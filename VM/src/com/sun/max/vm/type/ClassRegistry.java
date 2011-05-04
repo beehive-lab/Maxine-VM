@@ -48,6 +48,7 @@ import com.sun.max.vm.jdk.JDK.ClassRef;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.reflection.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.value.*;
 
@@ -158,6 +159,12 @@ public final class ClassRegistry {
     @INSPECTED
     private final ConcurrentHashMap<TypeDescriptor, ClassActor> typeDescriptorToClassActor = new ConcurrentHashMap<TypeDescriptor, ClassActor>(16384);
 
+    /**
+     * Classes in the boot image.
+     */
+    @HOSTED_ONLY
+    private ClassActor[] bootImageClasses;
+
     private final HashMap<Object, Object>[] propertyMaps;
 
     public final ClassLoader classLoader;
@@ -168,6 +175,9 @@ public final class ClassRegistry {
             propertyMaps[property.ordinal()] = property.createMap();
         }
         this.classLoader = classLoader;
+        if (MaxineVM.isHosted()) {
+            bootImageClasses = new ClassActor[0];
+        }
     }
 
     /**
@@ -331,26 +341,12 @@ public final class ClassRegistry {
         return typeDescriptorToClassActor.size();
     }
 
-    @HOSTED_ONLY
-    private ClassActor[] classesCache;
-
     /**
      * Gets a snapshot of the classes currently in this registry.
      */
     @HOSTED_ONLY
-    public ClassActor[] copyOfClasses() {
-        while (true) {
-            int n = typeDescriptorToClassActor.size();
-            if (classesCache != null && classesCache.length == n) {
-                return classesCache;
-            }
-            classesCache = typeDescriptorToClassActor.values().toArray(new ClassActor[n]);
-            if (n == typeDescriptorToClassActor.size()) {
-                break;
-            }
-            assert classesCache.length == n;
-        }
-        return classesCache;
+    public ClassActor[] bootImageClasses() {
+        return bootImageClasses;
     }
 
     /**
@@ -379,6 +375,15 @@ public final class ClassRegistry {
 
         // Now finally publish the class
         typeDescriptorToClassActor.put(typeDescriptor, classActor);
+
+        if (MaxineVM.isHosted()) {
+            synchronized (this) {
+                bootImageClasses = Arrays.copyOf(bootImageClasses, bootImageClasses.length + 1);
+                bootImageClasses[bootImageClasses.length - 1] = classActor;
+            }
+        }
+
+        InspectableClassInfo.notifyClassLoaded(classActor);
 
         return classActor;
     }

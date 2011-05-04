@@ -30,11 +30,10 @@ import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.interpreter.*;
+import com.sun.max.tele.field.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
-import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.*;
@@ -43,7 +42,6 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.value.*;
 
 /**
  * A registry of classes known to be loaded in the VM.
@@ -55,9 +53,6 @@ import com.sun.max.vm.value.*;
  * data reading, avoiding the overhead of creating a {@link TeleClassActor},
  * which overhead includes loading the class.
  *
- * @author Bernd Mathiske
- * @author Athul Acharya
- * @author Michael Van De Vanter
  */
 public final class TeleClassRegistry extends AbstractTeleVMHolder implements MaxClassRegistry, TeleVMCache {
 
@@ -100,14 +95,9 @@ public final class TeleClassRegistry extends AbstractTeleVMHolder implements Max
     private Set<TypeDescriptor> typesOnClasspath;
 
     /**
-     * A list of indices in the class registry table that need processing after the {@link TeleHeap} is fully initialized.
+     * A set of ConcurrentHashMap.HashEntry values in the class registry table that need processing after the {@link TeleHeap} is fully initialized.
      */
-    private List<Integer> attachFixupList = new ArrayList<Integer>();
-
-    /**
-     * Cache of of table reference to support processing the fix-up list.
-     */
-    private Reference tableReference;
+    private List<Reference> attachFixupList = new ArrayList<Reference>();
 
     private final Object statsPrinter = new Object() {
 
@@ -145,46 +135,36 @@ public final class TeleClassRegistry extends AbstractTeleVMHolder implements Max
         this.lastUpdateEpoch = epoch;
         int count = 0;
         try {
-            final Reference classRegistryReference = vm.bootClassRegistryReference();
-
-            if (vm().getInterpreterUseLevel() > 0) {
-                final TeleReferenceValue classRegistryReferenceValue = TeleReferenceValue.from(vm, classRegistryReference);
-                final int length = TeleInterpreter.execute(vm, ClassRegistry.class, "numberOfClassActors", SignatureDescriptor.fromJava(int.class),
-                                classRegistryReferenceValue).asInt();
-
-                for (int i = 0; i < length; i++) {
-                    final Reference classActorReference = TeleInterpreter.execute(vm, ClassRegistry.class, "getClassActorByIndex",
-                                    SignatureDescriptor.fromJava(ClassActor.class, int.class),
-                                    classRegistryReferenceValue, IntValue.from(i)).asReference();
-                    final String typeDescriptorString = (String) TeleInterpreter.execute(vm, ClassRegistry.class, "getTypeDescriptorStringByIndex",
-                                    SignatureDescriptor.fromJava(String.class, int.class),
-                                    classRegistryReferenceValue, IntValue.from(i)).unboxObject();
-                    final TypeDescriptor typeDescriptor = JavaTypeDescriptor.parseTypeDescriptor(typeDescriptorString);
-                    final int id = TeleInterpreter.execute(vm, ClassRegistry.class, "getClassActorSerialByIndex",
-                                    SignatureDescriptor.fromJava(int.class, int.class),
-                                    classRegistryReferenceValue, IntValue.from(i)).asInt();
-
-                    idToClassActorReference.put(id, classActorReference);
-                    typeDescriptorToClassActorReference.put(typeDescriptor, classActorReference);
-                    count++;
-                }
-            } else {
-                final Reference typeDescriptorToClassActorReference = vm().teleFields().ClassRegistry_typeDescriptorToClassActor.readReference(classRegistryReference);
-                tableReference = vm().teleFields().HashMap_table.readReference(typeDescriptorToClassActorReference);
-                final int length = Layout.readArrayLength(tableReference);
-                for (int i = 0; i < length; i++) {
-                    Reference entryReference = vm().readReference(tableReference, i);
-                    while (!entryReference.isZero()) {
-                        if (entryReference instanceof TemporaryTeleReference && TeleVM.isAttaching()) {
-                            // this is likely to be a reference in the dynamic heap that we can't see because TeleHeap is not fully initialized yet.
-                            // so we add it to a fix-up list and handle it later
-                            attachFixupList.add(i);
-                        } else {
-                            final Reference classActorReference = vm().teleFields().HashMap$Entry_value.readReference(entryReference);
-                            addToRegistry(classActorReference);
-                            count++;
+            final Reference classRegistry = vm.bootClassRegistryReference();
+            TeleFields f = vm().teleFields();
+            final Reference typeDescriptorToClassActor = f.ClassRegistry_typeDescriptorToClassActor.readReference(classRegistry);
+            Reference segments = f.ConcurrentHashMap_segments.readReference(typeDescriptorToClassActor);
+            int segmentsLength = Layout.readArrayLength(segments);
+            for (int i = 0; i < segmentsLength; i++) {
+                Reference segment = vm().readReference(segments, i);
+                if (!segment.isZero()) {
+                    Reference table = f.ConcurrentHashMap$Segment_table.readReference(segment);
+                    if (!table.isZero()) {
+                        int tableLength = Layout.readArrayLength(table);
+                        for (int j = 0; j != tableLength; j++) {
+                            int n = 0;
+                            Reference entry = vm().readReference(table, j);
+                            while (!entry.isZero()) {
+                                n++;
+                                if (entry instanceof TemporaryTeleReference && TeleVM.isAttaching()) {
+                                    // this is likely to be a reference in the dynamic heap that we can't see because TeleHeap is not
+                                    // fully initialized yet so we add it to a fix-up list and handle it later
+                                    attachFixupList.add(entry);
+                                } else {
+                                    Reference classActor = f.ConcurrentHashMap$HashEntry_value.readReference(entry);
+                                    if (!classActor.isZero()) {
+                                        addToRegistry(classActor);
+                                        count++;
+                                    }
+                                }
+                                entry = f.ConcurrentHashMap$HashEntry_next.readReference(entry);
+                            }
                         }
-                        entryReference = vm().teleFields().HashMap$Entry_next.readReference(entryReference);
                     }
                 }
             }
@@ -313,14 +293,20 @@ public final class TeleClassRegistry extends AbstractTeleVMHolder implements Max
     }
 
     public void processAttachFixupList() {
-        final TimedTrace timedTrace = new TimedTrace(TRACE_VALUE, tracePrefix() + " adding entries from attach fixup list");
-        timedTrace.begin();
-        for (Integer i : attachFixupList) {
-            Reference entryReference = vm().readReference(tableReference, i);
-            final Reference classActorReference = vm().teleFields().HashMap$Entry_value.readReference(entryReference);
-            addToRegistry(classActorReference);
+        if (attachFixupList != null) {
+            final TimedTrace timedTrace = new TimedTrace(TRACE_VALUE, tracePrefix() + " adding entries from attach fixup list");
+            timedTrace.begin();
+            for (Reference entry : attachFixupList) {
+                if (!entry.isZero()) {
+                    Reference classActor = vm().teleFields().ConcurrentHashMap$HashEntry_value.readReference(entry);
+                    if (!classActor.isZero()) {
+                        addToRegistry(classActor);
+                    }
+                }
+            }
+            timedTrace.end("added=" + attachFixupList.size());
+            attachFixupList = null;
         }
-        timedTrace.end("added=" + attachFixupList.size());
     }
 
     /**
