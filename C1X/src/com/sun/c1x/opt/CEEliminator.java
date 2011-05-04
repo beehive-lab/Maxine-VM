@@ -25,6 +25,7 @@ package com.sun.c1x.opt;
 import com.sun.c1x.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
+import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.c1x.value.FrameState.*;
 import com.sun.cri.ci.*;
@@ -127,8 +128,7 @@ public class CEEliminator implements BlockClosure {
         Value tValue = tGoto.stateAfter().stackAt(curIf.stateAfter().stackSize());
         Value fValue = fGoto.stateAfter().stackAt(curIf.stateAfter().stackSize());
 
-        assert tValue.kind == fValue.kind : "incompatible types";
-
+        assert  Util.archKindsEqual(tValue, fValue) : "incompatible types";
         if (tValue.kind.isFloat() || tValue.kind.isDouble()) {
             // backend does not support conditional moves on floats
             return;
