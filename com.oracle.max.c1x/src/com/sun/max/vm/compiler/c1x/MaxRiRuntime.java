@@ -61,7 +61,13 @@ public class MaxRiRuntime implements RiRuntime {
 
     private RiSnippets snippets;
 
-    public MaxRiRuntime() {
+    private static MaxRiRuntime instance = new MaxRiRuntime();
+    
+    public static MaxRiRuntime getInstance() {
+    	return instance;
+    }
+    
+    private MaxRiRuntime() {
     }
 
     /**

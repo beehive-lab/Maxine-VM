@@ -52,7 +52,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
     private static final CiRegister negateArgument = AMD64.xmm0;
     private static final CiRegister negateTemp = AMD64.xmm1;
 
-    private AMD64MacroAssembler asm;
+    private AMD64C1XMacroAssembler asm;
     private final CiTarget target;
     private int argsSize;
     private int[] argOffsets;
@@ -73,7 +73,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
     }
 
     private void reset(CiKind resultKind, CiKind[] argTypes) {
-        asm = new AMD64MacroAssembler.WithCompiler(compiler, compiler.globalStubRegisterConfig);
+        asm = new AMD64C1XMacroAssembler.WithCompiler(compiler, compiler.globalStubRegisterConfig);
         saveSize = 0;
         argsSize = 0;
         argOffsets = new int[argTypes.length];

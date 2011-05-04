@@ -27,6 +27,7 @@ import static com.sun.cri.bytecode.Bytecodes.UnsignedComparisons.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.alloc.OperandPool.VariableFlag;
+import com.sun.c1x.asm.*;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
@@ -82,7 +83,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
     @Override
     protected boolean canInlineAsConstant(Value v) {
         if (v.kind == CiKind.Long) {
-            if (v.isConstant() && Util.isInt(v.asConstant().asLong())) {
+            if (v.isConstant() && NumUtil.isInt(v.asConstant().asLong())) {
                 return true;
             }
             return false;

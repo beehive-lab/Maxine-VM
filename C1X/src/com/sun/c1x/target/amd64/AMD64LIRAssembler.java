@@ -65,13 +65,13 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     private static final long DoubleSignMask = 0x7FFFFFFFFFFFFFFFL;
 
     final CiTarget target;
-    final AMD64MacroAssembler masm;
+    final AMD64C1XMacroAssembler masm;
     final int wordSize;
     final CiRegister rscratch1;
 
     public AMD64LIRAssembler(C1XCompilation compilation) {
         super(compilation);
-        masm = (AMD64MacroAssembler) compilation.masm();
+        masm = (AMD64C1XMacroAssembler) compilation.masm();
         target = compilation.target;
         wordSize = target.wordSize;
         rscratch1 = compilation.registerConfig.getScratchRegister();
@@ -265,7 +265,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         }
 
         if (info != null) {
-            asm.recordImplicitException(nullCheckHere, info);
+            masm.recordImplicitException(nullCheckHere, info);
         }
     }
 
@@ -310,7 +310,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         CiAddress toAddr = (CiAddress) dest;
 
         if (info != null) {
-            asm.recordImplicitException(codePos(), info);
+            masm.recordImplicitException(codePos(), info);
         }
 
         switch (kind) {
@@ -399,7 +399,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
 
         CiAddress addr = (CiAddress) src;
         if (info != null) {
-            asm.recordImplicitException(codePos(), info);
+            masm.recordImplicitException(codePos(), info);
         }
 
         switch (kind) {
@@ -534,7 +534,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
 
         if (op.cond() == Condition.TRUE) {
             if (op.info != null) {
-                asm.recordImplicitException(codePos(), op.info);
+                masm.recordImplicitException(codePos(), op.info);
             }
             masm.jmp(op.label());
         } else {
@@ -927,7 +927,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                         // register - constant
                         assert right.isConstant();
                         long c = ((CiConstant) right).asLong();
-                        if (Util.isInt(c)) {
+                        if (NumUtil.isInt(c)) {
                             switch (code) {
                                 case Add : masm.addq(lreg, (int) c); break;
                                 case Sub : masm.subq(lreg, (int) c); break;
@@ -1110,7 +1110,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
             // normal and special case exit
             masm.bind(continuation);
 
-            asm.recordImplicitException(offset, info);
+            masm.recordImplicitException(offset, info);
             if (code == LIROpcode.Irem) {
                 moveRegs(AMD64.rdx, dreg); // result is in rdx
             } else {
@@ -1159,7 +1159,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         // normal and special case exit
         masm.bind(continuation);
 
-        asm.recordImplicitException(offset, info);
+        masm.recordImplicitException(offset, info);
         if (code == LIROpcode.Lrem) {
             moveRegs(AMD64.rdx, dreg);
         } else {
@@ -1192,7 +1192,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         int offset = masm.codeBuffer.position();
         masm.divq(rreg);
 
-        asm.recordImplicitException(offset, info);
+        masm.recordImplicitException(offset, info);
         if (code == LIROpcode.Wrem || code == LIROpcode.Wremi) {
             moveRegs(AMD64.rdx, dreg);
         } else {
@@ -1289,7 +1289,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     case Short   :
                     case Int     : masm.cmpl(left, right.asInt()); break;
                     case Long    :
-                    case Word    : assert Util.isInt(right.asLong());
+                    case Word    : assert NumUtil.isInt(right.asLong());
                                    masm.cmpq(left, right.asInt()); break;
                     case Object  : assert right.isNull();
                                    masm.cmpq(left, 0); break;
@@ -1543,7 +1543,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         assert kind == CiKind.Long : "only for volatile long fields";
 
         if (info != null) {
-            asm.recordImplicitException(codePos(), info);
+            masm.recordImplicitException(codePos(), info);
         }
 
         if (src.kind.isDouble()) {
@@ -1678,7 +1678,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
 
                 case PointerLoad: {
                     if ((Boolean) inst.extra && info != null) {
-                        asm.recordImplicitException(codePos(), info);
+                        masm.recordImplicitException(codePos(), info);
                     }
 
                     CiValue result = operands[inst.result.index];
@@ -1690,7 +1690,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
 
                 case PointerStore: {
                     if ((Boolean) inst.extra && info != null) {
-                        asm.recordImplicitException(codePos(), info);
+                        masm.recordImplicitException(codePos(), info);
                     }
 
                     CiValue value = operands[inst.y().index];
@@ -1788,7 +1788,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                 case PointerCAS:
 
                     if ((Boolean) inst.extra && info != null) {
-                        asm.recordImplicitException(codePos(), info);
+                        masm.recordImplicitException(codePos(), info);
                     }
                     assert operands[inst.x().index].asRegister().equals(AMD64.rax) : "wrong input x: " + operands[inst.x().index];
 
@@ -1922,11 +1922,11 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                 }
                 case Safepoint: {
                     assert info != null : "Must have debug info in order to create a safepoint.";
-                    asm.recordSafepoint(codePos(), info);
+                    masm.recordSafepoint(codePos(), info);
                     break;
                 }
                 case NullCheck: {
-                    asm.recordImplicitException(codePos(), info);
+                    masm.recordImplicitException(codePos(), info);
                     CiValue pointer = operands[inst.x().index];
                     asm.nullCheck(pointer.asRegister());
                     break;

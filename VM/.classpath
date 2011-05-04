@@ -6,6 +6,8 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/C1X"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/Assembler"/>
+	<classpathentry exported="true" kind="lib" path="/usr/jdk/instances/jdk1.6.0_14/lib/tools.jar"/>
 	<classpathentry exported="true" kind="lib" path="/VM/classes"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.asm"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

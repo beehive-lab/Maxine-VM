@@ -30,6 +30,7 @@ import com.sun.c1x.debug.*;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.FrameMap.StackBlock;
+import com.sun.c1x.target.amd64.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
@@ -99,10 +100,10 @@ public abstract class LIRAssembler {
     public abstract void emitTraps();
 
     public void emitExceptionEntries() {
-        if (asm.exceptionInfoList == null) {
+        if (((AMD64C1XMacroAssembler)asm).exceptionInfoList == null) {
             return;
         }
-        for (ExceptionInfo ilist : asm.exceptionInfoList) {
+        for (ExceptionInfo ilist : ((AMD64C1XMacroAssembler)asm).exceptionInfoList) {
             List<ExceptionHandler> handlers = ilist.exceptionHandlers;
 
             for (ExceptionHandler handler : handlers) {
@@ -286,7 +287,7 @@ public abstract class LIRAssembler {
                 if (C1XOptions.NullCheckUniquePc) {
                     asm.nop();
                 }
-                asm.recordImplicitException(codePos(), op.info);
+                ((AMD64C1XMacroAssembler)asm).recordImplicitException(codePos(), op.info);
                 asm.nullCheck(op.operand().asRegister());
                 break;
             case Lsb:

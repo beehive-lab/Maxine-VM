@@ -31,6 +31,7 @@ import java.util.*;
 import test.com.sun.max.vm.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.asm.AsmOptions;
 import com.sun.c1x.debug.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.xir.*;
@@ -113,6 +114,7 @@ public class C1XTest {
     static {
         // add all the fields from C1XOptions as options
         options.addFieldOptions(C1XOptions.class, "C1X", C1X.getHelpMap());
+        options.addFieldOptions(AsmOptions.class, "ASM", C1X.getHelpMap());
         C1X.optionsRegistered = true;
 
         // add all the fields from T1XOptions as options

@@ -29,8 +29,7 @@ import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.CiArchitecture.ByteOrder;
 
 /**
- *
- * @author Thomas Wuerthinger
+ * 
  */
 public final class Buffer {
 
@@ -42,7 +41,7 @@ public final class Buffer {
 
     public Buffer(ByteOrder byteOrder) {
         this.byteOrder = byteOrder;
-        this.data = new byte[C1XOptions.InitialCodeBufferSize];
+        this.data = new byte[AsmOptions.InitialCodeBufferSize];
     }
 
     public void reset() {
@@ -118,7 +117,7 @@ public final class Buffer {
     private void ensureSize(int length) {
         if (length >= data.length) {
             data = Arrays.copyOf(data, data.length * 4);
-            C1XMetrics.CodeBufferCopies++;
+//            C1XMetrics.CodeBufferCopies++;
         }
     }
 

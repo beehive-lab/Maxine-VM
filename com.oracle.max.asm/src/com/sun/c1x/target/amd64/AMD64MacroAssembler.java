@@ -24,9 +24,6 @@ package com.sun.c1x.target.amd64;
 
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
-import com.sun.c1x.globalstub.*;
-import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
@@ -39,117 +36,18 @@ import com.sun.cri.xir.*;
  */
 public class AMD64MacroAssembler extends AMD64Assembler {
 
-    private final CiRegister rscratch1;
+    protected final CiRegister rscratch1;
 
-    public static class WithCompiler extends AMD64MacroAssembler {
-
-        private final C1XCompiler compiler;
-
-        public WithCompiler(C1XCompiler compiler, RiRegisterConfig registerConfig) {
-            super(compiler.target, registerConfig);
-            this.compiler = compiler;
-        }
-
-        @Override
-        public GlobalStub lookupGlobalStub(XirTemplate template) {
-            return compiler.lookupGlobalStub(template);
-        }
-    }
 
     public AMD64MacroAssembler(CiTarget target, RiRegisterConfig registerConfig) {
         super(target, registerConfig);
         this.rscratch1 = registerConfig.getScratchRegister();
     }
 
-    /**
-     * Must be overridden if compiling code that makes calls to global stubs.
-     */
-    public GlobalStub lookupGlobalStub(XirTemplate template) {
-        throw new IllegalArgumentException("This assembler does not support compiling calls to global stubs");
-    }
-
-    public final int callGlobalStub(XirTemplate stub, LIRDebugInfo info, CiRegister result, CiValue... args) {
-        assert args.length == stub.parameters.length;
-        return callGlobalStubHelper(lookupGlobalStub(stub), stub.resultOperand.kind, info, result, args);
-    }
-
-    public final int callGlobalStub(GlobalStub stub, LIRDebugInfo info, CiRegister result, CiValue... args) {
-        assert args.length == stub.argOffsets.length;
-        return callGlobalStubHelper(stub, stub.resultKind, info, result, args);
-    }
-
-    private int callGlobalStubHelper(GlobalStub stub, CiKind resultKind, LIRDebugInfo info, CiRegister result, CiValue... args) {
-        for (int i = 0; i < args.length; i++) {
-            storeParameter(args[i], stub.argOffsets[i]);
-        }
-
-        int pos = directCall(stub.stubObject, info);
-
-        if (result != CiRegister.None) {
-            loadResult(result, stub.resultOffset, resultKind);
-        }
-
-        // Clear out parameters
-        if (C1XOptions.GenAssertionCode) {
-            for (int i = 0; i < args.length; i++) {
-                movptr(new CiAddress(CiKind.Word, AMD64.RSP, stub.argOffsets[i]), 0);
-            }
-        }
-        return pos;
-    }
-
-    private void loadResult(CiRegister r, int offset, CiKind kind) {
-        if (kind == CiKind.Int || kind == CiKind.Boolean) {
-            movl(r, new CiAddress(CiKind.Int, AMD64.RSP, offset));
-        } else if (kind == CiKind.Float) {
-            movss(r, new CiAddress(CiKind.Float, AMD64.RSP, offset));
-        } else if (kind == CiKind.Double) {
-            movsd(r, new CiAddress(CiKind.Double, AMD64.RSP, offset));
-        } else {
-            movq(r, new CiAddress(CiKind.Word, AMD64.RSP, offset));
-        }
-    }
-
-    private void storeParameter(CiValue registerOrConstant, int offset) {
-        CiKind k = registerOrConstant.kind;
-        if (registerOrConstant.isConstant()) {
-            CiConstant c = (CiConstant) registerOrConstant;
-            if (c.kind == CiKind.Object) {
-                movoop(new CiAddress(CiKind.Word, AMD64.RSP, offset), c);
-            } else {
-                movptr(new CiAddress(CiKind.Word, AMD64.RSP, offset), c.asInt());
-            }
-        } else if (registerOrConstant.isRegister()) {
-            if (k.isFloat()) {
-                movss(new CiAddress(CiKind.Float, AMD64.RSP, offset), registerOrConstant.asRegister());
-            } else if (k.isDouble()) {
-                movsd(new CiAddress(CiKind.Double, AMD64.RSP, offset), registerOrConstant.asRegister());
-            } else {
-                movq(new CiAddress(CiKind.Word, AMD64.RSP, offset), registerOrConstant.asRegister());
-            }
-        } else {
-            Util.shouldNotReachHere();
-        }
-    }
-
-    void movoop(CiRegister dst, CiConstant obj) {
-        assert obj.kind == CiKind.Object;
-        if (obj.isNull()) {
-            xorq(dst, dst);
-        } else {
-            if (target.inlineObjects) {
-                recordDataReferenceInCode(obj);
-                movq(dst, 0xDEADDEADDEADDEADL);
-            } else {
-                movq(dst, recordDataReferenceInCode(obj));
-            }
-        }
-    }
-
-    void movoop(CiAddress dst, CiConstant obj) {
-        movoop(rscratch1, obj);
-        movq(dst, rscratch1);
-    }
+ 
+ 
+ 
+ 
 
     void mov64(CiAddress dst, long src) {
         movq(rscratch1, src);
@@ -174,44 +72,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
 
     // 64 bit versions
 
-    int correctedIdivq(CiRegister reg) {
-        // Full implementation of Java ldiv and lrem; checks for special
-        // case as described in JVM spec. : p.243 & p.271. The function
-        // returns the (pc) offset of the idivl instruction - may be needed
-        // for implicit exceptions.
-        //
-        // normal case special case
-        //
-        // input : X86Register.rax: dividend minLong
-        // reg: divisor (may not be eax/edx) -1
-        //
-        // output: X86Register.rax: quotient (= X86Register.rax idiv reg) minLong
-        // X86Register.rdx: remainder (= X86Register.rax irem reg) 0
-        assert reg != AMD64.rax && reg != AMD64.rdx : "reg cannot be X86Register.rax or X86Register.rdx register";
-        final long minLong = 0x8000000000000000L;
-        Label normalCase = new Label();
-        Label specialCase = new Label();
-
-        // check for special case
-        cmpq(AMD64.rax, recordDataReferenceInCode(CiConstant.forLong(minLong)));
-        jcc(AMD64Assembler.ConditionFlag.notEqual, normalCase);
-        xorl(AMD64.rdx, AMD64.rdx); // prepare X86Register.rdx for possible special case (where
-        // remainder = 0)
-        cmpq(reg, -1);
-        jcc(AMD64Assembler.ConditionFlag.equal, specialCase);
-
-        // handle normal case
-        bind(normalCase);
-        cdqq();
-        int idivqOffset = codeBuffer.position();
-        idivq(reg);
-
-        // normal and special case exit
-        bind(specialCase);
-
-        return idivqOffset;
-    }
-
+  
     void decrementq(CiRegister reg, int value) {
         if (value == Integer.MIN_VALUE) {
             subq(reg, value);
@@ -224,7 +85,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         if (value == 0) {
             return;
         }
-        if (value == 1 && C1XOptions.UseIncDec) {
+        if (value == 1 && AsmOptions.UseIncDec) {
             decq(reg);
         } else {
             subq(reg, value);
@@ -243,7 +104,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         if (value == 0) {
             return;
         }
-        if (value == 1 && C1XOptions.UseIncDec) {
+        if (value == 1 && AsmOptions.UseIncDec) {
             incq(reg);
         } else {
             addq(reg, value);
@@ -256,9 +117,9 @@ public class AMD64MacroAssembler extends AMD64Assembler {
     }
 
     void stop(String msg) {
-        if (C1XOptions.GenAssertionCode) {
+        if (AsmOptions.GenAssertionCode) {
             // TODO: pass a pointer to the message
-            directCall(CiRuntimeCall.Debug, null);
+            directCall(CiRuntimeCall.Debug);
             hlt();
         }
     }
@@ -346,7 +207,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         if (value == 0) {
             return;
         }
-        if (value == 1 && C1XOptions.UseIncDec) {
+        if (value == 1 && AsmOptions.UseIncDec) {
             decl(reg);
         } else {
             subl(reg, value);
@@ -365,7 +226,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         if (value == 0) {
             return;
         }
-        if (value == 1 && C1XOptions.UseIncDec) {
+        if (value == 1 && AsmOptions.UseIncDec) {
             decl(dst);
         } else {
             subl(dst, value);
@@ -384,7 +245,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         if (value == 0) {
             return;
         }
-        if (value == 1 && C1XOptions.UseIncDec) {
+        if (value == 1 && AsmOptions.UseIncDec) {
             incl(reg);
         } else {
             addl(reg, value);
@@ -403,7 +264,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         if (value == 0) {
             return;
         }
-        if (value == 1 && C1XOptions.UseIncDec) {
+        if (value == 1 && AsmOptions.UseIncDec) {
             incl(dst);
         } else {
             addl(dst, value);
@@ -426,7 +287,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
     // Support optimal SSE move instructions.
     void movflt(CiRegister dst, CiRegister src) {
         assert dst.isFpu() && src.isFpu();
-        if (C1XOptions.UseXmmRegToRegMoveAll) {
+        if (AsmOptions.UseXmmRegToRegMoveAll) {
             movaps(dst, src);
         } else {
             movss(dst, src);
@@ -445,7 +306,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
 
     void movdbl(CiRegister dst, CiRegister src) {
         assert dst.isFpu() && src.isFpu();
-        if (C1XOptions.UseXmmRegToRegMoveAll) {
+        if (AsmOptions.UseXmmRegToRegMoveAll) {
             movapd(dst, src);
         } else {
             movsd(dst, src);
@@ -454,7 +315,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
 
     void movdbl(CiRegister dst, CiAddress src) {
         assert dst.isFpu();
-        if (C1XOptions.UseXmmLoadAndClearUpper) {
+        if (AsmOptions.UseXmmLoadAndClearUpper) {
             movsd(dst, src);
         } else {
             movlpd(dst, src);

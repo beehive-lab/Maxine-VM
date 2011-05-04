@@ -251,7 +251,7 @@ public class T1X implements RuntimeCompiler {
                         byte opcode = bytecode[bci];
                         if (opcode == INVOKEINTERFACE || opcode == INVOKESPECIAL || opcode == INVOKESTATIC || opcode == INVOKEVIRTUAL) {
                             int cpi = Bytes.beU2(bytecode, bci + 1);
-                            RiMethod callee = vm().runtime.getConstantPool(codePos.method).lookupMethod(cpi, opcode);
+                            RiMethod callee = MaxRiRuntime.getInstance().getConstantPool(codePos.method).lookupMethod(cpi, opcode);
                             hcf.addOperandComment(pos, String.valueOf(callee));
                         }
                     }

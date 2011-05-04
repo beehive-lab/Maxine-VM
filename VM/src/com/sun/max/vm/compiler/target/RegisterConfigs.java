@@ -29,7 +29,6 @@ import static com.sun.max.vm.runtime.VMRegister.Role.*;
 
 import java.util.*;
 
-import com.sun.c1x.globalstub.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;

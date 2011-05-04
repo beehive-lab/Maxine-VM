@@ -29,6 +29,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.asm.AsmOptions;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
@@ -57,7 +58,7 @@ public class C1X implements RuntimeCompiler {
     /**
      * The Maxine specific implementation of the {@linkplain RiRuntime runtime interface} needed by C1X.
      */
-    public final MaxRiRuntime runtime = vm().runtime;
+    public final MaxRiRuntime runtime = MaxRiRuntime.getInstance();
 
     /**
      * The {@linkplain CiTarget target} environment derived from a Maxine {@linkplain Platform platform} description.
@@ -171,6 +172,7 @@ public class C1X implements RuntimeCompiler {
                 C1XOptions.OptIntrinsify = false; // TODO (ds): remove once intrinisification works for Maxine
                 C1XOptions.StackShadowPages = VmThread.STACK_SHADOW_PAGES;
                 VMOptions.addFieldOptions("-C1X:", C1XOptions.class, getHelpMap());
+                VMOptions.addFieldOptions("-ASM:", AsmOptions.class, getHelpMap());
                 optionsRegistered = true;
             }
             compiler = new C1XCompiler(runtime, target, xirGenerator, vm().registerConfigs.globalStub);

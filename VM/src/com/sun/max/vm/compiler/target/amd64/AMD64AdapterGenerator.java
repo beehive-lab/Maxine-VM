@@ -321,7 +321,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             } else {
 
                 // This instruction is 5 bytes long
-                asm.directCall(adapter, null);
+                asm.directCall(adapter);
 
                 // Pad with 3 bytes to yield an 8-byte long prologue,
                 asm.nop();
@@ -406,7 +406,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
 
             // Args are now copied to the OPT locations; call the OPT main body
             int callPosition = asm.codeBuffer.position();
-            asm.indirectCall(rax, null, null);
+            asm.indirectCall(rax);
 
             // Restore RSP and RBP. Given that RBP is never modified by OPT methods and baseline methods always
             // restore it, RBP is guaranteed to be pointing to the slot holding the caller's RBP
@@ -624,7 +624,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             // Pad with nops up to the OPT entry point
             asm.align(OPTIMIZED_ENTRY_POINT.offset());
 
-            asm.directCall(adapter, null);
+            asm.directCall(adapter);
 
             int size = asm.codeBuffer.position();
             assert size == PROLOGUE_SIZE;
@@ -674,7 +674,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
 
             // Args are now copied to the baseline locations; call the baseline main body
             int callPosition = asm.codeBuffer.position();
-            asm.indirectCall(rax, null, null);
+            asm.indirectCall(rax);
 
             // The baseline method will have popped the args off the stack so now
             // RSP is pointing to the slot holding the address of the baseline main body.

@@ -24,7 +24,6 @@ package com.sun.max.vm.compiler.target;
 
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.compiler.CompilationScheme.Static.*;
@@ -44,8 +43,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.c1x.*;
-import com.sun.max.vm.compiler.target.TargetMethod.Flavor;
+import com.sun.max.vm.compiler.target.TargetMethod.*;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
@@ -229,7 +227,8 @@ public class Stubs {
             // load the return address into the third arg register
             asm.movq(args[2].asRegister(), new CiAddress(CiKind.Word, AMD64.rsp.asValue(), frameSize));
 
-            asm.directCall(isInterface ? resolveInterfaceCall.classMethodActor : resolveVirtualCall.classMethodActor, null);
+            int callPosition = asm.codeBuffer.position();
+            asm.directCall(isInterface ? resolveInterfaceCall.classMethodActor : resolveVirtualCall.classMethodActor);
 
             // Put the entry point of the resolved method on the stack just below the
             // return address of the trampoline itself. By adjusting RSP to point at
@@ -250,7 +249,11 @@ public class Stubs {
 
             String stubName = (isInterface ? 'i' : 'v') + "trampoline<" + index + ">";
             Flavor flavor = isInterface ? InterfaceTrampoline : VirtualTrampoline;
-            return new C1XTargetMethod(flavor, stubName, asm.finishTargetMethod(stubName, runtime(), registerRestoreEpilogueOffset, true));
+            byte[] code = asm.codeBuffer.close(true);
+
+            return new Stub(flavor, stubName, frameSize, code, callPosition, registerRestoreEpilogueOffset);
+
+//            return new C1XTargetMethod(flavor, stubName, asm.finishTargetMethod(stubName, runtime(), registerRestoreEpilogueOffset, true));
         }
         throw FatalError.unimplemented();
     }
@@ -304,7 +307,8 @@ public class Stubs {
             // load the static trampoline call site into the first parameter register
             asm.movq(locations[0].asRegister(), callSite);
 
-            asm.directCall(patchStaticTrampolineCallSite, null);
+            int callPosition = asm.codeBuffer.position();
+            asm.directCall(patchStaticTrampolineCallSite);
 
             // restore all parameter registers before returning
             int registerRestoreEpilogueOffset = asm.codeBuffer.position();
@@ -321,7 +325,11 @@ public class Stubs {
             asm.ret(0);
 
             String stubName = "strampoline";
-            return new C1XTargetMethod(StaticTrampoline, stubName, asm.finishTargetMethod(stubName, runtime(), registerRestoreEpilogueOffset, true));
+            byte[] code = asm.codeBuffer.close(true);
+
+            return new Stub(StaticTrampoline, stubName, frameSize, code, callPosition, registerRestoreEpilogueOffset);
+
+//            return new C1XTargetMethod(StaticTrampoline, stubName, asm.finishTargetMethod(stubName, runtime(), registerRestoreEpilogueOffset, true));
         }
         throw FatalError.unimplemented();
     }
@@ -390,7 +398,8 @@ public class Stubs {
             // load the fault address from the thread locals into the third parameter register
             asm.movq(args[2].asRegister(), new CiAddress(CiKind.Word, latch.asValue(), TRAP_FAULT_ADDRESS.offset));
 
-            asm.directCall(Trap.handleTrap.classMethodActor, null);
+            int callPosition = asm.codeBuffer.position();
+            asm.directCall(Trap.handleTrap.classMethodActor);
 
             asm.restore(csa, frameToCSA);
 
@@ -400,7 +409,11 @@ public class Stubs {
             asm.emitByte(popfq);
             asm.ret(0);
 
-            return new C1XTargetMethod(Flavor.TrapStub, "trapStub", asm.finishTargetMethod("trapStub", runtime(), -1, true));
+            byte[] code = asm.codeBuffer.close(true);
+
+            return new Stub(TrapStub, "trapStub", frameSize, code, callPosition, -1);
+
+//            return new C1XTargetMethod(Flavor.TrapStub, "trapStub", asm.finishTargetMethod("trapStub", runtime(), -1, true));
         }
         throw FatalError.unimplemented();
     }
@@ -437,8 +450,11 @@ public class Stubs {
             asm.movq(AMD64.rsp, catchSP);
             asm.ret(0);
 
-            String stubName = "unwindStub";
-            return new C1XTargetMethod(GlobalStub, stubName, asm.finishTargetMethod(stubName, runtime(), -1, true));
+//            String stubName = "unwindStub";
+            byte[] code = asm.codeBuffer.close(true);
+
+            return new Stub(GlobalStub, "unwindStub", frameSize, code, -1, -1);
+//            return new C1XTargetMethod(GlobalStub, stubName, asm.finishTargetMethod(stubName, runtime(), -1, true));
         }
         throw FatalError.unimplemented();
     }

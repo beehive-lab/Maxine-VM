@@ -28,7 +28,6 @@ import java.util.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
-import com.sun.max.vm.compiler.c1x.*;
 
 /**
  * This class encapsulates the configuration of the Maxine tester, which includes
@@ -239,9 +238,9 @@ public class MaxineTesterConfiguration {
         shootout("wc",              new File("wc.stdin"));
         shootout("wordfreq",        new File("wordfreq.stdin"));
 
-        String opt_c1x = "-opt=" + C1X.class.getName();
+        String opt_c1x = "-opt=C1X";
 
-        String baseline_c1x = "-baseline=" + C1X.class.getName();
+        String baseline_c1x = "-baseline=C1X";
         String baseline_t1x = "-baseline=T1X";
 
 

@@ -22,21 +22,17 @@
  */
 package com.sun.c1x.target.amd64;
 
+import static com.sun.c1x.asm.NumUtil.*;
 import static com.sun.c1x.target.amd64.AMD64.*;
 import static com.sun.cri.bytecode.Bytecodes.MemoryBarriers.*;
 import static com.sun.cri.ci.CiKind.*;
 
-import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
-import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 /**
  * This class implements an assembler that can encode most X86 instructions.
- *
- * @author Thomas Wuerthinger
  */
 public class AMD64Assembler extends AbstractAssembler {
 
@@ -122,8 +118,8 @@ public class AMD64Assembler extends AbstractAssembler {
 
     private void emitArithB(int op1, int op2, CiRegister dst, int imm8) {
         assert dst.isByte() : "must have byte register";
-        assert Util.isUByte(op1) && Util.isUByte(op2) : "wrong opcode";
-        assert Util.isUByte(imm8) : "not a byte";
+        assert isUByte(op1) && isUByte(op2) : "wrong opcode";
+        assert isUByte(imm8) : "not a byte";
         assert (op1 & 0x01) == 0 : "should be 8bit operation";
         emitByte(op1);
         emitByte(op2 | encode(dst));
@@ -131,10 +127,10 @@ public class AMD64Assembler extends AbstractAssembler {
     }
 
     private void emitArith(int op1, int op2, CiRegister dst, int imm32) {
-        assert Util.isUByte(op1) && Util.isUByte(op2) : "wrong opcode";
+        assert isUByte(op1) && isUByte(op2) : "wrong opcode";
         assert (op1 & 0x01) == 1 : "should be 32bit operation";
         assert (op1 & 0x02) == 0 : "sign-extension bit should not be set";
-        if (Util.isByte(imm32)) {
+        if (isByte(imm32)) {
             emitByte(op1 | 0x02); // set sign bit
             emitByte(op2 | encode(dst));
             emitByte(imm32 & 0xFF);
@@ -149,7 +145,7 @@ public class AMD64Assembler extends AbstractAssembler {
     private void emitArithOperand(int op1, CiRegister rm, CiAddress adr, int imm32) {
         assert (op1 & 0x01) == 1 : "should be 32bit operation";
         assert (op1 & 0x02) == 0 : "sign-extension bit should not be set";
-        if (Util.isByte(imm32)) {
+        if (isByte(imm32)) {
             emitByte(op1 | 0x02); // set sign bit
             emitOperandHelper(rm, adr);
             emitByte(imm32 & 0xFF);
@@ -161,7 +157,7 @@ public class AMD64Assembler extends AbstractAssembler {
     }
 
     private void emitArith(int op1, int op2, CiRegister dst, CiRegister src) {
-        assert Util.isUByte(op1) && Util.isUByte(op2) : "wrong opcode";
+        assert isUByte(op1) && isUByte(op2) : "wrong opcode";
         emitByte(op1);
         emitByte(op2 | encode(dst) << 3 | encode(src));
     }
@@ -199,7 +195,7 @@ public class AMD64Assembler extends AbstractAssembler {
                     assert index != rsp : "illegal addressing mode";
                     emitByte(0x04 | regenc);
                     emitByte(scale.log2 << 6 | indexenc | baseenc);
-                } else if (Util.isByte(disp)) {
+                } else if (isByte(disp)) {
                     // [base + indexscale + imm8]
                     // [01 reg 100][ss index base] imm8
                     assert index != rsp : "illegal addressing mode";
@@ -221,7 +217,7 @@ public class AMD64Assembler extends AbstractAssembler {
                     // [00 reg 100][00 100 100]
                     emitByte(0x04 | regenc);
                     emitByte(0x24);
-                } else if (Util.isByte(disp)) {
+                } else if (isByte(disp)) {
                     // [rsp + imm8]
                     // [01 reg 100][00 100 100] disp8
                     emitByte(0x44 | regenc);
@@ -241,7 +237,7 @@ public class AMD64Assembler extends AbstractAssembler {
                     // [base]
                     // [00 reg base]
                     emitByte(0x00 | regenc | baseenc);
-                } else if (Util.isByte(disp)) {
+                } else if (isByte(disp)) {
                     // [base + disp8]
                     // [01 reg base] disp8
                     emitByte(0x40 | regenc | baseenc);
@@ -447,47 +443,6 @@ public class AMD64Assembler extends AbstractAssembler {
         emitByte(imm8);
     }
 
-    public final void nativeCall(CiRegister dst, String symbol, LIRDebugInfo info) {
-        int before = codeBuffer.position();
-        int encode = prefixAndEncode(dst.encoding);
-        emitByte(0xFF);
-        emitByte(0xD0 | encode);
-        int after = codeBuffer.position();
-        recordIndirectCall(before, after, symbol, info);
-        recordExceptionHandlers(after, info);
-    }
-
-    public final int directCall(Object target, LIRDebugInfo info) {
-        int before = codeBuffer.position();
-        emitByte(0xE8);
-        emitInt(0);
-        int after = codeBuffer.position();
-        recordDirectCall(before, after, target, info);
-        recordExceptionHandlers(after, info);
-        return before;
-    }
-
-    public final int directJmp(Object target) {
-        int before = codeBuffer.position();
-        emitByte(0xE9);
-        emitInt(0);
-        int after = codeBuffer.position();
-        recordDirectCall(before, after, target, null);
-        return before;
-    }
-
-    public final int indirectCall(CiRegister dst, Object target, LIRDebugInfo info) {
-        int before = codeBuffer.position();
-        int encode = prefixAndEncode(dst.encoding);
-
-        emitByte(0xFF);
-        emitByte(0xD0 | encode);
-        int after = codeBuffer.position();
-        recordIndirectCall(before, after, target, info);
-        recordExceptionHandlers(after, info);
-        return before;
-    }
-
     public final void cdql() {
         emitByte(0x99);
     }
@@ -540,7 +495,7 @@ public class AMD64Assembler extends AbstractAssembler {
     // and stores reg into adr if so; otherwise, the value at adr is loaded into X86.rax,.
     // The ZF is set if the compared values were equal, and cleared otherwise.
     public final void cmpxchgl(CiRegister reg, CiAddress adr) { // cmpxchg
-        if ((C1XOptions.Atomics & 2) != 0) {
+        if ((AsmOptions.Atomics & 2) != 0) {
             // caveat: no instructionmark, so this isn't relocatable.
             // Emit a synthetic, non-atomic, CAS equivalent.
             // Beware. The synthetic form sets all ICCs, not just ZF.
@@ -719,7 +674,7 @@ public class AMD64Assembler extends AbstractAssembler {
 
     public final void imull(CiRegister dst, CiRegister src, int value) {
         int encode = prefixAndEncode(dst.encoding, src.encoding);
-        if (Util.isByte(value)) {
+        if (isByte(value)) {
             emitByte(0x6B);
             emitByte(0xC0 | encode);
             emitByte(value);
@@ -741,13 +696,13 @@ public class AMD64Assembler extends AbstractAssembler {
         int shortSize = 2;
         int longSize = 6;
         long disp = target - codeBuffer.position();
-        if (!forceDisp32 && Util.isByte(disp - shortSize)) {
+        if (!forceDisp32 && isByte(disp - shortSize)) {
             // 0111 tttn #8-bit disp
             emitByte(0x70 | cc.value);
             emitByte((int) ((disp - shortSize) & 0xFF));
         } else {
             // 0000 1111 1000 tttn #32-bit disp
-            assert Util.isInt(disp - longSize) : "must be 32bit offset (call4)";
+            assert isInt(disp - longSize) : "must be 32bit offset (call4)";
             emitByte(0x0F);
             emitByte(0x80 | cc.value);
             emitInt((int) (disp - longSize));
@@ -775,7 +730,7 @@ public class AMD64Assembler extends AbstractAssembler {
         if (l.isBound()) {
             int shortSize = 2;
             int entry = l.position();
-            assert Util.isByte(entry - (codeBuffer.position() + shortSize)) : "Dispacement too large for a short jmp";
+            assert isByte(entry - (codeBuffer.position() + shortSize)) : "Dispacement too large for a short jmp";
             long disp = entry - codeBuffer.position();
             // 0111 tttn #8-bit disp
             emitByte(0x70 | cc.value);
@@ -798,7 +753,7 @@ public class AMD64Assembler extends AbstractAssembler {
         int shortSize = 2;
         int longSize = 5;
         long disp = target - codeBuffer.position();
-        if (!forceDisp32 && Util.isByte(disp - shortSize)) {
+        if (!forceDisp32 && isByte(disp - shortSize)) {
             emitByte(0xEB);
             emitByte((int) ((disp - shortSize) & 0xFF));
         } else {
@@ -832,7 +787,7 @@ public class AMD64Assembler extends AbstractAssembler {
         if (l.isBound()) {
             int shortSize = 2;
             int entry = l.position();
-            assert Util.isByte((entry - codeBuffer.position()) + shortSize) : "Dispacement too large for a short jmp";
+            assert isByte((entry - codeBuffer.position()) + shortSize) : "Dispacement too large for a short jmp";
             long offs = entry - codeBuffer.position();
             emitByte(0xEB);
             emitByte((int) ((offs - shortSize) & 0xFF));
@@ -861,7 +816,7 @@ public class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void lock() {
-        if ((C1XOptions.Atomics & 1) != 0) {
+        if ((AsmOptions.Atomics & 1) != 0) {
             // Emit either nothing, a NOP, or a NOP: prefix
             emitByte(0x90);
         } else {
@@ -1315,7 +1270,7 @@ public class AMD64Assembler extends AbstractAssembler {
     }
 
     public void nop(int i) {
-        if (C1XOptions.UseNormalNop) {
+        if (AsmOptions.UseNormalNop) {
             assert i > 0 : " ";
             // The fancy nops aren't currently recognized by debuggers making it a
             // pain to disassemble code while debugging. If assert are on clearly
@@ -1328,7 +1283,7 @@ public class AMD64Assembler extends AbstractAssembler {
             return;
         }
 
-        if (C1XOptions.UseAddressNop) {
+        if (AsmOptions.UseAddressNop) {
             //
             // Using multi-bytes nops "0x0F 0x1F [Address]" for AMD.
             // 1: 0x90
@@ -1602,7 +1557,7 @@ public class AMD64Assembler extends AbstractAssembler {
     public final void pshufd(CiRegister dst, CiRegister src, int mode) {
         assert dst.isFpu();
         assert src.isFpu();
-        assert Util.isUByte(mode) : "invalid value";
+        assert isUByte(mode) : "invalid value";
 
         emitByte(0x66);
         int encode = prefixAndEncode(dst.encoding, src.encoding);
@@ -1614,7 +1569,7 @@ public class AMD64Assembler extends AbstractAssembler {
 
     public final void pshufd(CiRegister dst, CiAddress src, int mode) {
         assert dst.isFpu();
-        assert Util.isUByte(mode) : "invalid value";
+        assert isUByte(mode) : "invalid value";
 
         emitByte(0x66);
         prefix(src, dst);
@@ -1628,7 +1583,7 @@ public class AMD64Assembler extends AbstractAssembler {
     public final void pshuflw(CiRegister dst, CiRegister src, int mode) {
         assert dst.isFpu();
         assert src.isFpu();
-        assert Util.isUByte(mode) : "invalid value";
+        assert isUByte(mode) : "invalid value";
 
         emitByte(0xF2);
         int encode = prefixAndEncode(dst.encoding, src.encoding);
@@ -1640,7 +1595,7 @@ public class AMD64Assembler extends AbstractAssembler {
 
     public final void pshuflw(CiRegister dst, CiAddress src, int mode) {
         assert dst.isFpu();
-        assert Util.isUByte(mode) : "invalid value";
+        assert isUByte(mode) : "invalid value";
 
         emitByte(0xF2);
         prefix(src, dst); // QQ new
@@ -1718,7 +1673,7 @@ public class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void rcll(CiRegister dst, int imm8) {
-        assert Util.isShiftCount(imm8) : "illegal shift count";
+        assert isShiftCount(imm8) : "illegal shift count";
         int encode = prefixAndEncode(dst.encoding);
         if (imm8 == 1) {
             emitByte(0xD1);
@@ -1786,7 +1741,7 @@ public class AMD64Assembler extends AbstractAssembler {
 
     public final void sarl(CiRegister dst, int imm8) {
         int encode = prefixAndEncode(dst.encoding);
-        assert Util.isShiftCount(imm8) : "illegal shift count";
+        assert isShiftCount(imm8) : "illegal shift count";
         if (imm8 == 1) {
             emitByte(0xD1);
             emitByte(0xF8 | encode);
@@ -1833,7 +1788,7 @@ public class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void shll(CiRegister dst, int imm8) {
-        assert Util.isShiftCount(imm8) : "illegal shift count";
+        assert isShiftCount(imm8) : "illegal shift count";
         int encode = prefixAndEncode(dst.encoding);
         if (imm8 == 1) {
             emitByte(0xD1);
@@ -1852,7 +1807,7 @@ public class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void shrl(CiRegister dst, int imm8) {
-        assert Util.isShiftCount(imm8) : "illegal shift count";
+        assert isShiftCount(imm8) : "illegal shift count";
         int encode = prefixAndEncode(dst.encoding);
         emitByte(0xC1);
         emitByte(0xE8 | encode);
@@ -1884,7 +1839,7 @@ public class AMD64Assembler extends AbstractAssembler {
 
     public final void subl(CiAddress dst, int imm32) {
         prefix(dst);
-        if (Util.isByte(imm32)) {
+        if (isByte(imm32)) {
             emitByte(0x83);
             emitOperandHelper(rbp, dst);
             emitByte(imm32 & 0xFF);
@@ -2461,7 +2416,7 @@ public class AMD64Assembler extends AbstractAssembler {
 
     public final void imulq(CiRegister dst, CiRegister src, int value) {
         int encode = prefixqAndEncode(dst.encoding, src.encoding);
-        if (Util.isByte(value)) {
+        if (isByte(value)) {
             emitByte(0x6B);
             emitByte(0xC0 | encode);
             emitByte(value);
@@ -2512,7 +2467,7 @@ public class AMD64Assembler extends AbstractAssembler {
             emitByte(0x7E);
             emitByte(0xC0 | encode);
         } else {
-            Util.shouldNotReachHere();
+        	throw new InternalError("should not reach here");
         }
     }
 
@@ -2531,14 +2486,13 @@ public class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void movslq(CiRegister dst, int imm32) {
-        // dbx shows movslq(X86.rcx, 3) as movq $0x0000000049000000,(%X86.rbx)
-        // and movslq(X86.r8, 3); as movl $0x0000000048000000,(%X86.rbx)
-        // as a result we shouldn't use until tested at runtime...
-        Util.shouldNotReachHere();
-
         int encode = prefixqAndEncode(dst.encoding);
         emitByte(0xC7 | encode);
         emitInt(imm32);
+        // dbx shows movslq(X86.rcx, 3) as movq $0x0000000049000000,(%X86.rbx)
+        // and movslq(X86.r8, 3); as movl $0x0000000048000000,(%X86.rbx)
+        // as a result we shouldn't use until tested at runtime...
+    	throw new InternalError("untested");
     }
 
     public final void movslq(CiAddress dst, int imm32) {
@@ -2650,7 +2604,7 @@ public class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void rclq(CiRegister dst, int imm8) {
-        assert Util.isShiftCount(imm8 >> 1) : "illegal shift count";
+        assert isShiftCount(imm8 >> 1) : "illegal shift count";
         int encode = prefixqAndEncode(dst.encoding);
         if (imm8 == 1) {
             emitByte(0xD1);
@@ -2663,7 +2617,7 @@ public class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void sarq(CiRegister dst, int imm8) {
-        assert Util.isShiftCount(imm8 >> 1) : "illegal shift count";
+        assert isShiftCount(imm8 >> 1) : "illegal shift count";
         int encode = prefixqAndEncode(dst.encoding);
         if (imm8 == 1) {
             emitByte(0xD1);
@@ -2682,7 +2636,7 @@ public class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void shlq(CiRegister dst, int imm8) {
-        assert Util.isShiftCount(imm8 >> 1) : "illegal shift count";
+        assert isShiftCount(imm8 >> 1) : "illegal shift count";
         int encode = prefixqAndEncode(dst.encoding);
         if (imm8 == 1) {
             emitByte(0xD1);
@@ -2701,7 +2655,7 @@ public class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void shrq(CiRegister dst, int imm8) {
-        assert Util.isShiftCount(imm8 >> 1) : "illegal shift count";
+        assert isShiftCount(imm8 >> 1) : "illegal shift count";
         int encode = prefixqAndEncode(dst.encoding);
         emitByte(0xC1);
         emitByte(0xE8 | encode);
@@ -2726,7 +2680,7 @@ public class AMD64Assembler extends AbstractAssembler {
 
     public final void subq(CiAddress dst, int imm32) {
         prefixq(dst);
-        if (Util.isByte(imm32)) {
+        if (isByte(imm32)) {
             emitByte(0x83);
             emitOperandHelper(rbp, dst);
             emitByte(imm32 & 0xFF);
@@ -2874,5 +2828,37 @@ public class AMD64Assembler extends AbstractAssembler {
         if (codeBuffer.position() % modulus != 0) {
             nop(modulus - (codeBuffer.position() % modulus));
         }
+    }
+    
+    
+    
+    public final void nativeCall(CiRegister dst, String symbol) {
+        int encode = prefixAndEncode(dst.encoding);
+        emitByte(0xFF);
+        emitByte(0xD0 | encode);
+    }
+
+    public final int directCall(Object target) {
+        int before = codeBuffer.position();
+        emitByte(0xE8);
+        emitInt(0);
+        return before;
+    }
+
+//    public final int directJmp(Object target) {
+//        int before = codeBuffer.position();
+//        emitByte(0xE9);
+//        emitInt(0);
+//        int after = codeBuffer.position();
+//        return before;
+//    }
+
+    public final int indirectCall(CiRegister dst) {
+        int before = codeBuffer.position();
+        int encode = prefixAndEncode(dst.encoding);
+
+        emitByte(0xFF);
+        emitByte(0xD0 | encode);
+        return before;
     }
 }

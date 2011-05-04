@@ -33,6 +33,7 @@ import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.observer.*;
+import com.sun.c1x.target.amd64.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
@@ -320,7 +321,8 @@ public final class C1XCompilation {
             // generate traps at the end of the method
             lirAssembler.emitTraps();
 
-            CiTargetMethod targetMethod = masm().finishTargetMethod(method, runtime, lirAssembler.registerRestoreEpilogueOffset, false);
+            // TODO(cwi) temporary cast
+            CiTargetMethod targetMethod = ((AMD64C1XMacroAssembler)masm()).finishTargetMethod(method, runtime, lirAssembler.registerRestoreEpilogueOffset, false);
             if (assumptions.count() > 0) {
                 targetMethod.setAssumptions(assumptions);
             }

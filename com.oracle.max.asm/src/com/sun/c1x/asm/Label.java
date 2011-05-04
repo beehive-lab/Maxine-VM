@@ -22,12 +22,10 @@
  */
 package com.sun.c1x.asm;
 
-import com.sun.c1x.util.*;
+import java.util.ArrayList;
 
 /**
  * This class represents a label within assembly code.
- *
- * @author Marcelo Cintra
  */
 public final class Label {
 
@@ -38,7 +36,7 @@ public final class Label {
      * These instructions need to be patched when the label is bound
      * using the {@link #patchInstructions(AbstractAssembler)} method.
      */
-    private IntList patchPositions = new IntList(4);
+    private ArrayList<Integer> patchPositions = new ArrayList<Integer>(4);
 
     /**
      * Returns the position of this label in the code buffer.
