@@ -115,6 +115,7 @@ public final class ClassRegistry {
     public static final MethodActor VmThread_run = findMethod("run", VmThread.class);
     public static final MethodActor VmThread_attach = findMethod("attach", VmThread.class);
     public static final MethodActor VmThread_detach = findMethod("detach", VmThread.class);
+    public static final MethodActor ClassLoader_findBootstrapClass = findMethod("findBootstrapClass", ClassLoader.class);
 
     private static int loadCount;        // total loaded
     private static int unloadCount;    // total unloaded
@@ -507,18 +508,18 @@ public final class ClassRegistry {
         /**
          * Sets the value of this property for a given key.
          *
-         * @param mapping the mapping from keys to values for this property
+         * @param map the mapping from keys to values for this property
          * @param object the object for which the value of this property is to be retrieved
          * @param value the value to be set
          */
-        void set(HashMap<Object, Object> mapping, Object object, Object value) {
+        void set(HashMap<Object, Object> map, Object object, Object value) {
             assert keyType.isInstance(object);
-            if (value != null) {
+            if (value != null && value != defaultValue) {
                 assert valueType.isInstance(value);
-                final Object oldValue = mapping.put(object, value);
+                final Object oldValue = map.put(object, value);
                 assert !isFinal || oldValue == null;
             } else {
-                mapping.remove(object);
+                map.remove(object);
             }
         }
 
@@ -540,6 +541,10 @@ public final class ClassRegistry {
 
     /**
      * Sets the value of a given property for a given object.
+     *
+     * @param property the property to set
+     * @param object the object for which the property is to be set
+     * @param value the value of the property
      */
     public synchronized <Key_Type, Value_Type> void set(Property property, Key_Type object, Value_Type value) {
         property.set(propertyMaps[property.ordinal()], object, value);
