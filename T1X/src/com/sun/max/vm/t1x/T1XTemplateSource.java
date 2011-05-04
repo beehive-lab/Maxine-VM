@@ -27,6 +27,7 @@ import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.t1x.T1XFrameOps.*;
 import static com.sun.max.vm.t1x.T1XRuntime.*;
 import static com.sun.max.vm.t1x.T1XTemplateTag.*;
+import static com.sun.max.vm.t1x.T1XTemplateGenHelper.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
@@ -46,8 +47,11 @@ import com.sun.max.vm.type.*;
 /**
  * The Java source for the templates used by T1X.
  *
- * @author Laurent Daynes
- * @author Doug Simon
+ * The bytecodes that are parameterized by type are mostly automatically generated
+ * as they share a very similar form. The automatically generated code is created by
+ * running {@link #main} and is inserted (manually) at the end of the class.
+ * The focus of the generating code (which is {@link HOSTED_ONLY}) is readability.
+ *
  */
 public class T1XTemplateSource {
 
@@ -129,24 +133,6 @@ public class T1XTemplateSource {
         pushWord(Address.zero());
     }
 
-    @T1X_TEMPLATE(AALOAD)
-    public static void aaload() {
-        int index = peekInt(0);
-        Object array = peekObject(1);
-        ArrayAccess.checkIndex(array, index);
-        removeSlots(1);
-        pokeReference(0, ArrayAccess.getObject(array, index));
-    }
-
-    @T1X_TEMPLATE(AASTORE)
-    public static void aastore() {
-        int index = peekInt(1);
-        Object array = peekObject(2);
-        Object value = peekObject(0);
-        arrayStore(index, array, value);
-        removeSlots(3);
-    }
-
     @T1X_TEMPLATE(ALOAD)
     public static void aload(int dispToLocalSlot) {
         Object value = getLocalObject(dispToLocalSlot);
@@ -163,55 +149,7 @@ public class T1XTemplateSource {
     public static void anewarray(ResolutionGuard guard) {
         ArrayClassActor arrayClassActor = UnsafeCast.asArrayClassActor(Snippets.resolveArrayClass(guard));
         int length = peekInt(0);
-        pokeReference(0, T1XRuntime.createReferenceArray(arrayClassActor, length));
-    }
-
-    @T1X_TEMPLATE(ARETURN)
-    public static Object areturn() {
-        Object value = peekObject(0);
-        removeSlots(1);
-        return value;
-    }
-
-    @T1X_TEMPLATE(ARETURN$unlockClass)
-    public static Object areturnUnlockClass(Class c) {
-        Monitor.noninlineExit(c);
-        Object value = peekObject(0);
-        removeSlots(1);
-        return value;
-    }
-
-    @T1X_TEMPLATE(ARETURN$unlockReceiver)
-    public static Object areturnUnlockReceiver(int dispToRcvrCopy) {
-        Object rcvr = getLocalObject(dispToRcvrCopy);
-        Monitor.noninlineExit(rcvr);
-        Object value = peekObject(0);
-        removeSlots(1);
-        return value;
-    }
-
-    @T1X_TEMPLATE(WRETURN)
-    public static Word wreturn() {
-        Word value = peekWord(0);
-        removeSlots(1);
-        return value;
-    }
-
-    @T1X_TEMPLATE(WRETURN$unlockClass)
-    public static Word wreturnUnlockClass(Class c) {
-        Monitor.noninlineExit(c);
-        Word value = peekWord(0);
-        removeSlots(1);
-        return value;
-    }
-
-    @T1X_TEMPLATE(WRETURN$unlockReceiver)
-    public static Word wreturnUnlockReceiver(int dispToRcvrCopy) {
-        Object rcvr = getLocalObject(dispToRcvrCopy);
-        Monitor.noninlineExit(rcvr);
-        Word value = peekWord(0);
-        removeSlots(1);
-        return value;
+        pokeObject(0, T1XRuntime.createReferenceArray(arrayClassActor, length));
     }
 
     @T1X_TEMPLATE(ARRAYLENGTH)
@@ -239,47 +177,9 @@ public class T1XTemplateSource {
         Throw.raise(peekObject(0));
     }
 
-    @T1X_TEMPLATE(BALOAD)
-    public static void baload() {
-        int index = peekInt(0);
-        Object array = peekObject(1);
-        ArrayAccess.checkIndex(array, index);
-        removeSlots(1);
-        pokeInt(0, ArrayAccess.getByte(array, index));
-    }
-
-    @T1X_TEMPLATE(BASTORE)
-    public static void bastore() {
-        int index = peekInt(1);
-        Object array = peekObject(2);
-        ArrayAccess.checkIndex(array, index);
-        byte value = (byte) peekInt(0);
-        ArrayAccess.setByte(array, index, value);
-        removeSlots(3);
-    }
-
     @T1X_TEMPLATE(BIPUSH)
     public static void bipush(byte value) {
         pushInt(value);
-    }
-
-    @T1X_TEMPLATE(CALOAD)
-    public static void caload() {
-        int index = peekInt(0);
-        Object array = peekObject(1);
-        ArrayAccess.checkIndex(array, index);
-        removeSlots(1);
-        pokeInt(0, ArrayAccess.getChar(array, index));
-    }
-
-    @T1X_TEMPLATE(CASTORE)
-    public static void castore() {
-        int index = peekInt(1);
-        Object array = peekObject(2);
-        ArrayAccess.checkIndex(array, index);
-        char value = (char) peekInt(0);
-        ArrayAccess.setChar(array, index, value);
-        removeSlots(3);
     }
 
     @T1X_TEMPLATE(CHECKCAST)
@@ -313,24 +213,6 @@ public class T1XTemplateSource {
         double value1 = peekDouble(2);
         removeSlots(2);
         pokeDouble(0, value1 + value2);
-    }
-
-    @T1X_TEMPLATE(DALOAD)
-    public static void daload() {
-        int index = peekInt(0);
-        Object array = peekObject(1);
-        ArrayAccess.checkIndex(array, index);
-        pokeDouble(0, ArrayAccess.getDouble(array, index));
-    }
-
-    @T1X_TEMPLATE(DASTORE)
-    public static void dastore() {
-        int index = peekInt(2);
-        Object array = peekObject(3);
-        ArrayAccess.checkIndex(array, index);
-        double value = peekDouble(0);
-        ArrayAccess.setDouble(array, index, value);
-        removeSlots(4);
     }
 
     @T1X_TEMPLATE(DCMPG)
@@ -386,24 +268,6 @@ public class T1XTemplateSource {
         double value1 = peekDouble(2);
         removeSlots(2);
         pokeDouble(0, value1 % value2);
-    }
-
-    @T1X_TEMPLATE(DRETURN)
-    public static double dreturn() {
-        return popDouble();
-    }
-
-    @T1X_TEMPLATE(DRETURN$unlockClass)
-    public static double dreturnUnlockClass(Class c) {
-        Monitor.noninlineExit(c);
-        return popDouble();
-    }
-
-    @T1X_TEMPLATE(DRETURN$unlockReceiver)
-    public static double dreturnUnlockReceiver(int dispToRcvrCopy) {
-        Object rcvr = getLocalObject(dispToRcvrCopy);
-        Monitor.noninlineExit(rcvr);
-        return popDouble();
     }
 
     @T1X_TEMPLATE(DSTORE)
@@ -506,25 +370,6 @@ public class T1XTemplateSource {
         pokeFloat(0, value1 + value2);
     }
 
-    @T1X_TEMPLATE(FALOAD)
-    public static void faload() {
-        int index = peekInt(0);
-        Object array = peekObject(1);
-        ArrayAccess.checkIndex(array, index);
-        removeSlots(1);
-        pokeFloat(0, ArrayAccess.getFloat(array, index));
-    }
-
-    @T1X_TEMPLATE(FASTORE)
-    public static void fastore() {
-        int index = peekInt(1);
-        Object array = peekObject(2);
-        ArrayAccess.checkIndex(array, index);
-        float value = peekFloat(0);
-        ArrayAccess.setFloat(array, index, value);
-        removeSlots(3);
-    }
-
     @T1X_TEMPLATE(FCMPG)
     public static void fcmpg() {
         float value2 = peekFloat(0);
@@ -583,24 +428,6 @@ public class T1XTemplateSource {
         pokeFloat(0, value1 % value2);
     }
 
-    @T1X_TEMPLATE(FRETURN)
-    public static float freturn() {
-        return popFloat();
-    }
-
-    @T1X_TEMPLATE(FRETURN$unlockClass)
-    public static float freturnUnlockClass(Class c) {
-        Monitor.noninlineExit(c);
-        return popFloat();
-    }
-
-    @T1X_TEMPLATE(FRETURN$unlockReceiver)
-    public static float freturnUnlockReceiver(int dispToRcvrCopy) {
-        Object rcvr = getLocalObject(dispToRcvrCopy);
-        Monitor.noninlineExit(rcvr);
-        return popFloat();
-    }
-
     @T1X_TEMPLATE(FSTORE)
     public static void fstore(int displacementToSlot) {
         setLocalFloat(displacementToSlot, popFloat());
@@ -614,287 +441,6 @@ public class T1XTemplateSource {
         pokeFloat(0, value1 - value2);
     }
 
-    @T1X_TEMPLATE(GETFIELD$reference)
-    public static void getfieldReference(ResolutionGuard.InPool guard) {
-        Object object = peekObject(0);
-        pokeReference(0, resolveAndGetFieldReference(guard, object));
-    }
-
-    @T1X_TEMPLATE(GETFIELD$word)
-    public static void getfieldWord(ResolutionGuard.InPool guard) {
-        Object object = peekObject(0);
-        pokeWord(0, resolveAndGetFieldWord(guard, object));
-    }
-
-    @T1X_TEMPLATE(GETFIELD$byte)
-    public static void getfieldByte(ResolutionGuard.InPool guard) {
-        Object object = peekObject(0);
-        pokeInt(0, resolveAndGetFieldByte(guard, object));
-    }
-
-    @T1X_TEMPLATE(GETFIELD$char)
-    public static void getfieldChar(ResolutionGuard.InPool guard) {
-        Object object = peekObject(0);
-        pokeInt(0, resolveAndGetFieldChar(guard, object));
-    }
-
-    @T1X_TEMPLATE(GETFIELD$double)
-    public static void getfieldDouble(ResolutionGuard.InPool guard) {
-        Object object = peekObject(0);
-        addSlots(1);
-        pokeDouble(0, resolveAndGetFieldDouble(guard, object));
-    }
-
-    @T1X_TEMPLATE(GETFIELD$float)
-    public static void getfieldFloat(ResolutionGuard.InPool guard) {
-        Object object = peekObject(0);
-        pokeFloat(0, resolveAndGetFieldFloat(guard, object));
-    }
-
-    @T1X_TEMPLATE(GETFIELD$int)
-    public static void getfieldInt(ResolutionGuard.InPool guard) {
-        Object object = peekObject(0);
-        pokeInt(0, resolveAndGetFieldInt(guard, object));
-    }
-
-    @T1X_TEMPLATE(GETFIELD$long)
-    public static void getfieldLong(ResolutionGuard.InPool guard) {
-        Object object = peekObject(0);
-        addSlots(1);
-        pokeLong(0, resolveAndGetFieldLong(guard, object));
-    }
-
-    @T1X_TEMPLATE(GETFIELD$short)
-    public static void getfieldShort(ResolutionGuard.InPool guard) {
-        Object object = peekObject(0);
-        pokeInt(0, resolveAndGetFieldShort(guard, object));
-    }
-
-    @T1X_TEMPLATE(GETFIELD$boolean)
-    public static void getfieldBoolean(ResolutionGuard.InPool guard) {
-        Object object = peekObject(0);
-        pokeInt(0, UnsafeCast.asByte(resolveAndGetFieldBoolean(guard, object)));
-    }
-
-    @T1X_TEMPLATE(PUTFIELD$reference)
-    public static void putfieldReference(ResolutionGuard.InPool guard) {
-        Object object = peekObject(1);
-        Object value = peekObject(0);
-        resolveAndPutFieldReference(guard, object, value);
-        removeSlots(2);
-    }
-
-    @T1X_TEMPLATE(PUTFIELD$word)
-    public static void putfieldWord(ResolutionGuard.InPool guard) {
-        Object object = peekObject(1);
-        Word value = peekWord(0);
-        resolveAndPutFieldWord(guard, object, value);
-        removeSlots(2);
-    }
-
-    @T1X_TEMPLATE(PUTFIELD$byte)
-    public static void putfieldByte(ResolutionGuard.InPool guard) {
-        Object object = peekObject(1);
-        byte value = (byte) peekInt(0);
-        resolveAndPutFieldByte(guard, object, value);
-        removeSlots(2);
-    }
-
-    @T1X_TEMPLATE(PUTFIELD$char)
-    public static void putfieldChar(ResolutionGuard.InPool guard) {
-        Object object = peekObject(1);
-        char value = (char) peekInt(0);
-        resolveAndPutFieldChar(guard, object, value);
-        removeSlots(2);
-    }
-
-    @T1X_TEMPLATE(PUTFIELD$double)
-    public static void putfieldDouble(ResolutionGuard.InPool guard) {
-        Object object = peekObject(2);
-        double value = peekDouble(0);
-        resolveAndPutFieldDouble(guard, object, value);
-        removeSlots(3);
-    }
-
-    @T1X_TEMPLATE(PUTFIELD$float)
-    public static void putfieldFloat(ResolutionGuard.InPool guard) {
-        Object object = peekObject(1);
-        float value = peekFloat(0);
-        resolveAndPutFieldFloat(guard, object, value);
-        removeSlots(2);
-    }
-
-    @T1X_TEMPLATE(PUTFIELD$int)
-    public static void putfieldInt(ResolutionGuard.InPool guard) {
-        Object object = peekObject(1);
-        int value = peekInt(0);
-        resolveAndPutFieldInt(guard, object, value);
-        removeSlots(2);
-    }
-
-    @T1X_TEMPLATE(PUTFIELD$long)
-    public static void putfieldLong(ResolutionGuard.InPool guard) {
-        Object object = peekObject(2);
-        long value = peekLong(0);
-        resolveAndPutFieldLong(guard, object, value);
-        removeSlots(3);
-    }
-
-    @T1X_TEMPLATE(PUTFIELD$short)
-    public static void putfieldShort(ResolutionGuard.InPool guard) {
-        Object object = peekObject(1);
-        short value = (short) peekInt(0);
-        resolveAndPutFieldShort(guard, object, value);
-        removeSlots(2);
-    }
-
-    @T1X_TEMPLATE(PUTFIELD$boolean)
-    public static void putfieldBoolean(ResolutionGuard.InPool guard) {
-        Object object = peekObject(1);
-        boolean value = UnsafeCast.asBoolean((byte) peekInt(0));
-        resolveAndPutFieldBoolean(guard, object, value);
-        removeSlots(2);
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$byte)
-    public static void getstaticByte(ResolutionGuard.InPool guard) {
-        pushInt(resolveAndGetStaticByte(guard));
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$char)
-    public static void getstaticChar(ResolutionGuard.InPool guard) {
-        pushInt(resolveAndGetStaticChar(guard));
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$double)
-    public static void getstaticDouble(ResolutionGuard.InPool guard) {
-        pushDouble(resolveAndGetStaticDouble(guard));
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$float)
-    public static void getstaticFloat(ResolutionGuard.InPool guard) {
-        pushFloat(resolveAndGetStaticFloat(guard));
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$int)
-    public static void getstaticInt(ResolutionGuard.InPool guard) {
-        pushInt(resolveAndGetStaticInt(guard));
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$long)
-    public static void getstaticLong(ResolutionGuard.InPool guard) {
-        pushLong(resolveAndGetStaticLong(guard));
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$reference)
-    public static void getstaticReference(ResolutionGuard.InPool guard) {
-        pushObject(resolveAndGetStaticReference(guard));
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$word)
-    public static void getstaticWord(ResolutionGuard.InPool guard) {
-        pushWord(resolveAndGetStaticWord(guard));
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$short)
-    public static void getstaticShort(ResolutionGuard.InPool guard) {
-        pushInt(resolveAndGetStaticShort(guard));
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$boolean)
-    public static void getstaticBoolean(ResolutionGuard.InPool guard) {
-        pushInt(UnsafeCast.asByte(resolveAndGetStaticBoolean(guard)));
-    }
-
-    @T1X_TEMPLATE(PUTSTATIC$byte)
-    public static void putstaticByte(ResolutionGuard.InPool guard) {
-        resolveAndPutStaticByte(guard, (byte) popInt());
-    }
-
-    @T1X_TEMPLATE(PUTSTATIC$char)
-    public static void putstaticChar(ResolutionGuard.InPool guard) {
-        resolveAndPutStaticChar(guard, (char) popInt());
-    }
-
-    @T1X_TEMPLATE(PUTSTATIC$double)
-    public static void putstaticDouble(ResolutionGuard.InPool guard) {
-        resolveAndPutStaticDouble(guard, popDouble());
-    }
-
-    @T1X_TEMPLATE(PUTSTATIC$float)
-    public static void putstaticFloat(ResolutionGuard.InPool guard) {
-        resolveAndPutStaticFloat(guard, popFloat());
-    }
-
-    @T1X_TEMPLATE(PUTSTATIC$int)
-    public static void putstaticInt(ResolutionGuard.InPool guard) {
-        resolveAndPutStaticInt(guard, popInt());
-    }
-
-    @T1X_TEMPLATE(PUTSTATIC$long)
-    public static void putstaticLong(ResolutionGuard.InPool guard) {
-        resolveAndPutStaticLong(guard, popLong());
-    }
-
-    @T1X_TEMPLATE(PUTSTATIC$reference)
-    public static void putstaticReference(ResolutionGuard.InPool guard) {
-        resolveAndPutStaticReference(guard, peekObject(0));
-        removeSlots(1);
-    }
-
-    @T1X_TEMPLATE(PUTSTATIC$word)
-    public static void putstaticWord(ResolutionGuard.InPool guard) {
-        resolveAndPutStaticWord(guard, peekWord(0));
-        removeSlots(1);
-    }
-
-    @T1X_TEMPLATE(PUTSTATIC$short)
-    public static void putstaticShort(ResolutionGuard.InPool guard) {
-        resolveAndPutStaticShort(guard, (short) popInt());
-    }
-
-    @T1X_TEMPLATE(PUTSTATIC$boolean)
-    public static void putstaticBoolean(ResolutionGuard.InPool guard) {
-        resolveAndPutStaticBoolean(guard, UnsafeCast.asBoolean((byte) popInt()));
-    }
-
-    @T1X_TEMPLATE(I2B)
-    public static void i2b() {
-        int value = peekInt(0);
-        pokeInt(0, (byte) value);
-    }
-
-    @T1X_TEMPLATE(I2C)
-    public static void i2c() {
-        int value = peekInt(0);
-        pokeInt(0, (char) value);
-    }
-
-    @T1X_TEMPLATE(I2F)
-    public static void i2f() {
-        int value = peekInt(0);
-        pokeFloat(0, value);
-    }
-
-    @T1X_TEMPLATE(I2S)
-    public static void i2s() {
-        int value = peekInt(0);
-        pokeInt(0, (short) value);
-    }
-
-    @T1X_TEMPLATE(I2L)
-    public static void i2l() {
-        int value = peekInt(0);
-        addSlots(1);
-        pokeLong(0, value);
-    }
-
-    @T1X_TEMPLATE(I2D)
-    public static void i2d() {
-        int value = peekInt(0);
-        addSlots(1);
-        pokeDouble(0, value);
-    }
 
     @T1X_TEMPLATE(IADD)
     public static void iadd() {
@@ -904,31 +450,12 @@ public class T1XTemplateSource {
         pokeInt(0, value1 + value2);
     }
 
-    @T1X_TEMPLATE(IALOAD)
-    public static void iaload() {
-        int index = peekInt(0);
-        Object array = peekObject(1);
-        ArrayAccess.checkIndex(array, index);
-        removeSlots(1);
-        pokeInt(0, ArrayAccess.getInt(array, index));
-    }
-
     @T1X_TEMPLATE(IAND)
     public static void iand() {
         int value2 = peekInt(0);
         int value1 = peekInt(1);
         removeSlots(1);
         pokeInt(0, value1 & value2);
-    }
-
-    @T1X_TEMPLATE(IASTORE)
-    public static void iastore() {
-        int index = peekInt(1);
-        Object array = peekObject(2);
-        ArrayAccess.checkIndex(array, index);
-        int value = peekInt(0);
-        ArrayAccess.setInt(array, index, value);
-        removeSlots(3);
     }
 
     @T1X_TEMPLATE(ICONST_M1)
@@ -1178,24 +705,6 @@ public class T1XTemplateSource {
         pokeInt(0, dividend.remainder(divisor));
     }
 
-    @T1X_TEMPLATE(IRETURN)
-    public static int ireturn() {
-        return popInt();
-    }
-
-    @T1X_TEMPLATE(IRETURN$unlockClass)
-    public static int ireturnUnlockClass(Class c) {
-        Monitor.noninlineExit(c);
-        return popInt();
-    }
-
-    @T1X_TEMPLATE(IRETURN$unlockReceiver)
-    public static int ireturnUnlockReceiver(int dispToRcvrCopy) {
-        Object rcvr = getLocalObject(dispToRcvrCopy);
-        Monitor.noninlineExit(rcvr);
-        return popInt();
-    }
-
     @T1X_TEMPLATE(ISHL)
     public static void ishl() {
         int value2 = peekInt(0);
@@ -1296,30 +805,12 @@ public class T1XTemplateSource {
         pokeLong(0, value1 + value2);
     }
 
-    @T1X_TEMPLATE(LALOAD)
-    public static void laload() {
-        int index = peekInt(0);
-        Object array = peekObject(1);
-        ArrayAccess.checkIndex(array, index);
-        pokeLong(0, ArrayAccess.getLong(array, index));
-    }
-
     @T1X_TEMPLATE(LAND)
     public static void land() {
         long value2 = peekLong(0);
         long value1 = peekLong(2);
         removeSlots(2);
         pokeLong(0, value1 & value2);
-    }
-
-    @T1X_TEMPLATE(LASTORE)
-    public static void lastore() {
-        int index = peekInt(2);
-        Object array = peekObject(3);
-        ArrayAccess.checkIndex(array, index);
-        long value = peekLong(0);
-        ArrayAccess.setLong(array, index, value);
-        removeSlots(4);
     }
 
     @T1X_TEMPLATE(LCMP)
@@ -1376,24 +867,6 @@ public class T1XTemplateSource {
         long value1 = peekLong(2);
         removeSlots(2);
         pokeLong(0, value1 % value2);
-    }
-
-    @T1X_TEMPLATE(LRETURN)
-    public static long lreturn() {
-        return popLong();
-    }
-
-    @T1X_TEMPLATE(LRETURN$unlockClass)
-    public static long lreturnUnlockClass(Class c) {
-        Monitor.noninlineExit(c);
-        return popLong();
-    }
-
-    @T1X_TEMPLATE(LRETURN$unlockReceiver)
-    public static long lreturnUnlockReceiver(int dispToRcvrCopy) {
-        Object rcvr = getLocalObject(dispToRcvrCopy);
-        Monitor.noninlineExit(rcvr);
-        return popLong();
     }
 
     @T1X_TEMPLATE(LSHL)
@@ -1479,7 +952,7 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(NEWARRAY)
     public static void newarray(Kind kind) {
         int length = peekInt(0);
-        pokeReference(0, createPrimitiveArray(kind, length));
+        pokeObject(0, createPrimitiveArray(kind, length));
     }
 
     @T1X_TEMPLATE(NOP)
@@ -1495,49 +968,6 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(POP2)
     public static void pop2() {
         removeSlots(2);
-    }
-
-    @T1X_TEMPLATE(RETURN)
-    public static void vreturn() {
-        return;
-    }
-
-    @T1X_TEMPLATE(RETURN$unlockClass)
-    public static void vreturnUnlockClass(Class c) {
-        Monitor.noninlineExit(c);
-    }
-
-    @T1X_TEMPLATE(RETURN$unlockReceiver)
-    public static void vreturnUnlockReceiver(int dispToRcvrCopy) {
-        Object rcvr = getLocalObject(dispToRcvrCopy);
-        Monitor.noninlineExit(rcvr);
-    }
-
-    @T1X_TEMPLATE(RETURN$registerFinalizer)
-    public static void vreturnRegisterFinalizer(int dispToRcvr) {
-        Object rcvr = getLocalObject(dispToRcvr);
-        if (ObjectAccess.readClassActor(rcvr).hasFinalizer()) {
-            SpecialReferenceManager.registerFinalizee(rcvr);
-        }
-    }
-
-    @T1X_TEMPLATE(SALOAD)
-    public static void saload() {
-        int index = peekInt(0);
-        Object array = peekObject(1);
-        ArrayAccess.checkIndex(array, index);
-        removeSlots(1);
-        pokeInt(0, ArrayAccess.getShort(array, index));
-    }
-
-    @T1X_TEMPLATE(SASTORE)
-    public static void sastore() {
-        short value = (short) peekInt(0);
-        int index = peekInt(1);
-        Object array = peekObject(2);
-        ArrayAccess.checkIndex(array, index);
-        ArrayAccess.setShort(array, index, value);
-        removeSlots(3);
     }
 
     @T1X_TEMPLATE(SIPUSH)
@@ -1706,117 +1136,6 @@ public class T1XTemplateSource {
         directCallWord();
     }
 
-    @T1X_TEMPLATE(GETSTATIC$byte$init)
-    public static void getstaticByte(Object staticTuple, int offset) {
-        pushInt(TupleAccess.readByte(staticTuple, offset));
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$char$init)
-    public static void getstaticChar(Object staticTuple, int offset) {
-        pushInt(TupleAccess.readChar(staticTuple, offset));
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$double$init)
-    public static void getstaticDouble(Object staticTuple, int offset) {
-        pushDouble(TupleAccess.readDouble(staticTuple, offset));
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$float$init)
-    public static void getstaticFloat(Object staticTuple, int offset) {
-        pushFloat(TupleAccess.readFloat(staticTuple, offset));
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$int$init)
-    public static void getstaticInt(Object staticTuple, int offset) {
-        pushInt(TupleAccess.readInt(staticTuple, offset));
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$long$init)
-    public static void getstaticLong(Object staticTuple, int offset) {
-        pushLong(TupleAccess.readLong(staticTuple, offset));
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$reference$init)
-    public static void getstaticReference(Object staticTuple, int offset) {
-        pushObject(TupleAccess.readObject(staticTuple, offset));
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$word$init)
-    public static void getstaticWord(Object staticTuple, int offset) {
-        pushWord(TupleAccess.readWord(staticTuple, offset));
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$short$init)
-    public static void getstaticShort(Object staticTuple, int offset) {
-        pushInt(TupleAccess.readShort(staticTuple, offset));
-    }
-
-    @T1X_TEMPLATE(GETSTATIC$boolean$init)
-    public static void getstaticBoolean(Object staticTuple, int offset) {
-        pushInt(UnsafeCast.asByte(TupleAccess.readBoolean(staticTuple, offset)));
-    }
-
-    @T1X_TEMPLATE(PUTSTATIC$byte$init)
-    public static void putstaticByte(Object staticTuple, int offset) {
-        byte value = (byte) popInt();
-        TupleAccess.writeByte(staticTuple, offset, value);
-    }
-
-    @T1X_TEMPLATE(PUTSTATIC$char$init)
-    public static void putstaticChar(Object staticTuple, int offset) {
-        char value = (char) popInt();
-        TupleAccess.writeChar(staticTuple, offset, value);
-    }
-
-    @T1X_TEMPLATE(PUTSTATIC$double$init)
-    public static void putstaticDouble(Object staticTuple, int offset) {
-        double value = popDouble();
-        TupleAccess.writeDouble(staticTuple, offset, value);
-    }
-
-    @T1X_TEMPLATE(PUTSTATIC$float$init)
-    public static void putstaticFloat(Object staticTuple, int offset) {
-        float value = popFloat();
-        TupleAccess.writeFloat(staticTuple, offset, value);
-    }
-
-    @T1X_TEMPLATE(PUTSTATIC$int$init)
-    public static void putstaticInt(Object staticTuple, int offset) {
-        int value = popInt();
-        TupleAccess.writeInt(staticTuple, offset, value);
-    }
-
-    @T1X_TEMPLATE(PUTSTATIC$long$init)
-    public static void putstaticLong(Object staticTuple, int offset) {
-        long value = popLong();
-        TupleAccess.writeLong(staticTuple, offset, value);
-    }
-
-    @T1X_TEMPLATE(PUTSTATIC$reference$init)
-    public static void putstaticReference(Object staticTuple, int offset) {
-        Object value = peekObject(0);
-        TupleAccess.noninlineWriteObject(staticTuple, offset, value);
-        removeSlots(1);
-    }
-
-    @T1X_TEMPLATE(PUTSTATIC$word$init)
-    public static void putstaticWord(Object staticTuple, int offset) {
-        Word value = peekWord(0);
-        TupleAccess.writeWord(staticTuple, offset, value);
-        removeSlots(1);
-    }
-
-    @T1X_TEMPLATE(PUTSTATIC$short$init)
-    public static void putstaticShort(Object staticTuple, int offset) {
-        short value = (short) popInt();
-        TupleAccess.writeShort(staticTuple, offset, value);
-    }
-
-    @T1X_TEMPLATE(PUTSTATIC$boolean$init)
-    public static void putstaticBoolean(Object staticTuple, int offset) {
-        boolean value = UnsafeCast.asBoolean((byte) popInt());
-        TupleAccess.writeBoolean(staticTuple, offset, value);
-    }
 
     // Instructions with a resolved class operand
 
@@ -1839,7 +1158,7 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(ANEWARRAY$resolved)
     public static void anewarray(ArrayClassActor arrayClassActor) {
         int length = peekInt(0);
-        pokeReference(0, T1XRuntime.createReferenceArray(arrayClassActor, length));
+        pokeObject(0, T1XRuntime.createReferenceArray(arrayClassActor, length));
     }
 
     @T1X_TEMPLATE(MULTIANEWARRAY$resolved)
@@ -1856,147 +1175,6 @@ public class T1XTemplateSource {
         pushObject(Snippets.createMultiReferenceArray(arrayClassActor, lengths));
     }
 
-    @T1X_TEMPLATE(T1XTemplateTag.GETFIELD$reference$resolved)
-    public static void getfieldReference(int offset) {
-        Object object = peekObject(0);
-        pokeReference(0, TupleAccess.readObject(object, offset));
-    }
-
-    @T1X_TEMPLATE(T1XTemplateTag.GETFIELD$word$resolved)
-    public static void getfieldWord(int offset) {
-        Object object = peekObject(0);
-        pokeWord(0, TupleAccess.readWord(object, offset));
-    }
-
-    @T1X_TEMPLATE(T1XTemplateTag.GETFIELD$byte$resolved)
-    public static void getfieldByte(int offset) {
-        Object object = peekObject(0);
-        pokeInt(0, TupleAccess.readByte(object, offset));
-    }
-
-    @T1X_TEMPLATE(T1XTemplateTag.GETFIELD$char$resolved)
-    public static void getfieldChar(int offset) {
-        Object object = peekObject(0);
-        pokeInt(0, TupleAccess.readChar(object, offset));
-    }
-
-    @T1X_TEMPLATE(T1XTemplateTag.GETFIELD$double$resolved)
-    public static void getfieldDouble(int offset) {
-        Object object = peekObject(0);
-        addSlots(1);
-        pokeDouble(0, TupleAccess.readDouble(object, offset));
-    }
-
-    @T1X_TEMPLATE(T1XTemplateTag.GETFIELD$float$resolved)
-    public static void getfieldFloat(int offset) {
-        Object object = peekObject(0);
-        pokeFloat(0, TupleAccess.readFloat(object, offset));
-    }
-
-    @T1X_TEMPLATE(T1XTemplateTag.GETFIELD$int$resolved)
-    public static void getfieldInt(int offset) {
-        Object object = peekObject(0);
-        pokeInt(0, TupleAccess.readInt(object, offset));
-    }
-
-    @T1X_TEMPLATE(T1XTemplateTag.GETFIELD$long$resolved)
-    public static void getfieldLong(int offset) {
-        Object object = peekObject(0);
-        addSlots(1);
-        pokeLong(0, TupleAccess.readLong(object, offset));
-    }
-
-    @T1X_TEMPLATE(T1XTemplateTag.GETFIELD$short$resolved)
-    public static void getfieldShort(int offset) {
-        Object object = peekObject(0);
-        pokeInt(0, TupleAccess.readShort(object, offset));
-    }
-
-    @T1X_TEMPLATE(T1XTemplateTag.GETFIELD$boolean$resolved)
-    public static void getfieldBoolean(int offset) {
-        Object object = peekObject(0);
-        pokeInt(0, UnsafeCast.asByte(TupleAccess.readBoolean(object, offset)));
-    }
-
-    @T1X_TEMPLATE(T1XTemplateTag.PUTFIELD$reference$resolved)
-    public static void putfieldReference(int offset) {
-        Object object = peekObject(1);
-        Object value = peekObject(0);
-        removeSlots(2);
-        TupleAccess.noninlineWriteObject(object, offset, value);
-    }
-
-    @T1X_TEMPLATE(T1XTemplateTag.PUTFIELD$word$resolved)
-    public static void putfieldWord(int offset) {
-        Object object = peekObject(1);
-        Word value = peekWord(0);
-        removeSlots(2);
-        TupleAccess.writeWord(object, offset, value);
-    }
-
-    @T1X_TEMPLATE(T1XTemplateTag.PUTFIELD$byte$resolved)
-    public static void putfieldByte(int offset) {
-        Object object = peekObject(1);
-        byte value = (byte) peekInt(0);
-        removeSlots(2);
-        TupleAccess.writeByte(object, offset, value);
-    }
-
-    @T1X_TEMPLATE(T1XTemplateTag.PUTFIELD$char$resolved)
-    public static void putfieldChar(int offset) {
-        Object object = peekObject(1);
-        char value = (char) peekInt(0);
-        removeSlots(2);
-        TupleAccess.writeChar(object, offset, value);
-    }
-
-    @T1X_TEMPLATE(T1XTemplateTag.PUTFIELD$double$resolved)
-    public static void putfieldDouble(int offset) {
-        Object object = peekObject(2);
-        double value = peekDouble(0);
-        removeSlots(3);
-        TupleAccess.writeDouble(object, offset, value);
-    }
-
-    @T1X_TEMPLATE(T1XTemplateTag.PUTFIELD$float$resolved)
-    public static void putfieldFloat(int offset) {
-        Object object = peekObject(1);
-        float value = peekFloat(0);
-        removeSlots(2);
-        TupleAccess.writeFloat(object, offset, value);
-    }
-
-    @T1X_TEMPLATE(T1XTemplateTag.PUTFIELD$int$resolved)
-    public static void putfieldInt(int offset) {
-        Object object = peekObject(1);
-        int value = peekInt(0);
-        removeSlots(2);
-        TupleAccess.writeInt(object, offset, value);
-    }
-
-    @T1X_TEMPLATE(T1XTemplateTag.PUTFIELD$long$resolved)
-    public static void putfieldLong(int offset) {
-        Object object = peekObject(2);
-        long value = peekLong(0);
-        removeSlots(3);
-        TupleAccess.writeLong(object, offset, value);
-    }
-
-    @T1X_TEMPLATE(T1XTemplateTag.PUTFIELD$short$resolved)
-    public static void putfieldShort(int offset) {
-        Object object = peekObject(1);
-        short value = (short) peekInt(0);
-        removeSlots(2);
-        TupleAccess.writeShort(object, offset, value);
-    }
-
-    @T1X_TEMPLATE(T1XTemplateTag.PUTFIELD$boolean$resolved)
-    public static void putfieldBoolean(int offset) {
-        Object object = peekObject(1);
-        boolean value = UnsafeCast.asBoolean((byte) peekInt(0));
-        removeSlots(2);
-        TupleAccess.writeBoolean(object, offset, value);
-    }
 
     /**
      * Template sources for the invocation of resolved methods.
@@ -2209,511 +1387,6 @@ public class T1XTemplateSource {
         return entryPoint;
     }
 
-    @T1X_TEMPLATE(PREAD_BYTE)
-    public static void pread_byte() {
-        Offset off = peekWord(0).asOffset();
-        Pointer ptr = peekWord(1).asPointer();
-        removeSlots(1);
-        pokeInt(0, ptr.readByte(off));
-    }
-
-    @T1X_TEMPLATE(PREAD_CHAR)
-    public static void pread_char() {
-        Offset off = peekWord(0).asOffset();
-        Pointer ptr = peekWord(1).asPointer();
-        removeSlots(1);
-        pokeInt(0, ptr.readChar(off));
-    }
-
-    @T1X_TEMPLATE(PREAD_SHORT)
-    public static void pread_short() {
-        Offset off = peekWord(0).asOffset();
-        Pointer ptr = peekWord(1).asPointer();
-        removeSlots(1);
-        pokeInt(0, ptr.readShort(off));
-    }
-
-    @T1X_TEMPLATE(PREAD_INT)
-    public static void pread_int() {
-        Offset off = peekWord(0).asOffset();
-        Pointer ptr = peekWord(1).asPointer();
-        removeSlots(1);
-        pokeInt(0, ptr.readInt(off));
-    }
-
-    @T1X_TEMPLATE(PREAD_FLOAT)
-    public static void pread_float() {
-        Offset off = peekWord(0).asOffset();
-        Pointer ptr = peekWord(1).asPointer();
-        removeSlots(1);
-        pokeFloat(0, ptr.readFloat(off));
-    }
-
-    @T1X_TEMPLATE(PREAD_LONG)
-    public static void pread_long() {
-        Offset off = peekWord(0).asOffset();
-        Pointer ptr = peekWord(1).asPointer();
-        pokeLong(0, ptr.readLong(off));
-    }
-
-    @T1X_TEMPLATE(PREAD_DOUBLE)
-    public static void pread_double() {
-        Offset off = peekWord(0).asOffset();
-        Pointer ptr = peekWord(1).asPointer();
-        pokeDouble(0, ptr.readDouble(off));
-    }
-
-    @T1X_TEMPLATE(PREAD_WORD)
-    public static void pread_word() {
-        Offset off = peekWord(0).asOffset();
-        Pointer ptr = peekWord(1).asPointer();
-        removeSlots(1);
-        pokeWord(0, ptr.readWord(off));
-    }
-
-    @T1X_TEMPLATE(PREAD_REFERENCE)
-    public static void pread_reference() {
-        Offset off = peekWord(0).asOffset();
-        Pointer ptr = peekWord(1).asPointer();
-        removeSlots(1);
-        pokeReference(0, ptr.readReference(off));
-    }
-
-    @T1X_TEMPLATE(PREAD_BYTE_I)
-    public static void pread_byte_i() {
-        int off = peekInt(0);
-        Pointer ptr = peekWord(1).asPointer();
-        removeSlots(1);
-        pokeInt(0, ptr.readByte(off));
-    }
-
-    @T1X_TEMPLATE(PREAD_CHAR_I)
-    public static void pread_char_i() {
-        int off = peekInt(0);
-        Pointer ptr = peekWord(1).asPointer();
-        removeSlots(1);
-        pokeInt(0, ptr.readChar(off));
-    }
-
-    @T1X_TEMPLATE(PREAD_SHORT_I)
-    public static void pread_short_i() {
-        int off = peekInt(0);
-        Pointer ptr = peekWord(1).asPointer();
-        removeSlots(1);
-        pokeInt(0, ptr.readShort(off));
-    }
-
-    @T1X_TEMPLATE(PREAD_INT_I)
-    public static void pread_int_i() {
-        int off = peekInt(0);
-        Pointer ptr = peekWord(1).asPointer();
-        removeSlots(1);
-        pokeInt(0, ptr.readInt(off));
-    }
-
-    @T1X_TEMPLATE(PREAD_FLOAT_I)
-    public static void pread_float_i() {
-        int off = peekInt(0);
-        Pointer ptr = peekWord(1).asPointer();
-        removeSlots(1);
-        pokeFloat(0, ptr.readFloat(off));
-    }
-
-    @T1X_TEMPLATE(PREAD_LONG_I)
-    public static void pread_long_i() {
-        int off = peekInt(0);
-        Pointer ptr = peekWord(1).asPointer();
-        pokeLong(0, ptr.readLong(off));
-    }
-
-    @T1X_TEMPLATE(PREAD_DOUBLE_I)
-    public static void pread_double_i() {
-        int off = peekInt(0);
-        Pointer ptr = peekWord(1).asPointer();
-        pokeDouble(0, ptr.readDouble(off));
-    }
-
-    @T1X_TEMPLATE(PREAD_WORD_I)
-    public static void pread_word_i() {
-        int off = peekInt(0);
-        Pointer ptr = peekWord(1).asPointer();
-        removeSlots(1);
-        pokeWord(0, ptr.readWord(off));
-    }
-
-    @T1X_TEMPLATE(PREAD_REFERENCE_I)
-    public static void pread_reference_i() {
-        int off = peekInt(0);
-        Pointer ptr = peekWord(1).asPointer();
-        removeSlots(1);
-        pokeReference(0, ptr.readReference(off));
-    }
-
-    @T1X_TEMPLATE(PWRITE_BYTE)
-    public static void pwrite_byte() {
-        Pointer ptr = peekWord(2).asPointer();
-        Offset off = peekWord(1).asOffset();
-        byte value = (byte) peekInt(0);
-        removeSlots(3);
-        ptr.writeByte(off, value);
-    }
-
-    @T1X_TEMPLATE(PWRITE_SHORT)
-    public static void pwrite_short() {
-        Pointer ptr = peekWord(2).asPointer();
-        Offset off = peekWord(1).asOffset();
-        short value = (short) peekInt(0);
-        removeSlots(3);
-        ptr.writeShort(off, value);
-    }
-
-    @T1X_TEMPLATE(PWRITE_INT)
-    public static void pwrite_int() {
-        Pointer ptr = peekWord(2).asPointer();
-        Offset off = peekWord(1).asOffset();
-        int value = peekInt(0);
-        removeSlots(3);
-        ptr.writeInt(off, value);
-    }
-
-    @T1X_TEMPLATE(PWRITE_FLOAT)
-    public static void pwrite_float() {
-        Pointer ptr = peekWord(2).asPointer();
-        Offset off = peekWord(1).asOffset();
-        float value = peekFloat(0);
-        removeSlots(3);
-        ptr.writeFloat(off, value);
-    }
-
-    @T1X_TEMPLATE(PWRITE_LONG)
-    public static void pwrite_long() {
-        Pointer ptr = peekWord(3).asPointer();
-        Offset off = peekWord(2).asOffset();
-        long value = peekLong(0);
-        removeSlots(4);
-        ptr.writeLong(off, value);
-    }
-
-    @T1X_TEMPLATE(PWRITE_DOUBLE)
-    public static void pwrite_double() {
-        Pointer ptr = peekWord(3).asPointer();
-        Offset off = peekWord(2).asOffset();
-        double value = peekDouble(0);
-        removeSlots(4);
-        ptr.writeDouble(off, value);
-    }
-
-    @T1X_TEMPLATE(PWRITE_WORD)
-    public static void pwrite_word() {
-        Pointer ptr = peekWord(2).asPointer();
-        Offset off = peekWord(1).asOffset();
-        Word value = peekWord(0);
-        removeSlots(3);
-        ptr.writeWord(off, value);
-    }
-
-    @T1X_TEMPLATE(PWRITE_REFERENCE)
-    public static void pwrite_reference() {
-        Pointer ptr = peekWord(2).asPointer();
-        Offset off = peekWord(1).asOffset();
-        Reference value = peekReference(0);
-        removeSlots(3);
-        ptr.writeReference(off, value);
-    }
-
-    @T1X_TEMPLATE(PWRITE_BYTE_I)
-    public static void pwrite_byte_i() {
-        Pointer ptr = peekWord(2).asPointer();
-        int off = peekInt(1);
-        byte value = (byte) peekInt(0);
-        removeSlots(3);
-        ptr.writeByte(off, value);
-    }
-
-    @T1X_TEMPLATE(PWRITE_SHORT_I)
-    public static void pwrite_short_i() {
-        Pointer ptr = peekWord(2).asPointer();
-        int off = peekInt(1);
-        short value = (short) peekInt(0);
-        removeSlots(3);
-        ptr.writeShort(off, value);
-    }
-
-    @T1X_TEMPLATE(PWRITE_INT_I)
-    public static void pwrite_int_i() {
-        Pointer ptr = peekWord(2).asPointer();
-        int off = peekInt(1);
-        int value = peekInt(0);
-        removeSlots(3);
-        ptr.writeInt(off, value);
-    }
-
-    @T1X_TEMPLATE(PWRITE_FLOAT_I)
-    public static void pwrite_float_i() {
-        Pointer ptr = peekWord(2).asPointer();
-        int off = peekInt(1);
-        float value = peekFloat(0);
-        removeSlots(3);
-        ptr.writeFloat(off, value);
-    }
-
-    @T1X_TEMPLATE(PWRITE_LONG_I)
-    public static void pwrite_long_i() {
-        Pointer ptr = peekWord(3).asPointer();
-        int off = peekInt(2);
-        long value = peekLong(0);
-        removeSlots(4);
-        ptr.writeLong(off, value);
-    }
-
-    @T1X_TEMPLATE(PWRITE_DOUBLE_I)
-    public static void pwrite_double_i() {
-        Pointer ptr = peekWord(3).asPointer();
-        int off = peekInt(2);
-        double value = peekDouble(0);
-        removeSlots(4);
-        ptr.writeDouble(off, value);
-    }
-
-    @T1X_TEMPLATE(PWRITE_WORD_I)
-    public static void pwrite_word_i() {
-        Pointer ptr = peekWord(2).asPointer();
-        int off = peekInt(1);
-        Word value = peekWord(0);
-        removeSlots(3);
-        ptr.writeWord(off, value);
-    }
-
-    @T1X_TEMPLATE(PWRITE_REFERENCE_I)
-    public static void pwrite_reference_i() {
-        Pointer ptr = peekWord(2).asPointer();
-        int off = peekInt(1);
-        Reference value = peekReference(0);
-        removeSlots(3);
-        ptr.writeReference(off, value);
-    }
-
-    @T1X_TEMPLATE(PGET_BYTE)
-    public static void pget_byte() {
-        int index = peekInt(0);
-        int disp = peekInt(1);
-        Pointer ptr = peekWord(2).asPointer();
-        removeSlots(2);
-        pokeInt(0, ptr.getByte(disp, index));
-    }
-
-    @T1X_TEMPLATE(PGET_SHORT)
-    public static void pget_short() {
-        int index = peekInt(0);
-        int disp = peekInt(1);
-        Pointer ptr = peekWord(2).asPointer();
-        removeSlots(2);
-        pokeInt(0, ptr.getShort(disp, index));
-    }
-
-    @T1X_TEMPLATE(PGET_CHAR)
-    public static void pget_char() {
-        int index = peekInt(0);
-        int disp = peekInt(1);
-        Pointer ptr = peekWord(2).asPointer();
-        removeSlots(2);
-        pokeInt(0, ptr.getChar(disp, index));
-    }
-
-    @T1X_TEMPLATE(PGET_INT)
-    public static void pget_int() {
-        int index = peekInt(0);
-        int disp = peekInt(1);
-        Pointer ptr = peekWord(2).asPointer();
-        removeSlots(2);
-        pokeInt(0, ptr.getInt(disp, index));
-    }
-
-    @T1X_TEMPLATE(PGET_FLOAT)
-    public static void pget_float() {
-        int index = peekInt(0);
-        int disp = peekInt(1);
-        Pointer ptr = peekWord(2).asPointer();
-        removeSlots(2);
-        pokeFloat(0, ptr.getFloat(disp, index));
-    }
-
-    @T1X_TEMPLATE(PGET_LONG)
-    public static void pget_long() {
-        int index = peekInt(0);
-        int disp = peekInt(1);
-        Pointer ptr = peekWord(2).asPointer();
-        removeSlots(1);
-        pokeLong(0, ptr.getLong(disp, index));
-    }
-
-    @T1X_TEMPLATE(PGET_DOUBLE)
-    public static void pget_double() {
-        int index = peekInt(0);
-        int disp = peekInt(1);
-        Pointer ptr = peekWord(2).asPointer();
-        removeSlots(1);
-        pokeDouble(0, ptr.getDouble(disp, index));
-    }
-
-    @T1X_TEMPLATE(PGET_WORD)
-    public static void pget_word() {
-        int index = peekInt(0);
-        int disp = peekInt(1);
-        Pointer ptr = peekWord(2).asPointer();
-        removeSlots(2);
-        pokeWord(0, ptr.getWord(disp, index));
-    }
-
-    @T1X_TEMPLATE(PGET_REFERENCE)
-    public static void pget_reference() {
-        int index = peekInt(0);
-        int disp = peekInt(1);
-        Pointer ptr = peekWord(2).asPointer();
-        removeSlots(2);
-        pokeReference(0, ptr.getReference(disp, index));
-    }
-
-    @T1X_TEMPLATE(PSET_BYTE)
-    public static void pset_byte() {
-        byte value = (byte) peekInt(0);
-        int index = peekInt(1);
-        int disp = peekInt(2);
-        Pointer ptr = peekWord(3).asPointer();
-        removeSlots(4);
-        ptr.setByte(disp, index, value);
-    }
-
-    @T1X_TEMPLATE(PSET_SHORT)
-    public static void pset_short() {
-        short value = (short) peekInt(0);
-        int index = peekInt(1);
-        int disp = peekInt(2);
-        Pointer ptr = peekWord(3).asPointer();
-        removeSlots(4);
-        ptr.setShort(disp, index, value);
-    }
-
-    @T1X_TEMPLATE(PSET_INT)
-    public static void pset_int() {
-        int value = peekInt(0);
-        int index = peekInt(1);
-        int disp = peekInt(2);
-        Pointer ptr = peekWord(3).asPointer();
-        removeSlots(4);
-        ptr.setInt(disp, index, value);
-    }
-
-    @T1X_TEMPLATE(PSET_FLOAT)
-    public static void pset_float() {
-        float value = peekFloat(0);
-        int index = peekInt(1);
-        int disp = peekInt(2);
-        Pointer ptr = peekWord(3).asPointer();
-        removeSlots(4);
-        ptr.setFloat(disp, index, value);
-    }
-
-    @T1X_TEMPLATE(PSET_LONG)
-    public static void pset_long() {
-        long value = peekLong(0);
-        int index = peekInt(2);
-        int disp = peekInt(3);
-        Pointer ptr = peekWord(4).asPointer();
-        removeSlots(5);
-        ptr.setLong(disp, index, value);
-    }
-
-    @T1X_TEMPLATE(PSET_DOUBLE)
-    public static void pset_double() {
-        double value = peekDouble(0);
-        int index = peekInt(2);
-        int disp = peekInt(3);
-        Pointer ptr = peekWord(4).asPointer();
-        removeSlots(5);
-        ptr.setDouble(disp, index, value);
-    }
-
-    @T1X_TEMPLATE(PSET_WORD)
-    public static void pset_word() {
-        Word value = peekWord(0);
-        int index = peekInt(1);
-        int disp = peekInt(2);
-        Pointer ptr = peekWord(3).asPointer();
-        removeSlots(4);
-        ptr.setWord(disp, index, value);
-    }
-
-    @T1X_TEMPLATE(PSET_REFERENCE)
-    public static void pset_reference() {
-        Reference value = peekReference(0);
-        int index = peekInt(1);
-        int disp = peekInt(2);
-        Pointer ptr = peekWord(3).asPointer();
-        removeSlots(4);
-        ptr.setReference(disp, index, value);
-    }
-
-    @T1X_TEMPLATE(PCMPSWP_INT)
-    public static void pcmpswp_int() {
-        int newValue = peekInt(0);
-        int expectedValue = peekInt(1);
-        Offset off = peekWord(2).asOffset();
-        Pointer ptr = peekWord(3).asPointer();
-        removeSlots(3);
-        pokeInt(0, ptr.compareAndSwapInt(off, expectedValue, newValue));
-    }
-
-    @T1X_TEMPLATE(PCMPSWP_WORD)
-    public static void pcmpswp_word() {
-        Word newValue = peekWord(0);
-        Word expectedValue = peekWord(1);
-        Offset off = peekWord(2).asOffset();
-        Pointer ptr = peekWord(3).asPointer();
-        removeSlots(3);
-        pokeWord(0, ptr.compareAndSwapWord(off, expectedValue, newValue));
-    }
-
-    @T1X_TEMPLATE(PCMPSWP_REFERENCE)
-    public static void pcmpswp_reference() {
-        Reference newValue = peekReference(0);
-        Reference expectedValue = peekReference(1);
-        Offset off = peekWord(2).asOffset();
-        Pointer ptr = peekWord(3).asPointer();
-        removeSlots(3);
-        pokeReference(0, ptr.compareAndSwapReference(off, expectedValue, newValue));
-    }
-
-    @T1X_TEMPLATE(PCMPSWP_INT_I)
-    public static void pcmpswp_int_i() {
-        int newValue = peekInt(0);
-        int expectedValue = peekInt(1);
-        int off = peekInt(2);
-        Pointer ptr = peekWord(3).asPointer();
-        removeSlots(3);
-        pokeInt(0, ptr.compareAndSwapInt(off, expectedValue, newValue));
-    }
-
-    @T1X_TEMPLATE(PCMPSWP_WORD_I)
-    public static void pcmpswp_word_i() {
-        Word newValue = peekWord(0);
-        Word expectedValue = peekWord(1);
-        int off = peekInt(2);
-        Pointer ptr = peekWord(3).asPointer();
-        removeSlots(3);
-        pokeWord(0, ptr.compareAndSwapWord(off, expectedValue, newValue));
-    }
-
-    @T1X_TEMPLATE(PCMPSWP_REFERENCE_I)
-    public static void pcmpswp_reference_i() {
-        Reference newValue = peekReference(0);
-        Reference expectedValue = peekReference(1);
-        int off = peekInt(2);
-        Pointer ptr = peekWord(3).asPointer();
-        removeSlots(3);
-        pokeReference(0, ptr.compareAndSwapReference(off, expectedValue, newValue));
-    }
-
     @T1X_TEMPLATE(MOV_I2F)
     public static void mov_i2f() {
         int value = peekInt(0);
@@ -2842,4 +1515,1804 @@ public class T1XTemplateSource {
         removeSlots(1);
         VMRegister.setCallAddressRegister(value);
     }
+
+    @HOSTED_ONLY
+    private static void generatePutField(String k) {
+        final boolean isTwoStackWords = isTwoStackWords(k);
+        final int peekOffset = isTwoStackWords ? 2 : 1;
+        generateAutoComment();
+        o.printf("    @T1X_TEMPLATE(PUTFIELD$%s$resolved)%n", lType(k));
+        o.printf("    public static void putfield%s(int offset) {%n", uType(k));
+        o.printf("        Object object = peekObject(%d);%n", peekOffset);
+        o.printf("        %s value = peek%s(0);%n", oType(k), uoType(k));
+        o.printf("        removeSlots(%d);%n", peekOffset + 1);
+        o.printf("        TupleAccess.write%s(object, offset, value);%n", uoType(k));
+        o.printf("    }%n");
+        newLine();
+
+        generateAutoComment();
+        o.printf("    @T1X_TEMPLATE(PUTFIELD$%s)%n", lType(k));
+        o.printf("    public static void putfield%s(ResolutionGuard.InPool guard) {%n", uType(k));
+        o.printf("        Object object = peekObject(%d);%n", peekOffset);
+        o.printf("        %s value = peek%s(0);%n", oType(k), uoType(k));
+        o.printf("        resolveAndPutField%s(guard, object, value);%n", uType(k));
+        o.printf("        removeSlots(%d);%n", peekOffset + 1);
+        o.printf("    }%n");
+        newLine();
+
+        final String m = uoType(k).equals("Object") ? "noninlineW" : "w";
+        generateAutoComment();
+        o.printf("    @T1X_TEMPLATE(PUTSTATIC$%s$init)%n", lType(k));
+        o.printf("    public static void putstatic%s(Object staticTuple, int offset) {%n", uType(k));
+        o.printf("        %s value = pop%s();%n", oType(k), uoType(k));
+        o.printf("        TupleAccess.%srite%s(staticTuple, offset, value);%n", m, uoType(k));
+        o.printf("    }%n");
+        newLine();
+
+        generateAutoComment();
+        o.printf("    @T1X_TEMPLATE(PUTSTATIC$%s)%n", lType(k));
+        o.printf("    public static void putstatic%s(ResolutionGuard.InPool guard) {%n", uType(k));
+        o.printf("        resolveAndPutStatic%s(guard, pop%s());%n", uType(k), uoType(k));
+        o.printf("    }%n");
+        newLine();
+
+    }
+
+    @HOSTED_ONLY
+    private static void generateGetField(String k) {
+        final boolean isTwoStackWords = isTwoStackWords(k);
+        generateAutoComment();
+        o.printf("    @T1X_TEMPLATE(GETFIELD$%s$resolved)%n", lType(k));
+        o.printf("    public static void getfield%s(int offset) {%n", uType(k));
+        o.printf("        Object object = peekObject(0);%n");
+        if (isTwoStackWords) {
+            o.printf("        addSlots(1);%n");
+        }
+        o.printf("        poke%s(0, TupleAccess.read%s(object, offset));%n", uoType(k), uoType(k));
+        o.printf("    }%n");
+        newLine();
+
+        generateAutoComment();
+        o.printf("    @T1X_TEMPLATE(GETFIELD$%s)%n", lType(k));
+        o.printf("    public static void getfield%s(ResolutionGuard.InPool guard) {%n", uType(k));
+        o.printf("        Object object = peekObject(0);%n");
+        if (isTwoStackWords) {
+            o.printf("        addSlots(1);%n");
+        }
+        o.printf("        poke%s(0, resolveAndGetField%s(guard, object));%n", uoType(k), uType(k));
+        o.printf("    }%n");
+        newLine();
+
+        generateAutoComment();
+        o.printf("    @T1X_TEMPLATE(GETSTATIC$%s)%n", lType(k));
+        o.printf("    public static void getstatic%s(ResolutionGuard.InPool guard) {%n", uType(k));
+        o.printf("        push%s(resolveAndGetStatic%s(guard));%n", uoType(k), uType(k));
+        o.printf("    }%n");
+        newLine();
+
+        generateAutoComment();
+        o.printf("    @T1X_TEMPLATE(GETSTATIC$%s$init)%n", lType(k));
+        o.printf("    public static void getstatic%s(Object staticTuple, int offset) {%n", uType(k));
+        o.printf("        push%s(TupleAccess.read%s(staticTuple, offset));%n", uoType(k), uoType(k));
+        o.printf("    }%n");
+        newLine();
+    }
+
+    @HOSTED_ONLY
+    private static void generateArrayLoad(String k) {
+        final boolean isTwoStackWords = isTwoStackWords(k);
+        generateAutoComment();
+        o.printf("    @T1X_TEMPLATE(%sALOAD)%n", tagPrefix(k));
+        o.printf("    public static void %saload() {%n", opPrefix(k));
+        o.printf("        int index = peekInt(0);%n");
+        o.printf("        Object array = peekObject(1);%n");
+        o.printf("        ArrayAccess.checkIndex(array, index);%n");
+        if (!isTwoStackWords) {
+            o.printf("        removeSlots(1);%n");
+        }
+        o.printf("        poke%s(0, ArrayAccess.get%s(array, index));%n", uoType(k), uoType(k));
+        o.printf("    }%n");
+        newLine();
+    }
+
+    @HOSTED_ONLY
+    private static void generateArrayStore(String k) {
+        final boolean isTwoStackWords = isTwoStackWords(k);
+        final int indexSlot = isTwoStackWords ? 2 : 1;
+        generateAutoComment();
+        o.printf("    @T1X_TEMPLATE(%sASTORE)%n", tagPrefix(k));
+        o.printf("    public static void %sastore() {%n", opPrefix(k));
+        o.printf("        int index = peekInt(%d);%n", indexSlot);
+        o.printf("        Object array = peekObject(%d);%n", indexSlot + 1);
+        o.printf("        ArrayAccess.checkIndex(array, index);%n");
+        o.printf("        %s value = peek%s(0);%n", oType(k), uoType(k));
+        if (k.equals("Reference")) {
+            o.printf("        ArrayAccess.checkSetObject(array, value);%n");
+        }
+        o.printf("        ArrayAccess.set%s(array, index, value);%n", uoType(k));
+        o.printf("        removeSlots(%d);%n", indexSlot + 2);
+        o.printf("    }%n");
+        newLine();
+    }
+
+    @HOSTED_ONLY
+    private static void generatePSet(String k) {
+        final boolean isTwoStackWords = isTwoStackWords(k);
+        final int indexSlot = isTwoStackWords ? 2 : 1;
+        generateAutoComment();
+        o.printf("    @T1X_TEMPLATE(PSET_%s)%n", auType(k));
+        o.printf("    public static void pset_%s() {%n", lType(k));
+        o.printf("        %s value = peek%s(0);%n", k, uType(k));
+        o.printf("        int index = peekInt(%d);%n", indexSlot);
+        o.printf("        int disp = peekInt(%d);%n", indexSlot + 1);
+        o.printf("        Pointer ptr = peekWord(%d).asPointer();%n", indexSlot + 2);
+        o.printf("        removeSlots(%d);%n", indexSlot + 3);
+        o.printf("        ptr.set%s(disp, index, value);%n", uType(k));
+        o.printf("    }%n");
+        newLine();
+    }
+
+    @HOSTED_ONLY
+    private static void generatePGet(String k) {
+        final boolean isTwoStackWords = isTwoStackWords(k);
+        generateAutoComment();
+        o.printf("    @T1X_TEMPLATE(PGET_%s)%n", auType(k));
+        o.printf("    public static void pget_%s() {%n", lType(k));
+        o.printf("        int index = peekInt(0);%n");
+        o.printf("        int disp = peekInt(1);%n");
+        o.printf("        Pointer ptr = peekWord(2).asPointer();%n");
+        o.printf("        removeSlots(%d);%n", isTwoStackWords ? 1 : 2);
+        o.printf("        poke%s(0, ptr.get%s(disp, index));%n", uType(k), uType(k));
+        o.printf("    }%n");
+        newLine();
+    }
+
+    @HOSTED_ONLY
+    private static void generatePRead(String k, boolean isI) {
+        final boolean isTwoStackWords = isTwoStackWords(k);
+        generateAutoComment();
+        o.printf("    @T1X_TEMPLATE(PREAD_%s%s)%n", auType(k), isI ? "_I" : "");
+        o.printf("    public static void pread_%s%s() {%n", lType(k), isI ? "_i" : "");
+        if (isI) {
+            o.printf("        int off = peekInt(0);%n");
+        } else {
+            o.printf("        Offset off = peekWord(0).asOffset();%n");
+        }
+        o.printf("        Pointer ptr = peekWord(1).asPointer();%n");
+        if (!isTwoStackWords) {
+            o.printf("        removeSlots(1);%n");
+        }
+        o.printf("        poke%s(0, ptr.read%s(off));%n", uType(k), uType(k));
+        o.printf("    }%n");
+        newLine();
+    }
+
+    @HOSTED_ONLY
+    private static void generatePWrite(String k, boolean isI) {
+        final boolean isTwoStackWords = isTwoStackWords(k);
+        generateAutoComment();
+        o.printf("    @T1X_TEMPLATE(PWRITE_%s%s)%n", auType(k), isI ? "_I" : "");
+        o.printf("    public static void pwrite_%s%s() {%n", lType(k), isI ? "_i" : "");
+        o.printf("        Pointer ptr = peekWord(2).asPointer();%n");
+        if (isI) {
+            o.printf("        int off = peekInt(1);%n");
+        } else {
+            o.printf("        Offset off = peekWord(1).asOffset();%n");
+        }
+        o.printf("        %s value = peek%s(0);%n", k, uType(k));
+        o.printf("        removeSlots(%d);%n", isTwoStackWords ? 4 : 3);
+        o.printf("        ptr.write%s(off, value);%n", uType(k));
+        o.printf("    }%n");
+        newLine();
+    }
+
+    @HOSTED_ONLY
+    private static void generatePCmpSwp(String k, boolean isI) {
+        generateAutoComment();
+        o.printf("    @T1X_TEMPLATE(PCMPSWP_%s%s)%n", auType(k), isI ? "_I" : "");
+        o.printf("    public static void pcmpswp_%s%s() {%n", lType(k), isI ? "_i" : "");
+        o.printf("        %s newValue = peek%s(0);%n", k, uType(k));
+        o.printf("        %s expectedValue = peek%s(1);%n", k, uType(k));
+        if (isI) {
+            o.printf("        int off = peekInt(2);%n");
+        } else {
+            o.printf("        Offset off = peekWord(2).asOffset();%n");
+        }
+        o.printf("        Pointer ptr = peekWord(3).asPointer();%n");
+        o.printf("        removeSlots(3);%n");
+        o.printf("        poke%s(0, ptr.compareAndSwap%s(off, expectedValue, newValue));%n", uType(k), uType(k));
+        o.printf("    }%n");
+        newLine();
+    }
+
+    @HOSTED_ONLY
+    private static void generateI2(String k) {
+        final boolean isTwoStackWords = isTwoStackWords(k);
+        generateAutoComment();
+        o.printf("    @T1X_TEMPLATE(I2%c)%n", uType(k).charAt(0));
+        o.printf("    public static void i2%c() {%n", k.charAt(0));
+        o.printf("        %s value = peek%s(0);%n", k, uType(k));
+        if (isTwoStackWords) {
+            o.printf("        addSlots(1);%n");
+        }
+        o.printf("        poke%s(0, value);%n", uType(k));
+        o.printf("    }%n");
+        newLine();
+    }
+
+    @HOSTED_ONLY
+    private static void generateReturn(String k, String unlock) {
+        // Admittedly, the readability goal is a stretch here!
+        final String arg = unlock.equals("") ? "" :
+            (unlock.equals("unlockClass") ? "Class rcvr" : "int dispToRcvrCopy");
+        generateAutoComment();
+        o.printf("    @T1X_TEMPLATE(%sRETURN%s)%n", tagPrefix(k), prefixDollar(unlock));
+        o.printf("    public static %s %sreturn%s(%s) {%n", oType(k), opPrefix(k), toFirstUpper(unlock), arg);
+        if (unlock.equals("unlockReceiver") || unlock.equals("registerFinalizer")) {
+            o.printf("        Object rcvr = getLocalObject(dispToRcvrCopy);%n");
+        }
+        if (unlock.equals("registerFinalizer")) {
+            o.printf("        if (ObjectAccess.readClassActor(rcvr).hasFinalizer()) {%n");
+            o.printf("            SpecialReferenceManager.registerFinalizee(rcvr);%n");
+            o.printf("        }%n");
+        } else {
+            if (unlock.length() > 0) {
+                o.printf("        Monitor.noninlineExit(rcvr);%n");
+            }
+            if (!k.equals("void")) {
+                o.printf("        return pop%s();%n", uoType(k));
+            }
+        }
+        o.printf("    }%n");
+        newLine();
+    }
+
+    @HOSTED_ONLY
+    public static void main(String[] args) {
+        for (String k : types) {
+            if (hasGetPutOps(k)) {
+                generateGetField(k);
+                generatePutField(k);
+            }
+            if (hasI2Ops(k)) {
+                generateI2(k);
+            }
+            if (hasReturnOps(k)) {
+                for (String lockType : lockVariants) {
+                    generateReturn(k, lockType);
+                }
+            }
+            if (hasArrayOps(k)) {
+                generateArrayLoad(k);
+                generateArrayStore(k);
+            }
+            if (hasPOps(k)) {
+                generatePGet(k);
+                if (!k.equals("char")) {
+                    generatePSet(k);
+                }
+                generatePRead(k, false);
+                if (!k.equals("char")) {
+                    generatePWrite(k, false);
+                }
+                generatePRead(k, true);
+                if (!k.equals("char")) {
+                    generatePWrite(k, true);
+                }
+            }
+            if (hasPCmpSwpOps(k)) {
+                generatePCmpSwp(k, false);
+                generatePCmpSwp(k, true);
+            }
+        }
+        // This is a special case
+        generateReturn("void", "registerFinalizer");
+
+
+    }
+
+    // BEGIN GENERATED CODE
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETFIELD$boolean$resolved)
+    public static void getfieldBoolean(int offset) {
+        Object object = peekObject(0);
+        pokeBoolean(0, TupleAccess.readBoolean(object, offset));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETFIELD$boolean)
+    public static void getfieldBoolean(ResolutionGuard.InPool guard) {
+        Object object = peekObject(0);
+        pokeBoolean(0, resolveAndGetFieldBoolean(guard, object));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETSTATIC$boolean)
+    public static void getstaticBoolean(ResolutionGuard.InPool guard) {
+        pushBoolean(resolveAndGetStaticBoolean(guard));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETSTATIC$boolean$init)
+    public static void getstaticBoolean(Object staticTuple, int offset) {
+        pushBoolean(TupleAccess.readBoolean(staticTuple, offset));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTFIELD$boolean$resolved)
+    public static void putfieldBoolean(int offset) {
+        Object object = peekObject(1);
+        boolean value = peekBoolean(0);
+        removeSlots(2);
+        TupleAccess.writeBoolean(object, offset, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTFIELD$boolean)
+    public static void putfieldBoolean(ResolutionGuard.InPool guard) {
+        Object object = peekObject(1);
+        boolean value = peekBoolean(0);
+        resolveAndPutFieldBoolean(guard, object, value);
+        removeSlots(2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTSTATIC$boolean$init)
+    public static void putstaticBoolean(Object staticTuple, int offset) {
+        boolean value = popBoolean();
+        TupleAccess.writeBoolean(staticTuple, offset, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTSTATIC$boolean)
+    public static void putstaticBoolean(ResolutionGuard.InPool guard) {
+        resolveAndPutStaticBoolean(guard, popBoolean());
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(BALOAD)
+    public static void baload() {
+        int index = peekInt(0);
+        Object array = peekObject(1);
+        ArrayAccess.checkIndex(array, index);
+        removeSlots(1);
+        pokeBoolean(0, ArrayAccess.getBoolean(array, index));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(BASTORE)
+    public static void bastore() {
+        int index = peekInt(1);
+        Object array = peekObject(2);
+        ArrayAccess.checkIndex(array, index);
+        boolean value = peekBoolean(0);
+        ArrayAccess.setBoolean(array, index, value);
+        removeSlots(3);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETFIELD$byte$resolved)
+    public static void getfieldByte(int offset) {
+        Object object = peekObject(0);
+        pokeByte(0, TupleAccess.readByte(object, offset));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETFIELD$byte)
+    public static void getfieldByte(ResolutionGuard.InPool guard) {
+        Object object = peekObject(0);
+        pokeByte(0, resolveAndGetFieldByte(guard, object));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETSTATIC$byte)
+    public static void getstaticByte(ResolutionGuard.InPool guard) {
+        pushByte(resolveAndGetStaticByte(guard));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETSTATIC$byte$init)
+    public static void getstaticByte(Object staticTuple, int offset) {
+        pushByte(TupleAccess.readByte(staticTuple, offset));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTFIELD$byte$resolved)
+    public static void putfieldByte(int offset) {
+        Object object = peekObject(1);
+        byte value = peekByte(0);
+        removeSlots(2);
+        TupleAccess.writeByte(object, offset, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTFIELD$byte)
+    public static void putfieldByte(ResolutionGuard.InPool guard) {
+        Object object = peekObject(1);
+        byte value = peekByte(0);
+        resolveAndPutFieldByte(guard, object, value);
+        removeSlots(2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTSTATIC$byte$init)
+    public static void putstaticByte(Object staticTuple, int offset) {
+        byte value = popByte();
+        TupleAccess.writeByte(staticTuple, offset, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTSTATIC$byte)
+    public static void putstaticByte(ResolutionGuard.InPool guard) {
+        resolveAndPutStaticByte(guard, popByte());
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(I2B)
+    public static void i2b() {
+        byte value = peekByte(0);
+        pokeByte(0, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PGET_BYTE)
+    public static void pget_byte() {
+        int index = peekInt(0);
+        int disp = peekInt(1);
+        Pointer ptr = peekWord(2).asPointer();
+        removeSlots(2);
+        pokeByte(0, ptr.getByte(disp, index));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PSET_BYTE)
+    public static void pset_byte() {
+        byte value = peekByte(0);
+        int index = peekInt(1);
+        int disp = peekInt(2);
+        Pointer ptr = peekWord(3).asPointer();
+        removeSlots(4);
+        ptr.setByte(disp, index, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PREAD_BYTE)
+    public static void pread_byte() {
+        Offset off = peekWord(0).asOffset();
+        Pointer ptr = peekWord(1).asPointer();
+        removeSlots(1);
+        pokeByte(0, ptr.readByte(off));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PWRITE_BYTE)
+    public static void pwrite_byte() {
+        Pointer ptr = peekWord(2).asPointer();
+        Offset off = peekWord(1).asOffset();
+        byte value = peekByte(0);
+        removeSlots(3);
+        ptr.writeByte(off, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PREAD_BYTE_I)
+    public static void pread_byte_i() {
+        int off = peekInt(0);
+        Pointer ptr = peekWord(1).asPointer();
+        removeSlots(1);
+        pokeByte(0, ptr.readByte(off));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PWRITE_BYTE_I)
+    public static void pwrite_byte_i() {
+        Pointer ptr = peekWord(2).asPointer();
+        int off = peekInt(1);
+        byte value = peekByte(0);
+        removeSlots(3);
+        ptr.writeByte(off, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETFIELD$char$resolved)
+    public static void getfieldChar(int offset) {
+        Object object = peekObject(0);
+        pokeChar(0, TupleAccess.readChar(object, offset));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETFIELD$char)
+    public static void getfieldChar(ResolutionGuard.InPool guard) {
+        Object object = peekObject(0);
+        pokeChar(0, resolveAndGetFieldChar(guard, object));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETSTATIC$char)
+    public static void getstaticChar(ResolutionGuard.InPool guard) {
+        pushChar(resolveAndGetStaticChar(guard));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETSTATIC$char$init)
+    public static void getstaticChar(Object staticTuple, int offset) {
+        pushChar(TupleAccess.readChar(staticTuple, offset));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTFIELD$char$resolved)
+    public static void putfieldChar(int offset) {
+        Object object = peekObject(1);
+        char value = peekChar(0);
+        removeSlots(2);
+        TupleAccess.writeChar(object, offset, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTFIELD$char)
+    public static void putfieldChar(ResolutionGuard.InPool guard) {
+        Object object = peekObject(1);
+        char value = peekChar(0);
+        resolveAndPutFieldChar(guard, object, value);
+        removeSlots(2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTSTATIC$char$init)
+    public static void putstaticChar(Object staticTuple, int offset) {
+        char value = popChar();
+        TupleAccess.writeChar(staticTuple, offset, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTSTATIC$char)
+    public static void putstaticChar(ResolutionGuard.InPool guard) {
+        resolveAndPutStaticChar(guard, popChar());
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(I2C)
+    public static void i2c() {
+        char value = peekChar(0);
+        pokeChar(0, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(CALOAD)
+    public static void caload() {
+        int index = peekInt(0);
+        Object array = peekObject(1);
+        ArrayAccess.checkIndex(array, index);
+        removeSlots(1);
+        pokeChar(0, ArrayAccess.getChar(array, index));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(CASTORE)
+    public static void castore() {
+        int index = peekInt(1);
+        Object array = peekObject(2);
+        ArrayAccess.checkIndex(array, index);
+        char value = peekChar(0);
+        ArrayAccess.setChar(array, index, value);
+        removeSlots(3);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PGET_CHAR)
+    public static void pget_char() {
+        int index = peekInt(0);
+        int disp = peekInt(1);
+        Pointer ptr = peekWord(2).asPointer();
+        removeSlots(2);
+        pokeChar(0, ptr.getChar(disp, index));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PREAD_CHAR)
+    public static void pread_char() {
+        Offset off = peekWord(0).asOffset();
+        Pointer ptr = peekWord(1).asPointer();
+        removeSlots(1);
+        pokeChar(0, ptr.readChar(off));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PREAD_CHAR_I)
+    public static void pread_char_i() {
+        int off = peekInt(0);
+        Pointer ptr = peekWord(1).asPointer();
+        removeSlots(1);
+        pokeChar(0, ptr.readChar(off));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETFIELD$short$resolved)
+    public static void getfieldShort(int offset) {
+        Object object = peekObject(0);
+        pokeShort(0, TupleAccess.readShort(object, offset));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETFIELD$short)
+    public static void getfieldShort(ResolutionGuard.InPool guard) {
+        Object object = peekObject(0);
+        pokeShort(0, resolveAndGetFieldShort(guard, object));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETSTATIC$short)
+    public static void getstaticShort(ResolutionGuard.InPool guard) {
+        pushShort(resolveAndGetStaticShort(guard));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETSTATIC$short$init)
+    public static void getstaticShort(Object staticTuple, int offset) {
+        pushShort(TupleAccess.readShort(staticTuple, offset));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTFIELD$short$resolved)
+    public static void putfieldShort(int offset) {
+        Object object = peekObject(1);
+        short value = peekShort(0);
+        removeSlots(2);
+        TupleAccess.writeShort(object, offset, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTFIELD$short)
+    public static void putfieldShort(ResolutionGuard.InPool guard) {
+        Object object = peekObject(1);
+        short value = peekShort(0);
+        resolveAndPutFieldShort(guard, object, value);
+        removeSlots(2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTSTATIC$short$init)
+    public static void putstaticShort(Object staticTuple, int offset) {
+        short value = popShort();
+        TupleAccess.writeShort(staticTuple, offset, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTSTATIC$short)
+    public static void putstaticShort(ResolutionGuard.InPool guard) {
+        resolveAndPutStaticShort(guard, popShort());
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(I2S)
+    public static void i2s() {
+        short value = peekShort(0);
+        pokeShort(0, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(SALOAD)
+    public static void saload() {
+        int index = peekInt(0);
+        Object array = peekObject(1);
+        ArrayAccess.checkIndex(array, index);
+        removeSlots(1);
+        pokeShort(0, ArrayAccess.getShort(array, index));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(SASTORE)
+    public static void sastore() {
+        int index = peekInt(1);
+        Object array = peekObject(2);
+        ArrayAccess.checkIndex(array, index);
+        short value = peekShort(0);
+        ArrayAccess.setShort(array, index, value);
+        removeSlots(3);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PGET_SHORT)
+    public static void pget_short() {
+        int index = peekInt(0);
+        int disp = peekInt(1);
+        Pointer ptr = peekWord(2).asPointer();
+        removeSlots(2);
+        pokeShort(0, ptr.getShort(disp, index));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PSET_SHORT)
+    public static void pset_short() {
+        short value = peekShort(0);
+        int index = peekInt(1);
+        int disp = peekInt(2);
+        Pointer ptr = peekWord(3).asPointer();
+        removeSlots(4);
+        ptr.setShort(disp, index, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PREAD_SHORT)
+    public static void pread_short() {
+        Offset off = peekWord(0).asOffset();
+        Pointer ptr = peekWord(1).asPointer();
+        removeSlots(1);
+        pokeShort(0, ptr.readShort(off));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PWRITE_SHORT)
+    public static void pwrite_short() {
+        Pointer ptr = peekWord(2).asPointer();
+        Offset off = peekWord(1).asOffset();
+        short value = peekShort(0);
+        removeSlots(3);
+        ptr.writeShort(off, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PREAD_SHORT_I)
+    public static void pread_short_i() {
+        int off = peekInt(0);
+        Pointer ptr = peekWord(1).asPointer();
+        removeSlots(1);
+        pokeShort(0, ptr.readShort(off));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PWRITE_SHORT_I)
+    public static void pwrite_short_i() {
+        Pointer ptr = peekWord(2).asPointer();
+        int off = peekInt(1);
+        short value = peekShort(0);
+        removeSlots(3);
+        ptr.writeShort(off, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETFIELD$int$resolved)
+    public static void getfieldInt(int offset) {
+        Object object = peekObject(0);
+        pokeInt(0, TupleAccess.readInt(object, offset));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETFIELD$int)
+    public static void getfieldInt(ResolutionGuard.InPool guard) {
+        Object object = peekObject(0);
+        pokeInt(0, resolveAndGetFieldInt(guard, object));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETSTATIC$int)
+    public static void getstaticInt(ResolutionGuard.InPool guard) {
+        pushInt(resolveAndGetStaticInt(guard));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETSTATIC$int$init)
+    public static void getstaticInt(Object staticTuple, int offset) {
+        pushInt(TupleAccess.readInt(staticTuple, offset));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTFIELD$int$resolved)
+    public static void putfieldInt(int offset) {
+        Object object = peekObject(1);
+        int value = peekInt(0);
+        removeSlots(2);
+        TupleAccess.writeInt(object, offset, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTFIELD$int)
+    public static void putfieldInt(ResolutionGuard.InPool guard) {
+        Object object = peekObject(1);
+        int value = peekInt(0);
+        resolveAndPutFieldInt(guard, object, value);
+        removeSlots(2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTSTATIC$int$init)
+    public static void putstaticInt(Object staticTuple, int offset) {
+        int value = popInt();
+        TupleAccess.writeInt(staticTuple, offset, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTSTATIC$int)
+    public static void putstaticInt(ResolutionGuard.InPool guard) {
+        resolveAndPutStaticInt(guard, popInt());
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(IRETURN)
+    public static int ireturn() {
+        return popInt();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(IRETURN$unlockClass)
+    public static int ireturnUnlockClass(Class rcvr) {
+        Monitor.noninlineExit(rcvr);
+        return popInt();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(IRETURN$unlockReceiver)
+    public static int ireturnUnlockReceiver(int dispToRcvrCopy) {
+        Object rcvr = getLocalObject(dispToRcvrCopy);
+        Monitor.noninlineExit(rcvr);
+        return popInt();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(IALOAD)
+    public static void iaload() {
+        int index = peekInt(0);
+        Object array = peekObject(1);
+        ArrayAccess.checkIndex(array, index);
+        removeSlots(1);
+        pokeInt(0, ArrayAccess.getInt(array, index));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(IASTORE)
+    public static void iastore() {
+        int index = peekInt(1);
+        Object array = peekObject(2);
+        ArrayAccess.checkIndex(array, index);
+        int value = peekInt(0);
+        ArrayAccess.setInt(array, index, value);
+        removeSlots(3);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PGET_INT)
+    public static void pget_int() {
+        int index = peekInt(0);
+        int disp = peekInt(1);
+        Pointer ptr = peekWord(2).asPointer();
+        removeSlots(2);
+        pokeInt(0, ptr.getInt(disp, index));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PSET_INT)
+    public static void pset_int() {
+        int value = peekInt(0);
+        int index = peekInt(1);
+        int disp = peekInt(2);
+        Pointer ptr = peekWord(3).asPointer();
+        removeSlots(4);
+        ptr.setInt(disp, index, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PREAD_INT)
+    public static void pread_int() {
+        Offset off = peekWord(0).asOffset();
+        Pointer ptr = peekWord(1).asPointer();
+        removeSlots(1);
+        pokeInt(0, ptr.readInt(off));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PWRITE_INT)
+    public static void pwrite_int() {
+        Pointer ptr = peekWord(2).asPointer();
+        Offset off = peekWord(1).asOffset();
+        int value = peekInt(0);
+        removeSlots(3);
+        ptr.writeInt(off, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PREAD_INT_I)
+    public static void pread_int_i() {
+        int off = peekInt(0);
+        Pointer ptr = peekWord(1).asPointer();
+        removeSlots(1);
+        pokeInt(0, ptr.readInt(off));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PWRITE_INT_I)
+    public static void pwrite_int_i() {
+        Pointer ptr = peekWord(2).asPointer();
+        int off = peekInt(1);
+        int value = peekInt(0);
+        removeSlots(3);
+        ptr.writeInt(off, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PCMPSWP_INT)
+    public static void pcmpswp_int() {
+        int newValue = peekInt(0);
+        int expectedValue = peekInt(1);
+        Offset off = peekWord(2).asOffset();
+        Pointer ptr = peekWord(3).asPointer();
+        removeSlots(3);
+        pokeInt(0, ptr.compareAndSwapInt(off, expectedValue, newValue));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PCMPSWP_INT_I)
+    public static void pcmpswp_int_i() {
+        int newValue = peekInt(0);
+        int expectedValue = peekInt(1);
+        int off = peekInt(2);
+        Pointer ptr = peekWord(3).asPointer();
+        removeSlots(3);
+        pokeInt(0, ptr.compareAndSwapInt(off, expectedValue, newValue));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETFIELD$float$resolved)
+    public static void getfieldFloat(int offset) {
+        Object object = peekObject(0);
+        pokeFloat(0, TupleAccess.readFloat(object, offset));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETFIELD$float)
+    public static void getfieldFloat(ResolutionGuard.InPool guard) {
+        Object object = peekObject(0);
+        pokeFloat(0, resolveAndGetFieldFloat(guard, object));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETSTATIC$float)
+    public static void getstaticFloat(ResolutionGuard.InPool guard) {
+        pushFloat(resolveAndGetStaticFloat(guard));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETSTATIC$float$init)
+    public static void getstaticFloat(Object staticTuple, int offset) {
+        pushFloat(TupleAccess.readFloat(staticTuple, offset));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTFIELD$float$resolved)
+    public static void putfieldFloat(int offset) {
+        Object object = peekObject(1);
+        float value = peekFloat(0);
+        removeSlots(2);
+        TupleAccess.writeFloat(object, offset, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTFIELD$float)
+    public static void putfieldFloat(ResolutionGuard.InPool guard) {
+        Object object = peekObject(1);
+        float value = peekFloat(0);
+        resolveAndPutFieldFloat(guard, object, value);
+        removeSlots(2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTSTATIC$float$init)
+    public static void putstaticFloat(Object staticTuple, int offset) {
+        float value = popFloat();
+        TupleAccess.writeFloat(staticTuple, offset, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTSTATIC$float)
+    public static void putstaticFloat(ResolutionGuard.InPool guard) {
+        resolveAndPutStaticFloat(guard, popFloat());
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(I2F)
+    public static void i2f() {
+        float value = peekFloat(0);
+        pokeFloat(0, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(FRETURN)
+    public static float freturn() {
+        return popFloat();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(FRETURN$unlockClass)
+    public static float freturnUnlockClass(Class rcvr) {
+        Monitor.noninlineExit(rcvr);
+        return popFloat();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(FRETURN$unlockReceiver)
+    public static float freturnUnlockReceiver(int dispToRcvrCopy) {
+        Object rcvr = getLocalObject(dispToRcvrCopy);
+        Monitor.noninlineExit(rcvr);
+        return popFloat();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(FALOAD)
+    public static void faload() {
+        int index = peekInt(0);
+        Object array = peekObject(1);
+        ArrayAccess.checkIndex(array, index);
+        removeSlots(1);
+        pokeFloat(0, ArrayAccess.getFloat(array, index));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(FASTORE)
+    public static void fastore() {
+        int index = peekInt(1);
+        Object array = peekObject(2);
+        ArrayAccess.checkIndex(array, index);
+        float value = peekFloat(0);
+        ArrayAccess.setFloat(array, index, value);
+        removeSlots(3);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PGET_FLOAT)
+    public static void pget_float() {
+        int index = peekInt(0);
+        int disp = peekInt(1);
+        Pointer ptr = peekWord(2).asPointer();
+        removeSlots(2);
+        pokeFloat(0, ptr.getFloat(disp, index));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PSET_FLOAT)
+    public static void pset_float() {
+        float value = peekFloat(0);
+        int index = peekInt(1);
+        int disp = peekInt(2);
+        Pointer ptr = peekWord(3).asPointer();
+        removeSlots(4);
+        ptr.setFloat(disp, index, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PREAD_FLOAT)
+    public static void pread_float() {
+        Offset off = peekWord(0).asOffset();
+        Pointer ptr = peekWord(1).asPointer();
+        removeSlots(1);
+        pokeFloat(0, ptr.readFloat(off));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PWRITE_FLOAT)
+    public static void pwrite_float() {
+        Pointer ptr = peekWord(2).asPointer();
+        Offset off = peekWord(1).asOffset();
+        float value = peekFloat(0);
+        removeSlots(3);
+        ptr.writeFloat(off, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PREAD_FLOAT_I)
+    public static void pread_float_i() {
+        int off = peekInt(0);
+        Pointer ptr = peekWord(1).asPointer();
+        removeSlots(1);
+        pokeFloat(0, ptr.readFloat(off));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PWRITE_FLOAT_I)
+    public static void pwrite_float_i() {
+        Pointer ptr = peekWord(2).asPointer();
+        int off = peekInt(1);
+        float value = peekFloat(0);
+        removeSlots(3);
+        ptr.writeFloat(off, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETFIELD$long$resolved)
+    public static void getfieldLong(int offset) {
+        Object object = peekObject(0);
+        addSlots(1);
+        pokeLong(0, TupleAccess.readLong(object, offset));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETFIELD$long)
+    public static void getfieldLong(ResolutionGuard.InPool guard) {
+        Object object = peekObject(0);
+        addSlots(1);
+        pokeLong(0, resolveAndGetFieldLong(guard, object));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETSTATIC$long)
+    public static void getstaticLong(ResolutionGuard.InPool guard) {
+        pushLong(resolveAndGetStaticLong(guard));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETSTATIC$long$init)
+    public static void getstaticLong(Object staticTuple, int offset) {
+        pushLong(TupleAccess.readLong(staticTuple, offset));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTFIELD$long$resolved)
+    public static void putfieldLong(int offset) {
+        Object object = peekObject(2);
+        long value = peekLong(0);
+        removeSlots(3);
+        TupleAccess.writeLong(object, offset, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTFIELD$long)
+    public static void putfieldLong(ResolutionGuard.InPool guard) {
+        Object object = peekObject(2);
+        long value = peekLong(0);
+        resolveAndPutFieldLong(guard, object, value);
+        removeSlots(3);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTSTATIC$long$init)
+    public static void putstaticLong(Object staticTuple, int offset) {
+        long value = popLong();
+        TupleAccess.writeLong(staticTuple, offset, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTSTATIC$long)
+    public static void putstaticLong(ResolutionGuard.InPool guard) {
+        resolveAndPutStaticLong(guard, popLong());
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(I2L)
+    public static void i2l() {
+        long value = peekLong(0);
+        addSlots(1);
+        pokeLong(0, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(LRETURN)
+    public static long lreturn() {
+        return popLong();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(LRETURN$unlockClass)
+    public static long lreturnUnlockClass(Class rcvr) {
+        Monitor.noninlineExit(rcvr);
+        return popLong();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(LRETURN$unlockReceiver)
+    public static long lreturnUnlockReceiver(int dispToRcvrCopy) {
+        Object rcvr = getLocalObject(dispToRcvrCopy);
+        Monitor.noninlineExit(rcvr);
+        return popLong();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(LALOAD)
+    public static void laload() {
+        int index = peekInt(0);
+        Object array = peekObject(1);
+        ArrayAccess.checkIndex(array, index);
+        pokeLong(0, ArrayAccess.getLong(array, index));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(LASTORE)
+    public static void lastore() {
+        int index = peekInt(2);
+        Object array = peekObject(3);
+        ArrayAccess.checkIndex(array, index);
+        long value = peekLong(0);
+        ArrayAccess.setLong(array, index, value);
+        removeSlots(4);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PGET_LONG)
+    public static void pget_long() {
+        int index = peekInt(0);
+        int disp = peekInt(1);
+        Pointer ptr = peekWord(2).asPointer();
+        removeSlots(1);
+        pokeLong(0, ptr.getLong(disp, index));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PSET_LONG)
+    public static void pset_long() {
+        long value = peekLong(0);
+        int index = peekInt(2);
+        int disp = peekInt(3);
+        Pointer ptr = peekWord(4).asPointer();
+        removeSlots(5);
+        ptr.setLong(disp, index, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PREAD_LONG)
+    public static void pread_long() {
+        Offset off = peekWord(0).asOffset();
+        Pointer ptr = peekWord(1).asPointer();
+        pokeLong(0, ptr.readLong(off));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PWRITE_LONG)
+    public static void pwrite_long() {
+        Pointer ptr = peekWord(2).asPointer();
+        Offset off = peekWord(1).asOffset();
+        long value = peekLong(0);
+        removeSlots(4);
+        ptr.writeLong(off, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PREAD_LONG_I)
+    public static void pread_long_i() {
+        int off = peekInt(0);
+        Pointer ptr = peekWord(1).asPointer();
+        pokeLong(0, ptr.readLong(off));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PWRITE_LONG_I)
+    public static void pwrite_long_i() {
+        Pointer ptr = peekWord(2).asPointer();
+        int off = peekInt(1);
+        long value = peekLong(0);
+        removeSlots(4);
+        ptr.writeLong(off, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETFIELD$double$resolved)
+    public static void getfieldDouble(int offset) {
+        Object object = peekObject(0);
+        addSlots(1);
+        pokeDouble(0, TupleAccess.readDouble(object, offset));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETFIELD$double)
+    public static void getfieldDouble(ResolutionGuard.InPool guard) {
+        Object object = peekObject(0);
+        addSlots(1);
+        pokeDouble(0, resolveAndGetFieldDouble(guard, object));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETSTATIC$double)
+    public static void getstaticDouble(ResolutionGuard.InPool guard) {
+        pushDouble(resolveAndGetStaticDouble(guard));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETSTATIC$double$init)
+    public static void getstaticDouble(Object staticTuple, int offset) {
+        pushDouble(TupleAccess.readDouble(staticTuple, offset));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTFIELD$double$resolved)
+    public static void putfieldDouble(int offset) {
+        Object object = peekObject(2);
+        double value = peekDouble(0);
+        removeSlots(3);
+        TupleAccess.writeDouble(object, offset, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTFIELD$double)
+    public static void putfieldDouble(ResolutionGuard.InPool guard) {
+        Object object = peekObject(2);
+        double value = peekDouble(0);
+        resolveAndPutFieldDouble(guard, object, value);
+        removeSlots(3);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTSTATIC$double$init)
+    public static void putstaticDouble(Object staticTuple, int offset) {
+        double value = popDouble();
+        TupleAccess.writeDouble(staticTuple, offset, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTSTATIC$double)
+    public static void putstaticDouble(ResolutionGuard.InPool guard) {
+        resolveAndPutStaticDouble(guard, popDouble());
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(I2D)
+    public static void i2d() {
+        double value = peekDouble(0);
+        addSlots(1);
+        pokeDouble(0, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(DRETURN)
+    public static double dreturn() {
+        return popDouble();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(DRETURN$unlockClass)
+    public static double dreturnUnlockClass(Class rcvr) {
+        Monitor.noninlineExit(rcvr);
+        return popDouble();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(DRETURN$unlockReceiver)
+    public static double dreturnUnlockReceiver(int dispToRcvrCopy) {
+        Object rcvr = getLocalObject(dispToRcvrCopy);
+        Monitor.noninlineExit(rcvr);
+        return popDouble();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(DALOAD)
+    public static void daload() {
+        int index = peekInt(0);
+        Object array = peekObject(1);
+        ArrayAccess.checkIndex(array, index);
+        pokeDouble(0, ArrayAccess.getDouble(array, index));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(DASTORE)
+    public static void dastore() {
+        int index = peekInt(2);
+        Object array = peekObject(3);
+        ArrayAccess.checkIndex(array, index);
+        double value = peekDouble(0);
+        ArrayAccess.setDouble(array, index, value);
+        removeSlots(4);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PGET_DOUBLE)
+    public static void pget_double() {
+        int index = peekInt(0);
+        int disp = peekInt(1);
+        Pointer ptr = peekWord(2).asPointer();
+        removeSlots(1);
+        pokeDouble(0, ptr.getDouble(disp, index));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PSET_DOUBLE)
+    public static void pset_double() {
+        double value = peekDouble(0);
+        int index = peekInt(2);
+        int disp = peekInt(3);
+        Pointer ptr = peekWord(4).asPointer();
+        removeSlots(5);
+        ptr.setDouble(disp, index, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PREAD_DOUBLE)
+    public static void pread_double() {
+        Offset off = peekWord(0).asOffset();
+        Pointer ptr = peekWord(1).asPointer();
+        pokeDouble(0, ptr.readDouble(off));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PWRITE_DOUBLE)
+    public static void pwrite_double() {
+        Pointer ptr = peekWord(2).asPointer();
+        Offset off = peekWord(1).asOffset();
+        double value = peekDouble(0);
+        removeSlots(4);
+        ptr.writeDouble(off, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PREAD_DOUBLE_I)
+    public static void pread_double_i() {
+        int off = peekInt(0);
+        Pointer ptr = peekWord(1).asPointer();
+        pokeDouble(0, ptr.readDouble(off));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PWRITE_DOUBLE_I)
+    public static void pwrite_double_i() {
+        Pointer ptr = peekWord(2).asPointer();
+        int off = peekInt(1);
+        double value = peekDouble(0);
+        removeSlots(4);
+        ptr.writeDouble(off, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETFIELD$reference$resolved)
+    public static void getfieldReference(int offset) {
+        Object object = peekObject(0);
+        pokeObject(0, TupleAccess.readObject(object, offset));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETFIELD$reference)
+    public static void getfieldReference(ResolutionGuard.InPool guard) {
+        Object object = peekObject(0);
+        pokeObject(0, resolveAndGetFieldReference(guard, object));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETSTATIC$reference)
+    public static void getstaticReference(ResolutionGuard.InPool guard) {
+        pushObject(resolveAndGetStaticReference(guard));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETSTATIC$reference$init)
+    public static void getstaticReference(Object staticTuple, int offset) {
+        pushObject(TupleAccess.readObject(staticTuple, offset));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTFIELD$reference$resolved)
+    public static void putfieldReference(int offset) {
+        Object object = peekObject(1);
+        Object value = peekObject(0);
+        removeSlots(2);
+        TupleAccess.writeObject(object, offset, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTFIELD$reference)
+    public static void putfieldReference(ResolutionGuard.InPool guard) {
+        Object object = peekObject(1);
+        Object value = peekObject(0);
+        resolveAndPutFieldReference(guard, object, value);
+        removeSlots(2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTSTATIC$reference$init)
+    public static void putstaticReference(Object staticTuple, int offset) {
+        Object value = popObject();
+        TupleAccess.noninlineWriteObject(staticTuple, offset, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTSTATIC$reference)
+    public static void putstaticReference(ResolutionGuard.InPool guard) {
+        resolveAndPutStaticReference(guard, popObject());
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(ARETURN)
+    public static Object areturn() {
+        return popObject();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(ARETURN$unlockClass)
+    public static Object areturnUnlockClass(Class rcvr) {
+        Monitor.noninlineExit(rcvr);
+        return popObject();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(ARETURN$unlockReceiver)
+    public static Object areturnUnlockReceiver(int dispToRcvrCopy) {
+        Object rcvr = getLocalObject(dispToRcvrCopy);
+        Monitor.noninlineExit(rcvr);
+        return popObject();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(AALOAD)
+    public static void aaload() {
+        int index = peekInt(0);
+        Object array = peekObject(1);
+        ArrayAccess.checkIndex(array, index);
+        removeSlots(1);
+        pokeObject(0, ArrayAccess.getObject(array, index));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(AASTORE)
+    public static void aastore() {
+        int index = peekInt(1);
+        Object array = peekObject(2);
+        ArrayAccess.checkIndex(array, index);
+        Object value = peekObject(0);
+        ArrayAccess.checkSetObject(array, value);
+        ArrayAccess.setObject(array, index, value);
+        removeSlots(3);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PGET_REFERENCE)
+    public static void pget_reference() {
+        int index = peekInt(0);
+        int disp = peekInt(1);
+        Pointer ptr = peekWord(2).asPointer();
+        removeSlots(2);
+        pokeReference(0, ptr.getReference(disp, index));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PSET_REFERENCE)
+    public static void pset_reference() {
+        Reference value = peekReference(0);
+        int index = peekInt(1);
+        int disp = peekInt(2);
+        Pointer ptr = peekWord(3).asPointer();
+        removeSlots(4);
+        ptr.setReference(disp, index, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PREAD_REFERENCE)
+    public static void pread_reference() {
+        Offset off = peekWord(0).asOffset();
+        Pointer ptr = peekWord(1).asPointer();
+        removeSlots(1);
+        pokeReference(0, ptr.readReference(off));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PWRITE_REFERENCE)
+    public static void pwrite_reference() {
+        Pointer ptr = peekWord(2).asPointer();
+        Offset off = peekWord(1).asOffset();
+        Reference value = peekReference(0);
+        removeSlots(3);
+        ptr.writeReference(off, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PREAD_REFERENCE_I)
+    public static void pread_reference_i() {
+        int off = peekInt(0);
+        Pointer ptr = peekWord(1).asPointer();
+        removeSlots(1);
+        pokeReference(0, ptr.readReference(off));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PWRITE_REFERENCE_I)
+    public static void pwrite_reference_i() {
+        Pointer ptr = peekWord(2).asPointer();
+        int off = peekInt(1);
+        Reference value = peekReference(0);
+        removeSlots(3);
+        ptr.writeReference(off, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PCMPSWP_REFERENCE)
+    public static void pcmpswp_reference() {
+        Reference newValue = peekReference(0);
+        Reference expectedValue = peekReference(1);
+        Offset off = peekWord(2).asOffset();
+        Pointer ptr = peekWord(3).asPointer();
+        removeSlots(3);
+        pokeReference(0, ptr.compareAndSwapReference(off, expectedValue, newValue));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PCMPSWP_REFERENCE_I)
+    public static void pcmpswp_reference_i() {
+        Reference newValue = peekReference(0);
+        Reference expectedValue = peekReference(1);
+        int off = peekInt(2);
+        Pointer ptr = peekWord(3).asPointer();
+        removeSlots(3);
+        pokeReference(0, ptr.compareAndSwapReference(off, expectedValue, newValue));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETFIELD$word$resolved)
+    public static void getfieldWord(int offset) {
+        Object object = peekObject(0);
+        pokeWord(0, TupleAccess.readWord(object, offset));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETFIELD$word)
+    public static void getfieldWord(ResolutionGuard.InPool guard) {
+        Object object = peekObject(0);
+        pokeWord(0, resolveAndGetFieldWord(guard, object));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETSTATIC$word)
+    public static void getstaticWord(ResolutionGuard.InPool guard) {
+        pushWord(resolveAndGetStaticWord(guard));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(GETSTATIC$word$init)
+    public static void getstaticWord(Object staticTuple, int offset) {
+        pushWord(TupleAccess.readWord(staticTuple, offset));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTFIELD$word$resolved)
+    public static void putfieldWord(int offset) {
+        Object object = peekObject(1);
+        Word value = peekWord(0);
+        removeSlots(2);
+        TupleAccess.writeWord(object, offset, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTFIELD$word)
+    public static void putfieldWord(ResolutionGuard.InPool guard) {
+        Object object = peekObject(1);
+        Word value = peekWord(0);
+        resolveAndPutFieldWord(guard, object, value);
+        removeSlots(2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTSTATIC$word$init)
+    public static void putstaticWord(Object staticTuple, int offset) {
+        Word value = popWord();
+        TupleAccess.writeWord(staticTuple, offset, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PUTSTATIC$word)
+    public static void putstaticWord(ResolutionGuard.InPool guard) {
+        resolveAndPutStaticWord(guard, popWord());
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(WRETURN)
+    public static Word wreturn() {
+        return popWord();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(WRETURN$unlockClass)
+    public static Word wreturnUnlockClass(Class rcvr) {
+        Monitor.noninlineExit(rcvr);
+        return popWord();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(WRETURN$unlockReceiver)
+    public static Word wreturnUnlockReceiver(int dispToRcvrCopy) {
+        Object rcvr = getLocalObject(dispToRcvrCopy);
+        Monitor.noninlineExit(rcvr);
+        return popWord();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PGET_WORD)
+    public static void pget_word() {
+        int index = peekInt(0);
+        int disp = peekInt(1);
+        Pointer ptr = peekWord(2).asPointer();
+        removeSlots(2);
+        pokeWord(0, ptr.getWord(disp, index));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PSET_WORD)
+    public static void pset_word() {
+        Word value = peekWord(0);
+        int index = peekInt(1);
+        int disp = peekInt(2);
+        Pointer ptr = peekWord(3).asPointer();
+        removeSlots(4);
+        ptr.setWord(disp, index, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PREAD_WORD)
+    public static void pread_word() {
+        Offset off = peekWord(0).asOffset();
+        Pointer ptr = peekWord(1).asPointer();
+        removeSlots(1);
+        pokeWord(0, ptr.readWord(off));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PWRITE_WORD)
+    public static void pwrite_word() {
+        Pointer ptr = peekWord(2).asPointer();
+        Offset off = peekWord(1).asOffset();
+        Word value = peekWord(0);
+        removeSlots(3);
+        ptr.writeWord(off, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PREAD_WORD_I)
+    public static void pread_word_i() {
+        int off = peekInt(0);
+        Pointer ptr = peekWord(1).asPointer();
+        removeSlots(1);
+        pokeWord(0, ptr.readWord(off));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PWRITE_WORD_I)
+    public static void pwrite_word_i() {
+        Pointer ptr = peekWord(2).asPointer();
+        int off = peekInt(1);
+        Word value = peekWord(0);
+        removeSlots(3);
+        ptr.writeWord(off, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PCMPSWP_WORD)
+    public static void pcmpswp_word() {
+        Word newValue = peekWord(0);
+        Word expectedValue = peekWord(1);
+        Offset off = peekWord(2).asOffset();
+        Pointer ptr = peekWord(3).asPointer();
+        removeSlots(3);
+        pokeWord(0, ptr.compareAndSwapWord(off, expectedValue, newValue));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(PCMPSWP_WORD_I)
+    public static void pcmpswp_word_i() {
+        Word newValue = peekWord(0);
+        Word expectedValue = peekWord(1);
+        int off = peekInt(2);
+        Pointer ptr = peekWord(3).asPointer();
+        removeSlots(3);
+        pokeWord(0, ptr.compareAndSwapWord(off, expectedValue, newValue));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(RETURN)
+    public static void vreturn() {
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(RETURN$unlockClass)
+    public static void vreturnUnlockClass(Class rcvr) {
+        Monitor.noninlineExit(rcvr);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(RETURN$unlockReceiver)
+    public static void vreturnUnlockReceiver(int dispToRcvrCopy) {
+        Object rcvr = getLocalObject(dispToRcvrCopy);
+        Monitor.noninlineExit(rcvr);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(RETURN$registerFinalizer)
+    public static void vreturnRegisterFinalizer(int dispToRcvrCopy) {
+        Object rcvr = getLocalObject(dispToRcvrCopy);
+        if (ObjectAccess.readClassActor(rcvr).hasFinalizer()) {
+            SpecialReferenceManager.registerFinalizee(rcvr);
+        }
+    }
+
+
+
 }
