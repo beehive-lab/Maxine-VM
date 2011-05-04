@@ -109,24 +109,18 @@ public final class BytecodeFramesInspector extends Inspector<BytecodeFramesInspe
                  */
                 @Override
                 public void refresh(boolean force) {
-                    if (focus().hasCodeLocation()) {
-                        final Address instructionAddress = focus().codeLocation().address();
-                        if (instructionAddress != null && !instructionAddress.isZero()) {
-                            final MaxCompiledCode compiledCode = vm().codeCache().findCompiledCode(instructionAddress);
-                            if (compiledCode != null) {
-                                final InstructionMap instructionMap = compiledCode.getInstructionMap();
-                                final int instructionIndex = instructionMap.findInstructionIndex(instructionAddress);
-                                if (instructionIndex >= 0) {
-                                    bytecodeFrames = instructionMap.bytecodeFrames(instructionIndex);
-                                    if (bytecodeFrames == null) {
-                                        setEnabled(false);
-                                        return;
-                                    }
-                                }
-                                setEnabled(true);
+                    final MaxCodeLocation codeLocation = focus().codeLocation();
+                    if (codeLocation != null) {
+                        final MaxCompiledCode compiledCode = getCompiledCode(focus().codeLocation());
+                        if (compiledCode != null) {
+                            bytecodeFrames = getBytecodeFrames(codeLocation);
+                            if (bytecodeFrames == null) {
+                                setEnabled(false);
                                 return;
                             }
                         }
+                        setEnabled(true);
+                        return;
                     }
                     bytecodeFrames = null;
                     setEnabled(false);
@@ -148,6 +142,50 @@ public final class BytecodeFramesInspector extends Inspector<BytecodeFramesInspe
             return makeViewAction;
         }
 
+        @Override
+        public InspectorAction makeViewAction(final MaxCodeLocation codeLocation) {
+            final InspectorAction inspectorAction = new InspectorAction(inspection(), "View Bytecode frames at this instruction") {
+
+                private CiFrame bytecodeFrames;
+
+                @Override
+                protected void procedure() {
+                    final MaxCompiledCode compiledCode = getCompiledCode(codeLocation);
+                    if (compiledCode != null && bytecodeFrames != null) {
+                        makeView(bytecodeFrames, compiledCode).highlight();
+                    }
+                }
+
+                @Override
+                public void refresh(boolean force) {
+                    bytecodeFrames = getBytecodeFrames(codeLocation);
+                    setEnabled(bytecodeFrames != null);
+                }
+            };
+            inspectorAction.refresh(true);
+            return inspectorAction;
+        }
+
+        private MaxCompiledCode getCompiledCode(MaxCodeLocation codeLocation) {
+            final Address instructionAddress = codeLocation.address();
+            if (instructionAddress != null && !instructionAddress.isZero()) {
+                return vm().codeCache().findCompiledCode(instructionAddress);
+            }
+            return null;
+        }
+
+        private CiFrame getBytecodeFrames(MaxCodeLocation codeLocation) {
+            final MaxCompiledCode compiledCode = getCompiledCode(focus().codeLocation());
+            if (compiledCode != null) {
+                final InstructionMap instructionMap = compiledCode.getInstructionMap();
+                final int instructionIndex = instructionMap.findInstructionIndex(codeLocation.address());
+                if (instructionIndex >= 0) {
+                    return instructionMap.bytecodeFrames(instructionIndex);
+                }
+            }
+            return null;
+        }
+
         public BytecodeFramesInspector makeView(CiFrame bytecodeFrames, MaxCompiledCode compiledCode) {
             final Long key = makeKey(bytecodeFrames);
             BytecodeFramesInspector bytecodeFrameInspector = inspectors.get(key);
@@ -166,6 +204,7 @@ public final class BytecodeFramesInspector extends Inspector<BytecodeFramesInspe
             }
             return bytecodeFrameInspector;
         }
+
     }
 
     private final Rectangle originalFrameGeometry;
