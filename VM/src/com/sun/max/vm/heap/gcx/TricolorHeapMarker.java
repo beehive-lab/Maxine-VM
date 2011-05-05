@@ -2013,8 +2013,11 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         }
 
         public Reference preserve(Reference ref) {
-            // TODO: evacuate/preserve the graph rooted by 'ref'
-            return null;
+            Pointer origin = ref.toOrigin();
+            if (heapMarker.isCovered(origin)) {
+                heapMarker.markGreyIfWhite(origin);
+            }
+            return ref;
         }
     }
 
