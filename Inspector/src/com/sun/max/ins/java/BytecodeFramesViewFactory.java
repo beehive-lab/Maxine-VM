@@ -46,11 +46,21 @@ public interface BytecodeFramesViewFactory extends InspectionViewFactory<Bytecod
     BytecodeFramesInspector makeView(CiFrame bytecodeFrames, MaxCompiledCode compiledCode);
 
     /**
-     * Gets an action that makes view of the bytecode frames available at
+     * Gets an action that makes a view of the bytecode frames available at
      * the currently selected code location; disabled if there are no
-     * frames available at the currently selected code location.
+     * frames available at that location.
      *
      * @return an action that creates a bytecode frame view
      */
     InspectorAction makeViewAction();
+
+    /**
+     * Gets an action that makes view of the bytecode frames available at
+     * the specified code location; disabled if there are no
+     * frames available at that location.
+     *
+     * @return an action that creates a bytecode frame view
+     */
+    InspectorAction makeViewAction(MaxCodeLocation codeLocation);
+
 }
