@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,36 +20,20 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.ins.view;
 
-import com.sun.max.ins.*;
-import com.sun.max.ins.gui.*;
+package com.sun.max.ins.gui;
+
 
 /**
- * Manager for a kind of Inspector view that is a singleton which can either be active (the instance
- * exists and is visible) or not.
+ * Notification service for window-related events that affect a single {@link Inspector}.
  *
  * @author Michael Van De Vanter
  */
-public interface SingletonViewManager<Inspector_Kind extends Inspector> extends ViewManager<Inspector_Kind> {
+public interface InspectorEventListener {
 
     /**
-     * Activates the singleton view, newly created if necessary.
-     *
-     * @return the instance that implements the singleton view
+     * Notifies listener that the {@link Inspector} is closing.
      */
-    Inspector<Inspector_Kind> activateView();
+    void viewClosing(Inspector inspector);
 
-    /**
-     * Gets an action that highlights the, newly created if needed, view
-     * managed by this manager.
-     *
-     * @return the action for activating this manager's singleton view.
-     */
-    InspectorAction activateSingletonViewAction();
-
-    /**
-     * Disposes this manager's singleton view.
-     */
-    void deactivateView();
 }

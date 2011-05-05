@@ -93,13 +93,6 @@ public final class MemoryInspector extends Inspector<MemoryInspector> {
             Trace.end(1, tracePrefix() + "initializing");
         }
 
-        @Override
-        public void notifyViewClosing(Inspector inspector) {
-            // TODO (mlvdv)  should be using generics here
-            final MemoryInspector memoryInspector = (MemoryInspector) inspector;
-            super.notifyViewClosing(memoryInspector);
-        }
-
         public MemoryInspector makeView(MaxMemoryRegion memoryRegion, String regionName) {
             final String name = regionName == null ? memoryRegion.regionName() : regionName;
             final MemoryInspector memoryInspector = new MemoryInspector(inspection(), memoryRegion, name, memoryRegion.start(), ViewMode.WORD, null);
