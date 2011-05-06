@@ -23,11 +23,10 @@
 package com.sun.max.vm.t1x;
 
 import static com.sun.cri.bytecode.Bytecodes.MemoryBarriers.*;
-import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.t1x.T1XFrameOps.*;
 import static com.sun.max.vm.t1x.T1XRuntime.*;
 import static com.sun.max.vm.t1x.T1XTemplateTag.*;
-import static com.sun.max.vm.t1x.T1XTemplateGenHelper.*;
+
 
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
@@ -47,12 +46,12 @@ import com.sun.max.vm.type.*;
 /**
  * The Java source for the templates used by T1X.
  *
- * The bytecodes that are parameterized by type are mostly automatically generated
- * as they share a very similar form. The automatically generated code is created by
- * running {@link #main} and is inserted (manually) at the end of the class.
- * The focus of the generating code (which is {@link HOSTED_ONLY}) is readability.
+ * The templates are almost all automatically generated as many bytecodes fall in groups that share a very similar implementation.
+ * Auto-generation also allows for easy and optional customization, in particular, tracking of bytecode execution.
+ * The automatically generated code is created by running {@link T1XTemplateGenerator#main} and is inserted (manually) at the end of the class.
  *
  */
+
 public class T1XTemplateSource {
 
     @INTRINSIC(Bytecodes.LCMP)
@@ -123,166 +122,6 @@ public class T1XTemplateSource {
         T1XRuntime.monitorexit(c);
     }
 
-    @T1X_TEMPLATE(ACONST_NULL)
-    public static void aconst_null() {
-        pushObject(null);
-    }
-
-    @T1X_TEMPLATE(WCONST_0)
-    public static void wconst_0() {
-        pushWord(Address.zero());
-    }
-
-    @T1X_TEMPLATE(ALOAD)
-    public static void aload(int dispToLocalSlot) {
-        Object value = getLocalObject(dispToLocalSlot);
-        pushObject(value);
-    }
-
-    @T1X_TEMPLATE(WLOAD)
-    public static void wload(int dispToLocalSlot) {
-        Word value = getLocalWord(dispToLocalSlot);
-        pushWord(value);
-    }
-
-    @T1X_TEMPLATE(ANEWARRAY)
-    public static void anewarray(ResolutionGuard guard) {
-        ArrayClassActor arrayClassActor = UnsafeCast.asArrayClassActor(Snippets.resolveArrayClass(guard));
-        int length = peekInt(0);
-        pokeObject(0, T1XRuntime.createReferenceArray(arrayClassActor, length));
-    }
-
-    @T1X_TEMPLATE(ARRAYLENGTH)
-    public static void arraylength() {
-        int length = ArrayAccess.readArrayLength(peekObject(0));
-        pokeInt(0, length);
-    }
-
-    @T1X_TEMPLATE(ASTORE)
-    public static void astore(int displacementToSlot) {
-        Object value = peekObject(0);
-        removeSlots(1);
-        setLocalObject(displacementToSlot, value);
-    }
-
-    @T1X_TEMPLATE(WSTORE)
-    public static void wstore(int displacementToSlot) {
-        Word value = peekWord(0);
-        removeSlots(1);
-        setLocalWord(displacementToSlot, value);
-    }
-
-    @T1X_TEMPLATE(ATHROW)
-    public static void athrow() {
-        Throw.raise(peekObject(0));
-    }
-
-    @T1X_TEMPLATE(BIPUSH)
-    public static void bipush(byte value) {
-        pushInt(value);
-    }
-
-    @T1X_TEMPLATE(CHECKCAST)
-    public static void checkcast(ResolutionGuard guard) {
-        resolveAndCheckcast(guard, peekObject(0));
-    }
-
-    @T1X_TEMPLATE(D2F)
-    public static void d2f() {
-        double value = peekDouble(0);
-        removeSlots(1);
-        pokeFloat(0, (float) value);
-    }
-
-    @T1X_TEMPLATE(D2I)
-    public static void d2i() {
-        double value = peekDouble(0);
-        removeSlots(1);
-        pokeInt(0, T1XRuntime.d2i(value));
-    }
-
-    @T1X_TEMPLATE(D2L)
-    public static void d2l() {
-        double value = peekDouble(0);
-        pokeLong(0, T1XRuntime.d2l(value));
-    }
-
-    @T1X_TEMPLATE(DADD)
-    public static void dadd() {
-        double value2 = peekDouble(0);
-        double value1 = peekDouble(2);
-        removeSlots(2);
-        pokeDouble(0, value1 + value2);
-    }
-
-    @T1X_TEMPLATE(DCMPG)
-    public static void dcmpg() {
-        double value2 = peekDouble(0);
-        double value1 = peekDouble(2);
-        removeSlots(3);
-        pokeInt(0, dcmpg(value1, value2));
-    }
-
-    @T1X_TEMPLATE(DCMPL)
-    public static void dcmpl() {
-        double value2 = peekDouble(0);
-        double value1 = peekDouble(2);
-        removeSlots(3);
-        pokeInt(0, dcmpl(value1, value2));
-    }
-
-    @T1X_TEMPLATE(DCONST)
-    public static void dconst(double constant) {
-        pushDouble(constant);
-    }
-
-    @T1X_TEMPLATE(DDIV)
-    public static void ddiv() {
-        double divisor = peekDouble(0);
-        double dividend = peekDouble(2);
-        removeSlots(2);
-        pokeDouble(0, dividend / divisor);
-    }
-
-    @T1X_TEMPLATE(DLOAD)
-    public static void dload(int displacementToSlot) {
-        pushDouble(getLocalDouble(displacementToSlot));
-    }
-
-    @T1X_TEMPLATE(DMUL)
-    public static void dmul() {
-        double value2 = peekDouble(0);
-        double value1 = peekDouble(2);
-        removeSlots(2);
-        pokeDouble(0, value1 * value2);
-    }
-
-    @T1X_TEMPLATE(DNEG)
-    public static void dneg(double zero) {
-        pokeDouble(0, zero - peekDouble(0));
-    }
-
-    @T1X_TEMPLATE(DREM)
-    public static void drem() {
-        double value2 = peekDouble(0);
-        double value1 = peekDouble(2);
-        removeSlots(2);
-        pokeDouble(0, value1 % value2);
-    }
-
-    @T1X_TEMPLATE(DSTORE)
-    public static void dstore(int displacementToSlot) {
-        setLocalDouble(displacementToSlot, popDouble());
-    }
-
-    @T1X_TEMPLATE(DSUB)
-    public static void dsub() {
-        double value2 = peekDouble(0);
-        double value1 = peekDouble(2);
-        removeSlots(2);
-        pokeDouble(0, value1 - value2);
-    }
-
     @T1X_TEMPLATE(DUP)
     public static void dup() {
         pushWord(peekWord(0));
@@ -342,637 +181,9 @@ public class T1XTemplateSource {
         pushWord(value1);
     }
 
-    @T1X_TEMPLATE(F2D)
-    public static void f2d() {
-        float value = peekFloat(0);
-        addSlots(1);
-        pokeDouble(0, value);
-    }
-
-    @T1X_TEMPLATE(F2I)
-    public static void f2i() {
-        float value = peekFloat(0);
-        pokeInt(0, T1XRuntime.f2i(value));
-    }
-
-    @T1X_TEMPLATE(F2L)
-    public static void f2l() {
-        float value = peekFloat(0);
-        addSlots(1);
-        pokeLong(0, T1XRuntime.f2l(value));
-    }
-
-    @T1X_TEMPLATE(FADD)
-    public static void fadd() {
-        float value2 = peekFloat(0);
-        float value1 = peekFloat(1);
-        removeSlots(1);
-        pokeFloat(0, value1 + value2);
-    }
-
-    @T1X_TEMPLATE(FCMPG)
-    public static void fcmpg() {
-        float value2 = peekFloat(0);
-        float value1 = peekFloat(1);
-        removeSlots(1);
-        int result = fcmpg(value1, value2);
-        pokeInt(0, result);
-    }
-
-    @T1X_TEMPLATE(FCMPL)
-    public static void fcmpl() {
-        float value2 = peekFloat(0);
-        float value1 = peekFloat(1);
-        removeSlots(1);
-        int result = fcmpl(value1, value2);
-        pokeInt(0, result);
-    }
-
-    @T1X_TEMPLATE(FCONST)
-    public static void fconst(float constant) {
-        pushFloat(constant);
-    }
-
-    @T1X_TEMPLATE(FDIV)
-    public static void fdiv() {
-        float divisor = peekFloat(0);
-        float dividend = peekFloat(1);
-        removeSlots(1);
-        pokeFloat(0, dividend / divisor);
-    }
-
-    @T1X_TEMPLATE(FLOAD)
-    public static void fload(int dispToLocalSlot) {
-        float value = getLocalFloat(dispToLocalSlot);
-        pushFloat(value);
-    }
-
-    @T1X_TEMPLATE(FMUL)
-    public static void fmul() {
-        float value2 = peekFloat(0);
-        float value1 = peekFloat(1);
-        removeSlots(1);
-        pokeFloat(0, value1 * value2);
-    }
-
-    @T1X_TEMPLATE(FNEG)
-    public static void fneg(float zero) {
-        pokeFloat(0, zero - peekFloat(0));
-    }
-
-    @T1X_TEMPLATE(FREM)
-    public static void frem() {
-        float value2 = peekFloat(0);
-        float value1 = peekFloat(1);
-        removeSlots(1);
-        pokeFloat(0, value1 % value2);
-    }
-
-    @T1X_TEMPLATE(FSTORE)
-    public static void fstore(int displacementToSlot) {
-        setLocalFloat(displacementToSlot, popFloat());
-    }
-
-    @T1X_TEMPLATE(FSUB)
-    public static void fsub() {
-        float value2 = peekFloat(0);
-        float value1 = peekFloat(1);
-        removeSlots(1);
-        pokeFloat(0, value1 - value2);
-    }
-
-
-    @T1X_TEMPLATE(IADD)
-    public static void iadd() {
-        int value2 = peekInt(0);
-        int value1 = peekInt(1);
-        removeSlots(1);
-        pokeInt(0, value1 + value2);
-    }
-
-    @T1X_TEMPLATE(IAND)
-    public static void iand() {
-        int value2 = peekInt(0);
-        int value1 = peekInt(1);
-        removeSlots(1);
-        pokeInt(0, value1 & value2);
-    }
-
-    @T1X_TEMPLATE(ICONST_M1)
-    public static void iconst_m1() {
-        pushInt(-1);
-    }
-
-    @T1X_TEMPLATE(ICONST_0)
-    public static void iconst_0() {
-        pushInt(0);
-    }
-
-    @T1X_TEMPLATE(ICONST_1)
-    public static void iconst_1() {
-        pushInt(1);
-    }
-
-    @T1X_TEMPLATE(ICONST_2)
-    public static void iconst_2() {
-        pushInt(2);
-    }
-
-    @T1X_TEMPLATE(ICONST_3)
-    public static void iconst_3() {
-        pushInt(3);
-    }
-
-    @T1X_TEMPLATE(ICONST_4)
-    public static void iconst_4() {
-        pushInt(4);
-    }
-
-    @T1X_TEMPLATE(ICONST_5)
-    public static void iconst_5() {
-        pushInt(5);
-    }
-
-    @T1X_TEMPLATE(IDIV)
-    public static void idiv() {
-        int divisor = peekInt(0);
-        int dividend = peekInt(1);
-        removeSlots(1);
-        pokeInt(0, dividend / divisor);
-    }
-
-    @T1X_TEMPLATE(WDIV)
-    public static void wdiv() {
-        Address divisor = peekWord(0).asAddress();
-        Address dividend = peekWord(1).asAddress();
-        removeSlots(1);
-        pokeWord(0, dividend.dividedBy(divisor));
-    }
-
-    @T1X_TEMPLATE(WDIVI)
-    public static void wdivi() {
-        int divisor = peekInt(0);
-        Address dividend = peekWord(1).asAddress();
-        removeSlots(1);
-        pokeWord(0, dividend.dividedBy(divisor));
-    }
-
-    @T1X_TEMPLATE(IINC)
-    public static void iinc(int dispToLocalSlot, int increment) {
-        setLocalInt(dispToLocalSlot, getLocalInt(dispToLocalSlot) + increment);
-    }
-
-    @T1X_TEMPLATE(ILOAD)
-    public static void iload(int dispToLocalSlot) {
-        int value = getLocalInt(dispToLocalSlot);
-        pushInt(value);
-    }
-
-    @T1X_TEMPLATE(IMUL)
-    public static void imul() {
-        int value2 = peekInt(0);
-        int value1 = peekInt(1);
-        removeSlots(1);
-        pokeInt(0, value1 * value2);
-    }
-
-    @T1X_TEMPLATE(INEG)
-    public static void ineg() {
-        pokeInt(0, -peekInt(0));
-    }
-
-    @T1X_TEMPLATE(INSTANCEOF)
-    public static void instanceof_(ResolutionGuard guard) {
-        ClassActor classActor = UnsafeCast.asClassActor(Snippets.resolveClass(guard));
-        Object object = peekObject(0);
-        pokeInt(0, UnsafeCast.asByte(Snippets.instanceOf(classActor, object)));
-    }
-
-    @T1X_TEMPLATE(INVOKEVIRTUAL$void)
-    public static void invokevirtualVoid(ResolutionGuard.InPool guard, int receiverStackIndex) {
-        Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = resolveAndSelectVirtualMethod(receiver, guard, receiverStackIndex);
-        indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-    }
-
-    @T1X_TEMPLATE(INVOKEVIRTUAL$float)
-    public static void invokevirtualFloat(ResolutionGuard.InPool guard, int receiverStackIndex) {
-        Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = resolveAndSelectVirtualMethod(receiver, guard, receiverStackIndex);
-        indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-    }
-
-    @T1X_TEMPLATE(INVOKEVIRTUAL$long)
-    public static void invokevirtualLong(ResolutionGuard.InPool guard, int receiverStackIndex) {
-        Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = resolveAndSelectVirtualMethod(receiver, guard, receiverStackIndex);
-        indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-    }
-
-    @T1X_TEMPLATE(INVOKEVIRTUAL$double)
-    public static void invokevirtualDouble(ResolutionGuard.InPool guard, int receiverStackIndex) {
-        Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = resolveAndSelectVirtualMethod(receiver, guard, receiverStackIndex);
-        indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-    }
-
-    @T1X_TEMPLATE(INVOKEVIRTUAL$word)
-    public static void invokevirtualWord(ResolutionGuard.InPool guard, int receiverStackIndex) {
-        Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = resolveAndSelectVirtualMethod(receiver, guard, receiverStackIndex);
-        indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-    }
-
-    @T1X_TEMPLATE(INVOKEINTERFACE$void)
-    public static void invokeinterfaceVoid(ResolutionGuard.InPool guard, int receiverStackIndex) {
-        Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = resolveAndSelectInterfaceMethod(guard, receiver);
-        indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-    }
-
-    @T1X_TEMPLATE(INVOKEINTERFACE$float)
-    public static void invokeinterfaceFloat(ResolutionGuard.InPool guard, int receiverStackIndex) {
-        Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = resolveAndSelectInterfaceMethod(guard, receiver);
-        indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-    }
-
-    @T1X_TEMPLATE(INVOKEINTERFACE$long)
-    public static void invokeinterfaceLong(ResolutionGuard.InPool guard, int receiverStackIndex) {
-        Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = resolveAndSelectInterfaceMethod(guard, receiver);
-        indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-    }
-
-    @T1X_TEMPLATE(INVOKEINTERFACE$double)
-    public static void invokeinterfaceDouble(ResolutionGuard.InPool guard, int receiverStackIndex) {
-        Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = resolveAndSelectInterfaceMethod(guard, receiver);
-        indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-    }
-
-    @T1X_TEMPLATE(INVOKEINTERFACE$word)
-    public static void invokeinterfaceWord(ResolutionGuard.InPool guard, int receiverStackIndex) {
-        Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = resolveAndSelectInterfaceMethod(guard, receiver);
-        indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-    }
-
-    @T1X_TEMPLATE(INVOKESPECIAL$void)
-    public static void invokespecialVoid(ResolutionGuard.InPool guard, int receiverStackIndex) {
-        nullCheck(peekWord(receiverStackIndex).asPointer());
-        indirectCallVoid(resolveSpecialMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-    }
-
-    @T1X_TEMPLATE(INVOKESPECIAL$float)
-    public static void invokespecialFloat(ResolutionGuard.InPool guard, int receiverStackIndex) {
-        nullCheck(peekWord(receiverStackIndex).asPointer());
-        indirectCallFloat(resolveSpecialMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-    }
-
-    @T1X_TEMPLATE(INVOKESPECIAL$long)
-    public static void invokespecialLong(ResolutionGuard.InPool guard, int receiverStackIndex) {
-        nullCheck(peekWord(receiverStackIndex).asPointer());
-        indirectCallLong(resolveSpecialMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-    }
-
-    @T1X_TEMPLATE(INVOKESPECIAL$double)
-    public static void invokespecialDouble(ResolutionGuard.InPool guard, int receiverStackIndex) {
-        nullCheck(peekWord(receiverStackIndex).asPointer());
-        indirectCallDouble(resolveSpecialMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-    }
-
-    @T1X_TEMPLATE(INVOKESPECIAL$word)
-    public static void invokespecialWord(ResolutionGuard.InPool guard, int receiverStackIndex) {
-        nullCheck(peekWord(receiverStackIndex).asPointer());
-        indirectCallWord(resolveSpecialMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-    }
-
-    @T1X_TEMPLATE(INVOKESTATIC$void)
-    public static void invokestaticVoid(ResolutionGuard.InPool guard) {
-        indirectCallVoid(resolveStaticMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-    }
-
-    @T1X_TEMPLATE(INVOKESTATIC$float)
-    public static void invokestaticFloat(ResolutionGuard.InPool guard) {
-        indirectCallFloat(resolveStaticMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-    }
-
-    @T1X_TEMPLATE(INVOKESTATIC$long)
-    public static void invokestaticLong(ResolutionGuard.InPool guard) {
-        indirectCallLong(resolveStaticMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-    }
-
-    @T1X_TEMPLATE(INVOKESTATIC$double)
-    public static void invokestaticDouble(ResolutionGuard.InPool guard) {
-        indirectCallDouble(resolveStaticMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-    }
-
-    @T1X_TEMPLATE(INVOKESTATIC$word)
-    public static void invokestaticWord(ResolutionGuard.InPool guard) {
-        indirectCallWord(resolveStaticMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-    }
-
-    @T1X_TEMPLATE(IOR)
-    public static void ior() {
-        int value2 = peekInt(0);
-        int value1 = peekInt(1);
-        removeSlots(1);
-        pokeInt(0, value1 | value2);
-    }
-
-    @T1X_TEMPLATE(IREM)
-    public static void irem() {
-        int value2 = peekInt(0);
-        int value1 = peekInt(1);
-        removeSlots(1);
-        pokeInt(0, value1 % value2);
-    }
-
-    @T1X_TEMPLATE(WREM)
-    public static void wrem() {
-        Address divisor = peekWord(0).asAddress();
-        Address dividend = peekWord(1).asAddress();
-        removeSlots(1);
-        pokeWord(0, dividend.remainder(divisor));
-    }
-
-    @T1X_TEMPLATE(WREMI)
-    public static void wremi() {
-        int divisor = peekInt(0);
-        Address dividend = peekWord(1).asAddress();
-        removeSlots(1);
-        pokeInt(0, dividend.remainder(divisor));
-    }
-
-    @T1X_TEMPLATE(ISHL)
-    public static void ishl() {
-        int value2 = peekInt(0);
-        int value1 = peekInt(1);
-        removeSlots(1);
-        pokeInt(0, value1 << value2);
-    }
-
-    @T1X_TEMPLATE(ISHR)
-    public static void ishr() {
-        int value2 = peekInt(0);
-        int value1 = peekInt(1);
-        removeSlots(1);
-        pokeInt(0, value1 >> value2);
-    }
-
-    @T1X_TEMPLATE(ISTORE)
-    public static void istore(int displacementToSlot) {
-        setLocalInt(displacementToSlot, popInt());
-    }
-
-    @T1X_TEMPLATE(ISUB)
-    public static void isub() {
-        int value2 = peekInt(0);
-        int value1 = peekInt(1);
-        removeSlots(1);
-        pokeInt(0, value1 - value2);
-    }
-
-    @T1X_TEMPLATE(IUSHR)
-    public static void iushr() {
-        int value2 = peekInt(0);
-        int value1 = peekInt(1);
-        removeSlots(1);
-        pokeInt(0, value1 >>> value2);
-    }
-
-    @T1X_TEMPLATE(IXOR)
-    public static void ixor() {
-        int value2 = peekInt(0);
-        int value1 = peekInt(1);
-        removeSlots(1);
-        pokeInt(0, value1 ^ value2);
-    }
-
-    @T1X_TEMPLATE(LDC$int)
-    public static void ildc(int constant) {
-        pushInt(constant);
-    }
-
-    @T1X_TEMPLATE(LDC$float)
-    public static void fldc(float constant) {
-        pushFloat(constant);
-    }
-
-    @T1X_TEMPLATE(LDC$reference)
-    public static void unresolved_class_ldc(ResolutionGuard guard) {
-        ClassActor classActor = Snippets.resolveClass(guard);
-        Object mirror = T1XRuntime.getClassMirror(classActor);
-        pushObject(mirror);
-    }
-
-    @T1X_TEMPLATE(LDC$long)
-    public static void jldc(long value) {
-        pushLong(value);
-    }
-
-    @T1X_TEMPLATE(LDC$double)
-    public static void dldc(double value) {
-        pushDouble(value);
-    }
-
-    @T1X_TEMPLATE(L2D)
-    public static void l2d() {
-        long value = peekLong(0);
-        pokeDouble(0, value);
-    }
-
-    @T1X_TEMPLATE(L2F)
-    public static void l2f() {
-        long value = peekLong(0);
-        removeSlots(1);
-        pokeFloat(0, value);
-    }
-
-    @T1X_TEMPLATE(L2I)
-    public static void l2i() {
-        long value = peekLong(0);
-        removeSlots(1);
-        pokeInt(0, (int) value);
-    }
-
-    @T1X_TEMPLATE(LADD)
-    public static void ladd() {
-        long value2 = peekLong(0);
-        long value1 = peekLong(2);
-        removeSlots(2);
-        pokeLong(0, value1 + value2);
-    }
-
-    @T1X_TEMPLATE(LAND)
-    public static void land() {
-        long value2 = peekLong(0);
-        long value1 = peekLong(2);
-        removeSlots(2);
-        pokeLong(0, value1 & value2);
-    }
-
-    @T1X_TEMPLATE(LCMP)
-    public static void lcmp() {
-        long value2 = peekLong(0);
-        long value1 = peekLong(2);
-        int result = lcmp(value1, value2);
-        removeSlots(3);
-        pokeInt(0, result);
-    }
-
-    @T1X_TEMPLATE(LCONST)
-    public static void lconst(long constant) {
-        pushLong(constant);
-    }
-
-    @T1X_TEMPLATE(LLOAD)
-    public static void lload(int displacementToSlot) {
-        pushLong(getLocalLong(displacementToSlot));
-    }
-
-    @T1X_TEMPLATE(LDIV)
-    public static void ldiv() {
-        long divisor = peekLong(0);
-        long dividend = peekLong(2);
-        removeSlots(2);
-        pokeLong(0, dividend / divisor);
-    }
-
-    @T1X_TEMPLATE(LMUL)
-    public static void lmul() {
-        long value2 = peekLong(0);
-        long value1 = peekLong(2);
-        removeSlots(2);
-        pokeLong(0, value1 * value2);
-    }
-
-    @T1X_TEMPLATE(LNEG)
-    public static void lneg() {
-        pokeLong(0, -peekLong(0));
-    }
-
-    @T1X_TEMPLATE(LOR)
-    public static void lor() {
-        long value2 = peekLong(0);
-        long value1 = peekLong(2);
-        removeSlots(2);
-        pokeLong(0, value1 | value2);
-    }
-
-    @T1X_TEMPLATE(LREM)
-    public static void lrem() {
-        long value2 = peekLong(0);
-        long value1 = peekLong(2);
-        removeSlots(2);
-        pokeLong(0, value1 % value2);
-    }
-
-    @T1X_TEMPLATE(LSHL)
-    public static void lshl() {
-        int value2 = peekInt(0);
-        long value1 = peekLong(1);
-        removeSlots(1);
-        pokeLong(0, value1 << value2);
-    }
-
-    @T1X_TEMPLATE(LSHR)
-    public static void lshr() {
-        int value2 = peekInt(0);
-        long value1 = peekLong(1);
-        removeSlots(1);
-        pokeLong(0, value1 >> value2);
-    }
-
-    @T1X_TEMPLATE(LSTORE)
-    public static void lstor(int displacementToSlot) {
-        setLocalLong(displacementToSlot, popLong());
-    }
-
-    @T1X_TEMPLATE(LSUB)
-    public static void lsub() {
-        long value2 = peekLong(0);
-        long value1 = peekLong(2);
-        removeSlots(2);
-        pokeLong(0, value1 - value2);
-    }
-
-    @T1X_TEMPLATE(LUSHR)
-    public static void lushr() {
-        int value2 = peekInt(0);
-        long value1 = peekLong(1);
-        removeSlots(1);
-        pokeLong(0, value1 >>> value2);
-    }
-
-    @T1X_TEMPLATE(LXOR)
-    public static void lxor() {
-        long value2 = peekLong(0);
-        long value1 = peekLong(2);
-        removeSlots(2);
-        pokeLong(0, value1 ^ value2);
-    }
-
-    @T1X_TEMPLATE(MONITORENTER)
-    public static void monitorenter() {
-        Object object = peekObject(0);
-        T1XRuntime.monitorenter(object);
-        removeSlots(1);
-    }
-
-    @T1X_TEMPLATE(MONITOREXIT)
-    public static void monitorexit() {
-        Object object = peekObject(0);
-        T1XRuntime.monitorexit(object);
-        removeSlots(1);
-    }
-
-    @T1X_TEMPLATE(MULTIANEWARRAY)
-    public static void multianewarray(ResolutionGuard guard, int[] lengthsShared) {
-        ClassActor arrayClassActor = Snippets.resolveClass(guard);
-
-        // Need to use an unsafe cast to remove the checkcast inserted by javac as that causes this
-        // template to have a reference literal in its compiled form.
-        int[] lengths = UnsafeCast.asIntArray(cloneArray(lengthsShared));
-        int numberOfDimensions = lengths.length;
-
-        for (int i = 1; i <= numberOfDimensions; i++) {
-            int length = popInt();
-            checkArrayDimension(length);
-            ArrayAccess.setInt(lengths, numberOfDimensions - i, length);
-        }
-        pushObject(Snippets.createMultiReferenceArray(arrayClassActor, lengths));
-    }
-    @T1X_TEMPLATE(NEW)
-    public static void new_(ResolutionGuard guard) {
-        pushObject(resolveClassForNewAndCreate(guard));
-    }
-
-    @T1X_TEMPLATE(NEWARRAY)
-    public static void newarray(Kind kind) {
-        int length = peekInt(0);
-        pokeObject(0, createPrimitiveArray(kind, length));
-    }
-
     @T1X_TEMPLATE(NOP)
     public static void nop() {
         // do nothing.
-    }
-
-    @T1X_TEMPLATE(POP)
-    public static void pop() {
-        removeSlots(1);
-    }
-
-    @T1X_TEMPLATE(POP2)
-    public static void pop2() {
-        removeSlots(2);
-    }
-
-    @T1X_TEMPLATE(SIPUSH)
-    public static void sipush(short value) {
-        pushInt(value);
     }
 
     @T1X_TEMPLATE(SWAP)
@@ -1024,359 +235,14 @@ public class T1XTemplateSource {
         Intrinsics.compareWords(toWord(value1), toWord(value2));
     }
 
-    @T1X_TEMPLATE(IF_ACMPEQ)
-    public static void if_acmpeq() {
-        acmp_prefix();
-    }
-
-    @T1X_TEMPLATE(IF_ACMPNE)
-    public static void if_acmpne() {
-        acmp_prefix();
-    }
-
-    @T1X_TEMPLATE(IF_ICMPEQ)
-    public static void if_icmpeq() {
-        icmp_prefix();
-    }
-
-    @T1X_TEMPLATE(IF_ICMPNE)
-    public static void if_icmpne() {
-        icmp_prefix();
-    }
-
-    @T1X_TEMPLATE(IF_ICMPLT)
-    public static void if_icmplt() {
-        icmp_prefix();
-    }
-
-    @T1X_TEMPLATE(IF_ICMPGE)
-    public static void if_icmpge() {
-        icmp_prefix();
-    }
-
-    @T1X_TEMPLATE(IF_ICMPGT)
-    public static void if_icmpgt() {
-        icmp_prefix();
-    }
-
-    @T1X_TEMPLATE(IF_ICMPLE)
-    public static void if_icmple() {
-        icmp_prefix();
-    }
-
-    @T1X_TEMPLATE(IFEQ)
-    public static void ifeq() {
-        icmp0_prefix();
-    }
-
-    @T1X_TEMPLATE(IFNE)
-    public static void ifne() {
-        icmp0_prefix();
-    }
-
-    @T1X_TEMPLATE(IFLT)
-    public static void iflt() {
-        icmp0_prefix();
-    }
-
-    @T1X_TEMPLATE(IFGE)
-    public static void ifge() {
-        icmp0_prefix();
-    }
-
-    @T1X_TEMPLATE(IFGT)
-    public static void ifgt() {
-        icmp0_prefix();
-    }
-
-    @T1X_TEMPLATE(IFLE)
-    public static void ifle() {
-        icmp0_prefix();
-    }
-
-    @T1X_TEMPLATE(IFNONNULL)
-    public static void ifnonnull() {
-        acmp0_prefix();
-    }
-
-    @T1X_TEMPLATE(IFNULL)
-    public static void ifnull() {
-        acmp0_prefix();
-    }
-
     // Instructions with an initialized class operand
-
-    @T1X_TEMPLATE(NEW$init)
-    public static void new_(ClassActor classActor) {
-        pushObject(createTupleOrHybrid(classActor));
-    }
-
-    @T1X_TEMPLATE(INVOKESTATIC$void$init)
-    public static void invokestatic() {
-        directCallVoid();
-    }
-
-    @T1X_TEMPLATE(INVOKESTATIC$float$init)
-    public static void invokestaticFloat() {
-        directCallFloat();
-    }
-
-    @T1X_TEMPLATE(INVOKESTATIC$long$init)
-    public static void invokestaticLong() {
-        directCallLong();
-    }
-
-    @T1X_TEMPLATE(INVOKESTATIC$double$init)
-    public static void invokestaticDouble() {
-        directCallDouble();
-    }
-
-    @T1X_TEMPLATE(INVOKESTATIC$word$init)
-    public static void invokestaticWord() {
-        directCallWord();
-    }
-
 
     // Instructions with a resolved class operand
 
-    @T1X_TEMPLATE(LDC$reference$resolved)
-    public static void rldc(Object value) {
-        pushObject(value);
-    }
-
-    @T1X_TEMPLATE(CHECKCAST$resolved)
-    public static void checkcast(ClassActor classActor) {
-        Snippets.checkCast(classActor, peekObject(0));
-    }
-
-    @T1X_TEMPLATE(INSTANCEOF$resolved)
-    public static void instanceof_(ClassActor classActor) {
-        Object object = peekObject(0);
-        pokeInt(0, UnsafeCast.asByte(Snippets.instanceOf(classActor, object)));
-    }
-
-    @T1X_TEMPLATE(ANEWARRAY$resolved)
-    public static void anewarray(ArrayClassActor arrayClassActor) {
-        int length = peekInt(0);
-        pokeObject(0, T1XRuntime.createReferenceArray(arrayClassActor, length));
-    }
-
-    @T1X_TEMPLATE(MULTIANEWARRAY$resolved)
-    public static void multianewarray(ArrayClassActor arrayClassActor, int[] lengthsShared) {
-        // Need to use an unsafe cast to remove the checkcast inserted by javac as that causes this
-        // template to have a reference literal in its compiled form.
-        int[] lengths = UnsafeCast.asIntArray(cloneArray(lengthsShared));
-        int numberOfDimensions = lengths.length;
-        for (int i = 1; i <= numberOfDimensions; i++) {
-            int length = popInt();
-            checkArrayDimension(length);
-            ArrayAccess.setInt(lengths, numberOfDimensions - i, length);
-        }
-        pushObject(Snippets.createMultiReferenceArray(arrayClassActor, lengths));
-    }
-
-
-    /**
-     * Template sources for the invocation of resolved methods.
-     * <p>
-     * The calling convention is such that the part of the callee's frame that contains the incoming arguments of the method
-     * is the top of the stack of the caller. The rest of the frame is built on method entry. Thus, the template for a
-     * method invocation doesn't need to marshal the arguments. We can't just have templates compiled from standard method
-     * invocations as the compiler mixes instructions for arguments passing and method invocation. So we have to write
-     * template such that the call is explicitly made (using the Call SpecialBuiltin). Further, we need a template for each
-     * of the four kinds of returned result (void, one word, two words, a reference).
-     * <p>
-     * For methods with a static binding (e.g., methods invoked via invokestatic or invokespecial), we just need to issue a
-     * call. Thus a template for these bytecode is a single call instruction. A template resulting in this can be achieved
-     * by invoke a parameterless static method of an initialized class. We generate these templates for completion, although
-     * in practice a JIT might be better off generating the call instruction directly.
-     * <p>
-     * For dynamic method, the receiver is needed and method dispatch need to be generated. For the template, we pick an
-     * object at an arbitrary position on the expression stack to be the receiver, and rely on the optimizing compiler to
-     * generate dependency information about the constant value used as offset to read off the expression stack. JIT
-     * compilers just have to modify this offset using the appropriate instruction modifier from the generated template.
-     * Similarly, JIT compilers have to customized the virtual table index / itable serial identifier. Note that we use a
-     * parameter-less void method in the expression performing dynamic method selection, regardless of the number of
-     * parameters or of the kind of return value the template is to be used for.
-     *
-     * @author Laurent Daynes
-     */
-    @T1X_TEMPLATE(INVOKEVIRTUAL$void$resolved)
-    public static void invokevirtual(int vTableIndex, int receiverStackIndex) {
-        Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress();
-        indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-    }
-
-    @T1X_TEMPLATE(INVOKEVIRTUAL$float$resolved)
-    public static void invokevirtualReturnFloat(int vTableIndex, int receiverStackIndex) {
-        Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress();
-        indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-    }
-
-    @T1X_TEMPLATE(INVOKEVIRTUAL$long$resolved)
-    public static void invokevirtualLong(int vTableIndex, int receiverStackIndex) {
-        Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress();
-        indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-    }
-
-    @T1X_TEMPLATE(INVOKEVIRTUAL$double$resolved)
-    public static void invokevirtualDouble(int vTableIndex, int receiverStackIndex) {
-        Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress();
-        indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-    }
-
-    @T1X_TEMPLATE(INVOKEVIRTUAL$word$resolved)
-    public static void invokevirtualWord(int vTableIndex, int receiverStackIndex) {
-        Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress();
-        indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-    }
-
-    @T1X_TEMPLATE(INVOKEINTERFACE$void$resolved)
-    public static void invokeinterface(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
-        Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
-        indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-    }
-
-    @T1X_TEMPLATE(INVOKEINTERFACE$float$resolved)
-    public static void invokeinterfaceFloat(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
-        Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
-        indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-    }
-
-    @T1X_TEMPLATE(INVOKEINTERFACE$long$resolved)
-    public static void invokeinterfaceLong(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
-        Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
-        indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-    }
-
-    @T1X_TEMPLATE(INVOKEINTERFACE$double$resolved)
-    public static void invokeinterfaceDouble(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
-        Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
-        indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-    }
-
-    @T1X_TEMPLATE(INVOKEINTERFACE$word$resolved)
-    public static void invokeinterfaceWord(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
-        Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
-        indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-    }
 
     @INLINE
     public static void nullCheck(Pointer receiver) {
         receiver.readWord(0);
-    }
-
-    @T1X_TEMPLATE(INVOKESPECIAL$void$resolved)
-    public static void invokespecial(int receiverStackIndex) {
-        nullCheck(peekWord(receiverStackIndex).asPointer());
-        directCallVoid();
-    }
-
-    @INLINE
-    @T1X_TEMPLATE(INVOKESPECIAL$float$resolved)
-    public static void invokespecialReturnSingleSlot(int receiverStackIndex) {
-        nullCheck(peekWord(receiverStackIndex).asPointer());
-        directCallFloat();
-    }
-
-    @T1X_TEMPLATE(INVOKESPECIAL$long$resolved)
-    public static void invokespecialLong(int receiverStackIndex) {
-        nullCheck(peekWord(receiverStackIndex).asPointer());
-        directCallLong();
-    }
-
-    @T1X_TEMPLATE(INVOKESPECIAL$double$resolved)
-    public static void invokespecialDouble(int receiverStackIndex) {
-        nullCheck(peekWord(receiverStackIndex).asPointer());
-        directCallDouble();
-    }
-
-    @T1X_TEMPLATE(INVOKESPECIAL$word$resolved)
-    public static void invokespecialWord(int receiverStackIndex) {
-        nullCheck(peekWord(receiverStackIndex).asPointer());
-        directCallWord();
-    }
-
-    // Templates for instrumented invokevirtual and invokeinterface instructions.
-
-    @T1X_TEMPLATE(INVOKEVIRTUAL$void$instrumented)
-    public static void invokevirtual(int vTableIndex, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
-        Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);
-        indirectCallVoid(entryPoint, VTABLE_ENTRY_POINT, receiver);
-    }
-
-    @T1X_TEMPLATE(INVOKEVIRTUAL$float$instrumented)
-    public static void invokevirtualReturnFloat(int vTableIndex, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
-        Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);
-        indirectCallFloat(entryPoint, VTABLE_ENTRY_POINT, receiver);
-    }
-
-    @T1X_TEMPLATE(INVOKEVIRTUAL$long$instrumented)
-    public static void invokevirtualLong(int vTableIndex, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
-        Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);
-        indirectCallLong(entryPoint, VTABLE_ENTRY_POINT, receiver);
-    }
-
-    @T1X_TEMPLATE(INVOKEVIRTUAL$double$instrumented)
-    public static void invokevirtualDouble(int vTableIndex, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
-        Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);
-        indirectCallDouble(entryPoint, VTABLE_ENTRY_POINT, receiver);
-    }
-
-    @T1X_TEMPLATE(INVOKEVIRTUAL$word$instrumented)
-    public static void invokevirtualWord(int vTableIndex, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
-        Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);
-        indirectCallWord(entryPoint, VTABLE_ENTRY_POINT, receiver);
-    }
-
-    @T1X_TEMPLATE(INVOKEINTERFACE$void$instrumented)
-    public static void invokeinterface(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
-        Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
-        indirectCallVoid(entryPoint, VTABLE_ENTRY_POINT, receiver);
-    }
-
-    @T1X_TEMPLATE(INVOKEINTERFACE$float$instrumented)
-    public static void invokeinterfaceFloat(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
-        Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
-        indirectCallFloat(entryPoint, VTABLE_ENTRY_POINT, receiver);
-    }
-
-    @T1X_TEMPLATE(INVOKEINTERFACE$long$instrumented)
-    public static void invokeinterfaceLong(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
-        Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
-        indirectCallLong(entryPoint, VTABLE_ENTRY_POINT, receiver);
-    }
-
-    @T1X_TEMPLATE(INVOKEINTERFACE$double$instrumented)
-    public static void invokeinterfaceDouble(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
-        Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
-        indirectCallDouble(entryPoint, VTABLE_ENTRY_POINT, receiver);
-    }
-
-    @T1X_TEMPLATE(INVOKEINTERFACE$word$instrumented)
-    public static void invokeinterfaceWord(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
-        Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
-        indirectCallWord(entryPoint, VTABLE_ENTRY_POINT, receiver);
     }
 
     @INLINE
@@ -1385,30 +251,6 @@ public class T1XTemplateSource {
         Address entryPoint = hub.getWord(vTableIndex).asAddress();
         MethodInstrumentation.recordType(mpo, hub, mpoIndex, MethodInstrumentation.DEFAULT_RECEIVER_METHOD_PROFILE_ENTRIES);
         return entryPoint;
-    }
-
-    @T1X_TEMPLATE(MOV_I2F)
-    public static void mov_i2f() {
-        int value = peekInt(0);
-        pokeFloat(0, Intrinsics.intToFloat(value));
-    }
-
-    @T1X_TEMPLATE(MOV_F2I)
-    public static void mov_f2i() {
-        float value = peekFloat(0);
-        pokeInt(0, Intrinsics.floatToInt(value));
-    }
-
-    @T1X_TEMPLATE(MOV_L2D)
-    public static void mov_l2d() {
-        long value = peekLong(0);
-        pokeDouble(0, Intrinsics.longToDouble(value));
-    }
-
-    @T1X_TEMPLATE(MOV_D2L)
-    public static void mov_d2l() {
-        double value = peekDouble(0);
-        pokeLong(0, Intrinsics.doubleToLong(value));
     }
 
     @T1X_TEMPLATE(LSB)
@@ -1516,300 +358,6 @@ public class T1XTemplateSource {
         VMRegister.setCallAddressRegister(value);
     }
 
-    @HOSTED_ONLY
-    private static void generatePutField(String k) {
-        final boolean isTwoStackWords = isTwoStackWords(k);
-        final int peekOffset = isTwoStackWords ? 2 : 1;
-        generateAutoComment();
-        o.printf("    @T1X_TEMPLATE(PUTFIELD$%s$resolved)%n", lType(k));
-        o.printf("    public static void putfield%s(int offset) {%n", uType(k));
-        o.printf("        Object object = peekObject(%d);%n", peekOffset);
-        o.printf("        %s value = peek%s(0);%n", oType(k), uoType(k));
-        o.printf("        removeSlots(%d);%n", peekOffset + 1);
-        o.printf("        TupleAccess.write%s(object, offset, value);%n", uoType(k));
-        o.printf("    }%n");
-        newLine();
-
-        generateAutoComment();
-        o.printf("    @T1X_TEMPLATE(PUTFIELD$%s)%n", lType(k));
-        o.printf("    public static void putfield%s(ResolutionGuard.InPool guard) {%n", uType(k));
-        o.printf("        Object object = peekObject(%d);%n", peekOffset);
-        o.printf("        %s value = peek%s(0);%n", oType(k), uoType(k));
-        o.printf("        resolveAndPutField%s(guard, object, value);%n", uType(k));
-        o.printf("        removeSlots(%d);%n", peekOffset + 1);
-        o.printf("    }%n");
-        newLine();
-
-        final String m = uoType(k).equals("Object") ? "noninlineW" : "w";
-        generateAutoComment();
-        o.printf("    @T1X_TEMPLATE(PUTSTATIC$%s$init)%n", lType(k));
-        o.printf("    public static void putstatic%s(Object staticTuple, int offset) {%n", uType(k));
-        o.printf("        %s value = pop%s();%n", oType(k), uoType(k));
-        o.printf("        TupleAccess.%srite%s(staticTuple, offset, value);%n", m, uoType(k));
-        o.printf("    }%n");
-        newLine();
-
-        generateAutoComment();
-        o.printf("    @T1X_TEMPLATE(PUTSTATIC$%s)%n", lType(k));
-        o.printf("    public static void putstatic%s(ResolutionGuard.InPool guard) {%n", uType(k));
-        o.printf("        resolveAndPutStatic%s(guard, pop%s());%n", uType(k), uoType(k));
-        o.printf("    }%n");
-        newLine();
-
-    }
-
-    @HOSTED_ONLY
-    private static void generateGetField(String k) {
-        final boolean isTwoStackWords = isTwoStackWords(k);
-        generateAutoComment();
-        o.printf("    @T1X_TEMPLATE(GETFIELD$%s$resolved)%n", lType(k));
-        o.printf("    public static void getfield%s(int offset) {%n", uType(k));
-        o.printf("        Object object = peekObject(0);%n");
-        if (isTwoStackWords) {
-            o.printf("        addSlots(1);%n");
-        }
-        o.printf("        poke%s(0, TupleAccess.read%s(object, offset));%n", uoType(k), uoType(k));
-        o.printf("    }%n");
-        newLine();
-
-        generateAutoComment();
-        o.printf("    @T1X_TEMPLATE(GETFIELD$%s)%n", lType(k));
-        o.printf("    public static void getfield%s(ResolutionGuard.InPool guard) {%n", uType(k));
-        o.printf("        Object object = peekObject(0);%n");
-        if (isTwoStackWords) {
-            o.printf("        addSlots(1);%n");
-        }
-        o.printf("        poke%s(0, resolveAndGetField%s(guard, object));%n", uoType(k), uType(k));
-        o.printf("    }%n");
-        newLine();
-
-        generateAutoComment();
-        o.printf("    @T1X_TEMPLATE(GETSTATIC$%s)%n", lType(k));
-        o.printf("    public static void getstatic%s(ResolutionGuard.InPool guard) {%n", uType(k));
-        o.printf("        push%s(resolveAndGetStatic%s(guard));%n", uoType(k), uType(k));
-        o.printf("    }%n");
-        newLine();
-
-        generateAutoComment();
-        o.printf("    @T1X_TEMPLATE(GETSTATIC$%s$init)%n", lType(k));
-        o.printf("    public static void getstatic%s(Object staticTuple, int offset) {%n", uType(k));
-        o.printf("        push%s(TupleAccess.read%s(staticTuple, offset));%n", uoType(k), uoType(k));
-        o.printf("    }%n");
-        newLine();
-    }
-
-    @HOSTED_ONLY
-    private static void generateArrayLoad(String k) {
-        final boolean isTwoStackWords = isTwoStackWords(k);
-        generateAutoComment();
-        o.printf("    @T1X_TEMPLATE(%sALOAD)%n", tagPrefix(k));
-        o.printf("    public static void %saload() {%n", opPrefix(k));
-        o.printf("        int index = peekInt(0);%n");
-        o.printf("        Object array = peekObject(1);%n");
-        o.printf("        ArrayAccess.checkIndex(array, index);%n");
-        if (!isTwoStackWords) {
-            o.printf("        removeSlots(1);%n");
-        }
-        o.printf("        poke%s(0, ArrayAccess.get%s(array, index));%n", uoType(k), uoType(k));
-        o.printf("    }%n");
-        newLine();
-    }
-
-    @HOSTED_ONLY
-    private static void generateArrayStore(String k) {
-        final boolean isTwoStackWords = isTwoStackWords(k);
-        final int indexSlot = isTwoStackWords ? 2 : 1;
-        generateAutoComment();
-        o.printf("    @T1X_TEMPLATE(%sASTORE)%n", tagPrefix(k));
-        o.printf("    public static void %sastore() {%n", opPrefix(k));
-        o.printf("        int index = peekInt(%d);%n", indexSlot);
-        o.printf("        Object array = peekObject(%d);%n", indexSlot + 1);
-        o.printf("        ArrayAccess.checkIndex(array, index);%n");
-        o.printf("        %s value = peek%s(0);%n", oType(k), uoType(k));
-        if (k.equals("Reference")) {
-            o.printf("        ArrayAccess.checkSetObject(array, value);%n");
-        }
-        o.printf("        ArrayAccess.set%s(array, index, value);%n", uoType(k));
-        o.printf("        removeSlots(%d);%n", indexSlot + 2);
-        o.printf("    }%n");
-        newLine();
-    }
-
-    @HOSTED_ONLY
-    private static void generatePSet(String k) {
-        final boolean isTwoStackWords = isTwoStackWords(k);
-        final int indexSlot = isTwoStackWords ? 2 : 1;
-        generateAutoComment();
-        o.printf("    @T1X_TEMPLATE(PSET_%s)%n", auType(k));
-        o.printf("    public static void pset_%s() {%n", lType(k));
-        o.printf("        %s value = peek%s(0);%n", k, uType(k));
-        o.printf("        int index = peekInt(%d);%n", indexSlot);
-        o.printf("        int disp = peekInt(%d);%n", indexSlot + 1);
-        o.printf("        Pointer ptr = peekWord(%d).asPointer();%n", indexSlot + 2);
-        o.printf("        removeSlots(%d);%n", indexSlot + 3);
-        o.printf("        ptr.set%s(disp, index, value);%n", uType(k));
-        o.printf("    }%n");
-        newLine();
-    }
-
-    @HOSTED_ONLY
-    private static void generatePGet(String k) {
-        final boolean isTwoStackWords = isTwoStackWords(k);
-        generateAutoComment();
-        o.printf("    @T1X_TEMPLATE(PGET_%s)%n", auType(k));
-        o.printf("    public static void pget_%s() {%n", lType(k));
-        o.printf("        int index = peekInt(0);%n");
-        o.printf("        int disp = peekInt(1);%n");
-        o.printf("        Pointer ptr = peekWord(2).asPointer();%n");
-        o.printf("        removeSlots(%d);%n", isTwoStackWords ? 1 : 2);
-        o.printf("        poke%s(0, ptr.get%s(disp, index));%n", uType(k), uType(k));
-        o.printf("    }%n");
-        newLine();
-    }
-
-    @HOSTED_ONLY
-    private static void generatePRead(String k, boolean isI) {
-        final boolean isTwoStackWords = isTwoStackWords(k);
-        generateAutoComment();
-        o.printf("    @T1X_TEMPLATE(PREAD_%s%s)%n", auType(k), isI ? "_I" : "");
-        o.printf("    public static void pread_%s%s() {%n", lType(k), isI ? "_i" : "");
-        if (isI) {
-            o.printf("        int off = peekInt(0);%n");
-        } else {
-            o.printf("        Offset off = peekWord(0).asOffset();%n");
-        }
-        o.printf("        Pointer ptr = peekWord(1).asPointer();%n");
-        if (!isTwoStackWords) {
-            o.printf("        removeSlots(1);%n");
-        }
-        o.printf("        poke%s(0, ptr.read%s(off));%n", uType(k), uType(k));
-        o.printf("    }%n");
-        newLine();
-    }
-
-    @HOSTED_ONLY
-    private static void generatePWrite(String k, boolean isI) {
-        final boolean isTwoStackWords = isTwoStackWords(k);
-        generateAutoComment();
-        o.printf("    @T1X_TEMPLATE(PWRITE_%s%s)%n", auType(k), isI ? "_I" : "");
-        o.printf("    public static void pwrite_%s%s() {%n", lType(k), isI ? "_i" : "");
-        o.printf("        Pointer ptr = peekWord(2).asPointer();%n");
-        if (isI) {
-            o.printf("        int off = peekInt(1);%n");
-        } else {
-            o.printf("        Offset off = peekWord(1).asOffset();%n");
-        }
-        o.printf("        %s value = peek%s(0);%n", k, uType(k));
-        o.printf("        removeSlots(%d);%n", isTwoStackWords ? 4 : 3);
-        o.printf("        ptr.write%s(off, value);%n", uType(k));
-        o.printf("    }%n");
-        newLine();
-    }
-
-    @HOSTED_ONLY
-    private static void generatePCmpSwp(String k, boolean isI) {
-        generateAutoComment();
-        o.printf("    @T1X_TEMPLATE(PCMPSWP_%s%s)%n", auType(k), isI ? "_I" : "");
-        o.printf("    public static void pcmpswp_%s%s() {%n", lType(k), isI ? "_i" : "");
-        o.printf("        %s newValue = peek%s(0);%n", k, uType(k));
-        o.printf("        %s expectedValue = peek%s(1);%n", k, uType(k));
-        if (isI) {
-            o.printf("        int off = peekInt(2);%n");
-        } else {
-            o.printf("        Offset off = peekWord(2).asOffset();%n");
-        }
-        o.printf("        Pointer ptr = peekWord(3).asPointer();%n");
-        o.printf("        removeSlots(3);%n");
-        o.printf("        poke%s(0, ptr.compareAndSwap%s(off, expectedValue, newValue));%n", uType(k), uType(k));
-        o.printf("    }%n");
-        newLine();
-    }
-
-    @HOSTED_ONLY
-    private static void generateI2(String k) {
-        final boolean isTwoStackWords = isTwoStackWords(k);
-        generateAutoComment();
-        o.printf("    @T1X_TEMPLATE(I2%c)%n", uType(k).charAt(0));
-        o.printf("    public static void i2%c() {%n", k.charAt(0));
-        o.printf("        %s value = peek%s(0);%n", k, uType(k));
-        if (isTwoStackWords) {
-            o.printf("        addSlots(1);%n");
-        }
-        o.printf("        poke%s(0, value);%n", uType(k));
-        o.printf("    }%n");
-        newLine();
-    }
-
-    @HOSTED_ONLY
-    private static void generateReturn(String k, String unlock) {
-        // Admittedly, the readability goal is a stretch here!
-        final String arg = unlock.equals("") ? "" :
-            (unlock.equals("unlockClass") ? "Class rcvr" : "int dispToRcvrCopy");
-        generateAutoComment();
-        o.printf("    @T1X_TEMPLATE(%sRETURN%s)%n", tagPrefix(k), prefixDollar(unlock));
-        o.printf("    public static %s %sreturn%s(%s) {%n", oType(k), opPrefix(k), toFirstUpper(unlock), arg);
-        if (unlock.equals("unlockReceiver") || unlock.equals("registerFinalizer")) {
-            o.printf("        Object rcvr = getLocalObject(dispToRcvrCopy);%n");
-        }
-        if (unlock.equals("registerFinalizer")) {
-            o.printf("        if (ObjectAccess.readClassActor(rcvr).hasFinalizer()) {%n");
-            o.printf("            SpecialReferenceManager.registerFinalizee(rcvr);%n");
-            o.printf("        }%n");
-        } else {
-            if (unlock.length() > 0) {
-                o.printf("        Monitor.noninlineExit(rcvr);%n");
-            }
-            if (!k.equals("void")) {
-                o.printf("        return pop%s();%n", uoType(k));
-            }
-        }
-        o.printf("    }%n");
-        newLine();
-    }
-
-    @HOSTED_ONLY
-    public static void main(String[] args) {
-        for (String k : types) {
-            if (hasGetPutOps(k)) {
-                generateGetField(k);
-                generatePutField(k);
-            }
-            if (hasI2Ops(k)) {
-                generateI2(k);
-            }
-            if (hasReturnOps(k)) {
-                for (String lockType : lockVariants) {
-                    generateReturn(k, lockType);
-                }
-            }
-            if (hasArrayOps(k)) {
-                generateArrayLoad(k);
-                generateArrayStore(k);
-            }
-            if (hasPOps(k)) {
-                generatePGet(k);
-                if (!k.equals("char")) {
-                    generatePSet(k);
-                }
-                generatePRead(k, false);
-                if (!k.equals("char")) {
-                    generatePWrite(k, false);
-                }
-                generatePRead(k, true);
-                if (!k.equals("char")) {
-                    generatePWrite(k, true);
-                }
-            }
-            if (hasPCmpSwpOps(k)) {
-                generatePCmpSwp(k, false);
-                generatePCmpSwp(k, true);
-            }
-        }
-        // This is a special case
-        generateReturn("void", "registerFinalizer");
-
-
-    }
 
     // BEGIN GENERATED CODE
 
@@ -1951,8 +499,8 @@ public class T1XTemplateSource {
     // GENERATED -- EDIT AND RUN main() TO MODIFY
     @T1X_TEMPLATE(I2B)
     public static void i2b() {
-        byte value = peekByte(0);
-        pokeByte(0, value);
+        int value = peekInt(0);
+        pokeByte(0, (byte) value);
     }
 
     // GENERATED -- EDIT AND RUN main() TO MODIFY
@@ -2074,8 +622,8 @@ public class T1XTemplateSource {
     // GENERATED -- EDIT AND RUN main() TO MODIFY
     @T1X_TEMPLATE(I2C)
     public static void i2c() {
-        char value = peekChar(0);
-        pokeChar(0, value);
+        int value = peekInt(0);
+        pokeChar(0, (char) value);
     }
 
     // GENERATED -- EDIT AND RUN main() TO MODIFY
@@ -2187,8 +735,8 @@ public class T1XTemplateSource {
     // GENERATED -- EDIT AND RUN main() TO MODIFY
     @T1X_TEMPLATE(I2S)
     public static void i2s() {
-        short value = peekShort(0);
-        pokeShort(0, value);
+        int value = peekInt(0);
+        pokeShort(0, (short) value);
     }
 
     // GENERATED -- EDIT AND RUN main() TO MODIFY
@@ -2272,6 +820,48 @@ public class T1XTemplateSource {
     }
 
     // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(ICONST_0)
+    public static void iconst_0() {
+        pushInt(0);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(ICONST_1)
+    public static void iconst_1() {
+        pushInt(1);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(ICONST_2)
+    public static void iconst_2() {
+        pushInt(2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(ICONST_3)
+    public static void iconst_3() {
+        pushInt(3);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(ICONST_4)
+    public static void iconst_4() {
+        pushInt(4);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(ICONST_5)
+    public static void iconst_5() {
+        pushInt(5);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(ICONST_M1)
+    public static void iconst_m1() {
+        pushInt(-1);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
     @T1X_TEMPLATE(GETFIELD$int$resolved)
     public static void getfieldInt(int offset) {
         Object object = peekObject(0);
@@ -2326,6 +916,227 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(PUTSTATIC$int)
     public static void putstaticInt(ResolutionGuard.InPool guard) {
         resolveAndPutStaticInt(guard, popInt());
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(ILOAD)
+    public static void iload(int dispToLocalSlot) {
+        int value = getLocalInt(dispToLocalSlot);
+        pushInt(value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(ISTORE)
+    public static void istore(int dispToLocalSlot) {
+        int value = popInt();
+        setLocalInt(dispToLocalSlot, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(LDC$int)
+    public static void ildc(int constant) {
+        pushInt(constant);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(L2I)
+    public static void l2i() {
+        long value = peekLong(0);
+        removeSlots(1);
+        pokeInt(0, (int) value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(F2I)
+    public static void f2i() {
+        float value = peekFloat(0);
+        pokeInt(0, T1XRuntime.f2i(value));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(D2I)
+    public static void d2i() {
+        double value = peekDouble(0);
+        removeSlots(1);
+        pokeInt(0, T1XRuntime.d2i(value));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(IADD)
+    public static void iadd() {
+        int value2 = peekInt(0);
+        int value1 = peekInt(1);
+        removeSlots(1);
+        pokeInt(0, value1 + value2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(ISUB)
+    public static void isub() {
+        int value2 = peekInt(0);
+        int value1 = peekInt(1);
+        removeSlots(1);
+        pokeInt(0, value1 - value2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(IMUL)
+    public static void imul() {
+        int value2 = peekInt(0);
+        int value1 = peekInt(1);
+        removeSlots(1);
+        pokeInt(0, value1 * value2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(IDIV)
+    public static void idiv() {
+        int value2 = peekInt(0);
+        int value1 = peekInt(1);
+        removeSlots(1);
+        pokeInt(0, value1 / value2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(IREM)
+    public static void irem() {
+        int value2 = peekInt(0);
+        int value1 = peekInt(1);
+        removeSlots(1);
+        pokeInt(0, value1 % value2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INEG)
+    public static void ineg() {
+        int value = -peekInt(0);
+        pokeInt(0, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(IOR)
+    public static void ior() {
+        int value2 = peekInt(0);
+        int value1 = peekInt(1);
+        removeSlots(1);
+        pokeInt(0, value1 | value2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(IAND)
+    public static void iand() {
+        int value2 = peekInt(0);
+        int value1 = peekInt(1);
+        removeSlots(1);
+        pokeInt(0, value1 & value2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(IXOR)
+    public static void ixor() {
+        int value2 = peekInt(0);
+        int value1 = peekInt(1);
+        removeSlots(1);
+        pokeInt(0, value1 ^ value2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(ISHL)
+    public static void ishl() {
+        int value2 = peekInt(0);
+        int value1 = peekInt(1);
+        removeSlots(1);
+        pokeInt(0, value1 << value2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(ISHR)
+    public static void ishr() {
+        int value2 = peekInt(0);
+        int value1 = peekInt(1);
+        removeSlots(1);
+        pokeInt(0, value1 >> value2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(IUSHR)
+    public static void iushr() {
+        int value2 = peekInt(0);
+        int value1 = peekInt(1);
+        removeSlots(1);
+        pokeInt(0, value1 >>> value2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(IF_ICMPEQ)
+    public static void if_icmpeq() {
+        icmp_prefix();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(IFEQ)
+    public static void ifeq() {
+        icmp0_prefix();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(IF_ICMPNE)
+    public static void if_icmpne() {
+        icmp_prefix();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(IFNE)
+    public static void ifne() {
+        icmp0_prefix();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(IF_ICMPLT)
+    public static void if_icmplt() {
+        icmp_prefix();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(IFLT)
+    public static void iflt() {
+        icmp0_prefix();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(IF_ICMPGE)
+    public static void if_icmpge() {
+        icmp_prefix();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(IFGE)
+    public static void ifge() {
+        icmp0_prefix();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(IF_ICMPGT)
+    public static void if_icmpgt() {
+        icmp_prefix();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(IFGT)
+    public static void ifgt() {
+        icmp0_prefix();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(IF_ICMPLE)
+    public static void if_icmple() {
+        icmp_prefix();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(IFLE)
+    public static void ifle() {
+        icmp0_prefix();
     }
 
     // GENERATED -- EDIT AND RUN main() TO MODIFY
@@ -2452,6 +1263,12 @@ public class T1XTemplateSource {
     }
 
     // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(FCONST)
+    public static void fconst(float constant) {
+        pushFloat(constant);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
     @T1X_TEMPLATE(GETFIELD$float$resolved)
     public static void getfieldFloat(int offset) {
         Object object = peekObject(0);
@@ -2509,10 +1326,118 @@ public class T1XTemplateSource {
     }
 
     // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(FLOAD)
+    public static void fload(int dispToLocalSlot) {
+        float value = getLocalFloat(dispToLocalSlot);
+        pushFloat(value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(FSTORE)
+    public static void fstore(int dispToLocalSlot) {
+        float value = popFloat();
+        setLocalFloat(dispToLocalSlot, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(LDC$float)
+    public static void fldc(float constant) {
+        pushFloat(constant);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
     @T1X_TEMPLATE(I2F)
     public static void i2f() {
-        float value = peekFloat(0);
+        int value = peekInt(0);
         pokeFloat(0, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(L2F)
+    public static void l2f() {
+        long value = peekLong(0);
+        removeSlots(1);
+        pokeFloat(0, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(D2F)
+    public static void d2f() {
+        double value = peekDouble(0);
+        removeSlots(1);
+        pokeFloat(0, (float) value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(FADD)
+    public static void fadd() {
+        float value2 = peekFloat(0);
+        float value1 = peekFloat(1);
+        removeSlots(1);
+        pokeFloat(0, value1 + value2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(FSUB)
+    public static void fsub() {
+        float value2 = peekFloat(0);
+        float value1 = peekFloat(1);
+        removeSlots(1);
+        pokeFloat(0, value1 - value2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(FMUL)
+    public static void fmul() {
+        float value2 = peekFloat(0);
+        float value1 = peekFloat(1);
+        removeSlots(1);
+        pokeFloat(0, value1 * value2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(FDIV)
+    public static void fdiv() {
+        float value2 = peekFloat(0);
+        float value1 = peekFloat(1);
+        removeSlots(1);
+        pokeFloat(0, value1 / value2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(FREM)
+    public static void frem() {
+        float value2 = peekFloat(0);
+        float value1 = peekFloat(1);
+        removeSlots(1);
+        pokeFloat(0, value1 % value2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(FNEG)
+    public static void fneg(float zero) {
+        float value = zero - peekFloat(0);
+        pokeFloat(0, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(FCMPG)
+    public static void fcmpg() {
+        float value2 = peekFloat(0);
+        float value1 = peekFloat(1);
+        int result = fcmpg(value1, value2);
+        removeSlots(2);
+        pokeInt(0, result);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(FCMPL)
+    public static void fcmpl() {
+        float value2 = peekFloat(0);
+        float value1 = peekFloat(1);
+        int result = fcmpl(value1, value2);
+        removeSlots(2);
+        pokeInt(0, result);
     }
 
     // GENERATED -- EDIT AND RUN main() TO MODIFY
@@ -2555,6 +1480,80 @@ public class T1XTemplateSource {
         float value = peekFloat(0);
         ArrayAccess.setFloat(array, index, value);
         removeSlots(3);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEVIRTUAL$float)
+    public static void invokevirtualFloat(ResolutionGuard.InPool guard, int receiverStackIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = resolveAndSelectVirtualMethod(receiver, guard, receiverStackIndex);
+        indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEVIRTUAL$float$resolved)
+    public static void invokevirtualFloat(int vTableIndex, int receiverStackIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress();
+        indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEVIRTUAL$float$instrumented)
+    public static void invokevirtualFloat(int vTableIndex, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);
+        indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEINTERFACE$float)
+    public static void invokeinterfaceFloat(ResolutionGuard.InPool guard, int receiverStackIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = resolveAndSelectInterfaceMethod(guard, receiver);
+        indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEINTERFACE$float$resolved)
+    public static void invokeinterfaceFloat(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEINTERFACE$float$instrumented)
+    public static void invokeinterfaceFloat(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
+        indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKESPECIAL$float)
+    public static void invokespecialFloat(ResolutionGuard.InPool guard, int receiverStackIndex) {
+        nullCheck(peekWord(receiverStackIndex).asPointer());
+        indirectCallFloat(resolveSpecialMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKESPECIAL$float$resolved)
+    public static void invokespecialFloat(int receiverStackIndex) {
+        nullCheck(peekWord(receiverStackIndex).asPointer());
+        directCallFloat();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKESTATIC$float)
+    public static void invokestaticFloat(ResolutionGuard.InPool guard) {
+        indirectCallFloat(resolveStaticMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKESTATIC$float$init)
+    public static void invokestaticFloat() {
+        directCallFloat();
     }
 
     // GENERATED -- EDIT AND RUN main() TO MODIFY
@@ -2617,6 +1616,12 @@ public class T1XTemplateSource {
     }
 
     // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(LCONST)
+    public static void lconst(long constant) {
+        pushLong(constant);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
     @T1X_TEMPLATE(GETFIELD$long$resolved)
     public static void getfieldLong(int offset) {
         Object object = peekObject(0);
@@ -2676,11 +1681,162 @@ public class T1XTemplateSource {
     }
 
     // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(LLOAD)
+    public static void lload(int dispToLocalSlot) {
+        long value = getLocalLong(dispToLocalSlot);
+        pushLong(value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(LSTORE)
+    public static void lstore(int dispToLocalSlot) {
+        long value = popLong();
+        setLocalLong(dispToLocalSlot, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(LDC$long)
+    public static void lldc(long constant) {
+        pushLong(constant);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
     @T1X_TEMPLATE(I2L)
     public static void i2l() {
-        long value = peekLong(0);
+        int value = peekInt(0);
         addSlots(1);
         pokeLong(0, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(F2L)
+    public static void f2l() {
+        float value = peekFloat(0);
+        addSlots(1);
+        pokeLong(0, T1XRuntime.f2l(value));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(D2L)
+    public static void d2l() {
+        double value = peekDouble(0);
+        pokeLong(0, T1XRuntime.d2l(value));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(LADD)
+    public static void ladd() {
+        long value2 = peekLong(0);
+        long value1 = peekLong(2);
+        removeSlots(2);
+        pokeLong(0, value1 + value2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(LSUB)
+    public static void lsub() {
+        long value2 = peekLong(0);
+        long value1 = peekLong(2);
+        removeSlots(2);
+        pokeLong(0, value1 - value2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(LMUL)
+    public static void lmul() {
+        long value2 = peekLong(0);
+        long value1 = peekLong(2);
+        removeSlots(2);
+        pokeLong(0, value1 * value2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(LDIV)
+    public static void ldiv() {
+        long value2 = peekLong(0);
+        long value1 = peekLong(2);
+        removeSlots(2);
+        pokeLong(0, value1 / value2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(LREM)
+    public static void lrem() {
+        long value2 = peekLong(0);
+        long value1 = peekLong(2);
+        removeSlots(2);
+        pokeLong(0, value1 % value2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(LNEG)
+    public static void lneg() {
+        long value = -peekLong(0);
+        pokeLong(0, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(LOR)
+    public static void lor() {
+        long value2 = peekLong(0);
+        long value1 = peekLong(2);
+        removeSlots(2);
+        pokeLong(0, value1 | value2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(LAND)
+    public static void land() {
+        long value2 = peekLong(0);
+        long value1 = peekLong(2);
+        removeSlots(2);
+        pokeLong(0, value1 & value2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(LXOR)
+    public static void lxor() {
+        long value2 = peekLong(0);
+        long value1 = peekLong(2);
+        removeSlots(2);
+        pokeLong(0, value1 ^ value2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(LSHL)
+    public static void lshl() {
+        long value2 = peekLong(0);
+        long value1 = peekLong(2);
+        removeSlots(2);
+        pokeLong(0, value1 << value2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(LSHR)
+    public static void lshr() {
+        long value2 = peekLong(0);
+        long value1 = peekLong(2);
+        removeSlots(2);
+        pokeLong(0, value1 >> value2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(LUSHR)
+    public static void lushr() {
+        long value2 = peekLong(0);
+        long value1 = peekLong(2);
+        removeSlots(2);
+        pokeLong(0, value1 >>> value2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(LCMP)
+    public static void lcmp() {
+        long value2 = peekLong(0);
+        long value1 = peekLong(2);
+        int result = lcmp(value1, value2);
+        removeSlots(3);
+        pokeInt(0, result);
     }
 
     // GENERATED -- EDIT AND RUN main() TO MODIFY
@@ -2722,6 +1878,80 @@ public class T1XTemplateSource {
         long value = peekLong(0);
         ArrayAccess.setLong(array, index, value);
         removeSlots(4);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEVIRTUAL$long)
+    public static void invokevirtualLong(ResolutionGuard.InPool guard, int receiverStackIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = resolveAndSelectVirtualMethod(receiver, guard, receiverStackIndex);
+        indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEVIRTUAL$long$resolved)
+    public static void invokevirtualLong(int vTableIndex, int receiverStackIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress();
+        indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEVIRTUAL$long$instrumented)
+    public static void invokevirtualLong(int vTableIndex, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);
+        indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEINTERFACE$long)
+    public static void invokeinterfaceLong(ResolutionGuard.InPool guard, int receiverStackIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = resolveAndSelectInterfaceMethod(guard, receiver);
+        indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEINTERFACE$long$resolved)
+    public static void invokeinterfaceLong(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEINTERFACE$long$instrumented)
+    public static void invokeinterfaceLong(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
+        indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKESPECIAL$long)
+    public static void invokespecialLong(ResolutionGuard.InPool guard, int receiverStackIndex) {
+        nullCheck(peekWord(receiverStackIndex).asPointer());
+        indirectCallLong(resolveSpecialMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKESPECIAL$long$resolved)
+    public static void invokespecialLong(int receiverStackIndex) {
+        nullCheck(peekWord(receiverStackIndex).asPointer());
+        directCallLong();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKESTATIC$long)
+    public static void invokestaticLong(ResolutionGuard.InPool guard) {
+        indirectCallLong(resolveStaticMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKESTATIC$long$init)
+    public static void invokestaticLong() {
+        directCallLong();
     }
 
     // GENERATED -- EDIT AND RUN main() TO MODIFY
@@ -2779,6 +2009,12 @@ public class T1XTemplateSource {
         long value = peekLong(0);
         removeSlots(4);
         ptr.writeLong(off, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(DCONST)
+    public static void dconst(double constant) {
+        pushDouble(constant);
     }
 
     // GENERATED -- EDIT AND RUN main() TO MODIFY
@@ -2841,11 +2077,118 @@ public class T1XTemplateSource {
     }
 
     // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(DLOAD)
+    public static void dload(int dispToLocalSlot) {
+        double value = getLocalDouble(dispToLocalSlot);
+        pushDouble(value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(DSTORE)
+    public static void dstore(int dispToLocalSlot) {
+        double value = popDouble();
+        setLocalDouble(dispToLocalSlot, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(LDC$double)
+    public static void dldc(double constant) {
+        pushDouble(constant);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
     @T1X_TEMPLATE(I2D)
     public static void i2d() {
-        double value = peekDouble(0);
+        int value = peekInt(0);
         addSlots(1);
         pokeDouble(0, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(L2D)
+    public static void l2d() {
+        long value = peekLong(0);
+        pokeDouble(0, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(F2D)
+    public static void f2d() {
+        float value = peekFloat(0);
+        addSlots(1);
+        pokeDouble(0, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(DADD)
+    public static void dadd() {
+        double value2 = peekDouble(0);
+        double value1 = peekDouble(2);
+        removeSlots(2);
+        pokeDouble(0, value1 + value2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(DSUB)
+    public static void dsub() {
+        double value2 = peekDouble(0);
+        double value1 = peekDouble(2);
+        removeSlots(2);
+        pokeDouble(0, value1 - value2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(DMUL)
+    public static void dmul() {
+        double value2 = peekDouble(0);
+        double value1 = peekDouble(2);
+        removeSlots(2);
+        pokeDouble(0, value1 * value2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(DDIV)
+    public static void ddiv() {
+        double value2 = peekDouble(0);
+        double value1 = peekDouble(2);
+        removeSlots(2);
+        pokeDouble(0, value1 / value2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(DREM)
+    public static void drem() {
+        double value2 = peekDouble(0);
+        double value1 = peekDouble(2);
+        removeSlots(2);
+        pokeDouble(0, value1 % value2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(DNEG)
+    public static void dneg(double zero) {
+        double value = zero - peekDouble(0);
+        pokeDouble(0, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(DCMPG)
+    public static void dcmpg() {
+        double value2 = peekDouble(0);
+        double value1 = peekDouble(2);
+        int result = dcmpg(value1, value2);
+        removeSlots(3);
+        pokeInt(0, result);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(DCMPL)
+    public static void dcmpl() {
+        double value2 = peekDouble(0);
+        double value1 = peekDouble(2);
+        int result = dcmpl(value1, value2);
+        removeSlots(3);
+        pokeInt(0, result);
     }
 
     // GENERATED -- EDIT AND RUN main() TO MODIFY
@@ -2887,6 +2230,80 @@ public class T1XTemplateSource {
         double value = peekDouble(0);
         ArrayAccess.setDouble(array, index, value);
         removeSlots(4);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEVIRTUAL$double)
+    public static void invokevirtualDouble(ResolutionGuard.InPool guard, int receiverStackIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = resolveAndSelectVirtualMethod(receiver, guard, receiverStackIndex);
+        indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEVIRTUAL$double$resolved)
+    public static void invokevirtualDouble(int vTableIndex, int receiverStackIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress();
+        indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEVIRTUAL$double$instrumented)
+    public static void invokevirtualDouble(int vTableIndex, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);
+        indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEINTERFACE$double)
+    public static void invokeinterfaceDouble(ResolutionGuard.InPool guard, int receiverStackIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = resolveAndSelectInterfaceMethod(guard, receiver);
+        indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEINTERFACE$double$resolved)
+    public static void invokeinterfaceDouble(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEINTERFACE$double$instrumented)
+    public static void invokeinterfaceDouble(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
+        indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKESPECIAL$double)
+    public static void invokespecialDouble(ResolutionGuard.InPool guard, int receiverStackIndex) {
+        nullCheck(peekWord(receiverStackIndex).asPointer());
+        indirectCallDouble(resolveSpecialMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKESPECIAL$double$resolved)
+    public static void invokespecialDouble(int receiverStackIndex) {
+        nullCheck(peekWord(receiverStackIndex).asPointer());
+        directCallDouble();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKESTATIC$double)
+    public static void invokestaticDouble(ResolutionGuard.InPool guard) {
+        indirectCallDouble(resolveStaticMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKESTATIC$double$init)
+    public static void invokestaticDouble() {
+        directCallDouble();
     }
 
     // GENERATED -- EDIT AND RUN main() TO MODIFY
@@ -2947,6 +2364,12 @@ public class T1XTemplateSource {
     }
 
     // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(ACONST_NULL)
+    public static void aconst_null() {
+        pushObject(null);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
     @T1X_TEMPLATE(GETFIELD$reference$resolved)
     public static void getfieldReference(int offset) {
         Object object = peekObject(0);
@@ -3001,6 +2424,58 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(PUTSTATIC$reference)
     public static void putstaticReference(ResolutionGuard.InPool guard) {
         resolveAndPutStaticReference(guard, popObject());
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(ALOAD)
+    public static void aload(int dispToLocalSlot) {
+        Object value = getLocalObject(dispToLocalSlot);
+        pushObject(value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(ASTORE)
+    public static void astore(int dispToLocalSlot) {
+        Object value = popObject();
+        setLocalObject(dispToLocalSlot, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(LDC$reference$resolved)
+    public static void rldc(Object constant) {
+        pushObject(constant);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(LDC$reference)
+    public static void urldc(ResolutionGuard guard) {
+        ClassActor classActor = Snippets.resolveClass(guard);
+        Object constant = T1XRuntime.getClassMirror(classActor);
+        pushObject(constant);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(IF_ACMPEQ)
+    public static void if_acmpeq() {
+        acmp_prefix();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(IF_ACMPNE)
+    public static void if_acmpne() {
+        acmp_prefix();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(IFNULL)
+    public static void ifnull() {
+        acmp0_prefix();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(IFNONNULL)
+    public static void ifnonnull() {
+        acmp0_prefix();
     }
 
     // GENERATED -- EDIT AND RUN main() TO MODIFY
@@ -3128,6 +2603,12 @@ public class T1XTemplateSource {
     }
 
     // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(WCONST_0)
+    public static void wconst_0() {
+        pushWord(Address.zero());
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
     @T1X_TEMPLATE(GETFIELD$word$resolved)
     public static void getfieldWord(int offset) {
         Object object = peekObject(0);
@@ -3185,6 +2666,20 @@ public class T1XTemplateSource {
     }
 
     // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(WLOAD)
+    public static void wload(int dispToLocalSlot) {
+        Word value = getLocalWord(dispToLocalSlot);
+        pushWord(value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(WSTORE)
+    public static void wstore(int dispToLocalSlot) {
+        Word value = popWord();
+        setLocalWord(dispToLocalSlot, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
     @T1X_TEMPLATE(WRETURN)
     public static Word wreturn() {
         return popWord();
@@ -3203,6 +2698,80 @@ public class T1XTemplateSource {
         Object rcvr = getLocalObject(dispToRcvrCopy);
         Monitor.noninlineExit(rcvr);
         return popWord();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEVIRTUAL$word)
+    public static void invokevirtualWord(ResolutionGuard.InPool guard, int receiverStackIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = resolveAndSelectVirtualMethod(receiver, guard, receiverStackIndex);
+        indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEVIRTUAL$word$resolved)
+    public static void invokevirtualWord(int vTableIndex, int receiverStackIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress();
+        indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEVIRTUAL$word$instrumented)
+    public static void invokevirtualWord(int vTableIndex, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);
+        indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEINTERFACE$word)
+    public static void invokeinterfaceWord(ResolutionGuard.InPool guard, int receiverStackIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = resolveAndSelectInterfaceMethod(guard, receiver);
+        indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEINTERFACE$word$resolved)
+    public static void invokeinterfaceWord(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEINTERFACE$word$instrumented)
+    public static void invokeinterfaceWord(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
+        indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKESPECIAL$word)
+    public static void invokespecialWord(ResolutionGuard.InPool guard, int receiverStackIndex) {
+        nullCheck(peekWord(receiverStackIndex).asPointer());
+        indirectCallWord(resolveSpecialMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKESPECIAL$word$resolved)
+    public static void invokespecialWord(int receiverStackIndex) {
+        nullCheck(peekWord(receiverStackIndex).asPointer());
+        directCallWord();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKESTATIC$word)
+    public static void invokestaticWord(ResolutionGuard.InPool guard) {
+        indirectCallWord(resolveStaticMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKESTATIC$word$init)
+    public static void invokestaticWord() {
+        directCallWord();
     }
 
     // GENERATED -- EDIT AND RUN main() TO MODIFY
@@ -3305,6 +2874,311 @@ public class T1XTemplateSource {
     }
 
     // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEVIRTUAL$void)
+    public static void invokevirtualVoid(ResolutionGuard.InPool guard, int receiverStackIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = resolveAndSelectVirtualMethod(receiver, guard, receiverStackIndex);
+        indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEVIRTUAL$void$resolved)
+    public static void invokevirtualVoid(int vTableIndex, int receiverStackIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress();
+        indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEVIRTUAL$void$instrumented)
+    public static void invokevirtualVoid(int vTableIndex, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);
+        indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEINTERFACE$void)
+    public static void invokeinterfaceVoid(ResolutionGuard.InPool guard, int receiverStackIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = resolveAndSelectInterfaceMethod(guard, receiver);
+        indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEINTERFACE$void$resolved)
+    public static void invokeinterfaceVoid(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEINTERFACE$void$instrumented)
+    public static void invokeinterfaceVoid(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
+        indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKESPECIAL$void)
+    public static void invokespecialVoid(ResolutionGuard.InPool guard, int receiverStackIndex) {
+        nullCheck(peekWord(receiverStackIndex).asPointer());
+        indirectCallVoid(resolveSpecialMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKESPECIAL$void$resolved)
+    public static void invokespecialVoid(int receiverStackIndex) {
+        nullCheck(peekWord(receiverStackIndex).asPointer());
+        directCallVoid();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKESTATIC$void)
+    public static void invokestaticVoid(ResolutionGuard.InPool guard) {
+        indirectCallVoid(resolveStaticMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INVOKESTATIC$void$init)
+    public static void invokestaticVoid() {
+        directCallVoid();
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(WDIV)
+    public static void wdiv() {
+        Address value2 = peekWord(0).asAddress();
+        Address value1 = peekWord(1).asAddress();
+        removeSlots(1);
+        pokeWord(0, value1.dividedBy(value2));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(WDIVI)
+    public static void wdivi() {
+        int value2 = peekInt(0);
+        Address value1 = peekWord(1).asAddress();
+        removeSlots(1);
+        pokeWord(0, value1.dividedBy(value2));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(WREM)
+    public static void wrem() {
+        Address value2 = peekWord(0).asAddress();
+        Address value1 = peekWord(1).asAddress();
+        removeSlots(1);
+        pokeWord(0, value1.remainder(value2));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(WREMI)
+    public static void wremi() {
+        int value2 = peekInt(0);
+        Address value1 = peekWord(1).asAddress();
+        removeSlots(1);
+        pokeInt(0, value1.remainder(value2));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(IINC)
+    public static void iinc(int dispToLocalSlot, int increment) {
+        int value = getLocalInt(dispToLocalSlot);
+        setLocalInt(dispToLocalSlot, value  + increment);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(MOV_F2I)
+    public static void mov_f2i() {
+        float value = peekFloat(0);
+        pokeInt(0, Intrinsics.floatToInt(value));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(MOV_I2F)
+    public static void mov_i2f() {
+        int value = peekInt(0);
+        pokeFloat(0, Intrinsics.intToFloat(value));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(MOV_D2L)
+    public static void mov_d2l() {
+        double value = peekDouble(0);
+        pokeLong(0, Intrinsics.doubleToLong(value));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(MOV_L2D)
+    public static void mov_l2d() {
+        long value = peekLong(0);
+        pokeDouble(0, Intrinsics.longToDouble(value));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(BIPUSH)
+    public static void bipush(byte value) {
+        pushInt(value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(SIPUSH)
+    public static void sipush(short value) {
+        pushInt(value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(POP)
+    public static void pop() {
+        removeSlots(1);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(POP2)
+    public static void pop2() {
+        removeSlots(2);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(NEW)
+    public static void new_(ResolutionGuard arg) {
+        Object object = resolveClassForNewAndCreate(arg);
+        pushObject(object);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(NEW$init)
+    public static void new_(ClassActor arg) {
+        Object object = createTupleOrHybrid(arg);
+        pushObject(object);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(NEWARRAY)
+    public static void newarray(Kind kind) {;
+        int length = peekInt(0);;
+        Object array = createPrimitiveArray(kind, length);
+        pokeObject(0, array);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(ANEWARRAY)
+    public static void anewarray(ResolutionGuard guard) {
+        ArrayClassActor arrayClassActor = UnsafeCast.asArrayClassActor(Snippets.resolveArrayClass(guard));
+        int length = peekInt(0);
+        Object array = T1XRuntime.createReferenceArray(arrayClassActor, length);
+        pushObject(array);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(ANEWARRAY$resolved)
+    public static void anewarray(ArrayClassActor arrayClassActor) {
+        int length = peekInt(0);
+        Object array = T1XRuntime.createReferenceArray(arrayClassActor, length);
+        pushObject(array);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(MULTIANEWARRAY)
+    public static void multianewarray(ResolutionGuard guard, int[] lengthsShared) {
+        ClassActor arrayClassActor = Snippets.resolveClass(guard);
+        // Need to use an unsafe cast to remove the checkcast inserted by javac as that
+        // causes this template to have a reference literal in its compiled form.
+        int[] lengths = UnsafeCast.asIntArray(cloneArray(lengthsShared));
+        int numberOfDimensions = lengths.length;
+
+        for (int i = 1; i <= numberOfDimensions; i++) {
+            int length = popInt();
+            checkArrayDimension(length);
+            ArrayAccess.setInt(lengths, numberOfDimensions - i, length);
+        }
+
+        Object array = Snippets.createMultiReferenceArray(arrayClassActor, lengths);
+        pushObject(array);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(MULTIANEWARRAY$resolved)
+    public static void multianewarray(ArrayClassActor arrayClassActor, int[] lengthsShared) {
+        // Need to use an unsafe cast to remove the checkcast inserted by javac as that
+        // causes this template to have a reference literal in its compiled form.
+        int[] lengths = UnsafeCast.asIntArray(cloneArray(lengthsShared));
+        int numberOfDimensions = lengths.length;
+
+        for (int i = 1; i <= numberOfDimensions; i++) {
+            int length = popInt();
+            checkArrayDimension(length);
+            ArrayAccess.setInt(lengths, numberOfDimensions - i, length);
+        }
+
+        Object array = Snippets.createMultiReferenceArray(arrayClassActor, lengths);
+        pushObject(array);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(CHECKCAST)
+    public static void checkcast(ResolutionGuard arg) {
+        Object value = peekObject(0);
+        resolveAndCheckcast(arg, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(CHECKCAST$resolved)
+    public static void checkcast(ClassActor arg) {
+        Object value = peekObject(0);
+        Snippets.checkCast(arg, value);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(ARRAYLENGTH)
+    public static void arraylength() {
+        Object array = peekObject(0);
+        int length = ArrayAccess.readArrayLength(array);
+        pokeInt(0, length);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(ATHROW)
+    public static void athrow() {
+        Object object = peekObject(0);
+        Throw.raise(object);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(MONITORENTER)
+    public static void monitorenter() {
+        Object object = peekObject(0);
+        T1XRuntime.monitorenter(object);
+        removeSlots(1);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(MONITOREXIT)
+    public static void monitorexit() {
+        Object object = peekObject(0);
+        T1XRuntime.monitorexit(object);
+        removeSlots(1);
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INSTANCEOF)
+    public static void instanceof_(ResolutionGuard guard) {
+        ClassActor classActor = Snippets.resolveClass(guard);
+        Object object = peekObject(0);
+        pokeInt(0, UnsafeCast.asByte(Snippets.instanceOf(classActor, object)));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
+    @T1X_TEMPLATE(INSTANCEOF$resolved)
+    public static void instanceof_(ClassActor classActor) {
+        Object object = peekObject(0);
+        pokeInt(0, UnsafeCast.asByte(Snippets.instanceOf(classActor, object)));
+    }
+
+    // GENERATED -- EDIT AND RUN main() TO MODIFY
     @T1X_TEMPLATE(RETURN$registerFinalizer)
     public static void vreturnRegisterFinalizer(int dispToRcvrCopy) {
         Object rcvr = getLocalObject(dispToRcvrCopy);
@@ -3312,6 +3186,7 @@ public class T1XTemplateSource {
             SpecialReferenceManager.registerFinalizee(rcvr);
         }
     }
+
 
 
 
