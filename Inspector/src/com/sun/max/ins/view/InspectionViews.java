@@ -33,8 +33,8 @@ import com.sun.max.ins.NotepadInspector.NotepadViewManager;
 import com.sun.max.ins.UserFocusInspector.UserFocusViewManager;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.debug.BreakpointsInspector.BreakpointsViewManager;
-import com.sun.max.ins.debug.StackFrameInspector.StackFrameViewManager;
 import com.sun.max.ins.debug.RegistersInspector.RegistersViewManager;
+import com.sun.max.ins.debug.StackFrameInspector.StackFrameViewManager;
 import com.sun.max.ins.debug.StackInspector.StackViewManager;
 import com.sun.max.ins.debug.ThreadLocalsInspector.ThreadLocalsViewManager;
 import com.sun.max.ins.debug.ThreadsInspector.ThreadsViewManager;
@@ -43,7 +43,7 @@ import com.sun.max.ins.file.*;
 import com.sun.max.ins.file.JavaSourceInspector.JavaSourceViewManager;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.java.*;
-import com.sun.max.ins.java.BytecodeFramesInspector.BytecodeFrameViewManager;
+import com.sun.max.ins.java.CodeLocationInspector.CodeLocationViewManager;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.memory.AllocationsInspector.AllocationsViewManager;
 import com.sun.max.ins.memory.MemoryBytesInspector.MemoryBytesViewManager;
@@ -97,11 +97,11 @@ public final class InspectionViews extends AbstractInspectionHolder {
                 return viewManager;
             }
         },
-        BYTECODE_FRAMES(false, false, "The details of a bytecode frame descriptor") {
+        CODE_LOCATION(true, false, "The details of a position in compiled code") {
 
             @Override
-            public BytecodeFrameViewManager viewManager() {
-                final BytecodeFrameViewManager viewManager = BytecodeFramesInspector.makeViewManager(inspection);
+            public CodeLocationViewManager viewManager() {
+                final CodeLocationViewManager viewManager = CodeLocationInspector.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
@@ -333,13 +333,6 @@ public final class InspectionViews extends AbstractInspectionHolder {
             // Initialize any view managers that might need it.
             kind.viewManager();
         }
-    }
-
-    /**
-     * @return access to view creation for bytecode frames
-     */
-    public BytecodeFramesViewFactory bytecodeFrames() {
-        return (BytecodeFramesViewFactory) ViewKind.BYTECODE_FRAMES.viewManager();
     }
 
     /**
