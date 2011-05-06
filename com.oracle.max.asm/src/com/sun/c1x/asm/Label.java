@@ -28,7 +28,6 @@ import java.util.ArrayList;
  * This class represents a label within assembly code.
  */
 public final class Label {
-
     private int position = -1;
 
     /**
@@ -50,15 +49,11 @@ public final class Label {
     public Label() {
     }
 
-    public Label(int position) {
-        bind(position);
-    }
-
     /**
      * Binds the label to the specified position.
      * @param pos the position
      */
-    public void bind(int pos) {
+    protected void bind(int pos) {
         this.position = pos;
         assert isBound();
     }
@@ -72,7 +67,7 @@ public final class Label {
         patchPositions.add(branchLocation);
     }
 
-    public void patchInstructions(AbstractAssembler masm) {
+    protected void patchInstructions(AbstractAssembler masm) {
         assert isBound() : "Label should be bound";
         int target = position;
         for (int i = 0; i < patchPositions.size(); ++i) {

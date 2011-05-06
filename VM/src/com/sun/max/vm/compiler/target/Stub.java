@@ -17,6 +17,7 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
 import com.sun.max.vm.compiler.target.TargetMethod.*;
+import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.stack.*;
@@ -25,9 +26,7 @@ import com.sun.max.vm.stack.amd64.*;
 
 public class Stub extends TargetMethod {
 
-    public static final Object[] NO_DIRECT_CALLEES = {};
-
-    public Stub(Flavor flavor, String stubName,  int frameSize, byte[] code, int callPosition, int registerRestoreEpilogueOffset) {
+    public Stub(Flavor flavor, String stubName,  int frameSize, byte[] code, int callPosition, ClassMethodActor callee, int registerRestoreEpilogueOffset) {
         super(flavor, stubName, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         this.setFrameSize(frameSize);
         this.setRegisterRestoreEpilogueOffset(registerRestoreEpilogueOffset);
@@ -37,8 +36,24 @@ public class Stub extends TargetMethod {
         Code.allocate(targetBundleLayout, this);
         setData(null, null, code);
         if (callPosition != -1) {
-            setStopPositions(new int[] { callPosition}, NO_DIRECT_CALLEES, 1, 0);
+            assert callee != null;
+            setStopPositions(new int[] { callPosition }, new Object[] { callee }, 0, 0);
         }
+    }
+
+    @HOSTED_ONLY
+    private static boolean atFirstOrLastInstruction(Cursor current) {
+        if (platform().isa == ISA.AMD64) {
+            // check whether the current ip is at the first instruction or a return
+            // which means the stack pointer has not been adjusted yet (or has already been adjusted back)
+            TargetMethod targetMethod = current.targetMethod();
+            Pointer entryPoint = targetMethod.callEntryPoint.equals(CallEntryPoint.C_ENTRY_POINT) ?
+                CallEntryPoint.C_ENTRY_POINT.in(targetMethod) :
+                CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(targetMethod);
+
+            return entryPoint.equals(current.ip()) || current.stackFrameWalker().readByte(current.ip(), 0) == AMD64TargetMethodUtil.RET;
+        }
+        throw FatalError.unimplemented();
     }
 
     @Override
@@ -50,14 +65,13 @@ public class Stub extends TargetMethod {
             if (MaxineVM.isHosted()) {
                 // Only during a stack walk in the context of the Inspector can execution
                 // be anywhere other than at a recorded stop (i.e. call or safepoint).
-//                AdapterGenerator generator = AdapterGenerator.forCallee(current.targetMethod());
-//                if (generator != null && generator.advanceIfInPrologue(current)) {
-//                    return;
-//                }
-//                if (atFirstOrLastInstruction(current)) {
-//                    ripPointer = sp;
-//                }
-                throw new InternalError("check if called");
+                AdapterGenerator generator = AdapterGenerator.forCallee(current.targetMethod());
+                if (generator != null && generator.advanceIfInPrologue(current)) {
+                    return;
+                }
+                if (atFirstOrLastInstruction(current)) {
+                    ripPointer = sp;
+                }
             }
 
             StackFrameWalker stackFrameWalker = current.stackFrameWalker();
@@ -101,15 +115,14 @@ public class Stub extends TargetMethod {
 
     @Override
     public boolean acceptStackFrameVisitor(Cursor current, StackFrameVisitor visitor) {
-//        AdapterGenerator generator = AdapterGenerator.forCallee(current.targetMethod());
+        AdapterGenerator generator = AdapterGenerator.forCallee(current.targetMethod());
         Pointer sp = current.sp();
         if (MaxineVM.isHosted()) {
             // Only during a stack walk in the context of the Inspector can execution
             // be anywhere other than at a recorded stop (i.e. call or safepoint).
-//            if (atFirstOrLastInstruction(current) || (generator != null && generator.inPrologue(current.ip(), current.targetMethod()))) {
-//                sp = sp.minus(current.targetMethod().frameSize());
-//            }
-            throw new InternalError("check if called");
+            if (atFirstOrLastInstruction(current) || (generator != null && generator.inPrologue(current.ip(), current.targetMethod()))) {
+                sp = sp.minus(current.targetMethod().frameSize());
+            }
         }
         StackFrameWalker stackFrameWalker = current.stackFrameWalker();
         StackFrame stackFrame = new AMD64JavaStackFrame(stackFrameWalker.calleeStackFrame(), current.targetMethod(), current.ip(), sp, sp);
@@ -127,7 +140,7 @@ public class Stub extends TargetMethod {
 
     @Override
     public void fixupCallSite(int callOffset, Address callEntryPoint) {
-        FatalError.unexpected("Adapter should never be patched");
+        AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
     }
 
     @Override

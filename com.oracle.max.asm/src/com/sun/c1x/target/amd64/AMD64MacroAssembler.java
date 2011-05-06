@@ -22,32 +22,21 @@
  */
 package com.sun.c1x.target.amd64;
 
-import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
-import com.sun.cri.xir.*;
 
 /**
- * This class implements the AMD64-specific portion of the macro assembler.
- *
- * @author Thomas Wuerthinger
- * @author Ben L. Titzer
+ * This class implements commonly used X86 code patterns.
  */
 public class AMD64MacroAssembler extends AMD64Assembler {
 
     protected final CiRegister rscratch1;
 
-
     public AMD64MacroAssembler(CiTarget target, RiRegisterConfig registerConfig) {
         super(target, registerConfig);
         this.rscratch1 = registerConfig.getScratchRegister();
     }
-
- 
- 
- 
- 
 
     void mov64(CiAddress dst, long src) {
         movq(rscratch1, src);
@@ -72,7 +61,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
 
     // 64 bit versions
 
-  
+
     void decrementq(CiRegister reg, int value) {
         if (value == Integer.MIN_VALUE) {
             subq(reg, value);
@@ -114,14 +103,6 @@ public class AMD64MacroAssembler extends AMD64Assembler {
     // These are mostly for initializing null
     void movptr(CiAddress dst, int src) {
         movslq(dst, src);
-    }
-
-    void stop(String msg) {
-        if (AsmOptions.GenAssertionCode) {
-            // TODO: pass a pointer to the message
-            directCall(CiRuntimeCall.Debug);
-            hlt();
-        }
     }
 
     public final void cmp32(CiRegister src1, int imm) {
@@ -326,19 +307,6 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         xchgq(src1, src2);
     }
 
-    public void shouldNotReachHere() {
-        stop("should not reach here");
-    }
-
-    public void enter(short imm16, byte imm8) {
-        emitByte(0xC8);
-        // appended:
-        emitByte(imm16 & 0xff);
-        imm16 >>= 8;
-        emitByte(imm16 & 0xff);
-        emitByte(imm8);
-    }
-
     /**
      * Emit code to save a given set of callee save registers to the
      * {@linkplain CiCalleeSaveArea CSA} within the frame.
@@ -359,9 +327,5 @@ public class AMD64MacroAssembler extends AMD64Assembler {
             int offset = csa.offsetOf(r);
             movq(r, new CiAddress(CiKind.Word, frame, frameToCSA + offset));
         }
-    }
-
-    public void int3() {
-        emitByte(0xCC);
     }
 }

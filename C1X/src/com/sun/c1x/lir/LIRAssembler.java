@@ -115,7 +115,7 @@ public abstract class LIRAssembler {
                     if (handler.entryCode() != null && handler.entryCode().instructionsList().size() > 1) {
                         handler.setEntryCodeOffset(codePos());
                         if (C1XOptions.CommentedAssembly) {
-                            asm.blockComment("Exception adapter block");
+                            ((AMD64C1XMacroAssembler)asm).blockComment("Exception adapter block");
                         }
                         emitLirList(handler.entryCode());
                     } else {
@@ -159,7 +159,7 @@ public abstract class LIRAssembler {
         assert block.lir() != null : "must have LIR";
         if (C1XOptions.CommentedAssembly) {
             String st = String.format(" block B%d [%d, %d]", block.blockID, block.bci(), block.end().bci());
-            asm.blockComment(st);
+            ((AMD64C1XMacroAssembler)asm).blockComment(st);
         }
 
         emitLirList(block.lir());
@@ -172,7 +172,7 @@ public abstract class LIRAssembler {
             if (C1XOptions.CommentedAssembly) {
                 // Only print out branches
                 if (op.code == LIROpcode.Branch) {
-                    asm.blockComment(op.toStringWithIdPrefix());
+                    ((AMD64C1XMacroAssembler)asm).blockComment(op.toStringWithIdPrefix());
                 }
             }
             if (C1XOptions.PrintLIRWithAssembly && !TTY.isSuppressed()) {
@@ -230,14 +230,14 @@ public abstract class LIRAssembler {
                 // fall through
             case ConstDirectCall:
                if (op.marks != null) {
-                    op.marks.put(XirMark.CALLSITE, asm.recordMark(null, new Mark[0]));
+                    op.marks.put(XirMark.CALLSITE, ((AMD64C1XMacroAssembler)asm).recordMark(null, new Mark[0]));
                 }
                 emitDirectCall(op.target, op.info);
                 break;
             case IndirectCall:
                 emitCallAlignment(op.code);
                 if (op.marks != null) {
-                    op.marks.put(XirMark.CALLSITE, asm.recordMark(null, new Mark[0]));
+                    op.marks.put(XirMark.CALLSITE, ((AMD64C1XMacroAssembler)asm).recordMark(null, new Mark[0]));
                 }
                 emitIndirectCall(op.target, op.info, op.targetAddress());
                 break;
@@ -283,12 +283,7 @@ public abstract class LIRAssembler {
                 emitLea(op.operand(), op.result());
                 break;
             case NullCheck:
-                assert op.operand().isRegister();
-                if (C1XOptions.NullCheckUniquePc) {
-                    asm.nop();
-                }
-                ((AMD64C1XMacroAssembler)asm).recordImplicitException(codePos(), op.info);
-                asm.nullCheck(op.operand().asRegister());
+                emitNullCheck(op.operand(), op.info);
                 break;
             case Lsb:
                 emitSignificantBitOp(false,  op.operand(), op.result());
@@ -457,6 +452,8 @@ public abstract class LIRAssembler {
     protected abstract void emitBreakpoint();
 
     protected abstract void emitLea(CiValue src, CiValue dst);
+
+    protected abstract void emitNullCheck(CiValue src, LIRDebugInfo info);
 
     protected abstract void emitNegate(LIRNegate negate);
 

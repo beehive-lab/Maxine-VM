@@ -31,6 +31,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.c1x.*;
+import com.sun.max.vm.compiler.target.*;
 
 /**
  * A T1X template is a piece of machine code (and its associated metadata) that

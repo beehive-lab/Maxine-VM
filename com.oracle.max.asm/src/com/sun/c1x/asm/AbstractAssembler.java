@@ -23,21 +23,23 @@
 package com.sun.c1x.asm;
 
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiTargetMethod.*;
+import com.sun.cri.ci.CiArchitecture.*;
 
 /**
- * @author Marcelo Cintra
- * @author Thomas Wuerthinger
+ * The platform-independent base class for the assembler
  */
 public abstract class AbstractAssembler {
-    public final Buffer codeBuffer;
     public final CiTarget target;
-    public final CiTargetMethod targetMethod;
+    public final Buffer codeBuffer;
 
     public AbstractAssembler(CiTarget target) {
         this.target = target;
-        this.targetMethod = new CiTargetMethod();
-        this.codeBuffer = new Buffer(target.arch.byteOrder);
+
+        if (target.arch.byteOrder == ByteOrder.BigEndian) {
+        	this.codeBuffer = new Buffer.BigEndian();
+        } else {
+        	this.codeBuffer = new Buffer.LittleEndian();
+        }
     }
 
     public final void bind(Label l) {
@@ -46,39 +48,21 @@ public abstract class AbstractAssembler {
         l.patchInstructions(this);
     }
 
-    public void setFrameSize(int frameSize) {
-        targetMethod.setFrameSize(frameSize);
-    }
+    protected abstract void patchJumpTarget(int branch, int target);
 
-    public Mark recordMark(Object id, Mark[] references) {
-        return targetMethod.recordMark(codeBuffer.position(), id, references);
-    }
-
-    public abstract void nop();
-
-    public abstract void nullCheck(CiRegister r);
-
-    public abstract void align(int codeEntryAlignment);
-
-    public abstract void patchJumpTarget(int branch, int target);
-
-    public final void emitByte(int x) {
+    protected final void emitByte(int x) {
         codeBuffer.emitByte(x);
     }
 
-    public final void emitShort(int x) {
+    protected final void emitShort(int x) {
         codeBuffer.emitShort(x);
     }
 
-    public final void emitInt(int x) {
+    protected final void emitInt(int x) {
         codeBuffer.emitInt(x);
     }
 
-    public final void emitLong(long x) {
+    protected final void emitLong(long x) {
         codeBuffer.emitLong(x);
-    }
-
-    public void blockComment(String s) {
-        targetMethod.addAnnotation(new CodeComment(codeBuffer.position(), s));
     }
 }

@@ -227,8 +227,8 @@ public final class C1XCompilation {
     public AbstractAssembler masm() {
         if (assembler == null) {
             assembler = compiler.backend.newAssembler(registerConfig);
-            assembler.setFrameSize(frameMap.frameSize());
-            assembler.targetMethod.setCustomStackAreaOffset(frameMap.offsetToCustomArea());
+            ((AMD64C1XMacroAssembler)assembler).setFrameSize(frameMap.frameSize());
+            ((AMD64C1XMacroAssembler)assembler).targetMethod.setCustomStackAreaOffset(frameMap.offsetToCustomArea());
         }
         return assembler;
     }

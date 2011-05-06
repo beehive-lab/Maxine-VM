@@ -8,6 +8,4 @@ public class AsmOptions {
     public static boolean UseIncDec                     = false;
     public static boolean UseXmmLoadAndClearUpper       = false;
     public static boolean UseXmmRegToRegMoveAll         = false;
-
-    public static boolean GenAssertionCode              = false;
 }

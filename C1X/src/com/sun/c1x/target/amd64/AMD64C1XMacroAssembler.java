@@ -58,7 +58,7 @@ public class AMD64C1XMacroAssembler extends AMD64C1XAssembler {
         }
 
         // Clear out parameters
-        if (AsmOptions.GenAssertionCode) {
+        if (C1XOptions.GenAssertionCode) {
             for (int i = 0; i < args.length; i++) {
                 movptr(new CiAddress(CiKind.Word, AMD64.RSP, stub.argOffsets[i]), 0);
             }
@@ -101,7 +101,7 @@ public class AMD64C1XMacroAssembler extends AMD64C1XAssembler {
     }
 
 
-    void movoop(CiRegister dst, CiConstant obj) {
+    public void movoop(CiRegister dst, CiConstant obj) {
         assert obj.kind == CiKind.Object;
         if (obj.isNull()) {
             xorq(dst, dst);
@@ -115,12 +115,12 @@ public class AMD64C1XMacroAssembler extends AMD64C1XAssembler {
         }
     }
 
-    void movoop(CiAddress dst, CiConstant obj) {
+    public void movoop(CiAddress dst, CiConstant obj) {
         movoop(rscratch1, obj);
         movq(dst, rscratch1);
     }
 
-    int correctedIdivq(CiRegister reg) {
+    private int correctedIdivq(CiRegister reg) {
         // Full implementation of Java ldiv and lrem; checks for special
         // case as described in JVM spec. : p.243 & p.271. The function
         // returns the (pc) offset of the idivl instruction - may be needed
@@ -158,4 +158,15 @@ public class AMD64C1XMacroAssembler extends AMD64C1XAssembler {
         return idivqOffset;
     }
 
+    protected void stop(String msg) {
+        if (C1XOptions.GenAssertionCode) {
+            // TODO: pass a pointer to the message
+            directCall(CiRuntimeCall.Debug, null);
+            hlt();
+        }
+    }
+
+    public void shouldNotReachHere() {
+        stop("should not reach here");
+    }
 }
