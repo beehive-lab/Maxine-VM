@@ -27,6 +27,7 @@ import java.util.*;
 public abstract class Buffer {
 	protected byte[] data;
 	protected int position;
+    private int mark = -1;
 
 	public Buffer() {
 		data = new byte[AsmOptions.InitialCodeBufferSize];
@@ -34,6 +35,7 @@ public abstract class Buffer {
 
 	public void reset() {
 		position = 0;
+        mark = -1;
 	}
 
 	public int position() {
@@ -44,6 +46,23 @@ public abstract class Buffer {
 		assert position >= 0 && position <= data.length;
 		this.position = position;
 	}
+
+    /**
+     * Places a bookmark at the {@linkplain #position() current position}.
+     *
+     * @return the previously placed bookmark or {@code -1} if there was no bookmark
+     */
+    public void putMark() {
+    	assert this.mark == -1 : "overwriting existing mark";
+        this.mark = position;
+    }
+
+    public int getMark() {
+        int mark = this.mark;
+        assert mark != -1 : "mark must be set";
+        this.mark = -1;
+        return mark;
+    }
 
 	/**
 	 * Closes this buffer. No extra data can be written to this buffer after
@@ -109,9 +128,9 @@ public abstract class Buffer {
 	}
 
 	public int emitByte(int b, int pos) {
-		assert NumUtil.isByte(b);
+		assert NumUtil.isUByte(b);
 		ensureSize(pos + 1);
-		data[pos++] = (byte) b;
+		data[pos++] = (byte) (b & 0xFF);
 		return pos;
 	}
 
@@ -131,7 +150,7 @@ public abstract class Buffer {
 
 	public static final class BigEndian extends Buffer {
 		public int emitShort(int b, int pos) {
-			assert NumUtil.isShort(b);
+			assert NumUtil.isUShort(b);
 			ensureSize(pos + 2);
 			data[pos++] = (byte) ((b >> 8) & 0xFF);
 			data[pos++] = (byte) (b & 0xFF);
@@ -177,7 +196,7 @@ public abstract class Buffer {
 
 	public static final class LittleEndian extends Buffer {
 		public int emitShort(int b, int pos) {
-			assert NumUtil.isShort(b);
+			assert NumUtil.isUShort(b);
 			ensureSize(pos + 2);
 			data[pos++] = (byte) (b & 0xFF);
 			data[pos++] = (byte) ((b >> 8) & 0xFF);

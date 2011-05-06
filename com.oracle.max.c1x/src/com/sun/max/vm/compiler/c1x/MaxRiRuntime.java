@@ -33,9 +33,7 @@ import java.util.*;
 import com.sun.c1x.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiTargetMethod.Call;
-import com.sun.cri.ci.CiTargetMethod.DataPatch;
-import com.sun.cri.ci.CiTargetMethod.Site;
+import com.sun.cri.ci.CiTargetMethod.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.platform.*;
@@ -46,7 +44,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.value.*;
@@ -63,11 +60,11 @@ public class MaxRiRuntime implements RiRuntime {
     private RiSnippets snippets;
 
     private static MaxRiRuntime instance = new MaxRiRuntime();
-    
+
     public static MaxRiRuntime getInstance() {
     	return instance;
     }
-    
+
     private MaxRiRuntime() {
     }
 

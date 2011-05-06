@@ -28,12 +28,11 @@ import java.util.*;
 import com.sun.c1x.alloc.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.gen.*;
-import com.sun.c1x.gen.LIRGenerator.DeoptimizationStub;
+import com.sun.c1x.gen.LIRGenerator.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.observer.*;
-import com.sun.c1x.target.amd64.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
@@ -71,7 +70,7 @@ public final class C1XCompilation {
     private int nextID = 1;
 
     private FrameMap frameMap;
-    private AbstractAssembler assembler;
+    private TargetMethodAssembler assembler;
 
     private IR hir;
 
@@ -224,11 +223,12 @@ public final class C1XCompilation {
         return frameMap;
     }
 
-    public AbstractAssembler masm() {
+    public TargetMethodAssembler assembler() {
         if (assembler == null) {
-            assembler = compiler.backend.newAssembler(registerConfig);
-            ((AMD64C1XMacroAssembler)assembler).setFrameSize(frameMap.frameSize());
-            ((AMD64C1XMacroAssembler)assembler).targetMethod.setCustomStackAreaOffset(frameMap.offsetToCustomArea());
+            AbstractAssembler asm = compiler.backend.newAssembler(registerConfig);
+            assembler = new TargetMethodAssembler(asm);
+            assembler.setFrameSize(frameMap.frameSize());
+            assembler.targetMethod.setCustomStackAreaOffset(frameMap.offsetToCustomArea());
         }
         return assembler;
     }
@@ -321,8 +321,7 @@ public final class C1XCompilation {
             // generate traps at the end of the method
             lirAssembler.emitTraps();
 
-            // TODO(cwi) temporary cast
-            CiTargetMethod targetMethod = ((AMD64C1XMacroAssembler)masm()).finishTargetMethod(method, runtime, lirAssembler.registerRestoreEpilogueOffset, false);
+            CiTargetMethod targetMethod = assembler().finishTargetMethod(method, runtime, lirAssembler.registerRestoreEpilogueOffset, false);
             if (assumptions.count() > 0) {
                 targetMethod.setAssumptions(assumptions);
             }
