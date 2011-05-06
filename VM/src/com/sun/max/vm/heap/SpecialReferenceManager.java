@@ -82,6 +82,13 @@ public class SpecialReferenceManager {
          *         depends on the specific GC algorithm (e.g. mark-sweep vs copying)
          */
         Reference preserve(Reference ref);
+
+        /**
+         * Indicates whether the GC relocates live objects. If true and a reference object is live, the special reference manager must
+         * invoke its {@link #preserve(Reference)} method to update the referent field.
+         * @return true if live objects may have relocated.
+         */
+        boolean mayRelocateLiveObjects();
     }
 
     /**
@@ -199,6 +206,7 @@ public class SpecialReferenceManager {
     public static void processDiscoveredSpecialReferences(GC gc) {
         java.lang.ref.Reference head = discoveredList;
         java.lang.ref.Reference end = sentinel;
+        final boolean updateReachableReferent = gc.mayRelocateLiveObjects();
 
         // Process the discovered list until it is empty (new elements may be
         // prepended while processing).
@@ -230,7 +238,7 @@ public class SpecialReferenceManager {
                         refAlias.next = last;
                         last = ref;
                     }
-                } else {
+                } else if (updateReachableReferent) {
                     // this object is reachable, however the "referent" field was not scanned.
                     // we need to update this field manually
                     refAlias.referent = gc.preserve(referent).toJava();
@@ -265,7 +273,7 @@ public class SpecialReferenceManager {
                         Log.print(" [queue: ");
                         Log.print(Reference.fromJava(r.queue).toOrigin());
                         Log.print("]");
-                    } else {
+                    } else if (updateReachableReferent) {
                         Log.print(" moved to ");
                         Log.print(ObjectAccess.toOrigin(newReferent));
                     }
@@ -293,6 +301,7 @@ public class SpecialReferenceManager {
 
     private static void processInspectableWeakReferencesMemory(GC gc) {
         final RootTableMemoryRegion rootsMemoryRegion = InspectableHeapInfo.rootsMemoryRegion();
+        final boolean updateReachableReferent = gc.mayRelocateLiveObjects();
         assert rootsMemoryRegion != null;
         final Pointer rootsPointer = rootsMemoryRegion.start().asPointer();
         long wordsUsedCounter = 0;
@@ -302,7 +311,9 @@ public class SpecialReferenceManager {
             if (!rootPointer.isZero()) {
                 final Reference referent = Reference.fromOrigin(rootPointer);
                 if (gc.isReachable(referent)) {
-                    rootsPointer.setWord(i, gc.preserve(referent).toOrigin());
+                    if (updateReachableReferent) {
+                        rootsPointer.setWord(i, gc.preserve(referent).toOrigin());
+                    }
                     wordsUsedCounter++;
                 } else {
                     rootsPointer.setWord(i, Pointer.zero());

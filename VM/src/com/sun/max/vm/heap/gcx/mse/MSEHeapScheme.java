@@ -306,7 +306,6 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
         }
 
         private Size requestedSize;
-        private final TimerMetric weakRefTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
         private final TimerMetric reclaimTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
         private final TimerMetric totalPauseTime = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
 
@@ -326,8 +325,6 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
         private void reportLastGCTimes() {
             final boolean lockDisabledSafepoints = Log.lock();
             heapMarker.reportLastElapsedTimes();
-            Log.print(", weak refs=");
-            Log.print(weakRefTimer.getLastElapsedTime());
             Log.print(", sweeping=");
             Log.print(reclaimTimer.getLastElapsedTime());
             Log.print(", total=");
@@ -338,8 +335,6 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
         private void reportTotalGCTimes() {
             final boolean lockDisabledSafepoints = Log.lock();
             heapMarker.reportTotalElapsedTimes();
-            Log.print(", weak refs=");
-            Log.print(weakRefTimer.getElapsedTime());
             Log.print(", sweeping=");
             Log.print(reclaimTimer.getElapsedTime());
             Log.print(", total=");
@@ -366,9 +361,6 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
             }
             theHeap.makeParsable();
             theHeap.mark(heapMarker);
-            startTimer(weakRefTimer);
-            SpecialReferenceManager.processDiscoveredSpecialReferences(heapMarker.getSpecialReferenceGC());
-            stopTimer(weakRefTimer);
             startTimer(reclaimTimer);
             /*Size freeSpaceAfterGC = */theHeap.sweep(heapMarker);
             stopTimer(reclaimTimer);
