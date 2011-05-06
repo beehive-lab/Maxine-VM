@@ -164,6 +164,8 @@ public final class C1XOptions {
     public static boolean CommentedAssembly             = ____;
     public static boolean PrintLIRWithAssembly          = ____;
 
+    public static boolean GenAssertionCode              = ____;
+
     static {
         setOptimizationLevel(1);
     }

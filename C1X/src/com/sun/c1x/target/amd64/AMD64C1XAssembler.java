@@ -13,10 +13,25 @@ import com.sun.cri.ri.*;
 
 
 public class AMD64C1XAssembler extends AMD64MacroAssembler {
+    public final CiTargetMethod targetMethod;
+
     public List<ExceptionInfo> exceptionInfoList;
 
     public AMD64C1XAssembler(CiTarget target, RiRegisterConfig registerConfig) {
         super(target, registerConfig);
+        this.targetMethod = new CiTargetMethod();
+    }
+
+    public void setFrameSize(int frameSize) {
+        targetMethod.setFrameSize(frameSize);
+    }
+
+    public CiTargetMethod.Mark recordMark(Object id, CiTargetMethod.Mark[] references) {
+        return targetMethod.recordMark(codeBuffer.position(), id, references);
+    }
+
+    public void blockComment(String s) {
+        targetMethod.addAnnotation(new CiTargetMethod.CodeComment(codeBuffer.position(), s));
     }
 
     public CiTargetMethod finishTargetMethod(Object name, RiRuntime runtime, int registerRestoreEpilogueOffset, boolean isStub) {

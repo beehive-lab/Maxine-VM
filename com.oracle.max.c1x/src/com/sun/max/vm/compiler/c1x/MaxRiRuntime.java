@@ -46,6 +46,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.value.*;

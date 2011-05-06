@@ -172,10 +172,10 @@ public class AMD64Assembler extends AbstractAssembler {
         if (base == CiRegister.Frame) {
             assert frameRegister != null : "cannot use register " + CiRegister.Frame + " in assembler with null register configuration";
             base = frameRegister;
-        } else if (base == CiRegister.CallerFrame) {
-            assert frameRegister != null : "cannot use register " + CiRegister.Frame + " in assembler with null register configuration";
-            base = frameRegister;
-            disp += targetMethod.frameSize() + 8;
+//        } else if (base == CiRegister.CallerFrame) {
+//            assert frameRegister != null : "cannot use register " + CiRegister.Frame + " in assembler with null register configuration";
+//            base = frameRegister;
+//            disp += targetMethod.frameSize() + 8;
         }
 
         // Encode the registers as needed in the fields they are used in
@@ -259,7 +259,7 @@ public class AMD64Assembler extends AbstractAssembler {
                 emitInt(disp);
             } else if (base == CiRegister.InstructionRelative) {
                 // Adjust disp which is currently relative to the start of the instruction
-                int instrStart = codeBuffer.mark();
+                int instrStart = codeBuffer.position();
                 assert instrStart >= 0;
                 int instrSize = (codeBuffer.position() - instrStart) + 5;
                 disp = disp - instrSize;
@@ -1264,7 +1264,6 @@ public class AMD64Assembler extends AbstractAssembler {
         emitByte(0xD8 | encode);
     }
 
-    @Override
     public final void nop() {
         nop(1);
     }
@@ -2785,7 +2784,7 @@ public class AMD64Assembler extends AbstractAssembler {
     }
 
     @Override
-    public final void patchJumpTarget(int branch, int branchTarget) {
+    protected final void patchJumpTarget(int branch, int branchTarget) {
         int op = codeBuffer.getByte(branch);
         assert op == 0xE8 // call
             || op == 0x00 // jump table entry
@@ -2818,47 +2817,54 @@ public class AMD64Assembler extends AbstractAssembler {
         }
     }
 
-    @Override
     public void nullCheck(CiRegister r) {
         testl(AMD64.rax, new CiAddress(CiKind.Word, r.asValue(Word), 0));
     }
 
-    @Override
     public void align(int modulus) {
         if (codeBuffer.position() % modulus != 0) {
             nop(modulus - (codeBuffer.position() % modulus));
         }
     }
-    
-    
-    
-    public final void nativeCall(CiRegister dst, String symbol) {
-        int encode = prefixAndEncode(dst.encoding);
-        emitByte(0xFF);
-        emitByte(0xD0 | encode);
+
+    public void pushfq() {
+        emitByte(0x9c);
     }
 
-    public final int directCall(Object target) {
+    public void popfq() {
+        emitByte(0x9D);
+    }
+
+    /**
+     * Emits a direct call instruction. Note that the actual call target is not specified, because all calls
+     * need patching anyway. Therefore, 0 is emitted as the call target, and the user is responsible
+     * to add the call address to the appropriate patching tables.
+     */
+    public final int call() {
         int before = codeBuffer.position();
         emitByte(0xE8);
         emitInt(0);
         return before;
     }
 
-//    public final int directJmp(Object target) {
-//        int before = codeBuffer.position();
-//        emitByte(0xE9);
-//        emitInt(0);
-//        int after = codeBuffer.position();
-//        return before;
-//    }
-
-    public final int indirectCall(CiRegister dst) {
+    public final int call(CiRegister dst) {
         int before = codeBuffer.position();
         int encode = prefixAndEncode(dst.encoding);
-
         emitByte(0xFF);
         emitByte(0xD0 | encode);
         return before;
+    }
+
+    public void int3() {
+        emitByte(0xCC);
+    }
+
+    public void enter(short imm16, byte imm8) {
+        emitByte(0xC8);
+        // appended:
+        emitByte(imm16 & 0xff);
+        imm16 >>= 8;
+        emitByte(imm16 & 0xff);
+        emitByte(imm8);
     }
 }

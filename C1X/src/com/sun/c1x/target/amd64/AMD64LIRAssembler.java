@@ -105,7 +105,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     protected void emitHere(CiValue dst, LIRDebugInfo info, boolean infoOnly) {
         masm.recordSafepoint(codePos(), info);
         if (!infoOnly) {
-            masm.codeBuffer.mark();
+//            masm.codeBuffer.mark();
             masm.leaq(dst.asRegister(), new CiAddress(CiKind.Word, InstructionRelative.asValue(), 0));
         }
     }
@@ -487,7 +487,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
 
         // Set scratch to address of jump table
         int leaPos = buf.position();
-        buf.mark();
+//        buf.mark();
         masm.leaq(rscratch1, new CiAddress(CiKind.Word, InstructionRelative.asValue(), 0));
 
         // Load jump table entry into scratch and jump to it
@@ -503,7 +503,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         // Patch LEA instruction above now that we know the position of the jump table
         int jumpTablePos = buf.position();
         buf.setPosition(leaPos);
-        buf.mark();
+//        buf.mark();
         masm.leaq(rscratch1, new CiAddress(CiKind.Word, InstructionRelative.asValue(), jumpTablePos - leaPos));
         buf.setPosition(jumpTablePos);
 
@@ -1539,6 +1539,16 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     }
 
     @Override
+    protected void emitNullCheck(CiValue src, LIRDebugInfo info) {
+        assert src.isRegister();
+        if (C1XOptions.NullCheckUniquePc) {
+            masm.nop();
+        }
+        masm.recordImplicitException(codePos(), info);
+        masm.nullCheck(src.asRegister());
+    }
+
+    @Override
     protected void emitVolatileMove(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info) {
         assert kind == CiKind.Long : "only for volatile long fields";
 
@@ -1928,11 +1938,11 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                 case NullCheck: {
                     masm.recordImplicitException(codePos(), info);
                     CiValue pointer = operands[inst.x().index];
-                    asm.nullCheck(pointer.asRegister());
+                    masm.nullCheck(pointer.asRegister());
                     break;
                 }
                 case Align: {
-                    asm.align((Integer) inst.extra);
+                    masm.align((Integer) inst.extra);
                     break;
                 }
                 case StackOverflowCheck: {
@@ -1999,7 +2009,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                         references[i] = marks.get(xmark.references[i]);
                         assert references[i] != null;
                     }
-                    Mark mark = asm.recordMark(xmark.id, references);
+                    Mark mark = masm.recordMark(xmark.id, references);
                     marks.put(xmark, mark);
                     break;
                 }
@@ -2011,7 +2021,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                 }
                 case RawBytes: {
                     for (byte b : (byte[]) inst.extra) {
-                        masm.emitByte(b & 0xff);
+                        masm.codeBuffer.emitByte(b & 0xff);
                     }
                     break;
                 }

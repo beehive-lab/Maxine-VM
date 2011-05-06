@@ -24,227 +24,200 @@ package com.sun.c1x.asm;
 
 import java.util.*;
 
-import com.sun.c1x.*;
-import com.sun.cri.bytecode.*;
-import com.sun.cri.ci.CiArchitecture.ByteOrder;
+public abstract class Buffer {
+	protected byte[] data;
+	protected int position;
 
-/**
- * 
- */
-public final class Buffer {
+	public Buffer() {
+		data = new byte[AsmOptions.InitialCodeBufferSize];
+	}
 
-    private byte[] data;
-    private int position;
-    private int mark = -1;
+	public void reset() {
+		position = 0;
+	}
 
-    private final ByteOrder byteOrder;
+	public int position() {
+		return position;
+	}
 
-    public Buffer(ByteOrder byteOrder) {
-        this.byteOrder = byteOrder;
-        this.data = new byte[AsmOptions.InitialCodeBufferSize];
-    }
+	public void setPosition(int position) {
+		assert position >= 0 && position <= data.length;
+		this.position = position;
+	}
 
-    public void reset() {
-        position = 0;
-        mark = -1;
-    }
+	/**
+	 * Closes this buffer. No extra data can be written to this buffer after
+	 * this call.
+	 *
+	 * @param trimmedCopy
+	 *            if {@code true}, then a copy of the underlying byte array up
+	 *            to (but not including) {@code position()} is returned
+	 * @return the data in this buffer or a trimmed copy if {@code trimmedCopy}
+	 *         is {@code true}
+	 */
+	public byte[] close(boolean trimmedCopy) {
+		byte[] result = trimmedCopy ? Arrays.copyOf(data, position()) : data;
+		data = null;
+		return result;
+	}
 
-    /**
-     * Closes this buffer. No extra data can be written to this buffer after this call.
-     *
-     * @param trimmedCopy if {@code true}, then a copy of the underlying byte array up to (but not including)
-     *            {@code position()} is returned
-     * @return the data in this buffer or a trimmed copy if {@code trimmedCopy} is {@code true}
-     */
-    public byte[] close(boolean trimmedCopy) {
-        byte[] result = trimmedCopy ? Arrays.copyOf(data, position()) : data;
-        data = null;
-        return result;
-    }
+	public byte[] copyData(int start, int end) {
+		return Arrays.copyOfRange(data, start, end);
+	}
 
-    public int emitBytes(byte[] arr, int off, int len) {
-        assert data != null : "must not use buffer after calling finished!";
-        int oldPos = position;
-        ensureSize(position + len);
-        System.arraycopy(arr, off, data, position, len);
-        position += len;
-        return oldPos;
-    }
+	/**
+	 * Copies the data from this buffer into a given array.
+	 *
+	 * @param dst
+	 *            the destination array
+	 * @param off
+	 *            starting position in {@code dst}
+	 * @param len
+	 *            number of bytes to copy
+	 */
+	public void copyInto(byte[] dst, int off, int len) {
+		System.arraycopy(data, 0, dst, off, len);
+	}
 
-    public int emitByte(int b) {
-        int oldPos = position;
-        position = emitByte(b, oldPos);
-        return oldPos;
-    }
+	protected void ensureSize(int length) {
+		if (length >= data.length) {
+			data = Arrays.copyOf(data, length * 4);
+			// C1XMetrics.CodeBufferCopies++;
+		}
+	}
 
-    public int emitShort(int b) {
-        int oldPos = position;
-        position = emitShort(b, oldPos);
-        return oldPos;
-    }
+	public void emitBytes(byte[] arr, int off, int len) {
+		ensureSize(position + len);
+		System.arraycopy(arr, off, data, position, len);
+		position += len;
+	}
 
-    public int emitInt(int b) {
-        int oldPos = position;
-        position = emitInt(b, oldPos);
-        return oldPos;
-    }
+	public void emitByte(int b) {
+		position = emitByte(b, position);
+	}
 
-    public int emitLong(long b) {
-        int oldPos = position;
-        position = emitLong(b, oldPos);
-        return oldPos;
-    }
+	public void emitShort(int b) {
+		position = emitShort(b, position);
+	}
 
-    private boolean isByte(int b) {
-        return b == (b & 0xFF);
-    }
+	public void emitInt(int b) {
+		position = emitInt(b, position);
+	}
 
-    private boolean isShort(int s) {
-        return s == (s & 0xFFFF);
-    }
+	public void emitLong(long b) {
+		position = emitLong(b, position);
+	}
 
-    /**
-     * Places a bookmark at the {@linkplain #position() current position}.
-     *
-     * @return the previously placed bookmark or {@code -1} if there was no bookmark
-     */
-    public int mark() {
-        int mark = this.mark;
-        this.mark = position;
-        return mark;
-    }
+	public int emitByte(int b, int pos) {
+		assert NumUtil.isByte(b);
+		ensureSize(pos + 1);
+		data[pos++] = (byte) b;
+		return pos;
+	}
 
-    private void ensureSize(int length) {
-        if (length >= data.length) {
-            data = Arrays.copyOf(data, data.length * 4);
-//            C1XMetrics.CodeBufferCopies++;
-        }
-    }
+	public abstract int emitShort(int b, int pos);
 
-    public int emitByte(int b, int pos) {
-        assert data != null : "must not use buffer after calling finished!";
-        assert isByte(b);
-        ensureSize(pos + 1);
-        data[pos++] = (byte) b;
-        return pos;
-    }
+	public abstract int emitInt(int b, int pos);
 
-    public int emitShort(int b, int pos) {
-        assert data != null : "must not use buffer after calling finished!";
-        assert isShort(b);
-        ensureSize(pos + 2);
-        if (byteOrder == ByteOrder.BigEndian) {
-            data[pos++] = (byte) ((b >> 8) & 0xFF);
-            data[pos++] = (byte) (b & 0xFF);
+	public abstract int emitLong(long b, int pos);
 
-        } else {
-            assert byteOrder == ByteOrder.LittleEndian;
-            data[pos++] = (byte) (b & 0xFF);
-            data[pos++] = (byte) ((b >> 8) & 0xFF);
-        }
-        return pos;
-    }
+	public int getByte(int pos) {
+		return data[pos] & 0xff;
+	}
 
-    public int emitInt(int b, int pos) {
-        assert data != null : "must not use buffer after calling finished!";
-        ensureSize(pos + 4);
-        if (byteOrder == ByteOrder.BigEndian) {
-            data[pos++] = (byte) ((b >> 24) & 0xFF);
-            data[pos++] = (byte) ((b >> 16) & 0xFF);
-            data[pos++] = (byte) ((b >> 8) & 0xFF);
-            data[pos++] = (byte) (b & 0xFF);
-        } else {
-            assert byteOrder == ByteOrder.LittleEndian;
-            data[pos++] = (byte) (b & 0xFF);
-            data[pos++] = (byte) ((b >> 8) & 0xFF);
-            data[pos++] = (byte) ((b >> 16) & 0xFF);
-            data[pos++] = (byte) ((b >> 24) & 0xFF);
-        }
-        return pos;
-    }
+	public abstract int getShort(int pos);
 
-    public int emitLong(long b, int pos) {
-        assert data != null : "must not use buffer after calling finished!";
-        ensureSize(pos + 8);
+	public abstract int getInt(int pos);
 
-        if (byteOrder == ByteOrder.BigEndian) {
-            data[pos++] = (byte) ((b >> 56) & 0xFF);
-            data[pos++] = (byte) ((b >> 48) & 0xFF);
-            data[pos++] = (byte) ((b >> 40) & 0xFF);
-            data[pos++] = (byte) ((b >> 32) & 0xFF);
-            data[pos++] = (byte) ((b >> 24) & 0xFF);
-            data[pos++] = (byte) ((b >> 16) & 0xFF);
-            data[pos++] = (byte) ((b >> 8) & 0xFF);
-            data[pos++] = (byte) (b & 0xFF);
-        } else {
-            assert byteOrder == ByteOrder.LittleEndian;
-            data[pos++] = (byte) (b & 0xFF);
-            data[pos++] = (byte) ((b >> 8) & 0xFF);
-            data[pos++] = (byte) ((b >> 16) & 0xFF);
-            data[pos++] = (byte) ((b >> 24) & 0xFF);
-            data[pos++] = (byte) ((b >> 32) & 0xFF);
-            data[pos++] = (byte) ((b >> 40) & 0xFF);
-            data[pos++] = (byte) ((b >> 48) & 0xFF);
-            data[pos++] = (byte) ((b >> 56) & 0xFF);
-        }
-        return pos;
-    }
+	public static final class BigEndian extends Buffer {
+		public int emitShort(int b, int pos) {
+			assert NumUtil.isShort(b);
+			ensureSize(pos + 2);
+			data[pos++] = (byte) ((b >> 8) & 0xFF);
+			data[pos++] = (byte) (b & 0xFF);
+			return pos;
+		}
 
-    public int position() {
-        return position;
-    }
+		public int emitInt(int b, int pos) {
+			ensureSize(pos + 4);
+			data[pos++] = (byte) ((b >> 24) & 0xFF);
+			data[pos++] = (byte) ((b >> 16) & 0xFF);
+			data[pos++] = (byte) ((b >> 8) & 0xFF);
+			data[pos++] = (byte) (b & 0xFF);
+			return pos;
+		}
 
-    public void setPosition(int position) {
-        assert position >= 0 && position <= data.length;
-        this.position = position;
-    }
+		public int emitLong(long b, int pos) {
+			ensureSize(pos + 8);
+			data[pos++] = (byte) ((b >> 56) & 0xFF);
+			data[pos++] = (byte) ((b >> 48) & 0xFF);
+			data[pos++] = (byte) ((b >> 40) & 0xFF);
+			data[pos++] = (byte) ((b >> 32) & 0xFF);
+			data[pos++] = (byte) ((b >> 24) & 0xFF);
+			data[pos++] = (byte) ((b >> 16) & 0xFF);
+			data[pos++] = (byte) ((b >> 8) & 0xFF);
+			data[pos++] = (byte) (b & 0xFF);
+			return pos;
+		}
 
-    public int getByte(int pos) {
-        return Bytes.beU1(data, pos);
-    }
+		public int getShort(int pos) {
+			return
+				(data[pos + 0] & 0xff) << 8 |
+				(data[pos + 1] & 0xff) << 0;
+		}
 
-    public int getShort(int pos) {
-        if (byteOrder == ByteOrder.BigEndian) {
-            return
-                (data[pos + 0] & 0xff) << 8 |
-                (data[pos + 1] & 0xff) << 0;
-        } else {
-            assert byteOrder == ByteOrder.LittleEndian;
-            return
-                (data[pos + 1] & 0xff) << 8  |
-                (data[pos + 0] & 0xff) << 0;
-        }
-    }
+		public int getInt(int pos) {
+			return
+				(data[pos + 0] & 0xff) << 24 |
+				(data[pos + 1] & 0xff) << 16 |
+				(data[pos + 2] & 0xff) << 8 |
+				(data[pos + 3] & 0xff) << 0;
+		}
+	}
 
-    public int getInt(int pos) {
-        if (byteOrder == ByteOrder.BigEndian) {
-            return
-                (data[pos + 0] & 0xff) << 24 |
-                (data[pos + 1] & 0xff) << 16 |
-                (data[pos + 2] & 0xff) << 8  |
-                (data[pos + 3] & 0xff) << 0;
-        } else {
-            assert byteOrder == ByteOrder.LittleEndian;
-            return
-                (data[pos + 3] & 0xff) << 24 |
-                (data[pos + 2] & 0xff) << 16 |
-                (data[pos + 1] & 0xff) << 8  |
-                (data[pos + 0] & 0xff) << 0;
-        }
-    }
+	public static final class LittleEndian extends Buffer {
+		public int emitShort(int b, int pos) {
+			assert NumUtil.isShort(b);
+			ensureSize(pos + 2);
+			data[pos++] = (byte) (b & 0xFF);
+			data[pos++] = (byte) ((b >> 8) & 0xFF);
+			return pos;
+		}
 
-    public byte[] copyData(int start, int end) {
-        return Arrays.copyOfRange(data, start, end);
-    }
+		public int emitInt(int b, int pos) {
+			ensureSize(pos + 4);
+			data[pos++] = (byte) (b & 0xFF);
+			data[pos++] = (byte) ((b >> 8) & 0xFF);
+			data[pos++] = (byte) ((b >> 16) & 0xFF);
+			data[pos++] = (byte) ((b >> 24) & 0xFF);
+			return pos;
+		}
 
-    /**
-     * Copies the data from this buffer into a given array.
-     *
-     * @param dst the destination array
-     * @param off starting position in {@code dst}
-     * @param len number of bytes to copy
-     */
-    public void copyInto(byte[] dst, int off, int len) {
-        System.arraycopy(data, 0, dst, off, len);
-    }
+		public int emitLong(long b, int pos) {
+			ensureSize(pos + 8);
+			data[pos++] = (byte) (b & 0xFF);
+			data[pos++] = (byte) ((b >> 8) & 0xFF);
+			data[pos++] = (byte) ((b >> 16) & 0xFF);
+			data[pos++] = (byte) ((b >> 24) & 0xFF);
+			data[pos++] = (byte) ((b >> 32) & 0xFF);
+			data[pos++] = (byte) ((b >> 40) & 0xFF);
+			data[pos++] = (byte) ((b >> 48) & 0xFF);
+			data[pos++] = (byte) ((b >> 56) & 0xFF);
+			return pos;
+		}
+
+		public int getShort(int pos) {
+			return
+				(data[pos + 1] & 0xff) << 8 |
+				(data[pos + 0] & 0xff) << 0;
+		}
+
+		public int getInt(int pos) {
+			return
+				(data[pos + 3] & 0xff) << 24 |
+				(data[pos + 2] & 0xff) << 16 |
+				(data[pos + 1] & 0xff) << 8 |
+				(data[pos + 0] & 0xff) << 0;
+		}
+	}
 }
