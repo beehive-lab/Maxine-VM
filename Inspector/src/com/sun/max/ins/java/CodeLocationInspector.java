@@ -103,11 +103,6 @@ public final class CodeLocationInspector extends Inspector<CodeLocationInspector
     }
 
     @Override
-    protected Rectangle defaultGeometry() {
-        return originalFrameGeometry;
-    }
-
-    @Override
     public String getTextForTitle() {
         final StringBuilder sb = new StringBuilder(viewManager.shortName() + ": ");
         if (codeLocation == null) {

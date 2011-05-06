@@ -44,7 +44,8 @@ public final class InspectorGeometry12Pt implements InspectorGeometry {
     public InspectorGeometry12Pt() {
         preferredFrameGeometry.put(ViewKind.ALLOCATIONS, new Rectangle(500, 200, 500, 300));
         preferredFrameGeometry.put(ViewKind.BOOT_IMAGE, new Rectangle(200, 50, 375, 800));
-        preferredFrameGeometry.put(ViewKind.BREAKPOINTS, new Rectangle(1150, 0, 450, 170));
+        preferredFrameGeometry.put(ViewKind.BREAKPOINTS, new Rectangle(1150, 400, 200, 200));
+        preferredFrameGeometry.put(ViewKind.CODE_LOCATION, new Rectangle(10, 500, 400, 400));
         preferredFrameGeometry.put(ViewKind.STACK_FRAME, new Rectangle(1225, 400, 375, 500));
         preferredFrameGeometry.put(ViewKind.JAVA_SOURCE, new Rectangle(1270, 0, 605, 400));
         preferredFrameGeometry.put(ViewKind.METHODS, new Rectangle(375, 0, 850, 900));
