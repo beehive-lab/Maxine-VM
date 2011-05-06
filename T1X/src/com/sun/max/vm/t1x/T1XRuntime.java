@@ -24,7 +24,7 @@ package com.sun.max.vm.t1x;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.cri.bytecode.Bytecodes.MemoryBarriers.*;
-import static com.sun.max.vm.t1x.T1XTemplateGenHelper.*;
+import static com.sun.max.vm.t1x.T1XTemplateGenerator.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
@@ -128,7 +128,7 @@ public class T1XRuntime {
          * Should return a string that will be inserted after resolving the field.
          * @param indent current indentation
          * @param method GetField/PutField/GetStatic/PutStatic
-         * @param k member of {@link T1XTemplateGenHelper#types}
+         * @param k member of {@link T1XTemplateGenerator#types}
          * @return string to include
          */
         String getHook(String indent, String method, String k);
