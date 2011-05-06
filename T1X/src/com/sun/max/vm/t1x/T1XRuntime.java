@@ -24,8 +24,7 @@ package com.sun.max.vm.t1x;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.cri.bytecode.Bytecodes.MemoryBarriers.*;
-
-import java.io.*;
+import static com.sun.max.vm.t1x.T1XTemplateGenerator.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
@@ -42,6 +41,8 @@ import com.sun.max.vm.type.*;
  * Collection of methods called from T1X templates. These methods are typically non-inlined
  * to satisfy invariants enforced for the templates. They can also be used to keep the
  * template code small.
+ *
+ * Some methods are auto-generated.
  *
  * @author Doug Simon
  */
@@ -122,94 +123,91 @@ public class T1XRuntime {
      * Allows customization of the generated methods to support bytecode advising.
      */
     @HOSTED_ONLY
-    public interface Hook {
+    public interface AdviceHook {
         /**
          * Should return a string that will be inserted after resolving the field.
          * @param indent current indentation
          * @param method GetField/PutField/GetStatic/PutStatic
-         * @param t kind string with Reference replaced by Object
-         * @param uK kind string with first char uppercase
-         * @param uT {@code t} with first char uppercase
+         * @param k member of {@link T1XTemplateGenerator#types}
          * @return string to include
          */
-        String getHook(String indent, String method, String t, String uK, String uT);
+        String getHook(String indent, String method, String k);
         /**
-         * Customizes the methodname to resolveXXXname, where this method returns the XXX.
+         * Customizes the methodname to resolveMMMname, where this method returns the MMM.
          * @return
          */
         String getMethodNameModifier();
     }
 
     @HOSTED_ONLY
-    public static void generate(Hook hook) {
-        PrintStream o = System.out;
-        String[] kinds = {"boolean", "byte", "char", "short", "int", "float", "long", "double", "Reference", "Word"};
+    public static void generate(AdviceHook hook) {
         final String mm = hook == null ? "" : hook.getMethodNameModifier();
-        for (String k : kinds) {
-            String t = k.equals("Reference") ? "Object" : k;
-            String uK = k.substring(0, 1).toUpperCase() + k.substring(1);
-            String uT = t.substring(0, 1).toUpperCase() + t.substring(1);
-            o.printf("    // GENERATED -- EDIT AND RUN main() TO MODIFY%n");
-            o.printf("    public static %s resolve%sAndGetField%s(ResolutionGuard.InPool guard, Object object) {%n", t, mm, uK);
+        for (String k : types) {
+
+            generateAutoComment();
+            o.printf("    public static %s resolve%sAndGetField%s(ResolutionGuard.InPool guard, Object object) {%n", oType(k), mm, uType(k));
             o.printf("        FieldActor f = Snippets.resolveInstanceFieldForReading(guard);%n");
             if (hook != null) {
-                o.printf(hook.getHook("        ", "GetField", t, uK, uT));
+                o.printf(hook.getHook("        ", "GetField", k));
             }
             o.printf("        if (f.isVolatile()) {%n");
             o.printf("            preVolatileRead();%n");
-            o.printf("            %s value = TupleAccess.read%s(object, f.offset());%n", t, uT);
+            o.printf("            %s value = TupleAccess.read%s(object, f.offset());%n", oType(k), uoType(k));
             o.printf("            postVolatileRead();%n");
             o.printf("            return value;%n");
             o.printf("        } else {%n");
-            o.printf("            return TupleAccess.read%s(object, f.offset());%n", uT);
+            o.printf("            return TupleAccess.read%s(object, f.offset());%n", uoType(k));
             o.printf("        }%n");
             o.printf("    }%n");
             o.printf("%n");
-            o.printf("    // GENERATED -- EDIT AND RUN main() TO MODIFY%n");
-            o.printf("    public static void resolve%sAndPutField%s(ResolutionGuard.InPool guard, Object object, %s value) {%n", mm, uK, t);
+
+            generateAutoComment();
+            o.printf("    public static void resolve%sAndPutField%s(ResolutionGuard.InPool guard, Object object, %s value) {%n", mm, uType(k), oType(k));
             o.printf("        FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);%n");
             if (hook != null) {
-                o.printf(hook.getHook("        ", "PutField", t, uK, uT));
+                o.printf(hook.getHook("        ", "PutField", k));
             }
             o.printf("        if (f.isVolatile()) {%n");
             o.printf("            preVolatileWrite();%n");
-            o.printf("            TupleAccess.write%s(object, f.offset(), value);%n", uT);
+            o.printf("            TupleAccess.write%s(object, f.offset(), value);%n", uoType(k));
             o.printf("            postVolatileWrite();%n");
             o.printf("        } else {%n");
-            o.printf("            TupleAccess.write%s(object, f.offset(), value);%n", uT);
+            o.printf("            TupleAccess.write%s(object, f.offset(), value);%n", uoType(k));
             o.printf("        }%n");
             o.printf("    }%n");
             o.printf("%n");
-            o.printf("    // GENERATED -- EDIT AND RUN main() TO MODIFY%n");
-            o.printf("    public static %s resolve%sAndGetStatic%s(ResolutionGuard.InPool guard) {%n", t, mm, uK);
+
+            generateAutoComment();
+            o.printf("    public static %s resolve%sAndGetStatic%s(ResolutionGuard.InPool guard) {%n", oType(k), mm, uType(k));
             o.printf("        FieldActor f = Snippets.resolveStaticFieldForReading(guard);%n");
             o.printf("        Snippets.makeHolderInitialized(f);%n");
             if (hook != null) {
-                o.printf(hook.getHook("        ", "GetStatic", t, uK, uT));
+                o.printf(hook.getHook("        ", "GetStatic", k));
             }
             o.printf("        if (f.isVolatile()) {%n");
             o.printf("            preVolatileRead();%n");
-            o.printf("            %s value = TupleAccess.read%s(f.holder().staticTuple(), f.offset());%n", t, uT);
+            o.printf("            %s value = TupleAccess.read%s(f.holder().staticTuple(), f.offset());%n", oType(k), uoType(k));
             o.printf("            postVolatileRead();%n");
             o.printf("            return value;%n");
             o.printf("        } else {%n");
-            o.printf("            return TupleAccess.read%s(f.holder().staticTuple(), f.offset());%n", uT);
+            o.printf("            return TupleAccess.read%s(f.holder().staticTuple(), f.offset());%n", uoType(k));
             o.printf("        }%n");
             o.printf("    }%n");
             o.printf("%n");
-            o.printf("    // GENERATED -- EDIT AND RUN main() TO MODIFY%n");
-            o.printf("    public static void resolve%sAndPutStatic%s(ResolutionGuard.InPool guard, %s value) {%n", mm, uK, t);
+
+            generateAutoComment();
+            o.printf("    public static void resolve%sAndPutStatic%s(ResolutionGuard.InPool guard, %s value) {%n", mm, uType(k), oType(k));
             o.printf("        FieldActor f = Snippets.resolveStaticFieldForWriting(guard);%n");
             if (hook != null) {
-                o.printf(hook.getHook("        ", "PutStatic", t, uK, uT));
+                o.printf(hook.getHook("        ", "PutStatic", k));
             }
             o.printf("        Snippets.makeHolderInitialized(f);%n");
             o.printf("        if (f.isVolatile()) {%n");
             o.printf("            preVolatileWrite();%n");
-            o.printf("            TupleAccess.write%s(f.holder().staticTuple(), f.offset(), value);%n", uT);
+            o.printf("            TupleAccess.write%s(f.holder().staticTuple(), f.offset(), value);%n", uoType(k));
             o.printf("            postVolatileWrite();%n");
             o.printf("        } else {%n");
-            o.printf("            TupleAccess.write%s(f.holder().staticTuple(), f.offset(), value);%n", uT);
+            o.printf("            TupleAccess.write%s(f.holder().staticTuple(), f.offset(), value);%n", uoType(k));
             o.printf("        }%n");
             o.printf("    }%n");
             o.printf("%n");
@@ -219,6 +217,77 @@ public class T1XRuntime {
     @HOSTED_ONLY
     public static void main(String[] args) {
         generate(null);
+    }
+
+
+    // ==========================================================================================================
+    // == Misc routines =========================================================================================
+    // ==========================================================================================================
+
+    public static void resolveAndCheckcast(ResolutionGuard guard, final Object object) {
+        Snippets.checkCast(Snippets.resolveClass(guard), object);
+    }
+
+    public static void arrayStore(final int index, final Object array, final Object value) {
+        ArrayAccess.checkIndex(array, index);
+        ArrayAccess.checkSetObject(array, value);
+        ArrayAccess.setObject(array, index, value);
+    }
+
+    public static Object getClassMirror(ClassActor classActor) {
+        return classActor.javaClass();
+    }
+
+    public static Object createTupleOrHybrid(ClassActor classActor) {
+        return Snippets.createTupleOrHybrid(classActor);
+    }
+
+    public static Object createPrimitiveArray(Kind kind, int length) {
+        return Snippets.createArray(kind.arrayClassActor(), length);
+    }
+
+    public static Object createReferenceArray(ArrayClassActor arrayClassActor, int length) {
+        return Snippets.createArray(arrayClassActor, length);
+    }
+
+    public static Object cloneArray(int[] arr) {
+        return arr.clone();
+    }
+
+    public static void checkArrayDimension(int length) {
+        Snippets.checkArrayDimension(length);
+    }
+
+    public static Throwable loadException() {
+        return VmThread.current().loadExceptionForHandler();
+    }
+
+    public static void rethrowException() {
+        Throw.raise(VmThread.current().loadExceptionForHandler());
+    }
+
+    static void monitorenter(Object rcvr) {
+        Monitor.enter(rcvr);
+    }
+
+    static void monitorexit(Object rcvr) {
+        Monitor.exit(rcvr);
+    }
+
+    public static int f2i(float value) {
+        return (int) value;
+    }
+
+    public static long f2l(float value) {
+        return (long) value;
+    }
+
+    public static int d2i(double value) {
+        return (int) value;
+    }
+
+    public static long d2l(double value) {
+        return (long) value;
     }
 
     // GENERATED -- EDIT AND RUN main() TO MODIFY
@@ -245,6 +314,8 @@ public class T1XRuntime {
             TupleAccess.writeBoolean(object, f.offset(), value);
         }
     }
+
+    // BEGIN GENERATED CODE
 
     // GENERATED -- EDIT AND RUN main() TO MODIFY
     public static boolean resolveAndGetStaticBoolean(ResolutionGuard.InPool guard) {
@@ -741,73 +812,5 @@ public class T1XRuntime {
         }
     }
 
-    // ==========================================================================================================
-    // == Misc routines =========================================================================================
-    // ==========================================================================================================
 
-    public static void resolveAndCheckcast(ResolutionGuard guard, final Object object) {
-        Snippets.checkCast(Snippets.resolveClass(guard), object);
-    }
-
-    public static void arrayStore(final int index, final Object array, final Object value) {
-        ArrayAccess.checkIndex(array, index);
-        ArrayAccess.checkSetObject(array, value);
-        ArrayAccess.setObject(array, index, value);
-    }
-
-    public static Object getClassMirror(ClassActor classActor) {
-        return classActor.javaClass();
-    }
-
-    public static Object createTupleOrHybrid(ClassActor classActor) {
-        return Snippets.createTupleOrHybrid(classActor);
-    }
-
-    public static Object createPrimitiveArray(Kind kind, int length) {
-        return Snippets.createArray(kind.arrayClassActor(), length);
-    }
-
-    public static Object createReferenceArray(ArrayClassActor arrayClassActor, int length) {
-        return Snippets.createArray(arrayClassActor, length);
-    }
-
-    public static Object cloneArray(int[] arr) {
-        return arr.clone();
-    }
-
-    public static void checkArrayDimension(int length) {
-        Snippets.checkArrayDimension(length);
-    }
-
-    public static Throwable loadException() {
-        return VmThread.current().loadExceptionForHandler();
-    }
-
-    public static void rethrowException() {
-        Throw.raise(VmThread.current().loadExceptionForHandler());
-    }
-
-    static void monitorenter(Object rcvr) {
-        Monitor.enter(rcvr);
-    }
-
-    static void monitorexit(Object rcvr) {
-        Monitor.exit(rcvr);
-    }
-
-    public static int f2i(float value) {
-        return (int) value;
-    }
-
-    public static long f2l(float value) {
-        return (long) value;
-    }
-
-    public static int d2i(double value) {
-        return (int) value;
-    }
-
-    public static long d2l(double value) {
-        return (long) value;
-    }
 }
