@@ -418,7 +418,7 @@ public class FixedSizeRegionAllocator {
             // Cannot commit non-allocated regions.
             return false;
         }
-        // FIXME: should we try to avoid calling commitMemmory if the range is already committed ?
+        // TODO (ld) should we try to avoid calling commitMemmory if the range is already committed ?
         // Should we try to commit only uncommitted sub-range ?
         final Size size = Size.fromInt(numRegions).shiftedLeft(log2RegionSizeInBytes);
         if (VirtualMemory.commitMemory(regionStart(firstRegionId), size, VirtualMemory.Type.HEAP)) {

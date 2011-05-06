@@ -1047,7 +1047,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         }
 
         public void visitGreyObjects(int rangeLeftmostWordIndex, int rangeRightmostBitmapWordIndex) {
-            // TODO
+            // TODO (ld)
             FatalError.unimplemented();
         }
 
@@ -1070,8 +1070,8 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                 while (bitmapWordIndex <= rightmostBitmapWordIndex) {
                     long bitmapWord = colorMapBase.getLong(bitmapWordIndex);
                     if (bitmapWord != 0) {
-                        // FIXME:
-                        // This way of scanning the mark bitmap may cause black objects to end up on the marking stack. Here's how.
+                        // FIXME (ld) this way of scanning the mark bitmap may cause black objects to end up on the marking stack.
+                        // Here's how.
                         // If the object pointed by the finger contains backward references to objects covered by the same word
                         // of the mark bitmap, and its end is covered by the same word, we will end up visiting these objects although
                         // there were pushed on the marking stack.
@@ -1790,6 +1790,14 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     Pointer debugLiveObject;
 
     public void sweep(Sweepable sweepingArea) {
+        if (Sweepable.DoImpreciseSweep) {
+            impreciseSweep(sweepingArea, sweepingArea.minReclaimableSize());
+        } else {
+            preciseSweep(sweepingArea);
+        }
+    }
+
+    private void preciseSweep(Sweepable sweepingArea) {
         final Pointer colorMapBase = base.asPointer();
         final int rightmostBitmapWordIndex =  bitmapWordIndex(bitIndexOf(forwardScanState.rightmost));
         int bitmapWordIndex = bitmapWordIndex(bitIndexOf(coveredAreaStart));
@@ -1846,7 +1854,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      * @param sweepingArea
      * @param minReclaimableSpace
      */
-    public void impreciseSweep(Sweepable sweepingArea, Size minReclaimableSpace) {
+    private void impreciseSweep(Sweepable sweepingArea, Size minReclaimableSpace) {
         final Pointer colorMapBase = base.asPointer();
         final int minBitsBetweenMark = minReclaimableSpace.toInt() >> log2BytesCoveredPerBit;
         int bitmapWordIndex = 0;
@@ -2005,8 +2013,11 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         }
 
         public Reference preserve(Reference ref) {
-            // TODO: evacuate/preserve the graph rooted by 'ref'
-            return null;
+            Pointer origin = ref.toOrigin();
+            if (heapMarker.isCovered(origin)) {
+                heapMarker.markGreyIfWhite(origin);
+            }
+            return ref;
         }
     }
 

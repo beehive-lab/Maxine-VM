@@ -90,13 +90,6 @@ public final class MemoryBytesInspector extends Inspector<MemoryBytesInspector> 
             Trace.end(TRACE_VALUE, tracePrefix() + "creating");
         }
 
-        @Override
-        public void notifyViewClosing(Inspector inspector) {
-            // TODO (mlvdv)  should be using generics here
-            final MemoryBytesInspector memoryBytesInspector = (MemoryBytesInspector) inspector;
-            super.notifyViewClosing(memoryBytesInspector);
-        }
-
         public MemoryBytesInspector makeView(Address address) {
             final MemoryBytesInspector memoryBytesInspector = new MemoryBytesInspector(inspection(), address, 64, 1, 8);
             notifyAddingView(memoryBytesInspector);

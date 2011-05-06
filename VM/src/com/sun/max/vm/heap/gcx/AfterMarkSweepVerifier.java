@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,7 @@ import com.sun.max.vm.runtime.*;
 
 /**
  * After mark-sweep verifier for a free space manager with tracing based on TricolorHeapMarker.
- * FIXME: want to make this independent from FreeHeapSpaceManager.
+ * TODO (ld) want to make this independent from FreeHeapSpaceManager.
  * @author Laurent Daynes
  */
 public class AfterMarkSweepVerifier extends PointerIndexVisitor implements CellVisitor {

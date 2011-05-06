@@ -50,7 +50,7 @@ class VariableLengthArray<E> {
     }
 
     private void ensureCapacity(int minOverflowCapacity) {
-        // FIXME: need to make sure that capacity doesn't go beyond max int.
+        // FIXME (ld) need to make sure that capacity doesn't go beyond max int.
         int newCapacity = (variable.length * 3) / 2 + 1;
         if (newCapacity < minOverflowCapacity) {
             newCapacity = minOverflowCapacity;
