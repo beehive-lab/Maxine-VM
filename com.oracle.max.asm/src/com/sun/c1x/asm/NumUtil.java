@@ -64,6 +64,10 @@ public class NumUtil {
 		return (short) x == x;
 	}
 
+    public static boolean isUShort(int s) {
+        return s == (s & 0xFFFF);
+    }
+
 	public static boolean is32bit(long x) {
 		return -0x80000000L <= x && x < 0x80000000L;
 	}

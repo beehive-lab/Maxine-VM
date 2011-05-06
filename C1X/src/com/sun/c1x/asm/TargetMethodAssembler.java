@@ -1,9 +1,8 @@
-package com.sun.c1x.target.amd64;
+package com.sun.c1x.asm;
 
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.asm.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
@@ -12,13 +11,13 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 
-public class AMD64C1XAssembler extends AMD64MacroAssembler {
+public class TargetMethodAssembler {
+    public final AbstractAssembler asm;
     public final CiTargetMethod targetMethod;
-
     public List<ExceptionInfo> exceptionInfoList;
 
-    public AMD64C1XAssembler(CiTarget target, RiRegisterConfig registerConfig) {
-        super(target, registerConfig);
+    public TargetMethodAssembler(AbstractAssembler asm) {
+        this.asm = asm;
         this.targetMethod = new CiTargetMethod();
     }
 
@@ -27,16 +26,16 @@ public class AMD64C1XAssembler extends AMD64MacroAssembler {
     }
 
     public CiTargetMethod.Mark recordMark(Object id, CiTargetMethod.Mark[] references) {
-        return targetMethod.recordMark(codeBuffer.position(), id, references);
+        return targetMethod.recordMark(asm.codeBuffer.position(), id, references);
     }
 
     public void blockComment(String s) {
-        targetMethod.addAnnotation(new CiTargetMethod.CodeComment(codeBuffer.position(), s));
+        targetMethod.addAnnotation(new CiTargetMethod.CodeComment(asm.codeBuffer.position(), s));
     }
 
     public CiTargetMethod finishTargetMethod(Object name, RiRuntime runtime, int registerRestoreEpilogueOffset, boolean isStub) {
         // Install code, data and frame size
-        targetMethod.setTargetCode(codeBuffer.close(false), codeBuffer.position());
+        targetMethod.setTargetCode(asm.codeBuffer.close(false), asm.codeBuffer.position());
         targetMethod.setRegisterRestoreEpilogueOffset(registerRestoreEpilogueOffset);
 
         // Record exception handlers if they exist
@@ -65,7 +64,7 @@ public class AMD64C1XAssembler extends AMD64MacroAssembler {
             Util.printSection("Target Method", Util.SECTION_CHARACTER);
             TTY.println("Name: " + name);
             TTY.println("Frame size: " + targetMethod.frameSize());
-            TTY.println("Register size: " + target.arch.registerReferenceMapBitCount);
+            TTY.println("Register size: " + asm.target.arch.registerReferenceMapBitCount);
 
             if (C1XOptions.PrintCodeBytes) {
                 Util.printSection("Code", Util.SUB_SECTION_CHARACTER);
@@ -140,12 +139,12 @@ public class AMD64C1XAssembler extends AMD64MacroAssembler {
         }
     }
 
-    protected void recordDirectCall(int posBefore, int posAfter, Object target, LIRDebugInfo info) {
+    public void recordDirectCall(int posBefore, Object target, LIRDebugInfo info) {
         CiDebugInfo debugInfo = info != null ? info.debugInfo() : null;
         targetMethod.recordCall(posBefore, target, debugInfo, true);
     }
 
-    protected void recordIndirectCall(int posBefore, int posAfter, Object target, LIRDebugInfo info) {
+    public void recordIndirectCall(int posBefore, Object target, LIRDebugInfo info) {
         CiDebugInfo debugInfo = info != null ? info.debugInfo() : null;
         targetMethod.recordCall(posBefore, target, debugInfo, false);
     }
@@ -159,7 +158,7 @@ public class AMD64C1XAssembler extends AMD64MacroAssembler {
     public CiAddress recordDataReferenceInCode(CiConstant data) {
         assert data != null;
 
-        int pos = codeBuffer.position();
+        int pos = asm.codeBuffer.position();
 
         if (C1XOptions.TraceRelocation) {
             TTY.print("Data reference in code: pos = %d, data = %s", pos, data.toString());
@@ -168,47 +167,4 @@ public class AMD64C1XAssembler extends AMD64MacroAssembler {
         targetMethod.recordDataReference(pos, data);
         return CiAddress.Placeholder;
     }
-
-
-    public final void nativeCall(CiRegister dst, String symbol, LIRDebugInfo info) {
-        int before = codeBuffer.position();
-        int encode = prefixAndEncode(dst.encoding);
-        emitByte(0xFF);
-        emitByte(0xD0 | encode);
-        int after = codeBuffer.position();
-        recordIndirectCall(before, after, symbol, info);
-        recordExceptionHandlers(after, info);
-    }
-
-    public final int directCall(Object target, LIRDebugInfo info) {
-        int before = codeBuffer.position();
-        emitByte(0xE8);
-        emitInt(0);
-        int after = codeBuffer.position();
-        recordDirectCall(before, after, target, info);
-        recordExceptionHandlers(after, info);
-        return before;
-    }
-
-    public final int directJmp(Object target) {
-        int before = codeBuffer.position();
-        emitByte(0xE9);
-        emitInt(0);
-        int after = codeBuffer.position();
-        recordDirectCall(before, after, target, null);
-        return before;
-    }
-
-    public final int indirectCall(CiRegister dst, Object target, LIRDebugInfo info) {
-        int before = codeBuffer.position();
-        int encode = prefixAndEncode(dst.encoding);
-
-        emitByte(0xFF);
-        emitByte(0xD0 | encode);
-        int after = codeBuffer.position();
-        recordIndirectCall(before, after, target, info);
-        recordExceptionHandlers(after, info);
-        return before;
-    }
-
 }

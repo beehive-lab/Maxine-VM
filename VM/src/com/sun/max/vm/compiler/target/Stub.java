@@ -1,7 +1,6 @@
 package com.sun.max.vm.compiler.target;
 
 import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
 
 import java.util.*;
@@ -16,7 +15,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
-import com.sun.max.vm.compiler.target.TargetMethod.*;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.*;

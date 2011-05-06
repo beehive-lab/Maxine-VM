@@ -259,7 +259,7 @@ public class AMD64Assembler extends AbstractAssembler {
                 emitInt(disp);
             } else if (base == CiRegister.InstructionRelative) {
                 // Adjust disp which is currently relative to the start of the instruction
-                int instrStart = codeBuffer.position();
+                int instrStart = codeBuffer.getMark();
                 assert instrStart >= 0;
                 int instrSize = (codeBuffer.position() - instrStart) + 5;
                 disp = disp - instrSize;
@@ -2840,19 +2840,15 @@ public class AMD64Assembler extends AbstractAssembler {
      * need patching anyway. Therefore, 0 is emitted as the call target, and the user is responsible
      * to add the call address to the appropriate patching tables.
      */
-    public final int call() {
-        int before = codeBuffer.position();
+    public final void call() {
         emitByte(0xE8);
         emitInt(0);
-        return before;
     }
 
-    public final int call(CiRegister dst) {
-        int before = codeBuffer.position();
+    public final void call(CiRegister dst) {
         int encode = prefixAndEncode(dst.encoding);
         emitByte(0xFF);
         emitByte(0xD0 | encode);
-        return before;
     }
 
     public void int3() {

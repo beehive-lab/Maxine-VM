@@ -69,7 +69,7 @@ public class AMD64Backend extends Backend {
     }
     @Override
     public AbstractAssembler newAssembler(RiRegisterConfig registerConfig) {
-        return new AMD64C1XMacroAssembler.WithCompiler(compiler, registerConfig);
+        return new AMD64MacroAssembler(compiler.target, registerConfig);
     }
 
     @Override
