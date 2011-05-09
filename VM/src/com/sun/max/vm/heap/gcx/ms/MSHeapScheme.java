@@ -322,6 +322,11 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
         private void reportLastGCTimes() {
             final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("Timings (");
+            Log.print(TimerUtil.getHzSuffix(HeapScheme.GC_TIMING_CLOCK));
+            Log.print(") for GC ");
+            Log.print(collectionCount);
+            Log.print(" : ");
             heapMarker.reportLastElapsedTimes();
             Log.print(", sweeping=");
             Log.print(reclaimTimer.getLastElapsedTime());
@@ -332,6 +337,9 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
         private void reportTotalGCTimes() {
             final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("Timings (");
+            Log.print(TimerUtil.getHzSuffix(HeapScheme.GC_TIMING_CLOCK));
+            Log.print(") for all GC: ");
             heapMarker.reportTotalElapsedTimes();
             Log.print(", sweeping=");
             Log.print(reclaimTimer.getElapsedTime());
