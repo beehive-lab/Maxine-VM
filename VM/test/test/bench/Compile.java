@@ -29,7 +29,6 @@ import java.util.*;
 
 import test.com.sun.max.vm.*;
 
-//import com.sun.c1x.*;
 import com.sun.cri.ci.*;
 import com.sun.max.config.*;
 import com.sun.max.io.*;

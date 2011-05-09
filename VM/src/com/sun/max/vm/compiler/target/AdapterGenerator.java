@@ -29,7 +29,7 @@ import static com.sun.max.vm.VMOptions.*;
 import java.io.*;
 import java.util.*;
 
-import com.sun.c1x.asm.*;
+import com.oracle.max.asm.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.util.*;
 import com.sun.max.annotate.*;

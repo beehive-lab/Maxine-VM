@@ -2,6 +2,7 @@ package com.sun.c1x.asm;
 
 import java.util.*;
 
+import com.oracle.max.asm.*;
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;

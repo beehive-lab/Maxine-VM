@@ -22,7 +22,7 @@
  */
 package com.sun.max.vm.compiler.target.amd64;
 
-import static com.sun.c1x.target.amd64.AMD64.*;
+import static com.oracle.max.asm.target.amd64.AMD64.*;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
@@ -30,8 +30,8 @@ import static com.sun.max.vm.compiler.CallEntryPoint.*;
 
 import java.io.*;
 
-import com.sun.c1x.asm.*;
-import com.sun.c1x.target.amd64.*;
+import com.oracle.max.asm.*;
+import com.oracle.max.asm.target.amd64.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;

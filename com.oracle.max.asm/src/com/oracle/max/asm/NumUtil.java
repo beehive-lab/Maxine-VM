@@ -1,4 +1,4 @@
-package com.sun.c1x.asm;
+package com.oracle.max.asm;
 
 /**
  * A collection of static utility functions that check ranges of numbers.

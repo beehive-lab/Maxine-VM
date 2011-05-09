@@ -24,8 +24,8 @@ package com.sun.c1x.target;
 
 import java.lang.reflect.*;
 
+import com.oracle.max.asm.*;
 import com.sun.c1x.*;
-import com.sun.c1x.asm.*;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.lir.*;

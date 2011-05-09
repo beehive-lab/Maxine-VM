@@ -22,7 +22,7 @@
  */
 package com.sun.max.vm.compiler.target;
 
-import static com.sun.c1x.target.amd64.AMD64.*;
+import static com.oracle.max.asm.target.amd64.AMD64.*;
 import static com.sun.cri.ci.CiCalleeSaveArea.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.runtime.VMRegister.Role.*;

@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.c1x.asm;
+package com.oracle.max.asm;
 
 import java.util.*;
 
@@ -49,14 +49,15 @@ public abstract class Buffer {
 
     /**
      * Places a bookmark at the {@linkplain #position() current position}.
-     *
-     * @return the previously placed bookmark or {@code -1} if there was no bookmark
      */
     public void putMark() {
     	assert this.mark == -1 : "overwriting existing mark";
         this.mark = position;
     }
 
+    /**
+     * Returns a bookmark previously set via {@linkplain #putMark()} and removes the mark.
+     */
     public int getMark() {
         int mark = this.mark;
         assert mark != -1 : "mark must be set";

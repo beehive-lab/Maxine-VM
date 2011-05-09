@@ -24,8 +24,9 @@ package com.sun.c1x.target.amd64;
 
 import static com.sun.c1x.C1XCompilation.*;
 
+import com.oracle.max.asm.*;
+import com.oracle.max.asm.target.amd64.*;
 import com.sun.c1x.*;
-import com.sun.c1x.asm.*;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.lir.*;

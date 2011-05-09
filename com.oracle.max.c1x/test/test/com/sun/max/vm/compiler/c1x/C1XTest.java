@@ -30,8 +30,8 @@ import java.util.*;
 
 import test.com.sun.max.vm.*;
 
+import com.oracle.max.asm.*;
 import com.sun.c1x.*;
-import com.sun.c1x.asm.AsmOptions;
 import com.sun.c1x.debug.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.xir.*;

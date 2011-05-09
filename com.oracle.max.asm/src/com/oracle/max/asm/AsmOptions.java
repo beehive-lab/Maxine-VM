@@ -1,4 +1,4 @@
-package com.sun.c1x.asm;
+package com.oracle.max.asm;
 
 public class AsmOptions {
     public static int     InitialCodeBufferSize         = 232;

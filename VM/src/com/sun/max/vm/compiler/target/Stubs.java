@@ -32,7 +32,7 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.util.*;
 
-import com.sun.c1x.target.amd64.*;
+import com.oracle.max.asm.target.amd64.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.util.*;
 import com.sun.max.annotate.*;

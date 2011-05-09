@@ -20,9 +20,9 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.c1x.target.amd64;
+package com.oracle.max.asm.target.amd64;
 
-import com.sun.c1x.asm.*;
+import com.oracle.max.asm.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -38,31 +38,31 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         this.rscratch1 = registerConfig.getScratchRegister();
     }
 
-    void mov64(CiAddress dst, long src) {
+    public void mov64(CiAddress dst, long src) {
         movq(rscratch1, src);
         movq(dst, rscratch1);
     }
 
-    void pushptr(CiAddress src) {
+    public void pushptr(CiAddress src) {
         pushq(src);
     }
 
-    void popptr(CiAddress src) {
+    public void popptr(CiAddress src) {
         popq(src);
     }
 
-    void xorptr(CiRegister dst, CiRegister src) {
+    public void xorptr(CiRegister dst, CiRegister src) {
         xorq(dst, src);
     }
 
-    void xorptr(CiRegister dst, CiAddress src) {
+    public void xorptr(CiRegister dst, CiAddress src) {
         xorq(dst, src);
     }
 
     // 64 bit versions
 
 
-    void decrementq(CiRegister reg, int value) {
+    public void decrementq(CiRegister reg, int value) {
         if (value == Integer.MIN_VALUE) {
             subq(reg, value);
             return;
@@ -81,7 +81,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         }
     }
 
-    void incrementq(CiRegister reg, int value) {
+    public void incrementq(CiRegister reg, int value) {
         if (value == Integer.MIN_VALUE) {
             addq(reg, value);
             return;
@@ -101,7 +101,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
     }
 
     // These are mostly for initializing null
-    void movptr(CiAddress dst, int src) {
+    public void movptr(CiAddress dst, int src) {
         movslq(dst, src);
     }
 
@@ -113,7 +113,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         cmpl(src1, src2);
     }
 
-    void cmpsd2int(CiRegister opr1, CiRegister opr2, CiRegister dst, boolean unorderedIsLess) {
+    public void cmpsd2int(CiRegister opr1, CiRegister opr2, CiRegister dst, boolean unorderedIsLess) {
         assert opr1.isFpu() && opr2.isFpu();
         ucomisd(opr1, opr2);
 
@@ -136,7 +136,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         bind(l);
     }
 
-    void cmpss2int(CiRegister opr1, CiRegister opr2, CiRegister dst, boolean unorderedIsLess) {
+    public void cmpss2int(CiRegister opr1, CiRegister opr2, CiRegister dst, boolean unorderedIsLess) {
         assert opr1.isFpu();
         assert opr2.isFpu();
         ucomiss(opr1, opr2);
@@ -160,23 +160,23 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         bind(l);
     }
 
-    void cmpptr(CiRegister src1, CiRegister src2) {
+    public void cmpptr(CiRegister src1, CiRegister src2) {
         cmpq(src1, src2);
     }
 
-    void cmpptr(CiRegister src1, CiAddress src2) {
+    public void cmpptr(CiRegister src1, CiAddress src2) {
         cmpq(src1, src2);
     }
 
-    void cmpptr(CiRegister src1, int src2) {
+    public void cmpptr(CiRegister src1, int src2) {
         cmpq(src1, src2);
     }
 
-    void cmpptr(CiAddress src1, int src2) {
+    public void cmpptr(CiAddress src1, int src2) {
         cmpq(src1, src2);
     }
 
-    void decrementl(CiRegister reg, int value) {
+    public void decrementl(CiRegister reg, int value) {
         if (value == Integer.MIN_VALUE) {
             subl(reg, value);
             return;
@@ -195,7 +195,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         }
     }
 
-    void decrementl(CiAddress dst, int value) {
+    public void decrementl(CiAddress dst, int value) {
         if (value == Integer.MIN_VALUE) {
             subl(dst, value);
             return;
@@ -214,7 +214,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         }
     }
 
-    void incrementl(CiRegister reg, int value) {
+    public void incrementl(CiRegister reg, int value) {
         if (value == Integer.MIN_VALUE) {
             addl(reg, value);
             return;
@@ -233,7 +233,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         }
     }
 
-    void incrementl(CiAddress dst, int value) {
+    public void incrementl(CiAddress dst, int value) {
         if (value == Integer.MIN_VALUE) {
             addl(dst, value);
             return;
@@ -252,7 +252,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         }
     }
 
-    void signExtendByte(CiRegister reg) {
+    public void signExtendByte(CiRegister reg) {
         if (reg.isByte()) {
             movsxb(reg, reg); // movsxb
         } else {
@@ -261,12 +261,12 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         }
     }
 
-    void signExtendShort(CiRegister reg) {
+    public void signExtendShort(CiRegister reg) {
         movsxw(reg, reg); // movsxw
     }
 
     // Support optimal SSE move instructions.
-    void movflt(CiRegister dst, CiRegister src) {
+    public void movflt(CiRegister dst, CiRegister src) {
         assert dst.isFpu() && src.isFpu();
         if (AsmOptions.UseXmmRegToRegMoveAll) {
             movaps(dst, src);
@@ -275,17 +275,17 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         }
     }
 
-    void movflt(CiRegister dst, CiAddress src) {
+    public void movflt(CiRegister dst, CiAddress src) {
         assert dst.isFpu();
         movss(dst, src);
     }
 
-    void movflt(CiAddress dst, CiRegister src) {
+    public void movflt(CiAddress dst, CiRegister src) {
         assert src.isFpu();
         movss(dst, src);
     }
 
-    void movdbl(CiRegister dst, CiRegister src) {
+    public void movdbl(CiRegister dst, CiRegister src) {
         assert dst.isFpu() && src.isFpu();
         if (AsmOptions.UseXmmRegToRegMoveAll) {
             movapd(dst, src);
@@ -294,7 +294,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         }
     }
 
-    void movdbl(CiRegister dst, CiAddress src) {
+    public void movdbl(CiRegister dst, CiAddress src) {
         assert dst.isFpu();
         if (AsmOptions.UseXmmLoadAndClearUpper) {
             movsd(dst, src);
@@ -303,7 +303,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         }
     }
 
-    void xchgptr(CiRegister src1, CiRegister src2) {
+    public void xchgptr(CiRegister src1, CiRegister src2) {
         xchgq(src1, src2);
     }
 

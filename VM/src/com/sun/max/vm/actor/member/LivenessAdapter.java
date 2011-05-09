@@ -33,7 +33,7 @@ import com.sun.max.vm.verifier.types.*;
 
 /**
  * Adapts liveness information in a {@link StackMapTable} to the {@linkplain RiMethod#livenessMap() format}
- * used by C1X.
+ * used by the compiler interface.
  *
  * @author Doug Simon
  */
