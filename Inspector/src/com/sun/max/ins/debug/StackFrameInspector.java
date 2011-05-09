@@ -86,9 +86,9 @@ public final class StackFrameInspector extends Inspector<StackFrameInspector> im
 
         @Override
         public void procedure() {
-            // (mlvdv)  This is pretty awkward, but has the virtue that it reproduces exactly what's displayed.  Could be improved.
+            // TODO (mlvdv)  This is pretty awkward, but has the virtue that it reproduces exactly what's displayed.  Could be improved.
             final StringBuilder result = new StringBuilder(100);
-            // TODO  maybe just rely on the generic print command based on the table
+            // TODO (mlvdv) maybe just rely on the generic print command based on the table
             gui().postToClipboard(result.toString());
         }
     }

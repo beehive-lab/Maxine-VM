@@ -100,7 +100,7 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
          */
         @Override
         Address allocateTLAB(Size tlabSize, Pointer leftover, Size leftoverSize) {
-            // FIXME: this never refill the allocator!
+            // FIXME (ld) this never refill the allocator!
             Address firstChunk = tlabChunkOrZero(leftover, leftoverSize);
             if (!firstChunk.isZero()) {
                 tlabSize = tlabSize.minus(leftoverSize);
@@ -234,7 +234,7 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
                     if (spaceLeft.greaterEqual(minReclaimableSpace)) {
                         // Space is allocated at the end of the chunk to avoid reformatting the leftover
                         // if it doesn't change bins.
-                        // FIXME: need to revisit the API to clearly distinguish the cases when what's needed is formatted chunks
+                        // TODO (ld) need to revisit the API to clearly distinguish the cases when what's needed is formatted chunks
                         // (e.g., when allocating for allocators, like TLABs), or when all that is needed is bytes (i.e., for direct object allocation)
                         result = result.plus(spaceLeft);
                         HeapFreeChunk.format(result, size);
@@ -563,6 +563,11 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
      */
     private Size minReclaimableSpace;
 
+    @Override
+    public Size minReclaimableSize() {
+        return minReclaimableSpace;
+    }
+
     /**
      * Pointer to the end of the last dead object notified by the sweeper. Used  for precise sweeping.
      */
@@ -698,13 +703,12 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
     }
 
     @Override
-    public Size beginSweep(boolean precise) {
+    public void beginSweep() {
         for (int i = 0; i < freeChunkBins.length; i++) {
             freeChunkBins[i].reset();
         }
         totalFreeChunkSpace = 0;
         endOfLastVisitedObject = committedHeapSpace.start().asPointer();
-        return minReclaimableSpace;
     }
 
     @Override
@@ -779,7 +783,7 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
     }
 
     public Size shrinkAfterGC(Size delta) {
-        // FIXME: Can't do much without evacuation or regions apart from freeing the chunk that is at the end of
+        // TODO (ld) Can't do much without evacuation or regions apart from freeing the chunk that is at the end of
         // committed heap space. Don't bother with this for now.
         return Size.zero();
     }

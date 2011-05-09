@@ -155,16 +155,20 @@ public abstract class AbstractMultiViewManager<Inspector_Kind extends Inspector>
         return new DeactivateAllExceptAction(shortName, exception);
     }
 
-    public void notifyViewClosing(Inspector inspector) {
-        assert inspectors.remove(inspector);
-        refresh();
-    }
-
     /**
      * Allows concrete subclasses to register the creation of a new view.
      */
     protected final void notifyAddingView(Inspector_Kind inspector) {
         assert inspectors.add(inspector);
+        inspector.addInspectorEventListener(new InspectorEventListener() {
+
+            @Override
+            public void viewClosing(Inspector inspector) {
+                assert inspectors.remove(inspector);
+                refresh();
+            }
+
+        });
         refresh();
     }
 

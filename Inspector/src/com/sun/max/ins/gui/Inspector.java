@@ -29,6 +29,7 @@ import java.util.*;
 
 import javax.swing.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.AbstractSaveSettingsListener;
 import com.sun.max.ins.InspectionSettings.SaveSettingsEvent;
@@ -200,6 +201,8 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
     private InspectorAction showViewAction = null;
     private InspectorAction closeViewAction = null;
 
+    private Set<InspectorEventListener> inspectorEventListeners = CiUtil.newIdentityHashSet();
+
     /**
      * Abstract constructor for all inspector views.
      *
@@ -221,6 +224,22 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
             }
         };
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + "refresh");
+    }
+
+    /**
+     * Adds a listener for changes in {@link Inspector} window state.
+     */
+    public void addInspectorEventListener(InspectorEventListener listener) {
+        Trace.line(TRACE_VALUE, tracePrefix() + "adding inspector listener: " + listener);
+        inspectorEventListeners.add(listener);
+    }
+
+    /**
+     * Removes a listener for changes in {@link Inspector} window state.
+     */
+    public void removeInspectorEventListener(InspectorEventListener listener) {
+        Trace.line(TRACE_VALUE, tracePrefix() + "removing inspector listener: " + listener);
+        inspectorEventListeners.remove(listener);
     }
 
     /**
@@ -522,15 +541,15 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
     protected void inspectorClosing() {
         inspection().removeInspectionListener(this);
         focus().removeListener(this);
-        if (viewManager() != null) {
-            viewManager().notifyViewClosing(this);
-        }
         if (saveGeometrySettingsListener != null) {
             inspection().settings().removeSaveSettingsListener(saveGeometrySettingsListener);
         }
         inspection().settings().save();
+        for (InspectorEventListener listener : inspectorEventListeners) {
+            listener.viewClosing(this);
+        }
         // don't try to recompute the title, just get the one that's been in use
-        Trace.line(1, tracePrefix() + " closing for " + getTitle());
+        Trace.line(1, tracePrefix() + " closing view " + getTitle());
     }
 
     public void vmStateChanged(boolean force) {

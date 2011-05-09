@@ -110,7 +110,17 @@ public abstract class AbstractSingletonViewManager<Inspector_Kind extends Inspec
 
     public Inspector_Kind activateView() {
         if (inspectors.size() == 0) {
-            inspectors.add(createView(inspection()));
+            final Inspector_Kind inspector = createView(inspection());
+            inspectors.add(inspector);
+            inspector.addInspectorEventListener(new InspectorEventListener() {
+
+                @Override
+                public void viewClosing(Inspector inspector) {
+                    assert inspectors.remove(inspector);
+                    refresh();
+                }
+
+            });
             refresh();
         }
         return inspectors.get(0);
@@ -130,11 +140,6 @@ public abstract class AbstractSingletonViewManager<Inspector_Kind extends Inspec
             return deactivateAllAction;
         }
         return new DeactivateAllExceptAction(shortName, exception);
-    }
-
-    public final void notifyViewClosing(Inspector inspector) {
-        assert inspectors.remove(inspector);
-        refresh();
     }
 
     /**
@@ -222,4 +227,5 @@ public abstract class AbstractSingletonViewManager<Inspector_Kind extends Inspec
             setEnabled(isActive());
         }
     }
+
 }

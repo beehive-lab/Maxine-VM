@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -88,7 +88,7 @@ public class SimpleTLABRefillPolicy extends TLABRefillPolicy {
         // we had a number of allocation failures for the same allocation mark.
         // In that case, let bite the bullet and get a new TLAB.
 
-        // FIXME: a tlab global allocation failure counter is probably better...
+        // TODO (ld) a tlab global allocation failure counter is probably better...
         if (!lastMark.equals(allocationMark)) {
             lastMark = allocationMark;
             allocationFailures = 1;

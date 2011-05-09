@@ -325,6 +325,10 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             }
             return newRef;
         }
+
+        public boolean mayRelocateLiveObjects() {
+            return true;
+        }
     }
 
     /**

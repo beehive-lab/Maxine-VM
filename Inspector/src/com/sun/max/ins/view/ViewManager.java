@@ -101,10 +101,4 @@ public interface ViewManager<Inspector_Kind extends Inspector>  {
      */
     InspectorAction deactivateAllAction(Inspector exceptInspector);
 
-    /**
-     * Notifies the manager that a view under its management is
-     * in the process of being closed.
-     */
-    void notifyViewClosing(Inspector inspector);
-
 }

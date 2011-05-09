@@ -132,9 +132,11 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
     static boolean UseRescanMap;
     static boolean UseDeepMarkStackFlush = true;
+    static boolean VerifyAfterMarking = false;
     static {
         VMOptions.addFieldOption("-XX:", "UseRescanMap", TricolorHeapMarker.class, "Use a rescan map when recovering from mark stack overflow", Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "UseDeepMarkStackFlush", TricolorHeapMarker.class, "Visit flushed cells and mark their reference grey when flushing the mark stack", Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "VerifyAfterMarking", TricolorHeapMarker.class, "Verify absence of grey bits after marking is completed", Phase.PRISTINE);
     }
 
     /**
@@ -226,6 +228,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     private final TimerMetric immortalSpaceScanTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
     private final TimerMetric heapMarkingTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
     private final TimerMetric recoveryScanTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
+    private final TimerMetric weakRefTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
 
     /**
      * Counter of the number of recovery overflow scheduled during the current mark. For statistics purposes.
@@ -259,6 +262,8 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         Log.print(recoveryScanTimer.getCount());
         Log.print(") =");
         Log.print(recoveryScanTimer.getElapsedTime());
+        Log.print(", weak refs=");
+        Log.print(weakRefTimer.getLastElapsedTime());
     }
 
     public void reportTotalElapsedTimes() {
@@ -274,6 +279,8 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         Log.print(totalRecoveryScanCount);
         Log.print(") =");
         Log.print(totalRecoveryElapsedTime);
+        Log.print(", weak refs=");
+        Log.print(weakRefTimer.getElapsedTime());
     }
 
     /**
@@ -720,7 +727,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     abstract static class MarkingStackFlusher extends MarkingStack.MarkingStackCellVisitor {
         ColorMapScanState scanState;
 
-        void setScanState(ColorMapScanState scanState) {
+        final void setScanState(ColorMapScanState scanState) {
             this.scanState = scanState;
         }
 
@@ -1032,7 +1039,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         }
     }
 
-    static final class ForwardScanState extends ColorMapScanState {
+    static final class ForwardScanState extends ColorMapScanState implements SpecialReferenceManager.GC {
         ForwardScanState(TricolorHeapMarker heapMarker) {
             super(heapMarker);
         }
@@ -1047,7 +1054,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         }
 
         public void visitGreyObjects(int rangeLeftmostWordIndex, int rangeRightmostBitmapWordIndex) {
-            // TODO
+            // TODO (ld)
             FatalError.unimplemented();
         }
 
@@ -1070,8 +1077,8 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                 while (bitmapWordIndex <= rightmostBitmapWordIndex) {
                     long bitmapWord = colorMapBase.getLong(bitmapWordIndex);
                     if (bitmapWord != 0) {
-                        // FIXME:
-                        // This way of scanning the mark bitmap may cause black objects to end up on the marking stack. Here's how.
+                        // FIXME (ld) this way of scanning the mark bitmap may cause black objects to end up on the marking stack.
+                        // Here's how.
                         // If the object pointed by the finger contains backward references to objects covered by the same word
                         // of the mark bitmap, and its end is covered by the same word, we will end up visiting these objects although
                         // there were pushed on the marking stack.
@@ -1114,6 +1121,32 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             } while(true);
         }
 
+        public boolean isReachable(Reference ref) {
+            Pointer origin = ref.toOrigin();
+            if (heapMarker.isCovered(origin)) {
+                // If either back or grey, the object is reachable.
+                return !heapMarker.isWhite(origin);
+            }
+            // If not in the covered area, it must be in one of the regions treated as permanent roots.
+            // We cannot easily check that here because of NativeMutex which store the address of a NativeMutex
+            // in there reference field (nasty piece of work...).
+            return true;
+        }
+
+        public Reference preserve(Reference ref) {
+            // Tmp traces. REMOVE / add as debug code
+            if (!heapMarker.isWhite(ref.toOrigin())) {
+                Log.print("preserving a non-white reference : ");
+                Log.println(ref.toOrigin());
+            }
+            visit(ref);
+            return ref;
+        }
+
+        public boolean mayRelocateLiveObjects() {
+            return false;
+        }
+
         @Override
         public String toString() {
             return "forward scan";
@@ -1128,7 +1161,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             super(heapMarker);
         }
 
-        protected void setMarkingStackFlusher(MarkingStackFlusher flusher) {
+        protected final void setMarkingStackFlusher(MarkingStackFlusher flusher) {
             markingStackFlusher = flusher;
         }
 
@@ -1146,7 +1179,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             return heapMarker.currentScanState == this;
         }
 
-        MarkingStackFlusher markingStackFlusher() {
+        final MarkingStackFlusher markingStackFlusher() {
             return markingStackFlusher;
         }
 
@@ -1579,9 +1612,10 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      */
     public void verifyHasNoGreyMarks(Address start, Address end) {
         final int bitIndex = scanForGreyMark(start, end);
-        if (MaxineVM.isDebug() && bitIndex >= 0) {
+        if (bitIndex >= 0) {
             final boolean lockDisabledSafepoints = Log.lock();
             final Pointer greyCell = coveredAreaStart.plus(bitIndex << log2BytesCoveredPerBit).asPointer();
+            assert isGrey(bitIndex);
             Log.print("grey mark found for cell: ");
             Log.print(greyCell);
             Log.print(", size: ");
@@ -1601,9 +1635,8 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             overflowScanState.printState();
 
             Log.unlock(lockDisabledSafepoints);
-            isGrey(bitIndex);
+            FatalError.unexpected("Must not have any grey marks");
         }
-        FatalError.check(bitIndex < 0, "Must not have any grey marks");
     }
 
     /**
@@ -1732,6 +1765,19 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         overflowScanState.recoverFromOverflow();
     }
 
+    private void initAfterRootMarking() {
+        forwardScanState.rightmost = rootCellVisitor.rightmost;
+        forwardScanState.finger = rootCellVisitor.leftmost;
+        forwardScanState.numMarkinkgStackOverflow = 0;
+        overflowLinearScanState.numMarkinkgStackOverflow = 0;
+    }
+
+    private void visitGreyObjects() {
+        currentScanState = forwardScanState;
+        overflowScanState.markingStackFlusher().setScanState(currentScanState);
+        forwardScanState.visitGreyObjects();
+    }
+
     /**
      * Visit all objects marked grey during root marking that resides in list of memory region ranges.
      * Regions are numbered from 0, where in the address to the first bytes of region 0 coincide with
@@ -1740,11 +1786,8 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      * @param regions an ordered list of region ranges
      * @param log2RegionSizeInBytes the power of 2 of the size of the regions
      */
-    void visitAllGreyObjects(HeapRegionRangeIterable regions, int log2RegionSizeInBytes) {
-        forwardScanState.rightmost = rootCellVisitor.rightmost;
-        forwardScanState.finger = rootCellVisitor.leftmost;
-        forwardScanState.numMarkinkgStackOverflow = 0;
-        overflowLinearScanState.numMarkinkgStackOverflow = 0;
+    void visitGreyObjectsAfterRootMarking(HeapRegionRangeIterable regions, int log2RegionSizeInBytes) {
+        initAfterRootMarking();
         currentScanState = forwardScanState;
         overflowScanState.markingStackFlusher().setScanState(currentScanState);
 
@@ -1757,15 +1800,11 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     /**
      * Visit all objects marked grey during root marking.
      */
-    void visitAllGreyObjects() {
-        forwardScanState.rightmost = rootCellVisitor.rightmost;
-        forwardScanState.finger = rootCellVisitor.leftmost;
-        forwardScanState.numMarkinkgStackOverflow = 0;
-        overflowLinearScanState.numMarkinkgStackOverflow = 0;
-        currentScanState = forwardScanState;
-        overflowScanState.markingStackFlusher().setScanState(currentScanState);
-        forwardScanState.visitGreyObjects();
+    void visitGreyObjectsAfterRootMarking() {
+        initAfterRootMarking();
+        visitGreyObjects();
     }
+
 
     int firstBlackMark(int firstBitIndex, int lastBitIndex) {
         final Pointer colorMapBase = base.asPointer();
@@ -1790,6 +1829,14 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     Pointer debugLiveObject;
 
     public void sweep(Sweepable sweepingArea) {
+        if (Sweepable.DoImpreciseSweep) {
+            impreciseSweep(sweepingArea, sweepingArea.minReclaimableSize());
+        } else {
+            preciseSweep(sweepingArea);
+        }
+    }
+
+    private void preciseSweep(Sweepable sweepingArea) {
         final Pointer colorMapBase = base.asPointer();
         final int rightmostBitmapWordIndex =  bitmapWordIndex(bitIndexOf(forwardScanState.rightmost));
         int bitmapWordIndex = bitmapWordIndex(bitIndexOf(coveredAreaStart));
@@ -1846,7 +1893,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      * @param sweepingArea
      * @param minReclaimableSpace
      */
-    public void impreciseSweep(Sweepable sweepingArea, Size minReclaimableSpace) {
+    private void impreciseSweep(Sweepable sweepingArea, Size minReclaimableSpace) {
         final Pointer colorMapBase = base.asPointer();
         final int minBitsBetweenMark = minReclaimableSpace.toInt() >> log2BytesCoveredPerBit;
         int bitmapWordIndex = 0;
@@ -1937,23 +1984,33 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         if (traceGCTimes) {
             recoveryScanTimer.reset();
         }
+        FatalError.check(markingStack.isEmpty(), "Marking stack must be empty");
 
         clearColorMap();
-        if (MaxineVM.isDebug()) {
-            FatalError.check(markingStack.isEmpty(), "Marking stack must be empty");
-        }
         markRoots();
         if (Heap.traceGCPhases()) {
             Log.println("Tracing grey objects...");
         }
         startTimer(heapMarkingTimer);
-        visitAllGreyObjects();
+        visitGreyObjectsAfterRootMarking();
         stopTimer(heapMarkingTimer);
         if (traceGCTimes) {
             totalRecoveryScanCount += recoveryScanTimer.getCount();
             totalRecoveryElapsedTime += recoveryScanTimer.getElapsedTime();
         }
-        verifyHasNoGreyMarks(coveredAreaStart, forwardScanState.endOfRightmostVisitedObject());
+
+        if (VerifyAfterMarking) {
+            verifyHasNoGreyMarks(coveredAreaStart, forwardScanState.endOfRightmostVisitedObject());
+        }
+
+        startTimer(weakRefTimer);
+        SpecialReferenceManager.processDiscoveredSpecialReferences(forwardScanState);
+        visitGreyObjects();
+        stopTimer(weakRefTimer);
+
+        if (VerifyAfterMarking) {
+            verifyHasNoGreyMarks(coveredAreaStart, forwardScanState.endOfRightmostVisitedObject());
+        }
     }
 
     /**
@@ -1966,54 +2023,22 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         if (traceGCTimes) {
             recoveryScanTimer.reset();
         }
+        FatalError.check(markingStack.isEmpty(), "Marking stack must be empty");
 
         clearColorMap();
-        if (MaxineVM.isDebug()) {
-            FatalError.check(markingStack.isEmpty(), "Marking stack must be empty");
-        }
         markRoots();
         if (Heap.traceGCPhases()) {
             Log.println("Tracing grey objects...");
         }
         startTimer(heapMarkingTimer);
-        visitAllGreyObjects(heapRegions, log2RegionSize);
+        visitGreyObjectsAfterRootMarking(heapRegions, log2RegionSize);
         stopTimer(heapMarkingTimer);
         if (traceGCTimes) {
             totalRecoveryScanCount += recoveryScanTimer.getCount();
             totalRecoveryElapsedTime += recoveryScanTimer.getElapsedTime();
         }
-        verifyHasNoGreyMarks(coveredAreaStart, forwardScanState.endOfRightmostVisitedObject());
-    }
-
-
-    private static final class GC implements SpecialReferenceManager.GC {
-        final TricolorHeapMarker heapMarker;
-
-        GC(TricolorHeapMarker heapMarker) {
-            this.heapMarker = heapMarker;
-        }
-
-        public boolean isReachable(Reference ref) {
-            Pointer origin = ref.toOrigin();
-            if (heapMarker.isCovered(origin)) {
-                return heapMarker.isBlackWhenNoGreys(origin);
-            }
-            // If not in the covered area, it must be in one of the regions treated as permanent roots.
-            // We cannot easily check that here because of NativeMutex which store the address of a NativeMutex
-            // in there reference field (nasty piece of work...).
-            return true;
-        }
-
-        public Reference preserve(Reference ref) {
-            // TODO: evacuate/preserve the graph rooted by 'ref'
-            return null;
+        if (VerifyAfterMarking) {
+            verifyHasNoGreyMarks(coveredAreaStart, forwardScanState.endOfRightmostVisitedObject());
         }
     }
-
-    private final GC specialReferenceGC = new GC(this);
-
-    public SpecialReferenceManager.GC getSpecialReferenceGC() {
-        return specialReferenceGC;
-    }
-
 }
