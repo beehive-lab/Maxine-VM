@@ -35,7 +35,7 @@
 #elif os_MAXVE
 #   include <maxve.h>
 #elif os_WINDOWS
-	// TODO
+	// TODO if we ever want to support MS Windows
 #endif
 
 /*

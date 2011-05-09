@@ -173,7 +173,7 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
             sb.append(" 0x").append(address().toHexString()).append(", ");
         }
         if (hasTeleClassMethodActor()) {
-            sb.append(teleClassMethodActor().getName()).append(" pos=").append(bytecodePosition());
+            sb.append(teleClassMethodActor().getName()).append("(), bci=").append(bytecodePosition());
         }
         sb.append("}");
         return sb.toString();

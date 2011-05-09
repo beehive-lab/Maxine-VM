@@ -41,6 +41,7 @@ import com.sun.max.ins.gui.LocationLabel.AsAddressWithPosition;
 import com.sun.max.ins.object.*;
 import com.sun.max.ins.util.*;
 import com.sun.max.ins.value.*;
+import com.sun.max.ins.view.InspectionViews.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -267,6 +268,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
                 menu.add(actions().toggleMachineCodeBreakpoint(codeLocation, "Toggle breakpoint (double-click)"));
                 menu.add(actions().setMachineCodeBreakpoint(codeLocation, "Set breakpoint"));
                 menu.add(actions().removeMachineCodeBreakpoint(codeLocation, "Unset breakpoint"));
+                menu.add(views().activateSingletonViewAction(ViewKind.CODE_LOCATION));
                 return menu;
             }
             return null;

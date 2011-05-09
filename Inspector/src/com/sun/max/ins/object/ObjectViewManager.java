@@ -172,15 +172,6 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectInsp
     }
 
     @Override
-    public void notifyViewClosing(Inspector inspector) {
-        // TODO (mlvdv)  should be using generics here
-        final ObjectInspector objectInspector = (ObjectInspector) inspector;
-        teleObjectToInspector.remove(objectInspector.teleObject());
-        super.notifyViewClosing(inspector);
-    }
-
-
-    @Override
     public void vmProcessTerminated() {
         for (ObjectInspector inspector : inspectors()) {
             inspector.dispose();
@@ -241,6 +232,15 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectInsp
             }
             if (objectInspector != null) {
                 teleObjectToInspector.put(teleObject, objectInspector);
+                objectInspector.addInspectorEventListener(new InspectorEventListener() {
+
+                    @Override
+                    public void viewClosing(Inspector inspector) {
+                        final ObjectInspector objectInspector = (ObjectInspector) inspector;
+                        assert teleObjectToInspector.remove(objectInspector.teleObject()) != null;
+                    }
+
+                });
                 super.notifyAddingView(objectInspector);
             }
         }

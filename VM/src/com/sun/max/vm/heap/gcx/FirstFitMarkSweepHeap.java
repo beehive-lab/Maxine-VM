@@ -59,6 +59,11 @@ public class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner
 
     private Size minReclaimableSpace;
 
+    @Override
+    public Size minReclaimableSize() {
+        return minReclaimableSpace;
+    }
+
     /**
      * List of region with space available for allocation.
      * Used to refill the small object allocator and the overflow allocator.
@@ -176,8 +181,7 @@ public class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner
         @Override
         @NO_SAFEPOINTS("tlab allocation loop must not be subjected to safepoints")
         Address allocateTLAB(Size tlabSize, Pointer leftover, Size leftoverSize) {
-            // FIXME:
-            // This doesn't refill the TLAB allocator. It just allocate a new one.
+            // FIXME (ld) This doesn't refill the TLAB allocator. It just allocate a new one.
             Address firstChunk = tlabChunkOrZero(leftover, leftoverSize);
             if (!firstChunk.isZero()) {
                 tlabSize = tlabSize.minus(leftoverSize);
@@ -468,10 +472,9 @@ public class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner
     }
 
     @Override
-    public Size beginSweep(boolean precise) {
+    public void beginSweep() {
         // make all region empty again.
-
-        return minReclaimableSpace;
+        // TODO
     }
 
     @Override
@@ -486,16 +489,10 @@ public class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner
 
     }
 
-    public Size sweep(TricolorHeapMarker heapMarker, boolean doImpreciseSweep) {
+    public Size sweep(TricolorHeapMarker heapMarker) {
         // TODO: what about large object space ?
-        Size minReclaimableSpace = beginSweep(doImpreciseSweep);
-
-        if (doImpreciseSweep) {
-            heapMarker.impreciseSweep(this, minReclaimableSpace);
-        } else {
-            heapMarker.sweep(this);
-        }
-
+        beginSweep();
+        heapMarker.sweep(this);
         return endSweep();
     }
 }

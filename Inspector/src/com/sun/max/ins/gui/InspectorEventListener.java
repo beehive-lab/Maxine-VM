@@ -21,36 +21,19 @@
  * questions.
  */
 
-package com.sun.max.ins.java;
-
-import com.sun.cri.ci.*;
-import com.sun.max.ins.*;
-import com.sun.max.ins.view.*;
-import com.sun.max.tele.*;
+package com.sun.max.ins.gui;
 
 
 /**
- * Methods for creating views on bytecode frames.
+ * Notification service for window-related events that affect a single {@link Inspector}.
  *
  * @author Michael Van De Vanter
  */
-public interface BytecodeFramesViewFactory extends InspectionViewFactory<BytecodeFramesInspector> {
+public interface InspectorEventListener {
 
     /**
-     * Creates a view on a target Java frame descriptor.
-     *
-     * @param bytecodeFrames the java bytecode frames at a given location
-     * @param compiledCode
-     * @return
+     * Notifies listener that the {@link Inspector} is closing.
      */
-    BytecodeFramesInspector makeView(CiFrame bytecodeFrames, MaxCompiledCode compiledCode);
+    void viewClosing(Inspector inspector);
 
-    /**
-     * Gets an action that makes view of the bytecode frames available at
-     * the currently selected code location; disabled if there are no
-     * frames available at the currently selected code location.
-     *
-     * @return an action that creates a bytecode frame view
-     */
-    InspectorAction makeViewAction();
 }

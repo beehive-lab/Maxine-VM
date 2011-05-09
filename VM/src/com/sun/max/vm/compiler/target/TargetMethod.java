@@ -292,7 +292,11 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
-     * @return class method actors referenced by direct call instructions, matched to the stop positions array above by array index
+     * Answer an array containing the direct callees of this method.
+     * The array can contain instances of {@link ClassMethodActor} and {@link TargetMethod} side by side.
+     * In case a callee is an actual method, it is represented by a {@link ClassMethodActor}.
+     * In case it is a stub, a {@link TargetMethod} is used.
+     * @return entities referenced by direct call instructions, matched to the stop positions array above by array index
      */
     public final Object[] directCallees() {
         return directCallees;

@@ -236,6 +236,18 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     }
 
     /**
+     * E.g. "foo()[0]"
+     */
+    public String extremelyShortName(MaxCompiledCode compiledCode) {
+        if (compiledCode == null) {
+            return unavailableDataShortText();
+        }
+        return compiledCode.classMethodActor() == null ?
+                        compiledCode.entityName() :
+                            compiledCode.classMethodActor().format("%n()" + methodCompilationID(compiledCode));
+    }
+
+    /**
      * E.g. "Element.foo()[0]"
      */
     public String veryShortName(MaxCompiledCode compiledCode) {
@@ -329,6 +341,15 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
             return compiledCode.classMethodActor().format("%r %n(%p)" + methodCompilationID(compiledCode) + positionString(compiledCode, address) + " in %H");
         }
         return compiledCode.entityName();
+    }
+
+
+    /**
+     * E.g. "foo(Pointer, Word, int[])"
+     */
+    public String veryShortName(TeleClassMethodActor teleClassMethodActor) {
+        final ClassMethodActor classMethodActor = teleClassMethodActor.classMethodActor();
+        return classMethodActor.format("%n()");
     }
 
     /**

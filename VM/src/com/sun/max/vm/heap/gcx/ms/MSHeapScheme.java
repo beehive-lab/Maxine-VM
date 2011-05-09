@@ -55,10 +55,8 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
      */
     private static final int WORDS_COVERED_PER_BIT = 1;
 
-    static boolean DoImpreciseSweep = true;
     static boolean UseLOS = true;
     static {
-        VMOptions.addFieldOption("-XX:", "DoImpreciseSweep", MSHeapScheme.class, "Use an imprecise sweeping phase", Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "UseLOS", MSHeapScheme.class, "Use a large object space", Phase.PRISTINE);
     }
 
@@ -220,7 +218,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         }
         // We may reach here after a race. Don't run GC if request can be satisfied.
 
-        // FIXME: might be better to try allocate the requested space and save the result for the caller.
+        // TODO (ld) might be better to try allocate the requested space and save the result for the caller.
         // This may avoid starvation case where in concurrent threads allocate the requested space
         // in after this method returns but before the caller allocated the space..
         if (objectSpace.canSatisfyAllocation(requestedFreeSpace)) {
@@ -306,7 +304,6 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         }
 
         private Size requestedSize;
-        private final TimerMetric weakRefTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
         private final TimerMetric reclaimTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
         private final TimerMetric totalPauseTime = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
 
@@ -326,8 +323,6 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         private void reportLastGCTimes() {
             final boolean lockDisabledSafepoints = Log.lock();
             heapMarker.reportLastElapsedTimes();
-            Log.print(", weak refs=");
-            Log.print(weakRefTimer.getLastElapsedTime());
             Log.print(", sweeping=");
             Log.print(reclaimTimer.getLastElapsedTime());
             Log.print(", total=");
@@ -338,8 +333,6 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         private void reportTotalGCTimes() {
             final boolean lockDisabledSafepoints = Log.lock();
             heapMarker.reportTotalElapsedTimes();
-            Log.print(", weak refs=");
-            Log.print(weakRefTimer.getElapsedTime());
             Log.print(", sweeping=");
             Log.print(reclaimTimer.getElapsedTime());
             Log.print(", total=");
@@ -348,19 +341,8 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         }
 
         private Size reclaim() {
-            Size minReclaimableSpace = objectSpace.beginSweep(DoImpreciseSweep);
-
-            if (Heap.traceGCPhases()) {
-                Log.print(DoImpreciseSweep ? "Imprecise" : "Precise");
-                Log.println(" sweeping of the heap...");
-            }
-
-            if (DoImpreciseSweep) {
-                heapMarker.impreciseSweep(objectSpace, minReclaimableSpace);
-            } else {
-                heapMarker.sweep(objectSpace);
-            }
-
+            objectSpace.beginSweep();
+            heapMarker.sweep(objectSpace);
             return objectSpace.endSweep();
         }
 
@@ -383,9 +365,6 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             }
             objectSpace.makeParsable();
             heapMarker.markAll();
-            startTimer(weakRefTimer);
-            SpecialReferenceManager.processDiscoveredSpecialReferences(heapMarker.getSpecialReferenceGC());
-            stopTimer(weakRefTimer);
             startTimer(reclaimTimer);
             Size freeSpaceAfterGC = reclaim();
             stopTimer(reclaimTimer);
@@ -514,8 +493,6 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             // request is larger than the TLAB size. However, this second call will succeed and allocate outside of the tlab.
             return tlabAllocate(size);
         }
-        // FIXME:
-        // Want to first test against size of next chunk of this TLAB (if any).
         final Size nextTLABSize = refillPolicy.nextTlabSize();
         if (size.greaterThan(nextTLABSize)) {
             // This couldn't be allocated in a TLAB, so go directly to direct allocation routine.

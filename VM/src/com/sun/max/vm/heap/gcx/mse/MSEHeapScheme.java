@@ -34,7 +34,6 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
@@ -55,11 +54,6 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
      * Number of heap words covered by a single mark.
      */
     private static final int WORDS_COVERED_PER_BIT = 1;
-
-    static boolean DoImpreciseSweep = true;
-    static {
-        VMOptions.addFieldOption("-XX:", "DoImpreciseSweep", MSEHeapScheme.class, "Use an imprecise sweeping phase", Phase.PRISTINE);
-    }
 
    /**
      * Size to reserve at the end of a TLABs to guarantee that a dead object can always be
@@ -179,7 +173,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
                 "Not enough reserved space to initialize heap scheme");
 
             theHeap.initialize(initSize, applicationHeapMaxSize);
-            // FIXME: We should uncommit what hasn't been committed yet!
+            // FIXME (ld) We should uncommit what hasn't been committed yet!
 
             // Initialize the heap marker's data structures. Needs to make sure it is outside of the heap reserved space.
             if (!VirtualMemory.allocatePageAlignedAtFixedAddress(heapMarkerDataStart, heapMarkerDatasize,  VirtualMemory.Type.DATA)) {
@@ -226,7 +220,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
         }
         // We may reach here after a race. Don't run GC if request can be satisfied.
 
-        // FIXME: might be better to try allocate the requested space and save the result for the caller.
+        // TODO (ld) might be better to try allocate the requested space and save the result for the caller.
         // This may avoid starvation case where in concurrent threads allocate the requested space
         // in after this method returns but before the caller allocated the space..
         if (theHeap.canSatisfyAllocation(requestedFreeSpace)) {
@@ -312,7 +306,6 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
         }
 
         private Size requestedSize;
-        private final TimerMetric weakRefTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
         private final TimerMetric reclaimTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
         private final TimerMetric totalPauseTime = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
 
@@ -332,8 +325,6 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
         private void reportLastGCTimes() {
             final boolean lockDisabledSafepoints = Log.lock();
             heapMarker.reportLastElapsedTimes();
-            Log.print(", weak refs=");
-            Log.print(weakRefTimer.getLastElapsedTime());
             Log.print(", sweeping=");
             Log.print(reclaimTimer.getLastElapsedTime());
             Log.print(", total=");
@@ -344,8 +335,6 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
         private void reportTotalGCTimes() {
             final boolean lockDisabledSafepoints = Log.lock();
             heapMarker.reportTotalElapsedTimes();
-            Log.print(", weak refs=");
-            Log.print(weakRefTimer.getElapsedTime());
             Log.print(", sweeping=");
             Log.print(reclaimTimer.getElapsedTime());
             Log.print(", total=");
@@ -372,11 +361,8 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
             }
             theHeap.makeParsable();
             theHeap.mark(heapMarker);
-            startTimer(weakRefTimer);
-            SpecialReferenceManager.processDiscoveredSpecialReferences(heapMarker.getSpecialReferenceGC());
-            stopTimer(weakRefTimer);
             startTimer(reclaimTimer);
-            /*Size freeSpaceAfterGC = */theHeap.sweep(heapMarker, DoImpreciseSweep);
+            /*Size freeSpaceAfterGC = */theHeap.sweep(heapMarker);
             stopTimer(reclaimTimer);
             if (MaxineVM.isDebug()) {
                 afterGCVerifier.run();
@@ -506,8 +492,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
             // request is larger than the TLAB size. However, this second call will succeed and allocate outside of the tlab.
             return tlabAllocate(size);
         }
-        // FIXME:
-        // Want to first test against size of next chunk of this TLAB (if any).
+        // FIXME (ld) Want to first test against size of next chunk of this TLAB (if any).
         final Size nextTLABSize = refillPolicy.nextTlabSize();
         if (size.greaterThan(nextTLABSize)) {
             // This couldn't be allocated in a TLAB, so go directly to direct allocation routine.
