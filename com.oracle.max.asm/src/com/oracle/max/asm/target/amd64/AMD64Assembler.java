@@ -20,14 +20,14 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.c1x.target.amd64;
+package com.oracle.max.asm.target.amd64;
 
-import static com.sun.c1x.asm.NumUtil.*;
-import static com.sun.c1x.target.amd64.AMD64.*;
+import static com.oracle.max.asm.NumUtil.*;
+import static com.oracle.max.asm.target.amd64.AMD64.*;
 import static com.sun.cri.bytecode.Bytecodes.MemoryBarriers.*;
 import static com.sun.cri.ci.CiKind.*;
 
-import com.sun.c1x.asm.*;
+import com.oracle.max.asm.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 

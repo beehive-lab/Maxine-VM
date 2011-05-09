@@ -22,7 +22,7 @@
  */
 package com.sun.max.vm.t1x;
 
-import static com.sun.c1x.target.amd64.AMD64.*;
+import static com.oracle.max.asm.target.amd64.AMD64.*;
 import static com.sun.cri.ci.CiRegister.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
@@ -31,10 +31,10 @@ import static com.sun.max.vm.t1x.T1XTemplateTag.*;
 
 import java.util.*;
 
+import com.oracle.max.asm.*;
+import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.asm.target.amd64.AMD64Assembler.*;
 import com.sun.c1x.*;
-import com.sun.c1x.asm.*;
-import com.sun.c1x.target.amd64.*;
-import com.sun.c1x.target.amd64.AMD64Assembler.ConditionFlag;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.bytecode.Bytecodes.MemoryBarriers;
 import com.sun.cri.ci.*;

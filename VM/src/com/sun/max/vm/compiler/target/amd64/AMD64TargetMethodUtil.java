@@ -22,7 +22,7 @@
  */
 package com.sun.max.vm.compiler.target.amd64;
 
-import com.sun.c1x.target.amd64.*;
+import com.oracle.max.asm.target.amd64.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;

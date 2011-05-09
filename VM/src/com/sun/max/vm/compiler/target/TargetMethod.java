@@ -102,7 +102,7 @@ public abstract class TargetMethod extends MemoryRegion {
         StaticTrampoline(!COMPILED),
 
         /**
-         * A {@linkplain com.sun.c1x.globalstub.GlobalStub global stub}.
+         * A global stub.
          */
         GlobalStub(!COMPILED),
 

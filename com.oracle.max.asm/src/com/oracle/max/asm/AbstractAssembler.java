@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.c1x.asm;
+package com.oracle.max.asm;
 
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiArchitecture.*;

@@ -25,6 +25,7 @@ package com.sun.c1x;
 
 import java.util.*;
 
+import com.oracle.max.asm.*;
 import com.sun.c1x.alloc.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.gen.*;

@@ -22,13 +22,13 @@
  */
 package com.sun.max.vm.stack.amd64;
 
-import static com.sun.cri.ci.CiRegister.RegisterFlag.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
 
-import com.sun.c1x.target.amd64.*;
+import com.oracle.max.asm.target.amd64.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiCallingConvention.Type;
+import com.sun.cri.ci.CiCallingConvention.*;
+import com.sun.cri.ci.CiRegister.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
@@ -38,99 +38,57 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.object.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.Cursor;
+import com.sun.max.vm.stack.StackFrameWalker.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
  * This class collects together stack-walking related functionality that is (somewhat) compiler-independent.
- *
- * @author Ben L. Titzer
  */
 public class AMD64OptStackWalking {
-
-    public static final int RIP_CALL_INSTRUCTION_SIZE = 5;
-    public static final byte RET = (byte) 0xC3;
-
-    private static CriticalMethod unwindOptimized = new CriticalMethod(AMD64OptStackWalking.class, "unwindOptimized", null);
-
     @NEVER_INLINE
     public static void unwindToCalleeEpilogue(Address catchAddress, Pointer stackPointer, TargetMethod lastJavaCallee) {
         // Overwrite return address of callee with catch address
         final Pointer returnAddressPointer = stackPointer.minus(Word.size());
         returnAddressPointer.setWord(catchAddress);
 
-        assert lastJavaCallee.registerRestoreEpilogueOffset() != -1;
         Address epilogueAddress = lastJavaCallee.codeStart().plus(lastJavaCallee.registerRestoreEpilogueOffset());
 
         final Pointer calleeStackPointer = stackPointer.minus(Word.size()).minus(lastJavaCallee.frameSize());
-        unwindOptimized(epilogueAddress, calleeStackPointer, Pointer.zero());
-    }
-
-    /**
-     * Unwinds a thread's stack to an exception handler.
-     * <p/>
-     * The compiled version of this method must have its own frame but the frame size must be known at image build
-     * time. This is because this code manually adjusts the stack pointer.
-     * <p/>
-     * The critical state of the registers before the RET instruction is:
-     * <ul>
-     * <li>RAX must hold the exception object</li>
-     * <li>RSP must be one word less than the stack pointer of the handler frame that is the target of the unwinding</li>
-     * <li>The value at [RSP] must be the address of the handler code</li>
-     * </ul>
-     * @param catchAddress the address of the exception handler code
-     * @param stackPointer the stack pointer denoting the frame of the handler to which the stack is unwound upon
-     *                     returning from this method
-     * @param framePointer TODO
-     */
-    @NEVER_INLINE
-    public static void unwindOptimized(Address catchAddress, Pointer stackPointer, Pointer framePointer) {
-        final int unwindFrameSize = unwindOptimized.targetMethod().frameSize();
-
-        if (!framePointer.isZero()) {
-            VMRegister.setCpuFramePointer(framePointer);
-        }
-
-        // Push 'catchAddress' to the handler's stack frame and update RSP to point to the pushed value.
-        // When the RET instruction is executed, the pushed 'catchAddress' will be popped from the stack
-        // and the stack will be in the correct state for the handler.
-        final Pointer returnAddressPointer = stackPointer.minus(Word.size());
-        returnAddressPointer.setWord(catchAddress);
-        VMRegister.setCpuStackPointer(returnAddressPointer.minus(unwindFrameSize));
+        Stubs.unwind(epilogueAddress, calleeStackPointer, Pointer.zero());
     }
 
     public static void catchException(TargetMethod targetMethod, Cursor current, Cursor callee, Throwable throwable) {
-        Pointer ip = current.ip();
-        Pointer sp = current.sp();
-        Pointer fp = current.fp();
-        Address catchAddress = targetMethod.throwAddressToCatchAddress(current.isTopFrame(), ip, throwable.getClass());
-        if (!catchAddress.isZero()) {
-            if (StackFrameWalker.TraceStackWalk) {
-                Log.print("StackFrameWalk: Handler position for exception at position ");
-                Log.print(ip.minus(targetMethod.codeStart()).toInt());
-                Log.print(" is ");
-                Log.println(catchAddress.minus(targetMethod.codeStart()).toInt());
-            }
+         Pointer ip = current.ip();
+         Pointer sp = current.sp();
+         Pointer fp = current.fp();
+         Address catchAddress = targetMethod.throwAddressToCatchAddress(current.isTopFrame(), ip, throwable.getClass());
+         if (!catchAddress.isZero()) {
+             if (StackFrameWalker.TraceStackWalk) {
+                 Log.print("StackFrameWalk: Handler position for exception at position ");
+                 Log.print(ip.minus(targetMethod.codeStart()).toInt());
+                 Log.print(" is ");
+                 Log.println(catchAddress.minus(targetMethod.codeStart()).toInt());
+             }
 
-            TargetMethod calleeMethod = callee.targetMethod();
-            // Reset the stack walker
-            current.stackFrameWalker().reset();
+             TargetMethod calleeMethod = callee.targetMethod();
+             // Reset the stack walker
+             current.stackFrameWalker().reset();
 
-            // Store the exception for the handler
-            VmThread.current().storeExceptionForHandler(throwable, targetMethod, targetMethod.posFor(catchAddress));
+             // Store the exception for the handler
+             VmThread.current().storeExceptionForHandler(throwable, targetMethod, targetMethod.posFor(catchAddress));
 
-            if (calleeMethod != null && calleeMethod.registerRestoreEpilogueOffset() != -1) {
-                unwindToCalleeEpilogue(catchAddress, sp, calleeMethod);
-            } else {
-                unwindOptimized(catchAddress, sp, fp);
-            }
-            ProgramError.unexpected("Should not reach here, unwind must jump to the exception handler!");
-        }
+             if (calleeMethod != null && calleeMethod.registerRestoreEpilogueOffset() != -1) {
+                 unwindToCalleeEpilogue(catchAddress, sp, calleeMethod);
+             } else {
+                 Stubs.unwind(catchAddress, sp, fp);
+             }
+             ProgramError.unexpected("Should not reach here, unwind must jump to the exception handler!");
+         }
     }
 
     public static boolean acceptStackFrameVisitor(Cursor current, StackFrameVisitor visitor) {
@@ -185,10 +143,10 @@ public class AMD64OptStackWalking {
         // which means the stack pointer has not been adjusted yet (or has already been adjusted back)
         TargetMethod targetMethod = current.targetMethod();
         Pointer entryPoint = targetMethod.callEntryPoint.equals(CallEntryPoint.C_ENTRY_POINT) ?
-                CallEntryPoint.C_ENTRY_POINT.in(targetMethod) :
-                CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(targetMethod);
+            CallEntryPoint.C_ENTRY_POINT.in(targetMethod) :
+            CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(targetMethod);
 
-        return entryPoint.equals(current.ip()) || current.stackFrameWalker().readByte(current.ip(), 0) == RET;
+        return entryPoint.equals(current.ip()) || current.stackFrameWalker().readByte(current.ip(), 0) == AMD64TargetMethodUtil.RET;
     }
 
     /**
@@ -211,7 +169,7 @@ public class AMD64OptStackWalking {
 
         Pointer calleeSaveStart = callee.sp();
         CiCalleeSaveArea csa = registerConfig.getCalleeSaveArea();
-        CiRegister[] regs = registerConfig.getCallingConventionRegisters(Type.JavaCall, CPU);
+        CiRegister[] regs = registerConfig.getCallingConventionRegisters(Type.JavaCall, RegisterFlag.CPU);
 
         // figure out what method the caller is trying to call
         if (trampoline.is(StaticTrampoline)) {

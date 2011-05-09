@@ -28,8 +28,8 @@ import static com.sun.max.vm.MaxineVM.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.oracle.max.asm.*;
 import com.sun.c1x.*;
-import com.sun.c1x.asm.AsmOptions;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
