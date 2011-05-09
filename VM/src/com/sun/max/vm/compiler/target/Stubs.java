@@ -253,8 +253,6 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
 
             return new Stub(flavor, stubName, frameSize, code, callPosition, callee, registerRestoreEpilogueOffset);
-
-//            return new C1XTargetMethod(flavor, stubName, asm.finishTargetMethod(stubName, runtime(), registerRestoreEpilogueOffset, true));
         }
         throw FatalError.unimplemented();
     }
@@ -331,8 +329,6 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
 
             return new Stub(StaticTrampoline, stubName, frameSize, code, callPosition, callee, registerRestoreEpilogueOffset);
-
-//            return new C1XTargetMethod(StaticTrampoline, stubName, asm.finishTargetMethod(stubName, runtime(), registerRestoreEpilogueOffset, true));
         }
         throw FatalError.unimplemented();
     }
@@ -414,8 +410,6 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
 
             return new Stub(TrapStub, "trapStub", frameSize, code, callPosition, callee, -1);
-
-//            return new C1XTargetMethod(Flavor.TrapStub, "trapStub", asm.finishTargetMethod("trapStub", runtime(), -1, true));
         }
         throw FatalError.unimplemented();
     }
@@ -432,7 +426,6 @@ public class Stubs {
             CiRegisterConfig registerConfig = MaxineVM.vm().stubs.registerConfigs.globalStub;
             AMD64MacroAssembler asm = new AMD64MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(0);
-//            asm.setFrameSize(frameSize);
 
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
@@ -453,11 +446,8 @@ public class Stubs {
             asm.movq(AMD64.rsp, catchSP);
             asm.ret(0);
 
-//            String stubName = "unwindStub";
             byte[] code = asm.codeBuffer.close(true);
-
             return new Stub(GlobalStub, "unwindStub", frameSize, code, -1, null, -1);
-//            return new C1XTargetMethod(GlobalStub, stubName, asm.finishTargetMethod(stubName, runtime(), -1, true));
         }
         throw FatalError.unimplemented();
     }
