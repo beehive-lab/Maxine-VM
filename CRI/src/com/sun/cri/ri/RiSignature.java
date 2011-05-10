@@ -42,7 +42,7 @@ public interface RiSignature {
      * Gets the argument type at the specified position. This method will return a
      * {@linkplain RiType#isResolved() resolved} type if possible but without
      * triggering any class loading or resolution.
-     * 
+     *
      * @param index the index into the parameters, with {@code 0} indicating the first parameter
      * @param accessingClass the context of the type lookup. If accessing class is resolved, its class loader
      *        is used to retrieve an existing resolved type. This value can be {@code null} if the caller does
@@ -62,14 +62,14 @@ public interface RiSignature {
      * Gets the return type of this signature. This method will return a
      * {@linkplain RiType#isResolved() resolved} type if possible but without
      * triggering any class loading or resolution.
-     * 
+     *
      * @param accessingClass the context of the type lookup. If accessing class is resolved, its class loader
      *        is used to retrieve an existing resolved type. This value can be {@code null} if the caller does
      *        not care for a resolved type.
      * @return the compiler interface type representing the return type
      */
     RiType returnType(RiType accessingClass);
-    
+
     /**
      * Gets the return kind of this signature.
      * @return the return kind

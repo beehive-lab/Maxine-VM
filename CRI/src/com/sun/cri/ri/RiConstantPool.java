@@ -36,33 +36,33 @@ public interface RiConstantPool {
      * specific to the JVM instruction it denotes are performed if the field is already resolved.
      * Should any of these checks fail, an {@linkplain RiField#isResolved() unresolved}
      * field reference is returned.
-     * 
+     *
      * @param cpi the constant pool index
      * @param opcode the opcode of the instruction for which the lookup is being performed or {@code -1}
      * @return a reference to the field at {@code cpi} in this pool
      * @throws ClassFormatError if the entry at {@code cpi} is not a field
      */
     RiField lookupField(int cpi, int opcode);
-    
+
     /**
      * Looks up a reference to a method. If {@code opcode} is non-negative, then resolution checks
      * specific to the JVM instruction it denotes are performed if the method is already resolved.
      * Should any of these checks fail, an {@linkplain RiMethod#isResolved() unresolved}
      * method reference is returned.
-     * 
+     *
      * @param cpi the constant pool index
      * @param opcode the opcode of the instruction for which the lookup is being performed or {@code -1}
      * @return a reference to the method at {@code cpi} in this pool
      * @throws ClassFormatError if the entry at {@code cpi} is not a method
      */
     RiMethod lookupMethod(int cpi, int opcode);
-    
+
     /**
      * Looks up a reference to a type. If {@code opcode} is non-negative, then resolution checks
      * specific to the JVM instruction it denotes are performed if the type is already resolved.
      * Should any of these checks fail, an {@linkplain RiType#isResolved() unresolved}
      * type reference is returned.
-     * 
+     *
      * @param cpi the constant pool index
      * @param opcode the opcode of the instruction for which the lookup is being performed or {@code -1}
      * @return a reference to the compiler interface type
@@ -71,7 +71,7 @@ public interface RiConstantPool {
 
     /**
      * Looks up a method signature.
-     * 
+     *
      * @param cpi the constant pool index
      * @return the method signature at index {@code cpi} in this constant pool
      */

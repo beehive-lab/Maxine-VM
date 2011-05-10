@@ -26,8 +26,6 @@ package com.sun.cri.ci;
 /**
  * Represents the target machine for a compiler, including the CPU architecture, the size of pointers and references,
  * alignment of stacks, caches, etc.
- *
- * @author Ben L. Titzer
  */
 public class CiTarget {
     public final CiArchitecture arch;
@@ -36,17 +34,17 @@ public class CiTarget {
      * The OS page size.
      */
     public final int pageSize;
-    
+
     /**
      * Specifies if this is a multi-processor system.
      */
     public final boolean isMP;
-    
+
     /**
      * The number of {@link #spillSlotSize spill slots} required per kind.
      */
     private final int[] spillSlotsPerKindMap;
-    
+
     /**
      * Specifies if this target supports encoding objects inline in the machine code.
      */
@@ -73,12 +71,12 @@ public class CiTarget {
      * </pre>
      */
     public final int stackAlignment;
-    
+
     /**
      * @see http://docs.sun.com/app/docs/doc/806-0477/6j9r2e2b9?a=view
      */
     public final int stackBias;
-    
+
     /**
      * The cache alignment.
      */
@@ -95,7 +93,7 @@ public class CiTarget {
      * were to grow upwards, the embedded doubles would be word-swapped.)
      */
     public final boolean debugInfoDoubleWordsInSecondSlot;
-    
+
     public CiTarget(CiArchitecture arch,
              boolean isMP,
              int spillSlotSize,
@@ -129,7 +127,7 @@ public class CiTarget {
 
     /**
      * Gets the size in bytes of the specified kind for this target.
-     * 
+     *
      * @param kind the kind for which to get the size
      * @return the size in bytes of {@code kind}
      */

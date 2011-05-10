@@ -31,41 +31,41 @@ import java.util.*;
  * This class describes the layout of a CSA in terms of its
  * {@linkplain #size size}, {@linkplain #slotSize slot size} and
  * the {@linkplain #registers callee save registers} covered by the CSA.
- *  
+ *
  * @author Doug Simon
  */
 public class CiCalleeSaveArea {
-    
+
     /**
      * An empty callee-save area.
      */
     public static final CiCalleeSaveArea EMPTY = new CiCalleeSaveArea(0, 0, new CiRegister[0]);
-    
+
     /**
      * The size (in bytes) of the CSA.
      */
     public final int size;
-    
+
     /**
      * The size (in bytes) of an {@linkplain #registerAtIndex(int) indexable} slot in the CSA.
      */
     public final int slotSize;
-    
+
     /**
      * Map from {@linkplain CiRegister#number register numbers} to slot indexes in the CSA.
      */
     private final int[] regNumToIndex;
-    
+
     private final CiRegister[] indexToReg;
 
     /**
      * The list of registers {@linkplain #contains(CiRegister) contained} by this CSA.
      */
     public final CiRegister[] registers;
-                            
+
     /**
      * Creates an CSA descriptor.
-     * 
+     *
      * @param size size (in bytes) of the CSA. If this is {@code -1}, then the CSA size will be computed from {@code registers}.
      * @param slotSize the size (in bytes) of an {@linkplain #registerAtIndex(int) indexable} slot in the CSA
      * @param registers the registers that can be saved in the CSA
@@ -94,9 +94,9 @@ public class CiCalleeSaveArea {
             assert offset <= size;
             this.size = size;
         }
-        size = this.size; 
+        size = this.size;
 
-        this.regNumToIndex = new int[maxRegNum + 1]; 
+        this.regNumToIndex = new int[maxRegNum + 1];
         this.indexToReg = offset == 0 ? new CiRegister[0] : new CiRegister[offset / slotSize];
         Arrays.fill(regNumToIndex, -1);
         offset = 0;
@@ -107,12 +107,12 @@ public class CiCalleeSaveArea {
             offset += reg.spillSlotSize;
         }
     }
-    
+
     /**
      * Gets the offset of a given register in the CSA.
-     * 
+     *
      * @return the offset (in bytes) of {@code reg} in the CSA
-     * @throws IllegalArgumentException if {@code reg} does not have a slot in the CSA 
+     * @throws IllegalArgumentException if {@code reg} does not have a slot in the CSA
      */
     public int offsetOf(int reg) {
         return indexOf(reg) * slotSize;
@@ -120,9 +120,9 @@ public class CiCalleeSaveArea {
 
     /**
      * Gets the index of a given register in the CSA.
-     * 
+     *
      * @return the index of {@code reg} in the CSA
-     * @throws IllegalArgumentException if {@code reg} does not have a slot in the CSA 
+     * @throws IllegalArgumentException if {@code reg} does not have a slot in the CSA
      */
     public int indexOf(int reg) {
         if (!contains(reg)) {
@@ -130,12 +130,12 @@ public class CiCalleeSaveArea {
         }
         return regNumToIndex[reg];
     }
-    
+
     /**
      * Gets the offset of a given register in the CSA.
-     * 
+     *
      * @return the offset (in bytes) of {@code reg} in the CSA
-     * @throws IllegalArgumentException if {@code reg} does not have a slot in the CSA 
+     * @throws IllegalArgumentException if {@code reg} does not have a slot in the CSA
      */
     public int offsetOf(CiRegister reg) {
         return offsetOf(reg.number);
@@ -143,7 +143,7 @@ public class CiCalleeSaveArea {
 
     /**
      * Determines if the CSA includes a slot for a given register.
-     *  
+     *
      * @param reg the register to test
      * @return true if the CSA contains a slot for {@code reg}
      */
@@ -153,7 +153,7 @@ public class CiCalleeSaveArea {
 
     /**
      * Gets the register whose slot in the CSA is at a given index.
-     * 
+     *
      * @param index an index of a slot in the CSA
      * @return the register whose slot in the CSA is at  {@code index} or {@code null} if {@code index} does not denote a
      *         slot in the CSA aligned with a register

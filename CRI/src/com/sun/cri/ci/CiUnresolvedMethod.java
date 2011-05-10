@@ -85,7 +85,7 @@ public class CiUnresolvedMethod implements RiMethod {
     public boolean isLeafMethod() {
         throw unresolved("isLeafMethod()");
     }
-    
+
     public RiMethod uniqueConcreteMethod() {
         throw unresolved("uniqueConcreteMethod()");
     }
@@ -105,11 +105,11 @@ public class CiUnresolvedMethod implements RiMethod {
     public boolean noSafepoints() {
         throw unresolved("noSafepoints()");
     }
-    
+
     public boolean minimalDebugInfo() {
         throw unresolved("minimalDebugInfo()");
     }
-    
+
     public RiMethodProfile methodData() {
         throw unresolved("methodData()");
     }
@@ -143,7 +143,7 @@ public class CiUnresolvedMethod implements RiMethod {
     public StackTraceElement toStackTraceElement(int bci) {
         return new StackTraceElement(CiUtil.toJavaName(holder), name, null, -1);
     }
-    
+
     @Override
     public String toString() {
         return CiUtil.format("%H.%n(%p) [unresolved]", this, false);
@@ -152,11 +152,11 @@ public class CiUnresolvedMethod implements RiMethod {
     public boolean hasCompiledCode() {
         return false;
     }
-    
+
     public RiType accessor() {
         return null;
     }
-    
+
     public int intrinsic() {
         return 0;
     }

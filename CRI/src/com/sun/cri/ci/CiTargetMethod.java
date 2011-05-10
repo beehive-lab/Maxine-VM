@@ -46,7 +46,7 @@ public class CiTargetMethod implements Serializable {
         public Site(int pcOffset) {
             this.pcOffset = pcOffset;
         }
-        
+
         public CiDebugInfo debugInfo() {
             return null;
         }
@@ -89,7 +89,7 @@ public class CiTargetMethod implements Serializable {
         public final String symbol;
         public final Object globalStubID;
         public final CiDebugInfo debugInfo;
-        
+
         Call(int pcOffset, CiRuntimeCall runtimeCall, RiMethod method, String symbol, Object globalStubID, CiDebugInfo debugInfo) {
             super(pcOffset);
             this.runtimeCall = runtimeCall;
@@ -103,7 +103,7 @@ public class CiTargetMethod implements Serializable {
         public CiDebugInfo debugInfo() {
             return debugInfo;
         }
-        
+
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
@@ -157,9 +157,9 @@ public class CiTargetMethod implements Serializable {
      * Provides extra information about instructions or data at specific positions in {@link CiTargetMethod#targetCode()}.
      * This is optional information that can be used to enhance a disassembly of the code.
      */
-    public static abstract class CodeAnnotation implements Serializable {
+    public abstract static class CodeAnnotation implements Serializable {
         public final int position;
-        
+
         public CodeAnnotation(int position) {
             this.position = position;
         }
@@ -174,13 +174,13 @@ public class CiTargetMethod implements Serializable {
             super(position);
             this.value = comment;
         }
-        
+
         @Override
         public String toString() {
             return getClass().getSimpleName() + "@" + position + ": " + value;
         }
     }
- 
+
     /**
      * Labels some inline data in the code.
      */
@@ -190,7 +190,7 @@ public class CiTargetMethod implements Serializable {
             super(position);
             this.size = size;
         }
-        
+
         @Override
         public String toString() {
             return getClass().getSimpleName() + "@" + position + ": size=" + size;
@@ -209,30 +209,30 @@ public class CiTargetMethod implements Serializable {
          * The low value in the key range (inclusive).
          */
         public final int low;
-        
+
         /**
          * The high value in the key range (inclusive).
          */
         public final int high;
-        
+
         /**
          * The size (in bytes) of each table entry.
          */
         public final int entrySize;
-        
+
         public JumpTable(int position, int low, int high, int entrySize) {
             super(position);
             this.low = low;
             this.high = high;
             this.entrySize = entrySize;
         }
-        
+
         @Override
         public String toString() {
             return getClass().getSimpleName() + "@" + position + ": [" + low + " .. " + high + "]";
         }
     }
-    
+
     /**
      * Describes a table of key and offset pairs. The offset in each table entry is relative to the address of
      * the table. This type of table maybe generated when translating a multi-way branch
@@ -243,24 +243,24 @@ public class CiTargetMethod implements Serializable {
          * The number of entries in the table.
          */
         public final int npairs;
-        
+
         /**
          * The size (in bytes) of entry's key.
          */
         public final int keySize;
-        
+
         /**
          * The size (in bytes) of entry's offset value.
          */
         public final int offsetSize;
-        
+
         public LookupTable(int position, int npairs, int keySize, int offsetSize) {
             super(position);
             this.npairs = npairs;
             this.keySize = keySize;
             this.offsetSize = offsetSize;
         }
-        
+
         @Override
         public String toString() {
             return getClass().getSimpleName() + "@" + position + ": [npairs=" + npairs + ", keySize=" + keySize + ", offsetSize=" + offsetSize + "]";
@@ -292,7 +292,7 @@ public class CiTargetMethod implements Serializable {
             return String.format("Exception edge from pos %d to %d with type %s", pcOffset, handlerPos, (exceptionType == null) ? "null" : exceptionType);
         }
     }
-    
+
     public static final class Mark extends Site {
         public final Object id;
         public final Mark[] references;
@@ -305,10 +305,10 @@ public class CiTargetMethod implements Serializable {
 
         @Override
         public String toString() {
-            if (id == null)
+            if (id == null) {
                 return String.format("Mark at pos %d with %d references", pcOffset, references.length);
-            else if(id instanceof Integer) {
-                return String.format("Mark at pos %d with %d references and id %s", pcOffset, references.length, Integer.toHexString((Integer)id));
+            } else if (id instanceof Integer) {
+                return String.format("Mark at pos %d with %d references and id %s", pcOffset, references.length, Integer.toHexString((Integer) id));
             } else {
                 return String.format("Mark at pos %d with %d references and id %s", pcOffset, references.length, id.toString());
             }
@@ -339,25 +339,25 @@ public class CiTargetMethod implements Serializable {
      * List of exception handlers in the code.
      */
     public final List<ExceptionHandler> exceptionHandlers = new ArrayList<ExceptionHandler>();
-    
+
     public final List<Mark> marks = new ArrayList<Mark>();
-    
+
     private int frameSize = -1;
     private int customStackAreaOffset = -1;
     private int registerRestoreEpilogueOffset = -1;
-    
+
     /**
-     * The buffer containing the emitted machine code. 
+     * The buffer containing the emitted machine code.
      */
     private byte[] targetCode;
-    
+
     /**
      * The leading number of bytes in {@link #targetCode} containing the emitted machine code.
      */
     private int targetCodeSize;
 
     private ArrayList<CodeAnnotation> annotations;
-    
+
     private CiAssumptions assumptions;
 
     /**
@@ -365,7 +365,7 @@ public class CiTargetMethod implements Serializable {
      */
     public CiTargetMethod() {
     }
-    
+
     public void setAssumptions(CiAssumptions assumptions) {
         this.assumptions = assumptions;
     }
@@ -373,7 +373,7 @@ public class CiTargetMethod implements Serializable {
     public CiAssumptions assumptions() {
         return assumptions;
     }
-    
+
     /**
      * Sets the frame size in bytes. Does not include the return address pushed onto the
      * stack, if any.
@@ -420,7 +420,7 @@ public class CiTargetMethod implements Serializable {
         String symbol = target instanceof String ? (String) target : null;
         // make sure that only one is non-null
         Object globalStubID = (rt == null && meth == null && symbol == null) ? target : null;
-        
+
         final Call callSite = new Call(codePos, rt, meth, symbol, globalStubID, debugInfo);
         if (direct) {
             directCalls.add(callSite);
@@ -462,7 +462,7 @@ public class CiTargetMethod implements Serializable {
         marks.add(mark);
         return mark;
     }
-    
+
     /**
      * Allows a method to specify the offset of the epilogue that restores the callee saved registers. Must be called
      * iff the method is a callee saved method and stores callee registers on the stack.
@@ -490,15 +490,15 @@ public class CiTargetMethod implements Serializable {
     public int registerRestoreEpilogueOffset() {
         return registerRestoreEpilogueOffset;
     }
-    
+
     /**
-     * Offset in bytes for the custom stack area (relative to sp)
+     * Offset in bytes for the custom stack area (relative to sp).
      * @return the offset in bytes
      */
     public int customStackAreaOffset() {
         return customStackAreaOffset;
     }
-    
+
     /**
      * @see #customStackAreaOffset()
      * @param bytes
@@ -520,7 +520,7 @@ public class CiTargetMethod implements Serializable {
     public int targetCodeSize() {
         return targetCodeSize;
     }
-    
+
     /**
      * @return the code annotations or {@code null} if there are none
      */
@@ -535,7 +535,7 @@ public class CiTargetMethod implements Serializable {
         }
         annotations.add(annotation);
     }
-    
+
     private static void appendDebugInfo(StringBuilder sb, CiDebugInfo info) {
         if (info != null && info.hasFrame()) {
             sb.append(" #locals=").append(info.frame().numLocals).append(" #expr=").append(info.frame().numStack);

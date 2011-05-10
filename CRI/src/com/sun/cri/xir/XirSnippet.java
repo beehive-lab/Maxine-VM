@@ -41,7 +41,7 @@ public class XirSnippet {
     public final XirArgument[] arguments;
     public final XirTemplate template;
     public final Map<XirMark, Mark> marks;
-    
+
     public XirSnippet(XirTemplate template, XirArgument... inputs) {
         assert template != null;
         this.template = template;
@@ -70,7 +70,7 @@ public class XirSnippet {
                 return false;
             }
             if (arg.constant != null) {
-                if (arg.constant != null && arg.constant.kind != param.kind) {                    
+                if (arg.constant != null && arg.constant.kind != param.kind) {
                     return false;
                 }
             }
@@ -81,17 +81,17 @@ public class XirSnippet {
     @Override
     public String toString() {
 
-    	StringBuffer sb = new StringBuffer();
+        StringBuffer sb = new StringBuffer();
 
-    	sb.append(template.toString());
-    	sb.append("(");
-    	for (XirArgument a : arguments) {
-    	    sb.append(" ");
-    	    sb.append(a);
-    	}
+        sb.append(template.toString());
+        sb.append("(");
+        for (XirArgument a : arguments) {
+            sb.append(" ");
+            sb.append(a);
+        }
 
-    	sb.append(" )");
+        sb.append(" )");
 
-    	return sb.toString();
+        return sb.toString();
     }
 }

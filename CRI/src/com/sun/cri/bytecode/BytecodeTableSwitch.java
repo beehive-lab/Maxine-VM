@@ -28,10 +28,10 @@ package com.sun.cri.bytecode;
  * @author Ben L. Titzer
  */
 public class BytecodeTableSwitch extends BytecodeSwitch {
-	private static final int OFFSET_TO_LOW_KEY = 4;
-	private static final int OFFSET_TO_HIGH_KEY = 8;
-	private static final int OFFSET_TO_FIRST_JUMP_OFFSET = 12;
-	private static final int JUMP_OFFSET_SIZE = 4;
+    private static final int OFFSET_TO_LOW_KEY = 4;
+    private static final int OFFSET_TO_HIGH_KEY = 8;
+    private static final int OFFSET_TO_FIRST_JUMP_OFFSET = 12;
+    private static final int JUMP_OFFSET_SIZE = 4;
 
     /**
      * Constructor for a {@link BytecodeStream}.

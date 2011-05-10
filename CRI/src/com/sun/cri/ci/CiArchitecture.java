@@ -66,7 +66,7 @@ public abstract class CiArchitecture {
      * array is equal to its {@linkplain CiRegister#number number}.
      */
     public final CiRegister[] registers;
-    
+
     /**
      * Map of all registers keyed by their {@linkplain CiRegister#name names}.
      */
@@ -82,17 +82,17 @@ public abstract class CiArchitecture {
      * are not required to be explicitly inserted under this architecture.
      */
     public final int implicitMemoryBarriers;
-    
+
     /**
      * Determines the barriers in a given barrier mask that are explicitly required on this architecture.
-     * 
+     *
      * @param barriers a mask of the barrier constants defined in {@link MemoryBarriers}
      * @return the value of {@code barriers} minus the barriers unnecessary on this architecture
      */
     public final int requiredBarriers(int barriers) {
         return barriers & ~implicitMemoryBarriers;
     }
-    
+
     /**
      * Offset in bytes from the beginning of a call instruction to the displacement.
      */
@@ -105,11 +105,11 @@ public abstract class CiArchitecture {
     public final int returnAddressSize;
 
     private final EnumMap<RegisterFlag, CiRegister[]> registersByTypeAndEncoding;
-    
+
     /**
      * Gets the register for a given {@linkplain CiRegister#encoding encoding} and type.
-     * 
-     * @param encoding a register value as used in a machine instruction 
+     *
+     * @param encoding a register value as used in a machine instruction
      * @param type the type of the register
      */
     public CiRegister registerFor(int encoding, RegisterFlag type) {

@@ -28,7 +28,7 @@ package com.sun.cri.ri;
  * @author Ben L. Titzer
  */
 public interface RiExceptionHandler {
-    
+
     /**
      * Gets the start bytecode index of the protected range of this handler.
      * @return the start bytecode index

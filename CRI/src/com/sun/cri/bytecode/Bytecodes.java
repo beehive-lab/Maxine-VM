@@ -261,7 +261,7 @@ public class Bytecodes {
      * The 'function_address' value on the top of the stack is the result of
      * linking a native function. Typically, a {@link #JNIOP_LINK} operation
      * is used to obtain this address.
-     * 
+     *
      * <pre>
      * Format: { u1 opcode;  // JNICALL
      *           u2 sig;     // Constant pool index of a CONSTANT_Utf8_info representing the signature of the call
@@ -276,17 +276,17 @@ public class Bytecodes {
      * @see #JNIOP_N2J
      */
     public static final int JNICALL              = 203;
-    
+
     /**
      * @see #JNIOP_LINK
      * @see #JNIOP_J2N
      * @see #JNIOP_N2J
      */
     public static final int JNIOP                = 204;
-    
+
     /**
      * Template call.
-     * 
+     *
      * <pre>
      * Format: { u1 opcode;  // CALL
      *           u2 sig;     // Constant pool index of a CONSTANT_Utf8_info representing the signature of the call.
@@ -328,7 +328,7 @@ public class Bytecodes {
 
     /**
      * Atomic update of a value in memory.
-     * 
+     *
      * Compares {@code expectedValue} value with the actual value in a memory location (given by {@code pointer + offset}).
      * Iff they are same, {@code newValue} is stored into the memory location and the {@code expectedValue} is returned.
      * Otherwise, the actual value is returned.
@@ -337,7 +337,7 @@ public class Bytecodes {
      * Format: { u3 opcode;   // PCMPSWP_INT, PCMPSWP_WORD, PCMPSWP_REFERENCE,
      *                        // PCMPSWP_INT_I, PCMPSWP_WORD_I or PCMPSWP_REFERENCE_I
      *         }
-     *         
+     *
      * Operand Stack:
      *     ... pointer, offset, expectedValue, newValue => ..., result
      *
@@ -416,7 +416,7 @@ public class Bytecodes {
     public static final int WRITEREG             = 235;
 
     public static final int INCREG               = 236;
-    
+
     /**
      * Unsafe cast of top value on stack.
      *
@@ -433,17 +433,17 @@ public class Bytecodes {
     public static final int UNSAFE_CAST          = 237;
 
     public static final int WRETURN              = 238;
-    
+
     /**
      * Record debug info at the current code location.
-     * 
+     *
      * <pre>
      * Format: { u1 opcode;    // INFOPOINT
      *           u1 opcode2;   // SAFEPOINT, HERE or HERE_NOP
-     *           u1 inclFrame; // non-zero if the full frame is to be saved 
+     *           u1 inclFrame; // non-zero if the full frame is to be saved
      *         }
      * </pre>
-     * 
+     *
      * @see #SAFEPOINT
      * @see #HERE
      * @see #INFO
@@ -454,7 +454,7 @@ public class Bytecodes {
      * Record debug info at the current code location
      * and emit the instruction(s) that enable a thread
      * to be safely stopped for a VM operation (e.g. a GC).
-     * 
+     *
      * <pre>
      * Format: { u1 opcode;    // INFOPOINT
      *           u1 opcode2;   // SAFEPOINT
@@ -471,11 +471,11 @@ public class Bytecodes {
      * Record debug info at the current code location
      * and push its address to the stack. This is useful (for example)
      * when initiating a stack walk from the current execution position.
-     * 
+     *
      * <pre>
      * Format: { u1 opcode;    // INFOPOINT
      *           u1 opcode2;   // HERE
-     *           u1 inclFrame; // non-zero if the full frame is to be saved 
+     *           u1 inclFrame; // non-zero if the full frame is to be saved
      *         }
      *
      * Operand Stack:
@@ -487,11 +487,11 @@ public class Bytecodes {
     /**
      * Record debug info at the current code location.
      * No instructions are emitted.
-     * 
+     *
      * <pre>
      * Format: { u1 opcode;    // INFOPOINT
      *           u1 opcode2;   // HERE_NOP
-     *           u1 inclFrame; // non-zero if the full frame is to be saved 
+     *           u1 inclFrame; // non-zero if the full frame is to be saved
      *         }
      *
      * Operand Stack:
@@ -499,7 +499,7 @@ public class Bytecodes {
      * </pre>
      */
     public static final int INFO          = INFOPOINT  | 3 << 16;
-    
+
     /**
      * Allocates a requested block of memory within the current activation frame.
      * The allocated memory is reclaimed when the method returns.
@@ -534,11 +534,11 @@ public class Bytecodes {
      * Operand Stack:
      *     ... => ...
      * </pre>
-     * 
+     *
      * @see MemoryBarriers
      */
     public static final int MEMBAR               = 241;
-    
+
     /**
      * Create a handle for a given value on the native stack frame.
      * <p>
@@ -550,9 +550,9 @@ public class Bytecodes {
      * if it is a GC root. If {@code value} is an object, any subsequent value written to the slot
      * (via {@code address}) must be an object. If {@code value} is not an object, any subsequent value
      * written to the slot must not be an object.
-     * 
+     *
      * <b>The compiler is not required to enforce this type safety.</b>
-     * 
+     *
      * <pre>
      * Format: { u1 opcode;   // STACKHANDLE
      *           u2 method;   // Constant pool index to method (CONSTANT_Methodref_info) whose signature
@@ -564,15 +564,15 @@ public class Bytecodes {
      * </pre>
      */
     public static final int STACKHANDLE          = 242;
-    
+
     public static final int PAUSE                = 243;
     public static final int BREAKPOINT_TRAP      = 244;
     public static final int ADD_SP               = 245;
     public static final int FLUSHW               = 246;
-    
+
     /**
      * Produces the index of the least significant bit within {@code value} or {@code -1} if {@code value == 0}.
-     * 
+     *
      * <pre>
      * Format: { u1 opcode;  // LSB
      *           u2 ignore;
@@ -583,10 +583,10 @@ public class Bytecodes {
      * </pre>
      */
     public static final int LSB                  = 247;
-    
+
     /**
      * Produces the index of the most significant bit within {@code value} or {@code -1} if {@code value == 0}.
-     * 
+     *
      * <pre>
      * Format: { u1 opcode;  // MSB
      *           u2 ignore;
@@ -681,7 +681,7 @@ public class Bytecodes {
 
     /**
      * Links a native function.
-     * 
+     *
      * This instruction can only be used in a stub generated for a {@code native} method.
      * It causes the VM linker to find the address for the native function
      * corresponding to the native method.
@@ -696,10 +696,10 @@ public class Bytecodes {
      * </pre>
      */
     public static final int JNIOP_LINK         = JNIOP | LINK << 8;
-    
+
     /**
      * Effects a transition from compiled Java code to native code.
-     * 
+     *
      * This instruction must appear immediately before {@link #JNICALL} in the instruction stream.
      *
      * <pre>
@@ -715,7 +715,7 @@ public class Bytecodes {
 
     /**
      * Effects a transition from native code to compiled Java code.
-     * 
+     *
      * This instruction must appear immediately after {@link #JNICALL} in the instruction stream.
      *
      * <pre>
@@ -728,7 +728,7 @@ public class Bytecodes {
      * </pre>
      */
     public static final int JNIOP_N2J          = JNIOP | N2J << 8;
-    
+
     /**
      * Constants for the operations performed as part of JNI call from compiled Java code
      * to native code or vice versa.
@@ -738,7 +738,7 @@ public class Bytecodes {
          * @see Bytecodes#JNIOP_LINK
          */
         public static final int LINK = 1;
-        
+
         /**
          * @see Bytecodes#JNIOP_N2J
          */
@@ -749,7 +749,7 @@ public class Bytecodes {
          */
         public static final int J2N = 3;
     }
-    
+
     /**
      * Constants and {@link INTRINSIC} definitions for unsigned comparisons.
      */
@@ -771,7 +771,7 @@ public class Bytecodes {
         @INTRINSIC(UCMP | (BELOW_THAN << 8))
         public static native boolean belowThan(int x, int y);
     }
-    
+
     /**
      * Intrinsic functions for using {@link Bytecodes#INFOPOINT}s.
      */
@@ -780,10 +780,10 @@ public class Bytecodes {
 
         @INTRINSIC(SAFEPOINT | WITH_FRAME)
         public static native void safepoint();
-        
+
         @INTRINSIC(SAFEPOINT)
         public static native void safepointWithoutFrame();
-        
+
         @INTRINSIC(HERE)
         public static native long here();
 
@@ -792,7 +792,7 @@ public class Bytecodes {
 
         @INTRINSIC(INFO | WITH_FRAME)
         public static native void info();
-        
+
         @INTRINSIC(INFO)
         public static native void infoWithoutFrame();
     }
@@ -887,7 +887,7 @@ public class Bytecodes {
             appendFlag(sb, (barriers & STORE_STORE) != 0, "STORE_STORE ");
             return sb.toString().trim();
         }
-        
+
         /**
          * Ensures all preceding loads complete before any subsequent loads.
          */
@@ -905,7 +905,7 @@ public class Bytecodes {
          */
         @INTRINSIC(MEMBAR_STORE_LOAD)
         public static native void storeLoad();
-        
+
         /**
          * Ensures all preceding stores complete before any subsequent stores.
          */
@@ -917,8 +917,8 @@ public class Bytecodes {
          */
         @INTRINSIC(MEMBAR | ((LOAD_STORE | STORE_STORE) << 8))
         public static native void memopStore();
-        
-        
+
+
         public static final int JMM_PRE_VOLATILE_WRITE = LOAD_STORE | STORE_STORE;
         public static final int JMM_POST_VOLATILE_WRITE = STORE_LOAD | STORE_STORE;
         public static final int JMM_PRE_VOLATILE_READ = 0;
@@ -1022,17 +1022,17 @@ public class Bytecodes {
      * This will include the root instruction for the three-byte extended instructions.
      */
     private static final String[] names = new String[256];
-    
+
     /**
      * Maps from a three-byte extended bytecode value to a {@link String} for the corresponding instruction mnemonic.
      */
     private static final HashMap<Integer, String> threeByteExtNames = new HashMap<Integer, String>();
-    
+
     /**
      * A array that maps from a bytecode value to the set of {@link Flags} for the corresponding instruction.
      */
     private static final int[] flags = new int[256];
-    
+
     /**
      * A array that maps from a bytecode value to the length in bytes for the corresponding instruction.
      */
@@ -1243,8 +1243,8 @@ public class Bytecodes {
         def(GOTO_W              , "goto_w"          , "boooo", STOP | BRANCH);
         def(JSR_W               , "jsr_w"           , "boooo", STOP | BRANCH);
         def(BREAKPOINT          , "breakpoint"      , "b"    , TRAP);
-        
-        
+
+
         def(WLOAD               , "wload"           , "bi"   , EXTENSION | LOAD);
         def(WLOAD_0             , "wload_0"         , "b"    , EXTENSION | LOAD);
         def(WLOAD_1             , "wload_1"         , "b"    , EXTENSION | LOAD);
@@ -1291,20 +1291,20 @@ public class Bytecodes {
         def(FLUSHW              , "flushw"          , "bii"  , EXTENSION);
         def(LSB                 , "lsb"             , "bii"  , EXTENSION);
         def(MSB                 , "msb"             , "bii"  , EXTENSION);
-        
+
         def(JNIOP_J2N           , "jniop_j2n"         );
         def(JNIOP_LINK          , "jniop_link"        );
         def(JNIOP_N2J           , "jniop_n2j"         );
-        
+
         def(SAFEPOINT           , "safepoint"         );
         def(HERE                , "here"              );
         def(INFO                , "info"              );
-        
+
         def(MEMBAR_LOAD_LOAD    , "membar_load_load"  );
         def(MEMBAR_LOAD_STORE   , "membar_load_store" );
         def(MEMBAR_STORE_LOAD   , "membar_store_load" );
         def(MEMBAR_STORE_STORE  , "membar_store_store");
-        
+
         def(PCMPSWP_INT         , "pcmpswp_int"       );
         def(PCMPSWP_INT_I       , "pcmpswp_int_i"     );
         def(PCMPSWP_LONG        , "pcmpswp_long"      );
@@ -1313,7 +1313,7 @@ public class Bytecodes {
         def(PCMPSWP_REFERENCE_I , "pcmpswp_reference_i");
         def(PCMPSWP_WORD        , "pcmpswp_word"      );
         def(PCMPSWP_WORD_I      , "pcmpswp_word_i"    );
-        
+
         def(PGET_BYTE           , "pget_byte"         );
         def(PGET_CHAR           , "pget_char"         );
         def(PGET_SHORT          , "pget_short"        );
@@ -1323,7 +1323,7 @@ public class Bytecodes {
         def(PGET_DOUBLE         , "pget_double"       );
         def(PGET_REFERENCE      , "pget_reference"    );
         def(PGET_WORD           , "pget_word"         );
-        
+
         def(PREAD_BYTE          , "pread_byte"        );
         def(PREAD_BYTE_I        , "pread_byte_i"      );
         def(PREAD_CHAR          , "pread_char"        );
@@ -1342,7 +1342,7 @@ public class Bytecodes {
         def(PREAD_REFERENCE_I   , "pread_reference_i" );
         def(PREAD_WORD          , "pread_word"        );
         def(PREAD_WORD_I        , "pread_word_i"      );
-        
+
         def(PSET_BYTE           , "pset_byte"         );
         def(PSET_SHORT          , "pset_short"        );
         def(PSET_INT            , "pset_int"          );
@@ -1351,7 +1351,7 @@ public class Bytecodes {
         def(PSET_DOUBLE         , "pset_double"       );
         def(PSET_REFERENCE      , "pset_reference"    );
         def(PSET_WORD           , "pset_word"         );
-        
+
         def(PWRITE_BYTE         , "pwrite_byte"       );
         def(PWRITE_BYTE_I       , "pwrite_byte_i"     );
         def(PWRITE_SHORT        , "pwrite_short"      );
@@ -1367,7 +1367,7 @@ public class Bytecodes {
         def(PWRITE_REFERENCE    , "pwrite_reference"  );
         def(PWRITE_REFERENCE_I  , "pwrite_reference_i");
         def(PWRITE_WORD         , "pwrite_word"       );
-        def(PWRITE_WORD_I       , "pwrite_word_i"     );        
+        def(PWRITE_WORD_I       , "pwrite_word_i"     );
     }
     // Checkstyle: resume
 
@@ -1444,18 +1444,18 @@ public class Bytecodes {
         }
         return name;
     }
-    
+
     /**
      * Allocation-free version of {@linkplain #nameOf(int)}.
      * @param opcode an opcode.
      * @return the mnemonic for {@code opcode} or {@code "<illegal opcode>"} if {@code opcode} is not a legal opcode.
      */
     public static String baseNameOf(int opcode) {
-    	String name = names[opcode & 0xff];
-    	if (name == null) {
-    		return "<illegal opcode>"; 
-    	}
-    	return name;
+        String name = names[opcode & 0xff];
+        if (name == null) {
+            return "<illegal opcode>";
+        }
+        return name;
     }
 
     /**
@@ -1569,7 +1569,7 @@ public class Bytecodes {
      * @return {@code true} if {@code opcode} is an extended bytecode
      */
     public static boolean isExtended(int opcode) {
-    	return (flags[opcode & 0xff] & EXTENSION) != 0;
+        return (flags[opcode & 0xff] & EXTENSION) != 0;
     }
 
     /**
@@ -1591,6 +1591,7 @@ public class Bytecodes {
      * @return the arithmetic operator name
      */
     public static String operator(int op) {
+        // Checkstyle: stop
         switch (op) {
             // arithmetic ops
             case IADD : // fall through
@@ -1628,6 +1629,7 @@ public class Bytecodes {
             case IXOR : // fall through
             case LXOR : return "^";
         }
+        // Checkstyle: resume
         return nameOf(op);
     }
 
@@ -1636,7 +1638,7 @@ public class Bytecodes {
      */
     @INTRINSIC(BREAKPOINT_TRAP)
     public static native void breakpointTrap();
-    
+
     /**
      * Attempts to fold a binary operation on two constant integer inputs.
      *
@@ -1648,6 +1650,7 @@ public class Bytecodes {
      */
     public static Integer foldIntOp2(int opcode, int x, int y) {
         // attempt to fold a binary operation with constant inputs
+        // Checkstyle: stop
         switch (opcode) {
             case IADD: return x + y;
             case ISUB: return x - y;
@@ -1671,6 +1674,7 @@ public class Bytecodes {
             case ISHR: return x >> y;
             case IUSHR: return x >>> y;
         }
+        // Checkstyle: resume
         return null;
     }
 
@@ -1685,6 +1689,7 @@ public class Bytecodes {
      */
     public static Long foldLongOp2(int opcode, long x, long y) {
         // attempt to fold a binary operation with constant inputs
+        // Checkstyle: stop
         switch (opcode) {
             case LADD: return x + y;
             case LSUB: return x - y;
@@ -1708,6 +1713,7 @@ public class Bytecodes {
             case LSHR: return x >> y;
             case LUSHR: return x >>> y;
         }
+        // Checkstyle: resume
         return null;
     }
 
@@ -1721,6 +1727,7 @@ public class Bytecodes {
      * if it is foldable, {@code null} otherwise
      */
     public static strictfp Float foldFloatOp2(int opcode, float x, float y) {
+        // Checkstyle: stop
         switch (opcode) {
             case FADD: return x + y;
             case FSUB: return x - y;
@@ -1728,6 +1735,7 @@ public class Bytecodes {
             case FDIV: return x / y;
             case FREM: return x % y;
         }
+        // Checkstyle: resume
         return null;
     }
 
@@ -1741,6 +1749,7 @@ public class Bytecodes {
      * if it is foldable, {@code null} otherwise
      */
     public static strictfp Double foldDoubleOp2(int opcode, double x, double y) {
+        // Checkstyle: stop
         switch (opcode) {
             case DADD: return x + y;
             case DSUB: return x - y;
@@ -1748,6 +1757,7 @@ public class Bytecodes {
             case DDIV: return x / y;
             case DREM: return x % y;
         }
+        // Checkstyle: resume
         return null;
     }
 
@@ -1832,7 +1842,7 @@ public class Bytecodes {
 
     /**
      * Defines a bytecode by entering it into the arrays that record its name, length and flags.
-     * 
+     *
      * @param name instruction name (should be lower case)
      * @param format encodes the length of the instruction
      * @param flags the set of {@link Flags} associated with the instruction
@@ -1843,7 +1853,7 @@ public class Bytecodes {
 
     /**
      * Defines a bytecode by entering it into the arrays that record its name, length and flags.
-     * 
+     *
      * @param name instruction name (lower case)
      * @param format encodes the length of the instruction
      * @param flags the set of {@link Flags} associated with the instruction
@@ -1862,9 +1872,9 @@ public class Bytecodes {
      * Defines a three-byte extended bytecode by entering it into the maps that records its name.
      */
     private static void def(int opcode, String name) {
-         assert isExtended(opcode);
-         String oldValue = threeByteExtNames.put(opcode, name);
-         assert oldValue == null;
+        assert isExtended(opcode);
+        String oldValue = threeByteExtNames.put(opcode, name);
+        assert oldValue == null;
     }
 
     /**
