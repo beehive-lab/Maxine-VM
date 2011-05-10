@@ -71,7 +71,6 @@
       <property name="ignoreAbstractMethods" value="true"/>
       <metadata name="net.sf.eclipsecs.core.lastEnabledSeverity" value="inherit"/>
     </module>
-    <module name="FinalClass"/>
     <module name="HideUtilityClassConstructor">
       <property name="severity" value="ignore"/>
       <metadata name="net.sf.eclipsecs.core.lastEnabledSeverity" value="inherit"/>
@@ -99,7 +98,6 @@
     </module>
     <module name="EmptyForInitializerPad"/>
     <module name="EmptyForIteratorPad"/>
-    <module name="ModifierOrder"/>
     <module name="DefaultComesLast"/>
     <module name="InnerAssignment"/>
     <module name="JUnitTestCase"/>
