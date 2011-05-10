@@ -30,7 +30,6 @@ import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
 import java.io.*;
 import java.util.*;
 
-import com.sun.c1x.target.amd64.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiCallingConvention.Type;
@@ -60,10 +59,8 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.Cursor;
-import com.sun.max.vm.stack.amd64.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
@@ -430,23 +427,6 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
 
         setStopPositions(stopPositions, directCallees, numberOfIndirectCalls, numberOfSafepoints);
         initSourceInfo(debugInfos, hasInlinedMethods);
-
-        if (classMethodActor != null && false) {
-            Log.println("BCI closures for " + this);
-            for (int stopIndex = 0; stopIndex < debugInfos.length; stopIndex++) {
-                int pos = stopPositions[stopIndex];
-                Log.println("  at " + codeStart.to0xHexString() + "+" + pos);
-                CodePosClosure bc = new CodePosClosure() {
-                    int n;
-                    @Override
-                    public boolean doCodePos(ClassMethodActor method, int bci) {
-                        Log.println("    " + method.toStackTraceElement(bci) + " [bci: " + bci + "]");
-                        return ++n < 2;
-                    }
-                };
-                forEachCodePos(bc, codeStart.plus(pos), false);
-            }
-        }
     }
 
     private boolean initStopPosition(int index, int refmapIndex, int[] stopPositions, int codePos, CiDebugInfo debugInfo, CiDebugInfo[] debugInfos) {
@@ -971,18 +951,10 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
      */
     @Override
     public boolean acceptStackFrameVisitor(Cursor current, StackFrameVisitor visitor) {
-        AdapterGenerator generator = AdapterGenerator.forCallee(current.targetMethod());
-        Pointer sp = current.sp();
-        if (MaxineVM.isHosted()) {
-            // Only during a stack walk in the context of the Inspector can execution
-            // be anywhere other than at a recorded stop (i.e. call or safepoint).
-            if (atFirstOrLastInstruction(current) || (generator != null && generator.inPrologue(current.ip(), current.targetMethod()))) {
-                sp = sp.minus(current.targetMethod().frameSize());
-            }
+        if (platform().isa == ISA.AMD64) {
+            return AMD64TargetMethodUtil.acceptStackFrameVisitor(current, visitor);
         }
-        StackFrameWalker stackFrameWalker = current.stackFrameWalker();
-        StackFrame stackFrame = new AMD64JavaStackFrame(stackFrameWalker.calleeStackFrame(), current.targetMethod(), current.ip(), sp, sp);
-        return visitor.visitFrame(stackFrame);
+        throw FatalError.unimplemented();
     }
 
     /**
@@ -992,52 +964,10 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
     @Override
     public void advance(Cursor current) {
         if (platform().isa == ISA.AMD64) {
-            TargetMethod targetMethod = current.targetMethod();
-            Pointer sp = current.sp();
-            Pointer ripPointer = sp.plus(targetMethod.frameSize());
-            if (MaxineVM.isHosted()) {
-                // Only during a stack walk in the context of the Inspector can execution
-                // be anywhere other than at a recorded stop (i.e. call or safepoint).
-                AdapterGenerator generator = AdapterGenerator.forCallee(current.targetMethod());
-                if (generator != null && generator.advanceIfInPrologue(current)) {
-                    return;
-                }
-                if (atFirstOrLastInstruction(current)) {
-                    ripPointer = sp;
-                }
-            }
-
-            StackFrameWalker stackFrameWalker = current.stackFrameWalker();
-            Pointer callerIP = stackFrameWalker.readWord(ripPointer, 0).asPointer();
-            Pointer callerSP = ripPointer.plus(Word.size()); // Skip return instruction pointer on stack
-            Pointer callerFP;
-            if (targetMethod.is(TrapStub)) {
-                // RBP is whatever was in the frame pointer register at the time of the trap
-                Pointer calleeSaveArea = sp;
-                callerFP = stackFrameWalker.readWord(calleeSaveArea, AMD64TrapStateAccess.CSA.offsetOf(AMD64.rbp)).asPointer();
-            } else {
-                // Propagate RBP unchanged as OPT methods do not touch this register.
-                callerFP = current.fp();
-            }
-            stackFrameWalker.advance(callerIP, callerSP, callerFP, !targetMethod.is(TrapStub));
+            AMD64TargetMethodUtil.advance(current);
         } else {
             throw FatalError.unimplemented();
         }
-    }
-
-    @HOSTED_ONLY
-    private static boolean atFirstOrLastInstruction(Cursor current) {
-        if (platform().isa == ISA.AMD64) {
-            // check whether the current ip is at the first instruction or a return
-            // which means the stack pointer has not been adjusted yet (or has already been adjusted back)
-            TargetMethod targetMethod = current.targetMethod();
-            Pointer entryPoint = targetMethod.callEntryPoint.equals(CallEntryPoint.C_ENTRY_POINT) ?
-                CallEntryPoint.C_ENTRY_POINT.in(targetMethod) :
-                CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(targetMethod);
-
-            return entryPoint.equals(current.ip()) || current.stackFrameWalker().readByte(current.ip(), 0) == AMD64TargetMethodUtil.RET;
-        }
-        throw FatalError.unimplemented();
     }
 
     @Override

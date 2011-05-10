@@ -26,7 +26,6 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.util.*;
 
-import com.sun.c1x.ir.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;

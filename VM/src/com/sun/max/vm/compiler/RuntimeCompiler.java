@@ -30,7 +30,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.target.*;
 
 /**
@@ -48,7 +47,7 @@ public interface RuntimeCompiler {
     @HOSTED_ONLY
     Map<String, String> aliases = Utils.addEntries(new HashMap<String, String>(),
                     "T1X", "com.sun.max.vm.t1x.T1X",
-                    "C1X", C1X.class.getName());
+                    "C1X", "com.sun.max.vm.compiler.c1x.C1X");
 
     @HOSTED_ONLY
     OptionSet compilers = new OptionSet();

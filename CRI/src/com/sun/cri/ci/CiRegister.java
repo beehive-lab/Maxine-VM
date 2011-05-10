@@ -44,11 +44,11 @@ public final class CiRegister implements Comparable<CiRegister>, Serializable {
      */
     public static final CiRegister Frame = new CiRegister(-2, -2, 0, "framereg", RegisterFlag.CPU);
 
-    /**
-     * Frame pointer for the caller of the current method. All incoming stack-based arguments
-     * are address relative to this register.
-     */
-    public static final CiRegister CallerFrame = new CiRegister(-3, -3, 0, "caller-framereg", RegisterFlag.CPU);
+//    /**
+//     * Frame pointer for the caller of the current method. All incoming stack-based arguments
+//     * are address relative to this register.
+//     */
+//    public static final CiRegister CallerFrame = new CiRegister(-3, -3, 0, "caller-framereg", RegisterFlag.CPU);
 
     /**
      * Literals pointer register.

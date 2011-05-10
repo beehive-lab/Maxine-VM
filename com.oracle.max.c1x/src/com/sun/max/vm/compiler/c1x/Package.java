@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,14 +20,25 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.config.c1x;
+package com.sun.max.vm.compiler.c1x;
 
+import java.util.*;
+
+import com.sun.c1x.debug.*;
 import com.sun.max.config.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.hosted.*;
 
-public class Package extends BootImagePackage {
-
+public class Package extends BootImagePackage{
     public Package() {
-        super(
-            "com.sun.cri.**", "com.sun.c1x.**");
+        JavaPrototype.addObjectIdentityMapContributor(new C1XObjectMapContributor());
+    }
+
+    public static class C1XObjectMapContributor implements JavaPrototype.ObjectIdentityMapContributor {
+        @Override
+        public void initializeObjectIdentityMap(Map<Object, Object> objectMap) {
+            objectMap.put(TTY.out(), new LogStream(Log.os));
+            objectMap.put(CFGPrinter.cfgFileStream(), JavaPrototype.NULL);
+        }
     }
 }

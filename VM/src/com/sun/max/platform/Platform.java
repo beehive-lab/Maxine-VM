@@ -29,7 +29,7 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 
-import com.sun.c1x.target.amd64.*;
+import com.oracle.max.asm.target.amd64.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
