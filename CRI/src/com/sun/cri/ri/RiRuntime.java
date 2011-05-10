@@ -35,7 +35,7 @@ import com.sun.cri.ci.*;
  * @author Thomas Wuerthinger
 s */
 public interface RiRuntime {
-    
+
     /**
      * Gets the constant pool for a method.
      * @param method the method
@@ -56,7 +56,7 @@ public interface RiRuntime {
      * Checks whether the specified method is required to be inlined (for semantic reasons).
      * If this method returns true, then the null-check of the receiver emitted during
      * inlining is omitted.
-     * 
+     *
      * @param method the method being called
      * @return {@code true} if the method must be inlined; {@code false} to let the compiler
      * use its own heuristics
@@ -140,11 +140,11 @@ public interface RiRuntime {
 
     /**
      * Returns the type of the given constant object.
-     * 
+     *
      * @return {@code null} if {@code constant.isNull() || !constant.kind.isObject()}
      */
     RiType getTypeOf(CiConstant constant);
-    
+
     /**
      * Returns true if the given type is a subtype of java/lang/Throwable.
      */
@@ -157,7 +157,7 @@ public interface RiRuntime {
      * @return the runtime interface representation of {@code javaMethod}
      */
     RiMethod getRiMethod(Method javaMethod);
-    
+
     /**
      * Returns the runtime interface representation of the given Java constructor object.
      *
@@ -173,7 +173,7 @@ public interface RiRuntime {
      * @return the runtime interface representation of {@code javaField}
      */
     RiField getRiField(Field javaField);
-    
+
     /**
      * Gets the {@linkplain RiSnippets snippets} provided by the runtime.
      */
@@ -183,13 +183,13 @@ public interface RiRuntime {
      * Attempts to compile-time evaluate or "fold" a call to a given method. A foldable method is a pure function
      * that has no side effects. Such methods can be executed via reflection when all their inputs are constants,
      * and the resulting value is substituted for the method call.
-     * 
+     *
      * @param method the compiler interface method for which folding is being requested
      * @param args the arguments to the call
      * @return the result of the folding or {@code null} if no folding occurred
      */
     CiConstant invoke(RiMethod method, CiMethodInvokeArguments args);
-    
+
     /**
      * Attempts to compile-time evaluate or "fold" a bytecode operation that involves {@linkplain CiKind#Word word} types.
      *
@@ -201,14 +201,14 @@ public interface RiRuntime {
 
     /**
      * Used by the canonicalizer to compare objects, since a given runtime might not want to expose the real objects to the compiler.
-     * 
+     *
      * @return true if the two parameters represent the same runtime object, false otherwise
      */
     boolean areConstantObjectsEqual(CiConstant x, CiConstant y);
 
     /**
      * Gets the register configuration to use when compiling a given method.
-     * 
+     *
      * @param method the top level method of a compilation
      */
     RiRegisterConfig getRegisterConfig(RiMethod method);
@@ -218,7 +218,7 @@ public interface RiRuntime {
      * @return the size of the custom area in bytes
      */
     int getCustomStackAreaSize();
-    
+
     /**
      * Determines if this runtime wants {@link System#arraycopy} and {@link Arrays#copyOf} intrinsified.
      */
@@ -231,14 +231,14 @@ public interface RiRuntime {
 
     /**
      * Converts the given CiConstant object to a object.
-     * 
+     *
      * @return {@code null} if the conversion is not possible <b>OR</b> {@code c.isNull() == true}
      */
     Object asJavaObject(CiConstant c);
 
     /**
      * Converts the given CiConstant object to a {@link Class} object.
-     * 
+     *
      * @return {@code null} if the conversion is not possible.
      */
     Class<?> asJavaClass(CiConstant c);

@@ -24,7 +24,7 @@ package com.sun.max.annotate;
 import java.lang.annotation.*;
 
 /**
- * Every thus annotated method must must have no arguments (apart from a receiver for a non-static method).
+ * Every thus annotated method must have no arguments (apart from a receiver for a non-static method).
  * It must also be purely functional (without side-effects)
  * and idempotent (not influenced by any changing state).
  *
