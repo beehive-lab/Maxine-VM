@@ -71,9 +71,25 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
 
     private static final int TRACE_VALUE = 1;
 
-    private final TimedTrace updateTracer;
-
-    private long lastUpdateEpoch = -1L;
+    /**
+     * Map:  Class -> counters.
+     * <br>
+     * Class-indexed statistics.
+     * 0: number of objects in class updated
+     * 1: total system time of updates for objects in class
+     *
+     */
+    private static class TimerPerType extends HashMap<Class, long[]> {
+        @Override
+        public long[] get(Object key) {
+            long[] time = super.get(key);
+            if (time == null) {
+                time = new long[2];
+                super.put((Class) key, time);
+            }
+            return time;
+        }
+    }
 
     private static TeleObjectFactory teleObjectFactory;
 
@@ -108,6 +124,11 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
      */
     private final Map<Class, Constructor> classToTeleTupleObjectConstructor = new HashMap<Class, Constructor>();
 
+    private final TimedTrace updateTracer;
+
+    /**
+     * A printer for statistics concerning a cache update.
+     */
     private final Object statsPrinter = new Object() {
         private int previousTeleObjectCount = 0;
 
@@ -126,6 +147,8 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
      * The number of references in the table that point to an object.
      */
     private int liveObjectCount = 0;
+
+    private long lastUpdateEpoch = -1L;
 
     private TeleObjectFactory(TeleVM teleVM, long processEpoch) {
         super(teleVM);
@@ -227,35 +250,6 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
     }
 
     /**
-     * @return the number of {@linkplain Reference references} in the table.
-     */
-    public int referenceCount() {
-        return referenceToTeleObject.size();
-    }
-
-    /**
-     * @return the number of {@linkplain Reference references} in the table that point to live objects.
-     */
-    public int liveObjectCount() {
-        return liveObjectCount;
-    }
-
-    private Constructor getConstructor(Class clazz) {
-        return Classes.getDeclaredConstructor(clazz, TeleVM.class, Reference.class);
-    }
-
-    private TeleObject getTeleObjectFromReferenceToTeleObjectMap(Reference reference) {
-        TeleObject teleObject = null;
-        synchronized (referenceToTeleObject) {
-            final WeakReference<TeleObject> teleObjectRef = referenceToTeleObject.get(reference);
-            if (teleObjectRef != null) {
-                teleObject = teleObjectRef.get();
-            }
-        }
-        return teleObject;
-    }
-
-    /**
      * Factory method for canonical {@link TeleObject} surrogate for heap objects in the VM.  Specific subclasses are
      * created for Maxine implementation objects of special interest, and for other objects for which special treatment
      * is desired.
@@ -277,7 +271,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
             return null;
         }
         //assert vm().lockHeldByCurrentThread();
-        TeleObject teleObject = getTeleObjectFromReferenceToTeleObjectMap(reference);
+        TeleObject teleObject = getTeleObject(reference);
         if (teleObject != null) {
             return teleObject;
         }
@@ -325,34 +319,45 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
         final Class hubJavaClass = hubClassActor.toJava();  // the class of this object's hub
         if (StaticHub.class.isAssignableFrom(hubJavaClass)) {
             //teleObject = new TeleStaticTuple(teleVM(), reference);       ?????????
-            teleObject = getTeleObjectFromReferenceToTeleObjectMap(reference);
+            teleObject = getTeleObject(reference);
             if (teleObject == null) {
                 teleObject = new TeleStaticTuple(vm(), reference);
             }
         } else if (classActor.isArrayClass()) {
             // Check map again, just in case there's a race
-            teleObject = getTeleObjectFromReferenceToTeleObjectMap(reference);
+            teleObject = getTeleObject(reference);
             if (teleObject == null) {
                 teleObject = new TeleArrayObject(vm(), reference, classActor.componentClassActor().kind, classActor.dynamicHub().specificLayout);
             }
         } else if (classActor.isHybridClass()) {
             final Class javaClass = classActor.toJava();
             // Check map again, just in case there's a race
-            teleObject = getTeleObjectFromReferenceToTeleObjectMap(reference);
+            teleObject = getTeleObject(reference);
             if (teleObject == null) {
                 if (DynamicHub.class.isAssignableFrom(javaClass)) {
                     teleObject = new TeleDynamicHub(vm(), reference);
                 } else if (StaticHub.class.isAssignableFrom(javaClass)) {
                     teleObject = new TeleStaticHub(vm(), reference);
                 } else {
-                    throw TeleError.unexpected("invalid hybrid implementation type");
+                    throw TeleError.unexpected(tracePrefix() + "invalid hybrid implementation type");
                 }
             }
         } else if (classActor.isTupleClass()) {
             // Check map again, just in case there's a race
-            teleObject = getTeleObjectFromReferenceToTeleObjectMap(reference);
+            teleObject = getTeleObject(reference);
             if (teleObject == null) {
-                final Constructor constructor = lookupTeleTupleObjectConstructor(classActor);
+                // Walk up the type hierarchy for the class, locating the most specific type
+                // for which a constructor is defined.
+                Constructor constructor = null;
+                for (Class javaClass = classActor.toJava(); javaClass != null; javaClass = javaClass.getSuperclass()) {
+                    constructor = classToTeleTupleObjectConstructor.get(javaClass);
+                    if (constructor != null) {
+                        break;
+                    }
+                }
+                if (constructor == null) {
+                    TeleError.unexpected(tracePrefix() + "failed to find constructor for class" + classActor.toJava());
+                }
                 try {
                     teleObject = (TeleObject) constructor.newInstance(vm(), reference);
                 } catch (InstantiationException e) {
@@ -378,19 +383,6 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
         return teleObject;
     }
 
-    private Constructor lookupTeleTupleObjectConstructor(ClassActor classActor) {
-        Class javaClass = classActor.toJava();
-        while (javaClass != null) {
-            final Constructor constructor = classToTeleTupleObjectConstructor.get(javaClass);
-            if (constructor != null) {
-                return constructor;
-            }
-            javaClass = javaClass.getSuperclass();
-        }
-        TeleError.unexpected("TeleObjectFactory failed to find constructor for class" + classActor.toJava());
-        return null;
-    }
-
     /**
      * Gets a VM object with a specified OID, if it exists.
      * <br>
@@ -404,23 +396,36 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
     }
 
     /**
-     * Map:  Class -> counters.
-     * <br>
-     * Class-indexed statistics.
-     * 0: number of objects in class updated
-     * 1: total system time of updates for objects in class
-     *
+     * @return the number of {@linkplain Reference references} in the table.
      */
-    static class TimerPerType extends HashMap<Class, long[]> {
-        @Override
-        public long[] get(Object key) {
-            long[] time = super.get(key);
-            if (time == null) {
-                time = new long[2];
-                super.put((Class) key, time);
+    public int referenceCount() {
+        return referenceToTeleObject.size();
+    }
+
+    /**
+     * @return the number of {@linkplain Reference references} in the table that point to live objects.
+     */
+    public int liveObjectCount() {
+        return liveObjectCount;
+    }
+
+    private Constructor getConstructor(Class clazz) {
+        return Classes.getDeclaredConstructor(clazz, TeleVM.class, Reference.class);
+    }
+
+    /**
+     * @param reference location of an object in the VM
+     * @return the (preferably) canonical instance of {@link TeleObject} corresponding to the VM object
+     */
+    private TeleObject getTeleObject(Reference reference) {
+        TeleObject teleObject = null;
+        synchronized (referenceToTeleObject) {
+            final WeakReference<TeleObject> teleObjectRef = referenceToTeleObject.get(reference);
+            if (teleObjectRef != null) {
+                teleObject = teleObjectRef.get();
             }
-            return time;
         }
+        return teleObject;
     }
 
 }
