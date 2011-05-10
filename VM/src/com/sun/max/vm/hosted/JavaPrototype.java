@@ -118,7 +118,7 @@ public final class JavaPrototype extends Prototype {
     private Map<Object, Object> objectMap;
 
     /**
-     * A list of external contributors to the {@linkplain #objectMap}
+     * A list of external contributors to the {@linkplain #objectMap}.
      */
     private static List<ObjectIdentityMapContributor> objectMapContributors = new ArrayList<ObjectIdentityMapContributor>();
 
@@ -126,9 +126,8 @@ public final class JavaPrototype extends Prototype {
      * Interface that must be implemented by external contributors to the {@linkplain #objectMap}.
      */
     public static interface ObjectIdentityMapContributor {
-        public void initializeObjectIdentityMap(Map<Object, Object> objectMap);
+        void initializeObjectIdentityMap(Map<Object, Object> objectMap);
     }
-
 
     /**
      * A map used to canonicalize instances of the Maxine value classes.

@@ -30,16 +30,19 @@ import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
 import java.io.*;
 import java.util.*;
 
-import com.oracle.max.asm.target.amd64.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiCallingConvention.*;
-import com.sun.cri.ci.CiRegister.*;
-import com.sun.cri.ci.CiTargetMethod.*;
+import com.sun.cri.ci.CiCallingConvention.Type;
+import com.sun.cri.ci.CiRegister.RegisterFlag;
+import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
+import com.sun.cri.ci.CiTargetMethod.DataPatch;
+import com.sun.cri.ci.CiTargetMethod.ExceptionHandler;
+import com.sun.cri.ci.CiTargetMethod.JumpTable;
+import com.sun.cri.ci.CiTargetMethod.Site;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
-import com.sun.max.asm.InlineDataDescriptor.*;
+import com.sun.max.asm.InlineDataDescriptor.JumpTable32;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.lang.Bytes;
@@ -56,10 +59,8 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.*;
-import com.sun.max.vm.stack.amd64.*;
+import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
@@ -426,23 +427,6 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
 
         setStopPositions(stopPositions, directCallees, numberOfIndirectCalls, numberOfSafepoints);
         initSourceInfo(debugInfos, hasInlinedMethods);
-
-        if (classMethodActor != null && false) {
-            Log.println("BCI closures for " + this);
-            for (int stopIndex = 0; stopIndex < debugInfos.length; stopIndex++) {
-                int pos = stopPositions[stopIndex];
-                Log.println("  at " + codeStart.to0xHexString() + "+" + pos);
-                CodePosClosure bc = new CodePosClosure() {
-                    int n;
-                    @Override
-                    public boolean doCodePos(ClassMethodActor method, int bci) {
-                        Log.println("    " + method.toStackTraceElement(bci) + " [bci: " + bci + "]");
-                        return ++n < 2;
-                    }
-                };
-                forEachCodePos(bc, codeStart.plus(pos), false);
-            }
-        }
     }
 
     private boolean initStopPosition(int index, int refmapIndex, int[] stopPositions, int codePos, CiDebugInfo debugInfo, CiDebugInfo[] debugInfos) {
@@ -756,7 +740,7 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
                 // Normal call - no registers need scanning
                 break;
             case TRAMPOLINE:
-                AMD64OptStackWalking.prepareTrampolineRefMap(current, callee, preparer);
+                prepareTrampolineRefMap(current, callee, preparer);
                 break;
             case TRAP_STUB:  // fall through
                 // The register state *is* the trap stub frame
@@ -846,6 +830,72 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
     }
 
     /**
+     * Prepares the reference map for the frame of a call to a trampoline from an OPT compiled method.
+     *
+     * An opto-compiled caller may pass some arguments in registers.  The trampoline is polymorphic, i.e. it does not have any
+     * helpful maps regarding the actual callee.  It does store all potential parameter registers on its stack, though,
+     * and recovers them before returning.  We mark those that contain references.
+     *
+     * @param current
+     * @param callee
+     * @param preparer
+     * @param registerConfig TODO
+     */
+    public static void prepareTrampolineRefMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer) {
+        RiRegisterConfig registerConfig = vm().registerConfigs.trampoline;
+        TargetMethod trampoline = callee.targetMethod();
+        ClassMethodActor calledMethod;
+        TargetMethod targetMethod = current.targetMethod();
+
+        Pointer calleeSaveStart = callee.sp();
+        CiCalleeSaveArea csa = registerConfig.getCalleeSaveArea();
+        CiRegister[] regs = registerConfig.getCallingConventionRegisters(Type.JavaCall, RegisterFlag.CPU);
+
+        // figure out what method the caller is trying to call
+        if (trampoline.is(StaticTrampoline)) {
+            int stopIndex = targetMethod.findClosestStopIndex(current.ip().minus(1));
+            calledMethod = (ClassMethodActor) targetMethod.directCallees()[stopIndex];
+        } else {
+            // this is a virtual or interface call; figure out the receiver method based on the
+            // virtual or interface index
+            Object receiver = calleeSaveStart.plus(csa.offsetOf(regs[0])).getReference().toJava();
+            ClassActor classActor = ObjectAccess.readClassActor(receiver);
+            // The virtual dispatch trampoline stubs put the virtual dispatch index into the
+            // scratch register and then save it to the stack.
+            int index = vm().stubs.readVirtualDispatchIndexFromTrampolineFrame(calleeSaveStart);
+            if (trampoline.is(VirtualTrampoline)) {
+                calledMethod = classActor.getVirtualMethodActorByVTableIndex(index);
+            } else {
+                assert trampoline.is(InterfaceTrampoline);
+                calledMethod = classActor.getVirtualMethodActorByIIndex(index);
+            }
+        }
+
+        int regIndex = 0;
+        if (!calledMethod.isStatic()) {
+            // set a bit for the receiver object
+            int offset = csa.offsetOf(regs[regIndex++]);
+            preparer.setReferenceMapBits(current, calleeSaveStart.plus(offset), 1, 1);
+        }
+
+        SignatureDescriptor sig = calledMethod.descriptor();
+        for (int i = 0; i < sig.numberOfParameters() && regIndex < regs.length; ++i) {
+            TypeDescriptor arg = sig.parameterDescriptorAt(i);
+            CiRegister reg = regs[regIndex];
+            Kind kind = arg.toKind();
+            if (kind.isReference) {
+                // set a bit for this parameter
+                int offset = csa.offsetOf(reg);
+                preparer.setReferenceMapBits(current, calleeSaveStart.plus(offset), 1, 1);
+            }
+            if (kind != Kind.FLOAT && kind != Kind.DOUBLE) {
+                // Only iterating over the integral arg registers
+                regIndex++;
+            }
+        }
+    }
+
+    /**
      * Attempt to catch an exception that has been thrown with this method on the call stack.
      * @param current the current stack frame
      * @param callee the callee stack frame
@@ -853,7 +903,44 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
      */
     @Override
     public void catchException(Cursor current, Cursor callee, Throwable throwable) {
-    	AMD64OptStackWalking.catchException(this, current, callee, throwable);
+        Pointer ip = current.ip();
+        Pointer sp = current.sp();
+        Pointer fp = current.fp();
+        Address catchAddress = throwAddressToCatchAddress(current.isTopFrame(), ip, throwable.getClass());
+        if (!catchAddress.isZero()) {
+            if (StackFrameWalker.TraceStackWalk) {
+                Log.print("StackFrameWalk: Handler position for exception at position ");
+                Log.print(ip.minus(codeStart()).toInt());
+                Log.print(" is ");
+                Log.println(catchAddress.minus(codeStart()).toInt());
+            }
+
+            TargetMethod calleeMethod = callee.targetMethod();
+            // Reset the stack walker
+            current.stackFrameWalker().reset();
+
+            // Store the exception for the handler
+            VmThread.current().storeExceptionForHandler(throwable, this, posFor(catchAddress));
+
+            if (calleeMethod != null && calleeMethod.registerRestoreEpilogueOffset() != -1) {
+                unwindToCalleeEpilogue(catchAddress, sp, calleeMethod);
+            } else {
+                Stubs.unwind(catchAddress, sp, fp);
+            }
+            ProgramError.unexpected("Should not reach here, unwind must jump to the exception handler!");
+        }
+    }
+
+    @NEVER_INLINE
+    public static void unwindToCalleeEpilogue(Address catchAddress, Pointer stackPointer, TargetMethod lastJavaCallee) {
+        // Overwrite return address of callee with catch address
+        final Pointer returnAddressPointer = stackPointer.minus(Word.size());
+        returnAddressPointer.setWord(catchAddress);
+
+        Address epilogueAddress = lastJavaCallee.codeStart().plus(lastJavaCallee.registerRestoreEpilogueOffset());
+
+        final Pointer calleeStackPointer = stackPointer.minus(Word.size()).minus(lastJavaCallee.frameSize());
+        Stubs.unwind(epilogueAddress, calleeStackPointer, Pointer.zero());
     }
 
     /**
@@ -864,7 +951,10 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
      */
     @Override
     public boolean acceptStackFrameVisitor(Cursor current, StackFrameVisitor visitor) {
-    	return AMD64OptStackWalking.acceptStackFrameVisitor(current, visitor);
+        if (platform().isa == ISA.AMD64) {
+            return AMD64TargetMethodUtil.acceptStackFrameVisitor(current, visitor);
+        }
+        throw FatalError.unimplemented();
     }
 
     /**
@@ -874,7 +964,7 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
     @Override
     public void advance(Cursor current) {
         if (platform().isa == ISA.AMD64) {
-        	AMD64OptStackWalking.advance(current);
+            AMD64TargetMethodUtil.advance(current);
         } else {
             throw FatalError.unimplemented();
         }

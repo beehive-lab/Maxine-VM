@@ -2078,11 +2078,11 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     }
 
 
-    public final void callGlobalStub(XirTemplate stub, LIRDebugInfo info, CiRegister result, CiValue... args) {
+    public void callGlobalStub(XirTemplate stub, LIRDebugInfo info, CiRegister result, CiValue... args) {
         callGlobalStubHelper(lookupGlobalStub(stub), stub.resultOperand.kind, info, result, args);
     }
 
-    public final void callGlobalStub(GlobalStub stub, LIRDebugInfo info, CiRegister result, CiValue... args) {
+    public void callGlobalStub(GlobalStub stub, LIRDebugInfo info, CiRegister result, CiValue... args) {
         callGlobalStubHelper(stub, stub.resultKind, info, result, args);
     }
 
@@ -2162,7 +2162,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     }
 
 
-    public final void directCall(Object target, LIRDebugInfo info) {
+    public void directCall(Object target, LIRDebugInfo info) {
         int before = masm.codeBuffer.position();
         masm.call();
         int after = masm.codeBuffer.position();
@@ -2170,13 +2170,13 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         tasm.recordExceptionHandlers(after, info);
     }
 
-    public final void directJmp(Object target) {
+    public void directJmp(Object target) {
         int before = masm.codeBuffer.position();
         masm.jmp(0, true);
         tasm.recordDirectCall(before, target, null);
     }
 
-    public final void indirectCall(CiRegister dst, Object target, LIRDebugInfo info) {
+    public void indirectCall(CiRegister dst, Object target, LIRDebugInfo info) {
         int before = masm.codeBuffer.position();
         masm.call(dst);
         int after = masm.codeBuffer.position();

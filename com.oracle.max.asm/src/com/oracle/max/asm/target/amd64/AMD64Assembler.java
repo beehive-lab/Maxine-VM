@@ -2466,7 +2466,7 @@ public class AMD64Assembler extends AbstractAssembler {
             emitByte(0x7E);
             emitByte(0xC0 | encode);
         } else {
-        	throw new InternalError("should not reach here");
+            throw new InternalError("should not reach here");
         }
     }
 
@@ -2491,7 +2491,7 @@ public class AMD64Assembler extends AbstractAssembler {
         // dbx shows movslq(X86.rcx, 3) as movq $0x0000000049000000,(%X86.rbx)
         // and movslq(X86.r8, 3); as movl $0x0000000048000000,(%X86.rbx)
         // as a result we shouldn't use until tested at runtime...
-    	throw new InternalError("untested");
+        throw new InternalError("untested");
     }
 
     public final void movslq(CiAddress dst, int imm32) {
