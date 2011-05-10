@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,7 +34,6 @@ import com.sun.max.program.*;
  *     -source 1.4 -target 1.4 -XDjsrlimit=0
  * </pre>
  *
- * @author Doug Simon
  */
 public class JsrInliningTestSource {
 
@@ -62,6 +61,7 @@ public class JsrInliningTestSource {
         return a;
     }
 
+    @SuppressWarnings("all")
     public static int loops() {
         int loops = 0;
         try {
@@ -79,6 +79,7 @@ public class JsrInliningTestSource {
         }
     }
 
+    @SuppressWarnings("all")
     public static int oops(int i) {
         int p = i;
         while (p > 10) {

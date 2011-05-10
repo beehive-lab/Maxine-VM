@@ -63,7 +63,6 @@ import java.io.RandomAccessFile;
  * an ELF file. The symbol table is used to locate functions and variables
  * for relocation and debugging purposes.
  *
- * @author Ben L. Titzer
  */
 public class ELFSymbolTable {
 
@@ -212,7 +211,7 @@ public class ELFSymbolTable {
     public ELFSymbolTable(ELFHeader elfHeader, ELFSectionHeaderTable.Entry sectionEntry) {
         this.header = elfHeader;
         this.entry = sectionEntry;
-        entries = new Entry[(int) (sectionEntry.getSize() / (long) sectionEntry.getEntrySize())];
+        entries = new Entry[(int) (sectionEntry.getSize() / sectionEntry.getEntrySize())];
     }
 
     /**

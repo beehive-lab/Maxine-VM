@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,7 @@ public class BC_arraylength {
     static char[] arr2 = {'a', 'b', 'c', 'd'};
     static Object[] arr3 = new Object[5];
 
+    @SuppressWarnings("all")
     public static int test(int arg) {
         if (arg == 0) {
             int[] array = null;

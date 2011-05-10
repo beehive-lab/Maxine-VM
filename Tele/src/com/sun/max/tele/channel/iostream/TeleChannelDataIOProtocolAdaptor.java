@@ -34,9 +34,6 @@ import com.sun.max.tele.util.*;
 /**
  * An adaptor that provides implementations of the methods in {@link TeleChannelProtocol} that cannot be
  * implemented directly using {@link TeleChannelDataIOProtocol}.
- *
- * @author Mick Jordan
- *
  */
 public abstract class TeleChannelDataIOProtocolAdaptor extends TeleChannelDataIOProtocolImpl implements TeleChannelProtocol {
 
@@ -45,14 +42,14 @@ public abstract class TeleChannelDataIOProtocolAdaptor extends TeleChannelDataIO
         byte[] bytes;
         int result;
         if (dst.isDirect()) {
-            ByteBuffer bb = (ByteBuffer) dst;
+            ByteBuffer bb = dst;
             // have to copy the byte buffer back into an array
             bytes = new byte[length];
             final int n = readBytes(src, bytes, 0, length);
             bb.put(bytes, dstOffset, n);
             result = n;
         } else {
-            bytes = (byte[]) dst.array();
+            bytes = dst.array();
             result = readBytes(src, bytes, dst.arrayOffset() + dstOffset, length);
         }
         return result;
@@ -62,13 +59,13 @@ public abstract class TeleChannelDataIOProtocolAdaptor extends TeleChannelDataIO
     public int writeBytes(long dst, ByteBuffer src, int srcOffset, int length) {
         byte[] bytes;
         if (src.isDirect()) {
-            ByteBuffer bb = (ByteBuffer) src;
+            ByteBuffer bb = src;
             // have to copy the byte buffer back into an array
             bytes = new byte[length];
             bb.get(bytes);
             srcOffset = 0;
         } else {
-            bytes = (byte[]) src.array();
+            bytes = src.array();
         }
         return writeBytes(dst, bytes, src.arrayOffset() + srcOffset, length);
     }
