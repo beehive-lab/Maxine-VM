@@ -31,7 +31,7 @@ import java.io.*;
  * @author Ben L. Titzer
  */
 public class CiDebugInfo implements Serializable {
-    
+
     /**
      * The code position (including all inlined methods) of this debug info.
      * If this is a {@link CiFrame} instance, then it is also the deoptimization information for each inlined frame.
@@ -53,7 +53,7 @@ public class CiDebugInfo implements Serializable {
 
     /**
      * Creates a new {@code CiDebugInfo} from the given values.
-     * 
+     *
      * @param codePos the {@linkplain CiCodePos code position} or {@linkplain CiFrame frame} info
      * @param registerRefMap the register map
      * @param frameRefMap the reference map for {@code frame}, which may be {@code null}
@@ -88,7 +88,7 @@ public class CiDebugInfo implements Serializable {
 
     /**
      * Gets the deoptimization information for each inlined frame (if available).
-     * 
+     *
      * @return {@code null} if no frame de-opt info is {@linkplain #hasDebugFrame available}
      */
     public CiFrame frame() {

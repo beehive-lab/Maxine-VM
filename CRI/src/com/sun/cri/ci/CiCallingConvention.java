@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,39 +33,39 @@ import com.sun.cri.ri.*;
  * @author Doug Simon
  */
 public class CiCallingConvention {
-    
+
     /**
      * Constants denoting the type of a call for which a calling convention is
      * {@linkplain RiRegisterConfig#getCallingConvention(Type, CiKind[], CiTarget) requested}.
      */
     public enum Type {
         /**
-         * A request for the outgoing argument locations at a call site to Java code. 
+         * A request for the outgoing argument locations at a call site to Java code.
          */
         JavaCall(true),
-        
+
         /**
          * A request for the incoming argument locations.
          */
         JavaCallee(false),
 
         /**
-         * A request for the outgoing argument locations at a call site to the runtime (which may be Java or native code). 
+         * A request for the outgoing argument locations at a call site to the runtime (which may be Java or native code).
          */
         RuntimeCall(true),
-        
+
         /**
          * A request for the outgoing argument locations at a call site to
-         * external native code that complies with the platform ABI. 
+         * external native code that complies with the platform ABI.
          */
         NativeCall(true);
-        
+
         /**
-         * Determines if this is a request for the outgoing argument locations at a call site. 
+         * Determines if this is a request for the outgoing argument locations at a call site.
          */
         public final boolean out;
-        
-        
+
+
         private Type(boolean out) {
             this.out = out;
         }

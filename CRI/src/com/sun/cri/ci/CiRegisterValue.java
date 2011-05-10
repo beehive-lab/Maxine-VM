@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,9 +26,6 @@ package com.sun.cri.ci;
  * Denotes a register that stores a value of a fixed kind. There is exactly one (canonical) instance of {@code
  * CiRegisterValue} for each ({@link CiRegister}, {@link CiKind}) pair. Use {@link CiRegister#asValue(CiKind)} to
  * retrieve the canonical {@link CiRegisterValue} instance for a given (register,kind) pair.
- *
- * @author Ben L. Titzer
- * @author Doug Simon
  */
 public final class CiRegisterValue extends CiValue {
 
@@ -36,7 +33,6 @@ public final class CiRegisterValue extends CiValue {
      * The register.
      */
     public final CiRegister reg;
-    
 
     /**
      * Should only be called from {@link CiRegister#CiRegister} to ensure canonicalization.

@@ -660,10 +660,40 @@ public class jmax {
                 }
             };
 
+            File dotCheckstyle = new File(projectDir, ".checkstyle");
+            new FileUpdater(dotCheckstyle, false, response) {
+                @Override
+                void generate(PrintStream out) {
+                    String checkstyleConfigPath;
+                    File projectCheckstyleConfig = new File(projectDir, ".checkstyle_checks.xml");
+                    if (projectCheckstyleConfig.exists()) {
+                        checkstyleConfigPath = "/" + name + "/.checkstyle_checks.xml";
+                    } else {
+                        Project p = project("Base");
+                        File sharedCheckstyleConfig = new File(new File(p.baseDir, p.name), ".checkstyle_checks.xml");
+                        if (!sharedCheckstyleConfig.exists()) {
+                            throw new InternalError("Shared checkstyle config file not found: " + sharedCheckstyleConfig);
+                        }
+                        checkstyleConfigPath = "/" + p.name + "/.checkstyle_checks.xml";
+                    }
+                    out.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+                    out.println("<fileset-config file-format-version=\"1.2.0\" simple-config=\"true\">");
+                    out.println("\t<local-check-config name=\"Maxine Checks\" location=\"" + checkstyleConfigPath + "\" type=\"project\" description=\"\">");
+                    out.println("\t\t<additional-data name=\"protect-config-file\" value=\"false\"/>");
+                    out.println("\t</local-check-config>");
+                    out.println("\t<fileset name=\"all\" enabled=\"true\" check-config-name=\"Maxine Checks\" local=\"true\">");
+                    out.println("\t\t<file-match-pattern match-pattern=\".\" include-pattern=\"true\"/>");
+                    out.println("\t</fileset>");
+                    out.println("\t<filter name=\"FileTypesFilter\" enabled=\"true\">");
+                    out.println("\t\t<filter-data value=\"java\"/>");
+                    out.println("\t</filter>");
+                    out.println("</fileset-config>");
+                }
+            };
+
             new FileUpdater(new File(projectDir, ".project"), true, response) {
                 @Override
                 void generate(PrintStream out) {
-                    boolean checkstyle = new File(projectDir, ".checkstyle").exists();
                     out.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
                     out.println("<projectDescription>");
                     out.println("\t<name>" + name + "</name>");
@@ -676,19 +706,15 @@ public class jmax {
                     out.println("\t\t\t<arguments>");
                     out.println("\t\t\t</arguments>");
                     out.println("\t\t</buildCommand>");
-                    if (checkstyle) {
-                        out.println("\t\t<buildCommand>");
-                        out.println("\t\t\t<name>net.sf.eclipsecs.core.CheckstyleBuilder</name>");
-                        out.println("\t\t\t<arguments>");
-                        out.println("\t\t\t</arguments>");
-                        out.println("\t\t</buildCommand>");
-                    }
+                    out.println("\t\t<buildCommand>");
+                    out.println("\t\t\t<name>net.sf.eclipsecs.core.CheckstyleBuilder</name>");
+                    out.println("\t\t\t<arguments>");
+                    out.println("\t\t\t</arguments>");
+                    out.println("\t\t</buildCommand>");
                     out.println("\t</buildSpec>");
                     out.println("\t<natures>");
                     out.println("\t\t<nature>org.eclipse.jdt.core.javanature</nature>");
-                    if (checkstyle) {
-                        out.println("\t\t<nature>net.sf.eclipsecs.core.CheckstyleNature</nature>");
-                    }
+                    out.println("\t\t<nature>net.sf.eclipsecs.core.CheckstyleNature</nature>");
                     out.println("\t</natures>");
                     out.println("</projectDescription>");
                 }
@@ -791,15 +817,15 @@ public class jmax {
             "org.eclipse.jdt.ui.ondemandthreshold=0",
             "org.eclipse.jdt.ui.overrideannotation=true",
             "org.eclipse.jdt.ui.staticondemandthreshold=0",
-            "sp_cleanup.add_default_serial_version_id=true",
+            "sp_cleanup.add_default_serial_version_id=false",
             "sp_cleanup.add_generated_serial_version_id=false",
             "sp_cleanup.add_missing_annotations=false",
-            "sp_cleanup.add_missing_deprecated_annotations=true",
+            "sp_cleanup.add_missing_deprecated_annotations=false",
             "sp_cleanup.add_missing_methods=false",
             "sp_cleanup.add_missing_nls_tags=false",
-            "sp_cleanup.add_missing_override_annotations=true",
+            "sp_cleanup.add_missing_override_annotations=false",
             "sp_cleanup.add_serial_version_id=false",
-            "sp_cleanup.always_use_blocks=true",
+            "sp_cleanup.always_use_blocks=false",
             "sp_cleanup.always_use_parentheses_in_expressions=false",
             "sp_cleanup.always_use_this_for_non_static_field_access=false",
             "sp_cleanup.always_use_this_for_non_static_method_access=false",
@@ -809,18 +835,18 @@ public class jmax {
             "sp_cleanup.format_source_code_changes_only=false",
             "sp_cleanup.make_local_variable_final=false",
             "sp_cleanup.make_parameters_final=false",
-            "sp_cleanup.make_private_fields_final=true",
+            "sp_cleanup.make_private_fields_final=false",
             "sp_cleanup.make_variable_declarations_final=false",
             "sp_cleanup.never_use_blocks=false",
-            "sp_cleanup.never_use_parentheses_in_expressions=true",
+            "sp_cleanup.never_use_parentheses_in_expressions=false",
             "sp_cleanup.on_save_use_additional_actions=true",
             "sp_cleanup.organize_imports=false",
             "sp_cleanup.qualify_static_field_accesses_with_declaring_class=false",
-            "sp_cleanup.qualify_static_member_accesses_through_instances_with_declaring_class=true",
-            "sp_cleanup.qualify_static_member_accesses_through_subtypes_with_declaring_class=true",
+            "sp_cleanup.qualify_static_member_accesses_through_instances_with_declaring_class=false",
+            "sp_cleanup.qualify_static_member_accesses_through_subtypes_with_declaring_class=false",
             "sp_cleanup.qualify_static_member_accesses_with_declaring_class=false",
             "sp_cleanup.qualify_static_method_accesses_with_declaring_class=false",
-            "sp_cleanup.remove_private_constructors=true",
+            "sp_cleanup.remove_private_constructors=false",
             "sp_cleanup.remove_trailing_whitespaces=true",
             "sp_cleanup.remove_trailing_whitespaces_all=true",
             "sp_cleanup.remove_trailing_whitespaces_ignore_empty=false",
@@ -828,19 +854,19 @@ public class jmax {
             "sp_cleanup.remove_unnecessary_nls_tags=false",
             "sp_cleanup.remove_unused_imports=false",
             "sp_cleanup.remove_unused_local_variables=false",
-            "sp_cleanup.remove_unused_private_fields=true",
+            "sp_cleanup.remove_unused_private_fields=false",
             "sp_cleanup.remove_unused_private_members=false",
-            "sp_cleanup.remove_unused_private_methods=true",
-            "sp_cleanup.remove_unused_private_types=true",
+            "sp_cleanup.remove_unused_private_methods=false",
+            "sp_cleanup.remove_unused_private_types=false",
             "sp_cleanup.sort_members=false",
             "sp_cleanup.sort_members_all=false",
             "sp_cleanup.use_blocks=false",
             "sp_cleanup.use_blocks_only_for_return_and_throw=false",
             "sp_cleanup.use_parentheses_in_expressions=false",
             "sp_cleanup.use_this_for_non_static_field_access=false",
-            "sp_cleanup.use_this_for_non_static_field_access_only_if_necessary=true",
+            "sp_cleanup.use_this_for_non_static_field_access_only_if_necessary=false",
             "sp_cleanup.use_this_for_non_static_method_access=false",
-            "sp_cleanup.use_this_for_non_static_method_access_only_if_necessary=true"
+            "sp_cleanup.use_this_for_non_static_method_access_only_if_necessary=false"
         };
     }
 

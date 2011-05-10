@@ -30,82 +30,82 @@ import com.sun.cri.ri.RiType.*;
 
 /**
  * Represents the interface through which the compiler requests the XIR for a given bytecode from the runtime system.
- * 
+ *
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer
  */
-public abstract interface RiXirGenerator {
+public interface RiXirGenerator {
 
     /**
-     * Note: may return {@code null}
+     * Note: may return {@code null}.
      */
-    public XirSnippet genPrologue(XirSite site, RiMethod method);
+    XirSnippet genPrologue(XirSite site, RiMethod method);
 
     /**
-     * Note: may return {@code null} in which case the compiler will not emit a return instruction
+     * Note: may return {@code null} in which case the compiler will not emit a return instruction.
      */
-    public XirSnippet genEpilogue(XirSite site, RiMethod method);
+    XirSnippet genEpilogue(XirSite site, RiMethod method);
 
-    public XirSnippet genSafepoint(XirSite site);
+    XirSnippet genSafepoint(XirSite site);
 
-    public XirSnippet genExceptionObject(XirSite site);
+    XirSnippet genExceptionObject(XirSite site);
 
-    public XirSnippet genResolveClass(XirSite site, RiType type, Representation representation);
+    XirSnippet genResolveClass(XirSite site, RiType type, Representation representation);
 
-    public XirSnippet genIntrinsic(XirSite site, XirArgument[] arguments, RiMethod method);
+    XirSnippet genIntrinsic(XirSite site, XirArgument[] arguments, RiMethod method);
 
-    public XirSnippet genInvokeInterface(XirSite site, XirArgument receiver, RiMethod method);
+    XirSnippet genInvokeInterface(XirSite site, XirArgument receiver, RiMethod method);
 
-    public XirSnippet genInvokeVirtual(XirSite site, XirArgument receiver, RiMethod method);
+    XirSnippet genInvokeVirtual(XirSite site, XirArgument receiver, RiMethod method);
 
-    public XirSnippet genInvokeSpecial(XirSite site, XirArgument receiver, RiMethod method);
+    XirSnippet genInvokeSpecial(XirSite site, XirArgument receiver, RiMethod method);
 
-    public XirSnippet genInvokeStatic(XirSite site, RiMethod method);
+    XirSnippet genInvokeStatic(XirSite site, RiMethod method);
 
-    public XirSnippet genMonitorEnter(XirSite site, XirArgument receiver, XirArgument lockAddress);
+    XirSnippet genMonitorEnter(XirSite site, XirArgument receiver, XirArgument lockAddress);
 
-    public XirSnippet genMonitorExit(XirSite site, XirArgument receiver, XirArgument lockAddress);
+    XirSnippet genMonitorExit(XirSite site, XirArgument receiver, XirArgument lockAddress);
 
-    public XirSnippet genGetField(XirSite site, XirArgument receiver, RiField field);
+    XirSnippet genGetField(XirSite site, XirArgument receiver, RiField field);
 
-    public XirSnippet genPutField(XirSite site, XirArgument receiver, RiField field, XirArgument value);
+    XirSnippet genPutField(XirSite site, XirArgument receiver, RiField field, XirArgument value);
 
-    public XirSnippet genGetStatic(XirSite site, XirArgument staticTuple, RiField field);
+    XirSnippet genGetStatic(XirSite site, XirArgument staticTuple, RiField field);
 
-    public XirSnippet genPutStatic(XirSite site, XirArgument staticTuple, RiField field, XirArgument value);
+    XirSnippet genPutStatic(XirSite site, XirArgument staticTuple, RiField field, XirArgument value);
 
-    public XirSnippet genNewInstance(XirSite site, RiType type);
+    XirSnippet genNewInstance(XirSite site, RiType type);
 
-    public XirSnippet genNewArray(XirSite site, XirArgument length, CiKind elementKind, RiType componentType, RiType arrayType);
-    
-    public XirSnippet genNewObjectArrayClone(XirSite site, XirArgument newLength, XirArgument referenceArray);
+    XirSnippet genNewArray(XirSite site, XirArgument length, CiKind elementKind, RiType componentType, RiType arrayType);
 
-    public XirSnippet genNewMultiArray(XirSite site, XirArgument[] lengths, RiType type);
+    XirSnippet genNewObjectArrayClone(XirSite site, XirArgument newLength, XirArgument referenceArray);
 
-    public XirSnippet genCheckCast(XirSite site, XirArgument receiver, XirArgument hub, RiType type);
+    XirSnippet genNewMultiArray(XirSite site, XirArgument[] lengths, RiType type);
 
-    public XirSnippet genInstanceOf(XirSite site, XirArgument receiver, XirArgument hub, RiType type);
+    XirSnippet genCheckCast(XirSite site, XirArgument receiver, XirArgument hub, RiType type);
 
-    public XirSnippet genArrayLoad(XirSite site, XirArgument array, XirArgument index, XirArgument length, CiKind elementKind, RiType elementType);
+    XirSnippet genInstanceOf(XirSite site, XirArgument receiver, XirArgument hub, RiType type);
 
-    public XirSnippet genArrayStore(XirSite site, XirArgument array, XirArgument index, XirArgument length, XirArgument value, CiKind elementKind, RiType elementType);
+    XirSnippet genArrayLoad(XirSite site, XirArgument array, XirArgument index, XirArgument length, CiKind elementKind, RiType elementType);
 
-    public XirSnippet genArrayLength(XirSite site, XirArgument array);
+    XirSnippet genArrayStore(XirSite site, XirArgument array, XirArgument index, XirArgument length, XirArgument value, CiKind elementKind, RiType elementType);
 
-    public XirSnippet genWriteBarrier(XirArgument object);
-    
-    public XirSnippet genArrayCopy(XirSite site, XirArgument src, XirArgument srcPos, XirArgument dest, XirArgument destPos, XirArgument length, RiType elementType, boolean inputsSame, boolean inputsDifferent);
+    XirSnippet genArrayLength(XirSite site, XirArgument array);
 
-    public XirSnippet genCurrentThread(XirSite site);
+    XirSnippet genWriteBarrier(XirArgument object);
 
-    public XirSnippet genGetClass(XirSite site, XirArgument xirArgument);
-    
+    XirSnippet genArrayCopy(XirSite site, XirArgument src, XirArgument srcPos, XirArgument dest, XirArgument destPos, XirArgument length, RiType elementType, boolean inputsSame, boolean inputsDifferent);
+
+    XirSnippet genCurrentThread(XirSite site);
+
+    XirSnippet genGetClass(XirSite site, XirArgument xirArgument);
+
     /**
      * Construct the list of XIR templates using the given XIR assembler.
-     * 
+     *
      * @param asm the XIR assembler
      * @return the list of templates
      */
-    public List<XirTemplate> buildTemplates(CiXirAssembler asm);
+    List<XirTemplate> buildTemplates(CiXirAssembler asm);
 
 }

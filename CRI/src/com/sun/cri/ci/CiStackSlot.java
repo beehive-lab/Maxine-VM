@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,8 +25,6 @@ package com.sun.cri.ci;
 /**
  * Represents a compiler spill slot or an outgoing stack-based argument in a method's frame
  * or an incoming stack-based argument in a method's {@linkplain #inCallerFrame() caller's frame}.
- *
- * @author Doug Simon
  */
 public final class CiStackSlot extends CiValue {
 
@@ -38,14 +36,14 @@ public final class CiStackSlot extends CiValue {
     /**
      * Gets a {@link CiStackSlot} instance representing a stack slot in the current frame
      * at a given index holding a value of a given kind.
-     *  
+     *
      * @param kind the kind of the value stored in the stack slot
      * @param index the index of the stack slot
      */
     public static CiStackSlot get(CiKind kind, int index) {
         return get(kind, index, false);
     }
-    
+
     /**
      * Gets a {@link CiStackSlot} instance representing a stack slot at a given index
      * holding a value of a given kind.
@@ -65,7 +63,7 @@ public final class CiStackSlot extends CiValue {
             slot = new CiStackSlot(kind, inCallerFrame ? -(index + 1) : index);
         }
         assert slot.inCallerFrame() == inCallerFrame;
-        return slot; 
+        return slot;
     }
 
     /**
@@ -81,7 +79,7 @@ public final class CiStackSlot extends CiValue {
      * Gets the index of this stack slot. If this is a spill slot or outgoing stack argument to a call,
      * then the index is relative to the current frame pointer. Otherwise this is an incoming stack
      * argument and the index is relative to the caller frame pointer.
-     * 
+     *
      * @return the index of this slot
      * @see #inCallerFrame()
      */
@@ -110,7 +108,7 @@ public final class CiStackSlot extends CiValue {
     public String name() {
         return (inCallerFrame() ? "caller-stack" : "stack:") + index();
     }
-    
+
     /**
      * Determines if this is a stack slot in the caller's frame.
      */
@@ -122,14 +120,14 @@ public final class CiStackSlot extends CiValue {
      * Default size of the cache to generate per kind.
      */
     private static final int CACHE_PER_KIND_SIZE = 100;
-    
+
     private static final int CALLER_FRAME_CACHE_PER_KIND_SIZE = 10;
-    
+
     /**
      * A cache of {@linkplain #inCallerFrame() non-caller-frame} stack slots.
      */
     private static final CiStackSlot[][] CACHE = makeCache(CACHE_PER_KIND_SIZE, false);
-    
+
     /**
      * A cache of {@linkplain #inCallerFrame() caller-frame} stack slots.
      */
@@ -146,11 +144,11 @@ public final class CiStackSlot extends CiValue {
         cache[CiKind.Jsr.ordinal()]    = makeCacheForKind(CiKind.Jsr, cachePerKindSize, inCallerFrame);
         return cache;
     }
-    
+
     /**
      * Creates an array of {@code CiStackSlot} objects for a given {@link CiKind}.
      * The {@link #index} values range from {@code 0} to {@code count - 1}.
-     * 
+     *
      * @param kind the {@code CiKind} of the stack slot
      * @param count the size of the array to create
      * @return the generated {@code CiStackSlot} array

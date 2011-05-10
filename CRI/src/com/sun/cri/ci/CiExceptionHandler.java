@@ -32,7 +32,7 @@ import com.sun.cri.ri.*;
 public class CiExceptionHandler implements RiExceptionHandler {
 
     public static final CiExceptionHandler[] NONE = {};
-    
+
     public final int startBCI;
     public final int endBCI;
     public final int handlerBCI;
@@ -78,7 +78,7 @@ public class CiExceptionHandler implements RiExceptionHandler {
     public RiType catchType() {
         return catchType;
     }
-    
+
     @Override
     public String toString() {
         return new StringBuilder(20).

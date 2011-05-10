@@ -34,16 +34,16 @@ import com.sun.cri.ri.*;
 
 /**
  * Miscellaneous collection of utility methods used in the {@code CRI} project.
- * 
+ *
  * @author Doug Simon
  */
 public class CiUtil {
-    
+
     public static final String NEW_LINE = String.format("%n");
     /**
      * Extends the functionality of {@link Class#getSimpleName()} to include a non-empty string for anonymous and local
      * classes.
-     * 
+     *
      * @param clazz the class for which the simple name is being requested
      * @param withEnclosingClass specifies if the returned name should be qualified with the name(s) of the enclosing
      *            class/classes of {@code clazz} (if any). This option is ignored if {@code clazz} denotes an anonymous
@@ -81,11 +81,11 @@ public class CiUtil {
     public static boolean isOdd(int n) {
         return (n & 1) == 1;
     }
-    
+
     public static boolean isEven(int n) {
         return (n & 1) == 0;
     }
-    
+
     /**
      * Checks whether the specified integer is a power of two.
      *
@@ -95,7 +95,7 @@ public class CiUtil {
     public static boolean isPowerOf2(int val) {
         return val != 0 && (val & val - 1) == 0;
     }
-    
+
     /**
      * Checks whether the specified long is a power of two.
      *
@@ -105,7 +105,7 @@ public class CiUtil {
     public static boolean isPowerOf2(long val) {
         return val != 0 && (val & val - 1) == 0;
     }
-    
+
     /**
      * Computes the log (base 2) of the specified integer, rounding down.
      * (E.g {@code log2(8) = 3}, {@code log2(21) = 4})
@@ -117,7 +117,7 @@ public class CiUtil {
         assert val > 0 && isPowerOf2(val);
         return 31 - Integer.numberOfLeadingZeros(val);
     }
-    
+
     /**
      * Computes the log (base 2) of the specified long, rounding down.
      * (E.g {@code log2(8) = 3}, {@code log2(21) = 4})
@@ -129,21 +129,21 @@ public class CiUtil {
         assert val > 0 && isPowerOf2(val);
         return 63 - Long.numberOfLeadingZeros(val);
     }
-    
+
     public static int align(int size, int align) {
         assert isPowerOf2(align);
         return (size + align - 1) & ~(align - 1);
     }
-    
+
     /**
      * Gets a word with the nth bit set.
      * @param n the nth bit to set
      * @return an integer value with the nth bit set
      */
     public static int nthBit(int n) {
-        return (n >= Integer.SIZE ? 0 : 1 << (n));
+        return n >= Integer.SIZE ? 0 : 1 << n;
     }
-    
+
     /**
      * Gets a word with the right-most n bits set.
      * @param n the number of right most bits to set
@@ -152,7 +152,7 @@ public class CiUtil {
     public static int rightNBits(int n) {
         return nthBit(n) - 1;
     }
-    
+
     /**
      * Converts a given type to its Java programming language name. The following are examples of strings returned by
      * this method:
@@ -195,7 +195,7 @@ public class CiUtil {
     public static String toJavaName(RiType riType) {
         return internalNameToJava(riType.name(), true);
     }
-    
+
     public static String internalNameToJava(String name, boolean qualified) {
         switch (name.charAt(0)) {
             case 'L': {
@@ -380,14 +380,14 @@ public class CiUtil {
         }
         return sb.toString();
     }
-    
+
     /**
      * Gets a stack trace element for a given method and bytecode index.
      */
     public static StackTraceElement toStackTraceElement(RiMethod method, int bci) {
         return new StackTraceElement(CiUtil.toJavaName(method.holder()), method.name(), null, -1);
     }
-    
+
     /**
      * Converts a Java source-language class name into the internal form.
      *
@@ -397,20 +397,20 @@ public class CiUtil {
     public static String toInternalName(String className) {
         return "L" + className.replace('.', '/') + ";";
     }
-    
+
     private static final Object[] NO_ARGUMENTS = {};
-    
+
     /**
      * Creates a set that uses reference-equality instead of {@link Object#equals(Object)}
      * when comparing values.
-     * 
+     *
      * @param <T> the type of elements in the set
      * @return a set based on reference-equality
      */
     public static <T> Set<T> newIdentityHashSet() {
         return Collections.newSetFromMap(new IdentityHashMap<T, Boolean>());
     }
-    
+
     /**
      * Prepends the String {@code indentation} to every line in String {@code lines},
      * including a possibly non-empty line following the final newline.
@@ -428,7 +428,7 @@ public class CiUtil {
 
     /**
      * Formats the values in a frame as a tabulated string.
-     * 
+     *
      * @param frame
      * @return the values in {@code frame} as a tabulated string
      */
@@ -467,7 +467,7 @@ public class CiUtil {
 
     /**
      * Formats a given table as a string. The value of each cell is produced by {@link String#valueOf(Object)}.
-     * 
+     *
      * @param cells the cells of the table in row-major order
      * @param cols the number of columns per row
      * @param lpad the number of space padding inserted before each formatted cell value
@@ -512,17 +512,17 @@ public class CiUtil {
         }
         return sb.toString();
     }
-    
+
     /**
      * Convenient shortcut for calling {@link #appendLocation(StringBuilder, RiMethod, int)}
      * without having to supply a a {@link StringBuilder} instance and convert the result
-     * to a string. 
+     * to a string.
      */
     public static String toLocation(RiMethod method, int bci) {
         return appendLocation(new StringBuilder(), method, bci).toString();
     }
-    
-    
+
+
     /**
      * Appends a string representation of a location specified by a given method and bci to
      * a given {@link StringBuilder}. If a stack trace element with a non-null file name
@@ -537,7 +537,7 @@ public class CiUtil {
      * <pre>
      *     java.lang.String.valueOf(int) [bci: 12]
      * </pre>
-     * 
+     *
      * @param sb
      * @param method
      * @param bci
@@ -555,7 +555,7 @@ public class CiUtil {
 
     /**
      * Appends a formatted code position to a {@link StringBuilder}.
-     * 
+     *
      * @param sb the {@link StringBuilder} to append to
      * @param pos the code position to format and append to {@code sb}
      * @return the value of {@code sb}
@@ -571,7 +571,7 @@ public class CiUtil {
 
     /**
      * Appends a formatted frame to a {@link StringBuilder}.
-     * 
+     *
      * @param sb the {@link StringBuilder} to append to
      * @param frame the frame to format and append to {@code sb}
      * @return the value of {@code sb}
@@ -601,10 +601,10 @@ public class CiUtil {
         }
         return sb;
     }
-    
+
     /**
      * Appends a formatted debuginfo to a {@link StringBuilder}.
-     * 
+     *
      * @param sb the {@link StringBuilder} to append to
      * @param info the debug info to format and append to {@code sb}
      * @param arch if not {@code null}, this object is used to augment the output with register names denoted by the

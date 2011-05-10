@@ -103,7 +103,7 @@ public final class CiAddress extends CiValue {
             index = IllegalValue;
             scale = Scale.Times1;
         }
-        
+
         this.index = index;
         this.scale = scale;
         this.displacement = displacement;
@@ -134,6 +134,7 @@ public final class CiAddress extends CiValue {
         public final int log2;
 
         public static Scale fromInt(int scale) {
+            // Checkstyle: stop
             switch (scale) {
                 case 1: return Times1;
                 case 2: return Times2;
@@ -141,6 +142,7 @@ public final class CiAddress extends CiValue {
                 case 8: return Times8;
                 default: throw new IllegalArgumentException(String.valueOf(scale));
             }
+            // Checkstyle: resume
         }
 
         public static Scale fromShift(int shift) {
@@ -213,6 +215,7 @@ public final class CiAddress extends CiValue {
 
     @Override
     public String name() {
+        // Checkstyle: stop
         switch (format()) {
             case BASE            : return "[" + s(base) + "]";
             case BASE_DISP       : return "[" + s(base) + " + " + displacement + "]";
@@ -221,6 +224,7 @@ public final class CiAddress extends CiValue {
             case PLACEHOLDER     : return "[<placeholder>]";
             default              : throw new IllegalArgumentException("unknown format: " + format());
         }
+        // Checkstyle: resume
     }
 
     @Override

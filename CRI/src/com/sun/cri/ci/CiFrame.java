@@ -96,13 +96,13 @@ public class CiFrame extends CiCodePos implements Serializable {
 
     /**
      * Gets the caller of this frame.
-     * 
+     *
      * @return {@code null} if this frame has no caller
      */
     public CiFrame caller() {
         return (CiFrame) caller;
     }
-    
+
     /**
      * Deep equality test.
      */
@@ -124,7 +124,7 @@ public class CiFrame extends CiCodePos implements Serializable {
         }
         return false;
     }
-    
+
     @Override
     public String toString() {
         return CiUtil.append(new StringBuilder(100), this).toString();
