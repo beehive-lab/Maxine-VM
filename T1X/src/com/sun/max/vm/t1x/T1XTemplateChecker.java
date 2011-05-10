@@ -40,8 +40,6 @@ import com.sun.max.vm.runtime.*;
  * This invariant simplifies root scanning of a frame compiled by T1X.
  * A GC reference map derived for the bytecode state at the start of a
  * template will be valid for all stops in the template.
- *
- * @author Doug Simon
  */
 @HOSTED_ONLY
 public class T1XTemplateChecker extends C1XCompilerExtension {
