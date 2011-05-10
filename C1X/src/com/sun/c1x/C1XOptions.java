@@ -29,14 +29,12 @@ import com.sun.c1x.debug.TTY.*;
  * The help message for each option is specified by a {@linkplain #helpMap help map}.
  *
  * (tw) WARNING: Fields of this class are treated as final by Graal.
- *
- * @author Ben L. Titzer
  */
 public final class C1XOptions {
 
-    // Checkstyle: stop
+    // Checkstyle: off
     private static final boolean ____ = false;
-    // Checkstyle: resume
+    // Checkstyle: on
 
     // inlining settings
     public static boolean OptInline                          = ____;
@@ -170,9 +168,9 @@ public final class C1XOptions {
     }
 
     public static void setOptimizationLevel(int level) {
-        final boolean l = (level >= 1);
-        final boolean ll = (level >= 2);
-        final boolean lll = (level >= 3);
+        final boolean l = level >= 1;
+        final boolean ll = level >= 2;
+        final boolean lll = level >= 3;
 
         // Level 1 optimizations
         OptCanonicalize                 = l;

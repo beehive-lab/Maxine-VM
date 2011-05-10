@@ -191,22 +191,19 @@ public final class JavaPrototype extends Prototype {
      * Loads all classes annotated with {@link METHOD_SUBSTITUTIONS} and performs the relevant substitutions.
      */
     private void loadMethodSubstitutions(final VMConfiguration vmConfiguration) {
-        for (BootImagePackage maxPackage : vmConfiguration.bootImagePackages) {
-            if (maxPackage instanceof BootImagePackage) {
-                BootImagePackage bootImagePackage = (BootImagePackage) maxPackage;
-                if (bootImagePackage.isPartOfMaxineVM(vmConfiguration) && bootImagePackage.containsMethodSubstitutions()) {
-                    String[] classes = bootImagePackage.listClasses(packageLoader.classpath);
-                    for (String cn : classes) {
-                        try {
-                            Class<?> c = Class.forName(cn, false, Package.class.getClassLoader());
-                            METHOD_SUBSTITUTIONS annotation = c.getAnnotation(METHOD_SUBSTITUTIONS.class);
-                            if (annotation != null) {
-                                loadClass(c);
-                                METHOD_SUBSTITUTIONS.Static.processAnnotationInfo(annotation, toClassActor(c));
-                            }
-                        } catch (Exception e) {
-                            throw ProgramError.unexpected(e);
+        for (BootImagePackage bootImagePackage : vmConfiguration.bootImagePackages) {
+            if (bootImagePackage.isPartOfMaxineVM(vmConfiguration) && bootImagePackage.containsMethodSubstitutions()) {
+                String[] classes = bootImagePackage.listClasses(packageLoader.classpath);
+                for (String cn : classes) {
+                    try {
+                        Class<?> c = Class.forName(cn, false, Package.class.getClassLoader());
+                        METHOD_SUBSTITUTIONS annotation = c.getAnnotation(METHOD_SUBSTITUTIONS.class);
+                        if (annotation != null) {
+                            loadClass(c);
+                            METHOD_SUBSTITUTIONS.Static.processAnnotationInfo(annotation, toClassActor(c));
                         }
+                    } catch (Exception e) {
+                        throw ProgramError.unexpected(e);
                     }
                 }
             }

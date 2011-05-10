@@ -40,16 +40,13 @@ import com.sun.max.tele.util.*;
  * precede the method result value.
  *
  * For this to work, the {@link ArrayMode} of a parameter must be registered with {@link RemoteInvocationProtocolAdaptor} by the target end of the communication..
- *
- * @author Mick Jordan
- *
  */
 public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol {
     public enum ArrayMode {
         IN,
         OUT,
         INOUT
-    };
+    }
 
     protected DataInputStream in;
     protected DataOutputStream out;

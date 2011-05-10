@@ -30,7 +30,6 @@ import com.sun.cri.ci.*;
 /**
  * Unsigned comparisons.
  *
- * @author Mick Jordan
  * @see UnsignedComparisons
  */
 public final class UnsignedCompareOp extends Op2 {
@@ -62,9 +61,9 @@ public final class UnsignedCompareOp extends Op2 {
     @Override
     public void print(LogStream out) {
         out.print(x()).
-        print(' ').
-        print(Bytecodes.operator(opcode)).
-        print(' ').
-        print(y());
+            print(' ').
+            print(Bytecodes.operator(opcode)).
+            print(' ').
+            print(y());
     }
 }

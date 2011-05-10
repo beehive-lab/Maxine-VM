@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -90,8 +90,6 @@ import com.sun.max.program.*;
  * same {@link Microbenchmark} instance. Results are reported separately for each thread. There is no explicit support for per thread
  * state; if that is required, use {@link ThreadLocal}.
  *
- * @author Mick Jordan
- * @author Puneet Lakhina
  */
 public class RunBench {
 
@@ -311,7 +309,6 @@ public class RunBench {
     /**
      * Runs the benchmark in one thread.
      *
-     * @author Mick Jordan
      */
     private class ThreadRunner extends Thread {
 
@@ -422,7 +419,7 @@ public class RunBench {
         System.out.format("  average elapsed: %.3f, median elapsed: %.3f, \n", avgElapsed, median(elapsedSubArray, true));
         System.out.format("  average elapsed minus overhead: %.3f\n", benchElapsed);
         System.out.format("  stddev: %.3f, max: %d, min: %d\n", avgElapsedStdDev, minMaxArr[1], minMaxArr[0]);
-        System.out.format("  operations/ms: %.3f\n", (double) 1000000 / (double) benchElapsed);
+        System.out.format("  operations/ms: %.3f\n", 1000000 / benchElapsed);
     }
 
     /**
@@ -514,7 +511,7 @@ public class RunBench {
         if (length == 1) {
             return values[array.lwb];
         } else if (length == 2) {
-            return ((double) (values[array.lwb] + values[array.lwb + 1])) / 2.0;
+            return (values[array.lwb] + values[array.lwb + 1]) / 2.0D;
         }
         SubArray sortedArray = array;
         if (!isSorted) {
@@ -529,7 +526,7 @@ public class RunBench {
         if ((length & 1) != 0) {
             return values[lendiv2];
         }
-        return ((double) (values[lendiv2] + values[lendiv2 - 1])) / 2.0;
+        return (values[lendiv2] + values[lendiv2 - 1]) / 2.0D;
     }
 
     /**

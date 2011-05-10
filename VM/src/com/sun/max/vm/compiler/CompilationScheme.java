@@ -47,9 +47,6 @@ import com.sun.max.vm.thread.*;
  * Encapsulates the mechanism (or mechanisms) by which methods are prepared for execution.
  * Normally this means compiling (or recompiling) a method or creating an interpreter
  * stub.
- *
- * @author Ben L. Titzer
- * @author Doug Simon
  */
 public interface CompilationScheme extends VMScheme {
 
@@ -102,7 +99,6 @@ public interface CompilationScheme extends VMScheme {
      * This class provides a facade for the {@code CompilationScheme} interface, simplifying usage. It provides a number
      * of utilities to, for example, compile a method, get a method's current entrypoint, reset its method state, etc.
      *
-     * @author Ben L. Titzer
      */
     public final class Static {
         private Static() {
@@ -215,7 +211,7 @@ public interface CompilationScheme extends VMScheme {
          * @param receiver the receiver object of the profiled method. This will be {@code null} if the profiled method is static.
          */
         public static void instrumentationCounterOverflow(MethodProfile mpo, Object receiver) {
-            ClassMethodActor classMethodActor = (ClassMethodActor) mpo.method;
+            ClassMethodActor classMethodActor = mpo.method;
             TargetMethod oldMethod = TargetState.currentTargetMethod(classMethodActor.targetState);
             TargetMethod newMethod = vmConfig().compilationScheme().synchronousCompile(classMethodActor);
 

@@ -40,8 +40,6 @@ import com.sun.max.vm.compiler.target.*;
  * Much of the information is derived by delegation to
  * a surrogate for the corresponding instance of {@link TargetMethod}
  * in the VM.
- *
- * @author Michael Van De Vanter
  */
 public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxCompiledCode {
 
@@ -52,7 +50,6 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
      * <br>
      * This region has no children, unless we decide later to subdivide and model the parts separately.
      *
-     * @author Michael Van De Vanter
      */
     private static final class CompiledCodeMemoryRegion extends TeleDelegatedMemoryRegion implements MaxEntityMemoryRegion<MaxCompiledCode> {
 
@@ -123,7 +120,7 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
         public int methodRefIndex() {
             return methodRefIndex;
         }
-    };
+    }
 
     private final TeleTargetMethod teleTargetMethod;
     private CodeLocation codeStartLocation = null;

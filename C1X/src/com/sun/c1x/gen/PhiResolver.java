@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,10 +46,6 @@ import com.sun.cri.ci.*;
  *  r2 := r3  becomes  r1 := r2
  *  r1 := r2           r2 := r3
  * </pre>
- *
- * @author Marcelo Cintra
- * @author Thomas Wuerthinger
- * @author Doug Simon
  */
 public class PhiResolver {
 
@@ -152,7 +148,7 @@ public class PhiResolver {
         Node srcNode = sourceNode(src);
         Node destNode = destinationNode(dest);
         srcNode.destinations.add(destNode);
-      }
+    }
 
     private Node createNode(CiValue operand, boolean source) {
         Node node;

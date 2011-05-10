@@ -39,9 +39,6 @@ import com.sun.max.unsafe.*;
 
 /**
  * Disassembler for machine code in the VM.
- *
- * @author Doug Simon
- * @author Michael Van De Vanter
  */
 public final class TeleDisassembler {
 
@@ -177,7 +174,7 @@ public final class TeleDisassembler {
             final List<DisassembledObject> objects = new ArrayList<DisassembledObject>();
             try {
                 while (bufferedInputStream.available() > 0) {
-                    objects.add((DisassembledObject) disassembler.scanOne(bufferedInputStream).get(0));
+                    objects.add(disassembler.scanOne(bufferedInputStream).get(0));
                 }
             } catch (Throwable t) {
                 TeleWarning.message("Only partially disassembled given code stream", t);

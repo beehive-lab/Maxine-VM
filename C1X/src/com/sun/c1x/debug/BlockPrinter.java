@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,8 +29,6 @@ import com.sun.c1x.value.*;
 
 /**
  * Prints a listing for a {@linkplain BlockBegin block}.
- *
- * @author Doug Simon
  */
 public class BlockPrinter implements BlockClosure {
 
@@ -76,30 +74,30 @@ public class BlockPrinter implements BlockClosure {
     private static void printFrameState(FrameState newFrameState, LogStream out) {
         int startPosition = out.position();
         if (newFrameState.stackEmpty()) {
-          out.print("empty stack");
+            out.print("empty stack");
         } else {
-          out.print("stack [");
-          int i = 0;
-          while (i < newFrameState.stackSize()) {
-            if (i > 0) {
-                out.print(", ");
-            }
-            Value value = newFrameState.stackAt(i);
-            out.print(i + ":" + Util.valueString(value));
-            if (value == null) {
-                i++;
-            } else {
-                i += value.kind.sizeInSlots();
-                if (value instanceof Phi) {
-                    Phi phi = (Phi) value;
-                    if (phi.operand() != null) {
-                        out.print(" ");
-                        out.print(phi.operand().toString());
+            out.print("stack [");
+            int i = 0;
+            while (i < newFrameState.stackSize()) {
+                if (i > 0) {
+                    out.print(", ");
+                }
+                Value value = newFrameState.stackAt(i);
+                out.print(i + ":" + Util.valueString(value));
+                if (value == null) {
+                    i++;
+                } else {
+                    i += value.kind.sizeInSlots();
+                    if (value instanceof Phi) {
+                        Phi phi = (Phi) value;
+                        if (phi.operand() != null) {
+                            out.print(" ");
+                            out.print(phi.operand().toString());
+                        }
                     }
                 }
             }
-          }
-          out.print(']');
+            out.print(']');
         }
         if (newFrameState.locksSize() != 0) {
             // print out the lines on the line below this

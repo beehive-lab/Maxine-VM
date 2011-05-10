@@ -41,10 +41,6 @@ import com.sun.cri.xir.CiXirAssembler.*;
 
 /**
  * The {@code LIRAssembler} class definition.
- *
- * @author Marcelo Cintra
- * @author Thomas Wuerthinger
- * @author Ben L. Titzer
  */
 public abstract class LIRAssembler {
 
@@ -294,7 +290,7 @@ public abstract class LIRAssembler {
             case Msb:
                 emitSignificantBitOp(true,  op.operand(), op.result());
                 break;
-           default:
+            default:
                 throw Util.shouldNotReachHere();
         }
     }

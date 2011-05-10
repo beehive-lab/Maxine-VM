@@ -32,9 +32,6 @@ import com.sun.cri.ci.*;
 
 /**
  * Represents an interval in the {@linkplain LinearScan linear scan register allocator}.
- *
- * @author Thomas Wuerthinger
- * @author Doug Simon
  */
 public final class Interval {
 
@@ -568,8 +565,9 @@ public final class Interval {
     }
 
     void setSpillSlot(CiStackSlot slot) {
-        assert splitParent().spillSlot == null : "connot overwrite existing spill slot";
-        splitParent().spillSlot = slot;
+        Interval parent = splitParent();
+        assert parent.spillSlot == null : "connot overwrite existing spill slot";
+        parent.spillSlot = slot;
     }
 
     Interval currentSplitChild() {
@@ -577,7 +575,8 @@ public final class Interval {
     }
 
     void makeCurrentSplitChild() {
-        splitParent().currentSplitChild = this;
+        Interval parent = splitParent();
+        parent.currentSplitChild = this;
     }
 
     boolean insertMoveWhenActivated() {
@@ -599,12 +598,14 @@ public final class Interval {
 
     void setSpillState(SpillState state) {
         assert state.ordinal() >= spillState().ordinal() : "state cannot decrease";
-        splitParent().spillState = state;
+        Interval parent = splitParent();
+        parent.spillState = state;
     }
 
     void setSpillDefinitionPos(int pos) {
         assert spillDefinitionPos() == -1 : "cannot set the position twice";
-        splitParent().spillDefinitionPos = pos;
+        Interval parent = splitParent();
+        parent.spillDefinitionPos = pos;
     }
 
     // returns true if this interval has a shadow copy on the stack that is always correct
@@ -760,7 +761,7 @@ public final class Interval {
             int len = splitChildren.size();
 
             // in outputMode, the end of the interval (opId == cur.to()) is not valid
-            int toOffset = (mode == LIRInstruction.OperandMode.Output ? 0 : 1);
+            int toOffset = mode == LIRInstruction.OperandMode.Output ? 0 : 1;
 
             int i;
             for (i = 0; i < len; i++) {

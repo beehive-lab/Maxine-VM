@@ -70,7 +70,6 @@ import com.sun.max.vm.verifier.*;
  * <p>
  * This class is designed such that a single instance can be re-used for
  * separate compilations.
- *
  */
 public class T1XCompilation {
 
@@ -583,7 +582,7 @@ public class T1XCompilation {
                     int offset = (i + VmThread.STACK_SHADOW_PAGES) * pageSize;
                     // Deduct 'frameSize' to handle frames larger than (C1XOptions.StackShadowPages * pageSize)
                     offset = offset - frameSize;
-                    asm.movq(new CiAddress(CiKind.Word, RSP, (-offset)), rax);
+                    asm.movq(new CiAddress(CiKind.Word, RSP, -offset), rax);
                 }
             }
             return adapter;

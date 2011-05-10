@@ -41,10 +41,6 @@ import com.sun.cri.xir.*;
 /**
  * This class represents a list of LIR instructions and contains factory methods for creating and appending LIR
  * instructions to this list.
- *
- * @author Marcelo Cintra
- * @author Thomas Wuerthinger
- * @author Ben L. Titzer
  */
 public final class LIRList {
 
@@ -442,7 +438,7 @@ public final class LIRList {
         }
 
         // print block bci range
-        TTY.print("[%d, %d] ", x.bci(), (end == null ? -1 : end.bci()));
+        TTY.print("[%d, %d] ", x.bci(), end == null ? -1 : end.bci());
 
         // print predecessors and successors
         if (x.numberOfPreds() > 0) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,15 +31,11 @@ import com.sun.c1x.util.*;
 /**
  * A collection of static methods for printing debug and informational output to a global {@link LogStream}.
  * The output can be (temporarily) suppressed per thread through use of a {@linkplain Filter filter}.
- *
- * @author Doug Simon
  */
 public class TTY {
 
     /**
      * Support for thread-local suppression of {@link TTY}.
-     *
-     * @author Doug Simon
      */
     public static class Filter {
         private LogStream previous;
@@ -104,7 +100,7 @@ public class TTY {
         @Override
         protected LogStream initialValue() {
             return log;
-        };
+        }
     };
 
     public static boolean isSuppressed() {

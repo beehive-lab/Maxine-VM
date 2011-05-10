@@ -39,9 +39,6 @@ import com.sun.cri.ci.*;
 
 /**
  * This class implements the X86-specific portion of the LIR generator.
- *
- * @author Thomas Wuerthinger
- * @author Ben L. Titzer
  */
 public class AMD64LIRGenerator extends LIRGenerator {
 
@@ -99,7 +96,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
             return new CiAddress(kind, base, (((CiConstant) index).asInt() << shift) + disp);
         } else {
             assert index.isVariableOrRegister();
-            return new CiAddress(kind, base, (index), CiAddress.Scale.fromShift(shift), disp);
+            return new CiAddress(kind, base, index, CiAddress.Scale.fromShift(shift), disp);
         }
     }
 
@@ -173,7 +170,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
         LIRItem left = new LIRItem(x.x(), this);
         LIRItem right = new LIRItem(x.y(), this);
         assert !left.isStack() || !right.isStack() : "can't both be memory operands";
-        boolean mustLoadBoth = (x.opcode == Bytecodes.FREM || x.opcode == Bytecodes.DREM);
+        boolean mustLoadBoth = x.opcode == Bytecodes.FREM || x.opcode == Bytecodes.DREM;
 
         // Both are in register, swap operands such that the short-living one is on the left side.
         if (x.isCommutative() && left.isRegisterOrVariable() && right.isRegisterOrVariable()) {
@@ -335,29 +332,29 @@ public class AMD64LIRGenerator extends LIRGenerator {
         int opcode = x.opcode;
         if (opcode == Bytecodes.WDIV || opcode == Bytecodes.WREM || opcode == Bytecodes.WDIVI || opcode == Bytecodes.WREMI) {
             // emit code for long division or modulus
-                // emit inline 64-bit code
-                LIRDebugInfo info = x.needsZeroCheck() ? stateFor(x) : null;
-                CiValue dividend = force(x.x(), RAX_L); // dividend must be in RAX
-                CiValue divisor = load(x.y());            // divisor can be in any (other) register
+            // emit inline 64-bit code
+            LIRDebugInfo info = x.needsZeroCheck() ? stateFor(x) : null;
+            CiValue dividend = force(x.x(), RAX_L); // dividend must be in RAX
+            CiValue divisor = load(x.y());            // divisor can be in any (other) register
 
-                CiValue result = createResultVariable(x);
-                CiValue resultReg;
-                if (opcode == Bytecodes.WREM) {
-                    resultReg = RDX_L; // remainder result is produced in rdx
-                    lir.wrem(dividend, divisor, resultReg, LDIV_TMP, info);
-                } else if (opcode == Bytecodes.WREMI) {
-                    resultReg = RDX_L; // remainder result is produced in rdx
-                    lir.wremi(dividend, divisor, resultReg, LDIV_TMP, info);
-                } else if (opcode == Bytecodes.WDIV) {
-                    resultReg = RAX_L; // division result is produced in rax
-                    lir.wdiv(dividend, divisor, resultReg, LDIV_TMP, info);
-                } else {
-                    assert opcode == Bytecodes.WDIVI;
-                    resultReg = RAX_L; // division result is produced in rax
-                    lir.wdivi(dividend, divisor, resultReg, LDIV_TMP, info);
-                }
+            CiValue result = createResultVariable(x);
+            CiValue resultReg;
+            if (opcode == Bytecodes.WREM) {
+                resultReg = RDX_L; // remainder result is produced in rdx
+                lir.wrem(dividend, divisor, resultReg, LDIV_TMP, info);
+            } else if (opcode == Bytecodes.WREMI) {
+                resultReg = RDX_L; // remainder result is produced in rdx
+                lir.wremi(dividend, divisor, resultReg, LDIV_TMP, info);
+            } else if (opcode == Bytecodes.WDIV) {
+                resultReg = RAX_L; // division result is produced in rax
+                lir.wdiv(dividend, divisor, resultReg, LDIV_TMP, info);
+            } else {
+                assert opcode == Bytecodes.WDIVI;
+                resultReg = RAX_L; // division result is produced in rax
+                lir.wdivi(dividend, divisor, resultReg, LDIV_TMP, info);
+            }
 
-                lir.move(resultReg, result);
+            lir.move(resultReg, result);
         } else if (opcode == Bytecodes.LMUL) {
             LIRItem right = new LIRItem(x.y(), this);
 
@@ -456,7 +453,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
         } else if (x.x().kind.isFloat() || x.x().kind.isDouble()) {
             CiValue reg = createResultVariable(x);
             int code = x.opcode;
-            lir.fcmp2int(left.result(), right.result(), reg, (code == Bytecodes.FCMPL || code == Bytecodes.DCMPL));
+            lir.fcmp2int(left.result(), right.result(), reg, code == Bytecodes.FCMPL || code == Bytecodes.DCMPL);
         } else if (x.x().kind.isLong() || x.x().kind.isWord()) {
             CiValue reg = createResultVariable(x);
             lir.lcmp2int(left.result(), right.result(), reg);
@@ -472,6 +469,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
         left.loadItem();
         right.loadItem();
         Condition condition = null;
+        // Checkstyle: off
         switch (x.op) {
             case BELOW_THAN  : condition = Condition.BT; break;
             case ABOVE_THAN  : condition = Condition.AT; break;
@@ -480,6 +478,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
             default:
                 Util.unimplemented();
         }
+        // Checkstyle: on
         CiValue result = createResultVariable(x);
         lir.cmp(condition, left.result(), right.result());
         lir.cmove(condition, CiConstant.INT_1, CiConstant.INT_0, result);
@@ -616,12 +615,14 @@ public class AMD64LIRGenerator extends LIRGenerator {
         CiVariable result = newVariable(x.kind);
         // arguments of lirConvert
         GlobalStub globalStub = null;
+        // Checkstyle: off
         switch (x.opcode) {
             case Bytecodes.F2I: globalStub = stubFor(GlobalStub.Id.f2i); break;
             case Bytecodes.F2L: globalStub = stubFor(GlobalStub.Id.f2l); break;
             case Bytecodes.D2I: globalStub = stubFor(GlobalStub.Id.d2i); break;
             case Bytecodes.D2L: globalStub = stubFor(GlobalStub.Id.d2l); break;
         }
+        // Checkstyle: on
         if (globalStub != null) {
             // Force result to be rax to match global stubs expectation.
             CiValue stubResult = x.kind == CiKind.Int ? RAX_I : RAX_L;
@@ -712,7 +713,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
             lir.move(tmp, addr);
         } else {
             CiAddress addr = new CiAddress(kind, src, offset);
-            boolean isObj = (kind == CiKind.Jsr || kind == CiKind.Object);
+            boolean isObj = kind == CiKind.Jsr || kind == CiKind.Object;
             if (isObj) {
                 // Do the pre-write barrier, if any.
                 preGCWriteBarrier(addr, false, null);
