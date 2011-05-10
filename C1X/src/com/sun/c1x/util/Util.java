@@ -299,8 +299,6 @@ public class Util {
         }
     }
 
-
-
     /**
      * Determines if the kinds of two given IR nodes are equal at the {@linkplain #archKind(CiKind) architecture}
      * level in the context of the {@linkplain C1XCompilation#compilation()} compilation.

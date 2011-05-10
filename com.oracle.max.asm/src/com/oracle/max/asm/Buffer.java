@@ -24,6 +24,9 @@ package com.oracle.max.asm;
 
 import java.util.*;
 
+/**
+ * Code buffer management for the assembler. Support for little endian and big endian architectures is implemented using subclasses.
+ */
 public abstract class Buffer {
     protected byte[] data;
     protected int position;

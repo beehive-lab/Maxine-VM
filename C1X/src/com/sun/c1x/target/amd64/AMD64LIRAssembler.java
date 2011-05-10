@@ -2072,11 +2072,9 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         shouldNotReachHere();
     }
 
-
     public GlobalStub lookupGlobalStub(XirTemplate template) {
         return compilation.compiler.lookupGlobalStub(template);
     }
-
 
     public void callGlobalStub(XirTemplate stub, LIRDebugInfo info, CiRegister result, CiValue... args) {
         callGlobalStubHelper(lookupGlobalStub(stub), stub.resultOperand.kind, info, result, args);
@@ -2141,7 +2139,6 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         }
     }
 
-
     public void movoop(CiRegister dst, CiConstant obj) {
         assert obj.kind == CiKind.Object;
         if (obj.isNull()) {
@@ -2160,7 +2157,6 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         movoop(rscratch1, obj);
         masm.movq(dst, rscratch1);
     }
-
 
     public void directCall(Object target, LIRDebugInfo info) {
         int before = masm.codeBuffer.position();
