@@ -56,7 +56,7 @@ public enum CiKind {
     Illegal('-', "illegal", null,       -1,       0);
 
     public static final CiKind[] VALUES = values();
-    public static final CiKind[] JAVA_VALUES = new CiKind[] { CiKind.Boolean, CiKind.Byte, CiKind.Short, CiKind.Char, CiKind.Int, CiKind.Float, CiKind.Long, CiKind.Double, CiKind.Object};
+    public static final CiKind[] JAVA_VALUES = new CiKind[] {CiKind.Boolean, CiKind.Byte, CiKind.Short, CiKind.Char, CiKind.Int, CiKind.Float, CiKind.Long, CiKind.Double, CiKind.Object};
 
     CiKind(char ch, String name, String jniName, int jvmSlots, int flags) {
         this.typeChar = ch;
@@ -73,9 +73,9 @@ public enum CiKind {
     }
 
     static class Flags {
-    	/**
-    	 * Can be an object field type.
-    	 */
+        /**
+         * Can be an object field type.
+         */
         public static final int FIELD_TYPE  = 0x0001;
         /**
          * Can be result type of a method.
@@ -172,11 +172,12 @@ public enum CiKind {
 
     /**
      * Gets the size of this kind in bytes.
-     * 
+     *
      * @param wordSize the size of a word in bytes
      * @return the size of this kind in bytes
      */
     public int sizeInBytes(int wordSize) {
+        // Checkstyle: stop
         switch (this) {
             case Boolean: return 1;
             case Byte: return 1;
@@ -191,6 +192,7 @@ public enum CiKind {
             case Word: return wordSize;
             default: return 0;
         }
+        // Checkstyle: resume
     }
 
     /**
@@ -200,6 +202,7 @@ public enum CiKind {
      * @return the kind from the array type code
      */
     public static CiKind fromArrayTypeCode(int code) {
+        // Checkstyle: stop
         switch (code) {
             case 4: return Boolean;
             case 5: return Char;
@@ -210,13 +213,16 @@ public enum CiKind {
             case 10: return Int;
             case 11: return Long;
         }
+        // Checkstyle: resume
         throw new IllegalArgumentException("unknown array type code: " + code);
     }
-    
+
     public static CiKind fromTypeString(String typeString) {
         assert typeString.length() > 0;
         final char first = typeString.charAt(0);
-        if (first == '[' || first == 'L') return CiKind.Object;
+        if (first == '[' || first == 'L') {
+            return CiKind.Object;
+        }
         return CiKind.fromPrimitiveOrVoidTypeChar(first);
     }
 
@@ -226,6 +232,7 @@ public enum CiKind {
      * @return the kind
      */
     public static CiKind fromPrimitiveOrVoidTypeChar(char ch) {
+        // Checkstyle: stop
         switch (ch) {
             case 'Z': return Boolean;
             case 'C': return Char;
@@ -237,6 +244,7 @@ public enum CiKind {
             case 'J': return Long;
             case 'V': return Void;
         }
+        // Checkstyle: resume
         throw new IllegalArgumentException("unknown primitive or void type character: " + ch);
     }
 
@@ -246,6 +254,7 @@ public enum CiKind {
      * @return the kind
      */
     public static CiKind fromTypeChar(char ch) {
+        // Checkstyle: stop
         switch (ch) {
             case 'z': return Boolean;
             case 'c': return Char;
@@ -260,6 +269,7 @@ public enum CiKind {
             case 'v': return Void;
             case 'r': return Jsr;
         }
+        // Checkstyle: resume
         throw new IllegalArgumentException("unknown type character: " + ch);
     }
 
@@ -269,6 +279,7 @@ public enum CiKind {
      * @return the Java class which represents arrays of this kind
      */
     public Class<?> primitiveArrayClass() {
+        // Checkstyle: stop
         switch (this) {
             case Boolean: return boolean[].class;
             case Char:    return char[].class;
@@ -279,10 +290,12 @@ public enum CiKind {
             case Int:     return int[].class;
             case Long:    return long[].class;
         }
+        // Checkstyle: resume
         throw new IllegalArgumentException("not a primitive kind");
     }
-    
+
     public static CiKind fromJavaClass(Class<?> c) {
+        // Checkstyle: stop
         if (c == java.lang.Void.TYPE) return Void;
         if (c == java.lang.Integer.TYPE) return Int;
         if (c == java.lang.Byte.TYPE) return Byte;
@@ -293,6 +306,7 @@ public enum CiKind {
         if (c == java.lang.Short.TYPE) return Short;
         if (c == java.lang.Boolean.TYPE) return Boolean;
         return CiKind.Object;
+        // Checkstyle: resume
     }
 
     public Class< ? > toJavaClass() {

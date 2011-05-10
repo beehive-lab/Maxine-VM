@@ -64,10 +64,10 @@ public class XirArgument {
 
     @Override
     public String toString() {
-    	if (constant != null) {
-    		return constant.toString();
-    	} else {
-    		return "" + object;
-    	}
+        if (constant != null) {
+            return constant.toString();
+        } else {
+            return "" + object;
+        }
     }
 }

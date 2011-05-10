@@ -27,7 +27,7 @@ package com.sun.cri.ri;
  * Set of runtime calls to be used when translating bytecodes. These calls
  * must be woven into the IR during translation in a phase where they are
  * subject to inlining and folding.
- *  
+ *
  * @author Doug Simon
  */
 public interface RiSnippets {
@@ -36,12 +36,12 @@ public interface RiSnippets {
      * Gets the snippet call that links a native method.
      */
     RiSnippetCall link(RiMethod nativeMethod);
-    
+
     /**
-     * Gets the snippet call that implements the transition from the VM into native code
+     * Gets the snippet call that implements the transition from the VM into native code.
      */
     RiSnippetCall enterNative(RiMethod nativeMethod);
-    
+
     /**
      * Gets the snippet call that implements the transition from native code into the VM.
      */

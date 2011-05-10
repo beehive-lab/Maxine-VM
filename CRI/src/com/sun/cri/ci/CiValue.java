@@ -131,6 +131,6 @@ public abstract class CiValue implements Serializable {
     }
 
     public final boolean isConstant0() {
-        return isConstant() && ((CiConstant)this).asInt() == 0;
+        return isConstant() && ((CiConstant) this).asInt() == 0;
     }
 }

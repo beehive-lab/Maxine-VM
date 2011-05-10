@@ -29,9 +29,9 @@ package com.sun.cri.bytecode;
  * @author Ben L. Titzer
  */
 public abstract class BytecodeSwitch {
-	/**
-	 * The {@link BytecodeStream} containing bytecode array or {@code null} if {@link #code} is not {@code null}.
-	 */
+    /**
+     * The {@link BytecodeStream} containing bytecode array or {@code null} if {@link #code} is not {@code null}.
+     */
     private final BytecodeStream stream;
     /**
      * The bytecode array or {@code null} if {@link #stream} is not {@code null}.

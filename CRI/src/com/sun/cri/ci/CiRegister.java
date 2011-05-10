@@ -81,7 +81,7 @@ public final class CiRegister implements Comparable<CiRegister>, Serializable {
      * The size of the stack slot used to spill the value of this register.
      */
     public final int spillSlotSize;
-    
+
     /**
      * The set of {@link RegisterFlag} values associated with this register.
      */
@@ -118,7 +118,7 @@ public final class CiRegister implements Comparable<CiRegister>, Serializable {
 
     /**
      * Creates a {@code CiRegister} instance.
-     * 
+     *
      * @param number unique identifier for the register
      * @param encoding the target machine encoding for the register
      * @param spillSlotSize the size of the stack slot used to spill the value of the register
@@ -160,7 +160,7 @@ public final class CiRegister implements Comparable<CiRegister>, Serializable {
     }
 
     /**
-     * Gets this register as a {@linkplain CiRegisterValue value} with no particular kind,
+     * Gets this register as a {@linkplain CiRegisterValue value} with no particular kind.
      * @return a {@link CiRegisterValue} with {@link CiKind#Illegal} kind.
      */
     public CiRegisterValue asValue() {
@@ -199,7 +199,7 @@ public final class CiRegister implements Comparable<CiRegister>, Serializable {
 
     /**
      * Categorizes a set of registers by {@link RegisterFlag}.
-     * 
+     *
      * @param registers a list of registers to be categorized
      * @return a map from each {@link RegisterFlag} constant to the list of registers for which the flag is
      *         {@linkplain #isSet(RegisterFlag) set}
@@ -220,7 +220,7 @@ public final class CiRegister implements Comparable<CiRegister>, Serializable {
 
     /**
      * Gets the maximum register {@linkplain #number number} in a given set of registers.
-     * 
+     *
      * @param registers the set of registers to process
      * @return the maximum register number for any register in {@code registers}
      */
@@ -233,10 +233,10 @@ public final class CiRegister implements Comparable<CiRegister>, Serializable {
         }
         return max;
     }
-    
+
     /**
      * Gets the maximum register {@linkplain #encoding encoding} in a given set of registers.
-     * 
+     *
      * @param registers the set of registers to process
      * @return the maximum register encoding for any register in {@code registers}
      */
@@ -254,7 +254,7 @@ public final class CiRegister implements Comparable<CiRegister>, Serializable {
     public String toString() {
         return name;
     }
-    
+
     @Override
     public int compareTo(CiRegister o) {
         if (number < o.number) {
