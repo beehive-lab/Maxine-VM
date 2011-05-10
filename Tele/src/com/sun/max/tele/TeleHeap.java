@@ -32,6 +32,7 @@ import com.sun.max.program.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.object.TeleObjectFactory.ClassCount;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.type.*;
 import com.sun.max.tele.util.*;
@@ -71,6 +72,11 @@ import com.sun.max.vm.tele.*;
  */
 public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache, MaxHeap, TeleHeapScheme {
      /**
+     *
+     */
+    private static final int STATS_NUM_TYPE_COUNTS = 10;
+
+    /**
      * Name of system property that specifies the address where the heap is located, or where it should be relocated, depending
      * on the user of the TeleHeap class.
      */
@@ -637,6 +643,27 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
             printStream.print(indentation + "IN GC(#starts=" + formatter.format(gcStartedCount) + ", #complete=" + formatter.format(gcCompletedCount) + ")\n");
         } else if (gcCompletedCount >= 0) {
             printStream.print(indentation + "GC count: " + formatter.format(gcCompletedCount) + "\n");
+        }
+
+        final TreeSet<ClassCount> sortedObjectsCreatedPerType = new TreeSet<ClassCount>(new Comparator<ClassCount>() {
+            @Override
+            public int compare(ClassCount o1, ClassCount o2) {
+                return o2.value - o1.value;
+            }
+        });
+        sortedObjectsCreatedPerType.addAll(teleObjectFactory.objectsCreatedPerType());
+        printStream.println(indentation + "TeleObjects created: " + teleObjectFactory.objectsCreatedCount());
+        printStream.println(indentation + "TeleObjects created (top " + STATS_NUM_TYPE_COUNTS + " types)");
+        int countsPrinted = 0;
+        for (ClassCount count : sortedObjectsCreatedPerType) {
+            if (countsPrinted++ >= STATS_NUM_TYPE_COUNTS) {
+                break;
+            }
+            if (verbose) {
+                printStream.println("    " + count.value + "\t" + count.type.getName());
+            } else {
+                printStream.println("    " + count.value + "\t" + count.type.getSimpleName());
+            }
         }
     }
 
