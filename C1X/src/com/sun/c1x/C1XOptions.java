@@ -144,6 +144,7 @@ public final class C1XOptions {
     public static boolean UseConstDirectCall            = false;
 
     public static boolean GenSpecialDivChecks           = ____;
+    public static boolean GenAssertionCode              = ____;
     public static boolean AlignCallsForPatching         = true;
     public static boolean NullCheckUniquePc             = ____;
     public static boolean InvokeSnippetAfterArguments   = ____;
@@ -163,8 +164,6 @@ public final class C1XOptions {
     // Assembler settings
     public static boolean CommentedAssembly             = ____;
     public static boolean PrintLIRWithAssembly          = ____;
-
-    public static boolean GenAssertionCode              = ____;
 
     static {
         setOptimizationLevel(1);
