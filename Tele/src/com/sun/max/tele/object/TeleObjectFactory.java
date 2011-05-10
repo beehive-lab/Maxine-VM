@@ -91,6 +91,19 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
         }
     }
 
+    /**
+     * A count associated with an instance of {@link Class}.
+     */
+    public static final class ClassCount {
+
+        public final Class type;
+        public int value = 0;
+
+        private ClassCount(Class type) {
+            this.type = type;
+        }
+    }
+
     private static TeleObjectFactory teleObjectFactory;
 
     /**
@@ -141,6 +154,27 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
             previousTeleObjectCount = currentTeleObjectCount;
             return msg.toString();
         }
+    };
+
+    /**
+     * Total number of instances of {@link TeleObject} created during session.
+     */
+    private int objectsCreatedCount = 0;
+
+    /**
+     * Map: {@link Class} of a {@link TeleObject} --> counter for number of instances created during session.
+     */
+    private final HashMap<Class, ClassCount> objectsCreatedPerType = new HashMap<Class, ClassCount>() {
+
+        @Override
+        public ClassCount get(Object key) {
+            ClassCount count = super.get(key);
+            if (count == null) {
+                count = new ClassCount((Class) key);
+                put((Class) key, count);
+            }
+            return count;
+        };
     };
 
     /**
@@ -380,6 +414,10 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
 
         referenceToTeleObject.put(reference,  teleObjectWeakReference);
         teleObject.updateCache(vm().teleProcess().epoch());
+
+        objectsCreatedCount++;
+        objectsCreatedPerType.get(teleObject.getClass()).value++;
+
         return teleObject;
     }
 
@@ -393,6 +431,20 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
     public TeleObject lookupObject(long id) {
         WeakReference<TeleObject> teleObject = oidToTeleObject.get(id);
         return teleObject == null ? null : teleObject.get();
+    }
+
+    /**
+     * @return the number of {@link TeleObject} instances created during the session.
+     */
+    public int objectsCreatedCount() {
+        return objectsCreatedCount;
+    }
+
+    /**
+     * @return counters for each type of {@link TeleObject}, counting the number created during the session.
+     */
+    public Collection<ClassCount> objectsCreatedPerType() {
+        return objectsCreatedPerType.values();
     }
 
     /**
