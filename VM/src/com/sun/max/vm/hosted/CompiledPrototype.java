@@ -388,6 +388,12 @@ public class CompiledPrototype extends Prototype {
         }
         Link existing = methodActors.put(child, new Link(child, parent, relationship));
         assert existing == null : existing;
+
+        if (child instanceof ClassMethodActor && ((ClassMethodActor) child).targetMethodCount() != 0) {
+            assert parent == null && relationship == null : "Methods with hand-crafted pre-existing machine code must be entry points";
+            return false;
+        }
+
         worklist.add(child);
         return true;
     }
@@ -697,6 +703,7 @@ public class CompiledPrototype extends Prototype {
 
     private boolean hasCode(MethodActor methodActor) {
         return methodActor instanceof ClassMethodActor &&
+//            ((ClassMethodActor)methodActor).targetMethodCount() == 0 &&
             !methodActor.isAbstract() &&
             !methodActor.isIntrinsic();
     }

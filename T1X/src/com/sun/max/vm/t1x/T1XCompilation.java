@@ -22,7 +22,7 @@
  */
 package com.sun.max.vm.t1x;
 
-import static com.sun.c1x.target.amd64.AMD64.*;
+import static com.oracle.max.asm.target.amd64.AMD64.*;
 import static com.sun.cri.ci.CiRegister.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
@@ -31,10 +31,10 @@ import static com.sun.max.vm.t1x.T1XTemplateTag.*;
 
 import java.util.*;
 
+import com.oracle.max.asm.*;
+import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.asm.target.amd64.AMD64Assembler.*;
 import com.sun.c1x.*;
-import com.sun.c1x.asm.*;
-import com.sun.c1x.target.amd64.*;
-import com.sun.c1x.target.amd64.AMD64Assembler.ConditionFlag;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.bytecode.Bytecodes.MemoryBarriers;
 import com.sun.cri.ci.*;
@@ -1171,7 +1171,7 @@ public class T1XCompilation {
 
             // Set r15 to address of jump table
             int leaPos = buf.position();
-            buf.mark();
+            buf.putMark();
             asm.leaq(r15, new CiAddress(CiKind.Word, InstructionRelative.asValue(), 0));
 
             // Load jump table entry into r15 and jump to it
@@ -1187,7 +1187,7 @@ public class T1XCompilation {
             // Patch LEA instruction above now that we know the position of the jump table
             int jumpTablePos = buf.position();
             buf.setPosition(leaPos);
-            buf.mark();
+            buf.putMark();
             asm.leaq(r15, new CiAddress(CiKind.Word, InstructionRelative.asValue(), jumpTablePos - leaPos));
             buf.setPosition(jumpTablePos);
 
@@ -1241,7 +1241,7 @@ public class T1XCompilation {
 
                 // Set rbx to address of lookup table
                 int leaPos = buf.position();
-                buf.mark();
+                buf.putMark();
                 asm.leaq(rbx, new CiAddress(CiKind.Word, InstructionRelative.asValue(), 0));
 
                 // Initialize rcx to index of last entry
@@ -1286,7 +1286,7 @@ public class T1XCompilation {
                 // Patch the LEA instruction above now that we know the position of the lookup table
                 int lookupTablePos = buf.position();
                 buf.setPosition(leaPos);
-                buf.mark();
+                buf.putMark();
                 asm.leaq(rbx, new CiAddress(CiKind.Word, InstructionRelative.asValue(), lookupTablePos - leaPos));
                 buf.setPosition(lookupTablePos);
 
@@ -1404,7 +1404,7 @@ public class T1XCompilation {
         if (isAMD64()) {
             AMD64Assembler asm = (AMD64Assembler) this.asm;
             final CiRegister dst = cpuRegParams[parameterIndex];
-            buf.mark();
+            buf.putMark();
             CiAddress src = new CiAddress(CiKind.Word, InstructionRelative.asValue(), createReferenceLiteral(argument));
             asm.movq(dst, src);
         } else {

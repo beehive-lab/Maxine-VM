@@ -102,7 +102,7 @@ public abstract class TargetMethod extends MemoryRegion {
         StaticTrampoline(!COMPILED),
 
         /**
-         * A {@linkplain com.sun.c1x.globalstub.GlobalStub global stub}.
+         * A global stub.
          */
         GlobalStub(!COMPILED),
 
@@ -761,7 +761,7 @@ public abstract class TargetMethod extends MemoryRegion {
                         byte opcode = code[bci];
                         if (opcode == INVOKEINTERFACE || opcode == INVOKESPECIAL || opcode == INVOKESTATIC || opcode == INVOKEVIRTUAL) {
                             int cpi = Bytes.beU2(code, bci + 1);
-                            RiMethod callee = vm().runtime.getConstantPool(codePos.method).lookupMethod(cpi, opcode);
+                            RiMethod callee = ((ClassMethodActor)(codePos.method)).compilee().codeAttribute().cp.lookupMethod(cpi, opcode);
                             string += " [" + callee + "]";
                         }
                     }

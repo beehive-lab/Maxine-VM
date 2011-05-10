@@ -25,6 +25,8 @@ package com.sun.c1x.target.amd64;
 
 import static com.sun.cri.bytecode.Bytecodes.UnsignedComparisons.*;
 
+import com.oracle.max.asm.*;
+import com.oracle.max.asm.target.amd64.*;
 import com.sun.c1x.*;
 import com.sun.c1x.alloc.OperandPool.VariableFlag;
 import com.sun.c1x.gen.*;
@@ -82,7 +84,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
     @Override
     protected boolean canInlineAsConstant(Value v) {
         if (v.kind == CiKind.Long) {
-            if (v.isConstant() && Util.isInt(v.asConstant().asLong())) {
+            if (v.isConstant() && NumUtil.isInt(v.asConstant().asLong())) {
                 return true;
             }
             return false;

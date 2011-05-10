@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,14 +20,14 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.config.c1x;
+package com.oracle.max.asm;
 
-import com.sun.max.config.*;
-
-public class Package extends BootImagePackage {
-
-    public Package() {
-        super(
-            "com.sun.cri.**", "com.sun.c1x.**");
-    }
+public class AsmOptions {
+    public static int     InitialCodeBufferSize         = 232;
+    public static int     Atomics                       = 0;
+    public static boolean UseNormalNop                  = true;
+    public static boolean UseAddressNop                 = true;
+    public static boolean UseIncDec                     = false;
+    public static boolean UseXmmLoadAndClearUpper       = false;
+    public static boolean UseXmmRegToRegMoveAll         = false;
 }
