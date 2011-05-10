@@ -664,14 +664,21 @@ public class jmax {
             new FileUpdater(dotCheckstyle, false, response) {
                 @Override
                 void generate(PrintStream out) {
-                    Project p = project("Base");
-                    File sharedCheckstyleConfig = new File(new File(p.baseDir, p.name), ".checkstyle_checks.xml");
-                    if (!sharedCheckstyleConfig.exists()) {
-                        throw new InternalError("Shared checkstyle config file not found: " + sharedCheckstyleConfig);
+                    String checkstyleConfigPath;
+                    File projectCheckstyleConfig = new File(projectDir, ".checkstyle_checks.xml");
+                    if (projectCheckstyleConfig.exists()) {
+                        checkstyleConfigPath = "/" + name + "/.checkstyle_checks.xml";
+                    } else {
+                        Project p = project("Base");
+                        File sharedCheckstyleConfig = new File(new File(p.baseDir, p.name), ".checkstyle_checks.xml");
+                        if (!sharedCheckstyleConfig.exists()) {
+                            throw new InternalError("Shared checkstyle config file not found: " + sharedCheckstyleConfig);
+                        }
+                        checkstyleConfigPath = "/" + p.name + "/.checkstyle_checks.xml";
                     }
                     out.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
                     out.println("<fileset-config file-format-version=\"1.2.0\" simple-config=\"true\">");
-                    out.println("\t<local-check-config name=\"Maxine Checks\" location=\"/Base/.checkstyle_checks.xml\" type=\"project\" description=\"\">");
+                    out.println("\t<local-check-config name=\"Maxine Checks\" location=\"" + checkstyleConfigPath + "\" type=\"project\" description=\"\">");
                     out.println("\t\t<additional-data name=\"protect-config-file\" value=\"false\"/>");
                     out.println("\t</local-check-config>");
                     out.println("\t<fileset name=\"all\" enabled=\"true\" check-config-name=\"Maxine Checks\" local=\"true\">");
