@@ -36,8 +36,6 @@ import com.sun.max.vm.compiler.c1x.*;
  * A T1X template is a piece of machine code (and its associated metadata) that
  * is used by the T1X compiler to quickly translate a bytecode instruction
  * to native code.
- *
- * @author Doug Simon
  */
 public class T1XTemplate {
 

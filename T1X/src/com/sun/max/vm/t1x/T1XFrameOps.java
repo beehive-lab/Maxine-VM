@@ -23,7 +23,6 @@
 package com.sun.max.vm.t1x;
 
 import static com.sun.max.vm.stack.JVMSFrameLayout.*;
-import static com.sun.max.vm.t1x.T1XFrameOps.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
@@ -45,10 +44,6 @@ import com.sun.max.vm.type.*;
  * stack. Similarly, this class assumes the ABI frame pointer is used to access the
  * local variables.
  *
- * @author Laurent Daynes
- * @author Bernd Mathiske
- * @author Ben L. Titzer
- * @author Michael Bebenita
  */
 public final class T1XFrameOps {
     private T1XFrameOps() {

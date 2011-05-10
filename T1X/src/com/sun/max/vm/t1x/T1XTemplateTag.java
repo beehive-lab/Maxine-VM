@@ -39,8 +39,6 @@ import com.sun.max.vm.type.*;
  * The remainder of an {@code T1XTemplateTag} enum constant's name specifies various
  * properties of the template such whether it includes a class {@linkplain #resolved resolution}
  * or {@linkplain #initialized initialization} check.
- *
- * @author Doug Simon
  */
 public enum T1XTemplateTag {
     NOP,
