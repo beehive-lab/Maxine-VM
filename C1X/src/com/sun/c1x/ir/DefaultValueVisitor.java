@@ -27,8 +27,6 @@ package com.sun.c1x.ir;
  * does nothing for each value visited. This convenience class
  * simplifies implementing a value visitor that is only interested
  * in a subset of the value types.
- *
- * @author Doug Simon
  */
 public class DefaultValueVisitor extends ValueVisitor {
 
@@ -40,7 +38,7 @@ public class DefaultValueVisitor extends ValueVisitor {
     protected  void visit(Value value) {
     }
 
-    // Checkstyle: stop
+    // Checkstyle: off
     @Override public void visitArithmeticOp(ArithmeticOp i) { visit(i); }
     @Override public void visitArrayCopy(ArrayCopy i) { visit(i); }
     @Override public void visitArrayLength(ArrayLength i) { visit(i); }

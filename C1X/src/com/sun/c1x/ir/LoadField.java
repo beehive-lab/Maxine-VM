@@ -30,8 +30,6 @@ import com.sun.cri.ri.*;
 
 /**
  * The {@code LoadField} instruction represents a read of a static or instance field.
- *
- * @author Ben L. Titzer
  */
 public final class LoadField extends AccessField {
 
@@ -97,10 +95,10 @@ public final class LoadField extends AccessField {
     @Override
     public void print(LogStream out) {
         out.print(object()).
-        print(".").
-        print(field.name()).
-        print(" [field: ").
-        print(CiUtil.format("%h.%n:%t", field, false)).
-        print("]");
+            print(".").
+            print(field.name()).
+            print(" [field: ").
+            print(CiUtil.format("%h.%n:%t", field, false)).
+            print("]");
     }
 }

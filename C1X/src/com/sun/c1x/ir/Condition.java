@@ -89,6 +89,7 @@ public enum Condition {
     }
 
     public boolean check(int left, int right) {
+        // Checkstyle: off
         switch (this) {
             case EQ: return left == right;
             case NE: return left != right;
@@ -101,6 +102,7 @@ public enum Condition {
             case AT: return (left & 0xffffffffL) > (right & 0xffffffffL);
             case AE: return (left & 0xffffffffL) >= (right & 0xffffffffL);
         }
+        // Checkstyle: on
         throw new IllegalArgumentException();
     }
 
@@ -109,6 +111,7 @@ public enum Condition {
      * @return the condition that represents the negation
      */
     public final Condition negate() {
+        // Checkstyle: off
         switch (this) {
             case EQ: return NE;
             case NE: return EQ;
@@ -121,6 +124,7 @@ public enum Condition {
             case AT: return BE;
             case AE: return BT;
         }
+        // Checkstyle: on
         throw new IllegalArgumentException();
     }
 
@@ -129,6 +133,7 @@ public enum Condition {
      * @return the condition representing the equivalent commuted operation
      */
     public final Condition mirror() {
+        // Checkstyle: off
         switch (this) {
             case EQ: return EQ;
             case NE: return NE;
@@ -141,6 +146,7 @@ public enum Condition {
             case AT: return BT;
             case AE: return BE;
         }
+        // Checkstyle: on
         throw new IllegalArgumentException();
     }
 
@@ -161,6 +167,7 @@ public enum Condition {
      * {@link Boolean#FALSE} if the comparison is known to be false, {@code null} otherwise.
      */
     public Boolean foldCondition(CiConstant lt, CiConstant rt, RiRuntime runtime) {
+        // Checkstyle: off
         switch (lt.kind) {
             case Int: {
                 int x = lt.asInt();
@@ -201,6 +208,7 @@ public enum Condition {
             }
             // XXX: folding of floating comparisons should be possible
         }
+        // Checkstyle: on
         return null;
     }
 }

@@ -48,10 +48,6 @@ import com.sun.cri.ri.*;
  * An implementation of the linear scan register allocator algorithm described
  * in <a href="http://doi.acm.org/10.1145/1064979.1064998">"Optimized Interval Splitting in a Linear Scan Register Allocator"</a>
  * by Christian Wimmer and Hanspeter Moessenboeck.
- *
- * @author Christian Wimmer (original HotSpot implementation)
- * @author Thomas Wuerthinger
- * @author Doug Simon
  */
 public final class LinearScan {
 
@@ -844,7 +840,7 @@ public final class LinearScan {
         for (int operandNum = 0; operandNum < ir.startBlock.lirBlock.liveIn.size(); operandNum++) {
             if (ir.startBlock.lirBlock.liveIn.get(operandNum)) {
                 CiValue operand = operands.operandFor(operandNum);
-                Value instr = operand.isVariable() ? gen.operands.instructionForResult(((CiVariable) operand)) : null;
+                Value instr = operand.isVariable() ? gen.operands.instructionForResult((CiVariable) operand) : null;
                 TTY.println(" var %d (HIR instruction %s)", operandNum, instr == null ? " " : instr.toString());
 
                 for (int j = 0; j < numBlocks; j++) {
@@ -1285,7 +1281,7 @@ public final class LinearScan {
                         public void doValue(Value value) {
                             CiValue operand = value.operand();
                             if (operand.isVariableOrRegister()) {
-                                addUse(operand, blockFrom, (opId + 1), RegisterPriority.None, null);
+                                addUse(operand, blockFrom, opId + 1, RegisterPriority.None, null);
                             }
                         }
                     });
@@ -2132,10 +2128,10 @@ public final class LinearScan {
             } else {
                 Value lock = state.lockAt(i);
                 if (lock.isConstant() && compilation.runtime.asJavaClass(lock.asConstant()) != null) {
-                   // lock on class for synchronized static method
-                   values[valueIndex++] = lock.asConstant();
+                    // lock on class for synchronized static method
+                    values[valueIndex++] = lock.asConstant();
                 } else {
-                   values[valueIndex++] = toCiValue(opId, lock);
+                    values[valueIndex++] = toCiValue(opId, lock);
                 }
             }
         }
@@ -2292,7 +2288,7 @@ public final class LinearScan {
             C1XTimers.DEBUG_INFO.start();
         }
 
-        C1XMetrics.LSRASpills += (maxSpills - frameMap.initialSpillSlot());
+        C1XMetrics.LSRASpills += maxSpills - frameMap.initialSpillSlot();
 
         // fill in number of spill slots into frameMap
         frameMap.finalizeFrame(maxSpills);
@@ -2545,7 +2541,7 @@ public final class LinearScan {
                 }
                 CiValue operand = operands.operandFor(operandNum);
                 assert operand.isVariable() : "value must have variable operand";
-                Value value = gen.operands.instructionForResult(((CiVariable) operand));
+                Value value = gen.operands.instructionForResult((CiVariable) operand);
                 assert value != null : "all intervals live across block boundaries must have Value";
                 // TKR assert value.asConstant() == null || value.isPinned() :
                 // "only pinned constants can be alive accross block boundaries";

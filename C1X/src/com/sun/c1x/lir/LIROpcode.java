@@ -24,13 +24,9 @@ package com.sun.c1x.lir;
 
 /**
  * The {@code LirOpcode} enum represents the Operation code of each LIR instruction.
- *
- * @author Marcelo Cintra
- * @author Thomas Wuerthinger
  */
 public enum LIROpcode {
-    // Checkstyle: stop
-    // @formatter:off
+    // Checkstyle: off
     BeginOp0,
         Label,
         OsrEntry,
@@ -109,6 +105,5 @@ public enum LIROpcode {
     CasObj,
     CasInt,
     Xir,
-    // @formatter:on
-    // Checkstyle: resume
+    // Checkstyle: on
 }
