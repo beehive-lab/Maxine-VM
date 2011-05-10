@@ -724,7 +724,7 @@ public class jmax {
             File settingsDir = new File(projectDir, ".settings");
             makeDirectory(settingsDir);
 
-            new FileUpdater(new File(settingsDir, "org.eclipse.jdt.core.prefs"), false, response) {
+            new FileUpdater(new File(settingsDir, "org.eclipse.jdt.core.prefs"), true, response) {
                 @Override
                 void generate(PrintStream out) {
                     for (String line : org_eclipse_jdt_core_prefs.lines) {
@@ -733,7 +733,7 @@ public class jmax {
                 }
             };
 
-            new FileUpdater(new File(settingsDir, "org.eclipse.jdt.ui.prefs"), false, response) {
+            new FileUpdater(new File(settingsDir, "org.eclipse.jdt.ui.prefs"), true, response) {
                 @Override
                 void generate(PrintStream out) {
                     for (String line : org_eclipse_jdt_ui_prefs.lines) {
@@ -746,52 +746,52 @@ public class jmax {
 
     static class org_eclipse_jdt_ui_prefs {
         static final String[] lines = {
-            "cleanup.add_default_serial_version_id=true",
+            "cleanup.add_default_serial_version_id=false",
             "cleanup.add_generated_serial_version_id=false",
-            "cleanup.add_missing_annotations=true",
+            "cleanup.add_missing_annotations=false",
             "cleanup.add_missing_deprecated_annotations=false",
             "cleanup.add_missing_nls_tags=false",
-            "cleanup.add_missing_override_annotations=true",
+            "cleanup.add_missing_override_annotations=false",
             "cleanup.add_serial_version_id=false",
-            "cleanup.always_use_blocks=true",
+            "cleanup.always_use_blocks=false",
             "cleanup.always_use_parentheses_in_expressions=false",
             "cleanup.always_use_this_for_non_static_field_access=false",
             "cleanup.always_use_this_for_non_static_method_access=false",
             "cleanup.convert_to_enhanced_for_loop=false",
             "cleanup.format_source_code=false",
-            "cleanup.make_local_variable_final=true",
+            "cleanup.make_local_variable_final=false",
             "cleanup.make_parameters_final=false",
             "cleanup.make_private_fields_final=true",
             "cleanup.make_variable_declarations_final=false",
             "cleanup.never_use_blocks=false",
-            "cleanup.never_use_parentheses_in_expressions=true",
+            "cleanup.never_use_parentheses_in_expressions=false",
             "cleanup.organize_imports=false",
             "cleanup.qualify_static_field_accesses_with_declaring_class=false",
-            "cleanup.qualify_static_member_accesses_through_instances_with_declaring_class=true",
-            "cleanup.qualify_static_member_accesses_through_subtypes_with_declaring_class=true",
+            "cleanup.qualify_static_member_accesses_through_instances_with_declaring_class=false",
+            "cleanup.qualify_static_member_accesses_through_subtypes_with_declaring_class=false",
             "cleanup.qualify_static_member_accesses_with_declaring_class=false",
             "cleanup.qualify_static_method_accesses_with_declaring_class=false",
-            "cleanup.remove_private_constructors=true",
+            "cleanup.remove_private_constructors=false",
             "cleanup.remove_trailing_whitespaces=false",
-            "cleanup.remove_trailing_whitespaces_all=true",
+            "cleanup.remove_trailing_whitespaces_all=false",
             "cleanup.remove_trailing_whitespaces_ignore_empty=false",
             "cleanup.remove_unnecessary_casts=false",
             "cleanup.remove_unnecessary_nls_tags=false",
             "cleanup.remove_unused_imports=false",
             "cleanup.remove_unused_local_variables=false",
-            "cleanup.remove_unused_private_fields=true",
+            "cleanup.remove_unused_private_fields=false",
             "cleanup.remove_unused_private_members=false",
-            "cleanup.remove_unused_private_methods=true",
-            "cleanup.remove_unused_private_types=true",
+            "cleanup.remove_unused_private_methods=false",
+            "cleanup.remove_unused_private_types=false",
             "cleanup.sort_members=false",
             "cleanup.sort_members_all=false",
             "cleanup.use_blocks=false",
             "cleanup.use_blocks_only_for_return_and_throw=false",
             "cleanup.use_parentheses_in_expressions=false",
             "cleanup.use_this_for_non_static_field_access=false",
-            "cleanup.use_this_for_non_static_field_access_only_if_necessary=true",
+            "cleanup.use_this_for_non_static_field_access_only_if_necessary=false",
             "cleanup.use_this_for_non_static_method_access=false",
-            "cleanup.use_this_for_non_static_method_access_only_if_necessary=true",
+            "cleanup.use_this_for_non_static_method_access_only_if_necessary=false",
             "cleanup_profile=_CleanUpAgitarTests",
             "cleanup_settings_version=2",
             "comment_clear_blank_lines=false",
@@ -901,7 +901,7 @@ public class jmax {
             "org.eclipse.jdt.core.compiler.problem.assertIdentifier=error",
             "org.eclipse.jdt.core.compiler.problem.autoboxing=ignore",
             "org.eclipse.jdt.core.compiler.problem.comparingIdentical=warning",
-            "org.eclipse.jdt.core.compiler.problem.deadCode=warning",
+            "org.eclipse.jdt.core.compiler.problem.deadCode=ignore",
             "org.eclipse.jdt.core.compiler.problem.deprecation=error",
             "org.eclipse.jdt.core.compiler.problem.deprecationInDeprecatedCode=enabled",
             "org.eclipse.jdt.core.compiler.problem.deprecationWhenOverridingDeprecatedMethod=enabled",
@@ -916,7 +916,7 @@ public class jmax {
             "org.eclipse.jdt.core.compiler.problem.forbiddenReference=warning",
             "org.eclipse.jdt.core.compiler.problem.hiddenCatchBlock=warning",
             "org.eclipse.jdt.core.compiler.problem.incompatibleNonInheritedInterfaceMethod=warning",
-            "org.eclipse.jdt.core.compiler.problem.incompleteEnumSwitch=error",
+            "org.eclipse.jdt.core.compiler.problem.incompleteEnumSwitch=ignore",
             "org.eclipse.jdt.core.compiler.problem.indirectStaticAccess=ignore",
             "org.eclipse.jdt.core.compiler.problem.invalidJavadoc=ignore",
             "org.eclipse.jdt.core.compiler.problem.invalidJavadocTags=enabled",
@@ -940,9 +940,9 @@ public class jmax {
             "org.eclipse.jdt.core.compiler.problem.noEffectAssignment=warning",
             "org.eclipse.jdt.core.compiler.problem.noImplicitStringConversion=warning",
             "org.eclipse.jdt.core.compiler.problem.nonExternalizedStringLiteral=ignore",
-            "org.eclipse.jdt.core.compiler.problem.nullReference=error",
+            "org.eclipse.jdt.core.compiler.problem.nullReference=warning",
             "org.eclipse.jdt.core.compiler.problem.overridingPackageDefaultMethod=warning",
-            "org.eclipse.jdt.core.compiler.problem.parameterAssignment=warning",
+            "org.eclipse.jdt.core.compiler.problem.parameterAssignment=ignore",
             "org.eclipse.jdt.core.compiler.problem.possibleAccidentalBooleanAssignment=warning",
             "org.eclipse.jdt.core.compiler.problem.potentialNullReference=ignore",
             "org.eclipse.jdt.core.compiler.problem.rawTypeReference=ignore",
@@ -957,11 +957,11 @@ public class jmax {
             "org.eclipse.jdt.core.compiler.problem.uncheckedTypeOperation=warning",
             "org.eclipse.jdt.core.compiler.problem.undocumentedEmptyBlock=ignore",
             "org.eclipse.jdt.core.compiler.problem.unhandledWarningToken=error",
-            "org.eclipse.jdt.core.compiler.problem.unnecessaryElse=warning",
+            "org.eclipse.jdt.core.compiler.problem.unnecessaryElse=ignore",
             "org.eclipse.jdt.core.compiler.problem.unnecessaryTypeCheck=warning",
             "org.eclipse.jdt.core.compiler.problem.unqualifiedFieldAccess=ignore",
             "org.eclipse.jdt.core.compiler.problem.unsafeTypeOperation=warning",
-            "org.eclipse.jdt.core.compiler.problem.unusedDeclaredThrownException=warning",
+            "org.eclipse.jdt.core.compiler.problem.unusedDeclaredThrownException=ignore",
             "org.eclipse.jdt.core.compiler.problem.unusedDeclaredThrownExceptionExemptExceptionAndThrowable=enabled",
             "org.eclipse.jdt.core.compiler.problem.unusedDeclaredThrownExceptionIncludeDocCommentReference=enabled",
             "org.eclipse.jdt.core.compiler.problem.unusedDeclaredThrownExceptionWhenOverriding=disabled",

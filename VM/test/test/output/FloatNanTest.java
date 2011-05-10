@@ -24,10 +24,10 @@ package test.output;
 
 
 /**
- * @author Aziz Ghuloum
  */
 public class FloatNanTest {
 
+    @SuppressWarnings("all")
     public static int run13() {
         final int j = 0x7fffffff;
         final float jf = j;
@@ -71,6 +71,7 @@ public class FloatNanTest {
         return ((long) -1) >>> 1;
     }
 
+    @SuppressWarnings("all")
     public static int run14() {
         final long j = ((long) -1) >>> 1;
         final double dj = j;

@@ -41,10 +41,6 @@ import com.sun.max.vm.hosted.*;
  * Currently the Linux implementation does not use the {@link TeleChannelNatives} class owing to
  * the requirement to invoke the underlying native methods in the same thread, which is handled in
  * {@link LinuxTask}.
- *
- *
- * @author Mick Jordan
- *
  */
 public class LinuxNativeTeleChannelProtocol extends UnixNativeTeleChannelProtocolAdaptor implements LinuxTeleChannelProtocol {
 
@@ -53,7 +49,7 @@ public class LinuxNativeTeleChannelProtocol extends UnixNativeTeleChannelProtoco
     }
 
     private LinuxTask leaderTask;
-    private Map<Integer, LinuxTask> taskMap = new HashMap<Integer, LinuxTask>();;
+    private Map<Integer, LinuxTask> taskMap = new HashMap<Integer, LinuxTask>();
 
     private LinuxTask task(long ltid) {
         final int tid = (int) ltid;

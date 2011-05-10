@@ -105,15 +105,6 @@ import com.sun.max.vm.value.*;
  * acquire/release the lock will behave identically to standard
  * Java synchronization semantics.</li>
  * </ol>
- *
- * @author Bernd Mathiske
- * @author Athul Acharya
- * @author Michael Van De Vanter
- * @author Doug Simon
- * @author Thomas Wuerthinger
- * @author Hannes Payer
- * @author Mick Jordan
- * @author Laurent Daynes
  */
 public abstract class TeleVM implements MaxVM {
 
@@ -569,7 +560,7 @@ public abstract class TeleVM implements MaxVM {
     private static BootImagePackage getInspectorReferencePackage(BootImagePackage referencePackage) {
         final String suffix = referencePackage.name().substring("com.sun.max.vm.reference".length());
         final BootImagePackage inspectorReferenceRootPackage = new com.sun.max.tele.reference.Package();
-        return (BootImagePackage) BootImagePackage.fromName(inspectorReferenceRootPackage.name() + suffix);
+        return BootImagePackage.fromName(inspectorReferenceRootPackage.name() + suffix);
     }
 
     private String  tracePrefix() {
@@ -1997,8 +1988,6 @@ public abstract class TeleVM implements MaxVM {
      * Not fully implemented
      * TeleVM might eventually implement the interfaced {@link VMAccess} directly; moving in that direction.
      *
-     * @author Thomas Wuerthinger
-     * @author Michael Van De Vanter
      */
     private final class VMAccessImpl implements VMAccess {
 

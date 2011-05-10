@@ -104,14 +104,14 @@ public class ELFDumpTeleChannelProtocolAdaptor extends TeleChannelDataIOProtocol
                 int namesz = dis.read_Elf64_Word();
                 final int descsz = dis.read_Elf64_Word();
                 final int type = dis.read_Elf64_Word();
-                final String name = readNoteString(dis, (int) namesz);
+                final String name = readNoteString(dis, namesz);
                 readLength += 12 + namesz;
                 while (namesz % 8 != 0) {
                     dis.read_Elf32_byte();
                     readLength++;
                     namesz++;
                 }
-                final byte[] desc = readNoteDesc(dis, (int) descsz);
+                final byte[] desc = readNoteDesc(dis, descsz);
                 readLength += descsz;
 
                 entryHandler.processNoteEntry(type, name, desc);
