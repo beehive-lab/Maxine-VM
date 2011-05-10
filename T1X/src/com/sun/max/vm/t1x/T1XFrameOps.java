@@ -23,6 +23,7 @@
 package com.sun.max.vm.t1x;
 
 import static com.sun.max.vm.stack.JVMSFrameLayout.*;
+import static com.sun.max.vm.t1x.T1XFrameOps.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
@@ -103,6 +104,31 @@ public final class T1XFrameOps {
         return VMRegister.getAbiStackPointer().getReference(BIAS, index * WORDS_PER_SLOT);
     }
 
+    /*
+     * These peek methods exist to make auto-generation more regular.
+     */
+
+    @INLINE
+    public static boolean peekBoolean(int index) {
+        return UnsafeCast.asBoolean((byte) peekInt(index));
+    }
+
+    @INLINE
+    public static byte peekByte(int index) {
+        return (byte) peekInt(index);
+    }
+
+    @INLINE
+    public static char peekChar(int index) {
+        return (char) peekInt(index);
+    }
+
+    @INLINE
+    public static short peekShort(int index) {
+        return (short) peekInt(index);
+    }
+
+
     @INLINE
     public static void pokeWord(int index, Word value) {
         VMRegister.getAbiStackPointer().setWord(BIAS, index * WORDS_PER_SLOT, value);
@@ -129,9 +155,39 @@ public final class T1XFrameOps {
     }
 
     @INLINE
-    public static void pokeReference(int index, Object value) {
-        VMRegister.getAbiStackPointer().setReference(BIAS, index * WORDS_PER_SLOT, Reference.fromJava(value));
+    public static void pokeReference(int index, Reference value) {
+        VMRegister.getAbiStackPointer().setReference(BIAS, index * WORDS_PER_SLOT, value);
     }
+
+    @INLINE
+    public static void pokeObject(int index, Object value) {
+        pokeReference(index,  Reference.fromJava(value));
+    }
+
+    /*
+     * These poke methods exist to make auto-generation more regular.
+     */
+
+    @INLINE
+    public static void pokeBoolean(int index, boolean value) {
+        pokeInt(index, UnsafeCast.asByte(value));
+    }
+
+    @INLINE
+    public static void pokeByte(int index, byte value) {
+        pokeInt(index, value);
+    }
+
+    @INLINE
+    public static void pokeChar(int index, char value) {
+        pokeInt(index, value);
+    }
+
+    @INLINE
+    public static void pokeShort(int index, short value) {
+        pokeInt(index, value);
+    }
+
 
     @INLINE
     public static float popFloat() {
@@ -162,6 +218,51 @@ public final class T1XFrameOps {
     }
 
     @INLINE
+    public static Word popWord() {
+        final Word value = peekWord(0);
+        removeSlots(1);
+        return value;
+    }
+
+    @INLINE
+    public static Object popObject() {
+        final Object value = peekObject(0);
+        removeSlots(1);
+        return value;
+    }
+
+    /*
+     * These pop methods exist to make auto-generation more regular.
+     */
+
+    @INLINE
+    public static boolean popBoolean() {
+        final boolean value = peekBoolean(0);
+        removeSlots(1);
+        return value;
+    }
+
+    @INLINE
+    public static byte popByte() {
+        final byte value = peekByte(0);
+        removeSlots(1);
+        return value;
+    }
+    @INLINE
+    public static char popChar() {
+        final char value = peekChar(0);
+        removeSlots(1);
+        return value;
+    }
+    @INLINE
+    public static short popShort() {
+        final short value = peekShort(0);
+        removeSlots(1);
+        return value;
+    }
+
+
+    @INLINE
     public static void pushWord(final Word value) {
         addSlots(1);
         pokeWord(0, value);
@@ -182,7 +283,7 @@ public final class T1XFrameOps {
     @INLINE
     public static void pushObject(final Object value) {
         addSlots(1);
-        pokeReference(0, value);
+        pokeObject(0, value);
     }
 
     @INLINE
@@ -195,6 +296,34 @@ public final class T1XFrameOps {
     public static void pushDouble(final double value) {
         addSlots(2);
         pokeDouble(0, value);
+    }
+
+    /*
+     * These push methods exist to make auto-generation more regular.
+     */
+
+    @INLINE
+    public static void pushBoolean(final boolean value) {
+        addSlots(1);
+        pokeBoolean(0, value);
+    }
+
+    @INLINE
+    public static void pushByte(final byte value) {
+        addSlots(1);
+        pokeByte(0, value);
+    }
+
+    @INLINE
+    public static void pushChar(final char value) {
+        addSlots(1);
+        pokeChar(0, value);
+    }
+
+    @INLINE
+    public static void pushShort(final short value) {
+        addSlots(1);
+        pokeShort(0, value);
     }
 
     @INLINE
