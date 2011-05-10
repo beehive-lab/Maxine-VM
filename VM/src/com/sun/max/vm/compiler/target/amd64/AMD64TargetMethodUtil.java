@@ -22,12 +22,20 @@
  */
 package com.sun.max.vm.compiler.target.amd64;
 
+import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
+
 import com.oracle.max.asm.target.amd64.*;
+import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.runtime.amd64.*;
+import com.sun.max.vm.stack.*;
+import com.sun.max.vm.stack.StackFrameWalker.Cursor;
+import com.sun.max.vm.stack.amd64.*;
 
 /**
  * A utility class factoring out code common to all AMD64 target method.
@@ -114,4 +122,63 @@ public final class AMD64TargetMethodUtil {
     // Disable instance creation.
     private AMD64TargetMethodUtil() {
     }
+
+    @HOSTED_ONLY
+    public static boolean atFirstOrLastInstruction(Cursor current) {
+        // check whether the current ip is at the first instruction or a return
+        // which means the stack pointer has not been adjusted yet (or has already been adjusted back)
+        TargetMethod targetMethod = current.targetMethod();
+        Pointer entryPoint = targetMethod.callEntryPoint.equals(CallEntryPoint.C_ENTRY_POINT) ?
+            CallEntryPoint.C_ENTRY_POINT.in(targetMethod) :
+            CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(targetMethod);
+
+        return entryPoint.equals(current.ip()) || current.stackFrameWalker().readByte(current.ip(), 0) == RET;
+    }
+
+    public static boolean acceptStackFrameVisitor(Cursor current, StackFrameVisitor visitor) {
+        AdapterGenerator generator = AdapterGenerator.forCallee(current.targetMethod());
+        Pointer sp = current.sp();
+        if (MaxineVM.isHosted()) {
+            // Only during a stack walk in the context of the Inspector can execution
+            // be anywhere other than at a recorded stop (i.e. call or safepoint).
+            if (atFirstOrLastInstruction(current) || (generator != null && generator.inPrologue(current.ip(), current.targetMethod()))) {
+                sp = sp.minus(current.targetMethod().frameSize());
+            }
+        }
+        StackFrameWalker stackFrameWalker = current.stackFrameWalker();
+        StackFrame stackFrame = new AMD64JavaStackFrame(stackFrameWalker.calleeStackFrame(), current.targetMethod(), current.ip(), sp, sp);
+        return visitor.visitFrame(stackFrame);
+    }
+
+    public static void advance(Cursor current) {
+        TargetMethod targetMethod = current.targetMethod();
+        Pointer sp = current.sp();
+        Pointer ripPointer = sp.plus(targetMethod.frameSize());
+        if (MaxineVM.isHosted()) {
+            // Only during a stack walk in the context of the Inspector can execution
+            // be anywhere other than at a recorded stop (i.e. call or safepoint).
+            AdapterGenerator generator = AdapterGenerator.forCallee(current.targetMethod());
+            if (generator != null && generator.advanceIfInPrologue(current)) {
+                return;
+            }
+            if (atFirstOrLastInstruction(current)) {
+                ripPointer = sp;
+            }
+        }
+
+        StackFrameWalker stackFrameWalker = current.stackFrameWalker();
+        Pointer callerIP = stackFrameWalker.readWord(ripPointer, 0).asPointer();
+        Pointer callerSP = ripPointer.plus(Word.size()); // Skip return instruction pointer on stack
+        Pointer callerFP;
+        if (targetMethod.is(TrapStub)) {
+            // RBP is whatever was in the frame pointer register at the time of the trap
+            Pointer calleeSaveArea = sp;
+            callerFP = stackFrameWalker.readWord(calleeSaveArea, AMD64TrapStateAccess.CSA.offsetOf(AMD64.rbp)).asPointer();
+        } else {
+            // Propagate RBP unchanged as OPT methods do not touch this register.
+            callerFP = current.fp();
+        }
+        stackFrameWalker.advance(callerIP, callerSP, callerFP, !targetMethod.is(TrapStub));
+    }
+
 }

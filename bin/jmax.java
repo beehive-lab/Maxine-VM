@@ -942,7 +942,7 @@ public class jmax {
             "org.eclipse.jdt.core.compiler.problem.nonExternalizedStringLiteral=ignore",
             "org.eclipse.jdt.core.compiler.problem.nullReference=error",
             "org.eclipse.jdt.core.compiler.problem.overridingPackageDefaultMethod=warning",
-            "org.eclipse.jdt.core.compiler.problem.parameterAssignment=warning",
+            "org.eclipse.jdt.core.compiler.problem.parameterAssignment=ignore",
             "org.eclipse.jdt.core.compiler.problem.possibleAccidentalBooleanAssignment=warning",
             "org.eclipse.jdt.core.compiler.problem.potentialNullReference=ignore",
             "org.eclipse.jdt.core.compiler.problem.rawTypeReference=ignore",

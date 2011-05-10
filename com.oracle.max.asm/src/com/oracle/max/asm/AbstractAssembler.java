@@ -26,7 +26,7 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiArchitecture.*;
 
 /**
- * The platform-independent base class for the assembler
+ * The platform-independent base class for the assembler.
  */
 public abstract class AbstractAssembler {
     public final CiTarget target;
@@ -36,9 +36,9 @@ public abstract class AbstractAssembler {
         this.target = target;
 
         if (target.arch.byteOrder == ByteOrder.BigEndian) {
-        	this.codeBuffer = new Buffer.BigEndian();
+            this.codeBuffer = new Buffer.BigEndian();
         } else {
-        	this.codeBuffer = new Buffer.LittleEndian();
+            this.codeBuffer = new Buffer.LittleEndian();
         }
     }
 

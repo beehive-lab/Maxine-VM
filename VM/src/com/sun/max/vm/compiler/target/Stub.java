@@ -32,13 +32,15 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
+import com.sun.max.vm.compiler.target.TargetBundleLayout.ArrayField;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.*;
-import com.sun.max.vm.stack.amd64.*;
+import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 
+/**
+ * Stubs are for manually-assembled target code.
+ */
 public class Stub extends TargetMethod {
     public Stub(Flavor flavor, String stubName, int frameSize, byte[] code, int callPosition, ClassMethodActor callee, int registerRestoreEpilogueOffset) {
         super(flavor, stubName, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
@@ -51,14 +53,14 @@ public class Stub extends TargetMethod {
         setData(null, null, code);
         if (callPosition != -1) {
             assert callee != null;
-            setStopPositions(new int[] { callPosition}, new Object[] { callee}, 0, 0);
+            setStopPositions(new int[] {callPosition}, new Object[] {callee}, 0, 0);
         }
     }
 
     @Override
     public void advance(Cursor current) {
         if (platform().isa == ISA.AMD64) {
-            AMD64OptStackWalking.advance(current);
+            AMD64TargetMethodUtil.advance(current);
         } else {
             throw FatalError.unimplemented();
         }
@@ -67,7 +69,7 @@ public class Stub extends TargetMethod {
     @Override
     public boolean acceptStackFrameVisitor(Cursor current, StackFrameVisitor visitor) {
         if (platform().isa == ISA.AMD64) {
-            return AMD64OptStackWalking.acceptStackFrameVisitor(current, visitor);
+            return AMD64TargetMethodUtil.acceptStackFrameVisitor(current, visitor);
         }
         throw FatalError.unimplemented();
     }
@@ -82,7 +84,7 @@ public class Stub extends TargetMethod {
 
     @Override
     public boolean isPatchableCallSite(Address callSite) {
-        FatalError.unexpected("Adapter should never be patched");
+        FatalError.unexpected("Stub should never be patched");
         return false;
     }
 
@@ -93,7 +95,7 @@ public class Stub extends TargetMethod {
 
     @Override
     public void patchCallSite(int callOffset, Address callEntryPoint) {
-        FatalError.unexpected("Adapter should never be patched");
+        FatalError.unexpected("Stub should never be patched");
     }
 
     @Override

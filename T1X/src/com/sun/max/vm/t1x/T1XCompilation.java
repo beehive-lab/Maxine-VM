@@ -34,7 +34,6 @@ import java.util.*;
 import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.asm.target.amd64.AMD64Assembler.*;
-import com.sun.c1x.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.bytecode.Bytecodes.MemoryBarriers;
 import com.sun.cri.ci.*;
@@ -62,6 +61,7 @@ import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.amd64.*;
 import com.sun.max.vm.t1x.T1XCompilation.PatchInfo;
 import com.sun.max.vm.t1x.T1XTemplate.StopsBuilder;
+import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.verifier.*;
 
@@ -580,7 +580,7 @@ public class T1XCompilation {
                 int framePages = frameSize / pageSize;
                 // emit multiple stack bangs for methods with frames larger than a page
                 for (int i = 0; i <= framePages; i++) {
-                    int offset = (i + C1XOptions.StackShadowPages) * pageSize;
+                    int offset = (i + VmThread.STACK_SHADOW_PAGES) * pageSize;
                     // Deduct 'frameSize' to handle frames larger than (C1XOptions.StackShadowPages * pageSize)
                     offset = offset - frameSize;
                     asm.movq(new CiAddress(CiKind.Word, RSP, (-offset)), rax);
