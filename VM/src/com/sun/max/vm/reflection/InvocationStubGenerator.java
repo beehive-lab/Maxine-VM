@@ -291,8 +291,8 @@ public class InvocationStubGenerator<T> {
         final CodeAttribute codeAttribute = new CodeAttribute(
                         constantPoolEditor.pool(),
                         codeAttributeTemplate.code(),
-                        (char) codeAttributeTemplate.maxStack,
-                        (char) codeAttributeTemplate.maxLocals,
+                        codeAttributeTemplate.maxStack,
+                        codeAttributeTemplate.maxLocals,
                         CodeAttribute.NO_EXCEPTION_HANDLER_TABLE,
                         LineNumberTable.EMPTY,
                         LocalVariableTable.EMPTY,

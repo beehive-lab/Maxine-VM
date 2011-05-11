@@ -41,8 +41,6 @@ import com.sun.max.vm.verifier.TypeInferencingMethodVerifier.*;
  * This implementation is partially derived from inlinejsr.c, a source file in the preverifier tool that is part of the standard
  * <a href="http://java.sun.com/javame/index.jsp">Java Platform, Micro Edition</a> distribution.
  *
- * @author Doug Simon
- * @author David Liu
  */
 public class SubroutineInliner {
 
@@ -74,8 +72,8 @@ public class SubroutineInliner {
         final CodeAttribute newCodeAttribute = new CodeAttribute(
                 oldCodeAttribute.cp,
             newCode,
-            (char) oldCodeAttribute.maxStack,
-            (char) oldCodeAttribute.maxLocals,
+            oldCodeAttribute.maxStack,
+            oldCodeAttribute.maxLocals,
             exceptionHandlerTable,
             lineNumberTable,
             localVariableTable,

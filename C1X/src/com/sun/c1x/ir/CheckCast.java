@@ -31,8 +31,6 @@ import com.sun.cri.ri.*;
 
 /**
  * The {@code CheckCast} instruction represents a {@link Bytecodes#CHECKCAST}.
- *
- * @author Ben L. Titzer
  */
 public final class CheckCast extends TypeCheck {
 
@@ -87,10 +85,10 @@ public final class CheckCast extends TypeCheck {
     @Override
     public void print(LogStream out) {
         out.print("checkcast(").
-        print(object()).
-        print(",").
-        print(targetClassInstruction()).
-        print(") ").
-        print(CiUtil.toJavaName(targetClass()));
+            print(object()).
+            print(",").
+            print(targetClassInstruction()).
+            print(") ").
+            print(CiUtil.toJavaName(targetClass()));
     }
 }

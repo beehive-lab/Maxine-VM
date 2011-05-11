@@ -61,11 +61,6 @@ import com.sun.cri.xir.*;
 
 /**
  * This class traverses the HIR instructions and generates LIR instructions from them.
- *
- * @author Thomas Wuerthinger
- * @author Ben L. Titzer
- * @author Marcelo Cintra
- * @author Doug Simon
  */
 public abstract class LIRGenerator extends ValueVisitor {
 
@@ -292,7 +287,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
             // Assign new location to Local instruction for this local
             Value instr = state.localAt(javaIndex);
-            Local local = ((Local) instr);
+            Local local = (Local) instr;
             CiKind kind = src.kind.stackKind();
             assert kind == local.kind.stackKind() : "local type check failed";
             if (local.isLive()) {
@@ -1835,10 +1830,10 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     protected void postGCWriteBarrier(CiValue addr, CiValue newVal) {
-       XirSnippet writeBarrier = xir.genWriteBarrier(toXirArgument(addr));
-       if (writeBarrier != null) {
-           emitXir(writeBarrier, null, null, null, false);
-       }
+        XirSnippet writeBarrier = xir.genWriteBarrier(toXirArgument(addr));
+        if (writeBarrier != null) {
+            emitXir(writeBarrier, null, null, null, false);
+        }
     }
 
     protected void preGCWriteBarrier(CiValue addrOpr, boolean patch, LIRDebugInfo info) {
@@ -2136,7 +2131,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                 TypeEqualityCheck typeCheck = new TypeEqualityCheck(src, dest, arrayCopy.stateBefore(), Condition.EQ);
                 visitTypeEqualityCheck(typeCheck);
             }
-            boolean inputsSame = (src == dest);
+            boolean inputsSame = src == dest;
             boolean inputsDifferent = !inputsSame && (src.checkFlag(Flag.ResultIsUnique) || dest.checkFlag(Flag.ResultIsUnique));
             boolean needsStoreCheck = type.componentType().kind() == CiKind.Object && destType != srcType;
             if (!needsStoreCheck) {

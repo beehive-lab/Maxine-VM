@@ -99,7 +99,10 @@
     <module name="EmptyForInitializerPad"/>
     <module name="EmptyForIteratorPad"/>
     <module name="DefaultComesLast"/>
-    <module name="InnerAssignment"/>
+    <module name="InnerAssignment">
+      <property name="severity" value="ignore"/>
+      <metadata name="net.sf.eclipsecs.core.lastEnabledSeverity" value="inherit"/>
+    </module>
     <module name="JUnitTestCase"/>
     <module name="ModifiedControlVariable"/>
     <module name="ParameterAssignment">
@@ -133,30 +136,11 @@
   </module>
   <module name="Translation"/>
   <module name="SuppressionCommentFilter">
-    <property name="offCommentFormat" value="Checkstyle: stop constant name check"/>
-    <property name="onCommentFormat" value="Checkstyle: resume constant name check"/>
-    <property name="checkFormat" value="ConstantNameCheck"/>
-    <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Allow non-conforming constant names"/>
-  </module>
-  <module name="SuppressionCommentFilter">
     <property name="offCommentFormat" value="Checkstyle: stop method name check"/>
     <property name="onCommentFormat" value="Checkstyle: resume method name check"/>
     <property name="checkFormat" value="MethodName"/>
     <property name="checkC" value="false"/>
     <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Disable method name checks"/>
-  </module>
-  <module name="SuppressionCommentFilter">
-    <property name="offCommentFormat" value="CheckStyle: stop parameter assignment check"/>
-    <property name="onCommentFormat" value="CheckStyle: resume parameter assignment check"/>
-    <property name="checkFormat" value="ParameterAssignment"/>
-    <property name="checkC" value="false"/>
-    <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Disable Parameter Assignment"/>
-  </module>
-  <module name="SuppressionCommentFilter">
-    <property name="offCommentFormat" value="Checkstyle: stop final variable check"/>
-    <property name="onCommentFormat" value="Checkstyle: resume final variable check"/>
-    <property name="checkFormat" value="FinalLocalVariable"/>
-    <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Disable final variable checks"/>
   </module>
   <module name="SuppressionCommentFilter">
     <property name="offCommentFormat" value="Checkstyle: stop"/>
@@ -185,5 +169,9 @@
     <property name="checkFormat" value="MemberName"/>
     <property name="checkC" value="false"/>
     <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Disable field name checks"/>
+  </module>
+  <module name="SuppressionCommentFilter">
+    <property name="offCommentFormat" value="Checkstyle: off"/>
+    <property name="onCommentFormat" value="Checkstyle: on"/>
   </module>
 </module>

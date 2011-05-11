@@ -49,9 +49,6 @@ import com.sun.max.vm.value.*;
  * implementation details for working with those objects remotely. <br>
  * Each implementation is expected to either avoid caching any values read from the VM, or to override
  * {@link #updateCache()} and refresh the cache(s) when that method is called.
- *
- * @author Michael Van De Vanter
- * @author Hannes Payer
  */
 public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMCache, ObjectProvider, TeleObjectMemory {
 
@@ -91,7 +88,6 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
      * A simple class for aggregating lazily printed statistics, represented as a sequence of objects to be converted to
      * comma separate strings when actually printed.
      *
-     * @author Michael Van De Vanter
      */
     protected final class StatsPrinter {
 
@@ -251,7 +247,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
             TeleReference forwardedTeleRef = reference.getForwardedTeleRef();
             TeleObject teleObject = heap().findObjectByOID(forwardedTeleRef.makeOID());
             if (teleObject == null) {
-                reference = (TeleReference) forwardedTeleRef;
+                reference = forwardedTeleRef;
                 return this;
             }
             return teleObject;
@@ -562,7 +558,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
                     put((Class) key, count);
                 }
                 return count;
-            };
+            }
         };
 
         static {

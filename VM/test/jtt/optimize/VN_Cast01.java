@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -59,6 +59,7 @@ public class VN_Cast01 {
         return a.field + b.field;
     }
 
+    @SuppressWarnings("all")
     private static int test3() {
         Object o = null;
         VN_Cast01 a = (VN_Cast01) o;

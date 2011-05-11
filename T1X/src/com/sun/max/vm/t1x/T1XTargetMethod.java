@@ -431,7 +431,7 @@ public final class T1XTargetMethod extends TargetMethod {
                     if (e.catchTypeCPI != SYNC_METHOD_CATCH_TYPE_CPI) {
                         if (e.startBCI <= excBCI && excBCI < e.endBCI) {
                             ClassActor catchType = (ClassActor) e.catchType;
-                            if ((catchType == null || catchType.isAssignableFrom(ClassActor.fromJava(throwableClass)))) {
+                            if (catchType == null || catchType.isAssignableFrom(ClassActor.fromJava(throwableClass))) {
                                 int handlerPos = posForBci(e.handlerBCI());
                                 checkHandler(excPos, excBCI, e.handlerBCI, handlerPos);
                                 return codeStart.plus(handlerPos);

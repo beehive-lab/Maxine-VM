@@ -39,10 +39,6 @@ import com.sun.cri.xir.CiXirAssembler.XirMark;
 
 /**
  * The {@code LIRAssembler} class definition.
- *
- * @author Marcelo Cintra
- * @author Thomas Wuerthinger
- * @author Ben L. Titzer
  */
 public abstract class LIRAssembler {
 
@@ -228,7 +224,7 @@ public abstract class LIRAssembler {
                 emitCallAlignment(op.code);
                 // fall through
             case ConstDirectCall:
-               if (op.marks != null) {
+                if (op.marks != null) {
                     op.marks.put(XirMark.CALLSITE, asm.recordMark(null, new Mark[0]));
                 }
                 emitDirectCall(op.target, op.info);
@@ -295,7 +291,7 @@ public abstract class LIRAssembler {
             case Msb:
                 emitSignificantBitOp(true,  op.operand(), op.result());
                 break;
-           default:
+            default:
                 throw Util.shouldNotReachHere();
         }
     }

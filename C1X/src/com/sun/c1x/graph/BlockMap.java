@@ -116,8 +116,6 @@ import com.sun.cri.ri.*;
  *
  * If the {@code computeStoresInLoops} argument to {@code build} is true, the {@code loopBlocks} list is processed to
  * mark all local variables that are stored in the blocks in the list.
- *
- * @author Ben L. Titzer
  */
 public final class BlockMap {
 
@@ -589,6 +587,7 @@ public final class BlockMap {
     }
 
     private int processWideStore(int opcode, byte[] code, int bci) {
+        // Checkstyle: off
         switch (opcode) {
             case IINC:     storeOne(Bytes.beU2(code, bci + 2)); return 6;
             case ISTORE:   storeOne(Bytes.beU2(code, bci + 2)); return 3;
@@ -597,10 +596,12 @@ public final class BlockMap {
             case DSTORE:   storeTwo(Bytes.beU2(code, bci + 2)); return 3;
             case ASTORE:   storeOne(Bytes.beU2(code, bci + 2)); return 3;
         }
+        // Checkstyle: on
         return lengthOf(code, bci);
     }
 
     private int processStore(int opcode, byte[] code, int bci) {
+        // Checkstyle: off
         switch (opcode) {
             case IINC:     storeOne(code[bci + 1] & 0xff); return 3;
             case ISTORE:   storeOne(code[bci + 1] & 0xff); return 2;
@@ -634,6 +635,7 @@ public final class BlockMap {
             case WSTORE_2: // fall through
             case WSTORE_3: storeOne(opcode - WSTORE_0); return 1;
         }
+        // Checkstyle: on
         throw Util.shouldNotReachHere();
     }
 

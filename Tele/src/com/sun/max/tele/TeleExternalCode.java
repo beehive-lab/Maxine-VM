@@ -44,8 +44,6 @@ import com.sun.max.unsafe.*;
  * <br>
  * No attempt is made to check for changes to the code during
  * a session, unlike VM target methods.
- *
- * @author Michael Van De Vanter
  */
 public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxExternalCode {
 
@@ -56,7 +54,6 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
      * <br>
      * This region has no children.
      *
-     * @author Michael Van De Vanter
      */
     private static final class ExternalCodeMemoryRegion extends TeleFixedMemoryRegion implements MaxEntityMemoryRegion<MaxExternalCode> {
 
@@ -90,11 +87,10 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
      * Summary information about a sequence of external disassembled machine code instructions about
      * which little is known.
      *
-     * @author Michael Van De Vanter
      */
     private final class ExternalCodeInstructionMap implements InstructionMap {
 
-        private final List<MachineCodeLocation> instructionLocations;
+        private final List<MachineCodeLocation> machineCodeLocations;
 
         /**
          * Unmodifiable list of all instruction indexes where a label is present.
@@ -113,7 +109,7 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
                     labels.add(index);
                 }
             }
-            instructionLocations = locations;
+            machineCodeLocations = locations;
             labelIndexes = Collections.unmodifiableList(labels);
         }
 
@@ -151,7 +147,7 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
             if (index < 0 || index >= instructions.size()) {
                 throw new IllegalArgumentException();
             }
-            return instructionLocations.get(index);
+            return machineCodeLocations.get(index);
         }
 
         public boolean isStop(int index) throws IllegalArgumentException {
