@@ -703,7 +703,6 @@ public class CompiledPrototype extends Prototype {
 
     private boolean hasCode(MethodActor methodActor) {
         return methodActor instanceof ClassMethodActor &&
-//            ((ClassMethodActor)methodActor).targetMethodCount() == 0 &&
             !methodActor.isAbstract() &&
             !methodActor.isIntrinsic();
     }

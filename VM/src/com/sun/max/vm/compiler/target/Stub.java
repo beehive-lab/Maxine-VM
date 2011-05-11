@@ -39,7 +39,9 @@ import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 
 /**
- * Stubs are for manually-assembled target code.
+ * Stubs are for manually-assembled target code. Currently, a stub has the maximum of one
+ * direct call to another method, so that is call is passed into the constructor directly.
+ * Stack walking of stub frames is done with the same code as for optimized compiler frames.
  */
 public class Stub extends TargetMethod {
     public Stub(Flavor flavor, String stubName, int frameSize, byte[] code, int callPosition, ClassMethodActor callee, int registerRestoreEpilogueOffset) {
@@ -70,8 +72,9 @@ public class Stub extends TargetMethod {
     public boolean acceptStackFrameVisitor(Cursor current, StackFrameVisitor visitor) {
         if (platform().isa == ISA.AMD64) {
             return AMD64TargetMethodUtil.acceptStackFrameVisitor(current, visitor);
+        } else {
+            throw FatalError.unimplemented();
         }
-        throw FatalError.unimplemented();
     }
 
     @Override
@@ -101,7 +104,7 @@ public class Stub extends TargetMethod {
     @Override
     public Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class< ? extends Throwable> throwableClass) {
         if (isTopFrame) {
-            throw FatalError.unexpected("Exception occurred in frame adapter");
+            throw FatalError.unexpected("Exception occurred in stub frame");
         }
         return Address.zero();
     }

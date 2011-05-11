@@ -230,14 +230,6 @@ public final class MaxineVM {
     }
 
     /**
-     * Gets the current VM context.
-     */
-//    @INLINE
-//    public static MaxRiRuntime runtime() {
-//        return vm.runtime;
-//    }
-
-    /**
      * Initializes or changes the current VM context.
      * This also {@linkplain Platform#set(Platform) sets} the current platform context
      * to {@code vm.configuration.platform}. That is,
@@ -532,7 +524,6 @@ public final class MaxineVM {
     @C_FUNCTION
     public static native void core_dump();
 
-//    public final MaxRiRuntime runtime;
     public final VMConfiguration config;
     public Phase phase = Phase.BOOTSTRAPPING;
     public final RegisterConfigs registerConfigs;
@@ -542,7 +533,6 @@ public final class MaxineVM {
 
     public MaxineVM(VMConfiguration configuration) {
         this.config = configuration;
-//        this.runtime = new MaxRiRuntime();
         this.registerConfigs = RegisterConfigs.create();
         this.stubs = new Stubs(registerConfigs);
         this.safepoint = Safepoint.create();
