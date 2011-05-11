@@ -32,7 +32,6 @@ import com.sun.max.vm.bytecode.refmaps.*;
  * stops in the machine code generated for the bytecode instruction denoted by the associated key. A stop is represented
  * by its index in the {@linkplain T1XTargetMethod#stopPositions() stops table} of the JIT compiled method.
  *
- * @author Doug Simon
  */
 public class BytecodeStopsIterator implements BCIIterator {
 

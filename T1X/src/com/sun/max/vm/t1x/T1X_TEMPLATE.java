@@ -26,8 +26,6 @@ import java.lang.annotation.*;
 
 /**
  * Denotes a method that provides the implementation for a T1X template.
- *
- * @author Doug Simon
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)

@@ -30,8 +30,6 @@ import com.sun.max.vm.*;
 
 /**
  * This class encapsulates options that control the behavior of the T1X compiler.
- *
- * @author Doug Simon
  */
 public final class T1XOptions {
 
