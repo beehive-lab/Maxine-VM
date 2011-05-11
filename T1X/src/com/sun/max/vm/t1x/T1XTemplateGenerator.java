@@ -71,7 +71,7 @@ public class T1XTemplateGenerator {
     }
 
     @HOSTED_ONLY
-    public enum AdviceType {BEFORE, AFTER};
+    public enum AdviceType {BEFORE, AFTER}
 
     private static AdviceHook adviceHook;
 
@@ -107,6 +107,8 @@ public class T1XTemplateGenerator {
     private static Map<String, String> auTypes = new HashMap<String, String>();
 
     private static final String[] lockVariants = new String[] {"", "unlockClass", "unlockReceiver"};
+
+    private static final String[] conditions = new String[] {"eq", "ne", "lt", "ge", "gt", "le"};
 
     static {
         for (String type : types) {
@@ -1653,7 +1655,7 @@ public class T1XTemplateGenerator {
     public static void generateIfCmpTemplates() {
         for (String k : types) {
             if (hasIfCmpTemplates(k)) {
-                for (String s : new String[] {"eq", "ne", "lt", "ge", "gt", "le"}) {
+                for (String s : conditions) {
                     if (k.equals("Reference") && !(s.equals("eq") || s.equals("ne"))) {
                         continue;
                     }
@@ -1685,7 +1687,7 @@ public class T1XTemplateGenerator {
      *
      */
     public static void generateIfTemplates() {
-        for (String s : new String[] {"eq", "ne", "lt", "ge", "gt", "le"}) {
+        for (String s : conditions) {
             generateIfTemplate("int", s);
         }
         for (String s : new String[] {"null", "nonnull"}) {
@@ -1991,7 +1993,7 @@ public class T1XTemplateGenerator {
                 }
             }
             if (hasIfCmpTemplates(k)) {
-                for (String s : new String[] {"eq", "ne", "lt", "ge", "gt", "le"}) {
+                for (String s : conditions) {
                     if (k.equals("Reference") && !(s.equals("eq") || s.equals("ne"))) {
                         continue;
                     }
