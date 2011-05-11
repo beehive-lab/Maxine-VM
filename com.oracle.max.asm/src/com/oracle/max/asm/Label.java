@@ -20,17 +20,14 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.c1x.asm;
+package com.oracle.max.asm;
 
-import com.sun.c1x.util.*;
+import java.util.ArrayList;
 
 /**
  * This class represents a label within assembly code.
- *
- * @author Marcelo Cintra
  */
 public final class Label {
-
     private int position = -1;
 
     /**
@@ -38,7 +35,7 @@ public final class Label {
      * These instructions need to be patched when the label is bound
      * using the {@link #patchInstructions(AbstractAssembler)} method.
      */
-    private IntList patchPositions = new IntList(4);
+    private ArrayList<Integer> patchPositions = new ArrayList<Integer>(4);
 
     /**
      * Returns the position of this label in the code buffer.
@@ -52,15 +49,11 @@ public final class Label {
     public Label() {
     }
 
-    public Label(int position) {
-        bind(position);
-    }
-
     /**
      * Binds the label to the specified position.
      * @param pos the position
      */
-    public void bind(int pos) {
+    protected void bind(int pos) {
         this.position = pos;
         assert isBound();
     }
@@ -74,7 +67,7 @@ public final class Label {
         patchPositions.add(branchLocation);
     }
 
-    public void patchInstructions(AbstractAssembler masm) {
+    protected void patchInstructions(AbstractAssembler masm) {
         assert isBound() : "Label should be bound";
         int target = position;
         for (int i = 0; i < patchPositions.size(); ++i) {

@@ -22,7 +22,7 @@
  */
 package com.sun.max.vm.compiler.target.amd64;
 
-import static com.sun.c1x.target.amd64.AMD64.*;
+import static com.oracle.max.asm.target.amd64.AMD64.*;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
@@ -30,8 +30,8 @@ import static com.sun.max.vm.compiler.CallEntryPoint.*;
 
 import java.io.*;
 
-import com.sun.c1x.asm.*;
-import com.sun.c1x.target.amd64.*;
+import com.oracle.max.asm.*;
+import com.oracle.max.asm.target.amd64.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -321,7 +321,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             } else {
 
                 // This instruction is 5 bytes long
-                asm.directCall(adapter, null);
+                asm.call();
 
                 // Pad with 3 bytes to yield an 8-byte long prologue,
                 asm.nop();
@@ -406,7 +406,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
 
             // Args are now copied to the OPT locations; call the OPT main body
             int callPosition = asm.codeBuffer.position();
-            asm.indirectCall(rax, null, null);
+            asm.call(rax);
 
             // Restore RSP and RBP. Given that RBP is never modified by OPT methods and baseline methods always
             // restore it, RBP is guaranteed to be pointing to the slot holding the caller's RBP
@@ -619,12 +619,14 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             }
 
             // A baseline caller jumps over the call to the OPT2BASELINE adapter
-            asm.jmp(new Label(8 + DIRECT_CALL_SIZE));
+            Label end = new Label();
+            asm.jmp(end);
 
             // Pad with nops up to the OPT entry point
             asm.align(OPTIMIZED_ENTRY_POINT.offset());
 
-            asm.directCall(adapter, null);
+            asm.call();
+            asm.bind(end);
 
             int size = asm.codeBuffer.position();
             assert size == PROLOGUE_SIZE;
@@ -674,7 +676,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
 
             // Args are now copied to the baseline locations; call the baseline main body
             int callPosition = asm.codeBuffer.position();
-            asm.indirectCall(rax, null, null);
+            asm.call(rax);
 
             // The baseline method will have popped the args off the stack so now
             // RSP is pointing to the slot holding the address of the baseline main body.

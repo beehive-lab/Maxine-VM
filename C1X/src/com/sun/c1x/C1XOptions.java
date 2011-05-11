@@ -152,7 +152,6 @@ public final class C1XOptions {
     public static int     SequentialSwitchLimit         = 4;
     public static int     RangeTestsSwitchDensity       = 5;
 
-    public static int     InitialCodeBufferSize         = 232;
     public static boolean DetailedAsserts               = true;
 
     // Runtime settings
@@ -163,12 +162,6 @@ public final class C1XOptions {
     // Assembler settings
     public static boolean CommentedAssembly             = ____;
     public static boolean PrintLIRWithAssembly          = ____;
-    public static int     Atomics                       = 0;
-    public static boolean UseNormalNop                  = true;
-    public static boolean UseAddressNop                 = true;
-    public static boolean UseIncDec                     = ____;
-    public static boolean UseXmmLoadAndClearUpper       = ____;
-    public static boolean UseXmmRegToRegMoveAll         = ____;
 
     static {
         setOptimizationLevel(1);
