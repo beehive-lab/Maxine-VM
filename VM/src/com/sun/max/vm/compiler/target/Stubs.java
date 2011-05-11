@@ -207,7 +207,6 @@ public class Stubs {
 
             // now allocate the frame for this method
             asm.subq(AMD64.rsp, frameSize);
-//            asm.setFrameSize(frameSize);
 
             // save the index in the scratch register. This register is then callee-saved
             // so that the stack walker can find it.
@@ -294,13 +293,11 @@ public class Stubs {
 
             // now allocate the frame for this method
             asm.subq(AMD64.rsp, frameSize);
-//            asm.setFrameSize(frameSize);
 
             // save all the callee save registers
             asm.save(csa, frameToCSA);
 
             CriticalMethod patchStaticTrampoline = new CriticalMethod(Stubs.class, "patchStaticTrampolineCallSiteAMD64", null);
-//            ClassMethodActor patchStaticTrampolineCallSite = ClassMethodActor.fromJava(Classes.getDeclaredMethod(getClass(), "patchStaticTrampolineCallSiteAMD64", Pointer.class));
             CiKind[] trampolineParameters = {CiKind.Object};
             CiValue[] locations = registerConfig.getCallingConvention(JavaCall, trampolineParameters, target()).locations;
 
@@ -372,7 +369,6 @@ public class Stubs {
 
             // now allocate the frame for this method (first word of which was allocated by the second pushfq above)
             asm.subq(AMD64.rsp, frameSize - 8);
-//            asm.setFrameSize(frameSize);
 
             // save all the callee save registers
             asm.save(csa, frameToCSA);
