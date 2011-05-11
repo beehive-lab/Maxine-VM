@@ -100,10 +100,15 @@ public class MaxineTesterConfiguration {
 
         // Refine expectation for certain output tests
         output(test.output.AWTFont.class,                  FAIL_DARWIN, RAND_SPARC);
-//        output(test.output.GCTest7.class,                  RAND_ALL);
+        output(test.output.GCTest7.class,                  RAND_DARWIN);
 //        output(test.output.GCTest8.class,                  RAND_ALL);
 //        output(test.output.MegaThreads.class,              RAND_ALL);
 //        output(test.output.SafepointWhileInJava.class,     RAND_LINUX);
+        output(test.output.WeakReferenceTest01.class,                  RAND_ALL);
+        output(test.output.WeakReferenceTest02.class,                  RAND_ALL);
+        output(test.output.WeakReferenceTest03.class,                  RAND_ALL);
+        output(test.output.WeakReferenceTest03_01.class,               RAND_ALL);
+        output(test.output.WeakReferenceTest04.class,                  RAND_ALL);
 
 
 //        jtt(jtt.jasm.Invokevirtual_private01.class, RAND_ALL); // may fail due to incorrect invokevirtual / invokespecial optimization

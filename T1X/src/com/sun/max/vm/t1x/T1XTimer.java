@@ -27,8 +27,6 @@ import com.sun.c1x.debug.*;
 /**
  * This class contains timers that record the amount of time spent in various
  * parts of the T1X compiler.
- *
- * @author Doug Simon
  */
 public enum T1XTimer {
     PRE_COMPILE("Pre-compile"),

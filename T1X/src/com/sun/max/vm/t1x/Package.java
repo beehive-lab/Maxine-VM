@@ -28,9 +28,8 @@ import com.sun.max.vm.compiler.adaptive.*;
 
 /**
  * T1X compiler.
- *
- * @author Doug Simon
  */
+
 public class Package extends BootImagePackage {
     public Package() {
         super();

@@ -27,8 +27,6 @@ import com.sun.c1x.*;
 
 /**
  * This class contains a number of fields that collect metrics about T1X compilation.
- *
- * @author Doug Simon
  */
 public class T1XMetrics {
     public static int CompiledMethods;
