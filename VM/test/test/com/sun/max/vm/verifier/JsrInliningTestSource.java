@@ -61,7 +61,8 @@ public class JsrInliningTestSource {
         return a;
     }
 
-    @SuppressWarnings("all")
+    // Cannot use @SuppressWarnings("finally") as it is not Java 1.4 compliant
+    //@SuppressWarnings("finally")
     public static int loops() {
         int loops = 0;
         try {
@@ -79,7 +80,8 @@ public class JsrInliningTestSource {
         }
     }
 
-    @SuppressWarnings("all")
+    // Cannot use @SuppressWarnings("finally") as it is not Java 1.4 compliant
+    //@SuppressWarnings("finally")
     public static int oops(int i) {
         int p = i;
         while (p > 10) {
