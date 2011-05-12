@@ -39,11 +39,14 @@ import com.sun.max.vm.reference.*;
 /**
  * Canonical surrogate for an object of type {@link ClassMethodActor} in the VM.
  * <p>
- * Note that the compilations of a method are recorded a single polymorphic object
- * field that must be decoded.
+ * Note that the compilations of a method are recorded as a {@linkplain TargetState single polymorphic object} field
+ * that must be decoded using knowledge of how the encoding is done in the VM.
+ * <p>
+ * It is more important
  *
  * @see ClassMethodActor
  * @see TargetState
+ * @see TeleObject
  *
  * @author Michael Van De Vanter
  * @author Ben L. Titzer
@@ -57,7 +60,16 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
      */
     private TeleTargetMethod[] teleTargetMethodHistory = NO_TARGET_METHODS;
 
-    // Keep construction minimal for both performance and synchronization.
+    /**
+     * Constructs a {@link TeleObject} specialized for dealing with the information stored in a VM
+     * {@link ClassMetholdActor}.
+     * <p>
+     * This constructor follows no {@link References} and in particular does not attempt to decode the compilation state
+     * of the method. This avoids the infinite regress that can occur when the constructor for a mutually referential
+     * object such as a {@link TeleTargetMethod} attempts to do the same thing.
+     *
+     * @param classMethodActorReference reference to an instance of {@link ClassMethodActor} in the VM.
+     */
     protected TeleClassMethodActor(TeleVM vm, Reference classMethodActorReference) {
         super(vm, classMethodActorReference);
     }
@@ -127,7 +139,7 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
      *
      * @see ClassMethodActor
      * @see TargetState
-     * @param targetState
+     * @param targetState an object that represents an encoded compilation history
      */
     private void translateTargetState(TeleObject targetState) {
         if (targetState instanceof TeleTargetMethod) {

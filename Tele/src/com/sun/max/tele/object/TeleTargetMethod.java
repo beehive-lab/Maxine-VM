@@ -61,10 +61,10 @@ import com.sun.max.vm.type.*;
  * of a Java {@link ClassMethod} in the VM.
  * <p>
  * When this surrogate is first created, it determines only the location of the {@link TargetMehod}
- * in the VM in order to keep the overhead low, since these are created eagerly for every
+ * in the VM.  This limitation keeps the overhead low, since one of these is created eagerly for every
  * discovered compilation.
  * <p>
- * The contents of the {@link TargetMethod} in the VM are loaded, disassembled, and cached lazily.
+ * The full contents of the {@link TargetMethod} in the VM are lazily loaded, disassembled, and cached.
  * The caches are flushed whenever
  * an update determines that the code has been changed (i.e. patched).
  * <p>
@@ -72,7 +72,7 @@ import com.sun.max.vm.type.*;
  * from the VM, and caching the local instance.
  * <p>
  * <strong>Important</strong>: this implementation assumes that compilations in the VM, once created,
- * <strong>do not move in memory</strong>.
+ * <strong>do not move in memory</strong> and <strong>are never evicted</strong>.
  *
  * @author Michael Van De Vanter
  */
@@ -138,7 +138,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
     }
 
     /**
-     * A specialized copier to be used for copying instances of {@link TeleTargetMethod},
+     * A specialized copier for instances of {@link TeleTargetMethod},
      * designed to limit information copied to what's needed without pulling too
      * much other state.
      */
@@ -172,18 +172,18 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
      * A cache that encapsulates a {@link TargetMethod} instance copied from the VM, together
      * with derived information that is needed when examining the machine code.
      * <p>
-     * The code in a {@link TargetMethod} can change in the VM at runtime.
+     * The machine code in a {@link TargetMethod} can change in the VM at runtime.
      * There are two general cases where the state of the {@link TargetMethod} in the VM changes:
      * <ol>
-     * <li>When a compilation begins, the code is empty and the code's starting location is set to zero.
+     * <li>When a method compilation begins, the code is empty and the code's starting location is set to zero.
      * When the compilation is complete, it is copied into the appropriate place in the code cache and
      * the starting location is assigned.</li>
      * <li>The compiled code can be patched in place, for example when a method call is resolved.</li>
      * </ol>
      * <p>
-     * This cache object is immutable, so every method on it is thread-safe.
+     * This cache object is effectively immutable, so every method on it is thread-safe.
      * A new cache must be created each time the {@link TeleTargetMethod} object in the VM is
-     * discovered to have changed.
+     * discovered to have changed.  This is done lazily.
      * <p>
      * There are three states for this cache:
      * <ul>

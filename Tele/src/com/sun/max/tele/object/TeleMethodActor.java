@@ -44,7 +44,10 @@ public abstract class TeleMethodActor extends TeleMemberActor implements MethodP
 
     private MethodActor methodActor;
 
-    // Keep construction minimal for both performance and synchronization.
+    /**
+     * This constructor follows no {@link References}. This avoids the infinite regress that can occur when the VM
+     * object and another are mutually referential.
+     */
     protected TeleMethodActor(TeleVM vm, Reference methodActorReference) {
         super(vm, methodActorReference);
     }

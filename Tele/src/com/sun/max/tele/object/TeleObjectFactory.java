@@ -46,26 +46,29 @@ import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
- * A singleton factory that manages the creation and maintenance of
- * instances of {@link TeleObject}, each of which is a
+ * A singleton factory that manages the creation and maintenance of instances of {@link TeleObject}, each of which is a
  * canonical surrogate for an object in the VM.
- * <br>
- * A {@link TeleObject} is intended to be cannonical, so the unique instance for each object can be
- * retrieved either by location or by OID.  Exceptions to this can occur because of GC:
+ * <p>
+ * Instances are created reflectively, based on a table in which constructors for various subtypes of {@link TeleObject}
+ * are registered.  This allows the factory to create a {@link TeleObject} instance of the most specific subtype of the
+ * VM object for which a constructor is registered.
+ * <p>
+ * A {@link TeleObject} is intended to be cannonical, so the unique instance for each object can be retrieved either by
+ * location or by OID. Exceptions to this can occur because of GC:
  * <ul>
- * <li>An object in the VM can be released by the running application and "collected" by the
- * GC.  As soon as this is discovered, the {@TeleObject} that refers to it is marked "dead".
- * <li>During some phases of copying GC, there may be two instances that refer to what
- * is semantically the same object: one referring to the old copy and one referring to the new.</li>
- * <li>As soon as a duplication due to copying is discovered, the {@link TeleObject} that refers
- * to the old copy is marked "obsolete".  It is possible to discover the {@link TeleObject} that
- * refers to the newer copy of the object.</li>
- * <li>A {@link TeleObject} that is either "dead" or "obsolete" is removed from the maps
- *  and cannot be discovered, either by location or OID.</li>
+ * <li>An object in the VM can be released by the running application and "collected" by the GC. As soon as this is
+ * discovered, the {@TeleObject} that refers to it is marked "dead".
+ * <li>During some phases of copying GC, there may be two instances that refer to what is semantically the same object:
+ * one referring to the old copy and one referring to the new.</li>
+ * <li>As soon as a duplication due to copying is discovered, the {@link TeleObject} that refers to the old copy is
+ * marked "obsolete". It is possible to discover the {@link TeleObject} that refers to the newer copy of the object.</li>
+ * <li>A {@link TeleObject} that is either "dead" or "obsolete" is removed from the maps and cannot be discovered,
+ * either by location or OID.</li>
  * </ul>
  *
  * @author Michael Van De Vanter
  * @author Hannes Payer
+ * @see TeleObject
  */
 public final class TeleObjectFactory extends AbstractTeleVMHolder implements TeleVMCache {
 
@@ -284,17 +287,17 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
     }
 
     /**
-     * Factory method for canonical {@link TeleObject} surrogate for heap objects in the VM.  Specific subclasses are
+     * Factory method for canonical {@link TeleObject} surrogate for heap objects in the VM. Specific subclasses are
      * created for Maxine implementation objects of special interest, and for other objects for which special treatment
      * is desired.
-     * <br>
+     * <p>
      * Returns null for the distinguished zero {@link Reference}.
-     * <br>
+     * <p>
      * Must be called with current thread holding the VM lock.
-     * <br>
-     * Care is taken to avoid I/O with the VM during synchronized
-     * access to the canonicalization map.  There is a small exception
-     * to this for {@link TeleTargetMethod}.
+     * <p>
+     * Care is taken to avoid I/O with the VM during synchronized access to the canonicalization map. There is a small
+     * exception to this for {@link TeleTargetMethod}, which can lead to infinite regress if the constructors for
+     * mutually referential objects (notably {@link TeleClassMethodActor}) also create {@link TeleObject}s.
      *
      * @param reference non-null location of a Java object in the VM
      * @return canonical local surrogate for the object
@@ -352,7 +355,6 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
         final ClassActor hubClassActor = vm().classRegistry().makeClassActor(hubClassActorReference);
         final Class hubJavaClass = hubClassActor.toJava();  // the class of this object's hub
         if (StaticHub.class.isAssignableFrom(hubJavaClass)) {
-            //teleObject = new TeleStaticTuple(teleVM(), reference);       ?????????
             teleObject = getTeleObject(reference);
             if (teleObject == null) {
                 teleObject = new TeleStaticTuple(vm(), reference);

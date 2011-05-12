@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,10 @@ import com.sun.max.vm.reference.*;
  */
 public final class TeleStaticMethodActor extends TeleClassMethodActor {
 
+    /**
+     * This constructor follows no {@link References}. This avoids the infinite regress that can occur when the VM
+     * object and another are mutually referential.
+     */
     TeleStaticMethodActor(TeleVM teleVM, Reference staticMethodActorReference) {
         super(teleVM, staticMethodActorReference);
     }

@@ -43,13 +43,40 @@ import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
- * Canonical surrogate for a heap object in the VM.
+ * A canonical surrogate for a heap object in the VM.
  *
- * This class and its subclasses play the role of typed wrappers for References to heap objects in the VM, encapsulating
- * implementation details for working with those objects remotely. <br>
- * Each implementation is expected to either avoid caching any values read from the VM, or to override
+ * This class and its subclasses play the role of typed wrappers for {@link Reference}s that refer to heap objects in
+ * the VM. These wrappers encapsulate implementation details needed for working remotely with VM objects. This is not a
+ * general proxy mechanisms, but rather an encapsulation of the design knowledge about the VM that is needed make sense
+ * of VM state for debugging and visualization purposes.
+ * <p>
+ * The type hierarchy of {@link TeleObject} classes is designed as a <emph>projection</emph> (in the mathematical sense)
+ * of the representational type hierarchy in the VM. This hierarchy includes standard Java object types, the Maxine
+ * non-Java extended types under {@link TeleHybridObject}, and the special tuple {@link TeleStaticTuple}, which has no
+ * type at all, even in the Maxine extended type system.
+ * <p>
+ * There exist {@link TeleObject} subclasses designed to represent specific object types in the VM for those types that
+ * represent significant information about the runtime state of the VM, for example {@link TeleDynamicHub}. In those
+ * cases there are typically specialized methods for accessing and reasoning about that state information. Other
+ * subclasses are intended to manage usefully a whole subset of the type hierarchy; for example a
+ * {@link TeleArrayObject} is used to represent any kind of array in the VM heap and a {@link TeleTupleObject} is used
+ * to represent ordinary objects that are not called out for special treatment.
+ * <p>
+ * Note that instances of this class are to be created <strong>only</strong> by a reflection-driven
+ * {@linkplain TeleObjectFactory factory}. That declaratively specified factory creates an instance of the most specific
+ * subtype of {@link TeleObject} that applies to a VM object.
+ * <p>
+ * Each subclass implementation is expected to either avoid caching any values read from the VM, or to override
  * {@link #updateCache()} and refresh the cache(s) when that method is called.
+ * <p>
+ * There is an ongoing danger of circularity in the creation of {@link TeleObject} instances for VM objects that have
+ * two-way (or circular) references to other objects; this can lead to infinite regress and stack overflow. The general
+ * strategy for avoiding this is to keep the constructors for concrete subclasses as simple as possible and to avoid
+ * following {@link Reference} fields in constructors if at all possible. A troublesome example of such relationships
+ * involves {@link TeleClassMethodActor}s and {@link TeleTargetMethod}s.
  *
+ * @see TeleObjectFactory
+ * @see TeleHeap
  * @author Michael Van De Vanter
  * @author Hannes Payer
  */
@@ -149,12 +176,19 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
     private Pointer lastValidPointer;
 
     /**
-     * A "surrogate" object that encapsulates information about an object in the VM. <br>
+     * Creates a "surrogate" object that encapsulates information about an object in the VM.
+     * <p>
      * This is not the same thing as a Proxy, although it can be used that way. Specific subclasses encapsulate design
      * information about the structure of the VM that enable useful access methods beyond simple field or element
      * access. Most important are the subclasses for {@link Actor}s, objects in the VM that encapsulate meta-information
-     * about the language and object representation. <br>
-     * The factory method {@link TeleObjectFactory#make(Reference)} ensures synchronized TeleObjects creation.
+     * about the language and object representation.
+     * <p>
+     * The factory method {@link TeleObjectFactory#make(Reference)} ensures synchronized TeleObjects creation, and
+     * instances should <emph>only</emph> be created via that factory.
+     * <p>
+     * It is important to avoid in the constructor (and in the constructors of subclasses) the following of
+     * {@link Reference} fields, which leads to the creation of another instance of {@link TeleObject}. This can lead to
+     * infinite regress in the presence of mutually referential objects.
      *
      * @param vm the VM in which the object resides
      * @param reference the location of the object in the VM (whose absolute address can change via GC)
