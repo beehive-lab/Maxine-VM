@@ -53,10 +53,9 @@
  *
  * Created Sep 30, 2006
  */
-package com.sun.max.elf;
+package com.oracle.max.elf;
 
-import static com.sun.max.elf.StringUtil.leftJustify;
-import static com.sun.max.elf.StringUtil.rightJustify;
+import static com.oracle.max.elf.StringUtil.*;
 
 import java.io.RandomAccessFile;
 

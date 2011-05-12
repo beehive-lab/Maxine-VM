@@ -52,7 +52,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.sun.max.elf;
+package com.oracle.max.elf;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;

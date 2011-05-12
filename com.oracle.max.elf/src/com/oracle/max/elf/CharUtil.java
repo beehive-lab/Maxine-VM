@@ -53,7 +53,7 @@
  *
  * Created May 27, 2006
  */
-package com.sun.max.elf;
+package com.oracle.max.elf;
 
 /**
  * The <code>CharUtil</code> class includes a number of useful utilities in dealing

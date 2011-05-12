@@ -20,13 +20,13 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.elf;
+package com.oracle.max.elf;
 
 import java.io.*;
 import java.util.*;
 
-import com.sun.max.elf.ELFHeader.*;
-import com.sun.max.elf.ELFSymbolTable.*;
+import com.oracle.max.elf.ELFHeader.*;
+import com.oracle.max.elf.ELFSymbolTable.*;
 
 /**
  * Builds a lookup table given the symbol table by arranging the symbols as name,entry pairs.
