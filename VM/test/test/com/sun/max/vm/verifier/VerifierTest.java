@@ -32,6 +32,7 @@ import junit.framework.*;
 import test.com.sun.max.vm.*;
 import test.com.sun.max.vm.bytecode.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
@@ -205,6 +206,10 @@ public class VerifierTest extends VmTestCase {
      */
     public static boolean suppressVerificationOf(ClassMethodActor method) {
         if (method.isTemplate() || method.isAbstract() || method.intrinsic() != 0) {
+            return true;
+        }
+        if (METHOD_SUBSTITUTIONS.Static.findSubstituteFor(method) != null) {
+            // Suppress substituted methods
             return true;
         }
         if (method.holder().kind.isWord) {
