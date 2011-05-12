@@ -49,9 +49,7 @@ import com.sun.max.vm.type.*;
  * The templates are almost all automatically generated as many bytecodes fall in groups that share a very similar implementation.
  * Auto-generation also allows for easy and optional customization, in particular, tracking of bytecode execution.
  * The automatically generated code is created by running {@link T1XTemplateGenerator#main} and is inserted (manually) at the end of the class.
- *
  */
-
 public class T1XTemplateSource {
 
     @INTRINSIC(Bytecodes.LCMP)
