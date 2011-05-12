@@ -41,6 +41,10 @@ public abstract class TeleActor extends TeleTupleObject {
      */
     private Utf8Constant actorName;
 
+    /**
+     * This constructor follows no {@link References}. This avoids the infinite regress that can occur when the VM
+     * object and another are mutually referential.
+     */
     protected TeleActor(TeleVM vm, Reference actorReference) {
         super(vm, actorReference);
     }

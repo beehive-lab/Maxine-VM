@@ -34,6 +34,10 @@ import com.sun.max.vm.reference.*;
  */
 public abstract class TeleMemberActor extends TeleActor {
 
+    /**
+     * This constructor follows no {@link References}. This avoids the infinite regress that can occur when the VM
+     * object and another are mutually referential.
+     */
     protected TeleMemberActor(TeleVM vm, Reference memberActorReference) {
         super(vm, memberActorReference);
     }

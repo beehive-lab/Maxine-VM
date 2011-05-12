@@ -46,6 +46,23 @@ import com.sun.max.vm.value.*;
   */
 public class TeleTupleObject extends TeleObject {
 
+    /**
+     * Creates a surrogate for an ordinary (non-array) Java object in the VM.
+     * <p>
+     * Most Java objects in the VM are represented by this type. The exceptions are those types that carry important
+     * information about the execution state of the VM, for which specific subclasses of this type are declared. The
+     * factory method {@link TeleObjectFactory#make(Reference)} creates an instance of {@link TeleObject} of the most
+     * specific subtype corresponding to the VM object to which the {@link Reference} refers.
+     * <p>
+     * Note also that there is one exceptional subclass; {@link TeleStaticTuple} represents {@link StaticTuple} objects
+     * in the VM, objects for which there is no type expressible in the (extended) Java type system.
+     * <p>
+     * This constructor follows no {@link References}. This avoids the infinite regress that can occur when the VM
+     * object and another are mutually referential.
+     *
+     * @see TeleObjectFactory
+     * @see TeleStaticTuple
+     */
     protected TeleTupleObject(TeleVM vm, Reference reference) {
         super(vm, reference, Layout.tupleLayout());
     }

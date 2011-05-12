@@ -51,10 +51,11 @@ import com.sun.max.vm.tele.*;
  * with a call to {@link #initialize()}, which requires that {@link TeleClassRegistry} be
  * fully initialized.
  * <br>
-  * Interesting heap state includes the list of memory regions allocated.
+ *
+ * Interesting heap state includes the list of memory regions allocated.
  * <br>
  * This class also provides access to a special root table in the VM, active
- * only when being inspected, that allows Inspector references
+ * only when being inspected.  The root table allows inspection references
  * to track object locations when they are relocated by GC.
  * <br>
  * This class needs to be specialized by a helper class that
@@ -114,7 +115,8 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
      * Returns the singleton manager of cached information about the heap in the VM,
      * specialized for the particular implementation of {@link HeapScheme} in the VM.
      * <br>
-     * Not usable until after a call to {@link #initialize()}, which must be called
+     * This manager is not fully functional until after a call to {@link #initialize()}.
+     * However, {@link #initialize(long)} must be called only
      * after the {@link TeleClassRegistry} is fully initialized; otherwise, a circular
      * dependency will cause breakage.
      */
