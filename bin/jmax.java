@@ -38,8 +38,9 @@ public class jmax {
      *
      * @param request the command and its arguments
      * @param response where the response it to be written
+     * @return the exit code
      */
-    public static void process(List<String> request, PrintStream response) {
+    public static int process(List<String> request, PrintStream response) {
         String cmd = request.get(0);
         if (cmd.equals("projects")) {
             // Return the project names separated by spaces
@@ -55,16 +56,17 @@ public class jmax {
             Project p = project(request.get(1));
             response.println(p.baseDir.getPath() + File.separatorChar + p.name);
         } else if (cmd.equals("eclipse")) {
+            int changedFiles = 0;
             if (request.size() == 1) {
                 for (Project p : projects.values()) {
-                    p.generateEclipseProject(response);
+                    changedFiles += p.generateEclipseProject(response);
                 }
             } else {
                 for (String p : request.subList(1, request.size())) {
-                    project(p).generateEclipseProject(response);
+                    changedFiles += project(p).generateEclipseProject(response);
                 }
             }
-
+            return changedFiles;
         } else if (cmd.equals("source_dirs")) {
             // Return the absolute source directories of a project
             Project p = project(request.get(1));
@@ -92,6 +94,7 @@ public class jmax {
         } else {
             throw new Error("Command ' " + cmd + "' not known");
         }
+        return 0;
     }
 
     static PrintStream log = System.err;
@@ -278,7 +281,7 @@ public class jmax {
                 loadProjects(dir);
             }
         }
-        process(Arrays.asList(args), System.out);
+        System.exit(process(Arrays.asList(args), System.out));
     }
 
     static abstract class Dependency {
@@ -475,6 +478,7 @@ public class jmax {
      * Utility for creating or modifying a file.
      */
     static abstract class FileUpdater {
+        int changedFiles;
         public FileUpdater(File file, boolean canOverwrite, PrintStream status) {
             boolean exists = file.exists();
             if (exists && !canOverwrite) {
@@ -494,6 +498,7 @@ public class jmax {
                 fos.write(buf);
                 fos.close();
                 status.println((exists ? "modified " : "created ") + file);
+                changedFiles = 1;
             } catch (IOException e) {
                 throw new Error("Error while writing to " + file, e);
             }
@@ -616,12 +621,15 @@ public class jmax {
          * </pre>
          *
          * @param response
+         * @return number of files created/updated
          */
-        void generateEclipseProject(PrintStream response) {
+        int generateEclipseProject(PrintStream response) {
             final File projectDir = new File(baseDir, name);
             makeDirectory(projectDir);
 
-            new FileUpdater(new File(projectDir, ".classpath"), true, response) {
+            int changedFiles = 0;
+
+            FileUpdater update = new FileUpdater(new File(projectDir, ".classpath"), true, response) {
                 @Override
                 void generate(PrintStream out) {
                     out.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
@@ -659,9 +667,10 @@ public class jmax {
                     out.println("</classpath>");
                 }
             };
+            changedFiles += update.changedFiles;
 
             File dotCheckstyle = new File(projectDir, ".checkstyle");
-            new FileUpdater(dotCheckstyle, false, response) {
+            update = new FileUpdater(dotCheckstyle, false, response) {
                 @Override
                 void generate(PrintStream out) {
                     String checkstyleConfigPath;
@@ -690,8 +699,9 @@ public class jmax {
                     out.println("</fileset-config>");
                 }
             };
+            changedFiles += update.changedFiles;
 
-            new FileUpdater(new File(projectDir, ".project"), true, response) {
+            update = new FileUpdater(new File(projectDir, ".project"), true, response) {
                 @Override
                 void generate(PrintStream out) {
                     out.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
@@ -719,12 +729,12 @@ public class jmax {
                     out.println("</projectDescription>");
                 }
             };
-
+            changedFiles += update.changedFiles;
 
             File settingsDir = new File(projectDir, ".settings");
             makeDirectory(settingsDir);
 
-            new FileUpdater(new File(settingsDir, "org.eclipse.jdt.core.prefs"), true, response) {
+            update = new FileUpdater(new File(settingsDir, "org.eclipse.jdt.core.prefs"), true, response) {
                 @Override
                 void generate(PrintStream out) {
                     for (String line : org_eclipse_jdt_core_prefs.lines) {
@@ -732,8 +742,9 @@ public class jmax {
                     }
                 }
             };
+            changedFiles += update.changedFiles;
 
-            new FileUpdater(new File(settingsDir, "org.eclipse.jdt.ui.prefs"), true, response) {
+            update = new FileUpdater(new File(settingsDir, "org.eclipse.jdt.ui.prefs"), true, response) {
                 @Override
                 void generate(PrintStream out) {
                     for (String line : org_eclipse_jdt_ui_prefs.lines) {
@@ -741,6 +752,9 @@ public class jmax {
                     }
                 }
             };
+            changedFiles += update.changedFiles;
+
+            return changedFiles;
         }
     }
 

@@ -210,7 +210,7 @@ if [ -z "${MAXINE_OS}" ]; then
     OS=`uname -s`
     case $OS in
         Darwin* )
-            supported_macosx_jdks="1.6.0_20 1.6.0_22"
+            supported_macosx_jdks="1.6.0_20 1.6.0_22 1.6.0_25"
             version_found=0
             for maxos_java_version in $supported_macosx_jdks; do
                 if [ "$java_version" = "$maxos_java_version" ]; then
