@@ -53,7 +53,7 @@
  *
  * Created Sep 30, 2006
  */
-package com.sun.max.elf;
+package com.oracle.max.elf;
 
 import java.io.RandomAccessFile;
 import java.io.IOException;

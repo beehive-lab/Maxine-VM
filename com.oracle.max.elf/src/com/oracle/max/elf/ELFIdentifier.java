@@ -54,7 +54,7 @@
  * Creation date: Sep 2, 2005
  */
 
-package com.sun.max.elf;
+package com.oracle.max.elf;
 
 /**
  * The <code>ELFIndentifier</code> class contains all of the constants and information
