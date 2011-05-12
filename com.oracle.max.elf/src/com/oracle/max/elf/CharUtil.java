@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,7 +53,7 @@
  *
  * Created May 27, 2006
  */
-package com.sun.max.elf;
+package com.oracle.max.elf;
 
 /**
  * The <code>CharUtil</code> class includes a number of useful utilities in dealing
