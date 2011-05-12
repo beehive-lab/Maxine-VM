@@ -33,7 +33,6 @@ import com.sun.max.program.*;
  * <pre>
  *     -source 1.4 -target 1.4 -XDjsrlimit=0
  * </pre>
- *
  */
 public class JsrInliningTestSource {
 
