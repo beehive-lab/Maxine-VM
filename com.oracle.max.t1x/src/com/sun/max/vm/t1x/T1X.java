@@ -101,7 +101,7 @@ public class T1X implements RuntimeCompiler {
     /**
      * Class defining the template definitions, default is {@link T1XTemplateSource}.
      */
-    private final Class<?> templateSource;
+    private Class<?> templateSource;
     /**
      * When using non-default template definitions, this compiler provides the
      * default implementation for any non-overridden templates.
@@ -113,7 +113,7 @@ public class T1X implements RuntimeCompiler {
      */
     protected final T1XCompilationFactory t1XCompilationFactory;
 
-    // TODO(mjj) These are not implemented by vanilla T1X but should they be?
+    // TODO(mjj) These are not implemented by standard T1X but should they be?
     private static final EnumSet UNIMPLEMENTED_TEMPLATES = EnumSet.of(T1XTemplateTag.GOTO, T1XTemplateTag.GOTO_W,
                     T1XTemplateTag.NULL_CHECK, T1XTemplateTag.WRITEREG$link);
 
@@ -123,17 +123,26 @@ public class T1X implements RuntimeCompiler {
     }
 
     /**
-     * Creates a compiler in which some template definitions may be "overridden".
-     * @param templateSource class defining override template definitions
+     * Creates a compiler in which some template definitions may be overridden.
+     * by calling {@link #setTemplateSource(Class)} before {@link #initialize}.
      * @param altT1X compiler providing implementation of non-overridden definitions
      * @param factory for creating {@link T1XCompilation} instances
      */
     @HOSTED_ONLY
-    protected T1X(Class<?> templateSource, T1X altT1X, T1XCompilationFactory factory) {
+    protected T1X(T1X altT1X, T1XCompilationFactory factory) {
+        this(null, altT1X, factory);
+    }
+
+    @HOSTED_ONLY
+    private T1X(Class<?> templateSource, T1X altT1X, T1XCompilationFactory factory) {
         this.altT1X = altT1X;
         this.templateSource = templateSource;
         this.t1XCompilationFactory = factory;
         this.templates = new Templates();
+    }
+
+    protected void setTemplateSource(Class<?> templateSource) {
+        this.templateSource = templateSource;
     }
 
     private final ThreadLocal<T1XCompilation> compilation = new ThreadLocal<T1XCompilation>() {
