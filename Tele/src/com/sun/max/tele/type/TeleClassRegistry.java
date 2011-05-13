@@ -44,15 +44,17 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
- * A registry of classes known to be loaded in the VM.
- * The registry is initialized with all classes pre-loaded into the boot image.
- * Dynamically loaded classes are discovered and added by
- * inspection during each {@link #updateCache()}.
- *
- * The registry is constructed using information obtained by low level
- * data reading, avoiding the overhead of creating a {@link TeleClassActor},
- * which overhead includes loading the class.
- *
+ * A registry that identifies all classes known to be loaded in the VM.
+ * <p>
+ * The registry identifies each loaded class with a {@link TeleReference} that points at the {@link ClassActor} for the
+ * class in the VM. The registry does <em>not</em> created any instances of {@link TeleClassActor} for them, however, in
+ * order to avoid unnecessary overhead.
+ * <p>
+ * At the start of an session the registry is initialized with all classes loaded into the boot image. Dynamically
+ * loaded classes are discovered and added by inspection during each {@link #updateCache()}.
+ * <p>
+ * The registry is necessarily constructed using information obtained by low level data reading and knowledge of the VM
+ * implementation, because the registry is itself required before type-based access can be supported.
  */
 public final class TeleClassRegistry extends AbstractTeleVMHolder implements MaxClassRegistry, TeleVMCache {
 

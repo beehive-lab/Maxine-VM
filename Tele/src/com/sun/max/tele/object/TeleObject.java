@@ -50,7 +50,7 @@ import com.sun.max.vm.value.*;
  * general proxy mechanisms, but rather an encapsulation of the design knowledge about the VM that is needed make sense
  * of VM state for debugging and visualization purposes.
  * <p>
- * The type hierarchy of {@link TeleObject} classes is designed as a <emph>projection</emph> (in the mathematical sense)
+ * The type hierarchy of {@link TeleObject} classes is designed as a <em>projection</em> (in the mathematical sense)
  * of the representational type hierarchy in the VM. This hierarchy includes standard Java object types, the Maxine
  * non-Java extended types under {@link TeleHybridObject}, and the special tuple {@link TeleStaticTuple}, which has no
  * type at all, even in the Maxine extended type system.
@@ -184,7 +184,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
      * about the language and object representation.
      * <p>
      * The factory method {@link TeleObjectFactory#make(Reference)} ensures synchronized TeleObjects creation, and
-     * instances should <emph>only</emph> be created via that factory.
+     * instances should <em>only</em> be created via that factory.
      * <p>
      * It is important to avoid in the constructor (and in the constructors of subclasses) the following of
      * {@link Reference} fields, which leads to the creation of another instance of {@link TeleObject}. This can lead to

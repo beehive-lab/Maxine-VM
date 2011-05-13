@@ -57,24 +57,29 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
 /**
- * Canonical surrogate for some flavor of {@link TargetMethod}, which is a compilation
- * of a Java {@link ClassMethod} in the VM.
+ * Canonical surrogate for some flavor of {@link TargetMethod}, which is a compilation of a Java {@link ClassMethod} in
+ * the VM.
  * <p>
- * When this surrogate is first created, it determines only the location of the {@link TargetMehod}
- * in the VM.  This limitation keeps the overhead low, since one of these is created eagerly for every
- * discovered compilation.
+ * When this surrogate is first created, it records only the location of the {@link TargetMehod} in VM memory. This
+ * limitation keeps the overhead low, since an instance of this class is eagerly created for every compilation
+ * discovered in the VM. It also avoids creating any other instances of {@link TeleObject}, which can lead to infinite
+ * regress in the presence of mutually referential objects, notably with instances of {@link TeleClassMethodActor}.
  * <p>
- * The full contents of the {@link TargetMethod} in the VM are lazily loaded, disassembled, and cached.
- * The caches are flushed whenever
- * an update determines that the code has been changed (i.e. patched).
+ * The first time this object is refreshed, it gets an instance of {@link TeleClassMethodActor} that refers to the
+ * {@link ClassMethodActor} in the VM that owns the compilation represented by this object.
  * <p>
- * Content loading is performed by (restricted) deep copying the {@link TargetMethod}
- * from the VM, and caching the local instance.
+ * The full contents of the {@link TargetMethod} in the VM are loaded, disassembled, and cached lazily: only when
+ * needed. The caches are flushed eagerly, whenever an update determines that the code has been changed (i.e. patched),
+ * but the new contents are only loaded lazily, as needed.
  * <p>
- * <strong>Important</strong>: this implementation assumes that compilations in the VM, once created,
- * <strong>do not move in memory</strong> and <strong>are never evicted</strong>.
+ * Content loading is performed by (restricted) deep copying the {@link TargetMethod} from the VM, and caching the local
+ * instance.
+ * <p>
+ * <strong>Important</strong>: this implementation assumes that compilations in the VM, once created, <strong>do not
+ * move in memory</strong> and <strong>are never evicted</strong>.
  *
  * @author Michael Van De Vanter
+ * @see TeleClassMethodActor
  */
 public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetMethodAccess {
 
