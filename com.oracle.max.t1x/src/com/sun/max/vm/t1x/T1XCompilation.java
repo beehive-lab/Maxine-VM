@@ -315,7 +315,7 @@ public class T1XCompilation {
             if (method.isSynchronized() && !method.isStatic()) {
                 syncMethodReceiverCopy = maxLocals++;
             }
-            frame = new AMD64JVMSFrameLayout(maxLocals, maxStack, maxParams, compiler.templateSlots);
+            frame = new AMD64JVMSFrameLayout(maxLocals, maxStack, maxParams, compiler.templates.templateSlots);
         } else {
             unimplISA();
         }
@@ -560,8 +560,8 @@ public class T1XCompilation {
      */
     protected T1XTemplate getTemplate(T1XTemplateTag tag) {
         assert tag != null;
-        assert compiler.templates[tag.ordinal()] != null;
-        return compiler.templates[tag.ordinal()];
+        assert compiler.templates.t1XTemplates[tag.ordinal()] != null;
+        return compiler.templates.t1XTemplates[tag.ordinal()];
     }
 
     private Adapter emitPrologue() {
