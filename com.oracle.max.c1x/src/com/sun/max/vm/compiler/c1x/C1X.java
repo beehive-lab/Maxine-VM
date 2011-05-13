@@ -49,9 +49,6 @@ import com.sun.max.vm.type.*;
 
 /**
  * Integration of the C1X compiler into Maxine's compilation framework.
- *
- * @author Ben L. Titzer
- * @author Doug Simon
  */
 public class C1X implements RuntimeCompiler {
 
@@ -176,6 +173,7 @@ public class C1X implements RuntimeCompiler {
                 optionsRegistered = true;
             }
             compiler = new C1XCompiler(runtime, target, xirGenerator, vm().registerConfigs.globalStub);
+
             // search for the runtime call and register critical methods
             for (Method m : RuntimeCalls.class.getDeclaredMethods()) {
                 int flags = m.getModifiers();

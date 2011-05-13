@@ -39,7 +39,6 @@ BEGIN  { i = 0; }
 /\* @author [A-Za-z\. ]*$/ { while (i > 0 && lines[i - 1] ~ /^ \* *$/ ) { i-- ; } next; }
       { lines[i++] = $0; } 
 END   { j = 0; while (j < i) print lines[j++]; } '
-     echo "------ $f ------"
     diff $f $f.tmp >/dev/null
     if [ $? -ne 0 ]; then
         mv $f $f.orig

@@ -29,8 +29,6 @@ import com.sun.c1x.debug.*;
 /**
  * Base class for compilers that notify subscribed {@link CompilationObserver CompilationObservers} of
  * {@link CompilationEvent CompilationEvents} that occur during their compilations.
- *
- * @author Peter Hofer
  */
 public class ObservableCompiler {
 
@@ -96,4 +94,11 @@ public class ObservableCompiler {
         }
     }
 
+    /**
+     * Gets an iterable view over the observers currently attached to this compiler.
+     */
+    public Iterable<CompilationObserver> observers() {
+        List<CompilationObserver> empty = Collections.emptyList();
+        return observers == null ? empty : observers;
+    }
 }

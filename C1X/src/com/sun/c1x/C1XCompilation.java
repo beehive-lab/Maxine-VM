@@ -42,8 +42,6 @@ import com.sun.cri.ri.*;
 /**
  * This class encapsulates global information about the compilation of a particular method,
  * including a reference to the runtime, statistics about the compiled code, etc.
- *
- * @author Ben L. Titzer
  */
 public final class C1XCompilation {
 
