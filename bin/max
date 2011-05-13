@@ -56,8 +56,6 @@
 # override the 'image' command, define a function named 'run_image_override' in the
 # parent script before sourcing this script. In this case, the 'run_image_override'
 # function will be called instead of 'run_image' if the user specified the 'image' command.
-#
-# Author: Doug Simon, Mick Jordan
 
 #set -x
 
@@ -846,6 +844,10 @@ function run_image() {
                 prop_name="max.${1/-/}"
                 shift
                 system_props="$system_props -D${prop_name}=$1"
+                ;;
+            --XX:LogFile=*)
+                MAXINE_LOG_FILE=${1/*=/}
+                export MAXINE_LOG_FILE
                 ;;
             *)
                 image_args="$image_args $1"
