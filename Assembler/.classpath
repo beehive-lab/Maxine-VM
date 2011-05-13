@@ -3,6 +3,6 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="test"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/Base"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.base"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

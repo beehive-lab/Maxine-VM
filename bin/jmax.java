@@ -670,7 +670,7 @@ public class jmax {
             changedFiles += update.changedFiles;
 
             File dotCheckstyle = new File(projectDir, ".checkstyle");
-            update = new FileUpdater(dotCheckstyle, false, response) {
+            update = new FileUpdater(dotCheckstyle, true, response) {
                 @Override
                 void generate(PrintStream out) {
                     String checkstyleConfigPath;
@@ -678,7 +678,7 @@ public class jmax {
                     if (projectCheckstyleConfig.exists()) {
                         checkstyleConfigPath = "/" + name + "/.checkstyle_checks.xml";
                     } else {
-                        Project p = project("Base");
+                        Project p = project("com.oracle.max.base");
                         File sharedCheckstyleConfig = new File(new File(p.baseDir, p.name), ".checkstyle_checks.xml");
                         if (!sharedCheckstyleConfig.exists()) {
                             throw new InternalError("Shared checkstyle config file not found: " + sharedCheckstyleConfig);
