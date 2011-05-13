@@ -64,17 +64,30 @@ import com.sun.max.vm.verifier.*;
  */
 public class T1X implements RuntimeCompiler {
 
-    public final T1XTemplate[] templates;
+    /**
+     * Encapsulates a set of compiled templates and the associated maximum frame size.
+     */
+    public static class Templates {
+        /** The compiled templates.
+         */
+        public final T1XTemplate[] t1XTemplates;
+
+        /**
+         * The (max) number of slots to be reserved in each T1X frame for template spill slots,
+         * for {@link #templates}.
+         */
+        int templateSlots;
+
+        public Templates() {
+            t1XTemplates = new T1XTemplate[T1XTemplateTag.values().length];
+        }
+    }
 
     static {
         ClassfileReader.bytecodeTemplateClasses.add(T1X_TEMPLATE.class);
     }
 
-    /**
-     * The number of slots to be reserved in each T1X frame for template spill slots.
-     */
-    int templateSlots;
-
+    public Templates templates;
     /**
      * Support for {@link T1XOptions#PrintBytecodeHistogram}.
      */
@@ -120,7 +133,7 @@ public class T1X implements RuntimeCompiler {
         this.altT1X = altT1X;
         this.templateSource = templateSource;
         this.t1XCompilationFactory = factory;
-        templates = new T1XTemplate[T1XTemplateTag.values().length];
+        this.templates = new Templates();
     }
 
     private final ThreadLocal<T1XCompilation> compilation = new ThreadLocal<T1XCompilation>() {
@@ -333,72 +346,7 @@ public class T1X implements RuntimeCompiler {
     @Override
     public void initialize(Phase phase) {
         if (isHosted() && phase == Phase.COMPILING) {
-
-            Trace.begin(1, "creating T1X templates");
-            long startTime = System.currentTimeMillis();
-
-            // Create a C1X compiler to compile the templates
-            C1X bootCompiler = C1X.instance;
-            if (bootCompiler == null) {
-                bootCompiler = new C1X();
-                bootCompiler.initialize(Phase.COMPILING);
-            }
-            C1XCompiler comp = bootCompiler.compiler();
-            List<C1XCompilerExtension> oldExtensions = comp.extensions;
-            comp.extensions = Arrays.asList(new C1XCompilerExtension[] {new T1XTemplateChecker()});
-
-            ClassActor.fromJava(T1XFrameOps.class);
-            ClassActor.fromJava(T1XRuntime.class);
-            ClassVerifier verifier = new TypeCheckingVerifier(ClassActor.fromJava(T1XTemplateSource.class));
-
-            final Method[] templateMethods = templateSource.getDeclaredMethods();
-            int codeSize = 0;
-            for (Method method : templateMethods) {
-                if (Platform.platform().isAcceptedBy(method.getAnnotation(PLATFORM.class))) {
-                    T1X_TEMPLATE anno = method.getAnnotation(T1X_TEMPLATE.class);
-                    if (anno != null) {
-                        T1XTemplateTag tag = anno.value();
-                        ClassMethodActor templateSource = ClassMethodActor.fromJava(method);
-                        templateSource.verify(verifier);
-
-                        FatalError.check(templateSource.isTemplate(), "Method with " + T1X_TEMPLATE.class.getSimpleName() + " annotation should be a template: " + templateSource);
-                        FatalError.check(!hasStackParameters(templateSource), "Template must not have *any* stack parameters: " + templateSource);
-
-                        final C1XTargetMethod templateCode = (C1XTargetMethod) bootCompiler.compile(templateSource, true, null);
-                        if (!(templateCode.referenceLiterals() == null)) {
-                            StringBuilder sb = new StringBuilder("Template must not have *any* reference literals: " + templateCode);
-                            for (int i = 0; i < templateCode.referenceLiterals().length; i++) {
-                                Object literal = templateCode.referenceLiterals()[i];
-                                sb.append("\n  " + i + ": " + literal.getClass().getName() + " // \"" + literal + "\"");
-                            }
-                            throw FatalError.unexpected(sb.toString());
-                        }
-                        FatalError.check(templateCode.scalarLiterals() == null, "Template must not have *any* scalar literals: " + templateCode + "\n\n" + templateCode);
-                        codeSize += templateCode.codeLength();
-                        int frameSlots = Ints.roundUp(templateCode.frameSize(), STACK_SLOT_SIZE) / STACK_SLOT_SIZE;
-                        if (frameSlots > templateSlots) {
-                            templateSlots = frameSlots;
-                        }
-                        T1XTemplate template = templates[tag.ordinal()];
-                        if (template != null) {
-                            FatalError.unexpected("Template tag " + tag + " is already bound to " + template.method + ", cannot rebind to " + templateSource);
-                        }
-                        templates[tag.ordinal()] = new T1XTemplate(templateCode, tag, templateSource);
-                    }
-                }
-            }
-            // ensure everything is implemented
-            for (int i = 0; i < T1XTemplateTag.values().length; i++) {
-                if (templates[i] == null && !UNIMPLEMENTED_TEMPLATES.contains(T1XTemplateTag.values()[i])) {
-                    if (altT1X == null || altT1X.templates[i] == null) {
-                        FatalError.unexpected("Template tag " + T1XTemplateTag.values()[i] + " is not implemented");
-                    } else {
-                        templates[i] = altT1X.templates[i];
-                    }
-                }
-            }
-            Trace.end(1, "creating T1X templates [templates code size: " + codeSize + "]", startTime);
-            comp.extensions = oldExtensions;
+            createTemplates(templateSource, altT1X, true, templates);
         }
         if (phase == Phase.STARTING) {
             if (T1XOptions.PrintBytecodeHistogram) {
@@ -424,6 +372,92 @@ public class T1X implements RuntimeCompiler {
             }
 
         }
+    }
+
+    /**
+     * Create a set of templates from the methods annotated with {@link T1X_TEMPLATE} in the given class.
+     * Undefined templates are filled from the templates associated with {@code altT1X}. The latter
+     * maybe null iff {@code checkComplete} is {@code false}, in which case the result will only
+     * contain the templates defined in the class.
+     * @param templateSourceClass class containing template methods
+     * @param altT1X alternate compiler to use for undefined templates.
+     * @param checkComplete If {@code true} check the array for completeness.
+     * @param templates an existing instance that will be incrementally updated. May be null.
+     * @return a {@link Templates} instance.
+     */
+    @HOSTED_ONLY
+    public Templates createTemplates(Class<?> templateSourceClass, T1X altT1X, boolean checkComplete, Templates templates) {
+        Trace.begin(1, "creating T1X templates from " + templateSourceClass.getName());
+        if (templates == null) {
+            templates = new Templates();
+        }
+        long startTime = System.currentTimeMillis();
+
+        // Create a C1X compiler to compile the templates
+        C1X bootCompiler = C1X.instance;
+        if (bootCompiler == null) {
+            bootCompiler = new C1X();
+            bootCompiler.initialize(Phase.COMPILING);
+        }
+        C1XCompiler comp = bootCompiler.compiler();
+        List<C1XCompilerExtension> oldExtensions = comp.extensions;
+        comp.extensions = Arrays.asList(new C1XCompilerExtension[] {new T1XTemplateChecker()});
+
+        ClassActor.fromJava(T1XFrameOps.class);
+        ClassActor.fromJava(T1XRuntime.class);
+        ClassVerifier verifier = new TypeCheckingVerifier(ClassActor.fromJava(T1XTemplateSource.class));
+
+        final Method[] templateMethods = templateSourceClass.getDeclaredMethods();
+        int codeSize = 0;
+        for (Method method : templateMethods) {
+            if (Platform.platform().isAcceptedBy(method.getAnnotation(PLATFORM.class))) {
+                T1X_TEMPLATE anno = method.getAnnotation(T1X_TEMPLATE.class);
+                if (anno != null) {
+                    T1XTemplateTag tag = anno.value();
+                    ClassMethodActor templateSource = ClassMethodActor.fromJava(method);
+                    templateSource.verify(verifier);
+
+                    FatalError.check(templateSource.isTemplate(), "Method with " + T1X_TEMPLATE.class.getSimpleName() + " annotation should be a template: " + templateSource);
+                    FatalError.check(!hasStackParameters(templateSource), "Template must not have *any* stack parameters: " + templateSource);
+
+                    final C1XTargetMethod templateCode = (C1XTargetMethod) bootCompiler.compile(templateSource, true, null);
+                    if (!(templateCode.referenceLiterals() == null)) {
+                        StringBuilder sb = new StringBuilder("Template must not have *any* reference literals: " + templateCode);
+                        for (int i = 0; i < templateCode.referenceLiterals().length; i++) {
+                            Object literal = templateCode.referenceLiterals()[i];
+                            sb.append("\n  " + i + ": " + literal.getClass().getName() + " // \"" + literal + "\"");
+                        }
+                        throw FatalError.unexpected(sb.toString());
+                    }
+                    FatalError.check(templateCode.scalarLiterals() == null, "Template must not have *any* scalar literals: " + templateCode + "\n\n" + templateCode);
+                    codeSize += templateCode.codeLength();
+                    int frameSlots = Ints.roundUp(templateCode.frameSize(), STACK_SLOT_SIZE) / STACK_SLOT_SIZE;
+                    if (frameSlots > templates.templateSlots) {
+                        templates.templateSlots = frameSlots;
+                    }
+                    T1XTemplate template = templates.t1XTemplates[tag.ordinal()];
+                    if (template != null) {
+                        FatalError.unexpected("Template tag " + tag + " is already bound to " + template.method + ", cannot rebind to " + templateSource);
+                    }
+                    templates.t1XTemplates[tag.ordinal()] = new T1XTemplate(templateCode, tag, templateSource);
+                }
+            }
+        }
+        if (checkComplete) {
+            // ensure everything is implemented
+            for (int i = 0; i < T1XTemplateTag.values().length; i++) {
+                if (templates.t1XTemplates[i] == null && !UNIMPLEMENTED_TEMPLATES.contains(T1XTemplateTag.values()[i])) {
+                    if (altT1X == null || altT1X.templates.t1XTemplates[i] == null) {
+                        FatalError.unexpected("Template tag " + T1XTemplateTag.values()[i] + " is not implemented");
+                    } else {
+                        templates.t1XTemplates[i] = altT1X.templates.t1XTemplates[i];
+                    }
+                }
+            }
+        }
+        Trace.end(1, "creating T1X templates from " + templateSourceClass.getName() + " [templates code size: " + codeSize + "]", startTime);
+        comp.extensions = oldExtensions;
+        return templates;
     }
 
     @HOSTED_ONLY
