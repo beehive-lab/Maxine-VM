@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.actor.holder;
+package com.sun.max.vm;
 
 import java.util.*;
 
@@ -29,22 +29,19 @@ import com.sun.max.*;
  * Variable length array. Accessing elements of such an array with a positive index
  * will never throw an {@link IndexOutOfBoundsException}. Specifically,
  * {@linkplain #set(int, Object) inserting} an element will expand the array if necessary.
- *
- * @see ClassID
- * @see ClassDependencyManager
  */
-class VariableLengthArray<E> {
+public class LinearIDMap<T> {
     /*
      * Simple first implementation. Backing Storage for the array is made of a
      * fixed size initial prefix and a variable tail that is resized automatically
      * when trying to add an out of bound element.
      */
 
-    private final E[] prefix;
-    private E[] variable;
+    private final T[] prefix;
+    private T[] variable;
 
-    public VariableLengthArray(int initialCapacity) {
-        final Class<E []> type = null;
+    public LinearIDMap(int initialCapacity) {
+        final Class<T[]> type = null;
         prefix =  Utils.newArray(type, initialCapacity);
         variable = Utils.newArray(type, 0);
     }
@@ -55,17 +52,17 @@ class VariableLengthArray<E> {
         if (newCapacity < minOverflowCapacity) {
             newCapacity = minOverflowCapacity;
         }
-        E [] newOverflow = Arrays.copyOf(variable, newCapacity);
+        T [] newOverflow = Arrays.copyOf(variable, newCapacity);
         variable = newOverflow;
     }
 
     /**
      * Sets the element at a given index, expanding the array if necessary first so that {@code this.length() > index}.
      */
-    public E set(int index, E element) {
+    public T set(int index, T element) {
         final int pl = prefix.length;
         if (index < pl) {
-            E oldValue = prefix[index];
+            T oldValue = prefix[index];
             prefix[index] = element;
             return oldValue;
         }
@@ -74,12 +71,12 @@ class VariableLengthArray<E> {
         if (oindex >= variable.length) {
             ensureCapacity(oindex + 1);
         }
-        E oldValue = variable[oindex];
+        T oldValue = variable[oindex];
         variable[oindex] = element;
         return oldValue;
     }
 
-    public E get(int index) {
+    public T get(int index) {
         final int pl = prefix.length;
         if (index < pl) {
             return prefix[index];

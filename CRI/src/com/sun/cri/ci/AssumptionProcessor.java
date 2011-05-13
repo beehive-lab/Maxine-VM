@@ -22,30 +22,30 @@
  */
 package com.sun.cri.ci;
 
-import com.sun.cri.ri.*;
+import com.sun.cri.ci.CiAssumptions.ConcreteMethod;
+import com.sun.cri.ci.CiAssumptions.ConcreteSubtype;
 
 /**
  * Compiler assumption processor interface between classes implementing set of assumptions and
  * classes needing iteration over assumptions.
- *
- * @author Laurent Daynes
  */
-public interface AssumptionProcessor {
-    /**
-     * Process a unique concrete sub-type assumption.
-     *
-     * @param context
-     * @param subtype
-     * @return true if the processor should proceed to next assumption, false if it should stop.
-     */
-    boolean processUniqueConcreteSubtype(RiType context, RiType subtype);
+public abstract class AssumptionProcessor {
 
     /**
      * Process a unique concrete method assumption.
      *
-     * @param context
-     * @param method
-     * @return true if the processor should proceed to next assumption, false if it should stop.
+     * @return true if the processor should proceed to next assumption, false if it should stop
      */
-    boolean processUniqueConcreteMethod(RiMethod context, RiMethod method);
+    public boolean doConcreteMethod(ConcreteMethod cm) {
+        return true;
+    }
+
+    /**
+     * Processes a unique concrete sub-type assumption.
+     *
+     * @return true if the processor should proceed to next assumption, false if it should stop
+     */
+    public boolean doConcreteSubtype(ConcreteSubtype cs) {
+        return true;
+    }
 }

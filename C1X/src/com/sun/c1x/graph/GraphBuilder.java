@@ -2885,7 +2885,7 @@ public final class GraphBuilder {
             }
 
             if (C1XOptions.UseAssumptions) {
-                RiMethod assumed = method.uniqueConcreteMethod();
+                RiMethod assumed = method.holder().uniqueConcreteMethod(method);
                 if (assumed != null) {
                     if (C1XOptions.PrintAssumptions) {
                         TTY.println("Recording concrete method assumption in context of " + method.holder().name() + ": " + assumed.name());

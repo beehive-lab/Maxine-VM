@@ -86,10 +86,6 @@ public class CiUnresolvedMethod implements RiMethod {
         throw unresolved("isLeafMethod()");
     }
 
-    public RiMethod uniqueConcreteMethod() {
-        throw unresolved("uniqueConcreteMethod()");
-    }
-
     public boolean isClassInitializer() {
         throw unresolved("isClassInitializer()");
     }
