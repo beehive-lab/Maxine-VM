@@ -31,6 +31,7 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -43,6 +44,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.deps.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.hosted.CompiledPrototype.Link.Relationship;
 import com.sun.max.vm.jdk.*;
@@ -655,13 +657,14 @@ public class CompiledPrototype extends Prototype {
      * Recompile methods whose assumptions were invalidated.
      * @return true if the recompilation brought new methods in the compiled prototype.
      */
+    @HOSTED_ONLY
     public boolean recompileInvalidatedTargetMethods() {
         // All classes referenced from the invalidated target methods must already be loaded
         // However, recompilation may bring new class method actor since a recompilation
         // may be triggered by the addition of a new concrete method in the prototype which may
         // not be already compiled.
-        HashSet<TargetMethod> recompileSet = ClassDependencyManager.invalidTargetMethods;
-        ClassDependencyManager.invalidTargetMethods = new HashSet<TargetMethod>();
+        HashSet<TargetMethod> recompileSet = DependenciesManager.invalidTargetMethods;
+        DependenciesManager.invalidTargetMethods = new HashSet<TargetMethod>();
 
         if (!recompileSet.isEmpty()) {
             Trace.begin(1, "recompiling invalidated methods");
@@ -671,7 +674,7 @@ public class CompiledPrototype extends Prototype {
             }
             assert worklist.size() == recompileSet.size();
             compileWorklist();
-            assert ClassDependencyManager.invalidTargetMethods.size() == 0;
+            assert DependenciesManager.invalidTargetMethods.size() == 0;
             Trace.end(1, "recompiling invalidated methods");
             return true;
         }

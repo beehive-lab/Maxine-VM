@@ -30,16 +30,13 @@ import com.sun.cri.ri.*;
  * Class for recording optimistic assumptions made during compilation.
  * Recorded assumption can be visited for subsequent processing using
  * an implementation of the {@link AssumptionProcessor} interface.
- *
- * @author Thomas Wuerthinger
- * @author Laurent Daynes
- *
  */
 public final class CiAssumptions implements Serializable {
 
     public abstract static class Assumption implements Serializable {
         /**
          * Apply an assumption processor to the assumption.
+         * 
          * @param processor the assumption processor to apply
          * @return true if a next assumption in a list should be fed to the processor.
          */
@@ -56,7 +53,7 @@ public final class CiAssumptions implements Serializable {
          */
         public final RiType subtype;
 
-        private ConcreteSubtype(RiType context, RiType subtype) {
+        public ConcreteSubtype(RiType context, RiType subtype) {
             this.context = context;
             this.subtype = subtype;
         }
@@ -72,7 +69,7 @@ public final class CiAssumptions implements Serializable {
 
         @Override
         public boolean visit(AssumptionProcessor processor) {
-            return processor.processUniqueConcreteSubtype(context, subtype);
+            return processor.doConcreteSubtype(this);
         }
     }
 
@@ -80,7 +77,7 @@ public final class CiAssumptions implements Serializable {
         public final RiMethod context;
         public final RiMethod method;
 
-        private ConcreteMethod(RiMethod context, RiMethod method) {
+        public ConcreteMethod(RiMethod context, RiMethod method) {
             this.context = context;
             this.method = method;
         }
@@ -96,7 +93,7 @@ public final class CiAssumptions implements Serializable {
 
         @Override
         public boolean visit(AssumptionProcessor processor) {
-            return processor.processUniqueConcreteMethod(context, method);
+            return processor.doConcreteMethod(this);
         }
     }
 

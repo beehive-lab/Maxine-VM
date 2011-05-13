@@ -193,6 +193,10 @@ public abstract class UnresolvedType implements RiType {
         throw unresolved("superType()");
     }
 
+    public RiMethod uniqueConcreteMethod(RiMethod method) {
+        throw unresolved("uniqueConcreteMethod()");
+    }
+
     /**
      * Gets the compiler interface type representing an array of this compiler interface type.
      * @return the compiler interface type representing an array with elements of this compiler interface type

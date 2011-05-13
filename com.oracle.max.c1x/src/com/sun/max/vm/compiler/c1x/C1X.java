@@ -38,10 +38,10 @@ import com.sun.max.annotate.*;
 import com.sun.max.platform.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
-import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.c1x.MaxXirGenerator.RuntimeCalls;
+import com.sun.max.vm.compiler.deps.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
@@ -199,21 +199,21 @@ public class C1X implements RuntimeCompiler {
         return compiler;
     }
 
-    public final TargetMethod compile(final ClassMethodActor classMethodActor, boolean install, CiStatistics stats) {
-        RiMethod method = classMethodActor;
-        ClassHierarchyAssumptions assumptions = ClassHierarchyAssumptions.noAssumptions;
+    public final TargetMethod compile(final ClassMethodActor method, boolean install, CiStatistics stats) {
         CiTargetMethod compiledMethod;
         do {
             compiledMethod = compiler().compileMethod(method, -1, xirGenerator, stats).targetMethod();
-            if (compiledMethod == null) {
-                throw FatalError.unexpected("bailout"); // compilation failed
-            }
-            assumptions = ClassDependencyManager.validateAssumptions(compiledMethod.assumptions());
-            if (assumptions.isValid()) {
-                C1XTargetMethod c1xTargetMethod = new C1XTargetMethod(classMethodActor, compiledMethod, install);
-                if (ClassDependencyManager.registerValidatedTarget(assumptions, c1xTargetMethod)) {
-                    return c1xTargetMethod;
+            Dependencies deps = DependenciesManager.validateDependencies(compiledMethod.assumptions());
+            if (deps != Dependencies.INVALID) {
+                C1XTargetMethod c1xTargetMethod = new C1XTargetMethod(method, compiledMethod, install);
+                if (deps != null) {
+                    DependenciesManager.registerValidatedTarget(deps, c1xTargetMethod);
+                    if (DependenciesManager.TraceDeps) {
+                        Log.println("DEPS: " + deps.toString(true));
+                    }
                 }
+                return c1xTargetMethod;
+
             }
             // Loop back and recompile.
         } while(true);

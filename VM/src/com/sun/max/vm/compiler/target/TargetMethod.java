@@ -57,10 +57,6 @@ import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 /**
  * A collection of objects that represent the compiled target code
  * and its auxiliary data structures for a Java method.
- *
- * @author Bernd Mathiske
- * @author Doug Simon
- * @author Thomas Wuerthinger
  */
 public abstract class TargetMethod extends MemoryRegion {
 
@@ -528,10 +524,6 @@ public abstract class TargetMethod extends MemoryRegion {
 
     public final boolean isCalleeSaved() {
         return registerRestoreEpilogueOffset >= 0;
-    }
-
-    public boolean isMakingValidAssumptions() {
-        return true;
     }
 
     /**

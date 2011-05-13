@@ -31,8 +31,6 @@ import com.sun.cri.ci.*;
  * Represents resolved and unresolved methods. Methods, like fields and types, are resolved through
  * {@link RiConstantPool constant pools}, and their actual implementation is provided by the {@link RiRuntime runtime}
  * to the compiler. Note that most operations are only available on resolved methods.
- *
- * @author Ben L. Titzer
  */
 public interface RiMethod {
 
@@ -117,13 +115,6 @@ public interface RiMethod {
      * @return {@code true} if the method is a leaf method (that is, is final or private)
      */
     boolean isLeafMethod();
-
-    /**
-     * Gets the unique concrete method that is presumably called.
-     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return the unique concrete method
-     */
-    RiMethod uniqueConcreteMethod();
 
     /**
      * Checks whether this method is a class initializer.

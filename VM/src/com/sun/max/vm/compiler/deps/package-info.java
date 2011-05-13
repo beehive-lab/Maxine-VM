@@ -20,18 +20,9 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.annotate;
-import java.lang.annotation.*;
-
 /**
- * Every thus annotated method must must have no arguments (apart from a receiver for a non-static method).
- * It must also be purely functional (without side-effects)
- * and idempotent (not influenced by any changing state).
- *
- * If the method is static, it is to be meta-evaluated unconditionally by the compiler.
- * If the method is non-static, it will be meta-evaluated whenever its receiver is known at compile time.
+ * Management of dependencies from compiled methods to classes, methods and
+ * other entities where such dependencies may change and result in some
+ * action (e.g. deoptimization) being applied to a compiled method.
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface FOLD {
-}
+package com.sun.max.vm.compiler.deps;

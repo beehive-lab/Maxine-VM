@@ -231,4 +231,5 @@ public interface RiType {
      */
     RiMethod resolveMethodImpl(RiMethod method);
 
+    RiMethod uniqueConcreteMethod(RiMethod method);
 }
