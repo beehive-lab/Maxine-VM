@@ -77,22 +77,6 @@ public interface CompilationScheme extends VMScheme {
 
     boolean needsAdapters();
 
-    /**
-     * Adds a compilation observer to this compilation scheme. The observer will be notified before and after each
-     * compilation.
-     * @param observer the observer to add to this compilation scheme.
-     *
-     */
-    void addObserver(CompilationObserver observer);
-
-    /**
-     * Removes a compilation observer from this compilation scheme. The observer will no longer be notified
-     * before and after each compilation.
-     * @param observer the observer to remove from this compilation scheme.
-     *
-     */
-    void removeObserver(CompilationObserver observer);
-
     String description();
 
     /**

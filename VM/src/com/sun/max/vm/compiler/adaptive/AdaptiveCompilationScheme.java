@@ -43,10 +43,6 @@ import com.sun.max.vm.runtime.*;
  * This class implements an adaptive compilation system with multiple compilers with different compilation time / code
  * quality tradeoffs. It encapsulates the necessary infrastructure for recording profiling data, selecting what and when
  * to recompile, etc.
- *
- * @author Ben L. Titzer
- * @author Michael Van De Vanter
- * @author Doug Simon
  */
 public class AdaptiveCompilationScheme extends AbstractVMScheme implements CompilationScheme {
 
@@ -77,12 +73,6 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      * The optimizing compiler.
      */
     public final RuntimeCompiler optimizingCompiler;
-
-    /**
-     * List of attached Compilation observers.
-     */
-    @RESET
-    protected LinkedList<CompilationObserver> observers;
 
     private static boolean baseline;
     private static boolean opt;
@@ -286,7 +276,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
 
             try {
                 if (doCompile) {
-                    return compilation.compile(observers);
+                    return compilation.compile();
                 }
                 return compilation.get();
             } catch (Throwable t) {
@@ -308,28 +298,6 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 if (VMOptions.verboseOption.verboseCompilation) {
                     Log.println("Retrying with " + retryCompiler + "...");
                 }
-            }
-        }
-    }
-
-    /**
-     * This method allows an observer to be notified before the compilation of a method begins.
-     */
-    public synchronized void addObserver(CompilationObserver observer) {
-        if (observers == null) {
-            observers = new LinkedList<CompilationObserver>();
-        }
-        observers.add(observer);
-    }
-
-    /**
-     * This method allows an observer to be notified after the compilation of a method completes.
-     */
-    public synchronized void removeObserver(CompilationObserver observer) {
-        if (observers != null) {
-            observers.remove(observer);
-            if (observers.size() == 0) {
-                observers = null;
             }
         }
     }
@@ -392,7 +360,6 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      * This class implements a daemon thread that performs compilations in the background. Depending on the compiler
      * configuration, multiple compilation threads may be working in parallel.
      *
-     * @author Ben L. Titzer
      */
     protected class CompilationThread extends Thread {
 
@@ -443,7 +410,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
             if (GCOnRecompilation) {
                 System.gc();
             }
-            compilation.compile(observers);
+            compilation.compile();
             compilation = null;
         }
     }

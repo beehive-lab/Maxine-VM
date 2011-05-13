@@ -34,9 +34,6 @@ import com.sun.cri.xir.*;
 
 /**
  * This class implements the compiler interface for C1X.
- *
- * @author Thomas Wuerthinger
- * @author Ben L. Titzer
  */
 public class C1XCompiler extends ObservableCompiler {
 
@@ -56,6 +53,8 @@ public class C1XCompiler extends ObservableCompiler {
      * The XIR generator that lowers Java operations to machine operations.
      */
     public final RiXirGenerator xir;
+
+    private CompilationObserver cfgPrinterObserver;
 
     /**
      * The ordered set of compiler extensions.
@@ -79,6 +78,15 @@ public class C1XCompiler extends ObservableCompiler {
     }
 
     public CiResult compileMethod(RiMethod method, int osrBCI, RiXirGenerator xirGenerator, CiStatistics stats) {
+        if (C1XOptions.PrintCFGToFile && cfgPrinterObserver == null) {
+            synchronized (this) {
+                if (cfgPrinterObserver == null) {
+                    cfgPrinterObserver = new CFGPrinterObserver();
+                    addCompilationObserver(cfgPrinterObserver);
+                }
+            }
+        }
+
         long startTime = 0;
         int index = C1XMetrics.CompiledMethods++;
         if (C1XOptions.PrintCompilation) {
@@ -128,7 +136,7 @@ public class C1XCompiler extends ObservableCompiler {
         }
 
         if (C1XOptions.PrintCFGToFile) {
-            addCompilationObserver(new CFGPrinterObserver());
+            addCompilationObserver(cfgPrinterObserver = new CFGPrinterObserver());
         }
     }
 
