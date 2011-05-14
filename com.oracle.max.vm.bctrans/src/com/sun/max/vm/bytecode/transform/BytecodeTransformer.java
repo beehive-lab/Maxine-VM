@@ -33,8 +33,6 @@ import com.sun.max.vm.bytecode.graft.BytecodeAssembler.*;
  * performing a transformation on some input bytecode. This mechanism takes care of
  * relocating branches if the transformation involves inserting and/or deleting code
  * that changes the distance between a branch and its target.
- *
- * @author Doug Simon
  */
 public class BytecodeTransformer extends BytecodeAdapter {
 
