@@ -43,8 +43,6 @@ import com.sun.max.vm.runtime.*;
  * Size >> log2FirstBin is an index to that table. The first bin in the table contains a linked list of chunk of any size
  * between log2FirstBin and minReclaimableSpace and is used primarily for TLAB and small object allocation.
  * The other bins are used for large object space allocation. "Bin" allocation are synchronized.
- *
- * @author Laurent Daynes.
  */
 public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
     private static final VMIntOption largeObjectsMinSizeOption =
@@ -53,7 +51,7 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
 
     private static boolean TraceTLAB = false;
 
-    class LinearSpaceRefillManager extends MultiChunkTLABAllocator.RefillManager {
+    class LinearSpaceRefillManager extends ChunkListRefillManager {
         /**
          * Size linear space allocator managed by this refill manager are refilled with.
          */
@@ -68,15 +66,20 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
         void setPolicy(Size refillSize, Size refillThreshold, Size tlabMinChunkSize) {
             this.refillSize = refillSize;
             this.refillThreshold =  refillThreshold;
-            this.tlabMinChunkSize = tlabMinChunkSize;
+            this.minChunkSize = tlabMinChunkSize;
         }
 
         LinearSpaceRefillManager() {
         }
 
         @Override
+        Address allocateLarge(Size size) {
+            return binAllocate(size);
+        }
+
+        @Override
         @INLINE(override = true)
-        Address allocate(Size size) {
+        Address allocateOverflow(Size size) {
             return binAllocate(size);
         }
 
@@ -88,7 +91,7 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
 
         @Override
         @INLINE(override = true)
-        Address refill(Pointer startOfSpaceLeft, Size spaceLeft) {
+        Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
             return binRefill(refillSize, startOfSpaceLeft, spaceLeft);
         }
 
@@ -99,12 +102,12 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
          * which will trigger GC on next request.
          */
         @Override
-        Address allocateTLAB(Size tlabSize, Pointer leftover, Size leftoverSize) {
+        Address allocateChunkList(Size tlabSize, Pointer leftover, Size leftoverSize) {
             // FIXME (ld) this never refill the allocator!
-            Address firstChunk = tlabChunkOrZero(leftover, leftoverSize);
+            Address firstChunk = chunkOrZero(leftover, leftoverSize);
             if (!firstChunk.isZero()) {
                 tlabSize = tlabSize.minus(leftoverSize);
-                if (tlabSize.lessThan(tlabMinChunkSize)) {
+                if (tlabSize.lessThan(minChunkSize)) {
                     // Don't bother adding a new chunk.
                     return firstChunk;
                 }
@@ -125,7 +128,7 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
 
     private boolean useTLABBin;
 
-    private final MultiChunkTLABAllocator smallObjectAllocator;
+    private final ChunkListAllocator<LinearSpaceRefillManager> smallObjectAllocator;
 
 
     /**
@@ -663,7 +666,7 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
             freeChunkBins[i] = new FreeSpaceList(i);
         }
         tlabFreeSpaceList = freeChunkBins[0];
-        smallObjectAllocator = new MultiChunkTLABAllocator(new LinearSpaceRefillManager());
+        smallObjectAllocator = new ChunkListAllocator<LinearSpaceRefillManager>(new LinearSpaceRefillManager());
     }
 
     public void initialize(HeapScheme heapScheme, Address start, Size initSize, Size maxSize) {
@@ -684,8 +687,7 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
 
         // Dumb refill policy. Doesn't matter in the long term as we'll switch to a first fit linear allocator
         // with overflow allocator on the side.
-        LinearSpaceRefillManager refillManager = (LinearSpaceRefillManager) smallObjectAllocator.refillManager();
-        refillManager.setPolicy(minLargeObjectSize, allocatorRefillThreshold, minReclaimableSpace);
+        smallObjectAllocator.refillManager.setPolicy(minLargeObjectSize, allocatorRefillThreshold, minReclaimableSpace);
         smallObjectAllocator.initialize(start, initSize, minLargeObjectSize, HeapSchemeAdaptor.MIN_OBJECT_SIZE);
         useTLABBin = false;
     }

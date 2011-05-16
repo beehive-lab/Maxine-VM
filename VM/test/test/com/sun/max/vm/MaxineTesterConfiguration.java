@@ -247,7 +247,7 @@ public class MaxineTesterConfiguration {
 
         imageConfig("java", "-run=java");
         imageConfig("jtt-t1xc1x", opt_c1x, baseline_t1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-baseline");
-        imageConfig("jtt-c1xt1x", opt_c1x, baseline_t1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-baseline");
+        imageConfig("semi", opt_c1x, baseline_t1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-baseline");
         imageConfig("jtt-t1xt1x", opt_c1x, baseline_t1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-baseline", "-test-callee-baseline");
         imageConfig("jtt-c1xc1x", opt_c1x, baseline_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests");
 
