@@ -37,6 +37,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.deps.DependenciesManager.DependencyChecker;
 import com.sun.max.vm.compiler.deps.DependenciesManager.DependenciesCounter;
 import com.sun.max.vm.compiler.deps.Dependencies.DependencyClosure;
+import com.sun.max.vm.compiler.target.*;
 
 /**
  * Map from a class to the set of {@linkplain Dependencies dependencies}
@@ -316,12 +317,12 @@ final class ContextDependents {
             final Dependencies deps = dset.getDeps(i);
             deps.iterate(new DependencyClosure(type.id) {
                 @Override
-                public boolean doConcreteSubtype(ClassActor context, ClassActor subtype) {
+                public boolean doConcreteSubtype(TargetMethod method, ClassActor context, ClassActor subtype) {
                     out.println("    " + context + " has unique concrete implementation" + subtype + " [" + deps + "]");
                     return true;
                 }
                 @Override
-                public boolean doConcreteMethod(MethodActor context, MethodActor method) {
+                public boolean doConcreteMethod(TargetMethod targetMethod, MethodActor context, MethodActor method) {
                     out.println("    " + method + " is a unique concrete method [" + deps + "]");
                     return true;
                 }
