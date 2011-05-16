@@ -35,8 +35,6 @@ import com.sun.max.vm.MaxineVM.Phase;
  * dead space, and invoke the space manager for every. Imprecise sweeping only inspects marked location separated by a minimum
  * distance, thus avoiding inspecting object when the size of a potential free chunk is
  * too small to be of interest to the free space manager.
- *
- * @author Laurent Daynes.
  */
 public abstract class Sweepable {
 
