@@ -34,6 +34,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
@@ -74,7 +75,7 @@ public final class DependenciesManager {
      * multiple validation to be performed concurrently. Installation of dependencies in the dependency table
      * requires additional synchronization as it updates both the table and per class type dependency information.
      */
-    static final ReentrantReadWriteLock classHierarchyLock = new ReentrantReadWriteLock();
+    public static final ReentrantReadWriteLock classHierarchyLock = new ReentrantReadWriteLock();
 
     /**
      * The data structure mapping classes to their dependents.
@@ -121,7 +122,7 @@ public final class DependenciesManager {
         private ClassActor context;
 
         /**
-         * New concrete su-btype of the context type being added to the class hierarchy.
+         * New concrete subtype of the context type being added to the class hierarchy.
          */
         private ClassActor concreteSubtype;
 
@@ -133,12 +134,12 @@ public final class DependenciesManager {
         /**
          * Reset the checker for a new verification.
          * @param context
-         * @param newConcreteSubtype
+         * @param concreteSubtype
          */
-        void reset(ClassActor context, ClassActor newConcreteSubtype) {
+        void reset(ClassActor context, ClassActor concreteSubtype) {
             this.classID = context.id;
             this.context = context;
-            this.concreteSubtype = newConcreteSubtype;
+            this.concreteSubtype = concreteSubtype;
             valid = true;
         }
 
@@ -147,18 +148,35 @@ public final class DependenciesManager {
         }
 
         @Override
-        public boolean doConcreteSubtype(ClassActor context, ClassActor subtype) {
+        public boolean doConcreteSubtype(TargetMethod targetMethod, ClassActor context, ClassActor subtype) {
             // This is called only if assumption on a unique concrete sub-type of the context was recorded.
             // Adding a new concrete sub-type in this case always invalidate this assumption no matter what.
             assert this.context == context && subtype != concreteSubtype : "can never happen";
             valid = false;
+            if (TraceDeps) {
+                StringBuilder sb = new StringBuilder("DEPS: invalidated ").append(targetMethod).append(", invalid dep: UCT[").append(context);
+                if (context != subtype) {
+                    sb.append(",").append(subtype);
+                }
+                sb.append(']');
+                Log.println(sb.toString());
+            }
+
             return false;
         }
 
         @Override
-        public boolean doConcreteMethod(MethodActor context, MethodActor method) {
+        public boolean doConcreteMethod(TargetMethod targetMethod, MethodActor context, MethodActor method) {
             if (concreteSubtype.resolveMethodImpl(context) != method) {
                 valid = false;
+                if (TraceDeps) {
+                    StringBuilder sb = new StringBuilder("DEPS: invalidated ").append(targetMethod).append(", invalid dep: UCM[").append(context);
+                    if (context != method) {
+                        sb.append(",").append(method);
+                    }
+                    sb.append("] dependency of " + targetMethod);
+                    Log.println(sb.toString());
+                }
             }
             return valid;
         }
@@ -389,6 +407,7 @@ public final class DependenciesManager {
         /**
          * Search the instance class tree rooted by the specified class actor for concrete implementations
          * of the specified method. Result of the search can be obtained via {{@link #uniqueConcreteMethod()}.
+         *
          * @param root a tuple or hybrid class actor
          * @param method the method concrete implementation of are being searched
          */
@@ -481,7 +500,7 @@ public final class DependenciesManager {
         for (Dependencies deps : invalidated) {
             deps.invalidate();
             if (MaxineVM.isHosted()) {
-                invalidTargetMethods.add(deps.targetMethod);
+                CompiledPrototype.invalidateTargetMethod(deps.targetMethod);
             }
         }
         if (MaxineVM.isHosted()) {
@@ -572,12 +591,4 @@ public final class DependenciesManager {
             classHierarchyLock.readLock().unlock();
         }
     }
-
-    /**
-     * Set accumulating all the methods invalidated during boot image generation.
-     * The boot image generator must unlink these, and produce new target methods.
-     */
-    @HOSTED_ONLY
-    public static HashSet<TargetMethod> invalidTargetMethods = new HashSet<TargetMethod>();
-
 }

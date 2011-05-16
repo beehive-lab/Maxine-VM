@@ -28,7 +28,6 @@ import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.compiler.deps.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -78,11 +77,11 @@ public final class PrototypeGenerator {
             if (compiledPrototype.compile()) {
                 graphPrototype = new GraphPrototype(compiledPrototype);
             }
+            compiledPrototype.compileFoldableMethods();
         } while (currentNumberOfClasses() != numberOfClassActors);
 
         compiledPrototype.checkRequiredImageMethods();
-        compiledPrototype.compileFoldableMethods();
-        assert DependenciesManager.invalidTargetMethods.isEmpty();
+        assert compiledPrototype.invalidatedTargetMethods.isEmpty();
         compiledPrototype.link();
 
         graphPrototype = new GraphPrototype(compiledPrototype);

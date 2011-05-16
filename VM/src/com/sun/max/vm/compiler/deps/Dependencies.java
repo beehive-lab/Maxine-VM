@@ -174,7 +174,10 @@ public final class Dependencies {
     void invalidate() {
         // Called only when modifying the class hierarchy.
         FatalError.check(classHierarchyLock.isWriteLocked(), "Must hold class hierarchy lock in write mode");
-        assert contextDependents.removeDependencies(this) == 0 : "dependencies should have been removed when flushing";
+
+        // Remove all other mappings from context types not involved in the currently class hierachy change
+        contextDependents.removeDependencies(this);
+
         idMap.free(this);
 
         // TODO: Revisit the following. the invalidate marker may not be needed if this is done under the write lock ...
@@ -215,22 +218,26 @@ public final class Dependencies {
         /**
          * Processes a unique concrete subtype dependency.
          *
+         * @param targetMethod the method compiled with this dependency
          * @param context
          * @param subtype the subtype assumed to be the unique concrete subtype of {@code context}
+         *
          * @return {@code true} to continue the iteration, {@code false} to stop it
          */
-        public boolean doConcreteSubtype(ClassActor context, ClassActor subtype) {
+        public boolean doConcreteSubtype(TargetMethod targetMethod, ClassActor context, ClassActor subtype) {
             return true;
         }
 
         /**
          * Processes a unique concrete method dependency.
          *
+         * @param targetMethod the method compiled with this dependency
          * @param context
          * @param method the method assumed to be the unique concrete implementation of {@code context}
+         *
          * @return {@code true} to continue the iteration, {@code false} to stop it
          */
-        public boolean doConcreteMethod(MethodActor context, MethodActor method) {
+        public boolean doConcreteMethod(TargetMethod targetMethod, MethodActor context, MethodActor method) {
             return true;
         }
 
@@ -258,7 +265,7 @@ public final class Dependencies {
                 boolean stop = !dc.nextClass(classActor, prev);
                 if (length < 0) {
                     if (!stop) {
-                        stop = !dc.doConcreteSubtype(classActor, ClassID.toClassActor(classActor.uniqueConcreteType));
+                        stop = !dc.doConcreteSubtype(targetMethod, classActor, ClassID.toClassActor(classActor.uniqueConcreteType));
                     }
                     length = -length;
                 }
@@ -276,7 +283,7 @@ public final class Dependencies {
                         method = MethodID.toMethodActor(MethodID.fromWord(MemberID.create(methodHolder, -mindex - 1)));
                         contextMethod = classActor.findLocalMethodActor(method.name, method.descriptor());
                     }
-                    stop = !dc.doConcreteMethod(contextMethod, method);
+                    stop = !dc.doConcreteMethod(targetMethod, contextMethod, method);
                 }
                 assert length >= 0;
                 if (dc.classID == holder) {
@@ -314,7 +321,7 @@ public final class Dependencies {
             final StringBuilder sb = new StringBuilder(value + Arrays.toString(packed));
             iterate(new DependencyClosure() {
                 @Override
-                public boolean doConcreteSubtype(ClassActor context, ClassActor subtype) {
+                public boolean doConcreteSubtype(TargetMethod method, ClassActor context, ClassActor subtype) {
                     sb.append(" UCT[").append(context);
                     if (context != subtype) {
                         sb.append(",").append(subtype);
@@ -323,7 +330,7 @@ public final class Dependencies {
                     return true;
                 }
                 @Override
-                public boolean doConcreteMethod(MethodActor context, MethodActor method) {
+                public boolean doConcreteMethod(TargetMethod targetMethod, MethodActor context, MethodActor method) {
                     sb.append(" UCM[").append(context);
                     if (context != method) {
                         sb.append(",").append(method);
@@ -380,12 +387,12 @@ public final class Dependencies {
     void countAssumptionsPerType(int classID, final HashMap<DependenciesCounter, DependenciesCounter> counters) {
         iterate(new DependencyClosure(classID) {
             @Override
-            public boolean doConcreteSubtype(ClassActor context, ClassActor subtype) {
+            public boolean doConcreteSubtype(TargetMethod method, ClassActor context, ClassActor subtype) {
                 DependenciesCounter.incCounter(0, counters);
                 return true;
             }
             @Override
-            public boolean doConcreteMethod(MethodActor context, MethodActor method) {
+            public boolean doConcreteMethod(TargetMethod targetMethod, MethodActor context, MethodActor method) {
                 DependenciesCounter.incCounter(id, counters);
                 return true;
             }

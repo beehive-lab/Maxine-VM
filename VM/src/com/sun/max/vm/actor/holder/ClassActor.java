@@ -376,6 +376,7 @@ public abstract class ClassActor extends Actor implements RiType {
      * Adds this class to the beginning of the list of subclasses of its superclass.
      */
     public final void prependToSiblingList() {
+        assert DependenciesManager.classHierarchyLock.isWriteLockedByCurrentThread();
         if (!isInstanceClass()) {
             // Don't bother for non-instance classes: they all are sub-classes of Objects
             // class hierarchy information can be inferred otherwise.
