@@ -132,7 +132,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                 methods.add(method);
             } catch (InvocationTargetException invocationTargetException) {
                 if (invocationTargetException.getTargetException() instanceof UnsatisfiedLinkError) {
-                    // Library not present yet - try again next time:
+                   // Library not present yet - try again next time:
                     methods.add(method);
                 } else {
                     ProgramError.unexpected(invocationTargetException.getTargetException());

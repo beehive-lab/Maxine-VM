@@ -44,9 +44,6 @@ import com.sun.max.vm.type.*;
  * heap accounts, return free space to it, and may grow or shrink their accounts.
  * The heap region manager may also request a heap account to trade or free some specific
  * regions.
- *
- *
- * @author Laurent Daynes
  */
 public final class HeapRegionManager implements HeapAccountOwner {
     /**
@@ -78,7 +75,7 @@ public final class HeapRegionManager implements HeapAccountOwner {
     public Size size() {
         return Size.fromInt(heapAccount().reserve()).shiftedLeft(log2RegionSizeInBytes);
     }
-    final LinearSpaceAllocator bootAllocator;
+    final AtomicBumpPointerAllocator bootAllocator;
 
     public Address bootAllocator() {
         return Reference.fromJava(bootAllocator).toOrigin();
@@ -132,7 +129,7 @@ public final class HeapRegionManager implements HeapAccountOwner {
     private HeapRegionManager() {
         regionAllocator = new FixedSizeRegionAllocator("Heap Backing Storage");
         bootHeapAccount = new HeapAccount<HeapRegionManager>(this);
-        bootAllocator = new LinearSpaceAllocator(new LinearSpaceAllocator.RefillManager() {
+        bootAllocator = new AtomicBumpPointerAllocator<RefillManager>(new RefillManager() {
 
             @Override
             boolean shouldRefill(Size requestedSpace, Size spaceLeft) {
@@ -140,13 +137,19 @@ public final class HeapRegionManager implements HeapAccountOwner {
             }
 
             @Override
-            Address refill(Pointer startOfSpaceLeft, Size spaceLeft) {
+            Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
                 FatalError.unimplemented();
                 return Address.zero();
             }
 
             @Override
-            Address allocate(Size size) {
+            Address allocateOverflow(Size size) {
+                FatalError.unimplemented();
+                return Address.zero();
+            }
+
+            @Override
+            Address allocateLarge(Size size) {
                 FatalError.unimplemented();
                 return Address.zero();
             }
@@ -294,8 +297,8 @@ public final class HeapRegionManager implements HeapAccountOwner {
 
     public void verifyAfterInitialization() {
         HeapRegionConstants.validate();
-        final OutgoingReferenceChecker checker = new OutgoingReferenceChecker(bootHeapAccount);
         if (MaxineVM.isDebug()) {
+            final OutgoingReferenceChecker checker = new OutgoingReferenceChecker(bootHeapAccount);
             bootAllocator.unsafeMakeParsable();
             bootHeapAccount.visitObjects(checker);
             if (checker.outgoingReferenceCount() != 0L) {

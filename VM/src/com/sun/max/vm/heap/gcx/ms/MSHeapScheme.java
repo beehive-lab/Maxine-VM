@@ -46,18 +46,17 @@ import com.sun.max.vm.thread.*;
  * Implements TLAB over a linked list of free chunk provided by an object space manager.
  *
  * @see FreeHeapSpaceManager.
- *
- * @author Laurent Daynes
  */
 public class MSHeapScheme extends HeapSchemeWithTLAB {
     /**
      * Number of heap words covered by a single mark.
      */
     private static final int WORDS_COVERED_PER_BIT = 1;
-
     static boolean UseLOS = true;
+    static boolean VerifyAfterGC = false;
     static {
         VMOptions.addFieldOption("-XX:", "UseLOS", MSHeapScheme.class, "Use a large object space", Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "VerifyAfterGC", MSHeapScheme.class, "Verify heap after GC", Phase.PRISTINE);
     }
 
    /**
@@ -115,7 +114,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         if (MaxineVM.isHosted() && phase == MaxineVM.Phase.BOOTSTRAPPING) {
             // VM-generation time initialization.
             TLAB_HEADROOM = MIN_OBJECT_SIZE;
-            LinearSpaceAllocator.hostInitialize();
+            AtomicBumpPointerAllocator.hostInitialize();
         } else  if (phase == MaxineVM.Phase.PRISTINE) {
             allocateHeapAndGCStorage();
         } else if (phase == MaxineVM.Phase.TERMINATING) {
@@ -322,6 +321,11 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
         private void reportLastGCTimes() {
             final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("Timings (");
+            Log.print(TimerUtil.getHzSuffix(HeapScheme.GC_TIMING_CLOCK));
+            Log.print(") for GC ");
+            Log.print(collectionCount);
+            Log.print(" : ");
             heapMarker.reportLastElapsedTimes();
             Log.print(", sweeping=");
             Log.print(reclaimTimer.getLastElapsedTime());
@@ -332,6 +336,9 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
         private void reportTotalGCTimes() {
             final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("Timings (");
+            Log.print(TimerUtil.getHzSuffix(HeapScheme.GC_TIMING_CLOCK));
+            Log.print(") for all GC: ");
             heapMarker.reportTotalElapsedTimes();
             Log.print(", sweeping=");
             Log.print(reclaimTimer.getElapsedTime());
@@ -368,7 +375,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             startTimer(reclaimTimer);
             Size freeSpaceAfterGC = reclaim();
             stopTimer(reclaimTimer);
-            if (MaxineVM.isDebug()) {
+            if (VerifyAfterGC) {
                 afterGCVerifier.run();
             }
             vmConfig().monitorScheme().afterGarbageCollection();

@@ -46,8 +46,6 @@ import com.sun.max.vm.thread.VmThreadLocal.Nature;
  * to refill a TLAB, how to pad the end of the TLAB on refill, and how to refill is delegated to the HeapScheme concrete
  * implementation which also associates a TLAB Refill policy to each thread. The TLAB refill policy is currently required
  * if TLAB is used as it is also used to save/restore TLAB top on enabling/disabling of allocation.
- *
- * @author Laurent Daynes
  */
 public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
