@@ -38,8 +38,6 @@ import com.sun.max.vm.type.*;
  * A doubly linked list of regions implemented as an array of int region identifiers.
  * Used for region ownership list, wherein a list can only belong to one owner at a time.
  * This allows to share the backing storage for all the list.
- *
- * @author Laurent Daynes
  */
 public final class HeapRegionList {
 
@@ -230,6 +228,18 @@ public final class HeapRegionList {
         }
     }
 
+    int removeHead() {
+        if (isEmpty()) {
+            return nullElement;
+        }
+        int elem = head;
+        head = next(elem);
+        setPrev(head, nullElement);
+        setNext(elem, nullElement);
+        size--;
+        return elem;
+    }
+
     /**
      * Remove element from the list.
      * @param elem
@@ -237,7 +247,7 @@ public final class HeapRegionList {
     void remove(int elem) {
         FatalError.check(elem != nullElement, "Must be a valid list element");
         if (MaxineVM.isDebug()) {
-            FatalError.check(!contains(elem), "element must be in list");
+            FatalError.check(contains(elem), "element must be in list");
         }
         int nextElem = next(elem);
         int prevElem = prev(elem);

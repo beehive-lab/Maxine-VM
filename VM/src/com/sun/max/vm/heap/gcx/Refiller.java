@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,15 +25,25 @@ package com.sun.max.vm.heap.gcx;
 import com.sun.max.unsafe.*;
 
 /**
- * Application heap interface to a GCX heap scheme.
+ * Basic refiller for bump pointer allocators, that allocate a refill regardless of the space left in the allocator.
  */
-public interface ApplicationHeap {
-    Pointer allocate(Size size);
-    Pointer allocateTLAB(Size size);
-    boolean contains(Address address);
-    boolean canSatisfyAllocation(Size size);
-    void makeParsable();
-    Size totalSpace();
-    Size freeSpace();
-    Size usedSpace();
+public abstract class Refiller {
+
+    /**
+     * Dispose of the contiguous space left in the allocator and return a new chunk of memory to refill it.
+     *
+     * @param startOfSpaceLeft address of the first byte of the space left at the end of the linear space allocator being asking for refill.
+     * @param spaceLeft size, in bytes, of the space left
+     * @return
+     */
+    abstract Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft);
+
+    /**
+     * Make the portion of the allocator indicated by the start and end pointers iterable.
+     * by an object iterator.
+     * @param start
+     * @param end
+     */
+    abstract void makeParsable(Pointer start, Pointer end);
+
 }

@@ -35,9 +35,6 @@ import com.sun.max.vm.heap.*;
  * by the account owner. Space is expressed in terms of number of heap regions, whose size is defined
  * in {@link HeapRegionConstants}.
  * The account owner can allocate regions on demand up to the account's reserve.
- *
- *
- * @author Laurent Daynes
  */
 public class HeapAccount<T extends HeapAccountOwner>{
     /**
