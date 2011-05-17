@@ -886,7 +886,7 @@ hcfdis_help="disassembles HexCodeFiles embedded in text files
     to a disassembled format."
 
 function run_hcfdis() {
-    run ${jvm_exe} -cp $(jmax classpath VM) com.sun.max.vm.hosted.HexCodeFileDis $@
+    run ${jvm_exe} -cp $(jmax classpath com.oracle.max.hcfdis) com.oracle.max.hcfdis.HexCodeFileDis $@
 }
 
 #=======================================
