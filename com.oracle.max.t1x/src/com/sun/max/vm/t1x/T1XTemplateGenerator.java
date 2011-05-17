@@ -69,7 +69,16 @@ public class T1XTemplateGenerator {
     }
 
     @HOSTED_ONLY
-    public enum AdviceType {BEFORE, AFTER}
+    public enum AdviceType {
+        BEFORE("Before"),
+        AFTER("After");
+
+        public final String methodNameComponent;
+
+        AdviceType(String m) {
+            this.methodNameComponent = m;
+        }
+    }
 
     private static AdviceHook adviceHook;
 
@@ -79,7 +88,7 @@ public class T1XTemplateGenerator {
      * {@link String} equivalent of {@link KindEnum} with standard case rules.
      * Arguably this class could use {@link KindEnum} more, but it is mostly doing string processing.
      */
-    private static final String[] types = {"boolean", "byte", "char", "short", "int", "float", "long", "double", "Reference", "Word", "void"};
+    public static final String[] types = {"boolean", "byte", "char", "short", "int", "float", "long", "double", "Reference", "Word", "void"};
     /**
      * As {@link #types} but with first character uppercase.
      */
@@ -123,6 +132,8 @@ public class T1XTemplateGenerator {
      */
     public static PrintStream out = System.out;
 
+    private static String generatingClassName = T1XTemplateGenerator.class.getSimpleName();
+
     /**
      * Set the advice hook explicitly, which may be necessary when generating individual templates
      * with advice.
@@ -130,6 +141,10 @@ public class T1XTemplateGenerator {
      */
     public static void setAdviceHook(AdviceHook hook) {
         adviceHook = hook;
+    }
+
+    public static void setGeneratingClass(Class<?> klass) {
+        generatingClassName = klass.getSimpleName();
     }
 
     /**
@@ -326,8 +341,19 @@ public class T1XTemplateGenerator {
         return k.equals("float") || k.equals("double") || k.equals("long");
     }
 
+    /**
+     * Generate a // GENERATED comment with T1XTemplateGenerator to rerun.
+     */
     public static void generateAutoComment() {
-        out.printf("    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY%n");
+        generateAutoComment(generatingClassName);
+    }
+
+    /**
+     * Generate a // GENERATED comment with a specific classname to rerun.
+     * @param className
+     */
+    public static void generateAutoComment(String className) {
+        out.printf("    // GENERATED -- EDIT AND RUN %s.main() TO MODIFY%n", className);
     }
 
     public static void newLine() {
@@ -875,7 +901,7 @@ public class T1XTemplateGenerator {
         generateTemplateTag("NEW%s", prefixDollar(init));
         out.printf("    public static void new_(%s arg) {%n", t);
         out.printf("        Object object = %s(arg);%n", m);
-        generateBeforeAdvice(NULL_ARGS);
+        generateAfterAdvice(NULL_ARGS);
         out.printf("        pushObject(object);%n");
         out.printf("    }%n");
         newLine();
@@ -889,7 +915,7 @@ public class T1XTemplateGenerator {
         out.printf("    public static void newarray(Kind<?> kind) {%n");
         out.printf("        int length = peekInt(0);%n");
         out.printf("        Object array = createPrimitiveArray(kind, length);%n");
-        generateBeforeAdvice(NULL_ARGS);
+        generateAfterAdvice(NULL_ARGS);
         out.printf("        pokeObject(0, array);%n");
         out.printf("    }%n");
         newLine();
@@ -927,7 +953,7 @@ public class T1XTemplateGenerator {
         }
         out.printf("        int length = peekInt(0);%n");
         out.printf("        Object array = T1XRuntime.createReferenceArray(arrayClassActor, length);%n");
-        generateBeforeAdvice(NULL_ARGS);
+        generateAfterAdvice(NULL_ARGS);
         out.printf("        pokeObject(0, array);%n");
         out.printf("    }%n");
         newLine();
@@ -975,7 +1001,7 @@ public class T1XTemplateGenerator {
         out.printf("        }%n");
         out.printf("        %n");
         out.printf("        Object array = Snippets.createMultiReferenceArray(arrayClassActor, lengths);%n");
-        generateBeforeAdvice(NULL_ARGS);
+        generateAfterAdvice(NULL_ARGS);
         out.printf("        pushObject(array);%n");
         out.printf("    }%n");
         newLine();
