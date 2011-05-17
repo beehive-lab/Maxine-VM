@@ -584,7 +584,7 @@ public class VmThread {
      * thread startup code <b>after</b> the current thread has been {@linkplain #add(int, boolean, Address, Pointer, Pointer, Pointer, Pointer) added}
      * to the global list of running threads.
      *
-     * ATTENTION: this signature must match 'VmThreadRunMethod' in "Native/substrate/threads.h".
+     * ATTENTION: this signature must match 'VmThreadRunMethod' in "com.oracle.max.vm.native/substrate/threads.h".
      *
      * @param etla the address of the safepoints-enabled TLA
      * @param stackBase the lowest address (inclusive) of the stack (i.e. the stack memory range is {@code [stackBase .. stackEnd)})
@@ -662,7 +662,7 @@ public class VmThread {
     }
 
     /**
-     * ATTENTION: this signature must match 'VmThreadAttachMethod' in "Native/substrate/threads.h".
+     * ATTENTION: this signature must match 'VmThreadAttachMethod' in "com.oracle.max.vm.native/substrate/threads.h".
      *
      * @param id the unique identifier assigned to this thread when it was {@linkplain #start0() started}. This
      *            identifier is only bound to this thread until it is {@linkplain #beTerminated() terminated}. That is,
@@ -740,7 +740,7 @@ public class VmThread {
      * called for both threads created by the VM as well as threads attached to the VM
      * allowing a single mechanism to be used for both types of threads.
      *
-     * ATTENTION: this signature must match 'VmThreadDetachMethod' in "Native/substrate/threads.h".
+     * ATTENTION: this signature must match 'VmThreadDetachMethod' in "com.oracle.max.vm.native/substrate/threads.h".
      */
     @VM_ENTRY_POINT
     private static void detach(Pointer tla) {

@@ -40,32 +40,13 @@ public final class JavaProject {
     public static final String MAX_WORKSPACE_PROPERTY = "max.workspace";
 
     /**
-     * A set of project names that can be used to detect the Maxine workspace.
-     */
-    private static final String[] WORKSPACE_PROJECTS = {"VM", "C1X", "CRI", "Native"};
-
-    /**
      * Determines if a given directory is Maxine workspace directory.
      *
      * @param dir a directory to test
-     * @return {@code true} if {@code dir} is a directory containing sub-directories listed in {@link #WORKSPACE_PROJECTS}
+     * @return {@code true} if {@code dir} is a directory containing a file named "projects.properties"
      */
     public static boolean isWorkspace(File dir) {
-        File[] files = dir.listFiles();
-        if (files != null) {
-            int count = 0;
-            for (String proj : WORKSPACE_PROJECTS) {
-                for (File f : files) {
-                    if (f.getName().equals(proj) && f.isDirectory()) {
-                        count++;
-                    }
-                }
-            }
-            if (count == WORKSPACE_PROJECTS.length) {
-                return true;
-            }
-        }
-        return false;
+        return new File(dir, "projects.properties").exists();
     }
 
     private JavaProject() {
