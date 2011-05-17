@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.hosted;
+package com.oracle.max.hcfdis;
 
 import static com.sun.cri.ci.CiHexCodeFile.*;
 
@@ -41,8 +41,6 @@ import com.sun.max.program.option.*;
 
 /**
  * Utility for converting a {@link CiHexCodeFile} to a commented disassembly.
- *
- * @author Doug Simon
  */
 public class HexCodeFileDis extends DisassemblyPrinter {
 

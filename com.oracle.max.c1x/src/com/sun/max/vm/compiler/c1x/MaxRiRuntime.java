@@ -30,10 +30,13 @@ import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.oracle.max.hcfdis.*;
 import com.sun.c1x.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiTargetMethod.*;
+import com.sun.cri.ci.CiTargetMethod.Call;
+import com.sun.cri.ci.CiTargetMethod.DataPatch;
+import com.sun.cri.ci.CiTargetMethod.Site;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.platform.*;
@@ -44,7 +47,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.value.*;
 
@@ -52,8 +54,6 @@ import com.sun.max.vm.value.*;
  * The {@code MaxRiRuntime} class implements the runtime interface needed by C1X.
  * This includes access to runtime features such as class and method representations,
  * constant pools, as well as some compiler tuning.
- *
- * @author Ben L. Titzer
  */
 public class MaxRiRuntime implements RiRuntime {
 
