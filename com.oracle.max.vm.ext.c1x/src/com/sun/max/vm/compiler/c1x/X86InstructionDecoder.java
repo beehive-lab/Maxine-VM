@@ -25,8 +25,6 @@ package com.sun.max.vm.compiler.c1x;
 import com.sun.c1x.util.*;
 
 /**
- *
- * @author Thomas Wuerthinger
  */
 public final class X86InstructionDecoder {
 

@@ -67,10 +67,6 @@ import com.sun.max.vm.type.*;
 /**
  * This class is the Maxine's implementation of VM interface for generating XIR snippets that express
  * the low-level implementation of each bytecode for C1X compilation.
- *
- * @author Ben L. Titzer
- * @author Thomas Wuerthinger
- * @author Laurent Daynes
  */
 public class MaxXirGenerator implements RiXirGenerator {
 

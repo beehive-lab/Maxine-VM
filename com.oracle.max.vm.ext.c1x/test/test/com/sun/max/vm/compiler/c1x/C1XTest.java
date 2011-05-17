@@ -56,8 +56,6 @@ import com.sun.max.vm.profile.*;
 
 /**
  * A harness to run the C1X or T1X compiler and test it in various modes.
- *
- * @author Ben L. Titzer
  */
 public class C1XTest {
 

@@ -41,9 +41,6 @@ import com.sun.max.vm.stack.*;
 /**
  * This class contains the implementation of runtime calls that are called by
  * code emitted by the C1X compiler.
- *
- * @author Thomas Wuerthinger
- * @author Ben L. Titzer
  */
 public class C1XRuntimeCalls {
 
