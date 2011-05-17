@@ -338,11 +338,10 @@ public final class FirstFitMarkSweepHeap extends Sweepable implements HeapAccoun
         synchronized (heapLock()) {
             if (currentOverflowAllocatingRegion != INVALID_REGION_ID) {
                 final HeapRegionInfo regionInfo = HeapRegionInfo.fromRegionID(currentOverflowAllocatingRegion);
-                currentOverflowAllocatingRegion = INVALID_REGION_ID;
                 FatalError.check(!regionInfo.hasFreeChunks(), "must not have any free chunks");
                 if (spaceLeft.greaterEqual(minReclaimableSpace)) {
                     Log.print("overflow allocator putback region #");
-                    Log.print(regionInfo.toRegionID());
+                    Log.print(currentOverflowAllocatingRegion);
                     Log.print(" in TLAB allocation list with ");
                     Log.print(spaceLeft);
                     Log.println(" bytes");
@@ -353,7 +352,7 @@ public final class FirstFitMarkSweepHeap extends Sweepable implements HeapAccoun
                     tlabAllocationRegions.append(currentOverflowAllocatingRegion);
                 } else {
                     Log.print("overflow allocator full region #");
-                    Log.println(regionInfo.toRegionID());
+                    Log.println(currentOverflowAllocatingRegion);
                    // Just make the space left parsable.
                     if (!spaceLeft.isZero()) {
                         overflowRefillWaste = overflowRefillWaste.plus(spaceLeft);
@@ -361,6 +360,7 @@ public final class FirstFitMarkSweepHeap extends Sweepable implements HeapAccoun
                     }
                     regionInfo.setFull();
                 }
+                currentOverflowAllocatingRegion = INVALID_REGION_ID;
             }
             do {
                 regionInfoIterable.initialize(allocationRegions);
