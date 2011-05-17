@@ -32,8 +32,6 @@ import com.sun.max.vm.runtime.*;
 
 /**
  * Maxine implementation of {@link RiSnippets}.
- *
- * @author Doug Simon
  */
 public class MaxRiSnippets implements RiSnippets {
 
