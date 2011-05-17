@@ -26,8 +26,6 @@ import com.sun.c1x.*;
 
 /**
  * Interface for classes that observe events of an {@link ObservableCompiler}.
- *
- * @author Peter Hofer
  */
 public interface CompilationObserver {
 

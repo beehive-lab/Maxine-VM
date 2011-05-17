@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,10 +28,6 @@ import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 
-/**
- *
- * @author Thomas Wuerthinger
- */
 public final class LIRInsertionBuffer {
 
     private LIRList lir; // the lir list where ops of this buffer should be inserted later (null when uninitialized)
@@ -85,7 +81,7 @@ public final class LIRInsertionBuffer {
     }
 
     public int indexAt(int i) {
-        return indexAndCount.get((i << 1));
+        return indexAndCount.get(i << 1);
     }
 
     public int countAt(int i) {

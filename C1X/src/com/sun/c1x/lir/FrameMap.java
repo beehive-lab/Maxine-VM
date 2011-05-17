@@ -216,8 +216,8 @@ public final class FrameMap {
     public CiAddress toStackAddress(CiStackSlot slot) {
         int size = compilation.target.sizeInBytes(slot.kind);
         if (slot.inCallerFrame()) {
-            int offset = slot.index() * compilation.target.spillSlotSize;
-            return new CiAddress(slot.kind, CiRegister.CallerFrame.asValue(), offset);
+            int offset = slot.index() * compilation.target.spillSlotSize + frameSize() + 8;
+            return new CiAddress(slot.kind, CiRegister.Frame.asValue(), offset);
         } else {
             int offset = offsetForOutgoingOrSpillSlot(slot.index(), size);
             return new CiAddress(slot.kind, CiRegister.Frame.asValue(), offset);

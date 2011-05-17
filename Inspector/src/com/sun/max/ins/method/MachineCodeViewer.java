@@ -35,10 +35,6 @@ import com.sun.max.vm.classfile.constant.*;
 
 /**
  * Base class for views of disassembled machine code for a single method in the VM.
- *
- * @author Mick Jordan
- * @author Doug Simon
- * @author Michael Van De Vanter
  */
 public abstract class MachineCodeViewer extends CodeViewer {
 
@@ -202,7 +198,7 @@ public abstract class MachineCodeViewer extends CodeViewer {
         public int methodRefIndex() {
             return methodRefIndex;
         }
-    };
+    }
 
     private final MethodRefIndexFinder methodRefIndexFinder = new MethodRefIndexFinder();
 

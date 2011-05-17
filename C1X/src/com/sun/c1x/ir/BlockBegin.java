@@ -24,8 +24,8 @@ package com.sun.c1x.ir;
 
 import java.util.*;
 
+import com.oracle.max.asm.*;
 import com.sun.c1x.*;
-import com.sun.c1x.asm.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
@@ -36,8 +36,6 @@ import com.sun.cri.ci.*;
  * Denotes the beginning of a basic block, and holds information
  * about the basic block, including the successor and
  * predecessor blocks, exception handlers, liveness information, etc.
- *
- * @author Ben L. Titzer
  */
 public final class BlockBegin extends Instruction {
     private static final List<BlockBegin> NO_HANDLERS = Collections.emptyList();
@@ -681,7 +679,8 @@ public final class BlockBegin extends Instruction {
     }
 
     public void setExceptionHandlerPco(int codeOffset) {
-        lirBlock().exceptionHandlerPCO = codeOffset;
+        LIRBlock block = lirBlock();
+        block.exceptionHandlerPCO = codeOffset;
     }
 
     public int numberOfExceptionHandlers() {

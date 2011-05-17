@@ -74,7 +74,7 @@ public interface RiField {
      * @return the mask of JVM defined field access flags defined for this field
      */
     int accessFlags();
-    
+
     /**
      * Gets the constant value of this field if available.
      * NOTE: ONLY AVAILABLE FOR RESOLVED FIELDS.

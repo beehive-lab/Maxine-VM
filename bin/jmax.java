@@ -38,8 +38,9 @@ public class jmax {
      *
      * @param request the command and its arguments
      * @param response where the response it to be written
+     * @return the exit code
      */
-    public static void process(List<String> request, PrintStream response) {
+    public static int process(List<String> request, PrintStream response) {
         String cmd = request.get(0);
         if (cmd.equals("projects")) {
             // Return the project names separated by spaces
@@ -55,16 +56,17 @@ public class jmax {
             Project p = project(request.get(1));
             response.println(p.baseDir.getPath() + File.separatorChar + p.name);
         } else if (cmd.equals("eclipse")) {
+            int changedFiles = 0;
             if (request.size() == 1) {
                 for (Project p : projects.values()) {
-                    p.generateEclipseProject(response);
+                    changedFiles += p.generateEclipseProject(response);
                 }
             } else {
                 for (String p : request.subList(1, request.size())) {
-                    project(p).generateEclipseProject(response);
+                    changedFiles += project(p).generateEclipseProject(response);
                 }
             }
-
+            return changedFiles;
         } else if (cmd.equals("source_dirs")) {
             // Return the absolute source directories of a project
             Project p = project(request.get(1));
@@ -92,6 +94,7 @@ public class jmax {
         } else {
             throw new Error("Command ' " + cmd + "' not known");
         }
+        return 0;
     }
 
     static PrintStream log = System.err;
@@ -278,7 +281,7 @@ public class jmax {
                 loadProjects(dir);
             }
         }
-        process(Arrays.asList(args), System.out);
+        System.exit(process(Arrays.asList(args), System.out));
     }
 
     static abstract class Dependency {
@@ -475,6 +478,7 @@ public class jmax {
      * Utility for creating or modifying a file.
      */
     static abstract class FileUpdater {
+        int changedFiles;
         public FileUpdater(File file, boolean canOverwrite, PrintStream status) {
             boolean exists = file.exists();
             if (exists && !canOverwrite) {
@@ -494,6 +498,7 @@ public class jmax {
                 fos.write(buf);
                 fos.close();
                 status.println((exists ? "modified " : "created ") + file);
+                changedFiles = 1;
             } catch (IOException e) {
                 throw new Error("Error while writing to " + file, e);
             }
@@ -616,12 +621,15 @@ public class jmax {
          * </pre>
          *
          * @param response
+         * @return number of files created/updated
          */
-        void generateEclipseProject(PrintStream response) {
+        int generateEclipseProject(PrintStream response) {
             final File projectDir = new File(baseDir, name);
             makeDirectory(projectDir);
 
-            new FileUpdater(new File(projectDir, ".classpath"), true, response) {
+            int changedFiles = 0;
+
+            FileUpdater update = new FileUpdater(new File(projectDir, ".classpath"), true, response) {
                 @Override
                 void generate(PrintStream out) {
                     out.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
@@ -659,11 +667,43 @@ public class jmax {
                     out.println("</classpath>");
                 }
             };
+            changedFiles += update.changedFiles;
 
-            new FileUpdater(new File(projectDir, ".project"), true, response) {
+            File dotCheckstyle = new File(projectDir, ".checkstyle");
+            update = new FileUpdater(dotCheckstyle, true, response) {
                 @Override
                 void generate(PrintStream out) {
-                    boolean checkstyle = new File(projectDir, ".checkstyle").exists();
+                    String checkstyleConfigPath;
+                    File projectCheckstyleConfig = new File(projectDir, ".checkstyle_checks.xml");
+                    if (projectCheckstyleConfig.exists()) {
+                        checkstyleConfigPath = "/" + name + "/.checkstyle_checks.xml";
+                    } else {
+                        Project p = project("com.oracle.max.base");
+                        File sharedCheckstyleConfig = new File(new File(p.baseDir, p.name), ".checkstyle_checks.xml");
+                        if (!sharedCheckstyleConfig.exists()) {
+                            throw new InternalError("Shared checkstyle config file not found: " + sharedCheckstyleConfig);
+                        }
+                        checkstyleConfigPath = "/" + p.name + "/.checkstyle_checks.xml";
+                    }
+                    out.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+                    out.println("<fileset-config file-format-version=\"1.2.0\" simple-config=\"true\">");
+                    out.println("\t<local-check-config name=\"Maxine Checks\" location=\"" + checkstyleConfigPath + "\" type=\"project\" description=\"\">");
+                    out.println("\t\t<additional-data name=\"protect-config-file\" value=\"false\"/>");
+                    out.println("\t</local-check-config>");
+                    out.println("\t<fileset name=\"all\" enabled=\"true\" check-config-name=\"Maxine Checks\" local=\"true\">");
+                    out.println("\t\t<file-match-pattern match-pattern=\".\" include-pattern=\"true\"/>");
+                    out.println("\t</fileset>");
+                    out.println("\t<filter name=\"FileTypesFilter\" enabled=\"true\">");
+                    out.println("\t\t<filter-data value=\"java\"/>");
+                    out.println("\t</filter>");
+                    out.println("</fileset-config>");
+                }
+            };
+            changedFiles += update.changedFiles;
+
+            update = new FileUpdater(new File(projectDir, ".project"), true, response) {
+                @Override
+                void generate(PrintStream out) {
                     out.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
                     out.println("<projectDescription>");
                     out.println("\t<name>" + name + "</name>");
@@ -676,29 +716,25 @@ public class jmax {
                     out.println("\t\t\t<arguments>");
                     out.println("\t\t\t</arguments>");
                     out.println("\t\t</buildCommand>");
-                    if (checkstyle) {
-                        out.println("\t\t<buildCommand>");
-                        out.println("\t\t\t<name>net.sf.eclipsecs.core.CheckstyleBuilder</name>");
-                        out.println("\t\t\t<arguments>");
-                        out.println("\t\t\t</arguments>");
-                        out.println("\t\t</buildCommand>");
-                    }
+                    out.println("\t\t<buildCommand>");
+                    out.println("\t\t\t<name>net.sf.eclipsecs.core.CheckstyleBuilder</name>");
+                    out.println("\t\t\t<arguments>");
+                    out.println("\t\t\t</arguments>");
+                    out.println("\t\t</buildCommand>");
                     out.println("\t</buildSpec>");
                     out.println("\t<natures>");
                     out.println("\t\t<nature>org.eclipse.jdt.core.javanature</nature>");
-                    if (checkstyle) {
-                        out.println("\t\t<nature>net.sf.eclipsecs.core.CheckstyleNature</nature>");
-                    }
+                    out.println("\t\t<nature>net.sf.eclipsecs.core.CheckstyleNature</nature>");
                     out.println("\t</natures>");
                     out.println("</projectDescription>");
                 }
             };
-
+            changedFiles += update.changedFiles;
 
             File settingsDir = new File(projectDir, ".settings");
             makeDirectory(settingsDir);
 
-            new FileUpdater(new File(settingsDir, "org.eclipse.jdt.core.prefs"), false, response) {
+            update = new FileUpdater(new File(settingsDir, "org.eclipse.jdt.core.prefs"), true, response) {
                 @Override
                 void generate(PrintStream out) {
                     for (String line : org_eclipse_jdt_core_prefs.lines) {
@@ -706,8 +742,9 @@ public class jmax {
                     }
                 }
             };
+            changedFiles += update.changedFiles;
 
-            new FileUpdater(new File(settingsDir, "org.eclipse.jdt.ui.prefs"), false, response) {
+            update = new FileUpdater(new File(settingsDir, "org.eclipse.jdt.ui.prefs"), true, response) {
                 @Override
                 void generate(PrintStream out) {
                     for (String line : org_eclipse_jdt_ui_prefs.lines) {
@@ -715,57 +752,60 @@ public class jmax {
                     }
                 }
             };
+            changedFiles += update.changedFiles;
+
+            return changedFiles;
         }
     }
 
     static class org_eclipse_jdt_ui_prefs {
         static final String[] lines = {
-            "cleanup.add_default_serial_version_id=true",
+            "cleanup.add_default_serial_version_id=false",
             "cleanup.add_generated_serial_version_id=false",
-            "cleanup.add_missing_annotations=true",
+            "cleanup.add_missing_annotations=false",
             "cleanup.add_missing_deprecated_annotations=false",
             "cleanup.add_missing_nls_tags=false",
-            "cleanup.add_missing_override_annotations=true",
+            "cleanup.add_missing_override_annotations=false",
             "cleanup.add_serial_version_id=false",
-            "cleanup.always_use_blocks=true",
+            "cleanup.always_use_blocks=false",
             "cleanup.always_use_parentheses_in_expressions=false",
             "cleanup.always_use_this_for_non_static_field_access=false",
             "cleanup.always_use_this_for_non_static_method_access=false",
             "cleanup.convert_to_enhanced_for_loop=false",
             "cleanup.format_source_code=false",
-            "cleanup.make_local_variable_final=true",
+            "cleanup.make_local_variable_final=false",
             "cleanup.make_parameters_final=false",
             "cleanup.make_private_fields_final=true",
             "cleanup.make_variable_declarations_final=false",
             "cleanup.never_use_blocks=false",
-            "cleanup.never_use_parentheses_in_expressions=true",
+            "cleanup.never_use_parentheses_in_expressions=false",
             "cleanup.organize_imports=false",
             "cleanup.qualify_static_field_accesses_with_declaring_class=false",
-            "cleanup.qualify_static_member_accesses_through_instances_with_declaring_class=true",
-            "cleanup.qualify_static_member_accesses_through_subtypes_with_declaring_class=true",
+            "cleanup.qualify_static_member_accesses_through_instances_with_declaring_class=false",
+            "cleanup.qualify_static_member_accesses_through_subtypes_with_declaring_class=false",
             "cleanup.qualify_static_member_accesses_with_declaring_class=false",
             "cleanup.qualify_static_method_accesses_with_declaring_class=false",
-            "cleanup.remove_private_constructors=true",
+            "cleanup.remove_private_constructors=false",
             "cleanup.remove_trailing_whitespaces=false",
-            "cleanup.remove_trailing_whitespaces_all=true",
+            "cleanup.remove_trailing_whitespaces_all=false",
             "cleanup.remove_trailing_whitespaces_ignore_empty=false",
             "cleanup.remove_unnecessary_casts=false",
             "cleanup.remove_unnecessary_nls_tags=false",
             "cleanup.remove_unused_imports=false",
             "cleanup.remove_unused_local_variables=false",
-            "cleanup.remove_unused_private_fields=true",
+            "cleanup.remove_unused_private_fields=false",
             "cleanup.remove_unused_private_members=false",
-            "cleanup.remove_unused_private_methods=true",
-            "cleanup.remove_unused_private_types=true",
+            "cleanup.remove_unused_private_methods=false",
+            "cleanup.remove_unused_private_types=false",
             "cleanup.sort_members=false",
             "cleanup.sort_members_all=false",
             "cleanup.use_blocks=false",
             "cleanup.use_blocks_only_for_return_and_throw=false",
             "cleanup.use_parentheses_in_expressions=false",
             "cleanup.use_this_for_non_static_field_access=false",
-            "cleanup.use_this_for_non_static_field_access_only_if_necessary=true",
+            "cleanup.use_this_for_non_static_field_access_only_if_necessary=false",
             "cleanup.use_this_for_non_static_method_access=false",
-            "cleanup.use_this_for_non_static_method_access_only_if_necessary=true",
+            "cleanup.use_this_for_non_static_method_access_only_if_necessary=false",
             "cleanup_profile=_CleanUpAgitarTests",
             "cleanup_settings_version=2",
             "comment_clear_blank_lines=false",
@@ -791,15 +831,15 @@ public class jmax {
             "org.eclipse.jdt.ui.ondemandthreshold=0",
             "org.eclipse.jdt.ui.overrideannotation=true",
             "org.eclipse.jdt.ui.staticondemandthreshold=0",
-            "sp_cleanup.add_default_serial_version_id=true",
+            "sp_cleanup.add_default_serial_version_id=false",
             "sp_cleanup.add_generated_serial_version_id=false",
             "sp_cleanup.add_missing_annotations=false",
-            "sp_cleanup.add_missing_deprecated_annotations=true",
+            "sp_cleanup.add_missing_deprecated_annotations=false",
             "sp_cleanup.add_missing_methods=false",
             "sp_cleanup.add_missing_nls_tags=false",
-            "sp_cleanup.add_missing_override_annotations=true",
+            "sp_cleanup.add_missing_override_annotations=false",
             "sp_cleanup.add_serial_version_id=false",
-            "sp_cleanup.always_use_blocks=true",
+            "sp_cleanup.always_use_blocks=false",
             "sp_cleanup.always_use_parentheses_in_expressions=false",
             "sp_cleanup.always_use_this_for_non_static_field_access=false",
             "sp_cleanup.always_use_this_for_non_static_method_access=false",
@@ -809,18 +849,18 @@ public class jmax {
             "sp_cleanup.format_source_code_changes_only=false",
             "sp_cleanup.make_local_variable_final=false",
             "sp_cleanup.make_parameters_final=false",
-            "sp_cleanup.make_private_fields_final=true",
+            "sp_cleanup.make_private_fields_final=false",
             "sp_cleanup.make_variable_declarations_final=false",
             "sp_cleanup.never_use_blocks=false",
-            "sp_cleanup.never_use_parentheses_in_expressions=true",
+            "sp_cleanup.never_use_parentheses_in_expressions=false",
             "sp_cleanup.on_save_use_additional_actions=true",
             "sp_cleanup.organize_imports=false",
             "sp_cleanup.qualify_static_field_accesses_with_declaring_class=false",
-            "sp_cleanup.qualify_static_member_accesses_through_instances_with_declaring_class=true",
-            "sp_cleanup.qualify_static_member_accesses_through_subtypes_with_declaring_class=true",
+            "sp_cleanup.qualify_static_member_accesses_through_instances_with_declaring_class=false",
+            "sp_cleanup.qualify_static_member_accesses_through_subtypes_with_declaring_class=false",
             "sp_cleanup.qualify_static_member_accesses_with_declaring_class=false",
             "sp_cleanup.qualify_static_method_accesses_with_declaring_class=false",
-            "sp_cleanup.remove_private_constructors=true",
+            "sp_cleanup.remove_private_constructors=false",
             "sp_cleanup.remove_trailing_whitespaces=true",
             "sp_cleanup.remove_trailing_whitespaces_all=true",
             "sp_cleanup.remove_trailing_whitespaces_ignore_empty=false",
@@ -828,19 +868,19 @@ public class jmax {
             "sp_cleanup.remove_unnecessary_nls_tags=false",
             "sp_cleanup.remove_unused_imports=false",
             "sp_cleanup.remove_unused_local_variables=false",
-            "sp_cleanup.remove_unused_private_fields=true",
+            "sp_cleanup.remove_unused_private_fields=false",
             "sp_cleanup.remove_unused_private_members=false",
-            "sp_cleanup.remove_unused_private_methods=true",
-            "sp_cleanup.remove_unused_private_types=true",
+            "sp_cleanup.remove_unused_private_methods=false",
+            "sp_cleanup.remove_unused_private_types=false",
             "sp_cleanup.sort_members=false",
             "sp_cleanup.sort_members_all=false",
             "sp_cleanup.use_blocks=false",
             "sp_cleanup.use_blocks_only_for_return_and_throw=false",
             "sp_cleanup.use_parentheses_in_expressions=false",
             "sp_cleanup.use_this_for_non_static_field_access=false",
-            "sp_cleanup.use_this_for_non_static_field_access_only_if_necessary=true",
+            "sp_cleanup.use_this_for_non_static_field_access_only_if_necessary=false",
             "sp_cleanup.use_this_for_non_static_method_access=false",
-            "sp_cleanup.use_this_for_non_static_method_access_only_if_necessary=true"
+            "sp_cleanup.use_this_for_non_static_method_access_only_if_necessary=false"
         };
     }
 
@@ -875,7 +915,7 @@ public class jmax {
             "org.eclipse.jdt.core.compiler.problem.assertIdentifier=error",
             "org.eclipse.jdt.core.compiler.problem.autoboxing=ignore",
             "org.eclipse.jdt.core.compiler.problem.comparingIdentical=warning",
-            "org.eclipse.jdt.core.compiler.problem.deadCode=warning",
+            "org.eclipse.jdt.core.compiler.problem.deadCode=ignore",
             "org.eclipse.jdt.core.compiler.problem.deprecation=error",
             "org.eclipse.jdt.core.compiler.problem.deprecationInDeprecatedCode=enabled",
             "org.eclipse.jdt.core.compiler.problem.deprecationWhenOverridingDeprecatedMethod=enabled",
@@ -890,7 +930,7 @@ public class jmax {
             "org.eclipse.jdt.core.compiler.problem.forbiddenReference=warning",
             "org.eclipse.jdt.core.compiler.problem.hiddenCatchBlock=warning",
             "org.eclipse.jdt.core.compiler.problem.incompatibleNonInheritedInterfaceMethod=warning",
-            "org.eclipse.jdt.core.compiler.problem.incompleteEnumSwitch=error",
+            "org.eclipse.jdt.core.compiler.problem.incompleteEnumSwitch=ignore",
             "org.eclipse.jdt.core.compiler.problem.indirectStaticAccess=ignore",
             "org.eclipse.jdt.core.compiler.problem.invalidJavadoc=ignore",
             "org.eclipse.jdt.core.compiler.problem.invalidJavadocTags=enabled",
@@ -914,9 +954,9 @@ public class jmax {
             "org.eclipse.jdt.core.compiler.problem.noEffectAssignment=warning",
             "org.eclipse.jdt.core.compiler.problem.noImplicitStringConversion=warning",
             "org.eclipse.jdt.core.compiler.problem.nonExternalizedStringLiteral=ignore",
-            "org.eclipse.jdt.core.compiler.problem.nullReference=error",
+            "org.eclipse.jdt.core.compiler.problem.nullReference=warning",
             "org.eclipse.jdt.core.compiler.problem.overridingPackageDefaultMethod=warning",
-            "org.eclipse.jdt.core.compiler.problem.parameterAssignment=warning",
+            "org.eclipse.jdt.core.compiler.problem.parameterAssignment=ignore",
             "org.eclipse.jdt.core.compiler.problem.possibleAccidentalBooleanAssignment=warning",
             "org.eclipse.jdt.core.compiler.problem.potentialNullReference=ignore",
             "org.eclipse.jdt.core.compiler.problem.rawTypeReference=ignore",
@@ -931,11 +971,11 @@ public class jmax {
             "org.eclipse.jdt.core.compiler.problem.uncheckedTypeOperation=warning",
             "org.eclipse.jdt.core.compiler.problem.undocumentedEmptyBlock=ignore",
             "org.eclipse.jdt.core.compiler.problem.unhandledWarningToken=error",
-            "org.eclipse.jdt.core.compiler.problem.unnecessaryElse=warning",
+            "org.eclipse.jdt.core.compiler.problem.unnecessaryElse=ignore",
             "org.eclipse.jdt.core.compiler.problem.unnecessaryTypeCheck=warning",
             "org.eclipse.jdt.core.compiler.problem.unqualifiedFieldAccess=ignore",
             "org.eclipse.jdt.core.compiler.problem.unsafeTypeOperation=warning",
-            "org.eclipse.jdt.core.compiler.problem.unusedDeclaredThrownException=warning",
+            "org.eclipse.jdt.core.compiler.problem.unusedDeclaredThrownException=ignore",
             "org.eclipse.jdt.core.compiler.problem.unusedDeclaredThrownExceptionExemptExceptionAndThrowable=enabled",
             "org.eclipse.jdt.core.compiler.problem.unusedDeclaredThrownExceptionIncludeDocCommentReference=enabled",
             "org.eclipse.jdt.core.compiler.problem.unusedDeclaredThrownExceptionWhenOverriding=disabled",

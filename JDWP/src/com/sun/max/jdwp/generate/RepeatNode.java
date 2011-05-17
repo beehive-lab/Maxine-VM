@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,6 @@ import java.io.*;
 
 /**
  * @author JDK7: jdk/make/tools/src/build/tools/jdwpgen
- * @author Thomas Wuerthinger
  */
 class RepeatNode extends AbstractTypeNode {
 
@@ -44,6 +43,7 @@ class RepeatNode extends AbstractTypeNode {
         }
     }
 
+    @Override
     String docType() {
         return "-BOGUS-"; // should never call this
     }
@@ -78,6 +78,7 @@ class RepeatNode extends AbstractTypeNode {
         writer.println("stringBuilder.append(\"}\");");
     }
 
+    @Override
     String javaRead() {
         error("Internal - Should not call RepeatNode.javaRead()");
         return "";

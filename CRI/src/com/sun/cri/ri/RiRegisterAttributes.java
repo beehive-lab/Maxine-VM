@@ -30,45 +30,45 @@ import com.sun.cri.ci.*;
  * A collection of register attributes. The specific attribute values for a register may be
  * local to a compilation context. For example, a {@link RiRegisterConfig} in use during
  * a compilation will determine which registers are callee saved.
- * 
+ *
  * @author Doug Simon
  */
 public class RiRegisterAttributes {
-    
+
     /**
-     * Denotes a register whose value preservation (if required) across a call is the responsibility of the caller. 
+     * Denotes a register whose value preservation (if required) across a call is the responsibility of the caller.
      */
     public final boolean isCallerSave;
-    
+
     /**
-     * Denotes a register whose value preservation (if required) across a call is the responsibility of the callee. 
+     * Denotes a register whose value preservation (if required) across a call is the responsibility of the callee.
      */
     public final boolean isCalleeSave;
-    
+
     /**
-     * Denotes a register that is available for use by a register allocator. 
+     * Denotes a register that is available for use by a register allocator.
      */
     public final boolean isAllocatable;
-    
+
     /**
      * Denotes a register guaranteed to be non-zero if read in compiled Java code.
      * For example, a register dedicated to holding the current thread.
      */
     public boolean isNonZero;
-    
+
     public RiRegisterAttributes(boolean isCallerSave, boolean isCalleeSave, boolean isAllocatable) {
         this.isCallerSave = isCallerSave;
         this.isCalleeSave = isCalleeSave;
         this.isAllocatable = isAllocatable;
     }
-    
+
     public static final RiRegisterAttributes NONE = new RiRegisterAttributes(false, false, false);
-    
+
     /**
      * Creates a map from register {@linkplain CiRegister#number numbers} to register
      * {@linkplain RiRegisterAttributes attributes} for a given register configuration and set of
      * registers.
-     * 
+     *
      * @param registerConfig a register configuration
      * @param registers a set of registers
      * @return an array whose length is the max register number in {@code registers} plus 1. An element at index i holds

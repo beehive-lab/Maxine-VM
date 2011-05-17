@@ -32,7 +32,6 @@ import com.sun.cri.ri.*;
  * The {@code Intrinsic} instruction represents a call to a JDK method
  * that has been made {@linkplain C1XIntrinsic intrinsic}.
  *
- * @author Ben L. Titzer
  * @see C1XIntrinsic
  */
 public final class Intrinsic extends StateSplit {
@@ -168,10 +167,10 @@ public final class Intrinsic extends StateSplit {
     public void print(LogStream out) {
         out.print(intrinsic().className).print('.').print(intrinsic().name()).print('(');
         for (int i = 0; i < arguments().length; i++) {
-          if (i > 0) {
-              out.print(", ");
-          }
-          out.print(arguments()[i]);
+            if (i > 0) {
+                out.print(", ");
+            }
+            out.print(arguments()[i]);
         }
         out.print(')');
     }

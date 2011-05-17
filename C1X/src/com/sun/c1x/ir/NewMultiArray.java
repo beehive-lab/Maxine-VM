@@ -30,8 +30,6 @@ import com.sun.cri.ri.*;
 /**
  * The {@code NewMultiArray} instruction represents an allocation of a multi-dimensional object
  * array.
- *
- * @author Ben L. Titzer
  */
 public final class NewMultiArray extends NewArray {
     public final RiType elementKind;
@@ -96,10 +94,10 @@ public final class NewMultiArray extends NewArray {
         out.print("new multi array [");
         final Value[] dimensions = dimensions();
         for (int i = 0; i < dimensions.length; i++) {
-          if (i > 0) {
-              out.print(", ");
-          }
-          out.print(dimensions[i]);
+            if (i > 0) {
+                out.print(", ");
+            }
+            out.print(dimensions[i]);
         }
         out.print("] ").print(CiUtil.toJavaName(elementKind));
     }

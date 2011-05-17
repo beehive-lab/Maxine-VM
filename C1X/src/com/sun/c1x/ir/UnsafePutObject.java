@@ -27,8 +27,6 @@ import com.sun.cri.ci.*;
 
 /**
  * The {@code UnsafePutObject} instruction represents a unsafe write operation.
- *
- * @author Ben L. Titzer
  */
 public final class UnsafePutObject extends UnsafeObjectOp {
 
@@ -69,6 +67,6 @@ public final class UnsafePutObject extends UnsafeObjectOp {
     @Override
     public void print(LogStream out) {
         out.print("UnsafePutObject.(").print(object()).print(", ").print(offset() +
-        ", value ").print(value()).print(')');
+            ", value ").print(value()).print(')');
     }
 }

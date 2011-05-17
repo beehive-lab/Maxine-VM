@@ -30,8 +30,6 @@ import com.sun.cri.ci.*;
 /**
  * The {@code If} instruction represents a branch that can go one of two directions
  * depending on the outcome of a comparison.
- *
- * @author Ben L. Titzer
  */
 public final class If extends BlockEnd {
 
@@ -165,15 +163,15 @@ public final class If extends BlockEnd {
     @Override
     public void print(LogStream out) {
         out.print("if ").
-        print(x()).
-        print(' ').
-        print(condition().operator).
-        print(' ').
-        print(y()).
-        print(" then B").
-        print(successors().get(0).blockID).
-        print(" else B").
-        print(successors().get(1).blockID);
+            print(x()).
+            print(' ').
+            print(condition().operator).
+            print(' ').
+            print(y()).
+            print(" then B").
+            print(successors().get(0).blockID).
+            print(" else B").
+            print(successors().get(1).blockID);
         if (isSafepoint()) {
             out.print(" (safepoint)");
         }

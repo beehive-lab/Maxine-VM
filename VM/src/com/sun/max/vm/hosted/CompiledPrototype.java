@@ -40,7 +40,6 @@ import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
@@ -282,7 +281,7 @@ public class CompiledPrototype extends Prototype {
                     }
                 });
             } catch (Exception ex) {
-                ProgramError.unexpected("failed to load: " + className + "." + methodName);
+                FatalError.unexpected("failed to load: " + className + "." + methodName);
             }
         }
     }
@@ -332,7 +331,17 @@ public class CompiledPrototype extends Prototype {
 
     private final int numberOfCompilerThreads;
 
+    private static CompiledPrototype instance;
+
+    /**
+     * Set accumulating all the methods invalidated during boot image generation.
+     * The boot image generator must unlink these, and produce new target methods.
+     */
+    public HashSet<TargetMethod> invalidatedTargetMethods = new HashSet<TargetMethod>();
+
     CompiledPrototype(int numberCompilerThreads) {
+        assert instance == null;
+        instance = this;
         vmConfig().initializeSchemes(Phase.COMPILING);
         numberOfCompilerThreads = numberCompilerThreads;
         Trace.line(1, "# compiler threads:" + numberOfCompilerThreads);
@@ -362,6 +371,10 @@ public class CompiledPrototype extends Prototype {
             // if this is an indirect call that has not been seen before, add all possibly reaching implementations
             // --even if this actual method implementation may not be compiled.
             final ClassInfo info = getInfo(child.holder());
+            if (child.holder().toJava() == VMScheme.class && child.name().equals("initialize")) {
+                System.console();
+
+            }
             if (!info.indirectCalls.contains(child)) {
                 info.indirectCalls.add(child);
                 if (relationship == Relationship.VIRTUAL_CALL) {
@@ -388,6 +401,12 @@ public class CompiledPrototype extends Prototype {
         }
         Link existing = methodActors.put(child, new Link(child, parent, relationship));
         assert existing == null : existing;
+
+        if (child instanceof ClassMethodActor && ((ClassMethodActor) child).targetMethodCount() != 0) {
+            assert parent == null && relationship == null : "Methods with hand-crafted pre-existing machine code must be entry points";
+            return false;
+        }
+
         worklist.add(child);
         return true;
     }
@@ -472,12 +491,12 @@ public class CompiledPrototype extends Prototype {
         registerImageInvocationStub(MethodActor.fromJava(getDeclaredMethod(JDK.java_lang_Shutdown.javaClass(), "shutdown")));
 
         for (MethodActor methodActor : imageInvocationStubMethodActors) {
-            if (methodActor.holder().toJava().isEnum() && methodActor.name.equals("values")) {
-                // add a method stub for the "values" method of the enum
-                final ClassActor classActor = ClassActor.fromJava(methodActor.holder().toJava());
-                final ClassMethodActor valuesMethod = classActor.findLocalClassMethodActor(SymbolTable.makeSymbol("values"), SignatureDescriptor.fromJava(Enum[].class));
-                addStaticAndVirtualMethods(JDK_sun_reflect_ReflectionFactory.createPrePopulatedMethodStub(valuesMethod));
-            }
+//            if (methodActor.holder().toJava().isEnum() && methodActor.name.equals("values")) {
+//                // add a method stub for the "values" method of the enum
+//                final ClassActor classActor = ClassActor.fromJava(methodActor.holder().toJava());
+//                final ClassMethodActor valuesMethod = classActor.findLocalClassMethodActor(SymbolTable.makeSymbol("values"), SignatureDescriptor.fromJava(Enum[].class));
+//                addStaticAndVirtualMethods(JDK_sun_reflect_ReflectionFactory.createPrePopulatedMethodStub(valuesMethod));
+//            }
             final ClassActor stubClassActor = ClassActor.fromJava(methodActor.makeInvocationStub().getClass());
             addMethods(null, stubClassActor.localVirtualMethodActors(), entryPoint);
         }
@@ -514,7 +533,8 @@ public class CompiledPrototype extends Prototype {
         final CompilationScheme compilationScheme = vmConfig().compilationScheme();
 
         if (numberOfCompilerThreads == 1) {
-            while (!worklist.isEmpty()) {
+            while (!worklist.isEmpty() || !invalidatedTargetMethods.isEmpty()) {
+                processInvalidatedTargetMethods();
                 final MethodActor methodActor = worklist.removeFirst();
                 if (hasCode(methodActor)) {
                     TargetMethod targetMethod = compilationScheme.synchronousCompile((ClassMethodActor) methodActor);
@@ -532,7 +552,8 @@ public class CompiledPrototype extends Prototype {
             final CompletionService<TargetMethod> compilationCompletionService = new ExecutorCompletionService<TargetMethod>(compilationService);
 
             while (true) {
-                while (!worklist.isEmpty()) {
+                while (!worklist.isEmpty() || !invalidatedTargetMethods.isEmpty()) {
+                    processInvalidatedTargetMethods();
                     final MethodActor methodActor = worklist.removeFirst();
                     if (hasCode(methodActor)) {
                         ++submittedCompilations;
@@ -645,31 +666,30 @@ public class CompiledPrototype extends Prototype {
         Trace.end(1, "compiling foldable methods");
     }
 
+    private void processInvalidatedTargetMethods() {
+        synchronized (invalidatedTargetMethods) {
+            if (!invalidatedTargetMethods.isEmpty()) {
+                for (TargetMethod targetMethod : invalidatedTargetMethods) {
+                    final ClassMethodActor methodActor = targetMethod.classMethodActor;
+                    assert methodActors.containsKey(methodActor);
+                    assert methodActor.targetState == targetMethod;
+                    methodActor.targetState = null;
+                    worklist.add(methodActor);
+                }
+                invalidatedTargetMethods.clear();
+            }
+        }
+    }
+
     /**
      * Recompile methods whose assumptions were invalidated.
      * @return true if the recompilation brought new methods in the compiled prototype.
      */
-    public boolean recompileInvalidatedTargetMethods() {
-        // All classes referenced from the invalidated target methods must already be loaded
-        // However, recompilation may bring new class method actor since a recompilation
-        // may be triggered by the addition of a new concrete method in the prototype which may
-        // not be already compiled.
-        HashSet<TargetMethod> recompileSet = ClassDependencyManager.invalidTargetMethods;
-        ClassDependencyManager.invalidTargetMethods = new HashSet<TargetMethod>();
-
-        if (!recompileSet.isEmpty()) {
-            Trace.begin(1, "recompiling invalidated methods");
-            assert worklist.size() == 0;
-            for (TargetMethod targetMethod : recompileSet) {
-                add(targetMethod);
-            }
-            assert worklist.size() == recompileSet.size();
-            compileWorklist();
-            assert ClassDependencyManager.invalidTargetMethods.size() == 0;
-            Trace.end(1, "recompiling invalidated methods");
-            return true;
+    public synchronized static void invalidateTargetMethod(TargetMethod targetMethod) {
+        assert targetMethod != null;
+        synchronized (instance.invalidatedTargetMethods) {
+            instance.invalidatedTargetMethods.add(targetMethod);
         }
-        return false;
     }
 
     public void checkRequiredImageMethods() {
@@ -718,7 +738,6 @@ public class CompiledPrototype extends Prototype {
             gatherNewClasses();
             // 4. compile all new methods
             compiledSome = compileWorklist();
-            compiledSome |=  recompileInvalidatedTargetMethods();
             compiledAny |= compiledSome;
         } while (compiledSome);
 

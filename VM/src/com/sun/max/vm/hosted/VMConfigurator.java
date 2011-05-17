@@ -43,7 +43,6 @@ import com.sun.max.vm.runtime.*;
  * create and install "standard" configurations. Lastly, it defines the default implementations
  * for the VM schemes.
  *
- * @author Doug Simon
  */
 public final class VMConfigurator {
 
@@ -187,7 +186,7 @@ public final class VMConfigurator {
         if (value == null) {
             return null;
         }
-        return (BootImagePackage) BootImagePackage.fromName(value);
+        return BootImagePackage.fromName(value);
     }
 
     /**

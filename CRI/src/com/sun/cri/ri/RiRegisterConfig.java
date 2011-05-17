@@ -31,7 +31,7 @@ import com.sun.cri.ci.CiRegister.RegisterFlag;
 /**
  * A register configuration binds roles and {@linkplain RiRegisterAttributes attributes}
  * to physical registers.
- * 
+ *
  * @author Ben L. Titzer
  * @author Doug Simon
  */
@@ -51,24 +51,24 @@ public interface RiRegisterConfig {
 
     /**
      * Gets the calling convention describing how arguments are passed.
-     * 
-     * @param type the type of calling convention being requested 
+     *
+     * @param type the type of calling convention being requested
      * @param parameters the types of the arguments of the call
      * @param target the target platform
      */
     CiCallingConvention getCallingConvention(Type type, CiKind[] parameters, CiTarget target);
-    
+
     /**
      * Gets the ordered set of registers that are can be used to pass parameters
      * according to a given calling convention.
-     * 
+     *
      * @param type the type of calling convention
      * @param flag specifies whether registers for {@linkplain RegisterFlag#CPU integral} or
      *             {@linkplain} RegisterFlag#FPU floating point} parameters are being requested
      * @return the ordered set of registers that may be used to pass parameters in a call conforming to {@code type}
      */
     CiRegister[] getCallingConventionRegisters(Type type, RegisterFlag flag);
-    
+
     /**
      * Gets the set of registers that can be used by the register allocator.
      */
@@ -77,36 +77,36 @@ public interface RiRegisterConfig {
     /**
      * Gets the set of registers that can be used by the register allocator,
      * {@linkplain CiRegister#categorize(CiRegister[]) categorized} by register {@linkplain RegisterFlag flags}.
-     * 
+     *
      * @return a map from each {@link RegisterFlag} constant to the list of {@linkplain #getAllocatableRegisters()
      *         allocatable} registers for which the flag is {@linkplain #isSet(RegisterFlag) set}
-     * 
+     *
      */
     EnumMap<RegisterFlag, CiRegister[]> getCategorizedAllocatableRegisters();
 
     /**
-     * Gets the registers whose values must be preserved by a method across any call it makes. 
+     * Gets the registers whose values must be preserved by a method across any call it makes.
      */
     CiRegister[] getCallerSaveRegisters();
-    
+
     /**
      * Gets the object describing the callee save area of this register configuration.
-     * Note that this area may be {@linkplain CiCalleeSaveArea#EMPTY empty}. 
+     * Note that this area may be {@linkplain CiCalleeSaveArea#EMPTY empty}.
      */
     CiCalleeSaveArea getCalleeSaveArea();
-    
+
     /**
      * Gets a map from register {@linkplain CiRegister#number numbers} to register
      * {@linkplain RiRegisterAttributes attributes} for this register configuration.
-     * 
+     *
      * @return an array where an element at index i holds the attributes of the register whose number is i
      * @see CiRegister#categorize(CiRegister[])
      */
     RiRegisterAttributes[] getAttributesMap();
-    
+
     /**
      * Gets the register corresponding to a runtime-defined role.
-     * 
+     *
      * @param id the identifier of a runtime-defined register role
      * @return the register playing the role specified by {@code id}
      */

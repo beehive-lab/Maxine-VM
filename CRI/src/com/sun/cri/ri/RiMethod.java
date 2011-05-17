@@ -31,8 +31,6 @@ import com.sun.cri.ci.*;
  * Represents resolved and unresolved methods. Methods, like fields and types, are resolved through
  * {@link RiConstantPool constant pools}, and their actual implementation is provided by the {@link RiRuntime runtime}
  * to the compiler. Note that most operations are only available on resolved methods.
- *
- * @author Ben L. Titzer
  */
 public interface RiMethod {
 
@@ -110,20 +108,13 @@ public interface RiMethod {
      * @return the mask of JVM defined method access flags defined for this method
      */
     int accessFlags();
-    
+
     /**
      * Checks whether this method is a leaf method.
      * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
      * @return {@code true} if the method is a leaf method (that is, is final or private)
      */
     boolean isLeafMethod();
-    
-    /**
-     * Gets the unique concrete method that is presumably called.
-     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return the unique concrete method
-     */
-    RiMethod uniqueConcreteMethod();
 
     /**
      * Checks whether this method is a class initializer.
@@ -157,14 +148,14 @@ public interface RiMethod {
     /**
      * Determines if only minimal debug info is to be generated for a
      * compilation of this method. The minimal debug info is exactly the
-     * reference maps. 
+     * reference maps.
      */
     boolean minimalDebugInfo();
-    
+
     /**
      * Gets a map from bytecode indexes to bit maps denoting the live locals at that position.
-     * If a non-null array is return, its length is guaranteed to be equal to {@code code().length}. 
-     * 
+     * If a non-null array is return, its length is guaranteed to be equal to {@code code().length}.
+     *
      * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
      * @return the liveness map if it is available; {@code null} otherwise
      */
@@ -188,19 +179,19 @@ public interface RiMethod {
      * Gets a stack trace element for this method and a given bytecode index.
      */
     StackTraceElement toStackTraceElement(int bci);
-    
+
     /**
      * Indicates whether this method has compiled code.
-     * @return {@code true} if this method has compiled code 
+     * @return {@code true} if this method has compiled code
      */
     boolean hasCompiledCode();
-    
+
     /**
      * Temporary work-around to support the @ACCESSOR Maxine annotation.
      * Non-Maxine VMs should just return {@code null}.
      */
     RiType accessor();
-    
+
     /**
      * Temporary work-around to support the @ACCESSOR Maxine annotation.
      * Non-Maxine VMs should just return 0.

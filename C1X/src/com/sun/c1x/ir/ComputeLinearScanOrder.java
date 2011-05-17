@@ -30,10 +30,6 @@ import com.sun.c1x.debug.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 
-/**
- * @author Thomas Wuerthinger
- *
- */
 public final class ComputeLinearScanOrder {
 
     private final int maxBlockId; // the highest blockId of a block
@@ -395,38 +391,38 @@ public final class ComputeLinearScanOrder {
         // the same loop depth, but a different loop index (can happen for endless loops
         // with exception handlers)
         if (!cur.checkBlockFlag(BlockBegin.BlockFlag.LinearScanLoopHeader)) {
-            weight |= (1 << curBit);
+            weight |= 1 << curBit;
         }
         curBit--;
 
         // loop end blocks (blocks that end with a backward branch) are added
         // after all other blocks of the loop.
         if (!cur.checkBlockFlag(BlockBegin.BlockFlag.LinearScanLoopEnd)) {
-            weight |= (1 << curBit);
+            weight |= 1 << curBit;
         }
         curBit--;
 
         // critical edge split blocks are preferred because then they have a greater
         // probability to be completely empty
         if (cur.isCriticalEdgeSplit()) {
-            weight |= (1 << curBit);
+            weight |= 1 << curBit;
         }
         curBit--;
 
         // exceptions should not be thrown in normal control flow, so these blocks
         // are added as late as possible
         if (!(cur.end() instanceof Throw) && (singleSux == null || !(singleSux.end() instanceof Throw))) {
-            weight |= (1 << curBit);
+            weight |= 1 << curBit;
         }
         curBit--;
         if (!(cur.end() instanceof Return) && (singleSux == null || !(singleSux.end() instanceof Return))) {
-            weight |= (1 << curBit);
+            weight |= 1 << curBit;
         }
         curBit--;
 
         // exceptions handlers are added as late as possible
         if (!cur.checkBlockFlag(BlockBegin.BlockFlag.ExceptionEntry)) {
-            weight |= (1 << curBit);
+            weight |= 1 << curBit;
         }
         curBit--;
 
