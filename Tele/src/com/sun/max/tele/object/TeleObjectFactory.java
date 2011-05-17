@@ -177,7 +177,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
                 put((Class) key, count);
             }
             return count;
-        };
+        }
     };
 
     /**
