@@ -235,8 +235,10 @@ public final class HeapRegionList {
         }
         int elem = head;
         head = next(elem);
-        setPrev(head, nullElement);
         setNext(elem, nullElement);
+        if (head != nullElement) {
+            setPrev(head, nullElement);
+        }
         size--;
         return elem;
     }
@@ -255,15 +257,15 @@ public final class HeapRegionList {
         if (nextElem == nullElement) {
             FatalError.check(elem == tail, "Only the tail can have null next element");
             if (prevElem == nullElement) {
-                FatalError.check(head == tail, "Only the tail can have null next element");
+                FatalError.check(head == tail, "Only singleton list can have both prev and next null element");
                 head = nullElement;
                 tail = nullElement;
             } else {
                 tail = prevElem;
                 setNext(tail, nullElement);
             }
-
         } else if (prevElem == nullElement) {
+            FatalError.check(elem == head, "Only the head can have null prev element");
             head = nextElem;
             setPrev(head, nullElement);
         } else {
@@ -271,6 +273,7 @@ public final class HeapRegionList {
             setPrev(nextElem, prevElem);
         }
         clear(elem);
+        size--;
     }
 
     void append(HeapRegionList list) {
