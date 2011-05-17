@@ -78,6 +78,16 @@ public class BaseAtomicBumpPointerAllocator<T extends Refiller> {
         top = Address.zero();
     }
 
+
+    void initialize(Address initialChunk, Size initialChunkSize, Size headroom) {
+        this.headroom = headroom;
+        if (initialChunk.isZero()) {
+            clear();
+        } else {
+            refill(initialChunk, initialChunkSize);
+        }
+    }
+
     protected final void refill(Address chunk, Size chunkSize) {
         // Make sure we can cause any attempt to allocate to fail, regardless of the
         // value of top

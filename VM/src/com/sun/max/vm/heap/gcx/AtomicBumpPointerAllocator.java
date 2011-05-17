@@ -44,13 +44,8 @@ public class AtomicBumpPointerAllocator<T extends RefillManager> extends BaseAto
     }
 
     void initialize(Address initialChunk, Size initialChunkSize, Size sizeLimit, Size headroom) {
+        super.initialize(initialChunk, initialChunkSize, headroom);
         this.sizeLimit = sizeLimit;
-        this.headroom = headroom;
-        if (initialChunk.isZero()) {
-            clear();
-        } else {
-            refill(initialChunk, initialChunkSize);
-        }
     }
 
 

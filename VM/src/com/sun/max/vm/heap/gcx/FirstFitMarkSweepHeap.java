@@ -318,6 +318,16 @@ public final class FirstFitMarkSweepHeap extends Sweepable implements HeapAccoun
     }
 
     /**
+     * Count of waste left after overflow refill.
+     */
+    private Size overflowRefillWaste;
+
+    /**
+     * Count of free space putback in TLAB after overflow refill.
+     */
+    private Size overflowRefillFreeSpace;
+
+    /**
      * Try to refill the overflow allocator with a single continuous chunk. Runs GC if can't.
      * @param minRefillSize minimum amount of space to refill the allocator with
      * @return address to a chunk of the requested size, or zero if none requested.
@@ -336,7 +346,7 @@ public final class FirstFitMarkSweepHeap extends Sweepable implements HeapAccoun
                     Log.print(" in TLAB allocation list with ");
                     Log.print(spaceLeft);
                     Log.println(" bytes");
-
+                    overflowRefillFreeSpace = overflowRefillFreeSpace.plus(spaceLeft);
                     HeapFreeChunk.format(startOfSpaceLeft, spaceLeft);
                     regionInfo.setFreeChunks(startOfSpaceLeft, spaceLeft, 1);
                     // Can turn the left over into a chunk for tlab allocation.
@@ -346,6 +356,7 @@ public final class FirstFitMarkSweepHeap extends Sweepable implements HeapAccoun
                     Log.println(regionInfo.toRegionID());
                    // Just make the space left parsable.
                     if (!spaceLeft.isZero()) {
+                        overflowRefillWaste = overflowRefillWaste.plus(spaceLeft);
                         HeapSchemeAdaptor.fillWithDeadObject(startOfSpaceLeft, startOfSpaceLeft.plus(spaceLeft));
                     }
                     regionInfo.setFull();
@@ -358,6 +369,7 @@ public final class FirstFitMarkSweepHeap extends Sweepable implements HeapAccoun
                 for (HeapRegionInfo regionInfo : regionInfoIterable) {
                     if (regionInfo.isEmpty()) {
                         refill =  regionInfo.regionStart();
+                        HeapFreeChunk.format(refill, Size.fromInt(regionSizeInBytes));
                     } else if (regionInfo.freeWords() >= minFreeWords && regionInfo.numFreeChunks() == 1) {
                         refill = regionInfo.firstFreeBytes();
                         regionInfo.clearFreeChunks();
@@ -446,7 +458,9 @@ public final class FirstFitMarkSweepHeap extends Sweepable implements HeapAccoun
         currentTLABAllocatingRegion = allocationRegions.removeHead();
         final HeapRegionInfo regionInfo = HeapRegionInfo.fromRegionID(currentTLABAllocatingRegion);
         regionInfo.setAllocating();
-        tlabAllocator.initialize(regionInfo.firstFreeBytes(), regionSize, regionSize, HeapSchemeAdaptor.MIN_OBJECT_SIZE);
+        final Size allocatorsHeadroom = HeapSchemeAdaptor.MIN_OBJECT_SIZE;
+        tlabAllocator.initialize(regionInfo.firstFreeBytes(), regionSize, regionSize, allocatorsHeadroom);
+        overflowAllocator.initialize(Address.zero(), Size.zero(), allocatorsHeadroom);
     }
 
     /**
