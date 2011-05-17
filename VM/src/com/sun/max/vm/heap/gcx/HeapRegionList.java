@@ -187,6 +187,7 @@ public final class HeapRegionList {
      * @param elem element to append
      */
     void append(int elem) {
+        FatalError.check(elem != nullElement, "must not append null element");
         if (isEmpty()) {
             head = elem;
             tail = elem;
