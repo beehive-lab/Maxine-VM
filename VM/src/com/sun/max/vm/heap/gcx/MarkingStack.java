@@ -41,8 +41,6 @@ import com.sun.max.vm.runtime.*;
  *
  * Currently, the marking stack drains itself when reaching end of capacity.
  * Overflows typically take place while the stack is draining.
- *
- * @author Laurent Daynes
  */
 public class MarkingStack {
     private static final VMIntOption markingStackSizeOption =
