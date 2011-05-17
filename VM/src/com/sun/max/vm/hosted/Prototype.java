@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,7 +54,7 @@ public abstract class Prototype {
     /**
      * The root of the directory tree where generated files are placed by the build system.
      */
-    static final String GENERATED_ROOT = "Native" + File.separator + "generated";
+    static final String GENERATED_ROOT = "com.oracle.max.vm.native" + File.separator + "generated";
 
     /**
      * The root of the (target) OS specific directory tree for generated files.

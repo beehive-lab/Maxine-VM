@@ -183,7 +183,7 @@ public class BootImage {
     /**
      * The header section in a boot image.
      *
-     * <b>ATTENTION: this must match 'image_Header' in "Native/substrate/image.h".</b>
+     * <b>ATTENTION: this must match 'image_Header' in "com.oracle.max.vm.native/substrate/image.h".</b>
      */
     public static final class Header extends IntSection {
         public final int isBigEndian;
@@ -414,7 +414,7 @@ public class BootImage {
     /**
      * The string info section in a boot image.
      *
-     * <b>ATTENTION: this must match 'image_StringInfo' in "Native/substrate/image.h".</b>
+     * <b>ATTENTION: this must match 'image_StringInfo' in "com.oracle.max.vm.native/substrate/image.h".</b>
      */
     public static final class StringInfo extends FieldSection {
         public enum Key {
@@ -573,7 +573,7 @@ public class BootImage {
     /**
      * The trailer section in a boot image.
      *
-     * <b>ATTENTION: this must match 'image_Trailer' in "Native/substrate/image.h".</b>
+     * <b>ATTENTION: this must match 'image_Trailer' in "com.oracle.max.vm.native/substrate/image.h".</b>
      */
     public static final class Trailer extends IntSection {
         public final int randomID;

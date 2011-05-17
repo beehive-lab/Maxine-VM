@@ -248,7 +248,7 @@ if [[ $MAXINE_OS = windows ]]; then
 	cp_sep=";"
 fi
 
-test -n "$MAXVM_DIR" || MAXVM_DIR="${maxine_dir}/Native/generated/${MAXINE_OS}"
+test -n "$MAXVM_DIR" || MAXVM_DIR="${maxine_dir}/com.oracle.max.vm.native/generated/${MAXINE_OS}"
 maxine_vm=$MAXVM_DIR/maxvm
 
 method_finder_pattern_help='A pattern is a class name pattern followed by an optional method name
@@ -395,18 +395,18 @@ function run_build() {
     if [ -z "$projects_to_build" ]; then
         projects_to_build="$(jmax projects)"
         build_native=true
-    elif [[ "$projects_to_build" == *Native* ]]; then
-        $projects_to_build=${projects_to_build/Native/}
+    elif [[ "$projects_to_build" == *com.oracle.max.vm.native* ]]; then
+        $projects_to_build=${projects_to_build/com.oracle.max.vm.native/}
         build_native=true
     fi
 
     # Compile C sources
     if $build_native; then
-        echo "Compiling C sources in ${maxine_dir}/Native..."
+        echo "Compiling C sources in ${maxine_dir}/com.oracle.max.vm.native..."
 
         check_gnu_make
 
-        pushd ${maxine_dir}/Native >/dev/null
+        pushd ${maxine_dir}/com.oracle.max.vm.native >/dev/null
         if $clean ; then
            run $make clean
         fi
@@ -475,7 +475,7 @@ function run_clean() {
         exit 1
     fi
 
-    pushd $maxine_dir/Native >/dev/null
+    pushd $maxine_dir/com.oracle.max.vm.native >/dev/null
     check_gnu_make
     run $make clean
     rm -rf generated	
@@ -948,7 +948,7 @@ function run_copyvm() {
     if [ ! -d $1 ]; then
         mkdir -p $1 || { echo "Failed to created directory $1"; exit 1; }
     fi
-    run cp -r ${maxine_dir}/Native/generated/${MAXINE_OS}/* $1 && {
+    run cp -r ${maxine_dir}/com.oracle.max.vm.native/generated/${MAXINE_OS}/* $1 && {
         echo "Copied all VM files to $1."
         echo "Use either of the following commands to run this copy of the VM:"
         echo
@@ -1053,7 +1053,7 @@ function run_makejdk() {
     done
     echo -e "\r100%"
     popd >/dev/null
-    for f in ${maxine_dir}/Native/generated/${MAXINE_OS}/*; do
+    for f in ${maxine_dir}/com.oracle.max.vm.native/generated/${MAXINE_OS}/*; do
         if [ -f $f ]; then
             cp $f $maxjdk_dir/bin
             if [ "$OS" != "Darwin" ]; then
@@ -1318,12 +1318,12 @@ nm_help="print the contents of a boot image
     Print the contents of a boot image in a textual form.
     If not specified, the following path will be used for the boot image file:
 
-        ${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.vm
+        ${maxine_dir}/com.oracle.max.vm.native/generated/${MAXINE_OS}/maxine.vm
 
     Use \"max nm -help\" to see what other options this command accepts."
 
 function run_nm() {
-    run ${jvm_exe} -cp $(jmax classpath) com.sun.max.vm.hosted.BootImagePrinter "$@" ${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.vm
+    run ${jvm_exe} -cp $(jmax classpath) com.sun.max.vm.hosted.BootImagePrinter "$@" ${maxine_dir}/com.oracle.max.vm.native/generated/${MAXINE_OS}/maxine.vm
 }
 
 #=======================================
@@ -1343,7 +1343,7 @@ objecttree_help="print the causality spanning-tree of the object graph in the bo
     Use \"max objecttree -help\" to see what other options this command accepts."
 
 function run_objecttree() {
-    run ${jvm_exe} -cp $(jmax classpath) com.sun.max.vm.hosted.BootImageObjectTree -in=${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.object.tree "$@"
+    run ${jvm_exe} -cp $(jmax classpath) com.sun.max.vm.hosted.BootImageObjectTree -in=${maxine_dir}/com.oracle.max.vm.native/generated/${MAXINE_OS}/maxine.object.tree "$@"
 }
 
 #=======================================
@@ -1363,7 +1363,7 @@ methodtree_help="print the causality spanning-tree of the method graph in the bo
     Use \"max methodtree -help\" to see what other options this command accepts."
 
 function run_methodtree() {
-    run ${jvm_exe} -cp $(jmax classpath) com.sun.max.vm.hosted.BootImageMethodTree -in=${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.method.tree "$@"
+    run ${jvm_exe} -cp $(jmax classpath) com.sun.max.vm.hosted.BootImageMethodTree -in=${maxine_dir}/com.oracle.max.vm.native/generated/${MAXINE_OS}/maxine.method.tree "$@"
 }
 
 #=======================================

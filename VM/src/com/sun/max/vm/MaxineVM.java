@@ -406,7 +406,7 @@ public final class MaxineVM {
     /**
      * VM initialization point called by the substrate.
      *
-     * ATTENTION: this signature must match 'VMRunMethod' in "Native/substrate/maxine.c"
+     * ATTENTION: this signature must match 'VMRunMethod' in "com.oracle.max.vm.native/substrate/maxine.c"
      *
      * VM startup, initialization and exit code reporting routine running in the VM startup native thread.
      *
