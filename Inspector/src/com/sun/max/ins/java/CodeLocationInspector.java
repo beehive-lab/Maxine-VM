@@ -89,7 +89,9 @@ public final class CodeLocationInspector extends Inspector<CodeLocationInspector
         super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
         Trace.begin(1,  tracePrefix() + " initializing");
 
-        nullPanel = new InspectorPanel(inspection);
+        nullPanel = new InspectorPanel(inspection, new BorderLayout());
+        nullPanel.add(new PlainLabel(inspection, inspection.nameDisplay().unavailableDataShortText()), BorderLayout.PAGE_START);
+
         updateCodeLocation(focus().codeLocation());
 
         final InspectorFrame frame = createFrame(true);
@@ -158,14 +160,16 @@ public final class CodeLocationInspector extends Inspector<CodeLocationInspector
         this.codeLocation = codeLocation;
         compiledCode = null;
         frames = null;
-        final Address instructionAddress = codeLocation.address();
-        if (instructionAddress != null && !instructionAddress.isZero()) {
-            compiledCode = vm().codeCache().findCompiledCode(instructionAddress);
-            if (compiledCode != null) {
-                final InstructionMap instructionMap = compiledCode.getInstructionMap();
-                final int instructionIndex = instructionMap.findInstructionIndex(codeLocation.address());
-                if (instructionIndex >= 0) {
-                    this.frames = instructionMap.bytecodeFrames(instructionIndex);
+        if (codeLocation != null) {
+            final Address instructionAddress = codeLocation.address();
+            if (instructionAddress != null && !instructionAddress.isZero()) {
+                compiledCode = vm().codeCache().findCompiledCode(instructionAddress);
+                if (compiledCode != null) {
+                    final InstructionMap instructionMap = compiledCode.getInstructionMap();
+                    final int instructionIndex = instructionMap.findInstructionIndex(codeLocation.address());
+                    if (instructionIndex >= 0) {
+                        this.frames = instructionMap.bytecodeFrames(instructionIndex);
+                    }
                 }
             }
         }
