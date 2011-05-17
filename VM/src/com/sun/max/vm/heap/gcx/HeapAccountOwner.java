@@ -22,7 +22,6 @@
  */
 package com.sun.max.vm.heap.gcx;
 
-
 public interface HeapAccountOwner {
     HeapAccount<? extends HeapAccountOwner> heapAccount();
 }
