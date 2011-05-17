@@ -9,4 +9,8 @@
 	<filter name="FileTypesFilter" enabled="true">
 		<filter-data value="java"/>
 	</filter>
+	<filter name="FilesFromPackage" enabled="true">
+		<filter-data value="src/com/sun/max/asm/amd64/complete"/>
+		<filter-data value="src/com/sun/max/asm/ia32/complete"/>
+	</filter>
 </fileset-config>

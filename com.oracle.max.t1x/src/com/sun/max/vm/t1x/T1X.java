@@ -32,6 +32,7 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.oracle.max.hcfdis.*;
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.cri.bytecode.*;
@@ -53,14 +54,12 @@ import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.verifier.*;
 
 /**
  * The template JIT compiler based on C1X.
- *
  */
 public class T1X implements RuntimeCompiler {
 
