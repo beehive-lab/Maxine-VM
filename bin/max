@@ -604,14 +604,14 @@ function run_check() {
     fi
 
     for project in $projects_to_check; do
+        local project_dir=$(jmax project_dir $project)
+        pushd ${project_dir} >/dev/null
         local source_dirs=$(jmax source_dirs ${project})
         for source_dir in ${source_dirs} ; do
-            pushd ${source_dir} >/dev/null
             javac_input=/tmp/javacfiles.txt.$$
-            find . -name *.java | grep -v 'package-info.java' >$javac_input
+            find $source_dir -name *.java | grep -v 'package-info.java' >$javac_input
 
             result=0
-            local project_dir=$(jmax project_dir $project)
             if [ -f $project_dir/.checkstyle ]; then
                 checks_file=$(grep 'location=' < $project_dir/.checkstyle | sed 's:.*location="\([^"]*\)".*:\1:g')
                 local parent_dir=$(dirname $project_dir)
@@ -625,18 +625,11 @@ function run_check() {
                 local checkstyle_out=/tmp/audit.$$
                 local checkstyle_input=/tmp/checkfiles.txt.$$
 
-                cat $javac_input | \
-                    grep -v 'com/sun/max/asm/amd64/complete/' |\
-                    grep -v 'com/sun/max/asm/ia32/complete/' |\
-                    grep -v 'test/bytecode/' |\
-                    grep -v 'test/except/' |\
-                    grep -v 'test/interactive/' |\
-                    grep -v 'test/jdk/' |\
-                    grep -v 'test/lang/' |\
-                    grep -v 'test/micro/' |\
-                    grep -v 'test/optimize/' |\
-                    grep -v 'test/reflect/' |\
-                    grep -v 'test/threads/' >$checkstyle_input
+                if [ -f $project_dir/.checkstyle.exclude ]; then
+                    jmax filter $javac_input $project_dir/.checkstyle.exclude >$checkstyle_input
+                else
+                    cp $javac_input $checkstyle_input
+                fi
 
                 run $jvm -Xmx1g -jar $(jmax library CHECKSTYLE) -c $checks_file $(cat $checkstyle_input) -o $checkstyle_out
                 result=$?
@@ -652,11 +645,11 @@ function run_check() {
                 rm $checkstyle_out
             fi
             rm $javac_input
-            popd >/dev/null
             if [ $result -ne 0 ]; then
                 exit $result
             fi
         done
+        popd >/dev/null
     done
 }
 
@@ -893,7 +886,7 @@ hcfdis_help="disassembles HexCodeFiles embedded in text files
     to a disassembled format."
 
 function run_hcfdis() {
-    run ${jvm_exe} -cp $(jmax classpath VM) com.sun.max.vm.hosted.HexCodeFileDis $@
+    run ${jvm_exe} -cp $(jmax classpath com.oracle.max.hcfdis) com.oracle.max.hcfdis.HexCodeFileDis $@
 }
 
 #=======================================

@@ -33,7 +33,7 @@ import com.sun.cri.ci.CiTargetMethod.LookupTable;
 
 /**
  * A HexCodeFile is a textual format for representing a chunk of machine code along
- * with extra information that can be used to enhance of disassembly of the code.
+ * with extra information that can be used to enhance a disassembly of the code.
  *
  * A pseudo grammar for a HexCodeFile is given below.
  * <pre>
@@ -81,8 +81,6 @@ import com.sun.cri.ci.CiTargetMethod.LookupTable;
  *  OperandComment 36 {java.lang.String.toLowerCase(Locale)}  <|@
  *
  * </pre>
- *
- * @author Doug Simon
  */
 public class CiHexCodeFile {
 

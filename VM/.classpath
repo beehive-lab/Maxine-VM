@@ -4,7 +4,7 @@
 	<classpathentry kind="src" path="test"/>
 	<classpathentry kind="src" path="demo"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/Assembler"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.asmdis"/>
 	<classpathentry exported="true" kind="lib" path="/VM/classes"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.asm"/>
 	<classpathentry kind="output" path="bin"/>
