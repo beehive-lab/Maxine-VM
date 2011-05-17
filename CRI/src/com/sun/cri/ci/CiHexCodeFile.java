@@ -105,7 +105,7 @@ public class CiHexCodeFile {
      * Delimiter placed after a HexCodeFile when embedded in a string/stream.
      */
     public static final String EMBEDDED_HCF_CLOSE = "HexCodeFile>>>";
-    
+
     /**
      * Map from a machine code position to a list of comments for the position.
      */

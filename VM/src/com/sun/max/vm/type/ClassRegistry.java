@@ -44,6 +44,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.deps.*;
 import com.sun.max.vm.jdk.JDK.ClassRef;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.reflection.*;
@@ -145,14 +146,6 @@ public final class ClassRegistry {
     }
 
     /**
-     * Support for ClassFileWriter.testLoadGeneratedClasses().
-     */
-    @HOSTED_ONLY
-    public static ClassLoader testClassLoader;
-    @HOSTED_ONLY
-    private static ClassRegistry testClassRegistry;
-
-    /**
      * The map from symbol to classes for the classes defined by the class loader associated with this registry.
      * Use of {@link ConcurrentHashMap} allows for atomic insertion while still supporting fast, non-blocking lookup.
      * There's no need for deletion as class unloading removes a whole class registry and all its contained classes.
@@ -160,14 +153,11 @@ public final class ClassRegistry {
     @INSPECTED
     private final ConcurrentHashMap<TypeDescriptor, ClassActor> typeDescriptorToClassActor = new ConcurrentHashMap<TypeDescriptor, ClassActor>(16384);
 
-    /**
-     * Classes in the boot image.
-     */
-    @HOSTED_ONLY
-    private ClassActor[] bootImageClasses;
-
     private final HashMap<Object, Object>[] propertyMaps;
 
+    /**
+     * The class loader associated with this registry.
+     */
     public final ClassLoader classLoader;
 
     private ClassRegistry(ClassLoader classLoader) {
@@ -179,127 +169,6 @@ public final class ClassRegistry {
         if (MaxineVM.isHosted()) {
             bootImageClasses = new ClassActor[0];
         }
-    }
-
-    /**
-     * Creates a ClassActor for a primitive type.
-     */
-    @HOSTED_ONLY
-    private static <Value_Type extends Value<Value_Type>> PrimitiveClassActor createPrimitiveClass(Kind<Value_Type> kind) {
-        return define(new PrimitiveClassActor(kind));
-    }
-
-    /**
-     * Creates an ArrayClassActor for a primitive array type.
-     */
-    @HOSTED_ONLY
-    private static <Value_Type extends Value<Value_Type>> ArrayClassActor<Value_Type> createPrimitiveArrayClass(PrimitiveClassActor componentClassActor) {
-        return define(new ArrayClassActor<Value_Type>(componentClassActor));
-    }
-
-    /**
-     * Creates a ClassActor for a tuple or interface type.
-     */
-    @HOSTED_ONLY
-    private static <T extends ClassActor> T createClass(Class javaClass) {
-        TypeDescriptor typeDescriptor = JavaTypeDescriptor.forJavaClass(javaClass);
-        ClassActor classActor = BOOT_CLASS_REGISTRY.get(typeDescriptor);
-        if (classActor == null) {
-            final String name = typeDescriptor.toJavaString();
-            Classpath classpath = HOSTED_BOOT_CLASS_LOADER.classpath();
-            final ClasspathFile classpathFile = classpath.readClassFile(name);
-            classActor = ClassfileReader.defineClassActor(name, HOSTED_BOOT_CLASS_LOADER, classpathFile.contents, null, classpathFile.classpathEntry, false);
-        }
-        Class<T> type = null;
-        return Utils.cast(type, classActor);
-    }
-
-    @HOSTED_ONLY
-    public static Class asClass(Object classObject) {
-        if (classObject instanceof Class) {
-            return (Class) classObject;
-        }
-        assert classObject instanceof ClassRef;
-        return ((ClassRef) classObject).javaClass();
-    }
-
-    /**
-     * Finds the field actor denoted by a given name and declaring class.
-     *
-     * @param name the name of the field which must be unique in the declaring class
-     * @param declaringClass the class to search for a field named {@code name}
-     * @return the actor for the unique field in {@code declaringClass} named {@code name}
-     */
-    @HOSTED_ONLY
-    public static FieldActor findField(Object declaringClassObject, String name) {
-        Class declaringClass = asClass(declaringClassObject);
-        ClassActor classActor = ClassActor.fromJava(declaringClass);
-        FieldActor fieldActor = classActor.findLocalInstanceFieldActor(name);
-        if (fieldActor == null) {
-            fieldActor = classActor.findLocalStaticFieldActor(name);
-        }
-        assert fieldActor != null : "Could not find field '" + name + "' in " + declaringClass;
-        return fieldActor;
-    }
-
-    /**
-     * Finds the method actor denoted by a given name and declaring class.
-     *
-     * @param name the name of the method which must be unique in the declaring class
-     * @param declaringClass the class to search for a method named {@code name}
-     * @return the actor for the unique method in {@code declaringClass} named {@code name}
-     */
-    @HOSTED_ONLY
-    public static MethodActor findMethod(String name, Object declaringClassObject) {
-        Class declaringClass = asClass(declaringClassObject);
-        Method theMethod = null;
-        for (Method method : declaringClass.getDeclaredMethods()) {
-            if (method.getName().equals(name)) {
-                ProgramError.check(theMethod == null, "There must only be one method named \"" + name + "\" in " + declaringClass);
-                theMethod = method;
-            }
-        }
-        if (theMethod == null) {
-            if (declaringClass.getSuperclass() != null) {
-                return findMethod(name, declaringClass.getSuperclass());
-            }
-        }
-        ProgramError.check(theMethod != null, "Could not find method named \"" + name + "\" in " + declaringClass);
-        return findMethod(declaringClass, name, theMethod.getParameterTypes());
-    }
-
-    /**
-     * Finds the method actor denoted by a given name and declaring class.
-     * A side effect of this is that the method is compiled into the image.
-     *
-     * @param declaringClass the class to search for a method named {@code name}
-     * @param name the name of the method to find
-     * @param parameterTypes the types in the signature of the method
-     * @return the actor for the unique method in {@code declaringClass} named {@code name} with the signature composed
-     *         of {@code parameterTypes}
-     */
-    @HOSTED_ONLY
-    public static MethodActor findMethod(Object declaringClassObject, String name, Class... parameterTypes) {
-        Class declaringClass = asClass(declaringClassObject);
-        MethodActor methodActor;
-        if (name.equals("<init>")) {
-            methodActor = MethodActor.fromJavaConstructor(Classes.getDeclaredConstructor(declaringClass, parameterTypes));
-        } else if (name.equals("<clinit>")) {
-            methodActor = ClassActor.fromJava(declaringClass).clinit;
-        } else {
-            methodActor = MethodActor.fromJava(Classes.getDeclaredMethod(declaringClass, name, parameterTypes));
-        }
-        assert methodActor != null : "Could not find method " + name + "(" + Utils.toString(parameterTypes, ", ") + ") in " + declaringClass;
-        if (methodActor instanceof ClassMethodActor) {
-            // Some of these methods are called during VM startup
-            // so they are compiled in the image.
-            CallEntryPoint callEntryPoint = CallEntryPoint.OPTIMIZED_ENTRY_POINT;
-            if (methodActor.isVmEntryPoint()) {
-                callEntryPoint = CallEntryPoint.C_ENTRY_POINT;
-            }
-            new CriticalMethod((ClassMethodActor) methodActor, callEntryPoint);
-        }
-        return methodActor;
     }
 
     /**
@@ -343,14 +212,6 @@ public final class ClassRegistry {
     }
 
     /**
-     * Gets a snapshot of the classes currently in this registry.
-     */
-    @HOSTED_ONLY
-    public ClassActor[] bootImageClasses() {
-        return bootImageClasses;
-    }
-
-    /**
      * Defines a class and publishes it (i.e. makes it visible to the rest of the system).
      * In the context of parallel-capable class loaders, multiple threads may be concurrently trying to
      * define a given class. This method ensures that exactly one definition happens in this context.
@@ -372,7 +233,7 @@ public final class ClassRegistry {
         loadCount++;
 
         // Add to class hierarchy, initialize vtables, and do possible deoptimizations.
-        ClassDependencyManager.addToHierarchy(classActor);
+        DependenciesManager.addToHierarchy(classActor);
 
         // Now finally publish the class
         typeDescriptorToClassActor.put(typeDescriptor, classActor);
@@ -569,4 +430,148 @@ public final class ClassRegistry {
     public static synchronized int getUnloadedClassCount() {
         return unloadCount;
     }
+
+    /**
+     * Classes in the boot image.
+     */
+    @HOSTED_ONLY
+    private ClassActor[] bootImageClasses;
+
+    /**
+     * Gets a snapshot of the classes currently in this registry.
+     */
+    @HOSTED_ONLY
+    public ClassActor[] bootImageClasses() {
+        return bootImageClasses;
+    }
+
+    /**
+     * Creates a ClassActor for a primitive type.
+     */
+    @HOSTED_ONLY
+    private static <Value_Type extends Value<Value_Type>> PrimitiveClassActor createPrimitiveClass(Kind<Value_Type> kind) {
+        return define(new PrimitiveClassActor(kind));
+    }
+
+    /**
+     * Creates an ArrayClassActor for a primitive array type.
+     */
+    @HOSTED_ONLY
+    private static <Value_Type extends Value<Value_Type>> ArrayClassActor<Value_Type> createPrimitiveArrayClass(PrimitiveClassActor componentClassActor) {
+        return define(new ArrayClassActor<Value_Type>(componentClassActor));
+    }
+
+    /**
+     * Creates a ClassActor for a tuple or interface type.
+     */
+    @HOSTED_ONLY
+    private static <T extends ClassActor> T createClass(Class javaClass) {
+        TypeDescriptor typeDescriptor = JavaTypeDescriptor.forJavaClass(javaClass);
+        ClassActor classActor = BOOT_CLASS_REGISTRY.get(typeDescriptor);
+        if (classActor == null) {
+            final String name = typeDescriptor.toJavaString();
+            Classpath classpath = HOSTED_BOOT_CLASS_LOADER.classpath();
+            final ClasspathFile classpathFile = classpath.readClassFile(name);
+            classActor = ClassfileReader.defineClassActor(name, HOSTED_BOOT_CLASS_LOADER, classpathFile.contents, null, classpathFile.classpathEntry, false);
+        }
+        Class<T> type = null;
+        return Utils.cast(type, classActor);
+    }
+
+    @HOSTED_ONLY
+    public static Class asClass(Object classObject) {
+        if (classObject instanceof Class) {
+            return (Class) classObject;
+        }
+        assert classObject instanceof ClassRef;
+        return ((ClassRef) classObject).javaClass();
+    }
+
+    /**
+     * Finds the field actor denoted by a given name and declaring class.
+     *
+     * @param name the name of the field which must be unique in the declaring class
+     * @param declaringClass the class to search for a field named {@code name}
+     * @return the actor for the unique field in {@code declaringClass} named {@code name}
+     */
+    @HOSTED_ONLY
+    public static FieldActor findField(Object declaringClassObject, String name) {
+        Class declaringClass = asClass(declaringClassObject);
+        ClassActor classActor = ClassActor.fromJava(declaringClass);
+        FieldActor fieldActor = classActor.findLocalInstanceFieldActor(name);
+        if (fieldActor == null) {
+            fieldActor = classActor.findLocalStaticFieldActor(name);
+        }
+        assert fieldActor != null : "Could not find field '" + name + "' in " + declaringClass;
+        return fieldActor;
+    }
+
+    /**
+     * Finds the method actor denoted by a given name and declaring class.
+     *
+     * @param name the name of the method which must be unique in the declaring class
+     * @param declaringClass the class to search for a method named {@code name}
+     * @return the actor for the unique method in {@code declaringClass} named {@code name}
+     */
+    @HOSTED_ONLY
+    public static MethodActor findMethod(String name, Object declaringClassObject) {
+        Class declaringClass = asClass(declaringClassObject);
+        Method theMethod = null;
+        for (Method method : declaringClass.getDeclaredMethods()) {
+            if (method.getName().equals(name)) {
+                ProgramError.check(theMethod == null, "There must only be one method named \"" + name + "\" in " + declaringClass);
+                theMethod = method;
+            }
+        }
+        if (theMethod == null) {
+            if (declaringClass.getSuperclass() != null) {
+                return findMethod(name, declaringClass.getSuperclass());
+            }
+        }
+        ProgramError.check(theMethod != null, "Could not find method named \"" + name + "\" in " + declaringClass);
+        return findMethod(declaringClass, name, theMethod.getParameterTypes());
+    }
+
+    /**
+     * Finds the method actor denoted by a given name and declaring class.
+     * A side effect of this is that the method is compiled into the image.
+     *
+     * @param declaringClass the class to search for a method named {@code name}
+     * @param name the name of the method to find
+     * @param parameterTypes the types in the signature of the method
+     * @return the actor for the unique method in {@code declaringClass} named {@code name} with the signature composed
+     *         of {@code parameterTypes}
+     */
+    @HOSTED_ONLY
+    public static MethodActor findMethod(Object declaringClassObject, String name, Class... parameterTypes) {
+        Class declaringClass = asClass(declaringClassObject);
+        MethodActor methodActor;
+        if (name.equals("<init>")) {
+            methodActor = MethodActor.fromJavaConstructor(Classes.getDeclaredConstructor(declaringClass, parameterTypes));
+        } else if (name.equals("<clinit>")) {
+            methodActor = ClassActor.fromJava(declaringClass).clinit;
+        } else {
+            methodActor = MethodActor.fromJava(Classes.getDeclaredMethod(declaringClass, name, parameterTypes));
+        }
+        assert methodActor != null : "Could not find method " + name + "(" + Utils.toString(parameterTypes, ", ") + ") in " + declaringClass;
+        if (methodActor instanceof ClassMethodActor) {
+            // Some of these methods are called during VM startup
+            // so they are compiled in the image.
+            CallEntryPoint callEntryPoint = CallEntryPoint.OPTIMIZED_ENTRY_POINT;
+            if (methodActor.isVmEntryPoint()) {
+                callEntryPoint = CallEntryPoint.C_ENTRY_POINT;
+            }
+            new CriticalMethod((ClassMethodActor) methodActor, callEntryPoint);
+        }
+        return methodActor;
+    }
+
+    /**
+     * Support for ClassFileWriter.testLoadGeneratedClasses().
+     */
+    @HOSTED_ONLY
+    public static ClassLoader testClassLoader;
+    @HOSTED_ONLY
+    private static ClassRegistry testClassRegistry;
+
 }

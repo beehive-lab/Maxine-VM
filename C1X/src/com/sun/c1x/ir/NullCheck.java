@@ -30,8 +30,6 @@ import com.sun.cri.ri.*;
 
 /**
  * The {@code NullCheck} class represents an explicit null check instruction.
- *
- * @author Ben L. Titzer
  */
 public final class NullCheck extends StateSplit {
 
@@ -113,7 +111,7 @@ public final class NullCheck extends StateSplit {
     public void print(LogStream out) {
         out.print("null_check(").print(object()).print(')');
         if (!canTrap()) {
-          out.print(" (eliminated)");
+            out.print(" (eliminated)");
         }
     }
 }

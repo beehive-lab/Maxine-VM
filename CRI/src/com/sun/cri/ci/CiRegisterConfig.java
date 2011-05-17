@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,7 +30,7 @@ import com.sun.cri.ri.*;
 
 /**
  * A default implementation of {@link RiRegisterConfig}.
- * 
+ *
  * @author Doug Simon
  */
 public class CiRegisterConfig implements RiRegisterConfig {
@@ -39,56 +39,56 @@ public class CiRegisterConfig implements RiRegisterConfig {
      * The object describing the callee save area of this register configuration.
      */
     protected CiCalleeSaveArea calleeSaveArea;
-    
+
     /**
      * The minimum register role identifier.
      */
     protected final int minRole;
-    
+
     /**
      * The map from register role IDs to registers.
      */
     protected final CiRegister[] registersRoleMap;
-    
+
     /**
      * The set of registers that can be used by the register allocator.
      */
     protected final CiRegister[] allocatable;
-    
+
     /**
      * The set of registers that can be used by the register allocator,
      * {@linkplain CiRegister#categorize(CiRegister[]) categorized} by register
      * {@linkplain RegisterFlag flags}.
      */
     protected final EnumMap<RegisterFlag, CiRegister[]> categorized;
-    
+
     /**
      * The ordered set of registers used to pass integral arguments.
      */
     protected final CiRegister[] cpuParameters;
-    
+
     /**
      * The ordered set of registers used to pass floating point arguments.
      */
     protected final CiRegister[] fpuParameters;
-    
+
     /**
      * The caller saved registers.
      */
     protected final CiRegister[] callerSave;
-    
+
     /**
      * The register to which {@link CiRegister#Frame} and {@link CiRegister#CallerFrame} are bound.
      */
     protected final CiRegister frame;
-    
+
     /**
-     * Register for returning an integral value. 
+     * Register for returning an integral value.
      */
     protected final CiRegister integralReturn;
-    
+
     /**
-     * Register for returning a floating point value. 
+     * Register for returning a floating point value.
      */
     protected final CiRegister floatingPointReturn;
 
@@ -97,7 +97,7 @@ public class CiRegisterConfig implements RiRegisterConfig {
      * {@linkplain RiRegisterAttributes attributes} for this register configuration.
      */
     protected final RiRegisterAttributes[] attributesMap;
-    
+
     /**
      * The scratch register.
      */
@@ -162,7 +162,7 @@ public class CiRegisterConfig implements RiRegisterConfig {
         this.registersRoleMap = src.registersRoleMap;
         this.minRole = src.minRole;
     }
-    
+
     public CiRegister getReturnRegister(CiKind kind) {
         if (kind.isDouble() || kind.isFloat()) {
             return floatingPointReturn;
@@ -180,9 +180,9 @@ public class CiRegisterConfig implements RiRegisterConfig {
 
     /**
      * {@inheritDoc}
-     * 
+     *
      * This implementation assigns all available registers to parameters before assigning
-     * any stack slots to parameters.  
+     * any stack slots to parameters.
      */
     public CiCallingConvention getCallingConvention(Type type, CiKind[] parameters, CiTarget target) {
         CiValue[] locations = new CiValue[parameters.length];
@@ -261,7 +261,7 @@ public class CiRegisterConfig implements RiRegisterConfig {
     public CiRegister getRegisterForRole(int id) {
         return registersRoleMap[id - minRole];
     }
-    
+
     @Override
     public String toString() {
         StringBuilder roleMap = new StringBuilder();

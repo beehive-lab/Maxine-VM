@@ -28,25 +28,22 @@ import com.sun.cri.ri.*;
 
 /**
  * Class for recording optimistic assumptions made during compilation.
- * Recorded assumption can be visited for subsequent processing using 
+ * Recorded assumption can be visited for subsequent processing using
  * an implementation of the {@link AssumptionProcessor} interface.
- * 
- * @author Thomas Wuerthinger
- * @author Laurent Daynes
- *
  */
 public final class CiAssumptions implements Serializable {
 
     public abstract static class Assumption implements Serializable {
         /**
          * Apply an assumption processor to the assumption.
+         * 
          * @param processor the assumption processor to apply
          * @return true if a next assumption in a list should be fed to the processor.
          */
         abstract boolean visit(AssumptionProcessor processor);
     }
 
-    public final static class ConcreteSubtype extends Assumption {
+    public static final class ConcreteSubtype extends Assumption {
         /**
          * Type the assumption is made about.
          */
@@ -55,16 +52,16 @@ public final class CiAssumptions implements Serializable {
          * Assumed unique concrete sub-type of the context type.
          */
         public final RiType subtype;
-        
-        private ConcreteSubtype(RiType context, RiType subtype) {
+
+        public ConcreteSubtype(RiType context, RiType subtype) {
             this.context = context;
             this.subtype = subtype;
         }
-        
+
         @Override
         public boolean equals(Object obj) {
             if (obj instanceof ConcreteSubtype) {
-                ConcreteSubtype other = (ConcreteSubtype)obj;
+                ConcreteSubtype other = (ConcreteSubtype) obj;
                 return other.context == context && other.subtype == subtype;
             }
             return false;
@@ -72,45 +69,45 @@ public final class CiAssumptions implements Serializable {
 
         @Override
         public boolean visit(AssumptionProcessor processor) {
-            return processor.processUniqueConcreteSubtype(context, subtype);
+            return processor.doConcreteSubtype(this);
         }
     }
-    
-    public final static class ConcreteMethod extends Assumption {
+
+    public static final class ConcreteMethod extends Assumption {
         public final RiMethod context;
         public final RiMethod method;
-        
-        private ConcreteMethod(RiMethod context, RiMethod method) {
+
+        public ConcreteMethod(RiMethod context, RiMethod method) {
             this.context = context;
             this.method = method;
         }
-        
+
         @Override
         public boolean equals(Object obj) {
             if (obj instanceof ConcreteMethod) {
-                ConcreteMethod other = (ConcreteMethod)obj;
+                ConcreteMethod other = (ConcreteMethod) obj;
                 return other.context == context && other.method == method;
             }
             return false;
         }
-        
+
         @Override
         public boolean visit(AssumptionProcessor processor) {
-            return processor.processUniqueConcreteMethod(context, method);
+            return processor.doConcreteMethod(this);
         }
     }
-    
+
     private Assumption[] list;
     private int count;
-    
+
     public int count() {
         return count;
     }
-    
+
     public void recordConcreteSubtype(RiType context, RiType subtype) {
         record(new ConcreteSubtype(context, subtype));
     }
-    
+
     public void recordConcreteMethod(RiMethod context, RiMethod method) {
         record(new ConcreteMethod(context, method));
     }
@@ -126,7 +123,7 @@ public final class CiAssumptions implements Serializable {
             }
         }
         if (list.length == count) {
-            Assumption[] newList = new Assumption[list.length*2];
+            Assumption[] newList = new Assumption[list.length * 2];
             for (int i = 0; i < list.length; ++i) {
                 newList[i] = list[i];
             }
@@ -143,5 +140,5 @@ public final class CiAssumptions implements Serializable {
             }
         }
     }
-    
+
 }

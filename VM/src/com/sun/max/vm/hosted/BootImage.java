@@ -74,8 +74,6 @@ import com.sun.max.vm.type.*;
  * page-alignment requirement for the heap and code sections in the image will be satisfied if the
  * image itself starts at a page-aligned address.
  *
- * @author Bernd Mathiske
- * @author Doug Simon
  */
 public class BootImage {
 
@@ -540,7 +538,6 @@ public class BootImage {
                         BootImageException.check(match, "No " + key.valueType.getName() + " constant matches " + value);
                     } else {
                         assert key.valueType == BootImagePackage.class;
-                        BootImageException.check(BootImagePackage.fromName(value) instanceof BootImagePackage, "not a VM package: " + value);
                     }
                 } else {
                     // must be a system property for one of the schemes

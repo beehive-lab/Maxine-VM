@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -64,10 +64,10 @@ public class XirArgument {
 
     @Override
     public String toString() {
-    	if (constant != null) {
-    		return constant.toString();
-    	} else {
-    		return "" + object;
-    	}
+        if (constant != null) {
+            return constant.toString();
+        } else {
+            return "" + object;
+        }
     }
 }

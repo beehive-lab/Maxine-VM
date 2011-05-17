@@ -216,7 +216,7 @@ public final class BootImageMethodTree {
                 if (childId.equals(parentId)) {
                     ProgramWarning.message("link with same name for parent and child: " + childId);
                 }
-                methodIds.add(childId);
+                methodIds.add(parentId);
                 methodPool.put(parentId, methodId++);
             }
         }
@@ -230,8 +230,8 @@ public final class BootImageMethodTree {
         }
 
         for (Link link : links) {
-            final String childName = link.childId();
-            dataOutputStream.writeInt(methodPool.get(childName));
+            final String childId = link.childId();
+            dataOutputStream.writeInt(methodPool.get(childId));
             final String referrerName = link.parentId();
             if (referrerName != null) {
                 dataOutputStream.writeInt(methodPool.get(referrerName));

@@ -118,7 +118,6 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
      * A simple class for aggregating lazily printed statistics, represented as a sequence of objects to be converted to
      * comma separate strings when actually printed.
      *
-     * @author Michael Van De Vanter
      */
     protected final class StatsPrinter {
 
@@ -285,7 +284,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
             TeleReference forwardedTeleRef = reference.getForwardedTeleRef();
             TeleObject teleObject = heap().findObjectByOID(forwardedTeleRef.makeOID());
             if (teleObject == null) {
-                reference = (TeleReference) forwardedTeleRef;
+                reference = forwardedTeleRef;
                 return this;
             }
             return teleObject;
@@ -596,7 +595,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
                     put((Class) key, count);
                 }
                 return count;
-            };
+            }
         };
 
         static {

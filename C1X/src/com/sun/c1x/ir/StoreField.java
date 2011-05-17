@@ -29,8 +29,6 @@ import com.sun.cri.ri.*;
 
 /**
  * The {@code StoreField} instruction represents a write to a static or instance field.
- *
- * @author Ben L. Titzer
  */
 public final class StoreField extends AccessField {
 
@@ -87,11 +85,11 @@ public final class StoreField extends AccessField {
     @Override
     public void print(LogStream out) {
         out.print(object()).
-        print(".").
-        print(field().name()).
-        print(" := ").
-        print(value()).
-        print(" [type: ").print(CiUtil.format("%h.%n:%t", field(), false)).
-        print(']');
+            print(".").
+            print(field().name()).
+            print(" := ").
+            print(value()).
+            print(" [type: ").print(CiUtil.format("%h.%n:%t", field(), false)).
+            print(']');
     }
 }

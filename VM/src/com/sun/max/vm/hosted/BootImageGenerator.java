@@ -35,6 +35,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.deps.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.type.*;
 
@@ -54,7 +55,7 @@ public final class BootImageGenerator {
     public static final String IMAGE_JAR_FILE_NAME = "maxine.jar";
     public static final String IMAGE_FILE_NAME = "maxine.vm";
     public static final String STATS_FILE_NAME = "maxine.stats";
-    public static final String CHA_FILE_NAME = "maxine.cha";
+    public static final String DEPS_FILE_NAME = "maxine.deps";
 
     public static final String DEFAULT_VM_DIRECTORY = Prototype.TARGET_GENERATED_ROOT;
 
@@ -65,9 +66,6 @@ public final class BootImageGenerator {
 
     private final Option<Boolean> treeOption = options.newBooleanOption("tree", false,
             "Create a file showing the connectivity of objects in the image.");
-
-    private final Option<Boolean> chaOption = options.newBooleanOption("cha", false,
-            "Create a file showing assumptions made on the class type hierarchy by target methods of the boot image.");
 
     private final Option<Boolean> statsOption = options.newBooleanOption("stats", false,
             "Create a file detailing the number and size of each type of object in the image.");
@@ -222,8 +220,8 @@ public final class BootImageGenerator {
                 writeStats(graphPrototype, new File(vmDirectory, STATS_FILE_NAME));
             }
 
-            if (chaOption.getValue()) {
-                ClassDependencyManager.dump(new PrintStream(new File(vmDirectory, CHA_FILE_NAME)));
+            if (DependenciesManager.TraceDeps) {
+                DependenciesManager.dump(new PrintStream(new File(vmDirectory, DEPS_FILE_NAME)));
             }
 
             // ClassID debugging
@@ -236,7 +234,6 @@ public final class BootImageGenerator {
                 writeObjectTree(dataPrototype, graphPrototype, new File(vmDirectory, IMAGE_OBJECT_TREE_FILE_NAME));
                 writeMethodTree(graphPrototype.compiledPrototype, new File(vmDirectory, IMAGE_METHOD_TREE_FILE_NAME));
             }
-
         } catch (IOException ioException) {
             ProgramError.unexpected("could not write file ", ioException);
         } finally {

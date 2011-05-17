@@ -29,14 +29,12 @@ import com.sun.c1x.debug.TTY.*;
  * The help message for each option is specified by a {@linkplain #helpMap help map}.
  *
  * (tw) WARNING: Fields of this class are treated as final by Graal.
- *
- * @author Ben L. Titzer
  */
 public final class C1XOptions {
 
-    // Checkstyle: stop
+    // Checkstyle: off
     private static final boolean ____ = false;
-    // Checkstyle: resume
+    // Checkstyle: on
 
     // inlining settings
     public static boolean OptInline                          = ____;
@@ -154,7 +152,6 @@ public final class C1XOptions {
     public static int     SequentialSwitchLimit         = 4;
     public static int     RangeTestsSwitchDensity       = 5;
 
-    public static int     InitialCodeBufferSize         = 232;
     public static boolean DetailedAsserts               = true;
 
     // Runtime settings
@@ -165,21 +162,15 @@ public final class C1XOptions {
     // Assembler settings
     public static boolean CommentedAssembly             = ____;
     public static boolean PrintLIRWithAssembly          = ____;
-    public static int     Atomics                       = 0;
-    public static boolean UseNormalNop                  = true;
-    public static boolean UseAddressNop                 = true;
-    public static boolean UseIncDec                     = ____;
-    public static boolean UseXmmLoadAndClearUpper       = ____;
-    public static boolean UseXmmRegToRegMoveAll         = ____;
 
     static {
         setOptimizationLevel(1);
     }
 
     public static void setOptimizationLevel(int level) {
-        final boolean l = (level >= 1);
-        final boolean ll = (level >= 2);
-        final boolean lll = (level >= 3);
+        final boolean l = level >= 1;
+        final boolean ll = level >= 2;
+        final boolean lll = level >= 3;
 
         // Level 1 optimizations
         OptCanonicalize                 = l;

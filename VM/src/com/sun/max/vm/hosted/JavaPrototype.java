@@ -31,7 +31,6 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.*;
 
-import com.sun.c1x.debug.*;
 import com.sun.max.annotate.*;
 import com.sun.max.config.*;
 import com.sun.max.lang.*;
@@ -116,7 +115,19 @@ public final class JavaPrototype extends Prototype {
      * A map used during bootstrapping to replace references to a particular object with
      * references to another object during graph reachability.
      */
-    public Map<Object, Object> objectMap;
+    private Map<Object, Object> objectMap;
+
+    /**
+     * A list of external contributors to the {@linkplain #objectMap}.
+     */
+    private static List<ObjectIdentityMapContributor> objectMapContributors = new ArrayList<ObjectIdentityMapContributor>();
+
+    /**
+     * Interface that must be implemented by external contributors to the {@linkplain #objectMap}.
+     */
+    public static interface ObjectIdentityMapContributor {
+        void initializeObjectIdentityMap(Map<Object, Object> objectMap);
+    }
 
     /**
      * A map used to canonicalize instances of the Maxine value classes.
@@ -180,22 +191,19 @@ public final class JavaPrototype extends Prototype {
      * Loads all classes annotated with {@link METHOD_SUBSTITUTIONS} and performs the relevant substitutions.
      */
     private void loadMethodSubstitutions(final VMConfiguration vmConfiguration) {
-        for (BootImagePackage maxPackage : vmConfiguration.bootImagePackages) {
-            if (maxPackage instanceof BootImagePackage) {
-                BootImagePackage bootImagePackage = (BootImagePackage) maxPackage;
-                if (bootImagePackage.isPartOfMaxineVM(vmConfiguration) && bootImagePackage.containsMethodSubstitutions()) {
-                    String[] classes = bootImagePackage.listClasses(packageLoader.classpath);
-                    for (String cn : classes) {
-                        try {
-                            Class<?> c = Class.forName(cn, false, Package.class.getClassLoader());
-                            METHOD_SUBSTITUTIONS annotation = c.getAnnotation(METHOD_SUBSTITUTIONS.class);
-                            if (annotation != null) {
-                                loadClass(c);
-                                METHOD_SUBSTITUTIONS.Static.processAnnotationInfo(annotation, toClassActor(c));
-                            }
-                        } catch (Exception e) {
-                            throw ProgramError.unexpected(e);
+        for (BootImagePackage bootImagePackage : vmConfiguration.bootImagePackages) {
+            if (bootImagePackage.isPartOfMaxineVM(vmConfiguration) && bootImagePackage.containsMethodSubstitutions()) {
+                String[] classes = bootImagePackage.listClasses(packageLoader.classpath);
+                for (String cn : classes) {
+                    try {
+                        Class<?> c = Class.forName(cn, false, Package.class.getClassLoader());
+                        METHOD_SUBSTITUTIONS annotation = c.getAnnotation(METHOD_SUBSTITUTIONS.class);
+                        if (annotation != null) {
+                            loadClass(c);
+                            METHOD_SUBSTITUTIONS.Static.processAnnotationInfo(annotation, toClassActor(c));
                         }
+                    } catch (Exception e) {
+                        throw ProgramError.unexpected(e);
                     }
                 }
             }
@@ -554,8 +562,14 @@ public final class JavaPrototype extends Prototype {
         objectMap.put(FileDescriptor.err, FileDescriptor.err);
 
         objectMap.put(Trace.stream(), Log.out);
-        objectMap.put(TTY.out(), new LogStream(Log.os));
-        objectMap.put(CFGPrinter.cfgFileStream(), NULL);
         objectMap.put(WithoutAccessCheck.getStaticField(System.class, "props"), JDKInterceptor.initialSystemProperties);
+
+        for (ObjectIdentityMapContributor contributor : objectMapContributors) {
+            contributor.initializeObjectIdentityMap(objectMap);
+        }
+    }
+
+    public static void addObjectIdentityMapContributor(ObjectIdentityMapContributor contributor) {
+        objectMapContributors.add(contributor);
     }
 }

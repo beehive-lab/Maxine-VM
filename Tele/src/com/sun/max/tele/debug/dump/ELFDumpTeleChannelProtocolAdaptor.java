@@ -22,11 +22,11 @@
  */
 package com.sun.max.tele.debug.dump;
 
-import static com.sun.max.elf.ELFProgramHeaderTable.*;
+import static com.oracle.max.elf.ELFProgramHeaderTable.*;
 
 import java.io.*;
 
-import com.sun.max.elf.*;
+import com.oracle.max.elf.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.channel.*;
@@ -104,14 +104,14 @@ public class ELFDumpTeleChannelProtocolAdaptor extends TeleChannelDataIOProtocol
                 int namesz = dis.read_Elf64_Word();
                 final int descsz = dis.read_Elf64_Word();
                 final int type = dis.read_Elf64_Word();
-                final String name = readNoteString(dis, (int) namesz);
+                final String name = readNoteString(dis, namesz);
                 readLength += 12 + namesz;
                 while (namesz % 8 != 0) {
                     dis.read_Elf32_byte();
                     readLength++;
                     namesz++;
                 }
-                final byte[] desc = readNoteDesc(dis, (int) descsz);
+                final byte[] desc = readNoteDesc(dis, descsz);
                 readLength += descsz;
 
                 entryHandler.processNoteEntry(type, name, desc);

@@ -25,14 +25,20 @@
 #
 # ----------------------------------------------------------------------------------------------------
 #
-# Script to remove @author tags from the files supplied as args to this script.
+# Script to remove @author tags from the *.java files supplied as args to this script.
 #
 
 files="$@"
 for f in $files; do
+    if [[ ! "$f" =~ ".java" ]]; then
+        #echo "ignoring $f"
+        continue;
+    fi
     awk <$f >$f.tmp '
-/\* @author [A-Za-z\. ]*$/ { next; }
-                         { print; } '
+BEGIN  { i = 0; }    
+/\* @author [A-Za-z\. ]*$/ { while (i > 0 && lines[i - 1] ~ /^ \* *$/ ) { i-- ; } next; }
+      { lines[i++] = $0; } 
+END   { j = 0; while (j < i) print lines[j++]; } '
     diff $f $f.tmp >/dev/null
     if [ $? -ne 0 ]; then
         mv $f $f.orig

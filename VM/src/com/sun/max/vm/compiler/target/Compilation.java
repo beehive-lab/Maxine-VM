@@ -24,7 +24,6 @@ package com.sun.max.vm.compiler.target;
 
 import static com.sun.max.vm.VMOptions.*;
 
-import java.util.*;
 import java.util.concurrent.*;
 
 import com.sun.max.annotate.*;
@@ -39,8 +38,6 @@ import com.sun.max.vm.thread.*;
 
 /**
  * This class represents an ongoing or completed compilation.
- *
- * @author Ben L. Titzer
  */
 public class Compilation /*implements Future<TargetMethod>*/ {
 
@@ -166,16 +163,11 @@ public class Compilation /*implements Future<TargetMethod>*/ {
     /**
      * Perform the compilation, notifying the specified observers.
      *
-     * @param observers a list of observers to notify; {@code null} if there are no observers
-     * to notify
      * @return the target method that is the result of the compilation
      */
-    public TargetMethod compile(List<CompilationObserver> observers) {
+    public TargetMethod compile() {
         RuntimeCompiler compiler = this.compiler;
         TargetMethod targetMethod = null;
-
-        // notify any compilation observers
-        observeBeforeCompilation(observers, compiler);
 
         Throwable error = null;
         String methodString = "";
@@ -235,9 +227,6 @@ public class Compilation /*implements Future<TargetMethod>*/ {
         }
 
         COMPILATION.set(parent);
-
-        // notify any compilation observers
-        observeAfterCompilation(observers, compiler, targetMethod);
 
         return targetMethod;
     }
@@ -304,21 +293,6 @@ public class Compilation /*implements Future<TargetMethod>*/ {
             Log.print(", size = ");
             Log.print(targetMethod.codeLength());
             Log.println();
-        }
-    }
-
-    private void observeBeforeCompilation(List<CompilationObserver> observers, RuntimeCompiler compiler) {
-        if (observers != null) {
-            for (CompilationObserver observer : observers) {
-                observer.observeBeforeCompilation(classMethodActor, compiler);
-            }
-        }
-    }
-    private void observeAfterCompilation(List<CompilationObserver> observers, RuntimeCompiler compiler, TargetMethod result) {
-        if (observers != null) {
-            for (CompilationObserver observer : observers) {
-                observer.observeAfterCompilation(classMethodActor, compiler, result);
-            }
         }
     }
 }

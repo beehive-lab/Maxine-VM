@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -172,30 +172,30 @@ public final class BytecodeIntrinsifier {
      */
     private Frame todoHandler;
 
-	/**
-	 * Sentinel value used in {@link #frameMap} to denote that a given
-	 * instruction ({@code bci}) has been processed. This required as without a
-	 * pre-pass to establish basic block boundaries, it's possible for
-	 * {@linkplain #parseBlock(int) block parsing} to cross a block boundary at
-	 * a (as yet unknown) control flow merge point. There's no need to
-	 * re-process the instructions after the merge point when the other branch
-	 * to the merge point is subsequently discovered.
-	 */
+    /**
+     * Sentinel value used in {@link #frameMap} to denote that a given
+     * instruction ({@code bci}) has been processed. This required as without a
+     * pre-pass to establish basic block boundaries, it's possible for
+     * {@linkplain #parseBlock(int) block parsing} to cross a block boundary at
+     * a (as yet unknown) control flow merge point. There's no need to
+     * re-process the instructions after the merge point when the other branch
+     * to the merge point is subsequently discovered.
+     */
     private static final Frame VISITED = new Frame(-1, 0, null, null, null);
     static {
         VISITED.visited = true;
     }
 
-	/**
-	 * A map from each {@code bci} to a {@link Frame} object. A entry equal to
-	 * {@link #VISITED} in this map for a given {@code bci} indicates that the
-	 * instruction at {@code bci} has already be processed. A {@code null} entry
-	 * means that the instruction has not yet been processes and not a known
-	 * basic block entry point. A non-null entry not equals to {@link #VISITED}
-	 * indicates a known basic block entry point and the value of the
-	 * {@link Frame} object indicates the frame state to be used when parsing
-	 * the block.
-	 */
+    /**
+     * A map from each {@code bci} to a {@link Frame} object. A entry equal to
+     * {@link #VISITED} in this map for a given {@code bci} indicates that the
+     * instruction at {@code bci} has already be processed. A {@code null} entry
+     * means that the instruction has not yet been processes and not a known
+     * basic block entry point. A non-null entry not equals to {@link #VISITED}
+     * indicates a known basic block entry point and the value of the
+     * {@link Frame} object indicates the frame state to be used when parsing
+     * the block.
+     */
     private final Frame[] frameMap;
 
     /**
@@ -459,9 +459,9 @@ public final class BytecodeIntrinsifier {
      * @return the unsigned 2-byte value read
      */
     private int readU2() {
-    	final int result = Bytes.beU2(inCode, bci);
-    	bci += 2;
-    	return result;
+        final int result = Bytes.beU2(inCode, bci);
+        bci += 2;
+        return result;
     }
 
     /**
@@ -483,9 +483,9 @@ public final class BytecodeIntrinsifier {
      * @return the signed 2-byte value read
      */
     private int readS2() {
-    	final int result = Bytes.beS2(inCode, bci);
-    	bci += 2;
-    	return result;
+        final int result = Bytes.beS2(inCode, bci);
+        bci += 2;
+        return result;
     }
 
     /**
@@ -494,9 +494,9 @@ public final class BytecodeIntrinsifier {
      * @return the signed 4-byte value read
      */
     private int readS4() {
-    	final int result = Bytes.beS4(inCode, bci);
-    	bci += 4;
-    	return result;
+        final int result = Bytes.beS4(inCode, bci);
+        bci += 4;
+        return result;
     }
 
     private void align4() {

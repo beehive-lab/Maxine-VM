@@ -57,16 +57,16 @@ public final class CiBitMap implements Serializable {
 
     /**
      * Constructs a new bit map from a byte array encoded bit map.
-     * 
+     *
      * @param bitmap the bit map to convert
      */
     public CiBitMap(byte[] bitmap) {
         this(bitmap, 0, bitmap.length);
     }
-    
+
     /**
      * Constructs a new bit map from a byte array encoded bit map.
-     * 
+     *
      * @param arr the byte array containing the bit map to convert
      * @param off the byte index in {@code arr} at which the bit map starts
      * @param numberOfBytes the number of bytes worth of bits to copy from {@code arr}
@@ -108,7 +108,7 @@ public final class CiBitMap implements Serializable {
 
     /**
      * Constructs a new bit map with the specified length.
-     * 
+     *
      * @param length the length of the bitmap
      */
     public CiBitMap(int length) {
@@ -121,7 +121,7 @@ public final class CiBitMap implements Serializable {
 
     /**
      * Sets the bit at the specified index.
-     * 
+     *
      * @param i the index of the bit to set
      */
     public void set(int i) {
@@ -136,7 +136,7 @@ public final class CiBitMap implements Serializable {
 
     /**
      * Grows this bitmap to a new size, appending necessary zero bits.
-     * 
+     *
      * @param newLength the new length of the bitmap
      */
     public void grow(int newLength) {
@@ -447,7 +447,7 @@ public final class CiBitMap implements Serializable {
         }
         return true;
     }
-    
+
     /**
      * Compares this object against the specified object.
      * The result is {@code true} if and only if {@code obj} is
@@ -497,7 +497,7 @@ public final class CiBitMap implements Serializable {
     public int hashCode() {
         return (int) low ^ size;
     }
-    
+
     /**
      * Returns a string representation of this bit map
      * that is the same as the string returned by {@link BitSet#toString()}
@@ -527,7 +527,7 @@ public final class CiBitMap implements Serializable {
         }
         return bit;
     }
-    
+
     /**
      * Returns the number of bits set to {@code true} in this bit map.
      */
@@ -563,7 +563,7 @@ public final class CiBitMap implements Serializable {
      * Returns a string representation of this bit map with every set bit represented as {@code '1'}
      * and every unset bit represented as {@code '0'}. The first character in the returned string represents
      * bit 0 in this bit map.
-     * 
+     *
      * @param length the number of bits represented in the returned string. If {@code length < 0 || length > size()},
      *            then the value of {@link #length()} is used.
      */
@@ -581,9 +581,9 @@ public final class CiBitMap implements Serializable {
         return sb.toString();
     }
 
-    final static char[] hexDigits = {
-        '0' , '1' , '2' , '3' , '4' , '5' , '6' , '7' ,
-        '8' , '9' , 'a' , 'b' , 'c' , 'd' , 'e' , 'f'
+    static final char[] hexDigits = {
+        '0', '1', '2', '3', '4', '5', '6', '7',
+        '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
     };
 
     /**
@@ -606,7 +606,7 @@ public final class CiBitMap implements Serializable {
             if (get(i + 3)) {
                 nibble |= 8;
             }
-            
+
             sb.append(hexDigits[nibble]);
         }
         return sb.toString();
@@ -624,7 +624,7 @@ public final class CiBitMap implements Serializable {
 
     /**
      * Copies this bit map into a given byte array.
-     * 
+     *
      * @param arr the destination
      * @param off the byte index in {@code arr} at which to start writing
      * @param numberOfBytes the number of bytes worth of bits to copy from this bit map.
@@ -658,14 +658,14 @@ public final class CiBitMap implements Serializable {
      * byte array is {@code ((size() + 7) / 8)}.
      */
     public byte[] toByteArray() {
-        byte[] arr = new byte[(size + 7)/ 8];
+        byte[] arr = new byte[(size + 7) / 8];
         copyTo(arr, 0, arr.length);
         return arr;
     }
-    
+
     /**
      * Converts this bit map to a long.
-     * 
+     *
      * @throws IllegalArgumentException if {@code (size() > 64)}
      */
     public long toLong() {

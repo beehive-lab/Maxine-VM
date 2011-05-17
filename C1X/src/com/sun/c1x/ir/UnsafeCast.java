@@ -29,8 +29,6 @@ import com.sun.cri.ri.*;
 
 /**
  * The {@code UnsafeCast} instruction represents a {@link Bytecodes#UNSAFE_CAST}.
- *
- * @author Doug Simon
  */
 public final class UnsafeCast extends Instruction {
 
@@ -110,8 +108,8 @@ public final class UnsafeCast extends Instruction {
     @Override
     public void print(LogStream out) {
         out.print("unsafe_cast(").
-        print(value).
-        print(") ").
-        print(CiUtil.toJavaName(toType));
+            print(value).
+            print(") ").
+            print(CiUtil.toJavaName(toType));
     }
 }

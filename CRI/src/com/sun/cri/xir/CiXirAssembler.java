@@ -48,23 +48,23 @@ public abstract class CiXirAssembler {
     protected final List<XirTemp> temps = new ArrayList<XirTemp>(5);
     protected final List<XirConstant> constants = new ArrayList<XirConstant>(5);
     protected final List<XirMark> marks = new ArrayList<XirMark>(5);
-    
+
     protected int outgoingStackSize = 0;
 
     /**
      * Increases by one for every {@link XirOperand operand} created.
      */
     protected int variableCount;
-    
+
     /**
      * Marks the assembly complete.
      */
     protected boolean finished = true;
-    
+
     public static class RuntimeCallInformation {
         public final Object target;
         public final boolean useInfoAfter;
-        
+
         public RuntimeCallInformation(Object target, boolean useInfoAfter) {
             this.target = target;
             this.useInfoAfter = useInfoAfter;
@@ -85,7 +85,7 @@ public abstract class CiXirAssembler {
          * The constant byte-sized displacement part of an address computation.
          */
         public final int disp;
-        
+
         /**
          * Determines if the memory access through the address can trap.
          */
@@ -141,20 +141,20 @@ public abstract class CiXirAssembler {
     }
 
     public static final XirOperand VOID = null;
-    
+
     /**
      * Operands for {@link XirInstruction instructions}.
      * There are three basic variants, {@link XirConstant constant}, {@link XirParameter parameter} and {@link XirTemp}.
      */
-    public static abstract class XirOperand {
-        
+    public abstract static class XirOperand {
+
         public final CiKind kind;
-        
+
         /**
          * Unique id in range {@code 0} to {@link #variableCount variableCount - 1}.
          */
         public final int index;
-        
+
         /**
          * Value whose {@link #toString()} method provides a name for this operand.
          */
@@ -190,7 +190,7 @@ public abstract class CiXirAssembler {
          * Unique id in range {@code 0} to {@code parameters.Size()  - 1}.
          */
         public final int parameterIndex;
-        
+
         public final boolean canBeConstant;
 
         XirParameter(CiXirAssembler asm, String name, CiKind kind, boolean canBeConstant) {
@@ -225,7 +225,7 @@ public abstract class CiXirAssembler {
             super(asm, value, value.kind);
             this.value = value;
         }
-        
+
         public int getIndex() {
             return index;
         }
@@ -233,7 +233,7 @@ public abstract class CiXirAssembler {
 
     public static class XirTemp extends XirOperand {
         public final boolean reserve;
-        
+
         XirTemp(CiXirAssembler asm, String name, CiKind kind, boolean reserve) {
             super(asm, name, kind);
             this.reserve = reserve;
@@ -386,7 +386,7 @@ public abstract class CiXirAssembler {
     public static class XirMark {
         public final XirMark[] references;
         public final Object id;
-        
+
         // special mark used to refer to the actual call site of an invoke
         public static final XirMark CALLSITE = new XirMark(null);
 
@@ -489,8 +489,8 @@ public abstract class CiXirAssembler {
          */
         RepeatMoveBytes,
         /**
-         * Compare value at at address {@code x} with value in {@code y} and store value {@code z} at address {@code x} 
-         * if it was equal to {@code y}. 
+         * Compare value at at address {@code x} with value in {@code y} and store value {@code z} at address {@code x}
+         * if it was equal to {@code y}.
          */
         PointerCAS,
         /**
@@ -534,11 +534,11 @@ public abstract class CiXirAssembler {
          */
         Jlteq,
         /**
-         * Decreases the input by one and jumps to the target if the input is not 0
+         * Decreases the input by one and jumps to the target if the input is not 0.
          */
         DecAndJumpNotZero,
         /**
-         * If bit designated by {@code z} at effective address defined by base {@code x} and offset {@code y} 
+         * If bit designated by {@code z} at effective address defined by base {@code x} and offset {@code y}
          * is set transfer control to the instruction at the {@link XirLabel label} identified by {@code extra}.
          */
         Jbset,
@@ -584,7 +584,7 @@ public abstract class CiXirAssembler {
          */
         Mark,
         /**
-         * Inserts nop instructions, with the given size in bytes. 
+         * Inserts nop instructions, with the given size in bytes.
          */
         Nop,
         /**
@@ -681,11 +681,11 @@ public abstract class CiXirAssembler {
     public void lea(XirOperand result, XirOperand pointer, XirOperand index, int disp, Scale scale) {
         append(new XirInstruction(CiKind.Word, new AddressAccessInformation(false, disp, scale), LoadEffectiveAddress, result, pointer, index));
     }
-    
+
     public void repmov(XirOperand src, XirOperand dest, XirOperand length) {
         append(new XirInstruction(CiKind.Word, null, RepeatMoveWords, null, src, dest, length));
     }
-    
+
     public void repmovb(XirOperand src, XirOperand dest, XirOperand length) {
         append(new XirInstruction(CiKind.Word, null, RepeatMoveBytes, null, src, dest, length));
     }
@@ -741,7 +741,7 @@ public abstract class CiXirAssembler {
     public void jlteq(XirLabel l, XirOperand a, XirOperand b) {
         jcc(Jlteq, l, a, b);
     }
-    
+
     public void jbset(XirLabel l, XirOperand a, XirOperand b, XirOperand c) {
         append(new XirInstruction(CiKind.Void, l, Jbset, null, a, b, c));
     }
@@ -755,20 +755,20 @@ public abstract class CiXirAssembler {
         assert !l.inline;
         append(new XirInstruction(CiKind.Void, l, Bind, null));
     }
-    
+
     public void safepoint() {
         append(new XirInstruction(CiKind.Void, null, Safepoint, null));
     }
-    
+
     public void align(int multiple) {
         assert multiple > 0;
         append(new XirInstruction(CiKind.Void, multiple, Align, null));
     }
-    
+
     public void stackOverflowCheck() {
         append(new XirInstruction(CiKind.Void, null, StackOverflowCheck, null));
     }
-    
+
     public void pushFrame() {
         append(new XirInstruction(CiKind.Void, null, PushFrame, null));
     }
@@ -780,26 +780,26 @@ public abstract class CiXirAssembler {
     public void rawBytes(byte[] bytes) {
         append(new XirInstruction(CiKind.Void, bytes, RawBytes, null));
     }
-    
+
     public void push(XirOperand value) {
         append(new XirInstruction(CiKind.Void, Push, VOID, value));
     }
-    
+
     public void pop(XirOperand result) {
         append(new XirInstruction(result.kind, Pop, result));
     }
-    
+
     public XirMark mark(Object id, XirMark... references) {
         XirMark mark = new XirMark(id, references);
         marks.add(mark);
         append(new XirInstruction(CiKind.Void, mark, Mark, null));
         return mark;
     }
-    
+
     public void nop(int size) {
         append(new XirInstruction(CiKind.Void, size, Nop, null));
     }
-    
+
     public void shouldNotReachHere() {
         append(new XirInstruction(CiKind.Void, null, ShouldNotReachHere, null));
     }
@@ -816,7 +816,7 @@ public abstract class CiXirAssembler {
     public void callRuntime(Object rt, XirOperand result, XirOperand... args) {
         callRuntime(rt, result, false, args);
     }
-    
+
     public void callRuntime(Object rt, XirOperand result, boolean useInfoAfter, XirOperand... args) {
         CiKind resultKind = result == null ? CiKind.Void : result.kind;
         append(new XirInstruction(resultKind, new RuntimeCallInformation(rt, useInfoAfter), CallRuntime, result, args));
@@ -841,7 +841,7 @@ public abstract class CiXirAssembler {
         assert !finished;
         return new XirVariableParameter(this, name, kind, canBeConstant);
     }
-    
+
     public XirVariableParameter createInputParameter(String name, CiKind kind) {
         return createInputParameter(name, kind, false);
     }
@@ -870,22 +870,22 @@ public abstract class CiXirAssembler {
         temps.add(temp);
         return temp;
     }
-    
+
     public XirOperand createRegister(String name, CiKind kind, CiRegister register) {
         return createRegister(name, kind, register, false);
     }
-    
+
     public XirOperand createRegisterTemp(String name, CiKind kind, CiRegister register) {
         return createRegister(name, kind, register, true);
     }
-    
+
     private XirOperand createRegister(String name, CiKind kind, CiRegister register, boolean reserve) {
         assert !finished;
         XirRegister fixed = new XirRegister(this, name, register.asValue(kind), reserve);
         temps.add(fixed);
         return fixed;
     }
-    
+
     public XirParameter getParameter(String name) {
         for (XirParameter param : parameters) {
             if (param.name.toString().equals(name)) {
@@ -923,7 +923,7 @@ public abstract class CiXirAssembler {
     public XirConstant o(Object obj) {
         return createConstant(CiConstant.forObject(obj));
     }
-    
+
     public void reserveOutgoingStack(int size) {
         outgoingStackSize = Math.max(outgoingStackSize, size);
     }

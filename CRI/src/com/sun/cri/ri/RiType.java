@@ -94,7 +94,7 @@ public interface RiType {
      * @return a new compiler interface type representing an array of this type
      */
     RiType arrayOf();
-    
+
     /**
      * Gets the super type of this type or {@code null} if no such type exists.
      */
@@ -183,7 +183,7 @@ public interface RiType {
      * @return the mask of JVM defined class access flags defined for this type
      */
     int accessFlags();
-    
+
     /**
      * Checks whether this type is initialized.
      * NOTE: ONLY AVAILABLE ON RESOLVED TYPES.
@@ -214,7 +214,7 @@ public interface RiType {
      * @return the exact type of this type, if it exists; {@code null} otherwise
      */
     RiType exactType();
-    
+
     /**
      * Attempts to get the unique concrete subtype of this type.
      * NOTE: ONLY AVAILABLE ON RESOLVED TYPES.
@@ -231,4 +231,5 @@ public interface RiType {
      */
     RiMethod resolveMethodImpl(RiMethod method);
 
+    RiMethod uniqueConcreteMethod(RiMethod method);
 }

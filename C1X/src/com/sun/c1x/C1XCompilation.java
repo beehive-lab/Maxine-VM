@@ -25,10 +25,11 @@ package com.sun.c1x;
 
 import java.util.*;
 
+import com.oracle.max.asm.*;
 import com.sun.c1x.alloc.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.gen.*;
-import com.sun.c1x.gen.LIRGenerator.DeoptimizationStub;
+import com.sun.c1x.gen.LIRGenerator.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
@@ -41,8 +42,6 @@ import com.sun.cri.ri.*;
 /**
  * This class encapsulates global information about the compilation of a particular method,
  * including a reference to the runtime, statistics about the compiled code, etc.
- *
- * @author Ben L. Titzer
  */
 public final class C1XCompilation {
 
@@ -70,7 +69,7 @@ public final class C1XCompilation {
     private int nextID = 1;
 
     private FrameMap frameMap;
-    private AbstractAssembler assembler;
+    private TargetMethodAssembler assembler;
 
     private IR hir;
 
@@ -223,9 +222,10 @@ public final class C1XCompilation {
         return frameMap;
     }
 
-    public AbstractAssembler masm() {
+    public TargetMethodAssembler assembler() {
         if (assembler == null) {
-            assembler = compiler.backend.newAssembler(registerConfig);
+            AbstractAssembler asm = compiler.backend.newAssembler(registerConfig);
+            assembler = new TargetMethodAssembler(asm);
             assembler.setFrameSize(frameMap.frameSize());
             assembler.targetMethod.setCustomStackAreaOffset(frameMap.offsetToCustomArea());
         }
@@ -320,7 +320,7 @@ public final class C1XCompilation {
             // generate traps at the end of the method
             lirAssembler.emitTraps();
 
-            CiTargetMethod targetMethod = masm().finishTargetMethod(method, runtime, lirAssembler.registerRestoreEpilogueOffset, false);
+            CiTargetMethod targetMethod = assembler().finishTargetMethod(method, runtime, lirAssembler.registerRestoreEpilogueOffset, false);
             if (assumptions.count() > 0) {
                 targetMethod.setAssumptions(assumptions);
             }

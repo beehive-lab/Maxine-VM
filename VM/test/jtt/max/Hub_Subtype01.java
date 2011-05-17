@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ import com.sun.max.vm.actor.holder.ClassActor;
  * @Runs: 0=true; 1=true; 2=true; 3=true; 4=true; 5=false
  */
 public class Hub_Subtype01 {
+    @SuppressWarnings("all")
     public static boolean test(int arg) {
         Object obj = null;
         if (arg == 0) {

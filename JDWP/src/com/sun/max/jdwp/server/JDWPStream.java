@@ -44,10 +44,6 @@ import com.sun.max.jdwp.data.JDWPSender;
 import com.sun.max.jdwp.data.OutgoingData;
 import com.sun.max.jdwp.data.ReplyPacket;
 
-/**
- *
- * @author Thomas Wuerthinger
- */
 class JDWPStream implements JDWPSender {
 
     private static final Logger LOGGER = Logger.getLogger(JDWPStream.class.getName());
@@ -198,8 +194,8 @@ class JDWPStream implements JDWPSender {
     @SuppressWarnings("unchecked")
     private IncomingPacket<? extends IncomingData, ? extends OutgoingData> createIncomingPacket(int length, int id, byte flags, byte commandSetId, byte commandId, IncomingData data,
                     CommandHandler handler) {
-        final IncomingPacket incomingPacket = new IncomingPacket<IncomingData, OutgoingData>(length, id, flags, commandSetId, commandId, data, (CommandHandler<IncomingData, OutgoingData>) handler);
-        final IncomingPacket<? extends IncomingData, ? extends OutgoingData> p = (IncomingPacket<? extends IncomingData, ? extends OutgoingData>) incomingPacket;
+        final IncomingPacket incomingPacket = new IncomingPacket<IncomingData, OutgoingData>(length, id, flags, commandSetId, commandId, data, handler);
+        final IncomingPacket<? extends IncomingData, ? extends OutgoingData> p = incomingPacket;
         return p;
     }
 }

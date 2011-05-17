@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,10 +28,10 @@ package com.sun.cri.bytecode;
  * @author Ben L. Titzer
  */
 public class BytecodeTableSwitch extends BytecodeSwitch {
-	private static final int OFFSET_TO_LOW_KEY = 4;
-	private static final int OFFSET_TO_HIGH_KEY = 8;
-	private static final int OFFSET_TO_FIRST_JUMP_OFFSET = 12;
-	private static final int JUMP_OFFSET_SIZE = 4;
+    private static final int OFFSET_TO_LOW_KEY = 4;
+    private static final int OFFSET_TO_HIGH_KEY = 8;
+    private static final int OFFSET_TO_FIRST_JUMP_OFFSET = 12;
+    private static final int JUMP_OFFSET_SIZE = 4;
 
     /**
      * Constructor for a {@link BytecodeStream}.

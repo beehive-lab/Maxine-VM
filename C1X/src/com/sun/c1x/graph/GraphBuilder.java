@@ -46,9 +46,6 @@ import com.sun.cri.ri.RiType.Representation;
  * The {@code GraphBuilder} class parses the bytecode of a method and builds the IR graph.
  * A number of optimizations may be performed during parsing of the bytecode, including value
  * numbering, inlining, constant folding, strength reduction, etc.
- *
- * @author Ben L. Titzer
- * @author Doug Simon
  */
 public final class GraphBuilder {
 
@@ -914,6 +911,7 @@ public final class GraphBuilder {
         if (target.intrinsic() != 0) {
             int intrinsic = target.intrinsic();
             int opcode = intrinsic & 0xff;
+            // Checkstyle: off
             switch (opcode) {
                 case PREAD          : genLoadPointer(intrinsic); break;
                 case PGET           : genLoadPointer(intrinsic); break;
@@ -923,6 +921,7 @@ public final class GraphBuilder {
                 default:
                     throw new CiBailout("unknown bytecode " + opcode + " (" + nameOf(opcode) + ")");
             }
+            // Checkstyle: on
             return null;
         }
         return target;
@@ -1661,7 +1660,8 @@ public final class GraphBuilder {
             case java_lang_Integer$reverseBytes: // fall through
             case java_lang_Long$bitCount: // fall through
             case java_lang_Long$reverseBytes: // fall through
-            case java_lang_Object$clone:  return false;
+            case java_lang_Object$clone:
+                return false;
             // TODO: preservesState and canTrap for complex intrinsics
         }
 
@@ -2241,7 +2241,7 @@ public final class GraphBuilder {
     private void processBytecode(int bci, BytecodeStream s, int opcode) {
         int cpi;
 
-        // Checkstyle: stop
+        // Checkstyle: off
         switch (opcode) {
             case NOP            : /* nothing to do */ break;
             case ACONST_NULL    : apush(appendConstant(CiConstant.NULL_OBJECT)); break;
@@ -2446,11 +2446,11 @@ public final class GraphBuilder {
             default:
                 processExtendedBytecode(bci, s, opcode);
         }
-        // Checkstyle: resume
+        // Checkstyle: on
     }
 
     private void processExtendedBytecode(int bci, BytecodeStream s, int opcode) {
-        // Checkstyle: stop
+        // Checkstyle: off
         switch (opcode) {
             case UNSAFE_CAST    : genUnsafeCast(constantPool().lookupMethod(s.readCPI(), (byte)Bytecodes.UNSAFE_CAST)); break;
             case WLOAD          : loadLocal(s.readLocalIndex(), CiKind.Word); break;
@@ -2511,7 +2511,7 @@ public final class GraphBuilder {
             default:
                 throw new CiBailout("Unsupported opcode " + opcode + " (" + nameOf(opcode) + ") [bci=" + bci + "]");
         }
-        // Checkstyle: resume
+        // Checkstyle: on
     }
 
     private void traceInstruction(int bci, BytecodeStream s, int opcode, boolean blockStart) {
@@ -2697,6 +2697,7 @@ public final class GraphBuilder {
      * @return the kind of value at the address accessed by the pointer operation denoted by {@code opcode}
      */
     private static CiKind dataKindForPointerOp(int opcode) {
+        // Checkstyle: off
         switch (opcode) {
             case PGET_BYTE          :
             case PSET_BYTE          :
@@ -2752,6 +2753,7 @@ public final class GraphBuilder {
             default:
                 throw new CiBailout("Unsupported pointer operation opcode " + opcode + "(" + nameOf(opcode) + ")");
         }
+        // Checkstyle: on
     }
 
     /**
@@ -2809,6 +2811,7 @@ public final class GraphBuilder {
     }
 
     private static CiKind kindForCompareAndSwap(int opcode) {
+        // Checkstyle: off
         switch (opcode) {
             case PCMPSWP_INT        :
             case PCMPSWP_INT_I      : return CiKind.Int;
@@ -2819,6 +2822,7 @@ public final class GraphBuilder {
             default:
                 throw new CiBailout("Unsupported compare-and-swap opcode " + opcode + "(" + nameOf(opcode) + ")");
         }
+        // Checkstyle: on
     }
 
     private void genCompareAndSwap(int opcode) {
@@ -2881,7 +2885,7 @@ public final class GraphBuilder {
             }
 
             if (C1XOptions.UseAssumptions) {
-                RiMethod assumed = method.uniqueConcreteMethod();
+                RiMethod assumed = method.holder().uniqueConcreteMethod(method);
                 if (assumed != null) {
                     if (C1XOptions.PrintAssumptions) {
                         TTY.println("Recording concrete method assumption in context of " + method.holder().name() + ": " + assumed.name());

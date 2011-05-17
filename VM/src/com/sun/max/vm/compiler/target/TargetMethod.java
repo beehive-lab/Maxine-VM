@@ -57,10 +57,6 @@ import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 /**
  * A collection of objects that represent the compiled target code
  * and its auxiliary data structures for a Java method.
- *
- * @author Bernd Mathiske
- * @author Doug Simon
- * @author Thomas Wuerthinger
  */
 public abstract class TargetMethod extends MemoryRegion {
 
@@ -102,7 +98,7 @@ public abstract class TargetMethod extends MemoryRegion {
         StaticTrampoline(!COMPILED),
 
         /**
-         * A {@linkplain com.sun.c1x.globalstub.GlobalStub global stub}.
+         * A global stub.
          */
         GlobalStub(!COMPILED),
 
@@ -530,10 +526,6 @@ public abstract class TargetMethod extends MemoryRegion {
         return registerRestoreEpilogueOffset >= 0;
     }
 
-    public boolean isMakingValidAssumptions() {
-        return true;
-    }
-
     /**
      * Gets an object to help decode inline data in this target method's code.
      */
@@ -761,7 +753,7 @@ public abstract class TargetMethod extends MemoryRegion {
                         byte opcode = code[bci];
                         if (opcode == INVOKEINTERFACE || opcode == INVOKESPECIAL || opcode == INVOKESTATIC || opcode == INVOKEVIRTUAL) {
                             int cpi = Bytes.beU2(code, bci + 1);
-                            RiMethod callee = vm().runtime.getConstantPool(codePos.method).lookupMethod(cpi, opcode);
+                            RiMethod callee = ((ClassMethodActor) (codePos.method)).compilee().codeAttribute().cp.lookupMethod(cpi, opcode);
                             string += " [" + callee + "]";
                         }
                     }

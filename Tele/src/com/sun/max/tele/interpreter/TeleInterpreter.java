@@ -51,8 +51,6 @@ import com.sun.max.vm.value.*;
 /**
  * Entry points and utility functions for the interpreter.
  *
- * @author Athul Acharya
- * @author Doug Simon
  */
 public final class TeleInterpreter {
 
@@ -1058,7 +1056,7 @@ public final class TeleInterpreter {
                 ClassActor dynamicClass = receiver.getClassActor();
                 assert dynamicClass != null;
 
-                if (!dynamicClass.getAllInterfaceActors().contains((InterfaceActor) methodActor.holder())) {
+                if (!dynamicClass.getAllInterfaceActors().contains(methodActor.holder())) {
                     machine.raiseException(new IncompatibleClassChangeError(dynamicClass + " does not implement " + methodActor.holder()));
                 }
 

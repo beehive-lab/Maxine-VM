@@ -175,7 +175,7 @@
  * uninterruptible and works fine in the VM, signal handlers triggered when debugging or inspecting this code sequence
  * may destroy these values when the OS calls the signal handler. This requires knowing which global stubs are called
  * before finalizing the frame size; currently only the calls to
- * {@link com.sun.c1x.target.amd64.AMD64MacroAssembler#callRuntimeCalleeSaved}
+ * {@link com.oracle.max.asm.target.amd64.AMD64MacroAssembler#callRuntimeCalleeSaved}
  * do not fit this pattern. This needs to be fixed so that all global stubs that are called by the assembled code are
  * known before beginning assembling. The {@link com.sun.c1x.target.amd64.AMD64GlobalStubEmitter} controls how the global stubs accept their
  * parameters. See {@link com.sun.c1x.target.amd64.AMD64GlobalStubEmitter#callerFrameContainsArguments} and its usages.
