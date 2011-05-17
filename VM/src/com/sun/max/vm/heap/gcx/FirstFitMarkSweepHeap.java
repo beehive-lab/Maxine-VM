@@ -26,25 +26,66 @@ import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 import static com.sun.max.vm.heap.gcx.RegionTable.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 
 /**
- * A region-based, non-generational, mark-sweep heap.
- * Currently, for testing region-based GC mechanism (tracing, sweeping, region allocation, large object handling).
- *
- * @author Laurent Daynes
+ * A region-based, flat, mark-sweep heap, with bump pointer allocation only.
+ * Each partially occupied region has a list of addressed ordered free chunks, used to allocate TLAB refill and an overflow allocator.
  */
-public class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner, ApplicationHeap {
-    /* For simplicity at the moment. Should be able to allocated this in GC's own heap (i.e., the bootstrap allocator).
+public final class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner, ApplicationHeap {
+    /* For simplicity at the moment. Should be able to allocate this in GC's own heap (i.e., the bootstrap allocator).
      */
     private static final OutOfMemoryError outOfMemoryError = new OutOfMemoryError();
 
+    /**
+     * Heap account tracking the pool of regions allocated to this heap.
+     */
     final HeapAccount<FirstFitMarkSweepHeap> heapAccount;
-    final MultiChunkTLABAllocator tlabAllocator;
+
+    /**
+     * List of region with space available for allocation.
+     * Initialized with all regions. Then reset by the sweeper at every collection.
+     * Used to refill the TLAB allocator and the overflow allocator.
+     */
+    private HeapRegionList allocationRegions;
+    /**
+     * List of region with space available for TLAB allocation only.
+     */
+    private HeapRegionList tlabAllocationRegions;
+
+    /**
+     * Region currently used for tlab allocation.
+     */
+    private int currentTLABAllocatingRegion;
+
+    /**
+     * Region currently used for overflow allocation.
+     */
+    private int currentOverflowAllocatingRegion;
+
+    /**
+     * Total free space in allocation regions.
+     * Reset after each GC. Then decremented every time chunks are provided to allocators.
+     */
+    Size allocationRegionsFreeSpace;
+
+    /**
+     * TLAB refill allocator. Can supplies TLAB refill either as a single contiguous chunk,
+     * or as an address-ordered list of chunks.
+     */
+    final ChunkListAllocator<TLABRefillManager> tlabAllocator;
+
+    /**
+     * Overflow allocator. Handles direct allocation request and all small overflow of TLABs.
+     */
+    final BaseAtomicBumpPointerAllocator<Refiller> overflowAllocator;
+
+    /**
+     * Large object allocator. Handles direct allocation requests for large object as well as large overflow of TLABs.
+     */
     final LargeObjectSpace largeObjectAllocator;
 
     /**
@@ -59,23 +100,30 @@ public class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner
 
     private Size minReclaimableSpace;
 
+    /**
+     * Minimum size to be treated as a large object.
+     */
+    private Size minLargeObjectSize;
+    /**
+     * Minimum free space to refill the overflow allocator.
+     */
+    private Size minOverflowRefillSize;
+
     @Override
     public Size minReclaimableSize() {
         return minReclaimableSpace;
     }
 
     /**
-     * List of region with space available for allocation.
-     * Used to refill the small object allocator and the overflow allocator.
+     * Indicate whether a size is categorized as large. Request for large size must go to the large object allocator.
+     * @param size size in words
+     * @return true if the size is considered large.
      */
-    private HeapRegionList allocatingRegions;
+    private boolean isLarge(Size size) {
+        return size.greaterEqual(minLargeObjectSize);
+    }
 
     /**
-     * List of region with no space available for allocation.
-     */
-    private HeapRegionList fullRegions;
-
-    /*
      * The lock on which refill and region allocation to object spaces synchronize on.
      */
     private Object heapLock() {
@@ -86,84 +134,41 @@ public class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner
         throw outOfMemoryError;
     }
 
-    /**
-     * Simple allocator used to handle request to mid-size objects that are larger than the
-     * refill threshold of the tlab allocator.
-     * Calls to the allocator are always made under protection of the main allocator's refill lock.
-     * So we don't bother with any clever non-blocking synchronization mechanisms here.
-     */
-    class OverflowAllocator {
-        private Address top;
-        private Address start;
-        private Address end;
-        private int overflowRegionID;
-        private int overflowRefillCount;
-        /**
-         * Min space to request if triggering GC.
-         */
-        private Size minSpaceAfterGC;
-
-        OverflowAllocator(Size minSpaceAfterGC) {
-            top = Address.zero();
-            start = Address.zero();
-            end = Address.zero();
-            overflowRegionID = INVALID_REGION_ID;
-            overflowRefillCount = 0;
-            this.minSpaceAfterGC = minSpaceAfterGC;
-        }
-
-        private void overflowAllocatorRefill(int regionId, Address chunkStart, Size chunkSize) {
-            // Change the overflow allocator's region.
-            if (overflowRegionID != INVALID_REGION_ID) {
-                // Don't bother with re-using the space.
-                HeapSchemeAdaptor.fillWithDeadObject(top.asPointer(), end.asPointer());
-                fullRegions.append(overflowRegionID);
-            }
-            allocatingRegions.remove(regionId);
-            overflowRegionID = regionId;
-            start = chunkStart;
-            top = chunkStart;
-            end = chunkStart.plus(chunkSize);
-            HeapRegionInfo.fromRegionID(regionId).setAllocating();
-            overflowRefillCount++;
-        }
-
-        Pointer allocateCleared(Size size) {
-            Pointer cell = top.asPointer();
-            if (cell.plus(size).greaterThan(end)) {
-                overflowRefill(this, size);
-                cell = top.asPointer();
-            }
-            top = top.plus(size);
-            Memory.clearWords(cell, size.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt());
-            return cell;
-        }
-    }
 
     /**
      * Refill Manager for the small object space.
      */
-    class RefillManager extends MultiChunkTLABAllocator.RefillManager {
+    class TLABRefillManager extends ChunkListRefillManager {
         /**
          * Threshold below which the allocator should be refilled.
          */
         private Size refillThreshold;
 
         private Address nextFreeChunkInRegion;
-        private OverflowAllocator overflowAllocator;
 
         /**
          * Space wasted on refill. For statistics only.
          */
         private Size wastedSpace;
 
-        RefillManager(OverflowAllocator overflowAllocator) {
+        TLABRefillManager() {
             nextFreeChunkInRegion = Address.zero();
-            this.overflowAllocator = overflowAllocator;
         }
 
         void setRefillPolicy(Size refillThreshold) {
             this.refillThreshold = refillThreshold;
+        }
+
+        // FIXME: The following two are inherited from the ChunkListRefillManager used for the ChunkListAllocator.
+        // These aren't needed for the logic here where allocation is always dispatched to three independent allocators:
+        // large, overflow, and tlab. The latter never comes across a large or overflow situation,  and therefore never call these.
+        // What should be done is a variant of the ChunkListAllocator that extend the BaseBumpPointer allocator and override
+        // the refill allocate. We currently leave this as is because doing this change also requires changing the FreeHeapSpaceManager of the MSHeapScheme
+
+        @Override
+        Address allocateLarge(Size size) {
+            FatalError.unexpected("Should not reach here");
+            return Address.zero();
         }
 
         /**
@@ -171,8 +176,9 @@ public class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner
          * Allocate to large or overflow allocator.
          */
         @Override
-        Address allocate(Size size) {
-            return overflowAllocator.allocateCleared(size);
+        Address allocateOverflow(Size size) {
+            FatalError.unexpected("Should not reach here");
+            return Address.zero();
         }
 
         /**
@@ -180,12 +186,11 @@ public class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner
          */
         @Override
         @NO_SAFEPOINTS("tlab allocation loop must not be subjected to safepoints")
-        Address allocateTLAB(Size tlabSize, Pointer leftover, Size leftoverSize) {
-            // FIXME (ld) This doesn't refill the TLAB allocator. It just allocate a new one.
-            Address firstChunk = tlabChunkOrZero(leftover, leftoverSize);
+        Address allocateChunkList(Size tlabSize, Pointer leftover, Size leftoverSize) {
+            Address firstChunk = chunkOrZero(leftover, leftoverSize);
             if (!firstChunk.isZero()) {
                 tlabSize = tlabSize.minus(leftoverSize);
-                if (tlabSize.lessThan(tlabMinChunkSize)) {
+                if (tlabSize.lessThan(minChunkSize)) {
                     // don't bother with it. Just return.
                     return firstChunk;
                 }
@@ -210,7 +215,7 @@ public class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner
                 if (chunkSize.greaterThan(tlabSize)) {
                     Address next = HeapFreeChunk.getFreeChunkNext(chunk);
                     // Split if leftover larger that min tlab size.
-                    if (chunkSize.minus(tlabSize).greaterEqual(tlabMinChunkSize)) {
+                    if (chunkSize.minus(tlabSize).greaterEqual(minChunkSize)) {
                         lastChunk = HeapFreeChunk.splitRight(chunk, tlabSize, next);
                     } else {
                         lastChunk = next;
@@ -245,7 +250,10 @@ public class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner
          * thread can enter this method.
          */
         @Override
-        Address refill(Pointer startOfSpaceLeft, Size spaceLeft) {
+        Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
+            // FIXME: see comment above. We should never reach here as request for refilling the allocator can only happen via the allocateCleared call, which
+            // should never be called on the tlab allocator since these are routed early on to the overflow allocator.
+            FatalError.unexpected("Should not reach here");
             FatalError.check(spaceLeft.lessThan(refillThreshold), "Should not refill before threshold is reached");
             // First, make the space left parsable, then change of allocating regions.
             if (spaceLeft.greaterThan(0)) {
@@ -280,20 +288,17 @@ public class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner
         }
     }
 
-    /**
-     * Region currently used for allocation.
-     */
-    private int currentAllocatingRegion;
-
     HeapRegionInfo changeAllocatingRegion() {
         synchronized (heapLock()) {
             int gcCount = 0;
             // No more free chunk in this region.
-            theRegionTable().regionInfo(currentAllocatingRegion).setFull();
+            HeapRegionInfo.fromRegionID(currentTLABAllocatingRegion).setFull();
             do {
-                currentAllocatingRegion = allocatingRegions.next(currentAllocatingRegion);
-                if (currentAllocatingRegion != INVALID_REGION_ID) {
-                    final HeapRegionInfo regionInfo = theRegionTable().regionInfo(currentAllocatingRegion);
+                HeapRegionList regionList = tlabAllocationRegions.isEmpty() ? allocationRegions : tlabAllocationRegions;
+
+                currentTLABAllocatingRegion = regionList.removeHead();
+                if (currentTLABAllocatingRegion != INVALID_REGION_ID) {
+                    final HeapRegionInfo regionInfo = HeapRegionInfo.fromRegionID(currentTLABAllocatingRegion);
                     regionInfo.setAllocating();
                     return regionInfo;
                 }
@@ -313,37 +318,69 @@ public class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner
     }
 
     /**
+     * Count of waste left after overflow refill.
+     */
+    private Size overflowRefillWaste;
+
+    /**
+     * Count of free space putback in TLAB after overflow refill.
+     */
+    private Size overflowRefillFreeSpace;
+
+    /**
      * Try to refill the overflow allocator with a single continuous chunk. Runs GC if can't.
      * @param minRefillSize minimum amount of space to refill the allocator with
      * @return address to a chunk of the requested size, or zero if none requested.
      */
-    void overflowRefill(OverflowAllocator overflowAllocator, Size minRefillSize) {
-        final int minFreeWords = minRefillSize.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
+    private Address overflowRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
+        final int minFreeWords = minOverflowRefillSize.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
         int gcCount = 0;
         synchronized (heapLock()) {
+            if (currentOverflowAllocatingRegion != INVALID_REGION_ID) {
+                final HeapRegionInfo regionInfo = HeapRegionInfo.fromRegionID(currentOverflowAllocatingRegion);
+                FatalError.check(!regionInfo.hasFreeChunks(), "must not have any free chunks");
+                if (spaceLeft.greaterEqual(minReclaimableSpace)) {
+                    Log.print("overflow allocator putback region #");
+                    Log.print(currentOverflowAllocatingRegion);
+                    Log.print(" in TLAB allocation list with ");
+                    Log.print(spaceLeft);
+                    Log.println(" bytes");
+                    overflowRefillFreeSpace = overflowRefillFreeSpace.plus(spaceLeft);
+                    HeapFreeChunk.format(startOfSpaceLeft, spaceLeft);
+                    regionInfo.setFreeChunks(startOfSpaceLeft, spaceLeft, 1);
+                    // Can turn the left over into a chunk for tlab allocation.
+                    tlabAllocationRegions.append(currentOverflowAllocatingRegion);
+                } else {
+                    Log.print("overflow allocator full region #");
+                    Log.println(currentOverflowAllocatingRegion);
+                   // Just make the space left parsable.
+                    if (!spaceLeft.isZero()) {
+                        overflowRefillWaste = overflowRefillWaste.plus(spaceLeft);
+                        HeapSchemeAdaptor.fillWithDeadObject(startOfSpaceLeft, startOfSpaceLeft.plus(spaceLeft));
+                    }
+                    regionInfo.setFull();
+                }
+                currentOverflowAllocatingRegion = INVALID_REGION_ID;
+            }
             do {
-                int regionWithLargestSingleChunk = INVALID_REGION_ID;
-                int numFreeWords = minFreeWords - 1;
-                regionInfoIterable.initialize(allocatingRegions);
+                regionInfoIterable.initialize(allocationRegions);
                 regionInfoIterable.reset();
+                Address refill = Address.zero();
                 for (HeapRegionInfo regionInfo : regionInfoIterable) {
                     if (regionInfo.isEmpty()) {
-                        int regionId = regionInfo.toRegionID();
-                        // Refill allocator with the rest.
-                        overflowAllocator.overflowAllocatorRefill(regionId, regionInfo.regionStart(), Size.fromInt(HeapRegionConstants.regionSizeInBytes));
-                        return;
+                        refill =  regionInfo.regionStart();
+                        HeapFreeChunk.format(refill, Size.fromInt(regionSizeInBytes));
+                    } else if (regionInfo.freeWords() >= minFreeWords && regionInfo.numFreeChunks() == 1) {
+                        refill = regionInfo.firstFreeBytes();
+                        regionInfo.clearFreeChunks();
+                    } else {
+                        continue;
                     }
-                    if (regionInfo.freeWords() > numFreeWords && regionInfo.numFreeChunks() == 1) {
-                        regionWithLargestSingleChunk = regionInfo.toRegionID();
-                        numFreeWords = regionInfo.freeWords();
-                    }
-                }
-                if (regionWithLargestSingleChunk != INVALID_REGION_ID) {
-                    final HeapRegionInfo regionInfo = HeapRegionInfo.fromRegionID(regionWithLargestSingleChunk);
-                    Address firstChunk = regionInfo.firstFreeBytes();
-                    Size chunkSize = HeapFreeChunk.getFreechunkSize(firstChunk);
-                    overflowAllocator.overflowAllocatorRefill(regionWithLargestSingleChunk, firstChunk, chunkSize);
-                    return;
+                    // Found a refill.
+                    currentOverflowAllocatingRegion = regionInfo.toRegionID();
+                    allocationRegions.remove(currentOverflowAllocatingRegion);
+                    regionInfo.setAllocating();
+                    return refill;
                 }
 
                 if (MaxineVM.isDebug() && Heap.traceGC()) {
@@ -354,15 +391,33 @@ public class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner
                         FatalError.unexpected("Suspiscious repeating GC calls detected");
                     }
                 }
-            } while(Heap.collectGarbage(minRefillSize));
+            } while(Heap.collectGarbage(minOverflowRefillSize));
+            throw outOfMemoryError;
+        }
+    }
+
+    /**
+     * Simple implementation for the overflow allocator's refiller. Delegate to FirstFitMarkSweepHeap.
+     */
+    final class  OverflowAllocatorRefiller extends Refiller {
+        @Override
+        Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
+            return overflowRefill(startOfSpaceLeft, spaceLeft);
+        }
+
+        @Override
+        void makeParsable(Pointer start, Pointer end) {
+            HeapSchemeAdaptor.fillWithDeadObject(start, end);
         }
     }
 
     public FirstFitMarkSweepHeap() {
         heapAccount = new HeapAccount<FirstFitMarkSweepHeap>(this);
-        Size overflowAllocatorMinSpaceAfterGC = Size.fromInt(regionSizeInBytes).dividedBy(2);
-        final RefillManager refillManager = new RefillManager(new OverflowAllocator(overflowAllocatorMinSpaceAfterGC));
-        tlabAllocator = new MultiChunkTLABAllocator(refillManager);
+        currentOverflowAllocatingRegion = INVALID_REGION_ID;
+        currentTLABAllocatingRegion = INVALID_REGION_ID;
+        overflowAllocator = new BaseAtomicBumpPointerAllocator<Refiller>(new OverflowAllocatorRefiller());
+        tlabAllocator = new ChunkListAllocator<TLABRefillManager>(new TLABRefillManager());
+        tlabAllocator.refillManager.setMinChunkSize(Size.fromInt(regionSizeInBytes).dividedBy(2));
         largeObjectAllocator = new LargeObjectSpace();
         regionsRangeIterable = new HeapRegionRangeIterable();
         regionInfoIterable = new HeapRegionInfoIterable();
@@ -372,40 +427,59 @@ public class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner
         return heapAccount;
     }
 
+    /**
+     * Initialization of those elements that relies on parameters available at VM start only.
+     * @param minSize
+     * @param maxSize
+     */
     public void initialize(Size minSize, Size maxSize) {
         if (!heapAccount.open(numberOfRegions(maxSize))) {
             FatalError.unexpected("Failed to create application heap");
         }
-        allocatingRegions = HeapRegionList.RegionListUse.OWNERSHIP.createList();
-        fullRegions = HeapRegionList.RegionListUse.OWNERSHIP.createList();
-        heapAccount.allocate(numberOfRegions(minSize), allocatingRegions, true);
+        Size regionSize = Size.fromInt(regionSizeInBytes);
+        tlabAllocationRegions = HeapRegionList.RegionListUse.OWNERSHIP.createList();
+        allocationRegions = HeapRegionList.RegionListUse.OWNERSHIP.createList();
+        heapAccount.allocate(numberOfRegions(minSize), allocationRegions, true);
         minReclaimableSpace = Size.fromInt(Sweepable.freeChunkMinSizeOption.getValue());
+        // FIXME:  the following two are connected: if you deny refill after overflow, the only solution left is allocating large.
+        minLargeObjectSize = regionSize;
+        minOverflowRefillSize = regionSize.dividedBy(4);
+        tlabAllocator.refillManager.setRefillPolicy(minReclaimableSpace);
+
         // Set the iterable to the allocating regions. This is the default. Any exception to this should
         // reset to the allocating region list when done.
-        regionsRangeIterable.initialize(allocatingRegions);
+        regionsRangeIterable.initialize(allocationRegions);
 
         // Initialize the tlab allocator with the first contiguous range.
         regionsRangeIterable.reset();
-        Size regionSize = Size.fromInt(regionSizeInBytes);
-        ((MultiChunkTLABAllocator.RefillManager) tlabAllocator.refillManager).setMinTLABChunkSize(minReclaimableSpace);
+        ((ChunkListRefillManager) tlabAllocator.refillManager).setMinChunkSize(minReclaimableSpace);
 
         // Initialize TLAB allocator with first region.
-        currentAllocatingRegion = allocatingRegions.head();
-        final HeapRegionInfo regionInfo = HeapRegionInfo.fromRegionID(currentAllocatingRegion);
+        currentTLABAllocatingRegion = allocationRegions.removeHead();
+        final HeapRegionInfo regionInfo = HeapRegionInfo.fromRegionID(currentTLABAllocatingRegion);
         regionInfo.setAllocating();
-        tlabAllocator.initialize(regionInfo.firstFreeBytes(), regionSize, regionSize, HeapSchemeAdaptor.MIN_OBJECT_SIZE);
+        final Size allocatorsHeadroom = HeapSchemeAdaptor.MIN_OBJECT_SIZE;
+        tlabAllocator.initialize(regionInfo.firstFreeBytes(), regionSize, regionSize, allocatorsHeadroom);
+        overflowAllocator.initialize(Address.zero(), Size.zero(), allocatorsHeadroom);
     }
 
     /**
-     * Entry point for direct allocation by HeapScheme using this heap.
+     * Entry point for direct allocation when TLAB cannot be refilled.
      */
     @Override
     public Pointer allocate(Size size) {
-        return tlabAllocator.allocateCleared(size);
+        if (isLarge(size)) {
+            Log.print("Request for allocating ");
+            Log.print(size);
+            Log.println(" bytes: Too large for now.");
+            FatalError.unexpected("NOT SUPPORTED NOW");
+            return largeObjectAllocator.allocateCleared(size);
+        }
+        return overflowAllocator.allocateCleared(size);
     }
 
     /**
-     * Entry point for direct TLAB allocation by HeapScheme using this heap.
+     * Entry point to allocate storage for TLAB refill.
      */
     @Override
     public Pointer allocateTLAB(Size size) {
@@ -443,12 +517,13 @@ public class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner
 
     @Override
     public void makeParsable() {
+        overflowAllocator.makeParsable();
         tlabAllocator.makeParsable();
     }
 
     public void mark(TricolorHeapMarker heapMarker) {
         // All regions must be in the full list, sorted
-        regionsRangeIterable.initialize(fullRegions);
+        // regionsRangeIterable.initialize(fullRegions);
         regionsRangeIterable.reset();
         heapMarker.markAll(regionsRangeIterable, HeapRegionConstants.log2RegionSizeInBytes);
     }

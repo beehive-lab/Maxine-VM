@@ -30,7 +30,6 @@ import com.sun.max.vm.reference.*;
 
 /**
  * Checker of out of heap account references.
- *
  */
 class OutgoingReferenceChecker extends PointerIndexVisitor implements CellVisitor {
     private final Object accountOwner;
