@@ -67,6 +67,8 @@ public class jmax {
                 }
             }
             return changedFiles;
+        } else if (cmd.equals("filter")) {
+            filter(new File(request.get(1)), new File(request.get(2)), response);
         } else if (cmd.equals("source_dirs")) {
             // Return the absolute source directories of a project
             Project p = project(request.get(1));
@@ -95,6 +97,27 @@ public class jmax {
             throw new Error("Command ' " + cmd + "' not known");
         }
         return 0;
+    }
+
+    private static void filter(File inputFile, File excludeFile, PrintStream response) {
+        ArrayList<String> patterns = new ArrayList<String>();
+        for (String pattern : readLines(excludeFile)) {
+            if (!pattern.startsWith("#")) {
+                patterns.add(pattern);
+            }
+        }
+        for (String path : readLines(inputFile)) {
+            boolean excluded = false;
+            for (String pattern : patterns) {
+                if (path.contains(pattern)) {
+                    excluded = true;
+                    log.println("excluded: " + path);
+                }
+            }
+            if (!excluded) {
+                response.println(path);
+            }
+        }
     }
 
     static PrintStream log = System.err;
@@ -474,6 +497,21 @@ public class jmax {
         return buf;
     }
 
+    static ArrayList<String> readLines(File file) {
+        ArrayList<String> lines = new ArrayList<String>();
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(file));
+            String line;
+            while ((line = br.readLine()) != null) {
+                lines.add(line);
+            }
+            br.close();
+            return lines;
+        } catch (IOException e) {
+            throw new Error("Error reading file " + file, e);
+        }
+    }
+
     /**
      * Utility for creating or modifying a file.
      */
@@ -696,6 +734,19 @@ public class jmax {
                     out.println("\t<filter name=\"FileTypesFilter\" enabled=\"true\">");
                     out.println("\t\t<filter-data value=\"java\"/>");
                     out.println("\t</filter>");
+
+                    File exclude = new File(projectDir, ".checkstyle.exclude");
+                    if (exclude.exists()) {
+                        out.println("\t<filter name=\"FilesFromPackage\" enabled=\"true\">");
+                        for (String line : readLines(exclude)) {
+                            if (!line.startsWith("#")) {
+                                File exclDir = new File(projectDir, line);
+                                assert exclDir.isDirectory() : "excluded source directory listed in " + exclude + " does not exist or is not a directory: " + exclDir;
+                                out.println("\t\t<filter-data value=\"" + line + "\"/>");
+                            }
+                        }
+                        out.println("\t</filter>");
+                    }
                     out.println("</fileset-config>");
                 }
             };
