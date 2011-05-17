@@ -83,7 +83,6 @@ import com.sun.max.vm.runtime.*;
  * operations, wherein the fast variant assumes that a color never span a bitmap word. The GC is responsible for
  * guaranteeing this property when it uses the fast variant.
  *
- * @author Laurent Daynes
  */
 public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 

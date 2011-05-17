@@ -1419,7 +1419,7 @@ function run_gate() {
 #=======================================
 
 msgate_usage="[options]"
-msgate_presets="-image-configs=jtt-msc1xc1x -fail-fast -tests=output:GC+WeakReference"
+msgate_presets="-image-configs=jtt-c1xt1x,jtt-mst1xc1x -fail-fast -tests=output:GC+WeakReference"
 
 msgate_help="run the GC tests using the MS heap scheme"
 

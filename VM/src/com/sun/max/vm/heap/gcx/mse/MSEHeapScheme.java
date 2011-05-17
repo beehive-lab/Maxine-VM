@@ -34,6 +34,7 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
@@ -54,7 +55,10 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
      * Number of heap words covered by a single mark.
      */
     private static final int WORDS_COVERED_PER_BIT = 1;
-
+    static boolean VerifyAfterGC = false;
+    static {
+        VMOptions.addFieldOption("-XX:", "VerifyAfterGC", MSEHeapScheme.class, "Verify heap after GC", Phase.PRISTINE);
+    }
    /**
      * Size to reserve at the end of a TLABs to guarantee that a dead object can always be
      * appended to a TLAB to fill unused space before a TLAB refill.
@@ -104,7 +108,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
         if (MaxineVM.isHosted() && phase == MaxineVM.Phase.BOOTSTRAPPING) {
             // VM-generation time initialization.
             TLAB_HEADROOM = MIN_OBJECT_SIZE;
-            LinearSpaceAllocator.hostInitialize();
+            AtomicBumpPointerAllocator.hostInitialize();
         } else if (phase == MaxineVM.Phase.PRISTINE) {
             allocateHeapAndGCStorage();
         } else if (phase == MaxineVM.Phase.TERMINATING) {
@@ -364,7 +368,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
             startTimer(reclaimTimer);
             /*Size freeSpaceAfterGC = */theHeap.sweep(heapMarker);
             stopTimer(reclaimTimer);
-            if (MaxineVM.isDebug()) {
+            if (VerifyAfterGC) {
                 afterGCVerifier.run();
             }
             vmConfig().monitorScheme().afterGarbageCollection();
@@ -464,11 +468,11 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
 
 
     @INTRINSIC(UNSAFE_CAST)
-    private static native LinearSpaceAllocator asLinearSpaceAllocator(Object object);
+    private static native BaseAtomicBumpPointerAllocator asBumpPointerAllocator(Object object);
 
     @Override
     protected Pointer customAllocate(Pointer customAllocator, Size size, boolean adjustForDebugTag) {
-        return asLinearSpaceAllocator(Reference.fromOrigin(Layout.cellToOrigin(customAllocator)).toJava()).allocateCleared(size);
+        return asBumpPointerAllocator(Reference.fromOrigin(Layout.cellToOrigin(customAllocator)).toJava()).allocateCleared(size);
     }
 
     @Override

@@ -38,8 +38,6 @@ import com.sun.max.vm.type.*;
  * A doubly linked list of regions implemented as an array of int region identifiers.
  * Used for region ownership list, wherein a list can only belong to one owner at a time.
  * This allows to share the backing storage for all the list.
- *
- * @author Laurent Daynes
  */
 public final class HeapRegionList {
 
@@ -189,6 +187,7 @@ public final class HeapRegionList {
      * @param elem element to append
      */
     void append(int elem) {
+        FatalError.check(elem != nullElement, "must not append null element");
         if (isEmpty()) {
             head = elem;
             tail = elem;
@@ -230,6 +229,20 @@ public final class HeapRegionList {
         }
     }
 
+    int removeHead() {
+        if (isEmpty()) {
+            return nullElement;
+        }
+        int elem = head;
+        head = next(elem);
+        setNext(elem, nullElement);
+        if (head != nullElement) {
+            setPrev(head, nullElement);
+        }
+        size--;
+        return elem;
+    }
+
     /**
      * Remove element from the list.
      * @param elem
@@ -237,22 +250,22 @@ public final class HeapRegionList {
     void remove(int elem) {
         FatalError.check(elem != nullElement, "Must be a valid list element");
         if (MaxineVM.isDebug()) {
-            FatalError.check(!contains(elem), "element must be in list");
+            FatalError.check(contains(elem), "element must be in list");
         }
         int nextElem = next(elem);
         int prevElem = prev(elem);
         if (nextElem == nullElement) {
             FatalError.check(elem == tail, "Only the tail can have null next element");
             if (prevElem == nullElement) {
-                FatalError.check(head == tail, "Only the tail can have null next element");
+                FatalError.check(head == tail, "Only singleton list can have both prev and next null element");
                 head = nullElement;
                 tail = nullElement;
             } else {
                 tail = prevElem;
                 setNext(tail, nullElement);
             }
-
         } else if (prevElem == nullElement) {
+            FatalError.check(elem == head, "Only the head can have null prev element");
             head = nextElem;
             setPrev(head, nullElement);
         } else {
@@ -260,6 +273,7 @@ public final class HeapRegionList {
             setPrev(nextElem, prevElem);
         }
         clear(elem);
+        size--;
     }
 
     void append(HeapRegionList list) {
