@@ -129,14 +129,21 @@ public class CheckCopyright {
             }
             final String extension = getExtension(fileName);
             CopyrightKind ck = copyrightMap.get(extension);
-            assert ck != null;
+            assert ck != null : fileName;
             return ck.copyrightPattern.matcher(fileContent);
         }
 
         private static String getExtension(String fileName) {
-            int index = fileName.lastIndexOf('.');
+            int index = fileName.lastIndexOf(File.separatorChar);
+            if (index > 0) {
+                fileName = fileName.substring(index + 1);
+            }
+            index = fileName.lastIndexOf('.');
             if (index > 0) {
                 return fileName.substring(index + 1);
+            }
+            if (fileName.equals("makefile")) {
+                return "mk";
             }
             return "";
         }
