@@ -30,7 +30,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
-
+import static com.sun.max.vm.heap.gcx.HeapRegionInfo.*;
 /**
  * A region-based, flat, mark-sweep heap, with bump pointer allocation only.
  * Each partially occupied region has a list of addressed ordered free chunks, used to allocate TLAB refill and an overflow allocator.
@@ -68,9 +68,9 @@ public final class FirstFitMarkSweepHeap extends Sweepable implements HeapAccoun
 
     /**
      * Total free space in allocation regions.
-     * Reset after each GC. Then decremented every time chunks are provided to allocators.
+     * Reset after each GC. Then decremented when allocators refill.
      */
-    Size allocationRegionsFreeSpace;
+    private Size allocationRegionsFreeSpace;
 
     /**
      * TLAB refill allocator. Can supplies TLAB refill either as a single contiguous chunk,
@@ -108,6 +108,8 @@ public final class FirstFitMarkSweepHeap extends Sweepable implements HeapAccoun
      * Minimum free space to refill the overflow allocator.
      */
     private Size minOverflowRefillSize;
+
+
 
     @Override
     public Size minReclaimableSize() {
@@ -292,13 +294,13 @@ public final class FirstFitMarkSweepHeap extends Sweepable implements HeapAccoun
         synchronized (heapLock()) {
             int gcCount = 0;
             // No more free chunk in this region.
-            HeapRegionInfo.fromRegionID(currentTLABAllocatingRegion).setFull();
+            fromRegionID(currentTLABAllocatingRegion).setFull();
             do {
                 HeapRegionList regionList = tlabAllocationRegions.isEmpty() ? allocationRegions : tlabAllocationRegions;
 
                 currentTLABAllocatingRegion = regionList.removeHead();
                 if (currentTLABAllocatingRegion != INVALID_REGION_ID) {
-                    final HeapRegionInfo regionInfo = HeapRegionInfo.fromRegionID(currentTLABAllocatingRegion);
+                    final HeapRegionInfo regionInfo = fromRegionID(currentTLABAllocatingRegion);
                     regionInfo.setAllocating();
                     return regionInfo;
                 }
@@ -323,7 +325,7 @@ public final class FirstFitMarkSweepHeap extends Sweepable implements HeapAccoun
     private Size overflowRefillWaste;
 
     /**
-     * Count of free space putback in TLAB after overflow refill.
+     * Count of free space put back in TLAB after overflow refill.
      */
     private Size overflowRefillFreeSpace;
 
@@ -337,7 +339,7 @@ public final class FirstFitMarkSweepHeap extends Sweepable implements HeapAccoun
         int gcCount = 0;
         synchronized (heapLock()) {
             if (currentOverflowAllocatingRegion != INVALID_REGION_ID) {
-                final HeapRegionInfo regionInfo = HeapRegionInfo.fromRegionID(currentOverflowAllocatingRegion);
+                final HeapRegionInfo regionInfo = fromRegionID(currentOverflowAllocatingRegion);
                 FatalError.check(!regionInfo.hasFreeChunks(), "must not have any free chunks");
                 if (spaceLeft.greaterEqual(minReclaimableSpace)) {
                     Log.print("overflow allocator putback region #");
@@ -349,6 +351,7 @@ public final class FirstFitMarkSweepHeap extends Sweepable implements HeapAccoun
                     HeapFreeChunk.format(startOfSpaceLeft, spaceLeft);
                     regionInfo.setFreeChunks(startOfSpaceLeft, spaceLeft, 1);
                     // Can turn the left over into a chunk for tlab allocation.
+                    allocationRegionsFreeSpace = allocationRegionsFreeSpace.plus(spaceLeft);
                     tlabAllocationRegions.append(currentOverflowAllocatingRegion);
                 } else {
                     Log.print("overflow allocator full region #");
@@ -370,9 +373,11 @@ public final class FirstFitMarkSweepHeap extends Sweepable implements HeapAccoun
                     if (regionInfo.isEmpty()) {
                         refill =  regionInfo.regionStart();
                         HeapFreeChunk.format(refill, Size.fromInt(regionSizeInBytes));
+                        allocationRegionsFreeSpace = allocationRegionsFreeSpace.minus(regionSizeInBytes);
                     } else if (regionInfo.freeWords() >= minFreeWords && regionInfo.numFreeChunks() == 1) {
                         refill = regionInfo.firstFreeBytes();
                         regionInfo.clearFreeChunks();
+                        allocationRegionsFreeSpace = allocationRegionsFreeSpace.minus(regionInfo.freeBytes());
                     } else {
                         continue;
                     }
@@ -456,7 +461,7 @@ public final class FirstFitMarkSweepHeap extends Sweepable implements HeapAccoun
 
         // Initialize TLAB allocator with first region.
         currentTLABAllocatingRegion = allocationRegions.removeHead();
-        final HeapRegionInfo regionInfo = HeapRegionInfo.fromRegionID(currentTLABAllocatingRegion);
+        final HeapRegionInfo regionInfo = fromRegionID(currentTLABAllocatingRegion);
         regionInfo.setAllocating();
         final Size allocatorsHeadroom = HeapSchemeAdaptor.MIN_OBJECT_SIZE;
         tlabAllocator.initialize(regionInfo.firstFreeBytes(), regionSize, regionSize, allocatorsHeadroom);
@@ -488,31 +493,34 @@ public final class FirstFitMarkSweepHeap extends Sweepable implements HeapAccoun
 
     @Override
     public boolean contains(Address address) {
-        return RegionTable.theRegionTable().regionInfo(address).owner() == this;
+        final HeapRegionInfo regionInfo = fromAddress(address);
+        return regionInfo != null && regionInfo.owner() == this;
     }
 
     @Override
     public boolean canSatisfyAllocation(Size size) {
-        // TODO Auto-generated method stub
+        // Keep it simple and over-conservative for now.
+        if (isLarge(size)) {
+            FatalError.unimplemented();
+        } else if (allocationRegions.size() > 0 || overflowAllocator.freeSpace().greaterEqual(size)) {
+            return true;
+        }
         return false;
     }
 
     @Override
     public Size totalSpace() {
-        // TODO Auto-generated method stub
-        return Size.zero();
+        return Size.fromInt(heapAccount.used()).shiftedLeft(HeapRegionConstants.log2RegionSizeInBytes);
     }
 
     @Override
     public Size freeSpace() {
-        // TODO Auto-generated method stub
-        return Size.zero();
+        return allocationRegionsFreeSpace.plus(tlabAllocator.freeSpace().plus(overflowAllocator.freeSpace()));
     }
 
     @Override
     public Size usedSpace() {
-        // TODO Auto-generated method stub
-        return Size.zero();
+        return totalSpace().minus(freeSpace());
     }
 
     @Override

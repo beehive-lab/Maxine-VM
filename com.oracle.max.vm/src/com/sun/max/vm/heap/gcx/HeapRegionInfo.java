@@ -22,16 +22,12 @@
  */
 package com.sun.max.vm.heap.gcx;
 
-import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 import static com.sun.max.vm.heap.gcx.HeapRegionInfo.Flag.*;
 
-import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.layout.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 /**
  * Descriptor of heap region.
@@ -166,6 +162,10 @@ public class HeapRegionInfo {
     public final int freeWords() {
         return freeSpace;
     }
+
+    public final int freeBytes() {
+        return freeSpace << Word.widthValue().log2numberOfBytes;
+    }
     public final int numFreeChunks() {
         return numFreeChunks;
     }
@@ -178,16 +178,6 @@ public class HeapRegionInfo {
      */
     final Address firstFreeBytes() {
         return isFull() ? Address.zero() : regionStart().plus(firstFreeChunkOffset());
-    }
-
-
-
-    @INTRINSIC(UNSAFE_CAST)
-    private static native HeapRegionInfo asHeapRegionInfo(Object regionInfo);
-
-    @INLINE
-    static HeapRegionInfo toHeapRegionInfo(Pointer regionInfoPointer) {
-        return asHeapRegionInfo(Reference.fromOrigin(Layout.cellToOrigin(regionInfoPointer)).toJava());
     }
 
     /**
@@ -253,5 +243,10 @@ public class HeapRegionInfo {
     @INLINE
     static HeapRegionInfo fromRegionID(int regionID) {
         return RegionTable.theRegionTable().regionInfo(regionID);
+    }
+
+    @INLINE
+    static HeapRegionInfo fromAddress(Address address) {
+        return RegionTable.theRegionTable().regionInfo(address);
     }
 }
