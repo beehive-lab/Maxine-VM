@@ -244,6 +244,7 @@ public final class GraphBuilder {
         BytecodeStream stream = new BytecodeStream(scope.method.code());
         RiConstantPool constantPool = compilation.runtime.getConstantPool(scope.method);
         scopeData = new ScopeData(null, scope, blockMap, stream, constantPool);
+        scope.setStoresInLoops(blockMap.getStoresInLoops());
         curBlock = start;
     }
 
