@@ -43,8 +43,6 @@ import com.sun.max.vm.runtime.*;
  * A collection of routines useful for placing and operating on special
  * tags in an object heap in aid of debugging a garbage collector in
  * a {@linkplain MaxineVM#isDebug() debug} build of the VM.
- *
- * @author Doug Simon
  */
 public final class DebugHeap {
 
@@ -120,15 +118,23 @@ public final class DebugHeap {
         return cell;
     }
 
+    /**
+     * Checking the tag a cell.
+     * A region start address may be supplied for tracing purposes if the cell reside in a specific region of memory.
+     *
+     * @param regionStart Address to the first byte of the memory region where the cell is allocated
+     * @param cell cell whose tag is checked
+     * @return Address to beginning of the cell stripped off its tag.
+     */
     @INLINE
-    public static Pointer checkDebugCellTag(Address from, Pointer cell) {
+    public static Pointer checkDebugCellTag(Address regionStart, Pointer cell) {
         if (isTagging()) {
             if (!isValidCellTag(cell.getWord(0))) {
                 Log.print("Invalid object tag @ ");
                 Log.print(cell);
-                if (!from.isZero()) {
+                if (!regionStart.isZero()) {
                     Log.print(" (start + ");
-                    Log.print(cell.minus(from).asOffset().toInt());
+                    Log.print(cell.minus(regionStart).asOffset().toInt());
                     Log.print(")");
                 }
                 Log.println();
