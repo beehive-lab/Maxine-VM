@@ -507,7 +507,7 @@ jtt_help="run the JTMaxine program in the Maxine VM
     Use \"max jtt -help\" to see what arguments the JTMaxine program accepts."
 
 function run_jtt() {
-    jtt_cp=$(jmax classpath VM)
+    jtt_cp=$(jmax classpath com.oracle.max.vm)
     run ${maxine_vm} -cp $jtt_cp $MAXVM_OPTIONS test.com.sun.max.vm.jtrun.JTMaxine -native-tests $@
 }
 
@@ -526,8 +526,8 @@ function run_jttgen() {
         exit 1
     fi
 
-    pushd $maxine_dir/VM/test >/dev/null
-    run ${jvm_exe} -cp $(jmax classpath VM) test.com.sun.max.vm.compiler.JavaTester \
+    pushd $maxine_dir/com.oracle.max.vm/test >/dev/null
+    run ${jvm_exe} -cp $(jmax classpath com.oracle.max.vm) test.com.sun.max.vm.compiler.JavaTester \
         -scenario=target -run-scheme-package=all -native-tests $(echo jtt/* | sed 's:jtt/fail::g')
     result=$?
     popd >/dev/null
@@ -551,7 +551,7 @@ function run_jnigen() {
         exit 1
     fi
 
-    run ${jvm_exe} -cp $(jmax classpath VM) com.sun.max.vm.jni.JniFunctionsGenerator
+    run ${jvm_exe} -cp $(jmax classpath com.oracle.max.vm) com.sun.max.vm.jni.JniFunctionsGenerator
     result=$?
     exit $result
 }
@@ -813,7 +813,7 @@ function run_image() {
             @*)
                 if [ -z "$image_configs" ]; then
                     # Lazily construct this variable as it requires running a Java program
-                    image_configs=$(${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp $(jmax classpath VM) test.com.sun.max.vm.MaxineTesterConfiguration)
+                    image_configs=$(${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp $(jmax classpath com.oracle.max.vm) test.com.sun.max.vm.MaxineTesterConfiguration)
                 fi
                 image_config_arg=${1/@/}
                 for image_config in ${image_configs[@]}; do
@@ -1285,7 +1285,7 @@ function run_jtest() {
             -h )
                 echo "Usage: jtest <VM options> -- <Java Tester options>"
                 echo "where Java Tester options include:"
-                run ${maxine_vm} -classpath $(jmax classpath VM) test.com.sun.max.vm.compiler.JavaTester -help
+                run ${maxine_vm} -classpath $(jmax classpath com.oracle.max.vm) test.com.sun.max.vm.compiler.JavaTester -help
                 return
                 ;;
             * )
@@ -1305,7 +1305,7 @@ function run_jtest() {
 helloworld_help="run a basic 'hello world' program on the Maxine VM"
 
 function run_helloworld() {
-    run ${maxine_vm} -classpath $(jmax classpath VM) "$@" test.output.HelloWorld
+    run ${maxine_vm} -classpath $(jmax classpath com.oracle.max.vm) "$@" test.output.HelloWorld
 }
 
 #=======================================
