@@ -1,0 +1,1618 @@
+#!/bin/bash
+#
+# ----------------------------------------------------------------------------------------------------
+#
+# Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
+# ----------------------------------------------------------------------------------------------------
+#
+# A launcher for Maxine executables and tools. This launch simplifies the task
+# of running the Maxine VM and utilities by setting up the necessary class paths
+# and executable paths. The only requirement is for the user to have set the
+# environment variable JAVA_HOME to point to a JDK installation directory.
+# The '-java_home' global option can be used instead.
+#
+# To add a new command, write a function named 'run_<command>' and
+# define a variable named '<command>_help'. See the existing commands for examples.
+# Once added, the command can be launched as follows:
+#
+#   max <command> <arguments>
+#
+# In addition, the command and it's description will be listed when this script
+# is run without any arguments.
+#
+# It is possible to extend this script by sourcing it from a parent script. For
+# example, if this script is at $MAXINE_HOME/com.oracle.max.shell/max, then the parent script
+# needs to end with:
+#
+#    . "$MAXINE_HOME/com.oracle.max.shell/max"
+#
+# One reason to extend this script is to build additional
+# projects that depend on Maxine, e.g. for the Guest VM Xen port of Maxine.
+# To do this set the following variable before invoking max:
+#
+#  extra_projects_dirs   comma separated list of extra project directories
+#
+# It is also possible to override any of the commands in this script. For example, to
+# override the 'image' command, define a function named 'run_image_override' in the
+# parent script before sourcing this script. In this case, the 'run_image_override'
+# function will be called instead of 'run_image' if the user specified the 'image' command.
+
+#set -x
+
+verbose=false
+unknown_option=""
+show_help=false
+default_jvm_args="-d64 -ea -Xss2m -Xmx1g"
+default_jvm_dbg_port=8000
+jvm_args="$default_jvm_args"
+jvm_args_prefix=""
+jvm_args_suffix=""
+jvm_dbg_port=""
+maxine_dir=""
+make_arg=
+cp_suffix=
+cp_prefix=
+remote=0
+trace_level=1
+cp_sep=":"
+while [ "${1:0:1}" = "-" ]; do
+    case $1 in
+        -v )
+            verbose=true
+            ;;
+        -d )
+            set -x
+            ;;
+        -h )
+            show_help=true
+            ;;
+        -vmdir )
+            shift
+            MAXVM_DIR=$1
+            ;;
+        -os )
+            shift
+            MAXINE_OS=$1
+            jvm_args="$jvm_args -Dmax.os=$1"
+            remote=1
+            ;;
+        -make )
+            shift
+            make_arg=$1
+            ;;
+        -java_home )
+            shift
+            export JAVA_HOME=$1
+            ;;
+        -maxine )
+            shift
+            maxine_dir=$1
+            ;;
+        -jvm )
+            shift
+            jvm=$1
+            ;;
+        -J/p* )
+            jvm_args_prefix="$jvm_args_prefix ${1/-J\/p/}"
+            ;;
+        -J/a* )
+            jvm_args_suffix="$jvm_args_suffix ${1/-J\/a/}"
+            ;;
+        -J* )
+            jvm_args=${1/-J/}
+            ;;
+        -dbg )
+            jvm_dbg_port=$default_jvm_dbg_port
+            ;;
+        -dbgport )
+            shift
+            jvm_dbg_port=$1
+            ;;
+        -cp/p:* )
+            cp_prefix="${1/-cp\/p:/}"
+            ;;
+        -cp/a:* )
+            cp_suffix="${1/-cp\/a:/}"
+            ;;
+        -trace )
+            shift
+            trace_level=$1
+            ;;
+        * )
+            unknown_option=$1
+            break
+            ;;
+    esac
+    shift
+done
+
+command=$1
+shift
+if [ -n "$jvm_dbg_port" ]; then
+    jvm_args="$jvm_args -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=$jvm_dbg_port"
+fi
+jvm_args="$jvm_args_prefix $jvm_args $jvm_args_suffix"
+command_args=$@
+
+# Ensure that the JAVA_HOME is set or guess its location:
+if [ -z "${JAVA_HOME}" ]; then
+    if [ -d /usr/lib/jvm/java-6-sun ]; then
+       export JAVA_HOME=/usr/lib/jvm/java-6-sun
+    elif [ -d /System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home ]; then
+       export JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Versions/1.6.0/Home
+    elif [ -d /usr/jdk/latest ]; then
+       export JAVA_HOME=/usr/jdk/latest
+    else
+       echo "JAVA_HOME is not defined. It must point to a JDK 6 installation directory"
+       exit 1;
+    fi
+fi
+
+# Try to find the base directory of the Maxine code base by using the path of this script
+if [ -z "${maxine_dir}" ]; then
+    # Resolve location of this script
+    me="${BASH_SOURCE[0]}"
+    while [ -h "$me" ]; do
+        me=`readlink -e "$me"`
+    done
+    pushd . >/dev/null
+    cd `dirname "${me}"`
+    cd ..
+    maxine_dir=`pwd`
+    popd >/dev/null
+fi
+
+# Sanity check: is ${maxine_dir}/com.oracle.max.shell/max an executable
+if [ ! -x "${maxine_dir}/com.oracle.max.shell/max" ]; then
+    echo "Can't find Maxine code base at '${maxine_dir}': '${maxine_dir}/com.oracle.max.shell/max' does not exist or is not an executable"
+    exit 1
+fi
+
+# Undefined optional variables are set to defaults
+test -n "${jvm}" || jvm="${JAVA_HOME}/bin/java"
+jvm_exe="$jvm $jvm_args"
+
+# Ensure that a JDK 6 is being used
+# The definition f quote is for purely cosmetic reasons to avoid emacs thinking
+# the rest of the file is a string and messing up the syntax highlighting
+quote='"'
+quote='"'
+java_version="`$jvm -version 2>&1 | head -1 | cut -d $quote -f2`"
+if [[ "$java_version" != 1.6* ]]; then
+    echo "JAVA_HOME does not denote a JDK 6 installation: $java_version"
+    exit 255
+fi
+
+arch=""
+if [ -z "${MAXINE_OS}" ]; then
+    OS=`uname -s`
+    case $OS in
+        Darwin* )
+            supported_macosx_jdks="1.6.0_20 1.6.0_22 1.6.0_25"
+            version_found=0
+            for maxos_java_version in $supported_macosx_jdks; do
+                if [ "$java_version" = "$maxos_java_version" ]; then
+                    version_found=1
+                fi
+            done
+            if [ $version_found -eq 0 ]; then
+                # Integration with the JDK on Mac OS X has proven to be brittle
+                # due to the way in which the JDK libraries are linked against
+                # each other. For example, in version 1.6.0_17 libjava.jnilib
+                # had a Mach-O load command that explicitly specified a hard coded
+                # absolute path to libclient.dylib. In version 1.6.0_20, the linkage
+                # mechanism was changed to use @rpath/ commands instead (see the
+                # man page for dyld(1)). To keep things simple, only exact
+                # versions of the Mac OS X JDK are supported.
+                echo "WARNING: Only the following JDK versions are known to work with Maxine on Mac OS X: ${supported_macosx_jdks/ /, }"
+            fi
+            MAXINE_OS=darwin
+            ;;
+        Linux* )
+            MAXINE_OS=linux
+            ;;
+        SunOS* )
+            MAXINE_OS=solaris
+            ;;
+	CYGWIN* )
+	    MAXINE_OS=windows
+	    ;;
+    esac
+    if [ -z "${MAXINE_OS}" ]; then
+        echo "Supported operating system could not be derived from $OS. Please set MAXINE_OS explicitly."
+        exit 1
+    fi
+fi
+
+if [[ $MAXINE_OS = windows ]]; then
+	cp_sep=";"
+fi
+
+test -n "$MAXVM_DIR" || MAXVM_DIR="${maxine_dir}/com.oracle.max.vm.native/generated/${MAXINE_OS}"
+maxine_vm=$MAXVM_DIR/maxvm
+
+method_finder_pattern_help='A pattern is a class name pattern followed by an optional method name
+    pattern separated by a ':' further followed by an optional signature:
+    
+      <class name>[:<method name>[:<signature>]]
+    
+    For example, the list of patterns:
+    
+         "Object:wait", "String", "Util:add:(int,float)"
+         
+    will match all methods in a class whose name contains "Object" where the
+    method name contains "wait", all methods in a class whose name
+    contains "String" and all methods in any class whose name
+    contains "Util", the method name contains "add" and the
+    signature is (int, float).
+    
+    The type of matching performed for a given class/method name is determined
+    by the position of '^' in the pattern name as follows:
+    
+    Position of '^'   | Match algorithm
+     ------------------+------------------
+     start AND end     | Equality
+     start             | Prefix
+     end               | Suffix
+     absent            | Substring
+    
+    For example, "^java.util:^toString^" matches all methods named "toString" in
+    any class whose name starts with "java.util".
+
+    The matching performed on a signature is always a substring test. Signatures can
+    specified either in Java source syntax (e.g. "int,String") or JVM internal syntax
+    (e.g. "IFLjava/lang/String;"). The latter must always use fully qualified type
+    names where as the former must not.
+
+    Any pattern starting with "!" is an exclusion specification. Any class or method
+    whose name contains an exclusion string (the exclusion specification minus the
+    leading "!") is excluded.'
+
+#=======================================
+# Interface to the jmax utility
+#=======================================
+
+# These variables are used by jmax
+export maxine_dir
+export cp_prefix
+export cp_suffix
+
+function jmax() {
+    if [ ! -e $maxine_dir/com.oracle.max.shell/jmax.class -o $maxine_dir/com.oracle.max.shell/jmax.class -ot $maxine_dir/com.oracle.max.shell/jmax.java ]; then
+        $JAVA_HOME/bin/javac -d $maxine_dir/com.oracle.max.shell $maxine_dir/com.oracle.max.shell/jmax.java
+    fi
+    $jvm -ea -cp $maxine_dir/com.oracle.max.shell jmax $@
+    if [ $? -ne 0 ]; then
+        exit 1
+    fi
+}
+
+# Call jmax now to fail-fast on errors in the projects.properties files.
+jmax projects >/dev/null
+
+#=======================================
+# Utility for verbose execution
+#=======================================
+
+function run() {
+    if $verbose ; then
+        echo "$@"
+    fi
+    "$@"
+}
+
+#=======================================
+# Utility to ensure $make points to a
+# GNU make executable
+#=======================================
+
+function config_gnu_make() {
+    for a in $make_arg make gmake gnumake; do
+        if ( sh -c "$a --version" 2>/dev/null | grep GNU >/dev/null ) ; then
+            make=$(type -p $a)
+            break
+        fi
+    done
+}
+
+function check_gnu_make() {
+    config_gnu_make
+    if [ -z "$make" ]; then
+        if [ -n "$make_arg" ]; then
+            echo "$make_arg does not denote a GNU make executable"
+        else
+            echo "Could not find a GNU make executable on the current path."
+            echo "Please fix the path or use the -make option."
+        fi
+    exit 1
+    fi
+}
+
+#=======================================
+# 'build' command
+#=======================================
+
+build_usage="[options] projects..."
+build_help="compile the Maxine Java and C sources, linking the latter
+
+   Compile all or some of the Maxine source code using the appropriate compilers
+   and linkers for the various source code types.
+
+options:
+ -clean         removes existing binaries and class files before building projects
+ -javac <path>  path to a Java source compiler (default: ${JAVA_HOME}/bin/javac)
+
+If no projects are given, then all projects are built."
+
+function run_build() {
+    local javac=${JAVA_HOME}/bin/javac
+    local native_only=false
+    local exit_after_help=false
+    local clean=false
+    local projects_to_build=""
+    while [ "$1" != "" ]; do
+        case $1 in
+            -javac )
+                shift
+                javac=$1
+                ;;
+            -clean )
+                clean=true
+                ;;
+            -* )
+                echo "unknown build option '$1'"
+                run_help build
+                exit 1
+                ;;
+            * )
+                projects_to_build="$projects_to_build $1"
+                ;;
+        esac
+        shift
+    done
+
+    local build_native=false
+    if [ -z "$projects_to_build" ]; then
+        projects_to_build="$(jmax projects)"
+        build_native=true
+    elif [[ "$projects_to_build" == *com.oracle.max.vm.native* ]]; then
+        $projects_to_build=${projects_to_build/com.oracle.max.vm.native/}
+        build_native=true
+    fi
+
+    # Compile C sources
+    if $build_native; then
+        echo "Compiling C sources in ${maxine_dir}/com.oracle.max.vm.native..."
+
+        check_gnu_make
+
+        pushd ${maxine_dir}/com.oracle.max.vm.native >/dev/null
+        if $clean ; then
+           run $make clean
+        fi
+        run $make;
+        result=$?
+        popd >/dev/null
+        if [ $result -ne 0 ]; then
+            exit $result
+        fi
+    fi
+
+    # Compile Java sources
+    local project
+    for project in $projects_to_build; do
+    
+        local project_dest=$(jmax output_dir $project)
+        
+        if $clean ; then
+            run rm -rf ${project_dest}
+        fi
+        run mkdir -p ${project_dest}
+
+        local source_dirs=$(jmax source_dirs ${project})
+        for source_dir in ${source_dirs} ; do
+            pushd ${source_dir} >/dev/null
+            javac_input=/tmp/javacfiles.txt.$$
+            find . -name *.java | grep -v 'package-info.java' >$javac_input
+	        echo "Compiling Java sources in ${source_dir}..."
+                run ${javac} -source 1.6 -g -J-Xmx1g -classpath $(jmax classpath $project) -d ${project_dest} @$javac_input 2>&1 | \
+                   awk ' BEGIN                    { s=0; c=-1}
+                         /is Sun proprietary API/ { s++; c=2; }
+                                                  { if (c-- >= 0) next; print; }
+                         END                      { if (s > 0) print "Suppressed " s " warnings about use of Sun implementation classes." }'
+
+            result=${PIPESTATUS[0]}
+            if [ $result -eq 0 ]; then
+                # Copying non Java source files from 'src' to 'bin'
+                for file in `find . -type f | grep -v '.java$'`; do
+                    if [ -d ${project_dest}/$(dirname $file) ]; then
+                       run cp $file ${project_dest}/$file
+                    fi
+                done
+            fi
+            rm $javac_input
+            popd >/dev/null
+            if [ $result -ne 0 ]; then
+                exit $result
+            fi
+        done
+    done
+}
+
+#=======================================
+# 'clean' command
+#=======================================
+
+clean_help="Remove all class files, images, and executables
+
+    Removes all files created by a build, including Java class files, executables, and
+    generated images."
+
+
+function run_clean() {
+    if [ $# -ne 0 ]; then
+        run_help clean
+        exit 1
+    fi
+
+    pushd $maxine_dir/com.oracle.max.vm.native >/dev/null
+    check_gnu_make
+    run $make clean
+    rm -rf generated	
+    popd >/dev/null
+    
+    for project in $(jmax projects); do
+        local project_dest=$(jmax output_dir $project)
+        if [ "x$project_dest" != "x" ]; then
+            echo Removing $project_dest...
+            rm -rf $project_dest
+        fi
+    done
+
+    exit $result
+}
+
+
+#=======================================
+# 'jtt' command
+#=======================================
+
+jtt_usage="[JTMaxine args...]"
+jtt_help="run the JTMaxine program in the Maxine VM
+
+    Run the JTMaxine program in the Maxine VM with the given arguments.
+    The MAXVM_OPTIONS environment variable can be used to specify VM options.
+
+    Use \"max vm -help\" to see what VM options are available.
+    Use \"max jtt -help\" to see what arguments the JTMaxine program accepts."
+
+function run_jtt() {
+    jtt_cp=$(jmax classpath com.oracle.max.vm)
+    run ${maxine_vm} -cp $jtt_cp $MAXVM_OPTIONS test.com.sun.max.vm.jtrun.JTMaxine -native-tests $@
+}
+
+#=======================================
+# 'jttgen' command
+#=======================================
+
+jttgen_help="(re)generate harness and run scheme for the JavaTester tests
+
+    Run the JavaTester to update the JavaTesterRunScheme.java and JavaTesterTests.java
+    files in the com.sun.max.vm.jtrun.all package."
+
+function run_jttgen() {
+    if [ $# -ne 0 ]; then
+        run_help jttgen
+        exit 1
+    fi
+
+    pushd $maxine_dir/com.oracle.max.vm/test >/dev/null
+    run ${jvm_exe} -cp $(jmax classpath com.oracle.max.vm) test.com.sun.max.vm.compiler.JavaTester \
+        -scenario=target -run-scheme-package=all -native-tests $(echo jtt/* | sed 's:jtt/fail::g')
+    result=$?
+    popd >/dev/null
+    exit $result
+}
+
+#=======================================
+# 'jnigen' command
+#=======================================
+
+jnigen_help="(re)generate content in JniFunctions.java from JniFunctionsSource.java
+
+    Run JniFunctionsGenerator.java to update the methods in JniFunctions.java by adding
+    a prologue and epilogue to the @JNI_FUNCTION annotated methods in JniFunctionsSource.java.
+
+    The exit code is non-zero if JniFunctions.java was modified."
+
+function run_jnigen() {
+    if [ $# -ne 0 ]; then
+        run_help jnigen
+        exit 1
+    fi
+
+    run ${jvm_exe} -cp $(jmax classpath com.oracle.max.vm) com.sun.max.vm.jni.JniFunctionsGenerator
+    result=$?
+    exit $result
+}
+
+#=======================================
+# 'copycheck' command
+#=======================================
+
+copycheck_usage="[options]"
+copycheck_help="run copyright check on the Maxine sources (defined as being under hg control)"
+ 
+function run_copycheck() {
+    run ${jvm_exe} -cp $(jmax classpath_noresolve com.oracle.max.base) com.sun.max.tools.CheckCopyright $@
+    result=$?
+    if [ $result -ne 0 ]; then
+        exit $result
+    fi
+ }
+
+#=======================================
+# 'check' command
+#=======================================
+
+check_usage="[options] projects..."
+check_help="run Checkstyle on the Maxine Java sources
+
+   Run Checkstyle over the Java sources. Any errors or warnings
+   produced by Checkstyle result in a non-zero exit code.
+
+If no projects are given, then all Java projects are checked."
+
+function run_check() {
+    projects_to_check=""
+    while [ "$1" != "" ]; do
+        case $1 in
+            -* )
+                run_help check
+                echo "unknown build option '$1'"
+                exit 1
+                ;;
+            * )
+                projects_to_check="$projects_to_check $1"
+                ;;
+        esac
+        shift
+    done
+
+    if [ -z "$projects_to_check" ]; then
+        projects_to_check=$(jmax projects)
+    fi
+
+    for project in $projects_to_check; do
+        local project_dir=$(jmax project_dir $project)
+        pushd ${project_dir} >/dev/null
+        local source_dirs=$(jmax source_dirs ${project})
+        for source_dir in ${source_dirs} ; do
+            javac_input=/tmp/javacfiles.txt.$$
+            find $source_dir -name *.java | grep -v 'package-info.java' >$javac_input
+
+            result=0
+            if [ -f $project_dir/.checkstyle ]; then
+                checks_file=$(grep 'location=' < $project_dir/.checkstyle | sed 's:.*location="\([^"]*\)".*:\1:g')
+                local parent_dir=$(dirname $project_dir)
+                if [[ "$checks_file" = /* ]]; then
+                    checks_file=${checks_file/#\//$parent_dir/}
+                else
+                    checks_file="$project_dir/$checks_file"
+                fi
+
+                echo "Running Checkstyle on $source_dir using $checks_file..."
+                local checkstyle_out=/tmp/audit.$$
+                local checkstyle_input=/tmp/checkfiles.txt.$$
+
+                if [ -f $project_dir/.checkstyle.exclude ]; then
+                    jmax filter $javac_input $project_dir/.checkstyle.exclude >$checkstyle_input
+                else
+                    cp $javac_input $checkstyle_input
+                fi
+
+                run $jvm -Xmx1g -jar $(jmax library CHECKSTYLE) -c $checks_file $(cat $checkstyle_input) -o $checkstyle_out
+                result=$?
+                rm $checkstyle_input
+                if [ $result -eq 0 ]; then
+                    if [ "X$(grep 'warning:' <$checkstyle_out)" != "X" ]; then
+                        cat $checkstyle_out
+                        result=1
+                    fi
+                else
+                    cat $checkstyle_out
+                fi
+                rm $checkstyle_out
+            fi
+            rm $javac_input
+            if [ $result -ne 0 ]; then
+                exit $result
+            fi
+        done
+        popd >/dev/null
+    done
+}
+
+#=======================================
+# 'javadoc' command
+#=======================================
+
+javadoc_usage="[options]"
+javadoc_help="run javadoc over the Maxine Java source files
+
+   Run javadoc over the Maxine Java source code and place the generated
+   HTML in $maxine_dir/javadoc.
+
+options:
+ -clean     removes existing generated javadoc first
+ -projects p1,p2,... limit to listed projects
+ <any other javadoc option>
+
+    Use \"max javadoc -help\" to see what other options this command accepts."
+
+function run_javadoc() {
+    javadoc=${JAVA_HOME}/bin/javadoc
+    clean=false
+    extra_javadoc_options=""
+    projects_to_build=""
+    while [ "$1" != "" ]; do
+        case $1 in
+            -clean )
+                clean=true
+                ;;
+            -projects )
+                shift
+                projects_to_build="$projects_to_build ${1//,/ }"
+                ;;
+            -* )
+                extra_javadoc_options="$extra_javadoc_options $1"
+                ;;
+            * )
+                break
+                ;;
+        esac
+        shift
+    done
+
+    if [ $# -ne 0 ]; then
+        echo "Ignoring trailing args: $@"
+    fi
+
+    if [ -z "$projects_to_build" ]; then
+        projects_to_build=$(jmax projects)
+    fi
+
+    javadoc_output_dir=${maxine_dir}/javadoc
+    if $clean ; then
+        run rm -rf $javadoc_output_dir
+    fi
+    run mkdir -p $javadoc_output_dir
+
+    source_path=""
+    package_list=/tmp/packages.txt.$$
+    cat /dev/null > $package_list
+
+    for project in $projects_to_build; do
+        local source_dirs=$(jmax source_dirs ${project})
+        for source_dir in ${source_dirs} ; do
+            if [ -z "$source_path" ]; then
+                source_path=$source_dir
+            else
+                source_path="$source_path:$source_dir"
+            fi
+            find $source_dir -name package-info.java | sed 's:'$source_dir'/\(.*\)/package-info.java:\1:g' | tr '/' '.' >>$package_list
+        done
+    done
+
+    echo "Running javadoc over Java sources..."
+    run ${javadoc} -quiet -source 1.6 -J-Xmx1g \
+        -classpath $(jmax classpath) \
+        -sourcepath $source_path \
+        -d $javadoc_output_dir \
+        -link http://java.sun.com/javase/6/docs/api \
+    $extra_javadoc_options $(<$package_list)
+    result=$?
+    rm $package_list
+    if [ $result -ne 0 ]; then
+        exit $result
+    fi
+}
+
+#=======================================
+# 'configs' command
+#=======================================
+
+# To add new configs, see class test.com.sun.max.vm.MaxineTesterConfiguration
+configs_usage=""
+configs_help="prints the predefined image configurations"
+
+function run_configs() {
+    printf "The available preconfigured option sets are:\n\n"
+    printf "    %-15s %s\n" "Configuration" "Expansion"
+
+    ${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp $(jmax classpath_noresolve) test.com.sun.max.vm.MaxineTesterConfiguration | \
+    while read image_config; do
+        image_config_args="${image_config/*\#/}"
+        printf "    @%-15s %s\n" "${image_config/\#*/}" "${image_config_args//,/ }"
+    done
+
+}
+
+#=======================================
+# 'image' command
+#=======================================
+
+image_usage="[options] classes|packages..."
+function image_help() {
+    image_help_message="build a boot image
+
+    Run the BootImageGenerator to build a Maxine boot image. The classes
+    and packages specified on the command line will be included in the
+    boot image in addition to those found by the Package.java mechanism.
+    Package names are differentiated from class names by being prefixed
+    with '^'.
+
+    The platform configuration for the generated image is auto-detected
+    by native methods. However, the following system properties can be
+    used to override the defaults:
+    
+    Name            | Description                   | Example values
+    ================+===============================+================
+    max.platform    | name of a preset platform     | solaris-amd64 linux-amd64 darwin-amd64 
+    max.cpu         | processor model               | AMD64 IA32 SPARCV9   
+    max.isa         | instruction set architecture  | AMD64 ARM PPC SPARC
+    max.os          | operating system              | Darwin Linux Solaris 
+    max.endianness  | endianness                    | BIG LITTLE
+    max.bits        | machine word size             | 64 32
+    max.page        | page size                     | 4096 8192 
+    max.nsig        | number of signals             | 32
+    
+    These system properties can be specified as options to the image
+    command (e.g. '-os Darwin -bits 32').
+
+    An option starting with '@' denotes a preconfigured set of
+    options. $(run_configs)
+"
+    image_help_message="$image_help_message
+
+    An option starting with '--' is interpreted as a VM option of the same name
+    after the leading '-' is removed. For example, to use the '-verbose:class'
+    VM option to trace class loading while image building, specify '--verbose:class'.
+    Note that not all VM options have an effect during image building.
+
+    Use \"max image -help\" to see what other options this command accepts."
+
+    printf "%s" "$image_help_message"
+}
+
+function run_image() {
+    system_props=""
+    image_args=""
+    while [ "$1" != "" ]; do
+        case $1 in
+            @*)
+                if [ -z "$image_configs" ]; then
+                    # Lazily construct this variable as it requires running a Java program
+                    image_configs=$(${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp $(jmax classpath com.oracle.max.vm) test.com.sun.max.vm.MaxineTesterConfiguration)
+                fi
+                image_config_arg=${1/@/}
+                for image_config in ${image_configs[@]}; do
+                    image_config_name=${image_config/\#*/}
+                    if [ "$image_config_name" = "$image_config_arg" ]; then
+                        image_config_args="${image_config/*\#/}"
+
+                        # Prepend the expanded macro to the positional parameters
+                        shift
+                        set -- ${image_config_args//,/ } "$@"
+
+                        # Continue at the outer 'while' loop
+                        continue 2
+                    fi
+                done
+                echo "Invalid image configuration: $1"
+                run_help image
+                exit 1
+                ;;
+            -platform | -cpu | -isa | -os | -endianness | -bits | -page | -nsig )
+                prop_name="max.${1/-/}"
+                shift
+                system_props="$system_props -D${prop_name}=$1"
+                ;;
+            --XX:LogFile=*)
+                MAXINE_LOG_FILE=${1/*=/}
+                export MAXINE_LOG_FILE
+                ;;
+            *)
+                image_args="$image_args $1"
+                ;;
+        esac
+        shift
+    done
+
+	run ${jvm_exe} $system_props -cp $(jmax classpath) com.sun.max.vm.hosted.BootImageGenerator -trace=$trace_level -run=java $image_args
+}
+
+#=======================================
+# 'verify' command
+#=======================================
+
+verify_usage="[options] patterns..."
+verify_help="verifies a set of methods using the Maxine bytecode verifier
+
+    Run the Maxine verifier over a set of specified methods available
+    on the class path. To extend the class path, use one of the global
+    \"-cp/p:<arg>\" or \"-cp/a:<arg>\" options.
+
+    See Patterns below for a description of the format expected for \"patterns...\"
+
+    Use \"max verify -help\" to see what other options this command accepts.
+    
+    --- Patterns ---
+    
+    $method_finder_pattern_help"
+
+function run_verify() {
+    run ${jvm_exe} -cp $(jmax classpath) test.com.sun.max.vm.verifier.CommandLineVerifier $@
+}
+
+#=======================================
+# 'hcfdis' command
+#=======================================
+
+hcfdis_usage="[options] files..."
+hcfdis_help="disassembles HexCodeFiles embedded in text files
+
+    Run a tool over the input files to convert all embedded HexCodeFiles
+    to a disassembled format."
+
+function run_hcfdis() {
+    run ${jvm_exe} -cp $(jmax classpath com.oracle.max.hcfdis) com.oracle.max.hcfdis.HexCodeFileDis $@
+}
+
+#=======================================
+# 'c1x' command
+#=======================================
+
+c1x_usage="[options] patterns..."
+c1x_help="process a list of methods with the C1X compiler
+
+    See Patterns below for a description of the format expected for \"patterns...\"
+    
+    The output traced by this command is not guaranteed to be the same as the output
+    for a compilation performed at runtime. The code produced by a compiler is sensitive
+    to the compilation context such as what classes have been resolved etc.
+
+    Use \"max c1x -help\" to see what other options this command accepts.
+    
+    --- Patterns ---
+    
+    $method_finder_pattern_help"
+
+function run_c1x() {
+    c1x_cp=$(jmax classpath):`echo $@ | grep '\-search\-cp' | sed 's:.*-search-cp=\([^ ]*\).*:\1:g'`
+    run ${jvm_exe} -cp ${c1x_cp} test.com.sun.max.vm.compiler.c1x.C1XTest $@
+}
+
+#=======================================
+# 'vm' command
+#=======================================
+
+vm_usage="[options] [class | -jar jarfile]  [args...]"
+vm_help="launch the Maxine VM
+
+    Run the Maxine VM with the given options and arguments.
+    The expansion of the MAXVM_OPTIONS environment variable is inserted
+    before any other VM options specified on the command line.
+
+    Use \"max vm -help\" to see what other options this command accepts."
+
+function run_vm() {
+    run ${maxine_vm} $MAXVM_OPTIONS $@
+}
+
+#=======================================
+# 'copyvm' command
+#=======================================
+
+copyvm_usage="dest"
+copyvm_help="copy the VM files to a specified directory
+
+    Copy the VM executable, shared libraries and boot image files to
+    a specified directory, creating it first if necessary. This allows
+    multiple VMs to exist in a single workspace.
+
+    To use a particular VM, set the MAXVM_DIR environment variable before
+    running a \"max vm ...\" command."
+
+function run_copyvm() {
+    if [ ! -d $1 ]; then
+        mkdir -p $1 || { echo "Failed to created directory $1"; exit 1; }
+    fi
+    run cp -r ${maxine_dir}/com.oracle.max.vm.native/generated/${MAXINE_OS}/* $1 && {
+        echo "Copied all VM files to $1."
+        echo "Use either of the following commands to run this copy of the VM:"
+        echo
+        echo "    max -vmdir $1 vm ..."
+        echo "    env MAXVM_DIR=$1 max vm ..."
+        echo
+    }
+}
+
+#=======================================
+# 'eclipse' command
+#=======================================
+
+eclipse_usage="[options]"
+eclipse_defaults="-Xms1g -Xmx3g -XX:ReservedCodeCacheSize=512m -XX:+ShowConfiguration"
+eclipse_help="launch Eclipse with the Maxine VM
+
+    Run Eclipse under Maxine VM with the given options supplied as
+    the value of the '-vmargs' Eclipse launcher option.
+    The expansion of the MAXVM_OPTIONS environment variable is inserted
+    before any other VM options specified on the command line."
+
+function run_eclipse() {
+    if [ -z "$(type -t eclipse)" ]; then
+        echo "The Eclipse executable 'eclipse' must be on your PATH"
+        exit 1
+    fi
+    run eclipse -vm ${maxine_vm} -vmargs $eclipse_defaults $MAXVM_OPTIONS $@
+}
+
+#=======================================
+# 'makejdk' command
+#=======================================
+
+makejdk_usage="[<destination directory>]"
+makejdk_help="create a JDK directory based on the Maxine VM
+
+    Create a JDK directory by replicating the file structure of $JAVA_HOME
+    and replacing the 'java' executable with the Maxine VM
+    executable. This produces a Maxine VM based JDK for applications
+    (such as NetBeans) which expect a certain directory structure
+    and executable names in a JDK installation."
+
+function run_makejdk() {
+
+    if [ $# -eq 0 ]; then
+        maxjdk_dir="$maxine_dir/maxjdk"
+    else
+        maxjdk_dir="$1"
+        if [[ "$maxjdk_dir" != /* ]]; then
+            maxjdk_dir="$PWD/$1"
+        fi
+    fi
+
+	if [ -e $maxjdk_dir ]; then
+	    echo "The destination directory already exists: $maxjdk_dir"
+	    echo "Delete it first? [y/n]"
+	    done=
+	    while [ -z "$done" ]; do
+            read reply leftover
+            case $reply in
+                [yY] | [yY][eE][sS])
+                    echo "Deleting $maxjdk_dir..."
+                    rm -rf $maxjdk_dir || {
+                        echo "Could not remove $maxjdk_dir."
+                        echo "Please remove it manually and retry."
+                        exit 1;
+                    }
+                    done=1
+                    ;;
+                [nN] | [nN][oO])
+                    done=1
+                    ;;
+                *)
+                    echo "Please enter \"yes\" or \"no\"."
+                    ;;
+            esac
+        done
+    fi
+	mkdir -p $maxjdk_dir
+
+    pushd $JAVA_HOME >/dev/null
+    entries=$(find . | wc -l)
+    echo "Replicating JDK in $maxjdk_dir"
+    i=0;
+    percent_done=0
+    one_percent=$(( entries / 100 ))
+    for f in `find .`; do
+        mod=$(($i % $one_percent))
+        if [ $mod -eq 0 ]; then
+            echo -e "\r$percent_done%\c"
+            percent_done=$(($percent_done + 1))
+
+        fi
+        i=$(($i + 1))
+
+        if [ -d $f ]; then
+            mkdir -p $maxjdk_dir/$f
+        elif [ ! -f $maxjdk_dir/$f ]; then
+            ln -s $JAVA_HOME/$f $maxjdk_dir/$f
+        fi
+    done
+    echo -e "\r100%"
+    popd >/dev/null
+    for f in ${maxine_dir}/com.oracle.max.vm.native/generated/${MAXINE_OS}/*; do
+        if [ -f $f ]; then
+            cp $f $maxjdk_dir/bin
+            if [ "$OS" != "Darwin" ]; then
+                cp $f $maxjdk_dir/jre/bin
+            fi
+        fi
+    done
+    rm $maxjdk_dir/bin/java
+    ln -s $maxjdk_dir/bin/maxvm $maxjdk_dir/bin/java
+    if [ "$OS" != "Darwin" ]; then
+        rm $maxjdk_dir/jre/bin/java
+        ln -s $maxjdk_dir/jre/bin/maxvm $maxjdk_dir/jre/bin/java
+    fi
+
+    echo "Created Maxine based JDK in $maxjdk_dir"
+}
+
+#=======================================
+# 'javap' command
+#=======================================
+
+javap_usage="[options] classes..."
+javap_help="launch javap with a -classpath option denoting all the Maxine classes
+
+    Run the JDK javap class file disassembler with the following prepended options:
+
+        -private -verbose -classpath <path to Maxine classes>
+
+    Use \"max javap -help\" to see what other options this command accepts."
+
+function run_javap() {
+    run ${JAVA_HOME}/bin/javap -private -verbose -classpath $(jmax classpath):${JCK_CLASSPATH} "$@"
+}
+
+#=======================================
+# 'dis' command
+#=======================================
+
+dis_usage="[options] classes..."
+dis_help="preprocess class files with the Maxine VM and disassemble the result with javap
+
+    Run Maxine in boot image building mode to load one or more classes (which performs
+    preprocessing of the bytecode in the classes for implementing JNI stubs, exception
+    dispatchers and sychronized methods, etc), writes the classes back to valid Java
+    class files and feeds them into javap.
+
+    This is an easy way to see how Maxine implements certain VM features via bytecode
+    preprocessing or generation.
+
+    Use \"max dis -help\" to see what other options this command accepts."
+
+function run_dis() {
+    TMP_DIR=/tmp/${USER}/generated.$$
+    run mkdir -p ${TMP_DIR}
+    run ${jvm_exe} -cp $(jmax classpath) com.sun.max.vm.classfile.ClassfileWriter -d=${TMP_DIR} -javap "$@"
+    run rm -rf ${TMP_DIR}
+}
+
+#=======================================
+# 'inspect' command
+#=======================================
+
+inspect_usage="[options] [class | -jar jarfile]  [args...]"
+inspect_help="launch a given program under the Inspector
+
+    Run Maxine under the Inspector. The arguments accepted by this command
+    are those accepted by the 'max vm' command plus the Inspector specific
+    options. To debug a program in the Inspector, simply replace 'vm' on the
+    command line that launches the program with 'inspect'.
+    
+    Use \"max inspect --help\" to see what the Inspector options are. These options
+    must be specified with a '--' prefix so that they can be distinguished from
+    the VM options.
+
+    The inspect command also accepts the same system property related options
+    as the 'image' command except that a '--' prefix must be used (e.g.
+    '--os Darwin --bits 32'). Use \"max help image\" for more detail.
+    
+    Use \"max vm -help\" to see what the VM options are."
+
+function run_inspect() {
+    save_class_dir="$MAXVM_DIR/inspected_classes"
+    vm_args="-XX:SaveClassDir=$save_class_dir -XX:+TrapOnError"
+    inspector_args="-vmdir=$MAXVM_DIR"
+    inspector_cp="$MAXVM_DIR/inspected_classes"
+    mkdir -p $save_class_dir || { echo "Failed to created directory $save_class_dir"; exit 1; }
+    system_props=""
+
+    while [ "$1" != "" ]; do
+        case $1 in
+            -XX:LogFile=*)
+                vm_args="$vm_args $1"
+                TELE_LOG_FILE=tele-${1/*=/}
+                if $verbose ; then
+                    echo "TELE_LOG_FILE=$TELE_LOG_FILE"
+                fi
+                export TELE_LOG_FILE
+                ;;
+            -cp | -classpath )
+                vm_args="$vm_args $1"
+                shift
+                vm_args="$vm_args $1"
+                inspector_cp="$inspector_cp:$1"
+                ;;
+            -jar )
+                shift
+                vm_args="$vm_args -jar $1"
+                inspector_cp="$inspector_cp:$1"
+                ;;
+            --platform | --cpu | --isa | --os | --endianness | --bits | --page | --nsig )
+                prop_name="max.${1/--/}"
+                shift
+                system_props="$system_props -D${prop_name}=$1"
+                ;;
+            --cp=* )
+                inspector_cp="$inspector_cp:${1/--cp=/}"
+                ;;
+            --* )
+                inspector_args="$inspector_args ${1/-/}"
+                ;;
+            -XX:SaveClassDir=*)
+                vm_args="$vm_args $1"
+                save_class_dir=${1/*=/}
+                mkdir -p $save_class_dir || { echo "Failed to created directory $save_class_dir"; exit 1; }
+                inspector_cp="$inspector_cp:$save_class_dir"
+                ;;
+            -*)
+                vm_args="$vm_args $1"
+                ;;
+            *)
+                # This is the main class argument; copy it and any following
+                # arguments to the VM verbatim
+                vm_args="$vm_args $@"
+                break
+                ;;
+        esac
+        shift
+    done
+
+	if [ -n "$inspector_cp" ]; then
+	    inspector_args="$inspector_args -cp=${inspector_cp/#:/}"
+	fi
+
+    if [[ "$remote" -eq 0 && "$MAXINE_OS" = "darwin" ]]; then
+        # The -E option propagates the environment variables into the sudo process
+        run sudo -E -p \
+"Debugging is a privileged operation on Mac OS X.
+Please enter your 'sudo' password:" \
+        ${jvm_exe} $system_props -cp $(jmax classpath) com.sun.max.ins.MaxineInspector -trace=$trace_level ${inspector_args} -a="$vm_args"
+    else
+        run ${jvm_exe} $system_props -cp $(jmax classpath) com.sun.max.ins.MaxineInspector -trace=$trace_level ${inspector_args} -a="$vm_args"
+    fi
+}
+
+#=======================================
+# 'core' command
+#=======================================
+
+core_usage="[options] <core file>"
+core_help="inspect a core file with the Inspector"
+
+function run_core() {
+    # Prepend the expanded macro to the positional parameters
+    core_file=${!#}
+    set --  --mode=attach --target=file --location=$core_file "$@"
+    run_inspect "$@"
+}
+
+#=======================================
+# 'inspectoragent' command
+#=======================================
+
+inspectoragent_usage="[-impl target] [-port port]"
+inspectoragent_help="launch the Inspector agent
+
+    Launch the Inspector agent.
+
+    The agent listens on a given port for an incoming connection from
+    a remote Inspector process."
+
+function run_inspectoragent() {
+    if [ "$MAXINE_OS" = "darwin" ]; then
+        run sudo -p \
+"Debugging is a privileged operation on Mac OS X.
+Please enter your 'sudo' password:" \
+        ${jvm_exe} -cp $(jmax classpath) com.sun.max.tele.channel.agent.InspectorAgent $@
+    else
+        run ${jvm_exe} -cp $(jmax classpath) com.sun.max.tele.channel.agent.InspectorAgent  $@
+    fi
+}
+
+#=======================================
+# 'view' command
+#=======================================
+
+view_usage="[options]"
+view_help="browse the boot image under the Inspector
+
+    Browse a Maxine boot image under the Inspector.
+
+    Use \"max view -help\" to see what the Inspector options are."
+
+function run_view() {
+    run ${jvm_exe} -cp $(jmax classpath):$maxine_dir/Inspector/jlfgr-1_0.jar:$maxine_dir/Inspector/NB3B.jar com.sun.max.ins.MaxineInspector -trace=$trace_level -vmdir=$MAXVM_DIR -mode=image $@
+}
+
+#=======================================
+# 'jtest' command
+#=======================================
+
+jtest_usage="[VM options] -- [Java Tester options]"
+jtest_help="run the Java Tester
+
+    Use \"max jtest -- -help\" to see what the JavaTester options are. These options
+    must be separated from the VM options with '--'.
+
+    Use \"max jtest -help\" to see what the VM options are."
+
+function run_jtest() {
+    vm_args=""
+    jtester_args=""
+    while [ "$1" != "" ]; do
+        case $1 in
+            -- )
+                shift
+                jtester_args="$@"
+                break
+                ;;
+            -h )
+                echo "Usage: jtest <VM options> -- <Java Tester options>"
+                echo "where Java Tester options include:"
+                run ${maxine_vm} -classpath $(jmax classpath com.oracle.max.vm) test.com.sun.max.vm.compiler.JavaTester -help
+                return
+                ;;
+            * )
+                vm_args="$vmargs $1"
+                ;;
+        esac
+        shift
+    done
+    
+    run ${jvm_exe} -classpath $(jmax classpath) $vm_args test.com.sun.max.vm.compiler.JavaTester $jtester_args
+}
+
+#=======================================
+# 'helloworld' command
+#=======================================
+
+helloworld_help="run a basic 'hello world' program on the Maxine VM"
+
+function run_helloworld() {
+    run ${maxine_vm} -classpath $(jmax classpath com.oracle.max.vm) "$@" test.output.HelloWorld
+}
+
+#=======================================
+# 'nm' command
+#=======================================
+
+nm_usage="[options] [boot image file]"
+nm_help="print the contents of a boot image
+
+    Print the contents of a boot image in a textual form.
+    If not specified, the following path will be used for the boot image file:
+
+        ${maxine_dir}/com.oracle.max.vm.native/generated/${MAXINE_OS}/maxine.vm
+
+    Use \"max nm -help\" to see what other options this command accepts."
+
+function run_nm() {
+    run ${jvm_exe} -cp $(jmax classpath) com.sun.max.vm.hosted.BootImagePrinter "$@" ${maxine_dir}/com.oracle.max.vm.native/generated/${MAXINE_OS}/maxine.vm
+}
+
+#=======================================
+# 'objecttree' command
+#=======================================
+
+objecttree_usage="[options]"
+objecttree_help="print the causality spanning-tree of the object graph in the boot image
+
+    The causality spanning-tree allows one to audit the boot image with respect
+    to why any given object is in the image. This is useful when trying to reduce
+    the size of the image.
+
+    This tool requires an input *.tree file which is produced by specifying the
+    -tree option when building the boot image.
+
+    Use \"max objecttree -help\" to see what other options this command accepts."
+
+function run_objecttree() {
+    run ${jvm_exe} -cp $(jmax classpath) com.sun.max.vm.hosted.BootImageObjectTree -in=${maxine_dir}/com.oracle.max.vm.native/generated/${MAXINE_OS}/maxine.object.tree "$@"
+}
+
+#=======================================
+# 'methodtree' command
+#=======================================
+
+methodtree_usage="[options]"
+methodtree_help="print the causality spanning-tree of the method graph in the boot image
+
+    The causality spanning-tree allows one to audit the boot image with respect
+    to why any given method is (or isn't) in the image. This is useful when
+    trying to reduce the size of the image.
+
+    This tool requires an input *.tree file which is produced by specifying the
+    -tree option when building the boot image.
+
+    Use \"max methodtree -help\" to see what other options this command accepts."
+
+function run_methodtree() {
+    run ${jvm_exe} -cp $(jmax classpath) com.sun.max.vm.hosted.BootImageMethodTree -in=${maxine_dir}/com.oracle.max.vm.native/generated/${MAXINE_OS}/maxine.method.tree "$@"
+}
+
+#=======================================
+# 'test' command
+#=======================================
+
+test_usage="[options]"
+test_help="run some or all of the Maxine tests
+
+    The Maxine sources include a variety of tests that can be run by a
+    special launcher. These include JUnit tests, VM micro tests, certain
+    benchmark suites and output comparison tests, amongst others.
+
+    Use \"max test -help\" to see what other options this command accepts."
+
+function run_test() {
+    if [ -d maxine-tester ]; then
+	    rm -f `find maxine-tester | egrep '(.stdout|.stderr|.passed|.failed|.command)'`
+	else
+	    mkdir maxine-tester
+    fi
+    run ${jvm_exe} -cp $(jmax classpath) test.com.sun.max.vm.MaxineTester -output-dir=maxine-tester\
+        -refvm="${jvm}" "-refvm-args=${jvm_args}" "$@" 2>&1 | tee maxine-tester/console
+    result=${PIPESTATUS[0]}
+    exit $result
+}
+
+#=======================================
+# 'gate' command
+#=======================================
+
+gate_usage="[options]"
+gate_presets="-image-configs=java -fail-fast"
+gate_help="run the tests used to validate a push to the stable Maxine repository
+
+    If this commands exits with a 0 exit code, then the source code is in
+    a state that would be accepted for integration into the main repository.
+
+    This is simply a wrapper for invoking the \"max test\" command with the following
+    preset options:
+
+        ${gate_presets}
+
+    Use \"max gate -help\" to see what other options this command accepts."
+
+function run_gate() {
+    run ${jvm_exe} -cp $(jmax classpath) test.com.sun.max.vm.MaxineTester -refvm="${jvm}" "-refvm-args=${jvm_args}" ${gate_presets} "$@"
+}
+
+
+#=======================================
+# 'msgate' command
+#=======================================
+
+msgate_usage="[options]"
+msgate_presets="-image-configs=jtt-c1xt1x,jtt-mst1xc1x -fail-fast -tests=output:GC+WeakReference"
+
+msgate_help="run the GC tests using the MS heap scheme"
+
+function run_msgate() {
+    gate_presets=$msgate_presets
+    run_gate "$@"
+}
+
+#=======================================
+# 'jrockitbm' command
+#=======================================
+jrockitbm_usage="[-all] [options]"
+jrockitbm_help="run the jrockit benchmark suite
+    Set -all to run all the benchmarks in succession
+    otherwise specify a benchmark on the command line"
+
+function run_jrockitbm() {
+    if [ -z "$JROCKITBM_HOME" ]; then
+        if [ -f /import/maxwell/jrockitbm/benchmarks.jar ]; then
+            JROCKITBM_HOME=/import/maxwell/jrockitbm
+        else
+            echo "Need to set JROCKITBM_HOME environment variable to specify directory containing benchmarks.jar and tests.lst"
+            exit 1
+        fi
+    fi
+    all=0
+    while [ "$1" != "" ]; do
+        case $1 in
+            -all )
+                all=1
+                shift
+                break
+                ;;
+            * )
+                break;
+                ;;
+        esac
+        shift
+    done
+
+    if [ $all -eq 1 ]; then
+        for i in `cat $JROCKITBM_HOME/tests.lst`
+        do
+            echo Running $i
+            run ${maxine_vm} $MAXVM_OPTIONS -jar $JROCKITBM_HOME/benchmarks.jar $i "$@"
+        done
+    else
+        run ${maxine_vm} $MAXVM_OPTIONS -jar $JROCKITBM_HOME/benchmarks.jar "$@"
+    fi
+}
+
+#=======================================
+# 'projects' command
+#=======================================
+
+projects_usage=""
+projects_help="show contents of all projects.properties files"
+function run_projects() {
+    run jmax properties 
+}
+
+#=======================================
+# 'eclipseprojects' command
+#=======================================
+
+eclipseprojects_usage=""
+eclipseprojects_help="(re)generate Eclipse project configurations"
+function run_eclipseprojects() {
+    run jmax eclipse "$@"
+}
+
+#=======================================
+# 'help' command
+#=======================================
+
+help_usage="[command]"
+help_help="show help for a given command
+
+    With no arguments, print a list of commands and short help for each command.
+
+    Given a command name, print help for that command."
+
+function run_help() {
+    if [ $# -eq 0 ]; then
+        usage
+    else
+        command="$1"
+
+        run_command="run_${command}"
+        command_type=`type -t ${run_command}`
+        if [ "${command_type}" != "function" ]; then
+            usage "max: unknown command '${command}'"
+            exit 255
+        fi
+
+        usage_var="${command}_usage"
+        usage=${!usage_var}
+
+        help_var="${command}_help"
+        help_type=`type -t ${help_var}`
+        if [ "${help_type}" == "function" ]; then
+            help=`$help_var`
+        else
+            help=${!help_var}
+        fi
+        if [ -z "$help" ]; then
+            help="[no description available]"
+        fi
+
+        printf "max %s %s\n\n%s\n" "$command" "$usage" "$help"
+    fi
+}
+
+#=======================================
+# Main launcher
+#=======================================
+
+function usage() {
+    if [ -n "$1" ]; then
+        echo $1
+    fi
+    echo "Maxine Launcher"
+    echo
+    echo "available commands:"
+    for run_command in `declare -Ff | grep 'run_' | grep -v '_override' | cut -d ' ' -f 3 | sort`; do
+        command=${run_command/run_/}
+        help=""
+        help_var="${command}_help"
+        if [ "`type -t ${help_var}`" = "function" ]; then
+            help=`$help_var`
+        else
+            help=${!help_var}
+        fi
+        if [ -z "$help" ]; then
+            help="[no description available]"
+        fi
+        printf " %-16s %s\n" "$command" "$help" | head -n 1
+    done
+    config_gnu_make
+    echo
+    echo "global options:"
+    echo " -v               enable verbose output "
+    echo " -d               enable debug output"
+    echo " -h               show launcher help"
+    echo " -cp/p:<arg>      class path prefix"
+    echo " -cp/a:<arg>      class path suffix"
+    echo " -vmdir <path>    directory for VM executable, shared libraries boot image and related files"
+    echo "                    (default: $MAXVM_DIR)"
+    echo " -java_home <path> JDK installation directory (must be JDK 6 or later)"
+    echo "                    (default: value of the JAVA_HOME environment variable)"
+    echo " -jvm <path>      Java VM executable (default: bin/java under JAVA_HOME)"
+    echo " -dbgport <num>   add following to Java VM arguments to enable attaching a debugger:"
+    echo "                      -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=<num>"
+    echo " -dbg             alias for '-dbgport $default_jvm_dbg_port'"
+    echo " -J<args>         Java VM arguments (default: ${default_jvm_args})"
+    echo " -J/p<args>       prefix Java VM arguments"
+    echo " -J/a<args>       suffix Java VM arguments"
+    echo " -maxine <path>   base directory of the Maxine code base"
+    echo "                    (default: ${maxine_dir})"
+    echo " -make <path>     path to GNU make executable (default: $make)"
+    echo " -os osname       operating system hosting the VM (all lower case) for remote inspecting"
+}
+
+if [ -n "${unknown_option}" ]; then
+    usage "max: unknown global option '${unknown_option}'"
+    exit 255
+fi
+
+if $show_help ; then
+    usage ""
+    exit 0
+fi
+
+if [ -z "${command}" ]; then
+    usage ""
+    exit 0
+fi
+
+run_command="run_${command}"
+shift
+
+
+command_type=`type -t ${run_command}`
+if [ "${command_type}" != "function" ]; then
+    usage "max: unknown command '${command}'"
+    exit 255
+fi
+
+# Check for override
+run_command_override="run_${command}_override"
+command_override_type=`type -t ${run_command_override}`
+if [ "${command_override_type}" == "function" ]; then
+    $run_command_override $command_args
+else
+    $run_command $command_args
+fi
