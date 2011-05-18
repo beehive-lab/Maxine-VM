@@ -64,12 +64,12 @@ public interface MaxCodeManager {
      * Thread-safe
      *
      * @param teleClassMethodActor surrogate for a {@link ClassMethodActor} in the VM that identifies a method.
-     * @param bytecodePosition offset into the method's bytecodes of a bytecode instruction
+     * @param bci index into the method's bytecodes of a bytecode instruction
      * @param description a human-readable description, suitable for a menu or for debugging
      * @return a new location
-     * @throws TeleError if teleClassMethodActor is null or bytecodePosition &lt; -1
+     * @throws TeleError if teleClassMethodActor is null or bci &lt; -1
      */
-    MaxCodeLocation createBytecodeLocation(TeleClassMethodActor teleClassMethodActor, int bytecodePosition, String description) throws TeleError;
+    MaxCodeLocation createBytecodeLocation(TeleClassMethodActor teleClassMethodActor, int bci, String description) throws TeleError;
 
     /**
      * Creates a code location in VM specified as the memory address of a compiled machine code instruction.
@@ -93,11 +93,11 @@ public interface MaxCodeManager {
      *
      * @param address an address in VM memory that represents the beginning of a compiled machine code instruction
      * @param teleClassMethodActor surrogate for a {@link ClassMethodActor} in the VM that identifies a method.
-     * @param bytecodePosition offset into the method's bytecodes of a bytecode instruction
+     * @param bci index into the method's bytecodes of a bytecode instruction
      * @param description a human-readable description, suitable for a menu or for debugging
      * @return a new location
-     * @throws TeleError if the address is null or zero or  if teleClassMethodActor is null or bytecodePosition &lt; -1
+     * @throws TeleError if the address is null or zero or  if teleClassMethodActor is null or bci &lt; -1
      */
-    MaxCodeLocation createMachineCodeLocation(Address address, TeleClassMethodActor teleClassMethodActor, int bytecodePosition, String description) throws TeleError;
+    MaxCodeLocation createMachineCodeLocation(Address address, TeleClassMethodActor teleClassMethodActor, int bci, String description) throws TeleError;
 
 }

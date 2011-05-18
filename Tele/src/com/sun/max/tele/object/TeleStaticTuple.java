@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,8 +29,25 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.reference.*;
 
+/**
+ * Representation for a {@link StaticTuple} in the VM.
+ * <p>
+ * {@link StaticTuple}s are special in the VM in that, although represented as an ordinary tuple, they have no Java
+ * type, not even in the extended type system supported by Maxine. Any code that acts based on the type of a
+ * {@link TeleObject} must handle this type specially.
+ *
+ * @author Michael Van De Vanter
+ * @see StaticTuple
+ */
 public class TeleStaticTuple extends TeleTupleObject {
 
+    /**
+     * This constructor follows no {@link References}. This avoids the infinite regress that can occur when the VM
+     * object and another are mutually referential.
+     *
+     * @param teleVM
+     * @param reference
+     */
     protected TeleStaticTuple(TeleVM teleVM, Reference reference) {
         super(teleVM, reference);
     }
