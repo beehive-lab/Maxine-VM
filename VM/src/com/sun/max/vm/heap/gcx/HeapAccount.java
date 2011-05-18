@@ -99,6 +99,10 @@ public class HeapAccount<T extends HeapAccountOwner>{
         return reserve;
     }
 
+    public int used() {
+        return allocated.size();
+    }
+
     /**
      * The owner of the heap account.
      * @return an object

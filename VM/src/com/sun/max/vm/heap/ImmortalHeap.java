@@ -172,7 +172,7 @@ public final class ImmortalHeap {
      * @param cellVisitor the visitor to call back for each cell in each region
      */
     public static void visitCells(CellVisitor cellVisitor) {
-        Pointer firstCell = immortalHeap.start().asPointer();
+        final Pointer firstCell = immortalHeap.start().asPointer();
         final Pointer lastCell = immortalHeap.mark();
         Pointer cell = firstCell;
         while (cell.lessThan(lastCell)) {
