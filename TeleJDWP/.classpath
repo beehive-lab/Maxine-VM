@@ -2,7 +2,7 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/Tele"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.tele.vm"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/JDWP"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
