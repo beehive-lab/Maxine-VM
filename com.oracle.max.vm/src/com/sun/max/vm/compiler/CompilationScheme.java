@@ -152,13 +152,17 @@ public interface CompilationScheme extends VMScheme {
              */
             static final int FRAME_SEARCH_LIMIT = 10;
 
-            final Address from;
-            final Address to;
+            private final Address from1;
+            private final Address from2;
+            private final Address to1;
+            private final Address to2;
             int frameCount;
 
-            public DirectCallPatcher(Address oldAddr, Address newAddr) {
-                this.from = oldAddr;
-                this.to = newAddr;
+            public DirectCallPatcher(TargetMethod oldMethod, TargetMethod newMethod) {
+                from1 = oldMethod.getEntryPoint(BASELINE_ENTRY_POINT).asAddress();
+                to1 = newMethod.getEntryPoint(BASELINE_ENTRY_POINT).asAddress();
+                from2 = oldMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT).asAddress();
+                to2 = newMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT).asAddress();
             }
 
             @Override
@@ -169,11 +173,17 @@ public interface CompilationScheme extends VMScheme {
                     }
                     Pointer ip = current.ip();
                     Pointer callSite = ip.minus(AMD64TargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
-                    if (callSite.readByte(0) == AMD64TargetMethodUtil.RCALL) {
+                    if ((callSite.readByte(0) & 0xFF) == AMD64TargetMethodUtil.RCALL) {
                         Pointer target = ip.plus(callSite.readInt(1));
-                        if (target.equals(from)) {
-                            logStaticCallPatch(current, callSite, to);
-                            AMD64TargetMethodUtil.mtSafePatchCallDisplacement(current.targetMethod(), callSite, to);
+                        if (target.equals(from1)) {
+                            logStaticCallPatch(current, callSite, to1);
+                            AMD64TargetMethodUtil.mtSafePatchCallDisplacement(current.targetMethod(), callSite, to1);
+                            // Stop traversing the stack after a direct call site has been patched
+                            return false;
+                        }
+                        if (target.equals(from2)) {
+                            logStaticCallPatch(current, callSite, to2);
+                            AMD64TargetMethodUtil.mtSafePatchCallDisplacement(current.targetMethod(), callSite, to2);
                             // Stop traversing the stack after a direct call site has been patched
                             return false;
                         }
@@ -227,7 +237,7 @@ public interface CompilationScheme extends VMScheme {
                 // Look for a static call to 'oldMethod' and patch it.
                 // This occurs even if 'classMethodActor' is non-static
                 // as it may have been called directly.
-                DirectCallPatcher patcher = new DirectCallPatcher(from, to);
+                DirectCallPatcher patcher = new DirectCallPatcher(oldMethod, newMethod);
                 new VmStackFrameWalker(VmThread.current().tla()).inspect(Pointer.fromLong(here()),
                                 VMRegister.getCpuStackPointer(),
                                 VMRegister.getCpuFramePointer(),

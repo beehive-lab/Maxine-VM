@@ -49,6 +49,7 @@ public class Package extends BootImagePackage {
         "java.util.regex.*",
         "java.util.concurrent.atomic.*",
         "java.util.concurrent.locks.*",
+        "java.text.*",
         "sun.misc.Version",
         "sun.misc.SharedSecrets",
         "sun.misc.VM",

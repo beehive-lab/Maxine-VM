@@ -104,6 +104,14 @@ public class Compilation /*implements Future<TargetMethod>*/ {
     }
 
     /**
+     * Checks if any compilations are currently running in this thread. Useful to avoid recursive calls
+     * of the optimizing compiler.
+     */
+    public static boolean isCompilationRunningInCurrentThread() {
+        return COMPILATION.get() != null;
+    }
+
+    /**
      * Cancel this compilation. Ignored.
      */
     public boolean cancel(boolean mayInterruptIfRunning) {

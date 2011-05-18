@@ -28,6 +28,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.object.*;
 
@@ -87,16 +88,28 @@ public class MethodInstrumentation {
 
     @INLINE
     public static void recordEntrypoint(MethodProfile mpo, Object receiver) {
-        if (--mpo.entryCount == 0) {
+        if (--mpo.entryCount <= 0) {
+            // In case the recompilation is not done immediately, we don't want to trigger it too soon again.
+            mpo.entryCount = 200;
             triggerRecompilation(mpo, receiver);
         }
     }
 
     private static void triggerRecompilation(MethodProfile mpo, Object receiver) {
         if (Heap.isAllocationDisabledForCurrentThread()) {
-            Log.print("Stopped recompilation of ");
-            Log.printMethod(mpo.method, false);
-            Log.println(" because allocation is currently disabled");
+            if (VMOptions.verboseOption.verboseCompilation) {
+                Log.print("Stopped recompilation of ");
+                Log.printMethod(mpo.method, false);
+                Log.println(" because allocation is currently disabled");
+            }
+            return;
+        }
+        if (Compilation.isCompilationRunningInCurrentThread()) {
+            if (VMOptions.verboseOption.verboseCompilation) {
+                Log.print("Stopped recompilation of ");
+                Log.printMethod(mpo.method, false);
+                Log.println(" because compilation is running in current thread");
+            }
             return;
         }
 
