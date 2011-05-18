@@ -46,34 +46,66 @@ import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
- * A singleton factory that manages the creation and maintenance of
- * instances of {@link TeleObject}, each of which is a
+ * A singleton factory that manages the creation and maintenance of instances of {@link TeleObject}, each of which is a
  * canonical surrogate for an object in the VM.
- * <br>
- * A {@link TeleObject} is intended to be cannonical, so the unique instance for each object can be
- * retrieved either by location or by OID.  Exceptions to this can occur because of GC:
+ * <p>
+ * Instances are created reflectively, based on a table in which constructors for various subtypes of {@link TeleObject}
+ * are registered.  This allows the factory to create a {@link TeleObject} instance of the most specific subtype of the
+ * VM object for which a constructor is registered.
+ * <p>
+ * A {@link TeleObject} is intended to be cannonical, so the unique instance for each object can be retrieved either by
+ * location or by OID. Exceptions to this can occur because of GC:
  * <ul>
- * <li>An object in the VM can be released by the running application and "collected" by the
- * GC.  As soon as this is discovered, the {@TeleObject} that refers to it is marked "dead".
- * <li>During some phases of copying GC, there may be two instances that refer to what
- * is semantically the same object: one referring to the old copy and one referring to the new.</li>
- * <li>As soon as a duplication due to copying is discovered, the {@link TeleObject} that refers
- * to the old copy is marked "obsolete".  It is possible to discover the {@link TeleObject} that
- * refers to the newer copy of the object.</li>
- * <li>A {@link TeleObject} that is either "dead" or "obsolete" is removed from the maps
- *  and cannot be discovered, either by location or OID.</li>
+ * <li>An object in the VM can be released by the running application and "collected" by the GC. As soon as this is
+ * discovered, the {@TeleObject} that refers to it is marked "dead".
+ * <li>During some phases of copying GC, there may be two instances that refer to what is semantically the same object:
+ * one referring to the old copy and one referring to the new.</li>
+ * <li>As soon as a duplication due to copying is discovered, the {@link TeleObject} that refers to the old copy is
+ * marked "obsolete". It is possible to discover the {@link TeleObject} that refers to the newer copy of the object.</li>
+ * <li>A {@link TeleObject} that is either "dead" or "obsolete" is removed from the maps and cannot be discovered,
+ * either by location or OID.</li>
  * </ul>
  *
  * @author Michael Van De Vanter
  * @author Hannes Payer
+ * @see TeleObject
  */
 public final class TeleObjectFactory extends AbstractTeleVMHolder implements TeleVMCache {
 
     private static final int TRACE_VALUE = 1;
 
-    private final TimedTrace updateTracer;
+    /**
+     * Map:  Class -> counters.
+     * <br>
+     * Class-indexed statistics.
+     * 0: number of objects in class updated
+     * 1: total system time of updates for objects in class
+     *
+     */
+    private static class TimerPerType extends HashMap<Class, long[]> {
+        @Override
+        public long[] get(Object key) {
+            long[] time = super.get(key);
+            if (time == null) {
+                time = new long[2];
+                super.put((Class) key, time);
+            }
+            return time;
+        }
+    }
 
-    private long lastUpdateEpoch = -1L;
+    /**
+     * A count associated with an instance of {@link Class}.
+     */
+    public static final class ClassCount {
+
+        public final Class type;
+        public int value = 0;
+
+        private ClassCount(Class type) {
+            this.type = type;
+        }
+    }
 
     private static TeleObjectFactory teleObjectFactory;
 
@@ -108,6 +140,11 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
      */
     private final Map<Class, Constructor> classToTeleTupleObjectConstructor = new HashMap<Class, Constructor>();
 
+    private final TimedTrace updateTracer;
+
+    /**
+     * A printer for statistics concerning a cache update.
+     */
     private final Object statsPrinter = new Object() {
         private int previousTeleObjectCount = 0;
 
@@ -123,9 +160,32 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
     };
 
     /**
+     * Total number of instances of {@link TeleObject} created during session.
+     */
+    private int objectsCreatedCount = 0;
+
+    /**
+     * Map: {@link Class} of a {@link TeleObject} --> counter for number of instances created during session.
+     */
+    private final HashMap<Class, ClassCount> objectsCreatedPerType = new HashMap<Class, ClassCount>() {
+
+        @Override
+        public ClassCount get(Object key) {
+            ClassCount count = super.get(key);
+            if (count == null) {
+                count = new ClassCount((Class) key);
+                put((Class) key, count);
+            }
+            return count;
+        }
+    };
+
+    /**
      * The number of references in the table that point to an object.
      */
     private int liveObjectCount = 0;
+
+    private long lastUpdateEpoch = -1L;
 
     private TeleObjectFactory(TeleVM teleVM, long processEpoch) {
         super(teleVM);
@@ -227,46 +287,17 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
     }
 
     /**
-     * @return the number of {@linkplain Reference references} in the table.
-     */
-    public int referenceCount() {
-        return referenceToTeleObject.size();
-    }
-
-    /**
-     * @return the number of {@linkplain Reference references} in the table that point to live objects.
-     */
-    public int liveObjectCount() {
-        return liveObjectCount;
-    }
-
-    private Constructor getConstructor(Class clazz) {
-        return Classes.getDeclaredConstructor(clazz, TeleVM.class, Reference.class);
-    }
-
-    private TeleObject getTeleObjectFromReferenceToTeleObjectMap(Reference reference) {
-        TeleObject teleObject = null;
-        synchronized (referenceToTeleObject) {
-            final WeakReference<TeleObject> teleObjectRef = referenceToTeleObject.get(reference);
-            if (teleObjectRef != null) {
-                teleObject = teleObjectRef.get();
-            }
-        }
-        return teleObject;
-    }
-
-    /**
-     * Factory method for canonical {@link TeleObject} surrogate for heap objects in the VM.  Specific subclasses are
+     * Factory method for canonical {@link TeleObject} surrogate for heap objects in the VM. Specific subclasses are
      * created for Maxine implementation objects of special interest, and for other objects for which special treatment
      * is desired.
-     * <br>
+     * <p>
      * Returns null for the distinguished zero {@link Reference}.
-     * <br>
+     * <p>
      * Must be called with current thread holding the VM lock.
-     * <br>
-     * Care is taken to avoid I/O with the VM during synchronized
-     * access to the canonicalization map.  There is a small exception
-     * to this for {@link TeleTargetMethod}.
+     * <p>
+     * Care is taken to avoid I/O with the VM during synchronized access to the canonicalization map. There is a small
+     * exception to this for {@link TeleTargetMethod}, which can lead to infinite regress if the constructors for
+     * mutually referential objects (notably {@link TeleClassMethodActor}) also create {@link TeleObject}s.
      *
      * @param reference non-null location of a Java object in the VM
      * @return canonical local surrogate for the object
@@ -277,7 +308,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
             return null;
         }
         //assert vm().lockHeldByCurrentThread();
-        TeleObject teleObject = getTeleObjectFromReferenceToTeleObjectMap(reference);
+        TeleObject teleObject = getTeleObject(reference);
         if (teleObject != null) {
             return teleObject;
         }
@@ -324,35 +355,45 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
         final ClassActor hubClassActor = vm().classRegistry().makeClassActor(hubClassActorReference);
         final Class hubJavaClass = hubClassActor.toJava();  // the class of this object's hub
         if (StaticHub.class.isAssignableFrom(hubJavaClass)) {
-            //teleObject = new TeleStaticTuple(teleVM(), reference);       ?????????
-            teleObject = getTeleObjectFromReferenceToTeleObjectMap(reference);
+            teleObject = getTeleObject(reference);
             if (teleObject == null) {
                 teleObject = new TeleStaticTuple(vm(), reference);
             }
         } else if (classActor.isArrayClass()) {
             // Check map again, just in case there's a race
-            teleObject = getTeleObjectFromReferenceToTeleObjectMap(reference);
+            teleObject = getTeleObject(reference);
             if (teleObject == null) {
                 teleObject = new TeleArrayObject(vm(), reference, classActor.componentClassActor().kind, classActor.dynamicHub().specificLayout);
             }
         } else if (classActor.isHybridClass()) {
             final Class javaClass = classActor.toJava();
             // Check map again, just in case there's a race
-            teleObject = getTeleObjectFromReferenceToTeleObjectMap(reference);
+            teleObject = getTeleObject(reference);
             if (teleObject == null) {
                 if (DynamicHub.class.isAssignableFrom(javaClass)) {
                     teleObject = new TeleDynamicHub(vm(), reference);
                 } else if (StaticHub.class.isAssignableFrom(javaClass)) {
                     teleObject = new TeleStaticHub(vm(), reference);
                 } else {
-                    throw TeleError.unexpected("invalid hybrid implementation type");
+                    throw TeleError.unexpected(tracePrefix() + "invalid hybrid implementation type");
                 }
             }
         } else if (classActor.isTupleClass()) {
             // Check map again, just in case there's a race
-            teleObject = getTeleObjectFromReferenceToTeleObjectMap(reference);
+            teleObject = getTeleObject(reference);
             if (teleObject == null) {
-                final Constructor constructor = lookupTeleTupleObjectConstructor(classActor);
+                // Walk up the type hierarchy for the class, locating the most specific type
+                // for which a constructor is defined.
+                Constructor constructor = null;
+                for (Class javaClass = classActor.toJava(); javaClass != null; javaClass = javaClass.getSuperclass()) {
+                    constructor = classToTeleTupleObjectConstructor.get(javaClass);
+                    if (constructor != null) {
+                        break;
+                    }
+                }
+                if (constructor == null) {
+                    TeleError.unexpected(tracePrefix() + "failed to find constructor for class" + classActor.toJava());
+                }
                 try {
                     teleObject = (TeleObject) constructor.newInstance(vm(), reference);
                 } catch (InstantiationException e) {
@@ -375,20 +416,11 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
 
         referenceToTeleObject.put(reference,  teleObjectWeakReference);
         teleObject.updateCache(vm().teleProcess().epoch());
-        return teleObject;
-    }
 
-    private Constructor lookupTeleTupleObjectConstructor(ClassActor classActor) {
-        Class javaClass = classActor.toJava();
-        while (javaClass != null) {
-            final Constructor constructor = classToTeleTupleObjectConstructor.get(javaClass);
-            if (constructor != null) {
-                return constructor;
-            }
-            javaClass = javaClass.getSuperclass();
-        }
-        TeleError.unexpected("TeleObjectFactory failed to find constructor for class" + classActor.toJava());
-        return null;
+        objectsCreatedCount++;
+        objectsCreatedPerType.get(teleObject.getClass()).value++;
+
+        return teleObject;
     }
 
     /**
@@ -404,23 +436,50 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
     }
 
     /**
-     * Map:  Class -> counters.
-     * <br>
-     * Class-indexed statistics.
-     * 0: number of objects in class updated
-     * 1: total system time of updates for objects in class
-     *
+     * @return the number of {@link TeleObject} instances created during the session.
      */
-    static class TimerPerType extends HashMap<Class, long[]> {
-        @Override
-        public long[] get(Object key) {
-            long[] time = super.get(key);
-            if (time == null) {
-                time = new long[2];
-                super.put((Class) key, time);
+    public int objectsCreatedCount() {
+        return objectsCreatedCount;
+    }
+
+    /**
+     * @return counters for each type of {@link TeleObject}, counting the number created during the session.
+     */
+    public Collection<ClassCount> objectsCreatedPerType() {
+        return objectsCreatedPerType.values();
+    }
+
+    /**
+     * @return the number of {@linkplain Reference references} in the table.
+     */
+    public int referenceCount() {
+        return referenceToTeleObject.size();
+    }
+
+    /**
+     * @return the number of {@linkplain Reference references} in the table that point to live objects.
+     */
+    public int liveObjectCount() {
+        return liveObjectCount;
+    }
+
+    private Constructor getConstructor(Class clazz) {
+        return Classes.getDeclaredConstructor(clazz, TeleVM.class, Reference.class);
+    }
+
+    /**
+     * @param reference location of an object in the VM
+     * @return the (preferably) canonical instance of {@link TeleObject} corresponding to the VM object
+     */
+    private TeleObject getTeleObject(Reference reference) {
+        TeleObject teleObject = null;
+        synchronized (referenceToTeleObject) {
+            final WeakReference<TeleObject> teleObjectRef = referenceToTeleObject.get(reference);
+            if (teleObjectRef != null) {
+                teleObject = teleObjectRef.get();
             }
-            return time;
         }
+        return teleObject;
     }
 
 }

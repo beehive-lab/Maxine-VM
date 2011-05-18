@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,16 +45,16 @@ public final class CodeManager extends AbstractTeleVMHolder implements MaxCodeMa
         return CodeLocation.createBytecodeLocation(vm(), methodKey, description);
     }
 
-    public  BytecodeLocation createBytecodeLocation(TeleClassMethodActor teleClassMethodActor, int bytecodePosition, String description) {
-        return CodeLocation.createBytecodeLocation(vm(), teleClassMethodActor, bytecodePosition, description);
+    public  BytecodeLocation createBytecodeLocation(TeleClassMethodActor teleClassMethodActor, int bci, String description) {
+        return CodeLocation.createBytecodeLocation(vm(), teleClassMethodActor, bci, description);
     }
 
     public MachineCodeLocation createMachineCodeLocation(Address address, String description) throws TeleError {
         return CodeLocation.createMachineCodeLocation(vm(), address, description);
     }
 
-    public MachineCodeLocation createMachineCodeLocation(Address address, TeleClassMethodActor teleClassMethodActor, int position, String description) throws TeleError {
-        return CodeLocation.createMachineCodeLocation(vm(), address, teleClassMethodActor, position, description);
+    public MachineCodeLocation createMachineCodeLocation(Address address, TeleClassMethodActor teleClassMethodActor, int bci, String description) throws TeleError {
+        return CodeLocation.createMachineCodeLocation(vm(), address, teleClassMethodActor, bci, description);
     }
 
 }

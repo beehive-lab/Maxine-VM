@@ -134,8 +134,8 @@ public interface MaxMachineCode<MachineCode_Type extends MaxMachineCode> extends
         boolean isBytecodeBoundary(int index) throws IllegalArgumentException;
 
         /**
-         * @return the bytecode frames corresponding to the instruction at the beginning
-         * of a sequence of instructions that implement a bytecode, if known, else null
+         * @return the bytecode frames corresponding to the machine code instruction at the beginning
+         * of a sequence of machine code instructions that implement a bytecode, if known, else null
          * @throws IllegalArgumentException unless {@code 0 <= index < length()}
          */
         CiFrame bytecodeFrames(int index) throws IllegalArgumentException;
@@ -168,9 +168,9 @@ public interface MaxMachineCode<MachineCode_Type extends MaxMachineCode> extends
          * Builds a map from the beginning of byte code instruction to the beginning of the
          * machine code instructions generated from it.
          *
-         * @return Map: byte positions in bytecode -> byte positions in machine code, null if information not available
+         * @return Map: bci (byte index in bytecode) -> byte positions in machine code, null if information not available
          */
-        int[] bytecodeToMachineCodePositionMap();
+        int[] bciToMachineCodePositionMap();
 
     }
 

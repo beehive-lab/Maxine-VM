@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.sun.max.tele;
 
+import com.sun.cri.ci.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
@@ -40,7 +41,7 @@ public interface MaxCodeLocation {
     /**
      * Is there a machine code representation for the code location in the VM,
      * which refers to a specific compilation.
-     * <br>
+     * <p>
      * Thread-safe
      *
      * @return whether an absolute machine code location is specified
@@ -52,9 +53,9 @@ public interface MaxCodeLocation {
      * Location in VM memory of a machine code instruction;
      * returns {@link Address#zero()}
      * if no machine code information about the location is specified.
-     * <br>
+     * <p>
      * Machine code is assumed <strong>not</strong> to relocate in VM memory.
-     * <br>
+     * <p>
      * Thread-safe
      *
      * @return memory address in the VM of the machine code instruction,
@@ -64,13 +65,21 @@ public interface MaxCodeLocation {
     Address address();
 
     /**
+     * The compilation in the VM that includes the machine code instruction
+     * at this location, if specified.
+     *
+     * @return a VM compilation; null if not specified or not available
+     */
+    MaxCompiledCode compiledCode();
+
+    /**
      * Is there a bytecode representation for the code location, expressed in terms
      * of the method description loaded in the VM, and by extension a specific
      * bytecode representation.
-     * <br>
+     * <p>
      * Initially false when location is created by method key specification.  Becomes true when a
      * corresponding loaded method in the VM is located.
-     * <br>
+     * <p>
      * Thread-safe
      *
      * @return whether bytecode information about the method loaded in the VM is available.
@@ -81,10 +90,10 @@ public interface MaxCodeLocation {
     /**
      * Access to a description in the VM of the method containing the location, and by extension
      * to the bytecode representation of the method.
-     * <br>
+     * <p>
      * Initially null when location is created by key.  Becomes non-null when a
      * corresponding loaded method in the VM is located.
-     * <br>
+     * <p>
      * Thread-safe
      *
      * @return  bytecode position and information about the method loaded in the VM
@@ -93,8 +102,18 @@ public interface MaxCodeLocation {
     TeleClassMethodActor teleClassMethodActor();
 
     /**
+     * Bytecode frame information specified by the compiler at the machine
+     * code instruction, if specified by this location.  This may include more than
+     * one frame when there has been inlining.
+     *
+     * @return the bytecode frames specified by the compiler at the
+     * machine code instruction, if specified; null otherwise
+     */
+    CiFrame bytecodeFrames();
+
+    /**
      * Is there an abstract intentional representation of the location, in terms of method name and signature, available?
-     * <br>
+     * <p>
      * Thread-safe
      *
      * @return whether a method key is available
@@ -111,8 +130,8 @@ public interface MaxCodeLocation {
     MethodKey methodKey();
 
     /**
-     * Location of a bytecode instruction, specified as as the byte offset from the beginning of the bytecodes, default value is -1.
-     * <br>
+     * Bytecode Index: location of a bytecode instruction, specified as the byte offset from the beginning of the bytecodes, default value is -1.
+     * <p>
      * Specific values:
      * <ol>
      * <li>-1; specifies method entry (first bytecode instruction, and the prologue entry of any machine code compilation); this value
@@ -125,7 +144,7 @@ public interface MaxCodeLocation {
      * @return offset of location in bytes from beginning of bytecode representation
      * @see #teleClassMethodActor()
      */
-    int bytecodePosition();
+    int bci();
 
     /**
      * Determines whether two descriptions are equivalent.  For locations specified in terms of

@@ -709,18 +709,18 @@ public final class BreakpointsTable extends InspectorTable {
             super(bytecodeBreakpoint);
             codeLocation = bytecodeBreakpoint.codeLocation();
             final MethodKey key = codeLocation.methodKey();
-            final int position = codeLocation.bytecodePosition();
+            final int bci = codeLocation.bci();
             shortName = key.holder().toJavaString(false) + "." + key.name().toString() + key.signature().toJavaString(false,  false);
             final StringBuilder longBuilder = new StringBuilder("Method: ");
             longBuilder.append(key.signature().resultDescriptor().toJavaString(false)).append(" ");
             longBuilder.append(key.name().toString());
             longBuilder.append(key.signature().toJavaString(false,  false));
-            if (position == -1) {
+            if (bci == -1) {
                 longBuilder.append("(prologue)");
-            } else if (position == 0) {
+            } else if (bci == 0) {
                 longBuilder.append("(entry)");
             } else {
-                longBuilder.append(" + ").append(position);
+                longBuilder.append(" + ").append(bci);
             }
             longBuilder.append(" in ").append(key.holder().toJavaString());
             longName = longBuilder.toString();
@@ -748,7 +748,7 @@ public final class BreakpointsTable extends InspectorTable {
 
         @Override
         int location() {
-            return codeLocation.bytecodePosition();
+            return codeLocation.bci();
         }
 
         @Override
