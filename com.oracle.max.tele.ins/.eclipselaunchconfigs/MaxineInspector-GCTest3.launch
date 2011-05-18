@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
-<listEntry value="/Inspector/src/com/sun/max/ins/MaxineInspector.java"/>
+<listEntry value="/com.oracle.max.tele.ins/src/com/sun/max/ins/MaxineInspector.java"/>
 </listAttribute>
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
 <listEntry value="1"/>
@@ -11,7 +11,7 @@
 </mapAttribute>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.sun.max.ins.MaxineInspector"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-a=&quot;-Xmx64m -XX:-ImpreciseSweep -XX:-TraceTLAB -XX:-TraceSweep -classpath /export/maxine/workspaces/gc-dev/maxine/VM/bin test.output.GCTest3&quot;"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="Inspector"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="com.oracle.max.tele.ins"/>
 <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-d64 -ea -Xss2m -Xms1g -Xmx1g"/>
 <stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="${workspace_loc:VM}"/>
 </launchConfiguration>
