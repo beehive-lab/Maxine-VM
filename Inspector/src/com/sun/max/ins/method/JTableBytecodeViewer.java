@@ -182,8 +182,8 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
     @Override
     protected void setFocusAtRow(int row) {
-        final int position = tableModel.rowToInstruction(row).position;
-        focus().setCodeLocation(vm().codeManager().createBytecodeLocation(teleClassMethodActor(), position, "bytecode view set focus"), false);
+        final int bci = tableModel.rowToInstruction(row).bci;
+        focus().setCodeLocation(vm().codeManager().createBytecodeLocation(teleClassMethodActor(), bci, "bytecode view set focus"), false);
     }
 
     @Override
@@ -242,11 +242,11 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                 if (selectedRow >= 0 && selectedRow < bytecodeTableModel.getRowCount()) {
                     final BytecodeInstruction bytecodeInstruction = bytecodeTableModel.rowToInstruction(selectedRow);
                     final Address machineCodeFirstAddress = bytecodeInstruction.machineCodeFirstAddress;
-                    final int position = bytecodeInstruction.position;
+                    final int bci = bytecodeInstruction.bci;
                     if (machineCodeFirstAddress.isZero()) {
-                        focus().setCodeLocation(vm().codeManager().createBytecodeLocation(teleClassMethodActor(), position, "bytecode view"));
+                        focus().setCodeLocation(vm().codeManager().createBytecodeLocation(teleClassMethodActor(), bci, "bytecode view"));
                     } else {
-                        focus().setCodeLocation(vm().codeManager().createMachineCodeLocation(machineCodeFirstAddress, teleClassMethodActor(), position, "bytecode view"), true);
+                        focus().setCodeLocation(vm().codeManager().createMachineCodeLocation(machineCodeFirstAddress, teleClassMethodActor(), bci, "bytecode view"), true);
                     }
                 }
             }
@@ -284,12 +284,12 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             int focusRow = -1;
             if (codeLocation.hasTeleClassMethodActor()) {
                 if (codeLocation.teleClassMethodActor().classMethodActor() == teleClassMethodActor().classMethodActor()) {
-                    focusRow = model.findRowAtPosition(codeLocation.bytecodePosition());
+                    focusRow = model.findRowAtBCI(codeLocation.bci());
                 }
             } else if (codeLocation.hasMethodKey()) {
                 // Shouldn't happen, but...
                 if (codeLocation.methodKey().equals(methodKey())) {
-                    focusRow = model.findRowAtPosition(0);
+                    focusRow = model.findRowAtBCI(0);
                 }
             } else if (codeLocation.hasAddress()) {
                 if (compiledCode() != null && compiledCode().contains(codeLocation.address())) {
@@ -318,7 +318,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             super(BytecodeColumnKind.values().length, instanceViewPreferences);
             addColumn(BytecodeColumnKind.TAG, new TagRenderer(inspection), null);
             addColumn(BytecodeColumnKind.NUMBER, new NumberRenderer(), null);
-            addColumn(BytecodeColumnKind.POSITION, new PositionRenderer(), null);
+            addColumn(BytecodeColumnKind.BCI, new BCIRenderer(), null);
             addColumn(BytecodeColumnKind.INSTRUCTION, new InstructionRenderer(), null);
             addColumn(BytecodeColumnKind.OPERAND1, new OperandRenderer(), null);
             addColumn(BytecodeColumnKind.OPERAND2, new OperandRenderer(), null);
@@ -351,8 +351,8 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                     return null;
                 case NUMBER:
                     return row;
-                case POSITION:
-                    return new Integer(instruction.position);
+                case BCI:
+                    return new Integer(instruction.bci);
                 case INSTRUCTION:
                     return instruction.opcode;
                 case OPERAND1:
@@ -360,7 +360,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                 case OPERAND2:
                     return instruction.operand2;
                 case SOURCE_LINE:
-                    return new CiCodePos(null, teleClassMethodActor().classMethodActor(), instruction.position);
+                    return new CiCodePos(null, teleClassMethodActor().classMethodActor(), instruction.bci);
                 case BYTES:
                     return instruction.instructionBytes;
                 default:
@@ -375,7 +375,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                     return Object.class;
                 case NUMBER:
                     return Integer.class;
-                case POSITION:
+                case BCI:
                     return Integer.class;
                 case INSTRUCTION:
                     return int.class;
@@ -400,12 +400,12 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         }
 
         /**
-         * @param position a position (in bytes) in this block of bytecodes
+         * @param bci bytecode index: a position (in bytes) in this block of bytecodes
          * @return the row in this block of bytecodes containing an instruction starting at this position, -1 if none
          */
-        public int findRowAtPosition(int position) {
+        public int findRowAtBCI(int bci) {
             for (BytecodeInstruction instruction : bytecodeInstructions) {
-                if (instruction.position == position) {
+                if (instruction.bci == bci) {
                     return instruction.row;
                 }
             }
@@ -532,21 +532,21 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         }
     }
 
-    private final class PositionRenderer extends LocationLabel.AsPosition implements TableCellRenderer {
-        private int position;
+    private final class BCIRenderer extends LocationLabel.AsPosition implements TableCellRenderer {
+        private int bci;
 
-        public PositionRenderer() {
+        public BCIRenderer() {
             super(inspection, 0);
             setToolTipPrefix("Instruction");
-            position = 0;
+            bci = 0;
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             final BytecodeTable bytecodeTable = (BytecodeTable) table;
-            final Integer position = (Integer) value;
-            if (this.position != position) {
-                this.position = position;
-                setValue(position);
+            final Integer bci = (Integer) value;
+            if (this.bci != bci) {
+                this.bci = bci;
+                setValue(bci);
             }
             setToolTipPrefix(tableModel.getRowDescription(row) + " location<br>");
             setToolTipSuffix(" bytes from beginning");

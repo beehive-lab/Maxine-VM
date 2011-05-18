@@ -258,25 +258,25 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             return new MethodPositionKey(codeLocation);
         }
 
-        protected final int bytecodePosition;
+        protected final int bci;
 
         private MethodPositionKey(CodeLocation codeLocation) {
             super(codeLocation.methodKey().holder(), codeLocation.methodKey().name(), codeLocation.methodKey().signature());
-            this.bytecodePosition = codeLocation.bytecodePosition();
+            this.bci = codeLocation.bci();
         }
 
         @Override
         public boolean equals(Object obj) {
             if (super.equals(obj) && obj instanceof MethodPositionKey) {
                 final MethodPositionKey otherKey = (MethodPositionKey) obj;
-                return bytecodePosition == otherKey.bytecodePosition;
+                return bci == otherKey.bci;
             }
             return false;
         }
 
         @Override
         public int hashCode() {
-            return super.hashCode() ^ bytecodePosition;
+            return super.hashCode() ^ bci;
         }
 
         @Override
@@ -284,7 +284,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             final StringBuilder sb = new StringBuilder();
             sb.append("MethodPositionKey{");
             sb.append(name()).append(signature().toJavaString(false, false));
-            sb.append(", pos=").append(bytecodePosition);
+            sb.append(", bci=").append(bci);
             sb.append("}");
             return sb.toString();
         }
@@ -633,7 +633,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
         /**
          * Creates special system target code breakpoints in a compiled method in the VM
          * at location specified abstractly by a key.  Normally there is exactly one such location,
-         * but in the special case where bytecodePosition is -1, which specifies the beginning
+         * but in the special case where bytecode index is -1, which specifies the beginning
          * of the compiled method's prologue, there may be more than one for different kinds
          * of calls.
          * <br>
@@ -651,7 +651,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
         private List<TeleTargetBreakpoint> createTeleTargetBreakpoints(final TeleBytecodeBreakpoint owner, TeleTargetMethod teleTargetMethod) throws MaxVMBusyException {
             assert owner != null;
             final List<TeleTargetBreakpoint> teleTargetBreakpoints = new LinkedList<TeleTargetBreakpoint>();
-            final int bci = owner.methodPositionKey.bytecodePosition;
+            final int bci = owner.methodPositionKey.bci;
             Address address = Address.zero();
             if (bci == -1) {
                 int pos = AdapterGenerator.prologueSizeForCallee(teleTargetMethod.targetMethod());

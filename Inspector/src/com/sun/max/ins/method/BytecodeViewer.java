@@ -150,39 +150,39 @@ public abstract class BytecodeViewer extends CodeViewer {
     }
 
     private void buildView() {
-        int[] bytecodeToMachineCodePositionMap = null;
+        int[] bciToMachineCodePositionMap = null;
         InstructionMap instructionMap = null;
         if (compiledCode != null) {
             instructionMap = compiledCode.getInstructionMap();
-            bytecodeToMachineCodePositionMap = instructionMap.bytecodeToMachineCodePositionMap();
+            bciToMachineCodePositionMap = instructionMap.bciToMachineCodePositionMap();
             // TODO (mlvdv) can only map bytecodes to JIT machine code so far
-            if (bytecodeToMachineCodePositionMap != null) {
+            if (bciToMachineCodePositionMap != null) {
                 haveMachineCodeAddresses = true;
             }
         }
         bytecodeInstructions = new ArrayList<BytecodeInstruction>(10);
-        int currentBytecodeOffset = 0;
+        int bci = 0;
         int bytecodeRow = 0;
         int machineCodeRow = 0;
         Address machineCodeFirstAddress = Address.zero();
-        while (currentBytecodeOffset < methodBytes.length) {
+        while (bci < methodBytes.length) {
             final OutputStream stream = new NullOutputStream();
             try {
                 final InspectorBytecodePrinter bytecodePrinter = new InspectorBytecodePrinter(new PrintStream(stream), localConstantPool);
                 final BytecodeScanner bytecodeScanner = new BytecodeScanner(bytecodePrinter);
-                final int nextBytecodeOffset = bytecodeScanner.scanInstruction(methodBytes, currentBytecodeOffset);
-                final byte[] instructionBytes = Bytes.getSection(methodBytes, currentBytecodeOffset, nextBytecodeOffset);
+                final int nextBCI = bytecodeScanner.scanInstruction(methodBytes, bci);
+                final byte[] instructionBytes = Bytes.getSection(methodBytes, bci, nextBCI);
                 if (haveMachineCodeAddresses) {
-                    while (instructionMap.instruction(machineCodeRow).position < bytecodeToMachineCodePositionMap[currentBytecodeOffset]) {
+                    while (instructionMap.instruction(machineCodeRow).position < bciToMachineCodePositionMap[bci]) {
                         machineCodeRow++;
                     }
                     machineCodeFirstAddress = instructionMap.instruction(machineCodeRow).address;
                 }
-                final BytecodeInstruction instruction = new BytecodeInstruction(bytecodeRow, currentBytecodeOffset, instructionBytes, bytecodePrinter.opcode(), bytecodePrinter.operand1(),
+                final BytecodeInstruction instruction = new BytecodeInstruction(bytecodeRow, bci, instructionBytes, bytecodePrinter.opcode(), bytecodePrinter.operand1(),
                                 bytecodePrinter.operand2(), machineCodeRow, machineCodeFirstAddress);
                 bytecodeInstructions.add(instruction);
                 bytecodeRow++;
-                currentBytecodeOffset = nextBytecodeOffset;
+                bci = nextBCI;
             } catch (Throwable throwable) {
                 InspectorError.unexpected("could not disassemble bytecode", throwable);
             }
@@ -255,7 +255,7 @@ public abstract class BytecodeViewer extends CodeViewer {
             if (breakpoint.isBytecodeBreakpoint()) {
                 final MaxCodeLocation breakpointLocation = breakpoint.codeLocation();
                 // the direction of key comparison is significant
-                if (methodKey.equals(breakpointLocation.methodKey()) &&  bytecodeInstructions().get(row).position == breakpointLocation.bytecodePosition()) {
+                if (methodKey.equals(breakpointLocation.methodKey()) &&  bytecodeInstructions().get(row).bci == breakpointLocation.bci()) {
                     return breakpoint;
                 }
             }
@@ -277,9 +277,9 @@ public abstract class BytecodeViewer extends CodeViewer {
     protected class BytecodeInstruction {
 
         /**
-         * offset from method beginning of the first byte of this instruction.
+         * bytecode index: offset from method beginning of the first byte of this instruction.
          */
-        public final int position;
+        public final int bci;
 
 
         /**
@@ -326,9 +326,9 @@ public abstract class BytecodeViewer extends CodeViewer {
          */
         public final Object operand2;
 
-        BytecodeInstruction(int bytecodeRow, int position, byte[] bytes, int opcode, Object operand1, Object operand2, int machineCodeRow, Address machineCodeFirstAddress) {
+        BytecodeInstruction(int bytecodeRow, int bci, byte[] bytes, int opcode, Object operand1, Object operand2, int machineCodeRow, Address machineCodeFirstAddress) {
             this.row = bytecodeRow;
-            this.position = position;
+            this.bci = bci;
             this.instructionBytes = bytes;
             this.opcode = opcode;
             this.operand1 = operand1;

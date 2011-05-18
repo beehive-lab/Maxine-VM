@@ -34,8 +34,6 @@ import com.sun.max.ins.view.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.MaxMachineCode.InstructionMap;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 
@@ -89,7 +87,9 @@ public final class CodeLocationInspector extends Inspector<CodeLocationInspector
         super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
         Trace.begin(1,  tracePrefix() + " initializing");
 
-        nullPanel = new InspectorPanel(inspection);
+        nullPanel = new InspectorPanel(inspection, new BorderLayout());
+        nullPanel.add(new PlainLabel(inspection, inspection.nameDisplay().unavailableDataShortText()), BorderLayout.PAGE_START);
+
         updateCodeLocation(focus().codeLocation());
 
         final InspectorFrame frame = createFrame(true);
@@ -115,11 +115,11 @@ public final class CodeLocationInspector extends Inspector<CodeLocationInspector
             if (compiledCode != null) {
                 sb.append(inspection().nameDisplay().extremelyShortName(compiledCode));
                 if (codeLocation.hasTeleClassMethodActor()) {
-                    sb.append(" bci=").append(codeLocation.bytecodePosition());
+                    sb.append(" bci=").append(codeLocation.bci());
                 }
             } else if (codeLocation.hasTeleClassMethodActor()) {
                 sb.append(inspection().nameDisplay().veryShortName(codeLocation.teleClassMethodActor()));
-                sb.append(" bci=").append(codeLocation.bytecodePosition());
+                sb.append(" bci=").append(codeLocation.bci());
             }
         }
         return sb.toString();
@@ -156,21 +156,9 @@ public final class CodeLocationInspector extends Inspector<CodeLocationInspector
 
     private void updateCodeLocation(MaxCodeLocation codeLocation) {
         this.codeLocation = codeLocation;
-        compiledCode = null;
-        frames = null;
-        final Address instructionAddress = codeLocation.address();
-        if (instructionAddress != null && !instructionAddress.isZero()) {
-            compiledCode = vm().codeCache().findCompiledCode(instructionAddress);
-            if (compiledCode != null) {
-                final InstructionMap instructionMap = compiledCode.getInstructionMap();
-                final int instructionIndex = instructionMap.findInstructionIndex(codeLocation.address());
-                if (instructionIndex >= 0) {
-                    this.frames = instructionMap.bytecodeFrames(instructionIndex);
-                }
-            }
-        }
+        compiledCode = codeLocation.compiledCode();
+        frames = codeLocation.bytecodeFrames();
     }
-
 
     private String shortString(CiCodePos codePos) {
         return codePos.method.name() + " @ " + codePos.bci;

@@ -57,24 +57,29 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
 /**
- * Canonical surrogate for some flavor of {@link TargetMethod}, which is a compilation
- * of a Java {@link ClassMethod} in the VM.
+ * Canonical surrogate for some flavor of {@link TargetMethod}, which is a compilation of a Java {@link ClassMethod} in
+ * the VM.
  * <p>
- * When this surrogate is first created, it determines only the location of the {@link TargetMehod}
- * in the VM in order to keep the overhead low, since these are created eagerly for every
- * discovered compilation.
+ * When this surrogate is first created, it records only the location of the {@link TargetMehod} in VM memory. This
+ * limitation keeps the overhead low, since an instance of this class is eagerly created for every compilation
+ * discovered in the VM. It also avoids creating any other instances of {@link TeleObject}, which can lead to infinite
+ * regress in the presence of mutually referential objects, notably with instances of {@link TeleClassMethodActor}.
  * <p>
- * The contents of the {@link TargetMethod} in the VM are loaded, disassembled, and cached lazily.
- * The caches are flushed whenever
- * an update determines that the code has been changed (i.e. patched).
+ * The first time this object is refreshed, it gets an instance of {@link TeleClassMethodActor} that refers to the
+ * {@link ClassMethodActor} in the VM that owns the compilation represented by this object.
  * <p>
- * Content loading is performed by (restricted) deep copying the {@link TargetMethod}
- * from the VM, and caching the local instance.
+ * The full contents of the {@link TargetMethod} in the VM are loaded, disassembled, and cached lazily: only when
+ * needed. The caches are flushed eagerly, whenever an update determines that the code has been changed (i.e. patched),
+ * but the new contents are only loaded lazily, as needed.
  * <p>
- * <strong>Important</strong>: this implementation assumes that compilations in the VM, once created,
- * <strong>do not move in memory</strong>.
+ * Content loading is performed by (restricted) deep copying the {@link TargetMethod} from the VM, and caching the local
+ * instance.
+ * <p>
+ * <strong>Important</strong>: this implementation assumes that compilations in the VM, once created, <strong>do not
+ * move in memory</strong> and <strong>are never evicted</strong>.
  *
  * @author Michael Van De Vanter
+ * @see TeleClassMethodActor
  */
 public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetMethodAccess {
 
@@ -138,7 +143,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
     }
 
     /**
-     * A specialized copier to be used for copying instances of {@link TeleTargetMethod},
+     * A specialized copier for instances of {@link TeleTargetMethod},
      * designed to limit information copied to what's needed without pulling too
      * much other state.
      */
@@ -172,18 +177,18 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
      * A cache that encapsulates a {@link TargetMethod} instance copied from the VM, together
      * with derived information that is needed when examining the machine code.
      * <p>
-     * The code in a {@link TargetMethod} can change in the VM at runtime.
+     * The machine code in a {@link TargetMethod} can change in the VM at runtime.
      * There are two general cases where the state of the {@link TargetMethod} in the VM changes:
      * <ol>
-     * <li>When a compilation begins, the code is empty and the code's starting location is set to zero.
+     * <li>When a method compilation begins, the code is empty and the code's starting location is set to zero.
      * When the compilation is complete, it is copied into the appropriate place in the code cache and
      * the starting location is assigned.</li>
      * <li>The compiled code can be patched in place, for example when a method call is resolved.</li>
      * </ol>
      * <p>
-     * This cache object is immutable, so every method on it is thread-safe.
+     * This cache object is effectively immutable, so every method on it is thread-safe.
      * A new cache must be created each time the {@link TeleTargetMethod} object in the VM is
-     * discovered to have changed.
+     * discovered to have changed.  This is done lazily.
      * <p>
      * There are three states for this cache:
      * <ul>
@@ -591,7 +596,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
             return labelIndexes;
         }
 
-        public int[] bytecodeToMachineCodePositionMap() {
+        public int[] bciToMachineCodePositionMap() {
             return bciToPosMap;
         }
 
@@ -621,15 +626,15 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
 
         /**
          * @param bytecodes
-         * @param bytecodePosition byte offset into bytecodes
+         * @param bci byte index into bytecodes
          * @return if a call instruction, the index into the constant pool of the called {@link MethodRefConstant}; else -1.
          */
-        private int findCalleeCPIndex(byte[] bytecodes, int bytecodePosition) {
-            if (bytecodes == null || bytecodePosition >= bytecodes.length) {
+        private int findCalleeCPIndex(byte[] bytecodes, int bci) {
+            if (bytecodes == null || bci >= bytecodes.length) {
                 return -1;
             }
             final BytecodeScanner bytecodeScanner = new BytecodeScanner(methodRefIndexFinder.reset());
-            bytecodeScanner.scanInstruction(bytecodes, bytecodePosition);
+            bytecodeScanner.scanInstruction(bytecodes, bci);
             return methodRefIndexFinder.methodRefIndex();
         }
 
