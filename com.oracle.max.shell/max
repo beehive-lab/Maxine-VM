@@ -41,10 +41,10 @@
 # is run without any arguments.
 #
 # It is possible to extend this script by sourcing it from a parent script. For
-# example, if this script is at $MAXINE_HOME/bin/max, then the parent script
+# example, if this script is at $MAXINE_HOME/com.oracle.max.shell/max, then the parent script
 # needs to end with:
 #
-#    . "$MAXINE_HOME/bin/max"
+#    . "$MAXINE_HOME/com.oracle.max.shell/max"
 #
 # One reason to extend this script is to build additional
 # projects that depend on Maxine, e.g. for the Guest VM Xen port of Maxine.
@@ -182,9 +182,9 @@ if [ -z "${maxine_dir}" ]; then
     popd >/dev/null
 fi
 
-# Sanity check: is ${maxine_dir}/bin/max an executable
-if [ ! -x "${maxine_dir}/bin/max" ]; then
-    echo "Can't find Maxine code base at '${maxine_dir}': '${maxine_dir}/bin/max' does not exist or is not an executable"
+# Sanity check: is ${maxine_dir}/com.oracle.max.shell/max an executable
+if [ ! -x "${maxine_dir}/com.oracle.max.shell/max" ]; then
+    echo "Can't find Maxine code base at '${maxine_dir}': '${maxine_dir}/com.oracle.max.shell/max' does not exist or is not an executable"
     exit 1
 fi
 
@@ -298,10 +298,10 @@ export cp_prefix
 export cp_suffix
 
 function jmax() {
-    if [ ! -e $maxine_dir/bin/jmax.class -o $maxine_dir/bin/jmax.class -ot $maxine_dir/bin/jmax.java ]; then
-        $JAVA_HOME/bin/javac -d $maxine_dir/bin $maxine_dir/bin/jmax.java
+    if [ ! -e $maxine_dir/com.oracle.max.shell/jmax.class -o $maxine_dir/com.oracle.max.shell/jmax.class -ot $maxine_dir/com.oracle.max.shell/jmax.java ]; then
+        $JAVA_HOME/bin/javac -d $maxine_dir/com.oracle.max.shell $maxine_dir/com.oracle.max.shell/jmax.java
     fi
-    $jvm -ea -cp $maxine_dir/bin jmax $@
+    $jvm -ea -cp $maxine_dir/com.oracle.max.shell jmax $@
     if [ $? -ne 0 ]; then
         exit 1
     fi
