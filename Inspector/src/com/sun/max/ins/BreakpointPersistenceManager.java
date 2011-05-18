@@ -91,7 +91,7 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
     private static final String METHOD_HOLDER_KEY = "method.holder";
     private static final String METHOD_NAME_KEY = "method.name";
     private static final String METHOD_SIGNATURE_KEY = "method.signature";
-    private static final String POSITION_KEY = "position";
+    private static final String BCI_KEY = "bci";
 
     public void breakpointsChanged() {
         // Breakpoints in the VM have changed.
@@ -170,7 +170,7 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
                 settings.save(prefix + "." + METHOD_HOLDER_KEY, methodKey.holder().string);
                 settings.save(prefix + "." + METHOD_NAME_KEY, methodKey.name().string);
                 settings.save(prefix + "." + METHOD_SIGNATURE_KEY, methodKey.signature().string);
-                settings.save(prefix + "." + POSITION_KEY, codeLocation.bytecodePosition());
+                settings.save(prefix + "." + BCI_KEY, codeLocation.bci());
                 settings.save(prefix + "." + ENABLED_KEY, breakpoint.isEnabled());
             } else {
                 InspectorWarning.message("Unable to save bytecode breakpoint, no key in " + breakpoint);
@@ -186,9 +186,9 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
             final Utf8Constant name = PoolConstantFactory.makeUtf8Constant(settings.get(this, prefix + "." + METHOD_NAME_KEY, OptionTypes.STRING_TYPE, null));
             final SignatureDescriptor signature = SignatureDescriptor.create(settings.get(this, prefix + "." + METHOD_SIGNATURE_KEY, OptionTypes.STRING_TYPE, null));
             final MethodKey methodKey = new DefaultMethodKey(holder, name, signature);
-            final int bytecodePosition = settings.get(this, prefix + "." + POSITION_KEY, OptionTypes.INT_TYPE, 0);
-            if (bytecodePosition > 0) {
-                InspectorWarning.message("Ignoring non-zero bytecode position for saved breakpoint in " + methodKey);
+            final int bci = settings.get(this, prefix + "." + BCI_KEY, OptionTypes.INT_TYPE, 0);
+            if (bci > 0) {
+                InspectorWarning.message("Ignoring non-zero bytecode index for saved breakpoint in " + methodKey);
             }
             final boolean enabled = settings.get(this, prefix + "." + ENABLED_KEY, OptionTypes.BOOLEAN_TYPE, true);
             final MaxCodeLocation location = inspection.vm().codeManager().createBytecodeLocation(methodKey, "loaded by breakpoint persistence manager");

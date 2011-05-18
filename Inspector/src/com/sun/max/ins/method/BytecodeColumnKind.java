@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,7 +39,7 @@ public enum BytecodeColumnKind implements ColumnKind {
         }
     },
     NUMBER("No.", "Index of instruction in the method", false, 15),
-    POSITION("Pos.", "Position in bytes of bytecode instruction start", true, 15),
+    BCI("bci", "Index of instruction in bytes from method start", true, 15),
     INSTRUCTION("Instr.", "Instruction mnemonic", true, -1),
     OPERAND1("Operand 1", "Instruction operand 1", true, -1),
     OPERAND2("Operand 2", "Instruction operand 2", true, -1),

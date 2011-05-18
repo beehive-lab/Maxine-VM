@@ -596,7 +596,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
             return labelIndexes;
         }
 
-        public int[] bytecodeToMachineCodePositionMap() {
+        public int[] bciToMachineCodePositionMap() {
             return bciToPosMap;
         }
 
@@ -626,15 +626,15 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
 
         /**
          * @param bytecodes
-         * @param bytecodePosition byte offset into bytecodes
+         * @param bci byte index into bytecodes
          * @return if a call instruction, the index into the constant pool of the called {@link MethodRefConstant}; else -1.
          */
-        private int findCalleeCPIndex(byte[] bytecodes, int bytecodePosition) {
-            if (bytecodes == null || bytecodePosition >= bytecodes.length) {
+        private int findCalleeCPIndex(byte[] bytecodes, int bci) {
+            if (bytecodes == null || bci >= bytecodes.length) {
                 return -1;
             }
             final BytecodeScanner bytecodeScanner = new BytecodeScanner(methodRefIndexFinder.reset());
-            bytecodeScanner.scanInstruction(bytecodes, bytecodePosition);
+            bytecodeScanner.scanInstruction(bytecodes, bci);
             return methodRefIndexFinder.methodRefIndex();
         }
 

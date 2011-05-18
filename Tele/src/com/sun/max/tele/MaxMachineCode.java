@@ -168,9 +168,9 @@ public interface MaxMachineCode<MachineCode_Type extends MaxMachineCode> extends
          * Builds a map from the beginning of byte code instruction to the beginning of the
          * machine code instructions generated from it.
          *
-         * @return Map: byte positions in bytecode -> byte positions in machine code, null if information not available
+         * @return Map: bci (byte index in bytecode) -> byte positions in machine code, null if information not available
          */
-        int[] bytecodeToMachineCodePositionMap();
+        int[] bciToMachineCodePositionMap();
 
     }
 

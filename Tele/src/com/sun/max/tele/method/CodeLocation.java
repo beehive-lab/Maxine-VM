@@ -65,7 +65,7 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
      * is bytecode instruction 0, the method entry. When requested, attempts will be made to locate the surrogate
      * for the {@link ClassMethodActor} in the VM that identifies the method, once the class has been loaded.
      * <br>
-     * Important: this location will always have {@link #bytecodePosition()} = -1, which in any machine code
+     * Important: this location will always have {@link #bci()} = -1, which in any machine code
      * compilation is understood to mean the beginning of the method prologue, which comes before the machine
      * code deriving from bytecode instruction 0;
      * <br>
@@ -92,13 +92,13 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
      *
      * @param teleVM the VM
      * @param teleClassMethodActor surrogate for a {@link ClassMethodActor} in the VM that identifies a method.
-     * @param bytecodePosition offset into the method's bytecodes of a bytecode instruction
+     * @param bci offset into the method's bytecodes of a bytecode instruction
      * @param description a human-readable description, suitable for a menu or for debugging
      * @return a new location
-     * @throws TeleError if teleClassMethodActor is null or bytecodePosition &lt; -1
+     * @throws TeleError if teleClassMethodActor is null or bci &lt; -1
      */
-    public static BytecodeLocation createBytecodeLocation(TeleVM teleVM, TeleClassMethodActor teleClassMethodActor, int bytecodePosition, String description) throws TeleError {
-        return new ClassMethodActorLocation(teleVM, teleClassMethodActor, bytecodePosition, description);
+    public static BytecodeLocation createBytecodeLocation(TeleVM teleVM, TeleClassMethodActor teleClassMethodActor, int bci, String description) throws TeleError {
+        return new ClassMethodActorLocation(teleVM, teleClassMethodActor, bci, description);
     }
 
     /**
@@ -130,13 +130,13 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
      * @param teleVM the VM
      * @param address an address in VM memory that represents the beginning of a compiled machine code instruction
      * @param teleClassMethodActor surrogate for a {@link ClassMethodActor} in the VM that identifies a method.
-     * @param bytecodePosition offset into the method's bytecodes of a bytecode instruction
+     * @param bci offset into the method's bytecodes of a bytecode instruction
      * @param description a human-readable description, suitable for a menu or for debugging
      * @return a new location
-     * @throws TeleError if the address is null or zero or  if teleClassMethodActor is null or bytecodePosition &lt; -1
+     * @throws TeleError if the address is null or zero or  if teleClassMethodActor is null or bci &lt; -1
      */
-    public static MachineCodeLocation createMachineCodeLocation(TeleVM teleVM, Address address, TeleClassMethodActor teleClassMethodActor, int bytecodePosition, String description) throws TeleError {
-        return new ClassMethodActorAddressLocation(teleVM, address, teleClassMethodActor, bytecodePosition, description);
+    public static MachineCodeLocation createMachineCodeLocation(TeleVM teleVM, Address address, TeleClassMethodActor teleClassMethodActor, int bci, String description) throws TeleError {
+        return new ClassMethodActorAddressLocation(teleVM, address, teleClassMethodActor, bci, description);
     }
 
     /**
@@ -173,7 +173,7 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
             sb.append(" 0x").append(address().toHexString()).append(", ");
         }
         if (hasTeleClassMethodActor()) {
-            sb.append(teleClassMethodActor().getName()).append("(), bci=").append(bytecodePosition());
+            sb.append(teleClassMethodActor().getName()).append("(), bci=").append(bci());
         }
         sb.append("}");
         return sb.toString();
@@ -287,7 +287,7 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
     /**
      * Attempt to determine the first machine code instruction address of the first
      * compilation of the specified method.  This is the first machine code instruction
-     * of the method prologue, which is equivalent to a bytecodePosition of -1.
+     * of the method prologue, which is equivalent to a bci of -1.
      *
      * @param teleClassMethodActor description of the method in the VM
      * @return a non-zero address, null if not available
@@ -386,7 +386,7 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
             return teleClassMethodActor;
         }
 
-        public int bytecodePosition() {
+        public int bci() {
             return -1;
         }
 
@@ -415,15 +415,15 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
     private static final class ClassMethodActorLocation extends BytecodeLocation {
 
         private final TeleClassMethodActor teleClassMethodActor;
-        private final int bytecodePosition;
+        private final int bci;
         private volatile MethodKey methodKey = null;
 
-        public ClassMethodActorLocation(TeleVM teleVM, TeleClassMethodActor teleClassMethodActor, int bytecodePosition, String description) {
+        public ClassMethodActorLocation(TeleVM teleVM, TeleClassMethodActor teleClassMethodActor, int bci, String description) {
             super(teleVM, description);
             TeleError.check(teleClassMethodActor != null);
-            TeleError.check(bytecodePosition >= -1);
+            TeleError.check(bci >= -1);
             this.teleClassMethodActor = teleClassMethodActor;
-            this.bytecodePosition = bytecodePosition;
+            this.bci = bci;
         }
 
         public boolean hasAddress() {
@@ -442,8 +442,8 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
             return teleClassMethodActor;
         }
 
-        public int bytecodePosition() {
-            return bytecodePosition;
+        public int bci() {
+            return bci;
         }
 
         public boolean hasMethodKey() {
@@ -477,7 +477,7 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
 
         private final Address address;
         private volatile TeleClassMethodActor teleClassMethodActor = null;
-        private volatile int bytecodePosition = -1;
+        private volatile int bci = -1;
         private volatile MethodKey methodKey = null;
 
         public AddressCodeLocation(TeleVM teleVM, Address address, String description) {
@@ -504,8 +504,8 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
             return teleClassMethodActor;
         }
 
-        public int bytecodePosition() {
-            return bytecodePosition;
+        public int bci() {
+            return bci;
         }
 
         public boolean hasMethodKey() {
@@ -546,17 +546,17 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
 
         private final Address address;
         private final TeleClassMethodActor teleClassMethodActor;
-        private final int bytecodePosition;
+        private final int bci;
         private volatile MethodKey methodKey = null;
 
-        public ClassMethodActorAddressLocation(TeleVM teleVM, Address address, TeleClassMethodActor teleClassMethodActor, int bytecodePosition, String description) {
+        public ClassMethodActorAddressLocation(TeleVM teleVM, Address address, TeleClassMethodActor teleClassMethodActor, int bci, String description) {
             super(teleVM, description);
             TeleError.check(address != null && !address.isZero());
             TeleError.check(teleClassMethodActor != null);
-            TeleError.check(bytecodePosition >= -1);
+            TeleError.check(bci >= -1);
             this.address = address;
             this.teleClassMethodActor = teleClassMethodActor;
-            this.bytecodePosition = bytecodePosition;
+            this.bci = bci;
         }
 
         public boolean hasAddress() {
@@ -575,8 +575,8 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
             return teleClassMethodActor;
         }
 
-        public int bytecodePosition() {
-            return bytecodePosition;
+        public int bci() {
+            return bci;
         }
 
         public boolean hasMethodKey() {
@@ -639,7 +639,7 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
             return teleClassMethodActor;
         }
 
-        public int bytecodePosition() {
+        public int bci() {
             return -1;
         }
 

@@ -117,11 +117,11 @@ public final class CodeLocationInspector extends Inspector<CodeLocationInspector
             if (compiledCode != null) {
                 sb.append(inspection().nameDisplay().extremelyShortName(compiledCode));
                 if (codeLocation.hasTeleClassMethodActor()) {
-                    sb.append(" bci=").append(codeLocation.bytecodePosition());
+                    sb.append(" bci=").append(codeLocation.bci());
                 }
             } else if (codeLocation.hasTeleClassMethodActor()) {
                 sb.append(inspection().nameDisplay().veryShortName(codeLocation.teleClassMethodActor()));
-                sb.append(" bci=").append(codeLocation.bytecodePosition());
+                sb.append(" bci=").append(codeLocation.bci());
             }
         }
         return sb.toString();

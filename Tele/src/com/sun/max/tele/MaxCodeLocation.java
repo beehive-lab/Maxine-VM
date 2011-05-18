@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -111,8 +111,8 @@ public interface MaxCodeLocation {
     MethodKey methodKey();
 
     /**
-     * Location of a bytecode instruction, specified as as the byte offset from the beginning of the bytecodes, default value is -1.
-     * <br>
+     * Bytecode Index: location of a bytecode instruction, specified as the byte offset from the beginning of the bytecodes, default value is -1.
+     * <p>
      * Specific values:
      * <ol>
      * <li>-1; specifies method entry (first bytecode instruction, and the prologue entry of any machine code compilation); this value
@@ -125,7 +125,7 @@ public interface MaxCodeLocation {
      * @return offset of location in bytes from beginning of bytecode representation
      * @see #teleClassMethodActor()
      */
-    int bytecodePosition();
+    int bci();
 
     /**
      * Determines whether two descriptions are equivalent.  For locations specified in terms of
