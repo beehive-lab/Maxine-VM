@@ -34,8 +34,6 @@ import com.sun.max.ins.view.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.MaxMachineCode.InstructionMap;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 
@@ -158,23 +156,9 @@ public final class CodeLocationInspector extends Inspector<CodeLocationInspector
 
     private void updateCodeLocation(MaxCodeLocation codeLocation) {
         this.codeLocation = codeLocation;
-        compiledCode = null;
-        frames = null;
-        if (codeLocation != null) {
-            final Address instructionAddress = codeLocation.address();
-            if (instructionAddress != null && !instructionAddress.isZero()) {
-                compiledCode = vm().codeCache().findCompiledCode(instructionAddress);
-                if (compiledCode != null) {
-                    final InstructionMap instructionMap = compiledCode.getInstructionMap();
-                    final int instructionIndex = instructionMap.findInstructionIndex(codeLocation.address());
-                    if (instructionIndex >= 0) {
-                        this.frames = instructionMap.bytecodeFrames(instructionIndex);
-                    }
-                }
-            }
-        }
+        compiledCode = codeLocation.compiledCode();
+        frames = codeLocation.bytecodeFrames();
     }
-
 
     private String shortString(CiCodePos codePos) {
         return codePos.method.name() + " @ " + codePos.bci;
