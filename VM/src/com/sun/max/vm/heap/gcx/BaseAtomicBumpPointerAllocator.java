@@ -146,6 +146,9 @@ public class BaseAtomicBumpPointerAllocator<T extends Refiller> {
         return cell.asPointer();
     }
 
+    /**
+     * Atomically fill up the allocator with a dead object  to make it parsable.
+     */
     protected final void makeParsable() {
         Pointer cell = setTopToLimit();
         Pointer hardLimit = hardLimit().asPointer();
@@ -155,7 +158,8 @@ public class BaseAtomicBumpPointerAllocator<T extends Refiller> {
     }
 
     /**
-     * Temporary hack to support HeapRegionManager.verifyAfterInitialization.
+     * Make the allocator parseable without filling up the allocator.
+     * This is unsafe and should only be used when non concurrent allocation can take place.
      */
     protected final void unsafeMakeParsable() {
         Pointer cell = top.asPointer();

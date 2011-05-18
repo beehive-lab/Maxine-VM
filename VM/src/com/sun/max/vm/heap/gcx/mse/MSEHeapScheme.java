@@ -363,6 +363,9 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
                 Log.print("Begin mark-sweep #");
                 Log.println(collectionCount);
             }
+
+            theHeapRegionManager().checkOutgoingReferences();
+
             theHeap.makeParsable();
             theHeap.mark(heapMarker);
             startTimer(reclaimTimer);
