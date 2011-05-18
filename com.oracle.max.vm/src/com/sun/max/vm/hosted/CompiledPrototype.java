@@ -440,9 +440,13 @@ public class CompiledPrototype extends Prototype {
      * Internal use.
      */
     public static void registerVMEntryPoint(ClassMethodActor m) {
-        assert extraVMEntryPoints != null : "too late to add VM entry point " + m;
-        ProgramError.check(m != null);
-        extraVMEntryPoints.add(m);
+        if (instance != null) {
+            instance.add(m, null, null);
+        } else {
+            assert extraVMEntryPoints != null : "too late to add VM entry point " + m;
+            ProgramError.check(m != null);
+            extraVMEntryPoints.add(m);
+        }
     }
 
     /**
@@ -451,16 +455,24 @@ public class CompiledPrototype extends Prototype {
      * @param classAndMethodActor fully qualified name, e.g. a.b.C.m where m may be * to denote all methods
      */
     public static void registerVMEntryPoint(String classAndMethodActor) {
-        assert extraVMEntryPointNames != null : "too late to add VM entry point " + classAndMethodActor;
-        extraVMEntryPointNames.add(classAndMethodActor);
+        if (instance != null) {
+            instance.addMethods(Collections.singleton(classAndMethodActor));
+        } else {
+            assert extraVMEntryPointNames != null : "too late to add VM entry point " + classAndMethodActor;
+            extraVMEntryPointNames.add(classAndMethodActor);
+        }
     }
 
     /**
      * Request the given method have a statically generated and compiled invocation stub in the boot image.
      */
     public static void registerImageInvocationStub(MethodActor m) {
-        assert imageInvocationStubMethodActors != null : "too late to add VM entry point " + m;
-        imageInvocationStubMethodActors.add(m);
+        if (instance != null) {
+            instance.addMethods(null, ClassActor.fromJava(m.makeInvocationStub().getClass()).localVirtualMethodActors(), null);
+        } else {
+            assert imageInvocationStubMethodActors != null : "too late to add VM entry point " + m;
+            imageInvocationStubMethodActors.add(m);
+        }
     }
 
     /**
@@ -468,8 +480,12 @@ public class CompiledPrototype extends Prototype {
      * @param m
      */
     public static void registerImageConstructorStub(MethodActor m) {
-        assert imageConstructorStubMethodActors != null : "too late to add VM entry point " + m;
-        imageConstructorStubMethodActors.add(m);
+        if (instance != null) {
+            instance.addStaticAndVirtualMethods(JDK_sun_reflect_ReflectionFactory.createPrePopulatedConstructorStub(m));
+        } else {
+            assert imageConstructorStubMethodActors != null : "too late to add VM entry point " + m;
+            imageConstructorStubMethodActors.add(m);
+        }
     }
 
     private boolean entryPointsDone;
@@ -497,8 +513,7 @@ public class CompiledPrototype extends Prototype {
 //                final ClassMethodActor valuesMethod = classActor.findLocalClassMethodActor(SymbolTable.makeSymbol("values"), SignatureDescriptor.fromJava(Enum[].class));
 //                addStaticAndVirtualMethods(JDK_sun_reflect_ReflectionFactory.createPrePopulatedMethodStub(valuesMethod));
 //            }
-            final ClassActor stubClassActor = ClassActor.fromJava(methodActor.makeInvocationStub().getClass());
-            addMethods(null, stubClassActor.localVirtualMethodActors(), entryPoint);
+            addMethods(null, ClassActor.fromJava(methodActor.makeInvocationStub().getClass()).localVirtualMethodActors(), entryPoint);
         }
         for (MethodActor methodActor : imageConstructorStubMethodActors) {
             addStaticAndVirtualMethods(JDK_sun_reflect_ReflectionFactory.createPrePopulatedConstructorStub(methodActor));
