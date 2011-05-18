@@ -5,7 +5,7 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/VM"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/C1X"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/CRI"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.cri"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.asm"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.hcfdis"/>
 	<classpathentry kind="output" path="bin"/>
