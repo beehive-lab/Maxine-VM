@@ -62,8 +62,6 @@ import java.io.RandomAccessFile;
  * It can load the header from a file and check the identification, identify
  * the version, endianness, and detect which architecture the file
  * has been created for.
- *
- * @author Ben L. Titzer
  */
 public class ELFHeader {
 

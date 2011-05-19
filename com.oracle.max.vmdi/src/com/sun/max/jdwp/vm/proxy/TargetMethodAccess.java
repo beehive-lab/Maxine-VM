@@ -30,8 +30,6 @@ import com.sun.max.jdwp.vm.core.JDWPPlus;
  *  <strong>Note:</strong> methods disabled for the time being, as not needed for JDWP and their
  *  implementations were cluttering {@link TeleCompiledMethod}.  (mlvdv 5/11/2010)
  *
- * @author Thomas Wuerthinger
- *
  */
 @JDWPPlus
 public interface TargetMethodAccess {

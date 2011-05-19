@@ -30,7 +30,6 @@ import com.oracle.max.elf.ELFSymbolTable.*;
 
 /**
  * Builds a lookup table given the symbol table by arranging the symbols as name,entry pairs.
- * @author Puneeet Lakhina
  *
  */
 public class ELFSymbolLookup {

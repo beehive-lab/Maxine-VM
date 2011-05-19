@@ -28,8 +28,6 @@ import java.lang.annotation.*;
  * This attribute states that a method will always produce the same result value when called with the same parameters. It is used to enable caching of results
  * when the method is remotely called. This attribute should only be used for methods of JDWP proxy objects.
  *
- * @author Thomas Wuerthinger
- *
  */
 
 @Retention(RetentionPolicy.RUNTIME)

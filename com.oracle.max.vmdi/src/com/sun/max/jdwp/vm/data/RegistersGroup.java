@@ -26,8 +26,6 @@ package com.sun.max.jdwp.vm.data;
  * This class represents an array of register sets. There is e.g. one entry in the array for floating point and one entry for integer registers. The reason for wrapping
  * the array in a class is that this way the whole object can be serialized and transmitted at once.
  *
- * @author Thomas Wuerthinger
- *
  */
 public class RegistersGroup extends AbstractSerializableObject {
 

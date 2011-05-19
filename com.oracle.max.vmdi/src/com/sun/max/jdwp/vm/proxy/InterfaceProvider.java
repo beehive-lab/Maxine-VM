@@ -24,8 +24,6 @@ package com.sun.max.jdwp.vm.proxy;
 
 /**
  * Representing an interface in the VM.
- *
- * @author Thomas Wuerthinger
  */
 public interface InterfaceProvider extends ReferenceTypeProvider {
 }

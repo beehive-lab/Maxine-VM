@@ -786,8 +786,7 @@ public class JTRuns {
             case 701: jtt_threads_Thread_new02(); break;
             case 702: jtt_threads_Thread_setPriority01(); break;
             case 703: jtt_threads_Thread_sleep01(); break;
-            case 704: jtt_threads_Thread_start01(); break;
-            case 705: jtt_threads_Thread_yield01(); break;
+            case 704: jtt_threads_Thread_yield01(); break;
         }
         return true;
     }
@@ -25612,22 +25611,6 @@ public class JTRuns {
             // (100) == true
                 runString = "(100)";
                 if (true != jtt.threads.Thread_sleep01.test(100)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_threads_Thread_start01() {
-            begin("jtt.threads.Thread_start01");
-            String runString = null;
-            try {
-            // (0) == true
-                runString = "(0)";
-                if (true != jtt.threads.Thread_start01.test(0)) {
                     fail(runString);
                     return;
                 }

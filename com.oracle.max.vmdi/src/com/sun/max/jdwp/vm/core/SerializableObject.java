@@ -27,8 +27,6 @@ import java.io.*;
 /**
  * Classes that implement this interface can be serialized over a JDWP stream.
  *
- * @author Thomas Wuerthinger
- *
  */
 public interface SerializableObject extends Serializable {
 
