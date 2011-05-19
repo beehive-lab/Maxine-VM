@@ -98,7 +98,8 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceReferenceFieldAccess CodeAttribute_code = new TeleInstanceReferenceFieldAccess(CodeAttribute.class, "code", byte[].class);
     public final TeleInstanceReferenceFieldAccess CodeAttribute_cp = new TeleInstanceReferenceFieldAccess(CodeAttribute.class, "cp", ConstantPool.class);
     public final TeleStaticReferenceFieldAccess CodeManager_runtimeCodeRegion = new TeleStaticReferenceFieldAccess(CodeManager.class, "runtimeCodeRegion", CodeRegion.class);
-    public final TeleInstanceReferenceFieldAccess CodeRegion_targetMethods = new TeleInstanceReferenceFieldAccess(CodeRegion.class, "targetMethods", SortedMemoryRegionList.class);
+    public final TeleInstanceIntFieldAccess CodeRegion_nTargetMethods = new TeleInstanceIntFieldAccess(CodeRegion.class, "nTargetMethods");
+    public final TeleInstanceReferenceFieldAccess CodeRegion_targetMethods = new TeleInstanceReferenceFieldAccess(CodeRegion.class, "targetMethods", TargetMethod[].class);
     public final TeleInstanceReferenceFieldAccess Compilation_previousTargetState = new TeleInstanceReferenceFieldAccess(Compilation.class, "previousTargetState", Object.class);
     public final TeleInstanceReferenceFieldAccess ConstantPool_constants = new TeleInstanceReferenceFieldAccess(ConstantPool.class, "constants", PoolConstant[].class);
     public final TeleInstanceReferenceFieldAccess ConstantPool_holder = new TeleInstanceReferenceFieldAccess(ConstantPool.class, "holder", ClassActor.class);
