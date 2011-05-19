@@ -633,8 +633,11 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             setBackgroundForRow(this, row);
             setForeground(cellForegroundColor(row, column));
-            final String instructionName = value.toString();
-            setText(instructionName);
+            if (value == null) {
+                setText(inspection().nameDisplay().unavailableDataShortText());
+            } else {
+                setText(value.toString());
+            }
             setWrappedToolTipText(tableModel.getRowDescription(row) + "<br>ISA = " + isa.name());
             setBorderForRow(this, row);
             return this;
