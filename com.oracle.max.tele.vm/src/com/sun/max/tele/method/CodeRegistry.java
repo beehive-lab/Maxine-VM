@@ -42,8 +42,6 @@ import com.sun.max.unsafe.*;
  * memory space in the VM's code cache (distinguished by a starting address equal to zero), the
  * entries are set aside and checked upon each refresh to see if they have since been allocated
  * and can be inserted into the registry.
- *
- * @author Michael Van De Vanter
  */
 final class CodeRegistry extends AbstractTeleVMHolder implements TeleVMCache {
 

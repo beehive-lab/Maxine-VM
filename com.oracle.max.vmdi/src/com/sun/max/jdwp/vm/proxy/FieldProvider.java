@@ -27,8 +27,6 @@ import com.sun.max.jdwp.vm.core.*;
 /**
  * Interface to a field in the VM.
  *
- * @author Thomas Wuerthinger
- *
  */
 public interface FieldProvider extends Provider {
 

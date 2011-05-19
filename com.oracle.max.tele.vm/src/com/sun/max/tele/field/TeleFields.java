@@ -98,7 +98,8 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceReferenceFieldAccess CodeAttribute_code = new TeleInstanceReferenceFieldAccess(CodeAttribute.class, "code", byte[].class);
     public final TeleInstanceReferenceFieldAccess CodeAttribute_cp = new TeleInstanceReferenceFieldAccess(CodeAttribute.class, "cp", ConstantPool.class);
     public final TeleStaticReferenceFieldAccess CodeManager_runtimeCodeRegion = new TeleStaticReferenceFieldAccess(CodeManager.class, "runtimeCodeRegion", CodeRegion.class);
-    public final TeleInstanceReferenceFieldAccess CodeRegion_targetMethods = new TeleInstanceReferenceFieldAccess(CodeRegion.class, "targetMethods", SortedMemoryRegionList.class);
+    public final TeleInstanceIntFieldAccess CodeRegion_length = new TeleInstanceIntFieldAccess(CodeRegion.class, "length");
+    public final TeleInstanceReferenceFieldAccess CodeRegion_targetMethods = new TeleInstanceReferenceFieldAccess(CodeRegion.class, "targetMethods", TargetMethod[].class);
     public final TeleInstanceReferenceFieldAccess Compilation_previousTargetState = new TeleInstanceReferenceFieldAccess(Compilation.class, "previousTargetState", Object.class);
     public final TeleInstanceReferenceFieldAccess ConstantPool_constants = new TeleInstanceReferenceFieldAccess(ConstantPool.class, "constants", PoolConstant[].class);
     public final TeleInstanceReferenceFieldAccess ConstantPool_holder = new TeleInstanceReferenceFieldAccess(ConstantPool.class, "holder", ClassActor.class);
@@ -138,8 +139,6 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceReferenceFieldAccess FieldRefConstant$Resolved_fieldActor = new TeleInstanceReferenceFieldAccess(FieldRefConstant.Resolved.class, "fieldActor", FieldActor.class);
     public final TeleInstanceReferenceFieldAccess ResolvedMethodRefConstant_methodActor = new TeleInstanceReferenceFieldAccess(ResolvedMethodRefConstant.class, "methodActor", MethodActor.class);
     public final TeleInstanceLongFieldAccess RootTableMemoryRegion_wordsUsed = new TeleInstanceLongFieldAccess(RootTableMemoryRegion.class, "wordsUsed");
-    public final TeleInstanceReferenceFieldAccess SortedMemoryRegionList_memoryRegions = new TeleInstanceReferenceFieldAccess(SortedMemoryRegionList.class, "memoryRegions", MemoryRegion[].class);
-    public final TeleInstanceIntFieldAccess SortedMemoryRegionList_size = new TeleInstanceIntFieldAccess(SortedMemoryRegionList.class, "size");
     public final TeleInstanceReferenceFieldAccess StringConstant_value = new TeleInstanceReferenceFieldAccess(StringConstant.class, "value", String.class);
     public final TeleInstanceReferenceFieldAccess TargetMethod_callEntryPoint = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "callEntryPoint", CallEntryPoint.class);
     public final TeleInstanceReferenceFieldAccess TargetMethod_classMethodActor = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "classMethodActor", ClassMethodActor.class);

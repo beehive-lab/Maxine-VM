@@ -68,6 +68,19 @@ public abstract class TargetMethod extends MemoryRegion {
     static final boolean COMPILED = true;
 
     /**
+     * Implemented by a client wanting to do something to a target method.
+     */
+    public static interface Closure {
+        /**
+         * Processes a given target method.
+         *
+         * @param targetMethod the class to process
+         * @return {@code false} if target method processing (e.g. iteration) by the caller should be stopped
+         */
+        boolean doTargetMethod(TargetMethod targetMethod);
+    }
+
+    /**
      * Categorization of target methods.
      */
     public enum Flavor {

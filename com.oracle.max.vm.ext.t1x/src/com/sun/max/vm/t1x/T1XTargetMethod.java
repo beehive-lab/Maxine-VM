@@ -775,8 +775,6 @@ public final class T1XTargetMethod extends TargetMethod {
 /**
  * Various execution states in a T1X method that can only be observed in
  * the context of the Inspector.
- *
- * @author Laurent Daynes
  */
 @HOSTED_ONLY
 @PLATFORM(cpu = "amd64")

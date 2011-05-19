@@ -64,8 +64,6 @@ import java.util.LinkedList;
  * The <code>ELFLoader</code> class presents a facade to users of the ELF
  * classes that permits a simpler usage model. This class contains a number of
  * utility methods to load sections and symbol tables from ELF files.
- *
- * @author Ben L. Titzer
  */
 public final class ELFLoader {
 

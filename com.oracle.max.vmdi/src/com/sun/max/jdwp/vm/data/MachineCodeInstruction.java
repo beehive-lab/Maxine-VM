@@ -25,8 +25,6 @@ package com.sun.max.jdwp.vm.data;
 /**
  * This class represents a machine code instruction of a target method.
  *
- * @author Thomas Wuerthinger
- *
  */
 public class MachineCodeInstruction extends AbstractSerializableObject {
 

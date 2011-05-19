@@ -28,8 +28,6 @@ import com.sun.max.jdwp.vm.core.*;
  *
  * Class representing a JDWP array type.
  *
- * @author Thomas Wuerthinger
- *
  */
 public interface ArrayTypeProvider extends ReferenceTypeProvider {
 

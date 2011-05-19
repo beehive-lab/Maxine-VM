@@ -27,8 +27,6 @@ import com.sun.max.jdwp.vm.core.*;
 /**
  * A reference type that is a class.
  *
- * @author Thomas Wuerthinger
- *
  */
 public interface ClassProvider extends ReferenceTypeProvider {
 
