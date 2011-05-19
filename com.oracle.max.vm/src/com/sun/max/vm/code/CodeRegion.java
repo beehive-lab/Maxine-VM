@@ -35,6 +35,8 @@ import com.sun.max.vm.heap.*;
  */
 public final class CodeRegion extends LinearAllocatorHeapRegion {
 
+    public static final int DEFAULT_CAPACITY = 10;
+
     /**
      * Creates a code region that is not yet bound to any memory.
      *
@@ -42,7 +44,7 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
      */
     public CodeRegion(String description) {
         super(description);
-        targetMethods = new TargetMethod[initialCapacity];
+        targetMethods = new TargetMethod[DEFAULT_CAPACITY];
     }
 
     /**
@@ -56,7 +58,7 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
     @HOSTED_ONLY
     public CodeRegion(Address start, Size size, String description) {
         super(start, size, description);
-        targetMethods = new TargetMethod[initialCapacity];
+        targetMethods = new TargetMethod[DEFAULT_CAPACITY];
     }
 
     /**
@@ -72,49 +74,60 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
     }
 
     /**
-     * Gets a copy of the sorted target method list.
+     * A sorted list of the target methods allocated within this code region.
      */
-    public TargetMethod[] copyOfTargetMethods() {
-        while (true) {
-            TargetMethod[] result = new TargetMethod[nTargetMethods];
-            int length = copyInto(result);
-            if (length == result.length) {
-                return result;
-            }
-        }
-    }
-
-    public static final int initialCapacity = 10;
-
     @INSPECTED
     private TargetMethod[] targetMethods;
 
+    /**
+     * Length of valid data in {@link #targetMethods}.
+     */
     @INSPECTED
-    private int nTargetMethods;
+    private int length;
 
-    public TargetMethod get(int index) {
-        if (index >= targetMethods.length) {
-            return null;
-        }
-        return targetMethods[index];
+    /**
+     * Gets a copy of the sorted target method list.
+     */
+    public TargetMethod[] copyOfTargetMethods() {
+        int length = this.length;
+        TargetMethod[] result = new TargetMethod[length];
+        System.arraycopy(targetMethods, 0, result, 0, length);
+        return result;
     }
 
     /**
-     * Looks up the target method containing a particular address (typically using binary search).
+     * Adds a target method to this sorted list of target methods.
+     */
+    public void add(TargetMethod targetMethod) {
+        int index = Arrays.binarySearch(targetMethods, 0, length, targetMethod, COMPARATOR);
+        if (index < 0) {
+            int insertionPoint = -(index + 1);
+            if (length == targetMethods.length) {
+                int newCapacity = (targetMethods.length * 3) / 2 + 1;
+                targetMethods = Arrays.copyOf(targetMethods, newCapacity);
+            }
+            System.arraycopy(targetMethods, insertionPoint, targetMethods, insertionPoint + 1, length - insertionPoint);
+            targetMethods[insertionPoint] = targetMethod;
+            length++;
+        }
+    }
+
+    /**
+     * Looks up the target method containing a particular address (using binary search).
      *
      * @param address the address to lookup in this region
      * @return a reference to the target method containing the specified address, if it exists; {@code null} otherwise
      */
     public TargetMethod find(Address address) {
         int left = 0;
-        int right = nTargetMethods;
+        int right = length;
         while (right > left) {
             final int middle = left + ((right - left) >> 1);
-            final TargetMethod middleRegion = targetMethods[middle];
-            if (middleRegion.start().greaterThan(address)) {
+            final TargetMethod method = targetMethods[middle];
+            if (method.start().greaterThan(address)) {
                 right = middle;
-            } else if (middleRegion.start().plus(middleRegion.size()).greaterThan(address)) {
-                return middleRegion;
+            } else if (method.start().plus(method.size()).greaterThan(address)) {
+                return method;
             } else {
                 left = middle + 1;
             }
@@ -123,25 +136,21 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
     }
 
     /**
-     * Adds a target method to this code region.
+     * Process each target method in this region with a given closure. This iteration operates on a snapshot of the
+     * methods in this region.
      *
-     * @param targetMethod a target method that is disjoint from all other target methods currently in the region or the same as one of them
-     * @return either the new target method if added or otherwise the pre-existing same one
-     * @throws IllegalArgumentException if {@code targetMethod} overlaps another target method currently in this region
+     * @return {@code false} if {@code c} returned {@code false} when processing a target method (and thus aborted
+     *         processing of any subsequent methods in the snapshot)
      */
-    public TargetMethod add(TargetMethod targetMethod) {
-        int index = Arrays.binarySearch(targetMethods, 0, nTargetMethods, targetMethod, COMPARATOR);
-        if (index < 0) {
-            int insertionPoint = -(index + 1);
-            if (nTargetMethods == targetMethods.length) {
-                int newCapacity = (targetMethods.length * 3) / 2 + 1;
-                targetMethods = Arrays.copyOf(targetMethods, newCapacity);
+    public boolean doAllTargetMethods(TargetMethod.Closure c) {
+        TargetMethod[] targetMethods = this.targetMethods;
+        for (int i = 0; i < length && i < targetMethods.length; i++) {
+            TargetMethod targetMethod = targetMethods[i];
+            if (targetMethod != null && !c.doTargetMethod(targetMethod)) {
+                return false;
             }
-            System.arraycopy(targetMethods, insertionPoint, targetMethods, insertionPoint + 1, nTargetMethods - insertionPoint);
-            targetMethods[insertionPoint] = targetMethod;
-            ++nTargetMethods;
         }
-        return targetMethod;
+        return true;
     }
 
     public static final Comparator<TargetMethod> COMPARATOR = new Comparator<TargetMethod>() {
@@ -161,19 +170,4 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
             return 1;
         }
     };
-
-    /**
-     * Copies the methods in this region into a given array. The number
-     * of elements written into {@code dst} (starting at index 0) is
-     * the minimum of {@code this.size()} and {@code dst.length}.
-     *
-     * @param dst the destination array
-     * @return the number of elements copied into {@code dst}
-     */
-    public int copyInto(TargetMethod[] dst) {
-        int length = Math.min(nTargetMethods, dst.length);
-        System.arraycopy(targetMethods, 0, dst, 0, length);
-        return length;
-    }
-
 }
