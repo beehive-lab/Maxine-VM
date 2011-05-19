@@ -1001,7 +1001,7 @@ public class T1XCompilation {
     private void recordDirectBytecodeCall(T1XTemplate template, ClassMethodActor callee) {
         if (isAMD64()) {
             AMD64Assembler asm = (AMD64Assembler) this.asm;
-            if (callee.currentTargetMethod() == null) {
+//            if (callee.currentTargetMethod() == null) {
                 // Align unlinked bytecode call site for MT safe patching
                 final int alignment = 7;
                 final int callSitePosition = buf.position() + template.bytecodeCall.pos;
@@ -1012,7 +1012,7 @@ public class T1XCompilation {
                     // Emit nops to align up to next 8-byte boundary
                     asm.nop(8 - (callSitePosition & alignment));
                 }
-            }
+//            }
         } else {
             unimplISA();
         }

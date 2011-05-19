@@ -32,7 +32,6 @@ final class JDK_java_util_ResourceBundle {
 
     @SUBSTITUTE
     public static Class[] getClassContext() {
-        System.out.println("Here");
         return JVMFunctions.GetClassContext();
     }
 }
