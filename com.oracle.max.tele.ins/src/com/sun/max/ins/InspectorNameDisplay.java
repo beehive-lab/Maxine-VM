@@ -435,16 +435,14 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
             } else {
                 final MaxCompiledCode compiledCode = vm().codeCache().findCompiledCode(address);
                 if (compiledCode != null) {
-                    name.append(",  ").append(longName(compiledCode, address)).append("} ");
-                } else {
-                    name.append("}");
+                    name.append(",  ").append(longName(compiledCode, address));
                 }
             }
         }
         if (codeLocation.hasTeleClassMethodActor()) {
-            name.append("Bytecodes{").append(codeLocation.bci()).append("} ");
+            name.append(", bci=").append(codeLocation.bci());
         } else if (codeLocation.methodKey() != null) {
-            name.append("MethodKey{").append(longName(codeLocation.methodKey())).append("} ");
+            name.append(", MethodKey=").append(longName(codeLocation.methodKey()));
         }
         return name.toString();
     }
