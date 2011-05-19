@@ -82,6 +82,8 @@ public final class CodeLocationInspector extends Inspector<CodeLocationInspector
 
     private final Rectangle originalFrameGeometry;
     private final InspectorPanel nullPanel;
+    private final InspectorPanel simplePanel;
+    private final PlainLabel simplePanelLabel;
 
     protected CodeLocationInspector(Inspection inspection) {
         super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
@@ -89,6 +91,10 @@ public final class CodeLocationInspector extends Inspector<CodeLocationInspector
 
         nullPanel = new InspectorPanel(inspection, new BorderLayout());
         nullPanel.add(new PlainLabel(inspection, inspection.nameDisplay().unavailableDataShortText()), BorderLayout.PAGE_START);
+
+        simplePanel = new InspectorPanel(inspection, new BorderLayout());
+        simplePanelLabel = new PlainLabel(inspection, "");
+        simplePanel.add(simplePanelLabel, BorderLayout.PAGE_START);
 
         updateCodeLocation(focus().codeLocation());
 
@@ -114,20 +120,22 @@ public final class CodeLocationInspector extends Inspector<CodeLocationInspector
             }
             if (compiledCode != null) {
                 sb.append(inspection().nameDisplay().extremelyShortName(compiledCode));
-                if (codeLocation.hasTeleClassMethodActor()) {
-                    sb.append(" bci=").append(codeLocation.bci());
-                }
             } else if (codeLocation.hasTeleClassMethodActor()) {
                 sb.append(inspection().nameDisplay().veryShortName(codeLocation.teleClassMethodActor()));
-                sb.append(" bci=").append(codeLocation.bci());
             }
+            sb.append(" bci=").append(codeLocation.bci());
         }
         return sb.toString();
     }
 
     @Override
     protected void createView() {
-        if (frames != null) {
+        if (codeLocation == null) {
+            setContentPane(nullPanel);
+        } else if (frames == null) {
+            simplePanelLabel.setText(inspection().nameDisplay().longName(codeLocation));
+            setContentPane(simplePanel);
+        } else {
             final JPanel panel = new InspectorPanel(inspection());
             panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
             CiFrame frame = frames;
@@ -136,8 +144,6 @@ public final class CodeLocationInspector extends Inspector<CodeLocationInspector
                 frame = frame.caller();
             } while (frame != null);
             setContentPane(panel);
-        } else {
-            setContentPane(nullPanel);
         }
         setTitle();
     }
