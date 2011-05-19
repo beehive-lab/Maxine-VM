@@ -87,12 +87,10 @@ public final class CodeCacheMetricsPrinter {
         if (verbose) {
             out.println("Bytecode\tMachineCode\tInvocations\tCodeType\tMethod");
         }
-        TargetMethod[] targetMethods = runtimeCodeRegion.copyOfTargetMethods();
-
         TreeMap<String, CodeCacheMetricsPrinter.Metrics> metrics = new TreeMap<String, CodeCacheMetricsPrinter.Metrics>();
         TreeMap<String, CodeCacheMetricsPrinter.Metrics> metrics2 = new TreeMap<String, CodeCacheMetricsPrinter.Metrics>();
 
-        for (TargetMethod targetMethod : targetMethods) {
+        for (TargetMethod targetMethod : runtimeCodeRegion.copyOfTargetMethods()) {
             ClassMethodActor methodActor = targetMethod.classMethodActor();
             int bcSize = methodActor == null ? 0 : methodActor.code().length;
             int mcSize = targetMethod.codeLength();
