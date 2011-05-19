@@ -1053,6 +1053,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         }
 
         public void visitGreyObjects(int rangeLeftmostWordIndex, int rangeRightmostBitmapWordIndex) {
+            final Pointer colorMapBase = heapMarker.base.asPointer();
             // TODO (ld)
             FatalError.unimplemented();
         }
