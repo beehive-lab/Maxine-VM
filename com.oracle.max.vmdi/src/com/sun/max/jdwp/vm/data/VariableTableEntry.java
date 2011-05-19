@@ -25,8 +25,6 @@ package com.sun.max.jdwp.vm.data;
 /**
  * An entry in the variable table as specified by the JDWP protocol.
  *
- * @author Thomas Wuerthinger
- *
  */
 public class VariableTableEntry extends AbstractSerializableObject {
     private long codeIndex;

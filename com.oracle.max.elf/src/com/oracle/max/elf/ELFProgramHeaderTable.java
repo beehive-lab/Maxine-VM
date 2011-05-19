@@ -71,8 +71,6 @@ import java.io.RandomAccessFile;
  * table contains information for the operating system (or bootloader or programmer
  * in the case of embedded systems) to create a process image from the binary. This table
  * is optional for relocatable object files.
- *
- * @author Ben L. Titzer
  */
 
 public class ELFProgramHeaderTable {

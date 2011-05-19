@@ -64,8 +64,6 @@ import java.io.RandomAccessFile;
  * section in the ELF file. Each section might contain code, data, symbol
  * table information, etc. This class reads this header table from a
  * random access file.
- *
- * @author Ben L. Titzer
  */
 public class ELFSectionHeaderTable {
 

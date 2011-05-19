@@ -53,9 +53,6 @@ import java.nio.ByteBuffer;
 
 /**
  * Supports reading of ELF values from an ELF file or a {@link ByteBuffer} (presumably read from an ELF file).
- * 
- * @author Ben L. Titzer
- * @author Mick Jordan
  */
 public class ELFDataInputStream {
 
