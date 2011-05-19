@@ -735,7 +735,6 @@ public class JTConfig {
         jtt.threads.Thread_new02.class,
         jtt.threads.Thread_setPriority01.class,
         jtt.threads.Thread_sleep01.class,
-        jtt.threads.Thread_start01.class,
         jtt.threads.Thread_yield01.class
     };
 // END GENERATED TEST CLASS LIST

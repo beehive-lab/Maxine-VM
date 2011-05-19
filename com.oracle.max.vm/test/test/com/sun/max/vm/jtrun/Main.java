@@ -22,7 +22,7 @@
  */
 package test.com.sun.max.vm.jtrun;
 
-import test.com.sun.max.vm.jtrun.some.*;
+import test.com.sun.max.vm.jtrun.all.*;
 
 /**
  * Simple class to allow a main entry point into the Java tester tests.
