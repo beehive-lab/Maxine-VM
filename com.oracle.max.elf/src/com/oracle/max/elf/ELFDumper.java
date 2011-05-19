@@ -62,8 +62,6 @@ import java.io.RandomAccessFile;
 /**
  * The {@code ELFDumper} is a class that can load and display information
  * about ELF files.
- *
- * @author Ben L. Titzer
  */
 public final class ELFDumper {
 

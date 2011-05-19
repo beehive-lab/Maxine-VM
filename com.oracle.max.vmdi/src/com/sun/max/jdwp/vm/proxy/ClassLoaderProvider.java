@@ -24,8 +24,6 @@ package com.sun.max.jdwp.vm.proxy;
 
 /**
  * Class representing a JDWP class loader object.
- *
- * @author Thomas Wuerthinger
  */
 public interface ClassLoaderProvider extends ObjectProvider {
 

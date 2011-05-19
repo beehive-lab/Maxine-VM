@@ -27,8 +27,6 @@ import java.lang.annotation.*;
 /**
  * This attribute states that a method or type is only used for JDWP+ and NOT used by the normal JDWP implementation.
  *
- * @author Thomas Wuerthinger
- *
  */
 
 @Retention(RetentionPolicy.RUNTIME)

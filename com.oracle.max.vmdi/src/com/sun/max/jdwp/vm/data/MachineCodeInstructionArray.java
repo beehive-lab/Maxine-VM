@@ -26,8 +26,6 @@ package com.sun.max.jdwp.vm.data;
  * Class representing an array of machine code instructions. The reason for having an explicit class wrapped around the array is that this makes it possible to
  * serialize the whole array as one object.
  *
- * @author Thomas Wuerthinger
- *
  */
 public class MachineCodeInstructionArray extends AbstractSerializableObject {
     private final MachineCodeInstruction[] array;
