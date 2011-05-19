@@ -1001,18 +1001,16 @@ public class T1XCompilation {
     private void recordDirectBytecodeCall(T1XTemplate template, ClassMethodActor callee) {
         if (isAMD64()) {
             AMD64Assembler asm = (AMD64Assembler) this.asm;
-//            if (callee.currentTargetMethod() == null) {
-                // Align unlinked bytecode call site for MT safe patching
-                final int alignment = 7;
-                final int callSitePosition = buf.position() + template.bytecodeCall.pos;
-                final int roundDownMask = ~alignment;
-                final int directCallInstructionLength = 5; // [0xE8] disp32
-                final int endOfCallSite = callSitePosition + (directCallInstructionLength - 1);
-                if ((callSitePosition & roundDownMask) != (endOfCallSite & roundDownMask)) {
-                    // Emit nops to align up to next 8-byte boundary
-                    asm.nop(8 - (callSitePosition & alignment));
-                }
-//            }
+            // Align bytecode call site for MT safe patching
+            final int alignment = 7;
+            final int callSitePosition = buf.position() + template.bytecodeCall.pos;
+            final int roundDownMask = ~alignment;
+            final int directCallInstructionLength = 5; // [0xE8] disp32
+            final int endOfCallSite = callSitePosition + (directCallInstructionLength - 1);
+            if ((callSitePosition & roundDownMask) != (endOfCallSite & roundDownMask)) {
+                // Emit nops to align up to next 8-byte boundary
+                asm.nop(8 - (callSitePosition & alignment));
+            }
         } else {
             unimplISA();
         }
