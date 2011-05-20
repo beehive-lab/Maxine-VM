@@ -95,16 +95,14 @@ public interface CompilationScheme extends VMScheme {
          * @return the compiled method
          */
         public static TargetMethod compile(ClassMethodActor classMethodActor) {
-            TargetMethod current;
-            Object targetState = classMethodActor.targetState;
-            if (targetState instanceof TargetMethod) {
+            TargetMethod currentTargetMethod = TargetState.currentTargetMethod(classMethodActor.targetState);
+            if (currentTargetMethod != null) {
                 // fast path: method is already compiled just once
-                current = (TargetMethod) targetState;
+                return currentTargetMethod;
             } else {
                 // slower path: method has not been compiled, or been compiled more than once
-                current = vmConfig().compilationScheme().synchronousCompile(classMethodActor);
+                return vmConfig().compilationScheme().synchronousCompile(classMethodActor);
             }
-            return current;
         }
 
         /**

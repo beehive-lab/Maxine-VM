@@ -48,6 +48,11 @@ public class VirtualMethodActor extends ClassMethodActor {
     @CONSTANT
     private int vTableIndex = INVALID_VTABLE_INDEX;
 
+    /**
+     * Gets the index of this method in the vtable of its holder's class hierarchy.
+     * A negative return value implies that this method in not an entry in any vtable.
+     * This is the case for private methods and constructors.
+     */
     @INLINE
     public final int vTableIndex() {
         return vTableIndex;

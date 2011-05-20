@@ -178,4 +178,9 @@ public final class AMD64TargetMethodUtil {
         stackFrameWalker.advance(callerIP, callerSP, callerFP, !targetMethod.is(TrapStub));
     }
 
+    public static Pointer returnAddressPointer(Cursor frame) {
+        TargetMethod targetMethod = frame.targetMethod();
+        Pointer sp = frame.sp();
+        return sp.plus(targetMethod.frameSize());
+    }
 }
