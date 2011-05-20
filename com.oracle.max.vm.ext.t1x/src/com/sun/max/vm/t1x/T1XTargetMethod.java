@@ -770,6 +770,16 @@ public final class T1XTargetMethod extends TargetMethod {
             unimplISA();
         }
     }
+
+    @Override
+    public Pointer returnAddressPointer(Cursor frame) {
+        if (isAMD64()) {
+            int dispToRip = frameSize() - sizeOfNonParameterLocals();
+            return frame.fp().plus(dispToRip);
+        } else {
+            throw unimplISA();
+        }
+    }
 }
 
 /**

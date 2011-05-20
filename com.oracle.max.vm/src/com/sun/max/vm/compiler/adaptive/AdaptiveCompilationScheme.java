@@ -262,6 +262,10 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                         // the method is currently being compiled, just wait for the result
                         doCompile = false;
                     }
+                } else if (targetState instanceof TargetMethod && ((TargetMethod) targetState).deoptInfo() != null) {
+                    // Deoptimized method must be replaced with a baseline compiled method
+                    compilation = new Compilation(this, baselineCompiler, classMethodActor, targetState, Thread.currentThread());
+                    classMethodActor.targetState = compilation;
                 } else {
                     // this method has already been compiled once
                     RuntimeCompiler compiler = retryCompiler == null ? selectCompiler(classMethodActor, classMethodActor.targetMethodCount() == 0) : retryCompiler;

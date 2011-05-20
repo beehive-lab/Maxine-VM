@@ -60,6 +60,15 @@ public class Stub extends TargetMethod {
     }
 
     @Override
+    public Pointer returnAddressPointer(Cursor frame) {
+        if (platform().isa == ISA.AMD64) {
+            return AMD64TargetMethodUtil.returnAddressPointer(frame);
+        } else {
+            throw FatalError.unimplemented();
+        }
+    }
+
+    @Override
     public void advance(Cursor current) {
         if (platform().isa == ISA.AMD64) {
             AMD64TargetMethodUtil.advance(current);

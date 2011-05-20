@@ -306,6 +306,12 @@ public class MaxXirGenerator implements RiXirGenerator {
             asm.stackOverflowCheck();
         }
 
+        XirLabel deoptHandler = asm.createOutOfLineLabel("deoptHandler");
+        asm.bindOutOfLine(deoptHandler);
+        asm.mark(C1XTargetMethod.DEOPT_HANDLER_MARK);
+        asm.callRuntime(CiRuntimeCall.Deoptimize, null);
+        asm.shouldNotReachHere();
+
         return new XirSnippet(finishTemplate(asm, "prologue"));
     }
 
@@ -1883,7 +1889,6 @@ public class MaxXirGenerator implements RiXirGenerator {
         public static Throwable loadException() {
             return VmThread.current().loadExceptionForHandler();
         }
-
     }
 
     @Override

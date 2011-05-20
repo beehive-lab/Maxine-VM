@@ -78,13 +78,8 @@ public final class AMD64TrapStateAccess extends TrapStateAccess {
     }
 
     @Override
-    public Pointer getPC(Pointer trapState) {
-        return trapState.readWord(vm().stubs.trapStub().frameSize()).asPointer();
-    }
-
-    @Override
-    public void setPC(Pointer trapState, Pointer value) {
-        trapState.writeWord(vm().stubs.trapStub().frameSize(), value);
+    public Pointer getPCPointer(Pointer trapState) {
+        return trapState.plus(vm().stubs.trapStub().frameSize());
     }
 
     @Override
