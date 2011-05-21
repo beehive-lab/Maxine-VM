@@ -24,13 +24,9 @@ package com.sun.max.vm.profile;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.heap.*;
-import com.sun.max.vm.object.*;
 
 /**
  * This class contains several utility methods for dealing with method instrumentation.
@@ -49,10 +45,7 @@ public class MethodInstrumentation {
 
     public static MethodProfile.Builder createMethodProfile(ClassMethodActor classMethodActor) {
         if (enabled) {
-            MethodProfile.Builder builder = new MethodProfile.Builder();
-            MethodProfile mpo = builder.methodProfileObject();
-            mpo.method = classMethodActor;
-            return builder;
+            return new MethodProfile.Builder();
         }
         return null;
     }
@@ -67,59 +60,16 @@ public class MethodInstrumentation {
         findAndIncrement(mpo, mpoIndex, entries, entrypoint.asOffset().toInt());
     }
 
-    @NEVER_INLINE
-    public static void recordLocation(MethodProfile mpo, int mpoIndex) {
-        int[] data = mpo.rawData();
-        if (false) {
-            // use checked array access
-            if (--data[mpoIndex] == 0) {
-                triggerRecompilation(mpo, null);
-            }
-        } else {
-            // use unchecked array access
-            Pointer ptr = ArrayAccess.elementPointer(data, mpoIndex);
-            int nval = ptr.getInt() - 1;
-            if (nval == 0) {
-                triggerRecompilation(mpo, null);
-            }
-            ptr.setInt(nval);
+    @INLINE
+    public static void recordEntrypoint(MethodProfile mpo, Object receiver) {
+        if (--mpo.entryCount <= 0) {
+            CompilationScheme.Static.instrumentationCounterOverflow(mpo, receiver);
         }
     }
 
     @INLINE
-    public static void recordEntrypoint(MethodProfile mpo, Object receiver) {
-        if (--mpo.entryCount <= 0) {
-            // In case the recompilation is not done immediately, we don't want to trigger it too soon again.
-            mpo.entryCount = 200;
-            triggerRecompilation(mpo, receiver);
-        }
-    }
-
-    private static void triggerRecompilation(MethodProfile mpo, Object receiver) {
-        if (Heap.isAllocationDisabledForCurrentThread()) {
-            if (VMOptions.verboseOption.verboseCompilation) {
-                Log.print("Stopped recompilation of ");
-                Log.printMethod(mpo.method, false);
-                Log.println(" because allocation is currently disabled");
-            }
-            return;
-        }
-        if (Compilation.isCompilationRunningInCurrentThread()) {
-            if (VMOptions.verboseOption.verboseCompilation) {
-                Log.print("Stopped recompilation of ");
-                Log.printMethod(mpo.method, false);
-                Log.println(" because compilation is running in current thread");
-            }
-            return;
-        }
-
-        synchronized (mpo) {
-            if (!mpo.triggered) {
-                // location count overflowed; call into instrumentation system
-                CompilationScheme.Static.instrumentationCounterOverflow(mpo, receiver);
-                mpo.triggered = true;
-            }
-        }
+    public static void recordBackwardBranch(MethodProfile mpo) {
+        mpo.entryCount--;
     }
 
     @INLINE

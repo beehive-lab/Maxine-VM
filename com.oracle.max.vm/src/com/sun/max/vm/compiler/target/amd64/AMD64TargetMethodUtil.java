@@ -80,6 +80,13 @@ public final class AMD64TargetMethodUtil {
 
     private static void fixupCode(TargetMethod targetMethod, int offset, Address target, int controlTransferOpcode) {
         final Pointer callSite = targetMethod.codeStart().plus(offset);
+        if (!isPatchableCallSite(callSite)) {
+            // Every call site that is fixed up here might also be patched later.  To avoid failed patching,
+            // check for alignment of call site also here.
+            // TODO(cwi): This is a check that I would like to have, however, T1X does not ensure proper alignment yet when it stiches together templates that contain calls.
+            // FatalError.unexpected(" invalid patchable call site:  " + targetMethod + "+" + offset + " " + callSite.toHexString());
+        }
+
         long displacement = target.minus(callSite.plus(DIRECT_METHOD_CALL_INSTRUCTION_LENGTH)).toLong();
         FatalError.check((int) displacement == displacement, "Code displacement out of 32-bit range");
         displacement = displacement & 0xFFFFFFFFL;

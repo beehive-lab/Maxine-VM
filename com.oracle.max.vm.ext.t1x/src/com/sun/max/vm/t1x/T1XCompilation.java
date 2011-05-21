@@ -347,10 +347,7 @@ public class T1XCompilation {
         patchInfo.reset();
         adapter = null;
         stops.reset(false);
-        if (methodProfileBuilder != null) {
-            methodProfileBuilder.finish();
-            methodProfileBuilder = null;
-        }
+        methodProfileBuilder = null;
     }
 
     void emitProfileMethodEntry() {
@@ -799,6 +796,14 @@ public class T1XCompilation {
         int bci = stream.currentBCI();
         startBlock(targetBCI);
         beginBytecode(tag.opcode);
+
+        if (bci >= targetBCI && methodProfileBuilder != null) {
+            // Profiling of backward branches.
+            assignReferenceLiteralTemplateArgument(0, methodProfileBuilder.methodProfileObject());
+            T1XTemplate template = getTemplate(PROFILE_BACKWARD_BRANCH);
+            emitAndRecordStops(template);
+        }
+
         if (ccObj != null) {
             T1XTemplate template = getTemplate(tag);
             emitAndRecordStops(template);
