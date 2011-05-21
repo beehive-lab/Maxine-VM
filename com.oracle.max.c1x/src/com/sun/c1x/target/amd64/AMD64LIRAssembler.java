@@ -1358,18 +1358,6 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void emitCallAlignment(LIROpcode code) {
-        if (C1XOptions.AlignCallsForPatching) {
-            // make sure that the displacement word of the call ends up word aligned
-            int offset = masm.codeBuffer.position();
-            offset += compilation.target.arch.machineCodeCallDisplacementOffset;
-            while (offset++ % wordSize != 0) {
-                masm.nop();
-            }
-        }
-    }
-
-    @Override
     protected void emitIndirectCall(Object target, LIRDebugInfo info, CiValue callAddress) {
         CiRegister reg = rscratch1;
         if (callAddress.isRegister()) {
@@ -2186,6 +2174,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     }
 
     public void directCall(Object target, LIRDebugInfo info) {
+        masm.alignCall();
         int before = masm.codeBuffer.position();
         masm.call();
         int after = masm.codeBuffer.position();

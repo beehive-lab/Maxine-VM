@@ -308,23 +308,10 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             AMD64Assembler asm = out instanceof OutputStream ? new AMD64Assembler(target(), null) : (AMD64Assembler) out;
 
             if (adapter == null) {
-                asm.nop();
-                asm.nop();
-                asm.nop();
-                asm.nop();
-                asm.nop();
-                asm.nop();
-                asm.nop();
-                asm.nop();
+                asm.nop(PROLOGUE_SIZE);
             } else {
-
-                // This instruction is 5 bytes long
                 asm.call();
-
-                // Pad with 3 bytes to yield an 8-byte long prologue,
-                asm.nop();
-                asm.nop();
-                asm.nop();
+                asm.align(PROLOGUE_SIZE);
             }
             int size = asm.codeBuffer.position();
             assert size == PROLOGUE_SIZE;
@@ -609,8 +596,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
         protected int emitPrologue(Object out, Adapter adapter) {
             AMD64Assembler asm = out instanceof OutputStream ? new AMD64Assembler(target(), null) : (AMD64Assembler) out;
             if (adapter == null) {
-                asm.nop();
-                asm.align(OPTIMIZED_ENTRY_POINT.offset());
+                asm.nop(OPTIMIZED_ENTRY_POINT.offset());
                 assert asm.codeBuffer.position() == PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE;
                 copyIfOutputStream(asm.codeBuffer, out);
                 return PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE;

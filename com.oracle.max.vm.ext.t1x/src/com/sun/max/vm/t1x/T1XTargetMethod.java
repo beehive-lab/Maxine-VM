@@ -154,6 +154,7 @@ public final class T1XTargetMethod extends TargetMethod {
         handlers = initHandlers(comp);
 
         if (comp.methodProfileBuilder != null) {
+            comp.methodProfileBuilder.finish(this);
             profile = comp.methodProfileBuilder.methodProfileObject();
         } else {
             profile = null;

@@ -224,6 +224,7 @@ public class Stubs {
             // load the return address into the third arg register
             asm.movq(args[2].asRegister(), new CiAddress(CiKind.Word, AMD64.rsp.asValue(), frameSize));
 
+            asm.alignCall();
             int callPosition = asm.codeBuffer.position();
             ClassMethodActor callee = isInterface ? resolveInterfaceCall.classMethodActor : resolveVirtualCall.classMethodActor;
             asm.call();
@@ -302,6 +303,7 @@ public class Stubs {
             // load the static trampoline call site into the first parameter register
             asm.movq(locations[0].asRegister(), callSite);
 
+            asm.alignCall();
             int callPosition = asm.codeBuffer.position();
             ClassMethodActor callee = patchStaticTrampoline.classMethodActor;
             asm.call();
@@ -390,6 +392,7 @@ public class Stubs {
             // load the fault address from the thread locals into the third parameter register
             asm.movq(args[2].asRegister(), new CiAddress(CiKind.Word, latch.asValue(), TRAP_FAULT_ADDRESS.offset));
 
+            asm.alignCall();
             int callPosition = asm.codeBuffer.position();
             ClassMethodActor callee = Trap.handleTrap.classMethodActor;
             asm.call();
