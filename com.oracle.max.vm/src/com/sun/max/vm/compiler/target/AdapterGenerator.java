@@ -239,15 +239,19 @@ public abstract class AdapterGenerator {
             Adapter adapter = adapters.get(sig);
             if (adapter == null) {
                 if (verboseOption.verboseCompilation) {
+                    boolean lockDisabledSafepoints = Log.lock();
                     Log.printCurrentThread(false);
                     Log.print(": Creating adapter ");
                     Log.println(sig);
+                    Log.unlock(lockDisabledSafepoints);
                 }
                 adapter = create(sig);
                 if (verboseOption.verboseCompilation) {
+                    boolean lockDisabledSafepoints = Log.lock();
                     Log.printCurrentThread(false);
                     Log.print(": Created adapter  ");
                     Log.println(adapter.regionName());
+                    Log.unlock(lockDisabledSafepoints);
                 }
                 adapters.put(sig, adapter);
             }

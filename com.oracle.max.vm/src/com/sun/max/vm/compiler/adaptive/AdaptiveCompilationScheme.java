@@ -283,8 +283,12 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 classMethodActor.targetState = null;
                 String errorMessage = "Compilation of " + classMethodActor + " by " + compilation.compiler + " failed";
                 if (VMOptions.verboseOption.verboseCompilation) {
+                    boolean lockDisabledSafepoints = Log.lock();
+                    Log.printCurrentThread(false);
+                    Log.print(": ");
                     Log.println(errorMessage);
                     t.printStackTrace(Log.out);
+                    Log.unlock(lockDisabledSafepoints);
                 }
                 if (!FailOverCompilation || retryCompiler != null || (optimizingCompiler == baselineCompiler)) {
                     // This is the final failure: no other compilers available or failover is disabled
@@ -296,7 +300,10 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                     retryCompiler = optimizingCompiler;
                 }
                 if (VMOptions.verboseOption.verboseCompilation) {
-                    Log.println("Retrying with " + retryCompiler + "...");
+                    boolean lockDisabledSafepoints = Log.lock();
+                    Log.printCurrentThread(false);
+                    Log.println(": Retrying with " + retryCompiler + "...");
+                    Log.unlock(lockDisabledSafepoints);
                 }
             }
         }

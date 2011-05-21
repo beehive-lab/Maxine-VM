@@ -264,11 +264,13 @@ public class Compilation /*implements Future<TargetMethod>*/ {
 
     private void logCompilationError(Throwable error, RuntimeCompiler compiler, String methodString) {
         if (verboseOption.verboseCompilation) {
+            boolean lockDisabledSafepoints = Log.lock();
             Log.printCurrentThread(false);
             Log.print(": ");
             Log.print(compiler.getClass().getSimpleName());
             Log.print(": Failed ");
             Log.println(methodString);
+            Log.unlock(lockDisabledSafepoints);
         }
         if (error instanceof Error) {
             throw (Error) error;
@@ -280,17 +282,20 @@ public class Compilation /*implements Future<TargetMethod>*/ {
         String methodString = null;
         if (verboseOption.verboseCompilation) {
             methodString = classMethodActor.format("%H.%n(%p)");
+            boolean lockDisabledSafepoints = Log.lock();
             Log.printCurrentThread(false);
             Log.print(": ");
             Log.print(compiler.getClass().getSimpleName());
             Log.print(previousTargetState == null ? ": Compiling " : ": Recompiling ");
             Log.println(methodString);
+            Log.unlock(lockDisabledSafepoints);
         }
         return methodString;
     }
 
     private void logAfterCompilation(RuntimeCompiler compiler, TargetMethod targetMethod, String methodString) {
         if (verboseOption.verboseCompilation) {
+            boolean lockDisabledSafepoints = Log.lock();
             Log.printCurrentThread(false);
             Log.print(": ");
             Log.print(compiler.getClass().getSimpleName());
@@ -301,6 +306,7 @@ public class Compilation /*implements Future<TargetMethod>*/ {
             Log.print(", size = ");
             Log.print(targetMethod.codeLength());
             Log.println();
+            Log.unlock(lockDisabledSafepoints);
         }
     }
 }
