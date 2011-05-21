@@ -33,7 +33,7 @@ import java.util.*;
 
 import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.amd64.*;
-import com.oracle.max.asm.target.amd64.AMD64Assembler.*;
+import com.oracle.max.asm.target.amd64.AMD64Assembler.ConditionFlag;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.bytecode.Bytecodes.MemoryBarriers;
 import com.sun.cri.ci.*;

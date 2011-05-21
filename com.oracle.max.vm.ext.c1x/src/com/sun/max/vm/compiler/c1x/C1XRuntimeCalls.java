@@ -27,7 +27,6 @@ import static com.sun.max.vm.VMConfiguration.*;
 import java.lang.annotation.*;
 import java.lang.reflect.*;
 
-import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
@@ -188,7 +187,7 @@ public class C1XRuntimeCalls {
 
     @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.Deoptimize)
     public static void deoptimize() {
-        throw Util.unimplemented();
+        throw FatalError.unimplemented();
     }
 
     private static void registerMethod(Method selectedMethod, CiRuntimeCall call) {

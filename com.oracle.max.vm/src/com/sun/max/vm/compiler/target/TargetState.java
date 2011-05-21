@@ -28,7 +28,7 @@ import com.sun.max.vm.actor.member.*;
 
 /**
  * This class implements utility functions for transitioning a {@link ClassMethodActor}
- * from one target state to another as a result of compilation.
+ * from one target state to another as a result of compilation and deoptimization.
  */
 public class TargetState {
     private static final TargetMethod[] NOT_COMPILED = {};
@@ -50,7 +50,20 @@ public class TargetState {
         return 0;
     }
 
+    /**
+     * Gets the compiled code represented by a given target state object.
+     * Note that this will never return an invalidated target method.
+     */
     public static TargetMethod currentTargetMethod(Object targetState) {
+        TargetMethod result = currentTargetMethod0(targetState);
+        if (result != null && result.deoptInfo() != null) {
+            // Never expose an invalidated target method
+            return null;
+        }
+        return result;
+    }
+
+    private static TargetMethod currentTargetMethod0(Object targetState) {
         if (targetState == null) {
             // not compiled yet
             return null;

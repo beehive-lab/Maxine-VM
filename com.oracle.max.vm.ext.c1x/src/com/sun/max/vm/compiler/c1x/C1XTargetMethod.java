@@ -38,6 +38,7 @@ import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
 import com.sun.cri.ci.CiTargetMethod.DataPatch;
 import com.sun.cri.ci.CiTargetMethod.ExceptionHandler;
 import com.sun.cri.ci.CiTargetMethod.JumpTable;
+import com.sun.cri.ci.CiTargetMethod.Mark;
 import com.sun.cri.ci.CiTargetMethod.Site;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
@@ -114,8 +115,20 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
 
     private final CodeAnnotation[] annotations;
 
+    /**
+     * @see #deoptHandlerOffset()
+     */
+    private int deoptHandlerOffset;
+
+    /**
+     * @see #deoptReturnAddressOffset()
+     */
+    private int deoptReturnAddressOffset;
+
     @HOSTED_ONLY
     private CiTargetMethod bootstrappingCiTargetMethod;
+
+    public static final Object DEOPT_HANDLER_MARK = "DEOPT_HANDLER";
 
     public C1XTargetMethod(ClassMethodActor classMethodActor, CiTargetMethod ciTargetMethod, boolean install) {
         super(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
@@ -149,6 +162,15 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
             // Save the target method for later gathering of calls and duplication
             this.bootstrappingCiTargetMethod = ciTargetMethod;
         }
+
+        for (Mark mark : ciTargetMethod.marks) {
+            if (mark.id == DEOPT_HANDLER_MARK) {
+                deoptHandlerOffset = mark.pcOffset;
+            } else {
+                FatalError.unexpected("Unknown mark in code generated for " + this + ": " + mark);
+            }
+        }
+        deoptReturnAddressOffset = ciTargetMethod.customStackAreaOffset();
 
         initCodeBuffer(ciTargetMethod, install);
         initFrameLayout(ciTargetMethod);
@@ -226,6 +248,16 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
      */
     public int totalRefMapSize() {
         return regRefMapSize() + frameRefMapSize();
+    }
+
+    @Override
+    public int deoptHandlerOffset() {
+        return deoptHandlerOffset;
+    }
+
+    @Override
+    public int deoptReturnAddressOffset() {
+        return deoptReturnAddressOffset;
     }
 
     private void initCodeBuffer(CiTargetMethod ciTargetMethod, boolean install) {
@@ -953,6 +985,15 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
     public void advance(Cursor current) {
         if (platform().isa == ISA.AMD64) {
             AMD64TargetMethodUtil.advance(current);
+        } else {
+            throw FatalError.unimplemented();
+        }
+    }
+
+    @Override
+    public Pointer returnAddressPointer(Cursor frame) {
+        if (platform().isa == ISA.AMD64) {
+            return AMD64TargetMethodUtil.returnAddressPointer(frame);
         } else {
             throw FatalError.unimplemented();
         }

@@ -134,6 +134,18 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             }
 
             @Override
+            public Pointer returnAddressPointer(Cursor frame) {
+                int ripAdjustment = frameSize();
+                if (MaxineVM.isHosted()) {
+                    // Inspector context only
+                    int state = computeFrameState(frame);
+                    ripAdjustment = state & ~1;
+                }
+
+                return frame.sp().plus(ripAdjustment);
+            }
+
+            @Override
             public void advance(Cursor current) {
                 StackFrameWalker stackFrameWalker = current.stackFrameWalker();
                 int ripAdjustment = frameSize();
@@ -495,6 +507,12 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
                     }
                 }
                 return ripAdjustment;
+            }
+
+            @Override
+            public Pointer returnAddressPointer(Cursor frame) {
+                int ripAdjustment = MaxineVM.isHosted() ? computeRipAdjustment(frame) : Word.size();
+                return frame.sp().plus(ripAdjustment);
             }
 
             @Override
