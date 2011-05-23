@@ -30,6 +30,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
+
 import static com.sun.max.vm.heap.gcx.HeapRegionInfo.*;
 /**
  * A region-based, flat, mark-sweep heap, with bump pointer allocation only.
@@ -494,7 +495,7 @@ public final class FirstFitMarkSweepHeap extends Sweepable implements HeapAccoun
     @Override
     public boolean contains(Address address) {
         final HeapRegionInfo regionInfo = fromAddress(address);
-        return regionInfo != null && regionInfo.owner() == this;
+        return regionInfo.owner() == this;
     }
 
     @Override
@@ -533,7 +534,7 @@ public final class FirstFitMarkSweepHeap extends Sweepable implements HeapAccoun
         // All regions must be in the full list, sorted
         // regionsRangeIterable.initialize(fullRegions);
         regionsRangeIterable.reset();
-        heapMarker.markAll(regionsRangeIterable, HeapRegionConstants.log2RegionSizeInBytes);
+        heapMarker.markAll(regionsRangeIterable);
     }
 
     @Override
@@ -556,8 +557,9 @@ public final class FirstFitMarkSweepHeap extends Sweepable implements HeapAccoun
 
     @Override
     public void beginSweep() {
-        // make all region empty again.
+        FatalError.unimplemented();
         // TODO
+        // make all region empty again.
     }
 
     @Override

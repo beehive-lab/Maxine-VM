@@ -94,8 +94,8 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
 
     @HOSTED_ONLY
     public MSEHeapScheme() {
-        heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT);
         theHeap = new FirstFitMarkSweepHeap();
+        heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT, new HeapAccounRootCellVisitor(theHeap));
         afterGCVerifier = new AfterMarkSweepVerifier(heapMarker, theHeap);
     }
 
@@ -197,7 +197,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
         } finally {
             disableCustomAllocation();
         }
-        theHeapRegionManager().verifyAfterInitialization();
+        theHeapRegionManager().verifyAfterInitialization(heapMarker);
     }
 
     @Override

@@ -319,9 +319,11 @@ public final class HeapRegionManager implements HeapAccountOwner {
         }
     }
 
-    public void verifyAfterInitialization() {
+    public void verifyAfterInitialization(TricolorHeapMarker heapMarker) {
         HeapRegionConstants.validate();
         checkOutgoingReferences();
+        FatalError.check(HeapRegionConstants.log2RegionSizeInBytes >= heapMarker.log2BitmapWord, "Region size too small for heap marker");
+
     }
 }
 

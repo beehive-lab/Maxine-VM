@@ -102,7 +102,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
     @HOSTED_ONLY
     public MSHeapScheme() {
-        heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT);
+        heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT, new ContiguousHeapRootCellVisitor());
         objectSpace = new FreeHeapSpaceManager();
         largeObjectSpace = new LargeObjectSpace();
         afterGCVerifier = new AfterMarkSweepVerifier(heapMarker, objectSpace);

@@ -45,6 +45,8 @@ import com.sun.max.vm.runtime.*;
  * the heap space.
  */
 public final class RegionTable {
+    public static final HeapRegionInfo nullHeapRegionInfo = new HeapRegionInfo();
+
     static final int TableOffset = ClassActor.fromJava(RegionTable.class).dynamicTupleSize().toInt();
 
     @CONSTANT_WHEN_NOT_ZERO
@@ -116,6 +118,13 @@ public final class RegionTable {
     }
 
     HeapRegionInfo regionInfo(Address addr) {
+        if (!isInHeapRegion(addr)) {
+            return nullHeapRegionInfo;
+        }
+        return regionInfo(regionID(addr));
+    }
+
+    HeapRegionInfo regionInfoOrNull(Address addr) {
         if (!isInHeapRegion(addr)) {
             return null;
         }
