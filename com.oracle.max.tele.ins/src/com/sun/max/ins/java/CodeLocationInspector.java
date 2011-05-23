@@ -34,6 +34,7 @@ import com.sun.max.ins.view.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 
@@ -113,17 +114,17 @@ public final class CodeLocationInspector extends Inspector<CodeLocationInspector
         final StringBuilder sb = new StringBuilder(viewManager.shortName() + ": ");
         if (codeLocation == null) {
             sb.append("<none>");
-        } else {
-            if (codeLocation.hasAddress()) {
-                sb.append(codeLocation.address().to0xHexString());
-                sb.append(" ");
+        } else if (codeLocation.hasTeleClassMethodActor()) {
+            final TeleClassMethodActor teleClassMethodActor = codeLocation.teleClassMethodActor();
+            sb.append(teleClassMethodActor.classMethodActor().holder().simpleName()).append(".");
+            sb.append(inspection().nameDisplay().veryShortName(teleClassMethodActor));
+        } else if (codeLocation.hasAddress()) {
+            MaxExternalCode externalCode = vm().codeCache().findExternalCode(codeLocation.address());
+            if (externalCode == null) {
+                sb.append("<native>");
+            } else {
+                sb.append(externalCode.entityName());
             }
-            if (compiledCode != null) {
-                sb.append(inspection().nameDisplay().extremelyShortName(compiledCode));
-            } else if (codeLocation.hasTeleClassMethodActor()) {
-                sb.append(inspection().nameDisplay().veryShortName(codeLocation.teleClassMethodActor()));
-            }
-            sb.append(" bci=").append(codeLocation.bci());
         }
         return sb.toString();
     }
@@ -133,7 +134,7 @@ public final class CodeLocationInspector extends Inspector<CodeLocationInspector
         if (codeLocation == null) {
             setContentPane(nullPanel);
         } else if (frames == null) {
-            simplePanelLabel.setText(inspection().nameDisplay().longName(codeLocation));
+            simplePanelLabel.setText(inspection().nameDisplay().shortName(codeLocation));
             setContentPane(simplePanel);
         } else {
             final JPanel panel = new InspectorPanel(inspection());
