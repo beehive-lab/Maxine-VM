@@ -139,6 +139,20 @@ public final class RegionTable {
         return regionAddress(regionID(regionInfo));
     }
 
+
+    /**
+     * Apply CellVisitor over all references within a region range.
+     * @param regionRange
+     * @param cellVisitor
+     */
+    void walk(RegionRange regionRange, CellVisitor cellVisitor) {
+        Pointer p = regionAddress(regionRange.firstRegion()).asPointer();
+        final Pointer end = p.plus(regionRange.numRegions()  << log2RegionSizeInBytes);
+        while (p.lessThan(end)) {
+            p = cellVisitor.visitCell(p);
+        }
+    }
+
     HeapRegionInfo next(HeapRegionInfo regionInfo) {
         return toHeapRegionInfo(Reference.fromJava(regionInfo).toOrigin().plus(regionInfoSize));
     }
