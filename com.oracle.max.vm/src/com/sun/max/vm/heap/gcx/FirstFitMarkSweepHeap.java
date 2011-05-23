@@ -531,10 +531,9 @@ public final class FirstFitMarkSweepHeap extends Sweepable implements HeapAccoun
     }
 
     public void mark(TricolorHeapMarker heapMarker) {
-        // All regions must be in the full list, sorted
-        // regionsRangeIterable.initialize(fullRegions);
-        regionsRangeIterable.reset();
-        heapMarker.markAll(regionsRangeIterable);
+        HeapRegionRangeIterable allRegions = heapAccount.allocatedRegions();
+        allRegions.reset();
+        heapMarker.markAll(allRegions);
     }
 
     @Override
