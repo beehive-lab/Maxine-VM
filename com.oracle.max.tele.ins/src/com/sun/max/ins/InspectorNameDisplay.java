@@ -345,7 +345,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
 
 
     /**
-     * E.g. "foo(Pointer, Word, int[])"
+     * E.g. "foo()"
      */
     public String veryShortName(TeleClassMethodActor teleClassMethodActor) {
         final ClassMethodActor classMethodActor = teleClassMethodActor.classMethodActor();
@@ -421,9 +421,22 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         return name.toString();
     }
 
+    /**
+     * E.g. "foo() in com.sun.max.ins.Bar"
+     */
+    public String shortName(MethodKey key) {
+        final StringBuilder name = new StringBuilder();
+        name.append(key.name()).append(key.signature().toJavaString(false, false));
+        name.append(" in ").append(key.holder().toJavaString());
+        return name.toString();
+    }
+
+    /**
+     * E.g. "MachineCode{0x11111111, int foo(int, int)[0]+0x235 in com.sun.Example, bci=-1}.
+     */
     public String longName(MaxCodeLocation codeLocation) {
         if (codeLocation == null) {
-            return "null";
+            return unavailableDataShortText();
         }
         final StringBuilder name = new StringBuilder();
         if (codeLocation.hasAddress()) {
@@ -437,12 +450,45 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
                 if (compiledCode != null) {
                     name.append(",  ").append(longName(compiledCode, address));
                 }
+                if (codeLocation.hasTeleClassMethodActor()) {
+                    name.append(", bci=").append(codeLocation.bci());
+                } else if (codeLocation.methodKey() != null) {
+                    name.append(", MethodKey=").append(longName(codeLocation.methodKey()));
+                }
+                name.append("}");
             }
-        }
-        if (codeLocation.hasTeleClassMethodActor()) {
-            name.append(", bci=").append(codeLocation.bci());
+        } else if (codeLocation.hasTeleClassMethodActor()) {
+            name.append(longName(codeLocation.teleClassMethodActor())).append(", bci=").append(codeLocation.bci());
         } else if (codeLocation.methodKey() != null) {
-            name.append(", MethodKey=").append(longName(codeLocation.methodKey()));
+            name.append("MethodKey=").append(longName(codeLocation.methodKey()));
+        }
+        return name.toString();
+    }
+
+    /**
+     * E.g. "0x11111111 foo()[0] com.sun.Example bci=-1}.
+     */
+    public String shortName(MaxCodeLocation codeLocation) {
+        if (codeLocation == null) {
+            return unavailableDataShortText();
+        }
+        final StringBuilder name = new StringBuilder();
+        if (codeLocation.hasAddress()) {
+            final Address address = codeLocation.address();
+            name.append(address.to0xHexString()).append(" ");
+            final MaxCompiledCode compiledCode = vm().codeCache().findCompiledCode(address);
+            if (compiledCode != null) {
+                name.append(extremelyShortName(compiledCode)).append(" ");
+            }
+            if (codeLocation.hasTeleClassMethodActor()) {
+                name.append(" bci=").append(codeLocation.bci());
+            } else if (codeLocation.methodKey() != null) {
+                name.append(shortName(codeLocation.methodKey()));
+            }
+        } else if (codeLocation.hasTeleClassMethodActor()) {
+            name.append(veryShortName(codeLocation.teleClassMethodActor())).append(" bci=").append(codeLocation.bci());
+        } else if (codeLocation.methodKey() != null) {
+            name.append(shortName(codeLocation.methodKey()));
         }
         return name.toString();
     }
