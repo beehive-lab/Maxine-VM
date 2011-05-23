@@ -1007,7 +1007,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
         public void visitGreyObjects(HeapRegionRangeIterable regionsRanges) {
             final int log2RegionToBitmapWord = HeapRegionConstants.log2RegionSizeInBytes - heapMarker.log2BitmapWord;
-            FatalError.check(HeapRegionConstants.log2RegionSizeInBytes >= heapMarker.log2BitmapWord, "Region size too small for heap marker");
 
             while (regionsRanges.hasNext()) {
                 final int fingerBitmapWordIndex = heapMarker.bitmapWordIndex(finger);
