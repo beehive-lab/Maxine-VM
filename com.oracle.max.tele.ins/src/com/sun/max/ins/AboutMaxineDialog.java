@@ -41,12 +41,12 @@ public final class AboutMaxineDialog extends SimpleDialog {
         "\n" +
         "The Maxine Project at Oracle Labs (<" + MaxineVM.HOME_URL + ">):\n" +
         "     Doug Simon, Principal Investigator\n" +
-        "     Laurent Daynes\n" +
+        "     Laurent Dayn\u00E8s\n" +
         "     Michael Haupt\n" +
         "     Mick Jordan\n" +
         "     Michael Van De Vanter\n" +
         "     Christian Wimmer\n" +
-        "     Thomas Wuerthinger\n" +
+        "     Thomas W\u00FCrthinger\n" +
         "\n";
 
     private static final JTextArea textArea = new JTextArea(aboutString);
