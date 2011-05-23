@@ -84,14 +84,14 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
     /**
      * Space where objects are allocated from by default.
-     * Implements the {@link Sweepable} interface to be notified by a sweeper of
+     * Implements the {@link Sweeper} interface to be notified by a sweeper of
      * free space.
      */
     final FreeHeapSpaceManager objectSpace;
 
     /**
      * Space where large object are allocated from if {@link MSHeapScheme#UseLOS} is true.
-     * Implements the {@link Sweepable} interface to be notified by a sweeper of
+     * Implements the {@link Sweeper} interface to be notified by a sweeper of
      * free space.
      */
     final LargeObjectSpace largeObjectSpace;

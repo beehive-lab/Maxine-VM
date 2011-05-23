@@ -366,7 +366,8 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
             theHeap.makeParsable();
             theHeap.mark(heapMarker);
             startTimer(reclaimTimer);
-            /*Size freeSpaceAfterGC = */theHeap.sweep(heapMarker);
+            /*Size freeSpaceAfterGC = */
+            theHeap.sweep(heapMarker);
             stopTimer(reclaimTimer);
             if (VerifyAfterGC) {
                 afterGCVerifier.run();

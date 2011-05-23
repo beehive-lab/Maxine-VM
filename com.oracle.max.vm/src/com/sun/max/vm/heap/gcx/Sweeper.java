@@ -36,15 +36,15 @@ import com.sun.max.vm.MaxineVM.Phase;
  * distance, thus avoiding inspecting object when the size of a potential free chunk is
  * too small to be of interest to the free space manager.
  */
-public abstract class Sweepable {
+public abstract class Sweeper {
 
     public static boolean DoImpreciseSweep = true;
     static boolean TraceSweep;
 
     static {
-        VMOptions.addFieldOption("-XX:", "DoImpreciseSweep", Sweepable.class, "Use an imprecise sweeping phase", Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "DoImpreciseSweep", Sweeper.class, "Use an imprecise sweeping phase", Phase.PRISTINE);
         if (MaxineVM.isDebug()) {
-            VMOptions.addFieldOption("-XX:", "TraceSweep", Sweepable.class, "Trace heap sweep operations", Phase.PRISTINE);
+            VMOptions.addFieldOption("-XX:", "TraceSweep", Sweeper.class, "Trace heap sweep operations", Phase.PRISTINE);
         }
     }
 
@@ -93,12 +93,6 @@ public abstract class Sweepable {
      * @return total free spaces
      */
     public abstract Size endSweep();
-
-
-    /**
-     * @param verifier
-     */
-    public abstract void verify(AfterMarkSweepVerifier verifier);
 
     /**
      * Minimum size to be considered reclaimable.
