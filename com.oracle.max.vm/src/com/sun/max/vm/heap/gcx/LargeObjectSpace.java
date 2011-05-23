@@ -62,7 +62,7 @@ import com.sun.max.vm.runtime.*;
  * to other garbage collected space with evacuation support
  * TODO: enable downward growth and allocation (i.e., from high to low addresses).
  */
-public class LargeObjectSpace extends Sweepable {
+public class LargeObjectSpace extends Sweeper implements MarkSweepVerification {
 
     protected static final int MIN_LARGE_OBJECT_SIZE = Size.K.times(4).toInt();
     protected static final int BLOCK_SIZE = Size.K.times(2).toInt();
@@ -495,7 +495,6 @@ public class LargeObjectSpace extends Sweepable {
         return endOfLastProcessedChunk.asPointer();
     }
 
-    @Override
     public void verify(AfterMarkSweepVerifier verifier) {
         FatalError.unimplemented();
     }
