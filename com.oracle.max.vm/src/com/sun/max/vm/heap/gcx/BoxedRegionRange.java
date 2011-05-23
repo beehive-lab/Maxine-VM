@@ -43,7 +43,7 @@ public final class BoxedRegionRange extends RegionRange implements Boxed {
 
     public static BoxedRegionRange from(int regionID, int numRegions) {
         long encodedRange = regionID;
-        encodedRange = (encodedRange << REGION_ID_WIDTH) | numRegions;
+        encodedRange = (encodedRange << REGION_ID_SHIFT) | numRegions;
         return new BoxedRegionRange(encodedRange);
     }
 
