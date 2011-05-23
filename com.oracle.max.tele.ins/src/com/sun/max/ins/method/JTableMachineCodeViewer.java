@@ -545,7 +545,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
             super(inspection, "");
         }
 
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        public Component getTableCellRendererComponent(JTable table, Object ignore, boolean isSelected, boolean hasFocus, int row, int column) {
             setValue(row);
             setToolTipText(tableModel.getRowDescription(row));
             setBackgroundForRow(this, row);
@@ -565,6 +565,9 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            if (value == null) {
+                return gui().getUnavailableDataTableCellRenderer();
+            }
             final Address address = (Address) value;
             setToolTipPrefix(tableModel.getRowDescription(row) + " location<br>address= ");
             setValue(address.minus(entryAddress).asSize().toInt());
@@ -584,6 +587,9 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            if (value == null) {
+                return gui().getUnavailableDataTableCellRenderer();
+            }
             final Integer position = (Integer) value;
             if (this.position != position) {
                 this.position = position;
@@ -605,8 +611,9 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            final String label = (String) value;
             final Integer position = (Integer) tableModel.getValueAt(row, MachineCodeColumnKind.POSITION.ordinal());
-            setLocation(value.toString(), position);
+            setLocation(label, position);
             setWrappedToolTipText(tableModel.getRowDescription(row));
             setFont(style().defaultFont());
             setBackgroundForRow(this, row);
@@ -631,13 +638,13 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            if (value == null) {
+                return gui().getUnavailableDataTableCellRenderer();
+            }
+            final String mnemonic = (String) value;
             setBackgroundForRow(this, row);
             setForeground(cellForegroundColor(row, column));
-            if (value == null) {
-                setText(inspection().nameDisplay().unavailableDataShortText());
-            } else {
-                setText(value.toString());
-            }
+            setText(mnemonic);
             setWrappedToolTipText(tableModel.getRowDescription(row) + "<br>ISA = " + isa.name());
             setBorderForRow(this, row);
             return this;
@@ -740,7 +747,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
             return text;
         }
 
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        public Component getTableCellRendererComponent(JTable table, Object ignore, boolean isSelected, boolean hasFocus, int row, int column) {
             final CiFrame frame = instructionMap().bytecodeFrames(row);
             setText("");
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
@@ -839,10 +846,14 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            if (value == null) {
+                return gui().getUnavailableDataTableCellRenderer();
+            }
+            final byte[] bytes = (byte[]) value;
             setBackgroundForRow(this, row);
             setForeground(cellForegroundColor(row, column));
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>as bytes = ");
-            setValue((byte[]) value);
+            setValue(bytes);
             setBorderForRow(this, row);
             return this;
         }
