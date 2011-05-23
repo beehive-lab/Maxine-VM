@@ -137,14 +137,13 @@ public final class CodeLocationInspector extends Inspector<CodeLocationInspector
             simplePanelLabel.setText(inspection().nameDisplay().shortName(codeLocation));
             setContentPane(simplePanel);
         } else {
-            final JPanel panel = new InspectorPanel(inspection());
-            panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+            final JPanel panel = new InspectorPanel(inspection(), new GridLayout(0, 1));
             CiFrame frame = frames;
             do {
                 panel.add(createFramePanel(frame), 0);
                 frame = frame.caller();
             } while (frame != null);
-            setContentPane(panel);
+            setContentPane(new InspectorScrollPane(inspection(), panel));
         }
         setTitle();
     }
@@ -168,27 +167,26 @@ public final class CodeLocationInspector extends Inspector<CodeLocationInspector
     }
 
     private String shortString(CiCodePos codePos) {
-        return codePos.method.name() + " @ " + codePos.bci;
+        return codePos.method.name() + "() bci=" + codePos.bci;
     }
 
     private JPanel createFramePanel(CiFrame frame) {
-        final JPanel panel = new InspectorPanel(inspection());
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        final JPanel panel = new InspectorPanel(inspection(), new FlowLayout(FlowLayout.LEADING));
 
         final CiCodePos codePos = frame;
-        final TextLabel bytecodeLocationLabel = new TextLabel(inspection(), shortString(codePos));
+        final PlainLabel bytecodeLocationLabel = new PlainLabel(inspection(), shortString(codePos));
         bytecodeLocationLabel.setToolTipText(codePos.toString());
         panel.add(bytecodeLocationLabel);
 
         ClassMethodActor method = (ClassMethodActor) codePos.method;
-        final String sourceFileName = method.holder().sourceFileName;
+        String sourceFileName = method.holder().sourceFileName;
         final int lineNumber = method.sourceLineNumber(codePos.bci);
         if (sourceFileName != null || lineNumber >= 0) {
-            String source = (sourceFileName == null) ? "?" : sourceFileName;
-            if (lineNumber >= 0) {
-                source += " : " + lineNumber;
+            if (sourceFileName == null) {
+                sourceFileName = inspection().nameDisplay().unavailableDataShortText();
             }
-            final TextLabel sourceLocationLabel = new TextLabel(inspection(), source);
+            final String labelText = lineNumber >= 0 ? String.valueOf(lineNumber) : inspection().nameDisplay().unavailableDataShortText();
+            final PlainLabel sourceLocationLabel = new PlainLabel(inspection(), " line=" + labelText);
             sourceLocationLabel.setToolTipText(sourceFileName);
             sourceLocationLabel.addMouseListener(new MouseAdapter() {
                 @Override
