@@ -26,8 +26,6 @@ package com.sun.max.jdwp.vm.data;
  * This class represents a set of registers. Each register is uniquely identified by a String name. The register names are stored in a String array.
  * The register value of each register is at the corresponding position in the register value array. A register value is always represented as a long.
  *
- * @author Thomas Wuerthinger
- *
  */
 public class Registers extends AbstractSerializableObject {
 

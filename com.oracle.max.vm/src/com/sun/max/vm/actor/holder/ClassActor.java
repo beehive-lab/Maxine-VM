@@ -67,6 +67,19 @@ public abstract class ClassActor extends Actor implements RiType {
 
     public static final Deferrable.Queue DEFERRABLE_QUEUE_1 = Deferrable.createDeferred();
 
+    /**
+     * Implemented by a client wanting to do something to a class.
+     */
+    public static interface Closure {
+        /**
+         * Processes a given class.
+         *
+         * @param classActor the class to process
+         * @return {@code false} if class processing (e.g. iteration) by the caller should be stopped
+         */
+        boolean doClass(ClassActor classActor);
+    }
+
     public static final char NO_MAJOR_VERSION = (char) -1;
     public static final char NO_MINOR_VERSION = (char) -1;
     public static final SpecificLayout NO_SPECIFIC_LAYOUT = null;
@@ -388,6 +401,30 @@ public abstract class ClassActor extends Actor implements RiType {
         }
         nextSiblingId = superClassActor.firstSubclassActorId;
         superClassActor.firstSubclassActorId = id;
+    }
+
+    /**
+     * Traverses all subclasses of this class, depth-first.
+     *
+     * Note: This is not thread safe and should only be called when the class hierarchy is guaranteed not to be changing.
+     *
+     * @return {@code true} if the complete hierarchy of this class was traversed, {@code false} if {@code c} terminated
+     *         the traversal prematurely
+     */
+    public boolean allSubclassesDo(Closure c) {
+        boolean cont = true;
+        if (hasSubclass()) {
+            int classId = firstSubclassActorId;
+            do {
+                ClassActor sub = ClassID.toClassActor(classId);
+                cont = c.doClass(sub);
+                if (cont) {
+                    cont = sub.allSubclassesDo(c);
+                }
+                classId = sub.nextSiblingId;
+            } while(classId != NULL_CLASS_ID && cont);
+        }
+        return cont;
     }
 
     /**

@@ -225,7 +225,6 @@ public abstract class LIRAssembler {
 
         switch (op.code) {
             case DirectCall:
-                emitCallAlignment(op.code);
                 // fall through
             case ConstDirectCall:
                 if (op.marks != null) {
@@ -234,7 +233,6 @@ public abstract class LIRAssembler {
                 emitDirectCall(op.target, op.info);
                 break;
             case IndirectCall:
-                emitCallAlignment(op.code);
                 if (op.marks != null) {
                     op.marks.put(XirMark.CALLSITE, tasm.recordMark(null, new Mark[0]));
                 }
@@ -509,8 +507,6 @@ public abstract class LIRAssembler {
     protected abstract void emitNativeCall(String symbol, LIRDebugInfo info, CiValue callAddress);
 
     protected abstract void emitTemplateCall(CiValue address);
-
-    protected abstract void emitCallAlignment(LIROpcode code);
 
     protected abstract void emitMemoryBarriers(int barriers);
 

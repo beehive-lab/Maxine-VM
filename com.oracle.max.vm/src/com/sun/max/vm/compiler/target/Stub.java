@@ -40,7 +40,7 @@ import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 
 /**
  * Stubs are for manually-assembled target code. Currently, a stub has the maximum of one
- * direct call to another method, so that is call is passed into the constructor directly.
+ * direct call to another method, so the callee is passed into the constructor directly.
  * Stack walking of stub frames is done with the same code as for optimized compiler frames.
  */
 public class Stub extends TargetMethod {
@@ -56,6 +56,15 @@ public class Stub extends TargetMethod {
         if (callPosition != -1) {
             assert callee != null;
             setStopPositions(new int[] {callPosition}, new Object[] {callee}, 0, 0);
+        }
+    }
+
+    @Override
+    public Pointer returnAddressPointer(Cursor frame) {
+        if (platform().isa == ISA.AMD64) {
+            return AMD64TargetMethodUtil.returnAddressPointer(frame);
+        } else {
+            throw FatalError.unimplemented();
         }
     }
 

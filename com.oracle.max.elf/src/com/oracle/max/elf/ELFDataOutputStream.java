@@ -59,7 +59,6 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 
 /**
- * @author Ben L. Titzer
  */
 public class ELFDataOutputStream {
 

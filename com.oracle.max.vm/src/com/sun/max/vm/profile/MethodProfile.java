@@ -26,7 +26,7 @@ import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
-import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.target.*;
 
 /**
  * This class collects profiling information of various kinds into a single place.
@@ -57,14 +57,31 @@ public class MethodProfile {
     private static final byte RECVR_COUNT   = 6;
     private static final byte RECVR_NOT_FOUND = 7;
 
+    /**
+     * The method that contains the instrumentation to increase counters in this profile.
+     */
+    public TargetMethod method;
+
+    /**
+     * The method invocation and backward branch counter. Decremented by profiling code.
+     * This is a separate counter since even methods without heavy profiling need a simple
+     * invocation counter to trigger recompilation.
+     */
     public int entryCount;
-    public boolean triggered;
-    private int[] data; // records actual counts
-    private int[] info; // records bci and type for each count entry
 
-    public ClassMethodActor method;
+    /**
+     * Records actual counts of a count entry
+     * TODO since we don't emit actual profiling yet, this is unused.
+     */
+    private int[] data;
 
-    MethodProfile() {
+    /**
+     * Records bci and type for each count entry.
+     * TODO since we don't emit actual profiling yet, this is unused.
+     */
+    private int[] info;
+
+    protected MethodProfile() {
     }
 
     /**
@@ -290,7 +307,8 @@ public class MethodProfile {
             return mpo;
         }
 
-        public MethodProfile finish() {
+        public MethodProfile finish(TargetMethod method) {
+            mpo.method = method;
             int size = infoList.size();
             if (size > 0) {
                 int[] data = new int[size];

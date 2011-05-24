@@ -59,8 +59,6 @@ package com.oracle.max.elf;
  * The <code>CharUtil</code> class includes a number of useful utilities in dealing
  * with characters. For example, testing whether a character is within a certain set,
  * converting between characters and digits in various base systems, etc.
- *
- * @author Ben L. Titzer
  */
 public final class CharUtil {
     public static final char[] HEX_CHARS = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};

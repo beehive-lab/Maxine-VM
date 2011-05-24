@@ -61,8 +61,6 @@ package com.oracle.max.elf;
  * necessary to identify the architecture of an ELF file, given its machine number.
  *
  * This information is gleaned from the ELF documentation.
- *
- * @author Ben L. Titzer
  */
 public final class ELFIdentifier {
 

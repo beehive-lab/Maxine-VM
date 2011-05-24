@@ -98,12 +98,11 @@ public final class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
         if (!vm().codeCache().isInitialized() || !isAllocated()) {
             return false;
         }
+        int length = vm().teleFields().CodeRegion_length.readInt(reference());
         Reference targetMethodsReference = vm().teleFields().CodeRegion_targetMethods.readReference(reference());
-        int size = vm().teleFields().SortedMemoryRegionList_size.readInt(targetMethodsReference);
-        Reference regionsReference = vm().teleFields().SortedMemoryRegionList_memoryRegions.readReference(targetMethodsReference);
         int index = teleTargetMethods.size();
-        while (index < size) {
-            Reference targetMethodReference = vm().getElementValue(Kind.REFERENCE, regionsReference, index++).asReference();
+        while (index < length) {
+            Reference targetMethodReference = vm().getElementValue(Kind.REFERENCE, targetMethodsReference, index++).asReference();
             // Creating a {@link TeleTargetMethod} causes it to be added to the code registry
             TeleTargetMethod teleTargetMethod = (TeleTargetMethod) heap().makeTeleObject(targetMethodReference);
             if (teleTargetMethod == null) {

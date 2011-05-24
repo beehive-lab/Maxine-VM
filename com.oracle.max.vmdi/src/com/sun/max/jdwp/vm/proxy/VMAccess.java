@@ -27,8 +27,6 @@ import com.sun.max.jdwp.vm.core.*;
 /**
  * This class specifies the interface to the VM that is used for JDWP.
  *
- * @author Thomas Wuerthinger
- *
  */
 public interface VMAccess {
 

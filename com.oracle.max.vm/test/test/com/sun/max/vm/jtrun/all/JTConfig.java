@@ -502,6 +502,7 @@ public class JTConfig {
         jtt.loop.Loop04.class,
         jtt.loop.Loop05.class,
         jtt.loop.Loop06.class,
+        jtt.loop.LoopPhi.class,
         jtt.loop.LoopSwitch01.class,
         jtt.max.Fold01.class,
         jtt.max.Fold02.class,
@@ -735,7 +736,6 @@ public class JTConfig {
         jtt.threads.Thread_new02.class,
         jtt.threads.Thread_setPriority01.class,
         jtt.threads.Thread_sleep01.class,
-        jtt.threads.Thread_start01.class,
         jtt.threads.Thread_yield01.class
     };
 // END GENERATED TEST CLASS LIST
