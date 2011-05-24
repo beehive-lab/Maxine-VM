@@ -663,7 +663,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
                     return vm().readWordValue(literalAddress);
                 }
             };
-            wordValueLabel.setTextPrefix(literalLoadText.substring(0, literalLoadText.indexOf("[")));
+            wordValueLabel.setTextPrefix(literalLoadText.substring(0, literalLoadText.indexOf("[")).trim());
             wordValueLabel.setToolTipSuffix(" from RIP " + literalLoadText.substring(literalLoadText.indexOf("["), literalLoadText.length()));
             wordValueLabel.updateText();
             return wordValueLabel;
