@@ -35,6 +35,11 @@ import com.sun.max.vm.*;
  */
 public final class CString {
 
+    /**
+     * Denotes an error for methods that cannot denote eror in the result.
+     */
+    public static boolean parseError;
+
     private CString() {
     }
 
@@ -390,6 +395,23 @@ public final class CString {
             }
         }
         return result;
+    }
+
+    public static int parseInt(Pointer pointer) {
+        int result;
+        parseError = false;
+        Pointer ptr = pointer;
+        if ((char) ptr.getByte(0) == '-') {
+            ptr = ptr.plus(1);
+        }
+        result = parseUnsignedInt(ptr);
+        if (result < 0) {
+            parseError = true;
+            return -1;
+        } else {
+            return ptr == pointer ? result : -result;
+        }
+
     }
 
     public static int parseUnsignedInt(Pointer pointer) {
