@@ -308,18 +308,13 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
     }
 
     /**
-     * Sets text to be prepended to every subsequently "wrapped" label text, with an additional
-     * space inserted between.
-     *
+     * Sets text to be prepended to every subsequently "wrapped" label text
+     *.
      * @param textPrefix prefix for every text display.
      * @see #setWrappedText(String)
      */
     public final void setTextPrefix(String textPrefix) {
-        if (textPrefix != null && !textPrefix.equals("")) {
-            this.textPrefix = textPrefix + " ";
-        } else {
-            this.textPrefix = "";
-        }
+        this.textPrefix = textPrefix == null ? "" : textPrefix;
         redisplay();
     }
 
