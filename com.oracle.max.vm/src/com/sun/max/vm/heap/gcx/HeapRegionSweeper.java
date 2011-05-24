@@ -93,16 +93,11 @@ public abstract class HeapRegionSweeper implements MarkSweepVerification {
         Log.unlock(lockDisabledSafepoints);
     }
 
-    public int liveBytes() {
+    final public int liveBytes() {
         return csrLiveBytes;
     }
 
-    public void clearLiveData() {
-        csrLiveBytes = 0;
-        csrLastLiveAddress = Address.zero();
-    }
-
-    public Size minReclaimableSpace() {
+    public final Size minReclaimableSpace() {
         return minReclaimableSpace;
     }
 
@@ -115,7 +110,7 @@ public abstract class HeapRegionSweeper implements MarkSweepVerification {
     }
 
 
-    void resetSweepingRegion(HeapRegionInfo rinfo) {
+    final void resetSweepingRegion(HeapRegionInfo rinfo) {
         csrInfo = rinfo;
         csrFreeBytes = 0;
         csrHead = null;
@@ -123,14 +118,15 @@ public abstract class HeapRegionSweeper implements MarkSweepVerification {
         csrFreeChunks = 0;
 
         csrLiveBytes = 0;
-        csrLastLiveAddress = Address.zero();
+        csrLastLiveAddress = csrInfo.regionStart();
 
         csrInfo.resetOccupancy();
-        csrEnd = csrInfo.regionStart().plus(regionSizeInBytes);
+        csrEnd = csrLastLiveAddress.plus(regionSizeInBytes);
 
         Log.print("Sweeping region #");
         Log.println(csrInfo.toRegionID());
     }
+
     void recordFreeSpace(Address chunk, Size chunkSize) {
         HeapFreeChunk c = HeapFreeChunk.format(chunk, chunkSize);
         if (csrTail == null) {

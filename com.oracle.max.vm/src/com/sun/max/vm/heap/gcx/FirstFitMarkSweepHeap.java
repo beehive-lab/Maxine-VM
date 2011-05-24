@@ -547,7 +547,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         tlabAllocationRegions.clear();
         allocationRegions.clear();
         regionInfoIterable.initialize(allRegions);
-
+        regionInfoIterable.reset();
         heapMarker.sweep(this);
         return Size.zero();
     }

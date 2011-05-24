@@ -106,29 +106,37 @@ public final class RegionTable {
         return regionID;
     }
 
+    int inHeapAddressRegionID(Address addr) {
+        return addr.minus(regionPoolStart).unsignedShiftedRight(log2RegionSizeInBytes).toInt();
+    }
+
     int regionID(Address addr) {
         if (!isInHeapRegion(addr)) {
             return INVALID_REGION_ID;
         }
-        return addr.minus(regionPoolStart).unsignedShiftedRight(log2RegionSizeInBytes).toInt();
+        return inHeapAddressRegionID(addr);
     }
 
     HeapRegionInfo regionInfo(int regionID) {
         return toHeapRegionInfo(table().plus(regionID * regionInfoSize));
     }
 
+    HeapRegionInfo inHeapAddressRegionInfo(Address addr) {
+        return regionInfo(inHeapAddressRegionID(addr));
+    }
+
     HeapRegionInfo regionInfo(Address addr) {
         if (!isInHeapRegion(addr)) {
             return nullHeapRegionInfo;
         }
-        return regionInfo(regionID(addr));
+        return regionInfo(inHeapAddressRegionID(addr));
     }
 
     HeapRegionInfo regionInfoOrNull(Address addr) {
         if (!isInHeapRegion(addr)) {
             return null;
         }
-        return regionInfo(regionID(addr));
+        return regionInfo(inHeapAddressRegionID(addr));
     }
 
     Address regionAddress(int regionID) {

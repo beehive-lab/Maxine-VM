@@ -27,11 +27,6 @@ import com.sun.max.unsafe.*;
 
 final public class ContiguousHeapRootCellVisitor extends RootCellVisitor {
 
-    /**
-     * Cache for heapMarker's coveredAreaStart.
-     */
-    Address coveredAreaStart;
-
     public ContiguousHeapRootCellVisitor() {
         super();
     }
@@ -39,7 +34,7 @@ final public class ContiguousHeapRootCellVisitor extends RootCellVisitor {
     @Override
     void reset() {
         super.reset();
-        coveredAreaStart = heapMarker.coveredAreaStart;
+        bottom = heapMarker.coveredAreaStart;
     }
 
     /**
@@ -50,8 +45,8 @@ final public class ContiguousHeapRootCellVisitor extends RootCellVisitor {
      */
     @INLINE(override = true)
     @Override
-    boolean isNonNullAndInHeap(Pointer cell) {
+    boolean isNonNullCovered(Pointer cell) {
         // Note: the first test also acts as a null pointer filter.
-        return cell.greaterEqual(coveredAreaStart);
+        return true;
     }
 }
