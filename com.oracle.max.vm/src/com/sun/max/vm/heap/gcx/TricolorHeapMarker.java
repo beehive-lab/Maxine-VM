@@ -1925,13 +1925,29 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         }
     }
 
-    public boolean impreciseSweep(HeapRegionSweeper sweeper) {
+    /**
+     * Sweep a region of memory described by the heap region sweeper.
+     * The sweeper implements an API for recording range of dead space, and to specify the bounds of the region.
+     * This can server region-based heap as well as contiguous heap, wherein a single region is passed in this case.
+     * @param sweeper
+     * @return
+     */
+    public void sweep(HeapRegionSweeper regionsSweeper) {
+        boolean reachedRightmostLivedObject = false;
+        while (regionsSweeper.hasNextSweepingRegion() && !reachedRightmostLivedObject) {
+            regionsSweeper.beginSweep();
+            reachedRightmostLivedObject = impreciseSweep(regionsSweeper);
+            regionsSweeper.endSweep();
+        }
+    }
+
+    boolean impreciseSweep(HeapRegionSweeper sweeper) {
         final Pointer colorMapBase = base.asPointer();
-        final int minBitsBetweenMark = sweeper.minReclaimableSpace.toInt() >> log2BytesCoveredPerBit;
+        final int minBitsBetweenMark = sweeper.minReclaimableSpace().toInt() >> log2BytesCoveredPerBit;
         int bitmapWordIndex = 0;
         final Address rightmost = forwardScanState.rightmost;
-        final Address regionLeftmost = sweeper.start();
-        final Address regionRightmost = sweeper.end();
+        final Address regionLeftmost = sweeper.startOfSweepingRegion();
+        final Address regionRightmost = sweeper.endOfSweepingRegion();
         final boolean reachedRightmostLivedObject =  regionRightmost.greaterThan(forwardScanState.rightmost);
         final int rightmostBitIndex = bitIndexOf(regionRightmost);
         final int leftmostBitIndex = bitIndexOf(regionLeftmost);
@@ -1940,7 +1956,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         int lastLiveMark = firstBlackMark(leftmostBitIndex, rightmostBitIndex);
         if (lastLiveMark > 0) {
             if (lastLiveMark >=  nextReclaimableMark) {
-                sweeper.processDeadSpace(sweeper.start(), Size.fromInt(lastLiveMark << log2BytesCoveredPerBit));
+                sweeper.processDeadSpace(sweeper.startOfSweepingRegion(), Size.fromInt(lastLiveMark << log2BytesCoveredPerBit));
             }
             bitmapWordIndex =  bitmapWordIndex(lastLiveMark + 2);
             nextReclaimableMark = lastLiveMark + 2 + minBitsBetweenMark;
@@ -2003,8 +2019,8 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             }
         }
         Pointer tail = rightmost.asPointer().plus(Layout.size(Layout.cellToOrigin(rightmost.asPointer())));
-        Size tailSpace = sweeper.end().minus(tail).asSize();
-        if (tailSpace.greaterEqual(sweeper.minReclaimableSpace)) {
+        Size tailSpace = sweeper.endOfSweepingRegion().minus(tail).asSize();
+        if (tailSpace.greaterEqual(sweeper.minReclaimableSpace())) {
             sweeper.processDeadSpace(tail, tailSpace);
         }
         return reachedRightmostLivedObject;
