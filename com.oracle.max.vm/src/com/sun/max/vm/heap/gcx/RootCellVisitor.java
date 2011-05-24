@@ -55,6 +55,8 @@ abstract class RootCellVisitor extends PointerIndexVisitor implements CellVisito
      */
     protected Address rightmost;
 
+    protected Address bottom;
+
     RootCellVisitor() {
     }
 
@@ -62,7 +64,7 @@ abstract class RootCellVisitor extends PointerIndexVisitor implements CellVisito
         this.heapMarker = heapMarker;
     }
 
-    abstract boolean isNonNullAndInHeap(Pointer cell);
+    abstract boolean isNonNullCovered(Pointer cell);
 
     void reset() {
         leftmost = heapMarker.coveredAreaEnd;
@@ -71,7 +73,7 @@ abstract class RootCellVisitor extends PointerIndexVisitor implements CellVisito
 
     final void markExternalRoot(Pointer cell) {
         // Note: the first test also acts as a null pointer filter.
-        if (isNonNullAndInHeap(cell)) {
+        if (cell.greaterEqual(bottom) && isNonNullCovered(cell)) {
             heapMarker.markGrey(cell);
             if (cell.lessThan(leftmost)) {
                 leftmost = cell;

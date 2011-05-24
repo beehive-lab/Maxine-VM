@@ -253,6 +253,22 @@ public class HeapRegionInfo {
         return RegionTable.theRegionTable().regionInfo(regionID);
     }
 
+    /**
+     * Return heap region associated information from an address guaranteed to point in a heap region.
+     * @param address
+     * @return
+     */
+    @INLINE
+    static HeapRegionInfo fromInRegionAddress(Address address) {
+        return RegionTable.theRegionTable().inHeapAddressRegionInfo(address);
+    }
+
+    /**
+     * Return heap region associated information from an address not guaranteed to point in a heap region.
+     * Return {@linkplain RegionTable#nullHeapRegionInfo} if not.
+     * @param address
+     * @return
+     */
     @INLINE
     static HeapRegionInfo fromAddress(Address address) {
         return RegionTable.theRegionTable().regionInfo(address);
