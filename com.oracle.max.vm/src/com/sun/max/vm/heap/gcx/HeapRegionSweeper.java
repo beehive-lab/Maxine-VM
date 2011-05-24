@@ -28,50 +28,50 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.layout.*;
 
-public class HeapRegionSweeper {
-    Size minReclaimableSpace;
+/**
+ * Sweeping interface for heap made of multiple, possibly discontinuous regions.
+ * A heap marker interacts with the sweeper via a hasNextSweepingRegion / beginSweep / endSweep methods that bracket the sweeping of each region.
+ * Dead space within the region is notified to the sweeper via three interface: processLargeGap, processDeadSpace, and processFreeRegion.
+ */
+public abstract class HeapRegionSweeper implements MarkSweepVerification {
 
-    int numFreeBytes;
-    Size darkMatter = Size.zero();
-    HeapFreeChunk head;
-    HeapFreeChunk tail;
-    HeapRegionInfo rinfo;
-    Address regionEnd;
-    short numChunks;
+    protected Size minReclaimableSpace;
 
-    Size minReclaimableSpace() {
-        return minReclaimableSpace;
-    }
+    /**
+     * Region information for the current sweeping region (csr).
+     */
+    HeapRegionInfo csrInfo;
+    /**
+     * Number of free bytes recorded for the csr.
+     */
+    int csrFreeBytes;
 
-    Address start() {
-        return rinfo.regionStart();
-    }
+    /**
+     * Number of live bytes recorded for the csr.
+     */
+    int csrLiveBytes;
 
-    Address end() {
-        return regionEnd;
-    }
+    /**
+     * Number of free chunks in the csr.
+     */
+    int csrFreeChunks;
+    /**
+     * Head of the list of free chunks recorded for the csr.
+     */
+    HeapFreeChunk csrHead;
+    /**
+     * Tail of the list of free chunks recorded for the csr.
+     */
+    HeapFreeChunk csrTail;
+    /**
+     * End of the current sweeping region.
+     */
+    Address csrEnd;
 
-    void beginSweep(HeapRegionInfo rinfo) {
-        this.rinfo = rinfo;
-        rinfo.resetOccupancy();
-        numFreeBytes = 0;
-        darkMatter = Size.zero();
-        head = null;
-        tail = null;
-        numChunks = 0;
-        regionEnd = rinfo.regionStart().plus(regionSizeInBytes);
-    }
-
-    void endSweep() {
-        if (numFreeBytes == 0) {
-            rinfo.setFull();
-        } else if (numFreeBytes == regionSizeInBytes) {
-            rinfo.setEmpty();
-        } else {
-            rinfo.setAllocating();
-            rinfo.setFreeChunks(HeapFreeChunk.fromHeapFreeChunk(head), (short) numFreeBytes, numChunks);
-        }
-    }
+    /**
+     * Cursor on the last live address seen during sweeping of the csr.
+     */
+    Address csrLastLiveAddress;
 
     private void printNotifiedGap(Pointer leftLiveObject, Pointer rightLiveObject, Pointer gapAddress, Size gapSize) {
         final boolean lockDisabledSafepoints = Log.lock();
@@ -85,24 +85,72 @@ public class HeapRegionSweeper {
         Log.print(gapSize.toLong());
         Log.print(")");
 
-        if (gapSize.greaterEqual(minReclaimableSpace)) {
-            Log.println("");
+        if (gapSize.greaterEqual(minReclaimableSpace())) {
+            Log.println(" => reclaimable");
         } else {
             Log.println(" => dark matter");
         }
         Log.unlock(lockDisabledSafepoints);
     }
+
+    public int liveBytes() {
+        return csrLiveBytes;
+    }
+
+    public void clearLiveData() {
+        csrLiveBytes = 0;
+        csrLastLiveAddress = Address.zero();
+    }
+
+    public Size minReclaimableSpace() {
+        return minReclaimableSpace;
+    }
+
+    Address startOfSweepingRegion() {
+        return csrInfo.regionStart();
+    }
+
+    Address endOfSweepingRegion() {
+        return csrEnd;
+    }
+
+
+    void resetSweepingRegion(HeapRegionInfo rinfo) {
+        csrInfo = rinfo;
+        csrFreeBytes = 0;
+        csrHead = null;
+        csrTail = null;
+        csrFreeChunks = 0;
+
+        csrLiveBytes = 0;
+        csrLastLiveAddress = Address.zero();
+
+        csrInfo.resetOccupancy();
+        csrEnd = csrInfo.regionStart().plus(regionSizeInBytes);
+
+        Log.print("Sweeping region #");
+        Log.println(csrInfo.toRegionID());
+    }
     void recordFreeSpace(Address chunk, Size chunkSize) {
         HeapFreeChunk c = HeapFreeChunk.format(chunk, chunkSize);
-        if (tail == null) {
-            head = c;
+        if (csrTail == null) {
+            csrHead = c;
         } else {
-            tail.next = c;
+            csrTail.next = c;
         }
-        tail = c;
-        numChunks++;
-        numFreeBytes += chunkSize.toInt();
+        csrTail = c;
+        csrFreeChunks++;
+        csrFreeBytes += chunkSize.toInt();
     }
+
+    public void processFreeRegion() {
+        csrFreeBytes = regionSizeInBytes;
+    }
+
+    public abstract boolean hasNextSweepingRegion();
+    public abstract void beginSweep();
+    public abstract void endSweep();
+    public abstract void verify(AfterMarkSweepVerifier verifier);
 
     /**
      * Invoked when doing imprecise sweeping to process an large interval between to marked locations.
@@ -115,13 +163,14 @@ public class HeapRegionSweeper {
      * @return
      */
     public Pointer processLargeGap(Pointer leftLiveObject, Pointer rightLiveObject) {
-        assert rightLiveObject.lessEqual(regionEnd);
+        assert rightLiveObject.lessEqual(endOfSweepingRegion());
         Pointer endOfLeftObject = leftLiveObject.plus(Layout.size(Layout.cellToOrigin(leftLiveObject)));
+        csrLiveBytes += endOfLeftObject.minus(csrLastLiveAddress).asSize().toInt();
         Size numDeadBytes = rightLiveObject.minus(endOfLeftObject).asSize();
-        if (numDeadBytes.greaterEqual(minReclaimableSpace)) {
-            recordFreeSpace(endOfLeftObject, numDeadBytes);
-        }
-        return rightLiveObject.plus(Layout.size(Layout.cellToOrigin(rightLiveObject)));
+        printNotifiedGap(leftLiveObject, rightLiveObject, endOfLeftObject, numDeadBytes);
+        recordFreeSpace(endOfLeftObject, numDeadBytes);
+        csrLastLiveAddress = rightLiveObject.plus(Layout.size(Layout.cellToOrigin(rightLiveObject)));
+        return csrLastLiveAddress.asPointer();
     }
 
     /**
@@ -132,12 +181,8 @@ public class HeapRegionSweeper {
      * @param size
      */
     public void processDeadSpace(Address freeChunk, Size size) {
-        assert freeChunk.plus(size).lessEqual(regionEnd);
+        assert freeChunk.plus(size).lessEqual(endOfSweepingRegion());
+        csrLastLiveAddress = freeChunk.plus(size);
         recordFreeSpace(freeChunk, size);
     }
-
-    public void processFreeRegion() {
-        numFreeBytes = regionSizeInBytes;
-    }
-
 }

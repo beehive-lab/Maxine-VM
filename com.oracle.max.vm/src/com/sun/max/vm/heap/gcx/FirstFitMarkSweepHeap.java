@@ -35,7 +35,7 @@ import com.sun.max.vm.runtime.*;
  * A region-based, flat, mark-sweep heap, with bump pointer allocation only.
  * Each partially occupied region has a list of addressed ordered free chunks, used to allocate TLAB refill and an overflow allocator.
  */
-public final class FirstFitMarkSweepHeap implements HeapAccountOwner, ApplicationHeap, MarkSweepVerification {
+public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements HeapAccountOwner, ApplicationHeap {
     /* For simplicity at the moment. Should be able to allocate this in GC's own heap (i.e., the bootstrap allocator).
      */
     private static final OutOfMemoryError outOfMemoryError = new OutOfMemoryError();
@@ -97,8 +97,6 @@ public final class FirstFitMarkSweepHeap implements HeapAccountOwner, Applicatio
      * Support for iterating over region info of regions from a list.
      */
     final HeapRegionInfoIterable regionInfoIterable;
-
-    private Size minReclaimableSpace;
 
     /**
      * Minimum size to be treated as a large object.
@@ -531,6 +529,7 @@ public final class FirstFitMarkSweepHeap implements HeapAccountOwner, Applicatio
     }
 
 
+    @Override
     public void verify(AfterMarkSweepVerifier verifier) {
         HeapRegionRangeIterable allRegions = heapAccount.allocatedRegions();
         allRegions.reset();
@@ -539,27 +538,58 @@ public final class FirstFitMarkSweepHeap implements HeapAccountOwner, Applicatio
         }
     }
 
-    final HeapRegionSweeper regionSweeper = new HeapRegionSweeper();
 
     public Size sweep(TricolorHeapMarker heapMarker) {
-        HeapRegionRangeIterable allRegions = heapAccount.allocatedRegions();
+        HeapRegionList allRegions = heapAccount.allocatedRegions().regionList;
+        if (MaxineVM.isDebug()) {
+            allRegions.checkIsAddressOrdered();
+        }
         tlabAllocationRegions.clear();
         allocationRegions.clear();
-        regionInfoIterable.initialize(allRegions.regionList);
-        while (regionInfoIterable.hasNext()) {
-            HeapRegionInfo rinfo = regionInfoIterable.next();
-            regionSweeper.beginSweep(rinfo);
-            heapMarker.impreciseSweep(regionSweeper);
-            regionSweeper.endSweep();
-            if (rinfo.isEmpty()) {
-                allocationRegions.append(rinfo.toRegionID());
-            } else if (rinfo.numFreeChunks == 1 && minOverflowRefillSize.lessEqual(rinfo.freeBytes())) {
-                allocationRegions.append(rinfo.toRegionID());
-            } else  if (!rinfo.isFull()) {
-                tlabAllocationRegions.append(rinfo.toRegionID());
-            }
-        }
+        regionInfoIterable.initialize(allRegions);
+
+        heapMarker.sweep(this);
         return Size.zero();
+    }
+
+    @Override
+    public boolean hasNextSweepingRegion() {
+        return regionInfoIterable.hasNext();
+    }
+
+    @Override
+    public void beginSweep() {
+        resetSweepingRegion(regionInfoIterable.next());
+    }
+
+    private void logSweptRegion(String listName, int regionId, String state) {
+        Log.print("[");
+        Log.print(regionId);
+        Log.print(" (");
+        Log.print(state);
+        Log.print(") : ");
+        Log.print(listName);
+        Log.println("]");
+    }
+
+    @Override
+    public void endSweep() {
+        if (csrFreeBytes == 0) {
+            logSweptRegion("F", csrInfo.toRegionID(), "F");
+            csrInfo.setFull();
+        } else if (csrFreeBytes == regionSizeInBytes) {
+            logSweptRegion("A ", csrInfo.toRegionID(), "E");
+            csrInfo.setEmpty();
+            allocationRegions.append(csrInfo.toRegionID());
+        } else if (csrFreeChunks == 1 && minOverflowRefillSize.lessEqual(csrFreeBytes)) {
+            logSweptRegion("A", csrInfo.toRegionID(), "A");
+            csrInfo.setFreeChunks(HeapFreeChunk.fromHeapFreeChunk(csrHead), (short) csrFreeBytes, (short) csrFreeChunks);
+            allocationRegions.append(csrInfo.toRegionID());
+        } else {
+            FatalError.check(csrFreeChunks > 0 && csrFreeBytes > 0 && minOverflowRefillSize.greaterThan(csrFreeBytes) && csrHead != null, "unknown state for a swept region");
+            csrInfo.setFreeChunks(HeapFreeChunk.fromHeapFreeChunk(csrHead), (short) csrFreeBytes, (short) csrFreeChunks);
+            tlabAllocationRegions.append(csrInfo.toRegionID());
+        }
     }
 
 }

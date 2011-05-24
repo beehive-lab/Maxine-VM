@@ -297,5 +297,17 @@ public final class HeapRegionList {
         }
         head = list.head;
     }
+
+    void checkIsAddressOrdered() {
+        if (size < 2) {
+            return;
+        }
+        int last = head;
+        do {
+            int next = next(last);
+            FatalError.check(next > last, "region list isn't address-ordered");
+            last = next;
+        } while (last != tail);
+    }
 }
 
