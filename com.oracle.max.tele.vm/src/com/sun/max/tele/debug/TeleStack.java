@@ -168,12 +168,12 @@ public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
     }
 
     public MaxStackFrame top() {
+        assert !frames().isEmpty();
         return frames().get(0);
     }
 
     public List<MaxStackFrame> frames() {
-        final TeleVMState currentVmState = vm().state();
-        if (currentVmState.newerThan(lastUpdatedState)) {
+        if (vm().state().newerThan(lastUpdatedState)) {
             if (vm().tryLock()) {
                 try {
                     final List<StackFrame> frames = teleNativeThread.frames();
@@ -184,10 +184,10 @@ public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
                         position++;
                     }
                     this.maxStackFrames = maxStackFrames;
-                    lastUpdatedState = currentVmState;
+                    lastUpdatedState = vm().state();
 
                     final Long lastChangedEpoch = teleNativeThread.framesLastChangedEpoch();
-                    lastChangedState = currentVmState;
+                    lastChangedState = vm().state();
                     while (lastChangedState.previous() != null && lastChangedEpoch <= lastChangedState.previous().epoch()) {
                         lastChangedState = (TeleVMState) lastChangedState.previous();
                     }
