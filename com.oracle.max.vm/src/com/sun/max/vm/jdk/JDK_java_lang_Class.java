@@ -22,12 +22,16 @@
  */
 package com.sun.max.vm.jdk;
 
+import static com.sun.cri.bytecode.Bytecodes.*;
+
 import java.lang.reflect.*;
 import java.security.*;
 import java.util.*;
 
+import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -448,21 +452,80 @@ final class JDK_java_lang_Class {
         return new Class[0];
     }
 
-    private static final Utf8Constant ASSERTIONS_DISABLED = SymbolTable.makeSymbol("$assertionsDisabled");
-
     /**
      * Gets the desired assertion status for the specified class.
+     * I.e., Returns false if assertions are disabled, true if enabled
+     *
+     * This is the mechanism by which the command line settings for assertion status
+     * are discovered; this class is only called for system classes and for classes
+     * for which no settings have been made by the relevant calls to {@link java.lang.ClassLoader}.
+     *
+     * Most of the relevant logic already exists in {@link java.lang.ClassLoader},
+     * so to avoid replication we create a dummy instance just to hold the
+     * data and invoke the relevant method to determine the status. Since the fields
+     * and methods are private we use the {@link ALIAS} mechanism for access.
+     * TODO(mjj) consider nulling out all the unnecessary fields in the dummy instance.
+     * to minimize boot image heap space.
+     *
      * @see java.lang.Class#desiredAssertionStatus0()
      * @param javaClass the class for which to get the assertion status
      * @return the desired assertion status of the specified class
      */
     @SUBSTITUTE
     private static boolean desiredAssertionStatus0(Class javaClass) {
-        final ClassActor classActor = ClassActor.fromJava(javaClass);
-        final FieldActor fieldActor = classActor.findLocalStaticFieldActor(ASSERTIONS_DISABLED, JavaTypeDescriptor.BOOLEAN);
-        if (fieldActor != null) {
-            return fieldActor.getBoolean(null);
+        ClassLoaderAlias assertionStatusClassLoaderAlias = asClassLoaderAlias(assertionStatusClassLoader);
+        // check the command line settings
+        if (!assertionStatusRetrieved) {
+            synchronized (assertionStatusClassLoaderAlias) {
+                assertionStatusClassLoaderAlias.initializeJavaAssertionMaps();
+                assertionStatusRetrieved = true;
+            }
         }
-        return false;
+        /* System classes requires special treatment.
+         * If the class is named explicitly then the result is as per non-system class
+         * otherwise it takes a potentially different default value.
+         * If the system/non-system defaults are the same we can treat it as a non-system class,
+         * otherwise we temporarily override the default with the system default.
+         */
+        final String className = javaClass.getName();
+        if (javaClass.getClassLoader() != null || AssertionsVMOption.deflt == AssertionsVMOption.systemDeflt) {
+            return assertionStatusClassLoaderAlias.desiredAssertionStatus(className);
+        } else {
+            synchronized (assertionStatusClassLoaderAlias) {
+                final boolean saveDefaultAssertionStatus = assertionStatusClassLoaderAlias.defaultAssertionStatus;
+                assertionStatusClassLoaderAlias.defaultAssertionStatus = AssertionsVMOption.systemDeflt;
+                final boolean result = assertionStatusClassLoaderAlias.desiredAssertionStatus(className);
+                assertionStatusClassLoaderAlias.defaultAssertionStatus = saveDefaultAssertionStatus;
+                return result;
+            }
+        }
     }
+
+    /**
+     * Alias class for access to private state of {@link java.lang.ClassLoader}.
+     */
+    private static class ClassLoaderAlias {
+        @ALIAS(declaringClass = ClassLoader.class)
+        private native void initializeJavaAssertionMaps();
+
+        @ALIAS(declaringClass = ClassLoader.class)
+        private synchronized native boolean desiredAssertionStatus(String className);
+
+        @ALIAS(declaringClass = ClassLoader.class)
+        boolean defaultAssertionStatus;
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    private static native ClassLoaderAlias asClassLoaderAlias(ClassLoader cl);
+
+    /**
+     * Set {@code true} when we have read the command line options and set up the relevent
+     * {@link java.lang.ClassLoader} data structures.
+     */
+    private static boolean assertionStatusRetrieved;
+
+    /**
+     * A dummy instance solely to hold the assertion status state.
+     */
+    private static ClassLoader assertionStatusClassLoader = new ClassLoader() {};
 }
