@@ -38,12 +38,10 @@ public final class VmStackFrameWalker extends StackFrameWalker {
     private boolean dumpingFatalStackTrace;
 
     public VmStackFrameWalker(Pointer tla) {
-        super();
         this.tla = tla;
     }
 
     public void setTLA(Pointer tla) {
-        assert this.tla.isZero();
         this.tla = tla;
     }
 

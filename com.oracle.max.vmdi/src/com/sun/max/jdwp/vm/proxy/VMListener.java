@@ -25,8 +25,6 @@ package com.sun.max.jdwp.vm.proxy;
 /**
  * Listener interface for anybody who wants to be informed about VM events.
  *
- * @author Thomas Wuerthinger
- *
  */
 public interface VMListener {
 

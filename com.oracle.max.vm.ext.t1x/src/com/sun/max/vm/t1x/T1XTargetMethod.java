@@ -154,6 +154,7 @@ public final class T1XTargetMethod extends TargetMethod {
         handlers = initHandlers(comp);
 
         if (comp.methodProfileBuilder != null) {
+            comp.methodProfileBuilder.finish(this);
             profile = comp.methodProfileBuilder.methodProfileObject();
         } else {
             profile = null;
@@ -770,13 +771,21 @@ public final class T1XTargetMethod extends TargetMethod {
             unimplISA();
         }
     }
+
+    @Override
+    public Pointer returnAddressPointer(Cursor frame) {
+        if (isAMD64()) {
+            int dispToRip = frameSize() - sizeOfNonParameterLocals();
+            return frame.fp().plus(dispToRip);
+        } else {
+            throw unimplISA();
+        }
+    }
 }
 
 /**
  * Various execution states in a T1X method that can only be observed in
  * the context of the Inspector.
- *
- * @author Laurent Daynes
  */
 @HOSTED_ONLY
 @PLATFORM(cpu = "amd64")

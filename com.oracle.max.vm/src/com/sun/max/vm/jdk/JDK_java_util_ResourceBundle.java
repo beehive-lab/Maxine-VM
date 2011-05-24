@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,27 +20,18 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package test.com.sun.max.vm.jtrun.some;
+package com.sun.max.vm.jdk;
 
-import test.com.sun.max.vm.jtrun.*;
+import java.util.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.vm.jni.*;
 
-public class JTRunScheme extends JTAbstractRunScheme {
+@METHOD_SUBSTITUTIONS(ResourceBundle.class)
+final class JDK_java_util_ResourceBundle {
 
-    @HOSTED_ONLY
-    public JTRunScheme() {
-    }
-
-    @Override
-    @HOSTED_ONLY
-    public Class<?>[] getClassList() {
-        return JTConfig.testClasses.testClasses;
-    }
-
-    @Override
-    public void runTests() {
-        JTRuns.runTests(testStart, testEnd);
-        JTUtil.printReport();
+    @SUBSTITUTE
+    public static Class[] getClassContext() {
+        return JVMFunctions.GetClassContext();
     }
 }

@@ -61,6 +61,10 @@ import com.sun.cri.util.*;
  *          | monitor n                      |                   |
  *          :     ...                        :                   |
  *          | monitor 0                      |                   |
+ *          +--------------------------------+                   |
+ *          |                                |                   |
+ *          : custom area                    :                   |
+ *          |                                |                   |
  *          +--------------------------------+    ---            |
  *          | spill slot n                   |     ^           frame
  *          :     ...                        :     |           size

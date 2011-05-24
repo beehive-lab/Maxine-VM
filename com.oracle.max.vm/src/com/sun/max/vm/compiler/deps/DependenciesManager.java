@@ -33,6 +33,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.runtime.*;
@@ -469,13 +470,14 @@ public final class DependenciesManager {
      * Adds the class to the class hierarchy.
      * This checks dependencies on the type hierarchy and invalidates all target methods whose dependencies are no longer valid.
      *
-     * @param classActor the class to be added to the global class hierarchy.
+     * @param classActor the class to be added to the global class hierarchy
      */
     public static void addToHierarchy(ClassActor classActor) {
         classHierarchyLock.writeLock().lock();
         try {
             classActor.prependToSiblingList();
-            invalidateDependencies(recordUniqueConcreteSubtype(classActor));
+            ArrayList<Dependencies> invalidated = recordUniqueConcreteSubtype(classActor);
+            invalidateDependencies(invalidated, classActor);
         } finally {
             classHierarchyLock.writeLock().unlock();
         }
@@ -485,15 +487,17 @@ public final class DependenciesManager {
      * Processes a list of invalidated dependencies, triggering deopt as necessary.
      *
      * @param invalidated the head of a {@link Dependencies} list
+     * @param classActor the class to be added to the global class hierarchy
      */
-    static void invalidateDependencies(ArrayList<Dependencies> invalidated) {
+    static void invalidateDependencies(ArrayList<Dependencies> invalidated, ClassActor classActor) {
         if (invalidated == null) {
             return;
         }
         if (TraceDeps) {
             final boolean lockDisabledSafepoints = Log.lock();
+            Log.println("DEPS: adding " + classActor + " to the hierarchy invalidates:");
             for (Dependencies deps : invalidated) {
-                Log.println("DEPS: " + deps + " invalidated");
+                Log.println("DEPS:   " + deps);
             }
             Log.unlock(lockDisabledSafepoints);
         }
@@ -505,8 +509,9 @@ public final class DependenciesManager {
         }
         if (MaxineVM.isHosted()) {
             return;
+        } else {
+            new Deoptimizer(invalidated).go();
         }
-        FatalError.unexpected("Invalidation of target methods with invalid dependencies not implemented");
     }
 
     /**

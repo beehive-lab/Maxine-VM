@@ -26,8 +26,6 @@ package com.sun.max.jdwp.vm.core;
  *
  * Marker interfaces for classes that represent objects that have an ID in the JDWP protocol.
  *
- * @author Thomas Wuerthinger
- *
  */
 public interface Provider {
 }

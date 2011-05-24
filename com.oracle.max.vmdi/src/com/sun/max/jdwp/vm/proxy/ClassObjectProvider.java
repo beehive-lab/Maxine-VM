@@ -24,7 +24,6 @@ package com.sun.max.jdwp.vm.proxy;
 
 /**
  * Represents an object in the VM that is a Java class object.
- * @author Thomas Wuerthinger
  *
  */
 public interface ClassObjectProvider extends ObjectProvider {

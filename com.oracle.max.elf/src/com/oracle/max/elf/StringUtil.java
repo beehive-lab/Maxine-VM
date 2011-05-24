@@ -60,8 +60,6 @@ import java.text.StringCharacterIterator;
 /**
  * The <code>StringUtil</code> class implements several useful functions for dealing with strings such as
  * parsing pieces of syntax, formatting, etc.
- *
- * @author Ben L. Titzer
  */
 public final class StringUtil {
     public static final String QUOTE = "\"";

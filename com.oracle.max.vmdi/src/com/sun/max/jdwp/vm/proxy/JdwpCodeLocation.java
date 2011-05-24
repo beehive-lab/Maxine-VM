@@ -27,8 +27,6 @@ import com.sun.max.jdwp.vm.core.*;
 /**
  * Interface for defining a code position.
  *
- * @author Thomas Wuerthinger
- *
  */
 public interface JdwpCodeLocation {
 

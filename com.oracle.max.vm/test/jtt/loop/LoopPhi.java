@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,28 +20,42 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package jtt.loop;
+
 /*
  * @Harness: java
- * @Runs: 0 = true
+ * @Runs: 50000 = 11;
  */
-package jtt.threads;
+public class LoopPhi {
+    public static int test(int arg) {
+		for (int i = 0; i < arg; i++) {
+			test(1, 1, 1, 1, 1, 1);
+		}
+		return test(1, 1, 1, 1, 1, 1);
+	}
 
-public class Thread_start01 implements Runnable {
+	public static int test(int i1, int i2, int i3, int i4, int i5, int i6) {
+		if (i1 == 0) {
+			i1 = 2;
+		} else {
+			i2 = 2;
+		}
+		for (int i = 0; i < 10; i++) {
+			if (i == 0) {
+				i3 = 2;
+			} else {
+				i4 = 2;
+			}
 
-    static volatile boolean cont;
+			for (int j = 0; j < 10; j++) {
+				if (j == 0) {
+					i5 = 2;
+				} else {
+					i6 = 2;
+				}
+			}
+		}
 
-    public static boolean test(int i) {
-        cont = true;
-        new Thread(new Thread_start01()).start();
-        for (int j = 0; j < 100000000; j++) {
-            if (!cont) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public void run() {
-        cont = false;
-    }
+		return i1 + i2 + i3 + i4 + i5 + i6;
+	}
 }
