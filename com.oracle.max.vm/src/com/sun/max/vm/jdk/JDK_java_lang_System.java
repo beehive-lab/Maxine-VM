@@ -740,13 +740,24 @@ public final class JDK_java_lang_System {
         // 8. set up the class path
         // N.B. -jar overrides any other classpath setting
         if (VMOptions.jarFile() == null) {
+            // classpath search order (copying the semantic from the java command):
+            // (1) the -cp command line option
             String javaClassPath = classpathOption.getValue();
             if (javaClassPath == null) {
-                javaClassPath = getenvClassPath();
+                // (2) the property java.class.path
+                javaClassPath = properties.getProperty("java.class.path");
+                if (javaClassPath == null) {
+                    // (3) the environment variable CLASSPATH
+                    javaClassPath = getenvClassPath();
+                    if (javaClassPath == null) {
+                        // (4) the current working directory only
+                        javaClassPath = ".";
+                    }
+                }
             }
-            setIfAbsent(properties, "java.class.path", javaClassPath);
+            properties.setProperty("java.class.path", javaClassPath);
         } else {
-            properties.put("java.class.path", VMOptions.jarFile());
+            properties.setProperty("java.class.path", VMOptions.jarFile());
         }
 
         // 9. load the native code for zip and java libraries
