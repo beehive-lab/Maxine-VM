@@ -23,6 +23,7 @@
 package com.sun.max.vm.compiler.target;
 
 import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.MaxineVM.*;
 
 import java.util.*;
 
@@ -56,6 +57,9 @@ public class Stub extends TargetMethod {
         if (callPosition != -1) {
             assert callee != null;
             setStopPositions(new int[] {callPosition}, new Object[] {callee}, 0, 0);
+        }
+        if (!isHosted()) {
+            linkDirectCalls(null);
         }
     }
 
