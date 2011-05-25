@@ -38,14 +38,14 @@ final public class HeapAccounRootCellVisitor extends RootCellVisitor {
         bottom = HeapRegionInfo.fromRegionID(owner.heapAccount().allocatedRegions().regionList.head()).regionStart();
     }
     /**
-     * Marking cell referenced from outside of the covered area.
-     * If the cell is itself outside of the covered area, nothing is done.
+     * Check if a non-null pointer is  within the area covered by root marking.
      *
      * @param cell a pointer read from an external root (may be zero).
+     * @return true if the pointer is in the area covered by root marking.
      */
     @INLINE(override = true)
     @Override
     boolean isNonNullCovered(Pointer cell) {
-        return HeapRegionInfo.fromAddress(cell).owner == owner;
+        return HeapRegionInfo.fromInRegionAddress(cell).owner == owner;
     }
 }

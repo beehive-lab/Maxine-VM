@@ -21,7 +21,6 @@
  * questions.
  */
 package com.sun.max.vm.heap.gcx;
-
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
@@ -125,6 +124,9 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
     static final long COLOR_MASK = 3L;
 
+    static final String [] COLOR_NAMES = new String[] {"WHITE", "BLACK", "INVALID", "GREY"};
+    static final char [] COLOR_CHARS = new char[] {'W', 'B', 'I', 'G' };
+
     static final int LAST_BIT_INDEX_IN_WORD = Word.width() - 1;
 
     static final int bitIndexInWordMask = LAST_BIT_INDEX_IN_WORD;
@@ -136,6 +138,26 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         VMOptions.addFieldOption("-XX:", "UseRescanMap", TricolorHeapMarker.class, "Use a rescan map when recovering from mark stack overflow", Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "UseDeepMarkStackFlush", TricolorHeapMarker.class, "Visit flushed cells and mark their reference grey when flushing the mark stack", Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "VerifyAfterMarking", TricolorHeapMarker.class, "Verify absence of grey bits after marking is completed", Phase.PRISTINE);
+    }
+
+    private static enum MARK_PHASE {
+        SCAN_THREADS("T"),
+        SCAN_BOOT_HEAP("B"),
+        SCAN_CODE("C"),
+        SCAN_IMMORTAL("I"),
+        VISIT_GREY_FORWARD("V"),
+        SPECIAL_REF("W"),
+        DONE("D");
+
+        String tag;
+        private MARK_PHASE(String tag) {
+            this.tag = tag;
+        }
+
+        @Override
+        final public String toString() {
+            return tag;
+        }
     }
 
     /**
@@ -236,6 +258,49 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     private long totalRecoveryElapsedTime = 0L;
 
     private boolean traceGCTimes = false;
+
+    private MARK_PHASE markPhase = MARK_PHASE.DONE;
+
+
+    private static String colorName(long color) {
+        return COLOR_NAMES[(int) color & 0x3];
+    }
+    private static char colorChar(long color) {
+        return COLOR_CHARS[(int) color & 0x3];
+    }
+
+    private void traceMark(Address cell,  long color, int bitIndex) {
+        final int bwi = bitmapWordIndex(bitIndex);
+        Log.print("#mark ");
+        Log.print(markPhase);
+        Log.print(" ");
+        Log.print(colorChar(color));
+        Log.print(" ");
+        Log.print(cell);
+        Log.print(" bi: ");
+        Log.print(bitIndex);
+        Log.print(" [ ");
+        Log.print(bwi);
+        Log.println(" ]");
+    }
+
+    private void traceMark(Address cell,  long color) {
+        traceMark(cell, color, bitIndexOf(cell));
+    }
+
+    @INLINE
+    final public void traceGreyMark(Address cell, int bitIndex) {
+        if (MaxineVM.isDebug()) {
+            traceMark(cell, GREY, bitIndex);
+        }
+    }
+
+    @INLINE
+    final public void traceBlackMark(Address cell, int bitIndex) {
+        if (MaxineVM.isDebug()) {
+            traceMark(cell, BLACK, bitIndex);
+        }
+    }
 
     private void startTimer(Timer timer) {
         if (traceGCTimes) {
@@ -450,7 +515,9 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
     @INLINE
     final void markGrey(Address cell) {
-        markGrey(bitIndexOf(cell));
+        final int bitIndex = bitIndexOf(cell);
+        traceGreyMark(cell, bitIndex);
+        markGrey(bitIndex);
     }
 
     @INLINE
@@ -468,6 +535,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     final boolean markGreyIfWhite(Pointer cell) {
         final int bitIndex = bitIndexOf(cell);
         if (isWhite(bitIndex)) {
+            traceGreyMark(cell, bitIndex);
             markGrey(bitIndex);
             return true;
         }
@@ -509,7 +577,9 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
     @INLINE
     final void markBlackFromGrey(Address cell) {
-        markBlackFromGrey(bitIndexOf(cell));
+        final int bitIndex = bitIndexOf(cell);
+        traceBlackMark(cell, bitIndex);
+        markBlackFromGrey(bitIndex);
     }
 
     @INLINE
@@ -703,10 +773,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         }
 
         @INLINE
-        private void markBlackFromGrey(Pointer cell) {
-            heapMarker.markBlackFromGrey(cell);
-        }
-        @INLINE
         private void markRefGrey(Reference ref) {
             markObjectGrey(Layout.originToCell(ref.toOrigin()));
         }
@@ -759,6 +825,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                     markRefGrey(Layout.getReference(origin, index));
                 }
             }
+            heapMarker.traceBlackMark(cell, bitIndex);
             heapMarker.markBlackFromGrey(bitIndex);
         }
 
@@ -933,6 +1000,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                 printVisitedCell(cell, "Visiting popped cell ");
             }
             visitGreyCell(cell);
+            heapMarker.traceBlackMark(cell, bitIndex);
             heapMarker.markBlackFromGrey(bitIndex);
         }
 
@@ -1448,6 +1516,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         // Mark all out of heap roots first (i.e., thread).
         // This only needs setting grey marks blindly (there are no black mark at this stage).
         startTimer(rootScanTimer);
+        markPhase = MARK_PHASE.SCAN_THREADS;
         heapRootsScanner.run();
         stopTimer(rootScanTimer);
 
@@ -1456,6 +1525,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             Log.println("Marking roots from boot heap...");
         }
         startTimer(bootHeapScanTimer);
+        markPhase = MARK_PHASE.SCAN_BOOT_HEAP;
         markBootHeap();
         stopTimer(bootHeapScanTimer);
 
@@ -1463,6 +1533,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             Log.println("Marking roots from code...");
         }
         startTimer(codeScanTimer);
+        markPhase = MARK_PHASE.SCAN_CODE;
         markCode();
         stopTimer(codeScanTimer);
 
@@ -1470,6 +1541,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             Log.println("Marking roots from immortal heap...");
         }
         startTimer(immortalSpaceScanTimer);
+        markPhase = MARK_PHASE.SCAN_IMMORTAL;
         markImmortalHeap();
         stopTimer(immortalSpaceScanTimer);
     }
@@ -2039,6 +2111,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             Log.println("Tracing grey objects...");
         }
         startTimer(heapMarkingTimer);
+        markPhase = MARK_PHASE.VISIT_GREY_FORWARD;
         visitGreyObjectsAfterRootMarking();
         stopTimer(heapMarkingTimer);
         if (traceGCTimes) {
@@ -2051,6 +2124,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         }
 
         startTimer(weakRefTimer);
+        markPhase = MARK_PHASE.SPECIAL_REF;
         SpecialReferenceManager.processDiscoveredSpecialReferences(forwardScanState);
         visitGreyObjects();
         stopTimer(weakRefTimer);
@@ -2077,6 +2151,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             Log.println("Tracing grey objects...");
         }
         startTimer(heapMarkingTimer);
+        markPhase = MARK_PHASE.VISIT_GREY_FORWARD;
         visitGreyObjectsAfterRootMarking(regionsRanges);
         stopTimer(heapMarkingTimer);
 
@@ -2088,9 +2163,11 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             verifyHasNoGreyMarks(regionsRanges, forwardScanState.endOfRightmostVisitedObject());
         }
         startTimer(weakRefTimer);
+        markPhase = MARK_PHASE.SPECIAL_REF;
         SpecialReferenceManager.processDiscoveredSpecialReferences(forwardScanState);
         visitGreyObjects(regionsRanges);
         stopTimer(weakRefTimer);
-
+        markPhase = MARK_PHASE.DONE;
     }
+
 }
