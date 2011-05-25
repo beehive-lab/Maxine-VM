@@ -2114,9 +2114,9 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                 bitmapWordIndex++;
             }
         }
-        if (lastLiveMark + minBitsBetweenMark <= rightmostBitIndex)  {
-            Address tail = endOfCellAtBitIndex(lastLiveMark);
-            Size tailSpace = regionRightmost.minus(tail).asSize();
+        Address tail = endOfCellAtBitIndex(lastLiveMark);
+        Size tailSpace = regionRightmost.minus(tail).asSize();
+        if (tailSpace.greaterEqual(sweeper.minReclaimableSpace())) {
             sweeper.processDeadSpace(tail, tailSpace);
         }
     }
