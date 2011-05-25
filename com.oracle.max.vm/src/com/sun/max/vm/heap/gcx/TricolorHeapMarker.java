@@ -131,10 +131,12 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
     static final int bitIndexInWordMask = LAST_BIT_INDEX_IN_WORD;
 
+    static boolean TraceMarking = false;
     static boolean UseRescanMap;
     static boolean UseDeepMarkStackFlush = true;
     static boolean VerifyAfterMarking = false;
     static {
+        VMOptions.addFieldOption("-XX:", "TraceMarking", TricolorHeapMarker.class, "Trace each mark update (Debug mode only)", Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "UseRescanMap", TricolorHeapMarker.class, "Use a rescan map when recovering from mark stack overflow", Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "UseDeepMarkStackFlush", TricolorHeapMarker.class, "Visit flushed cells and mark their reference grey when flushing the mark stack", Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "VerifyAfterMarking", TricolorHeapMarker.class, "Verify absence of grey bits after marking is completed", Phase.PRISTINE);
@@ -290,14 +292,14 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
     @INLINE
     final public void traceGreyMark(Address cell, int bitIndex) {
-        if (MaxineVM.isDebug()) {
+        if (MaxineVM.isDebug() && TraceMarking) {
             traceMark(cell, GREY, bitIndex);
         }
     }
 
     @INLINE
     final public void traceBlackMark(Address cell, int bitIndex) {
-        if (MaxineVM.isDebug()) {
+        if (MaxineVM.isDebug() && TraceMarking) {
             traceMark(cell, BLACK, bitIndex);
         }
     }
