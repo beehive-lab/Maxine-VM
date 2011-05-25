@@ -49,7 +49,7 @@ public final class AMD64TargetMethodUtil {
     /**
      * Lock to avoid race on concurrent icache invalidation when patching target methods.
      */
-    private static final Object PatchingLock = new Object();
+    private static final Object PatchingLock = new Object(); // JavaMonitorManager.newVmLock("PATCHING_LOCK");
 
     public static int registerReferenceMapSize() {
         return Unsigned.idiv(AMD64.cpuRegisters.length, Bytes.WIDTH);

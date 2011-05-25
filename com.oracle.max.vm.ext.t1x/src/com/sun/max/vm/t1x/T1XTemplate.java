@@ -428,10 +428,6 @@ public class T1XTemplate {
             safepoints = new T1XStop[numberOfSafepoints];
             T1XStop bytecodeCall = null;
 
-            int frameRefMapSize = source.frameRefMapSize();
-            int totalRefMapSize = source.totalRefMapSize();
-            int regRefMapSize = C1XTargetMethod.regRefMapSize();
-
             for (int i = 0; i < numberOfDirectCalls; i++) {
                 int stopIndex = i;
                 if (source.directCallees()[i] == null) {
@@ -446,23 +442,23 @@ public class T1XTemplate {
                 } else {
                     T1XStop stop = new T1XStop(DirectCall.mask | InTemplate.mask, source.stopPosition(stopIndex), -1);
                     stop.callee = (ClassMethodActor) source.directCallees()[i];
-                    stop.frameRefMap = nullIfEmpty(new CiBitMap(source.referenceMaps(), stopIndex * totalRefMapSize, frameRefMapSize));
-                    //stop.regRefMap = nullIfEmpty(CiBitMap(code.referenceMaps(), stopIndex * totalRefMapSize + frameRefMapSize, regRefMapSize));
+                    stop.frameRefMap = nullIfEmpty(source.frameRefMapAt(stopIndex));
+                    //stop.regRefMap = nullIfEmpty(source.regRefMapAt(stopIndex));
                     directCalls[i] = stop;
                 }
             }
             for (int i = 0; i < numberOfIndirectCalls; i++) {
                 int stopIndex = numberOfDirectCalls + i;
                 T1XStop stop = new T1XStop(IndirectCall.mask | InTemplate.mask, source.stopPosition(stopIndex), -1);
-                stop.frameRefMap = nullIfEmpty(new CiBitMap(source.referenceMaps(), stopIndex * totalRefMapSize, frameRefMapSize));
-                //stop.regRefMap = nullIfEmpty(new CiBitMap(code.referenceMaps(), stopIndex * totalRefMapSize + frameRefMapSize, regRefMapSize));
+                stop.frameRefMap = nullIfEmpty(source.frameRefMapAt(stopIndex));
+                //stop.regRefMap = nullIfEmpty(source.regRefMapAt(stopIndex));
                 indirectCalls[i] = stop;
             }
             for (int i = 0; i < numberOfSafepoints; i++) {
                 int stopIndex = numberOfDirectCalls + numberOfIndirectCalls + i;
                 T1XStop stop = new T1XStop(Safepoint.mask | InTemplate.mask, source.stopPosition(stopIndex), -1);
-                stop.frameRefMap = nullIfEmpty(new CiBitMap(source.referenceMaps(), stopIndex * totalRefMapSize, frameRefMapSize));
-                stop.regRefMap = nullIfEmpty(new CiBitMap(source.referenceMaps(), stopIndex * totalRefMapSize + frameRefMapSize, regRefMapSize));
+                stop.frameRefMap = nullIfEmpty(source.frameRefMapAt(stopIndex));
+                stop.regRefMap = nullIfEmpty(source.regRefMapAt(stopIndex));
                 safepoints[i] = stop;
             }
 

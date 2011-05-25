@@ -26,6 +26,7 @@ import java.lang.ref.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
@@ -221,6 +222,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
         // Other Maxine support
         classToTeleTupleObjectConstructor.put(Kind.class, getConstructor(TeleKind.class));
         classToTeleTupleObjectConstructor.put(ObjectReferenceValue.class, getConstructor(TeleObjectReferenceValue.class));
+        classToTeleTupleObjectConstructor.put(CiConstant.class, getConstructor(TeleCiConstant.class));
         // ConstantPool and PoolConstants
         classToTeleTupleObjectConstructor.put(ConstantPool.class, getConstructor(TeleConstantPool.class));
         classToTeleTupleObjectConstructor.put(CodeAttribute.class, getConstructor(TeleCodeAttribute.class));
@@ -238,6 +240,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
         classToTeleTupleObjectConstructor.put(InterfaceMethodRefConstant.Resolved.class, getConstructor(TeleInterfaceMethodRefConstant.Resolved.class));
         classToTeleTupleObjectConstructor.put(InterfaceMethodRefConstant.Unresolved.class, getConstructor(TeleInterfaceMethodRefConstant.Unresolved.class));
         classToTeleTupleObjectConstructor.put(InterfaceMethodRefConstant.UnresolvedIndices.class, getConstructor(TeleInterfaceMethodRefConstant.UnresolvedIndices.class));
+
         // Java language objects
         classToTeleTupleObjectConstructor.put(Class.class, getConstructor(TeleClass.class));
         classToTeleTupleObjectConstructor.put(Constructor.class, getConstructor(TeleConstructor.class));

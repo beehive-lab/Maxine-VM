@@ -39,6 +39,7 @@ public class Package extends BootImagePackage{
         public void initializeObjectIdentityMap(Map<Object, Object> objectMap) {
             objectMap.put(TTY.out(), new LogStream(Log.os));
             objectMap.put(CFGPrinter.cfgFileStream(), JavaPrototype.NULL);
+            objectMap.put(ValueCodec.objectConstants, new IdentityHashMap<Object, Integer>());
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,33 +25,28 @@ package com.sun.max.vm.heap.gcx;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 
-/**
- * Boxed version of RegionRange.
- */
-@HOSTED_ONLY
-public final class BoxedRegionRange extends RegionRange implements Boxed {
-    private long nativeWord;
+final public class ContiguousHeapRootCellVisitor extends RootCellVisitor {
 
-    private BoxedRegionRange(long value) {
-        nativeWord = value;
+    public ContiguousHeapRootCellVisitor() {
+        super();
     }
 
     @Override
-    public long value() {
-        return nativeWord;
+    void reset() {
+        super.reset();
+        bottom = heapMarker.coveredAreaStart;
     }
 
-    public static BoxedRegionRange from(int regionID, int numRegions) {
-        long encodedRange = regionID;
-        encodedRange = (encodedRange << REGION_ID_SHIFT) | numRegions;
-        return new BoxedRegionRange(encodedRange);
-    }
-
-    protected static BoxedRegionRange fromLong(long value) {
-        return new BoxedRegionRange(value);
-    }
-
-    protected static BoxedRegionRange fromInt(int value) {
-        return new BoxedRegionRange(value);
+    /**
+     * Marking cell referenced from outside of the covered area.
+     * If the cell is itself outside of the covered area, nothing is done.
+     *
+     * @param cell a pointer read from an external root (may be zero).
+     */
+    @INLINE(override = true)
+    @Override
+    boolean isNonNullCovered(Pointer cell) {
+        // Note: the first test also acts as a null pointer filter.
+        return true;
     }
 }

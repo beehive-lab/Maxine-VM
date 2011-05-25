@@ -730,6 +730,7 @@ public final class ClassfileReader {
         // A map for efficiently checking the uniqueness of methods
         final MemberSet methodActorSet = new MemberSet(numberOfMethods);
 
+        int clinitIndex = -1;
     nextMethod:
         for (int i = 0; i < numberOfMethods; ++i) {
             int flags = classfileStream.readUnsigned2();
@@ -988,17 +989,27 @@ public final class ClassfileReader {
                     if (methodActorSet.add(methodActor) != null) {
                         throw classFormatError("Duplicate method name and signature: " + name + " " + descriptor);
                     }
+                    if (isClinit) {
+                        clinitIndex = nextMethodIndex;
+                    }
                     methodActors[nextMethodIndex++] = methodActor;
+
                 }
             } finally {
                 exitContext();
             }
         }
 
-        if (nextMethodIndex < numberOfMethods) {
-            return Arrays.copyOf(methodActors, nextMethodIndex);
+        MethodActor[] result = nextMethodIndex < numberOfMethods ? Arrays.copyOf(methodActors, nextMethodIndex) : methodActors;
+        if (clinitIndex != -1) {
+            // Swap <clinit> with the last element in the array. This enables
+            // ClassActor.getLocalMethodActor(int memberIndex) to work in the
+            // Inspector (which preserves all <clinit> methods).
+            MethodActor tmp = result[result.length - 1];
+            result[result.length - 1] = result[clinitIndex];
+            result[clinitIndex] = tmp;
         }
-        return methodActors;
+        return result;
     }
 
     protected void readInnerClassesAttribute() {

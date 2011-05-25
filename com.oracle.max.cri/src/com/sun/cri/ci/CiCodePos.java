@@ -59,6 +59,7 @@ public class CiCodePos implements Serializable {
      * @param bci the bytecode index within the method
      */
     public CiCodePos(CiCodePos caller, RiMethod method, int bci) {
+        assert method != null;
         this.caller = caller;
         this.method = method;
         this.bci = bci;
@@ -78,6 +79,9 @@ public class CiCodePos implements Serializable {
      */
     @Override
     public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
         if (obj instanceof CiCodePos) {
             CiCodePos other = (CiCodePos) obj;
             if (other.method.equals(method) && other.bci == bci) {

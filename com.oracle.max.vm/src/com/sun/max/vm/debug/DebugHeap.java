@@ -118,15 +118,23 @@ public final class DebugHeap {
         return cell;
     }
 
+    /**
+     * Checking the tag a cell.
+     * A region start address may be supplied for tracing purposes if the cell reside in a specific region of memory.
+     *
+     * @param regionStart Address to the first byte of the memory region where the cell is allocated
+     * @param cell cell whose tag is checked
+     * @return Address to beginning of the cell stripped off its tag.
+     */
     @INLINE
-    public static Pointer checkDebugCellTag(Address from, Pointer cell) {
+    public static Pointer checkDebugCellTag(Address regionStart, Pointer cell) {
         if (isTagging()) {
             if (!isValidCellTag(cell.getWord(0))) {
                 Log.print("Invalid object tag @ ");
                 Log.print(cell);
-                if (!from.isZero()) {
+                if (!regionStart.isZero()) {
                     Log.print(" (start + ");
-                    Log.print(cell.minus(from).asOffset().toInt());
+                    Log.print(cell.minus(regionStart).asOffset().toInt());
                     Log.print(")");
                 }
                 Log.println();

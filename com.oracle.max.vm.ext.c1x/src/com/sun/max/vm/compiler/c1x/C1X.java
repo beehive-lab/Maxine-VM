@@ -185,6 +185,7 @@ public class C1X implements RuntimeCompiler {
         if (phase == Phase.TERMINATING) {
             if (C1XOptions.PrintMetrics) {
                 C1XMetrics.print();
+                DebugInfo.dumpStats(Log.out);
             }
             if (C1XOptions.PrintTimers) {
                 C1XTimers.print();
@@ -205,7 +206,13 @@ public class C1X implements RuntimeCompiler {
             compiledMethod = compiler().compileMethod(method, -1, xirGenerator, stats).targetMethod();
             Dependencies deps = DependenciesManager.validateDependencies(compiledMethod.assumptions());
             if (deps != Dependencies.INVALID) {
+                if (C1XOptions.PrintTimers) {
+                    C1XTimers.INSTALL.start();
+                }
                 C1XTargetMethod c1xTargetMethod = new C1XTargetMethod(method, compiledMethod, install);
+                if (C1XOptions.PrintTimers) {
+                    C1XTimers.INSTALL.stop();
+                }
                 if (deps != null) {
                     DependenciesManager.registerValidatedTarget(deps, c1xTargetMethod);
                     if (DependenciesManager.TraceDeps) {

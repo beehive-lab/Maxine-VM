@@ -21,13 +21,17 @@
  * questions.
  */
 package com.sun.max.vm.heap.gcx;
+import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 
+import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
+import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 
@@ -41,6 +45,8 @@ import com.sun.max.vm.runtime.*;
  * the heap space.
  */
 public final class RegionTable {
+    public static final HeapRegionInfo nullHeapRegionInfo = new HeapRegionInfo();
+
     static final int TableOffset = ClassActor.fromJava(RegionTable.class).dynamicTupleSize().toInt();
 
     @CONSTANT_WHEN_NOT_ZERO
@@ -51,44 +57,48 @@ public final class RegionTable {
         return theRegionTable;
     }
 
+    @INTRINSIC(UNSAFE_CAST)
+    private static native HeapRegionInfo asHeapRegionInfo(Object regionInfo);
+
+    @INLINE
+    private static HeapRegionInfo toHeapRegionInfo(Pointer regionInfoPointer) {
+        return asHeapRegionInfo(Reference.fromOrigin(Layout.cellToOrigin(regionInfoPointer)).toJava());
+    }
+
     private Pointer table() {
         return Reference.fromJava(this).toOrigin().plus(TableOffset);
     }
 
-    /**
-     * Base address of the contiguous space backing up the heap regions.
-     */
-    @CONSTANT_WHEN_NOT_ZERO
-    private  Address regionBaseAddress;
+    final private Address regionPoolStart;
 
-    @CONSTANT_WHEN_NOT_ZERO
-    private int regionInfoSize;
+    final private Address regionPoolEnd;
 
-    @CONSTANT_WHEN_NOT_ZERO
-    private int length;
+    final private int regionInfoSize;
 
-    private boolean isInHeapRegion(Address addr) {
-        return HeapRegionManager.theHeapRegionManager.contains(addr);
+    final private int length;
+
+    private boolean isInHeapRegion(Address address) {
+        return address.greaterEqual(regionPoolStart) && address.lessThan(regionPoolEnd);
     }
 
-    private RegionTable() {
-    }
-
-    static void initialize(Class<HeapRegionInfo> regionInfoClass, Address firstRegion, int numRegions) {
+    private RegionTable(Class<HeapRegionInfo> regionInfoClass, MemoryRegion regionPool, int numRegions) {
         final HeapScheme heapScheme = VMConfiguration.vmConfig().heapScheme();
         final Hub regionInfoHub = ClassActor.fromJava(regionInfoClass).dynamicHub();
-        RegionTable regionTable = new RegionTable();
-        regionTable.regionBaseAddress = firstRegion;
-        regionTable.length = numRegions;
-        regionTable.regionInfoSize = regionInfoHub.tupleSize.toInt();
+        regionPoolStart = regionPool.start();
+        regionPoolEnd = regionPool.end();
+        length = numRegions;
+        regionInfoSize = regionInfoHub.tupleSize.toInt();
 
         for (int i = 0; i < numRegions; i++) {
             Object regionInfo = heapScheme.createTuple(regionInfoHub);
             if (MaxineVM.isDebug()) {
-                FatalError.check(regionInfo == regionTable.regionInfo(i), "Failed to create valid region table");
+                FatalError.check(regionInfo == regionInfo(i), "Failed to create valid region table");
             }
         }
-        theRegionTable = regionTable;
+    }
+
+    static void initialize(Class<HeapRegionInfo> regionInfoClass, MemoryRegion regionPool, int numRegions) {
+        theRegionTable = new RegionTable(regionInfoClass, regionPool, numRegions);
     }
 
     int regionID(HeapRegionInfo regionInfo) {
@@ -96,37 +106,66 @@ public final class RegionTable {
         return regionID;
     }
 
+    int inHeapAddressRegionID(Address addr) {
+        return addr.minus(regionPoolStart).unsignedShiftedRight(log2RegionSizeInBytes).toInt();
+    }
+
     int regionID(Address addr) {
         if (!isInHeapRegion(addr)) {
             return INVALID_REGION_ID;
         }
-        return addr.minus(regionBaseAddress).unsignedShiftedRight(log2RegionSizeInBytes).toInt();
+        return inHeapAddressRegionID(addr);
     }
 
     HeapRegionInfo regionInfo(int regionID) {
-        return HeapRegionInfo.toHeapRegionInfo(table().plus(regionID * regionInfoSize));
+        return toHeapRegionInfo(table().plus(regionID * regionInfoSize));
+    }
+
+    HeapRegionInfo inHeapAddressRegionInfo(Address addr) {
+        return regionInfo(inHeapAddressRegionID(addr));
     }
 
     HeapRegionInfo regionInfo(Address addr) {
         if (!isInHeapRegion(addr)) {
+            return nullHeapRegionInfo;
+        }
+        return regionInfo(inHeapAddressRegionID(addr));
+    }
+
+    HeapRegionInfo regionInfoOrNull(Address addr) {
+        if (!isInHeapRegion(addr)) {
             return null;
         }
-        return regionInfo(regionID(addr));
+        return regionInfo(inHeapAddressRegionID(addr));
     }
 
     Address regionAddress(int regionID) {
-        return regionBaseAddress.plus(regionID << log2RegionSizeInBytes);
+        return regionPoolStart.plus(regionID << log2RegionSizeInBytes);
     }
 
     Address regionAddress(HeapRegionInfo regionInfo) {
         return regionAddress(regionID(regionInfo));
     }
 
+
+    /**
+     * Apply CellVisitor over all references within a region range.
+     * @param regionRange
+     * @param cellVisitor
+     */
+    void walk(RegionRange regionRange, CellVisitor cellVisitor) {
+        Pointer p = regionAddress(regionRange.firstRegion()).asPointer();
+        final Pointer end = p.plus(regionRange.numRegions()  << log2RegionSizeInBytes);
+        while (p.lessThan(end)) {
+            p = cellVisitor.visitCell(p);
+        }
+    }
+
     HeapRegionInfo next(HeapRegionInfo regionInfo) {
-        return HeapRegionInfo.toHeapRegionInfo(Reference.fromJava(regionInfo).toOrigin().plus(regionInfoSize));
+        return toHeapRegionInfo(Reference.fromJava(regionInfo).toOrigin().plus(regionInfoSize));
     }
 
     HeapRegionInfo prev(HeapRegionInfo regionInfo) {
-        return HeapRegionInfo.toHeapRegionInfo(Reference.fromJava(regionInfo).toOrigin().minus(regionInfoSize));
+        return toHeapRegionInfo(Reference.fromJava(regionInfo).toOrigin().minus(regionInfoSize));
     }
 }

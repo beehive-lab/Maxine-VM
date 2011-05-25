@@ -26,6 +26,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.*;
+import com.sun.max.annotate.*;
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -562,7 +563,6 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
 
         int level = 0;
         final Map<TeleObject, Object> teleObjectToObject = new HashMap<TeleObject, Object>();
-        final Set<FieldActor> omittedFields = new HashSet<FieldActor>();
 
         /**
          * @return the depth of the object graph currently being copied
@@ -631,11 +631,6 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
             }
         }
 
-        protected DeepCopier omit(FieldActor fieldActor) {
-            omittedFields.add(fieldActor);
-            return this;
-        }
-
         /**
          * Gets the number of unique object copied by this copier.
          */
@@ -651,10 +646,6 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
          * @param fieldActor the field to be copied/updated
          */
         protected void copyField(TeleObject teleObject, Object newTuple, FieldActor fieldActor) {
-            if (!omittedFields.isEmpty() && omittedFields.contains(fieldActor)) {
-                return;
-            }
-
             if (!fieldActor.isInjected()) {
                 final Field field = fieldActor.toJava();
                 field.setAccessible(true);
@@ -662,6 +653,10 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
                     final Value value = teleObject.readFieldValue(fieldActor);
                     final Object newJavaValue;
                     if (fieldActor.kind.isReference) {
+                        INSPECTED a = fieldActor.getAnnotation(INSPECTED.class);
+                        if (a != null && !a.deepCopied()) {
+                            return;
+                        }
                         final TeleObject teleFieldReferenceObject = teleObject.heap().makeTeleObject(value.asReference());
                         if (teleFieldReferenceObject == null) {
                             newJavaValue = null;

@@ -34,5 +34,12 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.FIELD })
 public @interface INSPECTED {
+    /**
+     * Determines if the value of this field is deep copied in a deep copy operation.
+     * If false, then the value of the field will be {@code null} in a deep copy.
+     * This value is ignored for non-object fields (i.e. the value of these fields
+     * are always copied).
+     */
+    boolean deepCopied() default true;
 
 }

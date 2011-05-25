@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,38 +20,21 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.heap.gcx;
+package test.output;
 
-import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
 
-/**
- * Boxed version of RegionRange.
- */
-@HOSTED_ONLY
-public final class BoxedRegionRange extends RegionRange implements Boxed {
-    private long nativeWord;
+public class Assert01 {
 
-    private BoxedRegionRange(long value) {
-        nativeWord = value;
+    public static void test(int arg) {
+        assert arg == 0;
     }
 
-    @Override
-    public long value() {
-        return nativeWord;
-    }
-
-    public static BoxedRegionRange from(int regionID, int numRegions) {
-        long encodedRange = regionID;
-        encodedRange = (encodedRange << REGION_ID_SHIFT) | numRegions;
-        return new BoxedRegionRange(encodedRange);
-    }
-
-    protected static BoxedRegionRange fromLong(long value) {
-        return new BoxedRegionRange(value);
-    }
-
-    protected static BoxedRegionRange fromInt(int value) {
-        return new BoxedRegionRange(value);
+    public static void main(String[] args) {
+        try {
+            test(0);
+            System.out.println("Assert01 not thrown");
+        } catch (AssertionError e) {
+            System.out.println("Assert01 thrown");
+        }
     }
 }

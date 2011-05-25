@@ -23,7 +23,6 @@
 package com.sun.cri.ci;
 
 import java.io.*;
-import java.util.*;
 
 import com.sun.cri.ri.*;
 
@@ -61,6 +60,7 @@ public class CiFrame extends CiCodePos implements Serializable {
 
     public CiFrame(CiFrame caller, RiMethod method, int bci, CiValue[] values, int numLocals, int numStack, int numLocks) {
         super(caller, method, bci);
+        assert values != null;
         this.values = values;
         this.numLocks = numLocks;
         this.numLocals = numLocals;
@@ -108,19 +108,53 @@ public class CiFrame extends CiCodePos implements Serializable {
      */
     @Override
     public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
         if (obj instanceof CiFrame) {
             CiFrame other = (CiFrame) obj;
-            if (method.equals(other.method) &&
-                other.bci == bci &&
-                numLocals == other.numLocals &&
-                numStack == other.numStack &&
-                numLocks == other.numLocks &&
-                Arrays.equals(values, other.values)) {
-                if (caller == null) {
-                    return other.caller == null;
+            return equals(other, false);
+        }
+        return false;
+    }
+
+    /**
+     * Deep equality test, ignoring value kinds.
+     */
+    public boolean equalsIgnoringKind(CiFrame other) {
+        if (other == this) {
+            return true;
+        }
+        return equals(other, true);
+    }
+
+    private boolean equals(CiFrame other, boolean ignoreKinds) {
+        if (other.bci == bci &&
+            numLocals == other.numLocals &&
+            numStack == other.numStack &&
+            numLocks == other.numLocks &&
+            values.length == other.values.length) {
+
+            if (ignoreKinds) {
+                for (int i = 0; i < values.length; i++) {
+                    if (!values[i].equalsIgnoringKind(other.values[i])) {
+                        return false;
+                    }
                 }
-                return caller.equals(other.caller);
+            } else {
+                for (int i = 0; i < values.length; i++) {
+                    if (!values[i].equals(other.values[i])) {
+                        return false;
+                    }
+                }
             }
+            if (caller == null) {
+                return other.caller == null;
+            }
+            if (other.caller == null) {
+                return false;
+            }
+            return caller().equals(other.caller(), ignoreKinds);
         }
         return false;
     }
