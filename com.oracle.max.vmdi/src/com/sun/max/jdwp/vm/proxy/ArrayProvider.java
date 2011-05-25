@@ -25,8 +25,6 @@ package com.sun.max.jdwp.vm.proxy;
 /**
  * An interface that allows accessing an array object in the VM.
  *
- * @author Thomas Wuerthinger
- *
  */
 public interface ArrayProvider extends ObjectProvider {
 

@@ -27,8 +27,6 @@ import com.sun.max.jdwp.vm.core.*;
 /**
  * Class representing a JDWP stack frame.
  *
- * @author Thomas Wuerthinger
- *
  */
 public interface FrameProvider extends Provider {
 

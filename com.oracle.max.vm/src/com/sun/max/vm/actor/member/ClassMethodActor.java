@@ -333,6 +333,10 @@ public abstract class ClassMethodActor extends MethodActor {
         return (ClassMethodActor) MethodActor.fromJava(javaMethod);
     }
 
+    /**
+     * Gets the latest version of compiled code for this method that can be executed.
+     * Note that this will never return an invalidated target method.
+     */
     public TargetMethod currentTargetMethod() {
         return TargetState.currentTargetMethod(targetState);
     }

@@ -31,8 +31,6 @@ import com.sun.cri.ci.CiRegister.RegisterFlag;
 
 /**
  * Represents the AMD64 architecture.
- *
- * @author Thomas Wuerthinger
  */
 public class AMD64 extends CiArchitecture {
 

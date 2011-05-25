@@ -25,8 +25,6 @@ package com.sun.max.jdwp.vm.proxy;
 /**
  * Object in the VM that is a String object.
  *
- * @author Thomas Wuerthinger
- *
  */
 public interface StringProvider extends ObjectProvider {
 

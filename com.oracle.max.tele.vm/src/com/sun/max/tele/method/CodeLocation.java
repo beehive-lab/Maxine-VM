@@ -160,7 +160,7 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
     private final String description;
 
     private TeleCompiledCode compiledCode;
-    private CiFrame frames = null;
+    private CiFrame bytecodeFrames = null;
 
     protected CodeLocation(TeleVM teleVM, String description) {
         super(teleVM);
@@ -175,10 +175,21 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
     }
 
     public final CiFrame bytecodeFrames() {
-        if (frames == null && hasAddress()) {
-            frames = addressToBytecodeFrames(address());
+        if (bytecodeFrames == null && hasAddress()) {
+            bytecodeFrames = addressToBytecodeFrames(address());
         }
-        return frames;
+        return bytecodeFrames;
+    }
+
+    public int bci() {
+        CiFrame frame = bytecodeFrames();
+        if (frame == null) {
+            return -1;
+        }
+        while (frame.caller() != null) {
+            frame = frame.caller();
+        }
+        return frame.bci;
     }
 
     public final String description() {
@@ -433,10 +444,6 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
             return teleClassMethodActor;
         }
 
-        public int bci() {
-            return -1;
-        }
-
         public boolean hasMethodKey() {
             return true;
         }
@@ -489,6 +496,7 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
             return teleClassMethodActor;
         }
 
+        @Override
         public int bci() {
             return bci;
         }
@@ -524,7 +532,6 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
 
         private final Address address;
         private volatile TeleClassMethodActor teleClassMethodActor = null;
-        private volatile int bci = -1;
         private volatile MethodKey methodKey = null;
 
         public AddressCodeLocation(TeleVM teleVM, Address address, String description) {
@@ -549,10 +556,6 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
         public TeleClassMethodActor teleClassMethodActor() {
             tryLocateTeleClassMethodActor();
             return teleClassMethodActor;
-        }
-
-        public int bci() {
-            return bci;
         }
 
         public boolean hasMethodKey() {
@@ -622,10 +625,6 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
             return teleClassMethodActor;
         }
 
-        public int bci() {
-            return bci;
-        }
-
         public boolean hasMethodKey() {
             tryCreateMethodKey();
             return methodKey != null;
@@ -684,10 +683,6 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
         public TeleClassMethodActor teleClassMethodActor() {
             tryLocateTeleClassMethodActor();
             return teleClassMethodActor;
-        }
-
-        public int bci() {
-            return -1;
         }
 
         public boolean hasMethodKey() {

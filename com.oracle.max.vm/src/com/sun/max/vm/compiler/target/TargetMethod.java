@@ -46,6 +46,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.ArrayField;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.*;
@@ -66,6 +67,19 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     static final boolean COMPILED = true;
+
+    /**
+     * Implemented by a client wanting to do something to a target method.
+     */
+    public static interface Closure {
+        /**
+         * Processes a given target method.
+         *
+         * @param targetMethod the class to process
+         * @return {@code false} if target method processing (e.g. iteration) by the caller should be stopped
+         */
+        boolean doTargetMethod(TargetMethod targetMethod);
+    }
 
     /**
      * Categorization of target methods.
@@ -177,8 +191,25 @@ public abstract class TargetMethod extends MemoryRegion {
     @INSPECTED
     protected Pointer codeStart = Pointer.zero();
 
+    /**
+     * If non-null, then this method is being/has been deoptimized.
+     * Atomic updates to this field are used to ensure that an invalidated/deoptimized field
+     * is never used for linking a call site or dispatch table entry.
+     */
+    volatile private DeoptInfo deoptInfo;
+
+    /**
+     * The frame size (in bytes) of an activation of this target method. This does not
+     * include the space occupied by a return address (if the arch uses one).
+     */
     private int frameSize = -1;
 
+    /**
+     * The offset of the code restoring the saved registers and returning to the caller.
+     * When unwinding the stack to an exception handler in the caller of such a method, control must be returned
+     * to this address (after the return address has been patched with the address of the exception handler).
+     * A value of {@code -1} means this is not a callee-save target method.
+     */
     private int registerRestoreEpilogueOffset = -1;
 
     public TargetMethod(Flavor flavor, String description, CallEntryPoint callEntryPoint) {
@@ -215,6 +246,21 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     public abstract byte[] referenceMaps();
+
+    /**
+     * Sets the deopt info for this target method. This denotes an atomic transition after which
+     * this target method can no longer be used to link a call site or a dispatch table entry.
+     * This can only be done at most once for any target method instance.
+     */
+    public void setDeoptInfo(DeoptInfo deoptInfo) {
+        assert deoptInfo != null;
+        assert this.deoptInfo == null : "cannot overwrite existing deopt info for " + this;
+        this.deoptInfo = deoptInfo;
+    }
+
+    public DeoptInfo deoptInfo() {
+        return deoptInfo;
+    }
 
     /**
      * Gets the bytecode locations for the inlining chain rooted at a given instruction pointer. The first bytecode
@@ -450,6 +496,17 @@ public abstract class TargetMethod extends MemoryRegion {
 
     public Word getEntryPoint(CallEntryPoint callEntryPoint) {
         return callEntryPoint.in(this);
+    }
+
+    /**
+     * Resets a direct call site, make it point to the static trampoline again.
+     *
+     * @param dc the index of the direct call
+     */
+    public final void resetDirectCall(int dc) {
+        final int offset = getCallEntryOffset(directCallees[dc], dc);
+        final int pos = stopPosition(dc);
+        fixupCallSite(pos, vm().stubs.staticTrampoline().codeStart.plus(offset));
     }
 
     /**
@@ -922,6 +979,39 @@ public abstract class TargetMethod extends MemoryRegion {
      * @param current the current stack frame cursor
      */
     public abstract void advance(Cursor current);
+
+    /**
+     * Gets a pointer to the memory word holding the return address in a frame of this target method.
+     *
+     * @param frame an activation frame for this target method
+     */
+    public abstract Pointer returnAddressPointer(Cursor frame);
+
+    /**
+     * Gets the offset of the deopt handler in this target method.
+     * This is the code returned to when this target method was on a stack
+     * notified of a deoptimization request. Callee frames will have
+     * their return address patched to this address and the original
+     * return address is saved in the frame at the offset given
+     * by {@link #deoptReturnAddressOffset()}.
+     *
+     * @return {@code -1} if this target method has no deopt stub
+     */
+    public int deoptHandlerOffset() {
+        return -1;
+    }
+
+    /**
+     * The offset (in bytes) in a frame for this target method where
+     * the overwritten return address can be found if this method is
+     * deoptimized while in a call.
+     *
+     * @return {@code -1} if this target method has no deopt handler
+     * @see #deoptHandlerOffset()
+     */
+    public int deoptReturnAddressOffset() {
+        return -1;
+    }
 
     /**
      * Determines if this method has been compiled under the invariant that the

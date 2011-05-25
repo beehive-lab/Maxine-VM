@@ -28,8 +28,6 @@ import com.sun.max.jdwp.vm.core.*;
  * Class representing a group of thread. This is a construct that is in the JDWP protocol and many Java IDEs (e.g. NetBeans, Eclipse) support grouped views of
  * thread based on this concept.
  *
- * @author Thomas Wuerthinger
- *
  */
 public interface ThreadGroupProvider extends ObjectProvider {
 

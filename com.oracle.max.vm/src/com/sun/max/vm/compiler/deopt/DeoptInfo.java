@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,27 +20,29 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package test.com.sun.max.vm.jtrun.some;
+package com.sun.max.vm.compiler.deopt;
 
-import test.com.sun.max.vm.jtrun.*;
+import com.sun.max.vm.compiler.target.*;
 
-import com.sun.max.annotate.*;
+/**
+ * Various per-target method information required for deoptimization.
+ */
+public class DeoptInfo {
 
-public class JTRunScheme extends JTAbstractRunScheme {
+    public final TargetMethod targetMethod;
 
-    @HOSTED_ONLY
-    public JTRunScheme() {
+
+    public DeoptInfo(TargetMethod targetMethod) {
+        this.targetMethod = targetMethod;
     }
 
-    @Override
-    @HOSTED_ONLY
-    public Class<?>[] getClassList() {
-        return JTConfig.testClasses.testClasses;
-    }
+    /**
+     * Number of frames still executing method.
+     */
+    volatile int liveFrames;
 
     @Override
-    public void runTests() {
-        JTRuns.runTests(testStart, testEnd);
-        JTUtil.printReport();
+    public String toString() {
+        return String.valueOf(targetMethod);
     }
 }

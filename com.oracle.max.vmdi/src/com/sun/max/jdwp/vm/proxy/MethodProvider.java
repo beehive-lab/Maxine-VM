@@ -27,8 +27,6 @@ import com.sun.max.jdwp.vm.data.*;
 
 /**
  * Class representing a method in the VM.
- *
- * @author Thomas Wuerthinger
  */
 public interface MethodProvider extends Provider {
 

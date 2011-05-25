@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,19 +20,42 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.jdwp.vm.proxy;
+package jtt.loop;
 
-import com.sun.max.jdwp.vm.core.*;
-
-/**
- * A reference type that is a class.
- *
+/*
+ * @Harness: java
+ * @Runs: 50000 = 11;
  */
-public interface ClassProvider extends ReferenceTypeProvider {
+public class LoopPhi {
+    public static int test(int arg) {
+		for (int i = 0; i < arg; i++) {
+			test(1, 1, 1, 1, 1, 1);
+		}
+		return test(1, 1, 1, 1, 1, 1);
+	}
 
-    /**
-     * @return the super class of this class or null if it has no super class
-     */
-    @ConstantReturnValue
-    ClassProvider getSuperClass();
+	public static int test(int i1, int i2, int i3, int i4, int i5, int i6) {
+		if (i1 == 0) {
+			i1 = 2;
+		} else {
+			i2 = 2;
+		}
+		for (int i = 0; i < 10; i++) {
+			if (i == 0) {
+				i3 = 2;
+			} else {
+				i4 = 2;
+			}
+
+			for (int j = 0; j < 10; j++) {
+				if (j == 0) {
+					i5 = 2;
+				} else {
+					i6 = 2;
+				}
+			}
+		}
+
+		return i1 + i2 + i3 + i4 + i5 + i6;
+	}
 }

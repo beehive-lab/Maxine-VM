@@ -25,8 +25,6 @@ package com.sun.max.jdwp.vm.data;
 /**
  * This class represents an entry in the line table information of a Java method.
  *
- * @author Thomas Wuerthinger
- *
  */
 public class LineTableEntry extends AbstractSerializableObject {
 

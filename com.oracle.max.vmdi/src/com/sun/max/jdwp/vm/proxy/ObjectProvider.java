@@ -27,8 +27,6 @@ import com.sun.max.jdwp.vm.core.*;
 /**
  * Class representing a Java object in the JDWP protocol.
  *
- * @author Thomas Wuerthinger
- *
  */
 public interface ObjectProvider extends Provider {
 

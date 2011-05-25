@@ -47,7 +47,9 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.stack.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -396,17 +398,19 @@ public class MaxRiRuntime implements RiRuntime {
         return vm().registerConfigs.getRegisterConfig((ClassMethodActor) method);
     }
 
-    @Override
+    /**
+     * Reserves a word for saving an overwritten return address during the deoptimization process.
+     *
+     * @see TargetMethod#deoptReturnAddressOffset()
+     */
     public int getCustomStackAreaSize() {
-        return 0;
+        return VMFrameLayout.STACK_SLOT_SIZE;
     }
 
-    @Override
     public boolean supportsArrayIntrinsics() {
         return false;
     }
 
-    @Override
     public int getArrayLength(CiConstant array) {
         return Array.getLength(array.asObject());
     }

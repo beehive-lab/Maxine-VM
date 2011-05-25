@@ -25,13 +25,15 @@ package com.sun.max.vm.jdk;
 import static com.sun.cri.bytecode.Bytecodes.*;
 
 import java.security.*;
+import java.util.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
+import com.sun.max.program.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.layout.*;
-import com.sun.max.vm.reference.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
@@ -210,36 +212,64 @@ public final class JDK_java_lang_ClassLoader {
         return classActor.toJava();
     }
 
-    /**
-     * java.lang.AssertionStatusDirectives is package private.
-     * This is a parallel class with exactly the same fields:
-     */
-    private static final class Fake_AssertionStatusDirectives {
-        String[] classes;
-        boolean[] classEnabled;
+    private static final String ASSERTION_STATUS_DIRECTIVES_CLASS_NAME = "java.lang.AssertionStatusDirectives";
+    private static Class<?> AssertionStatusDirectivesClass;
+    private static Object assertionStatusDirectives;
+
+    static {
+        try {
+            AssertionStatusDirectivesClass = Class.forName(ASSERTION_STATUS_DIRECTIVES_CLASS_NAME);
+        } catch (ClassNotFoundException ex) {
+            ProgramError.unexpected("can't load " + ASSERTION_STATUS_DIRECTIVES_CLASS_NAME);
+        }
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    private static native AssertionStatusDirectivesAlias asASDA(Object object);
+
+    private static class AssertionStatusDirectivesAlias {
+        @ALIAS(declaringClassName = ASSERTION_STATUS_DIRECTIVES_CLASS_NAME, name = "<init>")
+        private native void init();
+        @ALIAS(declaringClassName = ASSERTION_STATUS_DIRECTIVES_CLASS_NAME)
         String[] packages;
+        @ALIAS(declaringClassName = ASSERTION_STATUS_DIRECTIVES_CLASS_NAME)
         boolean[] packageEnabled;
+        @ALIAS(declaringClassName = ASSERTION_STATUS_DIRECTIVES_CLASS_NAME)
+        String[] classes;
+        @ALIAS(declaringClassName = ASSERTION_STATUS_DIRECTIVES_CLASS_NAME)
+        boolean[] classEnabled;
+        @ALIAS(declaringClassName = ASSERTION_STATUS_DIRECTIVES_CLASS_NAME)
         boolean deflt;
     }
 
+
+
     /**
      * Retrieves the assertion status directives for this class loader.
+     *
      * @return the assertion status directives object
      */
     @SUBSTITUTE
     private static Object retrieveDirectives() {
-        final Fake_AssertionStatusDirectives assertionStatusDirectives = new Fake_AssertionStatusDirectives();
-        //TODO: obtain proper values for these from command line arguments:
-        assertionStatusDirectives.classes = new String[0];
-        assertionStatusDirectives.classEnabled = new boolean[0];
-        assertionStatusDirectives.packages = new String[0];
-        assertionStatusDirectives.packageEnabled = new boolean[0];
-        assertionStatusDirectives.deflt = false;
+        if (assertionStatusDirectives == null) {
+            assertionStatusDirectives = Heap.createTuple(ClassActor.fromJava(AssertionStatusDirectivesClass).dynamicHub());
+            AssertionStatusDirectivesAlias thisAssertionStatusDirectives = asASDA(assertionStatusDirectives);
+            thisAssertionStatusDirectives.classes = AssertionsVMOption.classes.toArray(new String[AssertionsVMOption.classes.size()]);
+            thisAssertionStatusDirectives.packages = AssertionsVMOption.packages.toArray(new String[AssertionsVMOption.packages.size()]);
+            thisAssertionStatusDirectives.classEnabled = new boolean[AssertionsVMOption.classEnabled.size()];
+            thisAssertionStatusDirectives.classEnabled = toBooleanArray(AssertionsVMOption.classEnabled);
+            thisAssertionStatusDirectives.packageEnabled = toBooleanArray(AssertionsVMOption.packageEnabled);
+            thisAssertionStatusDirectives.deflt = AssertionsVMOption.deflt;
 
-        // Replace the result object's class reference with the type the JDK expects:
-        final ClassActor classActor = ClassRegistry.BOOT_CLASS_REGISTRY.get(JavaTypeDescriptor.getDescriptorForJavaString("java.lang.AssertionStatusDirectives"));
-        assert classActor != null;
-        Layout.writeHubReference(Reference.fromJava(assertionStatusDirectives), Reference.fromJava(classActor));
+        }
         return assertionStatusDirectives;
+    }
+
+    private static boolean[] toBooleanArray(ArrayList<Boolean> list) {
+        boolean[] result = new boolean[list.size()];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = list.get(i);
+        }
+        return result;
     }
 }
