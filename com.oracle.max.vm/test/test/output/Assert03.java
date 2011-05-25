@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,38 +20,28 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.heap.gcx;
-
-import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
+package test.output;
 
 /**
- * Boxed version of RegionRange.
+ * These VM args test individual suppression within an an enabled tree.
+ *
+ * -ea:test.output... -da:test.output.Assert04
+ *
+ * and vice versa:
+ *
+ * -da:test.output.asert -ea:test.output.Assert04
  */
-@HOSTED_ONLY
-public final class BoxedRegionRange extends RegionRange implements Boxed {
-    private long nativeWord;
 
-    private BoxedRegionRange(long value) {
-        nativeWord = value;
+public class Assert03 {
+
+    public static void main(String[] args) {
+        try {
+            Assert02.main(new String[0]);
+            assert false;
+            System.out.println("Assert03 not thrown");
+        } catch (AssertionError e) {
+            System.out.println("Assert03 thrown");
+        }
     }
 
-    @Override
-    public long value() {
-        return nativeWord;
-    }
-
-    public static BoxedRegionRange from(int regionID, int numRegions) {
-        long encodedRange = regionID;
-        encodedRange = (encodedRange << REGION_ID_SHIFT) | numRegions;
-        return new BoxedRegionRange(encodedRange);
-    }
-
-    protected static BoxedRegionRange fromLong(long value) {
-        return new BoxedRegionRange(value);
-    }
-
-    protected static BoxedRegionRange fromInt(int value) {
-        return new BoxedRegionRange(value);
-    }
 }

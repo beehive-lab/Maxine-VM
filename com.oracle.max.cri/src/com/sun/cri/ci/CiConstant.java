@@ -24,6 +24,7 @@ package com.sun.cri.ci;
 
 
 
+
 /**
  * Represents a constant (boxed) value, such as an integer, floating point number, or object reference,
  * within the compiler and across the compiler/runtime interface. Exports a set of {@code CiConstant}
@@ -181,9 +182,9 @@ public final class CiConstant extends CiValue {
         throw new IllegalArgumentException();
     }
 
-    private boolean valueEqual(CiConstant other) {
+    private boolean valueEqual(CiConstant other, boolean ignoreKind) {
         // must have equivalent kinds to be equal
-        if (kind != other.kind) {
+        if (!ignoreKind && kind != other.kind) {
             return false;
         }
         if (kind.isObject()) {
@@ -298,7 +299,12 @@ public final class CiConstant extends CiValue {
      */
     @Override
     public boolean equals(Object o) {
-        return o == this || o instanceof CiConstant && valueEqual((CiConstant) o);
+        return o == this || o instanceof CiConstant && valueEqual((CiConstant) o, false);
+    }
+
+    @Override
+    public boolean equalsIgnoringKind(CiValue o) {
+        return o == this || o instanceof CiConstant && valueEqual((CiConstant) o, true);
     }
 
     /**
@@ -307,7 +313,7 @@ public final class CiConstant extends CiValue {
      * @return {@code true} if this constant is equivalent to {@code other}
      */
     public boolean equivalent(CiConstant other) {
-        return other == this || valueEqual(other);
+        return other == this || valueEqual(other, false);
     }
 
     /**

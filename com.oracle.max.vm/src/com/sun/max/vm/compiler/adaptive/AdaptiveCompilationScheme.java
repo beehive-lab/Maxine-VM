@@ -78,7 +78,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
     private static boolean opt;
     private static int RCT = DEFAULT_RECOMPILATION_THRESHOLD;
     private static boolean GCOnRecompilation;
-    private static boolean FailOverCompilation = true;
+    private static boolean FailOverCompilation;
     static int PrintCodeCacheMetrics;
 
     static {

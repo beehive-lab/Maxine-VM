@@ -230,7 +230,6 @@ public class GraphStats {
         total += sizeOf(targetMethod.code());
         total += sizeOf(targetMethod.referenceLiterals());
         total += sizeOf(targetMethod.directCallees());
-        total += sizeOf(targetMethod.referenceMaps());
         total += sizeOf(targetMethod.scalarLiterals());
         total += sizeOf(targetMethod.stopPositions());
         return total;

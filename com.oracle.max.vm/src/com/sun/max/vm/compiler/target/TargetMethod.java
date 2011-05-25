@@ -182,7 +182,7 @@ public abstract class TargetMethod extends MemoryRegion {
 
     protected byte[] scalarLiterals;
 
-    @INSPECTED
+    @INSPECTED(deepCopied = false)
     protected Object[] referenceLiterals;
 
     @INSPECTED
@@ -244,8 +244,6 @@ public abstract class TargetMethod extends MemoryRegion {
     public final ClassMethodActor classMethodActor() {
         return classMethodActor;
     }
-
-    public abstract byte[] referenceMaps();
 
     /**
      * Sets the deopt info for this target method. This denotes an atomic transition after which

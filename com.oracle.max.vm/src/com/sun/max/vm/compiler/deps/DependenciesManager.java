@@ -549,14 +549,14 @@ public final class DependenciesManager {
             if (printDetails) {
                 Log.println("class id, class name, parent class id, concrete subtype, concrete subtype class id");
             }
-            final int length = ClassID.largestClassId();
-            while (classId < length) {
+            final int largestClassId = ClassID.largestClassId();
+            while (classId <= largestClassId) {
                 ClassActor classActor;
                 // Skip unused ids
                 do {
                     classActor = ClassID.toClassActor(classId++);
-                } while(classActor == null && classId < length);
-                if (classId >= length) {
+                } while(classActor == null && classId <= largestClassId);
+                if (classId > largestClassId) {
                     break;
                 }
                 totalClasses++;

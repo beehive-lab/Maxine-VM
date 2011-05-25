@@ -53,6 +53,14 @@ public final class CiRegisterValue extends CiValue {
     }
 
     @Override
+    public boolean equalsIgnoringKind(CiValue other) {
+        if (other instanceof CiRegisterValue) {
+            return ((CiRegisterValue) other).reg == reg;
+        }
+        return false;
+    }
+
+    @Override
     public String name() {
         return reg.name;
     }

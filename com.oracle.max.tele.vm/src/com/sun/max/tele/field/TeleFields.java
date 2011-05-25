@@ -172,6 +172,11 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceIntFieldAccess String_count = new TeleInstanceIntFieldAccess(String.class, "count");
     public final TeleInstanceIntFieldAccess String_offset = new TeleInstanceIntFieldAccess(String.class, "offset");
     public final TeleInstanceReferenceFieldAccess String_value = new TeleInstanceReferenceFieldAccess(String.class, "value", char[].class);
+
+    // Other fields:
+
+    public final TeleInstanceReferenceFieldAccess CiConstant_object = new TeleInstanceReferenceFieldAccess(CiConstant.class, "object", Object.class);
+
     // Checkstyle: resume field name check
 
     public static interface InspectedMemberReifier<Member_Type extends Member> {

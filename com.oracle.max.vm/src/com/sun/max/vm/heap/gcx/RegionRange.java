@@ -31,13 +31,14 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
 
 /**
- * A word encoding a fixed size region range. The low-order bits holds the
+ * A word encoding a fixed size region range. The low-order bits hold the number of regions in the range. The high-order bits
+ * hold the identifier of the first region in the range.
  */
 public abstract class RegionRange extends Word {
-    protected static final int REGION_ID_WIDTH = Word.width() == 64 ? 32 : 16;
-    protected static final Word REGION_ID_MASK = Word.allOnes().asAddress().unsignedShiftedRight(REGION_ID_WIDTH);
+    protected static final int REGION_ID_SHIFT = Word.width() == 64 ? 32 : 16;
+    protected static final Word REGION_ID_MASK = Word.allOnes().asAddress().unsignedShiftedRight(REGION_ID_SHIFT);
 
-    public static final RegionRange INVALID_RANGE = asRegionRange(-1L << REGION_ID_WIDTH);
+    public static final RegionRange INVALID_RANGE = asRegionRange(-1L << REGION_ID_SHIFT);
 
     @INLINE
     protected static RegionRange fromLong(long encodedRange) {
@@ -63,7 +64,7 @@ public abstract class RegionRange extends Word {
             return BoxedRegionRange.from(regionID, numRegions);
         }
         long range = regionID;
-        range = (range << REGION_ID_WIDTH) | numRegions;
+        range = (range << REGION_ID_SHIFT) | numRegions;
         if (Word.width() == 64) {
             return asRegionRange(range);
         }
@@ -72,7 +73,7 @@ public abstract class RegionRange extends Word {
 
     @INLINE
     public final int firstRegion() {
-        return asAddress().unsignedShiftedRight(REGION_ID_WIDTH).toInt();
+        return asAddress().unsignedShiftedRight(REGION_ID_SHIFT).toInt();
     }
 
     @INLINE

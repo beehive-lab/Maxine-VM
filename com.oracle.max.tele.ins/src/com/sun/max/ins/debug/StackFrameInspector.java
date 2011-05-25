@@ -168,17 +168,18 @@ public final class StackFrameInspector extends Inspector<StackFrameInspector> im
             nativeFramePanel.add(nativeFrameTextArea);
             setContentPane(nativeFramePanel);
             compiledStackFramePanel = null;
-        } else if (stackFrame instanceof MaxStackFrame.Error) {
-            final MaxStackFrame.Error errorFrame = (MaxStackFrame.Error) stackFrame;
-            final String message = "Stack walking error:\n" + errorFrame.errorMessage();
-            final InspectorPanel errorFramePanel = new InspectorPanel(inspection());
-            final JTextArea errorFrameTextArea = new JTextArea(message);
-            errorFrameTextArea.setEditable(false);
-            errorFramePanel.add(errorFrameTextArea);
-            setContentPane(errorFramePanel);
-            compiledStackFramePanel = null;
-        } else if (stackFrame instanceof TruncatedStackFrame) {
-            setContentPane(truncatedFramePanel);
+        } else if (stackFrame instanceof MaxStackFrame.Truncated) {
+            final MaxStackFrame.Truncated truncated = (MaxStackFrame.Truncated) stackFrame;
+            if (truncated.omitted() >= 0) {
+                setContentPane(truncatedFramePanel);
+            } else {
+                final String message = "Stack walking error:\n" + truncated.error();
+                final InspectorPanel errorFramePanel = new InspectorPanel(inspection());
+                final JTextArea errorFrameTextArea = new JTextArea(message);
+                errorFrameTextArea.setEditable(false);
+                errorFramePanel.add(errorFrameTextArea);
+                setContentPane(errorFramePanel);
+            }
             compiledStackFramePanel = null;
         } else if (stackFrame == null) {
             setContentPane(nullFramePanel);

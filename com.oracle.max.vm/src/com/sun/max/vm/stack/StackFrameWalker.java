@@ -26,8 +26,6 @@ import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
 import static com.sun.max.vm.stack.StackFrameWalker.Purpose.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
-import java.util.*;
-
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
@@ -713,33 +711,6 @@ public abstract class StackFrameWalker {
             callee.copyFrom(current);
         }
         current.advance(ip.asPointer(), sp.asPointer(), fp.asPointer(), ipIsReturnAddress);
-    }
-
-    /**
-     * Collects a sequence of stack frames, beginning a stack walk at the specified instruction pointer, stack pointer,
-     * and frame pointer. This method will return all stack frames, including native frames, adapter frames, and
-     * non-application visible stack frames. This method accepts an appendable sequence of stack frames in
-     * which to store the result.
-     *
-     * @param stackFrames an appendable sequence of stack frames to collect the results; if {@code null}, this method
-     * will create a new appendable sequence for collecting the result
-     * @param ip the instruction pointer from which to begin the stack walk
-     * @param sp the stack pointer from which to begin the stack walk
-     * @param fp the frame pointer from which to begin the stack walk
-     * @return a sequence of all the stack frames, including native, adapter, and non-application visible stack frames,
-     *         with the top frame as the first frame
-     */
-    public List<StackFrame> frames(List<StackFrame> stackFrames, Pointer ip, Pointer sp, Pointer fp) {
-        final List<StackFrame> frames = stackFrames == null ? new LinkedList<StackFrame>() : stackFrames;
-        final StackFrameVisitor visitor = new StackFrameVisitor() {
-            @Override
-            public boolean visitFrame(StackFrame stackFrame) {
-                frames.add(stackFrame);
-                return true;
-            }
-        };
-        inspect(ip, sp, fp, visitor);
-        return frames;
     }
 
     public abstract Word readWord(Address address, int offset);

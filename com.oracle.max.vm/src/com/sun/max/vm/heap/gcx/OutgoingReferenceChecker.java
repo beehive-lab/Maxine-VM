@@ -23,6 +23,7 @@
 package com.sun.max.vm.heap.gcx;
 
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
@@ -30,6 +31,7 @@ import com.sun.max.vm.reference.*;
 
 /**
  * Checker of out of heap account references.
+ * Reference to the boot regions aren't counted.
  */
 class OutgoingReferenceChecker extends PointerIndexVisitor implements CellVisitor {
     private final Object accountOwner;
@@ -51,7 +53,9 @@ class OutgoingReferenceChecker extends PointerIndexVisitor implements CellVisito
     private void checkReference(Pointer cell) {
         if (!cell.isZero()) {
             final HeapRegionInfo rinfo = regionTable.regionInfo(cell);
-            if (rinfo != null && rinfo.owner() != accountOwner) {
+            if (rinfo.owner() != accountOwner && !Heap.bootHeapRegion.contains(cell)) {
+                Log.print("outgoing ref: ");
+                Log.println(cell);
                 outgoingReferenceCount++;
             }
         }

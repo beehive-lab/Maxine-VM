@@ -105,6 +105,18 @@ public final class CiStackSlot extends CiValue {
     }
 
     @Override
+    public boolean equalsIgnoringKind(CiValue o) {
+        if (o == this) {
+            return true;
+        }
+        if (o instanceof CiStackSlot) {
+            CiStackSlot l = (CiStackSlot) o;
+            return l.index == index;
+        }
+        return false;
+    }
+
+    @Override
     public String name() {
         return (inCallerFrame() ? "caller-stack" : "stack:") + index();
     }
@@ -135,13 +147,14 @@ public final class CiStackSlot extends CiValue {
 
     private static CiStackSlot[][] makeCache(int cachePerKindSize, boolean inCallerFrame) {
         CiStackSlot[][] cache = new CiStackSlot[CiKind.VALUES.length][];
-        cache[CiKind.Int.ordinal()]    = makeCacheForKind(CiKind.Int, cachePerKindSize, inCallerFrame);
-        cache[CiKind.Long.ordinal()]   = makeCacheForKind(CiKind.Long, cachePerKindSize, inCallerFrame);
-        cache[CiKind.Float.ordinal()]  = makeCacheForKind(CiKind.Float, cachePerKindSize, inCallerFrame);
-        cache[CiKind.Double.ordinal()] = makeCacheForKind(CiKind.Double, cachePerKindSize, inCallerFrame);
-        cache[CiKind.Word.ordinal()]   = makeCacheForKind(CiKind.Word, cachePerKindSize, inCallerFrame);
-        cache[CiKind.Object.ordinal()] = makeCacheForKind(CiKind.Object, cachePerKindSize, inCallerFrame);
-        cache[CiKind.Jsr.ordinal()]    = makeCacheForKind(CiKind.Jsr, cachePerKindSize, inCallerFrame);
+        cache[CiKind.Illegal.ordinal()] = makeCacheForKind(CiKind.Illegal, cachePerKindSize, inCallerFrame);
+        cache[CiKind.Int.ordinal()]     = makeCacheForKind(CiKind.Int, cachePerKindSize, inCallerFrame);
+        cache[CiKind.Long.ordinal()]    = makeCacheForKind(CiKind.Long, cachePerKindSize, inCallerFrame);
+        cache[CiKind.Float.ordinal()]   = makeCacheForKind(CiKind.Float, cachePerKindSize, inCallerFrame);
+        cache[CiKind.Double.ordinal()]  = makeCacheForKind(CiKind.Double, cachePerKindSize, inCallerFrame);
+        cache[CiKind.Word.ordinal()]    = makeCacheForKind(CiKind.Word, cachePerKindSize, inCallerFrame);
+        cache[CiKind.Object.ordinal()]  = makeCacheForKind(CiKind.Object, cachePerKindSize, inCallerFrame);
+        cache[CiKind.Jsr.ordinal()]     = makeCacheForKind(CiKind.Jsr, cachePerKindSize, inCallerFrame);
         return cache;
     }
 

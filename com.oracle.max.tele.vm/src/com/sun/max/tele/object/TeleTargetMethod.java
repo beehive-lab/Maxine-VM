@@ -33,7 +33,6 @@ import com.sun.cri.bytecode.Bytes;
 import com.sun.cri.ci.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
-import com.sun.max.atomic.*;
 import com.sun.max.io.*;
 import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.jdwp.vm.proxy.*;
@@ -43,7 +42,6 @@ import com.sun.max.program.*;
 import com.sun.max.tele.MaxMachineCode.InstructionMap;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
-import com.sun.max.tele.field.*;
 import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.type.*;
@@ -54,7 +52,6 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.type.*;
 
 /**
  * Canonical surrogate for some flavor of {@link TargetMethod}, which is a compilation of a Java {@link ClassMethod} in
@@ -139,37 +136,6 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
 
         public int methodRefIndex() {
             return methodRefIndex;
-        }
-    }
-
-    /**
-     * A specialized copier for instances of {@link TeleTargetMethod},
-     * designed to limit information copied to what's needed without pulling too
-     * much other state.
-     */
-    class ReducedDeepCopier extends DeepCopier {
-        public ReducedDeepCopier() {
-            TeleFields teleFields = vm().teleFields();
-            omit(teleFields.TargetMethod_referenceLiterals.fieldActor());
-            generator = teleFields.Adapter_generator.fieldActor();
-        }
-        private final FieldActor generator;
-        private final TypeDescriptor atomicReference = JavaTypeDescriptor.forJavaClass(AtomicReference.class);
-
-        @Override
-        protected Object makeDeepCopy(FieldActor fieldActor, TeleObject teleObject) {
-            if (fieldActor.descriptor().equals(atomicReference)) {
-                String name = fieldActor.name();
-                if (!name.equals("refMapEditor") && !name.equals("referenceMapEditor")) {
-                    // This is to detect renames of the fields in the TargetMethod subclasses we want to cut
-                    new Throwable("***** Cutting off deep copy at field " + fieldActor + "*****").printStackTrace();
-                }
-                return null;
-            } else if (fieldActor.equals(generator)) {
-                return null;
-            } else {
-                return super.makeDeepCopy(fieldActor, teleObject);
-            }
         }
     }
 
@@ -427,7 +393,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
                         // for the start of bytecode template.
                         if (bci < bciToPosMap.length && pos == bciToPosMap[bci]) {
                             // This is the start of the machine code block implementing the next bytecode
-                            posToBytecodeFramesMap[pos] = new CiFrame(null, classMethodActor(), bci, null, 0, 0, 0);
+                            posToBytecodeFramesMap[pos] = new CiFrame(null, classMethodActor(), bci, new CiValue[0], 0, 0, 0);
                             do {
                                 ++bci;
                             } while (bci < bciToPosMap.length && bciToPosMap[bci] == 0);
@@ -906,13 +872,6 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
 
     public MethodProvider getMethodProvider() {
         return this.teleClassMethodActor;
-    }
-
-    @Override
-    protected final DeepCopier newDeepCopier() {
-        return new ReducedDeepCopier();
-        //   omit(vm().teleFields().JitTargetMethod_referenceMapEditor.fieldActor()).
-        //   omit(vm().teleFields().T1XTargetMethod_refMapEditor.fieldActor());
     }
 
     @Override

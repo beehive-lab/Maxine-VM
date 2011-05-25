@@ -48,6 +48,10 @@ public abstract class CiValue implements Serializable {
         public boolean equals(Object obj) {
             return obj == this;
         }
+        @Override
+        public boolean equalsIgnoringKind(CiValue other) {
+            return other == this;
+        }
     };
 
     /**
@@ -111,6 +115,8 @@ public abstract class CiValue implements Serializable {
 
     @Override
     public abstract boolean equals(Object obj);
+
+    public abstract boolean equalsIgnoringKind(CiValue other);
 
     @Override
     public abstract int hashCode();

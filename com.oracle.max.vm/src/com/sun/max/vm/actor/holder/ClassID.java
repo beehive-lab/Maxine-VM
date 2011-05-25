@@ -140,7 +140,7 @@ public final class ClassID {
     }
 
     public static synchronized int largestClassId() {
-        return idToClassActor.length();
+        return idToClassActor.maxID();
     }
 
 
