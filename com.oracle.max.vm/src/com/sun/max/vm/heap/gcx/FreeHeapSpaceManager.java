@@ -44,7 +44,7 @@ import com.sun.max.vm.runtime.*;
  * between log2FirstBin and minReclaimableSpace and is used primarily for TLAB and small object allocation.
  * The other bins are used for large object space allocation. "Bin" allocation are synchronized.
  */
-public final class FreeHeapSpaceManager extends Sweeper implements ResizableSpace, MarkSweepVerification {
+public final class FreeHeapSpaceManager extends Sweeper implements ResizableSpace {
     private static final VMIntOption largeObjectsMinSizeOption =
         register(new VMIntOption("-XX:LargeObjectsMinSize=", Size.K.times(64).toInt(),
                         "Minimum size to be treated as a large object"), MaxineVM.Phase.PRISTINE);
@@ -803,6 +803,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements ResizableSpac
 
     }
 
+    @Override
     public void verify(AfterMarkSweepVerifier verifier) {
         committedHeapSpace.walkCommittedSpace(verifier);
         verifyUsage(verifier.freeChunksByteCount, verifier.darkMatterByteCount, verifier.liveDataByteCount);
