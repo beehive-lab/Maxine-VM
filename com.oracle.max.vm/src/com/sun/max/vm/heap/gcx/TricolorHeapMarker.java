@@ -1831,7 +1831,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     int firstBlackMark(int firstBitIndex, int lastBitIndex) {
         final Pointer colorMapBase = base.asPointer();
         final int lastBitmapWordIndex = bitmapWordIndex(lastBitIndex);
-        int bitmapWordIndex = firstBitIndex;
+        int bitmapWordIndex = bitmapWordIndex(firstBitIndex);
         while (bitmapWordIndex <= lastBitmapWordIndex) {
             long bitmapWord = colorMapBase.getLong(bitmapWordIndex);
             if (bitmapWord != 0) {
