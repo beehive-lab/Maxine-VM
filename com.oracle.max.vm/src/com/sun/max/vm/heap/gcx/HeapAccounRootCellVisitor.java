@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,33 +25,27 @@ package com.sun.max.vm.heap.gcx;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 
-/**
- * Boxed version of RegionRange.
- */
-@HOSTED_ONLY
-public final class BoxedRegionRange extends RegionRange implements Boxed {
-    private long nativeWord;
+final public class HeapAccounRootCellVisitor extends RootCellVisitor {
+    final HeapAccountOwner owner;
 
-    private BoxedRegionRange(long value) {
-        nativeWord = value;
+    public HeapAccounRootCellVisitor(HeapAccountOwner owner) {
+        this.owner = owner;
     }
 
     @Override
-    public long value() {
-        return nativeWord;
+    void reset() {
+        super.reset();
+        bottom = HeapRegionInfo.fromRegionID(owner.heapAccount().allocatedRegions().regionList.head()).regionStart();
     }
-
-    public static BoxedRegionRange from(int regionID, int numRegions) {
-        long encodedRange = regionID;
-        encodedRange = (encodedRange << REGION_ID_SHIFT) | numRegions;
-        return new BoxedRegionRange(encodedRange);
-    }
-
-    protected static BoxedRegionRange fromLong(long value) {
-        return new BoxedRegionRange(value);
-    }
-
-    protected static BoxedRegionRange fromInt(int value) {
-        return new BoxedRegionRange(value);
+    /**
+     * Check if a non-null pointer is  within the area covered by root marking.
+     *
+     * @param cell a pointer read from an external root (may be zero).
+     * @return true if the pointer is in the area covered by root marking.
+     */
+    @INLINE(override = true)
+    @Override
+    boolean isNonNullCovered(Pointer cell) {
+        return HeapRegionInfo.fromInRegionAddress(cell).owner == owner;
     }
 }

@@ -45,6 +45,8 @@ import com.sun.max.vm.runtime.*;
  * the heap space.
  */
 public final class RegionTable {
+    public static final HeapRegionInfo nullHeapRegionInfo = new HeapRegionInfo();
+
     static final int TableOffset = ClassActor.fromJava(RegionTable.class).dynamicTupleSize().toInt();
 
     @CONSTANT_WHEN_NOT_ZERO
@@ -104,22 +106,37 @@ public final class RegionTable {
         return regionID;
     }
 
+    int inHeapAddressRegionID(Address addr) {
+        return addr.minus(regionPoolStart).unsignedShiftedRight(log2RegionSizeInBytes).toInt();
+    }
+
     int regionID(Address addr) {
         if (!isInHeapRegion(addr)) {
             return INVALID_REGION_ID;
         }
-        return addr.minus(regionPoolStart).unsignedShiftedRight(log2RegionSizeInBytes).toInt();
+        return inHeapAddressRegionID(addr);
     }
 
     HeapRegionInfo regionInfo(int regionID) {
         return toHeapRegionInfo(table().plus(regionID * regionInfoSize));
     }
 
+    HeapRegionInfo inHeapAddressRegionInfo(Address addr) {
+        return regionInfo(inHeapAddressRegionID(addr));
+    }
+
     HeapRegionInfo regionInfo(Address addr) {
+        if (!isInHeapRegion(addr)) {
+            return nullHeapRegionInfo;
+        }
+        return regionInfo(inHeapAddressRegionID(addr));
+    }
+
+    HeapRegionInfo regionInfoOrNull(Address addr) {
         if (!isInHeapRegion(addr)) {
             return null;
         }
-        return regionInfo(regionID(addr));
+        return regionInfo(inHeapAddressRegionID(addr));
     }
 
     Address regionAddress(int regionID) {
@@ -128,6 +145,20 @@ public final class RegionTable {
 
     Address regionAddress(HeapRegionInfo regionInfo) {
         return regionAddress(regionID(regionInfo));
+    }
+
+
+    /**
+     * Apply CellVisitor over all references within a region range.
+     * @param regionRange
+     * @param cellVisitor
+     */
+    void walk(RegionRange regionRange, CellVisitor cellVisitor) {
+        Pointer p = regionAddress(regionRange.firstRegion()).asPointer();
+        final Pointer end = p.plus(regionRange.numRegions()  << log2RegionSizeInBytes);
+        while (p.lessThan(end)) {
+            p = cellVisitor.visitCell(p);
+        }
     }
 
     HeapRegionInfo next(HeapRegionInfo regionInfo) {

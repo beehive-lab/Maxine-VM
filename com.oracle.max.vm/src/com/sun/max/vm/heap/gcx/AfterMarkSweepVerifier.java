@@ -36,15 +36,15 @@ import com.sun.max.vm.runtime.*;
  */
 public class AfterMarkSweepVerifier extends PointerIndexVisitor implements CellVisitor {
     final TricolorHeapMarker heapMarker;
-    final Sweepable sweptSpaceManager;
+    final MarkSweepVerification msVerification;
     long darkMatterByteCount;
     long freeChunksByteCount;
     long liveDataByteCount;
     Pointer visitedCellOrigin;
 
-    public AfterMarkSweepVerifier(TricolorHeapMarker heapMarker, Sweepable sweptSpaceManager) {
+    public AfterMarkSweepVerifier(TricolorHeapMarker heapMarker, MarkSweepVerification msVerification) {
         this.heapMarker = heapMarker;
-        this.sweptSpaceManager = sweptSpaceManager;
+        this.msVerification = msVerification;
     }
 
     @INLINE
@@ -116,6 +116,6 @@ public class AfterMarkSweepVerifier extends PointerIndexVisitor implements CellV
         darkMatterByteCount = 0L;
         freeChunksByteCount = 0L;
         liveDataByteCount = 0L;
-        sweptSpaceManager.verify(this);
+        msVerification.verify(this);
     }
 }

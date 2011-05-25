@@ -84,14 +84,14 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
     /**
      * Space where objects are allocated from by default.
-     * Implements the {@link Sweepable} interface to be notified by a sweeper of
+     * Implements the {@link Sweeper} interface to be notified by a sweeper of
      * free space.
      */
     final FreeHeapSpaceManager objectSpace;
 
     /**
      * Space where large object are allocated from if {@link MSHeapScheme#UseLOS} is true.
-     * Implements the {@link Sweepable} interface to be notified by a sweeper of
+     * Implements the {@link Sweeper} interface to be notified by a sweeper of
      * free space.
      */
     final LargeObjectSpace largeObjectSpace;
@@ -102,7 +102,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
     @HOSTED_ONLY
     public MSHeapScheme() {
-        heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT);
+        heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT, new ContiguousHeapRootCellVisitor());
         objectSpace = new FreeHeapSpaceManager();
         largeObjectSpace = new LargeObjectSpace();
         afterGCVerifier = new AfterMarkSweepVerifier(heapMarker, objectSpace);
@@ -348,9 +348,12 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         }
 
         private Size reclaim() {
+            startTimer(reclaimTimer);
             objectSpace.beginSweep();
             heapMarker.sweep(objectSpace);
-            return objectSpace.endSweep();
+            objectSpace.endSweep();
+            stopTimer(reclaimTimer);
+            return objectSpace.freeSpaceAfterSweep();
         }
 
         private HeapResizingPolicy heapResizingPolicy = new HeapResizingPolicy();
@@ -372,9 +375,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             }
             objectSpace.makeParsable();
             heapMarker.markAll();
-            startTimer(reclaimTimer);
             Size freeSpaceAfterGC = reclaim();
-            stopTimer(reclaimTimer);
             if (VerifyAfterGC) {
                 afterGCVerifier.run();
             }

@@ -28,6 +28,7 @@ import static com.sun.max.vm.heap.gcx.HeapRegionInfo.Flag.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.type.*;
 /**
  * Descriptor of heap region.
@@ -129,20 +130,20 @@ public class HeapRegionInfo {
 
     /**
      * Index, in number of minimum object size relative to the beginning of a region to the first free chunk of the region.
-     * Value is 0 if the region is empty.
+     * Zero if the region is empty.
      */
     short firstFreeChunkIndex;
     /**
-     * Number of free chunks.
+     * Number of free chunks. Zero if the region is empty.
      */
     short numFreeChunks;
     /**
      * Space available for allocation, in words. This excludes dark matter than cannot be used
-     * for allocation.
+     * for allocation. Zero if the region is empty.
      */
     short freeSpace;
     /**
-     * Amount of live data.
+     * Amount of live data. Zero if the region is empty.
      */
     short liveData;
 
@@ -221,6 +222,13 @@ public class HeapRegionInfo {
         freeSpace = 0;
     }
 
+    final void resetOccupancy() {
+        flags = EMPTY_REGION;
+        liveData = 0;
+        numFreeChunks  = 0;
+        freeSpace = 0;
+    }
+
     final HeapAccountOwner owner() {
         return owner;
     }
@@ -245,8 +253,29 @@ public class HeapRegionInfo {
         return RegionTable.theRegionTable().regionInfo(regionID);
     }
 
+    /**
+     * Return heap region associated information from an address guaranteed to point in a heap region.
+     * @param address
+     * @return
+     */
+    @INLINE
+    static HeapRegionInfo fromInRegionAddress(Address address) {
+        return RegionTable.theRegionTable().inHeapAddressRegionInfo(address);
+    }
+
+    /**
+     * Return heap region associated information from an address not guaranteed to point in a heap region.
+     * Return {@linkplain RegionTable#nullHeapRegionInfo} if not.
+     * @param address
+     * @return
+     */
     @INLINE
     static HeapRegionInfo fromAddress(Address address) {
         return RegionTable.theRegionTable().regionInfo(address);
+    }
+
+    @INLINE
+    static void walk(RegionRange regionRange, CellVisitor cellVisitor) {
+        RegionTable.theRegionTable().walk(regionRange, cellVisitor);
     }
 }
