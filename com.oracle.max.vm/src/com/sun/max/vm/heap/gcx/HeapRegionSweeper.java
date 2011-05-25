@@ -27,6 +27,7 @@ import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * Sweeping interface for heap made of multiple, possibly discontinuous regions.
@@ -161,7 +162,7 @@ public abstract class HeapRegionSweeper implements MarkSweepVerification {
      * @return
      */
     public Pointer processLargeGap(Pointer leftLiveObject, Pointer rightLiveObject) {
-        assert rightLiveObject.lessEqual(endOfSweepingRegion());
+        FatalError.check(rightLiveObject.lessEqual(endOfSweepingRegion()), "dead space must not cross region boundary");
         Pointer endOfLeftObject = leftLiveObject.plus(Layout.size(Layout.cellToOrigin(leftLiveObject)));
         csrLiveBytes += endOfLeftObject.minus(csrLastLiveAddress).asSize().toInt();
         Size numDeadBytes = rightLiveObject.minus(endOfLeftObject).asSize();
