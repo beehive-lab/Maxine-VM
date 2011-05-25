@@ -586,7 +586,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
             csrInfo.setFreeChunks(HeapFreeChunk.fromHeapFreeChunk(csrHead), (short) csrFreeBytes, (short) csrFreeChunks);
             allocationRegions.append(csrInfo.toRegionID());
         } else {
-            FatalError.check(csrFreeChunks > 0 && csrFreeBytes > 0 && minOverflowRefillSize.greaterThan(csrFreeBytes) && csrHead != null, "unknown state for a swept region");
+            FatalError.check(csrFreeBytes > 0 && (csrFreeChunks > 1 || minOverflowRefillSize.greaterThan(csrFreeBytes)) && csrHead != null, "unknown state for a swept region");
             csrInfo.setFreeChunks(HeapFreeChunk.fromHeapFreeChunk(csrHead), (short) csrFreeBytes, (short) csrFreeChunks);
             tlabAllocationRegions.append(csrInfo.toRegionID());
         }
