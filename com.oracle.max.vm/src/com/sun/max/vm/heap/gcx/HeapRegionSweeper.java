@@ -149,10 +149,12 @@ public abstract class HeapRegionSweeper implements MarkSweepVerification {
     public abstract void verify(AfterMarkSweepVerifier verifier);
 
     /**
-     * Invoked when doing imprecise sweeping to process an large interval between to marked locations.
+     * Invoked when doing imprecise sweeping to process a large interval between two marked locations.
      * Imprecise heap sweeping ignores any space before two live objects smaller than a specified amount of space.
      * When the distance between two live marks is large enough to indicate a potentially large chunk of free space,
-     * the sweeper invoke this method.
+     * the sweeper invoke this method. Note however that the reported gap may not be entirely free
+     * (e.g., if the first object of the gap is actually larger than the minimum gap size).
+     * FIXME: probably better to just have a processDeadSpace interface and leave these details to the imprecise sweeper.
      *
      * @param leftLiveObject
      * @param rightLiveObject
