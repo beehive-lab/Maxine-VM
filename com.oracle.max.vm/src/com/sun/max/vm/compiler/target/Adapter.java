@@ -94,7 +94,7 @@ public abstract class Adapter extends TargetMethod {
     /**
      * The generator that produced this adapter.
      */
-    @INSPECTED
+    @INSPECTED(deepCopied = false)
     public final AdapterGenerator generator;
 
     /**
@@ -154,11 +154,6 @@ public abstract class Adapter extends TargetMethod {
 
     @Override
     public void traceExceptionHandlers(IndentWriter writer) {
-    }
-
-    @Override
-    public byte[] referenceMaps() {
-        return null;
     }
 
     @Override

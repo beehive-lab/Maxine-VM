@@ -58,10 +58,11 @@ public interface MaxStack extends MaxEntity<MaxStack> {
      * then previous value is returned.
      * <br>
      * Thread-safe
+     * @param maxDepth the max number of frames to retrieve
      *
      * @return the frames in the stack
      */
-    List<MaxStackFrame> frames();
+    List<MaxStackFrame> frames(int maxDepth);
 
     /**
      * Gets the frame, if any, whose memory location in the VM includes an address.

@@ -81,7 +81,7 @@ public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
         }
 
         public List<MaxEntityMemoryRegion< ? extends MaxEntity>> children() {
-            final List<MaxStackFrame> frames = teleStack.frames();
+            final List<MaxStackFrame> frames = teleStack.frames(Integer.MAX_VALUE);
             final List<MaxEntityMemoryRegion<? extends MaxEntity>> regions =
                 new ArrayList<MaxEntityMemoryRegion<? extends MaxEntity>>(frames.size());
             for (MaxStackFrame stackFrame : frames) {
@@ -168,15 +168,22 @@ public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
     }
 
     public MaxStackFrame top() {
-        return frames().get(0);
+        if (vm().tryLock()) {
+            try {
+                return TeleStackFrame.createFrame(vm(), this, 0, teleNativeThread.top());
+            } finally {
+                vm().unlock();
+            }
+        }
+        return null;
     }
 
-    public List<MaxStackFrame> frames() {
+    public List<MaxStackFrame> frames(int maxDepth) {
         final TeleVMState currentVmState = vm().state();
-        if (currentVmState.newerThan(lastUpdatedState)) {
+        if (currentVmState.newerThan(lastUpdatedState) || teleNativeThread.framesMaxDepth() != maxDepth) {
             if (vm().tryLock()) {
                 try {
-                    final List<StackFrame> frames = teleNativeThread.frames();
+                    final List<StackFrame> frames = teleNativeThread.frames(maxDepth);
                     final List<MaxStackFrame> maxStackFrames = new ArrayList<MaxStackFrame>(frames.size());
                     int position = 0;
                     for (StackFrame stackFrame : frames) {
@@ -201,7 +208,7 @@ public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
     }
 
     public MaxStackFrame findStackFrame(Address address) {
-        for (MaxStackFrame stackFrame : frames()) {
+        for (MaxStackFrame stackFrame : frames(Integer.MAX_VALUE)) {
             if (stackFrame.memoryRegion().contains(address)) {
                 return stackFrame;
             }
@@ -219,13 +226,13 @@ public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
 
     public void writeSummary(PrintStream printStream) {
         printStream.println("Stack frames :");
-        for (MaxStackFrame maxStackFrame : new ArrayList<MaxStackFrame>(frames())) {
+        for (MaxStackFrame maxStackFrame : new ArrayList<MaxStackFrame>(frames(Integer.MAX_VALUE))) {
             printStream.println("  " + maxStackFrame.toString());
         }
     }
 
     public CodeLocation returnLocation() {
-        final StackFrame topFrame = teleNativeThread.frames().get(0);
+        final StackFrame topFrame = teleNativeThread.top();
         final StackFrame topFrameCaller = topFrame.callerFrame();
         if (topFrameCaller == null) {
             return null;

@@ -127,11 +127,6 @@ public class Stub extends TargetMethod {
     }
 
     @Override
-    public byte[] referenceMaps() {
-        return null;
-    }
-
-    @Override
     public void prepareReferenceMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer) {
     }
 

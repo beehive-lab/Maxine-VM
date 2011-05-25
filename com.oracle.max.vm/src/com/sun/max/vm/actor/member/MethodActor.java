@@ -25,7 +25,6 @@ package com.sun.max.vm.actor.member;
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
 import static com.sun.max.vm.type.ClassRegistry.Property.*;
 
-import java.io.*;
 import java.lang.annotation.*;
 import java.lang.reflect.*;
 import java.util.*;
@@ -43,7 +42,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.hosted.*;
-import com.sun.max.vm.jni.*;
 import com.sun.max.vm.reflection.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -466,10 +464,6 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
         return boxedJavaValues;
     }
 
-    public void write(DataOutput stream) throws IOException {
-        MethodID.fromMethodActor(this).write(stream);
-    }
-
     public Kind resultKind() {
         return descriptor().resultKind();
     }
@@ -485,10 +479,6 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
         final Kind[] kinds = descriptor().copyParameterKinds(null, 1);
         kinds[0] = holder().kind.isWord ? Kind.WORD : Kind.REFERENCE;
         return kinds;
-    }
-
-    public static MethodActor read(DataInput stream) throws IOException {
-        return MethodID.toMethodActor(MethodID.fromWord(Word.read(stream)));
     }
 
     public final int accessFlags() {

@@ -22,6 +22,7 @@
  */
 package com.sun.max.tele;
 
+import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.*;
@@ -172,16 +173,24 @@ public interface MaxStackFrame extends MaxEntity<MaxStackFrame> {
     }
 
     /**
-     * A synthetic stack frame (non-VM) used to record an error
-     * encountered during stack walking.
+     * A synthetic stack frame (non-VM) used to denote an incomplete stack walk.
      */
-    public static interface Error extends MaxStackFrame {
+    public static interface Truncated extends MaxStackFrame {
 
         /**
-         * Description of an error encountered during stack walking.
+         * The error that truncated the stack walk or {@code null} if the stack walk
+         * was stopped due to the frame limit specified to {@link TeleStackFrameWalker#frames(int)}
+         * being reached.
          *
-         * @return a message describing the nature of the error
+         * @return a message describing the nature of the error or {@code null}
+         *         if this frame indicates a truncated stack walk
          */
-        String errorMessage();
+        Throwable error();
+
+        /**
+         * @return the number of frames omitted if the stack walk was stopped due to the
+         *         frame limit being hit, -1 if it was stopped due to an error
+         */
+        int omitted();
     }
 }

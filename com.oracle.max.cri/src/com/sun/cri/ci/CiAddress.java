@@ -235,6 +235,15 @@ public final class CiAddress extends CiValue {
     }
 
     @Override
+    public boolean equalsIgnoringKind(CiValue o) {
+        if (o instanceof CiAddress) {
+            CiAddress addr = (CiAddress) o;
+            return displacement == addr.displacement && base.equalsIgnoringKind(addr.base) && scale == addr.scale && index.equalsIgnoringKind(addr.index);
+        }
+        return false;
+    }
+
+    @Override
     public int hashCode() {
         return (base.hashCode() << 4) | kind.ordinal();
     }

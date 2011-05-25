@@ -995,7 +995,7 @@ public abstract class ClassActor extends Actor implements RiType {
     }
 
     private void assignHolderToLocalMethodActors() {
-        assignHolderToMembers(localVirtualMethodActors, localStaticMethodActors, localInterfaceMethodActors);
+        assignHolderToMembers(localVirtualMethodActors, localInterfaceMethodActors, localStaticMethodActors);
     }
 
     public MethodActor getLocalMethodActor(int memberIndex) {

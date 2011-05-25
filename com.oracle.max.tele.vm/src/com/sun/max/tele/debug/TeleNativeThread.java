@@ -84,6 +84,11 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
     private List<StackFrame> frames = Collections.emptyList();
 
     /**
+     * The value of maxDepth when {@link #frames} was last updated.
+     */
+    private int framesMaxDepth = -1;
+
+    /**
      * Only if this value is less than the {@linkplain TeleProcess#epoch() epoch} of this thread's tele process, does
      * the {@link #refreshFrames(boolean)} method do anything.
      */
@@ -297,21 +302,27 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
         return teleProcess;
     }
 
+    final StackFrame top() {
+        return new TeleStackFrameWalker(teleProcess.vm(), this).frames(1).get(0);
+    }
+
     /**
+     * @param maxDepth the maximum length of the returned frame list
      * @return the most currently refreshed frames on the thread's stack, never null.
      */
-    final List<StackFrame> frames() {
+    final List<StackFrame> frames(int maxDepth) {
         final long epoch = teleProcess().epoch();
-        if (framesRefreshedEpoch < epoch) {
+        if (framesRefreshedEpoch < epoch || maxDepth != this.framesMaxDepth) {
             Trace.line(TRACE_VALUE + 1, tracePrefix() + "refreshFrames (epoch=" + epoch + ") for " + this);
             threadLocalsBlock.updateCache(epoch);
-            final List<StackFrame> newFrames = new TeleStackFrameWalker(teleProcess.vm(), this).frames();
+            final List<StackFrame> newFrames = new TeleStackFrameWalker(teleProcess.vm(), this).frames(maxDepth);
+            framesMaxDepth = maxDepth;
             assert !newFrames.isEmpty();
             // See if the new stack is structurally equivalent to its predecessor, even if the contents of the top
             // frame may have changed.
             if (newFrames.size() != this.frames.size()) {
                 // Clear structural change; lengths are different
-                framesLastChangedEpoch = epoch;
+                framesRefreshedEpoch = epoch;
             } else {
                 // Lengths are the same; see if any frames differ.
                 final Iterator<StackFrame> oldFramesIterator = this.frames.iterator();
@@ -326,19 +337,25 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
                 }
             }
             this.frames = newFrames;
-            framesRefreshedEpoch = epoch;
         }
         return frames;
     }
 
     /**
-     * Track when the structure of the stack changes, in any respect other than
+     * Tracks when the structure of the stack changes, in any respect other than
      * the contents of the top frame.
      *
      * @return the last process epoch at which the structure of the stack changed.
      */
     final Long framesLastChangedEpoch() {
         return framesLastChangedEpoch;
+    }
+
+    /**
+     * Gets the value of maxDepth when the frames cache was last updated.
+     */
+    final int framesMaxDepth() {
+        return framesMaxDepth;
     }
 
     /**
@@ -424,39 +441,6 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
     private synchronized void clearFrames() {
         frames = Collections.emptyList();
         framesLastChangedEpoch = teleProcess().epoch();
-    }
-
-    /**
-     * Update the current list of frames, and notice if the structure of the stack has changed.
-     */
-    private synchronized void refreshFrames() {
-        final long epoch = teleProcess().epoch();
-        if (epoch > framesRefreshedEpoch) {
-            Trace.line(TRACE_VALUE + 1, tracePrefix() + "refreshFrames (epoch=" + epoch + ") for " + this);
-            threadLocalsBlock.updateCache(epoch);
-            final TeleVM teleVM = teleProcess.vm();
-            final List<StackFrame> newFrames = new TeleStackFrameWalker(teleVM, this).frames();
-            assert !newFrames.isEmpty();
-            // See if the new stack is structurally equivalent to its predecessor, even if the contents of the top
-            // frame may have changed.
-            if (newFrames.size() != this.frames.size()) {
-                // Clear structural change; lengths are different
-                framesLastChangedEpoch = epoch;
-            } else {
-                final Iterator<StackFrame> oldFramesIterator = this.frames.iterator();
-                final Iterator<StackFrame> newFramesIterator = newFrames.iterator();
-                while (oldFramesIterator.hasNext()) {
-                    final StackFrame oldFrame = oldFramesIterator.next();
-                    final StackFrame newFrame = newFramesIterator.next();
-                    if (!oldFrame.isSameFrame(newFrame)) {
-                        framesLastChangedEpoch = epoch;
-                        break;
-                    }
-                }
-            }
-            this.frames = newFrames;
-            framesRefreshedEpoch = epoch;
-        }
     }
 
     /**
@@ -674,7 +658,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
 
             final List<FrameProvider> result = new LinkedList<FrameProvider>();
             int z = 0;
-            for (final StackFrame stackFrame : frames()) {
+            for (final StackFrame stackFrame : frames(Integer.MAX_VALUE)) {
                 z++;
 
                 final Address address = stackFrame.ip;
