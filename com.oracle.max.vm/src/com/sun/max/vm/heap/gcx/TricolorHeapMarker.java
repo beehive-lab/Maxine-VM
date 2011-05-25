@@ -2030,7 +2030,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      * of every encountered dead space larger or equal to {@link HeapRegionSweeper#minReclaimableSpace()}.
      * @param sweeper
      */
-    void impreciseSweep(HeapRegionSweeper sweeper) {
+    private void impreciseSweep(HeapRegionSweeper sweeper) {
         final Pointer colorMapBase = base.asPointer();
         final int minBitsBetweenMark = sweeper.minReclaimableSpace().toInt() >> log2BytesCoveredPerBit;
         final Address regionLeftmost = sweeper.startOfSweepingRegion();
