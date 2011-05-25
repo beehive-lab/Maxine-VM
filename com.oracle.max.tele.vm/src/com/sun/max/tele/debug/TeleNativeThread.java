@@ -303,7 +303,8 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
     }
 
     final StackFrame top() {
-        return new TeleStackFrameWalker(teleProcess.vm(), this).frames(1).get(0);
+        StackFrame top = new TeleStackFrameWalker(teleProcess.vm(), this).frames(2).get(0);
+        return top;
     }
 
     /**
