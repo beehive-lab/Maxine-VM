@@ -101,11 +101,11 @@ public abstract class HeapRegionSweeper implements MarkSweepVerification {
         return minReclaimableSpace;
     }
 
-    Address startOfSweepingRegion() {
+    final Address startOfSweepingRegion() {
         return csrInfo.regionStart();
     }
 
-    Address endOfSweepingRegion() {
+    final Address endOfSweepingRegion() {
         return csrEnd;
     }
 
@@ -163,8 +163,12 @@ public abstract class HeapRegionSweeper implements MarkSweepVerification {
         Pointer endOfLeftObject = leftLiveObject.plus(Layout.size(Layout.cellToOrigin(leftLiveObject)));
         csrLiveBytes += endOfLeftObject.minus(csrLastLiveAddress).asSize().toInt();
         Size numDeadBytes = rightLiveObject.minus(endOfLeftObject).asSize();
-        printNotifiedGap(leftLiveObject, rightLiveObject, endOfLeftObject, numDeadBytes);
-        recordFreeSpace(endOfLeftObject, numDeadBytes);
+        if (MaxineVM.isDebug()) {
+            printNotifiedGap(leftLiveObject, rightLiveObject, endOfLeftObject, numDeadBytes);
+        }
+        if (numDeadBytes.greaterEqual(minReclaimableSpace)) {
+            recordFreeSpace(endOfLeftObject, numDeadBytes);
+        }
         csrLastLiveAddress = rightLiveObject.plus(Layout.size(Layout.cellToOrigin(rightLiveObject)));
         return csrLastLiveAddress.asPointer();
     }
