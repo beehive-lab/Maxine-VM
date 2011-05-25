@@ -2836,12 +2836,25 @@ public class AMD64Assembler extends AbstractAssembler {
     }
 
     /**
+     * Makes sure that at subsequent {@linkplain #call} does not fail the alignment check.
+     */
+    public final void alignCall() {
+        int dispStart = codeBuffer.position() + 1;
+        int mask = target.wordSize - 1;
+        if ((dispStart & ~mask) != ((dispStart + 3) & ~mask)) {
+            nop(target.wordSize - (dispStart & mask));
+            assert ((codeBuffer.position() + 1) & mask) == 0;
+        }
+    }
+
+    /**
      * Emits a direct call instruction. Note that the actual call target is not specified, because all calls
      * need patching anyway. Therefore, 0 is emitted as the call target, and the user is responsible
      * to add the call address to the appropriate patching tables.
      */
     public final void call() {
         emitByte(0xE8);
+        assert (codeBuffer.position() & ~(target.wordSize - 1)) == ((codeBuffer.position() + 3) & ~(target.wordSize - 1)) : "all call sites must be aligned for possible patching";
         emitInt(0);
     }
 

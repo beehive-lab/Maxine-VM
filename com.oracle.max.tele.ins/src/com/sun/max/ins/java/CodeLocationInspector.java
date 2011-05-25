@@ -34,6 +34,7 @@ import com.sun.max.ins.view.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 
@@ -82,6 +83,8 @@ public final class CodeLocationInspector extends Inspector<CodeLocationInspector
 
     private final Rectangle originalFrameGeometry;
     private final InspectorPanel nullPanel;
+    private final InspectorPanel simplePanel;
+    private final PlainLabel simplePanelLabel;
 
     protected CodeLocationInspector(Inspection inspection) {
         super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
@@ -89,6 +92,10 @@ public final class CodeLocationInspector extends Inspector<CodeLocationInspector
 
         nullPanel = new InspectorPanel(inspection, new BorderLayout());
         nullPanel.add(new PlainLabel(inspection, inspection.nameDisplay().unavailableDataShortText()), BorderLayout.PAGE_START);
+
+        simplePanel = new InspectorPanel(inspection, new BorderLayout());
+        simplePanelLabel = new PlainLabel(inspection, "");
+        simplePanel.add(simplePanelLabel, BorderLayout.PAGE_START);
 
         updateCodeLocation(focus().codeLocation());
 
@@ -107,19 +114,16 @@ public final class CodeLocationInspector extends Inspector<CodeLocationInspector
         final StringBuilder sb = new StringBuilder(viewManager.shortName() + ": ");
         if (codeLocation == null) {
             sb.append("<none>");
-        } else {
-            if (codeLocation.hasAddress()) {
-                sb.append(codeLocation.address().to0xHexString());
-                sb.append(" ");
-            }
-            if (compiledCode != null) {
-                sb.append(inspection().nameDisplay().extremelyShortName(compiledCode));
-                if (codeLocation.hasTeleClassMethodActor()) {
-                    sb.append(" bci=").append(codeLocation.bci());
-                }
-            } else if (codeLocation.hasTeleClassMethodActor()) {
-                sb.append(inspection().nameDisplay().veryShortName(codeLocation.teleClassMethodActor()));
-                sb.append(" bci=").append(codeLocation.bci());
+        } else if (codeLocation.hasTeleClassMethodActor()) {
+            final TeleClassMethodActor teleClassMethodActor = codeLocation.teleClassMethodActor();
+            sb.append(teleClassMethodActor.classMethodActor().holder().simpleName()).append(".");
+            sb.append(inspection().nameDisplay().veryShortName(teleClassMethodActor));
+        } else if (codeLocation.hasAddress()) {
+            MaxExternalCode externalCode = vm().codeCache().findExternalCode(codeLocation.address());
+            if (externalCode == null) {
+                sb.append("<native>");
+            } else {
+                sb.append(externalCode.entityName());
             }
         }
         return sb.toString();
@@ -127,17 +131,19 @@ public final class CodeLocationInspector extends Inspector<CodeLocationInspector
 
     @Override
     protected void createView() {
-        if (frames != null) {
-            final JPanel panel = new InspectorPanel(inspection());
-            panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        if (codeLocation == null) {
+            setContentPane(nullPanel);
+        } else if (frames == null) {
+            simplePanelLabel.setText(inspection().nameDisplay().shortName(codeLocation));
+            setContentPane(simplePanel);
+        } else {
+            final JPanel panel = new InspectorPanel(inspection(), new GridLayout(0, 1));
             CiFrame frame = frames;
             do {
                 panel.add(createFramePanel(frame), 0);
                 frame = frame.caller();
             } while (frame != null);
-            setContentPane(panel);
-        } else {
-            setContentPane(nullPanel);
+            setContentPane(new InspectorScrollPane(inspection(), panel));
         }
         setTitle();
     }
@@ -161,27 +167,26 @@ public final class CodeLocationInspector extends Inspector<CodeLocationInspector
     }
 
     private String shortString(CiCodePos codePos) {
-        return codePos.method.name() + " @ " + codePos.bci;
+        return codePos.method.name() + "() bci=" + codePos.bci;
     }
 
     private JPanel createFramePanel(CiFrame frame) {
-        final JPanel panel = new InspectorPanel(inspection());
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        final JPanel panel = new InspectorPanel(inspection(), new FlowLayout(FlowLayout.LEADING));
 
         final CiCodePos codePos = frame;
-        final TextLabel bytecodeLocationLabel = new TextLabel(inspection(), shortString(codePos));
+        final PlainLabel bytecodeLocationLabel = new PlainLabel(inspection(), shortString(codePos));
         bytecodeLocationLabel.setToolTipText(codePos.toString());
         panel.add(bytecodeLocationLabel);
 
         ClassMethodActor method = (ClassMethodActor) codePos.method;
-        final String sourceFileName = method.holder().sourceFileName;
+        String sourceFileName = method.holder().sourceFileName;
         final int lineNumber = method.sourceLineNumber(codePos.bci);
         if (sourceFileName != null || lineNumber >= 0) {
-            String source = (sourceFileName == null) ? "?" : sourceFileName;
-            if (lineNumber >= 0) {
-                source += " : " + lineNumber;
+            if (sourceFileName == null) {
+                sourceFileName = inspection().nameDisplay().unavailableDataShortText();
             }
-            final TextLabel sourceLocationLabel = new TextLabel(inspection(), source);
+            final String labelText = lineNumber >= 0 ? String.valueOf(lineNumber) : inspection().nameDisplay().unavailableDataShortText();
+            final PlainLabel sourceLocationLabel = new PlainLabel(inspection(), " line=" + labelText);
             sourceLocationLabel.setToolTipText(sourceFileName);
             sourceLocationLabel.addMouseListener(new MouseAdapter() {
                 @Override

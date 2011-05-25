@@ -40,6 +40,7 @@ public class LIRCall extends LIRInstruction {
      * object denoting a call to the runtime, a Java method or a native function respectively.
      */
     public final Object target;
+
     /**
      * The call site needs to be marked if this is non-null.
      */

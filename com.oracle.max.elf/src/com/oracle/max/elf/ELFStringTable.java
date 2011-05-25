@@ -64,8 +64,6 @@ import java.util.*;
  * null-terminated strings and can be indexed by integers to obtain the
  * string corresponding to the sequence of characters starting at the
  * specified index up to (and not including) the next null character.
- *
- * @author Ben L. Titzer
  */
 public class ELFStringTable {
 

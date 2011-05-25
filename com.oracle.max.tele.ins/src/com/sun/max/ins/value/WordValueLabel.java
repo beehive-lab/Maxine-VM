@@ -519,7 +519,7 @@ public class WordValueLabel extends ValueLabel {
                 try {
                     final String labelText = inspection().nameDisplay().referenceLabelText(teleObject);
                     if (labelText != null) {
-                        setText(labelText);
+                        setWrappedText(htmlify(labelText));
                         // The syntax of object reference names contains "<" and ">"; make them safe for HTML tool tips.
                         final StringBuilder toolTipSB = new StringBuilder();
                         toolTipSB.append(value.toWord().toPadded0xHexString('0'));

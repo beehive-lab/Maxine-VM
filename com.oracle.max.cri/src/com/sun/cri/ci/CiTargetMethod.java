@@ -342,6 +342,7 @@ public class CiTargetMethod implements Serializable {
     private int frameSize = -1;
     private int customStackAreaOffset = -1;
     private int registerRestoreEpilogueOffset = -1;
+    private int deoptReturnAddressOffset;
 
     /**
      * The buffer containing the emitted machine code.
@@ -498,10 +499,10 @@ public class CiTargetMethod implements Serializable {
 
     /**
      * @see #customStackAreaOffset()
-     * @param bytes
+     * @param offset
      */
-    public void setCustomStackAreaOffset(int bytes) {
-        customStackAreaOffset = bytes;
+    public void setCustomStackAreaOffset(int offset) {
+        customStackAreaOffset = offset;
     }
 
     /**

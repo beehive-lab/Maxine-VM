@@ -30,11 +30,6 @@ import com.sun.max.unsafe.*;
 
 /**
  * Sorted list of non-intersecting memory regions.
- * <br>
- * Cloned from {@link com.sun.max.memory.SortedMemoryRegionList} to extract it from the VM's type space for memory.
- *
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
  */
 public final class OrderedMemoryRegionList<MemoryRegion_Type extends MaxMemoryRegion> implements Iterable<MemoryRegion_Type> {
 

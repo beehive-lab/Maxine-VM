@@ -28,7 +28,6 @@ import com.sun.max.jdwp.vm.data.*;
 /**
  * Class representing a thread in the VM.
 
- * @author Thomas Wuerthinger
  *
  */
 public interface ThreadProvider extends ObjectProvider {

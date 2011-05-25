@@ -312,7 +312,10 @@ public final class BlockMap {
         if (computeStoresInLoops) {
             // process any blocks in loops to compute their stores
             // (requires another pass, but produces fewer phi's and ultimately better code)
-            processLoopBlocks();
+            //
+            // [cwi] Disabled because the implementation is severely broken, will be fixed in Graal
+            // processLoopBlocks();
+            storesInLoops.setAll();
         } else {
             // be conservative and assume all locals are potentially stored in loops
             // (does not require another pass, but produces more phi's and worse code)

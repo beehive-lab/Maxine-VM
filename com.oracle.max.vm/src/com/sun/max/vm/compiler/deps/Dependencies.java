@@ -168,6 +168,10 @@ public final class Dependencies {
         this.targetMethod = targetMethod;
     }
 
+    public TargetMethod targetMethod() {
+        return targetMethod;
+    }
+
     /**
      * Invalidates this set of dependencies.
      */

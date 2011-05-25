@@ -42,6 +42,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.hosted.CompiledPrototype.Link.Relationship;
 import com.sun.max.vm.jdk.*;
@@ -551,7 +552,7 @@ public class CompiledPrototype extends Prototype {
             while (!worklist.isEmpty() || !invalidatedTargetMethods.isEmpty()) {
                 processInvalidatedTargetMethods();
                 final MethodActor methodActor = worklist.removeFirst();
-                if (hasCode(methodActor)) {
+                if (needsCompilation(methodActor)) {
                     TargetMethod targetMethod = compilationScheme.synchronousCompile((ClassMethodActor) methodActor);
                     processNewTargetMethod(targetMethod);
                     ++totalCompilations;
@@ -570,7 +571,7 @@ public class CompiledPrototype extends Prototype {
                 while (!worklist.isEmpty() || !invalidatedTargetMethods.isEmpty()) {
                     processInvalidatedTargetMethods();
                     final MethodActor methodActor = worklist.removeFirst();
-                    if (hasCode(methodActor)) {
+                    if (needsCompilation(methodActor)) {
                         ++submittedCompilations;
                         compilationCompletionService.submit(new Callable<TargetMethod>() {
                             public TargetMethod call() throws Exception {
@@ -702,6 +703,11 @@ public class CompiledPrototype extends Prototype {
      */
     public synchronized static void invalidateTargetMethod(TargetMethod targetMethod) {
         assert targetMethod != null;
+
+        // Ensures that calling currentTargetMethod on targetMethod.classMethodActor returns null
+        // which is need for needsCompilation() to return true for the method.
+        targetMethod.setDeoptInfo(new DeoptInfo(targetMethod));
+
         synchronized (instance.invalidatedTargetMethods) {
             instance.invalidatedTargetMethods.add(targetMethod);
         }
@@ -730,10 +736,14 @@ public class CompiledPrototype extends Prototype {
         Trace.end(1, "checking methods that must be compiled");
     }
 
-    private boolean hasCode(MethodActor methodActor) {
-        return methodActor instanceof ClassMethodActor &&
+    private boolean needsCompilation(MethodActor methodActor) {
+        if (methodActor instanceof ClassMethodActor &&
             !methodActor.isAbstract() &&
-            !methodActor.isIntrinsic();
+            !methodActor.isIntrinsic()) {
+            ClassMethodActor cma = (ClassMethodActor) methodActor;
+            return cma.currentTargetMethod() == null;
+        }
+        return false;
     }
 
     public void addEntrypoints() {

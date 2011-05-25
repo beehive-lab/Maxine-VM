@@ -55,11 +55,11 @@ import com.sun.max.vm.thread.*;
  * machine:
  *
  * <pre>
- *     +------+                            +--------+                               +---------+
+ *     +------+                            +--------+                                +---------+
  *     |      |--- M:JNI-Prolog{STORE} --->|        |--- VM:WaitUntilFrozen{CAS} --->|         |
- *     | JAVA |                            | NATIVE |                               | FROZEN  |
+ *     | JAVA |                            | NATIVE |                                | FROZEN  |
  *     |      |<--- M:JNI-Epilog{CAS} -----|        |<----- VM:ThawThread{STORE} ----|         |
- *     +------+                            +--------+                               +---------+
+ *     +------+                            +--------+                                +---------+
  * </pre>
  * The syntax for each transition operation is:
  * <pre>
@@ -172,7 +172,7 @@ public class VmOperation {
         Safepoint,
 
         /**
-         * Denotes that an operation does target any threads
+         * Denotes that an operation does not target any threads
          * and that the thread {@linkplain VmOperation#submit() submitting} the operation is
          * not blocked until the operation completes.
          */
@@ -279,7 +279,7 @@ public class VmOperation {
     }
 
     /**
-     * Called on the current thread (which just hit safepoint) before it is frozen.
+     * Called on the current thread (which just hit a safepoint) before it is frozen.
      *
      * @param trapState the register and other thread state at the safepoint
      */

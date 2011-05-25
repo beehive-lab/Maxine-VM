@@ -53,6 +53,14 @@ public abstract class TrapStateAccess {
     }
 
     /**
+     * Gets the address of the memory word in a given trap state holding
+     * the program counter denoting instruction causing the trap.
+     *
+     * @param trapState the block of memory holding the trap state
+     */
+    public abstract Pointer getPCPointer(Pointer trapState);
+
+    /**
      * Gets the program counter denoting instruction causing the trap.
      * This is also the address to which the trap handler will return
      * unless the handler unwinds to an exception handler in a method
@@ -60,14 +68,18 @@ public abstract class TrapStateAccess {
      *
      * @param trapState the block of memory holding the trap state
      */
-    public abstract Pointer getPC(Pointer trapState);
+    public final Pointer getPC(Pointer trapState) {
+        return getPCPointer(trapState).readWord(0).asPointer();
+    }
 
     /**
      * Updates the address to which the trap handler will return.
      *
      * @param trapState the block of memory holding the trap state
      */
-    public abstract void setPC(Pointer trapState, Pointer value);
+    public final void setPC(Pointer trapState, Pointer value) {
+        getPCPointer(trapState).writeWord(0, value);
+    }
 
     /**
      * Gets the value of the stack pointer at the point of the trap.

@@ -47,7 +47,7 @@
 #    . "$MAXINE_HOME/com.oracle.max.shell/max"
 #
 # One reason to extend this script is to build additional
-# projects that depend on Maxine, e.g. for the Guest VM Xen port of Maxine.
+# projects that depend on Maxine, e.g. for the Virtual Edition port of Maxine.
 # To do this set the following variable before invoking max:
 #
 #  extra_projects_dirs   comma separated list of extra project directories
@@ -203,6 +203,13 @@ if [[ "$java_version" != 1.6* ]]; then
     exit 255
 fi
 
+# The Maxine VM runs with assertions enabled by default
+if [ -z "${MAXVM_OPTIONS}" ]; then
+    MAXVM_OPTIONS=-ea
+else
+    MAXVM_OPTIONS="-ea $MAXVM_OPTIONS"
+fi
+
 arch=""
 if [ -z "${MAXINE_OS}" ]; then
     OS=`uname -s`
@@ -253,29 +260,29 @@ maxine_vm=$MAXVM_DIR/maxvm
 
 method_finder_pattern_help='A pattern is a class name pattern followed by an optional method name
     pattern separated by a ':' further followed by an optional signature:
-    
+
       <class name>[:<method name>[:<signature>]]
-    
+
     For example, the list of patterns:
-    
+
          "Object:wait", "String", "Util:add:(int,float)"
-         
+
     will match all methods in a class whose name contains "Object" where the
     method name contains "wait", all methods in a class whose name
     contains "String" and all methods in any class whose name
     contains "Util", the method name contains "add" and the
     signature is (int, float).
-    
+
     The type of matching performed for a given class/method name is determined
     by the position of '^' in the pattern name as follows:
-    
+
     Position of '^'   | Match algorithm
      ------------------+------------------
      start AND end     | Equality
      start             | Prefix
      end               | Suffix
      absent            | Substring
-    
+
     For example, "^java.util:^toString^" matches all methods named "toString" in
     any class whose name starts with "java.util".
 
@@ -421,9 +428,9 @@ function run_build() {
     # Compile Java sources
     local project
     for project in $projects_to_build; do
-    
+
         local project_dest=$(jmax output_dir $project)
-        
+
         if $clean ; then
             run rm -rf ${project_dest}
         fi
@@ -478,9 +485,9 @@ function run_clean() {
     pushd $maxine_dir/com.oracle.max.vm.native >/dev/null
     check_gnu_make
     run $make clean
-    rm -rf generated	
+    rm -rf generated
     popd >/dev/null
-    
+
     for project in $(jmax projects); do
         local project_dest=$(jmax output_dir $project)
         if [ "x$project_dest" != "x" ]; then
@@ -562,7 +569,7 @@ function run_jnigen() {
 
 copycheck_usage="[options]"
 copycheck_help="run copyright check on the Maxine sources (defined as being under hg control)"
- 
+
 function run_copycheck() {
     run ${jvm_exe} -cp $(jmax classpath_noresolve com.oracle.max.base) com.sun.max.tools.CheckCopyright $@
     result=$?
@@ -775,18 +782,18 @@ function image_help() {
     The platform configuration for the generated image is auto-detected
     by native methods. However, the following system properties can be
     used to override the defaults:
-    
+
     Name            | Description                   | Example values
     ================+===============================+================
-    max.platform    | name of a preset platform     | solaris-amd64 linux-amd64 darwin-amd64 
-    max.cpu         | processor model               | AMD64 IA32 SPARCV9   
+    max.platform    | name of a preset platform     | solaris-amd64 linux-amd64 darwin-amd64
+    max.cpu         | processor model               | AMD64 IA32 SPARCV9
     max.isa         | instruction set architecture  | AMD64 ARM PPC SPARC
-    max.os          | operating system              | Darwin Linux Solaris 
+    max.os          | operating system              | Darwin Linux Solaris
     max.endianness  | endianness                    | BIG LITTLE
     max.bits        | machine word size             | 64 32
-    max.page        | page size                     | 4096 8192 
+    max.page        | page size                     | 4096 8192
     max.nsig        | number of signals             | 32
-    
+
     These system properties can be specified as options to the image
     command (e.g. '-os Darwin -bits 32').
 
@@ -842,6 +849,9 @@ function run_image() {
                 MAXINE_LOG_FILE=${1/*=/}
                 export MAXINE_LOG_FILE
                 ;;
+            -vma )
+                system_props="$system_props -Dmax.permsize=8 -Dmax.vmthread.factory.class=com.oracle.max.vm.ext.vma.runtime.VMAVmThreadFactory -Dmax.vma.advice.class=com.sun.max.vm.t1x.vma.VMAAdviceTemplateSource"
+                ;;
             *)
                 image_args="$image_args $1"
                 ;;
@@ -866,9 +876,9 @@ verify_help="verifies a set of methods using the Maxine bytecode verifier
     See Patterns below for a description of the format expected for \"patterns...\"
 
     Use \"max verify -help\" to see what other options this command accepts.
-    
+
     --- Patterns ---
-    
+
     $method_finder_pattern_help"
 
 function run_verify() {
@@ -897,15 +907,15 @@ c1x_usage="[options] patterns..."
 c1x_help="process a list of methods with the C1X compiler
 
     See Patterns below for a description of the format expected for \"patterns...\"
-    
+
     The output traced by this command is not guaranteed to be the same as the output
     for a compilation performed at runtime. The code produced by a compiler is sensitive
     to the compilation context such as what classes have been resolved etc.
 
     Use \"max c1x -help\" to see what other options this command accepts.
-    
+
     --- Patterns ---
-    
+
     $method_finder_pattern_help"
 
 function run_c1x() {
@@ -1123,7 +1133,7 @@ inspect_help="launch a given program under the Inspector
     are those accepted by the 'max vm' command plus the Inspector specific
     options. To debug a program in the Inspector, simply replace 'vm' on the
     command line that launches the program with 'inspect'.
-    
+
     Use \"max inspect --help\" to see what the Inspector options are. These options
     must be specified with a '--' prefix so that they can be distinguished from
     the VM options.
@@ -1131,12 +1141,12 @@ inspect_help="launch a given program under the Inspector
     The inspect command also accepts the same system property related options
     as the 'image' command except that a '--' prefix must be used (e.g.
     '--os Darwin --bits 32'). Use \"max help image\" for more detail.
-    
+
     Use \"max vm -help\" to see what the VM options are."
 
 function run_inspect() {
     save_class_dir="$MAXVM_DIR/inspected_classes"
-    vm_args="-XX:SaveClassDir=$save_class_dir -XX:+TrapOnError"
+    vm_args="-XX:SaveClassDir=$save_class_dir -XX:+TrapOnError $MAXVM_OPTIONS"
     inspector_args="-vmdir=$MAXVM_DIR"
     inspector_cp="$MAXVM_DIR/inspected_classes"
     mkdir -p $save_class_dir || { echo "Failed to created directory $save_class_dir"; exit 1; }
@@ -1294,7 +1304,7 @@ function run_jtest() {
         esac
         shift
     done
-    
+
     run ${jvm_exe} -classpath $(jmax classpath) $vm_args test.com.sun.max.vm.compiler.JavaTester $jtester_args
 }
 
@@ -1478,7 +1488,7 @@ function run_jrockitbm() {
 projects_usage=""
 projects_help="show contents of all projects.properties files"
 function run_projects() {
-    run jmax properties 
+    run jmax properties
 }
 
 #=======================================

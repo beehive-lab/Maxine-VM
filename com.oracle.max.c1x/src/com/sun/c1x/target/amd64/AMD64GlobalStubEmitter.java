@@ -430,6 +430,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
             loadArgument(i, location.asRegister());
         }
 
+        asm.alignCall();
         // Call to the runtime
         int before = asm.codeBuffer.position();
         asm.call();

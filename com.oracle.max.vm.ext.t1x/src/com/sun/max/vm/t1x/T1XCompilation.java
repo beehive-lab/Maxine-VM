@@ -33,7 +33,7 @@ import java.util.*;
 
 import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.amd64.*;
-import com.oracle.max.asm.target.amd64.AMD64Assembler.*;
+import com.oracle.max.asm.target.amd64.AMD64Assembler.ConditionFlag;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.bytecode.Bytecodes.MemoryBarriers;
 import com.sun.cri.ci.*;
@@ -347,10 +347,7 @@ public class T1XCompilation {
         patchInfo.reset();
         adapter = null;
         stops.reset(false);
-        if (methodProfileBuilder != null) {
-            methodProfileBuilder.finish();
-            methodProfileBuilder = null;
-        }
+        methodProfileBuilder = null;
     }
 
     void emitProfileMethodEntry() {
@@ -799,6 +796,14 @@ public class T1XCompilation {
         int bci = stream.currentBCI();
         startBlock(targetBCI);
         beginBytecode(tag.opcode);
+
+        if (bci >= targetBCI && methodProfileBuilder != null) {
+            // Profiling of backward branches.
+            assignReferenceLiteralTemplateArgument(0, methodProfileBuilder.methodProfileObject());
+            T1XTemplate template = getTemplate(PROFILE_BACKWARD_BRANCH);
+            emitAndRecordStops(template);
+        }
+
         if (ccObj != null) {
             T1XTemplate template = getTemplate(tag);
             emitAndRecordStops(template);
@@ -1001,17 +1006,15 @@ public class T1XCompilation {
     private void recordDirectBytecodeCall(T1XTemplate template, ClassMethodActor callee) {
         if (isAMD64()) {
             AMD64Assembler asm = (AMD64Assembler) this.asm;
-            if (callee.currentTargetMethod() == null) {
-                // Align unlinked bytecode call site for MT safe patching
-                final int alignment = 7;
-                final int callSitePosition = buf.position() + template.bytecodeCall.pos;
-                final int roundDownMask = ~alignment;
-                final int directCallInstructionLength = 5; // [0xE8] disp32
-                final int endOfCallSite = callSitePosition + (directCallInstructionLength - 1);
-                if ((callSitePosition & roundDownMask) != (endOfCallSite & roundDownMask)) {
-                    // Emit nops to align up to next 8-byte boundary
-                    asm.nop(8 - (callSitePosition & alignment));
-                }
+            // Align bytecode call site for MT safe patching
+            final int alignment = 7;
+            final int callSitePosition = buf.position() + template.bytecodeCall.pos;
+            final int roundDownMask = ~alignment;
+            final int directCallInstructionLength = 5; // [0xE8] disp32
+            final int endOfCallSite = callSitePosition + (directCallInstructionLength - 1);
+            if ((callSitePosition & roundDownMask) != (endOfCallSite & roundDownMask)) {
+                // Emit nops to align up to next 8-byte boundary
+                asm.nop(8 - (callSitePosition & alignment));
             }
         } else {
             unimplISA();

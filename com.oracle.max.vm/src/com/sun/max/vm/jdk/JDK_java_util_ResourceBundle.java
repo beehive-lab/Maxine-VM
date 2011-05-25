@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,28 +20,18 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-/*
- * @Harness: java
- * @Runs: 0 = true
- */
-package jtt.threads;
+package com.sun.max.vm.jdk;
 
-public class Thread_start01 implements Runnable {
+import java.util.*;
 
-    static volatile boolean cont;
+import com.sun.max.annotate.*;
+import com.sun.max.vm.jni.*;
 
-    public static boolean test(int i) {
-        cont = true;
-        new Thread(new Thread_start01()).start();
-        for (int j = 0; j < 100000000; j++) {
-            if (!cont) {
-                return true;
-            }
-        }
-        return false;
-    }
+@METHOD_SUBSTITUTIONS(ResourceBundle.class)
+final class JDK_java_util_ResourceBundle {
 
-    public void run() {
-        cont = false;
+    @SUBSTITUTE
+    public static Class[] getClassContext() {
+        return JVMFunctions.GetClassContext();
     }
 }

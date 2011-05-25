@@ -23,7 +23,5 @@
 /**
  *
  * This package defines the core classes of the JDWP+ interface to the VM.
- *
- * @author Thomas Wuerthinger
  */
 package com.sun.max.jdwp.vm.core;

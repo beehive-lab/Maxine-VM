@@ -92,6 +92,13 @@ public class T1XTemplateSource {
         MethodInstrumentation.recordEntrypoint(mpo, null);
     }
 
+    @T1X_TEMPLATE(PROFILE_BACKWARD_BRANCH)
+    public static void profileBackwardBranch(MethodProfile mpo) {
+        // entrypoint counters count down to zero ("overflow")
+        // Currently, there is no reason to use a separate counter for backward branches.
+        MethodInstrumentation.recordBackwardBranch(mpo);
+    }
+
     @T1X_TEMPLATE(TRACE_METHOD_ENTRY)
     public static void traceMethodEntry(String method) {
         Log.println(method);

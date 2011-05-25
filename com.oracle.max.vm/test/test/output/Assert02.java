@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,24 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package test.com.sun.max.vm.jtrun.some;
+package test.output;
 
-import com.sun.max.config.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.run.*;
 
-/**
- * @see MaxPackage
- */
-public class Package extends BootImagePackage {
-    public Package() {
-        super();
-        registerScheme(RunScheme.class, JTRunScheme.class);
+public class Assert02 {
+
+    public static void test(int arg) {
+        assert arg != 0;
     }
 
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.runPackage.equals(this);
+    public static void main(String[] args) {
+        try {
+            test(0);
+            System.out.println("Assert02 not thrown");
+        } catch (AssertionError e) {
+            System.out.println("Assert02 thrown");
+        }
     }
+
 }
-

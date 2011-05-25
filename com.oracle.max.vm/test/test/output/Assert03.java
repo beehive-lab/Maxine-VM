@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,19 +20,28 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.jdwp.vm.proxy;
-
-import com.sun.max.jdwp.vm.core.*;
+package test.output;
 
 /**
- * A reference type that is a class.
+ * These VM args test individual suppression within an an enabled tree.
  *
+ * -ea:test.output... -da:test.output.Assert04
+ *
+ * and vice versa:
+ *
+ * -da:test.output.asert -ea:test.output.Assert04
  */
-public interface ClassProvider extends ReferenceTypeProvider {
 
-    /**
-     * @return the super class of this class or null if it has no super class
-     */
-    @ConstantReturnValue
-    ClassProvider getSuperClass();
+public class Assert03 {
+
+    public static void main(String[] args) {
+        try {
+            Assert02.main(new String[0]);
+            assert false;
+            System.out.println("Assert03 not thrown");
+        } catch (AssertionError e) {
+            System.out.println("Assert03 thrown");
+        }
+    }
+
 }
