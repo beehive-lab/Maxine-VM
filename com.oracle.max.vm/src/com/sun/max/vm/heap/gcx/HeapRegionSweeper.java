@@ -34,7 +34,7 @@ import com.sun.max.vm.runtime.*;
  * A heap marker interacts with the sweeper via a hasNextSweepingRegion / beginSweep / endSweep methods that bracket the sweeping of each region.
  * Dead space within the region is notified to the sweeper via three interface: processLargeGap, processDeadSpace, and processFreeRegion.
  */
-public abstract class HeapRegionSweeper implements MarkSweepVerification {
+public abstract class HeapRegionSweeper extends Sweeper implements MarkSweepVerification {
 
     protected Size minReclaimableSpace;
 
@@ -108,6 +108,7 @@ public abstract class HeapRegionSweeper implements MarkSweepVerification {
         return csrLiveBytes;
     }
 
+    @Override
     public final Size minReclaimableSpace() {
         return minReclaimableSpace;
     }
@@ -133,9 +134,6 @@ public abstract class HeapRegionSweeper implements MarkSweepVerification {
 
         csrInfo.resetOccupancy();
         csrEnd = csrLastLiveAddress.plus(regionSizeInBytes);
-
-        Log.print("Sweeping region #");
-        Log.println(csrInfo.toRegionID());
     }
 
     void recordFreeSpace(Address chunk, Size chunkSize) {
@@ -155,7 +153,9 @@ public abstract class HeapRegionSweeper implements MarkSweepVerification {
     }
 
     public abstract boolean hasNextSweepingRegion();
+    @Override
     public abstract void beginSweep();
+    @Override
     public abstract void endSweep();
     public abstract void verify(AfterMarkSweepVerifier verifier);
 
@@ -171,12 +171,13 @@ public abstract class HeapRegionSweeper implements MarkSweepVerification {
      * @param rightLiveObject
      * @return
      */
+    @Override
     public Pointer processLargeGap(Pointer leftLiveObject, Pointer rightLiveObject) {
         FatalError.check(rightLiveObject.lessEqual(endOfSweepingRegion()), "dead space must not cross region boundary");
         Pointer endOfLeftObject = leftLiveObject.plus(Layout.size(Layout.cellToOrigin(leftLiveObject)));
         csrLiveBytes += endOfLeftObject.minus(csrLastLiveAddress).asSize().toInt();
         Size numDeadBytes = rightLiveObject.minus(endOfLeftObject).asSize();
-        if (MaxineVM.isDebug()) {
+        if (MaxineVM.isDebug() && TraceSweep) {
             printNotifiedGap(leftLiveObject, rightLiveObject, endOfLeftObject, numDeadBytes);
         }
         if (numDeadBytes.greaterEqual(minReclaimableSpace)) {
@@ -193,10 +194,11 @@ public abstract class HeapRegionSweeper implements MarkSweepVerification {
      * @param freeChunk
      * @param size
      */
+    @Override
     public void processDeadSpace(Address freeChunk, Size size) {
         assert freeChunk.plus(size).lessEqual(endOfSweepingRegion());
         csrLastLiveAddress = freeChunk.plus(size);
-        if (MaxineVM.isDebug()) {
+        if (MaxineVM.isDebug() && TraceSweep) {
             printNotifiedDeadSpace(freeChunk, size);
         }
         recordFreeSpace(freeChunk, size);

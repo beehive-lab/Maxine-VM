@@ -465,7 +465,11 @@ public class LargeObjectSpace extends Sweeper implements MarkSweepVerification {
     }
 
     @Override
-    public Size endSweep() {
+    public void endSweep() {
+    }
+
+    @Override
+    public Size freeSpaceAfterSweep() {
         return Size.fromLong(totalFreeBlocks << LOG2_BLOCK_SIZE);
     }
 
@@ -500,7 +504,7 @@ public class LargeObjectSpace extends Sweeper implements MarkSweepVerification {
     }
 
     @Override
-    public Size minReclaimableSize() {
+    public Size minReclaimableSpace() {
         return Size.fromInt(BLOCK_SIZE);
     }
 
