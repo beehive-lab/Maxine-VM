@@ -63,6 +63,10 @@ public class HeapAccount<T extends HeapAccountOwner>{
         this.regionsRangeIterable = new HeapRegionRangeIterable();
     }
 
+    public HeapRegionRangeIterable allocatedRegions() {
+        return regionsRangeIterable;
+    }
+
     /**
      * Open the account with the specified amount of space.
      * @param spaceReserve
@@ -97,6 +101,10 @@ public class HeapAccount<T extends HeapAccountOwner>{
      */
     public int reserve() {
         return reserve;
+    }
+
+    public int used() {
+        return allocated.size();
     }
 
     /**

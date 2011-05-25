@@ -86,6 +86,11 @@ public final class HeapRegionManager implements HeapAccountOwner {
      */
     private int unreserved;
 
+    /**
+     *
+     */
+    private OutgoingReferenceChecker outgoingReferenceChecker;
+
     // Region reservation management interface. Should be private to heap account.
     // May want to revisit how the two interacts to better control
     // use of these sensitive operations (ideally, the transfer of unreserved to a
@@ -231,7 +236,7 @@ public final class HeapRegionManager implements HeapAccountOwner {
             // enable early inspection.
             InspectableHeapInfo.init(false, regionAllocator.bounds());
 
-            RegionTable.initialize(regionInfoClass, startOfManagedSpace, numRegions);
+            RegionTable.initialize(regionInfoClass, regionAllocator.bounds(), numRegions);
             // Allocate the backing storage for the region lists.
             HeapRegionList.initializeListStorage(HeapRegionList.RegionListUse.ACCOUNTING, new int[regionListSize]);
             HeapRegionList.initializeListStorage(HeapRegionList.RegionListUse.OWNERSHIP, new int[regionListSize]);
@@ -242,6 +247,10 @@ public final class HeapRegionManager implements HeapAccountOwner {
             // Start with opening the boot heap account to set the records straight after bootstrap.
             // TODO (ld) initialNumRegions may not be the reserve we want here. Need to adjust that to the desired "immortal" size.
             FatalError.check(bootHeapAccount.open(initialNumRegions), "Failed to create boot heap account");
+            if (MaxineVM.isDebug()) {
+                outgoingReferenceChecker = new OutgoingReferenceChecker(bootHeapAccount);
+            }
+
             // Now fix up the boot heap account to records the regions used up to now.
             bootHeapAccount.recordAllocated(0, initialNumRegions, null, false);
         } finally {
@@ -281,35 +290,40 @@ public final class HeapRegionManager implements HeapAccountOwner {
      * @param numRegions
      */
     void free(int firstRegionId, int numRegions) {
-        // TODO: error handling
+        // TODO(ld): error handling
         regionAllocator.free(firstRegionId, numRegions);
     }
 
     void commit(int firstRegionId, int numRegions) {
-        // TODO: error handling
+        // TODO(ld): error handling
         regionAllocator.commit(firstRegionId, numRegions);
     }
 
     void uncommit(int firstRegionId, int numRegions) {
-        // TODO: error handling
+        // TODO:(ld) error handling
         regionAllocator.uncommit(firstRegionId, numRegions);
     }
 
-    public void verifyAfterInitialization() {
-        HeapRegionConstants.validate();
+    public void checkOutgoingReferences() {
         if (MaxineVM.isDebug()) {
-            final OutgoingReferenceChecker checker = new OutgoingReferenceChecker(bootHeapAccount);
             bootAllocator.unsafeMakeParsable();
-            bootHeapAccount.visitObjects(checker);
-            if (checker.outgoingReferenceCount() != 0L) {
+            bootHeapAccount.visitObjects(outgoingReferenceChecker);
+            if (outgoingReferenceChecker.outgoingReferenceCount() != 0L) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("Boot heap account has ");
-                Log.print(checker.outgoingReferenceCount());
+                Log.print(outgoingReferenceChecker.outgoingReferenceCount());
                 Log.println(" outgoing references.");
                 Log.unlock(lockDisabledSafepoints);
                 FatalError.crash("Must not happen");
             }
         }
+    }
+
+    public void verifyAfterInitialization(TricolorHeapMarker heapMarker) {
+        HeapRegionConstants.validate();
+        checkOutgoingReferences();
+        FatalError.check(HeapRegionConstants.log2RegionSizeInBytes >= heapMarker.log2BitmapWord, "Region size too small for heap marker");
+
     }
 }
 
