@@ -94,6 +94,16 @@ public abstract class HeapRegionSweeper implements MarkSweepVerification {
         Log.unlock(lockDisabledSafepoints);
     }
 
+    private void printNotifiedDeadSpace(Address deadSpace, Size size) {
+        final boolean lockDisabledSafepoints = Log.lock();
+        Log.print("Dead Space @");
+        Log.print(deadSpace);
+        Log.print("(");
+        Log.print(size.toLong());
+        Log.println(")");
+        Log.unlock(lockDisabledSafepoints);
+    }
+
     final public int liveBytes() {
         return csrLiveBytes;
     }
@@ -186,6 +196,9 @@ public abstract class HeapRegionSweeper implements MarkSweepVerification {
     public void processDeadSpace(Address freeChunk, Size size) {
         assert freeChunk.plus(size).lessEqual(endOfSweepingRegion());
         csrLastLiveAddress = freeChunk.plus(size);
+        if (MaxineVM.isDebug()) {
+            printNotifiedDeadSpace(freeChunk, size);
+        }
         recordFreeSpace(freeChunk, size);
     }
 }
