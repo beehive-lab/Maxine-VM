@@ -283,7 +283,8 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         Log.print(bitIndex);
         Log.print(" [ ");
         Log.print(bwi);
-        Log.println(" ]");
+        Log.print(" ] @ ");
+        Log.println(bitmapWordPointerAt(bitIndex));
     }
 
     private void traceMark(Address cell,  long color) {
