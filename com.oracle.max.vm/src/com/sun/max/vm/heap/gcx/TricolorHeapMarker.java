@@ -1852,7 +1852,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
     public void sweep(Sweeper sweeper) {
         if (Sweeper.DoImpreciseSweep) {
-            impreciseSweep(sweeper, sweeper.minReclaimableSize());
+            impreciseSweep(sweeper, sweeper.minReclaimableSpace());
         } else {
             preciseSweep(sweeper);
         }

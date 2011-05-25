@@ -348,9 +348,12 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         }
 
         private Size reclaim() {
+            startTimer(reclaimTimer);
             objectSpace.beginSweep();
             heapMarker.sweep(objectSpace);
-            return objectSpace.endSweep();
+            objectSpace.endSweep();
+            stopTimer(reclaimTimer);
+            return objectSpace.freeSpaceAfterSweep();
         }
 
         private HeapResizingPolicy heapResizingPolicy = new HeapResizingPolicy();
@@ -372,9 +375,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             }
             objectSpace.makeParsable();
             heapMarker.markAll();
-            startTimer(reclaimTimer);
             Size freeSpaceAfterGC = reclaim();
-            stopTimer(reclaimTimer);
             if (VerifyAfterGC) {
                 afterGCVerifier.run();
             }

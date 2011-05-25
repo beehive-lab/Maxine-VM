@@ -92,10 +92,17 @@ public abstract class Sweeper {
      *
      * @return total free spaces
      */
-    public abstract Size endSweep();
+    public abstract void endSweep();
+
+    /**
+     * Total free space after sweeping.
+     * May not be accurate with actual free space if allocation took place since endSweep was called.
+     * @return
+     */
+    public abstract Size freeSpaceAfterSweep();
 
     /**
      * Minimum size to be considered reclaimable.
      */
-    public abstract Size minReclaimableSize();
+    public abstract Size minReclaimableSpace();
 }
