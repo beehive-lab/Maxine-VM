@@ -288,8 +288,17 @@ public class MaxineTesterConfiguration {
         imageConfig("msd",  opt_c1x, baseline_t1x,     "-run=java", "-heap=gcx.ms", "-build=DEBUG");
         imageConfig("msed",  opt_c1x, baseline_t1x,     "-run=java", "-heap=gcx.mse", "-build=DEBUG");
         imageConfig("mse",  opt_c1x, baseline_t1x,   "-run=java", "-heap=gcx.mse");
-       imageConfig("msc1x",      "-run=java", "-heap=gcx.ms", opt_c1x, baseline_c1x);
+        imageConfig("msc1x",      "-run=java", "-heap=gcx.ms", opt_c1x, baseline_c1x);
         imageConfig("msec1x",     "-run=java", "-heap=gcx.mse", opt_c1x, baseline_c1x);
+
+        // VMA configs
+        final String vmaT1X = "com.sun.max.vm.t1x.vma.VMAT1X";
+        final String vmaBaseline = "-baseline=" + vmaT1X;
+        final String vmaRun = "-run=com.oracle.max.vm.ext.vma.run.java";
+        final String vmaHeap = "-heap=com.oracle.max.vm.ext.vma.heap.semi";
+        final String vmaLayout = "-layout=xohm";
+        imageConfig("vma-c1x-t1x", vmaLayout, vmaHeap, vmaBaseline, vmaRun,"-vma");
+        imageConfig("vma-t1x-t1x", "-opt=" + vmaT1X, vmaLayout, vmaHeap, vmaBaseline, vmaRun, "-vma");
 
         c1xTest("opt0", "-C1X:OptLevel=0", "^jtt", "!jtt.max", "!jtt.max.", "!jtt.jvmni.", "!jtt.exbytecode.", "!jtt.jni.", "^com.sun.c1x", "^com.sun.cri");
         c1xTest("opt1", "-C1X:OptLevel=1", "^jtt", "^com.sun.c1x", "^com.sun.cri");
