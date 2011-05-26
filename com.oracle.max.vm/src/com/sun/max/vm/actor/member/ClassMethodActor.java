@@ -26,6 +26,7 @@ import static com.sun.max.vm.actor.member.LivenessAdapter.*;
 
 import java.lang.reflect.*;
 
+import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
@@ -234,21 +235,10 @@ public abstract class ClassMethodActor extends MethodActor {
                 }
 
                 if (verifier != null && codeAttribute != null && !compilee.holder().isReflectionStub()) {
-                    if (MaxineVM.isHosted()) {
-                        try {
-                            codeAttribute = verifier.verify(compilee, codeAttribute);
-                        } catch (HostOnlyClassError e) {
-                        } catch (HostOnlyMethodError e) {
-                        } catch (OmittedClassError e) {
-                            // Ignore: assume all classes being loaded during boot imaging are verifiable.
-                        }
-                    } else {
-                        codeAttribute = verifier.verify(compilee, codeAttribute);
-                        beVerified();
-                    }
+                    codeAttribute = verify(compilee, codeAttribute, verifier);
                 }
 
-                intrinsify(compilee, codeAttribute);
+                codeAttribute = intrinsify(compilee, codeAttribute);
 
                 this.codeAttribute = codeAttribute;
                 this.compilee = compilee;
@@ -257,19 +247,43 @@ public abstract class ClassMethodActor extends MethodActor {
         return compilee;
     }
 
-    private boolean intrinsify(ClassMethodActor compilee, CodeAttribute codeAttribute) {
+    private CodeAttribute verify(ClassMethodActor compilee, CodeAttribute codeAttribute, ClassVerifier verifier) {
+        if (MaxineVM.isHosted()) {
+            try {
+                codeAttribute = verifier.verify(compilee, codeAttribute);
+                beVerified();
+            } catch (HostOnlyClassError e) {
+            } catch (HostOnlyMethodError e) {
+            } catch (OmittedClassError e) {
+                // Ignore: assume all classes being loaded during boot imaging are verifiable.
+            }
+        } else {
+            codeAttribute = verifier.verify(compilee, codeAttribute);
+            beVerified();
+        }
+        return codeAttribute;
+    }
+
+    /**
+     * Performs {@linkplain BytecodeIntrinsifier intrinsification} on a given code attribute.
+     * This method also rewrites the code attribute if it contains any subroutines.
+     */
+    private CodeAttribute intrinsify(ClassMethodActor compilee, CodeAttribute codeAttribute) {
         if (codeAttribute != null) {
             Intrinsifier intrinsifier = new Intrinsifier(compilee, codeAttribute);
             intrinsifier.run();
+            if ((intrinsifier.flags & BytecodeIntrinsifier.FLAG_HAS_SUBROUTINE) != 0) {
+                // Inline subroutines
+                TypeInferencingVerifier verifier = new TypeInferencingVerifier(compilee.holder());
+                codeAttribute = verify(compilee, codeAttribute, verifier);
+            }
+
             if (intrinsifier.unsafe) {
                 compilee.beUnsafe();
                 beUnsafe();
             }
-            if (intrinsifier.extended) {
-                return true;
-            }
         }
-        return false;
+        return codeAttribute;
     }
 
     /**
@@ -324,8 +338,7 @@ public abstract class ClassMethodActor extends MethodActor {
 
     public synchronized void verify(ClassVerifier classVerifier) {
         if (codeAttribute() != null && !isVerified(flags())) {
-            codeAttribute = classVerifier.verify(this, codeAttribute);
-            beVerified();
+            codeAttribute = verify(compilee, codeAttribute, classVerifier);
         }
     }
 
