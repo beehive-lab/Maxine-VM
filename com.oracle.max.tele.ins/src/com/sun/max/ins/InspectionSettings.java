@@ -402,11 +402,14 @@ public class InspectionSettings {
             saveSettingsListener.saveSettings(saveSettingsEvent);
             final Inspector inspector = saveSettingsListener.inspector();
             if (inspector != null) {
+
                 final Rectangle geometry = inspector.getJComponent().getBounds();
                 saveSettingsEvent.save(COMPONENT_X_KEY, geometry.x);
                 saveSettingsEvent.save(COMPONENT_Y_KEY, geometry.y);
                 saveSettingsEvent.save(COMPONENT_WIDTH_KEY, geometry.width);
                 saveSettingsEvent.save(COMPONENT_HEIGHT_KEY, geometry.height);
+                Trace.line(TRACE_VALUE, tracePrefix() + "saving locn=(" + geometry.x + "," + geometry.y + "),size=(" + geometry.width + "," + geometry.height + ") for " + inspector.getClass().getSimpleName());
+
             }
         }
         properties.putAll(newProperties);

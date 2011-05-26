@@ -188,7 +188,7 @@ public interface CompilationScheme extends VMScheme {
                         }
                     }
                     if (++frameCount > FRAME_SEARCH_LIMIT) {
-                        logNoStaticCallPatch();
+                        logNoFurtherStaticCallPatching();
                         return false;
                     }
                     return true;
@@ -338,11 +338,11 @@ public interface CompilationScheme extends VMScheme {
             }
         }
 
-        private static void logNoStaticCallPatch() {
+        private static void logNoFurtherStaticCallPatching() {
             if (verboseOption.verboseCompilation) {
                 boolean lockDisabledSafepoints = Log.lock();
                 Log.printCurrentThread(false);
-                Log.print(": No Patching of static call");
+                Log.println(": No further patching of static calls");
                 Log.unlock(lockDisabledSafepoints);
             }
         }
