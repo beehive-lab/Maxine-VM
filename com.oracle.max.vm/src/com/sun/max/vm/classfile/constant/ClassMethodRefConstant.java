@@ -148,6 +148,7 @@ public interface ClassMethodRefConstant extends PoolConstant<ClassMethodRefConst
                         methodActor = aliasedMethodActor;
                     }
                 } else {
+                    assert methodActor.getAnnotation(ALIAS.class) == null; // Alias resolution only occurs during boot image generation, so must not see alias method here.
                     pool.updateAt(index, new Resolved(methodActor));
                 }
                 return methodActor;
