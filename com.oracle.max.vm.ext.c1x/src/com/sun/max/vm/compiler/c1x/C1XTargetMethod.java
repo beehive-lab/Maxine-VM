@@ -85,7 +85,7 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
     private ClassActor[] exceptionClassActors;
 
     /**
-     * Encoded debug info.
+     * Debug info.
      */
     private DebugInfo debugInfo;
 
@@ -192,20 +192,6 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
     }
 
     /**
-     * Gets the frame reference map for a given stop index.
-     */
-    public CiBitMap frameRefMapAt(int stopIndex) {
-        return debugInfo.frameRefMapAt(this, stopIndex);
-    }
-
-    /**
-     * Gets the register reference map for a given stop index.
-     */
-    public CiBitMap regRefMapAt(int stopIndex) {
-        return debugInfo.regRefMapAt(this, stopIndex);
-    }
-
-    /**
      * Gets the size (in bytes) of a bit map covering all the registers that may store references.
      * The bit position of a register in the bit map is the register's {@linkplain CiRegister#encoding encoding}.
      */
@@ -243,6 +229,10 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
     @Override
     public int deoptReturnAddressOffset() {
         return deoptReturnAddressOffset;
+    }
+
+    public DebugInfo debugInfo() {
+        return debugInfo;
     }
 
     private void initCodeBuffer(CiTargetMethod ciTargetMethod, boolean install) {
@@ -700,7 +690,7 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
             // the callee contains register state from this frame;
             // use register reference maps in this method to fill in the map for the callee
             Pointer slotPointer = registerState;
-            int byteIndex = debugInfo.regRefMapStart(this, stopIndex);
+            int byteIndex = debugInfo.regRefMapStart(stopIndex);
             preparer.tracePrepareReferenceMap(this, stopIndex, slotPointer, "C1X registers frame");
 
             // Need to translate from register numbers (as stored in the reg ref maps) to frame slots.
@@ -726,7 +716,7 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
         // prepare the map for this stack frame
         Pointer slotPointer = current.sp();
         preparer.tracePrepareReferenceMap(this, stopIndex, slotPointer, "C1X stack frame");
-        int byteIndex = debugInfo.frameRefMapStart(this, stopIndex);
+        int byteIndex = debugInfo.frameRefMapStart(stopIndex);
         for (int i = 0; i < frameRefMapSize; i++) {
             preparer.setReferenceMapBits(current, slotPointer, debugInfo.data[byteIndex] & 0xff, Bytes.WIDTH);
             slotPointer = slotPointer.plusWords(Bytes.WIDTH);
@@ -895,7 +885,7 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
             return 0;
         }
 
-        return debugInfo.forEachCodePos(this, cpc, index);
+        return debugInfo.forEachCodePos(cpc, index);
     }
 
     @Override
@@ -903,6 +893,6 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
         if (classMethodActor == null) {
             return null;
         }
-        return debugInfo.frameAt(this, stopIndex);
+        return debugInfo.frameAt(stopIndex);
     }
 }

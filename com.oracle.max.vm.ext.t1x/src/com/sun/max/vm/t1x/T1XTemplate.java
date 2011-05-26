@@ -442,23 +442,23 @@ public class T1XTemplate {
                 } else {
                     T1XStop stop = new T1XStop(DirectCall.mask | InTemplate.mask, source.stopPosition(stopIndex), -1);
                     stop.callee = (ClassMethodActor) source.directCallees()[i];
-                    stop.frameRefMap = nullIfEmpty(source.frameRefMapAt(stopIndex));
-                    //stop.regRefMap = nullIfEmpty(source.regRefMapAt(stopIndex));
+                    stop.frameRefMap = nullIfEmpty(source.debugInfo().frameRefMapAt(stopIndex));
+                    //stop.regRefMap = nullIfEmpty(source.debugInfo().regRefMapAt(stopIndex));
                     directCalls[i] = stop;
                 }
             }
             for (int i = 0; i < numberOfIndirectCalls; i++) {
                 int stopIndex = numberOfDirectCalls + i;
                 T1XStop stop = new T1XStop(IndirectCall.mask | InTemplate.mask, source.stopPosition(stopIndex), -1);
-                stop.frameRefMap = nullIfEmpty(source.frameRefMapAt(stopIndex));
-                //stop.regRefMap = nullIfEmpty(source.regRefMapAt(stopIndex));
+                stop.frameRefMap = nullIfEmpty(source.debugInfo().frameRefMapAt(stopIndex));
+                //stop.regRefMap = nullIfEmpty(source.debugInfo().regRefMapAt(stopIndex));
                 indirectCalls[i] = stop;
             }
             for (int i = 0; i < numberOfSafepoints; i++) {
                 int stopIndex = numberOfDirectCalls + numberOfIndirectCalls + i;
                 T1XStop stop = new T1XStop(Safepoint.mask | InTemplate.mask, source.stopPosition(stopIndex), -1);
-                stop.frameRefMap = nullIfEmpty(source.frameRefMapAt(stopIndex));
-                stop.regRefMap = nullIfEmpty(source.regRefMapAt(stopIndex));
+                stop.frameRefMap = nullIfEmpty(source.debugInfo().frameRefMapAt(stopIndex));
+                stop.regRefMap = nullIfEmpty(source.debugInfo().regRefMapAt(stopIndex));
                 safepoints[i] = stop;
             }
 

@@ -690,7 +690,7 @@ public final class BlockMap {
                     }
                     sb.append('}');
                 }
-                sb.append(String.format("%n"));
+                sb.append(CiUtil.NEW_LINE);
             }
         }
         return sb.toString();
