@@ -49,7 +49,7 @@ public interface MaxStack extends MaxEntity<MaxStack> {
      * <br>
      * Thread-safe
      *
-     * @return the to frame in the stack
+     * @return the top frame in the stack; null if not available
      */
     MaxStackFrame top();
 
