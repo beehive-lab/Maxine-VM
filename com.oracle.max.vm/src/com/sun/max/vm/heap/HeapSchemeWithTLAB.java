@@ -210,27 +210,27 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      * Will need to get per-thread, with statistics gathered globally at safepoint,
      * and with more elaborated statistics (especially wrt to TLAB refills).
      */
-    class TLABStats {
+    static class TLABStats {
         /**
          * Count of calls to slow path from inlined tlab allocation request.
          */
-        private volatile long inlinedSlowPathAllocateCount = 0L;
+        volatile long inlinedSlowPathAllocateCount = 0L;
         /**
          * Count of all calls to slow path (inlined and runtime).
          */
-        private volatile long runtimeSlowPathAllocateCount = 0L;
+        volatile long runtimeSlowPathAllocateCount = 0L;
 
         /**
          * Count TLAB overflows.
          */
-        private volatile long tlabOverflowCount = 0L;
+        volatile long tlabOverflowCount = 0L;
 
         /**
          * Leftover after refill.
          */
-        private volatile long leftover = 0L;
+        volatile long leftover = 0L;
 
-        private void printTLABStats() {
+        void printTLABStats() {
             Log.println("\n\n Summary TLAB stats");
             Log.print("   inlined allocation slow-path count: ");
             Log.println(inlinedSlowPathAllocateCount);

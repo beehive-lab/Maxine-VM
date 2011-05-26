@@ -215,7 +215,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
                 return viewManager;
             }
         },
-        WATCHPOINTS(true, true, "Watchpoints that currently exist for VM memory") {
+        WATCHPOINTS(true, false, "Watchpoints that currently exist for VM memory") {
 
             @Override
             public WatchpointsViewManager viewManager() {

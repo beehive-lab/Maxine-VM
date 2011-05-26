@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.max.ins.*;
+import com.sun.max.ins.debug.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.MaxMachineCode.InstructionMap;
 import com.sun.max.tele.object.*;
@@ -114,11 +115,11 @@ public abstract class MachineCodeViewer extends CodeViewer {
         if (thread == null) {
             return;
         }
-        final List<MaxStackFrame> frames = thread.stack().frames();
+        final List<MaxStackFrame> frames = thread.stack().frames(StackInspector.DEFAULT_MAX_FRAMES_DISPLAY);
 
         Arrays.fill(rowToStackFrame, null);
 
-        // For very deep stacks (e.g. when debugging a metacircular related infinite recursion issue),
+        // For very deep stacks (e.g. when debugging stack overflow handling),
         // it's faster to loop over the frames and then only loop over the instructions for each
         // frame related to the machine code represented by this viewer.
         final MaxMemoryRegion machineCodeRegion = machineCode().memoryRegion();

@@ -149,9 +149,9 @@ public interface InterfaceMethodRefConstant extends PoolConstant<InterfaceMethod
                         methodActor = aliasedMethodActor;
                     }
                 } else {
+                    assert methodActor.getAnnotation(ALIAS.class) == null; // Alias resolution only occurs during boot image generation, so must not see alias method here.
                     pool.updateAt(index, new Resolved(methodActor));
                 }
-                pool.updateAt(index, new Resolved(methodActor));
                 return methodActor;
             }
             final String errorMessage = classActor.javaSignature(true) + "." + name + signature;

@@ -56,20 +56,19 @@ public final class StackInspector extends Inspector<StackInspector> {
     private static final String LONG_NAME = "Stack Inspector";
     private static final String GEOMETRY_SETTINGS_KEY = "stackInspectorGeometry";
 
-    private static final int DEFAULT_MAX_FRAMES_DISPLAY = 200;
+    public static final int DEFAULT_MAX_FRAMES_DISPLAY;
     private static final String MAX_FRAMES_DISPLAY_PROPERTY = "inspector.max.stack.frames.display";
-    private static int defaultMaxFramesDisplay;
     static {
+        int def = 500;
         final String value = System.getProperty(MAX_FRAMES_DISPLAY_PROPERTY);
         if (value != null) {
             try {
-                defaultMaxFramesDisplay = Integer.parseInt(value);
+                def = Integer.parseInt(value);
             } catch (NumberFormatException ex) {
                 InspectorError.unexpected(MAX_FRAMES_DISPLAY_PROPERTY + " value " +  value + " not an integer");
             }
-        } else {
-            defaultMaxFramesDisplay = DEFAULT_MAX_FRAMES_DISPLAY;
         }
+        DEFAULT_MAX_FRAMES_DISPLAY = def;
     }
 
     public static final class StackViewManager extends AbstractSingletonViewManager<StackInspector> {
@@ -133,12 +132,14 @@ public final class StackInspector extends Inspector<StackInspector> {
                         toolTip = inspection().nameDisplay().unavailableDataLongText();
                     }
                 }
-            } else if (stackFrame instanceof TruncatedStackFrame) {
-                methodName += "*select here to extend the display*";
-            } else if (stackFrame instanceof MaxStackFrame.Error) {
-                methodName += "*a stack walker error occurred*";
-                final MaxStackFrame.Error errorStackFrame = (MaxStackFrame.Error) stackFrame;
-                toolTip = errorStackFrame.errorMessage();
+            } else if (stackFrame instanceof MaxStackFrame.Truncated) {
+                final MaxStackFrame.Truncated truncated = (MaxStackFrame.Truncated) stackFrame;
+                if (truncated.error() != null) {
+                    methodName += "*a stack walker error occurred*";
+                    toolTip = truncated.error().toString();
+                } else {
+                    methodName += "*select here to extend the display*";
+                }
             } else {
                 InspectorWarning.check(stackFrame instanceof MaxStackFrame.Native, "Unhandled type of non-native stack frame: " + stackFrame.getClass().getName());
                 final Pointer instructionPointer = stackFrame.ip();
@@ -200,7 +201,7 @@ public final class StackInspector extends Inspector<StackInspector> {
                     MaxStackFrame stackFrame = (MaxStackFrame) stackFrameListModel.get(index);
                     // New stack frame selection; set the global focus.
                     inspection().focus().setStackFrame(stackFrame, false);
-                    if (stackFrame instanceof TruncatedStackFrame) {
+                    if (stackFrame instanceof MaxStackFrame.Truncated && ((MaxStackFrame.Truncated) stackFrame).omitted() >= 0) {
                         // A user selection of the pseudo frame that marks the end
                         // of a partial (truncated) stack list has the effect of
                         // doubling the number of frames so that you can see more.
@@ -235,6 +236,7 @@ public final class StackInspector extends Inspector<StackInspector> {
 
     private InspectorPanel contentPane = null;
     private DefaultListModel stackFrameListModel = null;
+    private DefaultListModel emptyModel = new DefaultListModel();
     private JList stackFrameList = null;
 
     /**
@@ -242,7 +244,7 @@ public final class StackInspector extends Inspector<StackInspector> {
      * stacks.  The user can click in the final pseudo-frame in the display when it has been limited
      * this way, and this will cause the number displayed to grow.
      */
-    private int maxFramesDisplay = defaultMaxFramesDisplay;
+    private int maxFramesDisplay = DEFAULT_MAX_FRAMES_DISPLAY;
 
     public StackInspector(Inspection inspection) {
         super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
@@ -328,20 +330,33 @@ public final class StackInspector extends Inspector<StackInspector> {
     protected void refreshState(boolean force) {
         if (stack != null && stack.thread() != null && stack.thread().isLive()) {
             if (force || stack.lastUpdated() == null || vm().state().newerThan(lastUpdatedState)) {
-                final List<MaxStackFrame> frames = stack.frames();
+                final List<MaxStackFrame> frames = stack.frames(maxFramesDisplay);
                 if (!frames.isEmpty()) {
                     if (force || stack.lastChanged().newerThan(this.lastChangedState)) {
+                        // Set the list to an empty model while doing the update so that all
+                        // the addition of each element to the list doing not fire a whole
+                        // bunch of list GUI update events. This really helps for deep stacks.
+                        stackFrameList.setModel(emptyModel);
                         stackFrameListModel.clear();
-                        int position = stackFrameListModel.size();
+                        int position = 0;
+                        int omitted = -1;
                         for (MaxStackFrame stackFrame : frames) {
-                            if (position  >= maxFramesDisplay) {
-                                stackFrameListModel.addElement(new TruncatedStackFrame(stackFrame.stack(), stackFrame,  position));
-                                inspection().gui().informationMessage("stack depth of " + stackFrameListModel.size() + " exceeds " + maxFramesDisplay + ": truncated", "Stack Inspector");
-                                break;
+                            if (stackFrame instanceof MaxStackFrame.Truncated) {
+                                final MaxStackFrame.Truncated tr = (MaxStackFrame.Truncated) stackFrame;
+                                if (tr.omitted() >= 0) {
+                                    stackFrameListModel.addElement(stackFrame);
+                                    omitted = tr.omitted();
+                                    break;
+                                }
                             }
                             stackFrameListModel.addElement(stackFrame);
                             position++;
                         }
+                        stackFrameList.setModel(stackFrameListModel);
+                        if (omitted >= 0) {
+                            inspection().gui().informationMessage("stack depth exceeds " + maxFramesDisplay + ": truncated " + omitted + " frames", "Stack Inspector");
+                        }
+
                         this.lastChangedState = stack.lastChanged();
                     } else {
                         // The stack is structurally unchanged with respect to methods,

@@ -175,6 +175,7 @@ public interface FieldRefConstant extends PoolConstant<FieldRefConstant>, Member
                         fieldActor = aliasedFieldActor;
                     }
                 } else {
+                    assert fieldActor.getAnnotation(ALIAS.class) == null; // Alias resolution only occurs during boot image generation, so must not see alias field here.
                     pool.updateAt(index, new Resolved(fieldActor));
                 }
                 return fieldActor;

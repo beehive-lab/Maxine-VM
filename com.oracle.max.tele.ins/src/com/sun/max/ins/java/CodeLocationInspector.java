@@ -40,7 +40,7 @@ import com.sun.max.vm.classfile.*;
 
 
 /**
- * A display showing detailed information about he currently selected location in compiled code,
+ * A display showing detailed information about the currently selected location in compiled code,
  * starting with Java frame descriptors, if available.
  *
  * @author Michael Van De Vanter

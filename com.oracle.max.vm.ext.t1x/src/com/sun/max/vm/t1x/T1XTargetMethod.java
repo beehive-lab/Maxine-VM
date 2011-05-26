@@ -98,6 +98,7 @@ public final class T1XTargetMethod extends TargetMethod {
 
     public final int frameRefMapSize;
 
+    @INSPECTED(deepCopied = false)
     private final AtomicReference refMapEditor = new AtomicReference();
 
     /**
@@ -271,8 +272,6 @@ public final class T1XTargetMethod extends TargetMethod {
         AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
     }
 
-
-    @Override
     public byte[] referenceMaps() {
         return refMaps;
     }

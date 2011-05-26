@@ -37,7 +37,8 @@ public enum C1XTimers {
     LINEAR_SCAN("Linear Scan"),
     RESOLUTION("Resolution"),
     DEBUG_INFO("Create Debug Info"),
-    CODE_CREATE("Create Code");
+    CODE_CREATE("Create Code"),
+    INSTALL("Install");
 
     private final String name;
     private long start;

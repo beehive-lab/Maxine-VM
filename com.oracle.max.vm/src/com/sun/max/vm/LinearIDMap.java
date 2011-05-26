@@ -26,9 +26,7 @@ import java.util.*;
 
 import com.sun.max.*;
 /**
- * Variable length array. Accessing elements of such an array with a positive index
- * will never throw an {@link IndexOutOfBoundsException}. Specifically,
- * {@linkplain #set(int, Object) inserting} an element will expand the array if necessary.
+ * Map from positive identifiers to values.
  */
 public class LinearIDMap<T> {
     /*
@@ -39,6 +37,8 @@ public class LinearIDMap<T> {
 
     private final T[] prefix;
     private T[] variable;
+
+    private int maxID = -1;
 
     public LinearIDMap(int initialCapacity) {
         final Class<T[]> type = null;
@@ -57,16 +57,19 @@ public class LinearIDMap<T> {
     }
 
     /**
-     * Sets the element at a given index, expanding the array if necessary first so that {@code this.length() > index}.
+     * Sets the value for a given identifier.
      */
-    public T set(int index, T element) {
+    public T set(int id, T element) {
         final int pl = prefix.length;
-        if (index < pl) {
-            T oldValue = prefix[index];
-            prefix[index] = element;
+        if (id > maxID) {
+            maxID = id;
+        }
+        if (id < pl) {
+            T oldValue = prefix[id];
+            prefix[id] = element;
             return oldValue;
         }
-        final int oindex = index - pl;
+        final int oindex = id - pl;
 
         if (oindex >= variable.length) {
             ensureCapacity(oindex + 1);
@@ -76,21 +79,36 @@ public class LinearIDMap<T> {
         return oldValue;
     }
 
-    public T get(int index) {
+    /**
+     * Gets the value for a given identifier.
+     *
+     * @return {@code null} if there is no value associated with {@code id}
+     */
+    public T get(int id) {
         final int pl = prefix.length;
-        if (index < pl) {
-            return prefix[index];
+        if (id < pl) {
+            return prefix[id];
         }
-        final int oindex = index - pl;
+        final int oindex = id - pl;
         if (oindex < variable.length) {
             return variable[oindex];
         }
         return null;
     }
 
-    public int length() {
+    /**
+     * Gets the highest identifier seen by {@link #set(int, Object)}.
+     *
+     * @return {@code -1} if {@link #set(int, Object)} has never been called for this map
+     */
+    public int maxID() {
+        return maxID;
+    }
+
+    public int capacity() {
         return prefix.length + variable.length;
     }
+
     // TODO:
     // add trimming methods and support sparse array.
 }

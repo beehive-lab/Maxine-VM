@@ -28,6 +28,7 @@ import java.util.*;
 import javax.swing.*;
 
 import com.sun.max.ins.*;
+import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.util.*;
 import com.sun.max.io.*;
@@ -220,7 +221,7 @@ public abstract class BytecodeViewer extends CodeViewer {
         if (haveMachineCodeAddresses()) {
             Arrays.fill(rowToStackFrame, null);
             for (int row = 0; row < bytecodeInstructions.size(); row++) {
-                for (MaxStackFrame frame : focus().thread().stack().frames()) {
+                for (MaxStackFrame frame : focus().thread().stack().frames(StackInspector.DEFAULT_MAX_FRAMES_DISPLAY)) {
                     if (rowContainsAddress(row, frame.codeLocation().address())) {
                         rowToStackFrame[row] = frame;
                         break;

@@ -25,6 +25,7 @@ package com.sun.max.vm.compiler.target;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
+import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.compiler.CompilationScheme.Static.*;
 import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
@@ -48,6 +49,7 @@ import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * Stubs are pieces of hand crafted assembly code for expressing semantics that cannot otherwise be expressed as Java.
@@ -131,7 +133,17 @@ public class Stubs {
     public synchronized Address interfaceTrampoline(int iIndex) {
         if (interfaceTrampolines.size() <= iIndex) {
             for (int i = interfaceTrampolines.size(); i <= iIndex; i++) {
-                interfaceTrampolines.add(genDynamicTrampoline(i, true));
+                String stubName = "itrampoline<" + i + ">";
+                if (verboseOption.verboseCompilation) {
+                    VmThread thread = VmThread.current();
+                    Log.println(thread.getName() + "[id=" + thread.id() + "]: Creating stub " + stubName);
+                }
+                TargetMethod stub = genDynamicTrampoline(i, true, stubName);
+                interfaceTrampolines.add(stub);
+                if (verboseOption.verboseCompilation) {
+                    VmThread thread = VmThread.current();
+                    Log.println(thread.getName() + "[id=" + thread.id() + "]: Created stub " + stub.regionName());
+                }
             }
         }
         return VTABLE_ENTRY_POINT.in(interfaceTrampolines.get(iIndex));
@@ -140,7 +152,17 @@ public class Stubs {
     public synchronized Address virtualTrampoline(int vTableIndex) {
         if (virtualTrampolines.size() <= vTableIndex) {
             for (int i = virtualTrampolines.size(); i <= vTableIndex; i++) {
-                virtualTrampolines.add(genDynamicTrampoline(i, false));
+                String stubName = "vtrampoline<" + i + ">";
+                if (verboseOption.verboseCompilation) {
+                    VmThread thread = VmThread.current();
+                    Log.println(thread.getName() + "[id=" + thread.id() + "]: Creating stub " + stubName);
+                }
+                TargetMethod stub = genDynamicTrampoline(i, false, stubName);
+                virtualTrampolines.add(stub);
+                if (verboseOption.verboseCompilation) {
+                    VmThread thread = VmThread.current();
+                    Log.println(thread.getName() + "[id=" + thread.id() + "]: Created stub " + stub.regionName());
+                }
             }
         }
         return VTABLE_ENTRY_POINT.in(virtualTrampolines.get(vTableIndex));
@@ -190,7 +212,7 @@ public class Stubs {
         return adjustEntryPointForCaller(itableEntryPoint, pcInCaller);
     }
 
-    private TargetMethod genDynamicTrampoline(int index, boolean isInterface) {
+    private TargetMethod genDynamicTrampoline(int index, boolean isInterface, String stubName) {
         delayedInit();
         if (platform().isa == ISA.AMD64) {
             CiRegisterConfig registerConfig = registerConfigs.trampoline;
@@ -246,7 +268,6 @@ public class Stubs {
             asm.addq(AMD64.rsp, frameSize - 8);
             asm.ret(0);
 
-            String stubName = (isInterface ? 'i' : 'v') + "trampoline<" + index + ">";
             Flavor flavor = isInterface ? InterfaceTrampoline : VirtualTrampoline;
             byte[] code = asm.codeBuffer.close(true);
 

@@ -28,7 +28,7 @@ import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
 import java.util.*;
 
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.TeleStackFrameWalker.ErrorStackFrame;
+import com.sun.max.tele.debug.TeleStackFrameWalker.TruncatedStackFrame;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
@@ -39,10 +39,10 @@ import com.sun.max.vm.stack.*;
 
 /**
  * Hierarchy of classes that act as wrappers for VM {@linkplain StackFrame stack frames}, with additional
- * contextual information added for the benefits of clients.  The hierarchy also includes the two subclasses
- * {@link ErrorFrame} and {@link TruncatedFrame}, which are <em>synthetic</em>: they
- * correspond to no VM frame types, but are rather used to as markers by the stack walker for errors
- * and compression of long stacks respectively.
+ * contextual information added for the benefits of clients.  The hierarchy also includes the subclasses
+ * {@link TruncatedFrame}, which is <em>synthetic</em>: it
+ * corresponds to no VM frame type, but is rather used to as a marker by the stack walker for
+ * communicating truncated stack walks.
  *
  * @author Michael Van De Vanter
  */
@@ -103,9 +103,9 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
             final NativeStackFrame nativeStackFrame = (NativeStackFrame) stackFrame;
             return new NativeFrame(teleVM, teleStack, position, nativeStackFrame);
         }
-        if (stackFrame instanceof ErrorStackFrame) {
-            final ErrorStackFrame errorStackFrame = (ErrorStackFrame) stackFrame;
-            return new ErrorFrame(teleVM, teleStack, position, errorStackFrame);
+        if (stackFrame instanceof TruncatedStackFrame) {
+            final TruncatedStackFrame errorStackFrame = (TruncatedStackFrame) stackFrame;
+            return new TruncatedFrame(teleVM, teleStack, position, errorStackFrame);
         }
         TeleError.unexpected("Unknown stack frame kind");
         return null;
@@ -276,18 +276,18 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
         }
     }
 
-    static final class ErrorFrame extends TeleStackFrame<ErrorStackFrame> implements MaxStackFrame.Error {
+    static final class TruncatedFrame extends TeleStackFrame<TruncatedStackFrame> implements MaxStackFrame.Truncated {
 
-        private ErrorFrame(TeleVM teleVM, TeleStack teleStack, int position, ErrorStackFrame errorStackFrame) {
-            super(teleVM, teleStack, position, errorStackFrame);
+        private TruncatedFrame(TeleVM teleVM, TeleStack teleStack, int position, TruncatedStackFrame pseudoStackFrame) {
+            super(teleVM, teleStack, position, pseudoStackFrame);
         }
 
         public String entityName() {
-            return "<error: " + errorMessage() + ">" + stackFrame.toString();
+            return stackFrame.toString();
         }
 
         public String entityDescription() {
-            return "A error frame created as part of a stack walking failure for the " + vm().entityName();
+            return "A frame denoting a truncated stack walk the " + vm().entityName();
         }
 
         public MaxEntityMemoryRegion<MaxStackFrame> memoryRegion() {
@@ -313,8 +313,12 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
             return Pointer.zero();
         }
 
-        public String errorMessage() {
-            return stackFrame.errorMessage();
+        public Throwable error() {
+            return stackFrame.error;
+        }
+
+        public int omitted() {
+            return stackFrame.omitted;
         }
     }
 

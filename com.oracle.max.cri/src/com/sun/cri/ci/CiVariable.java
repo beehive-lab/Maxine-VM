@@ -93,6 +93,18 @@ public final class CiVariable extends CiValue {
     }
 
     @Override
+    public boolean equalsIgnoringKind(CiValue o) {
+        if (this == o) {
+            return true;
+        }
+        if (o instanceof CiVariable) {
+            CiVariable var = (CiVariable) o;
+            return index == var.index;
+        }
+        return false;
+    }
+
+    @Override
     public int hashCode() {
         return (index << 4) | kind.ordinal();
     }

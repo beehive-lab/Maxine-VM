@@ -119,7 +119,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
                 }
                 // User Model Policy: when setting code location, if it happens to match a stack frame of the current thread then focus on that frame.
                 if (thread != null && codeLocation != null && codeLocation.hasAddress()) {
-                    for (MaxStackFrame maxStackFrame : thread.stack().frames()) {
+                    for (MaxStackFrame maxStackFrame : thread.stack().frames(StackInspector.DEFAULT_MAX_FRAMES_DISPLAY)) {
                         if (codeLocation.isSameAs(maxStackFrame.codeLocation())) {
                             setStackFrame(stackFrame, false);
                             break;
@@ -187,7 +187,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
             final MaxStackFrame previousStackFrame = frameSelections.get(thread);
             MaxStackFrame newStackFrame = null;
             if (previousStackFrame != null) {
-                for (MaxStackFrame stackFrame : this.thread.stack().frames()) {
+                for (MaxStackFrame stackFrame : this.thread.stack().frames(StackInspector.DEFAULT_MAX_FRAMES_DISPLAY)) {
                     if (stackFrame.isSameFrame(previousStackFrame)) {
                         newStackFrame = stackFrame;
                         break;
@@ -248,25 +248,30 @@ public class InspectionFocus extends AbstractInspectionHolder {
      * @param interactiveForNative whether (should a side effect be to land in a native method) the user should be consulted if unknown.
      */
     public void setStackFrame(MaxStackFrame newStackFrame, boolean interactiveForNative) {
+
         if (this.stackFrame != newStackFrame) {
             final MaxStackFrame oldStackFrame = this.stackFrame;
-            final MaxThread newThread = newStackFrame.stack().thread();
-            // For consistency, be sure we're in the right thread context before doing anything with the stack frame.
-            setThread(newThread);
             this.stackFrame = newStackFrame;
-            frameSelections.put(newThread, newStackFrame);
+            if (newStackFrame != null) {
+                final MaxThread newThread = newStackFrame.stack().thread();
+                // For consistency, be sure we're in the right thread context before doing anything with the stack frame.
+                setThread(newThread);
+                frameSelections.put(newThread, newStackFrame);
+            }
             Trace.line(TRACE_VALUE, stackFrameFocusTracer);
             for (ViewFocusListener listener : copyListeners()) {
                 listener.frameFocusChanged(oldStackFrame, newStackFrame);
             }
         }
-        // User Model Policy:  When a stack frame becomes the focus, then also focus on the code at the frame's instruction pointer
-        // or call return location.
-        // Update code location, even if stack frame is the "same", where same means at the same logical position in the stack as the old one.
-        // Note that the old and new stack frames are not identical, and in fact may have different instruction pointers.
-        final MaxCodeLocation newCodeLocation = newStackFrame.codeLocation();
-        if (this.codeLocation == null || !this.codeLocation.isSameAs(newCodeLocation)) {
-            setCodeLocation(newCodeLocation, interactiveForNative);
+        if (newStackFrame != null) {
+            // User Model Policy:  When a stack frame becomes the focus, then also focus on the code at the frame's instruction pointer
+            // or call return location.
+            // Update code location, even if stack frame is the "same", where same means at the same logical position in the stack as the old one.
+            // Note that the old and new stack frames are not identical, and in fact may have different instruction pointers.
+            final MaxCodeLocation newCodeLocation = newStackFrame.codeLocation();
+            if (this.codeLocation == null || !this.codeLocation.isSameAs(newCodeLocation)) {
+                setCodeLocation(newCodeLocation, interactiveForNative);
+            }
         }
     }
 

@@ -120,7 +120,7 @@ public final class Dependencies {
     }
 
     private static short[] pack(HashMap<ClassActor, ArrayList<Assumption>> deps, int localUCMs, int nonLocalUCMs) {
-        FatalError.check(ClassID.largestClassId() < Short.MAX_VALUE, "Support for 1 << 16 number of classes not supported yet");
+        FatalError.check(ClassID.largestClassId() <= Short.MAX_VALUE, "Support for 1 << 16 number of classes not supported yet");
 
         // Pre-compute size of the dependencies arrays:
         final int numClasses = deps.size();

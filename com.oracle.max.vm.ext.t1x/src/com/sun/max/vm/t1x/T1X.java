@@ -171,7 +171,9 @@ public class T1X implements RuntimeCompiler {
             // once the compilation is done. This should be a very rare occurrence.
             c = t1XCompilationFactory.newT1XCompilation(this);
             reentrant = true;
-            Log.println("Created temporary compilation object for re-entrant T1X compilation");
+            if (VMOptions.verboseOption.verboseCompilation || PrintCompilation) {
+                Log.println("Created temporary compilation object for re-entrant T1X compilation");
+            }
         }
 
         long startTime = 0;

@@ -44,7 +44,7 @@ import com.sun.max.vm.runtime.*;
  * between log2FirstBin and minReclaimableSpace and is used primarily for TLAB and small object allocation.
  * The other bins are used for large object space allocation. "Bin" allocation are synchronized.
  */
-public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
+public final class FreeHeapSpaceManager extends Sweeper implements ResizableSpace, MarkSweepVerification {
     private static final VMIntOption largeObjectsMinSizeOption =
         register(new VMIntOption("-XX:LargeObjectsMinSize=", Size.K.times(64).toInt(),
                         "Minimum size to be treated as a large object"), MaxineVM.Phase.PRISTINE);
@@ -556,7 +556,7 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
      * @param size
      */
     @Override
-    public final void processDeadSpace(Address freeChunk, Size size) {
+    public void processDeadSpace(Address freeChunk, Size size) {
         recordFreeSpace(freeChunk, size);
         endOfLastVisitedObject = freeChunk.plus(size).asPointer();
     }
@@ -567,7 +567,7 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
     private Size minReclaimableSpace;
 
     @Override
-    public Size minReclaimableSize() {
+    public Size minReclaimableSpace() {
         return minReclaimableSpace;
     }
 
@@ -714,7 +714,7 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
     }
 
     @Override
-    public Size endSweep() {
+    public void endSweep() {
         useTLABBin = tlabFreeSpaceList.totalSize > 0;
         if (MaxineVM.isDebug()) {
             checkBinFreeSpace();
@@ -722,6 +722,10 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
                 print();
             }
         }
+    }
+
+    @Override
+    public Size freeSpaceAfterSweep() {
         return lockedFreeSpaceLeft();
     }
 
@@ -755,12 +759,12 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
      * @return
      */
     @INLINE
-    public final Pointer allocate(Size size) {
+    public Pointer allocate(Size size) {
         return smallObjectAllocator.allocateCleared(size);
     }
 
     @INLINE
-    public final Pointer allocateTLAB(Size size) {
+    public Pointer allocateTLAB(Size size) {
         return useTLABBin ? binAllocateTLAB(size, Address.zero()).asPointer() : smallObjectAllocator.allocateTLAB(size);
     }
 
@@ -799,7 +803,6 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
 
     }
 
-    @Override
     public void verify(AfterMarkSweepVerifier verifier) {
         committedHeapSpace.walkCommittedSpace(verifier);
         verifyUsage(verifier.freeChunksByteCount, verifier.darkMatterByteCount, verifier.liveDataByteCount);
