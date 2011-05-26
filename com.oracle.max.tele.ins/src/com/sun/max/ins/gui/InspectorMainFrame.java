@@ -259,10 +259,39 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
             };
         }
 
-        // Set default geometry; may get overridden by settings when initialized
+        saveSettingsListener = new AbstractSaveSettingsListener(FRAME_SETTINGS_NAME) {
+            public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
+                final Rectangle geometry = getBounds();
+                saveSettingsEvent.save(FRAME_X_KEY, geometry.x);
+                saveSettingsEvent.save(FRAME_Y_KEY, geometry.y);
+                saveSettingsEvent.save(FRAME_WIDTH_KEY, geometry.width);
+                saveSettingsEvent.save(FRAME_HEIGHT_KEY, geometry.height);
+            }
+        };
+        settings.addSaveSettingsListener(saveSettingsListener);
+
         setMinimumSize(inspection.geometry().inspectorMinFrameSize());
-        setPreferredSize(inspection.geometry().inspectorPrefFrameSize());
-        setLocation(inspection.geometry().inspectorDefaultFrameLocation());
+
+        try {
+            if (settings.containsKey(saveSettingsListener, FRAME_X_KEY)) {
+                // Adjust any negative (off-screen) locations to be on-screen.
+                final int x = Math.max(settings.get(saveSettingsListener, FRAME_X_KEY, OptionTypes.INT_TYPE, -1), 0);
+                final int y = Math.max(settings.get(saveSettingsListener, FRAME_Y_KEY, OptionTypes.INT_TYPE, -1), 0);
+                // Adjust any excessive window size to fit within the screen
+                final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+                final int width = Math.min(settings.get(saveSettingsListener, FRAME_WIDTH_KEY, OptionTypes.INT_TYPE, -1), screenSize.width);
+                final int height = Math.min(settings.get(saveSettingsListener, FRAME_HEIGHT_KEY, OptionTypes.INT_TYPE, -1), screenSize.height);
+                setPreferredSize(new Dimension(width, height));
+                setLocation(x, y);
+            } else {
+                setPreferredSize(inspection.geometry().inspectorPrefFrameSize());
+                setLocation(inspection.geometry().inspectorDefaultFrameLocation());
+            }
+        } catch (Option.Error optionError) {
+            InspectorWarning.message("Inspector Main Frame settings", optionError);
+            setPreferredSize(inspection.geometry().inspectorPrefFrameSize());
+            setLocation(inspection.geometry().inspectorDefaultFrameLocation());
+        }
 
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
@@ -309,33 +338,8 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
             }
         });
         unavailableDataTableCellRenderer = new UnavailableDataTableCellRenderer(inspection);
-        saveSettingsListener = new AbstractSaveSettingsListener(FRAME_SETTINGS_NAME) {
-            public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
-                final Rectangle geometry = getBounds();
-                saveSettingsEvent.save(FRAME_X_KEY, geometry.x);
-                saveSettingsEvent.save(FRAME_Y_KEY, geometry.y);
-                saveSettingsEvent.save(FRAME_WIDTH_KEY, geometry.width);
-                saveSettingsEvent.save(FRAME_HEIGHT_KEY, geometry.height);
-            }
-        };
-        settings.addSaveSettingsListener(saveSettingsListener);
 
         pack();
-
-        try {
-            if (settings.containsKey(saveSettingsListener, FRAME_X_KEY)) {
-                // Adjust any negative (off-screen) locations to be on-screen.
-                final int x = Math.max(settings.get(saveSettingsListener, FRAME_X_KEY, OptionTypes.INT_TYPE, -1), 0);
-                final int y = Math.max(settings.get(saveSettingsListener, FRAME_Y_KEY, OptionTypes.INT_TYPE, -1), 0);
-                // Adjust any excessive window size to fit within the screen
-                final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-                final int width = Math.min(settings.get(saveSettingsListener, FRAME_WIDTH_KEY, OptionTypes.INT_TYPE, -1), screenSize.width);
-                final int height = Math.min(settings.get(saveSettingsListener, FRAME_HEIGHT_KEY, OptionTypes.INT_TYPE, -1), screenSize.height);
-                setBounds(x, y, width, height);
-            }
-        } catch (Option.Error optionError) {
-            InspectorWarning.message("Inspector Main Frame settings", optionError);
-        }
 
         desktopPane.setTransferHandler(new MainFrameTransferHandler());
 
