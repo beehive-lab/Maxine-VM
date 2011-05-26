@@ -105,4 +105,7 @@ public abstract class Sweeper {
      * Minimum size to be considered reclaimable.
      */
     public abstract Size minReclaimableSpace();
+
+    public abstract void verify(AfterMarkSweepVerifier verifier);
+
 }

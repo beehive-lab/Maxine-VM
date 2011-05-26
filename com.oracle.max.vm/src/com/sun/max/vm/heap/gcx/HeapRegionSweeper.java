@@ -34,7 +34,7 @@ import com.sun.max.vm.runtime.*;
  * A heap marker interacts with the sweeper via a hasNextSweepingRegion / beginSweep / endSweep methods that bracket the sweeping of each region.
  * Dead space within the region is notified to the sweeper via three interface: processLargeGap, processDeadSpace, and processFreeRegion.
  */
-public abstract class HeapRegionSweeper extends Sweeper implements MarkSweepVerification {
+public abstract class HeapRegionSweeper extends Sweeper {
 
     protected Size minReclaimableSpace;
 
@@ -157,6 +157,8 @@ public abstract class HeapRegionSweeper extends Sweeper implements MarkSweepVeri
     public abstract void beginSweep();
     @Override
     public abstract void endSweep();
+
+    @Override
     public abstract void verify(AfterMarkSweepVerifier verifier);
 
     /**
