@@ -52,7 +52,7 @@ import com.sun.max.util.*;
  */
 public final class InspectorMainFrame extends JFrame implements InspectorGUI, Prober {
 
-    private static final int TRACE_VALUE = 2;
+    private static final int TRACE_VALUE = 1;
     private static final int MOUSE_TRACE_VALUE = 3;
 
     private static final String FRAME_SETTINGS_NAME = "inspectorMainFrame";
@@ -569,7 +569,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
      * @param point mouse location in absolute screen coordinates.
      */
     private void recordMostRecentMouseLocation(Point point) {
-        Trace.line(MOUSE_TRACE_VALUE, InspectorMainFrame.this.tracePrefix + "Recording mouse location=" + point);
+        Trace.line(MOUSE_TRACE_VALUE, InspectorMainFrame.this.tracePrefix + "Mouse@(" + point.x + "," + point.y + ")");
         mostRecentMouseLocation = point;
     }
 
