@@ -23,6 +23,7 @@
 package com.sun.max.vm.classfile.constant;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
 import static com.sun.max.vm.classfile.constant.ConstantPool.Tag.*;
 import static com.sun.max.vm.classfile.constant.PoolConstantFactory.*;
@@ -797,7 +798,7 @@ public final class ConstantPool implements RiConstantPool {
 
     private FieldActor checkResolvedFieldAccess(FieldActor field, int opcode) {
         if (opcode >= 0) {
-            if (ALIAS.Static.isAliased(field)) {
+            if (isHosted() && ALIAS.Static.isAliased(field)) {
                 // The use of an aliased field is always ok.
                 return field;
             }
@@ -865,7 +866,7 @@ public final class ConstantPool implements RiConstantPool {
 
     private MethodActor checkResolvedMethodAccess(MethodActor method, int opcode) {
         if (opcode >= 0) {
-            if (ALIAS.Static.isAliased(method)) {
+            if (isHosted() && ALIAS.Static.isAliased(method)) {
                 // The use of an aliased method is always ok.
                 return method;
             }
@@ -933,7 +934,8 @@ public final class ConstantPool implements RiConstantPool {
             case CLASS: {
                 RiType type = typeFrom(classAt(cpi), cpi, LDC);
                 if (type.isResolved()) {
-                    return CiConstant.forObject(type.javaClass());
+                    ClassActor classActor = (ClassActor) type;
+                    return CiConstant.forObject(classActor.javaClass());
                 }
                 return type;
             }
