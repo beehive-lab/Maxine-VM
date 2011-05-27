@@ -22,8 +22,6 @@
  */
 package com.sun.max.vm.classfile.constant;
 
-import static com.sun.max.vm.MaxineVM.*;
-
 import java.lang.reflect.*;
 
 import com.sun.max.annotate.*;
@@ -138,19 +136,14 @@ public interface InterfaceMethodRefConstant extends PoolConstant<InterfaceMethod
             final InterfaceActor interfaceActor = (InterfaceActor) classActor;
             MethodActor methodActor = findInterfaceMethodActor(interfaceActor, name, signature);
             if (methodActor != null) {
-                if (isHosted()) {
-                    MethodActor aliasedMethodActor = ALIAS.Static.resolveAlias(methodActor);
-                    if (aliasedMethodActor == null) {
-                        // Only update constant pool if no aliasing occurred.
-                        // Otherwise, subsequent verification of bytecode
-                        // referencing the alias method will fail.
-                        pool.updateAt(index, new Resolved(methodActor));
-                    } else {
-                        methodActor = aliasedMethodActor;
-                    }
-                } else {
-                    assert methodActor.getAnnotation(ALIAS.class) == null; // Alias resolution only occurs during boot image generation, so must not see alias method here.
+                MethodActor aliasedMethodActor = ALIAS.Static.aliasedMethod(methodActor);
+                if (aliasedMethodActor == null) {
+                    // Only update constant pool if no aliasing occurred.
+                    // Otherwise, subsequent verification of bytecode
+                    // referencing the alias method will fail.
                     pool.updateAt(index, new Resolved(methodActor));
+                } else {
+                    methodActor = aliasedMethodActor;
                 }
                 return methodActor;
             }
