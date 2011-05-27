@@ -30,14 +30,17 @@ import java.util.*;
 
 import com.oracle.max.asm.*;
 import com.sun.c1x.*;
+import com.sun.c1x.graph.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.platform.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.c1x.MaxXirGenerator.RuntimeCalls;
@@ -162,6 +165,9 @@ public class C1X implements RuntimeCompiler {
     @Override
     public void initialize(Phase phase) {
         if (isHosted() && phase == Phase.COMPILING) {
+            // Temporary work-around to support the @ACCESSOR annotation.
+            GraphBuilder.setAccessor(ClassActor.fromJava(Accessor.class));
+
             if (!optionsRegistered) {
                 C1XOptions.setOptimizationLevel(optLevelOption.getValue());
                 C1XOptions.UseConstDirectCall = true; // Default

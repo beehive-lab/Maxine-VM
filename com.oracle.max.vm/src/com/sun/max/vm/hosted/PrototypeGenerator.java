@@ -80,6 +80,7 @@ public final class PrototypeGenerator {
             compiledPrototype.compileFoldableMethods();
         } while (currentNumberOfClasses() != numberOfClassActors);
 
+        compiledPrototype.resolveAlias();
         compiledPrototype.checkRequiredImageMethods();
         assert compiledPrototype.invalidatedTargetMethods.isEmpty();
         compiledPrototype.link();
