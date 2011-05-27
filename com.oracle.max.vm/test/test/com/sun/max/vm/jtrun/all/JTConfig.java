@@ -392,6 +392,8 @@ public class JTConfig {
         jtt.jdk.System_currentTimeMillis02.class,
         jtt.jdk.System_nanoTime01.class,
         jtt.jdk.System_nanoTime02.class,
+        jtt.jdk.System_setOut.class,
+        jtt.jdk.Thread_setName.class,
         jtt.jdk.UnsafeAccess01.class,
         jtt.jni.JNI_IdentityBoolean.class,
         jtt.jni.JNI_IdentityByte.class,

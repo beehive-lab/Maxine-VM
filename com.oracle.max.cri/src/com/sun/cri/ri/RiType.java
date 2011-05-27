@@ -121,13 +121,6 @@ public interface RiType {
     // NOTE: All operations beyond this point are only available on resolved types.
 
     /**
-     * Gets the Java class object associated with this type.
-     * NOTE: ONLY AVAILABLE ON RESOLVED TYPES.
-     * @return the Java class object for this type.
-     */
-    Class<?> javaClass();
-
-    /**
      * Checks whether this type has any subclasses so far. Any decisions
      * based on this information require the registration of a dependency, since
      * this information may change.

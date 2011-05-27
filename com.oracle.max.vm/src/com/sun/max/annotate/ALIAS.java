@@ -25,6 +25,7 @@ import java.lang.annotation.*;
 import java.util.*;
 
 import com.sun.max.lang.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -117,7 +118,6 @@ public @interface ALIAS {
      */
     boolean optional() default false;
 
-    @HOSTED_ONLY
     public static class Static {
 
         /**
@@ -136,7 +136,17 @@ public @interface ALIAS {
          * @param field a field that may be an alias (i.e. annotated with {@link ALIAS})
          * @return the field aliased by {@code field} or {@code null} if it is not an alias
          */
-        public static synchronized FieldActor aliasedField(FieldActor field) {
+        public static FieldActor aliasedField(FieldActor field) {
+            if (MaxineVM.isHosted()) {
+                registerAliasedField(field);
+            }
+            FieldActor aliasedField = aliasedFields.get(field);
+            assert aliasedField != null || field.getAnnotation(ALIAS.class) == null : "All aliased fields and methods must be registed at boot time";
+            return aliasedField;
+        }
+
+        @HOSTED_ONLY
+        private static synchronized void registerAliasedField(FieldActor field) {
             ALIAS alias = field.getAnnotation(ALIAS.class);
             if (alias != null) {
                 FieldActor aliasedField = aliasedFields.get(field);
@@ -151,7 +161,8 @@ public @interface ALIAS {
                     aliasedField = ClassActor.fromJava(holder).findLocalFieldActor(SymbolTable.makeSymbol(name), type);
                     if (aliasedField == null) {
                         if (alias.optional()) {
-                            return field;
+                            aliasedFields.put(field, field);
+                            return;
                         }
                         throw FatalError.unexpected("Could not find target for alias " + field + " in " + holder.getName());
                     }
@@ -163,9 +174,7 @@ public @interface ALIAS {
                     assert aliasedField.isStatic() == field.isStatic() : "Alias " + field + " must be static if " + aliasedField + " is";
                     aliasedFields.put(field, aliasedField);
                 }
-                return aliasedField;
             }
-            return null;
         }
 
         /**
@@ -174,7 +183,17 @@ public @interface ALIAS {
          * @param method a method that may be an alias (i.e. annotated with {@link ALIAS})
          * @return the method aliased by {@code method} or {@code null} if it is not an alias
          */
-        public static synchronized MethodActor resolveAlias(MethodActor method) {
+        public static MethodActor aliasedMethod(MethodActor method) {
+            if (MaxineVM.isHosted()) {
+                registerAliasedMethod(method);
+            }
+            MethodActor aliasedMethod = aliasedMethods.get(method);
+            assert aliasedMethod != null || method.getAnnotation(ALIAS.class) == null : "All aliased fields and methods must be registed at boot time";
+            return aliasedMethod;
+        }
+
+        @HOSTED_ONLY
+        public static synchronized void registerAliasedMethod(MethodActor method) {
             ALIAS alias = method.getAnnotation(ALIAS.class);
             if (alias != null) {
                 MethodActor aliasedMethod = aliasedMethods.get(method);
@@ -189,7 +208,8 @@ public @interface ALIAS {
                     aliasedMethod = ClassActor.fromJava(holder).findLocalMethodActor(SymbolTable.makeSymbol(name), sig);
                     if (aliasedMethod == null) {
                         if (alias.optional()) {
-                            return method;
+                            aliasedMethods.put(method, method);
+                            return;
                         }
                         throw FatalError.unexpected("Could not find target for alias " + method + " in " + holder.getName());
                     }
@@ -211,9 +231,7 @@ public @interface ALIAS {
                     assert aliasedMethod.isStatic() == method.isStatic() : "Alias " + method + " must be static if " + aliasedMethod + " is";
                     aliasedMethods.put(method, aliasedMethod);
                 }
-                return aliasedMethod;
             }
-            return null;
         }
 
         private static ClassActor returnType(MethodActor method) {
