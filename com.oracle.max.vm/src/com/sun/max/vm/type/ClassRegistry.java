@@ -107,6 +107,10 @@ public final class ClassRegistry {
     public static final FieldActor Buffer_address = findField(Buffer.class, "address");
     public static final FieldActor JLRReference_referent = findField(java.lang.ref.Reference.class, "referent");
 
+    public static final FieldActor SYSTEM_IN = findField(System.class, "in");
+    public static final FieldActor SYSTEM_OUT = findField(System.class, "out");
+    public static final FieldActor SYSTEM_ERR = findField(System.class, "err");
+
     public static final MethodActor Object_finalize = findMethod("finalize", Object.class);
     public static final MethodActor ReferenceHandler_init = findMethod(java_lang_ref_Reference$ReferenceHandler, "<init>", ThreadGroup.class, String.class);
     public static final MethodActor FinalizerThread_init = findMethod(java_lang_ref_Finalizer$FinalizerThread, "<init>", ThreadGroup.class);
