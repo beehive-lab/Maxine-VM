@@ -1466,7 +1466,7 @@ public class T1XCompilation {
         assignIntTemplateArgument(parameterIndex, slotOffset);
     }
 
-    private void processBytecode(int opcode) throws InternalError {
+    protected void processBytecode(int opcode) throws InternalError {
         switch (opcode) {
             // Checkstyle: stop
 
