@@ -33,7 +33,7 @@ import com.oracle.max.vm.ext.vma.log.txt.sbps.*;
  */
 
 public class VMAdviceHandlerLogFactory {
-    public static final String LOGCLASS_PROPERTY = "max.vma.logclass";
+    public static final String LOGCLASS_PROPERTY = "max.vma.logger";
 
     public static VMAdviceHandlerLog create() {
         VMAdviceHandlerLog result = null;

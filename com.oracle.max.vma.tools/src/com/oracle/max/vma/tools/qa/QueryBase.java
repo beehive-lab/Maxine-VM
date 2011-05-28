@@ -39,7 +39,7 @@ import java.net.*;
 public abstract class QueryBase implements Query {
     protected final static String INDENT_TWO = "  ";
     protected final static String INDENT_FOUR = "    ";
-    protected final static String DEFAULT_QUERY_PACKAGE = "com.oracle.max.vma.ot.tools.cliquery.queries";
+    protected final static String DEFAULT_QUERY_PACKAGE = "com.oracle.max.vma.tools.qa.queries";
 
     protected static DecimalFormat format6 = new DecimalFormat("#.000000");
     protected static DecimalFormat format4 = new DecimalFormat("#.0000");

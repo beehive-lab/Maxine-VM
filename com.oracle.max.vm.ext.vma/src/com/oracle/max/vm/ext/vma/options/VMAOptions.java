@@ -39,8 +39,8 @@ public class VMAOptions {
         VMOptions.addFieldOption("-XX:", "VMA", "enable advising");
         VMOptions.addFieldOption("-XX:", "VMACI", "regex for classes to instrument");
         VMOptions.addFieldOption("-XX:", "VMACX", "regex for classes not to instrument");
-        VMOptions.addFieldOption("-XX:", "VMABCI", "regex for bytecodes to match");
-        VMOptions.addFieldOption("-XX:", "VMABCX", "regex for bytecodes to not match");
+        VMOptions.addFieldOption("-XX:", "VMABI", "regex for bytecodes to match");
+        VMOptions.addFieldOption("-XX:", "VMABX", "regex for bytecodes to not match");
         VMOptions.addFieldOption("-XX:", "VMATemplatesClass", "class defining VMA T1X templates");
         VMOptions.addFieldOption("-XX:", "VMATrace", "trace instrumentation");
     }
