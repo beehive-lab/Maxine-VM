@@ -42,7 +42,7 @@ import com.sun.max.vm.t1x.T1X_TEMPLATE;
 import com.sun.max.vm.thread.VmThread;
 import com.sun.max.vm.type.*;
 
-public class VMAAdviceTemplateSource {
+public class VMAdviceTemplateSource {
 
     @INLINE
     private static boolean isAdvising() {

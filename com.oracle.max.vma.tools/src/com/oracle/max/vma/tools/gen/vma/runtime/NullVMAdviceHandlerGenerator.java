@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,12 +20,32 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.t1x.vma;
+package com.oracle.max.vma.tools.gen.vma.runtime;
 
-/**
- * Defines no templates; allows a subclass of {@link T1X} to incrementally fill the templates.
- */
+import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
+import static com.sun.max.vm.t1x.T1XTemplateGenerator.*;
 
-public class NullT1XTemplateSource {
+import java.lang.reflect.*;
 
+import com.oracle.max.vm.ext.vma.*;
+import com.sun.max.vm.t1x.*;
+
+
+public class NullVMAdviceHandlerGenerator {
+    public static void main(String[] args) {
+        T1XTemplateGenerator.setGeneratingClass(NullVMAdviceHandlerGenerator.class);
+        for (Method m : VMAdviceHandler.class.getMethods()) {
+            String name = m.getName();
+            if (name.startsWith("advise")) {
+                generate(m);
+            }
+        }
+    }
+
+    private static void generate(Method m) {
+        generateAutoComment();
+        out.printf("    @Override%n");
+        generateSignature(m, null);
+        out.printf(" {%n    }%n%n");
+    }
 }

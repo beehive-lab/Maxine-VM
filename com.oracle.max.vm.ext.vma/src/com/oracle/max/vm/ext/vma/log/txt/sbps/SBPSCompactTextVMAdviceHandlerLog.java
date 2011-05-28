@@ -36,11 +36,6 @@ public class SBPSCompactTextVMAdviceHandlerLog extends CompactTextVMAdviceHandle
 
     private final SBPSTextVMAdviceHandlerLog jdel;
 
-    public SBPSCompactTextVMAdviceHandlerLog(TimeStampGenerator timeStampGenerator) {
-        super(new SBPSTextVMAdviceHandlerLog(timeStampGenerator), timeStampGenerator);
-        this.jdel = (SBPSTextVMAdviceHandlerLog) del;
-    }
-
     public SBPSCompactTextVMAdviceHandlerLog() {
         super(new SBPSTextVMAdviceHandlerLog());
         this.jdel = (SBPSTextVMAdviceHandlerLog) del;

@@ -80,11 +80,6 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
         this.del = del;
     }
 
-    protected CompactTextVMAdviceHandlerLog(TextVMAdviceHandlerLog del, TimeStampGenerator timeStampGenerator) {
-        super(timeStampGenerator);
-        this.del = del;
-    }
-
     /**
      * Check if this {@codeobjId} is the same as the previous one.
      * Note that all traces that start with an {@code objId} must call this method!

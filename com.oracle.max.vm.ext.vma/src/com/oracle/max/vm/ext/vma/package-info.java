@@ -43,7 +43,7 @@
  * Some VM actions, for example, garbage collection, can also generate advice. Currently this is
  * hard-wired into the VM code but, evidently, since Maxine is a meta-circular VM, this could
  * be done by adding specific advice at image build time, using some declarative mechanism
- * similar to <a href="http://www.eclipse.org/aspectj">AspectJ</a>..
+ * similar to <a href="http://www.eclipse.org/aspectj">AspectJ</a>.
  * <p>
  * The implementation has two components; data generation and data logging.
  * Eventually the instrumentation for data generation should be dynamically generated

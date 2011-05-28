@@ -37,7 +37,7 @@ import com.sun.max.vm.heap.*;
  *
  */
 public class VMAdviceHandlerFactory {
-    public static final String ADVICE_HANDLER_PROPERTY = "max.vma.advicehandler";
+    public static final String ADVICE_HANDLER_PROPERTY = "max.vma.advice.handler";
 
     public static VMAdviceHandler create() {
         VMAdviceHandler result = null;
