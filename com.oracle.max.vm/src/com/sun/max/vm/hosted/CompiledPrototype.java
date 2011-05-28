@@ -874,10 +874,14 @@ public class CompiledPrototype extends Prototype {
                     for (InterfaceMethodActor interfaceMethodActor : interfaceActor.localInterfaceMethodActors()) {
                         final int methodITableIndex = interfaceITableIndex + interfaceMethodActor.iIndexInInterface();
                         final int iIndex = methodITableIndex - hub.iTableStartIndex;
-                        final VirtualMethodActor virtualMethodActor = classActor.getVirtualMethodActorByIIndex(iIndex);
-                        final TargetMethod targetMethod = CompilationScheme.Static.getCurrentTargetMethod(virtualMethodActor);
-                        if (targetMethod != null) {
-                            words[methodITableIndex] = VTABLE_ENTRY_POINT.in(targetMethod);
+                        try {
+                            final VirtualMethodActor virtualMethodActor = classActor.getVirtualMethodActorByIIndex(iIndex);
+                            final TargetMethod targetMethod = CompilationScheme.Static.getCurrentTargetMethod(virtualMethodActor);
+                            if (targetMethod != null) {
+                                words[methodITableIndex] = VTABLE_ENTRY_POINT.in(targetMethod);
+                            }
+                        } catch (Throwable e) {
+                            throw FatalError.unexpected("Error linking itable entry " + iIndex + " {" + interfaceMethodActor + "} in hub of " + classActor, e);
                         }
                     }
                 }
