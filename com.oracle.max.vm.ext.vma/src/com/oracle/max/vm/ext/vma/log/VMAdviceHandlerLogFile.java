@@ -32,7 +32,7 @@ package com.oracle.max.vm.ext.vma.log;
  */
 public class VMAdviceHandlerLogFile {
     public static final String LOGFILE_PROPERTY = "max.vma.logfile";
-    public static final String DEFAULT_LOGFILE = "default.vma";
+    public static final String DEFAULT_LOGFILE = "output.vma";
 
     public static String getLogFile() {
         String logFile = System.getProperty(LOGFILE_PROPERTY);

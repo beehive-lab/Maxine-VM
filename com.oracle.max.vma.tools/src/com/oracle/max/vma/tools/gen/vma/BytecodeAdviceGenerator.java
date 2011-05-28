@@ -34,7 +34,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.vm.t1x.*;
 
 /**
- * Generates the bytecode advising interface by processing {@link Bytecodes}. This interface supports advising by having
+ * Generates the bytecode advising interface by processing {@link VMABytecodes}. This interface supports advising by having
  * the VM invoke the advice method when a bytecode is (logically) executed (logically because the bytecodes may have
  * been compiled into native code). The pertinent state associated with the bytecode is typically provided as arguments
  * to the method, to avoid having a separate API to the execution state.
@@ -46,7 +46,8 @@ import com.sun.max.vm.t1x.*;
  * always specified even if it might not be meaningful, e.g. {@link AdviceMode#BEFORE before advice} on a
  * {@link Bytecodes#GETFIELD}.
  *
- * N.B. Currently the API is limited to supporting the legacy {@link ObjectTracker} interface.
+ * N.B. Currently the default generated API is limited to advising a subset of the bytecodes, although
+ * it is possible to generate a complete API if required with the "-complete" option.
  *
  * We use some of the auto-generation facilities from {@link T1XTemplateGenerator}.
  */
@@ -61,6 +62,12 @@ public class BytecodeAdviceGenerator {
     private static String adviceMode;
 
     public static void main(String[] args) {
+        boolean complete = false;
+        for (String arg : args) {
+            if (arg.equals("-complete")) {
+                complete = true;
+            }
+        }
         setGeneratingClass(BytecodeAdviceGenerator.class);
         for (String k : types) {
             if (!(k.equals("boolean") || k.equals("byte") || k.equals("char") || k.equals("short") || k.equals("int") || k.equals("Word"))) {
@@ -70,33 +77,42 @@ public class BytecodeAdviceGenerator {
         for (String a : new String[] {"Before", "After"}) {
             adviceMode = a;
             for (VMABytecodes f : VMABytecodes.values()) {
-                generate(f);
+                if (complete) {
+                    generateComplete(f);
+                } else {
+                    generateSpecific(f);
+                }
             }
         }
     }
 
-    private static void generate(VMABytecodes f) {
-        if (f == GETSTATIC) {
-            generateGetPutStatic(f);
-        } else if (f == GETFIELD) {
-            generateGetPutField(f);
-        } else if (f == PUTFIELD) {
-            generateGetPutField(f);
-        } else if (f == PUTSTATIC) {
-            generateGetPutStatic(f);
-        } else if (f == NEW) {
-            generateNew(f);
-        } else if (f == NEWARRAY) {
+    private static void generateComplete(VMABytecodes bytecode) {
+        generateAutoComment();
+        out.printf(METHOD_PREFIX + ");%n%n", adviceMode, bytecode.methodName);
+    }
+
+    private static void generateSpecific(VMABytecodes bytecode) {
+        if (bytecode == GETSTATIC) {
+            generateGetPutStatic(bytecode);
+        } else if (bytecode == GETFIELD) {
+            generateGetPutField(bytecode);
+        } else if (bytecode == PUTFIELD) {
+            generateGetPutField(bytecode);
+        } else if (bytecode == PUTSTATIC) {
+            generateGetPutStatic(bytecode);
+        } else if (bytecode == NEW) {
+            generateNew(bytecode);
+        } else if (bytecode == NEWARRAY) {
             // NEWARRAY and ANEWARRAY
-            generateNewArray(f);
-        } else if (f == MULTIANEWARRAY) {
-            generateMultiNewArray(f);
-        } else if (f == INVOKESPECIAL) {
-            generateInvoke(f);
-        } else if (Pattern.matches(".{1}ALOAD", f.name())) {
-            generateArrayLoadStore(f);
-        } else if (Pattern.matches(".{1}ASTORE", f.name())) {
-            generateArrayLoadStore(f);
+            generateNewArray(bytecode);
+        } else if (bytecode == MULTIANEWARRAY) {
+            generateMultiNewArray(bytecode);
+        } else if (bytecode == INVOKESPECIAL) {
+            generateInvoke(bytecode);
+        } else if (Pattern.matches(".{1}ALOAD", bytecode.name())) {
+            generateArrayLoadStore(bytecode);
+        } else if (Pattern.matches(".{1}ASTORE", bytecode.name())) {
+            generateArrayLoadStore(bytecode);
         }
     }
 
