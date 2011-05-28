@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.runtime.gen;
+package com.oracle.max.vma.tools.gen.vma.runtime;
 
 import static com.sun.max.vm.t1x.T1XTemplateGenerator.*;
 import static com.oracle.max.vm.ext.vma.runtime.JavaVMAdviceHandlerEvents.*;

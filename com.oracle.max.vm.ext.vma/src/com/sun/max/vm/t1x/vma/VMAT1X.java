@@ -38,7 +38,7 @@ import com.sun.max.vm.t1x.T1X;
  * We actually create two compilers, one that instruments and a vanilla
  * one that doesn't (since the templates are built at image build time).
  *
- * The actual templates that are used are specified in {@link VMAOptions#VMAAdviceClass}.
+ * The actual templates that are used are specified in {@link VMAOptions#VMATemplatesClass}.
  *
  * @author Mick Jordan
  *
@@ -64,13 +64,13 @@ public class VMAT1X extends T1X {
         altT1X.initialize(phase);
         if (isHosted() && phase == Phase.COMPILING) {
             Class< ? > templateSource = null;
-            if (VMAOptions.VMAAdviceClass == null) {
+            if (VMAOptions.VMATemplatesClass == null) {
                 templateSource = NullT1XTemplateSource.class;
             } else {
                 try {
-                    templateSource = Class.forName(VMAOptions.VMAAdviceClass);
+                    templateSource = Class.forName(VMAOptions.VMATemplatesClass);
                 } catch (Exception ex) {
-                    ProgramError.unexpected("failed to load class " + VMAOptions.VMAAdviceClass);
+                    ProgramError.unexpected("failed to load class " + VMAOptions.VMATemplatesClass);
                 }
             }
             setTemplateSource(templateSource);
@@ -80,7 +80,7 @@ public class VMAT1X extends T1X {
 
     @Override
     public TargetMethod compile(ClassMethodActor method, boolean install, CiStatistics stats) {
-        if (instrumenting && VMAOptions.instrumentForTracking(method)) {
+        if (instrumenting && VMAOptions.instrumentForAdvising(method)) {
             return super.compile(method, install, stats);
         } else {
             return altT1X.compile(method, install, stats);

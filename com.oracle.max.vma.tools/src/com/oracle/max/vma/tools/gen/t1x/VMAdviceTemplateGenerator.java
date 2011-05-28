@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.t1x.vma.gen;
+package com.oracle.max.vma.tools.gen.t1x;
 
 import static com.sun.max.vm.t1x.T1XTemplateGenerator.*;
 
@@ -31,11 +31,11 @@ import com.sun.max.vm.t1x.T1XTemplateTag;
 import com.sun.max.vm.t1x.T1XTemplateGenerator.AdviceHook;
 
 /**
- * Template generation that supports the {@link VMAAdvice} interface.
+ * Template generation that supports the {@link VMAdviceHandler} interface.
  */
 
 @HOSTED_ONLY
-public class VMAAdviceTemplateGenerator {
+public class VMAdviceTemplateGenerator {
     private static class VMAT1XAdvice implements AdviceHook {
 
         public void generate(T1XTemplateTag tag, AdviceType adviceType, String... args) {
@@ -310,7 +310,7 @@ public class VMAAdviceTemplateGenerator {
     public static void main(String[] args) {
         final AdviceHook hook = new VMAT1XAdvice();
         setAdviceHook(hook);
-        setGeneratingClass(VMAAdviceTemplateGenerator.class);
+        setGeneratingClass(VMAdviceTemplateGenerator.class);
         generateNewTemplates();
         generatePutTemplates();
         generateGetTemplates();

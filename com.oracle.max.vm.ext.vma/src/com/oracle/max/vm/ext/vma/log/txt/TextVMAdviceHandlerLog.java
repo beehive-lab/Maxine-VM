@@ -107,14 +107,6 @@ public abstract class TextVMAdviceHandlerLog extends VMAdviceHandlerLog {
     public static final char FLOAT_TYPE = 'F';
     public static final char DOUBLE_TYPE = 'D';
 
-    protected TextVMAdviceHandlerLog() {
-        super();
-    }
-
-    protected TextVMAdviceHandlerLog(TimeStampGenerator timeStampGenerator) {
-        super(timeStampGenerator);
-    }
-
     public static boolean hasId(char c) {
         switch (c) {
             case OBJECT_CREATION_BEGIN_ID:

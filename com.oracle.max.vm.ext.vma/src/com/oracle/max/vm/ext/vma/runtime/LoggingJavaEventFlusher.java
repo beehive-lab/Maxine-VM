@@ -84,10 +84,10 @@ public class LoggingJavaEventFlusher extends Thread implements JavaEventFlusher 
 
     public LoggingJavaEventFlusher() {
         logHandler = new LoggingVMAdviceHandler();
-        logHandler.setThreadNameGenerator(tng);
         this.tng = new EventThreadNameGenerator();
+        logHandler.setThreadNameGenerator(tng);
         this.tsg = new EventTimeStampGenerator();
-        setName("OALogger");
+        setName("LoggingJavaEventFlusher");
         setDaemon(true);
         logBuffer = new LogBuffer();
         start();
@@ -95,6 +95,7 @@ public class LoggingJavaEventFlusher extends Thread implements JavaEventFlusher 
 
     public void initialise(ObjectStateHandler state) {
         logHandler.initialise(state);
+        logHandler.getLog().setTimeStampGenerator(tsg);
     }
 
     public void finalise() {

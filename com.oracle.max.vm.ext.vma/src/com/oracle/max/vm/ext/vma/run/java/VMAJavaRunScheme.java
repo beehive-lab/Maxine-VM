@@ -61,33 +61,32 @@ public class VMAJavaRunScheme extends JavaRunScheme {
 
     private static final int BUFFER_SIZE = 64 * 1024;
 
-//    private static boolean advising;
+    /**
+     * Set to true when {@link VMAOptions.VMA} is set AND the VM is in a state to start advising.
+     */
+    private static boolean advising;
+
+    /**
+     * The runtime specified {@link VMAdviceHandler}.
+     */
     private static VMAdviceHandler adviceHandler;
-
-    /*
-    static {
-        VMOptions.addFieldOption("-XX:", "VMA", "run with VM advising enabled");
-    }
-
-    private static boolean VMA;
-    */
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
         if (phase == MaxineVM.Phase.RUNNING) {
-            if (VMAOptions.advising) {
+            if (VMAOptions.VMA) {
                 try {
                     adviceHandler = VMAdviceHandlerFactory.create();
                     adviceHandler.initialise(state);
                 } catch (Throwable ex) {
                     ProgramError.unexpected("VMA initialization failed", ex);
                 }
-//                advising = true;
+                advising = true;
                 threadStarting();
             }
         } else if (phase == MaxineVM.Phase.TERMINATING) {
-            if (VMAOptions.advising) {
+            if (advising) {
                 disableAdvising();
                 // N.B. daemon threads may still be running and invoking advice.
                 // There is nothing we can do about that as they may be in the act
@@ -106,7 +105,7 @@ public class VMAJavaRunScheme extends JavaRunScheme {
      * If the VM is being run with advising turned on, enables advising for the current thread.
      */
     public static void threadStarting() {
-        if (VMAOptions.advising) {
+        if (advising) {
             Pointer buffer = VirtualMemory.allocate(Size.fromInt(BUFFER_SIZE), VirtualMemory.Type.DATA);
             assert !buffer.isZero();
             VM_ADVISING_BUFFER.store3(buffer);
@@ -119,7 +118,7 @@ public class VMAJavaRunScheme extends JavaRunScheme {
      * If the VM is being run with advising turned on, notifies the advisee that this thread is terminating.
      */
     public static void threadTerminating() {
-        if (VMAOptions.advising) {
+        if (advising) {
             adviceHandler.adviseThreadTerminating(AdviceMode.BEFORE, VmThread.current());
         }
     }
@@ -145,7 +144,7 @@ public class VMAJavaRunScheme extends JavaRunScheme {
      */
     @INLINE
     public static boolean isVMAdvising() {
-        return VMAOptions.advising;
+        return advising;
     }
 
     /**
@@ -155,7 +154,7 @@ public class VMAJavaRunScheme extends JavaRunScheme {
      */
     @INLINE
     public static boolean isEnabled() {
-        return VMAOptions.advising && VmThread.currentTLA().getWord(VM_ADVISING.index) != Word.zero();
+        return advising && VmThread.currentTLA().getWord(VM_ADVISING.index) != Word.zero();
     }
 
 }

@@ -22,8 +22,6 @@
  */
 package com.oracle.max.vm.ext.vma;
 
-import com.oracle.max.vm.ext.vma.gen.*;
-
 /**
  * The VM executes an (extended) bytecode instruction set and the execution can be subject to advice,
  * specified by the methods below.

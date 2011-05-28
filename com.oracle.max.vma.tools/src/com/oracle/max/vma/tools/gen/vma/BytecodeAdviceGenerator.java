@@ -20,10 +20,10 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.gen;
+package com.oracle.max.vma.tools.gen.vma;
 
 import static com.sun.max.vm.t1x.T1XTemplateGenerator.*;
-import static com.oracle.max.vm.ext.vma.gen.VMABytecodes.*;
+import static com.oracle.max.vm.ext.vma.VMABytecodes.*;
 
 import java.util.*;
 import java.util.regex.*;
@@ -39,8 +39,8 @@ import com.sun.max.vm.t1x.*;
  * been compiled into native code). The pertinent state associated with the bytecode is typically provided as arguments
  * to the method, to avoid having a separate API to the execution state.
  *
- * Then generated API is not simply 1-1 with the list of bytecodes because several bytecodes, e.g. {@code ICONST_*} form
- * a group for which there is no value in providing independent advice and some, e.g. {@code GETFIELD} for which is is
+ * The generated API is not simply 1-1 with the list of bytecodes because several bytecodes, e.g. {@code ICONST_*} form
+ * a group for which there is no value in providing independent advice and some, e.g. {@code GETFIELD} for which it is
  * necessary to create type-specific variants (in order to pass arguments unboxed). To reduce the fan out of methods
  * boolean, byte, char, short, int and Word values are all passed as long. To reduce fan out further a value argument is
  * always specified even if it might not be meaningful, e.g. {@link AdviceMode#BEFORE before advice} on a
@@ -56,19 +56,19 @@ public class BytecodeAdviceGenerator {
 
     private static final String METHOD_PREFIX = "    public abstract void advise%s%s(";
 
-    private static final Set<String> apiTypes = new HashSet<String>();
+    private static final Set<String> getPutTypes = new HashSet<String>();
 
     private static String adviceMode;
 
     public static void main(String[] args) {
         setGeneratingClass(BytecodeAdviceGenerator.class);
+        for (String k : types) {
+            if (!(k.equals("boolean") || k.equals("byte") || k.equals("char") || k.equals("short") || k.equals("int") || k.equals("Word"))) {
+                getPutTypes.add(oType(k));
+            }
+        }
         for (String a : new String[] {"Before", "After"}) {
             adviceMode = a;
-            for (String k : types) {
-                if (!(k.equals("boolean") || k.equals("byte") || k.equals("char") || k.equals("short") || k.equals("int") || k.equals("Word"))) {
-                    apiTypes.add(oType(k));
-                }
-            }
             for (VMABytecodes f : VMABytecodes.values()) {
                 generate(f);
             }
@@ -102,7 +102,7 @@ public class BytecodeAdviceGenerator {
 
     private static void generateGetPutField(VMABytecodes bytecode) {
         if (adviceMode.equals("Before")) {
-            for (String k : apiTypes) {
+            for (String k : getPutTypes) {
                 if (hasGetPutTemplates(k)) {
                     generateAutoComment();
                     out.printf(METHOD_PREFIX + "Object object, int offset, %s value);%n%n", adviceMode, bytecode.methodName, k);
@@ -113,7 +113,7 @@ public class BytecodeAdviceGenerator {
 
     private static void generateGetPutStatic(VMABytecodes bytecode) {
         if (adviceMode.equals("Before")) {
-            for (String k : apiTypes) {
+            for (String k : getPutTypes) {
                 if (hasGetPutTemplates(k)) {
                     generateAutoComment();
                     // StaticTuple but ClassActor.staticTuple returns Object

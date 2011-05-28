@@ -55,10 +55,6 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
         super();
     }
 
-    public SBPSTextVMAdviceHandlerLog(TimeStampGenerator timeStampGenerator) {
-        super(timeStampGenerator);
-    }
-
     @Override
     public boolean initializeLog() {
         final String logFile = VMAdviceHandlerLogFile.getLogFile();

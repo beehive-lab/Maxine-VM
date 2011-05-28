@@ -25,11 +25,11 @@ package com.sun.max.vm.t1x.vma;
 import java.util.*;
 
 import com.oracle.max.vm.ext.vma.options.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.ClassMethodRefConstant;
 import com.sun.max.vm.t1x.*;
-import com.sun.max.vm.type.*;
 
 /**
  * Overrides some {@link T1XCompilation} methods to provide finer compile time control over advising.
@@ -62,17 +62,14 @@ public class VMAT1XCompilation extends T1XCompilation {
     protected void emitInvokespecial(int index) {
         // We are only interested in tracking calls to constructors (currently)
         ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
-        useVMATemplate = classMethodRef.name(cp).equals("<init>");
+        useVMATemplate = VMAOptions.useVMATemplate(Bytecodes.INVOKESPECIAL) && classMethodRef.name(cp).equals("<init>");
         super.emitInvokespecial(index);
     }
 
     @Override
-    protected void emitFieldAccess(EnumMap<KindEnum, T1XTemplateTag> tags, int index) {
-        // Depending on the runtime settings, reads and/or write tracking may be suppressed
-        final boolean isGet = tags == T1XTemplateTag.GETFIELDS || tags == T1XTemplateTag.GETSTATICS;
-        useVMATemplate = (VMAOptions.trackWrites && !isGet) || (VMAOptions.trackReads && isGet);
-        super.emitFieldAccess(tags, index);
-
+    protected void processBytecode(int opcode) throws InternalError {
+        useVMATemplate = VMAOptions.useVMATemplate(opcode);
+        super.processBytecode(opcode);
     }
 
     @Override

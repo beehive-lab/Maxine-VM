@@ -20,10 +20,10 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.log.gen;
+package com.oracle.max.vma.tools.gen.vma.log;
 
 import static com.sun.max.vm.t1x.T1XTemplateGenerator.*;
-import static com.oracle.max.vm.ext.vma.gen.AdviceGeneratorHelper.*;
+import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
 
 import java.lang.reflect.*;
 

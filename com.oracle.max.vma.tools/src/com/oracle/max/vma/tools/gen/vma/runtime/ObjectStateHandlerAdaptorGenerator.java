@@ -20,21 +20,26 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.runtime.gen;
+package com.oracle.max.vma.tools.gen.vma.runtime;
 
-import static com.oracle.max.vm.ext.vma.gen.AdviceGeneratorHelper.*;
 import static com.sun.max.vm.t1x.T1XTemplateGenerator.*;
+import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
 
 import java.lang.reflect.*;
 
 import com.oracle.max.vm.ext.vma.*;
 import com.sun.max.annotate.*;
-import com.sun.max.vm.t1x.*;
+
+/**
+ * Generates the rote implementations of ObjectStateHandlerAdaptor.
+ *
+ */
 
 @HOSTED_ONLY
-public class SyncLogVMAdviceHandlerGenerator {
+public class ObjectStateHandlerAdaptorGenerator {
+
     public static void main(String[] args) {
-        T1XTemplateGenerator.setGeneratingClass(SyncLogVMAdviceHandlerGenerator.class);
+        setGeneratingClass(ObjectStateHandlerAdaptorGenerator.class);
         for (Method m : VMAdviceHandler.class.getMethods()) {
             String name = m.getName();
             if (name.startsWith("advise")) {
@@ -48,23 +53,31 @@ public class SyncLogVMAdviceHandlerGenerator {
     }
 
     private static void generate(Method m) {
+        String name = m.getName();
         generateAutoComment();
         out.printf("    @Override%n");
-        int argCount = generateSignature(m, null);
+        generateSignature(m, null);
         out.printf(" {%n");
-        if (m.getName().contains("MultiNewArray")) {
-            out.printf("        adviseAfterNewArray(arg1, arg2[0]);%n");
-        } else {
-            out.printf("        super.%s(", m.getName());
-            generateInvokeArgs(argCount);
-            out.printf("        logHandler.%s(", m.getName());
-            generateInvokeArgs(argCount);
-            if (m.getName().contains("NewArray")) {
-                out.printf("        MultiNewArrayHelper.handleMultiArray(this, arg1);%n");
+        if (name.endsWith("GetField")  || name.endsWith("PutField") ||
+                        name.endsWith("ArrayLoad")  || name.endsWith("ArrayStore")) {
+            out.printf("        checkId(arg1);%n");
+            if ((name.endsWith("PutField")  || name.endsWith("ArrayStore")) && getLastParameterName(m).equals("Object")) {
+                out.printf("        checkId(arg3);%n");
             }
+        } else if (name.endsWith("GetStatic")  || name.endsWith("PutStatic")) {
+            out.printf("        checkId(ObjectAccess.readClassActor(arg1));%n");
+            if (name.endsWith("PutStatic") && getLastParameterName(m).equals("Object")) {
+                out.printf("        checkId(arg3);%n");
+            }
+        } else if (name.equals("adviseAfterNew") || name.equals("adviseAfterNewArray")) {
+            out.printf("        final Reference objRef = Reference.fromJava(arg1);%n");
+            out.printf("        final Hub hub = UnsafeCast.asHub(Layout.readHubReference(objRef));%n");
+            out.printf("        state.assignId(objRef);%n");
+            out.printf("        checkId(hub.classActor.classLoader);%n");
+        } else if (name.contains("InvokeSpecial")) {
+            out.printf("        checkId(arg1);%n");
         }
         out.printf("    }%n%n");
     }
-
 
 }
