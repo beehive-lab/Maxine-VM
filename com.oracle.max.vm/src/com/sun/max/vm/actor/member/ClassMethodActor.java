@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.actor.member;
 
+import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.actor.member.LivenessAdapter.*;
 
 import java.lang.reflect.*;
@@ -274,8 +275,10 @@ public abstract class ClassMethodActor extends MethodActor {
             intrinsifier.run();
             if ((intrinsifier.flags & BytecodeIntrinsifier.FLAG_HAS_SUBROUTINE) != 0) {
                 // Inline subroutines
+                String methodString = logBeforeSubroutineInlining(compilee);
                 TypeInferencingVerifier verifier = new TypeInferencingVerifier(compilee.holder());
                 codeAttribute = verify(compilee, codeAttribute, verifier);
+                logAfterSubroutineInlining(compilee, methodString);
             }
 
             if (intrinsifier.unsafe) {
@@ -284,6 +287,29 @@ public abstract class ClassMethodActor extends MethodActor {
             }
         }
         return codeAttribute;
+    }
+
+    private static String logBeforeSubroutineInlining(ClassMethodActor classMethodActor) {
+        String methodString = null;
+        if (verboseOption.verboseCompilation) {
+            methodString = classMethodActor.format("%H.%n(%p)");
+            boolean lockDisabledSafepoints = Log.lock();
+            Log.printCurrentThread(false);
+            Log.print(": Inlining subroutines in ");
+            Log.println(methodString);
+            Log.unlock(lockDisabledSafepoints);
+        }
+        return methodString;
+    }
+
+    private static void logAfterSubroutineInlining(ClassMethodActor classMethodActor, String methodString) {
+        if (verboseOption.verboseCompilation) {
+            boolean lockDisabledSafepoints = Log.lock();
+            Log.printCurrentThread(false);
+            Log.print(": Inlined subroutines in ");
+            Log.println(methodString);
+            Log.unlock(lockDisabledSafepoints);
+        }
     }
 
     /**
