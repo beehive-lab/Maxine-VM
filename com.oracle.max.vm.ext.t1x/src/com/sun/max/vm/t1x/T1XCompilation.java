@@ -210,7 +210,7 @@ public class T1XCompilation {
      */
     CiExceptionHandler[] handlers;
 
-    MethodProfile.Builder methodProfileBuilder;
+    protected MethodProfile.Builder methodProfileBuilder;
 
     /**
      * Map of BCIs to target code positions. Entries in the table corresponding to the start of a bytecode instruction
@@ -262,7 +262,7 @@ public class T1XCompilation {
      *
      * @param method the method about to be compiled
      */
-    void initCompile(ClassMethodActor method, CodeAttribute codeAttribute) {
+    protected void initCompile(ClassMethodActor method, CodeAttribute codeAttribute) {
         assert this.method == null;
         assert buf.position() == 0;
         assert referenceLiterals.isEmpty();
@@ -1466,7 +1466,7 @@ public class T1XCompilation {
         assignIntTemplateArgument(parameterIndex, slotOffset);
     }
 
-    private void processBytecode(int opcode) throws InternalError {
+    protected void processBytecode(int opcode) throws InternalError {
         switch (opcode) {
             // Checkstyle: stop
 
