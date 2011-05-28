@@ -661,6 +661,11 @@ public class FieldActor extends MemberActor implements RiField {
         final ClassActor holder = holder();
         if (isFinal()) {
             if (isStatic()) {
+                if (this == ClassRegistry.SYSTEM_IN || this == ClassRegistry.SYSTEM_OUT || this == ClassRegistry.SYSTEM_ERR) {
+                    // A *special* static final field whose value can change.
+                    return false;
+                }
+
                 // Static final field:
                 if (!holder().hasClassInitializer()) {
                     // The field's value must come from a ConstantValue attribute. If
