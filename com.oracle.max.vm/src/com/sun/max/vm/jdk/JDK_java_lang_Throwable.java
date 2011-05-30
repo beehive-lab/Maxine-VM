@@ -43,6 +43,10 @@ import com.sun.max.vm.thread.*;
 @METHOD_SUBSTITUTIONS(Throwable.class)
 public final class JDK_java_lang_Throwable {
 
+    private static final ObjectThreadLocal<Throwable> TRACE_UNDER_CONSTRUCTION = new ObjectThreadLocal<Throwable>("TRACE_UNDER_CONSTRUCTION",
+                    "Exception whose back or stack trace is currently being constructed");
+
+
     private JDK_java_lang_Throwable() {
     }
 
@@ -80,6 +84,12 @@ public final class JDK_java_lang_Throwable {
             // Don't record stack traces in situations where memory may be exhausted
             return throwable;
         }
+
+        if (TRACE_UNDER_CONSTRUCTION.get() != null) {
+            FatalError.unexpected("Recursive exception while constructing back trace for " + this + " (outer exception: " + TRACE_UNDER_CONSTRUCTION.get() + ")");
+        }
+        TRACE_UNDER_CONSTRUCTION.set(throwable);
+
         final ClassActor throwableActor = ClassActor.fromJava(throwable.getClass());
         // use the stack walker to collect the frames
         final StackFrameWalker sfw = new VmStackFrameWalker(VmThread.current().tla());
@@ -93,6 +103,7 @@ public final class JDK_java_lang_Throwable {
             // Could not build backtrace due to memory shortage
             stackTrace = new StackTraceElement[0];
         }
+        TRACE_UNDER_CONSTRUCTION.set(null);
         return throwable;
     }
 
@@ -196,12 +207,21 @@ public final class JDK_java_lang_Throwable {
             if (backtrace == null) {
                 stackTrace = new StackTraceElement[0];
             } else {
+                if (TRACE_UNDER_CONSTRUCTION.get() != null) {
+                    FatalError.unexpected("Recursive exception while constructing stack trace for " + this + " (outer exception: " + TRACE_UNDER_CONSTRUCTION.get() + ")");
+
+                }
+                final Throwable throwable = thisThrowable();
+                TRACE_UNDER_CONSTRUCTION.set(throwable);
+
                 try {
                     stackTrace = ((Backtrace) backtrace).getTrace();
                 } catch (OutOfMemoryError e) {
                     // Could not build backtrace due to memory shortage
                     stackTrace = new StackTraceElement[0];
                 }
+                TRACE_UNDER_CONSTRUCTION.set(null);
+
                 // Let the GC clean up the back trace
                 backtrace = null;
             }
