@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.jdwp.vm.proxy.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
 import com.sun.max.tele.debug.*;
@@ -74,6 +75,8 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
         super(vm, classMethodActorReference);
     }
 
+    boolean updatingTargetState;
+
     /** {@inheritDoc}
      * <p>
      * The compilation history associated with a {@link ClassMethodActor} in the VM
@@ -88,8 +91,15 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
         try {
             final Reference targetStateReference = vm().teleFields().ClassMethodActor_targetState.readReference(reference());
             if (!targetStateReference.isZero()) {
-                // the method has been compiled; check the type to determine the number of times
-                translateTargetState(heap().makeTeleObject(targetStateReference));
+                if (!updatingTargetState) {
+                    updatingTargetState = true;
+                    // the method has been compiled; check the type to determine the number of times
+                    translateTargetState(heap().makeTeleObject(targetStateReference));
+                    updatingTargetState = false;
+                } else {
+                    // prevent infinite recursion
+                    Trace.line(1, "Cut off infinite recursion between TeleClassMethodActor.updateObjectCache() and TeleTargetMethod.updateObjectCache()");
+                }
             }
         } catch (DataIOError dataIOError) {
             // If something goes wrong, delay the cache update until next time.
