@@ -32,6 +32,7 @@ import java.util.*;
 
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
+import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
@@ -169,6 +170,7 @@ public final class DebugInfo {
                     CiFrame originalFrame = debugInfos[i].frame();
                     assert frame.equalsIgnoringKind(originalFrame);
                 }
+                forEachCodePos(new TestCPC(), i);
             }
         }
 
@@ -305,7 +307,7 @@ public final class DebugInfo {
 
     /**
      * Iterates over the code positions encoded for a given stop index.
-     * 
+     *
      * @param cpc a closure called for each bytecode location in the inlining chain rooted
      *        at {@code index} (inner most callee first)
      * @param index the index of a frame
@@ -318,10 +320,12 @@ public final class DebugInfo {
         final DecodingStream in = new DecodingStream(data);
         int fpt = (tm.totalRefMapSize()) * tm.stopPositions().length;
         int frameIndex = index;
-
         while (true) {
-            count++;
             in.pos = framePos(fpt, frameIndex);
+            if (in.pos == 0) {
+                return count;
+            }
+            count++;
             int encCallerIndex = in.decodeUInt();
             int holderID = in.decodeUInt();
             ClassActor holder = ClassID.toClassActor(holderID);
@@ -337,6 +341,8 @@ public final class DebugInfo {
                 method = holder.getLocalMethodActor(memberIndex);
                 bci = in.decodeUInt();
             }
+            assert method != null;
+            assert bci == -1 || (bci >= 0 && bci < method.code().length);
             if (!cpc.doCodePos((ClassMethodActor) method, bci)) {
                 return count;
             }
@@ -351,7 +357,7 @@ public final class DebugInfo {
 
     /**
      * Decodes the frame at a given stop index.
-     * 
+     *
      * @param index the index of a frame
      * @return the frame at {@code index}
      */
@@ -409,13 +415,14 @@ public final class DebugInfo {
             bci = -1;
             int memberIndex = m >>> 1;
             method = holder.getLocalMethodActor(memberIndex);
-            assert method != null;
         } else {
             int memberIndex = m >>> 1;
             method = holder.getLocalMethodActor(memberIndex);
-            assert method != null;
             bci = in.decodeUInt();
         }
+        assert method != null;
+        assert bci == -1 || (bci >= 0 && bci < method.code().length);
+
         int numLocals = in.decodeUInt();
         int numStack = in.decodeUInt();
         int numLocks = in.decodeUInt();
@@ -468,5 +475,14 @@ public final class DebugInfo {
         out.println("  " + objectConstants.size() + " object constants");
         out.println("  " + nonObjectConstants.size() + " non-object constants");
         out.println("  " + valuesEncoded + " values encoded (avg bytes per value: "  + (float) ((double) valuesEncodedSize / valuesEncoded) + ")");
+    }
+
+    @HOSTED_ONLY
+    static class TestCPC implements CodePosClosure {
+        public boolean doCodePos(ClassMethodActor method, int bci) {
+            assert method != null;
+            assert bci == -1 || (bci >= 0 && bci < method.code().length);
+            return true;
+        }
     }
 }
