@@ -571,7 +571,7 @@ public abstract class FrameState {
 
     public static String toString(FrameState fs) {
         StringBuilder sb = new StringBuilder();
-        String nl = String.format("%n");
+        String nl = CiUtil.NEW_LINE;
         while (fs != null) {
             if (fs.scope == null) {
                 sb.append("<no method>").append(" [bci: ").append(fs.bci).append(']');

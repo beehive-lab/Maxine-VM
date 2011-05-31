@@ -22,7 +22,6 @@
  */
 package com.sun.cri.ri;
 
-import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.cri.ci.*;
@@ -146,30 +145,6 @@ public interface RiRuntime {
      * Returns true if the given type is a subtype of java/lang/Throwable.
      */
     boolean isExceptionType(RiType type);
-
-    /**
-     * Returns the runtime interface representation of the given Java method object.
-     *
-     * @param javaMethod the Java method object
-     * @return the runtime interface representation of {@code javaMethod}
-     */
-    RiMethod getRiMethod(Method javaMethod);
-
-    /**
-     * Returns the runtime interface representation of the given Java constructor object.
-     *
-     * @param javaConstructor the Java constructor object
-     * @return the runtime interface representation {@code javaConstructor}
-     */
-    RiMethod getRiMethod(Constructor<?> javaConstructor);
-
-    /**
-     * Returns the runtime interface representation of the given Java field object.
-     *
-     * @param javaField the Java field object
-     * @return the runtime interface representation of {@code javaField}
-     */
-    RiField getRiField(Field javaField);
 
     /**
      * Gets the {@linkplain RiSnippets snippets} provided by the runtime.

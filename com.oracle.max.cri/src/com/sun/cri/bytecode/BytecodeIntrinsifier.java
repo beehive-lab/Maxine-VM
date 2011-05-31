@@ -43,6 +43,16 @@ import java.io.*;
 public final class BytecodeIntrinsifier {
 
     /**
+     * Denotes that one or more instructions were modified.
+     */
+    public static final int FLAG_CHANGED = 0x0001;
+
+    /**
+     * Denotes that one or more JSR or RET instructions were encountered.
+     */
+    public static final int FLAG_HAS_SUBROUTINE = 0x0002;
+
+    /**
      * Set to true to trace the bytecode processing.
      */
     private static final boolean DEBUG = false;
@@ -221,9 +231,9 @@ public final class BytecodeIntrinsifier {
     private final IntrinsifierClient intrinsifier;
 
     /**
-     * Indicates if one or more instructions were replaced with an extended instruction.
+     * A mask of the {@code FLAG_...} constants indicating the result of intrinsification.
      */
-    private boolean changed;
+    private int flags;
 
     private final byte[] inCode;
     private final byte[] outCode;
@@ -342,7 +352,7 @@ public final class BytecodeIntrinsifier {
         if (DEBUG) {
             debugOut.println("     ---> " + nameOf(inCode[opcodeBci] & 0xff));
         }
-        changed = true;
+        flags |= FLAG_CHANGED;
     }
 
     /**
@@ -523,13 +533,13 @@ public final class BytecodeIntrinsifier {
      * interpreted unless it is reachable along a control flow edge from another basic block
      * that is (transitively) reachable from the entry basic block.
      *
-     * It is assumed that the input code verifies. The means that all uses of a variable
+     * It is assumed that the input code verifies. This means that all uses of a variable
      * will match with a definition along all paths to the use and that the type (is a word
      * or not) will be the same along each path.
      *
-     * @return {@code true} if one or more instructions were modified
+     * @return a mask of the {@code FLAG_...} constants in the {@link BytecodeIntrinsifier} class indicating the result of intrinsification
      */
-    public boolean run() {
+    public int run() {
         try {
             if (DEBUG) {
                 debugOut.println(method);
@@ -540,7 +550,7 @@ public final class BytecodeIntrinsifier {
                 todoHandler = null;
                 parseBlocks();
             }
-            return changed;
+            return flags;
         } catch (Throwable e) {
             int opcode = inCode[opcodeBci] & 0xff;
             Frame errorFrame = new Frame(opcodeBci, sp, stack, locals, null);
@@ -610,11 +620,9 @@ public final class BytecodeIntrinsifier {
                 case NOP          :
                 case IINC         :
                 case GOTO         :
-                case RET          :
                 case RETURN       :
                 case WIDE         :
                 case GOTO_W       :
-                case JSR_W        :
                 case BREAKPOINT   :
                 case LALOAD       :
                 case DALOAD       :
@@ -649,7 +657,6 @@ public final class BytecodeIntrinsifier {
                 case SIPUSH       :
                 case LDC          :
                 case LDC_W        :
-                case JSR          :
                 case NEW          :
                 case I2L          :
                 case I2D          :
@@ -782,6 +789,16 @@ public final class BytecodeIntrinsifier {
                 case DCMPG        : pop(3); break;
                 case LASTORE      :
                 case DASTORE      : pop(4); break;
+                case JSR          :
+                case JSR_W        : {
+                    push1();
+                    flags |= FLAG_HAS_SUBROUTINE;
+                    break;
+                }
+                case RET: {
+                    flags |= FLAG_HAS_SUBROUTINE;
+                    break;
+                }
                 case DUP:
                     push1(top());
                     break;

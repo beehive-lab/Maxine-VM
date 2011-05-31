@@ -22,8 +22,6 @@
  */
 package com.sun.max.vm.classfile.constant;
 
-import static com.sun.max.vm.MaxineVM.*;
-
 import java.lang.reflect.*;
 
 import com.sun.max.annotate.*;
@@ -31,7 +29,7 @@ import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.constant.ConstantPool.*;
+import com.sun.max.vm.classfile.constant.ConstantPool.Tag;
 import com.sun.max.vm.type.*;
 
 /**
@@ -164,19 +162,14 @@ public interface FieldRefConstant extends PoolConstant<FieldRefConstant>, Member
             FieldActor fieldActor = holder.findFieldActor(name, type);
             if (fieldActor != null) {
                 fieldActor.checkAccessBy(pool.holder());
-                if (isHosted()) {
-                    FieldActor aliasedFieldActor = ALIAS.Static.aliasedField(fieldActor);
-                    if (aliasedFieldActor == null) {
-                        // Only update constant pool if no aliasing occurred.
-                        // Otherwise, subsequent verification of bytecode
-                        // referencing the alias field will fail.
-                        pool.updateAt(index, new Resolved(fieldActor));
-                    } else {
-                        fieldActor = aliasedFieldActor;
-                    }
-                } else {
-                    assert fieldActor.getAnnotation(ALIAS.class) == null; // Alias resolution only occurs during boot image generation, so must not see alias field here.
+                FieldActor aliasedFieldActor = ALIAS.Static.aliasedField(fieldActor);
+                if (aliasedFieldActor == null) {
+                    // Only update constant pool if no aliasing occurred.
+                    // Otherwise, subsequent verification of bytecode
+                    // referencing the alias field will fail.
                     pool.updateAt(index, new Resolved(fieldActor));
+                } else {
+                    fieldActor = aliasedFieldActor;
                 }
                 return fieldActor;
             }

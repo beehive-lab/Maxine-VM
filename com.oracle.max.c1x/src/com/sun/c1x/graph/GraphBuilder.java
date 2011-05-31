@@ -986,14 +986,10 @@ public final class GraphBuilder {
     /**
      * Temporary work-around to support the @ACCESSOR Maxine annotation.
      */
-    private static final Class<?> Accessor;
-    static {
-        Class<?> c = null;
-        try {
-            c = Class.forName("com.sun.max.unsafe.Accessor");
-        } catch (ClassNotFoundException e) {
-        }
-        Accessor = c;
+    private static RiType Accessor;
+    public static void setAccessor(RiType accessor) {
+        assert Accessor == null || Accessor == accessor;
+        Accessor = accessor;
     }
 
     /**
@@ -1005,7 +1001,7 @@ public final class GraphBuilder {
      * Temporary work-around to support the @ACCESSOR Maxine annotation.
      */
     private static RiMethod bindAccessorMethod(RiMethod target) {
-        if (Accessor != null && target.isResolved() && target.holder().javaClass() == Accessor) {
+        if (Accessor != null && target.isResolved() && target.holder() == Accessor) {
             RiType accessor = boundAccessor.get();
             assert accessor != null : "Cannot compile call to method in " + target.holder() + " without enclosing @ACCESSOR annotated method";
             RiMethod newTarget = accessor.resolveMethodImpl(target);

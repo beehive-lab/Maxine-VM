@@ -349,11 +349,7 @@ public class SubroutineInliner {
             return oldHandlers;
         }
 
-        SortedSet<ExceptionHandlerEntry> newHandlers = new TreeSet<ExceptionHandlerEntry>(new Comparator<ExceptionHandlerEntry>() {
-            public int compare(ExceptionHandlerEntry o1, ExceptionHandlerEntry o2) {
-                return o1.startBCI() - o2.startBCI();
-            }
-        });
+        ArrayList<ExceptionHandlerEntry> newHandlers = new ArrayList<ExceptionHandlerEntry>(oldHandlers.length);
 
         for (ExceptionHandlerEntry oldHandler : oldHandlers) {
             // For each instruction handle that maps to this handler, match it to all instructions that go to the handler.
