@@ -84,7 +84,7 @@ import com.sun.cri.ci.CiTargetMethod.LookupTable;
  */
 public class CiHexCodeFile {
 
-    public static final String NEW_LINE = String.format("%n");
+    public static final String NEW_LINE = CiUtil.NEW_LINE;
     public static final String SECTION_DELIM = " <|@";
     public static final Pattern SECTION = Pattern.compile("(\\S+)\\s+(.*)", Pattern.DOTALL);
     public static final Pattern COMMENT = Pattern.compile("(\\d+)\\s+(.*)", Pattern.DOTALL);

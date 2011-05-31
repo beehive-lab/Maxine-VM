@@ -861,13 +861,9 @@ public abstract class ClassActor extends Actor implements RiType {
     }
 
     public final VirtualMethodActor getVirtualMethodActorByVTableIndex(int vTableIndex) {
-        if (MaxineVM.isDebug()) {
-            final int index = vTableIndex - DynamicHub.vTableStartIndex();
-            if (index < 0 || index >= allVirtualMethodActors.length) {
-                FatalError.unexpected("must not happen");
-            }
-        }
-        return allVirtualMethodActors[vTableIndex - DynamicHub.vTableStartIndex()];
+        int index = vTableIndex - DynamicHub.vTableStartIndex();
+        assert index >= 0 && index < allVirtualMethodActors.length : "vtable index " + vTableIndex + " out of range for " + this;
+        return allVirtualMethodActors[index];
     }
 
     /**

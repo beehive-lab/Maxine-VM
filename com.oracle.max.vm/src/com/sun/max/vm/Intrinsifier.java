@@ -43,7 +43,7 @@ public class Intrinsifier extends IntrinsifierClient {
     final CodeAttribute codeAttribute;
     final ConstantPool cp;
     public boolean unsafe;
-    public boolean extended;
+    public int flags;
 
     /**
      * Creates an {@link Intrinsifier} instance to process the bytecode of a single method.
@@ -86,7 +86,7 @@ public class Intrinsifier extends IntrinsifierClient {
      */
     public boolean run() {
         try {
-            extended = new BytecodeIntrinsifier(this, compilee, codeAttribute.code(), null, codeAttribute.exceptionHandlerBCIs(), codeAttribute.maxStack, initLocals()).run();
+            flags = new BytecodeIntrinsifier(this, compilee, codeAttribute.code(), null, codeAttribute.exceptionHandlerBCIs(), codeAttribute.maxStack, initLocals()).run();
             return unsafe;
         } catch (Throwable e) {
             String msg = String.format("Error while intrinsifying " + compilee + "%n" + CodeAttributePrinter.toString(codeAttribute));

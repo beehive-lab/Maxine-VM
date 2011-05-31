@@ -31,6 +31,7 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -682,6 +683,25 @@ public class CompiledPrototype extends Prototype {
         Trace.end(1, "compiling foldable methods");
     }
 
+    public void resolveAlias() {
+        Trace.begin(1, "resolving alias annotations");
+        for (ClassActor classActor : BOOT_CLASS_REGISTRY.bootImageClasses()) {
+            forAllClassMethodActors(classActor, new Procedure<ClassMethodActor>() {
+                public void run(ClassMethodActor classMethodActor) {
+                    ALIAS.Static.aliasedMethod(classMethodActor);
+                }
+            });
+
+            for (FieldActor field : classActor.localInstanceFieldActors()) {
+                ALIAS.Static.aliasedField(field);
+            }
+            for (FieldActor field : classActor.localStaticFieldActors()) {
+                ALIAS.Static.aliasedField(field);
+            }
+        }
+        Trace.end(1, "resolving alias annotations");
+    }
+
     private void processInvalidatedTargetMethods() {
         synchronized (invalidatedTargetMethods) {
             if (!invalidatedTargetMethods.isEmpty()) {
@@ -854,10 +874,14 @@ public class CompiledPrototype extends Prototype {
                     for (InterfaceMethodActor interfaceMethodActor : interfaceActor.localInterfaceMethodActors()) {
                         final int methodITableIndex = interfaceITableIndex + interfaceMethodActor.iIndexInInterface();
                         final int iIndex = methodITableIndex - hub.iTableStartIndex;
-                        final VirtualMethodActor virtualMethodActor = classActor.getVirtualMethodActorByIIndex(iIndex);
-                        final TargetMethod targetMethod = CompilationScheme.Static.getCurrentTargetMethod(virtualMethodActor);
-                        if (targetMethod != null) {
-                            words[methodITableIndex] = VTABLE_ENTRY_POINT.in(targetMethod);
+                        try {
+                            final VirtualMethodActor virtualMethodActor = classActor.getVirtualMethodActorByIIndex(iIndex);
+                            final TargetMethod targetMethod = CompilationScheme.Static.getCurrentTargetMethod(virtualMethodActor);
+                            if (targetMethod != null) {
+                                words[methodITableIndex] = VTABLE_ENTRY_POINT.in(targetMethod);
+                            }
+                        } catch (Throwable e) {
+                            throw FatalError.unexpected("Error linking itable entry " + iIndex + " {" + interfaceMethodActor + "} in hub of " + classActor, e);
                         }
                     }
                 }

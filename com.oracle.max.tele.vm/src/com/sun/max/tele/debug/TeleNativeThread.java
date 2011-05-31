@@ -323,7 +323,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
             // frame may have changed.
             if (newFrames.size() != this.frames.size()) {
                 // Clear structural change; lengths are different
-                framesRefreshedEpoch = epoch;
+                framesLastChangedEpoch = epoch;
             } else {
                 // Lengths are the same; see if any frames differ.
                 final Iterator<StackFrame> oldFramesIterator = this.frames.iterator();
@@ -337,6 +337,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
                     }
                 }
             }
+            framesRefreshedEpoch = epoch;
             this.frames = newFrames;
         }
         return frames;

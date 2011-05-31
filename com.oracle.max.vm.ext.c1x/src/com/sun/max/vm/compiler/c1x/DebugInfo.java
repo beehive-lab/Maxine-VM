@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
+import static com.sun.cri.ci.CiUtil.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.compiler.c1x.C1XTargetMethod.*;
 import static com.sun.max.vm.compiler.c1x.ValueCodec.*;
@@ -31,6 +32,7 @@ import java.util.*;
 
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
+import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
@@ -107,12 +109,18 @@ public final class DebugInfo {
     final int fptSize;
 
     /**
+     * The target method associated with this debug info.
+     */
+    final C1XTargetMethod tm;
+
+    /**
      * Encodes an array of debug infos.
      *
      * @param debugInfos an array of debug infos correlated with each stop index
      * @param tm the target method associated with the debug infos
      */
     public DebugInfo(CiDebugInfo[] debugInfos, C1XTargetMethod tm) {
+        this.tm = tm;
         final HashMap<CiFrame, int[]> framesMap = new HashMap<CiFrame, int[]>();
         final EncodingStream out = new EncodingStream(1024);
 
@@ -158,10 +166,11 @@ public final class DebugInfo {
             // Test encoding & decoding while offline
             for (int i = 0; i < debugInfos.length; ++i) {
                 if (debugInfos[i] != null && debugInfos[i].frame() != null) {
-                    CiFrame frame = frameAt(tm, i);
+                    CiFrame frame = frameAt(i);
                     CiFrame originalFrame = debugInfos[i].frame();
                     assert frame.equalsIgnoringKind(originalFrame);
                 }
+                forEachCodePos(new TestCPC(), i);
             }
         }
 
@@ -271,50 +280,52 @@ public final class DebugInfo {
     /**
      * Gets the index in {@code #data} at which the register reference map for stop {@code index} starts.
      */
-    public int regRefMapStart(C1XTargetMethod tm, int index) {
+    public int regRefMapStart(int index) {
         return index * tm.totalRefMapSize() + tm.frameRefMapSize();
     }
 
     /**
      * Gets the index in {@code #data} at which the frame reference map for stop {@code index} starts.
      */
-    public int frameRefMapStart(C1XTargetMethod tm, int index) {
+    public int frameRefMapStart(int index) {
         return index * tm.totalRefMapSize();
     }
 
     /**
      * Gets the frame reference map for a given stop index.
      */
-    public CiBitMap frameRefMapAt(C1XTargetMethod tm, int index) {
+    public CiBitMap frameRefMapAt(int index) {
         return new CiBitMap(data, index * tm.totalRefMapSize(), tm.frameRefMapSize());
     }
 
     /**
      * Gets the register reference map for a given stop index.
      */
-    public CiBitMap regRefMapAt(C1XTargetMethod tm, int index) {
+    public CiBitMap regRefMapAt(int index) {
         return new CiBitMap(data, index * tm.totalRefMapSize() + tm.frameRefMapSize(), regRefMapSize());
     }
 
     /**
      * Iterates over the code positions encoded for a given stop index.
      *
-     * @param tm the target method associated with this debug info
      * @param cpc a closure called for each bytecode location in the inlining chain rooted
      *        at {@code index} (inner most callee first)
      * @param index the index of a frame
+     *
      * @return the number of code positions iterated over (i.e. the number of times
      *         {@link CodePosClosure#doCodePos(ClassMethodActor, int)} was called
      */
-    public int forEachCodePos(C1XTargetMethod tm, CodePosClosure cpc, int index) {
+    public int forEachCodePos(CodePosClosure cpc, int index) {
         int count = 0;
         final DecodingStream in = new DecodingStream(data);
         int fpt = (tm.totalRefMapSize()) * tm.stopPositions().length;
         int frameIndex = index;
-
         while (true) {
-            count++;
             in.pos = framePos(fpt, frameIndex);
+            if (in.pos == 0) {
+                return count;
+            }
+            count++;
             int encCallerIndex = in.decodeUInt();
             int holderID = in.decodeUInt();
             ClassActor holder = ClassID.toClassActor(holderID);
@@ -330,6 +341,8 @@ public final class DebugInfo {
                 method = holder.getLocalMethodActor(memberIndex);
                 bci = in.decodeUInt();
             }
+            assert method != null;
+            assert bci == -1 || (bci >= 0 && bci < method.code().length);
             if (!cpc.doCodePos((ClassMethodActor) method, bci)) {
                 return count;
             }
@@ -345,11 +358,10 @@ public final class DebugInfo {
     /**
      * Decodes the frame at a given stop index.
      *
-     * @param tm the target method associated with this debug info
      * @param index the index of a frame
      * @return the frame at {@code index}
      */
-    public CiFrame frameAt(C1XTargetMethod tm, int index) {
+    public CiFrame frameAt(int index) {
         final DecodingStream in = new DecodingStream(data);
         int fpt = (tm.totalRefMapSize()) * tm.stopPositions().length;
         return decodeFrame(in, fpt, index);
@@ -403,13 +415,14 @@ public final class DebugInfo {
             bci = -1;
             int memberIndex = m >>> 1;
             method = holder.getLocalMethodActor(memberIndex);
-            assert method != null;
         } else {
             int memberIndex = m >>> 1;
             method = holder.getLocalMethodActor(memberIndex);
-            assert method != null;
             bci = in.decodeUInt();
         }
+        assert method != null;
+        assert bci == -1 || (bci >= 0 && bci < method.code().length);
+
         int numLocals = in.decodeUInt();
         int numStack = in.decodeUInt();
         int numLocks = in.decodeUInt();
@@ -429,6 +442,27 @@ public final class DebugInfo {
         return new CiFrame(caller, method, bci, values, numLocals, numStack, numLocks);
     }
 
+
+    @Override
+    public String toString() {
+        if (data == null) {
+            // Still somewhere in the constructor
+            return "";
+        }
+        StringBuilder sb = new StringBuilder(1024);
+        for (int i = 0; i < tm.stopPositions().length; i++) {
+            CiBitMap regRefMap = regRefMapAt(i);
+            CiBitMap frameRefMap = frameRefMapAt(i);
+            CiFrame frame = frameAt(i);
+            CiDebugInfo info = new CiDebugInfo(frame, regRefMap, frameRefMap);
+            if (sb.length() != 0) {
+                sb.append(NEW_LINE);
+            }
+            sb.append("==== stop " + i + " [" + tm + "+" + tm.stopPosition(i) + "] ====").append(NEW_LINE).append(info);
+        }
+        return sb.toString();
+    }
+
     static int totalDebugInfos;
     static long totalDebugInfoBytes;
     static long totalCode;
@@ -441,5 +475,14 @@ public final class DebugInfo {
         out.println("  " + objectConstants.size() + " object constants");
         out.println("  " + nonObjectConstants.size() + " non-object constants");
         out.println("  " + valuesEncoded + " values encoded (avg bytes per value: "  + (float) ((double) valuesEncodedSize / valuesEncoded) + ")");
+    }
+
+    @HOSTED_ONLY
+    static class TestCPC implements CodePosClosure {
+        public boolean doCodePos(ClassMethodActor method, int bci) {
+            assert method != null;
+            assert bci == -1 || (bci >= 0 && bci < method.code().length);
+            return true;
+        }
     }
 }

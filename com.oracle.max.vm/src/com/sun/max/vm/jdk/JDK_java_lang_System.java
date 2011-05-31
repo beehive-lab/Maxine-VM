@@ -100,14 +100,6 @@ public final class JDK_java_lang_System {
         err = ps;
     }
 
-    static {
-        // These methods are never invoked from VM code, but must be compiled in the boot image because they
-        // access an aliased field (and alias information is not available after boot image generation)
-        new CriticalMethod(System.class, "setIn0", null);
-        new CriticalMethod(System.class, "setOut0", null);
-        new CriticalMethod(System.class, "setErr0", null);
-    }
-
     /**
      * Return the milliseconds elapsed since some fixed, but arbitrary time in the past.
      *

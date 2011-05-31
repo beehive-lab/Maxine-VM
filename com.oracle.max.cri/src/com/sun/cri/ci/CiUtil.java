@@ -38,6 +38,7 @@ import com.sun.cri.ri.*;
 public class CiUtil {
 
     public static final String NEW_LINE = String.format("%n");
+
     /**
      * Extends the functionality of {@link Class#getSimpleName()} to include a non-empty string for anonymous and local
      * classes.
