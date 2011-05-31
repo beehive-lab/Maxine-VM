@@ -366,7 +366,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
         // Mark bitmap must be word-aligned (the marking algorithm operates on mark bitmap words)
         // We also add an extra-word at the end to allow termination of the marking algorithm:
-        return numberOfBytesNeeded.aligned(Word.size()).plus(Word.size());
+        return numberOfBytesNeeded.alignUp(Word.size()).plus(Word.size());
     }
 
 

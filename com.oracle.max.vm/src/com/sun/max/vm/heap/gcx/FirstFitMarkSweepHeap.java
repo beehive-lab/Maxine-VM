@@ -134,8 +134,12 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         return allocated;
     }
 
+    private int debug_numContiguousRegionNeeded;
+    private int debug_firstRegion;
+    private int debug_lastRegion;
+
     private Pointer allocateLarge(Size size) {
-        final Size roundedUpSize = size.roundedUpBy(regionSizeInBytes);
+        final Size roundedUpSize = size.alignUp(regionSizeInBytes);
         final Size tailSize = roundedUpSize.minus(size);
         final int extraRegion = tailSize.greaterThan(0) && tailSize.lessThan(HeapSchemeAdaptor.MIN_OBJECT_SIZE)  ? 1 : 0;
         int numContiguousRegionNeeded = roundedUpSize.unsignedShiftedRight(log2RegionSizeInBytes).toInt() + extraRegion;
@@ -160,15 +164,23 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                     int n = 0;
                     int firstRegion = INVALID_REGION_ID;
                     int lastRegion = INVALID_REGION_ID;
+
+                    debug_numContiguousRegionNeeded = numContiguousRegionNeeded;
+                    debug_firstRegion = firstRegion;
+                    debug_lastRegion = lastRegion;
+
                     while (regionInfoIterable.hasNext()) {
                         HeapRegionInfo rinfo = regionInfoIterable.next();
                         if (rinfo.isEmpty()) {
                             int rid = rinfo.toRegionID();
                             if (n == 0) {
                                 firstRegion  = rid;
-                                lastRegion = rid;
+                                lastRegion  = rid;
+                                debug_firstRegion = firstRegion;
+                                n = 1;
                             } else if (rid == lastRegion + 1) {
                                 lastRegion = rid;
+                                debug_lastRegion = lastRegion;
                                 if (++n >= numContiguousRegionNeeded) {
                                     // Got the number of requested contiguous regions.
                                     // Remove them all from the list (except the tail if it leaves enough space for overflow allocation)
@@ -187,6 +199,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                                     Pointer tail = tailEnd.minus(tailSize);
                                     if (tailSize.lessThan(minReclaimableSpace)) {
                                         HeapSchemeAdaptor.fillWithDeadObject(tail, tailEnd);
+                                        allocationRegions.remove(lastRegion);
                                         lastRegionInfo.setLargeTail();
                                     } else {
                                         // Format the tail as a free chunk.
@@ -197,6 +210,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                                             tlabAllocationRegions.append(lastRegion);
                                         }
                                     }
+                                    return firstRegionInfo.regionStart().asPointer();
                                 }
                             } else {
                                 n = 0;
@@ -304,7 +318,8 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                 if (regionInfo.hasFreeChunks()) {
                     freeSpace = Size.fromInt(regionInfo.freeBytes());
                 } else {
-                    // It's an empty region.
+                    // It's an empty region.2328
+
                     freeSpace = Size.fromInt(regionSizeInBytes);
                     HeapFreeChunk.format(nextFreeChunkInRegion, freeSpace);
                 }
@@ -592,7 +607,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         // Keep it simple and over-conservative for now.
         if (isLarge(size)) {
             // Over simplistic. Assumes all regions in the allocationRegions list are empty.
-            int numRegionsNeeded = size.roundedUpBy(HeapRegionConstants.regionSizeInBytes).unsignedShiftedRight(HeapRegionConstants.log2RegionSizeInBytes).toInt();
+            int numRegionsNeeded = size.alignUp(HeapRegionConstants.regionSizeInBytes).unsignedShiftedRight(HeapRegionConstants.log2RegionSizeInBytes).toInt();
             return numRegionsNeeded <= allocationRegions.size();
         }
         if (allocationRegions.size() > 0 || overflowAllocator.freeSpace().greaterEqual(size)) {
