@@ -214,14 +214,20 @@ public final class HeapRegionManager implements HeapAccountOwner {
         // TODO (ld) initial size should be made to correspond to some notion of initial heap.
 
         // 1. The region info table:
-        Size initialSize = tupleSize(regionInfoClass).plus(tupleSize(RegionTable.class));
+        Size initialSize = tupleSize(RegionTable.class).plus(tupleSize(regionInfoClass).times(numRegions));
         // 2. The backing storage for the heap region lists
         initialSize = initialSize.plus(Layout.getArraySize(Kind.INT, regionListSize)).times(2);
 
         // Round this to an integral number of regions.
         initialSize = initialSize.roundedUpBy(regionSizeInBytes);
         final int initialNumRegions = initialSize.unsignedShiftedRight(log2RegionSizeInBytes).toInt();
-
+        if (MaxineVM.isDebug()) {
+            Log.print("Initialize heap region manager's boot allocator with ");
+            Log.print(initialNumRegions);
+            Log.print(" regions (");
+            Log.print(initialSize.toInt());
+            Log.println(" bytes)");
+        }
         // initialize the bootstrap allocator. The rest of the initialization code needs to allocate heap region management
         // object. We solve the bootstrapping problem this causes by using a linear allocator as a custom allocator for the current
         // thread. The contiguous set of regions consumed by the initialization will be accounted after the fact to the special
