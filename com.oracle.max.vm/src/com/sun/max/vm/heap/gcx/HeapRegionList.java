@@ -238,6 +238,8 @@ public final class HeapRegionList {
         setNext(elem, nullElement);
         if (head != nullElement) {
             setPrev(head, nullElement);
+        } else {
+            tail = nullElement;
         }
         size--;
         return elem;
@@ -249,8 +251,13 @@ public final class HeapRegionList {
      */
     void remove(int elem) {
         FatalError.check(elem != nullElement, "Must be a valid list element");
-        if (MaxineVM.isDebug()) {
-            FatalError.check(contains(elem), "element must be in list");
+        if (MaxineVM.isDebug() && !contains(elem)) {
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("Element ");
+            Log.print(elem);
+            Log.println(" must be in list");
+            Log.unlock(lockDisabledSafepoints);
+            FatalError.unexpected("Invalid argument to list removal");
         }
         int nextElem = next(elem);
         int prevElem = prev(elem);

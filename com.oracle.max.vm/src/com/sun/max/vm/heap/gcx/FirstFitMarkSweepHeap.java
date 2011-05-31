@@ -440,16 +440,17 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
     private Address overflowRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
         final int minFreeWords = minOverflowRefillSize.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
         int gcCount = 0;
+        final boolean traceOverflowRefill = true;
         synchronized (heapLock()) {
             if (currentOverflowAllocatingRegion != INVALID_REGION_ID) {
                 final HeapRegionInfo regionInfo = fromRegionID(currentOverflowAllocatingRegion);
                 FatalError.check(!regionInfo.hasFreeChunks(), "must not have any free chunks");
                 if (spaceLeft.greaterEqual(minReclaimableSpace)) {
-                    if (false) {
+                    if (traceOverflowRefill) {
                         Log.print("overflow allocator putback region #");
                         Log.print(currentOverflowAllocatingRegion);
                         Log.print(" in TLAB allocation list with ");
-                        Log.print(spaceLeft);
+                        Log.print(spaceLeft.toInt());
                         Log.println(" bytes");
                     }
                     overflowRefillFreeSpace = overflowRefillFreeSpace.plus(spaceLeft);
@@ -459,7 +460,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                     allocationRegionsFreeSpace = allocationRegionsFreeSpace.plus(spaceLeft);
                     tlabAllocationRegions.append(currentOverflowAllocatingRegion);
                 } else {
-                    if (false) {
+                    if (traceOverflowRefill) {
                         Log.print("overflow allocator full region #");
                         Log.println(currentOverflowAllocatingRegion);
                     }
@@ -488,8 +489,12 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                     } else {
                         continue;
                     }
-                    // Found a refill.
+                     // Found a refill.
                     currentOverflowAllocatingRegion = regionInfo.toRegionID();
+                    if (traceOverflowRefill) {
+                        Log.print("Refill overflow allocator w/ region #");
+                        Log.println(currentOverflowAllocatingRegion);
+                    }
                     allocationRegions.remove(currentOverflowAllocatingRegion);
                     regionInfo.setAllocating();
                     return refill;
@@ -520,6 +525,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         @Override
         void makeParsable(Pointer start, Pointer end) {
             HeapSchemeAdaptor.fillWithDeadObject(start, end);
+            currentOverflowAllocatingRegion = INVALID_REGION_ID;
         }
     }
 
@@ -702,14 +708,14 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
 
     @Override
     public void endSweep() {
-        if (csrFreeBytes == 0) {
-            csrInfo.setFull();
-        } else if (csrFreeBytes == regionSizeInBytes) {
-            boolean isLargeObject = csrInfo.isHeadOfLargeObject();
-            csrInfo.setEmpty();
-            allocationRegions.append(csrInfo.toRegionID());
-            if (isLargeObject) {
-                // Large object regions are at least 2 regions long.
+        if (csrIsLarge) {
+            // Large object regions are at least 2 regions long.
+            if (csrFreeBytes == 0) {
+                // Skip all intermediate region. They are full.
+                while (!csrInfo.next().isTailOfLargeObject()) {
+                    csrInfo = regionInfoIterable.next();
+                }
+            } else {
                 // Free all intermediate regions. The tail needs to be swept
                 // in case it was used for allocating small objects, so we
                 // don't free it. It'll be set as the next sweeping region by the next call to beginSweep.
@@ -719,6 +725,11 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                     allocationRegions.append(csrInfo.toRegionID());
                 }
             }
+        } else if (csrFreeBytes == 0) {
+            csrInfo.setFull();
+        } else if (csrFreeBytes == regionSizeInBytes) {
+            csrInfo.setEmpty();
+            allocationRegions.append(csrInfo.toRegionID());
         } else if (csrFreeChunks == 1 && minOverflowRefillSize.lessEqual(csrFreeBytes)) {
             csrInfo.setFreeChunks(HeapFreeChunk.fromHeapFreeChunk(csrHead), (short) csrFreeBytes, (short) csrFreeChunks);
             allocationRegions.append(csrInfo.toRegionID());
