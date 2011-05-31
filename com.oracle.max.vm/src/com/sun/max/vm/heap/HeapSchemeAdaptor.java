@@ -92,7 +92,7 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
     private static void plantDeadObject(Pointer cell) {
         DebugHeap.writeCellTag(cell);
         final Pointer origin = Layout.tupleCellToOrigin(cell);
-        Memory.clearWords(cell, MIN_OBJECT_SIZE.dividedBy(Word.size()).toInt());
+        Memory.clearWords(cell, MIN_OBJECT_SIZE.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt());
         Layout.writeHubReference(origin, Reference.fromJava(OBJECT_HUB));
     }
 
@@ -103,7 +103,7 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         DebugHeap.writeCellTag(cell);
         final int length = size.minus(BYTE_ARRAY_HEADER_SIZE).toInt();
         final Pointer origin = Layout.arrayCellToOrigin(cell);
-        Memory.clearWords(cell, BYTE_ARRAY_HEADER_SIZE.dividedBy(Word.size()).toInt());
+        Memory.clearWords(cell, BYTE_ARRAY_HEADER_SIZE.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt());
         Layout.writeArrayLength(origin, length);
         Layout.writeHubReference(origin, Reference.fromJava(BYTE_ARRAY_HUB));
     }
@@ -129,7 +129,8 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
             Log.print(start);
             Log.print(",");
             Log.print(end);
-            Log.print(" ("); Log.print(end.minus(start));
+            Log.print(" (");
+            Log.print(end.minus(start));
             Log.print(")");
             Log.unlock(lockDisabledSafepoints);
             FatalError.unexpected("Not enough space to fit a dead object");
