@@ -29,7 +29,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.type.*;
 /**
  * Descriptor of heap region.
  * The information recorded is carefully crafted so that a zero-filled HeapRegionInfo
@@ -54,7 +53,19 @@ public class HeapRegionInfo {
          * The head of the list is located at the {@link HeapRegionInfo#firstFreeChunkIndex} word in the region.
          * Note that empty regions doesn't have free chunks according to this definition.
          */
-        HAS_FREE_CHUNK;
+        HAS_FREE_CHUNK,
+        /**
+         * Region is part of  a large multi-regions, object.
+         */
+        IS_LARGE,
+        /**
+         * Region is the head of a large multi-regions object.
+         */
+        IS_HEAD,
+        /**
+         * Region is the last regions of a multi-region object. Space after the end of the large object may be used for allocation.
+         */
+        IS_TAIL;
 
         private final int mask = 1 << ordinal();
 
@@ -93,6 +104,11 @@ public class HeapRegionInfo {
     static final int ALLOCATING_REGION = IS_ALLOCATING.or(0);
     static final int FULL_REGION = IS_ITERABLE.or(0);
     static final int FREE_CHUNKS_REGION = IS_ITERABLE.or(HAS_FREE_CHUNK.or(0));
+    static final int LARGE_SINGLE_REGION = IS_LARGE.or(IS_HEAD.or(IS_TAIL.or(0)));
+    static final int LARGE_HEAD_ONLY =  IS_ITERABLE.or(IS_LARGE.or(IS_HEAD.or(0)));
+    static final int LARGE_FULL_TAIL =  IS_ITERABLE.or(IS_LARGE.or(IS_TAIL.or(0)));
+    static final int LARGE_TAIL = IS_ITERABLE.or(HAS_FREE_CHUNK.or(IS_LARGE.or(IS_TAIL.or(0))));
+    static final int LARGE_BODY =  IS_ITERABLE.or(IS_LARGE.or(0));
 
     /**
      * A 32-bit vector compounding several flags information. See {@link Flag} for usage of each of the bits.
@@ -116,6 +132,18 @@ public class HeapRegionInfo {
 
     public final boolean hasFreeChunks() {
         return HAS_FREE_CHUNK.isSet(flags);
+    }
+
+    public final boolean isLarge() {
+        return IS_LARGE.isSet(flags);
+    }
+
+    public final boolean isHeadOfLargeObject() {
+        return IS_HEAD.isSet(flags);
+    }
+
+    public final boolean isTailOfLargeObject() {
+        return IS_TAIL.isSet(flags);
     }
 
     HeapRegionInfo() {
@@ -205,6 +233,23 @@ public class HeapRegionInfo {
         flags = EMPTY_REGION;
     }
 
+    final void setLargeBody() {
+        flags = LARGE_BODY;
+    }
+    final void setLargeHead() {
+        flags = IS_ITERABLE.and(LARGE_HEAD_ONLY);
+    }
+
+    final void setLargeTail() {
+        flags = LARGE_FULL_TAIL;
+    }
+    final void setLargeTail(Address firstChunkAddress, Size numBytes) {
+        flags = LARGE_TAIL;
+        firstFreeChunkIndex = (short) firstChunkAddress.minus(regionStart()).unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
+        numFreeChunks = 1;
+        freeSpace = (short) numBytes.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
+    }
+
     final void setFreeChunks(Address firstChunkAddress, short numFreeWords, short numChunks) {
         flags = FREE_CHUNKS_REGION;
         firstFreeChunkIndex = (short) firstChunkAddress.minus(regionStart()).unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
@@ -213,7 +258,7 @@ public class HeapRegionInfo {
     }
 
     final void setFreeChunks(Address firstChunkAddress, Size numBytes, int numChunks) {
-        final short numFreeWords = (short) firstChunkAddress.unsignedShiftedRight(Kind.SHORT.width.log2numberOfBytes).toInt();
+        final short numFreeWords = (short) firstChunkAddress.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
         setFreeChunks(firstChunkAddress, numFreeWords, (short) numChunks);
     }
 
