@@ -559,6 +559,12 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
      */
     public abstract Object shallowCopy();
 
+    /**
+     * A carrier for the context needed to produce a local object that is a deep
+     * copy of a VM object.  Copying is truncated at any field annotated with {@link INSPECTED}
+     * and for which {@link INSPECTED#deepCopied()} returns {@code false}.
+     *
+     */
     protected static class DeepCopier {
 
         int level = 0;
@@ -639,7 +645,8 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
         }
 
         /**
-         * Updates the field of an object or class from the VM.
+         * Updates the field of an object or class from the VM.  The field will always be set to {@code null} if
+         * the field is annotated with {@link INSPECTED} and {@link INSPECTED#deepCopied()} returns {@code false}.
          *
          * @param teleObject surrogate for a tuple in the VM. This will be a static tuple if the field is static.
          * @param tuple the local object to be updated in the host VM. This value is ignored if the field is static.
@@ -713,7 +720,11 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
     }
 
     /**
-     * @return a best effort deep copy - with certain substitutions
+     * Creates a local copy of the remote VM object.  Deep copying is truncated at reference fields
+     * marked with the {@link INSPECTED} annotation specifying the value {@code false} for {@link INSPECTED#deepCopied()}.
+     *
+     * @return a best effort deep copy, truncated at reference fields for which {@link INSPECTED#deepCopied()} returns {@code false}.
+     * @see INSPECTED#deepCopied()
      */
     public final Object deepCopy() {
         Object objectCopy = null;
