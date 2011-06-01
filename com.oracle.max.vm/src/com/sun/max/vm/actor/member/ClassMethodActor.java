@@ -273,12 +273,20 @@ public abstract class ClassMethodActor extends MethodActor {
         if (codeAttribute != null) {
             Intrinsifier intrinsifier = new Intrinsifier(compilee, codeAttribute);
             intrinsifier.run();
+            ClassActor holder = compilee.holder();
             if ((intrinsifier.flags & BytecodeIntrinsifier.FLAG_HAS_SUBROUTINE) != 0) {
                 // Inline subroutines
                 String methodString = logBeforeSubroutineInlining(compilee);
-                TypeInferencingVerifier verifier = new TypeInferencingVerifier(compilee.holder());
+                TypeInferencingVerifier verifier = new TypeInferencingVerifier(holder);
                 codeAttribute = verify(compilee, codeAttribute, verifier);
                 logAfterSubroutineInlining(compilee, methodString);
+            } else if ((intrinsifier.flags & BytecodeIntrinsifier.FLAG_CHANGED) != 0) {
+                // Verify code that changed as it usually means word types are used and
+                // we want to make sure they are not being mixed with Object types.
+                if (!holder.kind.isWord) {
+                    ClassVerifier verifier = Verifier.verifierFor(holder);
+                    codeAttribute = verify(compilee, codeAttribute, verifier);
+                }
             }
 
             if (intrinsifier.unsafe) {
