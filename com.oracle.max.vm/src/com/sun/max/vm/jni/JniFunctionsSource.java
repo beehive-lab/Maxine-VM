@@ -38,6 +38,7 @@ import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jdk.*;
@@ -104,21 +105,15 @@ public final class JniFunctionsSource {
         Memory.readBytes(buffer, length, bytes);
         try {
             // TODO: find out whether already dottified class names should be rejected by this function
-            final Object[] arguments = {dottify(CString.utf8ToJava(slashifiedName)), bytes, 0, length};
-            Object cl = classLoader.unhand();
+            String name = dottify(CString.utf8ToJava(slashifiedName));
+            ClassLoader cl = (ClassLoader) classLoader.unhand();
             if (cl == null) {
                 cl = BootClassLoader.BOOT_CLASS_LOADER;
             }
-            return JniHandles.createLocalHandle(WithoutAccessCheck.invokeVirtual(cl, "defineClass", defineClassParameterTypes, arguments));
+            Class javaClass = ClassfileReader.defineClassActor(name, cl, bytes, 0, bytes.length, null, null, false).toJava();
+            return JniHandles.createLocalHandle(javaClass);
         } catch (Utf8Exception utf8Exception) {
             throw classFormatError("Invalid class name");
-        } catch (NoSuchMethodException noSuchMethodException) {
-            throw ProgramError.unexpected(noSuchMethodException);
-        } catch (IllegalAccessException illegalAccessException) {
-            throw ProgramError.unexpected(illegalAccessException);
-        } catch (InvocationTargetException invocationTargetException) {
-            VmThread.fromJniEnv(env).setJniException(invocationTargetException.getTargetException());
-            return JniHandle.zero();
         }
     }
 
