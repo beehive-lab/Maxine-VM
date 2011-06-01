@@ -1920,20 +1920,20 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                         case PGET_WORD:              pointerGet(WORD); break;
                         case PGET_REFERENCE:         pointerGet(VM_REFERENCE); break;
                         case PSET_BYTE:              pointerSet(BYTE); break;
-                        case PSET_SHORT:             pointerSet(BYTE); break;
-                        case PSET_INT:               pointerSet(SHORT); break;
-                        case PSET_FLOAT:             pointerSet(INTEGER); break;
-                        case PSET_LONG:              pointerSet(FLOAT); break;
-                        case PSET_DOUBLE:            pointerSet(LONG); break;
-                        case PSET_WORD:              pointerSet(DOUBLE); break;
-                        case PSET_REFERENCE:         pointerSet(WORD); break;
+                        case PSET_SHORT:             pointerSet(SHORT); break;
+                        case PSET_INT:               pointerSet(INTEGER); break;
+                        case PSET_FLOAT:             pointerSet(FLOAT); break;
+                        case PSET_LONG:              pointerSet(LONG); break;
+                        case PSET_DOUBLE:            pointerSet(DOUBLE); break;
+                        case PSET_WORD:              pointerSet(WORD); break;
+                        case PSET_REFERENCE:         pointerSet(VM_REFERENCE); break;
                         case PCMPSWP_INT:            pointerCompareAndSwap(INTEGER, false); break;
                         case PCMPSWP_WORD:           pointerCompareAndSwap(WORD, false); break;
                         case PCMPSWP_REFERENCE:      pointerCompareAndSwap(VM_REFERENCE, false); break;
                         case PCMPSWP_INT_I:          pointerCompareAndSwap(INTEGER, true); break;
                         case PCMPSWP_WORD_I:         pointerCompareAndSwap(WORD, true); break;
                         case PCMPSWP_REFERENCE_I:    pointerCompareAndSwap(VM_REFERENCE, true); break;
-                            default:                     verifyError("Unsupported bytecode: " + Bytecodes.nameOf(opcode));
+                        default:                     verifyError("Unsupported bytecode: " + Bytecodes.nameOf(opcode));
                     }
                     break;
                 }
@@ -2058,6 +2058,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
             frame.pop(type); // value
             frame.pop(INTEGER); // index
             frame.pop(INTEGER); // displacement
+            frame.pop(WORD); // pointer
         }
 
         private void pointerCompareAndSwap(VerificationType type, boolean intOffset) {
