@@ -22,7 +22,7 @@
  */
 package com.sun.max.vm.monitor;
 
-import static com.sun.max.unsafe.WithoutAccessCheck.*;
+import static com.sun.max.vm.hosted.WithoutAccessCheck.*;
 
 import java.util.*;
 import java.util.concurrent.locks.*;
