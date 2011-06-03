@@ -116,10 +116,6 @@ public class T1XRuntime {
     // == Misc routines =========================================================================================
     // ==========================================================================================================
 
-    public static void resolveAndCheckcast(ResolutionGuard guard, final Object object) {
-        Snippets.checkCast(Snippets.resolveClass(guard), object);
-    }
-
     public static void arrayStore(final int index, final Object array, final Object value) {
         ArrayAccess.checkIndex(array, index);
         ArrayAccess.checkSetObject(array, value);

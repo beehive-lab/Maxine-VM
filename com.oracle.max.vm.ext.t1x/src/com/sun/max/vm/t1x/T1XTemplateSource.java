@@ -104,132 +104,13 @@ public class T1XTemplateSource {
         Log.println(method);
     }
 
-    @T1X_TEMPLATE(LOCK_RECEIVER)
-    public static void lockReceiver(int dispToRcvr, int dispToRcvrCopy) {
-        Object rcvr = getLocalObject(dispToRcvr);
-        T1XRuntime.monitorenter(rcvr);
-        setLocalObject(dispToRcvrCopy, rcvr);
-    }
-
-    @T1X_TEMPLATE(UNLOCK_RECEIVER)
-    public static void unlockReceiver(int dispToRcvrCopy) {
-        Object rcvr = getLocalObject(dispToRcvrCopy);
-        T1XRuntime.monitorexit(rcvr);
-    }
-
-    @T1X_TEMPLATE(LOCK_CLASS)
-    public static void lockClass(Class c) {
-        T1XRuntime.monitorenter(c);
-    }
-
-    @T1X_TEMPLATE(UNLOCK_CLASS)
-    public static void unlockClass(Class c) {
-        T1XRuntime.monitorexit(c);
-    }
-
-    @T1X_TEMPLATE(DUP)
-    public static void dup() {
-        pushWord(peekWord(0));
-    }
-
-    @T1X_TEMPLATE(DUP_X1)
-    public static void dup_x1() {
-        Word value1 = peekWord(0);
-        Word value2 = peekWord(1);
-        pokeWord(1, value1);
-        pokeWord(0, value2);
-        pushWord(value1);
-    }
-
-    @T1X_TEMPLATE(DUP_X2)
-    public static void dup_x2() {
-        Word value1 = peekWord(0);
-        Word value2 = peekWord(1);
-        Word value3 = peekWord(2);
-        pushWord(value1);
-        pokeWord(1, value2);
-        pokeWord(2, value3);
-        pokeWord(3, value1);
-    }
-
-    @T1X_TEMPLATE(DUP2)
-    public static void dup2() {
-        Word value1 = peekWord(0);
-        Word value2 = peekWord(1);
-        pushWord(value2);
-        pushWord(value1);
-    }
-
-    @T1X_TEMPLATE(DUP2_X1)
-    public static void dup2_x1() {
-        Word value1 = peekWord(0);
-        Word value2 = peekWord(1);
-        Word value3 = peekWord(2);
-        pokeWord(2, value2);
-        pokeWord(1, value1);
-        pokeWord(0, value3);
-        pushWord(value2);
-        pushWord(value1);
-    }
-
-    @T1X_TEMPLATE(DUP2_X2)
-    public static void dup2_x2() {
-        Word value1 = peekWord(0);
-        Word value2 = peekWord(1);
-        Word value3 = peekWord(2);
-        Word value4 = peekWord(3);
-        pokeWord(3, value2);
-        pokeWord(2, value1);
-        pokeWord(1, value4);
-        pokeWord(0, value3);
-        pushWord(value2);
-        pushWord(value1);
-    }
-
     @T1X_TEMPLATE(NOP)
     public static void nop() {
         // do nothing.
     }
 
-    @T1X_TEMPLATE(SWAP)
-    public static void swap() {
-        Word value0 = peekWord(0);
-        Word value1 = peekWord(1);
-        pokeWord(0, value1);
-        pokeWord(1, value0);
-    }
-
-
-    @INLINE
-    public static void icmp0_prefix() {
-        Intrinsics.compareInts(popInt(), 0);
-    }
-
-    @INLINE
-    public static void acmp0_prefix() {
-        Object value = peekObject(0);
-        removeSlots(1);
-        Intrinsics.compareWords(toWord(value), Address.zero());
-    }
-
-    @INLINE
-    public static void icmp_prefix() {
-        int value2 = peekInt(0);
-        int value1 = peekInt(1);
-        removeSlots(2);
-        Intrinsics.compareInts(value1, value2);
-    }
-
     @INTRINSIC(Bytecodes.UNSAFE_CAST)
-    private static native Word toWord(Object object);
-
-    @INLINE
-    public static void acmp_prefix() {
-        Object value2 = peekObject(0);
-        Object value1 = peekObject(1);
-        removeSlots(2);
-        Intrinsics.compareWords(toWord(value1), toWord(value2));
-    }
+    public static native Word toWord(Object object);
 
     @INLINE
     public static void nullCheck(Pointer receiver) {
@@ -367,7 +248,8 @@ public class T1XTemplateSource {
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
-    @NEVER_INLINE    public static boolean resolveAndGetFieldBoolean(ResolutionGuard.InPool guard, Object object) {
+    @NEVER_INLINE
+    public static boolean resolveAndGetFieldBoolean(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         if (f.isVolatile()) {
             preVolatileRead();
@@ -386,7 +268,8 @@ public class T1XTemplateSource {
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
-    @NEVER_INLINE    public static boolean resolveAndGetStaticBoolean(ResolutionGuard.InPool guard) {
+    @NEVER_INLINE
+    public static boolean resolveAndGetStaticBoolean(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
         if (f.isVolatile()) {
@@ -499,7 +382,8 @@ public class T1XTemplateSource {
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
-    @NEVER_INLINE    public static byte resolveAndGetFieldByte(ResolutionGuard.InPool guard, Object object) {
+    @NEVER_INLINE
+    public static byte resolveAndGetFieldByte(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         if (f.isVolatile()) {
             preVolatileRead();
@@ -518,7 +402,8 @@ public class T1XTemplateSource {
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
-    @NEVER_INLINE    public static byte resolveAndGetStaticByte(ResolutionGuard.InPool guard) {
+    @NEVER_INLINE
+    public static byte resolveAndGetStaticByte(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
         if (f.isVolatile()) {
@@ -676,7 +561,8 @@ public class T1XTemplateSource {
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
-    @NEVER_INLINE    public static char resolveAndGetFieldChar(ResolutionGuard.InPool guard, Object object) {
+    @NEVER_INLINE
+    public static char resolveAndGetFieldChar(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         if (f.isVolatile()) {
             preVolatileRead();
@@ -695,7 +581,8 @@ public class T1XTemplateSource {
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
-    @NEVER_INLINE    public static char resolveAndGetStaticChar(ResolutionGuard.InPool guard) {
+    @NEVER_INLINE
+    public static char resolveAndGetStaticChar(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
         if (f.isVolatile()) {
@@ -843,7 +730,8 @@ public class T1XTemplateSource {
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
-    @NEVER_INLINE    public static short resolveAndGetFieldShort(ResolutionGuard.InPool guard, Object object) {
+    @NEVER_INLINE
+    public static short resolveAndGetFieldShort(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         if (f.isVolatile()) {
             preVolatileRead();
@@ -862,7 +750,8 @@ public class T1XTemplateSource {
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
-    @NEVER_INLINE    public static short resolveAndGetStaticShort(ResolutionGuard.InPool guard) {
+    @NEVER_INLINE
+    public static short resolveAndGetStaticShort(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
         if (f.isVolatile()) {
@@ -1083,7 +972,8 @@ public class T1XTemplateSource {
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
-    @NEVER_INLINE    public static int resolveAndGetFieldInt(ResolutionGuard.InPool guard, Object object) {
+    @NEVER_INLINE
+    public static int resolveAndGetFieldInt(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         if (f.isVolatile()) {
             preVolatileRead();
@@ -1102,7 +992,8 @@ public class T1XTemplateSource {
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
-    @NEVER_INLINE    public static int resolveAndGetStaticInt(ResolutionGuard.InPool guard) {
+    @NEVER_INLINE
+    public static int resolveAndGetStaticInt(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
         if (f.isVolatile()) {
@@ -1270,8 +1161,8 @@ public class T1XTemplateSource {
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INEG)
     public static void ineg() {
-        int value = -peekInt(0);
-        pokeInt(0, value);
+        int value = peekInt(0);
+        pokeInt(0, -value);
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
@@ -1331,94 +1222,121 @@ public class T1XTemplateSource {
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(IF_ICMPEQ)
     public static void if_icmpeq() {
-        icmp_prefix();
+        int value2 = peekInt(0);
+        int value1 = peekInt(1);
+        removeSlots(2);
+        Intrinsics.compareInts(value1, value2);
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(IFEQ)
     public static void ifeq() {
-        icmp0_prefix();
+        int value = popInt();
+        Intrinsics.compareInts(value, 0);
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(IF_ICMPNE)
     public static void if_icmpne() {
-        icmp_prefix();
+        int value2 = peekInt(0);
+        int value1 = peekInt(1);
+        removeSlots(2);
+        Intrinsics.compareInts(value1, value2);
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(IFNE)
     public static void ifne() {
-        icmp0_prefix();
+        int value = popInt();
+        Intrinsics.compareInts(value, 0);
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(IF_ICMPLT)
     public static void if_icmplt() {
-        icmp_prefix();
+        int value2 = peekInt(0);
+        int value1 = peekInt(1);
+        removeSlots(2);
+        Intrinsics.compareInts(value1, value2);
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(IFLT)
     public static void iflt() {
-        icmp0_prefix();
+        int value = popInt();
+        Intrinsics.compareInts(value, 0);
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(IF_ICMPGE)
     public static void if_icmpge() {
-        icmp_prefix();
+        int value2 = peekInt(0);
+        int value1 = peekInt(1);
+        removeSlots(2);
+        Intrinsics.compareInts(value1, value2);
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(IFGE)
     public static void ifge() {
-        icmp0_prefix();
+        int value = popInt();
+        Intrinsics.compareInts(value, 0);
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(IF_ICMPGT)
     public static void if_icmpgt() {
-        icmp_prefix();
+        int value2 = peekInt(0);
+        int value1 = peekInt(1);
+        removeSlots(2);
+        Intrinsics.compareInts(value1, value2);
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(IFGT)
     public static void ifgt() {
-        icmp0_prefix();
+        int value = popInt();
+        Intrinsics.compareInts(value, 0);
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(IF_ICMPLE)
     public static void if_icmple() {
-        icmp_prefix();
+        int value2 = peekInt(0);
+        int value1 = peekInt(1);
+        removeSlots(2);
+        Intrinsics.compareInts(value1, value2);
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(IFLE)
     public static void ifle() {
-        icmp0_prefix();
+        int value = popInt();
+        Intrinsics.compareInts(value, 0);
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(IRETURN)
     public static int ireturn() {
-        return popInt();
+        int result = popInt();
+        return result;
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(IRETURN$unlockClass)
-    public static int ireturnUnlockClass(Class<?> rcvr) {
-        Monitor.noninlineExit(rcvr);
-        return popInt();
+    public static int ireturnUnlockClass(Class<?> object) {
+        Monitor.noninlineExit(object);
+        int result = popInt();
+        return result;
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(IRETURN$unlockReceiver)
-    public static int ireturnUnlockReceiver(int dispToRcvrCopy) {
-        Object rcvr = getLocalObject(dispToRcvrCopy);
-        Monitor.noninlineExit(rcvr);
-        return popInt();
+    public static int ireturnUnlockReceiver(int dispToObjectCopy) {
+        Object object = getLocalObject(dispToObjectCopy);
+        Monitor.noninlineExit(object);
+        int result = popInt();
+        return result;
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
@@ -1544,7 +1462,8 @@ public class T1XTemplateSource {
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
-    @NEVER_INLINE    public static float resolveAndGetFieldFloat(ResolutionGuard.InPool guard, Object object) {
+    @NEVER_INLINE
+    public static float resolveAndGetFieldFloat(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         if (f.isVolatile()) {
             preVolatileRead();
@@ -1563,7 +1482,8 @@ public class T1XTemplateSource {
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
-    @NEVER_INLINE    public static float resolveAndGetStaticFloat(ResolutionGuard.InPool guard) {
+    @NEVER_INLINE
+    public static float resolveAndGetStaticFloat(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
         if (f.isVolatile()) {
@@ -1731,8 +1651,8 @@ public class T1XTemplateSource {
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(FNEG)
     public static void fneg(float zero) {
-        float value = zero - peekFloat(0);
-        pokeFloat(0, value);
+        float value = peekFloat(0);
+        pokeFloat(0, zero - value);
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
@@ -1758,22 +1678,25 @@ public class T1XTemplateSource {
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(FRETURN)
     public static float freturn() {
-        return popFloat();
+        float result = popFloat();
+        return result;
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(FRETURN$unlockClass)
-    public static float freturnUnlockClass(Class<?> rcvr) {
-        Monitor.noninlineExit(rcvr);
-        return popFloat();
+    public static float freturnUnlockClass(Class<?> object) {
+        Monitor.noninlineExit(object);
+        float result = popFloat();
+        return result;
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(FRETURN$unlockReceiver)
-    public static float freturnUnlockReceiver(int dispToRcvrCopy) {
-        Object rcvr = getLocalObject(dispToRcvrCopy);
-        Monitor.noninlineExit(rcvr);
-        return popFloat();
+    public static float freturnUnlockReceiver(int dispToObjectCopy) {
+        Object object = getLocalObject(dispToObjectCopy);
+        Monitor.noninlineExit(object);
+        float result = popFloat();
+        return result;
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
@@ -1955,7 +1878,8 @@ public class T1XTemplateSource {
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
-    @NEVER_INLINE    public static long resolveAndGetFieldLong(ResolutionGuard.InPool guard, Object object) {
+    @NEVER_INLINE
+    public static long resolveAndGetFieldLong(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         if (f.isVolatile()) {
             preVolatileRead();
@@ -1974,7 +1898,8 @@ public class T1XTemplateSource {
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
-    @NEVER_INLINE    public static long resolveAndGetStaticLong(ResolutionGuard.InPool guard) {
+    @NEVER_INLINE
+    public static long resolveAndGetStaticLong(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
         if (f.isVolatile()) {
@@ -2142,8 +2067,8 @@ public class T1XTemplateSource {
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(LNEG)
     public static void lneg() {
-        long value = -peekLong(0);
-        pokeLong(0, value);
+        long value = peekLong(0);
+        pokeLong(0, -value);
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
@@ -2213,22 +2138,25 @@ public class T1XTemplateSource {
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(LRETURN)
     public static long lreturn() {
-        return popLong();
+        long result = popLong();
+        return result;
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(LRETURN$unlockClass)
-    public static long lreturnUnlockClass(Class<?> rcvr) {
-        Monitor.noninlineExit(rcvr);
-        return popLong();
+    public static long lreturnUnlockClass(Class<?> object) {
+        Monitor.noninlineExit(object);
+        long result = popLong();
+        return result;
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(LRETURN$unlockReceiver)
-    public static long lreturnUnlockReceiver(int dispToRcvrCopy) {
-        Object rcvr = getLocalObject(dispToRcvrCopy);
-        Monitor.noninlineExit(rcvr);
-        return popLong();
+    public static long lreturnUnlockReceiver(int dispToObjectCopy) {
+        Object object = getLocalObject(dispToObjectCopy);
+        Monitor.noninlineExit(object);
+        long result = popLong();
+        return result;
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
@@ -2407,7 +2335,8 @@ public class T1XTemplateSource {
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
-    @NEVER_INLINE    public static double resolveAndGetFieldDouble(ResolutionGuard.InPool guard, Object object) {
+    @NEVER_INLINE
+    public static double resolveAndGetFieldDouble(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         if (f.isVolatile()) {
             preVolatileRead();
@@ -2426,7 +2355,8 @@ public class T1XTemplateSource {
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
-    @NEVER_INLINE    public static double resolveAndGetStaticDouble(ResolutionGuard.InPool guard) {
+    @NEVER_INLINE
+    public static double resolveAndGetStaticDouble(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
         if (f.isVolatile()) {
@@ -2594,8 +2524,8 @@ public class T1XTemplateSource {
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(DNEG)
     public static void dneg(double zero) {
-        double value = zero - peekDouble(0);
-        pokeDouble(0, value);
+        double value = peekDouble(0);
+        pokeDouble(0, zero - value);
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
@@ -2621,22 +2551,25 @@ public class T1XTemplateSource {
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(DRETURN)
     public static double dreturn() {
-        return popDouble();
+        double result = popDouble();
+        return result;
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(DRETURN$unlockClass)
-    public static double dreturnUnlockClass(Class<?> rcvr) {
-        Monitor.noninlineExit(rcvr);
-        return popDouble();
+    public static double dreturnUnlockClass(Class<?> object) {
+        Monitor.noninlineExit(object);
+        double result = popDouble();
+        return result;
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(DRETURN$unlockReceiver)
-    public static double dreturnUnlockReceiver(int dispToRcvrCopy) {
-        Object rcvr = getLocalObject(dispToRcvrCopy);
-        Monitor.noninlineExit(rcvr);
-        return popDouble();
+    public static double dreturnUnlockReceiver(int dispToObjectCopy) {
+        Object object = getLocalObject(dispToObjectCopy);
+        Monitor.noninlineExit(object);
+        double result = popDouble();
+        return result;
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
@@ -2813,7 +2746,8 @@ public class T1XTemplateSource {
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
-    @NEVER_INLINE    public static Object resolveAndGetFieldReference(ResolutionGuard.InPool guard, Object object) {
+    @NEVER_INLINE
+    public static Object resolveAndGetFieldReference(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         if (f.isVolatile()) {
             preVolatileRead();
@@ -2832,7 +2766,8 @@ public class T1XTemplateSource {
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
-    @NEVER_INLINE    public static Object resolveAndGetStaticReference(ResolutionGuard.InPool guard) {
+    @NEVER_INLINE
+    public static Object resolveAndGetStaticReference(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
         if (f.isVolatile()) {
@@ -2940,46 +2875,57 @@ public class T1XTemplateSource {
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(IF_ACMPEQ)
     public static void if_acmpeq() {
-        acmp_prefix();
+        Object value2 = peekObject(0);
+        Object value1 = peekObject(1);
+        removeSlots(2);
+        Intrinsics.compareWords(toWord(value1), toWord(value2));
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(IF_ACMPNE)
     public static void if_acmpne() {
-        acmp_prefix();
+        Object value2 = peekObject(0);
+        Object value1 = peekObject(1);
+        removeSlots(2);
+        Intrinsics.compareWords(toWord(value1), toWord(value2));
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(IFNULL)
     public static void ifnull() {
-        acmp0_prefix();
+        Object value = popObject();
+        Intrinsics.compareWords(toWord(value), Address.zero());
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(IFNONNULL)
     public static void ifnonnull() {
-        acmp0_prefix();
+        Object value = popObject();
+        Intrinsics.compareWords(toWord(value), Address.zero());
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(ARETURN)
     public static Object areturn() {
-        return popObject();
+        Object result = popObject();
+        return result;
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(ARETURN$unlockClass)
-    public static Object areturnUnlockClass(Class<?> rcvr) {
-        Monitor.noninlineExit(rcvr);
-        return popObject();
+    public static Object areturnUnlockClass(Class<?> object) {
+        Monitor.noninlineExit(object);
+        Object result = popObject();
+        return result;
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(ARETURN$unlockReceiver)
-    public static Object areturnUnlockReceiver(int dispToRcvrCopy) {
-        Object rcvr = getLocalObject(dispToRcvrCopy);
-        Monitor.noninlineExit(rcvr);
-        return popObject();
+    public static Object areturnUnlockReceiver(int dispToObjectCopy) {
+        Object object = getLocalObject(dispToObjectCopy);
+        Monitor.noninlineExit(object);
+        Object result = popObject();
+        return result;
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
@@ -3106,7 +3052,8 @@ public class T1XTemplateSource {
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
-    @NEVER_INLINE    public static Word resolveAndGetFieldWord(ResolutionGuard.InPool guard, Object object) {
+    @NEVER_INLINE
+    public static Word resolveAndGetFieldWord(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
         if (f.isVolatile()) {
             preVolatileRead();
@@ -3125,7 +3072,8 @@ public class T1XTemplateSource {
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
-    @NEVER_INLINE    public static Word resolveAndGetStaticWord(ResolutionGuard.InPool guard) {
+    @NEVER_INLINE
+    public static Word resolveAndGetStaticWord(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
         if (f.isVolatile()) {
@@ -3219,22 +3167,25 @@ public class T1XTemplateSource {
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(WRETURN)
     public static Word wreturn() {
-        return popWord();
+        Word result = popWord();
+        return result;
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(WRETURN$unlockClass)
-    public static Word wreturnUnlockClass(Class<?> rcvr) {
-        Monitor.noninlineExit(rcvr);
-        return popWord();
+    public static Word wreturnUnlockClass(Class<?> object) {
+        Monitor.noninlineExit(object);
+        Word result = popWord();
+        return result;
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(WRETURN$unlockReceiver)
-    public static Word wreturnUnlockReceiver(int dispToRcvrCopy) {
-        Object rcvr = getLocalObject(dispToRcvrCopy);
-        Monitor.noninlineExit(rcvr);
-        return popWord();
+    public static Word wreturnUnlockReceiver(int dispToObjectCopy) {
+        Object object = getLocalObject(dispToObjectCopy);
+        Monitor.noninlineExit(object);
+        Word result = popWord();
+        return result;
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
@@ -3401,15 +3352,15 @@ public class T1XTemplateSource {
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(RETURN$unlockClass)
-    public static void vreturnUnlockClass(Class<?> rcvr) {
-        Monitor.noninlineExit(rcvr);
+    public static void vreturnUnlockClass(Class<?> object) {
+        Monitor.noninlineExit(object);
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(RETURN$unlockReceiver)
-    public static void vreturnUnlockReceiver(int dispToRcvrCopy) {
-        Object rcvr = getLocalObject(dispToRcvrCopy);
-        Monitor.noninlineExit(rcvr);
+    public static void vreturnUnlockReceiver(int dispToObjectCopy) {
+        Object object = getLocalObject(dispToObjectCopy);
+        Monitor.noninlineExit(object);
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
@@ -3662,15 +3613,22 @@ public class T1XTemplateSource {
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(CHECKCAST)
     public static void checkcast(ResolutionGuard arg) {
-        Object value = peekObject(0);
-        resolveAndCheckcast(arg, value);
+        Object object = peekObject(0);
+        resolveAndCheckcast(arg, object);
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(CHECKCAST$resolved)
-    public static void checkcast(ClassActor arg) {
-        Object value = peekObject(0);
-        Snippets.checkCast(arg, value);
+    public static void checkcast(ClassActor classActor) {
+        Object object = peekObject(0);
+        Snippets.checkCast(classActor, object);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @NEVER_INLINE
+    private static void resolveAndCheckcast(ResolutionGuard guard, final Object object) {
+        ClassActor classActor = Snippets.resolveClass(guard);
+        Snippets.checkCast(classActor, object);
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
@@ -3721,13 +3679,215 @@ public class T1XTemplateSource {
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(RETURN$registerFinalizer)
-    public static void vreturnRegisterFinalizer(int dispToRcvrCopy) {
-        Object rcvr = getLocalObject(dispToRcvrCopy);
-        if (ObjectAccess.readClassActor(rcvr).hasFinalizer()) {
-            SpecialReferenceManager.registerFinalizee(rcvr);
+    public static void vreturnRegisterFinalizer(int dispToObjectCopy) {
+        Object object = getLocalObject(dispToObjectCopy);
+        if (ObjectAccess.readClassActor(object).hasFinalizer()) {
+            SpecialReferenceManager.registerFinalizee(object);
         }
     }
 
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(DUP)
+    public static void dup() {
+        pushWord(peekWord(0));
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(DUP_X1)
+    public static void dup_x1() {
+        Word value1 = peekWord(0);
+        Word value2 = peekWord(1);
+        pokeWord(1, value1);
+        pokeWord(0, value2);
+        pushWord(value1);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(DUP_X2)
+    public static void dup_x2() {
+        Word value1 = peekWord(0);
+        Word value2 = peekWord(1);
+        Word value3 = peekWord(2);
+        pushWord(value1);
+        pokeWord(1, value2);
+        pokeWord(2, value3);
+        pokeWord(3, value1);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(DUP2)
+    public static void dup2() {
+        Word value1 = peekWord(0);
+        Word value2 = peekWord(1);
+        pushWord(value2);
+        pushWord(value1);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(DUP2_X1)
+    public static void dup2_x1() {
+        Word value1 = peekWord(0);
+        Word value2 = peekWord(1);
+        Word value3 = peekWord(2);
+        pokeWord(2, value2);
+        pokeWord(1, value1);
+        pokeWord(0, value3);
+        pushWord(value2);
+        pushWord(value1);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(DUP2_X2)
+    public static void dup2_x2() {
+        Word value1 = peekWord(0);
+        Word value2 = peekWord(1);
+        Word value3 = peekWord(2);
+        Word value4 = peekWord(3);
+        pokeWord(3, value2);
+        pokeWord(2, value1);
+        pokeWord(1, value4);
+        pokeWord(0, value3);
+        pushWord(value2);
+        pushWord(value1);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(SWAP)
+    public static void swap() {
+        Word value0 = peekWord(0);
+        Word value1 = peekWord(1);
+        pokeWord(0, value1);
+        pokeWord(1, value0);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(LOCK_RECEIVER)
+    public static void lockReceiver(int dispToRcvr, int dispToRcvrCopy) {
+        Object object = getLocalObject(dispToRcvr);
+        T1XRuntime.monitorenter(object);
+        setLocalObject(dispToRcvrCopy, object);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(UNLOCK_RECEIVER)
+    public static void unlockReceiver(int dispToRcvrCopy) {
+        Object object = getLocalObject(dispToRcvrCopy);
+        T1XRuntime.monitorexit(object);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(LOCK_CLASS)
+    public static void lockClass(Class object) {
+        T1XRuntime.monitorenter(object);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(UNLOCK_CLASS)
+    public static void unlockClass(Class object) {
+        T1XRuntime.monitorexit(object);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @INLINE
+    public static void indirectCallFloat(Address address, CallEntryPoint callEntryPoint) {
+        final float result = Intrinsics.callFloat(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset()));
+        pushFloat(result);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @INLINE
+    public static void indirectCallFloat(Address address, CallEntryPoint callEntryPoint, Object receiver) {
+        final float result = Intrinsics.callFloat(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset()), receiver);
+        pushFloat(result);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @INLINE
+    public static void directCallFloat() {
+        final float result = Intrinsics.callFloat();
+        pushFloat(result);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @INLINE
+    public static void indirectCallLong(Address address, CallEntryPoint callEntryPoint) {
+        final long result = Intrinsics.callLong(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset()));
+        pushLong(result);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @INLINE
+    public static void indirectCallLong(Address address, CallEntryPoint callEntryPoint, Object receiver) {
+        final long result = Intrinsics.callLong(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset()), receiver);
+        pushLong(result);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @INLINE
+    public static void directCallLong() {
+        final long result = Intrinsics.callLong();
+        pushLong(result);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @INLINE
+    public static void indirectCallDouble(Address address, CallEntryPoint callEntryPoint) {
+        final double result = Intrinsics.callDouble(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset()));
+        pushDouble(result);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @INLINE
+    public static void indirectCallDouble(Address address, CallEntryPoint callEntryPoint, Object receiver) {
+        final double result = Intrinsics.callDouble(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset()), receiver);
+        pushDouble(result);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @INLINE
+    public static void directCallDouble() {
+        final double result = Intrinsics.callDouble();
+        pushDouble(result);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @INLINE
+    public static void indirectCallWord(Address address, CallEntryPoint callEntryPoint) {
+        final Word result = Intrinsics.callWord(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset()));
+        pushWord(result);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @INLINE
+    public static void indirectCallWord(Address address, CallEntryPoint callEntryPoint, Object receiver) {
+        final Word result = Intrinsics.callWord(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset()), receiver);
+        pushWord(result);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @INLINE
+    public static void directCallWord() {
+        final Word result = Intrinsics.callWord();
+        pushWord(result);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @INLINE
+    public static void indirectCallVoid(Address address, CallEntryPoint callEntryPoint) {
+        Intrinsics.call(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset()));
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @INLINE
+    public static void indirectCallVoid(Address address, CallEntryPoint callEntryPoint, Object receiver) {
+        Intrinsics.call(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset()), receiver);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @INLINE
+    public static void directCallVoid() {
+        Intrinsics.call();
+    }
 
 
 }
