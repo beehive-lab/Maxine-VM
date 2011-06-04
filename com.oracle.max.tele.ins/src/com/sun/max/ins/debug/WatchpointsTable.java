@@ -66,7 +66,7 @@ public final class WatchpointsTable extends InspectorTable {
             final MaxWatchpoint watchpoint = (MaxWatchpoint) tableModel.getValueAt(row, col);
             final TeleObject teleObject = watchpoint.getTeleObject();
             if (teleObject != null) {
-                menu.add(actions().inspectObject(teleObject, "Inspect Object"));
+                menu.add(views().objects().makeViewAction(teleObject, "Inspect Object"));
                 return menu;
             }
         }

@@ -66,7 +66,7 @@ public class TypeLabel extends InspectorLabel {
                     final InspectorPopupMenu menu = new InspectorPopupMenu();
                     final boolean enabled = teleClassActor != null;
 
-                    final InspectorAction inspectActorAction = actions().inspectObject(teleClassActor, "Inspect ClassActor for this type (Left-Button)");
+                    final InspectorAction inspectActorAction = views().objects().makeViewAction(teleClassActor, "Inspect ClassActor for this type (Left-Button)");
                     inspectActorAction.setEnabled(enabled);
                     menu.add(inspectActorAction);
 

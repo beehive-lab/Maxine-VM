@@ -77,7 +77,7 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectInsp
     private final Constructor defaultArrayInspectorConstructor;
     private final Constructor defaultTupleInspectorConstructor;
 
-    private final InspectorAction interactiveMakeViewAction;
+    private final InspectorAction interactiveMakeViewByAddressAction;
     private final InspectorAction interactiveMakeViewByIDAction;
     private final List<InspectorAction> makeViewActions;
 
@@ -109,66 +109,29 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectInsp
             }
         });
 
-        interactiveMakeViewAction = new InspectorAction(inspection(), "View object at address...") {
-
-            @Override
-            protected void procedure() {
-                new AddressInputDialog(inspection(), vm().heap().bootHeapRegion().memoryRegion().start(), "Inspect object at address...", "Inspect") {
-
-                    @Override
-                    public void entered(Address address) {
-                        try {
-                            final Pointer pointer = address.asPointer();
-                            if (vm().isValidOrigin(pointer)) {
-                                final Reference objectReference = vm().originToReference(pointer);
-                                final TeleObject teleObject = vm().heap().findTeleObject(objectReference);
-                                focus().setHeapObject(teleObject);
-                            } else {
-                                gui().errorMessage("heap object not found at "  + address.to0xHexString());
-                            }
-                        } catch (MaxVMBusyException maxVMBusyException) {
-                            inspection().announceVMBusyFailure(name());
-                        }
-                    }
-                };
-            }
-        };
-        interactiveMakeViewByIDAction = new InspectorAction(inspection(), "View object by ID...") {
-
-            @Override
-            protected void procedure() {
-                final String input = gui().inputDialog("Inspect object by ID..", "");
-                if (input == null) {
-                    // User clicked cancel.
-                    return;
-                }
-                try {
-                    final long oid = Long.parseLong(input);
-                    final TeleObject teleObject = vm().heap().findObjectByOID(oid);
-                    if (teleObject != null) {
-                        focus().setHeapObject(teleObject);
-                    } else {
-                        gui().errorMessage("failed to find heap object for ID: " + input);
-                    }
-                } catch (NumberFormatException numberFormatException) {
-                    gui().errorMessage("Not a ID: " + input);
-                }
-            }
-
-        };
+        interactiveMakeViewByAddressAction = new InteractiveViewObjectByAddressAction();
+        interactiveMakeViewByIDAction = new InteractiveViewObjectByIDAction();
 
         makeViewActions = new ArrayList<InspectorAction>(1);
-        makeViewActions.add(interactiveMakeViewAction);
+        makeViewActions.add(interactiveMakeViewByAddressAction);
         makeViewActions.add(interactiveMakeViewByIDAction);
         Trace.end(1, tracePrefix() + "initializing");
     }
 
-    public InspectorAction makeViewAction() {
-        return interactiveMakeViewAction;
+    public ObjectInspector makeView(TeleObject teleObject) {
+        return makeObjectInspector(inspection(), teleObject);
+    }
+
+    public InspectorAction makeViewByAddressAction() {
+        return interactiveMakeViewByAddressAction;
     }
 
     public InspectorAction makeViewByIDAction() {
         return interactiveMakeViewByIDAction;
+    }
+
+    public InspectorAction makeViewAction(TeleObject teleObject, String actionTitle) {
+        return new InspectSpecifiedObjectAction(teleObject, actionTitle);
     }
 
     @Override
@@ -183,7 +146,7 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectInsp
         return makeViewActions;
     }
 
-    private void makeObjectInspector(Inspection inspection, TeleObject teleObject) {
+    private ObjectInspector makeObjectInspector(Inspection inspection, TeleObject teleObject) {
         ObjectInspector objectInspector =  teleObjectToInspector.get(teleObject);
         if (objectInspector == null) {
             switch (teleObject.kind()) {
@@ -247,6 +210,7 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectInsp
         if (objectInspector != null) {
             objectInspector.highlight();
         }
+        return objectInspector;
     }
 
     private Constructor getConstructor(Class clazz) {
@@ -285,4 +249,80 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectInsp
     public Set<ObjectInspector> inspectors() {
         return new HashSet<ObjectInspector>(teleObjectToInspector.values());
     }
+
+    private final class InteractiveViewObjectByAddressAction extends InspectorAction {
+
+        InteractiveViewObjectByAddressAction() {
+            super(inspection(), "View object at address...");
+        }
+
+        @Override
+        protected void procedure() {
+            new AddressInputDialog(inspection(), vm().heap().bootHeapRegion().memoryRegion().start(), "Inspect object at address...", "Inspect") {
+
+                @Override
+                public void entered(Address address) {
+                    try {
+                        final Pointer pointer = address.asPointer();
+                        if (vm().isValidOrigin(pointer)) {
+                            final Reference objectReference = vm().originToReference(pointer);
+                            final TeleObject teleObject = vm().heap().findTeleObject(objectReference);
+                            focus().setHeapObject(teleObject);
+                        } else {
+                            gui().errorMessage("heap object not found at "  + address.to0xHexString());
+                        }
+                    } catch (MaxVMBusyException maxVMBusyException) {
+                        inspection().announceVMBusyFailure(name());
+                    }
+                }
+            };
+        }
+    }
+
+    private final class InteractiveViewObjectByIDAction extends InspectorAction {
+
+        InteractiveViewObjectByIDAction() {
+            super(inspection(), "View object by ID...");
+        }
+
+        @Override
+        protected void procedure() {
+            final String input = gui().inputDialog("View object by ID..", "");
+            if (input == null) {
+                // User clicked cancel.
+                return;
+            }
+            try {
+                final long oid = Long.parseLong(input);
+                final TeleObject teleObject = vm().heap().findObjectByOID(oid);
+                if (teleObject != null) {
+                    focus().setHeapObject(teleObject);
+                } else {
+                    gui().errorMessage("failed to find heap object for ID: " + input);
+                }
+            } catch (NumberFormatException numberFormatException) {
+                gui().errorMessage("Not an object ID: " + input);
+            }
+        }
+    }
+
+    /**
+     * Action:  creates an inspector for a specific heap object in the VM.
+     */
+    private final class InspectSpecifiedObjectAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Inspect object";
+        final TeleObject teleObject;
+
+        InspectSpecifiedObjectAction(TeleObject teleObject, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+            this.teleObject = teleObject;
+        }
+
+        @Override
+        protected void procedure() {
+            focus().setHeapObject(teleObject);
+        }
+    }
+
 }

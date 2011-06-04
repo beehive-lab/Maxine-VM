@@ -418,7 +418,7 @@ public final class NotepadInspector extends Inspector<NotepadInspector> {
 
         @Override
         protected void procedure() {
-            actions().inspectObject(object, null).perform();
+            views().objects().makeView(object);
             focus().setAddress(address);
         }
 

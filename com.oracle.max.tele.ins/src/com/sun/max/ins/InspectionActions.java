@@ -977,35 +977,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  creates an inspector for a specific heap object in the VM.
-     */
-    final class InspectSpecifiedObjectAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Inspect object";
-        final TeleObject teleObject;
-
-        InspectSpecifiedObjectAction(TeleObject teleObject, String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.teleObject = teleObject;
-        }
-
-        @Override
-        protected void procedure() {
-            focus().setHeapObject(teleObject);
-        }
-    }
-
-    /**
-     * @param surrogate for a heap object in the VM.
-     * @param actionTitle a string name for the Action, uses default name if null
-     * @return an Action that will create an Object Inspector
-     */
-    public final InspectorAction inspectObject(TeleObject teleObject, String actionTitle) {
-        return new InspectSpecifiedObjectAction(teleObject, actionTitle);
-    }
-
-
-    /**
      * Action: create an Object Inspector for the boot {@link ClassRegistry} in the VM.
      */
     final class InspectBootClassRegistryAction extends InspectorAction {
@@ -1246,7 +1217,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 for (int index = getMenuComponentCount(); index < compilations.size(); index++) {
                     final MaxCompiledCode compiledCode = compilations.get(index);
                     final String name = inspection().nameDisplay().shortName(compiledCode);
-                    add(actions().inspectObject(compiledCode.representation(), name.toString()));
+                    add(views().objects().makeViewAction(compiledCode.representation(), name.toString()));
                 }
             }
         }

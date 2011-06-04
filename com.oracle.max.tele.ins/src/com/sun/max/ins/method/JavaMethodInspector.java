@@ -218,13 +218,13 @@ public class JavaMethodInspector extends MethodInspector<JavaMethodInspector> {
             final InspectorAction copyAction = actions().copyCompiledCodeToClipboard(compiledCode, null);
             copyAction.setEnabled(true);
             editMenu.add(copyAction);
-            objectMenu.add(actions().inspectObject(compiledCode.representation(), "Compiled method: " + compiledCode.classActorForObjectType().simpleName()));
+            objectMenu.add(views().objects().makeViewAction(compiledCode.representation(), "Compiled method: " + compiledCode.classActorForObjectType().simpleName()));
         }
 
         if (teleClassMethodActor != null) {
-            objectMenu.add(actions().inspectObject(teleClassMethodActor, "Method: " + teleClassMethodActor.classActorForObjectType().simpleName()));
+            objectMenu.add(views().objects().makeViewAction(teleClassMethodActor, "Method: " + teleClassMethodActor.classActorForObjectType().simpleName()));
             final TeleClassActor teleClassActor = teleClassMethodActor.getTeleHolder();
-            objectMenu.add(actions().inspectObject(teleClassActor, "Holder: " + teleClassActor.classActorForObjectType().simpleName()));
+            objectMenu.add(views().objects().makeViewAction(teleClassActor, "Holder: " + teleClassActor.classActorForObjectType().simpleName()));
             objectMenu.add(actions().inspectSubstitutionSourceClassActorAction(teleClassMethodActor));
             objectMenu.add(actions().inspectMethodCompilationsMenu(teleClassMethodActor, "Method compilations:"));
             objectMenu.add(defaultMenuItems(OBJECT_MENU));

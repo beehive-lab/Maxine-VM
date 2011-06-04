@@ -71,7 +71,7 @@ public final class MemoryAllocationsTable extends InspectorTable {
                 TeleObject representation = entityMemoryRegion.owner().representation();
                 if (representation != null) {
                     final String actionTitle = "Owner: " + inspection().nameDisplay().longName(representation);
-                    ownerAction = inspection().actions().inspectObject(representation, actionTitle);
+                    ownerAction = views().objects().makeViewAction(representation, actionTitle);
                 }
             }
         }
