@@ -77,9 +77,9 @@ public final class HubInspector extends ObjectInspector<HubInspector> {
             debugMenu.add(actions().setBytecodeBreakpointAtMethodEntry(teleClassMethodActor));
             debugMenu.add(actions().debugInvokeMethod(teleClassMethodActor));
 
-            objectMenu.add(actions().inspectObject(teleClassMethodActor, teleClassMethodActor.classActorForObjectType().simpleName()));
+            objectMenu.add(views().objects().makeViewAction(teleClassMethodActor, teleClassMethodActor.classActorForObjectType().simpleName()));
             final TeleClassActor teleClassActor = teleClassMethodActor.getTeleHolder();
-            objectMenu.add(actions().inspectObject(teleClassActor, teleClassActor.classActorForObjectType().simpleName()));
+            objectMenu.add(views().objects().makeViewAction(teleClassActor, teleClassActor.classActorForObjectType().simpleName()));
             objectMenu.add(actions().inspectSubstitutionSourceClassActorAction(teleClassMethodActor));
             objectMenu.add(actions().inspectMethodCompilationsMenu(teleClassMethodActor));
 

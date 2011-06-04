@@ -45,9 +45,9 @@ public final class ClassMethodActorMenuItems extends AbstractInspectorMenuItems 
 
     public void addTo(InspectorMenu menu) {
         final InspectorMenu objectMenu = new InspectorMenu("Object");
-        objectMenu.add(actions().inspectObject(teleClassMethodActor, "Method: " + teleClassMethodActor.classActorForObjectType().simpleName()));
+        objectMenu.add(views().objects().makeViewAction(teleClassMethodActor, "Method: " + teleClassMethodActor.classActorForObjectType().simpleName()));
         final TeleClassActor teleClassActor = teleClassMethodActor.getTeleHolder();
-        objectMenu.add(actions().inspectObject(teleClassActor, "Holder: " + teleClassActor.classActorForObjectType().simpleName()));
+        objectMenu.add(views().objects().makeViewAction(teleClassActor, "Holder: " + teleClassActor.classActorForObjectType().simpleName()));
         objectMenu.add(actions().inspectSubstitutionSourceClassActorAction(teleClassMethodActor));
         objectMenu.add(actions().inspectMethodCompilationsMenu(teleClassMethodActor));
         menu.add(objectMenu);
@@ -66,9 +66,9 @@ public final class ClassMethodActorMenuItems extends AbstractInspectorMenuItems 
 
     public void addTo(InspectorPopupMenu menu) {
         final InspectorMenu objectMenu = new InspectorMenu("Object");
-        objectMenu.add(actions().inspectObject(teleClassMethodActor, "Method: " + teleClassMethodActor.classActorForObjectType().simpleName()));
+        objectMenu.add(views().objects().makeViewAction(teleClassMethodActor, "Method: " + teleClassMethodActor.classActorForObjectType().simpleName()));
         final TeleClassActor teleClassActor = teleClassMethodActor.getTeleHolder();
-        objectMenu.add(actions().inspectObject(teleClassActor, "Holder: " + teleClassActor.classActorForObjectType().simpleName()));
+        objectMenu.add(views().objects().makeViewAction(teleClassActor, "Holder: " + teleClassActor.classActorForObjectType().simpleName()));
         objectMenu.add(actions().inspectSubstitutionSourceClassActorAction(teleClassMethodActor));
         objectMenu.add(actions().inspectMethodCompilationsMenu(teleClassMethodActor));
         menu.add(objectMenu);

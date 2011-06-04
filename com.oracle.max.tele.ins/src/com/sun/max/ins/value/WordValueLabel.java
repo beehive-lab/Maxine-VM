@@ -853,7 +853,7 @@ public class WordValueLabel extends ValueLabel {
                     // Can't read VM right now
                 }
                 if (teleObject != null) {
-                    action = actions().inspectObject(teleObject, null);
+                    action = views().objects().makeViewAction(teleObject, null);
                 }
                 break;
             }
@@ -875,7 +875,7 @@ public class WordValueLabel extends ValueLabel {
             case CLASS_ACTOR: {
                 final TeleClassActor teleClassActor = vm().classRegistry().findTeleClassActor(value.asWord().asAddress().toInt());
                 if (teleClassActor != null) {
-                    action = actions().inspectObject(teleClassActor, "Inspect ClassActor");
+                    action = views().objects().makeViewAction(teleClassActor, "Inspect ClassActor");
                 }
                 break;
             }

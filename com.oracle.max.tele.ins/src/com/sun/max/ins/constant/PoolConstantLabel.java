@@ -199,8 +199,8 @@ public abstract class PoolConstantLabel extends InspectorLabel {
         if (telePoolConstant != null) {
             menu.add(actions().copyWord(telePoolConstant.origin(), "Copy PoolConstant address toclipboard"));
             menu.add(views().memory().makeViewAction(telePoolConstant, "Inspect PoolConstant memory words"));
-            menu.add(actions().inspectObject(telePoolConstant, "Inspect PoolConstant #" + Integer.toString(index)));
-            menu.add(actions().inspectObject(teleConstantPool, "Inspect ConstantPool"));
+            menu.add(views().objects().makeViewAction(telePoolConstant, "Inspect PoolConstant #" + Integer.toString(index)));
+            menu.add(views().objects().makeViewAction(teleConstantPool, "Inspect ConstantPool"));
             specializeMenu(menu);
         }
         return menu;
@@ -253,7 +253,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                 menu.addSeparator();
                 final TeleClassConstant.Resolved teleResolvedClassConstant = (TeleClassConstant.Resolved) telePoolConstant();
                 final TeleClassActor teleClassActor = teleResolvedClassConstant.getTeleClassActor();
-                menu.add(actions().inspectObject(teleClassActor, "Inspect ClassActor"));
+                menu.add(views().objects().makeViewAction(teleClassActor, "Inspect ClassActor"));
             }
         }
     }
@@ -296,7 +296,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                 menu.addSeparator();
                 final TeleFieldRefConstant.Resolved teleResolvedFieldRefConstant = (TeleFieldRefConstant.Resolved) telePoolConstant();
                 final TeleFieldActor teleFieldActor = teleResolvedFieldRefConstant.getTeleFieldActor();
-                menu.add(actions().inspectObject(teleFieldActor, "Inspect FieldActor"));
+                menu.add(views().objects().makeViewAction(teleFieldActor, "Inspect FieldActor"));
             }
         }
 
@@ -415,7 +415,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                 menu.addSeparator();
                 final TeleInterfaceMethodRefConstant.Resolved teleResolvedInterfaceMethodRefConstant = (TeleInterfaceMethodRefConstant.Resolved) telePoolConstant();
                 final TeleInterfaceMethodActor teleInterfaceMethodActor = teleResolvedInterfaceMethodRefConstant.getTeleInterfaceMethodActor();
-                menu.add(actions().inspectObject(teleInterfaceMethodActor, "Inspect InterfaceMethodActor"));
+                menu.add(views().objects().makeViewAction(teleInterfaceMethodActor, "Inspect InterfaceMethodActor"));
             }
         }
 

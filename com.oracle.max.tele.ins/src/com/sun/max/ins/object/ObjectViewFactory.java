@@ -25,6 +25,7 @@ package com.sun.max.ins.object;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.view.*;
+import com.sun.max.tele.object.*;
 
 
 /**
@@ -37,12 +38,21 @@ import com.sun.max.ins.view.*;
 public interface ObjectViewFactory extends InspectionViewFactory<ObjectInspector>{
 
     /**
+     * Gets a view on a specified object in VM memory, either an already existing view
+     * if one exits for that object, or a newly created view.
+     *
+     * @param teleObject the VM object to be viewed
+     * @return an object view
+     */
+    ObjectInspector makeView(TeleObject teleObject);
+
+    /**
      * Gets an interactive action that makes a view on an object in
      * VM memory, starting at a dialog-specified location.
      *
      * @return an action that creates an object view
      */
-    InspectorAction makeViewAction();
+    InspectorAction makeViewByAddressAction();
 
     /**
      * Gets an interactive action that makes a view on an object in
@@ -51,5 +61,15 @@ public interface ObjectViewFactory extends InspectionViewFactory<ObjectInspector
      * @return an action that creates an object view
      */
     InspectorAction makeViewByIDAction();
+
+    /**
+     * Gets an action that makes a view on a specified object in
+     * VM memory.
+     *
+     * @param teleObject the VM object that would be viewed
+     * @param actionTitle a string to be used if the action is in a menu, default title used if null
+     * @return an action that creates an object view
+     */
+    InspectorAction makeViewAction(TeleObject teleObject, String actionTitle);
 
 }

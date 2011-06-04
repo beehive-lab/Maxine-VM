@@ -168,7 +168,7 @@ public final class MiscWordLabel extends ValueLabel {
     }
 
     private InspectorAction getInspectJavaMonitorAction() {
-        final InspectorAction action = actions().inspectObject(teleJavaMonitor, "Inspect JavaMonitor (left-button)");
+        final InspectorAction action = views().objects().makeViewAction(teleJavaMonitor, "Inspect JavaMonitor (left-button)");
         action.setEnabled(teleJavaMonitor != null);
         return action;
     }
