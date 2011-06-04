@@ -31,6 +31,7 @@ import com.sun.max.ins.util.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -646,6 +647,29 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
             }
         }
         return null;
+    }
+
+    /**
+     * E.g.  "Object 0x01234567890 <99>ClassActor in BootHeap Region"
+     */
+    public String longName(TeleObject teleObject) {
+        final Pointer origin = teleObject.origin();
+        final MaxMemoryRegion memoryRegion = vm().findMemoryRegion(origin);
+        final String name = "Object " + origin.toHexString() + inspection().nameDisplay().referenceLabelText(teleObject);
+        final String suffix = " in "
+            + (memoryRegion == null ? "unknown region" : memoryRegion.regionName());
+        String prefix = "";
+        switch (teleObject.getTeleObjectMemoryState()) {
+            case LIVE:
+                break;
+            case OBSOLETE:
+                prefix = TeleObjectMemory.State.OBSOLETE.label() + " ";
+                break;
+            case DEAD:
+                prefix = TeleObjectMemory.State.DEAD.label() + " ";
+                break;
+        }
+        return prefix + name + suffix;
     }
 
     /**

@@ -64,16 +64,21 @@ public final class MemoryAllocationsTable extends InspectorTable {
         final MaxMemoryRegion memoryRegion = tableModel.getMemoryRegion(row);
         final String regionName = memoryRegion.regionName();
         final JMenu viewMenu = new JMenu("View for \"" + regionName + "\"");
+        InspectorAction ownerAction = null;
         if (memoryRegion instanceof MaxEntityMemoryRegion) {
             MaxEntityMemoryRegion entityMemoryRegion = (MaxEntityMemoryRegion) memoryRegion;
             if (entityMemoryRegion.owner() != null) {
                 TeleObject representation = entityMemoryRegion.owner().representation();
                 if (representation != null) {
-                    final String actionTitle = "Owner: " + inspection().nameDisplay().referenceToolTipText(representation);
-                    viewMenu.add(inspection().actions().inspectObject(representation, actionTitle));
+                    final String actionTitle = "Owner: " + inspection().nameDisplay().longName(representation);
+                    ownerAction = inspection().actions().inspectObject(representation, actionTitle);
                 }
             }
         }
+        if (ownerAction == null) {
+            ownerAction = actions().inertAction("Owner");
+        }
+        viewMenu.add(ownerAction);
         viewMenu.add(views().memory().makeViewAction(memoryRegion, regionName, "Memory"));
         menu.add(viewMenu);
         // menu.add(actions().setRegionWatchpoint(memoryRegionDisplay, "Watch region memory"));
