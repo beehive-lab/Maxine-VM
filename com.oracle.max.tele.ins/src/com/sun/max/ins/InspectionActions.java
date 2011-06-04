@@ -170,6 +170,21 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
+     * @return an Action that doesn't do anything and is disabled.
+     */
+    public final InspectorAction inertAction(String actionTitle) {
+        final InspectorAction action = new InspectorAction(inspection(), actionTitle) {
+
+            @Override
+            protected void procedure() {
+
+            }
+        };
+        action.setEnabled(false);
+        return action;
+    }
+
+    /**
      * Action:  displays the {@link AboutMaxineDialog}.
      */
     final class AboutMaxineAction extends InspectorAction {
