@@ -37,6 +37,7 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.ValueMode;
 import com.sun.max.tele.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.value.*;
 
@@ -62,7 +63,19 @@ public final class MemoryAllocationsTable extends InspectorTable {
         final InspectorPopupMenu menu = new InspectorPopupMenu();
         final MaxMemoryRegion memoryRegion = tableModel.getMemoryRegion(row);
         final String regionName = memoryRegion.regionName();
-        menu.add(views().memory().makeViewAction(memoryRegion, regionName, null));
+        final JMenu viewMenu = new JMenu("View for \"" + regionName + "\"");
+        if (memoryRegion instanceof MaxEntityMemoryRegion) {
+            MaxEntityMemoryRegion entityMemoryRegion = (MaxEntityMemoryRegion) memoryRegion;
+            if (entityMemoryRegion.owner() != null) {
+                TeleObject representation = entityMemoryRegion.owner().representation();
+                if (representation != null) {
+                    final String actionTitle = "Owner: " + inspection().nameDisplay().referenceToolTipText(representation);
+                    viewMenu.add(inspection().actions().inspectObject(representation, actionTitle));
+                }
+            }
+        }
+        viewMenu.add(views().memory().makeViewAction(memoryRegion, regionName, "Memory"));
+        menu.add(viewMenu);
         // menu.add(actions().setRegionWatchpoint(memoryRegionDisplay, "Watch region memory"));
         menu.add(Watchpoints.createEditMenu(inspection(), tableModel.getWatchpoints(row)));
         menu.add(Watchpoints.createRemoveActionOrMenu(inspection(), tableModel.getWatchpoints(row)));
