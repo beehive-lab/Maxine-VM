@@ -55,11 +55,11 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
     private static final int TRACE_VALUE = 1;
     private static final int MOUSE_TRACE_VALUE = 3;
 
-    private static final String FRAME_SETTINGS_NAME = "inspectorMainFrame";
-    private static final String FRAME_X_KEY = "frameX";
-    private static final String FRAME_Y_KEY = "frameY";
-    private static final String FRAME_HEIGHT_KEY = "frameHeight";
-    private static final String FRAME_WIDTH_KEY = "frameWidth";
+    private static final String FRAME_SETTINGS_NAME = "windowGeometry";
+    private static final String FRAME_X_KEY = "x";
+    private static final String FRAME_Y_KEY = "y";
+    private static final String FRAME_HEIGHT_KEY = "height";
+    private static final String FRAME_WIDTH_KEY = "width";
 
     /**
      * A mouse location to cache when no other location is available.

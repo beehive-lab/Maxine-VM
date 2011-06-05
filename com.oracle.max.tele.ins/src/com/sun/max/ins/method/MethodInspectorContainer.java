@@ -43,8 +43,8 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.METHODS;
     private static final String SHORT_NAME = "Methods";
-    private static final String LONG_NAME = "Methods Inspector";
-    private static final String GEOMETRY_SETTINGS_KEY = "methodsInspectorGeometry";
+    private static final String LONG_NAME = "Methods View";
+    private static final String GEOMETRY_SETTINGS_KEY = "methodsContainerGeometry";
 
     public static final class MethodViewManager extends AbstractSingletonViewManager<MethodInspectorContainer> {
 

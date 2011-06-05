@@ -112,7 +112,7 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
         public static final List<ToolTipDismissDelayPolicy> VALUES = Arrays.asList(values());
     }
 
-    private static final String INSPECTION_SETTINGS_NAME = "inspection";
+    private static final String INSPECTION_SETTINGS_NAME = "prefs";
     private static final String KEY_BINDINGS_PREFERENCE = "keyBindings";
     private static final String DISPLAY_STYLE_PREFERENCE = "displayStyle";
     private static final String TOOLTIP_DELAY_POLICY = "toolTipDelay";

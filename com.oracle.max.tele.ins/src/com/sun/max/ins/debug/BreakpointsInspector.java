@@ -42,8 +42,8 @@ public final class BreakpointsInspector extends Inspector<BreakpointsInspector> 
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.BREAKPOINTS;
     private static final String SHORT_NAME = "Breakpoints";
-    private static final String LONG_NAME = "Breakpoints Inspector";
-    private static final String GEOMETRY_SETTINGS_KEY = "breakpointsInspectorGeometry";
+    private static final String LONG_NAME = "Breakpoints View";
+    private static final String GEOMETRY_SETTINGS_KEY = "breakpointsViewGeometry";
 
     public static final class BreakpointsViewManager extends AbstractSingletonViewManager<BreakpointsInspector> {
 

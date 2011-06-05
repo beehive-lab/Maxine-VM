@@ -56,8 +56,8 @@ public final class NotepadInspector extends Inspector<NotepadInspector> {
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.NOTEPAD;
     private static final String SHORT_NAME = "Notepad";
-    private static final String LONG_NAME = "Notepad Inspector";
-    private static final String GEOMETRY_SETTINGS_KEY = "notepadInspectorGeometry";
+    private static final String LONG_NAME = "Notepad View";
+    private static final String GEOMETRY_SETTINGS_KEY = "notepadViewGeometry";
 
     // A compiled regular expression pattern that matches hex numbers (with or without prefix) and ordinary
     // integers as well.

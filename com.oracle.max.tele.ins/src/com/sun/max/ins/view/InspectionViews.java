@@ -272,7 +272,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
     public InspectionViews(Inspection inspection) {
         super(inspection);
         ViewKind.inspection = inspection;
-        saveSettingsListener = new AbstractSaveSettingsListener("inspectionViewActive") {
+        saveSettingsListener = new AbstractSaveSettingsListener("viewActive") {
 
             public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
                 for (ViewKind kind : ViewKind.singletonViewKinds) {

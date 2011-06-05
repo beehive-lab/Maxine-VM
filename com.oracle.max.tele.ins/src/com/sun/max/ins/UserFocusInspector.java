@@ -41,8 +41,8 @@ public final class UserFocusInspector extends Inspector<UserFocusInspector> {
 
     private static final ViewKind VIEW_KIND = ViewKind.USER_FOCUS;
     private static final String SHORT_NAME = "User Focus";
-    private static final String LONG_NAME = "User Focus Inspector";
-    private static final String GEOMETRY_SETTINGS_KEY = "userFocusInspectorGeometry";
+    private static final String LONG_NAME = "User Focus View";
+    private static final String GEOMETRY_SETTINGS_KEY = "userFocusViewGeometry";
 
     public static final class UserFocusViewManager extends AbstractSingletonViewManager<UserFocusInspector> {
 

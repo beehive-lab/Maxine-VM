@@ -53,8 +53,8 @@ public final class StackInspector extends Inspector<StackInspector> {
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.STACK;
     private static final String SHORT_NAME = "Stack";
-    private static final String LONG_NAME = "Stack Inspector";
-    private static final String GEOMETRY_SETTINGS_KEY = "stackInspectorGeometry";
+    private static final String LONG_NAME = "Stack View";
+    private static final String GEOMETRY_SETTINGS_KEY = "stackViewGeometry";
 
     public static final int DEFAULT_MAX_FRAMES_DISPLAY;
     private static final String MAX_FRAMES_DISPLAY_PROPERTY = "inspector.max.stack.frames.display";

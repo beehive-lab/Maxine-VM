@@ -49,8 +49,8 @@ public final class StackFrameInspector extends Inspector<StackFrameInspector> im
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.STACK_FRAME;
     private static final String SHORT_NAME = "Stack Frame";
-    private static final String LONG_NAME = "Stack Frame Inspector";
-    private static final String GEOMETRY_SETTINGS_KEY = "stackFrameInspectorGeometry";
+    private static final String LONG_NAME = "Stack Frame View";
+    private static final String GEOMETRY_SETTINGS_KEY = "stackFrameViewGeometry";
 
     public static final class StackFrameViewManager extends AbstractSingletonViewManager<StackFrameInspector> {
 

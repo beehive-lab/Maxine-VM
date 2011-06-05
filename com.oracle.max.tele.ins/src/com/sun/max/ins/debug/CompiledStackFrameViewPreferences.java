@@ -52,10 +52,10 @@ public final class CompiledStackFrameViewPreferences extends TableColumnVisibili
     }
 
     // Prefix for all persistent column preferences in view
-    private static final String STACK_FRAME_COLUMN_PREFERENCE = "javaStackFrameViewColumn";
+    private static final String STACK_FRAME_COLUMN_PREFERENCE = "stackFrameViewColumn";
 
     // Prefix for all other preferences in view
-    private static final String STACK_INSPECTOR_PREFERENCE = "javaStackInspectorPrefs";
+    private static final String STACK_FRAME_VIEW_PREFERENCE = "stackFrameViewPrefs";
 
     // Names of other preferences in view
     private static final String BIAS_SLOT_OFFSETS_PREFERENCE = "biasSlotOffsets";
@@ -78,7 +78,7 @@ public final class CompiledStackFrameViewPreferences extends TableColumnVisibili
     private CompiledStackFrameViewPreferences(Inspection inspection) {
         super(inspection, STACK_FRAME_COLUMN_PREFERENCE, CompiledStackFrameColumnKind.values());
         final InspectionSettings settings = inspection.settings();
-        final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener(STACK_INSPECTOR_PREFERENCE) {
+        final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener(STACK_FRAME_VIEW_PREFERENCE) {
             public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
                 saveSettingsEvent.save(BIAS_SLOT_OFFSETS_PREFERENCE, biasSlotOffsets);
             }

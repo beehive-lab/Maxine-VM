@@ -42,8 +42,8 @@ public final class ThreadsInspector extends Inspector<ThreadsInspector> implemen
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.THREADS;
     private static final String SHORT_NAME = "Threads";
-    private static final String LONG_NAME = "Threads Inspector";
-    private static final String GEOMETRY_SETTINGS_KEY = "threadsInspectorGeometry";
+    private static final String LONG_NAME = "Threads View";
+    private static final String GEOMETRY_SETTINGS_KEY = "threadsViewGeometry";
 
     public static final class ThreadsViewManager extends AbstractSingletonViewManager<ThreadsInspector> {
 

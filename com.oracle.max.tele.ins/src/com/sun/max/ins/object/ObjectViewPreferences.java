@@ -55,7 +55,7 @@ public class ObjectViewPreferences extends TableColumnVisibilityPreferences<Obje
     private static final String OBJECT_COLUMN_PREFERENCE = "objectViewColumn";
 
     // Prefix for all other preferences in view
-    private static final String OBJECT_INSPECTOR_PREFERENCE = "objectInspectorPrefs";
+    private static final String OBJECT_VIEW_PREFERENCE = "objectViewPrefs";
 
     // Names of other preferences in view
     private static final String OBJECT_SHOW_HEADER_PREFERENCE = "showHeader";
@@ -77,7 +77,7 @@ public class ObjectViewPreferences extends TableColumnVisibilityPreferences<Obje
     private ObjectViewPreferences(Inspection inspection) {
         super(inspection, OBJECT_COLUMN_PREFERENCE, ObjectColumnKind.values());
         final InspectionSettings settings = inspection.settings();
-        final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener(OBJECT_INSPECTOR_PREFERENCE) {
+        final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener(OBJECT_VIEW_PREFERENCE) {
             public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
                 saveSettingsEvent.save(OBJECT_SHOW_HEADER_PREFERENCE, showHeader);
                 saveSettingsEvent.save(OBJECT_HIDE_NULL_ARRAY_ELEMENTS_PREFERENCE,  hideNullArrayElements);

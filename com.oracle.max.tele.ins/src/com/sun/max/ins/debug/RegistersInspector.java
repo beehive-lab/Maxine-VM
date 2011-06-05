@@ -42,8 +42,8 @@ public final class RegistersInspector extends Inspector<RegistersInspector> impl
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.REGISTERS;
     private static final String SHORT_NAME = "Registers";
-    private static final String LONG_NAME = "Registers Inspector";
-    private static final String GEOMETRY_SETTINGS_KEY = "registersInspectorGeometry";
+    private static final String LONG_NAME = "Registers View";
+    private static final String GEOMETRY_SETTINGS_KEY = "registersViewGeometry";
 
     public static final class RegistersViewManager extends AbstractSingletonViewManager<RegistersInspector> {
 

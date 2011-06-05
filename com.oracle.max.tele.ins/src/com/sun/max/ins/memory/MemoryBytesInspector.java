@@ -52,7 +52,7 @@ public final class MemoryBytesInspector extends Inspector<MemoryBytesInspector> 
     private static final int TRACE_VALUE = 2;
     private static final ViewKind VIEW_KIND = ViewKind.MEMORY_BYTES;
     private static final String SHORT_NAME = "Memory as bytes";
-    private static final String LONG_NAME = "Memory Bytes Inspector";
+    private static final String LONG_NAME = "Memory Bytes View";
 
     private static MemoryBytesViewManager viewManager;
 
@@ -76,7 +76,7 @@ public final class MemoryBytesInspector extends Inspector<MemoryBytesInspector> 
 
                 @Override
                 protected void procedure() {
-                    new AddressInputDialog(inspection, inspection.vm().bootImageStart(), "Inspect memory bytes at address...", "Inspect") {
+                    new AddressInputDialog(inspection, inspection.vm().bootImageStart(), "Inspect memory bytes at address...", "View") {
 
                         @Override
                         public void entered(Address address) {

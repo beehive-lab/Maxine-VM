@@ -37,6 +37,8 @@ import com.sun.max.program.option.*;
 
 public class MethodInspectorPreferences extends AbstractInspectionHolder {
 
+    private static final String METHOD_VIEW_PREFS = "methodViewPrefs";
+
     private static MethodInspectorPreferences globalPreferences;
 
     /**
@@ -64,7 +66,7 @@ public class MethodInspectorPreferences extends AbstractInspectionHolder {
     public MethodInspectorPreferences(Inspection inspection) {
         super(inspection);
         final InspectionSettings settings = inspection.settings();
-        final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener("methodInspectorPrefs") {
+        final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener(METHOD_VIEW_PREFS) {
             public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
                 for (Map.Entry<MethodCodeKind, Boolean> entry : visibleCodeKinds.entrySet()) {
                     saveSettingsEvent.save(entry.getKey().name().toLowerCase(), entry.getValue());

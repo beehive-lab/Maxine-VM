@@ -47,8 +47,8 @@ public final class AllocationsInspector extends Inspector<AllocationsInspector> 
     private static final int TRACE_VALUE = 2;
     private static final ViewKind VIEW_KIND = ViewKind.ALLOCATIONS;
     private static final String SHORT_NAME = "Allocations";
-    private static final String LONG_NAME = "Allocations Inspector";
-    private static final String GEOMETRY_SETTINGS_KEY = "allocationsInspectorGeometry";
+    private static final String LONG_NAME = "Allocations View";
+    private static final String GEOMETRY_SETTINGS_KEY = "allocationsViewGeometry";
 
     public static final class AllocationsViewManager extends AbstractSingletonViewManager<AllocationsInspector> {
 
