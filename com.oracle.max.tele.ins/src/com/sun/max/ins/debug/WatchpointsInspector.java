@@ -41,8 +41,8 @@ public final class WatchpointsInspector extends Inspector<WatchpointsInspector> 
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.WATCHPOINTS;
     private static final String SHORT_NAME = "Watchpoints";
-    private static final String LONG_NAME = "Watchpoints Inspector";
-    private static final String GEOMETRY_SETTINGS_KEY = "watchpointsInspectorGeometry";
+    private static final String LONG_NAME = "Watchpoints View";
+    private static final String GEOMETRY_SETTINGS_KEY = "watchpointsViewGeometry";
 
     public static final class WatchpointsViewManager extends AbstractSingletonViewManager<WatchpointsInspector> {
 

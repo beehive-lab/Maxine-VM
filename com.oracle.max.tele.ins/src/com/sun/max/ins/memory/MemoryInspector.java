@@ -54,7 +54,7 @@ public final class MemoryInspector extends Inspector<MemoryInspector> {
     private static final int TRACE_VALUE = 2;
     private static final ViewKind VIEW_KIND = ViewKind.MEMORY;
     private static final String SHORT_NAME = "Memory";
-    private static final String LONG_NAME = "Memory Inspector";
+    private static final String LONG_NAME = "Memory View";
     private static final String UNKNOWN_REGION_NAME = "unknown region";
 
     private static MemoryViewManager viewManager;

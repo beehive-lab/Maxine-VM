@@ -52,8 +52,8 @@ public final class ThreadLocalsInspector extends Inspector<ThreadLocalsInspector
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.THREAD_LOCALS;
     private static final String SHORT_NAME = "Thread Locals";
-    private static final String LONG_NAME = "Thread Locals Inspector";
-    private static final String GEOMETRY_SETTINGS_KEY = "threadlocalsInspectorGeometry";
+    private static final String LONG_NAME = "Thread Locals View";
+    private static final String GEOMETRY_SETTINGS_KEY = "threadlocalsViewGeometry";
     private static final Safepoint.State DEFAULT_STATE_SELECTION = Safepoint.State.ENABLED;
     private static final Map<MaxThread, Safepoint.State> stateSelections = new HashMap<MaxThread, Safepoint.State>();
 

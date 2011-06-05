@@ -39,8 +39,8 @@ public final class BootImageInspector extends Inspector<BootImageInspector>  imp
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.BOOT_IMAGE;
     private static final String SHORT_NAME = "Boot Image";
-    private static final String LONG_NAME = "Boot Image Inspector";
-    private static final String GEOMETRY_SETTINGS_KEY = "bootImageInspectorGeometry";
+    private static final String LONG_NAME = "Boot Image View";
+    private static final String GEOMETRY_SETTINGS_KEY = "bootImageViewGeometry";
 
     public static final class BootImageViewManager extends AbstractSingletonViewManager<BootImageInspector> {
 

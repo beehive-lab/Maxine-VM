@@ -43,10 +43,12 @@ import com.sun.max.vm.hosted.*;
  */
 public class InspectionSettings {
 
+    private static final String VM_SETTINGS_KEY = "vm";
+
     private static final int TRACE_VALUE = 2;
 
-    private static final String BOOT_IMAGE_FORMAT_VERSION_KEY = "bootImageFormatVersion";
-    private static final String BOOT_IMAGE_ID_KEY = "bootImageId";
+    private static final String VM_BOOT_IMAGE_FORMAT_VERSION_KEY = "bootImageFormatVersion";
+    private static final String VM_BOOT_IMAGE_ID_KEY = "bootImageId";
     private static final String COMPONENT_X_KEY = "x";
     private static final String COMPONENT_Y_KEY = "y";
     private static final String COMPONENT_HEIGHT_KEY = "height";
@@ -197,16 +199,16 @@ public class InspectionSettings {
         }
 
         final BootImage bootImage = inspection.vm().bootImage();
-        bootimageClient = new AbstractSaveSettingsListener("bootimage") {
+        bootimageClient = new AbstractSaveSettingsListener(VM_SETTINGS_KEY) {
             public void saveSettings(SaveSettingsEvent settings) {
-                settings.save(BOOT_IMAGE_FORMAT_VERSION_KEY, String.valueOf(bootImage.header.bootImageFormatVersion));
-                settings.save(BOOT_IMAGE_ID_KEY, String.valueOf(bootImage.header.randomID));
+                settings.save(VM_BOOT_IMAGE_FORMAT_VERSION_KEY, String.valueOf(bootImage.header.bootImageFormatVersion));
+                settings.save(VM_BOOT_IMAGE_ID_KEY, String.valueOf(bootImage.header.randomID));
             }
         };
 
         addSaveSettingsListener(bootimageClient);
-        final int version = get(bootimageClient, BOOT_IMAGE_FORMAT_VERSION_KEY, OptionTypes.INT_TYPE, 0);
-        final int randomID = get(bootimageClient, BOOT_IMAGE_ID_KEY, OptionTypes.INT_TYPE, 0);
+        final int version = get(bootimageClient, VM_BOOT_IMAGE_FORMAT_VERSION_KEY, OptionTypes.INT_TYPE, 0);
+        final int randomID = get(bootimageClient, VM_BOOT_IMAGE_ID_KEY, OptionTypes.INT_TYPE, 0);
         bootImageChanged = version != bootImage.header.bootImageFormatVersion || randomID != bootImage.header.randomID;
         bootimageClient.saveSettings(new SaveSettingsEvent(bootimageClient, properties));
         saver = new Saver();

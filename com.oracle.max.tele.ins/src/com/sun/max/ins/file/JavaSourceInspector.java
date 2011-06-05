@@ -45,7 +45,7 @@ public final class JavaSourceInspector extends FileInspector<JavaSourceInspector
     private static final int TRACE_VALUE = 2;
     private static final ViewKind VIEW_KIND = ViewKind.JAVA_SOURCE;
     private static final String SHORT_NAME = "Java Source";
-    private static final String LONG_NAME = SHORT_NAME + " Inspector";
+    private static final String LONG_NAME = SHORT_NAME + " View";
 
     private static JavaSourceViewManager viewManager;
 

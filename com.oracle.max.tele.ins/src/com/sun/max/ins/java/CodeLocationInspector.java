@@ -50,8 +50,8 @@ public final class CodeLocationInspector extends Inspector<CodeLocationInspector
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.CODE_LOCATION;
     private static final String SHORT_NAME = "Code Location";
-    private static final String LONG_NAME = "CodeLocation Inspector";
-    private static final String GEOMETRY_SETTINGS_KEY = "codeLocationInspectorGeometry";
+    private static final String LONG_NAME = "CodeLocation View";
+    private static final String GEOMETRY_SETTINGS_KEY = "codeLocationViewGeometry";
 
 
     public static final class CodeLocationViewManager extends AbstractSingletonViewManager<CodeLocationInspector> {
