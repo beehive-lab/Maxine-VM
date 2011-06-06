@@ -171,12 +171,13 @@ public final class CodeLocationView extends AbstractView<CodeLocationView> {
     }
 
     private JPanel createFramePanel(CiFrame frame) {
-        final JPanel panel = new InspectorPanel(inspection(), new FlowLayout(FlowLayout.LEADING));
+        final JPanel panel = new InspectorPanel(inspection(), new BorderLayout());
+        final JPanel headerPanel = new InspectorPanel(inspection(), new FlowLayout(FlowLayout.LEADING));
 
         final CiCodePos codePos = frame;
         final PlainLabel bytecodeLocationLabel = new PlainLabel(inspection(), shortString(codePos));
         bytecodeLocationLabel.setToolTipText(codePos.toString());
-        panel.add(bytecodeLocationLabel);
+        headerPanel.add(bytecodeLocationLabel);
 
         ClassMethodActor method = (ClassMethodActor) codePos.method;
         String sourceFileName = method.holder().sourceFileName;
@@ -194,23 +195,29 @@ public final class CodeLocationView extends AbstractView<CodeLocationView> {
                     inspection().viewSourceExternally(codePos);
                 }
             });
-            panel.add(sourceLocationLabel);
+            headerPanel.add(sourceLocationLabel);
         }
+        panel.add(headerPanel, BorderLayout.PAGE_START);
 
-        final CodeAttribute codeAttribute = method.codeAttribute();
-        for (int i = 0; i < frame.numLocals; i++) {
-            String local = "local #" + i;
-            final LocalVariableTable.Entry entry = codeAttribute.localVariableTable().findLocalVariable(i, codePos.bci);
-            if (entry != null) {
-                local += ": " + entry.name(codeAttribute.cp);
+        if (frame.numLocals + frame.numStack > 0) {
+            final JPanel slotsPanel = new JPanel();
+            slotsPanel.setLayout(new BoxLayout(slotsPanel, BoxLayout.PAGE_AXIS));
+            final CodeAttribute codeAttribute = method.codeAttribute();
+            for (int i = 0; i < frame.numLocals; i++) {
+                String local = "local #" + i;
+                final LocalVariableTable.Entry entry = codeAttribute.localVariableTable().findLocalVariable(i, codePos.bci);
+                if (entry != null) {
+                    local += ": " + entry.name(codeAttribute.cp);
+                }
+                local += " = " + frame.getLocalValue(i);
+                slotsPanel.add(new TextLabel(inspection(), local));
             }
-            local += " = " + frame.getLocalValue(i);
-            panel.add(new TextLabel(inspection(), local));
-        }
-        for (int i = 0; i < frame.numStack; i++) {
-            String stackSlot = "stack #" + i;
-            stackSlot += " = " + frame.getStackValue(i);
-            panel.add(new TextLabel(inspection(), stackSlot));
+            for (int i = 0; i < frame.numStack; i++) {
+                String stackSlot = "stack #" + i;
+                stackSlot += " = " + frame.getStackValue(i);
+                slotsPanel.add(new TextLabel(inspection(), stackSlot));
+            }
+            panel.add(slotsPanel, BorderLayout.LINE_START);
         }
         panel.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, style().defaultBorderColor()));
         return panel;
