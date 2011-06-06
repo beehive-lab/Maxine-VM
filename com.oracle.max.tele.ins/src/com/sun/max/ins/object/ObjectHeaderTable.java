@@ -45,7 +45,7 @@ import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
- * A table that displays the header in a heap object; for use in an instance of {@link ObjectInspector}.
+ * A table that displays the header in a heap object; for use in an instance of {@link ObjectView}.
  *
  * @author Michael Van De Vanter
  */
@@ -155,8 +155,8 @@ public final class ObjectHeaderTable extends InspectorTable {
     }
 
     /**
-     * A column model for object headers, to be used in an {@link ObjectInspector}. Column selection is driven by
-     * choices in the parent {@link ObjectInspector}. This implementation cannot update column choices dynamically.
+     * A column model for object headers, to be used in an {@link ObjectView}. Column selection is driven by
+     * choices in the parent {@link ObjectView}. This implementation cannot update column choices dynamically.
      */
     private final class ObjectHeaderColumnModel extends InspectorTableColumnModel<ObjectColumnKind> {
 

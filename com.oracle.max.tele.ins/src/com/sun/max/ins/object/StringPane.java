@@ -35,7 +35,7 @@ import com.sun.max.tele.*;
  */
 public final class StringPane extends InspectorScrollPane {
 
-    public static StringPane createStringPane(ObjectInspector objectInspector, StringSource stringSource) {
+    public static StringPane createStringPane(ObjectView objectInspector, StringSource stringSource) {
         return new StringPane(objectInspector.inspection(), new JTextArea(), stringSource);
     }
 

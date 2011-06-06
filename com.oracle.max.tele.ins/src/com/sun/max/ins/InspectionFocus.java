@@ -119,7 +119,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
                 }
                 // User Model Policy: when setting code location, if it happens to match a stack frame of the current thread then focus on that frame.
                 if (thread != null && codeLocation != null && codeLocation.hasAddress()) {
-                    for (MaxStackFrame maxStackFrame : thread.stack().frames(StackInspector.DEFAULT_MAX_FRAMES_DISPLAY)) {
+                    for (MaxStackFrame maxStackFrame : thread.stack().frames(StackView.DEFAULT_MAX_FRAMES_DISPLAY)) {
                         if (codeLocation.isSameAs(maxStackFrame.codeLocation())) {
                             setStackFrame(stackFrame, false);
                             break;
@@ -187,7 +187,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
             final MaxStackFrame previousStackFrame = frameSelections.get(thread);
             MaxStackFrame newStackFrame = null;
             if (previousStackFrame != null) {
-                for (MaxStackFrame stackFrame : this.thread.stack().frames(StackInspector.DEFAULT_MAX_FRAMES_DISPLAY)) {
+                for (MaxStackFrame stackFrame : this.thread.stack().frames(StackView.DEFAULT_MAX_FRAMES_DISPLAY)) {
                     if (stackFrame.isSameFrame(previousStackFrame)) {
                         newStackFrame = stackFrame;
                         break;
@@ -379,7 +379,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
     };
 
     /**
-     * Currently selected breakpoint, typically controlled by the {@link BreakpointsInspector}.
+     * Currently selected breakpoint, typically controlled by the {@link BreakpointsView}.
      * May be null.
      */
     public MaxBreakpoint breakpoint() {
@@ -435,7 +435,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
     };
 
     /**
-     * Currently selected watchpoint, typically controlled by the {@link WatchpointsInspector}.
+     * Currently selected watchpoint, typically controlled by the {@link WatchpointsView}.
      * May be null.
      */
     public MaxWatchpoint watchpoint() {

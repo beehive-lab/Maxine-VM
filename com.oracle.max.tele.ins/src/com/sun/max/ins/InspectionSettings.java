@@ -128,7 +128,7 @@ public class InspectionSettings {
          * {@linkplain ComponentListener#componentShown(ComponentEvent) visible}, its bounds are updated from the
          * settings.
          */
-        Inspector inspector();
+        AbstractView inspector();
 
         /**
          * @return geometry to apply to a newly shown component when there have been no geometry settings saved.
@@ -141,16 +141,16 @@ public class InspectionSettings {
      */
     public abstract static class AbstractSaveSettingsListener implements SaveSettingsListener {
         protected final String name;
-        protected final Inspector inspector;
+        protected final AbstractView inspector;
         protected final Rectangle defaultGeometry;
 
-        private AbstractSaveSettingsListener(String name, Inspector inspector, Rectangle defaultGeometry) {
+        private AbstractSaveSettingsListener(String name, AbstractView inspector, Rectangle defaultGeometry) {
             this.name = name;
             this.inspector = inspector;
             this.defaultGeometry = defaultGeometry;
         }
 
-        public AbstractSaveSettingsListener(String name, Inspector inspector) {
+        public AbstractSaveSettingsListener(String name, AbstractView inspector) {
             this(name, inspector, null);
         }
 
@@ -158,7 +158,7 @@ public class InspectionSettings {
             this (name, null, null);
         }
 
-        public Inspector inspector() {
+        public AbstractView inspector() {
             return inspector;
         }
 
@@ -218,7 +218,7 @@ public class InspectionSettings {
      * Add a listener that will be notified when a "save event" is triggered, so that settings
      * can be saved.
      * <p>
-     * If the listener has an associated {@link Inspector}, then additional services are provided
+     * If the listener has an associated {@link AbstractView}, then additional services are provided
      * to automate the saving and restoring of window frame geometry (size, location):
      * <ol>
      * <li>During the execution of this method call, the inspector's frame is positioned and
@@ -239,7 +239,7 @@ public class InspectionSettings {
         final SaveSettingsListener oldClient = clients.put(saveSettingsListener.name(), saveSettingsListener);
         assert oldClient == null || oldClient == saveSettingsListener;
 
-        final Inspector inspector = saveSettingsListener.inspector();
+        final AbstractView inspector = saveSettingsListener.inspector();
         if (inspector != null) {
             inspector.getJComponent().addComponentListener(new ComponentListener() {
                 public void componentHidden(ComponentEvent e) {
@@ -269,7 +269,7 @@ public class InspectionSettings {
      * @param saveSettingsListener a listener that has an associated Inspector
      */
     private void repositionInspectorFromSettings(SaveSettingsListener saveSettingsListener) {
-        final Inspector inspector = saveSettingsListener.inspector();
+        final AbstractView inspector = saveSettingsListener.inspector();
         final Rectangle oldGeometry = inspector.getJComponent().getBounds();
         Rectangle newGeometry = saveSettingsListener.defaultGeometry();
         // Check to see if we have geometry settings for this component.
@@ -402,7 +402,7 @@ public class InspectionSettings {
         for (SaveSettingsListener saveSettingsListener : clients.values()) {
             final SaveSettingsEvent saveSettingsEvent = new SaveSettingsEvent(saveSettingsListener, newProperties);
             saveSettingsListener.saveSettings(saveSettingsEvent);
-            final Inspector inspector = saveSettingsListener.inspector();
+            final AbstractView inspector = saveSettingsListener.inspector();
             if (inspector != null) {
 
                 final Rectangle geometry = inspector.getJComponent().getBounds();

@@ -38,7 +38,7 @@ import com.sun.max.ins.view.InspectionViews.ViewKind;
  * @author Michael Van De Vanter
  * @param <Inspector_Kind> a kind of Inspector that is to be managed as a singleton view
  */
-public abstract class AbstractSingletonViewManager<Inspector_Kind extends Inspector> extends AbstractInspectionHolder implements SingletonViewManager {
+public abstract class AbstractSingletonViewManager<Inspector_Kind extends AbstractView> extends AbstractInspectionHolder implements SingletonViewManager {
 
     private final ViewKind viewKind;
     private final String shortName;
@@ -112,10 +112,10 @@ public abstract class AbstractSingletonViewManager<Inspector_Kind extends Inspec
         if (inspectors.size() == 0) {
             final Inspector_Kind inspector = createView(inspection());
             inspectors.add(inspector);
-            inspector.addInspectorEventListener(new InspectorEventListener() {
+            inspector.addViewEventListener(new ViewEventListener() {
 
                 @Override
-                public void viewClosing(Inspector inspector) {
+                public void viewClosing(AbstractView inspector) {
                     assert inspectors.remove(inspector);
                     refresh();
                 }
@@ -135,7 +135,7 @@ public abstract class AbstractSingletonViewManager<Inspector_Kind extends Inspec
         return activateViewAction;
     }
 
-    public InspectorAction deactivateAllAction(Inspector exception) {
+    public InspectorAction deactivateAllAction(AbstractView exception) {
         if (exception == null) {
             return deactivateAllAction;
         }
@@ -208,9 +208,9 @@ public abstract class AbstractSingletonViewManager<Inspector_Kind extends Inspec
      */
     private final class DeactivateAllExceptAction extends InspectorAction {
 
-        private final Inspector exceptInspector;
+        private final AbstractView exceptInspector;
 
-        public DeactivateAllExceptAction(String title, Inspector exceptInspector) {
+        public DeactivateAllExceptAction(String title, AbstractView exceptInspector) {
             super(inspection(), "Close " + title + " view");
             this.exceptInspector = exceptInspector;
         }

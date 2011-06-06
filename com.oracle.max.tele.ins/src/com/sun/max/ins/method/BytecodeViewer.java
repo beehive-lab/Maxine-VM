@@ -135,7 +135,7 @@ public abstract class BytecodeViewer extends CodeViewer {
      * Base class for bytecode viewers. Machine code is optional, since a method may not yet be compiled, but may appear
      * and change as method is compiled and recompiled.
      */
-    protected BytecodeViewer(Inspection inspection, MethodInspector parent, TeleClassMethodActor teleClassMethodActor, MaxCompiledCode compiledCode) {
+    protected BytecodeViewer(Inspection inspection, MethodView parent, TeleClassMethodActor teleClassMethodActor, MaxCompiledCode compiledCode) {
         super(inspection, parent);
         this.teleClassMethodActor = teleClassMethodActor;
         this.compiledCode = compiledCode;
@@ -221,7 +221,7 @@ public abstract class BytecodeViewer extends CodeViewer {
         if (haveMachineCodeAddresses()) {
             Arrays.fill(rowToStackFrame, null);
             for (int row = 0; row < bytecodeInstructions.size(); row++) {
-                for (MaxStackFrame frame : focus().thread().stack().frames(StackInspector.DEFAULT_MAX_FRAMES_DISPLAY)) {
+                for (MaxStackFrame frame : focus().thread().stack().frames(StackView.DEFAULT_MAX_FRAMES_DISPLAY)) {
                     if (rowContainsAddress(row, frame.codeLocation().address())) {
                         rowToStackFrame[row] = frame;
                         break;

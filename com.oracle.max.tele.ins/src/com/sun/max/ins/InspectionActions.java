@@ -72,7 +72,7 @@ import com.sun.max.vm.value.*;
  * <li> If the
  * action is interactive, for example if it produces a dialog, then the name should conclude with "...".
  * Capitalize the first word of the title but not the others, except for distinguished names such as
- * "Inspector" and acronyms.</li>
+ * "View" and acronyms.</li>
  * <li> For singletons, add a package scope constructor with one argument:  {@code String title}</li>
  * <li> For non-singletons, package scope constructor contains additional arguments that
  * customize the action, for example that specify to what "something" is to be done.</li>
@@ -120,7 +120,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private static final int TRACE_VALUE = 2;
 
     /**
-     * Name of the Action for searching in an Inspector view.
+     * Name of the Action for searching in a view.
      */
     public static final String SEARCH_ACTION = "Search";
 
@@ -261,7 +261,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  quits inspector.
+     * Action:  quits inspection session.
      */
     final class QuitAction extends InspectorAction {
 
@@ -652,8 +652,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * Menu: display a sub-menu of commands to inspect the basic allocation
      * regions of the VM.
      */
-    final class InspectMemoryAllocationsMenu extends JMenu {
-        public InspectMemoryAllocationsMenu() {
+    final class ViewMemoryAllocationsMenu extends JMenu {
+        public ViewMemoryAllocationsMenu() {
             super("View Memory allocated for:");
             addMenuListener(new MenuListener() {
 
@@ -677,25 +677,25 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Creates a menu of actions to inspect allocated memory regions.
+     * Creates a menu of actions to view allocated memory regions.
      * <br>
      * <strong>Note:</strong> This menu does not depend on context, so it would be natural to use
      * a singleton to be shared among all uses.  Unfortunately, that does not seem to work.
      *
-     * @return a dynamically populated menu that contains an action to inspect each currently allocated
+     * @return a dynamically populated menu that contains an action to view each currently allocated
      * region of memory in the VM.
      */
-    public final JMenu inspectMemoryAllocationsMenu() {
-        return new InspectMemoryAllocationsMenu();
+    public final JMenu viewMemoryAllocationsMenu() {
+        return new ViewMemoryAllocationsMenu();
     }
 
     /**
-     *Action:  inspect the memory allocated to the currently selected thread's stack.
+     *Action:  view the memory allocated to the currently selected thread's stack.
      */
-    final class InspectSelectedThreadStackMemoryAction extends InspectorAction {
+    final class ViewSelectedThreadStackMemoryAction extends InspectorAction {
 
-        public InspectSelectedThreadStackMemoryAction(String actionTitle) {
-            super(inspection(), actionTitle == null ? "Inspect memory for selected thread's stack" : actionTitle);
+        public ViewSelectedThreadStackMemoryAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? "View memory for selected thread's stack" : actionTitle);
         }
 
         @Override
@@ -716,20 +716,20 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
     /**
      * @param actionTitle title for the action, uses a default if null
-     * @return an action that will create a memory inspector
+     * @return an action that will create a memory view
      * for memory allocated by the currently selected stack frame
      */
-    public final InspectorAction inspectSelectedThreadStackMemory(String actionTitle) {
-        return new InspectSelectedThreadStackMemoryAction(actionTitle);
+    public final InspectorAction viewSelectedThreadStackMemory(String actionTitle) {
+        return new ViewSelectedThreadStackMemoryAction(actionTitle);
     }
 
     /**
-     *Action:  inspect the memory allocated to the currently selected thread's locals block.
+     *Action:  view the memory allocated to the currently selected thread's locals block.
      */
-    final class InspectSelectedThreadLocalsBlockMemoryAction extends InspectorAction {
+    final class ViewSelectedThreadLocalsBlockMemoryAction extends InspectorAction {
 
-        public InspectSelectedThreadLocalsBlockMemoryAction(String actionTitle) {
-            super(inspection(), actionTitle == null ? "Inspect memory for selected thread's locals block" : actionTitle);
+        public ViewSelectedThreadLocalsBlockMemoryAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? "View memory for selected thread's locals block" : actionTitle);
         }
 
         @Override
@@ -750,22 +750,22 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
     /**
      * @param actionTitle title for the action, uses a default if null
-     * @return an action that will create a memory inspector
+     * @return an action that will create a memory view
      * for the thread locals block allocated by the currently selected thread
      */
-    public final InspectorAction inspectSelectedThreadLocalsBlockMemory(String actionTitle) {
-        return new InspectSelectedThreadLocalsBlockMemoryAction(actionTitle);
+    public final InspectorAction viewSelectedThreadLocalsBlockMemory(String actionTitle) {
+        return new ViewSelectedThreadLocalsBlockMemoryAction(actionTitle);
     }
 
     /**
-     *Action:  inspect the memory allocated to one of the currently selected thread's locals areas.
+     *Action:  view the memory allocated to one of the currently selected thread's locals areas.
      */
-    final class InspectSelectedThreadLocalsAreaMemoryAction extends InspectorAction {
+    final class ViewSelectedThreadLocalsAreaMemoryAction extends InspectorAction {
 
         private final Safepoint.State state;
 
-        public InspectSelectedThreadLocalsAreaMemoryAction(Safepoint.State state, String actionTitle) {
-            super(inspection(), actionTitle == null ? "Inspect memory for selected thread's locals area=" + state.name() : actionTitle);
+        public ViewSelectedThreadLocalsAreaMemoryAction(Safepoint.State state, String actionTitle) {
+            super(inspection(), actionTitle == null ? "View memory for selected thread's locals area=" + state.name() : actionTitle);
             this.state = state;
         }
 
@@ -803,20 +803,20 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
     /**
      * @param actionTitle title for the action, uses a default if null
-     * @return an action that will create a memory inspector
+     * @return an action that will create a memory view
      * for one of the thread locals areas allocated by the currently selected thread
      */
-    public final InspectorAction inspectSelectedThreadLocalsAreaMemory(Safepoint.State state, String actionTitle) {
-        return new InspectSelectedThreadLocalsAreaMemoryAction(state, actionTitle);
+    public final InspectorAction viewSelectedThreadLocalsAreaMemory(Safepoint.State state, String actionTitle) {
+        return new ViewSelectedThreadLocalsAreaMemoryAction(state, actionTitle);
     }
 
     /**
-     *Action:  inspect the memory allocated to the currently selected stack frame.
+     *Action:  view the memory allocated to the currently selected stack frame.
      */
-    final class InspectSelectedStackFrameMemoryAction extends InspectorAction {
+    final class ViewSelectedStackFrameMemoryAction extends InspectorAction {
 
-        public InspectSelectedStackFrameMemoryAction(String actionTitle) {
-            super(inspection(), actionTitle == null ? "Inspect memory for selected stack frame" : actionTitle);
+        public ViewSelectedStackFrameMemoryAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? "View memory for selected stack frame" : actionTitle);
             refreshableActions.add(this);
         }
 
@@ -838,22 +838,22 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
     /**
      * @param actionTitle title for the action, uses a default if null
-     * @return an action that will create a memory inspector
+     * @return an action that will create a memory view
      * for memory allocated by the currently selected stack frame
      */
-    public final InspectorAction inspectSelectedStackFrameMemory(String actionTitle) {
-        return new InspectSelectedStackFrameMemoryAction(actionTitle);
+    public final InspectorAction viewSelectedStackFrameMemory(String actionTitle) {
+        return new ViewSelectedStackFrameMemoryAction(actionTitle);
     }
 
     /**
-     *Action:  inspect the memory allocated to a stack frame.
+     *Action:  view the memory allocated to a stack frame.
      */
-    final class InspectStackFrameMemoryAction extends InspectorAction {
+    final class ViewStackFrameMemoryAction extends InspectorAction {
 
         private final MaxStackFrame stackFrame;
 
-        public InspectStackFrameMemoryAction(MaxStackFrame stackFrame, String actionTitle) {
-            super(inspection(), actionTitle == null ? "Inspect memory for stack frame" : actionTitle);
+        public ViewStackFrameMemoryAction(MaxStackFrame stackFrame, String actionTitle) {
+            super(inspection(), actionTitle == null ? "View memory for stack frame" : actionTitle);
             assert stackFrame != null;
             this.stackFrame = stackFrame;
         }
@@ -870,20 +870,20 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
     /**
      * @param actionTitle title for the action, uses a default if null
-     * @return an action that will create a memory inspector
+     * @return an action that will create a memory view
      * for memory allocated by the currently selected stack frame
      */
-    public final InspectorAction inspectStackFrameMemory(MaxStackFrame stackFrame, String actionTitle) {
-        return new InspectStackFrameMemoryAction(stackFrame, actionTitle);
+    public final InspectorAction viewtackFrameMemory(MaxStackFrame stackFrame, String actionTitle) {
+        return new ViewStackFrameMemoryAction(stackFrame, actionTitle);
     }
 
     /**
-     *Action:  inspect the memory allocated to the currently selected memory watchpoint.
+     *Action:  view the memory allocated to the currently selected memory watchpoint.
      */
-    final class InspectSelectedMemoryWatchpointAction extends InspectorAction {
+    final class ViewSelectedMemoryWatchpointAction extends InspectorAction {
 
-        public InspectSelectedMemoryWatchpointAction(String actionTitle) {
-            super(inspection(), actionTitle == null ? "Inspect memory at selected watchpoint" : actionTitle);
+        public ViewSelectedMemoryWatchpointAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? "View memory at selected watchpoint" : actionTitle);
         }
 
         @Override
@@ -902,25 +902,25 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction inspectSelectedMemoryWatchpointAction = new InspectSelectedMemoryWatchpointAction(null);
+    private final InspectorAction viewSelectedMemoryWatchpointAction = new ViewSelectedMemoryWatchpointAction(null);
 
     /**
-     * @return Singleton action that will create a memory inspector
+     * @return Singleton action that will create a memory view
      * for memory allocated by the currently selected thread
      */
-    public final InspectorAction inspectSelectedMemoryWatchpointAction() {
-        return inspectSelectedMemoryWatchpointAction;
+    public final InspectorAction viewSelectedMemoryWatchpointAction() {
+        return viewSelectedMemoryWatchpointAction;
     }
 
     /**
-     * Action:  creates a memory inspector for the currently selected memory region, if any.
+     * Action:  creates a memory view for the currently selected memory region, if any.
      */
 
-    final class InspectSelectedMemoryRegionAction extends InspectorAction {
+    final class ViewSelectedMemoryRegionAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "Inspect selected memory region";
+        private static final String DEFAULT_TITLE = "View selected memory region";
 
-        InspectSelectedMemoryRegionAction() {
+        ViewSelectedMemoryRegionAction() {
             super(inspection(), DEFAULT_TITLE);
             refreshableActions.add(this);
             refresh(true);
@@ -940,13 +940,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction inspectSelectedMemoryRegionAction = new InspectSelectedMemoryRegionAction();
+    private final InspectorAction viewSelectedMemoryRegionAction = new ViewSelectedMemoryRegionAction();
 
     /**
-     * @return Singleton Action that will create a Memory inspector for the currently selected region of memory
+     * @return Singleton Action that will create a Memory view for the currently selected region of memory
      */
-    public final InspectorAction inspectSelectedMemoryRegion() {
-        return inspectSelectedMemoryRegionAction;
+    public final InspectorAction viewSelectedMemoryRegion() {
+        return viewSelectedMemoryRegionAction;
     }
 
     /**
@@ -977,13 +977,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action: create an Object Inspector for the boot {@link ClassRegistry} in the VM.
+     * Action: create an Object view for the boot {@link ClassRegistry} in the VM.
      */
-    final class InspectBootClassRegistryAction extends InspectorAction {
+    final class ViewBootClassRegistryAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "Inspect boot class registry";
+        private static final String DEFAULT_TITLE = "View boot class registry";
 
-        InspectBootClassRegistryAction(String actionTitle) {
+        ViewBootClassRegistryAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
@@ -998,55 +998,55 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction inspectBootClassRegistryAction = new InspectBootClassRegistryAction(null);
+    private final InspectorAction viewBootClassRegistryAction = new ViewBootClassRegistryAction(null);
 
     /**
-     * @return Singleton action that will create an Object Inspector for the boot {@link ClassRegistry} in the VM.
+     * @return Singleton action that will create an Object view for the boot {@link ClassRegistry} in the VM.
      */
-    public final InspectorAction inspectBootClassRegistry() {
-        return inspectBootClassRegistryAction;
+    public final InspectorAction viewBootClassRegistry() {
+        return viewBootClassRegistryAction;
     }
 
     /**
-     * Action:  inspect a {@link ClassActor} object for an interactively named class loaded in the VM,
+     * Action:  view a {@link ClassActor} object for an interactively named class loaded in the VM,
      * specified by class name.
      */
-    final class InspectClassActorByNameAction extends InspectorAction {
+    final class ViewClassActorByNameAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "Inspect ClassActor by name...";
+        private static final String DEFAULT_TITLE = "View ClassActor by name...";
 
-        InspectClassActorByNameAction(String actionTitle) {
+        ViewClassActorByNameAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
         @Override
         protected void procedure() {
-            final TeleClassActor teleClassActor = ClassActorSearchDialog.show(inspection(), "Inspect ClassActor ...", "Inspect");
+            final TeleClassActor teleClassActor = ClassActorSearchDialog.show(inspection(), "View ClassActor ...", "View");
             if (teleClassActor != null) {
                 focus().setHeapObject(teleClassActor);
             }
         }
     }
 
-    private final InspectorAction inspectClassActorByNameAction = new InspectClassActorByNameAction(null);
+    private final InspectorAction viewClassActorByNameAction = new ViewClassActorByNameAction(null);
 
     /**
-     * @return Singleton interactive Action that inspects a {@link ClassActor} object for a class loaded in the VM,
+     * @return Singleton interactive Action that views a {@link ClassActor} object for a class loaded in the VM,
      * specified by class name.
      */
-    public final InspectorAction inspectClassActorByName() {
-        return inspectClassActorByNameAction;
+    public final InspectorAction viewClassActorByName() {
+        return viewClassActorByNameAction;
     }
 
     /**
-     * Action:  inspect a {@link ClassActor} for an interactively named class loaded in the VM,
+     * Action:  view a {@link ClassActor} for an interactively named class loaded in the VM,
      * specified by the class ID in hex.
      */
-    final class InspectClassActorByHexIdAction extends InspectorAction {
+    final class ViewClassActorByHexIdAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "Inspect ClassActor by ID (Hex) ...";
+        private static final String DEFAULT_TITLE = "View ClassActor by ID (Hex) ...";
 
-        InspectClassActorByHexIdAction(String actionTitle) {
+        ViewClassActorByHexIdAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
@@ -1069,24 +1069,24 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction inspectClassActorByHexIdAction = new InspectClassActorByHexIdAction(null);
+    private final InspectorAction viewClassActorByHexIdAction = new ViewClassActorByHexIdAction(null);
 
     /**
-     * @return Singleton interactive Action that inspects a {@link ClassActor} object for a class loaded in the VM,
+     * @return Singleton interactive Action that views a {@link ClassActor} object for a class loaded in the VM,
      * specified by class ID in hex.
      */
-    public final InspectorAction inspectClassActorByHexId() {
-        return inspectClassActorByHexIdAction;
+    public final InspectorAction viewClassActorByHexId() {
+        return viewClassActorByHexIdAction;
     }
 
     /**
-     * Action:  inspect a {@link ClassActor} for an interactively named class loaded in the VM,
+     * Action:  view a {@link ClassActor} for an interactively named class loaded in the VM,
      * specified by the class ID in decimal.
      */
-    final class InspectClassActorByDecimalIdAction extends InspectorAction {
+    final class ViewClassActorByDecimalIdAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "Inspect ClassActor by ID (decimal) ...";
-        InspectClassActorByDecimalIdAction(String actionTitle) {
+        private static final String DEFAULT_TITLE = "View ClassActor by ID (decimal) ...";
+        ViewClassActorByDecimalIdAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
@@ -1109,59 +1109,58 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction inspectClassActorByDecimalIdAction = new InspectClassActorByDecimalIdAction(null);
+    private final InspectorAction viewClassActorByDecimalIdAction = new ViewClassActorByDecimalIdAction(null);
 
     /**
-     * @return Singleton interactive Action that inspects a {@link ClassActor} object for a class loaded in the VM,
+     * @return Singleton interactive Action that views a {@link ClassActor} object for a class loaded in the VM,
      * specified by class ID in decimal.
      */
-    public final InspectorAction inspectClassActorByDecimalId() {
-        return inspectClassActorByDecimalIdAction;
+    public final InspectorAction viewClassActorByDecimalId() {
+        return viewClassActorByDecimalIdAction;
     }
 
     /**
-     * Action: visits a {@link MethodActor} object in the VM, specified by name.
+     * Action: view a {@link MethodActor} object in the VM, specified by name.
      */
-    final class InspectMethodActorByNameAction extends InspectorAction {
+    final class ViewMethodActorByNameAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE =  "Inspect MethodActor by name...";
+        private static final String DEFAULT_TITLE =  "View MethodActor by name...";
 
-        InspectMethodActorByNameAction(String actionTitle) {
+        ViewMethodActorByNameAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
         @Override
         protected void procedure() {
-            final TeleClassActor teleClassActor = ClassActorSearchDialog.show(inspection(), "Inspect MethodActor in class...", "Select");
+            final TeleClassActor teleClassActor = ClassActorSearchDialog.show(inspection(), "View MethodActor in class...", "Select");
             if (teleClassActor != null) {
-                final TeleMethodActor teleMethodActor = MethodActorSearchDialog.show(inspection(), teleClassActor, "Inspect MethodActor...", "Inspect");
+                final TeleMethodActor teleMethodActor = MethodActorSearchDialog.show(inspection(), teleClassActor, "View MethodActor...", "View");
                 if (teleMethodActor != null) {
                     focus().setHeapObject(teleMethodActor);
                 }
             }
         }
-
     }
 
-    private InspectorAction inspectMethodActorByName = new InspectMethodActorByNameAction(null);
+    private InspectorAction viewMethodActorByName = new ViewMethodActorByNameAction(null);
 
     /**
-     * @return an interactive Action that will visit a {@link MethodActor} object in the VM, specified by name.
+     * @return an interactive Action that will view a {@link MethodActor} object in the VM, specified by name.
      */
-    public final InspectorAction inspectMethodActorByName() {
-        return inspectMethodActorByName;
+    public final InspectorAction viewMethodActorByName() {
+        return viewMethodActorByName;
     }
 
     /**
-     * Action:  inspects the class actor from which a method was substituted.
+     * Action:  view the class actor from which a method was substituted.
      */
-    final class InspectSubstitutionSourceClassActorAction extends InspectorAction {
+    final class ViewSubstitutionSourceClassActorAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE =  "Method substitution source";
+        private static final String DEFAULT_TITLE =  "View method substitution source";
 
         private final TeleClassMethodActor teleClassMethodActor;
 
-        private InspectSubstitutionSourceClassActorAction(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
+        private ViewSubstitutionSourceClassActorAction(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.teleClassMethodActor = teleClassMethodActor;
             setEnabled(teleClassMethodActor.isSubstituted());
@@ -1176,35 +1175,35 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Creates an action to inspect the class actor from which a method was substituted.
+     * Creates an action to view the class actor from which a method was substituted.
      *
      * @param teleClassMethodActor representation of a class method in the VM
      * @param actionTitle name of the action
-     * @return an action that will inspect the class actor, if any, from which the method was substituted
+     * @return an action that will view the class actor, if any, from which the method was substituted
      */
-    public final InspectorAction inspectSubstitutionSourceClassActorAction(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
-        return new InspectSubstitutionSourceClassActorAction(teleClassMethodActor, actionTitle);
+    public final InspectorAction viewSubstitutionSourceClassActorAction(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
+        return new ViewSubstitutionSourceClassActorAction(teleClassMethodActor, actionTitle);
     }
 
     /**
-     * Creates an action to inspect the class actor from which a method was substituted.
+     * Creates an action to view the class actor from which a method was substituted.
      *
      * @param teleClassMethodActor representation of a class method in the VM
-     * @return an action that will inspect the class actor, if any, from which the method was substituted
+     * @return an action that will view the class actor, if any, from which the method was substituted
      */
-    public final InspectorAction inspectSubstitutionSourceClassActorAction(TeleClassMethodActor teleClassMethodActor) {
-        return new InspectSubstitutionSourceClassActorAction(teleClassMethodActor, null);
+    public final InspectorAction viewSubstitutionSourceClassActorAction(TeleClassMethodActor teleClassMethodActor) {
+        return new ViewSubstitutionSourceClassActorAction(teleClassMethodActor, null);
     }
 
     /**
-     * Menu: contains actions to inspect each of the compilations of a method.
+     * Menu: contains actions to view each of the compilations of a method.
      */
-    final class InspectMethodCompilationsMenu extends InspectorMenu {
+    final class ViewMethodCompilationsMenu extends InspectorMenu {
 
         private static final String DEFAULT_TITLE = "Compilations";
         private final TeleClassMethodActor teleClassMethodActor;
 
-        public InspectMethodCompilationsMenu(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
+        public ViewMethodCompilationsMenu(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
             super(actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.teleClassMethodActor = teleClassMethodActor;
             refresh(true);
@@ -1224,26 +1223,26 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Creates a menu containing actions to inspect all compilations of a method, dynamically updated
+     * Creates a menu containing actions to view all compilations of a method, dynamically updated
      * as compilations are added.
      *
      * @param teleClassMethodActor representation of a Java method in the VM
      * @param actionTitle name of the action to appear on button or menu
-     * @return a dynamically refreshed menu that contains actions to inspect each of the compilations of a method.
+     * @return a dynamically refreshed menu that contains actions to view each of the compilations of a method.
      */
     public InspectorMenu inspectMethodCompilationsMenu(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
-        return new InspectMethodCompilationsMenu(teleClassMethodActor, actionTitle);
+        return new ViewMethodCompilationsMenu(teleClassMethodActor, actionTitle);
     }
 
     /**
-     * Creates a menu containing actions to inspect all compilations of a method, dynamically updated
+     * Creates a menu containing actions to view all compilations of a method, dynamically updated
      * as compilations are added.
      *
      * @param teleClassMethodActor representation of a Java method in the VM
-     * @return a dynamically refreshed menu that contains actions to inspect each of the compilations of a method.
+     * @return a dynamically refreshed menu that contains actions to view each of the compilations of a method.
      */
-    public InspectorMenu inspectMethodCompilationsMenu(TeleClassMethodActor teleClassMethodActor) {
-        return new InspectMethodCompilationsMenu(teleClassMethodActor, null);
+    public InspectorMenu viewMethodCompilationsMenu(TeleClassMethodActor teleClassMethodActor) {
+        return new ViewMethodCompilationsMenu(teleClassMethodActor, null);
     }
 
     /**
@@ -1309,7 +1308,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final InspectorAction viewMethodCodeByAddressAction = new ViewMethodCodeByAddressAction(null);
 
     /**
-     * @return Singleton interactive action that displays in the {@link MethodInspector} the method whose
+     * @return Singleton interactive action that displays in the {@link MethodView} the method whose
      * machine code contains the specified address in the VM.
      */
     public final InspectorAction viewMethodCodeByAddress() {
@@ -1318,7 +1317,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
     /**
      * @param actionTitle name of the action to appear in menu or button, uses default if null
-     * @return an interactive action that displays in the {@link MethodInspector} the method whose
+     * @return an interactive action that displays in the {@link MethodView} the method whose
      * machine code contains the specified address in the VM.
      */
     public final InspectorAction viewMethodCodeByAddress(String actionTitle) {
@@ -1326,7 +1325,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  displays in the {@MethodInspector} the method code containing an address.
+     * Action:  displays the method code containing an address.
      */
     final class ViewMethodCodeAtLocationAction extends InspectorAction {
 
@@ -1352,14 +1351,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * @return an Action that displays in the {@link MethodInspector} a method at some code location.
+     * @return an Action that displays in the {@link MethodView} a method at some code location.
      */
     public final InspectorAction viewMethodCodeAtLocation(MaxCodeLocation codeLocation, String actionTitle) {
         return new ViewMethodCodeAtLocationAction(codeLocation, actionTitle);
     }
 
     /**
-     * Action:  displays in the {@MethodInspector} the method code containing the current code selection.
+     * Action:  displays the method code containing the current code selection.
      */
     final class ViewMethodCodeAtSelectionAction extends InspectorAction {
 
@@ -1383,7 +1382,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final ViewMethodCodeAtSelectionAction viewMethodCodeAtSelection = new ViewMethodCodeAtSelectionAction(null);
 
     /**
-     * @return Singleton action that displays in the {@link MethodInspector} the method code
+     * @return Singleton action that displays in the {@link MethodView} the method code
      * containing the current code selection.
      */
     public final InspectorAction viewMethodCodeAtSelection() {
@@ -1391,7 +1390,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  displays in the {@MethodInspector} the method code containing the current instruction pointer.
+     * Action:  displays the method code containing the current instruction pointer.
      */
     final class ViewMethodCodeAtIPAction extends InspectorAction {
 
@@ -1415,7 +1414,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final ViewMethodCodeAtIPAction viewMethodCodeAtIP = new ViewMethodCodeAtIPAction(null);
 
     /**
-     * @return Singleton Action that displays in the {@link MethodInspector} the method
+     * @return Singleton Action that displays in the {@link MethodView} the method
      * containing the current instruction pointer.
      */
     public final InspectorAction viewMethodCodeAtIP() {
@@ -1423,7 +1422,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  displays in the {@MethodInspector} the bytecode for a specified method.
+     * Action:  displays the bytecode for a specified method.
      */
     final class ViewMethodBytecodeAction extends InspectorAction {
 
@@ -1444,7 +1443,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * @return an interactive Action that displays bytecode in the {@link MethodInspector}
+     * @return an interactive Action that displays bytecode in the {@link MethodView}
      * for a selected method.
      */
     public final InspectorAction viewMethodBytecode(TeleClassMethodActor teleClassMethodActor) {
@@ -1456,7 +1455,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      *
      * @param teleClassMethodActor
      * @param actionTitle name of the action to appear in menu or button
-     * @return an interactive Action that displays bytecode in the {@link MethodInspector}
+     * @return an interactive Action that displays bytecode in the {@link MethodView}
      * for a selected method.
      */
     public final InspectorAction viewMethodBytecode(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
@@ -1464,7 +1463,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  displays in the {@MethodInspector} the bytecode for an interactively specified method.
+     * Action:  displays the bytecode for an interactively specified method.
      */
     final class ViewMethodBytecodeByNameAction extends InspectorAction {
 
@@ -1483,7 +1482,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                         return teleMethodActor.hasCodeAttribute();
                     }
                 };
-                final TeleMethodActor teleMethodActor = MethodActorSearchDialog.show(inspection(), teleClassActor, hasBytecodePredicate, "View Bytecodes for Method...", "Inspect");
+                final TeleMethodActor teleMethodActor = MethodActorSearchDialog.show(inspection(), teleClassActor, hasBytecodePredicate, "View Bytecodes for Method...", "View");
                 if (teleMethodActor != null && teleMethodActor instanceof TeleClassMethodActor) {
                     final TeleClassMethodActor teleClassMethodActor = (TeleClassMethodActor) teleMethodActor;
                     final MaxCodeLocation teleCodeLocation = vm().codeManager().createBytecodeLocation(teleClassMethodActor, 0, "view method by name bytecode action");
@@ -1496,7 +1495,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final InspectorAction viewMethodBytecodeByNameAction = new  ViewMethodBytecodeByNameAction(null);
 
     /**
-     * @return an interactive Action that displays bytecode in the {@link MethodInspector}
+     * @return an interactive Action that displays bytecode in the {@link MethodView}
      * for a selected method.
      */
     public final InspectorAction viewMethodBytecodeByName() {
@@ -1505,7 +1504,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
     /**
      * @param actionTitle name of the action to appear in menu or button
-     * @return an interactive Action that displays bytecode in the {@link MethodInspector}
+     * @return an interactive Action that displays bytecode in the {@link MethodView}
      * for a selected method.
      */
     public final InspectorAction viewMethodBytecodeByName(String actionTitle) {
@@ -1513,7 +1512,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  displays in the {@MethodInspector} the machine code for an interactively specified method.
+     * Action:  displays the machine code for an interactively specified method.
      */
     final class ViewMethodCompilationByNameAction extends InspectorAction {
 
@@ -1539,7 +1538,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final InspectorAction viewMethodCompilationByNameAction = new ViewMethodCompilationByNameAction(null);
 
     /**
-     * @return Singleton interactive Action that displays machine code in the {@link MethodInspector}
+     * @return Singleton interactive Action that displays machine code in the {@link MethodView}
      * for a selected method.
      */
     public final InspectorAction viewMethodMachineCodeByName() {
@@ -1547,7 +1546,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  displays in the {@MethodInspector} the compiled code for an interactively specified method.
+     * Action:  displays the compiled code for an interactively specified method.
      */
     final class ViewMethodMachineCodeAction extends InspectorAction {
 
@@ -1570,7 +1569,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final InspectorAction viewMethodMachineCodeAction = new ViewMethodMachineCodeAction(null);
 
     /**
-     * @return Singleton interactive Action that displays machine code in the {@link MethodInspector}
+     * @return Singleton interactive Action that displays machine code in the {@link MethodView}
      * for a selected method.
      */
     public final InspectorAction viewMethodMachineCode() {
@@ -1609,7 +1608,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Creates a menu containing actions to inspect the machine code for all compilations of a method, dynamically updated
+     * Creates a menu containing actions to view the machine code for all compilations of a method, dynamically updated
      * as compilations are added.
      *
      * @param teleClassMethodActor representation of a Java method in the VM
@@ -1632,7 +1631,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  displays in the {@link MethodInspector} the code of a specified
+     * Action:  displays in the {@link MethodView} the code of a specified
      * method in the boot image.
      */
     final class ViewMethodCodeInBootImageAction extends InspectorAction {
@@ -1658,7 +1657,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         new ViewMethodCodeInBootImageAction(vm().bootImage().header.vmRunMethodOffset, ClassRegistry.MaxineVM_run.toJava());
 
     /**
-     * @return an Action that displays in the {@link MethodInspector} the code of
+     * @return an Action that displays in the {@link MethodView} the code of
      * the {@link MaxineVM#run()} method in the boot image.
      */
     public final InspectorAction viewRunMethodCodeInBootImage() {
@@ -1669,7 +1668,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         new ViewMethodCodeInBootImageAction(vm().bootImage().header.vmThreadRunMethodOffset, ClassRegistry.VmThread_run.toJava());
 
     /**
-     * @return an Action that displays in the {@link MethodInspector} the code of
+     * @return an Action that displays in the {@link MethodView} the code of
      * the {@link VmThread#run()} method in the boot image.
      */
     public final InspectorAction viewThreadRunMethodCodeInBootImage() {
@@ -1677,7 +1676,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  displays in the {@MethodInspector} a body of native code whose location contains
+     * Action:  displays a body of native code whose location contains
      * an interactively specified address.
      */
     final class ViewNativeCodeByAddressAction extends InspectorAction {
@@ -1707,7 +1706,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final InspectorAction viewNativeCodeByAddressAction = new ViewNativeCodeByAddressAction(null);
 
     /**
-      * @return Singleton interactive action that displays in the {@link MethodInspector} a body of native code whose
+      * @return Singleton interactive action that displays in the {@link MethodView} a body of native code whose
      * location contains the specified address in the VM.
      */
     public final InspectorAction viewNativeCodeByAddress() {
@@ -1716,7 +1715,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
     /**
      * @param actionTitle name of the action, as it will appear on a menu or button, default name if null
-     * @return an interactive action that displays in the {@link MethodInspector} a body of native code whose
+     * @return an interactive action that displays in the {@link MethodView} a body of native code whose
      * location contains the specified address in the VM.
      */
     public final InspectorAction viewNativeCodeByAddress(String actionTitle) {
@@ -1755,9 +1754,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Menu: display a sub-menu of commands to make visible
-     * existing object inspectors.  It includes a command
-     * that closes all of them.
+     * Menu: display a sub-menu of commands for setting breakpoints at standard locations.
      */
     final class BuiltinBreakpointsMenu extends InspectorMenu {
         public BuiltinBreakpointsMenu(String title) {
@@ -4090,7 +4087,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public InspectorMenuItems genericMemoryMenuItems() {
         return new AbstractInspectorMenuItems(inspection()) {
             public void addTo(InspectorMenu menu) {
-                menu.add(inspectMemoryAllocationsMenu());
+                menu.add(viewMemoryAllocationsMenu());
                 menu.add(views().memory().viewMenu());
                 menu.add(views().memoryBytes().viewMenu());
             }
@@ -4171,15 +4168,15 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return new AbstractInspectorMenuItems(inspection()) {
             public void addTo(InspectorMenu menu) {
 
-                final JMenu methodActorMenu = new JMenu("Inspect method actor");
-                methodActorMenu.add(inspectMethodActorByName());
+                final JMenu methodActorMenu = new JMenu("View method actor");
+                methodActorMenu.add(viewMethodActorByName());
                 menu.add(methodActorMenu);
 
-                final JMenu classActorMenu = new JMenu("Inspect class actor");
-                classActorMenu.add(inspectClassActorByName());
-                classActorMenu.add(inspectClassActorByHexId());
-                classActorMenu.add(inspectClassActorByDecimalId());
-                classActorMenu.add(inspectBootClassRegistry());
+                final JMenu classActorMenu = new JMenu("View class actor");
+                classActorMenu.add(viewClassActorByName());
+                classActorMenu.add(viewClassActorByHexId());
+                classActorMenu.add(viewClassActorByDecimalId());
+                classActorMenu.add(viewBootClassRegistry());
                 menu.add(classActorMenu);
 
                 menu.add(views().objects().viewMenu());

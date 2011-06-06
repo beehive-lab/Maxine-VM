@@ -35,7 +35,7 @@ import com.sun.max.tele.*;
 import com.sun.max.vm.value.*;
 
 /**
- * A label specialized for use in the {@link Inspector}.
+ * A label specialized for use in the {@link AbstractView}.
  * <br>
  * Labels can act as a source for drag and drop operations.
  *

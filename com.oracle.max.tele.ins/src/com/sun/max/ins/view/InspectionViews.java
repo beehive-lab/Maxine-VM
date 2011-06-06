@@ -25,31 +25,31 @@ package com.sun.max.ins.view;
 import java.util.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.BootImageInspector.BootImageViewManager;
+import com.sun.max.ins.BootImageView.BootImageViewManager;
 import com.sun.max.ins.InspectionSettings.AbstractSaveSettingsListener;
 import com.sun.max.ins.InspectionSettings.SaveSettingsEvent;
 import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
-import com.sun.max.ins.NotepadInspector.NotepadViewManager;
-import com.sun.max.ins.UserFocusInspector.UserFocusViewManager;
+import com.sun.max.ins.NotepadView.NotepadViewManager;
+import com.sun.max.ins.UserFocusView.UserFocusViewManager;
 import com.sun.max.ins.debug.*;
-import com.sun.max.ins.debug.BreakpointsInspector.BreakpointsViewManager;
-import com.sun.max.ins.debug.RegistersInspector.RegistersViewManager;
-import com.sun.max.ins.debug.StackFrameInspector.StackFrameViewManager;
-import com.sun.max.ins.debug.StackInspector.StackViewManager;
-import com.sun.max.ins.debug.ThreadLocalsInspector.ThreadLocalsViewManager;
-import com.sun.max.ins.debug.ThreadsInspector.ThreadsViewManager;
-import com.sun.max.ins.debug.WatchpointsInspector.WatchpointsViewManager;
+import com.sun.max.ins.debug.BreakpointsView.BreakpointsViewManager;
+import com.sun.max.ins.debug.RegistersView.RegistersViewManager;
+import com.sun.max.ins.debug.StackFrameView.StackFrameViewManager;
+import com.sun.max.ins.debug.StackView.StackViewManager;
+import com.sun.max.ins.debug.ThreadLocalsView.ThreadLocalsViewManager;
+import com.sun.max.ins.debug.ThreadsView.ThreadsViewManager;
+import com.sun.max.ins.debug.WatchpointsView.WatchpointsViewManager;
 import com.sun.max.ins.file.*;
-import com.sun.max.ins.file.JavaSourceInspector.JavaSourceViewManager;
+import com.sun.max.ins.file.JavaSourceView.JavaSourceViewManager;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.java.*;
-import com.sun.max.ins.java.CodeLocationInspector.CodeLocationViewManager;
+import com.sun.max.ins.java.CodeLocationView.CodeLocationViewManager;
 import com.sun.max.ins.memory.*;
-import com.sun.max.ins.memory.AllocationsInspector.AllocationsViewManager;
-import com.sun.max.ins.memory.MemoryBytesInspector.MemoryBytesViewManager;
-import com.sun.max.ins.memory.MemoryInspector.MemoryViewManager;
+import com.sun.max.ins.memory.AllocationsView.AllocationsViewManager;
+import com.sun.max.ins.memory.MemoryBytesView.MemoryBytesViewManager;
+import com.sun.max.ins.memory.MemoryView.MemoryViewManager;
 import com.sun.max.ins.method.*;
-import com.sun.max.ins.method.MethodInspectorContainer.MethodViewManager;
+import com.sun.max.ins.method.MethodViewContainer.MethodViewManager;
 import com.sun.max.ins.object.*;
 import com.sun.max.program.option.*;
 
@@ -74,7 +74,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
 
             @Override
             public AllocationsViewManager viewManager() {
-                final AllocationsViewManager viewManager = AllocationsInspector.makeViewManager(inspection);
+                final AllocationsViewManager viewManager = AllocationsView.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
@@ -83,7 +83,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
 
             @Override
             public BootImageViewManager viewManager() {
-                final BootImageViewManager viewManager = BootImageInspector.makeViewManager(inspection);
+                final BootImageViewManager viewManager = BootImageView.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
@@ -92,7 +92,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
 
             @Override
             public BreakpointsViewManager viewManager() {
-                final BreakpointsViewManager viewManager = BreakpointsInspector.makeViewManager(inspection);
+                final BreakpointsViewManager viewManager = BreakpointsView.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
@@ -101,7 +101,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
 
             @Override
             public CodeLocationViewManager viewManager() {
-                final CodeLocationViewManager viewManager = CodeLocationInspector.makeViewManager(inspection);
+                final CodeLocationViewManager viewManager = CodeLocationView.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
@@ -110,7 +110,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
 
             @Override
             public JavaSourceViewManager viewManager() {
-                final JavaSourceViewManager viewManager = JavaSourceInspector.makeViewManager(inspection);
+                final JavaSourceViewManager viewManager = JavaSourceView.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
@@ -119,7 +119,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
 
             @Override
             public MemoryViewManager viewManager() {
-                final MemoryViewManager viewManager = MemoryInspector.makeViewManager(inspection);
+                final MemoryViewManager viewManager = MemoryView.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
@@ -128,7 +128,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
 
             @Override
             public MemoryBytesViewManager viewManager() {
-                final MemoryBytesViewManager viewManager = MemoryBytesInspector.makeViewManager(inspection);
+                final MemoryBytesViewManager viewManager = MemoryBytesView.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
@@ -137,7 +137,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
 
             @Override
             public MethodViewManager viewManager() {
-                final MethodViewManager viewManager = MethodInspectorContainer.makeViewManager(inspection);
+                final MethodViewManager viewManager = MethodViewContainer.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
@@ -148,7 +148,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
 
             @Override
             public NotepadViewManager viewManager() {
-                final NotepadViewManager viewManager = NotepadInspector.makeViewManager(inspection);
+                final NotepadViewManager viewManager = NotepadView.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
@@ -156,7 +156,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
         OBJECT(false, false, "The contents of a region of VM memory interpreted as an object representation") {
             @Override
             public ObjectViewManager viewManager() {
-                final ObjectViewManager viewManager = ObjectInspector.makeViewManager(inspection);
+                final ObjectViewManager viewManager = ObjectView.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
@@ -165,7 +165,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
 
             @Override
             public RegistersViewManager viewManager() {
-                final RegistersViewManager viewManager = RegistersInspector.makeViewManager(inspection);
+                final RegistersViewManager viewManager = RegistersView.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
@@ -174,7 +174,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
 
             @Override
             public StackViewManager viewManager() {
-                final StackViewManager viewManager = StackInspector.makeViewManager(inspection);
+                final StackViewManager viewManager = StackView.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
@@ -183,7 +183,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
 
             @Override
             public StackFrameViewManager viewManager() {
-                final StackFrameViewManager viewManager = StackFrameInspector.makeViewManager(inspection);
+                final StackFrameViewManager viewManager = StackFrameView.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
@@ -192,7 +192,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
 
             @Override
             public ThreadsViewManager viewManager() {
-                final ThreadsViewManager viewManager = ThreadsInspector.makeViewManager(inspection);
+                final ThreadsViewManager viewManager = ThreadsView.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
@@ -201,7 +201,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
 
             @Override
             public ThreadLocalsViewManager viewManager() {
-                final ThreadLocalsViewManager viewManager = ThreadLocalsInspector.makeViewManager(inspection);
+                final ThreadLocalsViewManager viewManager = ThreadLocalsView.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
@@ -210,7 +210,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
 
             @Override
             public UserFocusViewManager viewManager() {
-                final UserFocusViewManager viewManager = UserFocusInspector.makeViewManager(inspection);
+                final UserFocusViewManager viewManager = UserFocusView.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
@@ -219,7 +219,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
 
             @Override
             public WatchpointsViewManager viewManager() {
-                final WatchpointsViewManager viewManager = WatchpointsInspector.makeViewManager(inspection);
+                final WatchpointsViewManager viewManager = WatchpointsView.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
@@ -256,12 +256,12 @@ public final class InspectionViews extends AbstractInspectionHolder {
             this.key = this.name().toLowerCase();
         }
 
-        public ViewManager<? extends Inspector> viewManager() {
+        public ViewManager<? extends AbstractView> viewManager() {
             return null;
         }
 
-        private InspectorAction deactivateAllAction(Inspector exceptInspector) {
-            final ViewManager< ? extends Inspector> viewManager = viewManager();
+        private InspectorAction deactivateAllAction(AbstractView exceptInspector) {
+            final ViewManager< ? extends AbstractView> viewManager = viewManager();
             return viewManager == null ? null : viewManager.deactivateAllAction(exceptInspector);
         }
     }
@@ -286,7 +286,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
 
             @Override
             protected void procedure() {
-                for (Inspector inspector : activeViews()) {
+                for (AbstractView inspector : activeViews()) {
                     inspector.dispose();
                 }
             }
@@ -296,10 +296,10 @@ public final class InspectionViews extends AbstractInspectionHolder {
     /**
      * @return all active views
      */
-    public List<Inspector> activeViews() {
-        final List<Inspector> inspectors = new ArrayList<Inspector>();
+    public List<AbstractView> activeViews() {
+        final List<AbstractView> inspectors = new ArrayList<AbstractView>();
         for (ViewKind kind : ViewKind.values()) {
-            final ViewManager<? extends Inspector> viewManager = kind.viewManager();
+            final ViewManager<? extends AbstractView> viewManager = kind.viewManager();
             if (viewManager != null) {
                 inspectors.addAll(viewManager.activeViews());
             }
@@ -310,8 +310,8 @@ public final class InspectionViews extends AbstractInspectionHolder {
     /**
      * @return all active views of a particular kind
      */
-    public List<? extends Inspector> activeViews(ViewKind kind) {
-        final ViewManager<? extends Inspector> viewManager = kind.viewManager();
+    public List<? extends AbstractView> activeViews(ViewKind kind) {
+        final ViewManager<? extends AbstractView> viewManager = kind.viewManager();
         if (viewManager != null) {
             return viewManager.activeViews();
         }
@@ -363,9 +363,9 @@ public final class InspectionViews extends AbstractInspectionHolder {
      * @param kind the kind of view, must be a singleton.
      * @return a new view
      */
-    public Inspector activateSingletonView(ViewKind kind) {
+    public AbstractView activateSingletonView(ViewKind kind) {
         assert kind.isSingleton;
-        final ViewManager< ? extends Inspector> viewManager = kind.viewManager();
+        final ViewManager< ? extends AbstractView> viewManager = kind.viewManager();
         if (viewManager != null) {
             SingletonViewManager singletonViewManager = (SingletonViewManager) viewManager;
             return singletonViewManager.activateView();
@@ -381,7 +381,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
      */
     public InspectorAction activateSingletonViewAction(ViewKind kind) {
         if (kind.isSingleton) {
-            final ViewManager< ? extends Inspector> viewManager = kind.viewManager();
+            final ViewManager< ? extends AbstractView> viewManager = kind.viewManager();
             if (viewManager != null) {
                 SingletonViewManager singletonViewManager = (SingletonViewManager) viewManager;
                 return singletonViewManager.activateSingletonViewAction();
@@ -416,12 +416,12 @@ public final class InspectionViews extends AbstractInspectionHolder {
      * @param exceptInspector the one view that should not be deactivated
      * @return the action for deactivating
      */
-    public InspectorAction deactivateOtherViewsAction(final Inspector exceptInspector) {
+    public InspectorAction deactivateOtherViewsAction(final AbstractView exceptInspector) {
         return new InspectorAction(inspection(), "Close other views") {
 
             @Override
             protected void procedure() {
-                for (Inspector inspector : activeViews()) {
+                for (AbstractView inspector : activeViews()) {
                     if (inspector != exceptInspector) {
                         inspector.dispose();
                     }
@@ -439,7 +439,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
      * @param exceptInspector the one view that should not be deactivated
      * @return the action for deactivating
      */
-    public InspectorAction deactivateOtherViewsAction(ViewKind kind, Inspector exceptInspector) {
+    public InspectorAction deactivateOtherViewsAction(ViewKind kind, AbstractView exceptInspector) {
         return kind.deactivateAllAction(exceptInspector);
     }
 
