@@ -24,6 +24,7 @@ package com.sun.max.vm.compiler.c1x;
 
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.compiler.deopt.Deoptimization.*;
 import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
 import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
 
@@ -91,20 +92,8 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
 
     private final CodeAnnotation[] annotations;
 
-    /**
-     * @see #deoptHandlerOffset()
-     */
-    private int deoptHandlerOffset;
-
-    /**
-     * @see #deoptReturnAddressOffset()
-     */
-    private int deoptReturnAddressOffset;
-
     @HOSTED_ONLY
     private CiTargetMethod bootstrappingCiTargetMethod;
-
-    public static final Object DEOPT_HANDLER_MARK = "DEOPT_HANDLER";
 
     public C1XTargetMethod(ClassMethodActor classMethodActor, CiTargetMethod ciTargetMethod, boolean install) {
         super(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
@@ -140,13 +129,15 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
         }
 
         for (Mark mark : ciTargetMethod.marks) {
-            if (mark.id == DEOPT_HANDLER_MARK) {
-                deoptHandlerOffset = mark.pcOffset;
-            } else {
-                FatalError.unexpected("Unknown mark in code generated for " + this + ": " + mark);
+            FatalError.unexpected("Unknown mark in code generated for " + this + ": " + mark);
+        }
+
+        if (classMethodActor != null) {
+            int customStackAreaOffset = ciTargetMethod.customStackAreaOffset();
+            if (customStackAreaOffset != DEOPT_RETURN_ADDRESS_OFFSET) {
+                throw new InternalError("custom stack area offset should be " + DEOPT_RETURN_ADDRESS_OFFSET + ", not " + customStackAreaOffset);
             }
         }
-        deoptReturnAddressOffset = ciTargetMethod.customStackAreaOffset();
 
         initCodeBuffer(ciTargetMethod, install);
         initFrameLayout(ciTargetMethod);
@@ -219,16 +210,6 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
      */
     public int totalRefMapSize() {
         return regRefMapSize() + frameRefMapSize();
-    }
-
-    @Override
-    public int deoptHandlerOffset() {
-        return deoptHandlerOffset;
-    }
-
-    @Override
-    public int deoptReturnAddressOffset() {
-        return deoptReturnAddressOffset;
     }
 
     public DebugInfo debugInfo() {
@@ -756,7 +737,7 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
             Object receiver = calleeSaveStart.plus(csa.offsetOf(regs[0])).getReference().toJava();
             ClassActor classActor = ObjectAccess.readClassActor(receiver);
             // The virtual dispatch trampoline stubs put the virtual dispatch index into the
-            // scratch register and then save it to the stack.
+            // scratch register and then saves it to the stack.
             int index = vm().stubs.readVirtualDispatchIndexFromTrampolineFrame(calleeSaveStart);
             if (trampoline.is(VirtualTrampoline)) {
                 calledMethod = classActor.getVirtualMethodActorByVTableIndex(index);
@@ -808,6 +789,11 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
                 Log.print(ip.minus(codeStart()).toInt());
                 Log.print(" is ");
                 Log.println(catchAddress.minus(codeStart()).toInt());
+            }
+
+            if (current.targetMethod().invalidated() != null) {
+                // TODO (ds)
+                FatalError.unimplemented();
             }
 
             TargetMethod calleeMethod = callee.targetMethod();
@@ -889,10 +875,10 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
     }
 
     @Override
-    public CiFrame getBytecodeFrames(int stopIndex) {
+    public CiFrame debugFramesAt(int stopIndex, FrameAccess fa) {
         if (classMethodActor == null) {
             return null;
         }
-        return debugInfo.frameAt(stopIndex);
+        return debugInfo.framesAt(stopIndex, fa);
     }
 }

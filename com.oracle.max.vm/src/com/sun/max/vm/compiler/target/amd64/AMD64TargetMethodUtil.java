@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.compiler.target.amd64;
 
+import static com.sun.max.vm.compiler.deopt.Deoptimization.*;
 import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
 
 import com.oracle.max.asm.target.amd64.*;
@@ -41,9 +42,30 @@ import com.sun.max.vm.stack.amd64.*;
  * A utility class factoring out code common to all AMD64 target method.
  */
 public final class AMD64TargetMethodUtil {
-    public static final int RCALL = 0xe8;
-    public static final int RJMP = 0xe9;
+
+    /**
+     * Opcode of a RIP-relative call instruction.
+     */
+    public static final int RIP_CALL = 0xe8;
+
+    /**
+     * Opcode of a register-based call instruction.
+     */
+    public static final int REG_CALL = 0xff;
+
+    /**
+     * Opcode of a RIP-relative jump instruction.
+     */
+    public static final int RIP_JMP = 0xe9;
+
+    /**
+     * Opcode of a (near) return instruction.
+     */
     public static final int RET = 0xc3;
+
+    /**
+     * Size (in bytes) of a RIP-relative call instruction.
+     */
     public static final int RIP_CALL_INSTRUCTION_SIZE = 5;
 
     /**
@@ -73,7 +95,7 @@ public final class AMD64TargetMethodUtil {
      * @param destination the absolute target address of the CALL
      */
     public static void fixupCall32Site(TargetMethod targetMethod, int callOffset, Address destination) {
-        fixupCode(targetMethod, callOffset, destination.asAddress(), RCALL);
+        fixupCode(targetMethod, callOffset, destination.asAddress(), RIP_CALL);
     }
 
     private static final long DIRECT_METHOD_CALL_INSTRUCTION_LENGTH = 5L;
@@ -170,24 +192,45 @@ public final class AMD64TargetMethodUtil {
             }
         }
 
-        StackFrameWalker stackFrameWalker = current.stackFrameWalker();
-        Pointer callerIP = stackFrameWalker.readWord(ripPointer, 0).asPointer();
+        StackFrameWalker sfw = current.stackFrameWalker();
+        Pointer callerIP = sfw.readWord(ripPointer, 0).asPointer();
         Pointer callerSP = ripPointer.plus(Word.size()); // Skip return instruction pointer on stack
         Pointer callerFP;
         if (targetMethod.is(TrapStub)) {
             // RBP is whatever was in the frame pointer register at the time of the trap
             Pointer calleeSaveArea = sp;
-            callerFP = stackFrameWalker.readWord(calleeSaveArea, AMD64TrapStateAccess.CSA.offsetOf(AMD64.rbp)).asPointer();
+            callerFP = sfw.readWord(calleeSaveArea, AMD64TrapStateAccess.CSA.offsetOf(AMD64.rbp)).asPointer();
         } else {
             // Propagate RBP unchanged as OPT methods do not touch this register.
             callerFP = current.fp();
         }
-        stackFrameWalker.advance(callerIP, callerSP, callerFP, !targetMethod.is(TrapStub));
+
+        // Rescue a return address that has been patched for deoptimization
+        TargetMethod caller = sfw.targetMethodFor(callerIP);
+        if (caller != null && MaxineVM.vm().stubs.isDeoptStub(caller)) {
+            Pointer originalReturnAddress = sfw.readWord(callerSP, DEOPT_RETURN_ADDRESS_OFFSET).asPointer();
+            callerIP = originalReturnAddress;
+        }
+
+        sfw.advance(callerIP, callerSP, callerFP, !targetMethod.is(TrapStub));
     }
 
     public static Pointer returnAddressPointer(Cursor frame) {
         TargetMethod targetMethod = frame.targetMethod();
         Pointer sp = frame.sp();
         return sp.plus(targetMethod.frameSize());
+    }
+
+    public static int callInstructionSize(byte[] code, int pos) {
+        if ((code[pos] & 0xFF) == RIP_CALL) {
+            return RIP_CALL_INSTRUCTION_SIZE;
+        }
+        if ((code[pos] & 0xff) == REG_CALL) {
+            return 2;
+        }
+        if ((code[pos + 1] & 0xff) == REG_CALL) {
+            return 3;
+        }
+        return -1;
     }
 }

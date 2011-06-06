@@ -34,6 +34,7 @@ import com.sun.c1x.ir.ExceptionHandler;
 import com.sun.c1x.lir.FrameMap.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.*;
 import com.sun.cri.ri.*;
@@ -301,10 +302,13 @@ public abstract class LIRAssembler {
                 emitOsrEntry();
                 break;
             case Here:
-                emitHere(op.result(), op.info, false);
+                emitInfopoint(op.result(), op.info, Bytecodes.HERE);
                 break;
             case Info:
-                emitHere(op.result(), op.info, true);
+                emitInfopoint(op.result(), op.info, Bytecodes.INFO);
+                break;
+            case UncommonTrap:
+                emitInfopoint(op.result(), op.info, Bytecodes.UNCOMMON_TRAP);
                 break;
             case Pause:
                 emitPause();
@@ -454,7 +458,7 @@ public abstract class LIRAssembler {
 
     protected abstract void emitNegate(LIRNegate negate);
 
-    protected abstract void emitHere(CiValue dst, LIRDebugInfo info, boolean infoOnly);
+    protected abstract void emitInfopoint(CiValue dst, LIRDebugInfo info, int opcode);
 
     protected abstract void emitMonitorAddress(int monitor, CiValue dst);
 

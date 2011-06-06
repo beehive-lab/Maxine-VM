@@ -25,21 +25,23 @@ package com.sun.max.vm.compiler.deopt;
 import com.sun.max.vm.compiler.target.*;
 
 /**
- * Various per-target method information required for deoptimization.
+ * Objects of this type are used to invalidate target methods.
+ * Using an object instead of a boolean flag allows for information about the
+ * invalidation and/or deoptimization to be retained for the purpose of
+ * debugging.
+ *
+ * @see TargetMethod#invalidate(InvalidationMarker)
  */
-public class DeoptInfo {
-
-    public final TargetMethod targetMethod;
-
-
-    public DeoptInfo(TargetMethod targetMethod) {
-        this.targetMethod = targetMethod;
-    }
+public class InvalidationMarker {
 
     /**
-     * Number of frames still executing method.
+     * The invalidated target method marks by this object.
      */
-    volatile int liveFrames;
+    public final TargetMethod targetMethod;
+
+    public InvalidationMarker(TargetMethod targetMethod) {
+        this.targetMethod = targetMethod;
+    }
 
     @Override
     public String toString() {

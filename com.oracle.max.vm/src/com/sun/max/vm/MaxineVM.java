@@ -436,9 +436,11 @@ public final class MaxineVM {
         // Perhaps this should be later, after VM has initialized
         startupTime = System.currentTimeMillis();
 
+        MaxineVM vm = vm();
         vmConfig().initializeSchemes(MaxineVM.Phase.PRIMORDIAL);
 
-        MaxineVM vm = vm();
+        vm().stubs.intialize();
+
         vm.phase = Phase.PRISTINE;
 
         VMOptions.parsePristine(argc, argv);

@@ -32,6 +32,7 @@ public enum LIROpcode {
         OsrEntry,
         Here,
         Info,
+        UncommonTrap,
         Alloca,
         Breakpoint,
         Pause,

@@ -435,7 +435,7 @@ public class Bytecodes {
      *
      * <pre>
      * Format: { u1 opcode;    // INFOPOINT
-     *           u1 opcode2;   // SAFEPOINT, HERE or HERE_NOP
+     *           u1 opcode2;   // 1, 2, 3 or 4
      *           u1 inclFrame; // non-zero if the full frame is to be saved
      *         }
      * </pre>
@@ -443,6 +443,7 @@ public class Bytecodes {
      * @see #SAFEPOINT
      * @see #HERE
      * @see #INFO
+     *
      */
     public static final int INFOPOINT        = 239;
 
@@ -453,7 +454,7 @@ public class Bytecodes {
      *
      * <pre>
      * Format: { u1 opcode;    // INFOPOINT
-     *           u1 opcode2;   // SAFEPOINT
+     *           u1 opcode2;   // 1
      *           u1 inclFrame; // non-zero if the full frame is to be saved
      *         }
      *
@@ -470,7 +471,7 @@ public class Bytecodes {
      *
      * <pre>
      * Format: { u1 opcode;    // INFOPOINT
-     *           u1 opcode2;   // HERE
+     *           u1 opcode2;   // 2
      *           u1 inclFrame; // non-zero if the full frame is to be saved
      *         }
      *
@@ -486,7 +487,7 @@ public class Bytecodes {
      *
      * <pre>
      * Format: { u1 opcode;    // INFOPOINT
-     *           u1 opcode2;   // HERE_NOP
+     *           u1 opcode2;   // 3
      *           u1 inclFrame; // non-zero if the full frame is to be saved
      *         }
      *
@@ -495,6 +496,21 @@ public class Bytecodes {
      * </pre>
      */
     public static final int INFO          = INFOPOINT  | 3 << 16;
+
+    /**
+     * Record debug info at the current code location and deoptimize if it is executed.
+     *
+     * <pre>
+     * Format: { u1 opcode;    // INFOPOINT
+     *           u1 opcode2;   // 4
+     *           u1 inclFrame; // non-zero if the full frame is to be saved
+     *         }
+     *
+     * Operand Stack:
+     *     ... => ...
+     * </pre>
+     */
+    public static final int UNCOMMON_TRAP          = INFOPOINT  | 4 << 16;
 
     /**
      * Allocates a requested block of memory within the current activation frame.
@@ -788,6 +804,9 @@ public class Bytecodes {
 
         @INTRINSIC(INFO | WITH_FRAME)
         public static native void info();
+
+        @INTRINSIC(UNCOMMON_TRAP | WITH_FRAME)
+        public static native void uncommonTrap();
 
         @INTRINSIC(INFO)
         public static native void infoWithoutFrame();

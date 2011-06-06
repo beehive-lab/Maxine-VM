@@ -27,6 +27,7 @@ import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
+import static com.sun.max.vm.compiler.CompilationScheme.CompilationFlag.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -61,11 +62,12 @@ public interface CompilationScheme extends VMScheme {
      * compilation threads.
      *
      * @param classMethodActor the method for which to make the target method
+     * @param flags a mask of {@link CompilationFlag} values
      * @return the currently compiled version of a target method, if it exists; a new compiled version of the specified
      *         method according to the internal policies if it is not already compiled; null if the compilation policy
      *         denies compilation of the specified method
      */
-    TargetMethod synchronousCompile(ClassMethodActor classMethodActor);
+    TargetMethod synchronousCompile(ClassMethodActor classMethodActor, int flags);
 
     /**
      * This method queries whether this compilation scheme is currently performing a compilation or has queued
@@ -81,6 +83,30 @@ public interface CompilationScheme extends VMScheme {
     String description();
 
     /**
+     * Various flags for modifying a compilation request.
+     */
+    public enum CompilationFlag {
+        /**
+         * The compilation request is for a target method that can be a
+         * {@link TargetMethod#isDeoptimizationTarget() deoptimization target}.
+         */
+        DEOPTIMIZING,
+
+        /**
+         * The compilation request is for a target method that profiling has determined is "hot".
+         */
+        COUNTER_OVERFLOW;
+
+        public static final int NONE = 0;
+
+        public boolean isSet(int flags) {
+            return (flags & mask) != 0;
+        }
+
+        public final int mask = 1 << ordinal();
+    }
+
+    /**
      * This class provides a facade for the {@code CompilationScheme} interface, simplifying usage. It provides a number
      * of utilities to, for example, compile a method, get a method's current entrypoint, reset its method state, etc.
      *
@@ -90,20 +116,23 @@ public interface CompilationScheme extends VMScheme {
         }
 
         /**
-         * Compiles a method.
+         * Gets compiled code for a given method.
          *
          * @param classMethodActor the method to compile
+         * @param flags a mask of {@link CompilationFlag} values
          * @return the compiled method
          */
-        public static TargetMethod compile(ClassMethodActor classMethodActor) {
-            TargetMethod currentTargetMethod = TargetState.currentTargetMethod(classMethodActor.targetState);
+        public static TargetMethod compile(ClassMethodActor classMethodActor, int flags) {
+            TargetMethod currentTargetMethod = TargetState.currentTargetMethod(classMethodActor.targetState, true);
             if (currentTargetMethod != null) {
-                // fast path: method is already compiled just once
-                return currentTargetMethod;
-            } else {
-                // slower path: method has not been compiled, or been compiled more than once
-                return vmConfig().compilationScheme().synchronousCompile(classMethodActor);
+                // fast path: method is already compiled
+                if (!DEOPTIMIZING.isSet(flags) || currentTargetMethod.isDeoptimizationTarget()) {
+                    return currentTargetMethod;
+                }
             }
+
+            // slow path: method has not been compiled, or been compiled more than once
+            return vmConfig().compilationScheme().synchronousCompile(classMethodActor, flags);
         }
 
         /**
@@ -172,7 +201,7 @@ public interface CompilationScheme extends VMScheme {
                     }
                     Pointer ip = current.ip();
                     Pointer callSite = ip.minus(AMD64TargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
-                    if ((callSite.readByte(0) & 0xFF) == AMD64TargetMethodUtil.RCALL) {
+                    if ((callSite.readByte(0) & 0xFF) == AMD64TargetMethodUtil.RIP_CALL) {
                         Pointer target = ip.plus(callSite.readInt(1));
                         if (target.equals(from1)) {
                             logStaticCallPatch(current, callSite, to1);
@@ -220,13 +249,13 @@ public interface CompilationScheme extends VMScheme {
 
             ClassMethodActor classMethodActor = mpo.method.classMethodActor;
             TargetMethod oldMethod = mpo.method;
-            TargetMethod newMethod = TargetState.currentTargetMethod(classMethodActor.targetState);
+            TargetMethod newMethod = TargetState.currentTargetMethod(classMethodActor.targetState, true);
 
             if (oldMethod == newMethod) {
                 // There is no newer compiled version available yet that we could just patch to, so recompile
                 logCounterOverflow(mpo, "");
                 synchronized (mpo) {
-                    newMethod = vmConfig().compilationScheme().synchronousCompile(classMethodActor);
+                    newMethod = vmConfig().compilationScheme().synchronousCompile(classMethodActor, COUNTER_OVERFLOW.mask);
                 }
             }
 

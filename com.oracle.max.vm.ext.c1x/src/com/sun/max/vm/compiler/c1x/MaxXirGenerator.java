@@ -55,6 +55,7 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.classfile.constant.UnresolvedType.ByAccessingClass;
 import com.sun.max.vm.classfile.constant.UnresolvedType.InPool;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.CompilationScheme.CompilationFlag;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
@@ -305,12 +306,6 @@ public class MaxXirGenerator implements RiXirGenerator {
         if (!callee.isVmEntryPoint()) {
             asm.stackOverflowCheck();
         }
-
-        XirLabel deoptHandler = asm.createOutOfLineLabel("deoptHandler");
-        asm.bindOutOfLine(deoptHandler);
-        asm.mark(C1XTargetMethod.DEOPT_HANDLER_MARK);
-        asm.callRuntime(CiRuntimeCall.Deoptimize, null);
-        asm.shouldNotReachHere();
 
         return new XirSnippet(finishTemplate(asm, "prologue"));
     }
@@ -1703,7 +1698,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         public static Word resolveStaticMethod(ResolutionGuard.InPool guard) {
             StaticMethodActor methodActor = Snippets.resolveStaticMethod(guard);
             Snippets.makeHolderInitialized(methodActor);
-            return compile(methodActor).getEntryPoint(OPTIMIZED_ENTRY_POINT).asAddress();
+            return compile(methodActor, CompilationFlag.NONE).getEntryPoint(OPTIMIZED_ENTRY_POINT).asAddress();
         }
 
         public static int resolveVirtualMethod(ResolutionGuard.InPool guard) {
@@ -1711,7 +1706,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
 
         public static Word resolveSpecialMethod(ResolutionGuard.InPool guard) {
-            return compile(Snippets.resolveSpecialMethod(guard)).getEntryPoint(OPTIMIZED_ENTRY_POINT).asAddress();
+            return compile(Snippets.resolveSpecialMethod(guard), CompilationFlag.NONE).getEntryPoint(OPTIMIZED_ENTRY_POINT).asAddress();
         }
 
         public static int resolveInterfaceMethod(ResolutionGuard.InPool guard) {

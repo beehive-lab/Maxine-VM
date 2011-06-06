@@ -25,7 +25,6 @@ package com.sun.max.vm.t1x;
 /**
  * Controls the exact subclass of {@link T1XCompilation} that is created.
  */
-
 public class T1XCompilationFactory {
     public T1XCompilation newT1XCompilation(T1X t1x) {
         return new T1XCompilation(t1x);

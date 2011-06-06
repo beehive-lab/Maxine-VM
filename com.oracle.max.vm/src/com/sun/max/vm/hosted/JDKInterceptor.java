@@ -30,7 +30,6 @@ import java.util.*;
 import sun.misc.*;
 
 import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jdk.*;

@@ -385,7 +385,7 @@ public abstract class ClassMethodActor extends MethodActor {
      * Note that this will never return an invalidated target method.
      */
     public TargetMethod currentTargetMethod() {
-        return TargetState.currentTargetMethod(targetState);
+        return TargetState.currentTargetMethod(targetState, true);
     }
 
     public TargetMethod[] targetMethodHistory() {
