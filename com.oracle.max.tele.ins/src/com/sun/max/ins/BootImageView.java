@@ -30,7 +30,7 @@ import com.sun.max.program.*;
 import com.sun.max.vm.*;
 
 /**
- * A singleton inspector that displays {@link VMConfiguration}  information in the VM boot image.
+ * A singleton view that displays {@link VMConfiguration}  information in the VM boot image.
  *
  * @author Michael Van De Vanter
  */

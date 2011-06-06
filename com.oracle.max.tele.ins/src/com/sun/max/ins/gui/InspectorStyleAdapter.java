@@ -376,7 +376,7 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
     public Color memoryRegisterTagTextColor() {
         //return debugCallReturnTextColor();
         // the above would be more consistent,
-        // but for now opt for consistency with the memory word inspector
+        // but for now opt for consistency with the memory word view
         // the current colors for return value aren't too good anyway
         return wordSelectedColor();
     }

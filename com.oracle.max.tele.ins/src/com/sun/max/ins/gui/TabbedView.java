@@ -78,7 +78,7 @@ public abstract class TabbedView<View_Type extends TabbedView> extends AbstractV
         if (component instanceof InspectorInternalFrame) {
             final InspectorFrame inspectorFrame = (InspectorFrame) component;
             //final Class<Member_Type> type = null;
-            //return Utils.cast(type, inspectorFrame.inspector());
+            //return Utils.cast(type, inspectorFrame.view());
             return inspectorFrame.view();
         }
         return null;

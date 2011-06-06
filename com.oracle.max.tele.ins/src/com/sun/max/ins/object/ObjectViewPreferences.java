@@ -72,7 +72,7 @@ public class ObjectViewPreferences extends TableColumnVisibilityPreferences<Obje
     private boolean hideNullArrayElements = false;
 
     /**
-     * Creates global preferences for object inspectors.
+     * Creates global preferences for object views.
      */
     private ObjectViewPreferences(Inspection inspection) {
         super(inspection, OBJECT_COLUMN_PREFERENCE, ObjectColumnKind.values());

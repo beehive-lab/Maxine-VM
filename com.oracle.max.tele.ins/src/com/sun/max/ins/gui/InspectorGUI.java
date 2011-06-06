@@ -152,23 +152,23 @@ public interface InspectorGUI {
 
     /**
      * Shrink a view in each dimension, without changing location,
-     * to make it fit within the Inspector's frame.
+     * to make it fit within the view's frame.
      */
     void resizeToFit(AbstractView view);
 
     /**
      * Gets an action that will shrink a view in each dimension, without
-     * changing location, to make it fit within the Inspector's frame.
+     * changing location, to make it fit within the view's frame.
      */
     InspectorAction resizeToFitAction(AbstractView view);
 
     /**
-     * Grow an view in each dimension to make it fill the Inspector's frame.
+     * Grow an view in each dimension to make it fill the view's frame.
      */
     void resizeToFill(AbstractView view);
 
     /**
-     * Gets an action that will grow an inspector in each dimension to make it fill the Inspector's frame.
+     * Gets an action that will grow an view in each dimension to make it fill the view's frame.
      */
     InspectorAction resizeToFillAction(AbstractView view);
 

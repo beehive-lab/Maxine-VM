@@ -37,29 +37,29 @@ import com.sun.max.ins.*;
  * Copied from the online Java Tutorial and modified to Maxine Project coding conventions.  2/5/08
  * http://java.sun.com/docs/books/tutorial/uiswing/examples/components/TabComponentsDemoProject/src/components/ButtonTabComponent.java
  *
- * Unfortunately, using this with the VM Inspector's TabbedInspector is a bit
- * tricky; causes there to be children of the TabbedInspector that aren't themselves
- * Inspectors.  The VM Inspector iterator filters them out.
+ * Unfortunately, using this with the VM View's TabbedInspector is a bit
+ * tricky; causes there to be children of the TabbedView that aren't themselves
+ * Views.  The VM view iterator filters them out.
  *
  * @author Michael Van De Vanter
  */
 class ButtonTabComponent extends InspectorPanel {
-    private final TabbedView tabbedInspector;
-    private final AbstractView inspector;
+    private final TabbedView tabbedView;
+    private final AbstractView view;
     private final String toolTipText;
 
-    ButtonTabComponent(Inspection inspection, final TabbedView tabbedInspector, AbstractView inspector, String toolTipText) {
+    ButtonTabComponent(Inspection inspection, final TabbedView tabbedView, AbstractView view, String toolTipText) {
         //unset default FlowLayout' gaps
         super(inspection, new FlowLayout(FlowLayout.LEFT, 0, 0));
-        this.tabbedInspector = tabbedInspector;
-        this.inspector = inspector;
+        this.tabbedView = tabbedView;
+        this.view = view;
         this.toolTipText = toolTipText;
         setOpaque(false);
 
         final JLabel label = new JLabel() {
             @Override
             public String getText() {
-                return ButtonTabComponent.this.inspector.getTextForTitle();
+                return ButtonTabComponent.this.view.getTextForTitle();
             }
         };
         label.setToolTipText(toolTipText);
@@ -68,23 +68,23 @@ class ButtonTabComponent extends InspectorPanel {
         final JPopupMenu popupMenu = new JPopupMenu();
         popupMenu.add(new AbstractAction("Close tab") {
             public void actionPerformed(ActionEvent e) {
-                tabbedInspector.close(ButtonTabComponent.this.inspector);
+                tabbedView.close(ButtonTabComponent.this.view);
             }
         });
         popupMenu.add(new AbstractAction("Close other tabs") {
             public void actionPerformed(ActionEvent e) {
-                tabbedInspector.closeOthers(ButtonTabComponent.this.inspector);
+                tabbedView.closeOthers(ButtonTabComponent.this.view);
             }
         });
         label.setComponentPopupMenu(popupMenu);
-        label.addMouseListener(new InspectorMouseClickAdapter(inspector.inspection()) {
+        label.addMouseListener(new InspectorMouseClickAdapter(view.inspection()) {
 
             @Override
             public void procedure(MouseEvent mouseEvent) {
                 switch(inspection().gui().getButton(mouseEvent)) {
                     case MouseEvent.BUTTON1:
                         // Default left button behavior; for some reason we have to do it by hand
-                        tabbedInspector.setSelected(ButtonTabComponent.this.inspector);
+                        tabbedView.setSelected(ButtonTabComponent.this.view);
                         break;
                     case MouseEvent.BUTTON3:
                         popupMenu.show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
@@ -125,7 +125,7 @@ class ButtonTabComponent extends InspectorPanel {
         }
 
         public void actionPerformed(ActionEvent e) {
-            tabbedInspector.close(inspector);
+            tabbedView.close(view);
         }
 
         //we don't want to update UI for this button

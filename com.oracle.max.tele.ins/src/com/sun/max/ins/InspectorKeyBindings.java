@@ -70,7 +70,7 @@ public class InspectorKeyBindings {
     ));
 
     /**
-     * A map from {@linkplain InspectorAction#KEY_BINDABLE_ACTIONS bindable} inspector actions to the key strokes to
+     * A map from {@linkplain InspectorAction#KEY_BINDABLE_ACTIONS bindable} Inspector actions to the key strokes to
      * which they are bound. Each key binding map has a {@linkplain #name() name} which must be unique across all
      * key binding maps.
      */

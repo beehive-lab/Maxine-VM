@@ -318,7 +318,7 @@ public final class BreakpointsTable extends InspectorTable {
         }
 
         /**
-         * Locates a machine code breakpoint already known to the inspector.
+         * Locates a machine code breakpoint already known to the Inspector.
          */
         MachineCodeBreakpointData findMachineCodeBreakpoint(Address address) {
             for (BreakpointData breakpointData : breakpoints) {
@@ -333,7 +333,7 @@ public final class BreakpointsTable extends InspectorTable {
         }
 
         /**
-         * Locates a bytecode breakpoint already known to the inspector.
+         * Locates a bytecode breakpoint already known to the Inspector.
          */
         BytecodeBreakpointData findBytecodeBreakpoint(MaxCodeLocation codeLocation) {
             for (BreakpointData breakpointData : breakpoints) {

@@ -43,7 +43,7 @@ public interface InspectorFrame extends RootPaneContainer, Prober {
     /**
      * Gets the view for the content held in this frame.
      *
-     * @return the inspector that owns this frame
+     * @return the view that owns this frame
      */
     AbstractView view();
 

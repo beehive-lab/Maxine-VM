@@ -516,7 +516,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
             return "immortal heap \"" + regionName + "\"";
         }
         if (memoryRegion.sameAs(vm().heap().rootsMemoryRegion())) {
-            return "inspector roots region \"" + regionName + "\"";
+            return "Inspector roots region \"" + regionName + "\"";
         }
 
         // Is it a compiled code region?

@@ -24,7 +24,7 @@ package com.sun.max.ins.method;
 
 
 /**
- * Constants denoting the kinds of code that can be inspected for a method.
+ * Constants denoting the kinds of code that can be viewed for a method.
  *
  * @author Michael Van De Vanter
  */
@@ -60,7 +60,7 @@ public enum MethodCodeKind {
     }
 
     /**
-     * Determines if this kind should be visible by default in new inspectors.
+     * Determines if this kind should be visible by default in new views.
      */
     public boolean defaultVisibility() {
         return defaultVisibility;

@@ -168,7 +168,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
     }
 
     /**
-     * Shifts the focus of the Inspection to a particular thread; notify interested inspectors.
+     * Shifts the focus of the Inspection to a particular thread; notify interested views.
      * Sets the code location to the current InstructionPointer of the newly focused thread.
      * This is a view state change that can happen when there is no change to VM  state.
      */
@@ -241,7 +241,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
     }
 
     /**
-     * Shifts the focus of the Inspection to a particular stack frame in a particular thread; notify interested inspectors.
+     * Shifts the focus of the Inspection to a particular stack frame in a particular thread; notify interested views.
      * Sets the current thread to be the thread of the frame.
      * This is a view state change that can happen when there is no change to VM state.
      * @param newStackFrame the frame on which to focus.
@@ -302,7 +302,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
     }
 
     /**
-     * Shifts the focus of the Inspection to a particular {@link Address}; notify interested inspectors.
+     * Shifts the focus of the Inspection to a particular {@link Address}; notify interested views.
      * This is a view state change that can happen when there is no change to the VM state.
      */
     public void setAddress(Address address) {
@@ -346,7 +346,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
     }
 
     /**
-     * Shifts the focus of the Inspection to a particular {@linkplain MaxMemoryRegion memory region}; notify interested inspectors.
+     * Shifts the focus of the Inspection to a particular {@linkplain MaxMemoryRegion memory region}; notify interested views.
      * If the region is a  stackRegion, then set the current thread to the thread owning the stack.
      * This is a view state change that can happen when there is no change to the VM state.
      */
@@ -488,7 +488,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
     }
 
     /**
-     * Shifts the focus of the Inspection to a particular heap object in the VM; notify interested inspectors.
+     * Shifts the focus of the Inspection to a particular heap object in the VM; notify interested views.
      * This is a view state change that can happen when there is no change to VM state.
      */
     public void setHeapObject(TeleObject heapObject) {

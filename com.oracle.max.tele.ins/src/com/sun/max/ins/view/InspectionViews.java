@@ -54,7 +54,7 @@ import com.sun.max.ins.object.*;
 import com.sun.max.program.option.*;
 
 /**
- * A generalized manager for views in the inspector, some of which are singletons and some of which are not.
+ * A generalized manager for views, some of which are singletons and some of which are not.
  * <p>
  * Not all view kinds have been brought into this framework.
  * @author Michael Van De Vanter
@@ -206,7 +206,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
                 return viewManager;
             }
         },
-        USER_FOCUS(true, false, "The current state of Inspector's user focus") {
+        USER_FOCUS(true, false, "The current state of session's user focus") {
 
             @Override
             public UserFocusViewManager viewManager() {
@@ -286,8 +286,8 @@ public final class InspectionViews extends AbstractInspectionHolder {
 
             @Override
             protected void procedure() {
-                for (AbstractView inspector : activeViews()) {
-                    inspector.dispose();
+                for (AbstractView view : activeViews()) {
+                    view.dispose();
                 }
             }
         };
@@ -297,14 +297,14 @@ public final class InspectionViews extends AbstractInspectionHolder {
      * @return all active views
      */
     public List<AbstractView> activeViews() {
-        final List<AbstractView> inspectors = new ArrayList<AbstractView>();
+        final List<AbstractView> views = new ArrayList<AbstractView>();
         for (ViewKind kind : ViewKind.values()) {
             final ViewManager<? extends AbstractView> viewManager = kind.viewManager();
             if (viewManager != null) {
-                inspectors.addAll(viewManager.activeViews());
+                views.addAll(viewManager.activeViews());
             }
         }
-        return inspectors;
+        return views;
     }
 
     /**
@@ -421,9 +421,9 @@ public final class InspectionViews extends AbstractInspectionHolder {
 
             @Override
             protected void procedure() {
-                for (AbstractView inspector : activeViews()) {
-                    if (inspector != exceptInspector) {
-                        inspector.dispose();
+                for (AbstractView view : activeViews()) {
+                    if (view != exceptInspector) {
+                        view.dispose();
                     }
                 }
             }
