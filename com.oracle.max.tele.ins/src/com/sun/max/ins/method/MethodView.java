@@ -87,7 +87,7 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
 
     /**
      * Makes a view displaying code for the method pointed to by the instructionPointer. Should always work for
-     * Java methods. For external native methods, only works if the code block is already known to the inspector or if the user
+     * Java methods. For external native methods, only works if the code block is already known to the Inspector or if the user
      * supplies some additional information at an optional prompt.
      *
      * @param address machine code location in the VM.
@@ -250,7 +250,7 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
     }
 
     /**
-     * @return A possibly new view for a block of native code in the VM already known to the inspector.
+     * @return A possibly new view for a block of native code in the VM already known to the Inspector.
      * @throws MaxVMBusyException if a new view cannot be created because the VM is unavailable
      */
     private static NativeMethodView make(Inspection inspection, MaxExternalCode maxExternalCode) throws MaxVMBusyException {

@@ -30,36 +30,36 @@ import com.sun.max.ins.gui.AbstractView.MenuKind;
 import com.sun.max.ins.util.*;
 
 /**
- * A frame suitable for use by an {@linkplain AbstractView inspector}.
+ * A frame suitable for use by an {@linkplain AbstractView view}.
  * This is a minimal frame without window system decoration, suitable
- * for used in a tabbed container of inspectors.
+ * for used in a tabbed container of views.
  *
  * @author Michael Van De Vanter
  */
 final class InspectorRootPane extends JRootPane implements InspectorFrame {
 
-    private final AbstractView inspector;
+    private final AbstractView view;
     private final TabbedView parent;
     private final InspectorMenuBar menuBar;
 
     private String title = null;
 
     /**
-     * Creates a simple frame, with content pane, for an Inspector intended to be in a
+     * Creates a simple frame, with content pane, for a view intended to be in a
      * tabbed frame.
      * <br>
      * The frame has an optional menu bar.  It is a program error to call {@link #makeMenu(MenuKind)}
      * if no menu bar is present.
      *
-     * @param inspector the inspector that owns this frame
+     * @param view the view that owns this frame
      * @param parent the tabbed frame that will own this frame.
      * @param addMenuBar  should the frame have a menu bar installed.
      * @see #makeMenu(MenuKind)
      */
-    public InspectorRootPane(AbstractView inspector, TabbedView parent, boolean addMenuBar) {
-        this.inspector = inspector;
+    public InspectorRootPane(AbstractView view, TabbedView parent, boolean addMenuBar) {
+        this.view = view;
         this.parent = parent;
-        menuBar = addMenuBar ? new InspectorMenuBar(inspector.inspection()) : null;
+        menuBar = addMenuBar ? new InspectorMenuBar(view.inspection()) : null;
         setJMenuBar(menuBar);
     }
 
@@ -89,7 +89,7 @@ final class InspectorRootPane extends JRootPane implements InspectorFrame {
     }
 
     public AbstractView view() {
-        return inspector;
+        return view;
     }
 
     public InspectorMenu makeMenu(MenuKind menuKind) throws InspectorError {
@@ -98,11 +98,11 @@ final class InspectorRootPane extends JRootPane implements InspectorFrame {
     }
 
     public void setSelected() {
-        parent.setSelected(inspector);
+        parent.setSelected(view);
     }
 
     public boolean isSelected() {
-        return parent.isSelected() && parent.isSelected(inspector);
+        return parent.isSelected() && parent.isSelected(view);
     }
 
     public void flash(Color borderFlashColor) {
@@ -134,7 +134,7 @@ final class InspectorRootPane extends JRootPane implements InspectorFrame {
 
     public void dispose() {
         parent.remove(this);
-        inspector.viewClosing();
+        view.viewClosing();
     }
 
     public String getTitle() {

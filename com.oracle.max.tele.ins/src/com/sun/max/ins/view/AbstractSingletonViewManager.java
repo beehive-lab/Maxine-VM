@@ -29,25 +29,25 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
 
 /**
- * Abstract manager for a kind of Inspector view that is a singleton which can either be active (the instance
+ * Abstract manager for a kind of view that is a singleton which can either be active (the instance
  * exists and is visible) or not.
  * <p>
  * Subclasses must implement {@link SingletonViewManager#activateView()} and set the view in this abstract
  * class.
  *
  * @author Michael Van De Vanter
- * @param <Inspector_Kind> a kind of Inspector that is to be managed as a singleton view
+ * @param <View_Kind> a kind of view that is to be managed as a singleton
  */
-public abstract class AbstractSingletonViewManager<Inspector_Kind extends AbstractView> extends AbstractInspectionHolder implements SingletonViewManager {
+public abstract class AbstractSingletonViewManager<View_Kind extends AbstractView> extends AbstractInspectionHolder implements SingletonViewManager {
 
     private final ViewKind viewKind;
     private final String shortName;
     private final String longName;
 
     /**
-     * The active inspector instance; null when inactive.
+     * The active view instance; null when inactive.
      */
-    private ArrayList<Inspector_Kind> inspectors = new ArrayList<Inspector_Kind>(1);
+    private ArrayList<View_Kind> views = new ArrayList<View_Kind>(1);
 
     private final InspectorAction activateViewAction;
     private final InspectorAction deactivateAllAction;
@@ -101,34 +101,34 @@ public abstract class AbstractSingletonViewManager<Inspector_Kind extends Abstra
     }
 
     public final boolean isActive() {
-        return inspectors.size() > 0;
+        return views.size() > 0;
     }
 
-    public final List<Inspector_Kind> activeViews() {
-        return inspectors;
+    public final List<View_Kind> activeViews() {
+        return views;
     }
 
-    public Inspector_Kind activateView() {
-        if (inspectors.size() == 0) {
-            final Inspector_Kind inspector = createView(inspection());
-            inspectors.add(inspector);
-            inspector.addViewEventListener(new ViewEventListener() {
+    public View_Kind activateView() {
+        if (views.size() == 0) {
+            final View_Kind view = createView(inspection());
+            views.add(view);
+            view.addViewEventListener(new ViewEventListener() {
 
                 @Override
-                public void viewClosing(AbstractView inspector) {
-                    assert inspectors.remove(inspector);
+                public void viewClosing(AbstractView view) {
+                    assert views.remove(view);
                     refresh();
                 }
 
             });
             refresh();
         }
-        return inspectors.get(0);
+        return views.get(0);
     }
 
     public final void deactivateView() {
-        assert inspectors.size() == 1;
-        inspectors.get(0).dispose();
+        assert views.size() == 1;
+        views.get(0).dispose();
     }
 
     public final InspectorAction activateSingletonViewAction() {
@@ -145,7 +145,7 @@ public abstract class AbstractSingletonViewManager<Inspector_Kind extends Abstra
     /**
      * Creates an instance of the concrete view kind.
      */
-    protected abstract Inspector_Kind createView(Inspection inspection);
+    protected abstract View_Kind createView(Inspection inspection);
 
     /**
      * Update any internal state on occasion of view activation/deactivation.
@@ -217,7 +217,7 @@ public abstract class AbstractSingletonViewManager<Inspector_Kind extends Abstra
 
         @Override
         protected void procedure() {
-            if (isActive() && !inspectors.get(0).equals(exceptInspector)) {
+            if (isActive() && !views.get(0).equals(exceptInspector)) {
                 deactivateView();
             }
         }

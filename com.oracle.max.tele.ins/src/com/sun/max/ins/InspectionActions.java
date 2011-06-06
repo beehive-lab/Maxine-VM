@@ -287,7 +287,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  relocates the boot image, assuming that the inspector was invoked
+     * Action:  relocates the boot image, assuming that the Inspector was invoked
      * with the option {@link MaxineInspector#suspendingBeforeRelocating()} set.
      */
     final class RelocateBootImageAction extends InspectorAction {
@@ -312,7 +312,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final InspectorAction relocateBootImageAction = new RelocateBootImageAction(null);
 
     /**
-     * @return Singleton Action that relocates the boot image, assuming that the inspector was invoked
+     * @return Singleton Action that relocates the boot image, assuming that the Inspector was invoked
      * with the option {@link MaxineInspector#suspendingBeforeRelocating()} set.
      */
     public final InspectorAction relocateBootImage() {
@@ -320,7 +320,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  sets level of trace output in inspector code.
+     * Action:  sets level of trace output in Inspector code.
      */
     final class SetInspectorTraceLevelAction extends InspectorAction {
 
@@ -353,7 +353,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final InspectorAction setInspectorTraceLevelAction = new SetInspectorTraceLevelAction(null);
 
     /**
-     * @return Singleton interactive Action that permits setting the level of inspector {@link Trace} output.
+     * @return Singleton interactive Action that permits setting the level of Inspector {@link Trace} output.
      */
     public final InspectorAction setInspectorTraceLevel() {
         return setInspectorTraceLevelAction;

@@ -32,12 +32,12 @@ import com.sun.max.ins.gui.AbstractView.MenuKind;
 import com.sun.max.ins.util.*;
 
 /**
- * A internal frame controlled by an {@linkplain AbstractView inspector}.
+ * A internal frame controlled by an {@linkplain AbstractView view}.
  * This is the simple form of such a frame, designed to be used inside
  * a Swing {@link JDesktopPane}.  It has the usual frame decorations,
  * including a title along with affordances for resizing, minimizing,
  * and closing (which is interpreted as a request to remove or "dispose")
- * of an individual Inspector.
+ * of an individual view.
  *
  * @author Bernd Mathiske
  * @author Doug Simon
@@ -45,7 +45,7 @@ import com.sun.max.ins.util.*;
  */
 final class InspectorInternalFrame extends JInternalFrame implements InspectorFrame {
 
-    private final AbstractView inspector;
+    private final AbstractView view;
     private final InspectorMenuBar menuBar;
 
     /**
@@ -55,13 +55,13 @@ final class InspectorInternalFrame extends JInternalFrame implements InspectorFr
      * The frame has an optional menu bar.  It is a program error to call {@link #makeMenu(MenuKind)}
      * if no menu bar is present.
      *
-     * @param inspector
+     * @param view
      * @param addMenuBar should the frame have a menu bar installed.
      * @see #makeMenu(MenuKind)
      */
-    public InspectorInternalFrame(AbstractView inspector, boolean addMenuBar) {
-        this.inspector = inspector;
-        menuBar = addMenuBar ? new InspectorMenuBar(inspector.inspection()) : null;
+    public InspectorInternalFrame(AbstractView view, boolean addMenuBar) {
+        this.view = view;
+        menuBar = addMenuBar ? new InspectorMenuBar(view.inspection()) : null;
         setJMenuBar(menuBar);
         setResizable(true);
         setClosable(true);
@@ -74,13 +74,13 @@ final class InspectorInternalFrame extends JInternalFrame implements InspectorFr
 
             @Override
             public void internalFrameActivated(InternalFrameEvent e) {
-                InspectorInternalFrame.this.inspector.viewGetsWindowFocus();
+                InspectorInternalFrame.this.view.viewGetsWindowFocus();
                 refresh(true);
             }
 
             @Override
             public void internalFrameDeactivated(InternalFrameEvent e) {
-                InspectorInternalFrame.this.inspector.viewLosesWindowFocus();
+                InspectorInternalFrame.this.view.viewLosesWindowFocus();
             }
         });
     }
@@ -111,7 +111,7 @@ final class InspectorInternalFrame extends JInternalFrame implements InspectorFr
     }
 
     public AbstractView view() {
-        return inspector;
+        return view;
     }
 
     public InspectorMenu makeMenu(MenuKind menuKind) throws InspectorError {
@@ -160,7 +160,7 @@ final class InspectorInternalFrame extends JInternalFrame implements InspectorFr
     @Override
     public void dispose() {
         super.dispose();
-        inspector.viewClosing();
+        view.viewClosing();
     }
 
 }

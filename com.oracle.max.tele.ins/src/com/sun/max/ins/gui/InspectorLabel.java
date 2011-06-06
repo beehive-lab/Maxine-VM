@@ -243,7 +243,7 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
     }
 
     /**
-     * A label for use in the inspector, by default not opaque.
+     * A label for use in the Inspector, by default not opaque.
      *
      * @param text label text
      * @param toolTipText text for ToolTips
@@ -261,7 +261,7 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
     }
 
     /**
-     * A label for use in the inspector.
+     * A label for use in the Inspector.
      * @param text label text
      */
     public InspectorLabel(Inspection inspection, String text) {
@@ -269,7 +269,7 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
     }
 
     /**
-     * A label for use in the inspector.
+     * A label for use in the Inspector.
      */
     public InspectorLabel(Inspection inspection) {
         this(inspection, null, null);

@@ -34,6 +34,6 @@ public interface ViewEventListener {
     /**
      * Notifies listener that the {@link AbstractView} is closing.
      */
-    void viewClosing(AbstractView inspector);
+    void viewClosing(AbstractView view);
 
 }

@@ -118,7 +118,7 @@ public final class Inspection implements InspectionHolder {
             inspectionViews.activateInitialViews();
         } else {
             try {
-                // Choose an arbitrary thread as the "current" thread. If the inspector is
+                // Choose an arbitrary thread as the "current" thread. If the Inspector is
                 // creating the process to be debugged (as opposed to attaching to it), then there
                 // should only be one thread.
                 final List<MaxThread> threads = vm().state().threads();
@@ -425,7 +425,7 @@ public final class Inspection implements InspectionHolder {
 
     /**
      * @return default title for any messages: defaults to name of current {@link InspectorAction} if one is current,
-     *         otherwise the generic name of the inspector.
+     *         otherwise the generic name of the Inspector.
      */
     public String currentActionTitle() {
         return currentAction != null ? currentAction.name() : MaxineInspector.NAME;
@@ -483,7 +483,7 @@ public final class Inspection implements InspectionHolder {
     public void updateAfterVMStopped() {
         gui().showInspectorBusy(true);
         // Clear any breakpoint selection; if we're at a breakpoint, it will be highlighted.
-        // This also avoids a regrettable event bug, where the breakpoint inspector decides
+        // This also avoids a regrettable event bug, where the breakpoint view decides
         // on update to send the method viewer to the currently selected breakpoint, even
         // if it has nothing to do with where we are.
         focus().setBreakpoint(null);

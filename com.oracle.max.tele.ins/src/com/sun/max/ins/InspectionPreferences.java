@@ -276,7 +276,7 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
      * Updates the current key binding map for this inspection.
      *
      * @param keyBindingMap a key binding map. If this value differs from the current key
-     *            binding map, then the accelerator keys of all the relevant inspector actions are updated.
+     *            binding map, then the accelerator keys of all the relevant Inspector actions are updated.
      */
     public void setKeyBindingMap(KeyBindingMap keyBindingMap) {
         if (keyBindingMap != this.keyBindingMap) {

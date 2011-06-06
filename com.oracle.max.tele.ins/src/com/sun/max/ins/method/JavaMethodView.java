@@ -379,7 +379,7 @@ public class JavaMethodView extends MethodView<JavaMethodView> {
     @Override
     public void closeCodeViewer(CodeViewer viewer) {
         if (codeViewers.size() == 1) {
-            // only code inspector; nuke the whole Method viewe
+            // only code view; nuke the whole Method viewer
             close();
         } else if (codeViewers.size() == 2) {
             final Component deleteComponent = viewer;

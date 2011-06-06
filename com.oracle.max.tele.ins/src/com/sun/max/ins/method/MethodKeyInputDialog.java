@@ -48,7 +48,7 @@ import com.sun.max.vm.type.*;
 public class MethodKeyInputDialog extends InspectorDialog implements DocumentListener {
 
     /**
-     * An action that brings up a dialog for choosing a type available on the inspector's
+     * An action that brings up a dialog for choosing a type available on the Inspector's
      * classpath. If a type is selected in the dialog, then an associated field is
      * updated with the selected type in {@linkplain TypeDescriptor#toJavaString() Java source format}.
      */

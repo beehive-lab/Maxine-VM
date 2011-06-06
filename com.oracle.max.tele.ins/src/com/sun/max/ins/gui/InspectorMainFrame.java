@@ -74,7 +74,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
     /**
      * Records the last position of the mouse when it was over a component.
      * The position is recorded in the coordinates of the desktop pane,
-     * which is the coordinate system we use to place inspector windows.
+     * which is the coordinate system we use to place Inspector windows.
      */
     private final class MouseLocationListener implements AWTEventListener {
 

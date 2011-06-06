@@ -30,7 +30,7 @@
  */
 
 /**
- * VM inspector.
+ * VM Inspector.
  * Support viewing of text files
  *
  * @author Michael Van De Vanter
