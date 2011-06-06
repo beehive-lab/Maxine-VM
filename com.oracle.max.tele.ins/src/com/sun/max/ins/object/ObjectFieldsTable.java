@@ -45,7 +45,7 @@ import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
- * A table that displays object fields; for use in an instance of {@link ObjectInspector}.
+ * A table that displays object fields; for use in an instance of {@link ObjectView}.
  *
  * @author Michael Van De Vanter
  */
@@ -189,8 +189,8 @@ public final class ObjectFieldsTable extends InspectorTable {
     }
 
     /**
-     * A column model for object headers, to be used in an {@link ObjectInspector}.
-     * Column selection is driven by choices in the parent {@link ObjectInspector}.
+     * A column model for object headers, to be used in an {@link ObjectView}.
+     * Column selection is driven by choices in the parent {@link ObjectView}.
      * This implementation cannot update column choices dynamically.
      */
     private final class ObjectFieldsTableColumnModel extends InspectorTableColumnModel<ObjectColumnKind> {

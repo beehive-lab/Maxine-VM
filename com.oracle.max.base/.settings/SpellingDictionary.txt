@@ -82,8 +82,10 @@ deactivates
 deactivating
 deactivation
 debugee
+deopt
 deoptimization
 deoptimize
+deoptimized
 deprecate
 deprecated
 disassembly

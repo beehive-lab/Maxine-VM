@@ -41,7 +41,7 @@ public interface InspectorStyle {
     String name();
 
     // Window, Frame, Desktop attributes
-    /** Default color for all custom borders used in the inspector. */
+    /** Default color for all custom borders used in the Inspector. */
     Color defaultBorderColor();
     /** Default color used to flash borders. */
     Color frameBorderFlashColor();
@@ -107,7 +107,7 @@ public interface InspectorStyle {
     /** font for displaying textual interpretation of word data. */
     Font wordAlternateTextFont();
 
-    /** foreground color for displaying a selected word (memory inspector). */
+    /** foreground color for displaying a selected word (memory view). */
     Color wordSelectedColor();
 
     /** font for displaying word data as flags. */

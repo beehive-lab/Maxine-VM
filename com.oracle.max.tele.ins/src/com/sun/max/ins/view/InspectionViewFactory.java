@@ -33,7 +33,7 @@ import com.sun.max.ins.gui.*;
  *
  * @author Michael Van De Vanter
  */
-public interface InspectionViewFactory<Inspector_Kind extends Inspector> {
+public interface InspectionViewFactory<Inspector_Kind extends AbstractView> {
 
     /**
      * Gets a menu that includes actions for creating new views.

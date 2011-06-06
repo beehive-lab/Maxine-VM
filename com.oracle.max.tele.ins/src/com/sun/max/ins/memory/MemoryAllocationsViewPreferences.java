@@ -46,7 +46,7 @@ public final class MemoryAllocationsViewPreferences extends com.sun.max.ins.gui.
     }
 
     // Prefix for all persistent column preferences in view
-    private static final String MEMORY_ALLOCATIONS_COLUMN_PREFERENCE = "memoryAllocationsViewColumn";
+    private static final String ALLOCATIONS_COLUMN_PREFERENCE = "allocationsViewColumn";
 
     /**
      * @return a GUI panel suitable for setting global preferences for this kind of view.
@@ -60,7 +60,7 @@ public final class MemoryAllocationsViewPreferences extends com.sun.max.ins.gui.
     * persistent global choices are identical.
     */
     private MemoryAllocationsViewPreferences(Inspection inspection) {
-        super(inspection, MEMORY_ALLOCATIONS_COLUMN_PREFERENCE, MemoryAllocationsColumnKind.values());
+        super(inspection, ALLOCATIONS_COLUMN_PREFERENCE, MemoryAllocationsColumnKind.values());
         // There are no view preferences beyond the column choices, so no additional machinery needed here.
     }
 }

@@ -41,7 +41,7 @@ public final class NotepadManager extends AbstractInspectionHolder {
     // some of the machinery to support more is already in place.
 
     // Key used for making data persistent
-    private static final String PREFIX_KEY = "notepad";
+    private static final String PREFIX_KEY = "notepadContents";
     private static final String DEFAULT_NOTEPAD_KEY = "default";
     private static final String EMPTY_CONTENTS = "<empty>";
 
