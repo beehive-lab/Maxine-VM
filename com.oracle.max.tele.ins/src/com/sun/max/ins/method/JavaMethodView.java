@@ -289,7 +289,7 @@ public class JavaMethodView extends MethodView<JavaMethodView> {
         if (compiledCode.vmCodeGeneration() > vmCodeGeneration) {
             reconstructView();
             vmCodeGeneration = compiledCode.vmCodeGeneration();
-            Trace.line(TRACE_VALUE, tracePrefix() + "Updated after code change in method " + teleClassMethodActor.getName());
+            Trace.line(TRACE_VALUE, tracePrefix() + "Updated after code change in method " + getToolTip());
 
         } else if (getJComponent().isShowing() || force) {
             for (CodeViewer codeViewer : codeViewers.values()) {
