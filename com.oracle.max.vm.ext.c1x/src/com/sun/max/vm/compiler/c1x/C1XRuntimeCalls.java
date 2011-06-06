@@ -32,6 +32,8 @@ import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.CompilationScheme.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
@@ -54,7 +56,7 @@ public class C1XRuntimeCalls {
 
     public static ClassMethodActor getClassMethodActor(CiRuntimeCall call) {
         final ClassMethodActor result = runtimeCallMethods[call.ordinal()];
-        assert result != null;
+        assert result != null : "no runtime method defined for " + call;
         return result;
     }
 
@@ -69,7 +71,6 @@ public class C1XRuntimeCalls {
         }
 
         for (CiRuntimeCall call : CiRuntimeCall.values()) {
-            assert getClassMethodActor(call) != null : "no runtime method defined for " + call.toString();
             assert checkCompatible(call, getClassMethodActor(call));
         }
     }
@@ -83,7 +84,7 @@ public class C1XRuntimeCalls {
     private static boolean checkCompatible(CiRuntimeCall call, ClassMethodActor classMethodActor) {
         assert classMethodActor.resultKind().ciKind == call.resultKind;
         for (int i = 0; i < call.arguments.length; i++) {
-            assert classMethodActor.getParameterKinds()[i].ciKind == call.arguments[i];
+            assert classMethodActor.getParameterKinds()[i].ciKind == call.arguments[i] : call + " incompatible with " + classMethodActor;
         }
         return true;
     }
@@ -185,11 +186,15 @@ public class C1XRuntimeCalls {
         return Math.sin(v);
     }
 
+    /**
+     * The body of this method is provided by {@link Stubs#genUncommonTrapStub()}.
+     */
     @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.Deoptimize)
-    public static void deoptimize() {
-        throw FatalError.unimplemented();
+    public static void uncommonTrap() {
+        throw FatalError.unexpected("stub should be overwritten");
     }
 
+    @HOSTED_ONLY
     private static void registerMethod(Method selectedMethod, CiRuntimeCall call) {
         ClassMethodActor classMethodActor = null;
         assert runtimeCallMethods[call.ordinal()] == null : "method already defined";
@@ -198,7 +203,7 @@ public class C1XRuntimeCalls {
         if (MaxineVM.isHosted()) {
             new CriticalMethod(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         } else {
-            vmConfig().compilationScheme().synchronousCompile(classMethodActor);
+            vmConfig().compilationScheme().synchronousCompile(classMethodActor, CompilationFlag.NONE);
         }
     }
 }

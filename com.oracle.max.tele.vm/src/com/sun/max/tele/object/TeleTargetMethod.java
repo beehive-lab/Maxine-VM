@@ -51,6 +51,7 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.target.TargetMethod.FrameAccess;
 import com.sun.max.vm.reference.*;
 
 /**
@@ -579,13 +580,13 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
          * @param stopIndex a stop index
          * @return the Java frame descriptor corresponding to {@code stopIndex} or null if there is no Java frame descriptor
          *         for {@code stopIndex}
-         * @see TargetMethod#getBytecodeFrames(int)
+         * @see TargetMethod#debugFramesAt(int, FrameAccess)
          */
         private CiFrame getBytecodeFramesAtStopIndex(final int stopIndex) {
             return TeleClassRegistry.usingTeleClassIDs(new Function<CiFrame>() {
                 @Override
                 public CiFrame call() throws Exception {
-                    return targetMethod.getBytecodeFrames(stopIndex);
+                    return targetMethod.debugFramesAt(stopIndex, null);
                 }
             });
         }
@@ -759,7 +760,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
                 // Set the VM generation count to one more than the cached copy.  This
                 // makes the cache not "current", essentially marking it dirty.
                 vmCodeGenerationCount = targetMethodCache.codeGenerationCount + 1;
-                Trace.line(1, tracePrefix() + "TargetMethod patched for " + classMethodActor().name());
+                Trace.line(1, tracePrefix() + "TargetMethod patched for " + getRegionName());
             }
         } catch (DataIOError dataIOError) {
             // If something goes wrong, delay the cache update until next time.
@@ -843,7 +844,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
      * @param stopIndex a stop index
      * @return the Java frame descriptor corresponding to {@code stopIndex} or null if there is no Java frame descriptor
      *         for {@code stopIndex}
-     * @see TargetMethod#getBytecodeFrames(int)
+     * @see TargetMethod#debugFramesAt(int, FrameAccess)
      */
     public CiFrame getBytecodeFramesAtStopIndex(final int stopIndex) {
         return targetMethodCache().getBytecodeFramesAtStopIndex(stopIndex);

@@ -27,7 +27,6 @@ import java.io.*;
 import com.sun.max.*;
 import com.sun.max.ide.*;
 import com.sun.max.platform.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 
 /**

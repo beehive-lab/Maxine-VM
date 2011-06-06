@@ -68,6 +68,9 @@ import com.sun.max.vm.type.*;
  *
  * The code for field access is similar; declare an {@code @ALIAS} annotated field in the class with the same
  * name as the field in the aliasee and then use {@code thisFoo.field}.
+ *
+ * A (current) restriction is that this annotation is only parsed by the VM during boot image generation
+ * and so should only be used on boot image methods and fields.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.FIELD})
@@ -188,7 +191,7 @@ public @interface ALIAS {
                 registerAliasedMethod(method);
             }
             MethodActor aliasedMethod = aliasedMethods.get(method);
-            assert aliasedMethod != null || method.getAnnotation(ALIAS.class) == null : "All aliased fields and methods must be registed at boot time";
+            assert aliasedMethod != null || method.getAnnotation(ALIAS.class) == null : "All aliased fields and methods must be registered at boot time";
             return aliasedMethod;
         }
 
