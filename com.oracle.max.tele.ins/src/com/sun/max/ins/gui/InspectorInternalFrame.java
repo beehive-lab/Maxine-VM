@@ -28,11 +28,11 @@ import java.beans.*;
 import javax.swing.*;
 import javax.swing.event.*;
 
-import com.sun.max.ins.gui.Inspector.MenuKind;
+import com.sun.max.ins.gui.AbstractView.MenuKind;
 import com.sun.max.ins.util.*;
 
 /**
- * A internal frame controlled by an {@linkplain Inspector inspector}.
+ * A internal frame controlled by an {@linkplain AbstractView inspector}.
  * This is the simple form of such a frame, designed to be used inside
  * a Swing {@link JDesktopPane}.  It has the usual frame decorations,
  * including a title along with affordances for resizing, minimizing,
@@ -45,7 +45,7 @@ import com.sun.max.ins.util.*;
  */
 final class InspectorInternalFrame extends JInternalFrame implements InspectorFrame {
 
-    private final Inspector inspector;
+    private final AbstractView inspector;
     private final InspectorMenuBar menuBar;
 
     /**
@@ -59,7 +59,7 @@ final class InspectorInternalFrame extends JInternalFrame implements InspectorFr
      * @param addMenuBar should the frame have a menu bar installed.
      * @see #makeMenu(MenuKind)
      */
-    public InspectorInternalFrame(Inspector inspector, boolean addMenuBar) {
+    public InspectorInternalFrame(AbstractView inspector, boolean addMenuBar) {
         this.inspector = inspector;
         menuBar = addMenuBar ? new InspectorMenuBar(inspector.inspection()) : null;
         setJMenuBar(menuBar);
@@ -74,13 +74,13 @@ final class InspectorInternalFrame extends JInternalFrame implements InspectorFr
 
             @Override
             public void internalFrameActivated(InternalFrameEvent e) {
-                InspectorInternalFrame.this.inspector.inspectorGetsWindowFocus();
+                InspectorInternalFrame.this.inspector.viewGetsWindowFocus();
                 refresh(true);
             }
 
             @Override
             public void internalFrameDeactivated(InternalFrameEvent e) {
-                InspectorInternalFrame.this.inspector.inspectorLosesWindowFocus();
+                InspectorInternalFrame.this.inspector.viewLosesWindowFocus();
             }
         });
     }
@@ -110,7 +110,7 @@ final class InspectorInternalFrame extends JInternalFrame implements InspectorFr
     public void redisplay() {
     }
 
-    public Inspector inspector() {
+    public AbstractView view() {
         return inspector;
     }
 
@@ -160,7 +160,7 @@ final class InspectorInternalFrame extends JInternalFrame implements InspectorFr
     @Override
     public void dispose() {
         super.dispose();
-        inspector.inspectorClosing();
+        inspector.viewClosing();
     }
 
 }

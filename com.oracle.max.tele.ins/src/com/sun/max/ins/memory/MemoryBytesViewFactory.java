@@ -36,7 +36,7 @@ import com.sun.max.unsafe.*;
  *
  * @author Michael Van De Vanter
  */
-public interface MemoryBytesViewFactory extends InspectionViewFactory<MemoryBytesInspector>{
+public interface MemoryBytesViewFactory extends InspectionViewFactory<MemoryBytesView>{
 
     /**
      * Creates a bytes view on the memory starting at an address, using
@@ -45,7 +45,7 @@ public interface MemoryBytesViewFactory extends InspectionViewFactory<MemoryByte
      * @param address location in VM memory where view starts
      * @return a memory bytes view
      */
-    MemoryBytesInspector makeView(Address address);
+    MemoryBytesView makeView(Address address);
 
     /**
      * Creates a bytes view on the memory holding an object.
@@ -53,7 +53,7 @@ public interface MemoryBytesViewFactory extends InspectionViewFactory<MemoryByte
      * @param teleObject surrogate for the object in VM whose memory should be viewed
      * @return a memory bytes view
      */
-    MemoryBytesInspector makeView(TeleObject teleObject);
+    MemoryBytesView makeView(TeleObject teleObject);
 
     /**
      * Gets an interactive action that makes a byte view on memory, starting

@@ -31,7 +31,7 @@ import com.sun.max.ins.view.InspectionViews.ViewKind;
 
 /**
  * A manager for a specific kind of Inspector View, each instance
- * of which is implemented as a subclass of {@link Inspector}.  Some kinds
+ * of which is implemented as a subclass of {@link AbstractView}.  Some kinds
  * of views are singletons, others may have an unbounded number of
  * instances. The intention is that there be a singleton manager for
  * each kind of view.
@@ -41,7 +41,7 @@ import com.sun.max.ins.view.InspectionViews.ViewKind;
  *
  * @author Michael Van De Vanter
  */
-public interface ViewManager<Inspector_Kind extends Inspector>  {
+public interface ViewManager<Inspector_Kind extends AbstractView>  {
 
     /**
      * @return the kind of view being managed by this manager
@@ -99,6 +99,6 @@ public interface ViewManager<Inspector_Kind extends Inspector>  {
      * @param exceptInspector a view that should not be deactivated
      * @return the action for deactivating views being managed by this manager
      */
-    InspectorAction deactivateAllAction(Inspector exceptInspector);
+    InspectorAction deactivateAllAction(AbstractView exceptInspector);
 
 }

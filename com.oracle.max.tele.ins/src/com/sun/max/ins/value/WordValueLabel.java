@@ -875,7 +875,7 @@ public class WordValueLabel extends ValueLabel {
             case CLASS_ACTOR: {
                 final TeleClassActor teleClassActor = vm().classRegistry().findTeleClassActor(value.asWord().asAddress().toInt());
                 if (teleClassActor != null) {
-                    action = views().objects().makeViewAction(teleClassActor, "Inspect ClassActor");
+                    action = views().objects().makeViewAction(teleClassActor, "View ClassActor");
                 }
                 break;
             }
@@ -900,7 +900,7 @@ public class WordValueLabel extends ValueLabel {
         return action;
     }
 
-    private InspectorAction getInspectMemoryAction(Value value) {
+    private InspectorAction getViewMemoryAction(Value value) {
         InspectorAction action = null;
         if (value != VoidValue.VOID) {
             final Address address = value.toWord().asAddress();
@@ -922,7 +922,7 @@ public class WordValueLabel extends ValueLabel {
                 case OBJECT_REFERENCE:
                 case OBJECT_REFERENCE_TEXT: {
                     if (teleObject != null) {
-                        action = views().memory().makeViewAction(teleObject, "Inspect memory for " + inspection().nameDisplay().referenceLabelText(teleObject));
+                        action = views().memory().makeViewAction(teleObject, "View memory for " + inspection().nameDisplay().referenceLabelText(teleObject));
                     } else {
                         action = views().memory().makeViewAction(address, null);
                     }
@@ -1019,12 +1019,12 @@ public class WordValueLabel extends ValueLabel {
 
     private final class WordValueMenuItems extends InspectorPopupMenuItems {
 
-        private final class MenuInspectObjectAction extends InspectorAction {
+        private final class MenuViewObjectAction extends InspectorAction {
 
             private final InspectorAction inspectAction;
 
-            private MenuInspectObjectAction(Value value) {
-                super(inspection(), "Inspect Object (Left-Button)");
+            private MenuViewObjectAction(Value value) {
+                super(inspection(), "View Object (Left-Button)");
                 inspectAction = getInspectValueAction(value);
                 setEnabled(inspectAction != null);
             }
@@ -1051,24 +1051,24 @@ public class WordValueLabel extends ValueLabel {
             }
         }
 
-        private final class MenuInspectMemoryAction extends InspectorAction {
+        private final class MenuViewMemoryAction extends InspectorAction {
 
-            private final InspectorAction inspectMemoryAction;
+            private final InspectorAction viewMemoryAction;
 
-            private MenuInspectMemoryAction(Value value) {
-                super(inspection(), "Inspect memory");
-                inspectMemoryAction = getInspectMemoryAction(value);
-                if (inspectMemoryAction == null) {
+            private MenuViewMemoryAction(Value value) {
+                super(inspection(), "View memory");
+                viewMemoryAction = getViewMemoryAction(value);
+                if (viewMemoryAction == null) {
                     setEnabled(false);
                 } else {
-                    setName(inspectMemoryAction.name());
+                    setName(viewMemoryAction.name());
                     setEnabled(true);
                 }
             }
 
             @Override
             public void procedure() {
-                inspectMemoryAction.perform();
+                viewMemoryAction.perform();
             }
         }
 
@@ -1095,9 +1095,9 @@ public class WordValueLabel extends ValueLabel {
 
         public WordValueMenuItems(Inspection inspection, Value value) {
             add(actions().copyValue(value, "Copy value to clipboard"));
-            add(new MenuInspectObjectAction(value));
+            add(new MenuViewObjectAction(value));
             add(new MenuCycleDisplayAction());
-            add(new MenuInspectMemoryAction(value));
+            add(new MenuViewMemoryAction(value));
             add(new MenuShowMemoryRegionAction(value));
         }
     }

@@ -34,7 +34,7 @@ import com.sun.max.vm.actor.holder.*;
  *
  * @author Michael Van De Vanter
  */
-public interface JavaSourceViewFactory extends InspectionViewFactory<JavaSourceInspector> {
+public interface JavaSourceViewFactory extends InspectionViewFactory<JavaSourceView> {
 
     /**
      * Creates a view on a Java source file.
@@ -43,5 +43,5 @@ public interface JavaSourceViewFactory extends InspectionViewFactory<JavaSourceI
      * @param sourceFile the source file to be viewed
      * @return a view showing the contents of the file
      */
-    JavaSourceInspector makeView(ClassActor classActor, File sourceFile);
+    JavaSourceView makeView(ClassActor classActor, File sourceFile);
 }

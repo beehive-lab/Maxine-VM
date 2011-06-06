@@ -44,7 +44,7 @@ import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
- * A table that displays VM array elements; for use in an instance of {@link ObjectInspector}.
+ * A table that displays VM array elements; for use in an instance of {@link ObjectView}.
  * <br>
  * Null array elements can be hidden from the display.
  * <br>
@@ -185,8 +185,8 @@ public final class ArrayElementsTable extends InspectorTable {
     }
 
     /**
-     * A column model for array elements, to be used in an {@link ObjectInspector}.
-     * Column selection is driven by choices in the parent {@link ObjectInspector}.
+     * A column model for array elements, to be used in an {@link ObjectView}.
+     * Column selection is driven by choices in the parent {@link ObjectView}.
      * This implementation cannot update column choices dynamically.
      */
     private final class ArrayElementsTableColumnModel extends InspectorTableColumnModel<ObjectColumnKind> {

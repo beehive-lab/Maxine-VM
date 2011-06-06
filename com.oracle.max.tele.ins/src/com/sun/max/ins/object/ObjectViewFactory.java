@@ -35,7 +35,7 @@ import com.sun.max.tele.object.*;
  *
  * @author Michael Van De Vanter
  */
-public interface ObjectViewFactory extends InspectionViewFactory<ObjectInspector>{
+public interface ObjectViewFactory extends InspectionViewFactory<ObjectView>{
 
     /**
      * Gets a view on a specified object in VM memory, either an already existing view
@@ -44,7 +44,7 @@ public interface ObjectViewFactory extends InspectionViewFactory<ObjectInspector
      * @param teleObject the VM object to be viewed
      * @return an object view
      */
-    ObjectInspector makeView(TeleObject teleObject);
+    ObjectView makeView(TeleObject teleObject);
 
     /**
      * Gets an interactive action that makes a view on an object in

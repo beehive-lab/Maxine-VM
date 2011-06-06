@@ -66,11 +66,11 @@ public class TypeLabel extends InspectorLabel {
                     final InspectorPopupMenu menu = new InspectorPopupMenu();
                     final boolean enabled = teleClassActor != null;
 
-                    final InspectorAction inspectActorAction = views().objects().makeViewAction(teleClassActor, "Inspect ClassActor for this type (Left-Button)");
+                    final InspectorAction inspectActorAction = views().objects().makeViewAction(teleClassActor, "View ClassActor for this type (Left-Button)");
                     inspectActorAction.setEnabled(enabled);
                     menu.add(inspectActorAction);
 
-                    final InspectorAction inspectMemoryAction = views().memory().makeViewAction(teleClassActor, "Inspect memory for this type's ClassActor");
+                    final InspectorAction inspectMemoryAction = views().memory().makeViewAction(teleClassActor, "View memory for this type's ClassActor");
                     inspectMemoryAction.setEnabled(enabled);
                     menu.add(inspectMemoryAction);
 

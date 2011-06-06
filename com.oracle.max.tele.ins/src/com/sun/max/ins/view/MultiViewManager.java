@@ -32,7 +32,7 @@ import com.sun.max.ins.gui.*;
  *
  * @author Michael Van De Vanter
  */
-public interface MultiViewManager<Inspector_Kind extends Inspector> extends ViewManager<Inspector_Kind> {
+public interface MultiViewManager<Inspector_Kind extends AbstractView> extends ViewManager<Inspector_Kind> {
 
     /**
      * Disposes all existing views of this kind.

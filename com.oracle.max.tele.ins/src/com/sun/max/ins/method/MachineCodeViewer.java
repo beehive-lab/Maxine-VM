@@ -44,7 +44,7 @@ public abstract class MachineCodeViewer extends CodeViewer {
     private ConstantPool localConstantPool;
     private String[] rowToTagText;
 
-    protected MachineCodeViewer(Inspection inspection, MethodInspector parent, MaxMachineCode machineCode) {
+    protected MachineCodeViewer(Inspection inspection, MethodView parent, MaxMachineCode machineCode) {
         super(inspection, parent);
         this.machineCode = machineCode;
         updateMachineCodeInfo();
@@ -115,7 +115,7 @@ public abstract class MachineCodeViewer extends CodeViewer {
         if (thread == null) {
             return;
         }
-        final List<MaxStackFrame> frames = thread.stack().frames(StackInspector.DEFAULT_MAX_FRAMES_DISPLAY);
+        final List<MaxStackFrame> frames = thread.stack().frames(StackView.DEFAULT_MAX_FRAMES_DISPLAY);
 
         Arrays.fill(rowToStackFrame, null);
 

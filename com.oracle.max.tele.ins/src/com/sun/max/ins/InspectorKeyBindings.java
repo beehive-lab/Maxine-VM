@@ -45,8 +45,8 @@ public class InspectorKeyBindings {
     @SuppressWarnings("unchecked")
     public static final Set<Class<? extends InspectorAction>> KEY_BINDABLE_ACTIONS = new HashSet<Class<? extends InspectorAction>>(Arrays.asList(
         QuitAction.class,
-        InspectClassActorByNameAction.class,
-        InspectMethodActorByNameAction.class,
+        ViewClassActorByNameAction.class,
+        ViewMethodActorByNameAction.class,
         ViewMethodBytecodeByNameAction.class,
         ViewMethodMachineCodeAction.class,
         ViewMethodCompilationByNameAction.class,
@@ -141,8 +141,8 @@ public class InspectorKeyBindings {
      */
     public static final KeyBindingMap NETBEANS_KEY_BINDINGS = new KeyBindingMap("NetBeans").
         add(QuitAction.class, 'Q', CTRL_DOWN_MASK).
-        add(InspectClassActorByNameAction.class, 'T', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
-        add(InspectMethodActorByNameAction.class, 'M', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
+        add(ViewClassActorByNameAction.class, 'T', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
+        add(ViewMethodActorByNameAction.class, 'M', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(ViewMethodBytecodeByNameAction.class, 'J', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(ViewMethodMachineCodeAction.class, 'D', CTRL_DOWN_MASK).
         add(ViewMethodCompilationByNameAction.class, 'D', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
@@ -167,8 +167,8 @@ public class InspectorKeyBindings {
      */
     public static final KeyBindingMap DEFAULT_KEY_BINDINGS = new KeyBindingMap("Default").
         add(QuitAction.class, 'Q', CTRL_DOWN_MASK).
-        add(InspectClassActorByNameAction.class, 'T', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
-        add(InspectMethodActorByNameAction.class, 'M', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
+        add(ViewClassActorByNameAction.class, 'T', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
+        add(ViewMethodActorByNameAction.class, 'M', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(ViewMethodBytecodeByNameAction.class, 'J', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(ViewMethodMachineCodeAction.class, 'D', CTRL_DOWN_MASK).
         add(ViewMethodCompilationByNameAction.class, 'D', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).

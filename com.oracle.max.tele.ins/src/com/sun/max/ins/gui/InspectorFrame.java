@@ -27,12 +27,12 @@ import java.awt.*;
 import javax.swing.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.gui.Inspector.MenuKind;
+import com.sun.max.ins.gui.AbstractView.MenuKind;
 import com.sun.max.ins.util.*;
 
 /**
  * An abstraction over the kinds of window system containers that can
- * hold an {@link Inspector}, either a simple internal frame suitable
+ * hold an {@link AbstractView}, either a simple internal frame suitable
  * for a {@link JDesktopPane} or the contents of a single tab in a
  * "tabbed pane".
  *
@@ -41,11 +41,11 @@ import com.sun.max.ins.util.*;
 public interface InspectorFrame extends RootPaneContainer, Prober {
 
     /**
-     * Gets the inspector for the view held in this frame.
+     * Gets the view for the content held in this frame.
      *
      * @return the inspector that owns this frame
      */
-    Inspector inspector();
+    AbstractView view();
 
     /**
      * Returns the Swing component that implements this frame.

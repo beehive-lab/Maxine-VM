@@ -27,7 +27,7 @@ import java.util.*;
 import javax.swing.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.gui.Inspector.*;
+import com.sun.max.ins.gui.AbstractView.*;
 import com.sun.max.ins.view.*;
 import com.sun.max.tele.*;
 

@@ -26,11 +26,11 @@ import java.awt.*;
 
 import javax.swing.*;
 
-import com.sun.max.ins.gui.Inspector.MenuKind;
+import com.sun.max.ins.gui.AbstractView.MenuKind;
 import com.sun.max.ins.util.*;
 
 /**
- * A frame suitable for use by an {@linkplain Inspector inspector}.
+ * A frame suitable for use by an {@linkplain AbstractView inspector}.
  * This is a minimal frame without window system decoration, suitable
  * for used in a tabbed container of inspectors.
  *
@@ -38,8 +38,8 @@ import com.sun.max.ins.util.*;
  */
 final class InspectorRootPane extends JRootPane implements InspectorFrame {
 
-    private final Inspector inspector;
-    private final TabbedInspector parent;
+    private final AbstractView inspector;
+    private final TabbedView parent;
     private final InspectorMenuBar menuBar;
 
     private String title = null;
@@ -56,7 +56,7 @@ final class InspectorRootPane extends JRootPane implements InspectorFrame {
      * @param addMenuBar  should the frame have a menu bar installed.
      * @see #makeMenu(MenuKind)
      */
-    public InspectorRootPane(Inspector inspector, TabbedInspector parent, boolean addMenuBar) {
+    public InspectorRootPane(AbstractView inspector, TabbedView parent, boolean addMenuBar) {
         this.inspector = inspector;
         this.parent = parent;
         menuBar = addMenuBar ? new InspectorMenuBar(inspector.inspection()) : null;
@@ -88,7 +88,7 @@ final class InspectorRootPane extends JRootPane implements InspectorFrame {
     public void redisplay() {
     }
 
-    public Inspector inspector() {
+    public AbstractView view() {
         return inspector;
     }
 
@@ -134,7 +134,7 @@ final class InspectorRootPane extends JRootPane implements InspectorFrame {
 
     public void dispose() {
         parent.remove(this);
-        inspector.inspectorClosing();
+        inspector.viewClosing();
     }
 
     public String getTitle() {

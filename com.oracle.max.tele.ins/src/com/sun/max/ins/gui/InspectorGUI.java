@@ -38,15 +38,15 @@ import com.sun.max.util.*;
 public interface InspectorGUI {
 
     /**
-     * Adds an {@link Inspector} to the GUI display, brings it to the front, and makes it visible.
+     * Adds an {@link AbstractView} to the GUI display, brings it to the front, and makes it visible.
      * Its frame must already have been created.
      */
-    void addInspector(Inspector inspector);
+    void addView(AbstractView view);
 
     /**
-     * Removes and disposes all instances of {@link Inspector} currently in the GUI display that match a predicate.
+     * Removes and disposes all instances of {@link AbstractView} currently in the GUI display that match a predicate.
      */
-    void removeInspectors(Predicate<Inspector> predicate);
+    void removeViews(Predicate<AbstractView> predicate);
 
     /**
      * Shows a visual indication of the Inspector state with regard to accepting user inputs.
@@ -118,10 +118,10 @@ public interface InspectorGUI {
     int getButton(MouseEvent mouseEvent);
 
     /**
-     * Sets Inspector frame location to a point displayed by specified diagonal amount from the most recently known mouse position.
+     * Sets view frame location to a point displayed by specified diagonal amount from the most recently known mouse position.
      * @param diagonalOffset number of pixels down and to right for new location
      */
-    void setLocationRelativeToMouse(Inspector inspector, int diagonalOffset);
+    void setLocationRelativeToMouse(AbstractView view, int diagonalOffset);
 
     /**
      * Sets a window component location to middle of Inspection display.
@@ -129,58 +129,58 @@ public interface InspectorGUI {
     void moveToMiddle(Component component);
 
     /**
-     * Sets Inspector frame location to middle of Inspection display.
+     * Sets view frame location to middle of Inspection display.
      */
-    void moveToMiddle(Inspector inspector);
+    void moveToMiddle(AbstractView view);
 
     /**
-     * Gets an action that sets Inspector frame location to middle of Inspection display.
+     * Gets an action that sets a view frame location to middle of Inspection display.
      */
-    InspectorAction moveToMiddleAction(Inspector inspector);
+    InspectorAction moveToMiddleAction(AbstractView view);
 
     /**
-     * Moves Inspector frame location as little as possible to make it fully visible.
+     * Moves a view frame location as little as possible to make it fully visible.
      */
-    void moveToFullyVisible(Inspector inspector);
+    void moveToFullyVisible(AbstractView view);
 
     /**
-     * If the inspector is moved out of the frame, either up or to the left, so that the default
-     * menu in the upper left corner of the inspector is not visible, move it down and to the left
+     * If the view is moved out of the frame, either up or to the left, so that the default
+     * menu in the upper left corner of the view is not visible, move it down and to the left
      * enough to make the menu visible.
      */
-    void moveToExposeDefaultMenu(Inspector inspector);
+    void moveToExposeDefaultMenu(AbstractView view);
 
     /**
-     * Shrink an inspector in each dimension, without changing location,
+     * Shrink a view in each dimension, without changing location,
      * to make it fit within the Inspector's frame.
      */
-    void resizeToFit(Inspector inspector);
+    void resizeToFit(AbstractView view);
 
     /**
-     * Gets an action that will shrink an inspector in each dimension, without
+     * Gets an action that will shrink a view in each dimension, without
      * changing location, to make it fit within the Inspector's frame.
      */
-    InspectorAction resizeToFitAction(Inspector inspector);
+    InspectorAction resizeToFitAction(AbstractView view);
 
     /**
-     * Grow an inspector in each dimension to make it fill the Inspector's frame.
+     * Grow an view in each dimension to make it fill the Inspector's frame.
      */
-    void resizeToFill(Inspector inspector);
+    void resizeToFill(AbstractView view);
 
     /**
      * Gets an action that will grow an inspector in each dimension to make it fill the Inspector's frame.
      */
-    InspectorAction resizeToFillAction(Inspector inspector);
+    InspectorAction resizeToFillAction(AbstractView view);
 
     /**
-     * Restores the default size and location of an Inspector.
+     * Restores the default size and location of a view.
      */
-    void restoreDefaultGeometry(Inspector inspector);
+    void restoreDefaultGeometry(AbstractView view);
 
     /**
-     * Gets an action that restores the default size and location of an Inspector.
+     * Gets an action that restores the default size and location of a view.
      */
-    InspectorAction restoreDefaultGeometryAction(Inspector inspector);
+    InspectorAction restoreDefaultGeometryAction(AbstractView view);
 
     /**
      * Moves a {@link JDialog} frame down and to the right of the current mouse location.

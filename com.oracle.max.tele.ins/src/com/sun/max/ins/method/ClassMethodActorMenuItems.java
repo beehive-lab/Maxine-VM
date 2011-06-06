@@ -48,8 +48,8 @@ public final class ClassMethodActorMenuItems extends AbstractInspectorMenuItems 
         objectMenu.add(views().objects().makeViewAction(teleClassMethodActor, "Method: " + teleClassMethodActor.classActorForObjectType().simpleName()));
         final TeleClassActor teleClassActor = teleClassMethodActor.getTeleHolder();
         objectMenu.add(views().objects().makeViewAction(teleClassActor, "Holder: " + teleClassActor.classActorForObjectType().simpleName()));
-        objectMenu.add(actions().inspectSubstitutionSourceClassActorAction(teleClassMethodActor));
-        objectMenu.add(actions().inspectMethodCompilationsMenu(teleClassMethodActor));
+        objectMenu.add(actions().viewSubstitutionSourceClassActorAction(teleClassMethodActor));
+        objectMenu.add(actions().viewMethodCompilationsMenu(teleClassMethodActor));
         menu.add(objectMenu);
 
         final InspectorMenu codeMenu = new InspectorMenu("Code");
@@ -69,8 +69,8 @@ public final class ClassMethodActorMenuItems extends AbstractInspectorMenuItems 
         objectMenu.add(views().objects().makeViewAction(teleClassMethodActor, "Method: " + teleClassMethodActor.classActorForObjectType().simpleName()));
         final TeleClassActor teleClassActor = teleClassMethodActor.getTeleHolder();
         objectMenu.add(views().objects().makeViewAction(teleClassActor, "Holder: " + teleClassActor.classActorForObjectType().simpleName()));
-        objectMenu.add(actions().inspectSubstitutionSourceClassActorAction(teleClassMethodActor));
-        objectMenu.add(actions().inspectMethodCompilationsMenu(teleClassMethodActor));
+        objectMenu.add(actions().viewSubstitutionSourceClassActorAction(teleClassMethodActor));
+        objectMenu.add(actions().viewMethodCompilationsMenu(teleClassMethodActor));
         menu.add(objectMenu);
 
         final InspectorMenu codeMenu = new InspectorMenu("Code");
