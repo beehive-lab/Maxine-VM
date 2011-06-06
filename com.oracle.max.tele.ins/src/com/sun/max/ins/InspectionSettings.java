@@ -44,12 +44,15 @@ import com.sun.max.vm.hosted.*;
  */
 public class InspectionSettings {
 
-    private static final String VM_SETTINGS_KEY = "vm";
-
     private static final int TRACE_VALUE = 2;
 
+    private static final String VM_SETTINGS_KEY = "vm";
     private static final String VM_BOOT_IMAGE_FORMAT_VERSION_KEY = "bootImageFormatVersion";
     private static final String VM_BOOT_IMAGE_ID_KEY = "bootImageId";
+
+    private static final String INSPECTOR_SETTINGS_KEY = "inspector";
+    private static final String INSPECTOR_SETTINGS_VERSION_KEY = "2";
+
     private static final String COMPONENT_X_KEY = "x";
     private static final String COMPONENT_Y_KEY = "y";
     private static final String COMPONENT_HEIGHT_KEY = "height";
@@ -196,9 +199,8 @@ public class InspectionSettings {
             fileReader.close();
         } catch (FileNotFoundException ioException) {
         } catch (IOException ioException) {
-            InspectorWarning.message(tracePrefix() + "Error while loading settings from " + settingsFile, ioException);
+            InspectorWarning.message(inspection, tracePrefix() + "Error while loading settings from " + settingsFile, ioException);
         }
-
         final BootImage bootImage = inspection.vm().bootImage();
         bootimageClient = new AbstractSaveSettingsListener(VM_SETTINGS_KEY) {
             public void saveSettings(SaveSettingsEvent settings) {
@@ -392,7 +394,7 @@ public class InspectionSettings {
             properties.store(fileWriter, null);
             fileWriter.close();
         } catch (IOException ioException) {
-            InspectorWarning.message(tracePrefix() + "Error while saving settings to " + settingsFile, ioException);
+            InspectorWarning.message(inspection, tracePrefix() + "Error while saving settings to " + settingsFile, ioException);
         }
 
     }
@@ -426,7 +428,7 @@ public class InspectionSettings {
         try {
             properties.store(printStream, "Inspection settings");
         } catch (IOException e) {
-            InspectorWarning.message("Failed to write settings to console", e);
+            InspectorWarning.message(inspection, "Failed to write settings to console", e);
         }
     }
 }

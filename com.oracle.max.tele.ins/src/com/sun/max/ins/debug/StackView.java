@@ -141,7 +141,7 @@ public final class StackView extends AbstractView<StackView> {
                     methodName += "*select here to extend the display*";
                 }
             } else {
-                InspectorWarning.check(stackFrame instanceof MaxStackFrame.Native, "Unhandled type of non-native stack frame: " + stackFrame.getClass().getName());
+                InspectorWarning.check(inspection(), stackFrame instanceof MaxStackFrame.Native, "Unhandled type of non-native stack frame: " + stackFrame.getClass().getName());
                 final Pointer instructionPointer = stackFrame.ip();
                 final MaxExternalCode externalCode = vm().codeCache().findExternalCode(instructionPointer);
                 if (externalCode != null) {
