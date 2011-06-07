@@ -101,17 +101,17 @@ public final class Throw {
      * by the exception handler.
      *
      * @param throwable the object to be passed to the exception handler - must not be null
-     * @param stackPointer the stack pointer to be used when determining the point at which exception was raised
-     * @param framePointer the frame pointer to be used when determining the point at which exception was raised
-     * @param instructionPointer the instruction pointer to be used when determining the point at which exception was raised
+     * @param sp the stack pointer to be used when determining the point at which exception was raised
+     * @param fp the frame pointer to be used when determining the point at which exception was raised
+     * @param ip the instruction pointer to be used when determining the point at which exception was raised
      */
-    public static void raise(Throwable throwable, Pointer stackPointer, Pointer framePointer, Pointer instructionPointer) {
+    public static void raise(Throwable throwable, Pointer sp, Pointer fp, Pointer ip) {
         FatalError.check(throwable != null, "Trying to raise an exception with a null Throwable object");
         final VmStackFrameWalker sfw = VmThread.current().unwindingStackFrameWalker(throwable);
 
         VmThread.current().checkYellowZoneForRaisingException();
         Safepoint.disable();
-        sfw.unwind(instructionPointer, stackPointer, framePointer, throwable);
+        sfw.unwind(ip, sp, fp, throwable);
         FatalError.unexpected("could not find top-level exception handler");
     }
 
@@ -179,16 +179,16 @@ public final class Throw {
      * Dumps the physical frames of a given stack to the {@link Log} stream.
      *
      * @param message if not {@code null}, this message is printed on a separate line prior to the stack trace
-     * @param instructionPointer the instruction pointer at which to begin the stack trace
-     * @param cpuStackPointer the stack pointer at which to begin the stack trace
-     * @param cpuFramePointer the frame pointer at which to begin the stack trace
+     * @param ip the instruction pointer at which to begin the stack trace
+     * @param sp the stack pointer at which to begin the stack trace
+     * @param fp the frame pointer at which to begin the stack trace
      */
     @NEVER_INLINE
-    public static void stackDump(String message, final Pointer instructionPointer, final Pointer cpuStackPointer, final Pointer cpuFramePointer) {
+    public static void stackDump(String message, final Pointer ip, final Pointer sp, final Pointer fp) {
         if (message != null) {
             Log.println(message);
         }
-        VmThread.current().stackDumpStackFrameWalker().inspect(instructionPointer, cpuStackPointer, cpuFramePointer, stackFrameDumper);
+        VmThread.current().stackDumpStackFrameWalker().inspect(ip, sp, fp, stackFrameDumper);
     }
 
     /**
@@ -238,13 +238,13 @@ public final class Throw {
      * inspecting each word in the memory range to see if it is a potential code pointer.
      *
      * @param message the message to print for this stack scan
-     * @param stackPointer the pointer to top of the stack
-     * @param endPointer the pointer to the end of the stack
+     * @param sp the pointer to top of the stack
+     * @param end the pointer to the end of the stack
      */
-    public static void stackScan(String message, final Pointer stackPointer, final Pointer endPointer) {
+    public static void stackScan(String message, final Pointer sp, final Pointer end) {
         Log.println(message);
-        Pointer pointer = stackPointer.wordAligned();
-        while (pointer.lessThan(endPointer)) {
+        Pointer pointer = sp.wordAligned();
+        while (pointer.lessThan(end)) {
             final Address potentialCodePointer = pointer.getWord().asAddress();
             final TargetMethod targetMethod = Code.codePointerToTargetMethod(potentialCodePointer);
             if (targetMethod != null) {
