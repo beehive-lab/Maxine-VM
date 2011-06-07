@@ -51,7 +51,10 @@ public class InspectionSettings {
     private static final String VM_BOOT_IMAGE_ID_KEY = "bootImageId";
 
     private static final String INSPECTOR_SETTINGS_KEY = "inspector";
-    private static final String INSPECTOR_SETTINGS_VERSION_KEY = "2";
+    private static final String INSPECTOR_SETTINGS_VERSION_KEY = "settingsVersion";
+
+    // This should be incremented any time that any of the persistent settings keys changes.
+    private static final String INSPECTOR_SETTINGS_VERSION = "2";
 
     private static final String COMPONENT_X_KEY = "x";
     private static final String COMPONENT_Y_KEY = "y";
@@ -181,7 +184,7 @@ public class InspectionSettings {
     }
 
     private final Inspection inspection;
-    private final SaveSettingsListener bootimageClient;
+
     private final Properties properties = new SortedProperties();
     private final File settingsFile;
     private final boolean bootImageChanged;
@@ -201,19 +204,35 @@ public class InspectionSettings {
         } catch (IOException ioException) {
             InspectorWarning.message(inspection, tracePrefix() + "Error while loading settings from " + settingsFile, ioException);
         }
+
+        // Check that the settings keys haven't changed since the previous session;
+        // if so warn and ignore the old settings.
+        final SaveSettingsListener inspectorClient = new AbstractSaveSettingsListener(INSPECTOR_SETTINGS_KEY) {
+            public void saveSettings(SaveSettingsEvent settings) {
+                settings.save(INSPECTOR_SETTINGS_VERSION_KEY, String.valueOf(INSPECTOR_SETTINGS_VERSION));
+            }
+        };
+        addSaveSettingsListener(inspectorClient);
+        final int settingsVersion = get(inspectorClient, INSPECTOR_SETTINGS_VERSION_KEY, OptionTypes.INT_TYPE, 0);
+        if (settingsVersion != Integer.valueOf(INSPECTOR_SETTINGS_VERSION)) {
+            InspectorWarning.message(inspection, tracePrefix() + "Settings in obsolete format ignored");
+            properties.clear();
+        }
+
+        // Check to see if the boot image being inspected is the same as the previous inspection session.
         final BootImage bootImage = inspection.vm().bootImage();
-        bootimageClient = new AbstractSaveSettingsListener(VM_SETTINGS_KEY) {
+        final SaveSettingsListener bootimageClient = new AbstractSaveSettingsListener(VM_SETTINGS_KEY) {
             public void saveSettings(SaveSettingsEvent settings) {
                 settings.save(VM_BOOT_IMAGE_FORMAT_VERSION_KEY, String.valueOf(bootImage.header.bootImageFormatVersion));
                 settings.save(VM_BOOT_IMAGE_ID_KEY, String.valueOf(bootImage.header.randomID));
             }
         };
-
         addSaveSettingsListener(bootimageClient);
         final int version = get(bootimageClient, VM_BOOT_IMAGE_FORMAT_VERSION_KEY, OptionTypes.INT_TYPE, 0);
         final int randomID = get(bootimageClient, VM_BOOT_IMAGE_ID_KEY, OptionTypes.INT_TYPE, 0);
         bootImageChanged = version != bootImage.header.bootImageFormatVersion || randomID != bootImage.header.randomID;
         bootimageClient.saveSettings(new SaveSettingsEvent(bootimageClient, properties));
+
         saver = new Saver();
     }
 
