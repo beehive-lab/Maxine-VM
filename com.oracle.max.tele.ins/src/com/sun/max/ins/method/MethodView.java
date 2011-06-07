@@ -261,6 +261,7 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
             try {
                 final MethodViewManager methodViewManager = (MethodViewManager) ViewKind.METHODS.viewManager();
                 final MethodViewContainer container = methodViewManager.activateView();
+                nativeMethodView = new NativeMethodView(inspection, container, maxExternalCode);
                 container.add(nativeMethodView);
                 machineCodeToMethodView.put(maxExternalCode, nativeMethodView);
             } finally {
