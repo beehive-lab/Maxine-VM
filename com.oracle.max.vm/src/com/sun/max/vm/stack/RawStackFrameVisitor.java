@@ -43,6 +43,12 @@ public abstract class RawStackFrameVisitor {
     public abstract boolean visitFrame(Cursor current, Cursor callee);
 
     public void done() {
+    }
 
+    public static class Default extends RawStackFrameVisitor {
+        @Override
+        public boolean visitFrame(Cursor current, Cursor callee) {
+            return true;
+        }
     }
 }

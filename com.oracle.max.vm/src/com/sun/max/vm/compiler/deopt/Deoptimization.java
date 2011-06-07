@@ -169,7 +169,7 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
             Object directCallee = tm.directCallees()[i];
             if (directCallee != null && isInvalidated(directCallee)) {
                 if (TraceDeopt) {
-                    Log.println("DEOPT:   patched direct call " + i + " in " + tm);
+                    Log.println("DEOPT:   resetting direct call " + i + " in " + tm + " to " + directCallee);
                 }
                 tm.resetDirectCall(i);
             }
@@ -180,6 +180,9 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
     @Override
     protected void doIt() {
         // Process code cache
+        if (TraceDeopt) {
+            Log.println("DEOPT: processing code cache");
+        }
         Code.bootCodeRegion().doAllTargetMethods(this);
         Code.getCodeManager().getRuntimeCodeRegion().doAllTargetMethods(this);
 
@@ -565,7 +568,15 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
             this.fp = fp;
             this.patchContext = patchContext;
 
-            new VmStackFrameWalker(thread.tla()).inspect(ip, sp, fp, this);
+            VmStackFrameWalker sfw = new VmStackFrameWalker(thread.tla());
+            sfw.inspect(ip, sp, fp, this);
+
+            assert stackIsWalkable(sfw, ip, sp, fp);
+        }
+
+        private boolean stackIsWalkable(StackFrameWalker sfw, Pointer ip, Pointer sp, Pointer fp) {
+            sfw.inspect(ip, sp, fp, new RawStackFrameVisitor.Default());
+            return true;
         }
 
         private ClassMethodActor lastCalleeMethod;

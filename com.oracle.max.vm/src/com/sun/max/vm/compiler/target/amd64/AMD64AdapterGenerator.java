@@ -27,6 +27,7 @@ import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
+import static com.sun.max.vm.compiler.deopt.Deoptimization.*;
 
 import java.io.*;
 
@@ -70,10 +71,10 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
     @Override
     public boolean advanceIfInPrologue(Cursor current) {
         if (inPrologue(current.ip(), current.targetMethod())) {
-            StackFrameWalker stackFrameWalker = current.stackFrameWalker();
-            final Pointer callerIP = stackFrameWalker.readWord(current.sp(), 0).asPointer();
+            StackFrameWalker sfw = current.stackFrameWalker();
+            final Pointer callerIP = sfw.readWord(current.sp(), 0).asPointer();
             Pointer callerSP = current.sp().plus(Word.size()); // skip RIP
-            stackFrameWalker.advance(callerIP, callerSP, current.fp(), true);
+            sfw.advance(callerIP, callerSP, current.fp(), true);
             return true;
         }
         return false;
@@ -110,16 +111,16 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             private int computeFrameState(Cursor cursor) {
                 int ripAdjustment = frameSize();
                 boolean rbpSaved = false;
-                StackFrameWalker stackFrameWalker = cursor.stackFrameWalker();
+                StackFrameWalker sfw = cursor.stackFrameWalker();
                 int position = cursor.ip().minus(codeStart).toInt();
 
-                byte b = stackFrameWalker.readByte(cursor.ip(), 0);
+                byte b = sfw.readByte(cursor.ip(), 0);
                 if (position == 0 || b == ENTER) {
                     ripAdjustment = Word.size();
                 } else if (b == RET2) {
                     ripAdjustment = 0;
                 } else if (b == REXW) {
-                    b = stackFrameWalker.readByte(cursor.ip(), 1);
+                    b = sfw.readByte(cursor.ip(), 1);
                     if (b == ADDQ_SUBQ_imm8) {
                         ripAdjustment = Word.size();
                     } else if (b == ADDQ_SUBQ_imm32) {
@@ -147,7 +148,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
 
             @Override
             public void advance(Cursor current) {
-                StackFrameWalker stackFrameWalker = current.stackFrameWalker();
+                StackFrameWalker sfw = current.stackFrameWalker();
                 int ripAdjustment = frameSize();
                 boolean rbpSaved = true;
                 if (MaxineVM.isHosted()) {
@@ -158,10 +159,10 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
                 }
 
                 Pointer ripPointer = current.sp().plus(ripAdjustment);
-                Pointer callerIP = stackFrameWalker.readWord(ripPointer, 0).asPointer();
+                Pointer callerIP = sfw.readWord(ripPointer, 0).asPointer();
                 Pointer callerSP = ripPointer.plus(Word.size()); // Skip RIP word
-                Pointer callerFP = rbpSaved ? stackFrameWalker.readWord(ripPointer, -Word.size() * 2).asPointer() : current.fp();
-                stackFrameWalker.advance(callerIP, callerSP, callerFP, true);
+                Pointer callerFP = rbpSaved ? sfw.readWord(ripPointer, -Word.size() * 2).asPointer() : current.fp();
+                sfw.advance(callerIP, callerSP, callerFP, true);
             }
 
             @Override
@@ -484,7 +485,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             @HOSTED_ONLY
             private int computeRipAdjustment(Cursor cursor) {
                 int ripAdjustment = frameSize();
-                StackFrameWalker stackFrameWalker = cursor.stackFrameWalker();
+                StackFrameWalker sfw = cursor.stackFrameWalker();
                 int position = cursor.ip().minus(codeStart).toInt();
                 if (!cursor.isTopFrame()) {
                     // Inside call to baseline body. The value of RSP in cursor is now the value
@@ -493,9 +494,9 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
                 } else if (position == 0) {
                     ripAdjustment = Word.size();
                 } else {
-                    switch (stackFrameWalker.readByte(cursor.ip(), 0)) {
+                    switch (sfw.readByte(cursor.ip(), 0)) {
                         case REXW:
-                            byte b = stackFrameWalker.readByte(cursor.ip(), 1);
+                            byte b = sfw.readByte(cursor.ip(), 1);
                             if (b == ADDQ_SUBQ_imm8) {
                                 ripAdjustment = Word.size();
                             } else if (b == ADDQ_SUBQ_imm32) {
@@ -518,13 +519,21 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             @Override
             public void advance(Cursor cursor) {
                 int ripAdjustment = MaxineVM.isHosted() ? computeRipAdjustment(cursor) : Word.size();
-                StackFrameWalker stackFrameWalker = cursor.stackFrameWalker();
+                StackFrameWalker sfw = cursor.stackFrameWalker();
 
                 Pointer ripPointer = cursor.sp().plus(ripAdjustment);
-                Pointer callerIP = stackFrameWalker.readWord(ripPointer, 0).asPointer();
+                Pointer callerIP = sfw.readWord(ripPointer, 0).asPointer();
                 Pointer callerSP = ripPointer.plus(Word.size()); // Skip RIP word
                 Pointer callerFP = cursor.fp();
-                stackFrameWalker.advance(callerIP, callerSP, callerFP, true);
+
+                // Rescue a return address that has been patched for deoptimization
+                TargetMethod caller = sfw.targetMethodFor(callerIP);
+                if (caller != null && MaxineVM.vm().stubs.isDeoptStub(caller)) {
+                    Pointer originalReturnAddress = sfw.readWord(callerSP, DEOPT_RETURN_ADDRESS_OFFSET).asPointer();
+                    callerIP = originalReturnAddress;
+                }
+
+                sfw.advance(callerIP, callerSP, callerFP, true);
             }
 
             @Override
