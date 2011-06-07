@@ -25,7 +25,9 @@ package com.oracle.max.vma.tools.gen.vma;
 import static com.sun.max.vm.t1x.T1XTemplateGenerator.*;
 
 import java.lang.reflect.*;
+import java.util.*;
 
+import com.oracle.max.vm.ext.vma.*;
 import com.sun.max.annotate.*;
 
 /**
@@ -34,6 +36,18 @@ import com.sun.max.annotate.*;
 
 @HOSTED_ONLY
 public class AdviceGeneratorHelper {
+
+    public static final VMABytecodes[] VMABytecodeValues = VMABytecodes.values();
+    /**
+     * Map from actual bytecode encoding value to {@link VMABytecode}.
+     */
+    public static Map<Integer, VMABytecodes> codeMap = new HashMap<Integer, VMABytecodes>();
+
+    static {
+        for (VMABytecodes bc : VMABytecodeValues) {
+            codeMap.put(bc.code, bc);
+        }
+    }
 
     /**
      * Generates the name/signature definition for given method, returning a count of the
@@ -76,7 +90,20 @@ public class AdviceGeneratorHelper {
 
     public static String getLastParameterName(Method m) {
         Class<?>[] types = m.getParameterTypes();
+        if (types.length == 0) {
+            return null;
+        }
         return types[types.length - 1].getSimpleName();
     }
+
+    public static String getNthParameterName(Method m, int argc) {
+        Class<?>[] types = m.getParameterTypes();
+        if (types.length == 0 || argc > types.length) {
+            return null;
+        }
+        return types[argc - 1].getSimpleName();
+
+    }
+
 
 }

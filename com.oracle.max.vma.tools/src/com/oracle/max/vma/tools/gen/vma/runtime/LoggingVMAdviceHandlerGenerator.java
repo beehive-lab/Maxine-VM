@@ -29,6 +29,7 @@ import java.lang.reflect.*;
 
 import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.runtime.*;
+import com.oracle.max.vma.tools.gen.vma.log.*;
 import com.sun.max.annotate.*;
 
 /**
@@ -49,39 +50,48 @@ public class LoggingVMAdviceHandlerGenerator {
 
     private static void generate(Method m) {
         String name = m.getName();
+        String oname = VMAdviceHandlerLogGenerator.getMethodNameRenamingObject(m);
         generateAutoComment();
         out.printf("    @Override%n");
         generateSignature(m, null);
         out.printf(" {%n");
-        if (name.endsWith("GetField")  || name.endsWith("PutField")) {
-            generateLogCallPrefix(name);
+        if (name.endsWith("ConstLoad")) {
+            generateLogCallPrefix(oname);
+            generateValueArg(m, 1);
+            out.printf(");%n");
+        } else if (name.endsWith("GetField")  || name.endsWith("PutField")) {
+            generateLogCallPrefix(oname);
             out.printf(", state.readId(arg1), ObjectAccess.readClassActor(arg1).findInstanceFieldActor(arg2).name()");
             if (name.endsWith("PutField")) {
-                generateValueArg(m);
+                generateValueArg(m, 3);
             }
             out.printf(");%n");
         } else if (name.endsWith("GetStatic")  || name.endsWith("PutStatic")) {
             out.printf("        ClassActor ca = ObjectAccess.readClassActor(arg1);%n");
-            generateLogCallPrefix(name);
+            generateLogCallPrefix(oname);
             out.printf(", ca.name(), state.readId(ca.classLoader), ca.findStaticFieldActor(arg2).name()");
             if (name.endsWith("PutStatic")) {
                 if (name.endsWith("PutStatic")) {
-                    generateValueArg(m);
+                    generateValueArg(m, 3);
                 }
-
             }
             out.printf(");%n");
         } else if (name.endsWith("ArrayLoad") || name.endsWith("ArrayStore")) {
-            generateLogCallPrefix(name);
+            generateLogCallPrefix(oname);
             out.printf(", state.readId(arg1), arg2");
             if (name.endsWith("ArrayStore")) {
-                generateValueArg(m);
+                generateValueArg(m, 3);
             }
+            out.printf(");%n");
+        } else if (name.endsWith("Store")) {
+            generateLogCallPrefix(oname);
+            generateValueArg(m, 1);
+            generateValueArg(m, 2);
             out.printf(");%n");
         } else if (name.equals("adviseAfterNew") || name.equals("adviseAfterNewArray")) {
             out.printf("        final Reference objRef = Reference.fromJava(arg1);%n");
             out.printf("        final Hub hub = UnsafeCast.asHub(Layout.readHubReference(objRef));%n");
-            generateLogCallPrefix(name);
+            generateLogCallPrefix(oname);
             out.printf(", state.readId(arg1), hub.classActor.name(), state.readId(hub.classActor.classLoader)");
             if (name.endsWith("NewArray")) {
                 out.print(", arg2");
@@ -89,15 +99,45 @@ public class LoggingVMAdviceHandlerGenerator {
             out.printf(");%n");
         } else if (name.equals("adviseAfterMultiNewArray")) {
             out.printf("        ProgramError.unexpected(\"adviseAfterMultiNewArray\");%n");
-        } else if (name.equals("adviseGC")) {
-            out.printf("        if (arg1 == AdviceMode.AFTER) {%n");
-            out.print("    ");
-            generateLogCallPrefix(name);
+        } else if (name.endsWith("If")) {
+            generateLogCallPrefix(oname);
+            generateValueArg(m, 1);
+            generateValueArg(m, 2);
+            generateValueArg(m, 3);
             out.printf(");%n");
-            out.printf("        }%n");
-        } else if (name.contains("InvokeSpecial")) {
-            generateLogCallPrefix(name);
+        } else if (name.contains("Return")) {
+            generateLogCallPrefix(oname);
+            if (m.getParameterTypes().length > 0) {
+                generateValueArg(m, 1);
+            }
+            out.printf(");%n");
+        } else if (name.contains("Invoke")) {
+            generateLogCallPrefix(oname);
+            out.print(", state.readId(arg1), arg2");
+            out.printf(");%n");
+        } else if (name.endsWith("ArrayLength")) {
+            generateLogCallPrefix(oname);
+            out.print(", state.readId(arg1), arg2");
+            out.printf(");%n");
+        } else if (name.contains("Monitor") || name.contains("Throw")) {
+            generateLogCallPrefix(oname);
             out.print(", state.readId(arg1)");
+            out.printf(");%n");
+        } else if (name.contains("CheckCast") || name.contains("InstanceOf")) {
+            out.printf("        ClassActor ca = ObjectAccess.readClassActor(arg2);%n");
+            generateLogCallPrefix(oname);
+            out.print(", state.readId(arg1), ca.name(), state.readId(ca.classLoader)");
+            out.printf(");%n");
+        } else if (name.contains("Thread")) {
+            // drop VmThread arg
+            generateLogCallPrefix(oname);
+            out.printf(");%n");
+        } else {
+            generateLogCallPrefix(oname);
+            Class<?>[] params = m.getParameterTypes();
+            for (int argc = 1; argc <= params.length; argc++) {
+                out.printf(", %s", "arg" + argc);
+            }
             out.printf(");%n");
         }
         out.printf("    }%n%n");
@@ -108,12 +148,13 @@ public class LoggingVMAdviceHandlerGenerator {
         out.printf("        log.%s(tng.getThreadName()", name);
     }
 
-    private static void generateValueArg(Method m) {
-        String valueType = getLastParameterName(m);
+    private static void generateValueArg(Method m, int argc) {
+        String arg = "arg" + argc;
+        String valueType = getNthParameterName(m, argc);
         if (valueType.equals("Object")) {
-            out.print(", state.readId(arg3)");
+            out.printf(", state.readId(%s)", arg);
         } else {
-            out.print(", arg3");
+            out.printf(", %s", arg);
         }
     }
 

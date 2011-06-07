@@ -35,13 +35,14 @@ import com.sun.max.annotate.*;
 @HOSTED_ONLY
 public class VMAStaticBytecodeAdviceGenerator {
     public static void main(String[] args) {
+        setGeneratingClass(VMAStaticBytecodeAdvice.class);
         for (Method m : BytecodeAdvice.class.getDeclaredMethods()) {
             generateStatic(m);
         }
     }
 
     private static void generateStatic(Method m) {
-        generateAutoComment(VMAStaticBytecodeAdvice.class.getSimpleName());
+        generateAutoComment();
         out.printf("    @NEVER_INLINE%n");
         int argCount = generateSignature(m, "static");
         out.printf(" {%n");

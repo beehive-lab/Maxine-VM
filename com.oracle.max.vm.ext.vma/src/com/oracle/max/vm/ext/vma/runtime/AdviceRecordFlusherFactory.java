@@ -23,21 +23,21 @@
 package com.oracle.max.vm.ext.vma.runtime;
 
 /**
- * Factory for controlling which implementation of {@link JavaEventFlusher} is
+ * Factory for controlling which implementation of {@link AdviceRecordFlusher} is
  * used at runtime.
  *
  */
-public class JavaEventFlusherFactory {
-    public static final String JAVA_EVENT_FLUSHER_PROPERTY = "max.vma.java.event.flusher";
+public class AdviceRecordFlusherFactory {
+    public static final String ADVICE_RECORD_FLUSHER_PROPERTY = "max.vma.record.flusher";
 
-    public static JavaEventFlusher create() {
-        JavaEventFlusher result = null;
-        final String flusherClassName = System.getProperty(JAVA_EVENT_FLUSHER_PROPERTY);
+    public static AdviceRecordFlusher create() {
+        AdviceRecordFlusher result = null;
+        final String flusherClassName = System.getProperty(ADVICE_RECORD_FLUSHER_PROPERTY);
         if (flusherClassName == null) {
-            result = new LoggingJavaEventFlusher();
+            result = new LoggingAdviceRecordFlusher();
         } else {
             try {
-                result = (JavaEventFlusher) Class.forName(flusherClassName).newInstance();
+                result = (AdviceRecordFlusher) Class.forName(flusherClassName).newInstance();
             } catch (Exception exception) {
                 System.err.println("Error instantiating " + flusherClassName
                         + ": " + exception);

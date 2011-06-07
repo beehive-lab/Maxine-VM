@@ -32,6 +32,9 @@ import com.sun.max.annotate.*;
 
 /**
  * Generates the rote implementations of ObjectStateHandlerAdaptor.
+ * Object creation is special and requires that we assign a unique id.
+ * All other methods that take objects as parameters have to be checked
+ * in case their creation was not observed.
  *
  */
 
@@ -58,24 +61,20 @@ public class ObjectStateHandlerAdaptorGenerator {
         out.printf("    @Override%n");
         generateSignature(m, null);
         out.printf(" {%n");
-        if (name.endsWith("GetField")  || name.endsWith("PutField") ||
-                        name.endsWith("ArrayLoad")  || name.endsWith("ArrayStore")) {
-            out.printf("        checkId(arg1);%n");
-            if ((name.endsWith("PutField")  || name.endsWith("ArrayStore")) && getLastParameterName(m).equals("Object")) {
-                out.printf("        checkId(arg3);%n");
-            }
-        } else if (name.endsWith("GetStatic")  || name.endsWith("PutStatic")) {
-            out.printf("        checkId(ObjectAccess.readClassActor(arg1));%n");
-            if (name.endsWith("PutStatic") && getLastParameterName(m).equals("Object")) {
-                out.printf("        checkId(arg3);%n");
-            }
-        } else if (name.equals("adviseAfterNew") || name.equals("adviseAfterNewArray")) {
+        if (name.equals("adviseAfterNew") || name.equals("adviseAfterNewArray")) {
             out.printf("        final Reference objRef = Reference.fromJava(arg1);%n");
             out.printf("        final Hub hub = UnsafeCast.asHub(Layout.readHubReference(objRef));%n");
             out.printf("        state.assignId(objRef);%n");
             out.printf("        checkId(hub.classActor.classLoader);%n");
-        } else if (name.contains("InvokeSpecial")) {
-            out.printf("        checkId(arg1);%n");
+        } else {
+            int i = 1;
+            Class<?>[] params = m.getParameterTypes();
+            for (Class<?> param : params) {
+                if (param == Object.class) {
+                    out.printf("        checkId(arg%d);%n", i);
+                }
+                i++;
+            }
         }
         out.printf("    }%n%n");
     }

@@ -34,16 +34,37 @@ public abstract class BytecodeAdvice {
     // BEGIN GENERATED CODE
 
     // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
-    public abstract void adviseBeforeArrayLoad(Object array, int index, long value);
+    public abstract void adviseBeforeConstLoad(Object value);
 
     // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
-    public abstract void adviseBeforeArrayLoad(Object array, int index, float value);
+    public abstract void adviseBeforeConstLoad(long value);
 
     // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
-    public abstract void adviseBeforeArrayLoad(Object array, int index, double value);
+    public abstract void adviseBeforeConstLoad(float value);
 
     // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
-    public abstract void adviseBeforeArrayLoad(Object array, int index, Object value);
+    public abstract void adviseBeforeConstLoad(double value);
+
+    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
+    public abstract void adviseBeforeIPush(int value);
+
+    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
+    public abstract void adviseBeforeLoad(int dispToLocalSlot);
+
+    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
+    public abstract void adviseBeforeArrayLoad(Object array, int index);
+
+    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
+    public abstract void adviseBeforeStore(int dispToLocalSlot, long value);
+
+    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
+    public abstract void adviseBeforeStore(int dispToLocalSlot, float value);
+
+    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
+    public abstract void adviseBeforeStore(int dispToLocalSlot, double value);
+
+    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
+    public abstract void adviseBeforeStore(int dispToLocalSlot, Object value);
 
     // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
     public abstract void adviseBeforeArrayStore(Object array, int index, long value);
@@ -58,16 +79,51 @@ public abstract class BytecodeAdvice {
     public abstract void adviseBeforeArrayStore(Object array, int index, Object value);
 
     // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
-    public abstract void adviseBeforeGetStatic(Object staticTuple, int offset, double value);
+    public abstract void adviseBeforeStackAdjust(int opcode);
 
     // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
-    public abstract void adviseBeforeGetStatic(Object staticTuple, int offset, long value);
+    public abstract void adviseBeforeOperation(int opcode, long op1, long op2);
 
     // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
-    public abstract void adviseBeforeGetStatic(Object staticTuple, int offset, float value);
+    public abstract void adviseBeforeOperation(int opcode, float op1, float op2);
 
     // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
-    public abstract void adviseBeforeGetStatic(Object staticTuple, int offset, Object value);
+    public abstract void adviseBeforeOperation(int opcode, double op1, double op2);
+
+    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
+    public abstract void adviseBeforeIInc(int dispToLocalSlot, int value, int increment);
+
+    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
+    public abstract void adviseBeforeConversion(int opcode, long op);
+
+    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
+    public abstract void adviseBeforeConversion(int opcode, float op);
+
+    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
+    public abstract void adviseBeforeConversion(int opcode, double op);
+
+    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
+    public abstract void adviseBeforeIf(int opcode, int op1, int op2);
+
+    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
+    public abstract void adviseBeforeIf(int opcode, Object op1, Object op2);
+
+    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
+    public abstract void adviseBeforeReturn(long value);
+
+    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
+    public abstract void adviseBeforeReturn(float value);
+
+    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
+    public abstract void adviseBeforeReturn(double value);
+
+    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
+    public abstract void adviseBeforeReturn(Object value);
+
+    public abstract void adviseBeforeReturn();
+
+    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
+    public abstract void adviseBeforeGetStatic(Object staticTuple, int offset);
 
     // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
     public abstract void adviseBeforePutStatic(Object staticTuple, int offset, double value);
@@ -81,17 +137,7 @@ public abstract class BytecodeAdvice {
     // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
     public abstract void adviseBeforePutStatic(Object staticTuple, int offset, Object value);
 
-    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
-    public abstract void adviseBeforeGetField(Object object, int offset, double value);
-
-    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
-    public abstract void adviseBeforeGetField(Object object, int offset, long value);
-
-    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
-    public abstract void adviseBeforeGetField(Object object, int offset, float value);
-
-    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
-    public abstract void adviseBeforeGetField(Object object, int offset, Object value);
+    public abstract void adviseBeforeGetField(Object object, int offset);
 
     // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
     public abstract void adviseBeforePutField(Object object, int offset, double value);
@@ -106,7 +152,49 @@ public abstract class BytecodeAdvice {
     public abstract void adviseBeforePutField(Object object, int offset, Object value);
 
     // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
-    public abstract void adviseAfterInvokeSpecial(Object object);
+    public abstract void adviseBeforeInvokeVirtual(Object object, int index);
+
+    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
+    public abstract void adviseBeforeInvokeSpecial(Object object, int index);
+
+    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
+    public abstract void adviseBeforeInvokeStatic(Object object, int index);
+
+    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
+    public abstract void adviseBeforeInvokeInterface(Object object, int index);
+
+    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
+    public abstract void adviseBeforeArrayLength(Object array, int length);
+
+    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
+    public abstract void adviseBeforeThrow(Object object);
+
+    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
+    public abstract void adviseBeforeCheckCast(Object object, Object classActor);
+
+    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
+    public abstract void adviseBeforeInstanceOf(Object object, Object classActor);
+
+    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
+    public abstract void adviseBeforeMonitorEnter(Object object);
+
+    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
+    public abstract void adviseBeforeMonitorExit(Object object);
+
+    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
+    public abstract void adviseBeforeBytecode(int opcode);
+
+    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
+    public abstract void adviseAfterInvokeVirtual(Object object, int index);
+
+    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
+    public abstract void adviseAfterInvokeSpecial(Object object, int index);
+
+    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
+    public abstract void adviseAfterInvokeStatic(Object object, int index);
+
+    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
+    public abstract void adviseAfterInvokeInterface(Object object, int index);
 
     // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
     public abstract void adviseAfterNew(Object object);
@@ -119,3 +207,4 @@ public abstract class BytecodeAdvice {
 
 
 }
+

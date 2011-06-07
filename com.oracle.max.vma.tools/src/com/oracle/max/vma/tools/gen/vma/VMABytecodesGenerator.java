@@ -29,8 +29,10 @@ import java.util.regex.*;
 
 import com.sun.cri.bytecode.*;
 
-
-/*
+/**
+ * Generates the {@link VMABytecodes} enum that is a clone of {@link Bytecodes} but
+ * with the code provided as a field and a methodname that is used in {@link BytecodeAdvice}.
+ *
  */
 public class VMABytecodesGenerator {
 
@@ -38,7 +40,7 @@ public class VMABytecodesGenerator {
         boolean first = true;
         for (Field f : Bytecodes.class.getDeclaredFields()) {
             int modifiers = f.getModifiers();
-            if (Modifier.isPublic(modifiers) && !f.getName().contains("UNUSED"))  {
+            if (Modifier.isPublic(modifiers))  {
                 generate(f, first);
             }
             first = false;
@@ -71,14 +73,48 @@ public class VMABytecodesGenerator {
             return result;
         } else if (name.equals("NEWARRAY") || name.equals("ANEWARRAY")) {
             return "NewArray";
+        } else if (name.equals("CHECKCAST")) {
+            return "CheckCast";
+        } else if (name.equals("INSTANCEOF")) {
+            return "InstanceOf";
+        } else if (name.equals("ARRAYLENGTH")) {
+            return "ArrayLength";
+        } else if (name.equals("ATHROW")) {
+            return "Throw";
+        } else if (name.equals("MONITORENTER")) {
+            return "MonitorEnter";
+        } else if (name.equals("MONITOREXIT")) {
+            return "MonitorExit";
         } else if (name.equals("MULTIANEWARRAY")) {
             return "MultiNewArray";
+        } else if (Pattern.matches(".{1}RETURN|RETURN", name)) {
+            return "Return";
         } else if (Pattern.matches(".{1}ALOAD", name)) {
             return "ArrayLoad";
         } else if (Pattern.matches(".{1}ASTORE", name)) {
             return "ArrayStore";
+        } else if (Pattern.matches(".{1}CONST.*|LDC.*", name)) {
+            return "ConstLoad";
+        } else if (Pattern.matches(".{1}LOAD.*", name)) {
+            return "Load";
+        } else if (Pattern.matches(".{1}STORE.*", name)) {
+            return "Store";
+        } else if (Pattern.matches(".{1}IPUSH", name)) {
+            return "IPush";
+        } else if (Pattern.matches(".{1}(ADD|SUB|MUL|DIV|REM|AND|OR|XOR|SHL|SHR|USHR|NEG)|WREMI|WDIVI", name)) {
+            return "Operation";
+        } else if (Pattern.matches(".{1}2.{1}|MOV_.*", name)) {
+            return "Conversion";
+        } else if (Pattern.matches("IF.*", name)) {
+            return "If";
+        } else if (Pattern.matches("POP|POP2|DUP.*|SWAP", name)) {
+            return "StackAdjust";
+        } else if (Pattern.matches("[FLD]CMP.*", name)) {
+            return "Operation";
+        } else if (name.equals("IINC")) {
+            return "IInc";
         } else {
-            return name;
+            return "Bytecode";
         }
     }
 

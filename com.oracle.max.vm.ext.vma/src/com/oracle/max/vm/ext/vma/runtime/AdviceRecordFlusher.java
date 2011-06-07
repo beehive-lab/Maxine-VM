@@ -22,34 +22,34 @@
  */
 package com.oracle.max.vm.ext.vma.runtime;
 
-import com.oracle.max.vm.ext.vma.runtime.JavaVMAdviceHandlerEvents.*;
+import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * The interface through which {@link JavaEventVMAdviceHandler} flushes the per-thread event buffer.
+ * The interface through which {@link TransientVMAdviceHandler} flushes the per-thread event buffer.
  */
 
-public interface JavaEventFlusher {
+public interface AdviceRecordFlusher {
 
     /**
      * Thread-specific buffer of events.
      */
-    public static class EventBuffer {
+    public static class RecordBuffer {
         VmThread vmThread;
-        Event[] events;
+        AdviceRecord[] records;
         int index;
 
-        public EventBuffer(Event[] events) {
-            this.events = events;
+        public RecordBuffer(AdviceRecord[] records) {
+            this.records = records;
             this.vmThread = VmThread.current();
         }
     }
 
     /**
-     * Flush the event buffer.
+     * Flush the buffer.
      * @param buffer
      */
-    void flushBuffer(EventBuffer buffer);
+    void flushBuffer(RecordBuffer buffer);
 
     void initialise(ObjectStateHandler state);
     void finalise();

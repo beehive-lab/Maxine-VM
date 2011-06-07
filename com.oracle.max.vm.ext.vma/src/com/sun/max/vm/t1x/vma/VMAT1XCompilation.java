@@ -22,61 +22,74 @@
  */
 package com.sun.max.vm.t1x.vma;
 
-import java.util.*;
-
 import com.oracle.max.vm.ext.vma.options.*;
-import com.sun.cri.bytecode.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.classfile.constant.ClassMethodRefConstant;
 import com.sun.max.vm.t1x.*;
+import com.sun.max.vm.t1x.T1X.Templates;
+import com.sun.max.vm.t1x.T1XTemplateGenerator.AdviceType;
 
 /**
  * Overrides some {@link T1XCompilation} methods to provide finer compile time control over advising.
  * N.B. Entry to this class can only occur if some advising is occurring in the method being compiled.
+ * For classes that are being advised, A decision is made as each bytecode is compiled whether to use the
+ * advice template or whether to use the standard template. This decision is based on the options
+ * set in {@link VMAOptions}. Note that this cannot handle selecting {@link AdviceMode before/after}
+ * advice at runtime, as the template has both compiled in at boot image generation time.
+ * To handle this we (potentially) generate three instances of a template with the
+ * appropriate advice generated, and select between those at runtime.
+ *
  */
 public class VMAT1XCompilation extends T1XCompilation {
 
-    private VMAT1X oat1x;
+    private static final int BEFORE_INDEX = AdviceType.BEFORE.ordinal();
+    private static final int AFTER_INDEX = AdviceType.AFTER.ordinal();
+
+    private VMAT1X vmaT1X;
     /**
-     * Used to control whether the advised template is used for the bytecode compilation
-     * or the default (altT1X) template. This is always reset after it is checked in {@link #getTemplate(T1XTemplateTag).
-     */
-    private boolean useVMATemplate = true;
+     * The specific templates to be used for processing the current bytecode,
+     * based on whether the bytecode is being advised and what kind of advice is
+     * being applied.
+      */
+    private Templates templates;
 
     public VMAT1XCompilation(T1X t1x) {
         super(t1x);
-        this.oat1x = (VMAT1X) t1x;
+        this.vmaT1X = (VMAT1X) t1x;
+        templates = vmaT1X.getAltT1X().templates;
     }
 
     @Override
     protected void initCompile(ClassMethodActor method, CodeAttribute codeAttribute) {
         super.initCompile(method, codeAttribute);
         // we do not want code to be recompiled as the optimizing compiler does not
-        // support advising currently.
+        // currently support advising.
         methodProfileBuilder = null;
     }
 
 
     @Override
-    protected void emitInvokespecial(int index) {
-        // We are only interested in tracking calls to constructors (currently)
-        ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
-        useVMATemplate = VMAOptions.useVMATemplate(Bytecodes.INVOKESPECIAL) && classMethodRef.name(cp).equals("<init>");
-        super.emitInvokespecial(index);
-    }
-
-    @Override
     protected void processBytecode(int opcode) throws InternalError {
-        useVMATemplate = VMAOptions.useVMATemplate(opcode);
+        boolean[] adviceTypeOptions = VMAOptions.getVMATemplateOptions(opcode);
+        if (adviceTypeOptions[BEFORE_INDEX]) {
+            if (adviceTypeOptions[AFTER_INDEX]) {
+                templates = vmaT1X.templates;
+            } else {
+                templates = vmaT1X.beforeTemplates;
+            }
+        } else {
+            if (adviceTypeOptions[AFTER_INDEX]) {
+                templates = vmaT1X.afterTemplates;
+            } else {
+                templates = vmaT1X.getAltT1X().templates;
+            }
+        }
         super.processBytecode(opcode);
     }
 
     @Override
     protected T1XTemplate getTemplate(T1XTemplateTag tag) {
-        T1X t1x = useVMATemplate ? oat1x : oat1x.getAltT1X();
-        useVMATemplate = true;
-        return t1x.templates.t1XTemplates[tag.ordinal()];
+        return templates.t1XTemplates[tag.ordinal()];
     }
 
 }
