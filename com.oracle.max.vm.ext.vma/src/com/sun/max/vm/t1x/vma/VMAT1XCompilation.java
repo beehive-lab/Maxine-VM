@@ -26,7 +26,6 @@ import com.oracle.max.vm.ext.vma.options.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.t1x.*;
-import com.sun.max.vm.t1x.T1X.Templates;
 import com.sun.max.vm.t1x.T1XTemplateGenerator.AdviceType;
 
 /**
@@ -51,7 +50,7 @@ public class VMAT1XCompilation extends T1XCompilation {
      * based on whether the bytecode is being advised and what kind of advice is
      * being applied.
       */
-    private Templates templates;
+    private T1XTemplate[] templates;
 
     public VMAT1XCompilation(T1X t1x) {
         super(t1x);
@@ -89,7 +88,7 @@ public class VMAT1XCompilation extends T1XCompilation {
 
     @Override
     protected T1XTemplate getTemplate(T1XTemplateTag tag) {
-        return templates.t1XTemplates[tag.ordinal()];
+        return templates[tag.ordinal()];
     }
 
 }

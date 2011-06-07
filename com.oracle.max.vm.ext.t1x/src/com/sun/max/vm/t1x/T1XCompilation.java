@@ -168,7 +168,7 @@ public class T1XCompilation {
     /**
      * The local variable index for a copy of the receiver object locked by a non-static synchronized method.
      */
-    int syncMethodReceiverCopy = -1;
+    int synchronizedReceiver = -1;
 
     /**
      * The first code position in the range covered by the exception handler synthesized for a synchronized method.
@@ -313,9 +313,9 @@ public class T1XCompilation {
             int maxStack = codeAttribute.maxStack;
             int maxParams = method.numberOfParameterSlots();
             if (method.isSynchronized() && !method.isStatic()) {
-                syncMethodReceiverCopy = maxLocals++;
+                synchronizedReceiver = maxLocals++;
             }
-            frame = new AMD64JVMSFrameLayout(maxLocals, maxStack, maxParams, compiler.templates.templateSlots);
+            frame = new AMD64JVMSFrameLayout(maxLocals, maxStack, maxParams, T1XTargetMethod.templateSlots);
         } else {
             unimplISA();
         }
@@ -336,7 +336,7 @@ public class T1XCompilation {
         handlers = null;
         syncMethodStartPos = -1;
         syncMethodEndPos = -1;
-        syncMethodReceiverCopy = -1;
+        synchronizedReceiver = -1;
         syncMethodHandlerPos = -1;
         cp = null;
         buf.reset();
@@ -382,7 +382,7 @@ public class T1XCompilation {
             } else {
                 T1XTemplate template = getTemplate(LOCK_RECEIVER);
                 assignLocalDisplacementTemplateArgument(0, 0, Kind.REFERENCE);
-                assignLocalDisplacementTemplateArgument(1, syncMethodReceiverCopy, Kind.REFERENCE);
+                assignLocalDisplacementTemplateArgument(1, synchronizedReceiver, Kind.REFERENCE);
                 emitAndRecordStops(template);
             }
             syncMethodStartPos = buf.position();
@@ -488,7 +488,7 @@ public class T1XCompilation {
                 emitAndRecordStops(template);
             } else {
                 T1XTemplate template = getTemplate(UNLOCK_RECEIVER);
-                assignLocalDisplacementTemplateArgument(0, syncMethodReceiverCopy, Kind.REFERENCE);
+                assignLocalDisplacementTemplateArgument(0, synchronizedReceiver, Kind.REFERENCE);
                 emitAndRecordStops(template);
             }
             syncMethodEndPos = buf.position();
@@ -557,8 +557,8 @@ public class T1XCompilation {
      */
     protected T1XTemplate getTemplate(T1XTemplateTag tag) {
         assert tag != null;
-        assert compiler.templates.t1XTemplates[tag.ordinal()] != null;
-        return compiler.templates.t1XTemplates[tag.ordinal()];
+        assert compiler.templates[tag.ordinal()] != null;
+        return compiler.templates[tag.ordinal()];
     }
 
     private Adapter emitPrologue() {
@@ -772,7 +772,7 @@ public class T1XCompilation {
                 emitAndRecordStops(template);
             } else {
                 T1XTemplate template = getTemplate(tagUnlockReceiver);
-                assignLocalDisplacementTemplateArgument(0, syncMethodReceiverCopy, Kind.REFERENCE);
+                assignLocalDisplacementTemplateArgument(0, synchronizedReceiver, Kind.REFERENCE);
                 emitAndRecordStops(template);
             }
         } else {
@@ -1687,6 +1687,16 @@ public class T1XCompilation {
             case Bytecodes.WREM               : emit(WREM); break;
             case Bytecodes.WREMI              : emit(WREMI); break;
 
+            case Bytecodes.INFOPOINT: {
+                opcode = opcode | (stream.readUByte(stream.currentBCI() + 1) << 16);
+                if (opcode == Bytecodes.UNCOMMON_TRAP) {
+                    bciToPos[stream.currentBCI()] = buf.position();
+                    break;
+                } else {
+                    throw new CiBailout("Unsupported opcode" + errorSuffix());
+                }
+            }
+
             case Bytecodes.MEMBAR:
             case Bytecodes.PCMPSWP:
             case Bytecodes.PGET:
@@ -1787,7 +1797,6 @@ public class T1XCompilation {
             case Bytecodes.READREG            :
             case Bytecodes.WRITEREG           :
             case Bytecodes.ADD_SP             :
-            case Bytecodes.INFOPOINT          :
             case Bytecodes.FLUSHW             :
             case Bytecodes.ALLOCA             :
             case Bytecodes.STACKHANDLE        :

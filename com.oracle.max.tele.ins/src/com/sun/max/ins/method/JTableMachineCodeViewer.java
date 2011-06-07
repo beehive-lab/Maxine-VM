@@ -75,7 +75,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
     private final Color defaultBackgroundColor;
     private final Color stopBackgroundColor;
 
-    public JTableMachineCodeViewer(Inspection inspection, MethodInspector parent, MaxMachineCode machineCode) {
+    public JTableMachineCodeViewer(Inspection inspection, MethodView parent, MaxMachineCode machineCode) {
         super(inspection, parent, machineCode);
         this.inspection = inspection;
         //inspection.vm().bootImage().header.

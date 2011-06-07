@@ -26,15 +26,20 @@ import static com.sun.cri.ci.CiUtil.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.compiler.c1x.C1XTargetMethod.*;
 import static com.sun.max.vm.compiler.c1x.ValueCodec.*;
+import static com.sun.max.vm.runtime.amd64.AMD64TrapStateAccess.*;
 
 import java.io.*;
 import java.util.*;
 
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
+import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.target.TargetMethod.FrameAccess;
+import com.sun.max.vm.reference.*;
 
 /**
  * The debug info for the stops in a {@link C1XTargetMethod}.
@@ -165,10 +170,11 @@ public final class DebugInfo {
             // Test encoding & decoding while offline
             for (int i = 0; i < debugInfos.length; ++i) {
                 if (debugInfos[i] != null && debugInfos[i].frame() != null) {
-                    CiFrame frame = frameAt(i);
+                    CiFrame frame = framesAt(i, null);
                     CiFrame originalFrame = debugInfos[i].frame();
                     assert frame.equalsIgnoringKind(originalFrame);
                 }
+                forEachCodePos(new TestCPC(), i);
             }
         }
 
@@ -305,7 +311,7 @@ public final class DebugInfo {
 
     /**
      * Iterates over the code positions encoded for a given stop index.
-     * 
+     *
      * @param cpc a closure called for each bytecode location in the inlining chain rooted
      *        at {@code index} (inner most callee first)
      * @param index the index of a frame
@@ -318,10 +324,12 @@ public final class DebugInfo {
         final DecodingStream in = new DecodingStream(data);
         int fpt = (tm.totalRefMapSize()) * tm.stopPositions().length;
         int frameIndex = index;
-
         while (true) {
-            count++;
             in.pos = framePos(fpt, frameIndex);
+            if (in.pos == 0) {
+                return count;
+            }
+            count++;
             int encCallerIndex = in.decodeUInt();
             int holderID = in.decodeUInt();
             ClassActor holder = ClassID.toClassActor(holderID);
@@ -337,6 +345,8 @@ public final class DebugInfo {
                 method = holder.getLocalMethodActor(memberIndex);
                 bci = in.decodeUInt();
             }
+            assert method != null;
+            assert bci == -1 || (bci >= 0 && bci < method.code().length);
             if (!cpc.doCodePos((ClassMethodActor) method, bci)) {
                 return count;
             }
@@ -350,15 +360,25 @@ public final class DebugInfo {
     }
 
     /**
-     * Decodes the frame at a given stop index.
-     * 
-     * @param index the index of a frame
-     * @return the frame at {@code index}
+     * Decodes the frame(s) at a given stop index.
+     *
+     * @param index a stop index
+     * @param fa access to a live frame (may be {@code null})
+     * @return the frame(s) at {@code index}
      */
-    public CiFrame frameAt(int index) {
+    public CiFrame framesAt(int index, FrameAccess fa) {
         final DecodingStream in = new DecodingStream(data);
         int fpt = (tm.totalRefMapSize()) * tm.stopPositions().length;
-        return decodeFrame(in, fpt, index);
+        CiBitMap regRefMap;
+        CiBitMap frameRefMap;
+        if (fa != null) {
+            regRefMap = regRefMapAt(index);
+            frameRefMap = frameRefMapAt(index);
+        } else {
+            regRefMap = null;
+            frameRefMap = null;
+        }
+        return decodeFrame(in, fpt, index, fa, regRefMap, frameRefMap);
     }
 
     /**
@@ -388,12 +408,11 @@ public final class DebugInfo {
 
     /**
      * Decodes a frame denoted by a given frame index.
-     *
      * @param fpt the position of the FPT in {@link #data}
      * @param frameIndex the index of an entry in the FPT
      * @return the decoded frame
      */
-    CiFrame decodeFrame(DecodingStream in, int fpt, int frameIndex) {
+    CiFrame decodeFrame(DecodingStream in, int fpt, int frameIndex, FrameAccess fa, CiBitMap regRefMap, CiBitMap frameRefMap) {
         int framePos = framePos(fpt, frameIndex);
         if (framePos == 0) {
             return null;
@@ -409,13 +428,14 @@ public final class DebugInfo {
             bci = -1;
             int memberIndex = m >>> 1;
             method = holder.getLocalMethodActor(memberIndex);
-            assert method != null;
         } else {
             int memberIndex = m >>> 1;
             method = holder.getLocalMethodActor(memberIndex);
-            assert method != null;
             bci = in.decodeUInt();
         }
+        assert method != null;
+        assert bci == -1 || (bci >= 0 && bci < method.code().length);
+
         int numLocals = in.decodeUInt();
         int numStack = in.decodeUInt();
         int numLocks = in.decodeUInt();
@@ -423,16 +443,47 @@ public final class DebugInfo {
         int n = numLocals + numStack + numLocks;
         CiValue[] values = new CiValue[n];
         for (int i = 0; i < n; i++) {
-            values[i] = readValue(in);
+            values[i] = fa != null ? toLiveSlot(fa, regRefMap, frameRefMap, readValue(in)) : readValue(in);
         }
 
         CiFrame caller = null;
         if (encCallerIndex != NO_FRAME) {
             int callerIndex = encCallerIndex - FIRST_FRAME;
             assert frameIndex != callerIndex;
-            caller = decodeFrame(in, fpt, callerIndex);
+            caller = decodeFrame(in, fpt, callerIndex, fa, regRefMap, frameRefMap);
         }
         return new CiFrame(caller, method, bci, values, numLocals, numStack, numLocks);
+    }
+
+    private static CiValue toLiveSlot(FrameAccess fa, CiBitMap regRefMap, CiBitMap frameRefMap, CiValue value) {
+        if (value.isRegister()) {
+            CiRegister reg = value.asRegister();
+            int offset = CSA.offsetOf(reg);
+            int index = CSA.indexOf(reg.number);
+            if (regRefMap.get(index)) {
+                Reference ref = fa.rsa.readReference(offset);
+                value = CiConstant.forObject(ref.toJava());
+            } else {
+                Word w = fa.rsa.readWord(offset);
+                value = CiConstant.forWord(w.asAddress().toLong());
+            }
+        } else if (value.isStackSlot()) {
+            CiStackSlot ss = (CiStackSlot) value;
+            int refMapIndex = ss.index();
+            assert !ss.inCallerFrame() : "caller frame slot should not be in debug info: " + ss;
+            if (frameRefMap.get(refMapIndex)) {
+                Reference ref = fa.sp.readReference(ss.index() * Word.size());
+                value = CiConstant.forObject(ref.toJava());
+            } else {
+                Word w = fa.sp.readWord(ss.index() * Word.size());
+                value = CiConstant.forWord(w.asAddress().toLong());
+            }
+        } else if (value.isIllegal()) {
+            value = CiConstant.ZERO;
+        } else {
+            assert value.isConstant();
+        }
+        return value;
     }
 
 
@@ -446,7 +497,7 @@ public final class DebugInfo {
         for (int i = 0; i < tm.stopPositions().length; i++) {
             CiBitMap regRefMap = regRefMapAt(i);
             CiBitMap frameRefMap = frameRefMapAt(i);
-            CiFrame frame = frameAt(i);
+            CiFrame frame = framesAt(i, null);
             CiDebugInfo info = new CiDebugInfo(frame, regRefMap, frameRefMap);
             if (sb.length() != 0) {
                 sb.append(NEW_LINE);
@@ -468,5 +519,14 @@ public final class DebugInfo {
         out.println("  " + objectConstants.size() + " object constants");
         out.println("  " + nonObjectConstants.size() + " non-object constants");
         out.println("  " + valuesEncoded + " values encoded (avg bytes per value: "  + (float) ((double) valuesEncodedSize / valuesEncoded) + ")");
+    }
+
+    @HOSTED_ONLY
+    static class TestCPC implements CodePosClosure {
+        public boolean doCodePos(ClassMethodActor method, int bci) {
+            assert method != null;
+            assert bci == -1 || (bci >= 0 && bci < method.code().length);
+            return true;
+        }
     }
 }

@@ -22,7 +22,6 @@
  */
 package com.sun.max.vm.t1x;
 
-import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.stack.VMFrameLayout.*;
@@ -36,12 +35,10 @@ import com.oracle.max.hcfdis.*;
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.cri.bytecode.*;
-import com.sun.cri.bytecode.Bytes;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiCallingConvention.Type;
 import com.sun.cri.ri.*;
 import com.sun.cri.util.*;
-import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
@@ -63,30 +60,12 @@ import com.sun.max.vm.verifier.*;
  */
 public class T1X implements RuntimeCompiler {
 
-    /**
-     * Encapsulates a set of compiled templates and the associated maximum frame size.
-     */
-    public static class Templates {
-        /** The compiled templates.
-         */
-        public final T1XTemplate[] t1XTemplates;
-
-        /**
-         * The (max) number of slots to be reserved in each T1X frame for template spill slots,
-         * for {@link #templates}.
-         */
-        int templateSlots;
-
-        public Templates() {
-            t1XTemplates = new T1XTemplate[T1XTemplateTag.values().length];
-        }
-    }
-
     static {
         ClassfileReader.bytecodeTemplateClasses.add(T1X_TEMPLATE.class);
     }
 
-    public Templates templates;
+    public final T1XTemplate[] templates = new T1XTemplate[T1XTemplateTag.values().length];
+
     /**
      * Support for {@link T1XOptions#PrintBytecodeHistogram}.
      */
@@ -101,6 +80,7 @@ public class T1X implements RuntimeCompiler {
      * Class defining the template definitions, default is {@link T1XTemplateSource}.
      */
     private Class<?> templateSource;
+
     /**
      * When using non-default template definitions, this compiler provides the
      * default implementation for any non-overridden templates.
@@ -124,6 +104,7 @@ public class T1X implements RuntimeCompiler {
     /**
      * Creates a compiler in which some template definitions may be overridden.
      * by calling {@link #setTemplateSource(Class)} before {@link #initialize}.
+     *
      * @param altT1X compiler providing implementation of non-overridden definitions
      * @param factory for creating {@link T1XCompilation} instances
      */
@@ -137,7 +118,6 @@ public class T1X implements RuntimeCompiler {
         this.altT1X = altT1X;
         this.templateSource = templateSource;
         this.t1XCompilationFactory = factory;
-        this.templates = new Templates();
     }
 
     protected void setTemplateSource(Class<?> templateSource) {
@@ -150,6 +130,14 @@ public class T1X implements RuntimeCompiler {
             return t1XCompilationFactory.newT1XCompilation(T1X.this);
         }
     };
+
+    @HOSTED_ONLY
+    public void deoptimizationNotSupported() {
+    }
+
+    public boolean canProduceDeoptimizedCode() {
+        return true;
+    }
 
     public void resetMetrics() {
         for (Field f : T1XMetrics.class.getFields()) {
@@ -274,14 +262,10 @@ public class T1X implements RuntimeCompiler {
                     Object callee = directCallees[stopIndex];
                     hcf.addOperandComment(pos, String.valueOf(callee));
                 } else if (stopIndex < t1xMethod.numberOfDirectCalls() + t1xMethod.numberOfIndirectCalls()) {
-                    CiCodePos codePos = t1xMethod.getBytecodeFrames(stopIndex);
+                    CiCodePos codePos = t1xMethod.debugFramesAt(stopIndex, null);
                     if (codePos != null) {
-                        byte[] bytecode = t1xMethod.codeAttribute.code();
-                        int bci = codePos.bci;
-                        byte opcode = bytecode[bci];
-                        if (opcode == INVOKEINTERFACE || opcode == INVOKESPECIAL || opcode == INVOKESTATIC || opcode == INVOKEVIRTUAL) {
-                            int cpi = Bytes.beU2(bytecode, bci + 1);
-                            RiMethod callee = MaxRiRuntime.getInstance().getConstantPool(codePos.method).lookupMethod(cpi, opcode);
+                        RiMethod callee = t1xMethod.codeAttribute.calleeAt(codePos.bci);
+                        if (callee != null) {
                             hcf.addOperandComment(pos, String.valueOf(callee));
                         }
                     }
@@ -343,17 +327,10 @@ public class T1X implements RuntimeCompiler {
         }
     }
 
-    public <T extends TargetMethod> Class<T> compiledType() {
-        Class<Class<T>> type = null;
-        return Utils.cast(type, T1XTargetMethod.class);
-    }
-
-    @Override
     public CallEntryPoint calleeEntryPoint() {
         return CallEntryPoint.BASELINE_ENTRY_POINT;
     }
 
-    @Override
     public void initialize(Phase phase) {
         if (isHosted() && phase == Phase.COMPILING) {
             createTemplates(templateSource, altT1X, true, templates);
@@ -389,17 +366,19 @@ public class T1X implements RuntimeCompiler {
      * Undefined templates are filled from the templates associated with {@code altT1X}. The latter
      * maybe null iff {@code checkComplete} is {@code false}, in which case the result will only
      * contain the templates defined in the class.
+     *
      * @param templateSourceClass class containing template methods
-     * @param altT1X alternate compiler to use for undefined templates.
+     * @param altT1X alternate compiler to use for undefined templates
      * @param checkComplete If {@code true} check the array for completeness.
-     * @param templates an existing instance that will be incrementally updated. May be null.
-     * @return a {@link Templates} instance.
+     * @param templates an existing instance that will be incrementally updated.
+     *        Value may be null, in which case a new array will be created.
+     * @return the templates array, either as passed in or created.
      */
     @HOSTED_ONLY
-    public static Templates createTemplates(Class<?> templateSourceClass, T1X altT1X, boolean checkComplete, Templates templates) {
+    public static T1XTemplate[] createTemplates(Class<?> templateSourceClass, T1X altT1X, boolean checkComplete, T1XTemplate[] templates) {
         Trace.begin(1, "creating T1X templates from " + templateSourceClass.getName());
         if (templates == null) {
-            templates = new Templates();
+            templates = new T1XTemplate[T1XTemplateTag.values().length];
         }
         long startTime = System.currentTimeMillis();
 
@@ -432,35 +411,44 @@ public class T1X implements RuntimeCompiler {
 
                     final C1XTargetMethod templateCode = (C1XTargetMethod) bootCompiler.compile(templateSource, true, null);
                     if (!(templateCode.referenceLiterals() == null)) {
-                        StringBuilder sb = new StringBuilder("Template must not have *any* reference literals: " + templateCode);
+                        final StringBuilder sb = new StringBuilder("Template must not have *any* reference literals: " + templateCode);
                         for (int i = 0; i < templateCode.referenceLiterals().length; i++) {
                             Object literal = templateCode.referenceLiterals()[i];
-                            sb.append("\n  " + i + ": " + literal.getClass().getName() + " // \"" + literal + "\"");
+                            sb.append("\n  " + i + ": " + literal.getClass().getName() + " // \"" + literal + "\"\n");
                         }
+
+                        templateCode.disassemble(new OutputStream() {
+                            @Override
+                            public void write(int b) throws IOException {
+                                // Only expecting ASCII so this should be safe
+                                sb.append((char) b);
+                            }
+                        });
+
                         throw FatalError.unexpected(sb.toString());
                     }
                     FatalError.check(templateCode.scalarLiterals() == null, "Template must not have *any* scalar literals: " + templateCode + "\n\n" + templateCode);
                     codeSize += templateCode.codeLength();
                     int frameSlots = Ints.roundUp(templateCode.frameSize(), STACK_SLOT_SIZE) / STACK_SLOT_SIZE;
-                    if (frameSlots > templates.templateSlots) {
-                        templates.templateSlots = frameSlots;
+                    if (frameSlots > T1XTargetMethod.templateSlots) {
+                        T1XTargetMethod.templateSlots = frameSlots;
                     }
-                    T1XTemplate template = templates.t1XTemplates[tag.ordinal()];
+                    T1XTemplate template = templates[tag.ordinal()];
                     if (template != null) {
                         FatalError.unexpected("Template tag " + tag + " is already bound to " + template.method + ", cannot rebind to " + templateSource);
                     }
-                    templates.t1XTemplates[tag.ordinal()] = new T1XTemplate(templateCode, tag, templateSource);
+                    templates[tag.ordinal()] = new T1XTemplate(templateCode, tag, templateSource);
                 }
             }
         }
         if (checkComplete) {
             // ensure everything is implemented
             for (int i = 0; i < T1XTemplateTag.values().length; i++) {
-                if (templates.t1XTemplates[i] == null && !UNIMPLEMENTED_TEMPLATES.contains(T1XTemplateTag.values()[i])) {
-                    if (altT1X == null || altT1X.templates.t1XTemplates[i] == null) {
+                if (templates[i] == null && !UNIMPLEMENTED_TEMPLATES.contains(T1XTemplateTag.values()[i])) {
+                    if (altT1X == null || altT1X.templates[i] == null) {
                         FatalError.unexpected("Template tag " + T1XTemplateTag.values()[i] + " is not implemented");
                     } else {
-                        templates.t1XTemplates[i] = altT1X.templates.t1XTemplates[i];
+                        templates[i] = altT1X.templates[i];
                     }
                 }
             }

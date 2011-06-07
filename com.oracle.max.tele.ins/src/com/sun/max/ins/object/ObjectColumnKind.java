@@ -25,7 +25,7 @@ package com.sun.max.ins.object;
 import com.sun.max.ins.debug.*;
 
 /**
- * Defines the columns supported by the object inspector.
+ * Defines the columns supported by the object view.
  *
  * @author Michael Van De Vanter
  */

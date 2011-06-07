@@ -73,7 +73,7 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
         } else {
             // TODO (mlvdv) some breakpoints could be saved across image builds,
             // for example method entry bytecode breakpoints.
-            InspectorWarning.message("Ignoring breakpoints related to a different boot image");
+            InspectorWarning.message(inspection, "Ignoring breakpoints related to a different boot image");
         }
 
         // Once load-in is finished, register for notification of subsequent breakpoint changes in the VM.
@@ -150,10 +150,10 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
                 } catch (BreakpointCondition.ExpressionException expressionException) {
                     inspection.gui().errorMessage(String.format("Error parsing saved breakpoint condition:%n  expression: %s%n       error: " + condition, expressionException.getMessage()), "Breakpoint Condition Error");
                 } catch (MaxVMBusyException maxVMBusyException) {
-                    InspectorWarning.message("Unable to recreate machine code breakpoint from saved settings at: " + address, maxVMBusyException);
+                    InspectorWarning.message(inspection, "Unable to recreate machine code breakpoint from saved settings at: " + address, maxVMBusyException);
                 }
             } else {
-                InspectorWarning.message("dropped former breakpoint in runtime-generated code at address: " + address);
+                InspectorWarning.message(inspection, "dropped former breakpoint in runtime-generated code at address: " + address);
             }
         }
     }
@@ -173,7 +173,7 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
                 settings.save(prefix + "." + BCI_KEY, codeLocation.bci());
                 settings.save(prefix + "." + ENABLED_KEY, breakpoint.isEnabled());
             } else {
-                InspectorWarning.message("Unable to save bytecode breakpoint, no key in " + breakpoint);
+                InspectorWarning.message(inspection, "Unable to save bytecode breakpoint, no key in " + breakpoint);
             }
         }
     }
@@ -188,7 +188,7 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
             final MethodKey methodKey = new DefaultMethodKey(holder, name, signature);
             final int bci = settings.get(this, prefix + "." + BCI_KEY, OptionTypes.INT_TYPE, 0);
             if (bci > 0) {
-                InspectorWarning.message("Ignoring non-zero bytecode index for saved breakpoint in " + methodKey);
+                InspectorWarning.message(inspection, "Ignoring non-zero bytecode index for saved breakpoint in " + methodKey);
             }
             final boolean enabled = settings.get(this, prefix + "." + ENABLED_KEY, OptionTypes.BOOLEAN_TYPE, true);
             final MaxCodeLocation location = inspection.vm().codeManager().createBytecodeLocation(methodKey, "loaded by breakpoint persistence manager");
@@ -199,7 +199,7 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
                     bytecodeBreakpoint.setEnabled(enabled);
                 }
             } catch (MaxVMBusyException maxVMBusyException) {
-                InspectorWarning.message("Unable to recreate bytecode breakpoint from saved settings at: " + methodKey, maxVMBusyException);
+                InspectorWarning.message(inspection, "Unable to recreate bytecode breakpoint from saved settings at: " + methodKey, maxVMBusyException);
             }
         }
     }

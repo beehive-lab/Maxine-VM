@@ -32,7 +32,7 @@ import com.sun.max.tele.type.*;
 import com.sun.max.vm.type.*;
 
 /**
- * A dialog to let the user select a class in the {@linkplain TeleClassRegistry inspector class registry}.
+ * A dialog to let the user select a class in the {@linkplain TeleClassRegistry Inspector class registry}.
  *
  * @author Bernd Mathiske
  * @author Doug Simon
@@ -109,7 +109,7 @@ public final class ClassActorSearchDialog extends TeleObjectSearchDialog {
     }
 
     /**
-     * Displays a dialog to let the user select a class from the {@linkplain TeleClassRegistry inspector class registry}.
+     * Displays a dialog to let the user select a class from the {@linkplain TeleClassRegistry Inspector class registry}.
      *
      * @return the reference to the selected class actor or {@link XXX_TeleReference#ZERO} if the user canceled the dialog
      */
@@ -120,7 +120,7 @@ public final class ClassActorSearchDialog extends TeleObjectSearchDialog {
     }
 
     /**
-     * Displays a dialog to let the user select a class from the {@linkplain TeleClassRegistry inspector class registry}.
+     * Displays a dialog to let the user select a class from the {@linkplain TeleClassRegistry Inspector class registry}.
      * @param inspection
      * @param title Title string for the dialog frame.
      * @param actionName Name of the action, appears on on the button to activate

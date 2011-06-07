@@ -53,7 +53,7 @@ public class BytecodeViewPreferences  extends TableColumnVisibilityPreferences<B
     private static final String BYTECODE_COLUMN_PREFERENCE = "bytecodeViewColumn";
 
     // Prefix for all other preferences in view
-    private static final String BYTECODE_VIEWER_PREFERENCE = "bytecodeViewerPrefs";
+    private static final String BYTECODE_VIEW_PREFERENCE = "bytecodeViewPrefs";
 
     // Names of other preferences in view
     private static final String BYTECODE_OPERAND_DISPLAY_MODE = "operandDisplayMode";
@@ -66,7 +66,7 @@ public class BytecodeViewPreferences  extends TableColumnVisibilityPreferences<B
     private BytecodeViewPreferences(Inspection inspection) {
         super(inspection, BYTECODE_COLUMN_PREFERENCE, BytecodeColumnKind.values());
         final InspectionSettings settings = inspection.settings();
-        final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener(BYTECODE_VIEWER_PREFERENCE) {
+        final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener(BYTECODE_VIEW_PREFERENCE) {
             public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
                 saveSettingsEvent.save(BYTECODE_OPERAND_DISPLAY_MODE, operandDisplayMode.name());
             }

@@ -159,7 +159,7 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
 
     private final String description;
 
-    private TeleCompiledCode compiledCode;
+    private TeleCompilation compiledCode;
     private CiFrame bytecodeFrames = null;
 
     protected CodeLocation(TeleVM teleVM, String description) {
@@ -167,7 +167,7 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
         this.description = description;
     }
 
-    public final TeleCompiledCode compiledCode() {
+    public final TeleCompilation compiledCode() {
         if (compiledCode == null && hasAddress()) {
             compiledCode = addressToCompiledCode(address());
         }
@@ -283,7 +283,7 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
     protected TeleClassMethodActor addressToTeleClassMethodActor(Address address) {
         if (vm().tryLock()) {
             try {
-                final TeleCompiledCode compiledCode = vm().codeCache().findCompiledCode(address);
+                final TeleCompilation compiledCode = vm().codeCache().findCompiledCode(address);
                 if (compiledCode != null) {
                     return compiledCode.getTeleClassMethodActor();
                 }
@@ -294,7 +294,7 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
         return null;
     }
 
-    protected TeleCompiledCode addressToCompiledCode(Address address) {
+    protected TeleCompilation addressToCompiledCode(Address address) {
         if (address != null && !address.isZero()) {
             return vm().codeCache().findCompiledCode(address);
         }

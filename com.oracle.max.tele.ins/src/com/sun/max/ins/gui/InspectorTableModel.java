@@ -29,7 +29,7 @@ import com.sun.max.ins.view.*;
 import com.sun.max.tele.*;
 
 /**
- * A table model specialized for Inspector's table-based views.
+ * A table model specialized for the Inspector's table-based views.
  *
  * @author Michael Van De Vanter
  */

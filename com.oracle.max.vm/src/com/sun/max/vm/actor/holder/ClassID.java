@@ -50,7 +50,7 @@ public final class ClassID {
 
     static final int MINIMAL_CLASSES_POPULATIONS = 4000;
 
-    private static LinearIDMap<ClassActor> idToClassActor = new LinearIDMap<ClassActor>(MINIMAL_CLASSES_POPULATIONS);
+    private static final LinearIDMap<ClassActor> idToClassActor = new LinearIDMap<ClassActor>(MINIMAL_CLASSES_POPULATIONS);
 
     /**
      * A bit set keeping track of the assigned class identifiers. A bit set to 1 doesn't necessarily means a

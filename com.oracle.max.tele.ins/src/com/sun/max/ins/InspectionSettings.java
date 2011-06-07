@@ -36,7 +36,8 @@ import com.sun.max.vm.hosted.*;
 
 /**
  * A manager for saving and restoring of settings between Inspection sessions, with some
- * specialized machinery to support the saving of inspector frame geometry (location, size).
+ * specialized machinery to support the saving of window frame geometry (location, size)
+ * for both the Inspector's main frame and for views within it.
  *
  * @author Michael Van De Vanter
  * @author Doug Simon
@@ -45,8 +46,16 @@ public class InspectionSettings {
 
     private static final int TRACE_VALUE = 2;
 
-    private static final String BOOT_IMAGE_FORMAT_VERSION_KEY = "bootImageFormatVersion";
-    private static final String BOOT_IMAGE_ID_KEY = "bootImageId";
+    private static final String VM_SETTINGS_KEY = "vm";
+    private static final String VM_BOOT_IMAGE_FORMAT_VERSION_KEY = "bootImageFormatVersion";
+    private static final String VM_BOOT_IMAGE_ID_KEY = "bootImageId";
+
+    private static final String INSPECTOR_SETTINGS_KEY = "inspector";
+    private static final String INSPECTOR_SETTINGS_VERSION_KEY = "settingsVersion";
+
+    // This should be incremented any time that any of the persistent settings keys changes.
+    private static final String INSPECTOR_SETTINGS_VERSION = "2";
+
     private static final String COMPONENT_X_KEY = "x";
     private static final String COMPONENT_Y_KEY = "y";
     private static final String COMPONENT_HEIGHT_KEY = "height";
@@ -114,11 +123,11 @@ public class InspectionSettings {
         String name();
 
         /**
-         * The Inspector responsible for the displaying this object in a GUI. If this object does not have a visual
+         * The view responsible for the displaying this object in a GUI. If this object does not have a visual
          * presentation, then this method should return null.
          *
          * In addition to the other listener specific settings, the {@linkplain Component#getBounds() geometry} of the
-         * {@linkplain #inspector() inspector} responsible for the displaying the object are automatically saved
+         * {@linkplain #view() view} responsible for the displaying the object are automatically saved
          * whenever the inspection settings are {@linkplain InspectionSettings#save() persisted}. The inspection
          * settings are persisted any time the inspection is
          * {@linkplain ComponentListener#componentMoved(ComponentEvent) moved} or
@@ -126,7 +135,7 @@ public class InspectionSettings {
          * {@linkplain ComponentListener#componentShown(ComponentEvent) visible}, its bounds are updated from the
          * settings.
          */
-        Inspector inspector();
+        AbstractView view();
 
         /**
          * @return geometry to apply to a newly shown component when there have been no geometry settings saved.
@@ -139,25 +148,25 @@ public class InspectionSettings {
      */
     public abstract static class AbstractSaveSettingsListener implements SaveSettingsListener {
         protected final String name;
-        protected final Inspector inspector;
+        protected final AbstractView view;
         protected final Rectangle defaultGeometry;
 
-        private AbstractSaveSettingsListener(String name, Inspector inspector, Rectangle defaultGeometry) {
+        private AbstractSaveSettingsListener(String name, AbstractView view, Rectangle defaultGeometry) {
             this.name = name;
-            this.inspector = inspector;
+            this.view = view;
             this.defaultGeometry = defaultGeometry;
         }
 
-        public AbstractSaveSettingsListener(String name, Inspector inspector) {
-            this(name, inspector, null);
+        public AbstractSaveSettingsListener(String name, AbstractView view) {
+            this(name, view, null);
         }
 
         protected AbstractSaveSettingsListener(String name) {
             this (name, null, null);
         }
 
-        public Inspector inspector() {
-            return inspector;
+        public AbstractView view() {
+            return view;
         }
 
         public String name() {
@@ -175,7 +184,7 @@ public class InspectionSettings {
     }
 
     private final Inspection inspection;
-    private final SaveSettingsListener bootimageClient;
+
     private final Properties properties = new SortedProperties();
     private final File settingsFile;
     private final boolean bootImageChanged;
@@ -193,22 +202,37 @@ public class InspectionSettings {
             fileReader.close();
         } catch (FileNotFoundException ioException) {
         } catch (IOException ioException) {
-            InspectorWarning.message(tracePrefix() + "Error while loading settings from " + settingsFile, ioException);
+            InspectorWarning.message(inspection, tracePrefix() + "Error while loading settings from " + settingsFile, ioException);
         }
 
-        final BootImage bootImage = inspection.vm().bootImage();
-        bootimageClient = new AbstractSaveSettingsListener("bootimage") {
+        // Check that the settings keys haven't changed since the previous session;
+        // if so warn and ignore the old settings.
+        final SaveSettingsListener inspectorClient = new AbstractSaveSettingsListener(INSPECTOR_SETTINGS_KEY) {
             public void saveSettings(SaveSettingsEvent settings) {
-                settings.save(BOOT_IMAGE_FORMAT_VERSION_KEY, String.valueOf(bootImage.header.bootImageFormatVersion));
-                settings.save(BOOT_IMAGE_ID_KEY, String.valueOf(bootImage.header.randomID));
+                settings.save(INSPECTOR_SETTINGS_VERSION_KEY, String.valueOf(INSPECTOR_SETTINGS_VERSION));
             }
         };
+        addSaveSettingsListener(inspectorClient);
+        final int settingsVersion = get(inspectorClient, INSPECTOR_SETTINGS_VERSION_KEY, OptionTypes.INT_TYPE, 0);
+        if (settingsVersion != Integer.valueOf(INSPECTOR_SETTINGS_VERSION)) {
+            InspectorWarning.message(inspection, tracePrefix() + "Settings in obsolete format ignored");
+            properties.clear();
+        }
 
+        // Check to see if the boot image being inspected is the same as the previous inspection session.
+        final BootImage bootImage = inspection.vm().bootImage();
+        final SaveSettingsListener bootimageClient = new AbstractSaveSettingsListener(VM_SETTINGS_KEY) {
+            public void saveSettings(SaveSettingsEvent settings) {
+                settings.save(VM_BOOT_IMAGE_FORMAT_VERSION_KEY, String.valueOf(bootImage.header.bootImageFormatVersion));
+                settings.save(VM_BOOT_IMAGE_ID_KEY, String.valueOf(bootImage.header.randomID));
+            }
+        };
         addSaveSettingsListener(bootimageClient);
-        final int version = get(bootimageClient, BOOT_IMAGE_FORMAT_VERSION_KEY, OptionTypes.INT_TYPE, 0);
-        final int randomID = get(bootimageClient, BOOT_IMAGE_ID_KEY, OptionTypes.INT_TYPE, 0);
+        final int version = get(bootimageClient, VM_BOOT_IMAGE_FORMAT_VERSION_KEY, OptionTypes.INT_TYPE, 0);
+        final int randomID = get(bootimageClient, VM_BOOT_IMAGE_ID_KEY, OptionTypes.INT_TYPE, 0);
         bootImageChanged = version != bootImage.header.bootImageFormatVersion || randomID != bootImage.header.randomID;
         bootimageClient.saveSettings(new SaveSettingsEvent(bootimageClient, properties));
+
         saver = new Saver();
     }
 
@@ -216,18 +240,18 @@ public class InspectionSettings {
      * Add a listener that will be notified when a "save event" is triggered, so that settings
      * can be saved.
      * <p>
-     * If the listener has an associated {@link Inspector}, then additional services are provided
+     * If the listener has an associated {@link AbstractView}, then additional services are provided
      * to automate the saving and restoring of window frame geometry (size, location):
      * <ol>
-     * <li>During the execution of this method call, the inspector's frame is positioned and
+     * <li>During the execution of this method call, the view's frame is positioned and
      * sized according to the following search:
      * <ul>
-     * <li>Use saved geometry settings for this Inspector, if they exist;</li>
+     * <li>Use saved geometry settings for this view, if they exist;</li>
      * <li>If no settings saved, then use default geometry for this kind of view, if it exists;</li>
      * <li>Otherwise use a generic default geometry.</li>
      * </ul>
      * </li>
-     * <li>The listener has associated code that will automatically save the Inspector's geometry
+     * <li>The listener has associated code that will automatically save the view's geometry
      * upon every "save event".</li>
      * </ol>
      * @param saveSettingsListener a listener for events that should cause important settings to be
@@ -237,9 +261,9 @@ public class InspectionSettings {
         final SaveSettingsListener oldClient = clients.put(saveSettingsListener.name(), saveSettingsListener);
         assert oldClient == null || oldClient == saveSettingsListener;
 
-        final Inspector inspector = saveSettingsListener.inspector();
-        if (inspector != null) {
-            inspector.getJComponent().addComponentListener(new ComponentListener() {
+        final AbstractView view = saveSettingsListener.view();
+        if (view != null) {
+            view.getJComponent().addComponentListener(new ComponentListener() {
                 public void componentHidden(ComponentEvent e) {
                 }
                 public void componentMoved(ComponentEvent e) {
@@ -261,14 +285,14 @@ public class InspectionSettings {
     }
 
     /**
-     * Repositions an Inspector's location from its previous settings, or
+     * Repositions a view's location from its previous settings, or
      * if none, from the default.  Ensures that the ultimate location is visible.
      *
-     * @param saveSettingsListener a listener that has an associated Inspector
+     * @param saveSettingsListener a listener that has an associated view
      */
     private void repositionInspectorFromSettings(SaveSettingsListener saveSettingsListener) {
-        final Inspector inspector = saveSettingsListener.inspector();
-        final Rectangle oldGeometry = inspector.getJComponent().getBounds();
+        final AbstractView view = saveSettingsListener.view();
+        final Rectangle oldGeometry = view.getJComponent().getBounds();
         Rectangle newGeometry = saveSettingsListener.defaultGeometry();
         // Check to see if we have geometry settings for this component.
         // We used to check to see if X location was set, with a default of -1 meaning
@@ -283,11 +307,11 @@ public class InspectionSettings {
                 get(saveSettingsListener, COMPONENT_HEIGHT_KEY, OptionTypes.INT_TYPE, oldGeometry.height));
         }
         if (newGeometry == null) {
-            inspector.getJComponent().setLocation(defaultInspectorLocation);
+            view.getJComponent().setLocation(defaultInspectorLocation);
         } else if (!newGeometry.equals(oldGeometry)) {
-            inspector.getJComponent().setBounds(newGeometry);
+            view.getJComponent().setBounds(newGeometry);
         }
-        inspection.gui().moveToFullyVisible(inspector);
+        inspection.gui().moveToFullyVisible(view);
     }
 
     /**
@@ -389,7 +413,7 @@ public class InspectionSettings {
             properties.store(fileWriter, null);
             fileWriter.close();
         } catch (IOException ioException) {
-            InspectorWarning.message(tracePrefix() + "Error while saving settings to " + settingsFile, ioException);
+            InspectorWarning.message(inspection, tracePrefix() + "Error while saving settings to " + settingsFile, ioException);
         }
 
     }
@@ -400,15 +424,15 @@ public class InspectionSettings {
         for (SaveSettingsListener saveSettingsListener : clients.values()) {
             final SaveSettingsEvent saveSettingsEvent = new SaveSettingsEvent(saveSettingsListener, newProperties);
             saveSettingsListener.saveSettings(saveSettingsEvent);
-            final Inspector inspector = saveSettingsListener.inspector();
-            if (inspector != null) {
+            final AbstractView view = saveSettingsListener.view();
+            if (view != null) {
 
-                final Rectangle geometry = inspector.getJComponent().getBounds();
+                final Rectangle geometry = view.getJComponent().getBounds();
                 saveSettingsEvent.save(COMPONENT_X_KEY, geometry.x);
                 saveSettingsEvent.save(COMPONENT_Y_KEY, geometry.y);
                 saveSettingsEvent.save(COMPONENT_WIDTH_KEY, geometry.width);
                 saveSettingsEvent.save(COMPONENT_HEIGHT_KEY, geometry.height);
-                Trace.line(TRACE_VALUE, tracePrefix() + "saving locn=(" + geometry.x + "," + geometry.y + "),size=(" + geometry.width + "," + geometry.height + ") for " + inspector.getClass().getSimpleName());
+                Trace.line(TRACE_VALUE, tracePrefix() + "saving locn=(" + geometry.x + "," + geometry.y + "),size=(" + geometry.width + "," + geometry.height + ") for " + view.getClass().getSimpleName());
 
             }
         }
@@ -423,7 +447,7 @@ public class InspectionSettings {
         try {
             properties.store(printStream, "Inspection settings");
         } catch (IOException e) {
-            InspectorWarning.message("Failed to write settings to console", e);
+            InspectorWarning.message(inspection, "Failed to write settings to console", e);
         }
     }
 }

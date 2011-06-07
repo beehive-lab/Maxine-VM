@@ -25,7 +25,7 @@ package com.sun.max.ins.method;
 import com.sun.max.ins.debug.*;
 
 /**
- * Defines the columns supported by the machine code inspector; the view includes one of each
+ * Defines the columns supported by the machine code view; the view includes one of each
  * kind.  The visibility of them, however, may be changed by the user.
  *
  * @author Michael Van De Vanter
@@ -39,7 +39,7 @@ public enum MachineCodeColumnKind implements ColumnKind {
         }
     },
     NUMBER("No.", "Index of instruction in the method", false, 15),
-    ADDRESS("Addr.", "Memory address of machine instruction start", false, -1),
+    ADDRESS("Addr.", "Memory address of machine instruction start", true, -1),
     POSITION("Pos.", "Position in bytes of machine instruction start", true, 20),
     LABEL("Label", "Labels synthesized during disassembly", true, -1),
     INSTRUCTION("Instr.", "Instruction mnemonic", true, -1),

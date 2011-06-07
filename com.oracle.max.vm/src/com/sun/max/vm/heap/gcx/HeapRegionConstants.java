@@ -35,7 +35,7 @@ import com.sun.max.vm.runtime.*;
  */
 public final class HeapRegionConstants {
     public static final int INVALID_REGION_ID = -1;
-    public static final VMSizeOption regionSizeOption = register(new VMSizeOption("-XX:HeapRegionSize", Size.K.times(256), "Heap Region Size"), MaxineVM.Phase.PRISTINE);
+    public static final VMSizeOption regionSizeOption = register(new VMSizeOption("-XX:HeapRegionSize=", Size.K.times(256), "Heap Region Size"), MaxineVM.Phase.PRISTINE);
 
     @CONSTANT_WHEN_NOT_ZERO
     static int regionSizeInBytes;

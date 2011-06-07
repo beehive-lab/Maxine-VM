@@ -252,6 +252,7 @@ final class ContextDependents {
         int i = 0;
         while (i < dset.size) {
             Dependencies deps = dset.getDeps(i);
+            checker.reset();
             deps.iterate(checker);
             if (!checker.valid()) {
                 if (invalidated == null) {

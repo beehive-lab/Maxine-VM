@@ -1002,12 +1002,15 @@ public final class ClassfileReader {
 
         MethodActor[] result = nextMethodIndex < numberOfMethods ? Arrays.copyOf(methodActors, nextMethodIndex) : methodActors;
         if (clinitIndex != -1) {
-            // Swap <clinit> with the last element in the array. This enables
-            // ClassActor.getLocalMethodActor(int memberIndex) to work in the
-            // Inspector (which preserves all <clinit> methods).
-            MethodActor tmp = result[result.length - 1];
-            result[result.length - 1] = result[clinitIndex];
-            result[clinitIndex] = tmp;
+            if (clinitIndex < result.length - 1) {
+                // Move <clinit> to the end of the array. This makes member indexes
+                // consistent, no matter whether the execution context omits clinit methods.
+                MethodActor clinit = result[clinitIndex];
+                for (int i = clinitIndex; i < result.length - 1; i++) {
+                    result[i] = result[i + 1];
+                }
+                result[result.length - 1] = clinit;
+            }
         }
         return result;
     }

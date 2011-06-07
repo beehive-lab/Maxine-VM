@@ -24,7 +24,7 @@
 package com.sun.max.ins.memory;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.memory.MemoryInspector.ViewMode;
+import com.sun.max.ins.memory.MemoryView.ViewMode;
 import com.sun.max.ins.view.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
@@ -38,7 +38,7 @@ import com.sun.max.unsafe.*;
  *
  * @author Michael Van De Vanter
  */
-public interface MemoryViewFactory extends InspectionViewFactory<MemoryInspector>{
+public interface MemoryViewFactory extends InspectionViewFactory<MemoryView>{
 
     /**
      * Creates a view on a designated, named region of memory, with the view
@@ -48,7 +48,7 @@ public interface MemoryViewFactory extends InspectionViewFactory<MemoryInspector
      * @param regionName optional name for region, defaults to region's own name
      * @return a memory view
      *      */
-    MemoryInspector makeView(MaxMemoryRegion memoryRegion, String regionName);
+    MemoryView makeView(MaxMemoryRegion memoryRegion, String regionName);
 
     /**
      * Creates a view on the memory holding an object, with the view
@@ -57,7 +57,7 @@ public interface MemoryViewFactory extends InspectionViewFactory<MemoryInspector
      * @param teleObject surrogate for the object in VM whose memory should be viewed
      * @return a memory view
      */
-    MemoryInspector makeView(TeleObject teleObject);
+    MemoryView makeView(TeleObject teleObject);
 
     /**
      * Creates a view on a page of memory, with the view mode set to {@link ViewMode#PAGE}.
@@ -65,7 +65,7 @@ public interface MemoryViewFactory extends InspectionViewFactory<MemoryInspector
      * @param address starting location of VM memory to be displayed
      * @return a memory view
      */
-    MemoryInspector makeView(Address address);
+    MemoryView makeView(Address address);
 
     /**
      * Gets an interactive action that makes a view on a page of memory, starting

@@ -118,7 +118,7 @@ public final class Inspection implements InspectionHolder {
             inspectionViews.activateInitialViews();
         } else {
             try {
-                // Choose an arbitrary thread as the "current" thread. If the inspector is
+                // Choose an arbitrary thread as the "current" thread. If the Inspector is
                 // creating the process to be debugged (as opposed to attaching to it), then there
                 // should only be one thread.
                 final List<MaxThread> threads = vm().state().threads();
@@ -137,7 +137,7 @@ public final class Inspection implements InspectionHolder {
                 inspectionViews.activateInitialViews();
                 focus.setCodeLocation(focus.thread().ipLocation());
             } catch (Throwable throwable) {
-                InspectorWarning.message("Error during initialization", throwable);
+                InspectorWarning.message(null, "Error during initialization", throwable);
                 throwable.printStackTrace();
                 System.exit(1);
             }
@@ -425,7 +425,7 @@ public final class Inspection implements InspectionHolder {
 
     /**
      * @return default title for any messages: defaults to name of current {@link InspectorAction} if one is current,
-     *         otherwise the generic name of the inspector.
+     *         otherwise the generic name of the Inspector.
      */
     public String currentActionTitle() {
         return currentAction != null ? currentAction.name() : MaxineInspector.NAME;
@@ -483,7 +483,7 @@ public final class Inspection implements InspectionHolder {
     public void updateAfterVMStopped() {
         gui().showInspectorBusy(true);
         // Clear any breakpoint selection; if we're at a breakpoint, it will be highlighted.
-        // This also avoids a regrettable event bug, where the breakpoint inspector decides
+        // This also avoids a regrettable event bug, where the breakpoint view decides
         // on update to send the method viewer to the currently selected breakpoint, even
         // if it has nothing to do with where we are.
         focus().setBreakpoint(null);
@@ -547,7 +547,7 @@ public final class Inspection implements InspectionHolder {
                 vm().terminateVM();
             }
         } catch (Exception exception) {
-            InspectorWarning.message("error during VM termination: " + exception);
+            InspectorWarning.message(null, "error during VM termination: " + exception);
         } finally {
             Trace.line(1, tracePrefix() + " exiting, Goodbye");
             System.exit(0);
@@ -602,7 +602,7 @@ public final class Inspection implements InspectionHolder {
                         Trace.line(1, tracePrefix() + "Opening file by executing " + command);
                         Runtime.getRuntime().exec(command);
                     } catch (IOException ioException) {
-                        InspectorWarning.message("Error opening file by executing " + command, ioException);
+                        InspectorWarning.message(this, "Error opening file by executing " + command, ioException);
                         return false;
                     }
                 }
@@ -622,7 +622,7 @@ public final class Inspection implements InspectionHolder {
                         fileViewerStream.flush();
                         fileViewer.close();
                     } catch (IOException ioException) {
-                        InspectorWarning.message("Error opening file via localhost:" + portString + ": " + ioException);
+                        InspectorWarning.message(this, "Error opening file via localhost:" + portString + ": " + ioException);
                         return false;
                     }
                 }

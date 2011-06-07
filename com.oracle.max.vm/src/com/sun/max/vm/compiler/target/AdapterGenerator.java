@@ -215,7 +215,7 @@ public abstract class AdapterGenerator {
     }
 
     /**
-     * Gets an adapter based for a given callee, creating it first if necessary.
+     * Gets an adapter based on a given callee, creating it first if necessary.
      *
      * @param callee the method that must be adapted to
      * @return an adapter for a call to {@code callee} from a method compiled with a different calling convention. This

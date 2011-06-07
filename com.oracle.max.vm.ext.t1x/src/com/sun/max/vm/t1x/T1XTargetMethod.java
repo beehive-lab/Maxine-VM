@@ -24,6 +24,8 @@ package com.sun.max.vm.t1x;
 
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.compiler.deopt.Deoptimization.*;
+import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
 import static com.sun.max.vm.t1x.T1XCompilation.*;
 
@@ -31,6 +33,7 @@ import java.util.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.atomic.*;
 import com.sun.max.io.*;
@@ -45,6 +48,9 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.deopt.Deoptimization.CallerContinuation;
+import com.sun.max.vm.compiler.deopt.Deoptimization.Continuation;
+import com.sun.max.vm.compiler.deopt.Deoptimization.Info;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.object.*;
@@ -64,6 +70,13 @@ import com.sun.max.vm.type.*;
 public final class T1XTargetMethod extends TargetMethod {
 
     static final int SYNC_METHOD_CATCH_TYPE_CPI = -1;
+
+    /**
+     * The number of slots to be reserved in each T1X frame for template spill slots.
+     * This is the max number of slots used by any template and is computed when the templates are
+     * {@linkplain T1X#createTemplates(Class, T1X, boolean, com.sun.max.vm.t1x.T1X.Templates) created}.
+     */
+    static int templateSlots;
 
     /**
      * The frame and register reference maps for this target method.
@@ -235,12 +248,12 @@ public final class T1XTargetMethod extends TargetMethod {
             newHandlers[handlers.length] = syncMethodHandler;
 
             // Update the reference maps to cover the local variable holding the copy of the receiver
-            if (comp.syncMethodReceiverCopy != -1) {
+            if (comp.synchronizedReceiver != -1) {
                 for (int stopIndex = 0; stopIndex < stopPositions.length; stopIndex++) {
                     int pos = StopPositions.get(stopPositions, stopIndex);
                     if (pos >= comp.syncMethodStartPos && pos < comp.syncMethodEndPos) {
                         final int offset = stopIndex * refMapSize();
-                        final int refMapBit = frame.localVariableReferenceMapIndex(comp.syncMethodReceiverCopy);
+                        final int refMapBit = frame.localVariableReferenceMapIndex(comp.synchronizedReceiver);
                         ByteArrayBitMap.set(refMaps, offset, frameRefMapSize, refMapBit);
                     }
                 }
@@ -313,7 +326,7 @@ public final class T1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public CiFrame getBytecodeFrames(int stopIndex) {
+    public CiFrame debugFramesAt(int stopIndex, FrameAccess fa) {
         int bci = bciForPos(stopPosition(stopIndex));
         return frame.asFrame(classMethodActor, bci);
     }
@@ -765,6 +778,13 @@ public final class T1XTargetMethod extends TargetMethod {
                 callerSP = callerSP.plus(stackAmountInBytes);
             }
 
+            // Rescue a return address that has been patched for deoptimization
+            TargetMethod caller = sfw.targetMethodFor(callerIP);
+            if (caller != null && MaxineVM.vm().stubs.isDeoptStub(caller)) {
+                Pointer originalReturnAddress = sfw.readWord(callerSP, DEOPT_RETURN_ADDRESS_OFFSET).asPointer();
+                callerIP = originalReturnAddress;
+            }
+
             sfw.advance(callerIP, callerSP, callerFP, true);
         } else {
             unimplISA();
@@ -779,6 +799,116 @@ public final class T1XTargetMethod extends TargetMethod {
         } else {
             throw unimplISA();
         }
+    }
+
+    @Override
+    public boolean isDeoptimizationTarget() {
+        return true;
+    }
+
+    @Override
+    public Continuation createDeoptimizedFrame(Info info, CiFrame frame, Continuation cont) {
+        int pos;
+        Pointer ip;
+        int bci = frame.bci;
+        ClassMethodActor method = classMethodActor;
+        assert method == frame.method : method + " != " + frame.method;
+        RiMethod callee = method.codeAttribute().calleeAt(bci);
+        CiKind returnKind = callee == null ? null : callee.signature().returnKind();
+        if (returnKind != null) {
+            // Find instruction *following* the call by searching backwards from the code
+            // position of the bytecode instruction after the invoke
+            final int invokeSize = 3;
+            int succBCI = bci + invokeSize;
+            int succPos = bciToPos[succBCI];
+            Pointer succIP = codeStart().plus(succPos);
+            int index = findClosestStopIndex(succIP.minus(1));
+            assert index != -1 : "can't find stop position before " + this + "+" + succPos;
+
+            if (isAMD64()) {
+                int call = stopPosition(index);
+                int callSize = AMD64TargetMethodUtil.callInstructionSize(code, call);
+                assert callSize > 0 : "no call instruction at pos " + call;
+                ip = codeStart().plus(call + callSize);
+            } else {
+                throw unimplISA();
+            }
+        } else {
+            // Must be a safepoint
+            pos = bciToPos[bci];
+            ip = codeStart().plus(pos);
+        }
+
+        // record continuation instruction pointer
+        cont.setIP(info, ip);
+
+        // record continuation stack pointer
+        cont.setSP(info, CiConstant.forJsr(info.slotsCount()));
+
+        // add operand stack slots
+        for (int i = frame.numStack - 1; i >= 0; i--) {
+            info.addSlot((CiConstant) frame.getStackValue(i), "ostack");
+            for (int pad = 0; pad < STACK_SLOTS_PER_JVMS_SLOT - 1; pad++) {
+                info.addSlot(CiConstant.ZERO, "ostack (pad)");
+            }
+        }
+
+        int paramLocals = method.numberOfParameterSlots();
+        int numLocals = frame.numLocals;
+        int synchronizedReceiver = -1;
+        if (method.isSynchronized() && !method.isStatic()) {
+            assert frame.numLocks > 0;
+            synchronizedReceiver = numLocals;
+            numLocals++;
+        }
+        int nonParamLocals = numLocals - paramLocals;
+
+        // add (non-parameter) local slots
+        for (int i = numLocals - 1; i >= paramLocals; i--) {
+            if (i == synchronizedReceiver) {
+                info.addSlot((CiConstant) frame.getLockValue(0), "locked rcvr");
+            } else {
+                info.addSlot((CiConstant) frame.getLocalValue(i), "local");
+            }
+            for (int pad = 0; pad < STACK_SLOTS_PER_JVMS_SLOT - 1; pad++) {
+                info.addSlot(CiConstant.ZERO, "local (pad)");
+            }
+        }
+
+        // record continuation frame pointer
+        cont.setFP(info, CiConstant.forJsr(info.slotsCount()));
+
+        // add template slots
+        for (int i = 0; i < templateSlots; i++) {
+            info.addSlot(CiConstant.ZERO, "template");
+        }
+
+        // add alignment slots
+        int numberOfSlots = 1 + templateSlots; // one extra word for the caller FP
+        int unalignedSize = (numberOfSlots + (nonParamLocals * STACK_SLOTS_PER_JVMS_SLOT)) * STACK_SLOT_SIZE;
+        int alignedSize = target().alignFrameSize(unalignedSize);
+        int alignmentSlots = (alignedSize - unalignedSize) / STACK_SLOT_SIZE;
+        for (int i = 0; i < alignmentSlots; i++) {
+            info.addSlot(CiConstant.ZERO, "align");
+        }
+
+        // add caller FP slot with placeholder value
+        int callerFPIndex = info.slotsCount();
+        info.addSlot(CiConstant.ZERO, "callerFP");
+
+        // add caller return address slot with placeholder value
+        int returnAddressIndex = info.slotsCount();
+        info.addSlot(CiConstant.ZERO, "returnIP");
+
+        // add parameter slots
+        for (int i = paramLocals - 1; i >= 0; i--) {
+            info.addSlot((CiConstant) frame.getLocalValue(i), "param");
+            for (int pad = 0; pad < JVMSFrameLayout.STACK_SLOTS_PER_JVMS_SLOT - 1; pad++) {
+                info.addSlot(CiConstant.ZERO, "param (pad)");
+            }
+        }
+
+        return new CallerContinuation(callerFPIndex, -1, returnAddressIndex, returnKind);
     }
 }
 

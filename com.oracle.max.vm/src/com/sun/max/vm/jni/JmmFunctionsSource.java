@@ -33,7 +33,7 @@ import com.sun.max.vm.runtime.*;
 
 /**
  * Template from which (parts of) {@link JmmFunctions} is generated. The static initializer of
- * {@link JmmFunctions} includes a call to {@link #compile()} to double-check that the source
+ * {@link JmmFunctions} includes a call to {@link #compile(boolean)} to double-check that the source
  * is up-to-date with respect to any edits made to this class.
  *
  * All the methods annotated by {@link VM_ENTRY_POINT} appear in the exact same order as specified in

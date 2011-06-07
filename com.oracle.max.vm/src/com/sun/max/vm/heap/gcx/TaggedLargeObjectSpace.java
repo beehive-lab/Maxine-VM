@@ -137,7 +137,7 @@ public class TaggedLargeObjectSpace extends LargeObjectSpace {
         return allocate(size, defaultAllocatingObjectList);
     }
 
-    public Pointer allocate(Size size, int list) {
+    private Pointer allocate(Size size, int list) {
         Pointer allocated = super.allocate(size.plus(LargeObjectTag.tagSize()));
         if (!allocated.isZero()) {
             // Tag the end of its last block to ease future coalescing.

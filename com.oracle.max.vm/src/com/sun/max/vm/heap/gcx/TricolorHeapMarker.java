@@ -2010,7 +2010,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      */
     public void sweep(HeapRegionSweeper regionsSweeper) {
         final Address rightmostLiveObject = forwardScanState.rightmost;
-        //while (regionsSweeper.hasNextSweepingRegion() && !reachedRightmostLivedObject) {
         do {
             assert regionsSweeper.hasNextSweepingRegion();
             regionsSweeper.beginSweep();

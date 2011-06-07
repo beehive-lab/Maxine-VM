@@ -2127,7 +2127,7 @@ public final class LinearScan {
                 LIRDebugInfo.setBit(frameRefMap, objectAddress.index());
             } else {
                 Value lock = state.lockAt(i);
-                if (lock.isConstant() && compilation.runtime.asJavaClass(lock.asConstant()) != null) {
+                if (lock.isConstant()) {
                     // lock on class for synchronized static method
                     values[valueIndex++] = lock.asConstant();
                 } else {

@@ -29,8 +29,6 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.thread.*;
 
-/**
- */
 public final class VmStackFrameWalker extends StackFrameWalker {
 
     private Pointer tla;

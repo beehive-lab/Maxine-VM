@@ -30,7 +30,7 @@ import com.sun.max.annotate.HOSTED_ONLY;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.member.ClassMethodActor;
 import com.sun.max.vm.compiler.target.TargetMethod;
-import com.sun.max.vm.t1x.T1X;
+import com.sun.max.vm.t1x.*;
 
 /**
  * Variant of T1X that uses modified templates to support VM advising.
@@ -51,8 +51,8 @@ import com.sun.max.vm.t1x.T1X;
 public class VMAT1X extends T1X {
 
     private boolean instrumenting;
-    Templates beforeTemplates;
-    Templates afterTemplates;
+    T1XTemplate[]  beforeTemplates;
+    T1XTemplate[]  afterTemplates;
 
     @HOSTED_ONLY
     public VMAT1X() {
