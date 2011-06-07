@@ -664,7 +664,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
                 z++;
 
                 final Address address = stackFrame.ip;
-                TeleCompiledCode compiledCode = vm().codeCache().findCompiledCode(address);
+                TeleCompilation compiledCode = vm().codeCache().findCompiledCode(address);
                 if (compiledCode == null) {
                     if (stackFrame.targetMethod() == null) {
                         LOGGER.warning("Target method of stack frame (" + stackFrame + ") was null!");
