@@ -171,7 +171,7 @@ public class C1X implements RuntimeCompiler {
             if (!optionsRegistered) {
                 C1XOptions.setOptimizationLevel(optLevelOption.getValue());
                 C1XOptions.UseConstDirectCall = true; // Default
-                C1XOptions.UseAssumptions = true; // TODO (ds): remove once deopt works
+                C1XOptions.UseAssumptions = false; // TODO (ds): remove once deopt works
                 C1XOptions.OptIntrinsify = false; // TODO (ds): remove once intrinisification works for Maxine
                 C1XOptions.StackShadowPages = VmThread.STACK_SHADOW_PAGES;
                 VMOptions.addFieldOptions("-C1X:", C1XOptions.class, getHelpMap());
