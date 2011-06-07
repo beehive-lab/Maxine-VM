@@ -75,7 +75,7 @@ public final class HeapRegionConstants {
      * @return a number of regions.
      */
     static int numberOfRegions(Size sizeInBytes) {
-        return sizeInBytes.roundedUpBy(regionSizeInBytes).unsignedShiftedRight(log2RegionSizeInBytes).toInt();
+        return sizeInBytes.alignUp(regionSizeInBytes).unsignedShiftedRight(log2RegionSizeInBytes).toInt();
     }
 
     static void validate() {

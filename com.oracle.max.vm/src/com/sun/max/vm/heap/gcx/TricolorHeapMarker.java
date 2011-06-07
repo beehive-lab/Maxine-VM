@@ -366,7 +366,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
         // Mark bitmap must be word-aligned (the marking algorithm operates on mark bitmap words)
         // We also add an extra-word at the end to allow termination of the marking algorithm:
-        return numberOfBytesNeeded.aligned(Word.size()).plus(Word.size());
+        return numberOfBytesNeeded.alignUp(Word.size()).plus(Word.size());
     }
 
 
@@ -656,7 +656,15 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             // Mustn't be grey
             final int greyBitIndex = bitIndex + 1;
             final long greymask =  bitmaskFor(greyBitIndex);
-            FatalError.check((bitmapWordAt(greyBitIndex) & greymask) == 0L, "Must have no grey marks");
+            if ((bitmapWordAt(greyBitIndex) & greymask) == 0L) {
+                final boolean lockDisabledSafepoints = Log.lock();
+                Log.print("grey bit ");
+                Log.print(greyBitIndex);
+                Log.print(" cells @ ");
+                Log.println(addressOf(bitIndex));
+                Log.unlock(lockDisabledSafepoints);
+                FatalError.unexpected("Must have no grey marks");
+            }
         }
         return true;
     }

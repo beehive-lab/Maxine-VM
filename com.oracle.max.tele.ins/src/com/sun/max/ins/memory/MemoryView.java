@@ -316,7 +316,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
             this.instanceViewPreferences = new MemoryViewPreferences(instanceViewPreferences, this);
         }
         Address start = memoryRegion.start();
-        final Address alignedStart = start.aligned(nBytesInWord);
+        final Address alignedStart = start.alignUp(nBytesInWord);
         start = (start.equals(alignedStart)) ? start : alignedStart.minus(nBytesInWord);
         final long wordCount = wordsInRegion(memoryRegion);
         this.originalMemoryWordRegion = new MemoryWordRegion(inspection.vm(), start, wordCount);
@@ -334,7 +334,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
                 if (!value.equals(MemoryView.this.origin)) {
                     // User model policy:  any adjustment to the region drops into generic word mode
                     clearViewMode();
-                    setOrigin(value.aligned(nBytesInWord));
+                    setOrigin(value.alignUp(nBytesInWord));
                     setTitle();
                 }
             }
@@ -750,7 +750,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
         TeleObject teleObject = vm().heap().findObjectAt(origin);
         if (teleObject != null) {
             MaxMemoryRegion objectMemoryRegion = teleObject.objectMemoryRegion();
-            final Address start = objectMemoryRegion.start().aligned(nBytesInWord);
+            final Address start = objectMemoryRegion.start().alignUp(nBytesInWord);
             // User model policy, grow the size of the viewing region if needed, but never shrink it.
             final long newWordCount = Math.max(wordsInRegion(objectMemoryRegion), memoryWordRegion.nWords());
             setMemoryRegion(new MemoryWordRegion(vm(), start, newWordCount));
@@ -766,7 +766,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
         final TeleObject teleObject = vm().heap().findObjectPreceding(origin, 1000000);
         if (teleObject != null) {
             MaxMemoryRegion objectMemoryRegion = teleObject.objectMemoryRegion();
-            final Address start = objectMemoryRegion.start().aligned(nBytesInWord);
+            final Address start = objectMemoryRegion.start().alignUp(nBytesInWord);
             // User model policy, grow the size of the viewing region if needed, but never shrink it.
             final long newWordCount = Math.max(wordsInRegion(objectMemoryRegion), memoryWordRegion.nWords());
             setMemoryRegion(new MemoryWordRegion(vm(), start, newWordCount));
@@ -797,7 +797,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
     }
 
     private void moveToCurrentPage() {
-        Address newOrigin = origin.aligned(nBytesInPage);
+        Address newOrigin = origin.alignUp(nBytesInPage);
         if (!newOrigin.equals(origin)) {
             // We're not at a page boundary, so set to the beginning of the current one.
             newOrigin = newOrigin.minus(nBytesInPage);
@@ -809,7 +809,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
     }
 
     private void moveToNextPage() {
-        Address nextOrigin = origin.aligned(nBytesInPage);
+        Address nextOrigin = origin.alignUp(nBytesInPage);
         if (origin.equals(nextOrigin)) {
             // Already at beginning of a page; jump to next.
             nextOrigin = nextOrigin.plus(nBytesInPage);
@@ -821,7 +821,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
     }
 
     private void moveToPreviousPage() {
-        final Address newOrigin = origin.aligned(nBytesInPage).minus(nBytesInPage);
+        final Address newOrigin = origin.alignUp(nBytesInPage).minus(nBytesInPage);
         setOrigin(newOrigin);
         setMemoryRegion(new MemoryWordRegion(vm(), newOrigin, nWordsInPage));
         table.scrollToBeginning();

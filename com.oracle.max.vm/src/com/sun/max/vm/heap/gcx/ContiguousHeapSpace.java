@@ -74,7 +74,7 @@ public class ContiguousHeapSpace extends MemoryRegion {
 
     public Size adjustGrowth(Size delta) {
         int pageSize = platform().pageSize;
-        Size pageAlignedGrowth = delta.roundedUpBy(pageSize).asSize();
+        Size pageAlignedGrowth = delta.alignUp(pageSize).asSize();
         Address end = end();
         if (committedEnd.plus(pageAlignedGrowth).greaterThan(end)) {
             return end.minus(committedEnd).asSize();

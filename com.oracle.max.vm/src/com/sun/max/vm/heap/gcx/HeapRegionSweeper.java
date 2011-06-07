@@ -68,6 +68,10 @@ public abstract class HeapRegionSweeper extends Sweeper {
      * End of the current sweeping region.
      */
     Address csrEnd;
+    /**
+     * Indicate whether the region is part of a multi-regions object.
+     */
+    boolean csrIsLarge;
 
     /**
      * Cursor on the last live address seen during sweeping of the csr.
@@ -131,7 +135,7 @@ public abstract class HeapRegionSweeper extends Sweeper {
 
         csrLiveBytes = 0;
         csrLastLiveAddress = csrInfo.regionStart();
-
+        csrIsLarge = csrInfo.isLarge();
         csrInfo.resetOccupancy();
         csrEnd = csrLastLiveAddress.plus(regionSizeInBytes);
     }

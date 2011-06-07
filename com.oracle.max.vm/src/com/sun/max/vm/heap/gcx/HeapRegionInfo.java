@@ -157,7 +157,7 @@ public class HeapRegionInfo {
     private static final Size OFFSET_TO_NEXT = ClassActor.fromJava(HeapFreeChunk.class).dynamicHub().tupleSize;
 
     /**
-     * Index, in number of minimum object size relative to the beginning of a region to the first free chunk of the region.
+     * Index, in number of words relative to the beginning of a region to the first free chunk of the region.
      * Zero if the region is empty.
      */
     short firstFreeChunkIndex;
@@ -209,6 +209,11 @@ public class HeapRegionInfo {
         return isFull() ? Address.zero() : regionStart().plus(firstFreeChunkOffset());
     }
 
+    @INLINE
+    private int indexInRegion(Address address) {
+        return address.and(regionAlignmentMask).unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
+    }
+
     /**
      * Start of the region described by this {@link HeapRegionInfo} instance.
      * @return address to the start of a region
@@ -245,20 +250,20 @@ public class HeapRegionInfo {
     }
     final void setLargeTail(Address firstChunkAddress, Size numBytes) {
         flags = LARGE_TAIL;
-        firstFreeChunkIndex = (short) firstChunkAddress.minus(regionStart()).unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
+        firstFreeChunkIndex = (short) indexInRegion(firstChunkAddress);
         numFreeChunks = 1;
         freeSpace = (short) numBytes.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
     }
 
     final void setFreeChunks(Address firstChunkAddress, short numFreeWords, short numChunks) {
         flags = FREE_CHUNKS_REGION;
-        firstFreeChunkIndex = (short) firstChunkAddress.minus(regionStart()).unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
+        firstFreeChunkIndex = (short) indexInRegion(firstChunkAddress);
         numFreeChunks = numChunks;
         freeSpace = numFreeWords;
     }
 
     final void setFreeChunks(Address firstChunkAddress, Size numBytes, int numChunks) {
-        final short numFreeWords = (short) firstChunkAddress.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
+        final short numFreeWords = (short) numBytes.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
         setFreeChunks(firstChunkAddress, numFreeWords, (short) numChunks);
     }
 
