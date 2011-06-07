@@ -99,7 +99,7 @@ public final class MethodSearchDialog extends FilteredListDialog<MethodKey> {
                 methodKeys.add(createMethodKey(SignatureDescriptor.create(Void.TYPE), holderTypeDescriptor, SymbolTable.CLINIT));
             }
         } catch (Error error) {
-            InspectorWarning.message("Error loading class " + className, error);
+            InspectorWarning.message(inspection, "Error loading class " + className, error);
         }
         rebuildList();
     }

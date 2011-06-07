@@ -476,7 +476,7 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
         if (imgURL != null) {
             return new ImageIcon(imgURL, description);
         }
-        InspectorWarning.message("Couldn't find file: " + path);
+        InspectorWarning.message(null, "Couldn't find file: " + path);
         return null;
     }
 

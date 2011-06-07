@@ -98,7 +98,7 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
      */
     private static MethodView make(final Inspection inspection, Address address, boolean interactive) throws MaxVMBusyException {
         MethodView methodView = null;
-        final MaxCompiledCode compiledCode = inspection.vm().codeCache().findCompiledCode(address);
+        final MaxCompilation compiledCode = inspection.vm().codeCache().findCompiledCode(address);
         if (compiledCode != null) {
             // Java method
             methodView = make(inspection, compiledCode, MethodCodeKind.MACHINE_CODE);
@@ -180,7 +180,7 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
     private static JavaMethodView make(Inspection inspection, TeleClassMethodActor teleClassMethodActor, MethodCodeKind codeKind) throws MaxVMBusyException {
         JavaMethodView javaMethodView = null;
         // If there are compilations, then inspect in association with the most recent
-        final MaxCompiledCode compiledCode = inspection.vm().codeCache().latestCompilation(teleClassMethodActor);
+        final MaxCompilation compiledCode = inspection.vm().codeCache().latestCompilation(teleClassMethodActor);
         if (compiledCode != null) {
             return make(inspection, compiledCode, codeKind);
         }
@@ -210,7 +210,7 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
      * @return a possibly new view with the specified code visible.
      * @throws MaxVMBusyException if can't create a new method view because the VM is unavailable
      */
-    private static JavaMethodView make(Inspection inspection, MaxCompiledCode compiledCode, MethodCodeKind codeKind) throws MaxVMBusyException {
+    private static JavaMethodView make(Inspection inspection, MaxCompilation compiledCode, MethodCodeKind codeKind) throws MaxVMBusyException {
         JavaMethodView javaMethodView = null;
 
         // Is there already a view open that is bound to this compilation?
@@ -261,6 +261,7 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
             try {
                 final MethodViewManager methodViewManager = (MethodViewManager) ViewKind.METHODS.viewManager();
                 final MethodViewContainer container = methodViewManager.activateView();
+                nativeMethodView = new NativeMethodView(inspection, container, maxExternalCode);
                 container.add(nativeMethodView);
                 machineCodeToMethodView.put(maxExternalCode, nativeMethodView);
             } finally {

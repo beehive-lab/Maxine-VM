@@ -317,7 +317,7 @@ public class WordValueLabel extends ValueLabel {
     private TeleClassActor teleClassActor;
 
     /** Non-null if a code pointer. */
-    private MaxCompiledCode compiledCode;
+    private MaxCompilation compiledCode;
 
     /** Non-null if a stack reference. */
     private MaxThread thread;

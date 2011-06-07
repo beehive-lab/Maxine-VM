@@ -70,7 +70,7 @@ public interface MaxCodeLocation {
      *
      * @return a VM compilation; null if not specified or not available
      */
-    MaxCompiledCode compiledCode();
+    MaxCompilation compiledCode();
 
     /**
      * Is there a bytecode representation for the code location, expressed in terms

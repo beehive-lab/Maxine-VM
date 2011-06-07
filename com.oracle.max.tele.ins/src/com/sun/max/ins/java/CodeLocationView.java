@@ -77,7 +77,7 @@ public final class CodeLocationView extends AbstractView<CodeLocationView> {
     }
 
     private MaxCodeLocation codeLocation = null;
-    private MaxCompiledCode compiledCode = null;
+    private MaxCompilation compiledCode = null;
     private CiFrame frames = null;
 
 

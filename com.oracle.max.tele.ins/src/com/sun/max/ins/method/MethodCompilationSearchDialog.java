@@ -41,7 +41,7 @@ import com.sun.max.vm.actor.member.*;
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public final class MethodCompilationSearchDialog extends FilteredListDialog<MaxCompiledCode> {
+public final class MethodCompilationSearchDialog extends FilteredListDialog<MaxCompilation> {
 
     /**
      * A tuple (method compilation name, method compilation).
@@ -50,9 +50,9 @@ public final class MethodCompilationSearchDialog extends FilteredListDialog<MaxC
 
         private final String name;
 
-        private final MaxCompiledCode compiledCode;
+        private final MaxCompilation compiledCode;
 
-        public NamedMethodCompilation(String name, MaxCompiledCode compiledCode) {
+        public NamedMethodCompilation(String name, MaxCompilation compiledCode) {
             this.name = name;
             this.compiledCode = compiledCode;
         }
@@ -61,7 +61,7 @@ public final class MethodCompilationSearchDialog extends FilteredListDialog<MaxC
             return name;
         }
 
-        public MaxCompiledCode compiledCode() {
+        public MaxCompilation compiledCode() {
             return compiledCode;
         }
 
@@ -76,7 +76,7 @@ public final class MethodCompilationSearchDialog extends FilteredListDialog<MaxC
     }
 
     @Override
-    protected MaxCompiledCode convertSelectedItem(Object listItem) {
+    protected MaxCompilation convertSelectedItem(Object listItem) {
         return ((NamedMethodCompilation) listItem).compiledCode();
     }
 
@@ -93,7 +93,7 @@ public final class MethodCompilationSearchDialog extends FilteredListDialog<MaxC
                     if (filterLowerCase.isEmpty() ||
                                     (filterLowerCase.endsWith(" ") && methodNameLowerCase.equals(Strings.chopSuffix(filterLowerCase, 1))) ||
                                     methodNameLowerCase.contains(filterLowerCase)) {
-                        for (MaxCompiledCode compiledCode : vm().codeCache().compilations(teleClassMethodActor)) {
+                        for (MaxCompilation compiledCode : vm().codeCache().compilations(teleClassMethodActor)) {
                             final String name = inspection().nameDisplay().shortName(compiledCode, ReturnTypeSpecification.AS_SUFFIX);
                             namedMethodCompilations.add(new NamedMethodCompilation(name, compiledCode));
                         }
@@ -102,7 +102,7 @@ public final class MethodCompilationSearchDialog extends FilteredListDialog<MaxC
             }
         } else {
             for (MaxCompiledCodeRegion teleCompiledCodeRegion : inspection().vm().codeCache().compiledCodeRegions()) {
-                for (MaxCompiledCode compiledCode : teleCompiledCodeRegion.compilations()) {
+                for (MaxCompilation compiledCode : teleCompiledCodeRegion.compilations()) {
                     ClassMethodActor methodActor = compiledCode.classMethodActor();
                     String methodCompilationType = Classes.getSimpleName(compiledCode.representation().classActorForObjectType().javaClass().getSimpleName());
                     if (methodActor != null) {
@@ -149,9 +149,9 @@ public final class MethodCompilationSearchDialog extends FilteredListDialog<MaxC
      * @param title for dialog window
      * @param actionName name to appear on button
      * @param multi allow multiple selections if true
-     * @return references to the selected instances of {@link MaxCompiledCode} in the tele VM, null if user canceled.
+     * @return references to the selected instances of {@link MaxCompilation} in the tele VM, null if user canceled.
      */
-    public static List<MaxCompiledCode> show(Inspection inspection, TeleClassActor teleClassActor, String title, String actionName, boolean multi) {
+    public static List<MaxCompilation> show(Inspection inspection, TeleClassActor teleClassActor, String title, String actionName, boolean multi) {
         final MethodCompilationSearchDialog dialog = new MethodCompilationSearchDialog(inspection, teleClassActor, title, actionName, multi);
         dialog.setVisible(true);
         return dialog.selectedObjects();
@@ -168,7 +168,7 @@ public final class MethodCompilationSearchDialog extends FilteredListDialog<MaxC
     }
 
     @Override
-    protected MaxCompiledCode noSelectedObject() {
+    protected MaxCompilation noSelectedObject() {
         return null;
     }
 
