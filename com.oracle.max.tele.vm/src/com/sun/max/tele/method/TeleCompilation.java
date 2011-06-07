@@ -41,7 +41,7 @@ import com.sun.max.vm.compiler.target.*;
  * a surrogate for the corresponding instance of {@link TargetMethod}
  * in the VM.
  */
-public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxCompiledCode {
+public final class TeleCompilation extends AbstractTeleVMHolder implements MaxCompilation {
 
     /**
      * Description of a compiled code region allocated in a code cache.
@@ -51,15 +51,15 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
      * This region has no children, unless we decide later to subdivide and model the parts separately.
      *
      */
-    private static final class CompiledCodeMemoryRegion extends TeleDelegatedMemoryRegion implements MaxEntityMemoryRegion<MaxCompiledCode> {
+    private static final class CompiledCodeMemoryRegion extends TeleDelegatedMemoryRegion implements MaxEntityMemoryRegion<MaxCompilation> {
 
         private static final List<MaxEntityMemoryRegion<? extends MaxEntity>> EMPTY = Collections.emptyList();
 
-        private final TeleCompiledCode owner;
+        private final TeleCompilation owner;
         private final boolean isBootCode;
         private final TeleCodeCache teleCodeCache;
 
-        private CompiledCodeMemoryRegion(TeleVM teleVM, TeleCompiledCode owner, TeleTargetMethod teleTargetMethod, TeleCodeCache teleCodeCache, boolean isBootCode) {
+        private CompiledCodeMemoryRegion(TeleVM teleVM, TeleCompilation owner, TeleTargetMethod teleTargetMethod, TeleCodeCache teleCodeCache, boolean isBootCode) {
             super(teleVM, teleTargetMethod);
             this.owner = owner;
             this.isBootCode = isBootCode;
@@ -76,7 +76,7 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
             return EMPTY;
         }
 
-        public MaxCompiledCode owner() {
+        public MaxCompilation owner() {
             return owner;
         }
 
@@ -135,7 +135,7 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
      * @param teleCodeCache the owner of all cached code in the VM
      * @param isBootCode is this code in the boot region?
      */
-    public TeleCompiledCode(TeleVM teleVM, TeleTargetMethod teleTargetMethod, TeleCodeCache teleCodeCache, boolean isBootCode) {
+    public TeleCompilation(TeleVM teleVM, TeleTargetMethod teleTargetMethod, TeleCodeCache teleCodeCache, boolean isBootCode) {
         super(teleVM);
         this.teleTargetMethod = teleTargetMethod;
         this.compiledCodeMemoryRegion = new CompiledCodeMemoryRegion(teleVM, this, teleTargetMethod, teleCodeCache, isBootCode);
@@ -158,7 +158,7 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
         return description + teleTargetMethod.classActorForObjectType().simpleName();
     }
 
-    public MaxEntityMemoryRegion<MaxCompiledCode> memoryRegion() {
+    public MaxEntityMemoryRegion<MaxCompilation> memoryRegion() {
         return compiledCodeMemoryRegion;
     }
 

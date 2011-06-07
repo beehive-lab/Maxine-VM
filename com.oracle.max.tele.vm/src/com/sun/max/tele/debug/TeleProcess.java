@@ -900,12 +900,12 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
             // Executed a return
             return null;
         }
-        final TeleCompiledCode oldCompiledCode = vm().codeCache().findCompiledCode(oldInstructionPointer);
+        final TeleCompilation oldCompiledCode = vm().codeCache().findCompiledCode(oldInstructionPointer);
         if (oldCompiledCode == null) {
             // Stepped from external native code:
             return null;
         }
-        final TeleCompiledCode newCompiledCode = vm().codeCache().findCompiledCode(newInstructionPointer);
+        final TeleCompilation newCompiledCode = vm().codeCache().findCompiledCode(newInstructionPointer);
         if (newCompiledCode == null) {
             // Stepped into external native code:
             return null;

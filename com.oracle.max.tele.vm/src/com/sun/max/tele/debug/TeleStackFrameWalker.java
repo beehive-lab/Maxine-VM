@@ -164,7 +164,7 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
 
     @Override
     public TargetMethod targetMethodFor(Pointer instructionPointer) {
-        final TeleCompiledCode compiledCode = teleVM.codeCache().findCompiledCode(instructionPointer);
+        final TeleCompilation compiledCode = teleVM.codeCache().findCompiledCode(instructionPointer);
         if (compiledCode != null) {
             return compiledCode.teleTargetMethod().targetMethod();
         }

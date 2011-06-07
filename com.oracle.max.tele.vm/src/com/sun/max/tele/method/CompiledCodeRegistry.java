@@ -51,11 +51,11 @@ final class CompiledCodeRegistry extends AbstractTeleVMHolder implements TeleVMC
 
     private long lastUpdateEpoch = -1L;
 
-    private final OrderedMemoryRegionList<MaxEntityMemoryRegion<MaxCompiledCode>> compiledCodeMemoryRegions =
-        new OrderedMemoryRegionList<MaxEntityMemoryRegion<MaxCompiledCode>>();
+    private final OrderedMemoryRegionList<MaxEntityMemoryRegion<MaxCompilation>> compiledCodeMemoryRegions =
+        new OrderedMemoryRegionList<MaxEntityMemoryRegion<MaxCompilation>>();
 
-    private final Set<MaxEntityMemoryRegion<MaxCompiledCode>> unallocatedCompiledCodeMemoryRegions =
-        new HashSet<MaxEntityMemoryRegion<MaxCompiledCode>>();
+    private final Set<MaxEntityMemoryRegion<MaxCompilation>> unallocatedCompiledCodeMemoryRegions =
+        new HashSet<MaxEntityMemoryRegion<MaxCompilation>>();
 
     private final Object statsPrinter = new Object() {
 
@@ -92,7 +92,7 @@ final class CompiledCodeRegistry extends AbstractTeleVMHolder implements TeleVMC
         if (epoch > lastUpdateEpoch) {
             updateTracer.begin();
             assert vm().lockHeldByCurrentThread();
-            for (MaxEntityMemoryRegion<MaxCompiledCode> memoryRegion : unallocatedCompiledCodeMemoryRegions) {
+            for (MaxEntityMemoryRegion<MaxCompilation> memoryRegion : unallocatedCompiledCodeMemoryRegions) {
                 if (!memoryRegion.start().isZero()) {
                     unallocatedCompiledCodeMemoryRegions.remove(memoryRegion);
                     Trace.line(TRACE_VALUE, tracePrefix() + " formerly unallocated code memory region promoted to registry: " + memoryRegion.owner().entityName());
@@ -112,8 +112,8 @@ final class CompiledCodeRegistry extends AbstractTeleVMHolder implements TeleVMC
      * @param teleCompiledCode the compilation whose memory region is to be added to this registry
      * @throws IllegalArgumentException when the code's memory overlaps one already in this registry.
      */
-    synchronized void register(TeleCompiledCode teleCompiledCode) {
-        final MaxEntityMemoryRegion<MaxCompiledCode> memoryRegion = teleCompiledCode.memoryRegion();
+    synchronized void register(TeleCompilation teleCompiledCode) {
+        final MaxEntityMemoryRegion<MaxCompilation> memoryRegion = teleCompiledCode.memoryRegion();
         if (memoryRegion.start().isZero()) {
             // The code has not been allocated any memory in the code cache yet; set aside for now.
             unallocatedCompiledCodeMemoryRegions.add(memoryRegion);
@@ -123,12 +123,12 @@ final class CompiledCodeRegistry extends AbstractTeleVMHolder implements TeleVMC
         }
     }
 
-    synchronized TeleCompiledCode find(Address address) {
-        final MaxEntityMemoryRegion<MaxCompiledCode> compiledCodeRegion = compiledCodeMemoryRegions.find(address);
+    synchronized TeleCompilation find(Address address) {
+        final MaxEntityMemoryRegion<MaxCompilation> compiledCodeRegion = compiledCodeMemoryRegions.find(address);
         if (compiledCodeRegion != null) {
-            final MaxCompiledCode compiledCode = compiledCodeRegion.owner();
+            final MaxCompilation compiledCode = compiledCodeRegion.owner();
             if (compiledCode != null) {
-                return (TeleCompiledCode) compiledCode;
+                return (TeleCompilation) compiledCode;
             }
         }
         return null;
@@ -144,8 +144,8 @@ final class CompiledCodeRegistry extends AbstractTeleVMHolder implements TeleVMC
 
     void writeSummary(PrintStream printStream) {
         Address lastEndAddress = null;
-        for (MaxEntityMemoryRegion<MaxCompiledCode> compiledCodeMemoryRegion : compiledCodeMemoryRegions) {
-            final MaxCompiledCode maxCompiledCode = compiledCodeMemoryRegion.owner();
+        for (MaxEntityMemoryRegion<MaxCompilation> compiledCodeMemoryRegion : compiledCodeMemoryRegions) {
+            final MaxCompilation maxCompiledCode = compiledCodeMemoryRegion.owner();
             final String name = maxCompiledCode.entityDescription();
             if (lastEndAddress != null && !lastEndAddress.equals(compiledCodeMemoryRegion.start())) {
                 printStream.println(lastEndAddress.toHexString() + "--" + compiledCodeMemoryRegion.start().minus(1).toHexString() + ": ");
