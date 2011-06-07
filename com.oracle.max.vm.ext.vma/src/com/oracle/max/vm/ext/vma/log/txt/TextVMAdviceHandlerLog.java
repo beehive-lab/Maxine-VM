@@ -22,128 +22,136 @@
  */
 package com.oracle.max.vm.ext.vma.log.txt;
 
+import java.util.*;
 import com.oracle.max.vm.ext.vma.log.*;
 
 /**
  * Defines a textual format for the the {@link VMAdviceHandlerLog} output.
- * The format corresponding to each method is given below. The terms used are:
- * <ul>
- * <li>atime absolute wall clock time
- * <li>time - if log uses absolute time then atime, else time increment from last trace
- * <li>thread - name for thread
- * <li>class - name for class
- * <li>field - name of field
- * <li>id - object id. Special case is '*', means same as last id (not used in a "value" context)
- * <li>clid - id of the associated classloader
- * <li>type - O object, J long, F float, D double (N.B. boolean, char, short, int all appear as long)
- * <li>value - id if type==O, toString representation otherwise
- * <li>index - array index
- * </ul>
- * Trace syntax by method:
- *
- * <ul>
- * <li>initializeLog: M atime isAbsTime (isAbsTime==true|false)
- * <li>finalizeLog: Z atime
- * <li>resetTime: K atime
- * <li>adviseAfteNew: B time thread id class clid
- * <li>adviseAfterInvokeSpecial: E time thread id
- * <li>adviseAfterNewArray: A time thread id class clid
- * <li>adviseBeforePutField: W time thread id field type value
- * <li>adviseBeforePutStatic: V time thread class clid field type value
- * <li>adviseBeforeGetField: R time thread id field
- * <li>adviseBeforeGetStatic: Q time thread class clid field
- * <li>adviseBeforeArrayStore: S time thread id type value @ index
- * <li>adviseBeforeArrayLoad: T time thread id
- * <li>arraycopyTrackingLog: C time thread srcid srcpos destid destpos length TODO
- * <li>removal: D id
- * <li>adviseGC: N time thread
- * <li>unseenObject: X time id class clid
- * </ul>
  *
  * There is an explicit assumption that log records are ordered in time to support
  * the relative time optimization. However, an embedded resetTimeLog record can be
  * used to "reset" the time for logs that are created from, say, a set of records for a set
- * of threads.
+ * of threads. Normally the log uses relative time, recording the offset from the previous
+ * record for that thread. However, it is possible to use absolute time and this is
+ * indicated by a boolean value to the {@link Key#INITIALIZE_LOG} record.
  *
- * N.B. There is absolutely no logic to the choice of characters used to represent the
- * method name!
+ * Each log record occupies one line starting with the string code for the {@link Key}.
+ * The key is followed by the time (either absolute or relative) and then, for most records,
+ * the thread that created the record. This is then followed by arguments that are specific
+ * to the record, generally in same order as the parameters to the methods in {@link VMAdviceHandlerLog}.
  *
  */
 
 public abstract class TextVMAdviceHandlerLog extends VMAdviceHandlerLog {
 
-    public static final char OBJECT_CREATION_BEGIN_ID = 'B';
-    public static final char OBJECT_CREATION_END_ID   = 'E';
-    public static final char ARRAY_CREATION_ID   = 'A';
-
-    public static final char OBJECT_WRITE_ID          = 'W';
-    public static final char ARRAY_WRITE_ID           = 'S';
-    public static final char STATIC_WRITE_ID          = 'V';
-
-    public static final char OBJECT_READ_ID           = 'R';
-    public static final char ARRAY_READ_ID            = 'T';
-    public static final char STATIC_READ_ID           = 'Q';
-
-    public static final char ARRAY_COPY_ID            = 'C';
-
-    public static final char REMOVAL_ID               = 'D';
-
-    public static final char UNSEEN_OBJECT_ID         = 'X';
-
-    public static final char CLASS_DEFINITION_ID      = 'G';
-    public static final char FIELD_DEFINITION_ID      = 'F';
-    public static final char THREAD_DEFINITION_ID      = 'H';
-    public static final char INITIALIZE_ID = 'M';
-    public static final char FINALIZE_ID = 'Z';
-    public static final char RESET_TIME_ID = 'K';
-    public static final char GC_ID = 'N';
-
     public static final int REPEAT_ID_VALUE = -1;
     public static final char REPEAT_ID = '*';
 
-    public static final char OBJ_TYPE = 'O';
-    public static final char INT_TYPE = 'I';
-    public static final char LONG_TYPE = 'J';
-    public static final char FLOAT_TYPE = 'F';
-    public static final char DOUBLE_TYPE = 'D';
+    public static final EnumSet<Key> noTimeSet = EnumSet.of(Key.CLASS_DEFINITION, Key.FIELD_DEFINITION, Key.THREAD_DEFINITION,
+                                                      Key.REMOVAL);
+    public static final Map<String, Key> commandMap = new HashMap<String, Key>();
 
-    public static boolean hasId(char c) {
-        switch (c) {
-            case OBJECT_CREATION_BEGIN_ID:
-            case OBJECT_CREATION_END_ID:
-            case ARRAY_CREATION_ID:
-            case OBJECT_WRITE_ID:
-            case ARRAY_WRITE_ID:
-            case OBJECT_READ_ID:
-            case ARRAY_READ_ID:
-            case ARRAY_COPY_ID:
-                return true;
-            default:
-                return false;
+    static {
+        for (Key key : Key.values()) {
+            commandMap.put(key.code, key);
         }
     }
 
-    public static boolean hasTime(char c) {
-        switch (c) {
-            case OBJECT_CREATION_BEGIN_ID:
-            case OBJECT_CREATION_END_ID:
-            case ARRAY_CREATION_ID:
-            case OBJECT_WRITE_ID:
-            case ARRAY_WRITE_ID:
-            case STATIC_WRITE_ID:
-            case OBJECT_READ_ID:
-            case ARRAY_READ_ID:
-            case STATIC_READ_ID:
-            case ARRAY_COPY_ID:
-            case UNSEEN_OBJECT_ID:
-                return true;
-            default:
-                return false;
+    public static final char OBJ_VALUE = 'O';
+    public static final char LONG_VALUE = 'J';
+    public static final char FLOAT_VALUE = 'F';
+    public static final char DOUBLE_VALUE = 'D';
+
+    public static boolean hasId(Key code) {
+        return hasIdSet.contains(code);
+    }
+
+    public static boolean hasTime(Key key) {
+        return !noTimeSet.contains(key);
+    }
+
+    public static boolean hasTimeAndThread(Key key) {
+        return hasTime(key) && !(key == Key.UNSEEN || key == Key.INITIALIZE_LOG | key == Key.FINALIZE_LOG);
+    }
+
+    // BEGIN GENERATED CODE
+
+    // GENERATED -- EDIT AND RUN TextVMAdviceHandlerLogGenerator.main() TO MODIFY
+    public enum Key {
+        CLASS_DEFINITION("C"),
+        FIELD_DEFINITION("F"),
+        THREAD_DEFINITION("T"),
+        ADVISE_BEFORE_THROW("BT"),
+        ADVISE_BEFORE_IF("BI"),
+        ADVISE_BEFORE_LOAD("BL"),
+        ADVISE_BEFORE_BYTECODE("BB"),
+        ADVISE_AFTER_MULTI_NEW_ARRAY("AMNA"),
+        ADVISE_BEFORE_INVOKE_INTERFACE("BII"),
+        ADVISE_BEFORE_STORE("BS"),
+        ADVISE_BEFORE_INSTANCE_OF("BIO"),
+        ADVISE_BEFORE_ARRAY_STORE("BAS"),
+        ADVISE_BEFORE_GET_STATIC("BGS"),
+        ADVISE_BEFORE_PUT_FIELD("BPF"),
+        ADVISE_AFTER_INVOKE_INTERFACE("AII"),
+        ADVISE_BEFORE_INVOKE_STATIC("BIS"),
+        ADVISE_BEFORE_PUT_STATIC("BPS"),
+        ADVISE_AFTER_INVOKE_VIRTUAL("AIV"),
+        ADVISE_BEFORE_MONITOR_EXIT("BMX"),
+        ADVISE_BEFORE_ARRAY_LENGTH("BAG"),
+        REMOVAL("D"),
+        ADVISE_BEFORE_CHECK_CAST("BCC"),
+        ADVISE_BEFORE_IPUSH("BIP"),
+        ADVISE_AFTER_GC("AGC"),
+        ADVISE_BEFORE_IINC("BIN"),
+        ADVISE_BEFORE_GET_FIELD("BGF"),
+        ADVISE_BEFORE_OPERATION("BO"),
+        ADVISE_AFTER_INVOKE_SPECIAL("AIZ"),
+        ADVISE_BEFORE_INVOKE_SPECIAL("BIZ"),
+        ADVISE_BEFORE_STACK_ADJUST("BSA"),
+        ADVISE_BEFORE_GC("BGC"),
+        ADVISE_AFTER_INVOKE_STATIC("AIS"),
+        ADVISE_BEFORE_RETURN("BR"),
+        ADVISE_BEFORE_ARRAY_LOAD("BAL"),
+        ADVISE_BEFORE_CONVERSION("BC"),
+        ADVISE_BEFORE_MONITOR_ENTER("BME"),
+        ADVISE_BEFORE_THREAD_TERMINATING("BTT"),
+        INITIALIZE_LOG("IL"),
+        ADVISE_BEFORE_THREAD_STARTING("BTS"),
+        ADVISE_BEFORE_CONST_LOAD("BCL"),
+        FINALIZE_LOG("FL"),
+        ADVISE_AFTER_NEW("AN"),
+        RESET_TIME("ZT"),
+        ADVISE_AFTER_NEW_ARRAY("ANA"),
+        ADVISE_BEFORE_INVOKE_VIRTUAL("BIV"),
+        UNSEEN("U");
+        public final String code;
+        private Key(String code) {
+            this.code = code;
         }
     }
 
-    public static boolean hasTimeAndThread(char c) {
-        return hasTime(c) && c != UNSEEN_OBJECT_ID;
-    }
+    // GENERATED -- EDIT AND RUN TextVMAdviceHandlerLogGenerator.main() TO MODIFY
+    public static final EnumSet<Key> hasIdSet = EnumSet.of(
+        Key.ADVISE_BEFORE_ARRAY_LOAD,
+        Key.ADVISE_BEFORE_ARRAY_STORE,
+        Key.ADVISE_BEFORE_GET_FIELD,
+        Key.ADVISE_BEFORE_PUT_FIELD,
+        Key.ADVISE_BEFORE_INVOKE_VIRTUAL,
+        Key.ADVISE_BEFORE_INVOKE_SPECIAL,
+        Key.ADVISE_BEFORE_INVOKE_STATIC,
+        Key.ADVISE_BEFORE_INVOKE_INTERFACE,
+        Key.ADVISE_BEFORE_ARRAY_LENGTH,
+        Key.ADVISE_BEFORE_THROW,
+        Key.ADVISE_BEFORE_CHECK_CAST,
+        Key.ADVISE_BEFORE_INSTANCE_OF,
+        Key.ADVISE_BEFORE_MONITOR_ENTER,
+        Key.ADVISE_BEFORE_MONITOR_EXIT,
+        Key.ADVISE_AFTER_INVOKE_VIRTUAL,
+        Key.ADVISE_AFTER_INVOKE_SPECIAL,
+        Key.ADVISE_AFTER_INVOKE_STATIC,
+        Key.ADVISE_AFTER_INVOKE_INTERFACE,
+        Key.ADVISE_AFTER_NEW,
+        Key.ADVISE_AFTER_NEW_ARRAY,
+        Key.ADVISE_AFTER_MULTI_NEW_ARRAY);
 
 }

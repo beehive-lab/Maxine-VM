@@ -22,7 +22,6 @@
  */
 package com.oracle.max.vm.ext.vma.heap.semi;
 
-import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.run.java.*;
 import com.sun.max.annotate.INLINE;
 import com.sun.max.unsafe.Pointer;
@@ -62,9 +61,9 @@ public class VMASemiSpaceHeapScheme extends SemiSpaceHeapScheme {
     @Override
     public boolean collectGarbage(Size requestedFreeSpace) {
         final boolean result = super.collectGarbage(requestedFreeSpace);
-        if (VMAJavaRunScheme.isEnabled()) {
+        if (VMAJavaRunScheme.isAdvising()) {
             VMAJavaRunScheme.disableAdvising();
-            VMAJavaRunScheme.adviceHandler().adviseGC(AdviceMode.AFTER);
+            VMAJavaRunScheme.adviceHandler().adviseAfterGC();
             VMAJavaRunScheme.enableAdvising();
         }
         return result;

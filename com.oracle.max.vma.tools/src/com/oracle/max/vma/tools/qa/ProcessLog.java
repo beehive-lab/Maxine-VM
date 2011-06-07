@@ -54,8 +54,6 @@ import com.oracle.max.vm.ext.vma.log.txt.*;
  * N.B. Currently non-time ordered logs cannot be handled by this code.
  * They must first be processed with {@link ConvertLog}.
  *
- * @author Mick Jordan
- *
  */
 public class ProcessLog {
 
@@ -99,12 +97,6 @@ public class ProcessLog {
     private Map<String, String> fieldForwardsMap = new HashMap<String, String>();
     private static final String FIELD_FORWARD_PREFIX = "FieldForward-";
     private static final String CLASS_FORWARD_PREFIX = "ClassForward-";
-
-    private final static char[] COMMANDS = {INITIALIZE_ID, FINALIZE_ID, RESET_TIME_ID,
-        OBJECT_CREATION_BEGIN_ID, OBJECT_CREATION_END_ID, ARRAY_CREATION_ID,
-        OBJECT_WRITE_ID, ARRAY_WRITE_ID, STATIC_WRITE_ID, OBJECT_READ_ID, STATIC_READ_ID, ARRAY_READ_ID,
-        ARRAY_COPY_ID, GC_ID, REMOVAL_ID, UNSEEN_OBJECT_ID, CLASS_DEFINITION_ID,
-        FIELD_DEFINITION_ID, THREAD_DEFINITION_ID};
 
     private ProcessLog(String dataFile, boolean verbose, boolean prettyTrace, int maxLines) throws IOException {
         this.st = new StreamTokenizer(new BufferedReader(new FileReader(
@@ -188,8 +180,10 @@ public class ProcessLog {
     private void processTraceRecord() throws IOException {
         try {
             String id = null;
-            expectValidTraceStart();
-            char traceCommand = st.sval.charAt(0);
+            Key traceCommand = expectValidTraceStart();
+            if (traceCommand == Key.ADVISE_BEFORE_RETURN) {
+                System.console();
+            }
             if (TextVMAdviceHandlerLog.hasTimeAndThread(traceCommand)) {
                 st.nextToken();
                 expectTimeAndThread();
@@ -207,20 +201,20 @@ public class ProcessLog {
             }
             ObjectRecord td = null;
             switch (traceCommand) {
-                case INITIALIZE_ID:
+                case INITIALIZE_LOG:
                     st.nextToken();
                     startTime = Long.parseLong(st.sval);
                     gcEpoch = new GCEpoch(0);
                     gcEpochs.add(gcEpoch);
                     break;
 
-                case FINALIZE_ID:
+                case FINALIZE_LOG:
                     st.nextToken();
                     lastTime = Long.parseLong(st.sval) - startTime; // relative
                     gcEpoch.endTime = lastTime;
                     break;
 
-                case RESET_TIME_ID:
+                case RESET_TIME:
                     st.nextToken();
                     lastTime = Long.parseLong(st.sval) - startTime; // relative
                     // find the right gc epoch
@@ -234,12 +228,12 @@ public class ProcessLog {
                     assert newGCEpoch != null;
                     gcEpoch = newGCEpoch;
                     if (prettyTrace) {
-                        System.out.println("@" + lastTime + " " + getKey(traceCommand));
+                        System.out.println("@" + lastTime + " " + traceCommand);
                     }
                     break;
 
-                case OBJECT_CREATION_BEGIN_ID:
-                case ARRAY_CREATION_ID: {
+                case ADVISE_AFTER_NEW:
+                case ADVISE_AFTER_NEW_ARRAY: {
                     getClassName();
                     // class loader object id
                     long classLoaderId = getClassLoader();
@@ -248,7 +242,7 @@ public class ProcessLog {
                     td = new ObjectRecord(id, gcEpoch.epoch, cr, threadName, beginCreationTime);
                     cr.addObject(td);
                     objectsPut(id, td);
-                    if (traceCommand == ARRAY_CREATION_ID) {
+                    if (traceCommand == Key.ADVISE_AFTER_NEW_ARRAY) {
                         st.nextToken();
                         expectNumber();
                         td.setLength(Integer.parseInt(st.sval));
@@ -262,14 +256,14 @@ public class ProcessLog {
                     break;
                 }
 
-                case OBJECT_CREATION_END_ID:
+                case ADVISE_AFTER_INVOKE_SPECIAL:
                     td = getTraceRecord(id);
                     long endCreationTime = lastTime;
                     td.setEndCreationTime(endCreationTime);
                     prettyTrace(traceCommand, td);
                     break;
 
-                case REMOVAL_ID: {
+                case REMOVAL: {
                     st.nextToken();
                     expectWord();
                     id = st.sval;
@@ -278,12 +272,12 @@ public class ProcessLog {
                     td = objects.get(ObjectRecord.getMapId(id, maxEpoch.get(id)));
                     td.setDeletionTime(lastTime);
                     if (prettyTrace) {
-                        System.out.println("@" + lastTime + " " + getKey(traceCommand) + " " + id);
+                        System.out.println("@" + lastTime + " " + traceCommand + " " + id);
                     }
                     break;
                 }
 
-                case GC_ID: {
+                case ADVISE_AFTER_GC: {
                     st.nextToken();
                     expectTime();
                     gcEpoch.setEndTime(lastTime);
@@ -292,7 +286,7 @@ public class ProcessLog {
                     break;
                 }
 
-                case OBJECT_WRITE_ID: {
+                case ADVISE_BEFORE_PUT_FIELD: {
                     td = getTraceRecord(id);
                     getFieldName();
                     td.addTraceElement(expectTypeAndValue(false));
@@ -300,7 +294,7 @@ public class ProcessLog {
                     break;
                 }
 
-                case STATIC_WRITE_ID: {
+                case ADVISE_BEFORE_PUT_STATIC: {
                     getClassName();
                     // class loader object id
                     long classLoaderId = getClassLoader();
@@ -311,7 +305,7 @@ public class ProcessLog {
                     break;
                 }
 
-                case ARRAY_READ_ID:
+                case ADVISE_BEFORE_ARRAY_LOAD:
                     td = getTraceRecord(id);
                     st.nextToken();
                     expectNumber();
@@ -320,13 +314,13 @@ public class ProcessLog {
                     prettyTrace(traceCommand, td, fieldName);
                     break;
 
-                case ARRAY_WRITE_ID: {
+                case ADVISE_BEFORE_ARRAY_STORE: {
                     td = getTraceRecord(id);
                     td.addTraceElement(expectTypeAndValue(true));
                     prettyTrace(traceCommand, td, fieldName);
                     break;
                 }
-
+/*
                 case ARRAY_COPY_ID: {
                     td = getTraceRecord(id);
                     st.nextToken();
@@ -344,8 +338,9 @@ public class ProcessLog {
                     td.addTraceElement(new ObjectRecord.ArrayCopyTraceElement(threadName, lastTime, destPos, destTd, srcPos, length));
                     break;
                 }
+                */
 
-                case UNSEEN_OBJECT_ID: {
+                case UNSEEN: {
                     // This warns of an access to an object that we have not seen
                     // the constructor for.
                     // We don't know how or when this was constructed, but give it a
@@ -379,7 +374,7 @@ public class ProcessLog {
                     break;
                 }
 
-                case OBJECT_READ_ID: {
+                case ADVISE_BEFORE_GET_FIELD: {
                     td = getTraceRecord(id);
                     getFieldName();
                     td.addTraceElement(new ObjectRecord.ReadTraceElement(fieldName, threadName, lastTime));
@@ -387,7 +382,7 @@ public class ProcessLog {
                     break;
                 }
 
-                case STATIC_READ_ID: {
+                case ADVISE_BEFORE_GET_STATIC: {
                     getClassName();
                     getFieldName();
                     // class loader object id
@@ -398,7 +393,7 @@ public class ProcessLog {
                     break;
                 }
 
-                case CLASS_DEFINITION_ID: {
+                case CLASS_DEFINITION: {
                     st.nextToken();
                     expectWord();
                     className = st.sval;
@@ -412,7 +407,7 @@ public class ProcessLog {
                     break;
                 }
 
-                case FIELD_DEFINITION_ID: {
+                case FIELD_DEFINITION: {
                     st.nextToken();
                     expectWord();
                     final String fullFieldName = st.sval;
@@ -422,7 +417,7 @@ public class ProcessLog {
                     break;
                 }
 
-                case THREAD_DEFINITION_ID: {
+                case THREAD_DEFINITION: {
                     st.nextToken();
                     String fullThreadName;
                     // thread names may be quoted
@@ -439,7 +434,7 @@ public class ProcessLog {
                 }
 
                 default:
-                    throw new TraceException("unknown trace element: " + traceCommand);
+                    prettyTrace(traceCommand, null, "unimplemented ");
             }
 
         } catch (TraceException e) {
@@ -454,14 +449,14 @@ public class ProcessLog {
         maxEpoch.put(id, gcEpoch.epoch);
     }
 
-    private void prettyTrace(char traceCommand, ObjectRecord td) {
+    private void prettyTrace(Key traceCommand, ObjectRecord td) {
         prettyTrace(traceCommand, td, null);
     }
 
-    private void prettyTrace(char traceCommand, ObjectRecord td, String xtra) {
+    private void prettyTrace(Key traceCommand, ObjectRecord td, String xtra) {
         if (prettyTrace) {
-            System.out.println("@" + lastTime + " " + getKey(traceCommand) + " " + td.getId() + " " +
-                    td.getClassName() +
+            System.out.println("@" + lastTime + " " + traceCommand + " " + (td == null ? "" : (td.getId())) + " " +
+                    (td == null ? "" : td.getClassName()) +
                     (xtra == null ? "" : " " + xtra) + " in " + threadName);
         }
     }
@@ -584,7 +579,7 @@ public class ProcessLog {
         st.nextToken();
         ObjectRecord.WriteTraceElement wte = null;
         switch (type) {
-            case OBJ_TYPE:
+            case OBJ_VALUE:
                 if (value.equals("0")) {
                     wte = new ObjectRecord.NullWriteTraceElement(fieldName, threadName, lastTime);
                 } else {
@@ -596,16 +591,13 @@ public class ProcessLog {
                     }
                 }
                 break;
-            case INT_TYPE:
-                wte = new ObjectRecord.IntWriteTraceElement(fieldName, threadName, lastTime, Integer.parseInt(value));
-                break;
-            case LONG_TYPE:
+            case LONG_VALUE:
                 wte = new ObjectRecord.LongWriteTraceElement(fieldName, threadName, lastTime, Long.parseLong(value));
                 break;
-            case FLOAT_TYPE:
+            case FLOAT_VALUE:
                 wte = new ObjectRecord.FloatWriteTraceElement(fieldName, threadName, lastTime, Float.parseFloat(value));
                 break;
-            case DOUBLE_TYPE:
+            case DOUBLE_VALUE:
                 wte = new ObjectRecord.DoubleWriteTraceElement(fieldName, threadName, lastTime, Float.parseFloat(value));
                 break;
             default:
@@ -636,20 +628,17 @@ public class ProcessLog {
 
     }
 
-    private boolean isCommand(char c) {
-        for (int i = 0; i < COMMANDS.length; i++) {
-            if (COMMANDS[i] == c) {
-                return true;
-            }
-        }
-        return false;
+    private boolean isCommand(String c) {
+        return commandMap.get(c) != null;
     }
 
-    private void expectValidTraceStart() throws TraceException {
+    private Key expectValidTraceStart() throws TraceException {
         if (!((st.ttype == StreamTokenizer.TT_WORD)
-                && isCommand(st.sval.charAt(0)))) {
+                && isCommand(st.sval))) {
             throw new TraceException("unknown trace command at line "
                             + st.lineno());
+        } else {
+            return commandMap.get(st.sval);
         }
     }
 
@@ -667,70 +656,5 @@ public class ProcessLog {
         }
     }
 
-    static enum VMAdviceHandlerKey {
-        OBJECT_CREATION_BEGIN,
-        OBJECT_CREATION_END,
-        ARRAY_CREATION,
-
-        OBJECT_WRITE,
-        ARRAY_WRITE,
-        STATIC_WRITE,
-
-        OBJECT_READ,
-        ARRAY_READ,
-        STATIC_READ,
-
-        ARRAY_COPY,
-        NEW_INSTANCE,
-        REMOVAL,
-        GC,
-
-        UNSEEN_OBJECT,
-
-        INITIALIZE,
-        FINALIZE,
-        RESET_TIME
-    }
-
-
-    // support methods for prettyTrace
-
-    private VMAdviceHandlerKey getKey(char k) {
-        switch (k) {
-            case OBJECT_CREATION_BEGIN_ID:
-                return VMAdviceHandlerKey.OBJECT_CREATION_BEGIN;
-            case OBJECT_CREATION_END_ID:
-                return VMAdviceHandlerKey.OBJECT_CREATION_END;
-            case ARRAY_CREATION_ID:
-                return VMAdviceHandlerKey.ARRAY_CREATION;
-
-            case OBJECT_WRITE_ID:
-                return VMAdviceHandlerKey.OBJECT_WRITE;
-            case ARRAY_WRITE_ID:
-                return VMAdviceHandlerKey.ARRAY_WRITE;
-            case STATIC_WRITE_ID:
-                return VMAdviceHandlerKey.STATIC_WRITE;
-
-            case OBJECT_READ_ID:
-                return VMAdviceHandlerKey.OBJECT_READ;
-            case ARRAY_READ_ID:
-                return VMAdviceHandlerKey.ARRAY_READ;
-            case STATIC_READ_ID:
-                return VMAdviceHandlerKey.STATIC_READ;
-
-            case ARRAY_COPY_ID:
-                return VMAdviceHandlerKey.ARRAY_COPY;
-
-            case REMOVAL_ID:
-                return VMAdviceHandlerKey.REMOVAL;
-
-            case UNSEEN_OBJECT_ID:
-                return VMAdviceHandlerKey.UNSEEN_OBJECT;
-            case RESET_TIME_ID:
-                return VMAdviceHandlerKey.RESET_TIME;
-            default:
-                throw new IllegalArgumentException("unexpected key");
-        }
-    }
 }
 

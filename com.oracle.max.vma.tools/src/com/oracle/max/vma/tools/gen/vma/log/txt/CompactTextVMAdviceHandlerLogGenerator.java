@@ -79,10 +79,20 @@ public class CompactTextVMAdviceHandlerLogGenerator {
                 out.print(", arg5");
             }
             out.printf(");%n");
-        } else if (name.contains("InvokeSpecial")) {
+        } else if (name.contains("Invoke")) {
+            out.print(", checkRepeatId(arg2, arg1), arg3");
+            out.printf(");%n");
+        } else if (name.contains("Monitor") || name.contains("Throw")) {
             out.print(", checkRepeatId(arg2, arg1)");
             out.printf(");%n");
+        } else if (name.contains("CheckCast") || name.contains("InstanceOf")) {
+            out.print(", checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4");
+            out.printf(");%n");
         } else {
+            Class<?>[] params = m.getParameterTypes();
+            for (int argc = 2; argc <= params.length; argc++) {
+                out.printf(", %s", "arg" + argc);
+            }
             out.printf(");%n");
         }
         out.printf("    }%n%n");

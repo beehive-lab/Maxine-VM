@@ -110,20 +110,26 @@ public class LoggingVMAdviceHandler extends VMAdviceHandler {
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseGC(AdviceMode arg1) {
-        if (arg1 == AdviceMode.AFTER) {
-            log.adviseGC(tng.getThreadName());
-        }
+    public void adviseBeforeGC() {
+        log.adviseBeforeGC(tng.getThreadName());
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseThreadStarting(AdviceMode arg1, VmThread arg2) {
+    public void adviseAfterGC() {
+        log.adviseAfterGC(tng.getThreadName());
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseThreadTerminating(AdviceMode arg1, VmThread arg2) {
+    public void adviseBeforeThreadStarting(VmThread arg1) {
+        log.adviseBeforeThreadStarting(tng.getThreadName());
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeThreadTerminating(VmThread arg1) {
+        log.adviseBeforeThreadTerminating(tng.getThreadName());
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
@@ -150,37 +156,79 @@ public class LoggingVMAdviceHandler extends VMAdviceHandler {
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeArrayLoad(Object arg1, int arg2, Object arg3) {
+    public void adviseBeforeConstLoad(float arg1) {
+        log.adviseBeforeConstLoad(tng.getThreadName(), arg1);
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeConstLoad(double arg1) {
+        log.adviseBeforeConstLoad(tng.getThreadName(), arg1);
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeConstLoad(Object arg1) {
+        log.adviseBeforeConstLoadObject(tng.getThreadName(), state.readId(arg1));
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeConstLoad(long arg1) {
+        log.adviseBeforeConstLoad(tng.getThreadName(), arg1);
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeIPush(int arg1) {
+        log.adviseBeforeIPush(tng.getThreadName(), arg1);
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeLoad(int arg1) {
+        log.adviseBeforeLoad(tng.getThreadName(), arg1);
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeArrayLoad(Object arg1, int arg2) {
         log.adviseBeforeArrayLoad(tng.getThreadName(), state.readId(arg1), arg2);
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeArrayLoad(Object arg1, int arg2, double arg3) {
-        log.adviseBeforeArrayLoad(tng.getThreadName(), state.readId(arg1), arg2);
+    public void adviseBeforeStore(int arg1, Object arg2) {
+        log.adviseBeforeStoreObject(tng.getThreadName(), arg1, state.readId(arg2));
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeArrayLoad(Object arg1, int arg2, float arg3) {
-        log.adviseBeforeArrayLoad(tng.getThreadName(), state.readId(arg1), arg2);
+    public void adviseBeforeStore(int arg1, long arg2) {
+        log.adviseBeforeStore(tng.getThreadName(), arg1, arg2);
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeArrayLoad(Object arg1, int arg2, long arg3) {
-        log.adviseBeforeArrayLoad(tng.getThreadName(), state.readId(arg1), arg2);
+    public void adviseBeforeStore(int arg1, float arg2) {
+        log.adviseBeforeStore(tng.getThreadName(), arg1, arg2);
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeStore(int arg1, double arg2) {
+        log.adviseBeforeStore(tng.getThreadName(), arg1, arg2);
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeArrayStore(Object arg1, int arg2, Object arg3) {
-        log.adviseBeforeArrayStore(tng.getThreadName(), state.readId(arg1), arg2, state.readId(arg3));
+        log.adviseBeforeArrayStoreObject(tng.getThreadName(), state.readId(arg1), arg2, state.readId(arg3));
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeArrayStore(Object arg1, int arg2, long arg3) {
+    public void adviseBeforeArrayStore(Object arg1, int arg2, double arg3) {
         log.adviseBeforeArrayStore(tng.getThreadName(), state.readId(arg1), arg2, arg3);
     }
 
@@ -192,34 +240,103 @@ public class LoggingVMAdviceHandler extends VMAdviceHandler {
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeArrayStore(Object arg1, int arg2, double arg3) {
+    public void adviseBeforeArrayStore(Object arg1, int arg2, long arg3) {
         log.adviseBeforeArrayStore(tng.getThreadName(), state.readId(arg1), arg2, arg3);
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeGetStatic(Object arg1, int arg2, Object arg3) {
-        ClassActor ca = ObjectAccess.readClassActor(arg1);
-        log.adviseBeforeGetStatic(tng.getThreadName(), ca.name(), state.readId(ca.classLoader), ca.findStaticFieldActor(arg2).name());
+    public void adviseBeforeStackAdjust(int arg1) {
+        log.adviseBeforeStackAdjust(tng.getThreadName(), arg1);
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeGetStatic(Object arg1, int arg2, double arg3) {
-        ClassActor ca = ObjectAccess.readClassActor(arg1);
-        log.adviseBeforeGetStatic(tng.getThreadName(), ca.name(), state.readId(ca.classLoader), ca.findStaticFieldActor(arg2).name());
+    public void adviseBeforeOperation(int arg1, double arg2, double arg3) {
+        log.adviseBeforeOperation(tng.getThreadName(), arg1, arg2, arg3);
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeGetStatic(Object arg1, int arg2, long arg3) {
-        ClassActor ca = ObjectAccess.readClassActor(arg1);
-        log.adviseBeforeGetStatic(tng.getThreadName(), ca.name(), state.readId(ca.classLoader), ca.findStaticFieldActor(arg2).name());
+    public void adviseBeforeOperation(int arg1, long arg2, long arg3) {
+        log.adviseBeforeOperation(tng.getThreadName(), arg1, arg2, arg3);
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeGetStatic(Object arg1, int arg2, float arg3) {
+    public void adviseBeforeOperation(int arg1, float arg2, float arg3) {
+        log.adviseBeforeOperation(tng.getThreadName(), arg1, arg2, arg3);
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeIInc(int arg1, int arg2, int arg3) {
+        log.adviseBeforeIInc(tng.getThreadName(), arg1, arg2, arg3);
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeConversion(int arg1, double arg2) {
+        log.adviseBeforeConversion(tng.getThreadName(), arg1, arg2);
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeConversion(int arg1, long arg2) {
+        log.adviseBeforeConversion(tng.getThreadName(), arg1, arg2);
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeConversion(int arg1, float arg2) {
+        log.adviseBeforeConversion(tng.getThreadName(), arg1, arg2);
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeIf(int arg1, int arg2, int arg3) {
+        log.adviseBeforeIf(tng.getThreadName(), arg1, arg2, arg3);
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeIf(int arg1, Object arg2, Object arg3) {
+        log.adviseBeforeIfObject(tng.getThreadName(), arg1, state.readId(arg2), state.readId(arg3));
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeReturn(Object arg1) {
+        log.adviseBeforeReturnObject(tng.getThreadName(), state.readId(arg1));
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeReturn(long arg1) {
+        log.adviseBeforeReturn(tng.getThreadName(), arg1);
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeReturn(float arg1) {
+        log.adviseBeforeReturn(tng.getThreadName(), arg1);
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeReturn(double arg1) {
+        log.adviseBeforeReturn(tng.getThreadName(), arg1);
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeReturn() {
+        log.adviseBeforeReturn(tng.getThreadName());
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeGetStatic(Object arg1, int arg2) {
         ClassActor ca = ObjectAccess.readClassActor(arg1);
         log.adviseBeforeGetStatic(tng.getThreadName(), ca.name(), state.readId(ca.classLoader), ca.findStaticFieldActor(arg2).name());
     }
@@ -228,12 +345,12 @@ public class LoggingVMAdviceHandler extends VMAdviceHandler {
     @Override
     public void adviseBeforePutStatic(Object arg1, int arg2, Object arg3) {
         ClassActor ca = ObjectAccess.readClassActor(arg1);
-        log.adviseBeforePutStatic(tng.getThreadName(), ca.name(), state.readId(ca.classLoader), ca.findStaticFieldActor(arg2).name(), state.readId(arg3));
+        log.adviseBeforePutStaticObject(tng.getThreadName(), ca.name(), state.readId(ca.classLoader), ca.findStaticFieldActor(arg2).name(), state.readId(arg3));
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforePutStatic(Object arg1, int arg2, double arg3) {
+    public void adviseBeforePutStatic(Object arg1, int arg2, float arg3) {
         ClassActor ca = ObjectAccess.readClassActor(arg1);
         log.adviseBeforePutStatic(tng.getThreadName(), ca.name(), state.readId(ca.classLoader), ca.findStaticFieldActor(arg2).name(), arg3);
     }
@@ -247,39 +364,27 @@ public class LoggingVMAdviceHandler extends VMAdviceHandler {
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforePutStatic(Object arg1, int arg2, float arg3) {
+    public void adviseBeforePutStatic(Object arg1, int arg2, double arg3) {
         ClassActor ca = ObjectAccess.readClassActor(arg1);
         log.adviseBeforePutStatic(tng.getThreadName(), ca.name(), state.readId(ca.classLoader), ca.findStaticFieldActor(arg2).name(), arg3);
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeGetField(Object arg1, int arg2, Object arg3) {
-        log.adviseBeforeGetField(tng.getThreadName(), state.readId(arg1), ObjectAccess.readClassActor(arg1).findInstanceFieldActor(arg2).name());
-    }
-
-    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeGetField(Object arg1, int arg2, double arg3) {
-        log.adviseBeforeGetField(tng.getThreadName(), state.readId(arg1), ObjectAccess.readClassActor(arg1).findInstanceFieldActor(arg2).name());
-    }
-
-    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeGetField(Object arg1, int arg2, long arg3) {
-        log.adviseBeforeGetField(tng.getThreadName(), state.readId(arg1), ObjectAccess.readClassActor(arg1).findInstanceFieldActor(arg2).name());
-    }
-
-    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeGetField(Object arg1, int arg2, float arg3) {
+    public void adviseBeforeGetField(Object arg1, int arg2) {
         log.adviseBeforeGetField(tng.getThreadName(), state.readId(arg1), ObjectAccess.readClassActor(arg1).findInstanceFieldActor(arg2).name());
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforePutField(Object arg1, int arg2, Object arg3) {
-        log.adviseBeforePutField(tng.getThreadName(), state.readId(arg1), ObjectAccess.readClassActor(arg1).findInstanceFieldActor(arg2).name(), state.readId(arg3));
+        log.adviseBeforePutFieldObject(tng.getThreadName(), state.readId(arg1), ObjectAccess.readClassActor(arg1).findInstanceFieldActor(arg2).name(), state.readId(arg3));
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforePutField(Object arg1, int arg2, float arg3) {
+        log.adviseBeforePutField(tng.getThreadName(), state.readId(arg1), ObjectAccess.readClassActor(arg1).findInstanceFieldActor(arg2).name(), arg3);
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
@@ -296,16 +401,95 @@ public class LoggingVMAdviceHandler extends VMAdviceHandler {
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforePutField(Object arg1, int arg2, float arg3) {
-        log.adviseBeforePutField(tng.getThreadName(), state.readId(arg1), ObjectAccess.readClassActor(arg1).findInstanceFieldActor(arg2).name(), arg3);
+    public void adviseBeforeInvokeVirtual(Object arg1, int arg2) {
+        log.adviseBeforeInvokeVirtual(tng.getThreadName(), state.readId(arg1), arg2);
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeSpecial(Object arg1) {
-        log.adviseAfterInvokeSpecial(tng.getThreadName(), state.readId(arg1));
+    public void adviseBeforeInvokeSpecial(Object arg1, int arg2) {
+        log.adviseBeforeInvokeSpecial(tng.getThreadName(), state.readId(arg1), arg2);
     }
 
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeInvokeStatic(Object arg1, int arg2) {
+        log.adviseBeforeInvokeStatic(tng.getThreadName(), state.readId(arg1), arg2);
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeInvokeInterface(Object arg1, int arg2) {
+        log.adviseBeforeInvokeInterface(tng.getThreadName(), state.readId(arg1), arg2);
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeArrayLength(Object arg1, int arg2) {
+        log.adviseBeforeArrayLength(tng.getThreadName(), state.readId(arg1), arg2);
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeThrow(Object arg1) {
+        log.adviseBeforeThrow(tng.getThreadName(), state.readId(arg1));
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeCheckCast(Object arg1, Object arg2) {
+        ClassActor ca = ObjectAccess.readClassActor(arg2);
+        log.adviseBeforeCheckCast(tng.getThreadName(), state.readId(arg1), ca.name(), state.readId(ca.classLoader));
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeInstanceOf(Object arg1, Object arg2) {
+        ClassActor ca = ObjectAccess.readClassActor(arg2);
+        log.adviseBeforeInstanceOf(tng.getThreadName(), state.readId(arg1), ca.name(), state.readId(ca.classLoader));
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeMonitorEnter(Object arg1) {
+        log.adviseBeforeMonitorEnter(tng.getThreadName(), state.readId(arg1));
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeMonitorExit(Object arg1) {
+        log.adviseBeforeMonitorExit(tng.getThreadName(), state.readId(arg1));
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeBytecode(int arg1) {
+        log.adviseBeforeBytecode(tng.getThreadName(), arg1);
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseAfterInvokeVirtual(Object arg1, int arg2) {
+        log.adviseAfterInvokeVirtual(tng.getThreadName(), state.readId(arg1), arg2);
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseAfterInvokeSpecial(Object arg1, int arg2) {
+        log.adviseAfterInvokeSpecial(tng.getThreadName(), state.readId(arg1), arg2);
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseAfterInvokeStatic(Object arg1, int arg2) {
+        log.adviseAfterInvokeStatic(tng.getThreadName(), state.readId(arg1), arg2);
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseAfterInvokeInterface(Object arg1, int arg2) {
+        log.adviseAfterInvokeInterface(tng.getThreadName(), state.readId(arg1), arg2);
+    }
 
 
 }

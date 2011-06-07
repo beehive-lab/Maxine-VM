@@ -396,7 +396,7 @@ public class T1X implements RuntimeCompiler {
      * @return a {@link Templates} instance.
      */
     @HOSTED_ONLY
-    public Templates createTemplates(Class<?> templateSourceClass, T1X altT1X, boolean checkComplete, Templates templates) {
+    public static Templates createTemplates(Class<?> templateSourceClass, T1X altT1X, boolean checkComplete, Templates templates) {
         Trace.begin(1, "creating T1X templates from " + templateSourceClass.getName());
         if (templates == null) {
             templates = new Templates();

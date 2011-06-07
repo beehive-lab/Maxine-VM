@@ -74,14 +74,17 @@ public class VMAJavaRunScheme extends JavaRunScheme {
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
+        if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
+            try {
+                adviceHandler = (VMAdviceHandler) Class.forName(VMAOptions.getHandlerClassName()).newInstance();
+            } catch (Throwable ex) {
+                ProgramError.unexpected("VMA initialization failed", ex);
+            }
+
+        }
         if (phase == MaxineVM.Phase.RUNNING) {
             if (VMAOptions.VMA) {
-                try {
-                    adviceHandler = VMAdviceHandlerFactory.create();
-                    adviceHandler.initialise(state);
-                } catch (Throwable ex) {
-                    ProgramError.unexpected("VMA initialization failed", ex);
-                }
+                adviceHandler.initialise(state);
                 advising = true;
                 threadStarting();
             }
@@ -109,7 +112,7 @@ public class VMAJavaRunScheme extends JavaRunScheme {
             Pointer buffer = VirtualMemory.allocate(Size.fromInt(BUFFER_SIZE), VirtualMemory.Type.DATA);
             assert !buffer.isZero();
             VM_ADVISING_BUFFER.store3(buffer);
-            adviceHandler.adviseThreadStarting(AdviceMode.BEFORE, VmThread.current());
+            adviceHandler.adviseBeforeThreadStarting(VmThread.current());
             enableAdvising();
         }
     }
@@ -119,7 +122,7 @@ public class VMAJavaRunScheme extends JavaRunScheme {
      */
     public static void threadTerminating() {
         if (advising) {
-            adviceHandler.adviseThreadTerminating(AdviceMode.BEFORE, VmThread.current());
+            adviceHandler.adviseBeforeThreadTerminating(VmThread.current());
         }
     }
 
@@ -148,13 +151,12 @@ public class VMAJavaRunScheme extends JavaRunScheme {
     }
 
     /**
-     * Is the VM being run with advising turned on and advising enabled for the
-     * current thread?
+     * Is advising enabled for the current thread?
      * @return
      */
     @INLINE
-    public static boolean isEnabled() {
-        return advising && VmThread.currentTLA().getWord(VM_ADVISING.index) != Word.zero();
+    public static boolean isAdvising() {
+        return VmThread.currentTLA().getWord(VM_ADVISING.index) != Word.zero();
     }
 
 }

@@ -38,14 +38,19 @@ import com.sun.max.vm.thread.*;
 
 public abstract class RuntimeAdvice extends BytecodeAdvice {
     /**
-     * Garbage collection.
+     * Before Garbage collection.
      *
      */
-    public abstract void adviseGC(AdviceMode adviceMode);
+    public abstract void adviseBeforeGC();
+
+    /**
+     * After Garbage collection.
+     *
+     */
+    public abstract void adviseAfterGC();
 
     /**
      * Called as a side-effect of GC when an object survives a garbage collection.
-     * Something of a special case in that there is no {@link AdviceMode}.
      */
     public abstract void gcSurvivor(Pointer cell);
 
@@ -54,13 +59,13 @@ public abstract class RuntimeAdvice extends BytecodeAdvice {
      * @param adviceMode
      * @param vmThread
      */
-    public abstract void adviseThreadStarting(AdviceMode adviceMode, VmThread vmThread);
+    public abstract void adviseBeforeThreadStarting(VmThread vmThread);
 
     /**
      * Thread termination.
      * @param adviceMode
      * @param vmThread
      */
-    public abstract void adviseThreadTerminating(AdviceMode adviceMode, VmThread vmThread);
+    public abstract void adviseBeforeThreadTerminating(VmThread vmThread);
 
 }

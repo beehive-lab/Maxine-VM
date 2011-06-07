@@ -44,37 +44,77 @@ public class NullVMAdviceHandler extends VMAdviceHandler {
 
     // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseGC(AdviceMode arg1) {
+    public void adviseBeforeGC() {
     }
 
     // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseThreadStarting(AdviceMode arg1, VmThread arg2) {
+    public void adviseAfterGC() {
     }
 
     // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseThreadTerminating(AdviceMode arg1, VmThread arg2) {
+    public void adviseBeforeThreadStarting(VmThread arg1) {
     }
 
     // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeArrayLoad(Object arg1, int arg2, long arg3) {
+    public void adviseBeforeThreadTerminating(VmThread arg1) {
     }
 
     // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeArrayLoad(Object arg1, int arg2, float arg3) {
+    public void adviseBeforeConstLoad(long arg1) {
     }
 
     // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeArrayLoad(Object arg1, int arg2, double arg3) {
+    public void adviseBeforeConstLoad(Object arg1) {
     }
 
     // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeArrayLoad(Object arg1, int arg2, Object arg3) {
+    public void adviseBeforeConstLoad(float arg1) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeConstLoad(double arg1) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeIPush(int arg1) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeLoad(int arg1) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeArrayLoad(Object arg1, int arg2) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeStore(int arg1, long arg2) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeStore(int arg1, float arg2) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeStore(int arg1, double arg2) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeStore(int arg1, Object arg2) {
     }
 
     // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
@@ -99,32 +139,92 @@ public class NullVMAdviceHandler extends VMAdviceHandler {
 
     // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeGetStatic(Object arg1, int arg2, double arg3) {
+    public void adviseBeforeStackAdjust(int arg1) {
     }
 
     // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeGetStatic(Object arg1, int arg2, long arg3) {
+    public void adviseBeforeOperation(int arg1, long arg2, long arg3) {
     }
 
     // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeGetStatic(Object arg1, int arg2, float arg3) {
+    public void adviseBeforeOperation(int arg1, float arg2, float arg3) {
     }
 
     // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeGetStatic(Object arg1, int arg2, Object arg3) {
+    public void adviseBeforeOperation(int arg1, double arg2, double arg3) {
     }
 
     // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforePutStatic(Object arg1, int arg2, long arg3) {
+    public void adviseBeforeIInc(int arg1, int arg2, int arg3) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeConversion(int arg1, long arg2) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeConversion(int arg1, float arg2) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeConversion(int arg1, double arg2) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeIf(int arg1, int arg2, int arg3) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeIf(int arg1, Object arg2, Object arg3) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeReturn(Object arg1) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeReturn(long arg1) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeReturn(float arg1) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeReturn(double arg1) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeReturn() {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeGetStatic(Object arg1, int arg2) {
     }
 
     // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforePutStatic(Object arg1, int arg2, double arg3) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforePutStatic(Object arg1, int arg2, long arg3) {
     }
 
     // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
@@ -139,27 +239,7 @@ public class NullVMAdviceHandler extends VMAdviceHandler {
 
     // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeGetField(Object arg1, int arg2, long arg3) {
-    }
-
-    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeGetField(Object arg1, int arg2, float arg3) {
-    }
-
-    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeGetField(Object arg1, int arg2, double arg3) {
-    }
-
-    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeGetField(Object arg1, int arg2, Object arg3) {
-    }
-
-    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforePutField(Object arg1, int arg2, float arg3) {
+    public void adviseBeforeGetField(Object arg1, int arg2) {
     }
 
     // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
@@ -174,12 +254,87 @@ public class NullVMAdviceHandler extends VMAdviceHandler {
 
     // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
+    public void adviseBeforePutField(Object arg1, int arg2, float arg3) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
     public void adviseBeforePutField(Object arg1, int arg2, Object arg3) {
     }
 
     // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeSpecial(Object arg1) {
+    public void adviseBeforeInvokeVirtual(Object arg1, int arg2) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeInvokeSpecial(Object arg1, int arg2) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeInvokeStatic(Object arg1, int arg2) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeInvokeInterface(Object arg1, int arg2) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeArrayLength(Object arg1, int arg2) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeThrow(Object arg1) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeCheckCast(Object arg1, Object arg2) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeInstanceOf(Object arg1, Object arg2) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeMonitorEnter(Object arg1) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeMonitorExit(Object arg1) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeBytecode(int arg1) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseAfterInvokeVirtual(Object arg1, int arg2) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseAfterInvokeSpecial(Object arg1, int arg2) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseAfterInvokeStatic(Object arg1, int arg2) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseAfterInvokeInterface(Object arg1, int arg2) {
     }
 
     // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY

@@ -130,7 +130,7 @@ public class ConvertLog {
         boolean logUsesAbsTime; // constant once assigned
         long lineTime; // time field of last line visited
         long lineAbsTime; // absolute time of last line visited
-        char command;
+        Key command;
         String[] lineParts;
 
         void visitLine(String line, PrintStream ps) {
@@ -138,7 +138,7 @@ public class ConvertLog {
             if (TextVMAdviceHandlerLog.hasTime(command)) {
                 lineTime = Long.parseLong(lineParts[1]);
                 lineAbsTime = logUsesAbsTime ? lineTime : lineAbsTime + lineTime;
-            } else if (command == INITIALIZE_ID || command == RESET_TIME_ID || command == FINALIZE_ID) {
+            } else if (command == Key.INITIALIZE_LOG || command == Key.RESET_TIME || command == Key.FINALIZE_LOG) {
                 checkTimeFormat();
             }
         }
@@ -148,14 +148,14 @@ public class ConvertLog {
         }
 
         void setCommand(String line) {
-            command = line.charAt(0);
             lineParts = line.split(" ");
+            command = commandMap.get(lineParts[0]);
         }
 
         void checkTimeFormat() {
             lineTime = Long.parseLong(lineParts[1]);
             lineAbsTime = lineTime;
-            if (command == INITIALIZE_ID) {
+            if (command == Key.INITIALIZE_LOG) {
                 logUsesAbsTime = lineParts[2].equals("true");
             }
         }
@@ -197,7 +197,7 @@ public class ConvertLog {
         @Override
         void visitLine(String line, PrintStream ps) {
             super.visitLine(line, ps);
-            if (command == RESET_TIME_ID) {
+            if (command == Key.RESET_TIME) {
                 // drop these records
                 return;
             }
@@ -212,7 +212,7 @@ public class ConvertLog {
             for (int i = 0; i < linesArray.length; i++) {
                 String line;
                 String[] lineParts = linesArray[i].lineParts;
-                if (TextVMAdviceHandlerLog.hasTime(lineParts[0].charAt(0))) {
+                if (TextVMAdviceHandlerLog.hasTime(commandMap.get(lineParts[0]))) {
                     line = fixupTime(linesArray[i], lastTime);
                     lastTime = linesArray[i].time;
                 } else {
@@ -253,7 +253,7 @@ public class ConvertLog {
 
             BatchData(long startTime) {
                 lastTime = startTime;
-                lines.add(new StringBuilder().append(RESET_TIME_ID).append(' ').append(startTime).toString());
+                lines.add(new StringBuilder().append(Key.RESET_TIME).append(' ').append(startTime).toString());
             }
         }
 
@@ -278,13 +278,13 @@ public class ConvertLog {
                     currentBatch = batch;
                 }
                 currentBatch.lines.add(fixupTime(currentBatch, lineParts, lineAbsTime));
-            } else if (command == INITIALIZE_ID) {
+            } else if (command == Key.INITIALIZE_LOG) {
                 initialize = line;
                 initialBatch = new BatchData(lineAbsTime);
                 currentBatch = initialBatch;
-            } else if (command == RESET_TIME_ID) {
+            } else if (command == Key.RESET_TIME) {
                 // ignore existing resets
-            } else if (command == FINALIZE_ID) {
+            } else if (command == Key.FINALIZE_LOG) {
                 finalize = line;
             } else {
                 // no time/thread component
@@ -354,7 +354,7 @@ public class ConvertLog {
                         }
                         line = sb.toString();
                     }
-                } else if (command == INITIALIZE_ID) {
+                } else if (command == Key.INITIALIZE_LOG) {
                     line = lineParts[0] + " " + lineAbsTime + " " + !logUsesAbsTime;
                 }
                 ps.println(line);
