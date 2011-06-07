@@ -652,6 +652,8 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
 
     @Override
     public void verify(AfterMarkSweepVerifier verifier) {
+        tlabAllocationRegions.checkIsAddressOrdered();
+        allocationRegions.checkIsAddressOrdered();
         HeapRegionRangeIterable allRegions = heapAccount.allocatedRegions();
         allRegions.reset();
         while (allRegions.hasNext()) {
@@ -660,7 +662,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
     }
 
 
-    public Size sweep(TricolorHeapMarker heapMarker) {
+    public void sweep(TricolorHeapMarker heapMarker) {
         HeapRegionList allRegions = heapAccount.allocatedRegions().regionList;
         if (MaxineVM.isDebug()) {
             allRegions.checkIsAddressOrdered();
@@ -670,7 +672,6 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         regionInfoIterable.initialize(allRegions);
         regionInfoIterable.reset();
         heapMarker.sweep(this);
-        return Size.zero();
     }
 
     @Override
