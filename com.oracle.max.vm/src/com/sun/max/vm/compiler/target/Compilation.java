@@ -171,9 +171,11 @@ public class Compilation /*implements Future<TargetMethod>*/ {
     /**
      * Perform the compilation, notifying the specified observers.
      *
+     * @param supersede specifies if the result should supersede any existing target method for the associated class
+     *            method actor (such that it becomes the new answer to {@link ClassMethodActor#currentTargetMethod()})
      * @return the target method that is the result of the compilation
      */
-    public TargetMethod compile() {
+    public TargetMethod compile(boolean supersede) {
         RuntimeCompiler compiler = this.compiler;
         TargetMethod targetMethod = null;
 
@@ -217,7 +219,7 @@ public class Compilation /*implements Future<TargetMethod>*/ {
                 // assert classMethodActor.targetState == this;
                 if (targetMethod != null) {
                     // compilation succeeded and produced a target method
-                    classMethodActor.targetState = TargetState.addTargetMethod(targetMethod, previousTargetState);
+                    classMethodActor.targetState = TargetState.addTargetMethod(targetMethod, previousTargetState, supersede);
                 }
                 // compilation finished: this must come after the assignment to classMethodActor.targetState
                 done = true;

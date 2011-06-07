@@ -568,6 +568,8 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
             new VmStackFrameWalker(thread.tla()).inspect(ip, sp, fp, this);
         }
 
+        private ClassMethodActor lastCalleeMethod;
+
         @Override
         public boolean visitFrame(Cursor current, Cursor callee) {
 
@@ -578,10 +580,13 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
                 assert fp == current.fp();
                 return true;
             } else {
+                if (callee.targetMethod() != null && callee.targetMethod().classMethodActor != null) {
+                    lastCalleeMethod = callee.targetMethod().classMethodActor;
+                }
                 TargetMethod tm = current.targetMethod();
                 if (patchContext != null) {
                     if (tm != null && patchContext.methods.contains(tm)) {
-                        patchReturnAddress(current, callee);
+                        patchReturnAddress(current, callee, lastCalleeMethod);
                     }
                 }
 
@@ -627,11 +632,12 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
      *
      * @param caller the frame of the method to be deoptimized
      * @param callee the callee frame whose return address is to be patched
+     * @param calleeMethod the class method actor that is being called. This is required in addition to {@code callee}
+     *            in the case where {@code callee} is an adapter frame
      */
-    static void patchReturnAddress(Cursor caller, Cursor callee) {
-        TargetMethod tm = caller.targetMethod();
-        ClassMethodActor calleeMethod = callee.targetMethod().classMethodActor;
+    static void patchReturnAddress(Cursor caller, Cursor callee, ClassMethodActor calleeMethod) {
         assert calleeMethod != null;
+        TargetMethod tm = caller.targetMethod();
         Stub stub = vm().stubs.deoptStub(calleeMethod.resultKind().ciKind);
         Pointer to = stub.codeStart().asPointer();
         Pointer save = caller.sp().plus(DEOPT_RETURN_ADDRESS_OFFSET);
@@ -707,7 +713,7 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
     @NEVER_INLINE // makes inspecting easier
     static void logPatchReturnAddress(TargetMethod tm, ClassMethodActor calleeMethod, Stub stub, Address to, Pointer save, Pointer patch, Address from) {
         if (TraceDeopt) {
-            Log.println("DEOPT: patch return address @ " + patch.to0xHexString() + " of call to " + calleeMethod +
+            Log.println("DEOPT: patched return address @ " + patch.to0xHexString() + " of call to " + calleeMethod +
                             ": " + from.to0xHexString() + '[' + tm + '+' + from.minus(tm.codeStart()).toInt() + ']' +
                             " -> " + to.to0xHexString() + '[' + stub + "], saved old value @ " + save.to0xHexString());
         }

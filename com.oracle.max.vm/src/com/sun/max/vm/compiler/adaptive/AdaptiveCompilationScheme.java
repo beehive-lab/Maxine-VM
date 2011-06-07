@@ -246,6 +246,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
         while (true) {
             Compilation compilation;
             boolean doCompile = true;
+            boolean supersede = true;
             synchronized (classMethodActor) {
                 assert !(classMethodActor.isNative() && classMethodActor.isVmEntryPoint()) : "cannot compile JNI functions that are native";
                 Object targetState = classMethodActor.targetState;
@@ -263,10 +264,15 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                         // the method is currently being compiled, just wait for the result
                         doCompile = false;
                     }
-                } else if (DEOPTIMIZING.isSet(flags) || targetState instanceof TargetMethod && ((TargetMethod) targetState).invalidated() != null) {
-                    // Invalidated method must be replaced with a baseline compiled method
+                } else if (DEOPTIMIZING.isSet(flags)) {
                     compilation = new Compilation(this, baselineCompiler, classMethodActor, targetState, Thread.currentThread());
                     classMethodActor.targetState = compilation;
+                    boolean invalidated = targetState instanceof TargetMethod && ((TargetMethod) targetState).invalidated() != null;
+                    if (!invalidated) {
+                        // If deoptimizing due to uncommon trap, the (still valid) optimized method should remain
+                        // the default for linking call sites.
+                        supersede = false;
+                    }
                 } else {
                     // this method has already been compiled once
                     RuntimeCompiler compiler = retryCompiler == null ? selectCompiler(classMethodActor, classMethodActor.targetMethodCount() == 0, flags) : retryCompiler;
@@ -281,7 +287,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
 
             try {
                 if (doCompile) {
-                    return compilation.compile();
+                    return compilation.compile(supersede);
                 }
                 return compilation.get();
             } catch (Throwable t) {
@@ -424,7 +430,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
             if (GCOnRecompilation) {
                 System.gc();
             }
-            compilation.compile();
+            compilation.compile(true);
             compilation = null;
         }
     }

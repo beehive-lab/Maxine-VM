@@ -706,10 +706,7 @@ public abstract class StackFrameWalker {
     }
 
     public final void advance(Word ip, Word sp, Word fp, boolean ipIsReturnAddress) {
-        if (!(current.targetMethod instanceof Adapter)) {
-            // Adapter frames are never of interest when visiting the frame of a caller
-            callee.copyFrom(current);
-        }
+        callee.copyFrom(current);
         current.advance(ip.asPointer(), sp.asPointer(), fp.asPointer(), ipIsReturnAddress);
     }
 

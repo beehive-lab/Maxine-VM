@@ -102,16 +102,28 @@ public class TargetState {
         return NOT_COMPILED;
     }
 
-    public static Object addTargetMethod(TargetMethod targetMethod, Object targetState) {
+    /**
+     * @param supersede specifies if {@code targetMethod} should supersede {@code targetState}
+     *            such that it becomes the new answer to {@link #currentTargetMethod(Object)}
+     */
+    public static Object addTargetMethod(TargetMethod targetMethod, Object targetState, boolean supersede) {
         if (targetState == null || targetState instanceof Throwable) {
             // not compiled yet
             return targetMethod;
         } else if (targetState instanceof TargetMethod) {
             // only compiled once, make into an array
-            return new TargetMethod[] {targetMethod, (TargetMethod) targetState};
+            if (supersede) {
+                return new TargetMethod[] {targetMethod, (TargetMethod) targetState};
+            } else {
+                return new TargetMethod[] {(TargetMethod) targetState, targetMethod};
+            }
         } else if (targetState instanceof TargetMethod[]) {
-            // compiled multiple times, make this the latest
-            return Utils.prepend((TargetMethod[]) targetState, targetMethod);
+            // compiled multiple times
+            if (supersede) {
+                return Utils.prepend((TargetMethod[]) targetState, targetMethod);
+            } else {
+                return Utils.concat((TargetMethod[]) targetState, targetMethod);
+            }
         }
         throw ProgramError.unexpected("Unknown or invalid TargetState: " + targetState);
     }
