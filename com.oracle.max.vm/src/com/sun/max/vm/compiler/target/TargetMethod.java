@@ -149,7 +149,7 @@ public abstract class TargetMethod extends MemoryRegion {
 
     /**
      * Determines if this target method represents compiled code.
-     * A target method has a non-null {@link TargetMethod#classMethodActor})
+     * A target method has a non-null {@link TargetMethod#classMethodActor}
      * iff is it compiled.
      */
     public final boolean isCompiled() {

@@ -34,7 +34,6 @@ import com.sun.c1x.graph.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
-import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
@@ -157,12 +156,6 @@ public class C1X implements RuntimeCompiler {
     }
 
     @Override
-    public <T extends TargetMethod> Class<T> compiledType() {
-        Class<Class<T>> type = null;
-        return Utils.cast(type, C1XTargetMethod.class);
-    }
-
-    @Override
     public void initialize(Phase phase) {
         if (isHosted() && phase == Phase.COMPILING) {
             // Temporary work-around to support the @ACCESSOR annotation.
@@ -171,7 +164,7 @@ public class C1X implements RuntimeCompiler {
             if (!optionsRegistered) {
                 C1XOptions.setOptimizationLevel(optLevelOption.getValue());
                 C1XOptions.UseConstDirectCall = true; // Default
-                C1XOptions.UseAssumptions = true; // disable if there are still deopt bugs
+                C1XOptions.UseAssumptions = deoptimizationSupported;
                 C1XOptions.OptIntrinsify = false; // TODO (ds): remove once intrinisification works for Maxine
                 C1XOptions.StackShadowPages = VmThread.STACK_SHADOW_PAGES;
                 VMOptions.addFieldOptions("-C1X:", C1XOptions.class, getHelpMap());
@@ -236,6 +229,19 @@ public class C1X implements RuntimeCompiler {
             }
             // Loop back and recompile.
         } while(true);
+    }
+
+    public boolean canProduceDeoptimizedCode() {
+        return false;
+    }
+
+    @HOSTED_ONLY
+    private static boolean deoptimizationSupported = true;
+
+    @HOSTED_ONLY
+    public void deoptimizationNotSupported() {
+        C1XOptions.UseAssumptions = false;
+        deoptimizationSupported = false;
     }
 
     public void resetMetrics() {
