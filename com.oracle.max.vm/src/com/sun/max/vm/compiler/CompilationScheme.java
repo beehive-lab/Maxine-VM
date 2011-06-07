@@ -93,9 +93,9 @@ public interface CompilationScheme extends VMScheme {
         DEOPTIMIZING,
 
         /**
-         * The compilation request is for a target method that profiling has determined is "hot".
+         * The compilation request is for an optimized target method.
          */
-        COUNTER_OVERFLOW;
+        OPTIMIZE;
 
         public static final int NONE = 0;
 
@@ -255,7 +255,7 @@ public interface CompilationScheme extends VMScheme {
                 // There is no newer compiled version available yet that we could just patch to, so recompile
                 logCounterOverflow(mpo, "");
                 synchronized (mpo) {
-                    newMethod = vmConfig().compilationScheme().synchronousCompile(classMethodActor, COUNTER_OVERFLOW.mask);
+                    newMethod = vmConfig().compilationScheme().synchronousCompile(classMethodActor, OPTIMIZE.mask);
                 }
             }
 

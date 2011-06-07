@@ -155,6 +155,9 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
         } else {
             baselineCompiler = optimizingCompiler;
         }
+        if (!baselineCompiler.canProduceDeoptimizedCode()) {
+            optimizingCompiler.deoptimizationNotSupported();
+        }
     }
 
     @HOSTED_ONLY
@@ -252,7 +255,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 Object targetState = classMethodActor.targetState;
                 if (targetState == null) {
                     // this is the first compilation.
-                    RuntimeCompiler compiler = retryCompiler == null ? selectCompiler(classMethodActor, true, flags) : retryCompiler;
+                    RuntimeCompiler compiler = retryCompiler == null ? selectCompiler(classMethodActor, flags) : retryCompiler;
                     compilation = new Compilation(this, compiler, classMethodActor, targetState, Thread.currentThread());
                     classMethodActor.targetState = compilation;
                 } else if (targetState instanceof Compilation) {
@@ -274,12 +277,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                         supersede = false;
                     }
                 } else {
-                    // this method has already been compiled once
-                    RuntimeCompiler compiler = retryCompiler == null ? selectCompiler(classMethodActor, classMethodActor.targetMethodCount() == 0, flags) : retryCompiler;
-                    TargetMethod targetMethod = classMethodActor.currentTargetMethod();
-                    if (targetMethod != null && compiler.compiledType() == targetMethod.getClass()) {
-                        return targetMethod;
-                    }
+                    RuntimeCompiler compiler = retryCompiler == null ? selectCompiler(classMethodActor, flags) : retryCompiler;
                     compilation = new Compilation(this, compiler, classMethodActor, targetState, Thread.currentThread());
                     classMethodActor.targetState = compilation;
                 }
@@ -336,16 +334,14 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      * Select the appropriate compiler based on the current state of the method.
      *
      * @param classMethodActor the class method actor to compile
-     * @param firstCompile {@code true} if this is the first compilation of this method
-     * @param compilationFlags TODO
-     * @param recommendedCompiler the compiler recommended for use
+     * @param flags a mask of {@link CompilationFlag} values
      * @return the compiler that should be used to perform the next compilation of the method
      */
-    RuntimeCompiler selectCompiler(ClassMethodActor classMethodActor, boolean firstCompile, int compilationFlags) {
+    RuntimeCompiler selectCompiler(ClassMethodActor classMethodActor, int compilationFlags) {
 
         int flags = classMethodActor.flags() | classMethodActor.compilee().flags();
         if (Actor.isUnsafe(flags)) {
-            assert !DEOPTIMIZING.isSet(compilationFlags);
+            assert !DEOPTIMIZING.isSet(compilationFlags) : "cannot produce deoptimized version of " + classMethodActor;
             return optimizingCompiler;
         }
 
@@ -359,17 +355,13 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 compiler = optimizingCompiler;
             }
         } else {
-            // in optimized mode, default to the optimizing compiler
-            if (mode == Mode.OPTIMIZED && !DEOPTIMIZING.isSet(compilationFlags)) {
+            if (DEOPTIMIZING.isSet(compilationFlags)) {
+                compiler = baselineCompiler;
+                assert baselineCompiler.canProduceDeoptimizedCode() : "deoptimization is not supported by the baseline compiler " + baselineCompiler;
+            } else if (mode == Mode.OPTIMIZED || OPTIMIZE.isSet(flags)) {
                 compiler = optimizingCompiler;
             } else {
-                // use the baseline if the first compile or in baseline mode
-                if (firstCompile || mode == Mode.BASELINE || DEOPTIMIZING.isSet(compilationFlags)) {
-                    compiler = baselineCompiler;
-                } else {
-                    // not the first compile, use the optimizing compiler
-                    compiler = optimizingCompiler;
-                }
+                compiler = baselineCompiler;
             }
         }
 
