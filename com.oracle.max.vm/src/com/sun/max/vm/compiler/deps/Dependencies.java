@@ -174,18 +174,26 @@ public final class Dependencies {
 
     /**
      * Invalidates this set of dependencies.
+     *
+     * @return {@code true} if this set of dependencies was not already invalidated
      */
-    void invalidate() {
+    boolean invalidate() {
         // Called only when modifying the class hierarchy.
         FatalError.check(classHierarchyLock.isWriteLocked(), "Must hold class hierarchy lock in write mode");
 
-        // Remove all other mappings from context types not involved in the currently class hierachy change
+        // The above lock makes an atomic CAS unnecessary for 'packed'
+        if (packed == INVALIDATED) {
+            return false;
+        }
+
+        // Remove all other mappings from context types not involved in the current class hierarchy change
         contextDependents.removeDependencies(this);
 
         idMap.free(this);
 
-        // TODO: Revisit the following. the invalidate marker may not be needed if this is done under the write lock ...
+        // Prevent multiple invalidations
         packed = INVALIDATED;
+        return true;
     }
 
     /**
@@ -353,7 +361,7 @@ public final class Dependencies {
     /**
      * Map used to allocate and reclaim unique identifiers for {@link Dependencies} objects.
      */
-    static class IDMap extends LinearIDMap<Dependencies> {
+    private static class IDMap extends LinearIDMap<Dependencies> {
         final BitSet usedIDs;
         public IDMap(int initialCapacity) {
             super(initialCapacity);
@@ -368,7 +376,7 @@ public final class Dependencies {
         }
 
         synchronized void free(Dependencies deps) {
-            assert get(deps.id) == deps;
+            assert get(deps.id) == deps : deps + " != " + get(deps.id);
             set(deps.id, null);
             usedIDs.clear(deps.id);
         }
@@ -377,7 +385,7 @@ public final class Dependencies {
     /**
      * Map used to allocate and reclaim unique identifiers for {@link Dependencies} objects.
      */
-    private static final IDMap idMap = new IDMap(MINIMAL_DEPENDENT_TARGET_METHOD);
+    public static final IDMap idMap = new IDMap(MINIMAL_DEPENDENT_TARGET_METHOD);
 
     static Dependencies fromId(int depsID) {
         Dependencies deps = idMap.get(depsID);

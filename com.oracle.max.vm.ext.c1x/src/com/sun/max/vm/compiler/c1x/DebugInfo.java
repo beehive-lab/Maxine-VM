@@ -26,6 +26,7 @@ import static com.sun.cri.ci.CiUtil.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.compiler.c1x.C1XTargetMethod.*;
 import static com.sun.max.vm.compiler.c1x.ValueCodec.*;
+import static com.sun.max.vm.runtime.amd64.AMD64TrapStateAccess.*;
 
 import java.io.*;
 import java.util.*;
@@ -33,9 +34,12 @@ import java.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.target.TargetMethod.FrameAccess;
+import com.sun.max.vm.reference.*;
 
 /**
  * The debug info for the stops in a {@link C1XTargetMethod}.
@@ -166,7 +170,7 @@ public final class DebugInfo {
             // Test encoding & decoding while offline
             for (int i = 0; i < debugInfos.length; ++i) {
                 if (debugInfos[i] != null && debugInfos[i].frame() != null) {
-                    CiFrame frame = frameAt(i);
+                    CiFrame frame = framesAt(i, null);
                     CiFrame originalFrame = debugInfos[i].frame();
                     assert frame.equalsIgnoringKind(originalFrame);
                 }
@@ -356,15 +360,25 @@ public final class DebugInfo {
     }
 
     /**
-     * Decodes the frame at a given stop index.
+     * Decodes the frame(s) at a given stop index.
      *
-     * @param index the index of a frame
-     * @return the frame at {@code index}
+     * @param index a stop index
+     * @param fa access to a live frame (may be {@code null})
+     * @return the frame(s) at {@code index}
      */
-    public CiFrame frameAt(int index) {
+    public CiFrame framesAt(int index, FrameAccess fa) {
         final DecodingStream in = new DecodingStream(data);
         int fpt = (tm.totalRefMapSize()) * tm.stopPositions().length;
-        return decodeFrame(in, fpt, index);
+        CiBitMap regRefMap;
+        CiBitMap frameRefMap;
+        if (fa != null) {
+            regRefMap = regRefMapAt(index);
+            frameRefMap = frameRefMapAt(index);
+        } else {
+            regRefMap = null;
+            frameRefMap = null;
+        }
+        return decodeFrame(in, fpt, index, fa, regRefMap, frameRefMap);
     }
 
     /**
@@ -394,12 +408,11 @@ public final class DebugInfo {
 
     /**
      * Decodes a frame denoted by a given frame index.
-     *
      * @param fpt the position of the FPT in {@link #data}
      * @param frameIndex the index of an entry in the FPT
      * @return the decoded frame
      */
-    CiFrame decodeFrame(DecodingStream in, int fpt, int frameIndex) {
+    CiFrame decodeFrame(DecodingStream in, int fpt, int frameIndex, FrameAccess fa, CiBitMap regRefMap, CiBitMap frameRefMap) {
         int framePos = framePos(fpt, frameIndex);
         if (framePos == 0) {
             return null;
@@ -430,16 +443,47 @@ public final class DebugInfo {
         int n = numLocals + numStack + numLocks;
         CiValue[] values = new CiValue[n];
         for (int i = 0; i < n; i++) {
-            values[i] = readValue(in);
+            values[i] = fa != null ? toLiveSlot(fa, regRefMap, frameRefMap, readValue(in)) : readValue(in);
         }
 
         CiFrame caller = null;
         if (encCallerIndex != NO_FRAME) {
             int callerIndex = encCallerIndex - FIRST_FRAME;
             assert frameIndex != callerIndex;
-            caller = decodeFrame(in, fpt, callerIndex);
+            caller = decodeFrame(in, fpt, callerIndex, fa, regRefMap, frameRefMap);
         }
         return new CiFrame(caller, method, bci, values, numLocals, numStack, numLocks);
+    }
+
+    private static CiValue toLiveSlot(FrameAccess fa, CiBitMap regRefMap, CiBitMap frameRefMap, CiValue value) {
+        if (value.isRegister()) {
+            CiRegister reg = value.asRegister();
+            int offset = CSA.offsetOf(reg);
+            int index = CSA.indexOf(reg.number);
+            if (regRefMap.get(index)) {
+                Reference ref = fa.rsa.readReference(offset);
+                value = CiConstant.forObject(ref.toJava());
+            } else {
+                Word w = fa.rsa.readWord(offset);
+                value = CiConstant.forWord(w.asAddress().toLong());
+            }
+        } else if (value.isStackSlot()) {
+            CiStackSlot ss = (CiStackSlot) value;
+            int refMapIndex = ss.index();
+            assert !ss.inCallerFrame() : "caller frame slot should not be in debug info: " + ss;
+            if (frameRefMap.get(refMapIndex)) {
+                Reference ref = fa.sp.readReference(ss.index() * Word.size());
+                value = CiConstant.forObject(ref.toJava());
+            } else {
+                Word w = fa.sp.readWord(ss.index() * Word.size());
+                value = CiConstant.forWord(w.asAddress().toLong());
+            }
+        } else if (value.isIllegal()) {
+            value = CiConstant.ZERO;
+        } else {
+            assert value.isConstant();
+        }
+        return value;
     }
 
 
@@ -453,7 +497,7 @@ public final class DebugInfo {
         for (int i = 0; i < tm.stopPositions().length; i++) {
             CiBitMap regRefMap = regRefMapAt(i);
             CiBitMap frameRefMap = frameRefMapAt(i);
-            CiFrame frame = frameAt(i);
+            CiFrame frame = framesAt(i, null);
             CiDebugInfo info = new CiDebugInfo(frame, regRefMap, frameRefMap);
             if (sb.length() != 0) {
                 sb.append(NEW_LINE);

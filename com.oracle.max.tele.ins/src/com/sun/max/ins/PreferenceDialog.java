@@ -35,7 +35,7 @@ import com.sun.max.ins.method.*;
 import com.sun.max.ins.object.*;
 
 /**
- * A rudimentary Preferences dialog; leveraging {@link JPanel}s provided by various {@link Inspector}s.
+ * A rudimentary Preferences dialog; leveraging {@link JPanel}s provided by various {@link AbstractView}s.
  *
  * @author Michael Van De Vanter
  */
@@ -61,7 +61,7 @@ public class PreferenceDialog extends SimpleDialog {
         methodLabelPanel.add(new TextLabel(inspection, "Methods"), BorderLayout.WEST);
         prefPanel.add(methodLabelPanel);
 
-        final JPanel methodInspectorPanel = MethodInspectorPreferences.globalPreferencesPanel(inspection);
+        final JPanel methodInspectorPanel = MethodViewPreferences.globalPreferencesPanel(inspection);
         methodInspectorPanel.setBorder(border);
         prefPanel.add(methodInspectorPanel);
 
@@ -97,7 +97,7 @@ public class PreferenceDialog extends SimpleDialog {
         hubLabelPanel.add(new TextLabel(inspection, "Hubs"), BorderLayout.WEST);
         prefPanel.add(hubLabelPanel);
 
-        final JPanel hubInspectorPanel = HubInspectorPreferences.globalPreferencesPanel(inspection);
+        final JPanel hubInspectorPanel = HubViewPreferences.globalPreferencesPanel(inspection);
         hubInspectorPanel.setBorder(border);
         prefPanel.add(hubInspectorPanel);
 
@@ -142,7 +142,7 @@ public class PreferenceDialog extends SimpleDialog {
         memoryWordsLabelPanel.add(new TextLabel(inspection, "Memory"), BorderLayout.WEST);
         prefPanel.add(memoryWordsLabelPanel);
 
-        final JPanel memoryWordsInspectorPanel = MemoryInspector.globalPreferencesPanel(inspection);
+        final JPanel memoryWordsInspectorPanel = MemoryView.globalPreferencesPanel(inspection);
         memoryWordsInspectorPanel.setBorder(border);
         prefPanel.add(memoryWordsInspectorPanel);
 

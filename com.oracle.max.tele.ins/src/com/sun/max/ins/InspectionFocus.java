@@ -119,7 +119,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
                 }
                 // User Model Policy: when setting code location, if it happens to match a stack frame of the current thread then focus on that frame.
                 if (thread != null && codeLocation != null && codeLocation.hasAddress()) {
-                    for (MaxStackFrame maxStackFrame : thread.stack().frames(StackInspector.DEFAULT_MAX_FRAMES_DISPLAY)) {
+                    for (MaxStackFrame maxStackFrame : thread.stack().frames(StackView.DEFAULT_MAX_FRAMES_DISPLAY)) {
                         if (codeLocation.isSameAs(maxStackFrame.codeLocation())) {
                             setStackFrame(stackFrame, false);
                             break;
@@ -168,7 +168,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
     }
 
     /**
-     * Shifts the focus of the Inspection to a particular thread; notify interested inspectors.
+     * Shifts the focus of the Inspection to a particular thread; notify interested views.
      * Sets the code location to the current InstructionPointer of the newly focused thread.
      * This is a view state change that can happen when there is no change to VM  state.
      */
@@ -187,7 +187,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
             final MaxStackFrame previousStackFrame = frameSelections.get(thread);
             MaxStackFrame newStackFrame = null;
             if (previousStackFrame != null) {
-                for (MaxStackFrame stackFrame : this.thread.stack().frames(StackInspector.DEFAULT_MAX_FRAMES_DISPLAY)) {
+                for (MaxStackFrame stackFrame : this.thread.stack().frames(StackView.DEFAULT_MAX_FRAMES_DISPLAY)) {
                     if (stackFrame.isSameFrame(previousStackFrame)) {
                         newStackFrame = stackFrame;
                         break;
@@ -241,7 +241,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
     }
 
     /**
-     * Shifts the focus of the Inspection to a particular stack frame in a particular thread; notify interested inspectors.
+     * Shifts the focus of the Inspection to a particular stack frame in a particular thread; notify interested views.
      * Sets the current thread to be the thread of the frame.
      * This is a view state change that can happen when there is no change to VM state.
      * @param newStackFrame the frame on which to focus.
@@ -302,7 +302,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
     }
 
     /**
-     * Shifts the focus of the Inspection to a particular {@link Address}; notify interested inspectors.
+     * Shifts the focus of the Inspection to a particular {@link Address}; notify interested views.
      * This is a view state change that can happen when there is no change to the VM state.
      */
     public void setAddress(Address address) {
@@ -346,7 +346,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
     }
 
     /**
-     * Shifts the focus of the Inspection to a particular {@linkplain MaxMemoryRegion memory region}; notify interested inspectors.
+     * Shifts the focus of the Inspection to a particular {@linkplain MaxMemoryRegion memory region}; notify interested views.
      * If the region is a  stackRegion, then set the current thread to the thread owning the stack.
      * This is a view state change that can happen when there is no change to the VM state.
      */
@@ -379,7 +379,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
     };
 
     /**
-     * Currently selected breakpoint, typically controlled by the {@link BreakpointsInspector}.
+     * Currently selected breakpoint, typically controlled by the {@link BreakpointsView}.
      * May be null.
      */
     public MaxBreakpoint breakpoint() {
@@ -435,7 +435,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
     };
 
     /**
-     * Currently selected watchpoint, typically controlled by the {@link WatchpointsInspector}.
+     * Currently selected watchpoint, typically controlled by the {@link WatchpointsView}.
      * May be null.
      */
     public MaxWatchpoint watchpoint() {
@@ -488,7 +488,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
     }
 
     /**
-     * Shifts the focus of the Inspection to a particular heap object in the VM; notify interested inspectors.
+     * Shifts the focus of the Inspection to a particular heap object in the VM; notify interested views.
      * This is a view state change that can happen when there is no change to VM state.
      */
     public void setHeapObject(TeleObject heapObject) {

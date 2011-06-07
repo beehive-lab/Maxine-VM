@@ -34,20 +34,20 @@ import com.sun.max.ins.view.InspectionViews.ViewKind;
 
 
 /**
- * Abstract manager for a kind of Inspector view that can occur in multiple
+ * Abstract manager for a kind of view that can occur in multiple
  * instances.
  *
  * @author Michael Van De Vanter
  */
-public abstract class AbstractMultiViewManager<Inspector_Kind extends Inspector>
+public abstract class AbstractMultiViewManager<View_Kind extends AbstractView>
     extends AbstractInspectionHolder
-    implements MultiViewManager, InspectionViewFactory<Inspector_Kind>, InspectionListener {
+    implements MultiViewManager, InspectionViewFactory<View_Kind>, InspectionListener {
 
     private final ViewKind viewKind;
     private final String shortName;
     private final String longName;
 
-    private final ArrayList<Inspector_Kind> inspectors = new ArrayList<Inspector_Kind>();
+    private final ArrayList<View_Kind> views = new ArrayList<View_Kind>();
 
     private final InspectorAction deactivateAllAction;
 
@@ -100,11 +100,11 @@ public abstract class AbstractMultiViewManager<Inspector_Kind extends Inspector>
     }
 
     public final boolean isActive() {
-        return inspectors.size() > 0;
+        return views.size() > 0;
     }
 
-    public final List<Inspector_Kind> activeViews() {
-        return inspectors;
+    public final List<View_Kind> activeViews() {
+        return views;
     }
 
     public final JMenu viewMenu() {
@@ -119,10 +119,10 @@ public abstract class AbstractMultiViewManager<Inspector_Kind extends Inspector>
 
             public void menuSelected(MenuEvent e) {
                 menu.removeAll();
-                final List<Inspector_Kind> views = activeViews();
+                final List<View_Kind> views = activeViews();
                 if (views.size() > 0) {
-                    for (Inspector inspector : views) {
-                        menu.add(inspector.getShowViewAction());
+                    for (AbstractView view : views) {
+                        menu.add(view.getShowViewAction());
                     }
                     menu.addSeparator();
                     for (InspectorAction makeViewAction : makeViewActions()) {
@@ -141,14 +141,14 @@ public abstract class AbstractMultiViewManager<Inspector_Kind extends Inspector>
     }
 
     public final void deactivateAllViews() {
-        for (Inspector inspector : new ArrayList<Inspector_Kind>(inspectors)) {
-            inspector.dispose();
+        for (AbstractView view : new ArrayList<View_Kind>(views)) {
+            view.dispose();
         }
         refresh();
         assert !isActive();
     }
 
-    public final InspectorAction deactivateAllAction(Inspector exception) {
+    public final InspectorAction deactivateAllAction(AbstractView exception) {
         if (exception == null) {
             return deactivateAllAction;
         }
@@ -158,13 +158,13 @@ public abstract class AbstractMultiViewManager<Inspector_Kind extends Inspector>
     /**
      * Allows concrete subclasses to register the creation of a new view.
      */
-    protected final void notifyAddingView(Inspector_Kind inspector) {
-        assert inspectors.add(inspector);
-        inspector.addInspectorEventListener(new InspectorEventListener() {
+    protected final void notifyAddingView(View_Kind view) {
+        assert views.add(view);
+        view.addViewEventListener(new ViewEventListener() {
 
             @Override
-            public void viewClosing(Inspector inspector) {
-                assert inspectors.remove(inspector);
+            public void viewClosing(AbstractView view) {
+                assert views.remove(view);
                 refresh();
             }
 
@@ -227,18 +227,18 @@ public abstract class AbstractMultiViewManager<Inspector_Kind extends Inspector>
 
     private final class DeactivateAllExceptAction extends InspectorAction {
 
-        private final Inspector exceptInspector;
+        private final AbstractView exceptInspector;
 
-        public DeactivateAllExceptAction(String title, Inspector exceptInspector) {
+        public DeactivateAllExceptAction(String title, AbstractView exceptInspector) {
             super(inspection(), "Close other " + title + " views");
             this.exceptInspector = exceptInspector;
         }
 
         @Override
         protected void procedure() {
-            for (Inspector inspector : new ArrayList<Inspector_Kind>(inspectors)) {
-                if (!inspector.equals(exceptInspector)) {
-                    inspector.dispose();
+            for (AbstractView view : new ArrayList<View_Kind>(views)) {
+                if (!view.equals(exceptInspector)) {
+                    view.dispose();
                 }
             }
             AbstractMultiViewManager.this.refresh();

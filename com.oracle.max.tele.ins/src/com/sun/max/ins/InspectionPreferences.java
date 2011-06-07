@@ -112,7 +112,7 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
         public static final List<ToolTipDismissDelayPolicy> VALUES = Arrays.asList(values());
     }
 
-    private static final String INSPECTION_SETTINGS_NAME = "inspection";
+    private static final String INSPECTION_SETTINGS_NAME = "prefs";
     private static final String KEY_BINDINGS_PREFERENCE = "keyBindings";
     private static final String DISPLAY_STYLE_PREFERENCE = "displayStyle";
     private static final String TOOLTIP_DELAY_POLICY = "toolTipDelay";
@@ -276,7 +276,7 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
      * Updates the current key binding map for this inspection.
      *
      * @param keyBindingMap a key binding map. If this value differs from the current key
-     *            binding map, then the accelerator keys of all the relevant inspector actions are updated.
+     *            binding map, then the accelerator keys of all the relevant Inspector actions are updated.
      */
     public void setKeyBindingMap(KeyBindingMap keyBindingMap) {
         if (keyBindingMap != this.keyBindingMap) {

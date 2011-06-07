@@ -66,7 +66,7 @@ public abstract class JVMSFrameLayout extends VMFrameLayout {
     public static final int CATEGORY2_OFFSET_WITHIN_WORD = offsetWithinWord(Kind.LONG);
 
     /**
-     * The number of normal stack slots per JVMS stack slot. See {@link #JVMS_SLOT_SIZE} for an explanation of why
+     * The number of word size stack slots per JVMS stack slot. See {@link #JVMS_SLOT_SIZE} for an explanation of why
      * JVMS stack slots may differ in size from normal stack slots.
      */
     public static final int STACK_SLOTS_PER_JVMS_SLOT = JVMS_SLOT_SIZE / STACK_SLOT_SIZE;

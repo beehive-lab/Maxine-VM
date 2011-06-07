@@ -43,6 +43,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.CompilationScheme.*;
 import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.hosted.CompiledPrototype.Link.Relationship;
@@ -554,7 +555,7 @@ public class CompiledPrototype extends Prototype {
                 processInvalidatedTargetMethods();
                 final MethodActor methodActor = worklist.removeFirst();
                 if (needsCompilation(methodActor)) {
-                    TargetMethod targetMethod = compilationScheme.synchronousCompile((ClassMethodActor) methodActor);
+                    TargetMethod targetMethod = compilationScheme.synchronousCompile((ClassMethodActor) methodActor, CompilationFlag.NONE);
                     processNewTargetMethod(targetMethod);
                     ++totalCompilations;
                     if (totalCompilations % 200 == 0) {
@@ -577,7 +578,7 @@ public class CompiledPrototype extends Prototype {
                         compilationCompletionService.submit(new Callable<TargetMethod>() {
                             public TargetMethod call() throws Exception {
                                 try {
-                                    TargetMethod result = compilationScheme.synchronousCompile((ClassMethodActor) methodActor);
+                                    TargetMethod result = compilationScheme.synchronousCompile((ClassMethodActor) methodActor, CompilationFlag.NONE);
                                     assert result != null;
                                     return result;
                                 } catch (Throwable error) {
@@ -726,7 +727,7 @@ public class CompiledPrototype extends Prototype {
 
         // Ensures that calling currentTargetMethod on targetMethod.classMethodActor returns null
         // which is need for needsCompilation() to return true for the method.
-        targetMethod.setDeoptInfo(new DeoptInfo(targetMethod));
+        targetMethod.invalidate(new InvalidationMarker(targetMethod));
 
         synchronized (instance.invalidatedTargetMethods) {
             instance.invalidatedTargetMethods.add(targetMethod);

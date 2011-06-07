@@ -22,7 +22,6 @@
  */
 package com.sun.max.vm.compiler.target;
 
-import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
@@ -31,7 +30,6 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.cri.bytecode.*;
-import com.sun.cri.bytecode.Bytes;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
@@ -47,6 +45,8 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.deopt.*;
+import com.sun.max.vm.compiler.deopt.Deoptimization.Info;
+import com.sun.max.vm.compiler.deopt.Deoptimization.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.ArrayField;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.*;
@@ -192,11 +192,11 @@ public abstract class TargetMethod extends MemoryRegion {
     protected Pointer codeStart = Pointer.zero();
 
     /**
-     * If non-null, then this method is being/has been deoptimized.
-     * Atomic updates to this field are used to ensure that an invalidated/deoptimized field
-     * is never used for linking a call site or dispatch table entry.
+     * If non-null, then this method is has been invalidated.
+     *
+     * @see #invalidated()
      */
-    volatile private DeoptInfo deoptInfo;
+    volatile private InvalidationMarker invalidated;
 
     /**
      * The frame size (in bytes) of an activation of this target method. This does not
@@ -246,18 +246,28 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
-     * Sets the deopt info for this target method. This denotes an atomic transition after which
-     * this target method can no longer be used to link a call site or a dispatch table entry.
-     * This can only be done at most once for any target method instance.
+     * Marks this method as invalidated.
+     *
+     * @see #invalidated()
      */
-    public void setDeoptInfo(DeoptInfo deoptInfo) {
-        assert deoptInfo != null;
-        assert this.deoptInfo == null : "cannot overwrite existing deopt info for " + this;
-        this.deoptInfo = deoptInfo;
+    public void invalidate(InvalidationMarker marker) {
+        assert marker != null;
+        assert this.invalidated == null : "cannot invalidate target method more than once: " + this;
+        this.invalidated = marker;
     }
 
-    public DeoptInfo deoptInfo() {
-        return deoptInfo;
+    /**
+     * Determines if this method has been invalidated.
+     * Invalidated target methods are never used when linking an unlinked
+     * call site or when resolving a dispatch table entry (e.g. vtable or itable).
+     * In addition, threads currently executing an invalidated method are required
+     * to apply deoptimization as soon as the execution context re-enters
+     * (via returning or stack unwinding during exception throwing) the method.
+     *
+     * @return a non-null {@link InvalidationMarker} object iff this method has been invalidated
+     */
+    public InvalidationMarker invalidated() {
+        return invalidated;
     }
 
     /**
@@ -318,12 +328,42 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
-     * Gets the bytecode frame(s) for a given stop.
+     * Provides access to live frame values.
+     */
+    public static class FrameAccess {
+        /**
+         * Register save area.
+         */
+        public final Pointer rsa;
+
+        /**
+         * Stack pointer.
+         */
+        public final Pointer sp;
+
+        /**
+         * Frame pointer.
+         */
+        public final Pointer fp;
+
+        public FrameAccess(Pointer rsa, Pointer sp, Pointer fp) {
+            this.rsa = rsa;
+            this.sp = sp;
+            this.fp = fp;
+        }
+    }
+
+    /**
+     * Gets the debug frame(s) for a given stop. If {@code fa != null}, then the {@linkplain CiFrame#values values}
+     * in the returned objects are {@link CiConstant}s wrapping the live values. Otherwise, they are
+     * {@link CiStackSlot}, {@link CiRegister} and {@link CiConstant} values describing how to extract
+     * values from a live frame.
      *
      * @param stopIndex an index of a stop within this method
-     * @return the bytecode frame(s) at the denoted stop
+     * @param fa access to a live frame (may be {@code null})
+     * @return the debug frame(s) at the denoted stop
      */
-    public CiFrame getBytecodeFrames(int stopIndex) {
+    public CiFrame debugFramesAt(int stopIndex, FrameAccess fa) {
         return null;
     }
 
@@ -722,7 +762,7 @@ public abstract class TargetMethod extends MemoryRegion {
         // Since this is not a safepoint, it must be a call.
         final int adjustedPos;
         if (platform().isa.offsetToReturnPC == 0) {
-            // targetCodePostion is the instruction after the call (which might be another call).
+            // pos is the instruction after the call (which might be another call).
             // We need to the find the call at which we actually stopped.
             adjustedPos = pos - 1;
         } else {
@@ -741,8 +781,8 @@ public abstract class TargetMethod extends MemoryRegion {
             }
         }
 
-        // It is not enough that we find the first matching position, since there might be a direct as well as an indirect call before the instruction pointer
-        // so we find the closest one. This can be avoided if we sort the stopPositions array first, but the runtime cost of this is unknown.
+        // It is not enough that we find the first matching position, since there might be a direct as well
+        // as an indirect call before the instruction pointer so we find the closest one.
         for (int i = numberOfCalls - 1; i >= numberOfDirectCalls(); i--) {
             final int indirectCallPosition = stopPosition(i);
             if (indirectCallPosition <= adjustedPos && (stopIndexWithClosestPos < 0 || indirectCallPosition > stopPosition(stopIndexWithClosestPos))) {
@@ -803,12 +843,8 @@ public abstract class TargetMethod extends MemoryRegion {
                     forEachCodePos(cpc, ip, true);
                     CiCodePos codePos = result[0];
                     if (codePos != null) {
-                        byte[] code = codePos.method.code();
-                        int bci = codePos.bci;
-                        byte opcode = code[bci];
-                        if (opcode == INVOKEINTERFACE || opcode == INVOKESPECIAL || opcode == INVOKESTATIC || opcode == INVOKEVIRTUAL) {
-                            int cpi = Bytes.beU2(code, bci + 1);
-                            RiMethod callee = ((ClassMethodActor) (codePos.method)).compilee().codeAttribute().cp.lookupMethod(cpi, opcode);
+                        RiMethod callee = ((ClassMethodActor) codePos.method).codeAttribute().calleeAt(codePos.bci);
+                        if (callee != null) {
                             string += " [" + callee + "]";
                         }
                     }
@@ -986,29 +1022,22 @@ public abstract class TargetMethod extends MemoryRegion {
     public abstract Pointer returnAddressPointer(Cursor frame);
 
     /**
-     * Gets the offset of the deopt handler in this target method.
-     * This is the code returned to when this target method was on a stack
-     * notified of a deoptimization request. Callee frames will have
-     * their return address patched to this address and the original
-     * return address is saved in the frame at the offset given
-     * by {@link #deoptReturnAddressOffset()}.
-     *
-     * @return {@code -1} if this target method has no deopt stub
+     * Specifies if this target method can be used to reconstruct deoptimized frames.
      */
-    public int deoptHandlerOffset() {
-        return -1;
+    public boolean isDeoptimizationTarget() {
+        return false;
     }
 
     /**
-     * The offset (in bytes) in a frame for this target method where
-     * the overwritten return address can be found if this method is
-     * deoptimized while in a call.
+     * Creates a deoptimized frame for this method.
      *
-     * @return {@code -1} if this target method has no deopt handler
-     * @see #deoptHandlerOffset()
+     * @param info details of current deoptimization
+     * @param frame debug info from which the slots of the deoptimized are initialized
+     * @param callee used to notify callee of the execution state the deoptimized frame when it is returned to
+     * @return object for notifying the deoptimized frame's caller of continuation state
      */
-    public int deoptReturnAddressOffset() {
-        return -1;
+    public Continuation createDeoptimizedFrame(Info info, CiFrame frame, Continuation callee) {
+        throw FatalError.unexpected("Cannot create deoptimized frame for " + getClass().getSimpleName() + " " + this);
     }
 
     /**

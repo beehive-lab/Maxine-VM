@@ -49,7 +49,7 @@ public abstract class CodeViewer extends InspectorPanel {
 
     private static final int TRACE_VALUE = 2;
 
-    private final MethodInspector parent;
+    private final MethodView parent;
 
     private JPanel toolBarPanel;
     private JToolBar toolBar;
@@ -58,7 +58,7 @@ public abstract class CodeViewer extends InspectorPanel {
     private final JButton activeRowsButton;
     private JButton viewCloseButton;
 
-    public MethodInspector parent() {
+    public MethodView parent() {
         return parent;
     }
 
@@ -78,7 +78,7 @@ public abstract class CodeViewer extends InspectorPanel {
         updateCaches(false);
     }
 
-    public CodeViewer(Inspection inspection, MethodInspector parent) {
+    public CodeViewer(Inspection inspection, MethodView parent) {
         super(inspection, new BorderLayout());
         this.parent = parent;
 

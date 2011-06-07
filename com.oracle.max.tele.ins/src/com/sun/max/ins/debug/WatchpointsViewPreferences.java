@@ -56,7 +56,7 @@ public final class WatchpointsViewPreferences extends TableColumnVisibilityPrefe
     private static final String WATCHPOINT_COLUMN_PREFERENCE = "watchpointsViewColumn";
 
     // Prefix for all other preferences in view
-    private static final String WATCHPOINT_INSPECTOR_PREFERENCE = "watchpointInspectorPrefs";
+    private static final String WATCHPOINT_VIEW_PREFERENCE = "watchpointViewPrefs";
 
     // Names of other preferences in view
     private static final String WATCHPOINT_READ_PREFERENCE = "trapOnRead";
@@ -83,7 +83,7 @@ public final class WatchpointsViewPreferences extends TableColumnVisibilityPrefe
     private WatchpointsViewPreferences(Inspection inspection) {
         super(inspection, WATCHPOINT_COLUMN_PREFERENCE, WatchpointsColumnKind.values());
         final InspectionSettings settings = inspection.settings();
-        final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener(WATCHPOINT_INSPECTOR_PREFERENCE) {
+        final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener(WATCHPOINT_VIEW_PREFERENCE) {
             public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
                 saveSettingsEvent.save(WATCHPOINT_READ_PREFERENCE, trapOnRead);
                 saveSettingsEvent.save(WATCHPOINT_WRITE_PREFERENCE, trapOnWrite);

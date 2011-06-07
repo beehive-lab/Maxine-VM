@@ -30,7 +30,7 @@ import com.sun.max.vm.type.*;
 
 /**
  * A dialog for selecting a type available via the {@linkplain MaxVM#loadableTypeDescriptors()} including those that may not have yet
- * been loaded into the {@linkplain TeleClassRegistry inspector class registry}.
+ * been loaded into the {@linkplain TeleClassRegistry Inspector class registry}.
  *
  * @author Doug Simon
  */
@@ -76,7 +76,7 @@ public final class TypeSearchDialog extends FilteredListDialog<TypeDescriptor> {
 
     /**
      * Displays a dialog for selecting a type available via the {@linkplain MaxVM#loadableTypeDescriptors()} including those that may
-     * not have yet been loaded into the {@linkplain TeleClassRegistry inspector class registry}.
+     * not have yet been loaded into the {@linkplain TeleClassRegistry Inspector class registry}.
      *
      * @return the type or null if the user canceled the dialog
      */
@@ -88,7 +88,7 @@ public final class TypeSearchDialog extends FilteredListDialog<TypeDescriptor> {
 
     /**
      * Displays a dialog for selecting a type available via the {@linkplain MaxVM#loadableTypeDescriptors()} including those that may
-     * not have yet been loaded into the {@linkplain TeleClassRegistry inspector class registry}.
+     * not have yet been loaded into the {@linkplain TeleClassRegistry Inspector class registry}.
      *
      * @param inspection
      * @param title Title string for the dialog frame.

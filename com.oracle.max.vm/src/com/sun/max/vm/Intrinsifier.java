@@ -99,12 +99,11 @@ public class Intrinsifier extends IntrinsifierClient {
      *
      * @param opcode an opcode to test
      */
-    private static boolean isUnsafe(int opcode) {
+    private static boolean isUnsafe(int opcode, int intrinsic) {
         switch (opcode) {
             // Checkstyle: stop
             case READREG            :
             case WRITEREG           :
-            case INFOPOINT          :
             case PAUSE              :
             case ADD_SP             :
             case FLUSHW             :
@@ -114,6 +113,13 @@ public class Intrinsifier extends IntrinsifierClient {
             case TEMPLATE_CALL      :
             case ICMP               :
             case WCMP               : return true;
+            case INFOPOINT: {
+                if ((intrinsic & UNCOMMON_TRAP) == UNCOMMON_TRAP) {
+                    // An uncommon trap is OK to baseline-compile
+                    return false;
+                }
+                return true;
+            }
             // Checkstyle: resume
         }
         return false;
@@ -140,7 +146,7 @@ public class Intrinsifier extends IntrinsifierClient {
                 } else if (intrinsic != 0) {
                     int opcode = intrinsic & 0xff;
                     if (!unsafe) {
-                        unsafe = isUnsafe(opcode);
+                        unsafe = isUnsafe(opcode, intrinsic);
                     }
                     int operand = (intrinsic >> 8) & 0xffff;
                     bi.intrinsify(opcode, operand);

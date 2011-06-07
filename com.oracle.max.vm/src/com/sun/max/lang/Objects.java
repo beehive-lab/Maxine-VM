@@ -22,7 +22,7 @@
  */
 package com.sun.max.lang;
 
-import static com.sun.max.unsafe.WithoutAccessCheck.*;
+import static com.sun.max.vm.hosted.WithoutAccessCheck.*;
 
 import java.lang.reflect.*;
 

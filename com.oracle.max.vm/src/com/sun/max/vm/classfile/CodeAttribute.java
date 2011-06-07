@@ -22,6 +22,8 @@
  */
 package com.sun.max.vm.classfile;
 
+import static com.sun.cri.bytecode.Bytecodes.*;
+
 import java.io.*;
 
 import com.sun.cri.ci.*;
@@ -215,5 +217,30 @@ public final class CodeAttribute {
         } catch (Exception e) {
             return super.toString() + "[" + e + "]";
         }
+    }
+
+    /**
+     * Gets the method called by an invoke instruction at a given BCI.
+     *
+     * @return the method invoked at offset {@code bci} in this code or {@code null} if
+     *         {@code bci} does not denote an invoke instruction
+     */
+    public RiMethod calleeAt(int bci) {
+        assert bci >= 0 && bci < code.length;
+        int opcode = code[bci] & 0xFF;
+        if (opcode == INVOKEINTERFACE || opcode == INVOKESPECIAL || opcode == INVOKESTATIC || opcode == INVOKEVIRTUAL) {
+            int cpi = com.sun.cri.bytecode.Bytes.beU2(code, bci + 1);
+            MethodRefConstant callee = cp.methodAt(cpi);
+
+
+            if (callee.isResolved()) {
+                return callee.resolve(cp, cpi);
+            }
+            RiType holder = UnresolvedType.toRiType(callee.holder(cp), cp.holder());
+            RiSignature signature = callee.signature(cp);
+            String name = callee.name(cp).string;
+            return new UnresolvedMethod(cp, cpi, holder, name, signature);
+        }
+        return null;
     }
 }

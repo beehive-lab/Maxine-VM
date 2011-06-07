@@ -46,12 +46,12 @@ public abstract class VMFrameLayout {
     public abstract int frameSize();
 
     /**
-     * Gets the size of the reference map for all the stack slots whose value may be changed by this frame's method.
+     * Gets the size of the reference map for all the stack words whose value may be changed by this frame's method.
      * This includes the parameter slots even though the space for them is allocated by the caller. These slots are
-     * potentially reused by the method and thus may subsequently change the GC type.
+     * potentially reused by the method and thus may subsequently change their GC type.
      *
      * @return the size of a {@linkplain ByteArrayBitMap bit map} which
-     *         {@linkplain ByteArrayBitMap#computeBitMapSize(int) can encode} a bit for each unique stack slot whose
+     *         {@linkplain ByteArrayBitMap#computeBitMapSize(int) can encode} a bit for each unique stack word whose
      *         value may be changed by this frame's method
      */
     public abstract int frameReferenceMapSize();

@@ -29,6 +29,7 @@ import java.util.*;
 import java.util.concurrent.locks.*;
 
 import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -113,8 +114,7 @@ public final class DependenciesManager {
     }
 
     /**
-     * An assumption processor that verifies that assumption made on a given type by a method remains valid if a new
-     * concrete sub-type is added to the descendant of that type.
+     * Verifies dependencies on a given type when a concrete sub-type is added to the descendants of the type.
      */
     static final class DependencyChecker extends Dependencies.DependencyClosure {
         /**
@@ -168,7 +168,8 @@ public final class DependenciesManager {
 
         @Override
         public boolean doConcreteMethod(TargetMethod targetMethod, MethodActor context, MethodActor method) {
-            if (concreteSubtype.resolveMethodImpl(context) != method) {
+            RiMethod impl = concreteSubtype.resolveMethodImpl(context);
+            if (impl != method) {
                 valid = false;
                 if (TraceDeps) {
                     StringBuilder sb = new StringBuilder("DEPS: invalidated ").append(targetMethod).append(", invalid dep: UCM[").append(context);
@@ -302,7 +303,7 @@ public final class DependenciesManager {
      * This also updates the unique concrete types recorded for all of the class's ancestors.
      *
      * @param classActor a class being defined
-     * @return any dependencies invalidated by this update
+     * @return any dependencies invalidated by this update (this array may contain duplicates)
      */
     private static ArrayList<Dependencies> recordUniqueConcreteSubtype(ClassActor classActor) {
         ArrayList<Dependencies> invalidated = null;
@@ -486,7 +487,7 @@ public final class DependenciesManager {
     /**
      * Processes a list of invalidated dependencies, triggering deopt as necessary.
      *
-     * @param invalidated the head of a {@link Dependencies} list
+     * @param invalidated the head of a {@link Dependencies} list (which may contain duplicates)
      * @param classActor the class to be added to the global class hierarchy
      */
     static void invalidateDependencies(ArrayList<Dependencies> invalidated, ClassActor classActor) {
@@ -501,16 +502,20 @@ public final class DependenciesManager {
             }
             Log.unlock(lockDisabledSafepoints);
         }
+
+        ArrayList<TargetMethod> methods = new ArrayList<TargetMethod>(invalidated.size());
         for (Dependencies deps : invalidated) {
-            deps.invalidate();
-            if (MaxineVM.isHosted()) {
-                CompiledPrototype.invalidateTargetMethod(deps.targetMethod);
+            if (deps.invalidate()) {
+                if (MaxineVM.isHosted()) {
+                    CompiledPrototype.invalidateTargetMethod(deps.targetMethod);
+                }
+                methods.add(deps.targetMethod);
             }
         }
         if (MaxineVM.isHosted()) {
             return;
         } else {
-            new Deoptimizer(invalidated).go();
+            new Deoptimization(methods).go();
         }
     }
 

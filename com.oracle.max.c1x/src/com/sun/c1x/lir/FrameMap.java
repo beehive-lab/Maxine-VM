@@ -61,10 +61,6 @@ import com.sun.cri.util.*;
  *          | monitor n                      |                   |
  *          :     ...                        :                   |
  *          | monitor 0                      |                   |
- *          +--------------------------------+                   |
- *          |                                |                   |
- *          : custom area                    :                   |
- *          |                                |                   |
  *          +--------------------------------+    ---            |
  *          | spill slot n                   |     ^           frame
  *          :     ...                        :     |           size
@@ -72,7 +68,11 @@ import com.sun.cri.util.*;
  *          +- - - - - - - - - - - - - - - - +   slot            |
  *          | outgoing overflow argument n   |  indexes          |
  *          |     ...                        |     |             |
- *    %sp   | outgoing overflow argument 0   |     v             v
+ *          | outgoing overflow argument 0   |     v             |
+ *          +--------------------------------+    ---            |
+ *          |                                |                   |
+ *          : custom area                    :                   |
+ *    %sp   |                                |                   v
  *   -------+--------------------------------+----------------  ---
  *
  * </pre>
@@ -216,7 +216,7 @@ public final class FrameMap {
     public CiAddress toStackAddress(CiStackSlot slot) {
         int size = compilation.target.sizeInBytes(slot.kind);
         if (slot.inCallerFrame()) {
-            int offset = slot.index() * compilation.target.spillSlotSize + frameSize() + 8;
+            int offset = slot.index() * compilation.target.spillSlotSize + frameSize() + compilation.target.arch.returnAddressSize;
             return new CiAddress(slot.kind, CiRegister.Frame.asValue(), offset);
         } else {
             int offset = offsetForOutgoingOrSpillSlot(slot.index(), size);
@@ -336,7 +336,7 @@ public final class FrameMap {
     }
 
     private int offsetToSpillArea() {
-        return outgoingSize;
+        return outgoingSize + customAreaSize();
     }
 
     private int offsetToSpillEnd() {
@@ -344,7 +344,7 @@ public final class FrameMap {
     }
 
     private int offsetToMonitors() {
-        return offsetToCustomArea() + customAreaSize();
+        return offsetToSpillEnd();
     }
 
     public int customAreaSize() {
@@ -352,7 +352,7 @@ public final class FrameMap {
     }
 
     public int offsetToCustomArea() {
-        return offsetToSpillEnd();
+        return 0;
     }
 
     private int offsetToMonitorsEnd() {
@@ -389,7 +389,7 @@ public final class FrameMap {
         if (spillSlotCount == -2) {
             spillSlotCount = -1;
         }
-        return outgoingSize / compilation.target.spillSlotSize;
+        return (outgoingSize + customAreaSize()) / compilation.target.spillSlotSize;
     }
 
 }

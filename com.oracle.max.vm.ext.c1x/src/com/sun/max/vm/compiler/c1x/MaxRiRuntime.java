@@ -26,6 +26,7 @@ import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
+import static com.sun.max.vm.stack.VMFrameLayout.*;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -47,9 +48,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.stack.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -387,12 +386,10 @@ public class MaxRiRuntime implements RiRuntime {
     }
 
     /**
-     * Reserves a word for saving an overwritten return address during the deoptimization process.
-     *
-     * @see TargetMethod#deoptReturnAddressOffset()
+     * Reserves a word at the bottom of the frame for saving an overwritten return address during the deoptimization process.
      */
     public int getCustomStackAreaSize() {
-        return VMFrameLayout.STACK_SLOT_SIZE;
+        return STACK_SLOT_SIZE;
     }
 
     public boolean supportsArrayIntrinsics() {

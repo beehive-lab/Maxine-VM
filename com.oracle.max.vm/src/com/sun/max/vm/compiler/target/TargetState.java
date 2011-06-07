@@ -52,11 +52,12 @@ public class TargetState {
 
     /**
      * Gets the compiled code represented by a given target state object.
-     * Note that this will never return an invalidated target method.
+     *
+     * @param ignoreInvalidated specifies whether invalidated target methods are to be ignored
      */
-    public static TargetMethod currentTargetMethod(Object targetState) {
+    public static TargetMethod currentTargetMethod(Object targetState, boolean ignoreInvalidated) {
         TargetMethod result = currentTargetMethod0(targetState);
-        if (result != null && result.deoptInfo() != null) {
+        if (ignoreInvalidated && result != null && result.invalidated() != null) {
             // Never expose an invalidated target method
             return null;
         }
@@ -75,7 +76,7 @@ public class TargetState {
             return ((TargetMethod[]) targetState)[0];
         } else if (targetState instanceof Compilation) {
             // currently being compiled, return any previous target method
-            return currentTargetMethod(((Compilation) targetState).previousTargetState);
+            return currentTargetMethod(((Compilation) targetState).previousTargetState, true);
         } else if (targetState instanceof Throwable) {
             return null;
         }

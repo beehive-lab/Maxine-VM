@@ -39,45 +39,45 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Creates and manages canonical instances of {@link ObjectInspector} for
+ * Creates and manages canonical instances of {@link ObjectView} for
  * objects in the heap of the VM.
  * <p>
  * This view manager does not have a public face for creating object views.  Rather,
  * the manager listens for the user to set focus on a particular object, and which point
- * an {@link ObjectInspector} is created (or merely highlighted if it already exists).
+ * an {@link ObjectView} is created (or merely highlighted if it already exists).
  *
  * @author Michael Van De Vanter
  */
-public final class ObjectViewManager extends AbstractMultiViewManager<ObjectInspector> implements ObjectViewFactory {
+public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView> implements ObjectViewFactory {
 
     private static final ViewKind VIEW_KIND = ViewKind.OBJECT;
     private static final String SHORT_NAME = "Object";
     private static final String LONG_NAME = "Object Inspector";
 
     /**
-     * Map:   {@link TeleObject} -- > the {@link ObjectInspector}, if it exists, for the corresponding
-     * object in the VM.  Relies on {@link ObjectInspector}s being canonical.
+     * Map:   {@link TeleObject} -- > the {@link ObjectView}, if it exists, for the corresponding
+     * object in the VM.  Relies on {@link ObjectView}s being canonical.
      */
-    private final Map<TeleObject, ObjectInspector> teleObjectToInspector = new HashMap<TeleObject, ObjectInspector>();
+    private final Map<TeleObject, ObjectView> teleObjectToView = new HashMap<TeleObject, ObjectView>();
 
     /**
-     * ObjectInspector constructors for specific tuple-implemented subclasses of {@link TeleObject}s.
+     * Object view constructors for specific tuple-implemented subclasses of {@link TeleObject}s.
      * The most specific class that matches a particular {@link TeleObject} will
      * be used, in an emulation of virtual method dispatch.
      */
-    private final Map<Class, Constructor> teleTupleObjectClassToObjectInspectorConstructor = new HashMap<Class, Constructor>();
+    private final Map<Class, Constructor> teleTupleObjectClassToObjectViewConstructor = new HashMap<Class, Constructor>();
 
     /**
-     * ObjectInspector constructors for specific array-implemented subclasses of {@link TeleObject}s.
+     * Object view constructors for specific array-implemented subclasses of {@link TeleObject}s.
      * The most specific class that matches a particular array component type will
      * be used, in an emulation of virtual method dispatch.
      */
-    private final Map<Class, Constructor> arrayComponentClassToObjectInspectorConstructor = new HashMap<Class, Constructor>();
+    private final Map<Class, Constructor> arrayComponentClassToObjectViewConstructor = new HashMap<Class, Constructor>();
 
     private final Constructor defaultArrayInspectorConstructor;
     private final Constructor defaultTupleInspectorConstructor;
 
-    private final InspectorAction interactiveMakeViewAction;
+    private final InspectorAction interactiveMakeViewByAddressAction;
     private final InspectorAction interactiveMakeViewByIDAction;
     private final List<InspectorAction> makeViewActions;
 
@@ -86,18 +86,18 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectInsp
         Trace.begin(1, tracePrefix() + "initializing");
 
         // Use this if there is no subclass of array component type is matched, or if the component type is an interface.
-        defaultArrayInspectorConstructor = getConstructor(ArrayInspector.class);
-        // Array inspectors for specific subclasses of component type
-        arrayComponentClassToObjectInspectorConstructor.put(Character.class, getConstructor(CharacterArrayInspector.class));
+        defaultArrayInspectorConstructor = getConstructor(ArrayView.class);
+        // Array views for specific subclasses of component type
+        arrayComponentClassToObjectViewConstructor.put(Character.class, getConstructor(CharacterArrayView.class));
 
         // Use this if there is no object type subclass matched
-        defaultTupleInspectorConstructor = getConstructor(TupleInspector.class);
-        // Tuple inspectors for specific subclasses
-        teleTupleObjectClassToObjectInspectorConstructor.put(TeleDescriptor.class, getConstructor(DescriptorInspector.class));
-        teleTupleObjectClassToObjectInspectorConstructor.put(TeleEnum.class, getConstructor(EnumInspector.class));
-        teleTupleObjectClassToObjectInspectorConstructor.put(TeleString.class, getConstructor(StringInspector.class));
-        teleTupleObjectClassToObjectInspectorConstructor.put(TeleStringConstant.class, getConstructor(StringConstantInspector.class));
-        teleTupleObjectClassToObjectInspectorConstructor.put(TeleUtf8Constant.class, getConstructor(Utf8ConstantInspector.class));
+        defaultTupleInspectorConstructor = getConstructor(TupleView.class);
+        // Tuple views for specific subclasses
+        teleTupleObjectClassToObjectViewConstructor.put(TeleDescriptor.class, getConstructor(DescriptorView.class));
+        teleTupleObjectClassToObjectViewConstructor.put(TeleEnum.class, getConstructor(EnumView.class));
+        teleTupleObjectClassToObjectViewConstructor.put(TeleString.class, getConstructor(StringView.class));
+        teleTupleObjectClassToObjectViewConstructor.put(TeleStringConstant.class, getConstructor(StringConstantView.class));
+        teleTupleObjectClassToObjectViewConstructor.put(TeleUtf8Constant.class, getConstructor(Utf8ConstantView.class));
 
         focus().addListener(new InspectionFocusAdapter() {
 
@@ -109,72 +109,35 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectInsp
             }
         });
 
-        interactiveMakeViewAction = new InspectorAction(inspection(), "View object at address...") {
-
-            @Override
-            protected void procedure() {
-                new AddressInputDialog(inspection(), vm().heap().bootHeapRegion().memoryRegion().start(), "Inspect object at address...", "Inspect") {
-
-                    @Override
-                    public void entered(Address address) {
-                        try {
-                            final Pointer pointer = address.asPointer();
-                            if (vm().isValidOrigin(pointer)) {
-                                final Reference objectReference = vm().originToReference(pointer);
-                                final TeleObject teleObject = vm().heap().findTeleObject(objectReference);
-                                focus().setHeapObject(teleObject);
-                            } else {
-                                gui().errorMessage("heap object not found at "  + address.to0xHexString());
-                            }
-                        } catch (MaxVMBusyException maxVMBusyException) {
-                            inspection().announceVMBusyFailure(name());
-                        }
-                    }
-                };
-            }
-        };
-        interactiveMakeViewByIDAction = new InspectorAction(inspection(), "View object by ID...") {
-
-            @Override
-            protected void procedure() {
-                final String input = gui().inputDialog("Inspect object by ID..", "");
-                if (input == null) {
-                    // User clicked cancel.
-                    return;
-                }
-                try {
-                    final long oid = Long.parseLong(input);
-                    final TeleObject teleObject = vm().heap().findObjectByOID(oid);
-                    if (teleObject != null) {
-                        focus().setHeapObject(teleObject);
-                    } else {
-                        gui().errorMessage("failed to find heap object for ID: " + input);
-                    }
-                } catch (NumberFormatException numberFormatException) {
-                    gui().errorMessage("Not a ID: " + input);
-                }
-            }
-
-        };
+        interactiveMakeViewByAddressAction = new InteractiveViewObjectByAddressAction();
+        interactiveMakeViewByIDAction = new InteractiveViewObjectByIDAction();
 
         makeViewActions = new ArrayList<InspectorAction>(1);
-        makeViewActions.add(interactiveMakeViewAction);
+        makeViewActions.add(interactiveMakeViewByAddressAction);
         makeViewActions.add(interactiveMakeViewByIDAction);
         Trace.end(1, tracePrefix() + "initializing");
     }
 
-    public InspectorAction makeViewAction() {
-        return interactiveMakeViewAction;
+    public ObjectView makeView(TeleObject teleObject) {
+        return makeObjectInspector(inspection(), teleObject);
+    }
+
+    public InspectorAction makeViewByAddressAction() {
+        return interactiveMakeViewByAddressAction;
     }
 
     public InspectorAction makeViewByIDAction() {
         return interactiveMakeViewByIDAction;
     }
 
+    public InspectorAction makeViewAction(TeleObject teleObject, String actionTitle) {
+        return new ViewSpecifiedObjectAction(teleObject, actionTitle);
+    }
+
     @Override
     public void vmProcessTerminated() {
-        for (ObjectInspector inspector : inspectors()) {
-            inspector.dispose();
+        for (ObjectView objectView : objectViews()) {
+            objectView.dispose();
         }
     }
 
@@ -183,21 +146,21 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectInsp
         return makeViewActions;
     }
 
-    private void makeObjectInspector(Inspection inspection, TeleObject teleObject) {
-        ObjectInspector objectInspector =  teleObjectToInspector.get(teleObject);
-        if (objectInspector == null) {
+    private ObjectView makeObjectInspector(Inspection inspection, TeleObject teleObject) {
+        ObjectView objectView =  teleObjectToView.get(teleObject);
+        if (objectView == null) {
             switch (teleObject.kind()) {
                 case HYBRID: {
-                    objectInspector = new HubInspector(inspection, this, teleObject);
+                    objectView = new HubView(inspection, this, teleObject);
                     break;
                 }
                 case TUPLE: {
-                    Constructor constructor = lookupInspectorConstructor(teleTupleObjectClassToObjectInspectorConstructor, teleObject.getClass());
+                    Constructor constructor = lookupInspectorConstructor(teleTupleObjectClassToObjectViewConstructor, teleObject.getClass());
                     if (constructor == null) {
                         constructor = defaultTupleInspectorConstructor;
                     }
                     try {
-                        objectInspector = (ObjectInspector) constructor.newInstance(inspection, this, teleObject);
+                        objectView = (ObjectView) constructor.newInstance(inspection, this, teleObject);
                     } catch (InstantiationException e) {
                         throw InspectorError.unexpected(e);
                     } catch (IllegalAccessException e) {
@@ -213,12 +176,12 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectInsp
                         final PrimitiveClassActor primitiveClassActor = (PrimitiveClassActor) componentClassActor;
                         componentClassActor = primitiveClassActor.toWrapperClassActor();
                     }
-                    Constructor constructor = lookupInspectorConstructor(arrayComponentClassToObjectInspectorConstructor, componentClassActor.toJava());
+                    Constructor constructor = lookupInspectorConstructor(arrayComponentClassToObjectViewConstructor, componentClassActor.toJava());
                     if (constructor == null) {
                         constructor = defaultArrayInspectorConstructor;
                     }
                     try {
-                        objectInspector = (ObjectInspector) constructor.newInstance(inspection, this, teleObject);
+                        objectView = (ObjectView) constructor.newInstance(inspection, this, teleObject);
                     } catch (InstantiationException e) {
                         throw InspectorError.unexpected();
                     } catch (IllegalAccessException e) {
@@ -230,23 +193,24 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectInsp
                     break;
                 }
             }
-            if (objectInspector != null) {
-                teleObjectToInspector.put(teleObject, objectInspector);
-                objectInspector.addInspectorEventListener(new InspectorEventListener() {
+            if (objectView != null) {
+                teleObjectToView.put(teleObject, objectView);
+                objectView.addViewEventListener(new ViewEventListener() {
 
                     @Override
-                    public void viewClosing(Inspector inspector) {
-                        final ObjectInspector objectInspector = (ObjectInspector) inspector;
-                        assert teleObjectToInspector.remove(objectInspector.teleObject()) != null;
+                    public void viewClosing(AbstractView view) {
+                        final ObjectView objectView = (ObjectView) view;
+                        assert teleObjectToView.remove(objectView.teleObject()) != null;
                     }
 
                 });
-                super.notifyAddingView(objectInspector);
+                super.notifyAddingView(objectView);
             }
         }
-        if (objectInspector != null) {
-            objectInspector.highlight();
+        if (objectView != null) {
+            objectView.highlight();
         }
+        return objectView;
     }
 
     private Constructor getConstructor(Class clazz) {
@@ -266,7 +230,7 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectInsp
     }
 
     public boolean isObjectInspectorObservingObject(long oid) {
-        for (TeleObject teleObject : teleObjectToInspector.keySet()) {
+        for (TeleObject teleObject : teleObjectToView.keySet()) {
             if (teleObject.reference().makeOID() == oid) {
                 return true;
             }
@@ -274,15 +238,91 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectInsp
         return false;
     }
 
-    public void resetObjectToInspectorMapEntry(TeleObject oldTeleObject, TeleObject newTeleObject, ObjectInspector objectInspector) {
-        teleObjectToInspector.remove(oldTeleObject);
-        teleObjectToInspector.put(newTeleObject, objectInspector);
+    public void resetObjectToInspectorMapEntry(TeleObject oldTeleObject, TeleObject newTeleObject, ObjectView objectInspector) {
+        teleObjectToView.remove(oldTeleObject);
+        teleObjectToView.put(newTeleObject, objectInspector);
     }
 
     /**
-     * @return all existing instances of {@link ObjectInspector}, even if hidden or iconic.
+     * @return all existing instances of {@link ObjectView}, even if hidden or iconic.
      */
-    public Set<ObjectInspector> inspectors() {
-        return new HashSet<ObjectInspector>(teleObjectToInspector.values());
+    public Set<ObjectView> objectViews() {
+        return new HashSet<ObjectView>(teleObjectToView.values());
     }
+
+    private final class InteractiveViewObjectByAddressAction extends InspectorAction {
+
+        InteractiveViewObjectByAddressAction() {
+            super(inspection(), "View object at address...");
+        }
+
+        @Override
+        protected void procedure() {
+            new AddressInputDialog(inspection(), vm().heap().bootHeapRegion().memoryRegion().start(), "View object at address...", "View") {
+
+                @Override
+                public void entered(Address address) {
+                    try {
+                        final Pointer pointer = address.asPointer();
+                        if (vm().isValidOrigin(pointer)) {
+                            final Reference objectReference = vm().originToReference(pointer);
+                            final TeleObject teleObject = vm().heap().findTeleObject(objectReference);
+                            focus().setHeapObject(teleObject);
+                        } else {
+                            gui().errorMessage("heap object not found at "  + address.to0xHexString());
+                        }
+                    } catch (MaxVMBusyException maxVMBusyException) {
+                        inspection().announceVMBusyFailure(name());
+                    }
+                }
+            };
+        }
+    }
+
+    private final class InteractiveViewObjectByIDAction extends InspectorAction {
+
+        InteractiveViewObjectByIDAction() {
+            super(inspection(), "View object by ID...");
+        }
+
+        @Override
+        protected void procedure() {
+            final String input = gui().inputDialog("View object by ID..", "");
+            if (input == null) {
+                // User clicked cancel.
+                return;
+            }
+            try {
+                final long oid = Long.parseLong(input);
+                final TeleObject teleObject = vm().heap().findObjectByOID(oid);
+                if (teleObject != null) {
+                    focus().setHeapObject(teleObject);
+                } else {
+                    gui().errorMessage("failed to find heap object for ID: " + input);
+                }
+            } catch (NumberFormatException numberFormatException) {
+                gui().errorMessage("Not an object ID: " + input);
+            }
+        }
+    }
+
+    /**
+     * Action:  creates a view for a specific heap object in the VM.
+     */
+    private final class ViewSpecifiedObjectAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "View object";
+        final TeleObject teleObject;
+
+        ViewSpecifiedObjectAction(TeleObject teleObject, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+            this.teleObject = teleObject;
+        }
+
+        @Override
+        protected void procedure() {
+            focus().setHeapObject(teleObject);
+        }
+    }
+
 }

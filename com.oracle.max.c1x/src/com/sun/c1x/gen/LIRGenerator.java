@@ -753,9 +753,24 @@ public abstract class LIRGenerator extends ValueVisitor {
             emitXir(xir.genSafepoint(site(x)), x, info, null, false);
             return;
         }
-        assert x.opcode == HERE || x.opcode == INFO;
+        assert x.opcode == HERE || x.opcode == INFO || x.opcode == UNCOMMON_TRAP;
         CiValue result = x.kind.isVoid() ? CiValue.IllegalValue : createResultVariable(x);
-        LIROpcode opcode = x.opcode == HERE ? LIROpcode.Here : LIROpcode.Info;
+
+        LIROpcode opcode;
+        switch (x.opcode) {
+            case HERE:
+                opcode = LIROpcode.Here;
+                break;
+            case INFO:
+                opcode = LIROpcode.Info;
+                break;
+            case UNCOMMON_TRAP:
+                opcode = LIROpcode.UncommonTrap;
+                break;
+            default:
+                throw new InternalError("Unexpected opcode: " + Bytecodes.nameOf(x.opcode));
+
+        }
         lir.infopoint(opcode, result, info);
     }
 

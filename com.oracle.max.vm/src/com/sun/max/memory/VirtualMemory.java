@@ -28,6 +28,7 @@ import java.io.*;
 import com.sun.max.annotate.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.hosted.*;
 
 /**
  * Access to the virtual memory facilities of the underlying operating system.
@@ -217,6 +218,7 @@ public final class VirtualMemory {
      * @return
      * @throws IOException
      */
+    @HOSTED_ONLY
     public static Pointer mapFile(Size size, FileDescriptor fileDescriptor, Address fileOffset) throws IOException {
         final Integer fd = (Integer) WithoutAccessCheck.getInstanceField(fileDescriptor, "fd");
         return Pointer.fromLong(virtualMemory_mapFile(size.toLong(), fd, fileOffset.toLong()));
@@ -232,6 +234,7 @@ public final class VirtualMemory {
      * @return
      * @throws IOException
      */
+    @HOSTED_ONLY
     public static Pointer mapFileIn31BitSpace(int size, FileDescriptor fileDescriptor, Address fileOffset) throws IOException {
         if (Platform.platform().os != OS.LINUX) {
             throw new UnsupportedOperationException();
