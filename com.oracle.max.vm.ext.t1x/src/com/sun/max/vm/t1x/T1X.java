@@ -31,8 +31,6 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-import javax.xml.transform.*;
-
 import com.oracle.max.hcfdis.*;
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
@@ -335,7 +333,7 @@ public class T1X implements RuntimeCompiler {
 
     public void initialize(Phase phase) {
         if (isHosted() && phase == Phase.COMPILING) {
-            createTemplates(templateSource, altT1X, true);
+            createTemplates(templateSource, altT1X, true, templates);
         }
         if (phase == Phase.STARTING) {
             if (T1XOptions.PrintBytecodeHistogram) {
@@ -372,12 +370,16 @@ public class T1X implements RuntimeCompiler {
      * @param templateSourceClass class containing template methods
      * @param altT1X alternate compiler to use for undefined templates
      * @param checkComplete If {@code true} check the array for completeness.
-     * @param templates an existing instance that will be incrementally updated. May be null.
-     * @return a {@link Templates} instance.
+     * @param templates an existing instance that will be incrementally updated.
+     *        Value may be null, in which case a new array will be created.
+     * @return the templates array, either as passed in or created.
      */
     @HOSTED_ONLY
-    public void createTemplates(Class<?> templateSourceClass, T1X altT1X, boolean checkComplete) {
+    public static T1XTemplate[] createTemplates(Class<?> templateSourceClass, T1X altT1X, boolean checkComplete, T1XTemplate[] templates) {
         Trace.begin(1, "creating T1X templates from " + templateSourceClass.getName());
+        if (templates == null) {
+            templates = new T1XTemplate[T1XTemplateTag.values().length];
+        }
         long startTime = System.currentTimeMillis();
 
         // Create a C1X compiler to compile the templates
@@ -453,6 +455,7 @@ public class T1X implements RuntimeCompiler {
         }
         Trace.end(1, "creating T1X templates from " + templateSourceClass.getName() + " [templates code size: " + codeSize + "]", startTime);
         comp.extensions = oldExtensions;
+        return templates;
     }
 
     @HOSTED_ONLY

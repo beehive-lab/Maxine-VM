@@ -850,7 +850,7 @@ function run_image() {
                 export MAXINE_LOG_FILE
                 ;;
             -vma )
-                system_props="$system_props -Dmax.permsize=8 -Dmax.vmthread.factory.class=com.oracle.max.vm.ext.vma.runtime.VMAVmThreadFactory -Dmax.vma.advice.class=com.sun.max.vm.t1x.vma.VMAAdviceTemplateSource"
+                system_props="$system_props -Dmax.permsize=8 -Dmax.vmthread.factory.class=com.oracle.max.vm.ext.vma.runtime.VMAVmThreadFactory"
                 ;;
             *)
                 image_args="$image_args $1"

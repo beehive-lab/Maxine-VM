@@ -42,6 +42,12 @@ import com.sun.max.annotate.*;
  * The generated code is written to {@link #out}, which defaults to {@link System#out).
  * However, this stream can be changed before invoking any of the generating methods.
  * The default behavior is to generate all methods using the {@link #main} method.
+ *
+ * A mechanism, {@link AdviceHook}, is provided to allow "advice" to be inserted into the
+ * generated templates. The templates are written in such a way to make this possible
+ * without violating the constraints, e.g., no calls after modifying the stack.
+ * This sometimes make the unadvised code a little more verbose than might appear necessary.
+ * However, it has no impact on runtime performance.
  */
 @HOSTED_ONLY
 public class T1XTemplateGenerator {
@@ -66,6 +72,13 @@ public class T1XTemplateGenerator {
          * Typically it is the type associated with the template tag.
          */
         void generate(T1XTemplateTag tag, AdviceType adviceType, String ... args);
+
+        /**
+         * Called just before the first output is generated for a method, which is the
+         * comment noting that it is automatically generated. N.B. Most, but not all
+         * generated methods are template tag implementations.
+         */
+        void startMethodGeneration();
     }
 
     @HOSTED_ONLY
@@ -345,15 +358,10 @@ public class T1XTemplateGenerator {
      * Generate a // GENERATED comment with T1XTemplateGenerator to rerun.
      */
     public static void generateAutoComment() {
-        generateAutoComment(generatingClassName);
-    }
-
-    /**
-     * Generate a // GENERATED comment with a specific classname to rerun.
-     * @param className
-     */
-    public static void generateAutoComment(String className) {
-        out.printf("    // GENERATED -- EDIT AND RUN %s.main() TO MODIFY%n", className);
+        if (adviceHook != null) {
+            adviceHook.startMethodGeneration();
+        }
+        out.printf("    // GENERATED -- EDIT AND RUN %s.main() TO MODIFY%n", generatingClassName);
     }
 
     public static void newLine() {
@@ -378,6 +386,12 @@ public class T1XTemplateGenerator {
         out.printf("    @T1X_TEMPLATE(%s)%n", tagString);
     }
 
+    private static void generateBeforeAdvice(T1XTemplateTag tag, String ... args) {
+        if (adviceHook != null) {
+            adviceHook.generate(tag, AdviceType.BEFORE, args);
+        }
+    }
+
     private static void generateBeforeAdvice(String ... args) {
         if (adviceHook != null) {
             adviceHook.generate(currentTemplateTag, AdviceType.BEFORE, args);
@@ -389,6 +403,112 @@ public class T1XTemplateGenerator {
             adviceHook.generate(currentTemplateTag, AdviceType.AFTER, args);
         }
     }
+
+    public static final EnumSet<T1XTemplateTag> STACK_ADJUST_TEMPLATES = EnumSet.of(DUP, DUP_X1, DUP_X2, DUP2, DUP2_X1, DUP2_X2, SWAP);
+
+
+    private static final String[] DUP_BODY = new String[] {
+        "pushWord(peekWord(0));"
+    };
+
+    private static final String[] DUP_X1_BODY = new String[] {
+        "Word value1 = peekWord(0);",
+        "Word value2 = peekWord(1);",
+        "pokeWord(1, value1);",
+        "pokeWord(0, value2);",
+        "pushWord(value1);"
+    };
+
+    private static final String[] DUP_X2_BODY = new String[] {
+        "Word value1 = peekWord(0);",
+        "Word value2 = peekWord(1);",
+        "Word value3 = peekWord(2);",
+        "pushWord(value1);",
+        "pokeWord(1, value2);",
+        "pokeWord(2, value3);",
+        "pokeWord(3, value1);",
+    };
+
+    private static final String[] DUP2_BODY = new String[] {
+        "Word value1 = peekWord(0);",
+        "Word value2 = peekWord(1);",
+        "pushWord(value2);",
+        "pushWord(value1);",
+    };
+
+
+    private static final String[] DUP2_X1_BODY = new String[] {
+        "Word value1 = peekWord(0);",
+        "Word value2 = peekWord(1);",
+        "Word value3 = peekWord(2);",
+        "pokeWord(2, value2);",
+        "pokeWord(1, value1);",
+        "pokeWord(0, value3);",
+        "pushWord(value2);",
+        "pushWord(value1);",
+    };
+
+
+    private static final String[] DUP2_X2_BODY = new String[] {
+        "Word value1 = peekWord(0);",
+        "Word value2 = peekWord(1);",
+        "Word value3 = peekWord(2);",
+        "Word value4 = peekWord(3);",
+        "pokeWord(3, value2);",
+        "pokeWord(2, value1);",
+        "pokeWord(1, value4);",
+        "pokeWord(0, value3);",
+        "pushWord(value2);",
+        "pushWord(value1);",
+    };
+
+    private static final String[] SWAP_BODY = new String[] {
+        "Word value0 = peekWord(0);",
+        "Word value1 = peekWord(1);",
+        "pokeWord(0, value1);",
+        "pokeWord(1, value0);",
+    };
+
+    private static String[] getStackAdjustContent(T1XTemplateTag tag) {
+        switch (tag) {
+            case DUP:
+                return DUP_BODY;
+            case DUP_X1:
+                return DUP_X1_BODY;
+            case DUP_X2:
+                return DUP_X2_BODY;
+            case DUP2:
+                return DUP2_BODY;
+            case DUP2_X1:
+                return DUP2_X1_BODY;
+            case DUP2_X2:
+                return DUP2_X2_BODY;
+            case SWAP:
+                return SWAP_BODY;
+        }
+        assert false;
+        return null;
+    }
+
+    public static void generateStackAdjustTemplates() {
+        for (T1XTemplateTag tag : STACK_ADJUST_TEMPLATES) {
+            generateStackAdjustTemplate(tag);
+        }
+    }
+
+    public static void generateStackAdjustTemplate(T1XTemplateTag tag) {
+        generateAutoComment();
+        generateTemplateTag("%s", tag);
+        out.printf("    public static void %s() {%n", tag.name().toLowerCase());
+        generateBeforeAdvice();
+        String[] content = getStackAdjustContent(tag);
+        for (String c : content) {
+            out.printf("        %s%n", c);
+        }
+        out.printf("    }%n");
+        newLine();
+    }
+
 
     public static final EnumSet<T1XTemplateTag> SHORT_CONST_TEMPLATES = EnumSet.of(WCONST_0, ACONST_NULL, ICONST_M1, ICONST_0, ICONST_1, ICONST_2, ICONST_3, ICONST_4, ICONST_5);
 
@@ -419,7 +539,7 @@ public class T1XTemplateGenerator {
         generateTemplateTag("%sCONST_%s", tagPrefix(k), arg);
         out.printf("    public static void %sconst_%s() {%n", opPrefix(k), arg.toLowerCase());
         String argVal = k.equals("Word") ? "Address.zero()" : (arg.equals("M1") ? "-1" : arg.toLowerCase());
-        generateBeforeAdvice(k);
+        generateBeforeAdvice(k, argVal);
         out.printf("        push%s(%s);%n", uoType(k), argVal);
         out.printf("    }%n");
         newLine();
@@ -699,8 +819,8 @@ public class T1XTemplateGenerator {
         generateAutoComment();
         generateTemplateTag("%sLOAD", tagPrefix(k));
         out.printf("    public static void %sload(int dispToLocalSlot) {%n", opPrefix(k));
-        out.printf("        %s value = getLocal%s(dispToLocalSlot);%n", oType(k), uoType(k));
         generateBeforeAdvice(k);
+        out.printf("        %s value = getLocal%s(dispToLocalSlot);%n", oType(k), uoType(k));
         out.printf("        push%s(value);%n", uoType(k));
         out.printf("    }%n");
         newLine();
@@ -888,7 +1008,6 @@ public class T1XTemplateGenerator {
      * @param init if "" generate {@code NEW} template, else {@code NEW$init}.
      */
     public static void generateNewTemplate(String init) {
-        generateAutoComment();
         String t;
         String m;
         if (init.equals("")) {
@@ -898,6 +1017,7 @@ public class T1XTemplateGenerator {
             t = "ClassActor";
             m = "createTupleOrHybrid";
         }
+        generateAutoComment();
         generateTemplateTag("NEW%s", prefixDollar(init));
         out.printf("    public static void new_(%s arg) {%n", t);
         out.printf("        Object object = %s(arg);%n", m);
@@ -936,7 +1056,6 @@ public class T1XTemplateGenerator {
      * @param resolved if "" generate {@code ANEWARRAY} template, else {@code ANEWARRAY$resolved}.
      */
     public static void generateANewArrayTemplate(String resolved) {
-        generateAutoComment();
         String t;
         String v;
         if (resolved.equals("")) {
@@ -946,6 +1065,7 @@ public class T1XTemplateGenerator {
             t = "ArrayClassActor<?>";
             v = "arrayClassActor";
         }
+        generateAutoComment();
         generateTemplateTag("ANEWARRAY%s", prefixDollar(resolved));
         out.printf("    public static void anewarray(%s %s) {%n", t, v);
         if (resolved.equals("")) {
@@ -974,7 +1094,6 @@ public class T1XTemplateGenerator {
      * @param resolved if "" generate {@code MULTIANEWARRAY} template, else {@code MULTIANEWARRAY$resolved}.
      */
     public static void generateMultiANewArrayTemplate(String resolved) {
-        generateAutoComment();
         String t;
         String v;
         if (resolved.equals("")) {
@@ -984,6 +1103,7 @@ public class T1XTemplateGenerator {
             t = "ArrayClassActor<?>";
             v = "arrayClassActor";
         }
+        generateAutoComment();
         generateTemplateTag("MULTIANEWARRAY%s", prefixDollar(resolved));
         out.printf("    public static void multianewarray(%s %s, int[] lengthsShared) {%n", t, v);
         if (resolved.equals("")) {
@@ -1015,6 +1135,7 @@ public class T1XTemplateGenerator {
     public static void generateCheckcastTemplates() {
         generateCheckcastTemplate("");
         generateCheckcastTemplate("resolved");
+        generateResolveAndCheckCast();
     }
 
     /**
@@ -1024,7 +1145,10 @@ public class T1XTemplateGenerator {
     public static void generateCheckcastTemplate(String resolved) {
         String t;
         String m;
-        if (resolved.equals("")) {
+        boolean isResolved = resolved.equals("resolved");
+        String arg = isResolved ? "classActor" : "arg";
+
+        if (!isResolved) {
             t = "ResolutionGuard";
             m = "resolveAndCheckcast";
         } else {
@@ -1033,10 +1157,23 @@ public class T1XTemplateGenerator {
         }
         generateAutoComment();
         generateTemplateTag("CHECKCAST%s", prefixDollar(resolved));
-        out.printf("    public static void checkcast(%s arg) {%n", t);
-        out.printf("        Object value = peekObject(0);%n");
-        generateBeforeAdvice(NULL_ARGS);
-        out.printf("        %s(arg, value);%n", m);
+        out.printf("    public static void checkcast(%s %s) {%n", t, arg);
+        out.printf("        Object object = peekObject(0);%n");
+        if (isResolved) {
+            generateBeforeAdvice(NULL_ARGS);
+        }
+        out.printf("        %s(%s, object);%n", m, arg);
+        out.printf("    }%n");
+        newLine();
+    }
+
+    public static void generateResolveAndCheckCast() {
+        generateAutoComment();
+        out.printf("    @NEVER_INLINE%n");
+        out.printf("    private static void resolveAndCheckcast(ResolutionGuard guard, final Object object) {%n");
+        out.printf("        ClassActor classActor = Snippets.resolveClass(guard);%n");
+        generateBeforeAdvice();
+        out.printf("        Snippets.checkCast(classActor, object);%n");
         out.printf("    }%n");
         newLine();
     }
@@ -1056,7 +1193,6 @@ public class T1XTemplateGenerator {
      * @param resolved if "" generate {@code INSTANCEOF} template, else {@code INSTANCEOF$resolved}.
      */
     public static void generateInstanceofTemplate(String resolved) {
-        generateAutoComment();
         String t;
         String v;
         if (resolved.equals("")) {
@@ -1066,6 +1202,7 @@ public class T1XTemplateGenerator {
             t = "ClassActor";
             v = "classActor";
         }
+        generateAutoComment();
         generateTemplateTag("INSTANCEOF%s", prefixDollar(resolved));
         out.printf("    public static void instanceof_(%s %s) {%n", t, v);
         if (resolved.equals("")) {
@@ -1127,6 +1264,38 @@ public class T1XTemplateGenerator {
         newLine();
     }
 
+    public static final EnumSet<T1XTemplateTag> LOCK_TEMPLATE_TAGS = EnumSet.of(LOCK_RECEIVER, UNLOCK_RECEIVER, LOCK_CLASS, UNLOCK_CLASS);
+
+    public static void generateLockTemplates() {
+        for (T1XTemplateTag tag : LOCK_TEMPLATE_TAGS) {
+            generateLockTemplate(tag);
+        }
+    }
+
+    public static void generateLockTemplate(T1XTemplateTag tag) {
+        generateAutoComment();
+        generateTemplateTag("%s", tag);
+        String param;
+        if (tag == LOCK_CLASS || tag == UNLOCK_CLASS) {
+            param = "Class object";
+        } else {
+            param = tag == LOCK_RECEIVER ? "int dispToRcvr, " : "";
+            param += "int dispToRcvrCopy";
+        }
+        String[] m = tag.name().split("_");
+        out.printf("    public static void %s(%s) {%n", m[0].toLowerCase() + toFirstUpper(m[1].toLowerCase()), param);
+        if (tag == LOCK_RECEIVER || tag == UNLOCK_RECEIVER) {
+            out.printf("        Object object = getLocalObject(dispToRcvr%s);%n", tag == UNLOCK_RECEIVER ? "Copy" : "");
+        }
+        generateBeforeAdvice();
+        out.printf("        T1XRuntime.monitor%s(object);%n", tag == LOCK_CLASS || tag == LOCK_RECEIVER ? "enter" : "exit");
+        if (tag == LOCK_RECEIVER) {
+            out.printf("        setLocalObject(dispToRcvrCopy, object);%n");
+        }
+        out.printf("    }%n");
+        newLine();
+    }
+
 
     /*
      * A note on the template sources for the invocation of resolved methods.
@@ -1153,6 +1322,52 @@ public class T1XTemplateGenerator {
      *
      * Laurent Daynes
      */
+
+    public static void generateDirectAndIndirectCalls() {
+        for (String k : types) {
+            if (hasInvokeTemplates(k)) {
+                generateIndirectCall(k, false);
+                generateIndirectCall(k, true);
+                generateDirectCall(k);
+            }
+        }
+    }
+
+    public static void generateIndirectCall(String k, boolean hasReceiverArg) {
+        boolean isVoid = k.equals("void");
+        String receiveParam = hasReceiverArg ? ", Object receiver" : "";
+        String receiveArg = hasReceiverArg ? ", receiver" : "";
+        generateAutoComment();
+        out.printf("    @INLINE%n");
+        out.printf("    public static %s indirectCall%s(Address address, CallEntryPoint callEntryPoint%s) {%n", oType(k), uoType(k), receiveParam);
+        out.printf("        ");
+        if (!isVoid) {
+            out.printf("final %s result = ", oType(k));
+        }
+        out.printf("Intrinsics.call%s(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset())%s);%n", isVoid ? "" : uoType(k), receiveArg);
+        if (!isVoid) {
+            out.printf("        return result;%n");
+        }
+        out.printf("    }%n");
+        newLine();
+    }
+
+    public static void generateDirectCall(String k) {
+        boolean isVoid = k.equals("void");
+        generateAutoComment();
+        out.printf("    @INLINE%n");
+        out.printf("    public static %s directCall%s() {%n", oType(k), uoType(k));
+        out.printf("        ");
+        if (!isVoid) {
+            out.printf("final %s result = ", oType(k));
+        }
+        out.printf("Intrinsics.call%s();%n", isVoid ? "" : uoType(k));
+        if (!isVoid) {
+            out.printf("        return result;%n", uoType(k));
+        }
+        out.printf("    }%n");
+        newLine();
+    }
 
     public static final EnumSet<T1XTemplateTag> INVOKE_VIRTUAL_TEMPLATE_TAGS = EnumSet.of(INVOKEVIRTUAL$void, INVOKEVIRTUAL$float, INVOKEVIRTUAL$long, INVOKEVIRTUAL$double, INVOKEVIRTUAL$word,
                     INVOKEVIRTUAL$void$resolved, INVOKEVIRTUAL$float$resolved, INVOKEVIRTUAL$long$resolved, INVOKEVIRTUAL$double$resolved, INVOKEVIRTUAL$word$resolved,
@@ -1195,6 +1410,7 @@ public class T1XTemplateGenerator {
      * @param tag one of "", "resolved" or "instrumented"
      */
     public static void generateInvokeVITemplate(String k, String variant, String tag) {
+        boolean isVoid = k.equals("void");
         String param1 = tag.equals("") ? "ResolutionGuard.InPool guard" :
             (variant.equals("interface") ? "InterfaceMethodActor interfaceMethodActor" : "int vTableIndex");
         param1 += ", int receiverStackIndex";
@@ -1205,7 +1421,6 @@ public class T1XTemplateGenerator {
         generateTemplateTag("INVOKE%s$%s%s", variant.toUpperCase(), lType(k), prefixDollar(tag));
         out.printf("    public static void invoke%s%s(%s) {%n", variant, uType(k), param1);
         out.printf("        Object receiver = peekObject(receiverStackIndex);%n");
-        generateBeforeAdvice(k, variant, tag);
         if (variant.equals("interface")) {
             if (tag.equals("")) {
                 out.printf("        Address entryPoint = resolveAndSelectInterfaceMethod(guard, receiver);%n");
@@ -1223,9 +1438,16 @@ public class T1XTemplateGenerator {
                 out.printf("        Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);%n");
             }
         }
-
-        out.printf("        indirectCall%s(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);%n", uType(k));
+        generateBeforeAdvice(k, variant, tag);
+        out.printf("        ");
+        if (!isVoid) {
+            out.printf("final %s result = ", oType(k));
+        }
+        out.printf("indirectCall%s(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);%n", uType(k));
         generateAfterAdvice(k, variant, tag);
+        if (!isVoid) {
+            out.printf("        push%s(result);%n", uoType(k));
+        }
         out.printf("    }%n");
         newLine();
     }
@@ -1244,7 +1466,7 @@ public class T1XTemplateGenerator {
     public static void generateInvokeStaticTemplates() {
         for (String k : types) {
             if (hasInvokeTemplates(k)) {
-                for (String t : new String[] {"", "init"}) {
+                for (String t : new String[] {"", "resolved"}) {
                     generateInvokeSSTemplate(k, "static", t);
                 }
             }
@@ -1272,6 +1494,7 @@ public class T1XTemplateGenerator {
      */
     public static void generateInvokeSSTemplate(String k, String variant, String xtag) {
         String tag = variant.equals("static") && xtag.equals("resolved") ? "init" : xtag;
+        boolean isVoid = k.equals("void");
         String params = tag.equals("") ? "ResolutionGuard.InPool guard" : "";
         if (variant.equals("special")) {
             if (params.length() > 0) {
@@ -1287,12 +1510,19 @@ public class T1XTemplateGenerator {
             out.printf("        nullCheck(receiver);%n");
         }
         generateBeforeAdvice(k, variant, tag);
+        out.printf("        ");
+        if (!isVoid) {
+            out.printf("final %s result = ", oType(k));
+        }
         if (xtag.equals("resolved")) {
-            out.printf("        directCall%s();%n", uType(k));
+            out.printf("directCall%s();%n", uType(k));
         } else {
-            out.printf("        indirectCall%s(resolve%sMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);%n", uType(k), toFirstUpper(variant));
+            out.printf("indirectCall%s(resolve%sMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);%n", uType(k), toFirstUpper(variant));
         }
         generateAfterAdvice(k, variant, tag);
+        if (!isVoid) {
+            out.printf("        push%s(result);%n", uoType(k));
+        }
         out.printf("    }%n");
         newLine();
     }
@@ -1510,9 +1740,9 @@ public class T1XTemplateGenerator {
         generateAutoComment();
         generateTemplateTag("%s%s", tagPrefix(k), op.toUpperCase());
         out.printf("    public static void %s%s(%s) {%n", opPrefix(k), op, param);
-        out.printf("        %s value = %speek%s(0);%n", k, op1, uType(k));
+        out.printf("        %s value = peek%s(0);%n", k, uType(k));
         generateBeforeAdvice(k);
-        out.printf("        poke%s(0, value);%n", uType(k));
+        out.printf("        poke%s(0, %svalue);%n", uType(k), op1);
         out.printf("    }%n");
         newLine();
     }
@@ -1637,24 +1867,29 @@ public class T1XTemplateGenerator {
     public static void generateReturnTemplate(String k, String unlock) {
         // Admittedly, the readability goal is a stretch here!
         final String arg = unlock.equals("") ? "" :
-            (unlock.equals("unlockClass") ? "Class<?> rcvr" : "int dispToRcvrCopy");
+            (unlock.equals("unlockClass") ? "Class<?> object" : "int dispToObjectCopy");
         generateAutoComment();
         generateTemplateTag("%sRETURN%s", tagPrefix(k), prefixDollar(unlock));
         out.printf("    public static %s %sreturn%s(%s) {%n", oType(k), opPrefix(k), toFirstUpper(unlock), arg);
         if (unlock.equals("unlockReceiver") || unlock.equals("registerFinalizer")) {
-            out.printf("        Object rcvr = getLocalObject(dispToRcvrCopy);%n");
+            out.printf("        Object object = getLocalObject(dispToObjectCopy);%n");
         }
-        generateBeforeAdvice(k);
         if (unlock.equals("registerFinalizer")) {
-            out.printf("        if (ObjectAccess.readClassActor(rcvr).hasFinalizer()) {%n");
-            out.printf("            SpecialReferenceManager.registerFinalizee(rcvr);%n");
+            out.printf("        if (ObjectAccess.readClassActor(object).hasFinalizer()) {%n");
+            out.printf("            SpecialReferenceManager.registerFinalizee(object);%n");
             out.printf("        }%n");
         } else {
             if (unlock.length() > 0) {
-                out.printf("        Monitor.noninlineExit(rcvr);%n");
+                // need to advise the implicit monitorexit
+                generateBeforeAdvice(MONITOREXIT);
+                out.printf("        Monitor.noninlineExit(object);%n");
             }
             if (!k.equals("void")) {
-                out.printf("        return pop%s();%n", uoType(k));
+                out.printf("        %s result = pop%s();%n", oType(k), uoType(k));
+                generateBeforeAdvice(k);
+                out.printf("        return result;%n");
+            } else {
+                generateBeforeAdvice(k);
             }
         }
         out.printf("    }%n");
@@ -1698,13 +1933,20 @@ public class T1XTemplateGenerator {
         generateAutoComment();
         generateTemplateTag("IF_%sCMP%s", tagPrefix(k), op.toUpperCase());
         out.printf("    public static void if_%scmp%s() {%n", opPrefix(k), op);
-        generateBeforeAdvice(k);
-        out.printf("        %scmp_prefix();%n", opPrefix(k));
+        out.printf("        %s value2 = peek%s(0);%n", oType(k), uoType(k));
+        out.printf("        %s value1 = peek%s(1);%n", oType(k), uoType(k));
+        generateBeforeAdvice();
+        out.printf("        removeSlots(2);%n");
+        if (k.equals("Reference")) {
+            out.printf("        Intrinsics.compareWords(toWord(value1), toWord(value2));%n");
+        } else {
+            out.printf("        Intrinsics.compareInts(value1, value2);%n");
+        }
         out.printf("    }%n");
         newLine();
     }
 
-    public static final EnumSet<T1XTemplateTag> IF_TEMPLATE_TAGS = EnumSet.of(IFEQ, IFNE, IFLT, IFGE, IFGT);
+    public static final EnumSet<T1XTemplateTag> IF_TEMPLATE_TAGS = EnumSet.of(IFEQ, IFNE, IFLT, IFLE, IFGE, IFGT);
 
     /**
      * Generate all the {@link #IF_TEMPLATE_TAGS}.
@@ -1728,8 +1970,13 @@ public class T1XTemplateGenerator {
         generateAutoComment();
         generateTemplateTag("IF%s", op.toUpperCase());
         out.printf("    public static void if%s() {%n", op);
-        generateBeforeAdvice(k);
-        out.printf("        %scmp0_prefix();%n", opPrefix(k));
+        out.printf("        %s value = pop%s();%n", oType(k), uoType(k));
+        generateBeforeAdvice();
+        if (k.equals("Reference")) {
+            out.printf("        Intrinsics.compareWords(toWord(value), Address.zero());%n");
+        } else {
+            out.printf("        Intrinsics.compareInts(value, 0);%n");
+        }
         out.printf("    }%n");
         newLine();
     }
@@ -2093,8 +2340,11 @@ public class T1XTemplateGenerator {
         generateMonitorTemplates();
         generateInstanceofTemplates();
         generateReturnTemplate("void", "registerFinalizer");
-
-
+        generateStackAdjustTemplates();
+        generateLockTemplates();
+        if (adviceHook == null) {
+            generateDirectAndIndirectCalls();
+        }
     }
 
     public static void main(String[] args) {
