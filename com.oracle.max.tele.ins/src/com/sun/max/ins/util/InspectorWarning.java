@@ -22,6 +22,8 @@
  */
 package com.sun.max.ins.util;
 
+import com.sun.max.ins.*;
+
 /**
  * Static methods for announcing non-fatal situations
  * that should not occur.
@@ -33,120 +35,131 @@ public final class InspectorWarning {
     private InspectorWarning() {
     }
 
-    private static void warn(String message, Throwable cause) {
+    private static void warn(Inspection inspection, String message, Throwable cause) {
         final StringBuilder sb = new StringBuilder();
-        sb.append("Warning: ");
         if (message != null) {
-            sb.append(message + "  ");
+            sb.append(message).append("  ");
         }
         if (cause != null) {
             sb.append(cause.getMessage());
         }
-        System.err.println(sb.toString());
-    }
-
-    /**
-     * Reports the occurrence of a non-fatal error condition.
-     *
-     * @param message a message describing the condition. This value may be {@code null}.
-     * @param throwable an exception given more detail on the cause of the condition. This value may be {@code null}.
-     */
-    public static void message(String message, Throwable throwable) {
-        warn(message, throwable);
-    }
-
-    /**
-     * Reports the occurrence of a non-fatal error condition.
-     *
-     * @param message a message describing the condition. This value may be {@code null}.
-     */
-    public static void message(String message) {
-        warn(message, null);
-    }
-
-    /**
-     * Reports the occurrence of a non-fatal error condition.
-     *
-     * @param throwable an exception given more detail on the cause of the condition. This value may be {@code null}.
-     * @throws InspectorWarning unconditionally
-     */
-    public static void message(Throwable throwable) {
-        warn(null, throwable);
-    }
-
-    /**
-     * Reports the occurrence of a non-fatal error condition.
-     */
-    public static void message() {
-        warn(null, null);
-    }
-
-    /**
-     * Reports the failure of a condition that should be {@code true}.
-     *
-     * @param condition a condition to test
-     */
-    public static void check(boolean condition) {
-        if (!condition) {
-            warn(null, null);
+        String warnText = sb.toString();
+        System.err.println(MaxineInspector.NAME + " WARNING:  " + warnText);
+        if (inspection != null && inspection.gui() != null) {
+            inspection.gui().informationMessage("Warning:  " + warnText);
         }
     }
 
     /**
-     * Reports the failure of a condition that should be {@code true}.
+     * Reports the occurrence of a non-fatal error condition, using the Inspector's GUI if available.
+     * @param inspection
+     * @param message a message describing the condition. This value may be {@code null}.
+     * @param throwable an exception given more detail on the cause of the condition. This value may be {@code null}.
+     */
+    public static void message(Inspection inspection, String message, Throwable throwable) {
+        warn(inspection, message, throwable);
+    }
+
+    /**
+     * Reports the occurrence of a non-fatal error condition, using the Inspector's GUI if available.
+     * @param inspection
+     * @param message a message describing the condition. This value may be {@code null}.
+     */
+    public static void message(Inspection inspection, String message) {
+        warn(inspection, message, null);
+    }
+
+    /**
+     * Reports the occurrence of a non-fatal error condition, using the Inspector's GUI if available.
+     * @param inspection
+     * @param throwable an exception given more detail on the cause of the condition. This value may be {@code null}.
      *
+     * @throws InspectorWarning unconditionally
+     */
+    public static void message(Inspection inspection, Throwable throwable) {
+        warn(inspection, null, throwable);
+    }
+
+    /**
+     * Reports the occurrence of a non-fatal error condition, using the Inspector's GUI if available.
+     * @param inspection
+     */
+    public static void message(Inspection inspection) {
+        warn(inspection, null, null);
+    }
+
+    /**
+     * Reports the failure of a condition that should be {@code true}, using the Inspector's GUI if available.
+     * @param inspection
+     * @param condition a condition to test
+     */
+    public static void check(Inspection inspection, boolean condition) {
+        if (!condition) {
+            warn(inspection, null, null);
+        }
+    }
+
+    /**
+     * Reports the failure of a condition that should be {@code true}, using the Inspector's GUI if available.
+     * @param inspection
      * @param condition a condition to test
      * @param message a message describing the condition being tested
      */
-    public static void check(boolean condition, String message) {
+    public static void check(Inspection inspection, boolean condition, String message) {
         if (!condition) {
-            warn(message, null);
+            warn(inspection, message, null);
         }
     }
 
     /**
-     * Reports the failure of a condition that should be {@code true}.
-     *
+     * Reports the failure of a condition that should be {@code true}, using the Inspector's GUI if available.
+     * @param inspection
      * @param condition a condition to test
      * @param message a message describing the error condition being tested
      * @param object an object whose string description is to be appended to the message
      */
-    public static void check(boolean condition, String message, Object object) {
+    public static void check(Inspection inspection, boolean condition, String message, Object object) {
         if (!condition) {
-            warn(message + object.toString(), null);
+            warn(inspection, message + object.toString(), null);
         }
     }
 
     /**
-     * Reports that a {@code switch} statement encountered a {@code case} value it was not expecting.
+     * Reports that a {@code switch} statement encountered a {@code case} value it was not expecting,
+     * using the Inspector's GUI if available.
+     * @param inspection
      */
-    public static void unknownCase() {
-        warn("unknown switch case", null);
+    public static void unknownCase(Inspection inspection) {
+        warn(inspection, "unknown switch case", null);
     }
 
     /**
-     * Reports that a {@code switch} statement encountered a {@code case} value it was not expecting.
-     *
+     * Reports that a {@code switch} statement encountered a {@code case} value it was not expecting,
+     * using the Inspector's GUI if available.
+     * @param inspection
      * @param caseValue the unexpected {@code case} value as a string
      */
-    public static void unknownCase(String caseValue) {
-        warn("unknown switch case \"" + caseValue + "\"", null);
+    public static void unknownCase(Inspection inspection, String caseValue) {
+        warn(inspection, "unknown switch case \"" + caseValue + "\"", null);
     }
 
     /**
-     * Reports that an unimplemented piece of functionality was encountered.
+     * Reports that an unimplemented piece of functionality was encountered,
+     * using the Inspector's GUI if available.
+     * @param inspection
      */
-    public static void unimplemented() {
-        warn("unimplemented functionality", null);
+    public static void unimplemented(Inspection inspection) {
+        warn(inspection, "unimplemented functionality", null);
     }
 
     /**
-     * Reports that an unimplemented piece of functionality was encountered.
-     *
+     * Reports that an unimplemented piece of functionality was encountered,
+     * using the Inspector's GUI if available.
+     * @param inspection
      * @param message description of the unimplemented functionality
      */
-    public static void unimplemented(String message) {
-        warn("unimplemented " + message, null);
+    public static void unimplemented(Inspection inspection, String message) {
+        warn(inspection, "unimplemented " + message, null);
     }
 
 }

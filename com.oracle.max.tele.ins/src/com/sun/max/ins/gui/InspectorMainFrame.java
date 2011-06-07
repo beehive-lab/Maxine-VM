@@ -288,7 +288,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
                 setLocation(inspection.geometry().inspectorDefaultFrameLocation());
             }
         } catch (Option.Error optionError) {
-            InspectorWarning.message("Inspector Main Frame settings", optionError);
+            InspectorWarning.message(inspection, "Inspector Main Frame settings", optionError);
             setPreferredSize(inspection.geometry().inspectorPrefFrameSize());
             setLocation(inspection.geometry().inspectorDefaultFrameLocation());
         }

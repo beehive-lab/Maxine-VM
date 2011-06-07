@@ -166,7 +166,7 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
                 if (keyBindingMap != null) {
                     setKeyBindingMap(keyBindingMap);
                 } else {
-                    InspectorWarning.message("Unknown key bindings name ignored: " + keyBindingsName);
+                    InspectorWarning.message(inspection, "Unknown key bindings name ignored: " + keyBindingsName);
                 }
             }
 
@@ -192,7 +192,7 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
             }
 
         } catch (Option.Error optionError) {
-            InspectorWarning.message(optionError);
+            InspectorWarning.message(inspection, optionError);
         }
 
     }

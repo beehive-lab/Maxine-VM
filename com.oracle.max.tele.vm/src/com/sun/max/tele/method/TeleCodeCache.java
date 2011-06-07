@@ -66,22 +66,28 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements TeleVMC
     private TeleCodeManager teleCodeManager;
 
     /**
-     * Contains all the compiled code we know about,
+     * Contains all the compiled methods we know about,
      * organized for lookup by address.
      */
-    private final CodeRegistry codeRegistry;
+    private final CompiledCodeRegistry compiledCodeRegistry;
+
+    /**
+     * Contains all regions of machine code discovered in the VM process that
+     * do not belong to the VM.
+     */
+    private final ExternalCodeRegistry externalCodeRegistry;
 
     private final String bootCodeRegionName;
     private TeleCompiledCodeRegion bootCodeRegion = null;
     private TeleCompiledCodeRegion dynamicCodeRegion = null;
 
     /**
-     * Unmodifiable list of all regions in which compiled code is stored.
+     * Unmodifiable list of all regions in which compiled methods are stored.
      */
     private List<MaxCompiledCodeRegion> compiledCodeRegions = Collections.emptyList();
 
     /**
-     * Creates the object that models the cache of compiled code in the VM.
+     * Creates the object that models the cache of machine code in the VM.
      * <br>
      * A subsequent call to {@link #initialize()} is required before this object is functional.
      */
@@ -90,7 +96,8 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements TeleVMC
         assert vm().lockHeldByCurrentThread();
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
         tracer.begin();
-        this.codeRegistry = new CodeRegistry(vm);
+        this.compiledCodeRegistry = new CompiledCodeRegistry(vm);
+        this.externalCodeRegistry = new ExternalCodeRegistry(vm);
         this.entityDescription = "Storage managment in the " + vm().entityName() + " for method compilations";
         this.bootCodeRegionName = vm().getString(vm().teleFields().Code_CODE_BOOT_NAME.readReference(vm()));
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
@@ -132,7 +139,8 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements TeleVMC
         if (epoch > lastUpdateEpoch) {
             updateTracer.begin();
             assert vm().lockHeldByCurrentThread();
-            codeRegistry.updateCache(epoch);
+            compiledCodeRegistry.updateCache(epoch);
+            externalCodeRegistry.updateCache(epoch);
             bootCodeRegion.updateCache(epoch);
             dynamicCodeRegion.updateCache(epoch);
             lastUpdateEpoch = epoch;
@@ -174,25 +182,24 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements TeleVMC
     }
 
     public TeleCompiledCodeRegion findCompiledCodeRegion(Address address) {
-        if (bootCodeRegion.memoryRegion().contains(address)) {
-            return bootCodeRegion;
-        }
-        if (dynamicCodeRegion.memoryRegion().contains(address)) {
-            return dynamicCodeRegion;
+        for (MaxCompiledCodeRegion compiledCodeRegion : compiledCodeRegions) {
+            if (compiledCodeRegion.memoryRegion().contains(address)) {
+                return (TeleCompiledCodeRegion) compiledCodeRegion;
+            }
         }
         return null;
     }
 
-    public MaxMachineCode< ? extends MaxMachineCode> findMachineCode(Address address) {
-        TeleExternalCode externalCode = codeRegistry.getExternalCode(address);
+    public MaxMachineCode<? extends MaxMachineCode> findMachineCode(Address address) {
+        TeleExternalCode externalCode = externalCodeRegistry.find(address);
         if (externalCode != null) {
             return externalCode;
         }
         return findCompiledCode(address);
     }
 
-    public TeleCompiledCode findCompiledCode(Address address) {
-        TeleCompiledCode teleCompiledCode = codeRegistry.getCompiledCode(address);
+    public TeleCompilation findCompiledCode(Address address) {
+        TeleCompilation teleCompiledCode = compiledCodeRegistry.find(address);
         if (teleCompiledCode == null) {
             // Not a known Java method.
             if (!contains(address)) {
@@ -215,20 +222,20 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements TeleVMC
                 }
             }
             // If a new method was discovered, then it will have been added to the registry.
-            teleCompiledCode = codeRegistry.getCompiledCode(address);
+            teleCompiledCode = compiledCodeRegistry.find(address);
         }
         return teleCompiledCode;
     }
 
-    public List<MaxCompiledCode> compilations(TeleClassMethodActor teleClassMethodActor) {
-        final List<MaxCompiledCode> compilations = new ArrayList<MaxCompiledCode>(teleClassMethodActor.compilationCount());
+    public List<MaxCompilation> compilations(TeleClassMethodActor teleClassMethodActor) {
+        final List<MaxCompilation> compilations = new ArrayList<MaxCompilation>(teleClassMethodActor.compilationCount());
         for (TeleTargetMethod teleTargetMethod : teleClassMethodActor.compilations()) {
             compilations.add(findCompiledCode(teleTargetMethod.getRegionStart()));
         }
         return Collections.unmodifiableList(compilations);
     }
 
-    public TeleCompiledCode latestCompilation(TeleClassMethodActor teleClassMethodActor) throws MaxVMBusyException {
+    public TeleCompilation latestCompilation(TeleClassMethodActor teleClassMethodActor) throws MaxVMBusyException {
         if (!vm().tryLock()) {
             throw new MaxVMBusyException();
         }
@@ -241,7 +248,7 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements TeleVMC
     }
 
     public MaxExternalCode findExternalCode(Address address) {
-        return codeRegistry.getExternalCode(address);
+        return externalCodeRegistry.find(address);
     }
 
     // TODO (mlvdv) fix
@@ -260,7 +267,7 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements TeleVMC
     public void printSessionStats(PrintStream printStream, int indent, boolean verbose) {
         final String indentation = Strings.times(' ', indent);
         final NumberFormat formatter = NumberFormat.getInstance();
-        printStream.print(indentation + "Compilations registered: " + formatter.format(codeRegistry.size()) + "\n");
+        printStream.print(indentation + "Compilations registered: " + formatter.format(compiledCodeRegistry.size()) + "\n");
         if (bootCodeRegion != null) {
             printStream.print(indentation + "Registered from " + bootCodeRegion.entityName() + ": " + formatter.format(bootCodeRegion.compilationCount())
                             + " (code loaded: " + formatter.format(bootCodeRegion.loadedCompilationCount()) + ")\n");
@@ -269,10 +276,12 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements TeleVMC
             printStream.print(indentation + "Registered from " + dynamicCodeRegion.entityName() + ": " + formatter.format(dynamicCodeRegion.compilationCount())
                             + " (code loaded: " + formatter.format(dynamicCodeRegion.loadedCompilationCount()) + ")\n");
         }
+        printStream.print(indentation + "Registered external machine code regions: " + externalCodeRegistry.size() + "\n");
     }
 
     public void writeSummary(PrintStream printStream) {
-        codeRegistry.writeSummary(printStream);
+        compiledCodeRegistry.writeSummary(printStream);
+        externalCodeRegistry.writeSummary(printStream);
     }
 
     /**
@@ -288,18 +297,19 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements TeleVMC
     }
 
     /**
-     * Adds a region of native code to the coded registry, indexed by code address.
+     * Adds a region of external machine code to the coded registry, indexed by code address.
      *
-     * @param teleExternalCode
-     * @throws IllegalArgumentException when the memory region of {@link teleTargetMethod} overlaps one already in this registry.
+     * @param teleExternalCode a region of machine code that has been identified, but is known not to occupy
+     * any memory region allocated by the VM.
+     * @throws IllegalArgumentException when the memory region of overlaps one already registered.
      */
     public void register(TeleExternalCode teleExternalCode) {
-        codeRegistry.add(teleExternalCode);
+        externalCodeRegistry.register(teleExternalCode);
 
     }
 
     /**
-     * Adds a {@link MaxCompiledCode} entry to the code registry, indexed by code address.
+     * Adds a {@link MaxCompilation} entry to the code registry, indexed by code address.
      * This should only be called from a constructor of a {@link TeleTargetMethod} subclass.
      *
      * @param teleTargetMethod the compiled method whose memory region is to be added to this registry
@@ -307,7 +317,7 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements TeleVMC
      */
     public void register(TeleTargetMethod teleTargetMethod) {
         final TeleCompiledCodeRegion teleCompiledCodeRegion = findCompiledCodeRegion(teleTargetMethod.getRegionStart());
-        codeRegistry.add(new TeleCompiledCode(vm(), teleTargetMethod, this, teleCompiledCodeRegion == bootCodeRegion));
+        compiledCodeRegistry.register(new TeleCompilation(vm(), teleTargetMethod, this, teleCompiledCodeRegion == bootCodeRegion));
     }
 
 }
