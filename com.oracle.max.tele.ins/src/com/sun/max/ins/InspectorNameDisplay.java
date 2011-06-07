@@ -187,7 +187,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     /**
      * E.g.: "[n]", where n is the index into the compilation history; first compilation n=0.
      */
-    public String methodCompilationID(MaxCompiledCode compiledCode) {
+    public String methodCompilationID(MaxCompilation compiledCode) {
         // Only have an index if a compiled method.
         if (compiledCode != null && compiledCode.getTeleClassMethodActor() != null) {
             final int compilationIndex = compiledCode.compilationIndex();
@@ -239,7 +239,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     /**
      * E.g. "foo()[0]"
      */
-    public String extremelyShortName(MaxCompiledCode compiledCode) {
+    public String extremelyShortName(MaxCompilation compiledCode) {
         if (compiledCode == null) {
             return unavailableDataShortText();
         }
@@ -251,7 +251,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     /**
      * E.g. "Element.foo()[0]"
      */
-    public String veryShortName(MaxCompiledCode compiledCode) {
+    public String veryShortName(MaxCompilation compiledCode) {
         if (compiledCode == null) {
             return unavailableDataShortText();
         }
@@ -264,7 +264,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     /**
      * E.g. "foo(Pointer, Word, int[])[0]"
      */
-    public String shortName(MaxCompiledCode compiledCode) {
+    public String shortName(MaxCompilation compiledCode) {
         try {
             vm().acquireLegacyVMAccess();
             try {
@@ -284,7 +284,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
      *
      * @param returnTypeSpecification specifies where the return type should appear in the returned value
      */
-    public String shortName(MaxCompiledCode compiledCode, ReturnTypeSpecification returnTypeSpecification) {
+    public String shortName(MaxCompilation compiledCode, ReturnTypeSpecification returnTypeSpecification) {
         final ClassMethodActor classMethodActor = compiledCode.classMethodActor();
 
         if (classMethodActor == null) {
@@ -307,7 +307,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         }
     }
 
-    private String positionString(MaxCompiledCode compiledCode, Address address) {
+    private String positionString(MaxCompilation compiledCode, Address address) {
         final Address entry = compiledCode.getCodeStart();
         final long position = address.minus(entry).toLong();
         return position == 0 ? "" : "+" + InspectorLabel.longTo0xHex(position);
@@ -316,7 +316,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     /**
      * E.g. "int foo(Pointer, Word, int[])[0] in com.sun.max.ins.Bar"
      */
-    public String longName(MaxCompiledCode compiledCode) {
+    public String longName(MaxCompilation compiledCode) {
         return compiledCode.classMethodActor() ==
             null ? compiledCode.entityDescription() :
                 compiledCode.classMethodActor().format("%r %n(%p)" + methodCompilationID(compiledCode) + " in %H");
@@ -325,7 +325,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     /**
      * E.g. "foo()[0]+0x7"
      */
-    public String veryShortName(MaxCompiledCode compiledCode, Address address) {
+    public String veryShortName(MaxCompilation compiledCode, Address address) {
         return compiledCode.classMethodActor() ==
             null ? compiledCode.entityName() :
                 compiledCode.classMethodActor().format("%n()" + methodCompilationID(compiledCode) + positionString(compiledCode, address));
@@ -334,7 +334,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     /**
      * E.g. "int foo(Pointer, Word, int[])[0]+0x7 in com.sun.max.ins.Bar"
      */
-    public String longName(MaxCompiledCode compiledCode, Address address) {
+    public String longName(MaxCompilation compiledCode, Address address) {
         if (compiledCode == null) {
             return unavailableDataLongText();
         }
@@ -447,7 +447,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
                 // a native routine that's already been registered.
                 name.append("}");
             } else {
-                final MaxCompiledCode compiledCode = vm().codeCache().findCompiledCode(address);
+                final MaxCompilation compiledCode = vm().codeCache().findCompiledCode(address);
                 if (compiledCode != null) {
                     name.append(",  ").append(longName(compiledCode, address));
                 }
@@ -477,7 +477,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         if (codeLocation.hasAddress()) {
             final Address address = codeLocation.address();
             name.append(address.to0xHexString()).append(" ");
-            final MaxCompiledCode compiledCode = vm().codeCache().findCompiledCode(address);
+            final MaxCompilation compiledCode = vm().codeCache().findCompiledCode(address);
             if (compiledCode != null) {
                 name.append(extremelyShortName(compiledCode)).append(" ");
             }

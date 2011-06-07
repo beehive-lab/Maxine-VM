@@ -67,7 +67,7 @@ public class JavaMethodView extends MethodView<JavaMethodView> {
      * Null when this view is not bound to any compilation, in which case this view is the unique (unbound)
      * view for the method.
      */
-    private final MaxCompiledCode compiledCode;
+    private final MaxCompilation compiledCode;
 
     /**
      * The generation count for the code in the VM, the last time this classed accessed any information.
@@ -125,7 +125,7 @@ public class JavaMethodView extends MethodView<JavaMethodView> {
      * @param compiledCode surrogate for the compilation in the VM
      * @param codeKind request for a particular code view to be displayed initially
      */
-    public JavaMethodView(Inspection inspection, MethodViewContainer container, MaxCompiledCode compiledCode, MethodCodeKind codeKind) {
+    public JavaMethodView(Inspection inspection, MethodViewContainer container, MaxCompilation compiledCode, MethodCodeKind codeKind) {
         this(inspection, container, compiledCode, compiledCode.getTeleClassMethodActor(), codeKind);
     }
 
@@ -145,7 +145,7 @@ public class JavaMethodView extends MethodView<JavaMethodView> {
         assert codeKind != MethodCodeKind.MACHINE_CODE;
     }
 
-    private JavaMethodView(Inspection inspection, MethodViewContainer container, MaxCompiledCode compiledCode, TeleClassMethodActor teleClassMethodActor, MethodCodeKind requestedCodeKind) {
+    private JavaMethodView(Inspection inspection, MethodViewContainer container, MaxCompilation compiledCode, TeleClassMethodActor teleClassMethodActor, MethodCodeKind requestedCodeKind) {
         super(inspection, container);
 
         this.methodViewPreferences = MethodViewPreferences.globalPreferences(inspection);
@@ -352,7 +352,7 @@ public class JavaMethodView extends MethodView<JavaMethodView> {
     }
 
     @Override
-    public MaxCompiledCode machineCode() {
+    public MaxCompilation machineCode() {
         return compiledCode;
     }
 
