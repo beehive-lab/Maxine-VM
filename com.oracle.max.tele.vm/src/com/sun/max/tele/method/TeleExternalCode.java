@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele;
+package com.sun.max.tele.method;
 
 import static com.sun.max.platform.Platform.*;
 
@@ -28,9 +28,9 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.cri.ci.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
 import com.sun.max.tele.memory.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
