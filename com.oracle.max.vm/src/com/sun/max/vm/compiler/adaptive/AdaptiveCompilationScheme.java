@@ -337,11 +337,10 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      * @param flags a mask of {@link CompilationFlag} values
      * @return the compiler that should be used to perform the next compilation of the method
      */
-    RuntimeCompiler selectCompiler(ClassMethodActor classMethodActor, int compilationFlags) {
+    RuntimeCompiler selectCompiler(ClassMethodActor classMethodActor, int flags) {
 
-        int flags = classMethodActor.flags() | classMethodActor.compilee().flags();
-        if (Actor.isUnsafe(flags)) {
-            assert !DEOPTIMIZING.isSet(compilationFlags) : "cannot produce deoptimized version of " + classMethodActor;
+        if (Actor.isUnsafe(classMethodActor.flags() | classMethodActor.compilee().flags())) {
+            assert !DEOPTIMIZING.isSet(flags) : "cannot produce deoptimized version of " + classMethodActor;
             return optimizingCompiler;
         }
 
@@ -355,7 +354,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 compiler = optimizingCompiler;
             }
         } else {
-            if (DEOPTIMIZING.isSet(compilationFlags)) {
+            if (DEOPTIMIZING.isSet(flags)) {
                 compiler = baselineCompiler;
                 assert baselineCompiler.canProduceDeoptimizedCode() : "deoptimization is not supported by the baseline compiler " + baselineCompiler;
             } else if (mode == Mode.OPTIMIZED || OPTIMIZE.isSet(flags)) {
