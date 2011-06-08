@@ -42,4 +42,22 @@ public abstract class RemoteTeleReference extends TeleReference {
 
     public abstract Address raw();
 
+    @Override
+    public int hashCode() {
+        return raw().toInt();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof RemoteTeleReference) {
+            RemoteTeleReference other = (RemoteTeleReference) obj;
+            if (raw().equals(other.raw())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+
 }
