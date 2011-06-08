@@ -57,6 +57,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.object.*;
@@ -791,9 +792,15 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
                 Log.println(catchAddress.minus(codeStart()).toInt());
             }
 
-            if (current.targetMethod().invalidated() != null) {
-                // TODO (ds)
-                FatalError.unimplemented();
+            if (invalidated() != null) {
+                current.sp().writeWord(DEOPT_RETURN_ADDRESS_OFFSET, catchAddress);
+                Stub stub = vm().stubs.deoptStub(CiKind.Void);
+                Pointer deoptStub = stub.codeStart().asPointer();
+                if (Deoptimization.TraceDeopt) {
+                    Log.println("DEOPT: changed exception handler address " + catchAddress.to0xHexString() + " to redirect to deopt stub " +
+                                    deoptStub.to0xHexString() + " [sp=" + sp.to0xHexString() + ", fp=" + fp.to0xHexString() + "]");
+                }
+                catchAddress = deoptStub;
             }
 
             TargetMethod calleeMethod = callee.targetMethod();
