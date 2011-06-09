@@ -440,9 +440,8 @@ public enum CiKind {
             } else {
                 String s = "";
                 try {
-                    // Append the result of value.toString() only if Object.toString() is overridden in the class hierarchy of value
-                    if (!value.getClass().getMethod("toString").equals(Object.class.getDeclaredMethod("toString"))) {
-                        s = String.valueOf(value);
+                    if (value instanceof String) {
+                        s = (String) value;
                         if (s.length() > 50) {
                             s = s.substring(0, 30) + "...";
                         }

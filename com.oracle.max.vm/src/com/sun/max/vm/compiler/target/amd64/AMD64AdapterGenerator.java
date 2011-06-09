@@ -247,11 +247,13 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
          *          +------------------------+      |
          *          :                        :      |
          *          +------------------------+      |
-         *   RSP--> |        OPT arg R       |      v
+         *          |        OPT arg S0      |      |
+         *          +------------------------+      |
+         *   RSP--> |    deopt rescue slot   |      v
          *          +------------------------+     ---
          *
-         *   N == number of args - 1
-         *   R == number of register args
+         *    N == number of args - 1
+         *   S0 == first stack arg (S0 == number of register args)
          * </pre>
          */
         public static class Baseline2OptAdapterFrameLayout extends AdapterStackFrameLayout {
@@ -276,6 +278,9 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
                     @Override
                     protected String nameOfSlot(int offset) {
                         final int offsetOfReturnAddress = frameSize();
+                        if (offset == DEOPT_RETURN_ADDRESS_OFFSET) {
+                            return "deopt rescue";
+                        }
                         if (offset == offsetOfReturnAddress) {
                             return "return address";
                         }
@@ -287,7 +292,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
                         if (offset == callersRBPOffset) {
                             return "caller's FP";
                         }
-                        return "stack arg " + (offset / Word.size());
+                        return "stack arg " + (offset / Word.size() - 1);
                     }
                 };
             }
@@ -361,7 +366,12 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             int stackArgumentsSize = 0;
             for (int i = optArgs.length - 1; i >= 0; i--) {
                 if (optArgs[i].isStackSlot()) {
-                    stackArgumentsSize += OPT_SLOT_SIZE;
+                    CiStackSlot slot = (CiStackSlot) optArgs[i];
+                    int offset = slot.index() * OPT_SLOT_SIZE;
+                    int end = offset + OPT_SLOT_SIZE;
+                    if (end > stackArgumentsSize) {
+                        stackArgumentsSize = end;
+                    }
                 }
             }
 

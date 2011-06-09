@@ -46,8 +46,13 @@ import com.sun.cri.util.*;
  *          | incoming overflow argument n   |
  *          |     ...                        |
  *          | incoming overflow argument 0   |
- *          | return address                 | Caller frame
- *   -------+--------------------------------+----------------  ---
+ *          +--------------------------------+ Caller frame
+ *          |                                |
+ *          : custom area*                   :
+ *          |                                |
+ *   -------+--------------------------------+---------------------
+ *          | return address                 |
+ *          +--------------------------------+                  ---
  *          |                                |                   ^
  *          : callee save area               :                   |
  *          |                                |                   |
@@ -76,8 +81,12 @@ import com.sun.cri.util.*;
  *   -------+--------------------------------+----------------  ---
  *
  * </pre>
- * Note that the size {@link Bytecodes#ALLOCA ALLOCA} blocks and {@code monitor}s in the frame may be greater
- * than the size of a {@linkplain CiTarget#spillSlotSize spill slot}.
+ * Note that the size of {@link Bytecodes#ALLOCA ALLOCA} blocks and {@code monitor}s in
+ * the frame may be greater than the size of a {@linkplain CiTarget#spillSlotSize spill slot}.
+ * Note also that the layout of the caller frame shown only applies if the caller
+ * was also compiled with C1X. In particular, native frames won't have
+ * a custom area if the native ABI specifies that stack arguments are at
+ * the bottom of the frame (e.g. System V ABI on AMD64).
  */
 public final class FrameMap {
 
@@ -133,6 +142,10 @@ public final class FrameMap {
         if (method == null) {
             incomingArguments = new CiCallingConvention(new CiValue[0], 0);
         } else {
+            if (compilation.method.toString().startsWith("com.sun.max.vm.MaxineVM.run")) {
+                System.console();
+            }
+
             CiKind receiver = !isStatic(method.accessFlags()) ? method.holder().kind() : null;
             incomingArguments = getCallingConvention(CRIUtil.signatureToKinds(method.signature(), receiver), JavaCallee);
         }
@@ -216,7 +229,12 @@ public final class FrameMap {
     public CiAddress toStackAddress(CiStackSlot slot) {
         int size = compilation.target.sizeInBytes(slot.kind);
         if (slot.inCallerFrame()) {
-            int offset = slot.index() * compilation.target.spillSlotSize + frameSize() + compilation.target.arch.returnAddressSize;
+            if (compilation.method.toString().startsWith("com.sun.max.vm.MaxineVM.run")) {
+                System.console();
+            }
+            int callerFrame = frameSize() + compilation.target.arch.returnAddressSize;
+            final int callerFrameOffset = slot.index() * compilation.target.spillSlotSize;
+            int offset = callerFrame + callerFrameOffset;
             return new CiAddress(slot.kind, CiRegister.Frame.asValue(), offset);
         } else {
             int offset = offsetForOutgoingOrSpillSlot(slot.index(), size);

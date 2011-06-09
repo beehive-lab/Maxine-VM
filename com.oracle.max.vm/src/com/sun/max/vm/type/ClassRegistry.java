@@ -111,16 +111,16 @@ public final class ClassRegistry {
     public static final FieldActor SYSTEM_OUT = findField(System.class, "out");
     public static final FieldActor SYSTEM_ERR = findField(System.class, "err");
 
-    public static final MethodActor Object_finalize = findMethod("finalize", Object.class);
-    public static final MethodActor ReferenceHandler_init = findMethod(java_lang_ref_Reference$ReferenceHandler, "<init>", ThreadGroup.class, String.class);
-    public static final MethodActor FinalizerThread_init = findMethod(java_lang_ref_Finalizer$FinalizerThread, "<init>", ThreadGroup.class);
-    public static final MethodActor Method_invoke = findMethod(Method.class, "invoke", Object.class, Object[].class);
-    public static final MethodActor MaxineVM_run = findMethod("run", MaxineVM.class);
-    public static final MethodActor VmThread_add = findMethod("add", VmThread.class);
-    public static final MethodActor VmThread_run = findMethod("run", VmThread.class);
-    public static final MethodActor VmThread_attach = findMethod("attach", VmThread.class);
-    public static final MethodActor VmThread_detach = findMethod("detach", VmThread.class);
-    public static final MethodActor ClassLoader_findBootstrapClass = findMethod("findBootstrapClass", ClassLoader.class);
+    public static final ClassMethodActor Object_finalize = findMethod("finalize", Object.class);
+    public static final ClassMethodActor ReferenceHandler_init = findMethod(java_lang_ref_Reference$ReferenceHandler, "<init>", ThreadGroup.class, String.class);
+    public static final ClassMethodActor FinalizerThread_init = findMethod(java_lang_ref_Finalizer$FinalizerThread, "<init>", ThreadGroup.class);
+    public static final ClassMethodActor Method_invoke = findMethod(Method.class, "invoke", Object.class, Object[].class);
+    public static final ClassMethodActor MaxineVM_run = findMethod("run", MaxineVM.class);
+    public static final ClassMethodActor VmThread_add = findMethod("add", VmThread.class);
+    public static final ClassMethodActor VmThread_run = findMethod("run", VmThread.class);
+    public static final ClassMethodActor VmThread_attach = findMethod("attach", VmThread.class);
+    public static final ClassMethodActor VmThread_detach = findMethod("detach", VmThread.class);
+    public static final ClassMethodActor ClassLoader_findBootstrapClass = findMethod("findBootstrapClass", ClassLoader.class);
 
     private static int loadCount;        // total loaded
     private static int unloadCount;    // total unloaded
@@ -518,7 +518,7 @@ public final class ClassRegistry {
      * @return the actor for the unique method in {@code declaringClass} named {@code name}
      */
     @HOSTED_ONLY
-    public static MethodActor findMethod(String name, Object declaringClassObject) {
+    public static <T extends MethodActor> T findMethod(String name, Object declaringClassObject) {
         Class declaringClass = asClass(declaringClassObject);
         Method theMethod = null;
         for (Method method : declaringClass.getDeclaredMethods()) {
@@ -547,7 +547,8 @@ public final class ClassRegistry {
      *         of {@code parameterTypes}
      */
     @HOSTED_ONLY
-    public static MethodActor findMethod(Object declaringClassObject, String name, Class... parameterTypes) {
+    @SuppressWarnings("unchecked")
+    public static <T extends MethodActor> T findMethod(Object declaringClassObject, String name, Class... parameterTypes) {
         Class declaringClass = asClass(declaringClassObject);
         MethodActor methodActor;
         if (name.equals("<init>")) {
@@ -567,7 +568,7 @@ public final class ClassRegistry {
             }
             new CriticalMethod((ClassMethodActor) methodActor, callEntryPoint);
         }
-        return methodActor;
+        return (T) methodActor;
     }
 
     /**

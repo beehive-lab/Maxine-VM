@@ -24,6 +24,7 @@ package com.sun.max.vm.compiler.target;
 
 import static com.oracle.max.asm.target.amd64.AMD64.*;
 import static com.sun.cri.ci.CiCalleeSaveArea.*;
+import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.runtime.VMRegister.Role.*;
 
@@ -34,7 +35,9 @@ import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.*;
 
@@ -154,9 +157,17 @@ public class RegisterConfigs {
                                 allRegisters,        // all AMD64 registers
                                 roleMap);            // VM register role map
 
+                // Account for the word at the bottom of the frame used
+                // for saving an overwritten return address during deoptimization
+                int javaStackArg0Offset = Deoptimization.DEOPT_RETURN_ADDRESS_OFFSET + Word.size();
+                int nativeStackArg0Offset = 0;
+                standard.stackArg0Offsets[JavaCall.ordinal()] = javaStackArg0Offset;
+                standard.stackArg0Offsets[JavaCallee.ordinal()] = javaStackArg0Offset;
+                standard.stackArg0Offsets[RuntimeCall.ordinal()] = javaStackArg0Offset;
+                standard.stackArg0Offsets[NativeCall.ordinal()] = nativeStackArg0Offset;
+
                 setNonZero(standard.getAttributesMap(), r14, rsp);
 
-                CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveArea(-1, 8, rbx, rbp, r12, r13, r14, r15));
                 CiRegisterConfig globalStub = new CiRegisterConfig(standard, new CiCalleeSaveArea(-1, 8, allRegisters));
                 CiRegisterConfig trapStub = new CiRegisterConfig(standard, AMD64TrapStateAccess.CSA);
                 CiRegisterConfig trampoline = new CiRegisterConfig(standard, new CiCalleeSaveArea(-1, 8,
@@ -165,6 +176,9 @@ public class RegisterConfigs {
                     standard.getScratchRegister(),                    // dynamic dispatch index is saved here for stack frame walker
                     xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7    // parameters
                 ));
+
+                CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveArea(-1, 8, rbx, rbp, r12, r13, r14, r15));
+                n2j.stackArg0Offsets[JavaCallee.ordinal()] = nativeStackArg0Offset;
 
                 roleMap.put(ABI_FRAME_POINTER.ordinal(), rbp);
                 CiRegisterConfig template = new CiRegisterConfig(

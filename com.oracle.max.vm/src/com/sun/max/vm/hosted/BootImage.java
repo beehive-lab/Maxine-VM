@@ -43,7 +43,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.CompilationScheme.Static;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.BootImage.StringInfo.Key;
 import com.sun.max.vm.tele.*;
@@ -178,6 +177,10 @@ public class BootImage {
         public Class<?> fieldType() {
             return int.class;
         }
+    }
+
+    static int getCriticalEntryPoint(ClassMethodActor classMethodActor, CallEntryPoint callEntryPoint) {
+        return classMethodActor.currentTargetMethod().getEntryPoint(callEntryPoint).asAddress().toInt();
     }
 
     /**
@@ -346,11 +349,11 @@ public class BootImage {
             pageSize = platform().pageSize;
             yellowZonePages = VmThread.YELLOW_ZONE_PAGES;
             redZonePages = VmThread.RED_ZONE_PAGES;
-            vmRunMethodOffset = Static.getCriticalEntryPoint((ClassMethodActor) ClassRegistry.MaxineVM_run, CallEntryPoint.C_ENTRY_POINT).toInt();
-            vmThreadAddMethodOffset = Static.getCriticalEntryPoint((ClassMethodActor) ClassRegistry.VmThread_add, CallEntryPoint.C_ENTRY_POINT).toInt();
-            vmThreadRunMethodOffset = Static.getCriticalEntryPoint((ClassMethodActor) ClassRegistry.VmThread_run, CallEntryPoint.C_ENTRY_POINT).toInt();
-            vmThreadAttachMethodOffset = Static.getCriticalEntryPoint((ClassMethodActor) ClassRegistry.VmThread_attach, CallEntryPoint.C_ENTRY_POINT).toInt();
-            vmThreadDetachMethodOffset = Static.getCriticalEntryPoint((ClassMethodActor) ClassRegistry.VmThread_detach, CallEntryPoint.C_ENTRY_POINT).toInt();
+            vmRunMethodOffset = getCriticalEntryPoint(ClassRegistry.MaxineVM_run, CallEntryPoint.C_ENTRY_POINT);
+            vmThreadAddMethodOffset = getCriticalEntryPoint(ClassRegistry.VmThread_add, CallEntryPoint.C_ENTRY_POINT);
+            vmThreadRunMethodOffset = getCriticalEntryPoint(ClassRegistry.VmThread_run, CallEntryPoint.C_ENTRY_POINT);
+            vmThreadAttachMethodOffset = getCriticalEntryPoint(ClassRegistry.VmThread_attach, CallEntryPoint.C_ENTRY_POINT);
+            vmThreadDetachMethodOffset = getCriticalEntryPoint(ClassRegistry.VmThread_detach, CallEntryPoint.C_ENTRY_POINT);
             classRegistryOffset = dataPrototype.objectToOrigin(ClassRegistry.BOOT_CLASS_REGISTRY).toInt();
             this.stringInfoSize = stringInfoSize;
             relocationDataSize = dataPrototype.relocationData().length;

@@ -324,13 +324,16 @@ public class ValueCodec {
     /**
      * Decodes a {@link CiValue} from a data input stream.
      */
-    static CiValue readValue(DecodingStream in) {
+    static CiValue readValue(DecodingStream in, CiBitMap regRefMap, CiBitMap frameRefMap) {
         int b = in.read();
         assert b >= 0;
         int type = TYPE.get(b);
         if (type == TYPE_STACK) {
             int index = STACK.get(b);
             if (index <= STACK_1_CURRENT_FRAME_MAX) {
+                if (frameRefMap != null && frameRefMap.get(index)) {
+                    return CiStackSlot.get(CiKind.Object, index, false);
+                }
                 return CiStackSlot.get(CiKind.Word, index, false);
             } else if (index <= STACK_1_MAX) {
                 return CiStackSlot.get(CiKind.Word, index - STACK_1_CURRENT_FRAME_MAX - 1, true);
@@ -340,10 +343,16 @@ public class ValueCodec {
             } else {
                 assert index == STACK_5_CURRENT_FRAME;
                 index = in.readInt();
+                if (frameRefMap != null && frameRefMap.get(index)) {
+                    return CiStackSlot.get(CiKind.Object, index, false);
+                }
                 return CiStackSlot.get(CiKind.Word, index, false);
             }
         } else if (type == TYPE_REGISTER) {
             int num = REGISTER.get(b);
+            if (regRefMap != null && num < regRefMap.size() && regRefMap.get(num)) {
+                return target().arch.registers[num].asValue(CiKind.Object);
+            }
             return target().arch.registers[num].asValue(CiKind.Word);
         } else if (type == TYPE_OBJECT_CONSTANT) {
             int index = OBJECT_CONSTANT.get(b);
@@ -396,6 +405,6 @@ public class ValueCodec {
     static CiValue testCodec(CiValue value) {
         EncodingStream es = new EncodingStream(1024);
         writeValue(es, value);
-        return readValue(new DecodingStream(es.toByteArray()));
+        return readValue(new DecodingStream(es.toByteArray()), null, null);
     }
 }

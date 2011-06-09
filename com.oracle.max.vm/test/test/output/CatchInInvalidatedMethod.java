@@ -71,11 +71,11 @@ public class CatchInInvalidatedMethod {
             return v.get() * 100;
         }
         try {
-            return triggerDeoptAndRaiseException();
+            "object on stack".substring(triggerDeoptAndRaiseException());
         } catch (MyException e) {
             System.out.println("caught: " + e);
-            return v.get();
         }
+        return v.get();
     }
 
     static class MyException extends Exception {
