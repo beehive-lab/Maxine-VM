@@ -717,9 +717,9 @@ public final class BootImageObjectTree {
         String getDetails() {
             if (detailStringRep == null) {
                 detailStringRep = String.format(
-                                "class: %s\naddress (decimal): %s\naddress (hexadecimal): %s\nsize: %d bytes\naggregate size: %d bytes",
+                                "class: %s\naddress (decimal): %s\naddress (hexadecimal): %s\nsize: %d bytes\naggregate size: %s bytes",
                                 node.className, Long.toString(node.address + RELOC.getValue(), 10), Long.toString(node.address + RELOC.getValue(), 16),
-                                node.size, node.aggregateSize);
+                                node.size, Longs.toUnitsString(node.aggregateSize(), false));
             }
             return detailStringRep;
         }
