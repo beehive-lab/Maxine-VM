@@ -28,7 +28,6 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.vm.runtime.*;
 
 /**
  * {@HOSTED_ONLY} support for automatically generating template method sources.
@@ -1413,7 +1412,7 @@ public class T1XTemplateGenerator {
     public static void generateInvokeVITemplate(String k, String variant, String tag) {
         boolean isVoid = k.equals("void");
         String param1 = tag.equals("") ? "ResolutionGuard.InPool guard" :
-            (variant.equals("interface") ? "InterfaceMethodActor interfaceMethodActor" : "int vTableIndex");
+            (variant.equals("interface") ? "InterfaceMethodActor interfaceMethodActor" : "VirtualMethodActor methodActor");
         param1 += ", int receiverStackIndex";
         if (tag.equals("instrumented")) {
             param1 += ", MethodProfile mpo, int mpoIndex";
@@ -1434,12 +1433,12 @@ public class T1XTemplateGenerator {
         } else {
             // virtual
             if (tag.equals("")) {
-                out.printf("        VirtualMethodActor virtualMethodActor = Snippets.resolveVirtualMethod(guard);%n");
-                out.printf("        Address entryPoint = Snippets.selectNonPrivateVirtualMethod(receiver, virtualMethodActor).asAddress();%n");
+                out.printf("        VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);%n");
+                out.printf("        Address entryPoint = Snippets.selectNonPrivateVirtualMethod(receiver, methodActor).asAddress();%n");
             } else if (tag.equals("resolved")) {
-                out.printf("        Address entryPoint = ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress();%n");
+                out.printf("        Address entryPoint = ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress();%n");
             } else if (tag.equals("instrumented")) {
-                out.printf("        Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);%n");
+                out.printf("        Address entryPoint = selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex);%n");
             }
         }
         generateBeforeAdvice(k, variant, tag);
@@ -1501,8 +1500,8 @@ public class T1XTemplateGenerator {
         boolean isStatic = variant.equals("static");
         String tag = isStatic && resolved ? "init" : xtag;
         boolean isVoid = k.equals("void");
-        String params = xtag.equals("") ? "ResolutionGuard.InPool guard" : "";
-//            (isStatic ? "StaticMethodActor staticMethodActor" : "int vTableIndex");
+        String params = xtag.equals("") ? "ResolutionGuard.InPool guard" :
+            (isStatic ? "StaticMethodActor methodActor" : "VirtualMethodActor methodActor");
         if (variant.equals("special")) {
             if (params.length() > 0) {
                 params += ", ";

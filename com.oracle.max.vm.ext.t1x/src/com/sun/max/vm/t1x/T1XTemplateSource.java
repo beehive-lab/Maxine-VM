@@ -1724,26 +1724,26 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(INVOKEVIRTUAL$float)
     public static void invokevirtualFloat(ResolutionGuard.InPool guard, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
-        VirtualMethodActor virtualMethodActor = Snippets.resolveVirtualMethod(guard);
-        Address entryPoint = Snippets.selectNonPrivateVirtualMethod(receiver, virtualMethodActor).asAddress();
+        VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
+        Address entryPoint = Snippets.selectNonPrivateVirtualMethod(receiver, methodActor).asAddress();
         final float result = indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
         pushFloat(result);
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKEVIRTUAL$float$resolved)
-    public static void invokevirtualFloat(int vTableIndex, int receiverStackIndex) {
+    public static void invokevirtualFloat(VirtualMethodActor methodActor, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress();
+        Address entryPoint = ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress();
         final float result = indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
         pushFloat(result);
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKEVIRTUAL$float$instrumented)
-    public static void invokevirtualFloat(int vTableIndex, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
+    public static void invokevirtualFloat(VirtualMethodActor methodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
         Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);
+        Address entryPoint = selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex);
         final float result = indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
         pushFloat(result);
     }
@@ -1788,7 +1788,7 @@ public class T1XTemplateSource {
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKESPECIAL$float$resolved)
-    public static void invokespecialFloat(int receiverStackIndex) {
+    public static void invokespecialFloat(VirtualMethodActor methodActor, int receiverStackIndex) {
         Pointer receiver = peekWord(receiverStackIndex).asPointer();
         nullCheck(receiver);
         final float result = directCallFloat();
@@ -1805,7 +1805,7 @@ public class T1XTemplateSource {
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKESTATIC$float$init)
-    public static void invokestaticFloat() {
+    public static void invokestaticFloat(StaticMethodActor methodActor) {
         final float result = directCallFloat();
         pushFloat(result);
     }
@@ -2197,26 +2197,26 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(INVOKEVIRTUAL$long)
     public static void invokevirtualLong(ResolutionGuard.InPool guard, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
-        VirtualMethodActor virtualMethodActor = Snippets.resolveVirtualMethod(guard);
-        Address entryPoint = Snippets.selectNonPrivateVirtualMethod(receiver, virtualMethodActor).asAddress();
+        VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
+        Address entryPoint = Snippets.selectNonPrivateVirtualMethod(receiver, methodActor).asAddress();
         final long result = indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
         pushLong(result);
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKEVIRTUAL$long$resolved)
-    public static void invokevirtualLong(int vTableIndex, int receiverStackIndex) {
+    public static void invokevirtualLong(VirtualMethodActor methodActor, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress();
+        Address entryPoint = ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress();
         final long result = indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
         pushLong(result);
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKEVIRTUAL$long$instrumented)
-    public static void invokevirtualLong(int vTableIndex, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
+    public static void invokevirtualLong(VirtualMethodActor methodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
         Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);
+        Address entryPoint = selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex);
         final long result = indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
         pushLong(result);
     }
@@ -2261,7 +2261,7 @@ public class T1XTemplateSource {
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKESPECIAL$long$resolved)
-    public static void invokespecialLong(int receiverStackIndex) {
+    public static void invokespecialLong(VirtualMethodActor methodActor, int receiverStackIndex) {
         Pointer receiver = peekWord(receiverStackIndex).asPointer();
         nullCheck(receiver);
         final long result = directCallLong();
@@ -2278,7 +2278,7 @@ public class T1XTemplateSource {
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKESTATIC$long$init)
-    public static void invokestaticLong() {
+    public static void invokestaticLong(StaticMethodActor methodActor) {
         final long result = directCallLong();
         pushLong(result);
     }
@@ -2624,26 +2624,26 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(INVOKEVIRTUAL$double)
     public static void invokevirtualDouble(ResolutionGuard.InPool guard, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
-        VirtualMethodActor virtualMethodActor = Snippets.resolveVirtualMethod(guard);
-        Address entryPoint = Snippets.selectNonPrivateVirtualMethod(receiver, virtualMethodActor).asAddress();
+        VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
+        Address entryPoint = Snippets.selectNonPrivateVirtualMethod(receiver, methodActor).asAddress();
         final double result = indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
         pushDouble(result);
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKEVIRTUAL$double$resolved)
-    public static void invokevirtualDouble(int vTableIndex, int receiverStackIndex) {
+    public static void invokevirtualDouble(VirtualMethodActor methodActor, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress();
+        Address entryPoint = ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress();
         final double result = indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
         pushDouble(result);
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKEVIRTUAL$double$instrumented)
-    public static void invokevirtualDouble(int vTableIndex, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
+    public static void invokevirtualDouble(VirtualMethodActor methodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
         Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);
+        Address entryPoint = selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex);
         final double result = indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
         pushDouble(result);
     }
@@ -2688,7 +2688,7 @@ public class T1XTemplateSource {
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKESPECIAL$double$resolved)
-    public static void invokespecialDouble(int receiverStackIndex) {
+    public static void invokespecialDouble(VirtualMethodActor methodActor, int receiverStackIndex) {
         Pointer receiver = peekWord(receiverStackIndex).asPointer();
         nullCheck(receiver);
         final double result = directCallDouble();
@@ -2705,7 +2705,7 @@ public class T1XTemplateSource {
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKESTATIC$double$init)
-    public static void invokestaticDouble() {
+    public static void invokestaticDouble(StaticMethodActor methodActor) {
         final double result = directCallDouble();
         pushDouble(result);
     }
@@ -3234,26 +3234,26 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(INVOKEVIRTUAL$word)
     public static void invokevirtualWord(ResolutionGuard.InPool guard, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
-        VirtualMethodActor virtualMethodActor = Snippets.resolveVirtualMethod(guard);
-        Address entryPoint = Snippets.selectNonPrivateVirtualMethod(receiver, virtualMethodActor).asAddress();
+        VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
+        Address entryPoint = Snippets.selectNonPrivateVirtualMethod(receiver, methodActor).asAddress();
         final Word result = indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
         pushWord(result);
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKEVIRTUAL$word$resolved)
-    public static void invokevirtualWord(int vTableIndex, int receiverStackIndex) {
+    public static void invokevirtualWord(VirtualMethodActor methodActor, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress();
+        Address entryPoint = ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress();
         final Word result = indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
         pushWord(result);
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKEVIRTUAL$word$instrumented)
-    public static void invokevirtualWord(int vTableIndex, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
+    public static void invokevirtualWord(VirtualMethodActor methodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
         Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);
+        Address entryPoint = selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex);
         final Word result = indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
         pushWord(result);
     }
@@ -3298,7 +3298,7 @@ public class T1XTemplateSource {
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKESPECIAL$word$resolved)
-    public static void invokespecialWord(int receiverStackIndex) {
+    public static void invokespecialWord(VirtualMethodActor methodActor, int receiverStackIndex) {
         Pointer receiver = peekWord(receiverStackIndex).asPointer();
         nullCheck(receiver);
         final Word result = directCallWord();
@@ -3315,7 +3315,7 @@ public class T1XTemplateSource {
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKESTATIC$word$init)
-    public static void invokestaticWord() {
+    public static void invokestaticWord(StaticMethodActor methodActor) {
         final Word result = directCallWord();
         pushWord(result);
     }
@@ -3423,24 +3423,24 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(INVOKEVIRTUAL$void)
     public static void invokevirtualVoid(ResolutionGuard.InPool guard, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
-        VirtualMethodActor virtualMethodActor = Snippets.resolveVirtualMethod(guard);
-        Address entryPoint = Snippets.selectNonPrivateVirtualMethod(receiver, virtualMethodActor).asAddress();
+        VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
+        Address entryPoint = Snippets.selectNonPrivateVirtualMethod(receiver, methodActor).asAddress();
         indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKEVIRTUAL$void$resolved)
-    public static void invokevirtualVoid(int vTableIndex, int receiverStackIndex) {
+    public static void invokevirtualVoid(VirtualMethodActor methodActor, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress();
+        Address entryPoint = ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress();
         indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKEVIRTUAL$void$instrumented)
-    public static void invokevirtualVoid(int vTableIndex, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
+    public static void invokevirtualVoid(VirtualMethodActor methodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
         Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);
+        Address entryPoint = selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex);
         indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
@@ -3480,7 +3480,7 @@ public class T1XTemplateSource {
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKESPECIAL$void$resolved)
-    public static void invokespecialVoid(int receiverStackIndex) {
+    public static void invokespecialVoid(VirtualMethodActor methodActor, int receiverStackIndex) {
         Pointer receiver = peekWord(receiverStackIndex).asPointer();
         nullCheck(receiver);
         directCallVoid();
@@ -3495,7 +3495,7 @@ public class T1XTemplateSource {
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKESTATIC$void$init)
-    public static void invokestaticVoid() {
+    public static void invokestaticVoid(StaticMethodActor methodActor) {
         directCallVoid();
     }
 
