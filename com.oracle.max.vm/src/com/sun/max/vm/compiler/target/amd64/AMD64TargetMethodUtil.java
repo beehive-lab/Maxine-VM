@@ -92,16 +92,11 @@ public final class AMD64TargetMethodUtil {
      *
      * @param targetMethod the method containing the CALL instruction
      * @param callOffset the offset within the code of {@code targetMethod} of the CALL to be patched
-     * @param destination the absolute target address of the CALL
+     * @param target the absolute target address of the CALL
+     * @return the target of the call prior to patching
      */
-    public static void fixupCall32Site(TargetMethod targetMethod, int callOffset, Address destination) {
-        fixupCode(targetMethod, callOffset, destination.asAddress(), RIP_CALL);
-    }
-
-    private static final long DIRECT_METHOD_CALL_INSTRUCTION_LENGTH = 5L;
-
-    private static void fixupCode(TargetMethod targetMethod, int offset, Address target, int controlTransferOpcode) {
-        final Pointer callSite = targetMethod.codeStart().plus(offset);
+    public static Address fixupCall32Site(TargetMethod targetMethod, int callOffset, Address target) {
+        final Pointer callSite = targetMethod.codeStart().plus(callOffset);
         if (!isPatchableCallSite(callSite)) {
             // Every call site that is fixed up here might also be patched later.  To avoid failed patching,
             // check for alignment of call site also here.
@@ -109,40 +104,65 @@ public final class AMD64TargetMethodUtil {
             // FatalError.unexpected(" invalid patchable call site:  " + targetMethod + "+" + offset + " " + callSite.toHexString());
         }
 
-        long displacement = target.minus(callSite.plus(DIRECT_METHOD_CALL_INSTRUCTION_LENGTH)).toLong();
-        FatalError.check((int) displacement == displacement, "Code displacement out of 32-bit range");
-        displacement = displacement & 0xFFFFFFFFL;
+        long disp64 = target.asAddress().minus(callSite.plus(DIRECT_METHOD_CALL_INSTRUCTION_LENGTH)).toLong();
+        int disp32 = (int) disp64;
+        int oldDisp32;
+        FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
         if (MaxineVM.isHosted()) {
             final byte[] code = targetMethod.code();
-            code[offset] = (byte) controlTransferOpcode;
-            code[offset + 1] = (byte) displacement;
-            code[offset + 2] = (byte) (displacement >> 8);
-            code[offset + 3] = (byte) (displacement >> 16);
-            code[offset + 4] = (byte) (displacement >> 24);
+            oldDisp32 =
+                (code[callOffset + 4] & 0xff) << 24 |
+                (code[callOffset + 3] & 0xff) << 16 |
+                (code[callOffset + 2] & 0xff) << 8 |
+                (code[callOffset + 1] & 0xff) << 0;
+            if (oldDisp32 != disp32) {
+                code[callOffset] = (byte) RIP_CALL;
+                code[callOffset + 1] = (byte) disp32;
+                code[callOffset + 2] = (byte) (disp32 >> 8);
+                code[callOffset + 3] = (byte) (disp32 >> 16);
+                code[callOffset + 4] = (byte) (disp32 >> 24);
+            }
         } else {
-            // Don't care about any particular alignment here. Can fixup any control of transfer code as there isn't concurrency issues.
-            callSite.writeByte(0, (byte) controlTransferOpcode);
-            callSite.writeByte(1, (byte) displacement);
-            callSite.writeByte(2, (byte) (displacement >> 8));
-            callSite.writeByte(3, (byte) (displacement >> 16));
-            callSite.writeByte(4, (byte) (displacement >> 24));
+            oldDisp32 =
+                (callSite.readByte(4) & 0xff) << 24 |
+                (callSite.readByte(3) & 0xff) << 16 |
+                (callSite.readByte(2) & 0xff) << 8 |
+                (callSite.readByte(1) & 0xff) << 0;
+            if (oldDisp32 != disp32) {
+                callSite.writeByte(0, (byte) RIP_CALL);
+                callSite.writeByte(1, (byte) disp32);
+                callSite.writeByte(2, (byte) (disp32 >> 8));
+                callSite.writeByte(3, (byte) (disp32 >> 16));
+                callSite.writeByte(4, (byte) (disp32 >> 24));
+            }
         }
+        return callSite.plus(DIRECT_METHOD_CALL_INSTRUCTION_LENGTH).plus(oldDisp32);
     }
 
-    // MT-safe replacement of the displacement of a direct call.
-    public static void mtSafePatchCallDisplacement(TargetMethod targetMethod, Pointer callSite, Address target) {
+    private static final long DIRECT_METHOD_CALL_INSTRUCTION_LENGTH = 5L;
+
+    /**
+     * Thread safe patching of the displacement field in a direct call.
+     *
+     * @return the target of the call prior to patching
+     */
+    public static Address mtSafePatchCallDisplacement(TargetMethod targetMethod, Pointer callSite, Address target) {
         if (!isPatchableCallSite(callSite)) {
-            FatalError.unexpected(" invalid patchable call site:  " + callSite.toHexString());
+            throw FatalError.unexpected(" invalid patchable call site:  " + callSite.toHexString());
         }
-        long displacement = target.minus(callSite.plus(DIRECT_METHOD_CALL_INSTRUCTION_LENGTH)).toLong();
-        FatalError.check((int) displacement == displacement, "Code displacement out of 32-bit range");
-        displacement = displacement & 0xFFFFFFFFL;
-        synchronized (PatchingLock) {
-            // Just to prevent concurrent writing and invalidation to the same instruction cache line
-            // (although the lock excludes ALL concurrent patching)
-            callSite.writeInt(1,  (int) displacement);
-            // Don't need icache invalidation to be correct (see AMD64's Architecture Programmer Manual Vol.2, p173 on self-modifying code)
+        long disp64 = target.minus(callSite.plus(DIRECT_METHOD_CALL_INSTRUCTION_LENGTH)).toLong();
+        int disp32 = (int) disp64;
+        FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
+        int oldDisp32 = callSite.readInt(1);
+        if (oldDisp32 != disp64) {
+            synchronized (PatchingLock) {
+                // Just to prevent concurrent writing and invalidation to the same instruction cache line
+                // (although the lock excludes ALL concurrent patching)
+                callSite.writeInt(1,  disp32);
+                // Don't need icache invalidation to be correct (see AMD64's Architecture Programmer Manual Vol.2, p173 on self-modifying code)
+            }
         }
+        return callSite.plus(DIRECT_METHOD_CALL_INSTRUCTION_LENGTH).plus(oldDisp32);
     }
 
     // Disable instance creation.

@@ -188,7 +188,7 @@ public class Compilation /*implements Future<TargetMethod>*/ {
             InspectableCodeInfo.notifyCompilationEvent(classMethodActor, null);
 
             methodString = logBeforeCompilation(compiler);
-            if (!MaxineVM.isHosted()) {
+            if (!MaxineVM.isHosted() && StackReferenceMapPreparer.VerifyRefMaps) {
                 StackReferenceMapPreparer.verifyReferenceMapsForThisThread();
             }
 

@@ -740,25 +740,30 @@ public final class StackReferenceMapPreparer {
     }
 
     /**
-     * This method can be called to walk the stack of the current thread from the current
+     * Walks the stack of the current thread from the current
      * instruction pointer, stack pointer, and frame pointer, verifying the reference map
      * for each stack frame by using the {@link Heap#isValidRef(com.sun.max.vm.ref.Reference)}
      * heuristic.
      */
     public static void verifyReferenceMapsForThisThread() {
-        if (VerifyRefMaps) {
-            VmThread current = VmThread.current();
-            current.stackReferenceMapVerifier().verifyReferenceMaps(current);
-        }
+        VmThread current = VmThread.current();
+        current.stackReferenceMapVerifier().verifyReferenceMaps0(current, Pointer.fromLong(here()), getCpuStackPointer(), getCpuFramePointer());
     }
 
-    private void verifyReferenceMaps(VmThread current) {
-        Pointer tla = current.tla();
+    /**
+     * Walks the stack of a given thread from a specified frame, verifying the reference map
+     * for each stack frame by using the {@link Heap#isValidRef(com.sun.max.vm.ref.Reference)}
+     * heuristic.
+     */
+    public static void verifyReferenceMaps(VmThread thread, Pointer ip, Pointer sp, Pointer fp) {
+        thread.stackReferenceMapVerifier().verifyReferenceMaps0(thread, ip, sp, fp);
+    }
+
+    private void verifyReferenceMaps0(VmThread thread, Pointer ip, Pointer sp, Pointer fp) {
+        Pointer tla = thread.tla();
         initRefMapFields(tla);
-        Pointer sp = getCpuStackPointer();
-        Pointer fp = getCpuFramePointer();
-        boolean lockDisabledSafepoints = traceStackRootScanStart(sp, HIGHEST_STACK_SLOT_ADDRESS.load(tla), VmThread.current());
-        current.stackDumpStackFrameWalker().verifyReferenceMap(Pointer.fromLong(here()), sp, fp, this);
+        boolean lockDisabledSafepoints = traceStackRootScanStart(sp, HIGHEST_STACK_SLOT_ADDRESS.load(tla), thread);
+        thread.stackDumpStackFrameWalker().verifyReferenceMap(ip, sp, fp, this);
         traceStackRootScanEnd(lockDisabledSafepoints);
     }
 }

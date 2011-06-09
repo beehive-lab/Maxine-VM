@@ -120,7 +120,7 @@ public class Stubs {
      * Gets the deoptimization stub for a given return value kind.
      */
     public Stub deoptStub(CiKind returnValueKind) {
-        return deoptStubs[returnValueKind.ordinal()];
+        return deoptStubs[returnValueKind.stackKind().ordinal()];
     }
 
     /**
@@ -685,7 +685,7 @@ public class Stubs {
     }
 
     @HOSTED_ONLY
-    private synchronized Stub genDeoptStub(CiKind kind) {
+    private Stub genDeoptStub(CiKind kind) {
         if (platform().isa == ISA.AMD64) {
             /*
              * The deopt stub initially executes in the frame of the method that was returned to and is about to be
@@ -780,7 +780,7 @@ public class Stubs {
      * to {@link Deoptimization#uncommonTrap(Pointer, Pointer, Pointer, Pointer)}.
      */
     @HOSTED_ONLY
-    public synchronized Stub genUncommonTrapStub() {
+    public Stub genUncommonTrapStub() {
         if (platform().isa == ISA.AMD64) {
             CiRegisterConfig registerConfig = registerConfigs.globalStub;
             AMD64MacroAssembler asm = new AMD64MacroAssembler(target(), registerConfig);

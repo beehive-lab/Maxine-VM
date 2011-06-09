@@ -36,70 +36,75 @@ public class CiRegisterConfig implements RiRegisterConfig {
     /**
      * The object describing the callee save area of this register configuration.
      */
-    protected CiCalleeSaveArea calleeSaveArea;
+    public CiCalleeSaveArea calleeSaveArea;
 
     /**
      * The minimum register role identifier.
      */
-    protected final int minRole;
+    public final int minRole;
 
     /**
      * The map from register role IDs to registers.
      */
-    protected final CiRegister[] registersRoleMap;
+    public final CiRegister[] registersRoleMap;
 
     /**
      * The set of registers that can be used by the register allocator.
      */
-    protected final CiRegister[] allocatable;
+    public final CiRegister[] allocatable;
 
     /**
      * The set of registers that can be used by the register allocator,
      * {@linkplain CiRegister#categorize(CiRegister[]) categorized} by register
      * {@linkplain RegisterFlag flags}.
      */
-    protected final EnumMap<RegisterFlag, CiRegister[]> categorized;
+    public final EnumMap<RegisterFlag, CiRegister[]> categorized;
 
     /**
      * The ordered set of registers used to pass integral arguments.
      */
-    protected final CiRegister[] cpuParameters;
+    public final CiRegister[] cpuParameters;
 
     /**
      * The ordered set of registers used to pass floating point arguments.
      */
-    protected final CiRegister[] fpuParameters;
+    public final CiRegister[] fpuParameters;
 
     /**
      * The caller saved registers.
      */
-    protected final CiRegister[] callerSave;
+    public final CiRegister[] callerSave;
 
     /**
      * The register to which {@link CiRegister#Frame} and {@link CiRegister#CallerFrame} are bound.
      */
-    protected final CiRegister frame;
+    public final CiRegister frame;
 
     /**
      * Register for returning an integral value.
      */
-    protected final CiRegister integralReturn;
+    public final CiRegister integralReturn;
 
     /**
      * Register for returning a floating point value.
      */
-    protected final CiRegister floatingPointReturn;
+    public final CiRegister floatingPointReturn;
 
     /**
      * The map from register {@linkplain CiRegister#number numbers} to register
      * {@linkplain RiRegisterAttributes attributes} for this register configuration.
      */
-    protected final RiRegisterAttributes[] attributesMap;
+    public final RiRegisterAttributes[] attributesMap;
 
     /**
      * The scratch register.
      */
-    protected final CiRegister scratch;
+    public final CiRegister scratch;
+
+    /**
+     * The frame offset of the first stack argument for each calling convention {@link CiCallingConvention.Type}.
+     */
+    public final int[] stackArg0Offsets = new int[CiCallingConvention.Type.VALUES.length];
 
     public CiRegisterConfig(
                     CiRegister frame,
@@ -159,6 +164,7 @@ public class CiRegisterConfig implements RiRegisterConfig {
         this.integralReturn = src.integralReturn;
         this.registersRoleMap = src.registersRoleMap;
         this.minRole = src.minRole;
+        System.arraycopy(src.stackArg0Offsets, 0, stackArg0Offsets, 0, stackArg0Offsets.length);
     }
 
     public CiRegister getReturnRegister(CiKind kind) {
@@ -187,7 +193,11 @@ public class CiRegisterConfig implements RiRegisterConfig {
 
         int currentGeneral = 0;
         int currentXMM = 0;
-        int currentStackIndex = 0;
+        int firstStackIndex = (stackArg0Offsets[type.ordinal()]) / target.spillSlotSize;
+        if (type == Type.NativeCall) {
+            firstStackIndex = 0;
+        }
+        int currentStackIndex = firstStackIndex;
 
         for (int i = 0; i < parameters.length; i++) {
             final CiKind kind = parameters[i];
@@ -225,7 +235,7 @@ public class CiRegisterConfig implements RiRegisterConfig {
             }
         }
 
-        return new CiCallingConvention(locations, currentStackIndex * target.spillSlotSize);
+        return new CiCallingConvention(locations, (currentStackIndex - firstStackIndex) * target.spillSlotSize);
     }
 
     public CiRegister[] getCallingConventionRegisters(Type type, RegisterFlag flag) {
@@ -272,6 +282,13 @@ public class CiRegisterConfig implements RiRegisterConfig {
                 roleMap.append(i + minRole).append(" -> ").append(reg);
             }
         }
+        StringBuilder stackArg0OffsetsMap = new StringBuilder();
+        for (Type t : Type.VALUES) {
+            if (stackArg0OffsetsMap.length() != 0) {
+                stackArg0OffsetsMap.append(", ");
+            }
+            stackArg0OffsetsMap.append(t).append(" -> ").append(stackArg0Offsets[t.ordinal()]);
+        }
         String res = String.format(
              "Allocatable: " + Arrays.toString(getAllocatableRegisters()) + "%n" +
              "CallerSave:  " + Arrays.toString(getCallerSaveRegisters()) + "%n" +
@@ -279,6 +296,7 @@ public class CiRegisterConfig implements RiRegisterConfig {
              "CPU Params:  " + Arrays.toString(cpuParameters) + "%n" +
              "FPU Params:  " + Arrays.toString(fpuParameters) + "%n" +
              "VMRoles:     " + roleMap + "%n" +
+             "stackArg0:   " + stackArg0OffsetsMap + "%n" +
              "Scratch:     " + getScratchRegister() + "%n");
         return res;
     }

@@ -61,6 +61,7 @@ public class CiCallingConvention {
          */
         public final boolean out;
 
+        public static final Type[] VALUES = values();
 
         private Type(boolean out) {
             this.out = out;

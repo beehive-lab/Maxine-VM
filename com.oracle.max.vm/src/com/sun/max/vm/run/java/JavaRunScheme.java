@@ -43,6 +43,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.instrument.*;
@@ -205,6 +206,10 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
 
             if (Heap.ExcessiveGCFrequency != 0) {
                 new ExcessiveGCDaemon(Heap.ExcessiveGCFrequency).start();
+            }
+
+            if (Deoptimization.DeoptimizeALot != 0) {
+                new DeoptimizeALot(Deoptimization.DeoptimizeALot).start();
             }
 
             // Install the signal handler for dumping threads when SIGHUP is received

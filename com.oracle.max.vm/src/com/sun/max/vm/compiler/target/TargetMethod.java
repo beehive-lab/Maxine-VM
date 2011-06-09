@@ -44,9 +44,9 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.deopt.*;
+import com.sun.max.vm.compiler.deopt.Deoptimization.Continuation;
 import com.sun.max.vm.compiler.deopt.Deoptimization.Info;
-import com.sun.max.vm.compiler.deopt.Deoptimization.*;
+import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.ArrayField;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.*;
@@ -332,6 +332,11 @@ public abstract class TargetMethod extends MemoryRegion {
      */
     public static class FrameAccess {
         /**
+         * Description of the register save area.
+         */
+        public final CiCalleeSaveArea csa;
+
+        /**
          * Register save area.
          */
         public final Pointer rsa;
@@ -346,10 +351,23 @@ public abstract class TargetMethod extends MemoryRegion {
          */
         public final Pointer fp;
 
-        public FrameAccess(Pointer rsa, Pointer sp, Pointer fp) {
+        /**
+         * Stack pointer.
+         */
+        public final Pointer callerSP;
+
+        /**
+         * Frame pointer.
+         */
+        public final Pointer callerFP;
+
+        public FrameAccess(CiCalleeSaveArea csa, Pointer rsa, Pointer sp, Pointer fp, Pointer callerSP, Pointer callerFP) {
+            this.csa = csa;
             this.rsa = rsa;
             this.sp = sp;
             this.fp = fp;
+            this.callerSP = callerSP;
+            this.callerFP = callerFP;
         }
     }
 
@@ -540,11 +558,13 @@ public abstract class TargetMethod extends MemoryRegion {
      * Resets a direct call site, make it point to the static trampoline again.
      *
      * @param dc the index of the direct call
+     * @return {@code true} if the call site was not already pointing to the static trampoline
      */
-    public final void resetDirectCall(int dc) {
+    public final boolean resetDirectCall(int dc) {
         final int offset = getCallEntryOffset(directCallees[dc], dc);
         final int pos = stopPosition(dc);
-        fixupCallSite(pos, vm().stubs.staticTrampoline().codeStart.plus(offset));
+        Pointer trampoline = vm().stubs.staticTrampoline().codeStart.plus(offset);
+        return !patchCallSite(pos, trampoline).equals(trampoline);
     }
 
     /**
@@ -951,18 +971,20 @@ public abstract class TargetMethod extends MemoryRegion {
      *
      * @param callSite offset to a call site relative to the start of the code of this target method
      * @param callEntryPoint entry point the call site should call after patching
+     * @return the entry point of the call prior to patching
      */
-    public abstract void patchCallSite(int callOffset, Address callEntryPoint);
+    public abstract Address patchCallSite(int callOffset, Address callEntryPoint);
 
     /**
-     * Fixup of call site in the method. This differs from the above in that the call site is updated before
+     * Fixup a call site in the method. This differs from the above in that the call site is updated before
      * any thread can see it. Thus there isn't any concurrency between modifying the call site and threads
      * trying to run it.
      *
      * @param callOffset offset to a call site relative to the start of the code of this target method
      * @param callEntryPoint entry point the call site should call after fixup
+     * @return the entry point of the call prior to patching
      */
-    public abstract void fixupCallSite(int callOffset, Address callEntryPoint);
+    public abstract Address fixupCallSite(int callOffset, Address callEntryPoint);
 
     /**
      * Indicates whether a call site can be patched safely when multiple threads may execute this target method concurrently.
@@ -990,6 +1012,25 @@ public abstract class TargetMethod extends MemoryRegion {
      * @param preparer the reference map preparer which receives the reference map
      */
     public abstract void prepareReferenceMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer);
+
+    /**
+     * The stack and frame pointers describing the extent of a physical frame.
+     */
+    public static class FrameInfo {
+        public FrameInfo(Pointer sp, Pointer fp) {
+            this.sp = sp;
+            this.fp = fp;
+        }
+        public Pointer sp;
+        public Pointer fp;
+    }
+
+    /**
+     * Adjusts the stack and frame pointers for the frame about to handle an exception.
+     * This is provided mainly for the benefit of deoptimization.
+     */
+    public void adjustFrameForHandler(FrameInfo frame) {
+    }
 
     /**
      * Attempts to catch an exception thrown by this method or a callee method. This method should not return
