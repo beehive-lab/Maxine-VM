@@ -399,28 +399,28 @@ public class DupVMAdviceHandlerLog extends VMAdviceHandlerLog {
 
     // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeVirtual(String arg1, long arg2, int arg3) {
+    public void adviseBeforeInvokeVirtual(String arg1, long arg2, String arg3) {
         a.adviseBeforeInvokeVirtual(arg1, arg2, arg3);
         b.adviseBeforeInvokeVirtual(arg1, arg2, arg3);
     }
 
     // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeSpecial(String arg1, long arg2, int arg3) {
+    public void adviseBeforeInvokeSpecial(String arg1, long arg2, String arg3) {
         a.adviseBeforeInvokeSpecial(arg1, arg2, arg3);
         b.adviseBeforeInvokeSpecial(arg1, arg2, arg3);
     }
 
     // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeStatic(String arg1, long arg2, int arg3) {
+    public void adviseBeforeInvokeStatic(String arg1, long arg2, String arg3) {
         a.adviseBeforeInvokeStatic(arg1, arg2, arg3);
         b.adviseBeforeInvokeStatic(arg1, arg2, arg3);
     }
 
     // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeInterface(String arg1, long arg2, int arg3) {
+    public void adviseBeforeInvokeInterface(String arg1, long arg2, String arg3) {
         a.adviseBeforeInvokeInterface(arg1, arg2, arg3);
         b.adviseBeforeInvokeInterface(arg1, arg2, arg3);
     }
@@ -476,28 +476,28 @@ public class DupVMAdviceHandlerLog extends VMAdviceHandlerLog {
 
     // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeVirtual(String arg1, long arg2, int arg3) {
+    public void adviseAfterInvokeVirtual(String arg1, long arg2, String arg3) {
         a.adviseAfterInvokeVirtual(arg1, arg2, arg3);
         b.adviseAfterInvokeVirtual(arg1, arg2, arg3);
     }
 
     // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeSpecial(String arg1, long arg2, int arg3) {
+    public void adviseAfterInvokeSpecial(String arg1, long arg2, String arg3) {
         a.adviseAfterInvokeSpecial(arg1, arg2, arg3);
         b.adviseAfterInvokeSpecial(arg1, arg2, arg3);
     }
 
     // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeStatic(String arg1, long arg2, int arg3) {
+    public void adviseAfterInvokeStatic(String arg1, long arg2, String arg3) {
         a.adviseAfterInvokeStatic(arg1, arg2, arg3);
         b.adviseAfterInvokeStatic(arg1, arg2, arg3);
     }
 
     // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeInterface(String arg1, long arg2, int arg3) {
+    public void adviseAfterInvokeInterface(String arg1, long arg2, String arg3) {
         a.adviseAfterInvokeInterface(arg1, arg2, arg3);
         b.adviseAfterInvokeInterface(arg1, arg2, arg3);
     }

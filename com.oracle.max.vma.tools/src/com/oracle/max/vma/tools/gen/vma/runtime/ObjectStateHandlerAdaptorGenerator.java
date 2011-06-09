@@ -46,7 +46,7 @@ public class ObjectStateHandlerAdaptorGenerator {
         for (Method m : VMAdviceHandler.class.getMethods()) {
             String name = m.getName();
             if (name.startsWith("advise")) {
-                if (name.equals("adviseGC") ||
+                if (name.contains("GC") ||
                     name.contains("ThreadStarting") || name.contains("ThreadTerminating")) {
                     continue;
                 }

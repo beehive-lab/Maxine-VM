@@ -25,6 +25,7 @@ package com.oracle.max.vm.ext.vma.runtime;
 import com.oracle.max.vm.ext.vma.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 
@@ -324,25 +325,25 @@ public abstract class ObjectStateHandlerAdaptor extends VMAdviceHandler {
 
     // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeVirtual(Object arg1, int arg2) {
+    public void adviseBeforeInvokeVirtual(Object arg1, MethodActor arg2) {
         checkId(arg1);
     }
 
     // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeSpecial(Object arg1, int arg2) {
+    public void adviseBeforeInvokeSpecial(Object arg1, MethodActor arg2) {
         checkId(arg1);
     }
 
     // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeStatic(Object arg1, int arg2) {
+    public void adviseBeforeInvokeStatic(Object arg1, MethodActor arg2) {
         checkId(arg1);
     }
 
     // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeInterface(Object arg1, int arg2) {
+    public void adviseBeforeInvokeInterface(Object arg1, MethodActor arg2) {
         checkId(arg1);
     }
 
@@ -391,25 +392,25 @@ public abstract class ObjectStateHandlerAdaptor extends VMAdviceHandler {
 
     // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeVirtual(Object arg1, int arg2) {
+    public void adviseAfterInvokeVirtual(Object arg1, MethodActor arg2) {
         checkId(arg1);
     }
 
     // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeSpecial(Object arg1, int arg2) {
+    public void adviseAfterInvokeSpecial(Object arg1, MethodActor arg2) {
         checkId(arg1);
     }
 
     // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeStatic(Object arg1, int arg2) {
+    public void adviseAfterInvokeStatic(Object arg1, MethodActor arg2) {
         checkId(arg1);
     }
 
     // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeInterface(Object arg1, int arg2) {
+    public void adviseAfterInvokeInterface(Object arg1, MethodActor arg2) {
         checkId(arg1);
     }
 

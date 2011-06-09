@@ -69,9 +69,10 @@ public class VMAOptions {
         }
     }
 
-    private static final AB[] LIFETIME_AB =
-        new AB[] {new AB(NEW, A), new AB(NEWARRAY, A), new AB(ANEWARRAY, A),
-            new AB(MULTIANEWARRAY, A), new AB(INVOKESPECIAL, A)};
+    private static final AB[] LIFETIME_AB = new AB[] {
+        new AB(NEW, A), new AB(NEWARRAY, A), new AB(ANEWARRAY, A),
+        new AB(MULTIANEWARRAY, A), new AB(INVOKESPECIAL, A)
+    };
 
     private static final AB[] READ_AB = compose(LIFETIME_AB, new AB[] {new AB(GETFIELD, B), new AB(GETSTATIC, B)});
 
@@ -81,12 +82,17 @@ public class VMAOptions {
 
     private static final AB[] MONITOR_AB = new AB[] {new AB(MONITORENTER, B), new AB(MONITOREXIT, B)};
 
+    private static final AB[] INVOKE_AB = new AB[] {
+        new AB(INVOKEVIRTUAL, B), new AB(INVOKEINTERFACE, B),
+        new AB(INVOKESTATIC, B), new AB(INVOKESPECIAL, B)
+    };
+
     enum StdConfig {
         LIFETIME("lifetime", LIFETIME_AB),
         READ("read", READ_AB),
         WRITE("write", WRITE_AB),
-        READWRITE("readwrite", READWRITE_AB),
-        MONITOR("monitor", MONITOR_AB);
+        MONITOR("monitor", MONITOR_AB),
+        INVOKE("invoke", INVOKE_AB);
 
         private String name;
         private AB[] bytecodesToApply;
@@ -114,7 +120,6 @@ public class VMAOptions {
         VMOptions.addFieldOption("-XX:", "VMACX", "regex for classes not to instrument");
         VMOptions.addFieldOption("-XX:", "VMABI", "regex for bytecodes to match");
         VMOptions.addFieldOption("-XX:", "VMABX", "regex for bytecodes to not match");
-        VMOptions.addFieldOption("-XX:", "VMATemplatesClass", "class defining VMA T1X templates");
         VMOptions.addFieldOption("-XX:", "VMATrace", "trace instrumentation as methods are compiled");
         VMOptions.addFieldOption("-XX:", "VMAConfig", "use pre-defined configuration");
     }
@@ -135,18 +140,13 @@ public class VMAOptions {
      * If this option is set, only these bytecodes are instrumented, otherwise
      * all classes are instrumented. The format of the bytecode specification
      * is {@code CODE:MODE}, where {@code MODE} is {@code A}, {@code B} or {@code AB}.
-     * If {@code MODE} is ommitted it defaults to {@code AB}.
+     * If {@code MODE} is omitted it defaults to {@code AB}.
      */
     private static String VMABI;
     /**
      * {@link Pattern regex pattern} defining specific bytecodes to exclude from instrumentation.
      */
     private static String VMABX;
-
-    /**
-     * Class that defines the VMA advice, by providing specific template source.
-     */
-    public static String VMATemplatesClass;
 
     private static Pattern classInclusionPattern;
     private static Pattern classExclusionPattern;
@@ -174,7 +174,7 @@ public class VMAOptions {
     public static boolean VMA;
 
     /**
-     * The handler class name.
+     * The {@link VMAdviceHandler} handler class name.
      */
     private static String handlerClassName;
 
@@ -195,6 +195,12 @@ public class VMAOptions {
     private static final String VMA_BX_PROPERTY = "max.vma.bx";
     private static final String VMA_TRACE_PROPERTY = "max.vma.trace";
     private static final String VMA_CONFIG_PROPERTY = "max.vma.config";
+
+    /**
+     * Not currently interpreted, but could allow a different template class to be built into the boot image.
+     */
+    private static final String VMA_TEMPLATES_PROPERTY = "max.vma.templates";
+
 
     /**
      * This property must be specified at boot image time.
@@ -264,6 +270,7 @@ public class VMAOptions {
                     }
                 }
             } else {
+                // setup default values
                 for (VMABytecodes b : VMABytecodes.values()) {
                     for (AdviceMode am : AdviceMode.values()) {
                         bytecodeApply[b.ordinal()][am.ordinal()] = VMABI == null ? true : false;
@@ -273,28 +280,46 @@ public class VMAOptions {
                 if (VMABI != null) {
                     Pattern bytecodeInclusionPattern = Pattern.compile(VMABI);
                     for (VMABytecodes b : VMABytecodes.values()) {
-                        for (AdviceMode am : AdviceMode.values()) {
-                            if (bytecodeInclusionPattern.matcher(b.name()).matches()) {
-                                bytecodeApply[b.ordinal()][am.ordinal()] = true;
-                            }
-                        }
+                        matchBytecode(bytecodeInclusionPattern, b, bytecodeApply[b.ordinal()], true);
                     }
                 }
                 if (VMABX != null) {
                     Pattern bytecodeExclusionPattern = Pattern.compile(VMABX);
                     for (VMABytecodes b : VMABytecodes.values()) {
-                        for (AdviceMode am : AdviceMode.values()) {
-                            if (bytecodeExclusionPattern.matcher(b.name()).matches()) {
-                                bytecodeApply[b.ordinal()][am.ordinal()] = false;
-                            }
-                        }
+                        matchBytecode(bytecodeExclusionPattern, b, bytecodeApply[b.ordinal()], false);
                     }
                 }
             }
-
+            if (VMATrace) {
+                Log.println("VMA: bytecode advice settings");
+                for (VMABytecodes b : VMABytecodes.values()) {
+                    boolean[] state = bytecodeApply[b.ordinal()];
+                    if (state[0] || state[1]) {
+                        Log.println("  " + b.name() + ":" + (state[0] ? "BEFORE" : "") + "/" + (state[1] ? "AFTER" : ""));
+                    }
+                }
+            }
             advising = VMA;
         }
         return VMA;
+    }
+
+    /**
+     * Check if bytecode:advice combination is matched by the provided pattern.
+     * @param pattern
+     * @param b
+     * @return
+     */
+    private static void matchBytecode(Pattern pattern, VMABytecodes b, boolean[] state, boolean setting) {
+        final String name = b.name();
+        if (pattern.matcher(name).matches() || pattern.matcher(name + ":AB").matches()) {
+            state[0] = setting;
+            state[1] = setting;
+        } else if (pattern.matcher(name + ":B").matches()) {
+            state[0] = setting;
+        } else if (pattern.matcher(name + ":A").matches()) {
+            state[1] = setting;
+        }
     }
 
 

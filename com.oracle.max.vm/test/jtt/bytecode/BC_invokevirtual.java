@@ -36,4 +36,8 @@ public class BC_invokevirtual {
     public int id(int i) {
         return i;
     }
+
+    public static void main(String[] args) {
+        test(0);
+    }
 }

@@ -121,9 +121,11 @@ public class TransientVMAdviceHandlerTypesGenerator {
             } else if (name.equals("IfObject") || name.equals("CheckCast") || name.equals("InstanceOf") ||
                             name.endsWith("MultiNewArray")) {
                 adviceRecordName = "ObjectObject";
-            } else if (name.contains("Invoke") || name.endsWith("ArrayLength") || name.endsWith("Throw") ||
+            } else if (name.endsWith("ArrayLength") || name.endsWith("Throw") ||
                             name.contains("Monitor") || name.contains("New")) {
                 adviceRecordName = "Object";
+            } else if (name.contains("Invoke")) {
+                adviceRecordName = "ObjectMethodActor";
             }
             adviceRecordName += ADVICE_RECORD;
             ArrayList<String> list = recordToEnumList.get(adviceRecordName);
@@ -146,8 +148,6 @@ public class TransientVMAdviceHandlerTypesGenerator {
             }
             out.printf("                    return new %s();%n", entry.getKey());
         }
-        out.printf("            }%n");
-        out.printf("        }%n");
     }
 
     private static String removeAdvise(String name) {

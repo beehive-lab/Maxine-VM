@@ -825,30 +825,27 @@ public class VMAdviceTemplateGenerator {
     }
 
     private static void generateInvokeVirtual(boolean resolved) {
-        String index = resolved ? "vTableIndex" : "-1";
         outIsAdvising();
-        out.printf(METHOD_PREFIX + "(receiver, %s);%n", adviceType.methodNameComponent, methodName, index);
+        out.printf(METHOD_PREFIX + "(receiver, methodActor);%n", adviceType.methodNameComponent, methodName);
         closeBrace();
     }
 
     private static void generateInvokeInterface(boolean resolved) {
-        // TODO fix index argument
         outIsAdvising();
-        out.printf(METHOD_PREFIX + "(receiver, -1);%n", adviceType.methodNameComponent, methodName);
+        out.printf(METHOD_PREFIX + "(receiver, interfaceMethodActor);%n", adviceType.methodNameComponent, methodName);
         closeBrace();
     }
 
     private static void generateInvokeSpecial(boolean resolved) {
-        // TODO fix index argument
         outIsAdvising();
-        out.printf(METHOD_PREFIX + "(Reference.fromOrigin(receiver).toJava(), -1);%n", adviceType.methodNameComponent, methodName);
+        out.printf(METHOD_PREFIX + "(Reference.fromOrigin(receiver).toJava(), methodActor);%n", adviceType.methodNameComponent, methodName);
         closeBrace();
     }
 
     private static void generateInvokeStatic(boolean resolved) {
         // TODO fix arguments
         outIsAdvising();
-        out.printf(METHOD_PREFIX + "(null, -1);%n", adviceType.methodNameComponent, methodName);
+        out.printf(METHOD_PREFIX + "(null, methodActor);%n", adviceType.methodNameComponent, methodName);
         closeBrace();
     }
 

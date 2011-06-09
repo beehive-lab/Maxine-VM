@@ -28,6 +28,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
@@ -401,26 +402,26 @@ public class LoggingVMAdviceHandler extends VMAdviceHandler {
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeVirtual(Object arg1, int arg2) {
-        log.adviseBeforeInvokeVirtual(tng.getThreadName(), state.readId(arg1), arg2);
+    public void adviseBeforeInvokeVirtual(Object arg1, MethodActor arg2) {
+        log.adviseBeforeInvokeVirtual(tng.getThreadName(), state.readId(arg1), arg2.name());
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeSpecial(Object arg1, int arg2) {
-        log.adviseBeforeInvokeSpecial(tng.getThreadName(), state.readId(arg1), arg2);
+    public void adviseBeforeInvokeSpecial(Object arg1, MethodActor arg2) {
+        log.adviseBeforeInvokeSpecial(tng.getThreadName(), state.readId(arg1), arg2.name());
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeStatic(Object arg1, int arg2) {
-        log.adviseBeforeInvokeStatic(tng.getThreadName(), state.readId(arg1), arg2);
+    public void adviseBeforeInvokeStatic(Object arg1, MethodActor arg2) {
+        log.adviseBeforeInvokeStatic(tng.getThreadName(), 0, arg2.name());
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeInterface(Object arg1, int arg2) {
-        log.adviseBeforeInvokeInterface(tng.getThreadName(), state.readId(arg1), arg2);
+    public void adviseBeforeInvokeInterface(Object arg1, MethodActor arg2) {
+        log.adviseBeforeInvokeInterface(tng.getThreadName(), state.readId(arg1), arg2.name());
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
@@ -469,26 +470,26 @@ public class LoggingVMAdviceHandler extends VMAdviceHandler {
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeVirtual(Object arg1, int arg2) {
-        log.adviseAfterInvokeVirtual(tng.getThreadName(), state.readId(arg1), arg2);
+    public void adviseAfterInvokeVirtual(Object arg1, MethodActor arg2) {
+        log.adviseAfterInvokeVirtual(tng.getThreadName(), state.readId(arg1), arg2.name());
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeSpecial(Object arg1, int arg2) {
-        log.adviseAfterInvokeSpecial(tng.getThreadName(), state.readId(arg1), arg2);
+    public void adviseAfterInvokeSpecial(Object arg1, MethodActor arg2) {
+        log.adviseAfterInvokeSpecial(tng.getThreadName(), state.readId(arg1), arg2.name());
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeStatic(Object arg1, int arg2) {
-        log.adviseAfterInvokeStatic(tng.getThreadName(), state.readId(arg1), arg2);
+    public void adviseAfterInvokeStatic(Object arg1, MethodActor arg2) {
+        log.adviseAfterInvokeStatic(tng.getThreadName(), 0, arg2.name());
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeInterface(Object arg1, int arg2) {
-        log.adviseAfterInvokeInterface(tng.getThreadName(), state.readId(arg1), arg2);
+    public void adviseAfterInvokeInterface(Object arg1, MethodActor arg2) {
+        log.adviseAfterInvokeInterface(tng.getThreadName(), state.readId(arg1), arg2.name());
     }
 
 

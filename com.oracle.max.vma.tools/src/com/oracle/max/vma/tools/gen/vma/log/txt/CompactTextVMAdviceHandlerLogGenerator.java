@@ -80,7 +80,7 @@ public class CompactTextVMAdviceHandlerLogGenerator {
             }
             out.printf(");%n");
         } else if (name.contains("Invoke")) {
-            out.print(", checkRepeatId(arg2, arg1), arg3");
+            out.print(", checkRepeatId(arg2, arg1), getMethodShortForm(arg3)");
             out.printf(");%n");
         } else if (name.contains("Monitor") || name.contains("Throw")) {
             out.print(", checkRepeatId(arg2, arg1)");

@@ -33,9 +33,10 @@ import com.sun.max.program.*;
  * system property {@value NO_REPEATS_PROPERTY). Repeated ids are only generated
  * for records created by the same originating thread.
  *
- * <li>classDefinitionTrackingLog: G shortclass class clid
- * <li>classDefinitionFieldTrackingLog: F shortfield field
- * <li>threadDefinitionTrackingLog: T shortthread thread
+ * <li>{@link #classDefinitionTracking}: G shortClass class clid
+ * <li>{@link #classDefinitionFieldTracking}: F shortField field
+ * <li>{@link #threadDefinitionTracking}: T shortThread thread
+ * <li>{@link #methodDefinitionTracking}: M shortMethod method
  * </ul>
  *
  * By default instances of the short forms are represented simply by their
@@ -62,14 +63,46 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
     private static Map<String, String> classes = null;
     private static Map<String, String> fields = null;
     private static Map<String, String> threads = null;
+    private static Map<String, String> methods = null;
     private static Map<String, LastId> repeatedIds;
     private static int classInt;
     private static int fieldInt;
     private static int threadInt;
+    private static int methodInt;
     private static final String NO_REPEATS_PROPERTY = "max.vma.norepeatids";
     private static final String PREFIX_PROPERTY = "max.vma.shortprefix";
     private static boolean doRepeats;
     private static boolean doPrefix;
+
+    public static enum ShortForm {
+        C("C"),
+        F("F"),
+        T("T"),
+        M("M");
+
+        public final String code;
+
+        private Map<String, String> shortForms = new HashMap<String, String>();
+        private int nextId;
+
+        String createShortForm(CompactTextVMAdviceHandlerLog handler, String name, long arg) {
+            synchronized (shortForms) {
+                String shortForm = shortForms.get(name);
+                if (shortForm == null) {
+                    shortForm = doPrefix ? (code + nextId) : Integer.toString(nextId);
+                    nextId++;
+                    shortForms.put(name, shortForm);
+                    handler.defineShortForm(this, name, shortForm, arg);
+                }
+                return shortForm;
+            }
+
+        }
+
+        ShortForm(String code) {
+            this.code = code;
+        }
+    }
 
     static class LastId {
         long id = -1;
@@ -116,6 +149,7 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
         classes = new HashMap<String, String>();
         fields = new HashMap<String, String>();
         threads = new HashMap<String, String>();
+        methods = new HashMap<String, String>();
         repeatedIds = new HashMap<String, LastId>();
         doRepeats = System.getProperty(NO_REPEATS_PROPERTY) == null;
         doPrefix = System.getProperty(PREFIX_PROPERTY) != null;
@@ -145,68 +179,30 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
 
 
     protected String getClassShortForm(String className, long clId) {
-        synchronized (classes) {
-            String shortForm = classes.get(className);
-            if (shortForm == null) {
-                shortForm = doPrefix ? ("C" + classInt) : Integer.toString(classInt);
-                classInt++;
-                classes.put(className, shortForm);
-                classDefinitionTracking(className, shortForm, clId);
-            }
-            return shortForm;
-        }
+        return ShortForm.C.createShortForm(this, className, clId);
     }
 
     protected String getFieldShortForm(String fieldName) {
-        synchronized (fields) {
-            String shortForm = fields.get(fieldName);
-            if (shortForm == null) {
-                shortForm = doPrefix ? ("F" + fieldInt) : Integer.toString(fieldInt);
-                fieldInt++;
-                fields.put(fieldName, shortForm);
-                classDefinitionFieldTracking(fieldName, shortForm);
-            }
-            return shortForm;
-        }
+        return ShortForm.C.createShortForm(this, fieldName, 0);
     }
 
     protected String getThreadShortForm(String threadName) {
-        synchronized (threads) {
-            String shortForm = threads.get(threadName);
-            if (shortForm == null) {
-                shortForm = doPrefix ? ("T" + threadInt) : Integer.toString(threadInt);
-                threadInt++;
-                threads.put(threadName, shortForm);
-                threadDefinitionTracking(threadName, shortForm);
-            }
-            return shortForm;
-        }
+        return ShortForm.T.createShortForm(this, threadName, 0);
+    }
+
+    protected String getMethodShortForm(String methodName) {
+        return ShortForm.M.createShortForm(this, methodName, 0);
     }
 
     /**
-     * Define a short form of {@code className} loaded by classloader identified by {@code clIdHash}.
+     * Define a short form of {@code name}.
      *
+     * @param type
      * @param className
      * @param shortForm
-     * @param clId
+     * @param type specific arg
      */
-    public abstract void classDefinitionTracking(String className, String shortForm, long clId);
-
-    /**
-     * Define a short form of {@code fieldName}.
-     *
-     * @param fieldName
-     * @param shortForm
-     */
-    public abstract void classDefinitionFieldTracking(String fieldName, String shortForm);
-
-    /**
-     * Define a short form of {@code threadName}.
-     *
-     * @param threadName
-     * @param shortForm
-     */
-    public abstract void threadDefinitionTracking(String threadName, String shortForm);
+    public abstract void defineShortForm(ShortForm type, String name, String shortForm, long arg);
 
     // BEGIN GENERATED CODE
 
@@ -482,26 +478,26 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeVirtual(String arg1, long arg2, int arg3) {
-        del.adviseBeforeInvokeVirtual(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), arg3);
+    public void adviseBeforeInvokeVirtual(String arg1, long arg2, String arg3) {
+        del.adviseBeforeInvokeVirtual(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getMethodShortForm(arg3));
     }
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeSpecial(String arg1, long arg2, int arg3) {
-        del.adviseBeforeInvokeSpecial(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), arg3);
+    public void adviseBeforeInvokeSpecial(String arg1, long arg2, String arg3) {
+        del.adviseBeforeInvokeSpecial(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getMethodShortForm(arg3));
     }
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeStatic(String arg1, long arg2, int arg3) {
-        del.adviseBeforeInvokeStatic(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), arg3);
+    public void adviseBeforeInvokeStatic(String arg1, long arg2, String arg3) {
+        del.adviseBeforeInvokeStatic(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getMethodShortForm(arg3));
     }
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeInterface(String arg1, long arg2, int arg3) {
-        del.adviseBeforeInvokeInterface(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), arg3);
+    public void adviseBeforeInvokeInterface(String arg1, long arg2, String arg3) {
+        del.adviseBeforeInvokeInterface(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getMethodShortForm(arg3));
     }
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
@@ -548,26 +544,26 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeVirtual(String arg1, long arg2, int arg3) {
-        del.adviseAfterInvokeVirtual(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), arg3);
+    public void adviseAfterInvokeVirtual(String arg1, long arg2, String arg3) {
+        del.adviseAfterInvokeVirtual(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getMethodShortForm(arg3));
     }
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeSpecial(String arg1, long arg2, int arg3) {
-        del.adviseAfterInvokeSpecial(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), arg3);
+    public void adviseAfterInvokeSpecial(String arg1, long arg2, String arg3) {
+        del.adviseAfterInvokeSpecial(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getMethodShortForm(arg3));
     }
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeStatic(String arg1, long arg2, int arg3) {
-        del.adviseAfterInvokeStatic(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), arg3);
+    public void adviseAfterInvokeStatic(String arg1, long arg2, String arg3) {
+        del.adviseAfterInvokeStatic(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getMethodShortForm(arg3));
     }
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeInterface(String arg1, long arg2, int arg3) {
-        del.adviseAfterInvokeInterface(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), arg3);
+    public void adviseAfterInvokeInterface(String arg1, long arg2, String arg3) {
+        del.adviseAfterInvokeInterface(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getMethodShortForm(arg3));
     }
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
@@ -581,7 +577,6 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
     public void adviseAfterNewArray(String arg1, long arg2, String arg3, long arg4, int arg5) {
         del.adviseAfterNewArray(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4, arg5);
     }
-
 
 
 }

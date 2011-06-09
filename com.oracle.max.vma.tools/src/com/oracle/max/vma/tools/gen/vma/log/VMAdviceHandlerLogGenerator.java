@@ -105,7 +105,7 @@ public class VMAdviceHandlerLogGenerator {
                 out.printf(", %s value", getLastParameterNameHandlingObject(m));
             }
         } else if (name.contains("Invoke")) {
-            out.print(", long objId, int index");
+            out.print(", long objId, String methodName");
         } else if (name.endsWith("ArrayLength")) {
             out.print(", long objId, int length");
         } else if (name.contains("Monitor") || name.contains("Throw")) {

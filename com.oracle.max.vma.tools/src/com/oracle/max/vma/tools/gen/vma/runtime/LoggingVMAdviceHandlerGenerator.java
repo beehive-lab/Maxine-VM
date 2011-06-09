@@ -113,7 +113,8 @@ public class LoggingVMAdviceHandlerGenerator {
             out.printf(");%n");
         } else if (name.contains("Invoke")) {
             generateLogCallPrefix(oname);
-            out.print(", state.readId(arg1), arg2");
+            String arg1 = name.contains("Static") ? "0" : "state.readId(arg1)";
+            out.printf(", %s, arg2.name()", arg1);
             out.printf(");%n");
         } else if (name.endsWith("ArrayLength")) {
             generateLogCallPrefix(oname);
