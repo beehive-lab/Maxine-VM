@@ -72,6 +72,15 @@ public class T1XRuntime {
         return Snippets.makeEntrypoint(staticMethod);
     }
 
+    public static Address initializeStaticMethod(StaticMethodActor staticMethod) {
+        Snippets.makeHolderInitialized(staticMethod);
+        return Snippets.makeEntrypoint(staticMethod);
+    }
+
+    public static Address initializeSpecialMethod(VirtualMethodActor virtualMethod) {
+        return Snippets.makeEntrypoint(virtualMethod);
+    }
+
     public static Object resolveClassForNewAndCreate(ResolutionGuard guard) {
         final ClassActor classActor = Snippets.resolveClassForNew(guard);
         Snippets.makeClassInitialized(classActor);

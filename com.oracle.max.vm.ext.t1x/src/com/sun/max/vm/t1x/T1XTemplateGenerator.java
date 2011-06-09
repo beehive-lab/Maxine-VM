@@ -28,6 +28,7 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * {@HOSTED_ONLY} support for automatically generating template method sources.
@@ -1423,15 +1424,18 @@ public class T1XTemplateGenerator {
         out.printf("        Object receiver = peekObject(receiverStackIndex);%n");
         if (variant.equals("interface")) {
             if (tag.equals("")) {
-                out.printf("        Address entryPoint = resolveAndSelectInterfaceMethod(guard, receiver);%n");
+                out.printf("        final InterfaceMethodActor interfaceMethodActor = Snippets.resolveInterfaceMethod(guard);%n");
+                out.printf("        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();%n");
             } else if (tag.equals("resolved")) {
                 out.printf("        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();%n");
             } else if (tag.equals("instrumented")) {
                 out.printf("        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);%n");
             }
         } else {
+            // virtual
             if (tag.equals("")) {
-                out.printf("        Address entryPoint = resolveAndSelectVirtualMethod(receiver, guard, receiverStackIndex);%n");
+                out.printf("        VirtualMethodActor virtualMethodActor = Snippets.resolveVirtualMethod(guard);%n");
+                out.printf("        Address entryPoint = Snippets.selectNonPrivateVirtualMethod(receiver, virtualMethodActor).asAddress();%n");
             } else if (tag.equals("resolved")) {
                 out.printf("        Address entryPoint = ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress();%n");
             } else if (tag.equals("instrumented")) {
@@ -1490,12 +1494,15 @@ public class T1XTemplateGenerator {
      * Generate a specific {@code INVOKE} template.
      * @param k type
      * @param variant one of "special" or "static"
-     * @param tag one of "" or "init" or "resolved"
+     * @param xtag one of "" or "init" or "resolved"
      */
     public static void generateInvokeSSTemplate(String k, String variant, String xtag) {
-        String tag = variant.equals("static") && xtag.equals("resolved") ? "init" : xtag;
+        boolean resolved = xtag.equals("resolved");
+        boolean isStatic = variant.equals("static");
+        String tag = isStatic && resolved ? "init" : xtag;
         boolean isVoid = k.equals("void");
-        String params = tag.equals("") ? "ResolutionGuard.InPool guard" : "";
+        String params = xtag.equals("") ? "ResolutionGuard.InPool guard" : "";
+//            (isStatic ? "StaticMethodActor staticMethodActor" : "int vTableIndex");
         if (variant.equals("special")) {
             if (params.length() > 0) {
                 params += ", ";
@@ -1505,19 +1512,22 @@ public class T1XTemplateGenerator {
         generateAutoComment();
         generateTemplateTag("INVOKE%s$%s%s", variant.toUpperCase(), lType(k), prefixDollar(tag));
         out.printf("    public static void invoke%s%s(%s) {%n", variant, uType(k), params);
-        if (variant.equals("special")) {
+        if (!isStatic) {
             out.printf("        Pointer receiver = peekWord(receiverStackIndex).asPointer();%n");
             out.printf("        nullCheck(receiver);%n");
+        }
+        if (!resolved) {
+            out.printf("        %sMethodActor methodActor = Snippets.resolve%sMethod(guard);%n", isStatic ? "Static" : "Virtual", toFirstUpper(variant));
         }
         generateBeforeAdvice(k, variant, tag);
         out.printf("        ");
         if (!isVoid) {
             out.printf("final %s result = ", oType(k));
         }
-        if (xtag.equals("resolved")) {
+        if (resolved) {
             out.printf("directCall%s();%n", uType(k));
         } else {
-            out.printf("indirectCall%s(resolve%sMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);%n", uType(k), toFirstUpper(variant));
+            out.printf("indirectCall%s(initialize%sMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);%n", uType(k), toFirstUpper(variant));
         }
         generateAfterAdvice(k, variant, tag);
         if (!isVoid) {
