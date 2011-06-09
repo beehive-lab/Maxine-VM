@@ -881,7 +881,8 @@ public class T1XCompilation {
                         tag = INVOKESPECIALS.get(kind.asEnum).resolved;
                         T1XTemplate template = getTemplate(tag);
                         beginBytecode(tag.opcode);
-                        assignIntTemplateArgument(0, receiverStackIndex(signature));
+                        assignReferenceLiteralTemplateArgument(0, virtualMethodActor);
+                        assignIntTemplateArgument(1, receiverStackIndex(signature));
                         recordDirectBytecodeCall(template, virtualMethodActor);
                         return;
 //                    } else if (shouldProfileMethodCall(virtualMethodActor)) {
@@ -898,7 +899,7 @@ public class T1XCompilation {
                         // emit an unprofiled virtual dispatch
                         T1XTemplate template = getTemplate(tag.resolved);
                         beginBytecode(tag.opcode);
-                        assignIntTemplateArgument(0, virtualMethodActor.vTableIndex());
+                        assignReferenceLiteralTemplateArgument(0, virtualMethodActor);
                         assignIntTemplateArgument(1, receiverStackIndex(signature));
                         emitAndRecordStops(template);
                     }
@@ -966,7 +967,8 @@ public class T1XCompilation {
                 VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(cp, index);
                 T1XTemplate template = getTemplate(tag.resolved);
                 beginBytecode(tag.opcode);
-                assignIntTemplateArgument(0, receiverStackIndex(signature));
+                assignReferenceLiteralTemplateArgument(0, virtualMethodActor);
+                assignIntTemplateArgument(1, receiverStackIndex(signature));
                 recordDirectBytecodeCall(template, virtualMethodActor);
                 return;
             }
@@ -990,6 +992,7 @@ public class T1XCompilation {
                 if (staticMethodActor.holder().isInitialized()) {
                     T1XTemplate template = getTemplate(tag.initialized);
                     beginBytecode(tag.opcode);
+                    assignReferenceLiteralTemplateArgument(0, staticMethodActor);
                     recordDirectBytecodeCall(template, staticMethodActor);
                     return;
                 }
