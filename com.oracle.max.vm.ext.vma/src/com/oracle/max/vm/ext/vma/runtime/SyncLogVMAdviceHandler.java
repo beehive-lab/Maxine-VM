@@ -23,6 +23,7 @@
 package com.oracle.max.vm.ext.vma.runtime;
 
 import com.oracle.max.vm.ext.vma.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -383,28 +384,28 @@ public class SyncLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
     // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeVirtual(Object arg1, int arg2) {
+    public void adviseBeforeInvokeVirtual(Object arg1, MethodActor arg2) {
         super.adviseBeforeInvokeVirtual(arg1, arg2);
         logHandler.adviseBeforeInvokeVirtual(arg1, arg2);
     }
 
     // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeSpecial(Object arg1, int arg2) {
+    public void adviseBeforeInvokeSpecial(Object arg1, MethodActor arg2) {
         super.adviseBeforeInvokeSpecial(arg1, arg2);
         logHandler.adviseBeforeInvokeSpecial(arg1, arg2);
     }
 
     // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeStatic(Object arg1, int arg2) {
+    public void adviseBeforeInvokeStatic(Object arg1, MethodActor arg2) {
         super.adviseBeforeInvokeStatic(arg1, arg2);
         logHandler.adviseBeforeInvokeStatic(arg1, arg2);
     }
 
     // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeInterface(Object arg1, int arg2) {
+    public void adviseBeforeInvokeInterface(Object arg1, MethodActor arg2) {
         super.adviseBeforeInvokeInterface(arg1, arg2);
         logHandler.adviseBeforeInvokeInterface(arg1, arg2);
     }
@@ -460,28 +461,28 @@ public class SyncLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
     // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeVirtual(Object arg1, int arg2) {
+    public void adviseAfterInvokeVirtual(Object arg1, MethodActor arg2) {
         super.adviseAfterInvokeVirtual(arg1, arg2);
         logHandler.adviseAfterInvokeVirtual(arg1, arg2);
     }
 
     // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeSpecial(Object arg1, int arg2) {
+    public void adviseAfterInvokeSpecial(Object arg1, MethodActor arg2) {
         super.adviseAfterInvokeSpecial(arg1, arg2);
         logHandler.adviseAfterInvokeSpecial(arg1, arg2);
     }
 
     // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeStatic(Object arg1, int arg2) {
+    public void adviseAfterInvokeStatic(Object arg1, MethodActor arg2) {
         super.adviseAfterInvokeStatic(arg1, arg2);
         logHandler.adviseAfterInvokeStatic(arg1, arg2);
     }
 
     // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeInterface(Object arg1, int arg2) {
+    public void adviseAfterInvokeInterface(Object arg1, MethodActor arg2) {
         super.adviseAfterInvokeInterface(arg1, arg2);
         logHandler.adviseAfterInvokeInterface(arg1, arg2);
     }
@@ -506,7 +507,6 @@ public class SyncLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
     public void adviseAfterMultiNewArray(Object arg1, int[] arg2) {
         adviseAfterNewArray(arg1, arg2[0]);
     }
-
 
 
 }

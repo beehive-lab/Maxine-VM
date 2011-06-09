@@ -64,7 +64,7 @@ public class TransientVMAdviceHandlerGenerator {
         } else {
             out.printf("        super.%s(", name);
             generateInvokeArgs(argCount);
-            if (name.contains("GetField") || name.contains("GetStatic") || name.contains("Invoke") ||
+            if (name.contains("GetField") || name.contains("GetStatic") ||
                             name.endsWith("ArrayLength") || name.contains("NewArray") || name.contains("ArrayLoad")) {
                 outStoreRecord(recordType, adviceMode, true);
                 out.printf(", arg1, arg2);%n");
@@ -81,7 +81,7 @@ public class TransientVMAdviceHandlerGenerator {
                 out.printf("            r.value = arg2;%n");
                 out.printf("            r.value2 = arg3;%n");
                 out.printf("        }%n");
-            } else if (name.contains("CheckCast") || name.contains("InstanceOf")) {
+            } else if (name.contains("CheckCast") || name.contains("InstanceOf") || name.contains("Invoke")) {
                 outRecordDeclAndStore(adviceRecordName, recordType, adviceMode);
                 out.printf(", arg1);%n");
                 out.printf("        if (r != null) {%n");

@@ -28,6 +28,7 @@ import static com.oracle.max.vm.ext.vma.runtime.AdviceRecordFlusher.*;
 import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.*;
 
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.thread.*;
 
@@ -617,30 +618,42 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
     // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeVirtual(Object arg1, int arg2) {
+    public void adviseBeforeInvokeVirtual(Object arg1, MethodActor arg2) {
         super.adviseBeforeInvokeVirtual(arg1, arg2);
-        storeRecord(InvokeVirtual, 0, arg1, arg2);
+        ObjectMethodActorAdviceRecord r = (ObjectMethodActorAdviceRecord) storeRecord(InvokeVirtual, 0, arg1);
+        if (r != null) {
+            r.value2 = arg2;
+        }
     }
 
     // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeSpecial(Object arg1, int arg2) {
+    public void adviseBeforeInvokeSpecial(Object arg1, MethodActor arg2) {
         super.adviseBeforeInvokeSpecial(arg1, arg2);
-        storeRecord(InvokeSpecial, 0, arg1, arg2);
+        ObjectMethodActorAdviceRecord r = (ObjectMethodActorAdviceRecord) storeRecord(InvokeSpecial, 0, arg1);
+        if (r != null) {
+            r.value2 = arg2;
+        }
     }
 
     // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeStatic(Object arg1, int arg2) {
+    public void adviseBeforeInvokeStatic(Object arg1, MethodActor arg2) {
         super.adviseBeforeInvokeStatic(arg1, arg2);
-        storeRecord(InvokeStatic, 0, arg1, arg2);
+        ObjectMethodActorAdviceRecord r = (ObjectMethodActorAdviceRecord) storeRecord(InvokeStatic, 0, arg1);
+        if (r != null) {
+            r.value2 = arg2;
+        }
     }
 
     // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeInterface(Object arg1, int arg2) {
+    public void adviseBeforeInvokeInterface(Object arg1, MethodActor arg2) {
         super.adviseBeforeInvokeInterface(arg1, arg2);
-        storeRecord(InvokeInterface, 0, arg1, arg2);
+        ObjectMethodActorAdviceRecord r = (ObjectMethodActorAdviceRecord) storeRecord(InvokeInterface, 0, arg1);
+        if (r != null) {
+            r.value2 = arg2;
+        }
     }
 
     // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
@@ -700,30 +713,42 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
     // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeVirtual(Object arg1, int arg2) {
+    public void adviseAfterInvokeVirtual(Object arg1, MethodActor arg2) {
         super.adviseAfterInvokeVirtual(arg1, arg2);
-        storeRecord(InvokeVirtual, 1, arg1, arg2);
+        ObjectMethodActorAdviceRecord r = (ObjectMethodActorAdviceRecord) storeRecord(InvokeVirtual, 1, arg1);
+        if (r != null) {
+            r.value2 = arg2;
+        }
     }
 
     // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeSpecial(Object arg1, int arg2) {
+    public void adviseAfterInvokeSpecial(Object arg1, MethodActor arg2) {
         super.adviseAfterInvokeSpecial(arg1, arg2);
-        storeRecord(InvokeSpecial, 1, arg1, arg2);
+        ObjectMethodActorAdviceRecord r = (ObjectMethodActorAdviceRecord) storeRecord(InvokeSpecial, 1, arg1);
+        if (r != null) {
+            r.value2 = arg2;
+        }
     }
 
     // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeStatic(Object arg1, int arg2) {
+    public void adviseAfterInvokeStatic(Object arg1, MethodActor arg2) {
         super.adviseAfterInvokeStatic(arg1, arg2);
-        storeRecord(InvokeStatic, 1, arg1, arg2);
+        ObjectMethodActorAdviceRecord r = (ObjectMethodActorAdviceRecord) storeRecord(InvokeStatic, 1, arg1);
+        if (r != null) {
+            r.value2 = arg2;
+        }
     }
 
     // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeInterface(Object arg1, int arg2) {
+    public void adviseAfterInvokeInterface(Object arg1, MethodActor arg2) {
         super.adviseAfterInvokeInterface(arg1, arg2);
-        storeRecord(InvokeInterface, 1, arg1, arg2);
+        ObjectMethodActorAdviceRecord r = (ObjectMethodActorAdviceRecord) storeRecord(InvokeInterface, 1, arg1);
+        if (r != null) {
+            r.value2 = arg2;
+        }
     }
 
     // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
@@ -739,7 +764,6 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
         super.adviseAfterNewArray(arg1, arg2);
         storeRecord(NewArray, 1, arg1, arg2);
     }
-
 
 
 }

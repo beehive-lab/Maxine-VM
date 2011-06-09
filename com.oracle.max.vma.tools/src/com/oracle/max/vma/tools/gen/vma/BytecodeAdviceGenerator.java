@@ -249,7 +249,7 @@ public class BytecodeAdviceGenerator {
 
     private static void generateInvoke(VMABytecodes bytecode) {
         generateAutoComment();
-        out.printf(METHOD_PREFIX + "Object object, int index);%n%n", adviceModeString, bytecode.methodName);
+        out.printf(METHOD_PREFIX + "Object object, MethodActor methodActor);%n%n", adviceModeString, bytecode.methodName);
     }
 
     private static Set<String> scalarArraySet = new HashSet<String>();

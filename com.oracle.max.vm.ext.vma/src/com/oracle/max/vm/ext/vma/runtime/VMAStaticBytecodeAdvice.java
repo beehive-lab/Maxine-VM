@@ -26,6 +26,7 @@ import static com.oracle.max.vm.ext.vma.run.java.VMAJavaRunScheme.*;
 
 import com.oracle.max.vm.ext.vma.*;
 import com.sun.max.annotate.*;
+import com.sun.max.vm.actor.member.*;
 
 /**
  * An facade that defines static methods that parallel those in {@BytecodeAdvice} for use
@@ -363,7 +364,7 @@ public class VMAStaticBytecodeAdvice {
 
     // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
     @NEVER_INLINE
-    public static void adviseBeforeInvokeVirtual(Object arg1, int arg2) {
+    public static void adviseBeforeInvokeVirtual(Object arg1, VirtualMethodActor arg2) {
         disableAdvising();
         adviceHandler().adviseBeforeInvokeVirtual(arg1, arg2);
         enableAdvising();
@@ -371,7 +372,7 @@ public class VMAStaticBytecodeAdvice {
 
     // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
     @NEVER_INLINE
-    public static void adviseBeforeInvokeSpecial(Object arg1, int arg2) {
+    public static void adviseBeforeInvokeSpecial(Object arg1, VirtualMethodActor arg2) {
         disableAdvising();
         adviceHandler().adviseBeforeInvokeSpecial(arg1, arg2);
         enableAdvising();
@@ -379,7 +380,7 @@ public class VMAStaticBytecodeAdvice {
 
     // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
     @NEVER_INLINE
-    public static void adviseBeforeInvokeStatic(Object arg1, int arg2) {
+    public static void adviseBeforeInvokeStatic(Object arg1, StaticMethodActor arg2) {
         disableAdvising();
         adviceHandler().adviseBeforeInvokeStatic(arg1, arg2);
         enableAdvising();
@@ -387,7 +388,7 @@ public class VMAStaticBytecodeAdvice {
 
     // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
     @NEVER_INLINE
-    public static void adviseBeforeInvokeInterface(Object arg1, int arg2) {
+    public static void adviseBeforeInvokeInterface(Object arg1, InterfaceMethodActor arg2) {
         disableAdvising();
         adviceHandler().adviseBeforeInvokeInterface(arg1, arg2);
         enableAdvising();
@@ -451,7 +452,7 @@ public class VMAStaticBytecodeAdvice {
 
     // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
     @NEVER_INLINE
-    public static void adviseAfterInvokeVirtual(Object arg1, int arg2) {
+    public static void adviseAfterInvokeVirtual(Object arg1, VirtualMethodActor arg2) {
         disableAdvising();
         adviceHandler().adviseAfterInvokeVirtual(arg1, arg2);
         enableAdvising();
@@ -459,7 +460,7 @@ public class VMAStaticBytecodeAdvice {
 
     // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
     @NEVER_INLINE
-    public static void adviseAfterInvokeSpecial(Object arg1, int arg2) {
+    public static void adviseAfterInvokeSpecial(Object arg1, VirtualMethodActor arg2) {
         disableAdvising();
         adviceHandler().adviseAfterInvokeSpecial(arg1, arg2);
         enableAdvising();
@@ -467,7 +468,7 @@ public class VMAStaticBytecodeAdvice {
 
     // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
     @NEVER_INLINE
-    public static void adviseAfterInvokeStatic(Object arg1, int arg2) {
+    public static void adviseAfterInvokeStatic(Object arg1, StaticMethodActor arg2) {
         disableAdvising();
         adviceHandler().adviseAfterInvokeStatic(arg1, arg2);
         enableAdvising();
@@ -475,7 +476,7 @@ public class VMAStaticBytecodeAdvice {
 
     // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
     @NEVER_INLINE
-    public static void adviseAfterInvokeInterface(Object arg1, int arg2) {
+    public static void adviseAfterInvokeInterface(Object arg1, InterfaceMethodActor arg2) {
         disableAdvising();
         adviceHandler().adviseAfterInvokeInterface(arg1, arg2);
         enableAdvising();

@@ -431,38 +431,38 @@ public class LoggingAdviceRecordFlusher extends Thread implements AdviceRecordFl
                     break;
                 }
                 case InvokeVirtual: {
-                    ObjectAdviceRecord record = (ObjectAdviceRecord) thisRecord;
+                    ObjectMethodActorAdviceRecord record = (ObjectMethodActorAdviceRecord) thisRecord;
                     if (getAdviceMode(thisRecord) == 0) {
-                        logHandler.adviseBeforeInvokeVirtual(record.value, getPackedValue(record));
+                        logHandler.adviseBeforeInvokeVirtual(record.value, record.value2);
                     } else {
-                        logHandler.adviseAfterInvokeVirtual(record.value, getPackedValue(record));
+                        logHandler.adviseAfterInvokeVirtual(record.value, record.value2);
                     }
                     break;
                 }
                 case InvokeSpecial: {
-                    ObjectAdviceRecord record = (ObjectAdviceRecord) thisRecord;
+                    ObjectMethodActorAdviceRecord record = (ObjectMethodActorAdviceRecord) thisRecord;
                     if (getAdviceMode(thisRecord) == 0) {
-                        logHandler.adviseBeforeInvokeSpecial(record.value, getPackedValue(record));
+                        logHandler.adviseBeforeInvokeSpecial(record.value, record.value2);
                     } else {
-                        logHandler.adviseAfterInvokeSpecial(record.value, getPackedValue(record));
+                        logHandler.adviseAfterInvokeSpecial(record.value, record.value2);
                     }
                     break;
                 }
                 case InvokeStatic: {
-                    ObjectAdviceRecord record = (ObjectAdviceRecord) thisRecord;
+                    ObjectMethodActorAdviceRecord record = (ObjectMethodActorAdviceRecord) thisRecord;
                     if (getAdviceMode(thisRecord) == 0) {
-                        logHandler.adviseBeforeInvokeStatic(record.value, getPackedValue(record));
+                        logHandler.adviseBeforeInvokeStatic(record.value, record.value2);
                     } else {
-                        logHandler.adviseAfterInvokeStatic(record.value, getPackedValue(record));
+                        logHandler.adviseAfterInvokeStatic(record.value, record.value2);
                     }
                     break;
                 }
                 case InvokeInterface: {
-                    ObjectAdviceRecord record = (ObjectAdviceRecord) thisRecord;
+                    ObjectMethodActorAdviceRecord record = (ObjectMethodActorAdviceRecord) thisRecord;
                     if (getAdviceMode(thisRecord) == 0) {
-                        logHandler.adviseBeforeInvokeInterface(record.value, getPackedValue(record));
+                        logHandler.adviseBeforeInvokeInterface(record.value, record.value2);
                     } else {
-                        logHandler.adviseAfterInvokeInterface(record.value, getPackedValue(record));
+                        logHandler.adviseAfterInvokeInterface(record.value, record.value2);
                     }
                     break;
                 }

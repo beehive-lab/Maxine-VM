@@ -22,6 +22,8 @@
  */
 package com.oracle.max.vm.ext.vma;
 
+import com.sun.max.vm.actor.member.*;
+
 /**
  * The VM executes an (extended) bytecode instruction set and the execution can be subject to advice,
  * specified by the methods below.
@@ -152,16 +154,16 @@ public abstract class BytecodeAdvice {
     public abstract void adviseBeforePutField(Object object, int offset, Object value);
 
     // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
-    public abstract void adviseBeforeInvokeVirtual(Object object, int index);
+    public abstract void adviseBeforeInvokeVirtual(Object object, MethodActor methodActor);
 
     // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
-    public abstract void adviseBeforeInvokeSpecial(Object object, int index);
+    public abstract void adviseBeforeInvokeSpecial(Object object, MethodActor methodActor);
 
     // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
-    public abstract void adviseBeforeInvokeStatic(Object object, int index);
+    public abstract void adviseBeforeInvokeStatic(Object object, MethodActor methodActor);
 
     // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
-    public abstract void adviseBeforeInvokeInterface(Object object, int index);
+    public abstract void adviseBeforeInvokeInterface(Object object, MethodActor methodActor);
 
     // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
     public abstract void adviseBeforeArrayLength(Object array, int length);
@@ -185,16 +187,16 @@ public abstract class BytecodeAdvice {
     public abstract void adviseBeforeBytecode(int opcode);
 
     // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
-    public abstract void adviseAfterInvokeVirtual(Object object, int index);
+    public abstract void adviseAfterInvokeVirtual(Object object, MethodActor methodActor);
 
     // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
-    public abstract void adviseAfterInvokeSpecial(Object object, int index);
+    public abstract void adviseAfterInvokeSpecial(Object object, MethodActor methodActor);
 
     // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
-    public abstract void adviseAfterInvokeStatic(Object object, int index);
+    public abstract void adviseAfterInvokeStatic(Object object, MethodActor methodActor);
 
     // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
-    public abstract void adviseAfterInvokeInterface(Object object, int index);
+    public abstract void adviseAfterInvokeInterface(Object object, MethodActor methodActor);
 
     // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
     public abstract void adviseAfterNew(Object object);
@@ -204,6 +206,7 @@ public abstract class BytecodeAdvice {
 
     // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
     public abstract void adviseAfterMultiNewArray(Object object, int[] lengths);
+
 
 
 }

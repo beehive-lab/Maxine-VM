@@ -194,6 +194,18 @@ public class LoggingAdviceRecordFlusherGenerator {
                 out.printf("                logHandler.adviseBefore%s(record.value, record.value2);%n", e.name());
                 break;
 
+            case InvokeInterface:
+            case InvokeSpecial:
+            case InvokeStatic:
+            case InvokeVirtual:
+                out.printf("                ObjectMethodActorAdviceRecord record = (ObjectMethodActorAdviceRecord) thisRecord;%n");
+                out.printf("                if (getAdviceMode(thisRecord) == 0) {%n");
+                out.printf("                    logHandler.adviseBefore%s(record.value, record.value2);%n", e.name());
+                out.printf("                } else {%n");
+                out.printf("                    logHandler.adviseAfter%s(record.value, record.value2);%n", e.name());
+                out.printf("                }%n");
+                break;
+
             case IfObject:
                 outAssertMode(AdviceMode.BEFORE.ordinal());
                 out.printf("                ObjectObjectAdviceRecord record = (ObjectObjectAdviceRecord) thisRecord;%n");
@@ -202,18 +214,6 @@ public class LoggingAdviceRecordFlusherGenerator {
 
             case MultiNewArray:
                 out.printf("                assert false;%n");
-                break;
-
-            case InvokeInterface:
-            case InvokeSpecial:
-            case InvokeStatic:
-            case InvokeVirtual:
-                out.printf("                ObjectAdviceRecord record = (ObjectAdviceRecord) thisRecord;%n");
-                out.printf("                if (getAdviceMode(thisRecord) == 0) {%n");
-                out.printf("                    logHandler.adviseBefore%s(record.value, getPackedValue(record));%n", e.name());
-                out.printf("                } else {%n");
-                out.printf("                    logHandler.adviseAfter%s(record.value, getPackedValue(record));%n", e.name());
-                out.printf("                }%n");
                 break;
 
             case MonitorEnter:

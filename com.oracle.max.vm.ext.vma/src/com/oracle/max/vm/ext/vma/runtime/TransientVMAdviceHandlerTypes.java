@@ -22,6 +22,7 @@
  */
 package com.oracle.max.vm.ext.vma.runtime;
 
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -116,13 +117,6 @@ public class TransientVMAdviceHandlerTypes {
                 case ThreadStarting:
                 case ThreadTerminating:
                     return new AdviceRecord();
-                case OperationDouble:
-                    return new DoubleDoubleAdviceRecord();
-                case ConstLoadFloat:
-                case ConversionFloat:
-                case ReturnFloat:
-                case StoreFloat:
-                    return new FloatAdviceRecord();
                 case IInc:
                 case IfInt:
                 case OperationLong:
@@ -131,8 +125,11 @@ public class TransientVMAdviceHandlerTypes {
                 case PutFieldFloat:
                 case PutStaticFloat:
                     return new ObjectFloatAdviceRecord();
-                case OperationFloat:
-                    return new FloatFloatAdviceRecord();
+                case InvokeInterface:
+                case InvokeSpecial:
+                case InvokeStatic:
+                case InvokeVirtual:
+                    return new ObjectMethodActorAdviceRecord();
                 case ArrayStoreObject:
                 case CheckCast:
                 case IfObject:
@@ -146,22 +143,10 @@ public class TransientVMAdviceHandlerTypes {
                 case ReturnDouble:
                 case StoreDouble:
                     return new DoubleAdviceRecord();
-                case ArrayStoreLong:
-                case PutFieldLong:
-                case PutStaticLong:
-                    return new ObjectLongAdviceRecord();
-                case ArrayStoreDouble:
-                case PutFieldDouble:
-                case PutStaticDouble:
-                    return new ObjectDoubleAdviceRecord();
                 case ArrayLength:
                 case ConstLoadObject:
                 case GetField:
                 case GetStatic:
-                case InvokeInterface:
-                case InvokeSpecial:
-                case InvokeStatic:
-                case InvokeVirtual:
                 case MonitorEnter:
                 case MonitorExit:
                 case New:
@@ -170,6 +155,23 @@ public class TransientVMAdviceHandlerTypes {
                 case StoreObject:
                 case Throw:
                     return new ObjectAdviceRecord();
+                case OperationDouble:
+                    return new DoubleDoubleAdviceRecord();
+                case ConstLoadFloat:
+                case ConversionFloat:
+                case ReturnFloat:
+                case StoreFloat:
+                    return new FloatAdviceRecord();
+                case OperationFloat:
+                    return new FloatFloatAdviceRecord();
+                case ArrayStoreDouble:
+                case PutFieldDouble:
+                case PutStaticDouble:
+                    return new ObjectDoubleAdviceRecord();
+                case ArrayStoreLong:
+                case PutFieldLong:
+                case PutStaticLong:
+                    return new ObjectLongAdviceRecord();
 
     // END GENERATED CODE
 
@@ -237,6 +239,10 @@ public class TransientVMAdviceHandlerTypes {
 
     static class ObjectDoubleAdviceRecord extends ObjectAdviceRecord {
         double value2;
+    }
+
+    static class ObjectMethodActorAdviceRecord extends ObjectAdviceRecord {
+        MethodActor value2;
     }
 
 }

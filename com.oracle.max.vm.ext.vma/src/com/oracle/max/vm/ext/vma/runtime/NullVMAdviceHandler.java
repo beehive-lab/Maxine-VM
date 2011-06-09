@@ -24,6 +24,7 @@ package com.oracle.max.vm.ext.vma.runtime;
 
 import com.oracle.max.vm.ext.vma.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -264,22 +265,22 @@ public class NullVMAdviceHandler extends VMAdviceHandler {
 
     // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeVirtual(Object arg1, int arg2) {
+    public void adviseBeforeInvokeVirtual(Object arg1, MethodActor arg2) {
     }
 
     // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeSpecial(Object arg1, int arg2) {
+    public void adviseBeforeInvokeSpecial(Object arg1, MethodActor arg2) {
     }
 
     // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeStatic(Object arg1, int arg2) {
+    public void adviseBeforeInvokeStatic(Object arg1, MethodActor arg2) {
     }
 
     // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeInterface(Object arg1, int arg2) {
+    public void adviseBeforeInvokeInterface(Object arg1, MethodActor arg2) {
     }
 
     // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
@@ -319,22 +320,22 @@ public class NullVMAdviceHandler extends VMAdviceHandler {
 
     // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeVirtual(Object arg1, int arg2) {
+    public void adviseAfterInvokeVirtual(Object arg1, MethodActor arg2) {
     }
 
     // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeSpecial(Object arg1, int arg2) {
+    public void adviseAfterInvokeSpecial(Object arg1, MethodActor arg2) {
     }
 
     // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeStatic(Object arg1, int arg2) {
+    public void adviseAfterInvokeStatic(Object arg1, MethodActor arg2) {
     }
 
     // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeInterface(Object arg1, int arg2) {
+    public void adviseAfterInvokeInterface(Object arg1, MethodActor arg2) {
     }
 
     // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
@@ -351,7 +352,6 @@ public class NullVMAdviceHandler extends VMAdviceHandler {
     @Override
     public void adviseAfterMultiNewArray(Object arg1, int[] arg2) {
     }
-
 
 
 }

@@ -22,8 +22,6 @@
  */
 package com.oracle.max.vm.ext.vma.log.txt.sbps;
 
-import static com.oracle.max.vm.ext.vma.log.txt.TextVMAdviceHandlerLog.Key.*;
-
 import com.oracle.max.vm.ext.vma.log.txt.*;
 
 /**
@@ -44,45 +42,20 @@ public class SBPSCompactTextVMAdviceHandlerLog extends CompactTextVMAdviceHandle
     }
 
     @Override
-    public void classDefinitionTracking(String className, String shortForm,
-            long clId) {
+    public void defineShortForm(CompactTextVMAdviceHandlerLog.ShortForm type, String className, String shortForm,
+            long arg) {
         synchronized (jdel) {
-            jdel.sb.append(CLASS_DEFINITION.code);
+            jdel.sb.append(type.code);
             jdel.sb.append(' ');
             jdel.sb.append(className);
             jdel.sb.append(' ');
             jdel.sb.append(shortForm);
-            jdel.sb.append(' ');
-            jdel.sb.append(clId);
+            if (type == ShortForm.C) {
+                jdel.sb.append(' ');
+                jdel.sb.append(arg);
+            }
             jdel.end();
         }
     }
-
-    @Override
-    public void classDefinitionFieldTracking(String fieldName,
-            String shortForm) {
-        synchronized (jdel) {
-            jdel.sb.append(FIELD_DEFINITION.code);
-            jdel.sb.append(' ');
-            jdel.sb.append(fieldName);
-            jdel.sb.append(' ');
-            jdel.sb.append(shortForm);
-            jdel.end();
-        }
-    }
-
-    @Override
-    public void threadDefinitionTracking(String threadName, String shortForm) {
-        synchronized (jdel) {
-            jdel.sb.append(THREAD_DEFINITION.code);
-            // thread names can have spaces, so quote
-            jdel.sb.append(" \"");
-            jdel.sb.append(threadName);
-            jdel.sb.append("\" ");
-            jdel.sb.append(shortForm);
-            jdel.end();
-        }
-    }
-
 
 }

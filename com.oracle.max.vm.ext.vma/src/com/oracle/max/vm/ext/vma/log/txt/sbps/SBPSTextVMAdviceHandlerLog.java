@@ -642,26 +642,34 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforeInvokeVirtual(String threadName, long objId, int index) {
+    public synchronized void adviseBeforeInvokeVirtual(String threadName, long objId, String methodName) {
         appendTTId(sb, ADVISE_BEFORE_INVOKE_VIRTUAL, objId, threadName);
+        appendSpace();
+        sb.append(methodName);
         end();
     }
 
     @Override
-    public synchronized void adviseBeforeInvokeSpecial(String threadName, long objId, int index) {
+    public synchronized void adviseBeforeInvokeSpecial(String threadName, long objId, String methodName) {
         appendTTId(sb, ADVISE_BEFORE_INVOKE_SPECIAL, objId, threadName);
+        appendSpace();
+        sb.append(methodName);
         end();
     }
 
     @Override
-    public synchronized void adviseBeforeInvokeStatic(String threadName, long objId, int index) {
+    public synchronized void adviseBeforeInvokeStatic(String threadName, long objId, String methodName) {
         appendTTId(sb, ADVISE_BEFORE_INVOKE_STATIC, objId, threadName);
+        appendSpace();
+        sb.append(methodName);
         end();
     }
 
     @Override
-    public synchronized void adviseBeforeInvokeInterface(String threadName, long objId, int index) {
+    public synchronized void adviseBeforeInvokeInterface(String threadName, long objId, String methodName) {
         appendTTId(sb, ADVISE_BEFORE_INVOKE_INTERFACE, objId, threadName);
+        appendSpace();
+        sb.append(methodName);
         end();
     }
 
@@ -720,26 +728,34 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseAfterInvokeVirtual(String threadName, long objId, int index) {
+    public synchronized void adviseAfterInvokeVirtual(String threadName, long objId, String methodName) {
         appendTTId(sb, ADVISE_AFTER_INVOKE_VIRTUAL, objId, threadName);
+        appendSpace();
+        sb.append(methodName);
         end();
     }
 
     @Override
-    public synchronized void adviseAfterInvokeStatic(String threadName, long objId, int index) {
+    public synchronized void adviseAfterInvokeStatic(String threadName, long objId, String methodName) {
         appendTTId(sb, ADVISE_AFTER_INVOKE_STATIC, objId, threadName);
+        appendSpace();
+        sb.append(methodName);
         end();
     }
 
     @Override
-    public synchronized void adviseAfterInvokeInterface(String threadName, long objId, int index) {
+    public synchronized void adviseAfterInvokeInterface(String threadName, long objId, String methodName) {
         appendTTId(sb, ADVISE_AFTER_INVOKE_INTERFACE, objId, threadName);
+        appendSpace();
+        sb.append(methodName);
         end();
     }
 
     @Override
-    public synchronized void adviseAfterInvokeSpecial(String threadName, long objId, int index) {
+    public synchronized void adviseAfterInvokeSpecial(String threadName, long objId, String methodName) {
         appendTTId(sb, ADVISE_AFTER_INVOKE_SPECIAL, objId, threadName);
+        appendSpace();
+        sb.append(methodName);
         end();
     }
 

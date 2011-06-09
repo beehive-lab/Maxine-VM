@@ -81,6 +81,7 @@ public abstract class TextVMAdviceHandlerLog extends VMAdviceHandlerLog {
         CLASS_DEFINITION("C"),
         FIELD_DEFINITION("F"),
         THREAD_DEFINITION("T"),
+        METHOD_DEFINITION("M"),
         ADVISE_BEFORE_THROW("BT"),
         ADVISE_BEFORE_IF("BI"),
         ADVISE_BEFORE_LOAD("BL"),
