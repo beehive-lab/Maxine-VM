@@ -124,7 +124,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
      * Map: Reference to {@link Object}s in the VM --> canonical local {@link TeleObject} that represents the
      * object in the VM. Relies on References being canonical and GC-safe.
      */
-    private  final Map<Reference, WeakReference<TeleObject>> referenceToTeleObject = new IdentityHashMap<Reference, WeakReference<TeleObject>>();
+    private  final Map<Reference, WeakReference<TeleObject>> referenceToTeleObject = new HashMap<Reference, WeakReference<TeleObject>>();
 
     /**
      * Map: OID --> {@link TeleObject}.
