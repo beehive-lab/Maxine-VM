@@ -669,13 +669,17 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             }
             if (teleTargetBreakpointManager.getTargetBreakpointAt(address) == null) {
                 final CodeLocation location = CodeLocation.createMachineCodeLocation(vm(), address, "For bytecode breapoint=" + owner.codeLocation());
-                final VMTriggerEventHandler vmTriggerEventHandler = new VMTriggerEventHandler() {
-
-                    public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
-                        return owner.handleTriggerEvent(teleNativeThread);
-                    }
-                };
-                teleTargetBreakpoints.add(teleTargetBreakpointManager.makeSystemBreakpoint(location, vmTriggerEventHandler, owner));
+                if (bci == -1) {
+                    teleTargetBreakpointManager.makeTransientBreakpoint(location);
+                } else {
+                    final VMTriggerEventHandler vmTriggerEventHandler;
+                    vmTriggerEventHandler = new VMTriggerEventHandler() {
+                        public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
+                            return owner.handleTriggerEvent(teleNativeThread);
+                        }
+                    };
+                    teleTargetBreakpoints.add(teleTargetBreakpointManager.makeSystemBreakpoint(location, vmTriggerEventHandler, owner));
+                }
             } else {
                 Trace.line(TRACE_VALUE, tracePrefix + "Target breakpoint already exists at 0x" + address.toHexString() + " in " + teleTargetMethod);
             }
