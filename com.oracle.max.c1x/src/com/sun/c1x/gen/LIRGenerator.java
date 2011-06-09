@@ -560,6 +560,18 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         XirSnippet snippet = null;
 
+        // First try to intrinsify the invocation
+        XirArgument[] args = new XirArgument[x.arguments().length];
+        for (int i = 0; i < x.arguments().length; i++) {
+            args[i] = toXirArgument(x.arguments()[i]);
+        }
+        snippet = xir.genIntrinsic(site(x), args, x.target());
+        if (snippet != null) {
+            emitXir(snippet, x, x.stateBefore() == null ? null : stateFor(x), null, true);
+            return;
+        }
+
+        // Invocation was not intrinsified -> generate a normal call
         int opcode = x.opcode();
         XirArgument receiver;
         switch (opcode) {
@@ -1983,7 +1995,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                     }
 
                     if (arg.kind == CiKind.Object && pointerSlots != null) {
-                        // This slot must be marked explicitedly in the pointer map.
+                        // This slot must be marked explicitly in the pointer map.
                         pointerSlots.add(slot);
                     }
                 }
