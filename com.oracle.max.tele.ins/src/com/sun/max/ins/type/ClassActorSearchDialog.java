@@ -33,10 +33,6 @@ import com.sun.max.vm.type.*;
 
 /**
  * A dialog to let the user select a class in the {@linkplain TeleClassRegistry Inspector class registry}.
- *
- * @author Bernd Mathiske
- * @author Doug Simon
- * @author Michael Van De Vanter
  */
 public final class ClassActorSearchDialog extends TeleObjectSearchDialog {
 

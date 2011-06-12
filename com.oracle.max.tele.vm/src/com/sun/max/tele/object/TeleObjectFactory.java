@@ -66,9 +66,6 @@ import com.sun.max.vm.value.*;
  * <li>A {@link TeleObject} that is either "dead" or "obsolete" is removed from the maps and cannot be discovered,
  * either by location or OID.</li>
  * </ul>
- *
- * @author Michael Van De Vanter
- * @author Hannes Payer
  * @see TeleObject
  */
 public final class TeleObjectFactory extends AbstractTeleVMHolder implements TeleVMCache {

@@ -30,8 +30,6 @@ import com.sun.max.unsafe.*;
  * Thrown when an error occurs accessing VM memory at the same time as another thread
  * in a context where only one thread can access the VM at a time. Use of ptrace(2)
  * on Linux is one such context.
- *
- * @author Doug Simon
  */
 public class ConcurrentDataIOError extends DataIOError {
 

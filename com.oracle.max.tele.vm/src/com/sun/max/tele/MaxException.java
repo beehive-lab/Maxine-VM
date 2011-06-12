@@ -25,8 +25,6 @@ package com.sun.max.tele;
 /**
  * Abstract parent class for all checked exceptions that might be
  * thrown by client interfaces in the Tele layer of code.
- *
- * @author Michael Van De Vanter
  */
 public abstract class MaxException extends Exception {
 

@@ -32,10 +32,6 @@ import com.sun.max.vm.thread.*;
 /**
  * Canonical surrogate for a {@link VmThread} in the {@link TeleVM}.
  * The name of a thread can be changed dynamically in the {@link TeleVM}.
- *
- * @author Bernd Mathiske
- * @author Doug Simon
- * @author Michael Van De Vanter
  */
 public class TeleVmThread extends TeleTupleObject {
 

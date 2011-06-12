@@ -24,8 +24,6 @@ package com.sun.max.tele;
 
 /**
  * Listener interface for GC completions in the VM.
- *
- * @author Michael Van De Vanter
  */
 public interface MaxGCCompletedListener {
 

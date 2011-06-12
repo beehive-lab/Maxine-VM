@@ -52,8 +52,6 @@ import com.sun.max.vm.value.*;
  * as well as the various array subsets (tables) in hybrid objects (hubs).  They are distinguished
  * by a string prefix appearing before any mention of elements, e.g. [3] for an ordinary
  * array element and M[3] for an element of the MTable in a hub.
- *
- * @author Michael Van De Vanter
  */
 public final class ArrayElementsTable extends InspectorTable {
 

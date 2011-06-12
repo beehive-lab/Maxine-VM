@@ -27,8 +27,6 @@ import java.util.*;
 
 /**
  * Client access to VM breakpoint creation and management.
- *
- * @author Michael Van De Vanter
  */
 public interface MaxBreakpointManager {
 

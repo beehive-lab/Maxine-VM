@@ -41,8 +41,6 @@ import com.sun.max.vm.type.*;
  * For literal constants, the labels rely on the local counterpart to the remote one.
  * For resolvable constants, an attempt is made to read the remote version in order
  * to determine if resolved or not.
- *
- * @author Michael Van De Vanter
  */
 public abstract class PoolConstantLabel extends InspectorLabel {
 

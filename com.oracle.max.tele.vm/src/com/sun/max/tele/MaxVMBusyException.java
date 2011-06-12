@@ -26,8 +26,6 @@ package com.sun.max.tele;
 /**
  * Signifies that non thread-safe data about the state of the VM is currently
  * unavailable.
- *
- * @author Michael Van De Vanter
  */
 public class MaxVMBusyException extends MaxException {
 

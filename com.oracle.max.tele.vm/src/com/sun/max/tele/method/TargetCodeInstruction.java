@@ -27,8 +27,6 @@ import com.sun.max.unsafe.*;
 
 /**
  * A single, disassembled native code instruction.
- *
- * @author Michael Van De Vanter
   */
 public final class TargetCodeInstruction {
 

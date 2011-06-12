@@ -25,9 +25,6 @@ package com.sun.max.tele.util;
 /**
  * Static methods for responding with unchecked exceptions
  * in situations that should not occur.
- *
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
  */
 public final class TeleError extends Error {
 

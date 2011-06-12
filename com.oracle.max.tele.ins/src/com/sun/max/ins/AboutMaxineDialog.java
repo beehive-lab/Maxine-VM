@@ -29,8 +29,6 @@ import com.sun.max.vm.*;
 
 /**
  * A rudimentary message describing the Maxine project.
- *
- * @author Michael Van De Vanter
  */
 public final class AboutMaxineDialog extends SimpleDialog {
 

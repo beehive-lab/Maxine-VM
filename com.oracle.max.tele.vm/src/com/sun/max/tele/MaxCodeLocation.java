@@ -33,8 +33,6 @@ import com.sun.max.vm.actor.member.*;
  * are assumed to be not relocatable).  A location also might be specified
  * by method description, which can be specified whether the
  * named method has been compiled or even loaded into the VM.
- *
- * @author Michael Van De Vanter
  */
 public interface MaxCodeLocation {
 

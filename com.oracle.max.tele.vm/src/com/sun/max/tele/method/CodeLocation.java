@@ -56,8 +56,6 @@ import com.sun.max.vm.actor.member.*;
  * <p>
  * This class is intended to encapsulate as many techniques for mapping among code locations
  * as possible.
- *
- * @author Michael Van De Vanter
  */
 public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCodeLocation {
 
@@ -367,7 +365,6 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
     /**
      * A code location that refers to a method in general, and not to any specific compilation.
      *
-     * @author Michael Van De Vanter
      */
     public abstract static class BytecodeLocation extends CodeLocation {
 
@@ -390,7 +387,6 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
      * cases where the address isn't yet known because not enough of the VM state
      * has been modeled to determine it.
      *
-     * @author Michael Van De Vanter
      */
     public abstract static class MachineCodeLocation extends CodeLocation {
 
@@ -413,7 +409,6 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
     * It is not bound to any particular compilation, and so never had a machine code address.
      *
      * @see CodeLocation#createBytecodeLocation(TeleVM, MethodKey, String)
-     * @author Michael Van De Vanter
      */
     private static final class MethodKeyLocation extends BytecodeLocation {
 
@@ -464,7 +459,6 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
      * It is not bound to any particular compilation, and so never had a machine code address.
      *
      * @see #createBytecodeLocation(TeleVM, TeleClassMethodActor, int, String)
-     * @author Michael Van De Vanter
      */
     private static final class ClassMethodActorLocation extends BytecodeLocation {
 
@@ -526,7 +520,6 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
      * bytecode location will be discovered when possible.
      *
      * @see #createMachineCodeLocation(TeleVM, Address, String)
-     * @author Michael Van De Vanter
      */
     private static final class AddressCodeLocation extends MachineCodeLocation {
 
@@ -590,7 +583,6 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
      * memory location of the corresponding machine code instruction in a compilation of the method.
      *
      * @see CodeLocation#createMachineCodeLocation(TeleVM, Address, TeleClassMethodActor, int, String)
-     * @author Michael Van De Vanter
      */
     private static final class ClassMethodActorAddressLocation extends MachineCodeLocation {
 
@@ -650,7 +642,6 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
      * The location corresponds to the beginning of the compiled method prologue, which
      * is equivalent to a bytecode position specification of -1.
      *
-     * @author Michael Van De Vanter
      */
     private static final class MethodAccessLocation extends MachineCodeLocation {
 

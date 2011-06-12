@@ -37,10 +37,6 @@ import com.sun.max.vm.value.*;
  * A {@code TeleMethodAccess} provides a mechanism for accessing a method in a tele VM.
  * It includes support for {@linkplain #interpret(Value...) invoking} such a method in the
  * context of the tele VM.
- *
- * @author Bernd Mathiske
- * @author Doug Simon
- * @author Michael Van De Vanter
  */
 public abstract class TeleMethodAccess extends AbstractTeleVMHolder {
 

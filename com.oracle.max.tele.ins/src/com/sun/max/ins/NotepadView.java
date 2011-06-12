@@ -46,8 +46,6 @@ import com.sun.max.unsafe.*;
  * The view is currently a singleton, but this might be generalized
  * if multiple notepads are supported in the future.  Some of the code
  * is written to anticipate this.
- *
- * @author Michael Van De Vanter
  * @see InspectorNotepad
  * @see NotepadManager
  */

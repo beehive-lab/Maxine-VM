@@ -26,9 +26,6 @@ import com.sun.max.vm.hosted.*;
 
 /**
  *  Modes in which the VM can be inspected.
- *
- * @author Mick Jordan
- * @author Michael Van De Vanter
  */
 public enum MaxInspectionMode {
 

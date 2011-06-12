@@ -22,7 +22,5 @@
  */
 /**
  * Rendering of Java values as in com.sun.max.vm.value.*.
- * 
- * @author Bernd Mathiske
  */
 package com.sun.max.ins.value;

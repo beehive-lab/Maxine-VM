@@ -29,8 +29,6 @@ import com.sun.max.tele.method.*;
 
 /**
  * An abstraction over breakpoints.
- *
- * @author Michael Van De Vanter
  */
 public abstract class TeleBreakpoint extends AbstractTeleVMHolder implements VMTriggerEventHandler, MaxBreakpoint {
 

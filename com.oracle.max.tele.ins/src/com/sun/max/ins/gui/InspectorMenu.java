@@ -34,8 +34,6 @@ import com.sun.max.ins.util.*;
  * <br>
  * The important characteristic of this menu is that it can be refreshed,
  * in case it depends on any state (e.g. for being enabled).
- *
- * @author Michael Van De Vanter
  */
 public class InspectorMenu extends JMenu implements Prober {
 

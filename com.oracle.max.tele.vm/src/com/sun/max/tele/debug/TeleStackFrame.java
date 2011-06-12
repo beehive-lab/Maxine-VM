@@ -43,8 +43,6 @@ import com.sun.max.vm.stack.*;
  * {@link TruncatedFrame}, which is <em>synthetic</em>: it
  * corresponds to no VM frame type, but is rather used to as a marker by the stack walker for
  * communicating truncated stack walks.
- *
- * @author Michael Van De Vanter
  */
 public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends AbstractTeleVMHolder implements MaxStackFrame {
 

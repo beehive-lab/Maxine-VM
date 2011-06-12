@@ -38,9 +38,6 @@ import com.sun.max.vm.actor.member.*;
 
 /**
  * Standardized ways to display textual names of common entities during Inspection sessions.
- *
- * @author Michael Van De Vanter
- * @author Doug Simon
  */
 public final class InspectorNameDisplay extends AbstractInspectionHolder {
 

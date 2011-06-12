@@ -33,8 +33,6 @@ import com.sun.max.unsafe.*;
  * Methods for creating byte views on memory in different variations.  Some are direct
  * actions; others are for possibly interactive {@link InspectorAction}s
  * that can be put on menus.
- *
- * @author Michael Van De Vanter
  */
 public interface MemoryBytesViewFactory extends InspectionViewFactory<MemoryBytesView>{
 

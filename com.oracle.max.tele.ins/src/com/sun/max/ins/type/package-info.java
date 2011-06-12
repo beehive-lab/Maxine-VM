@@ -22,7 +22,5 @@
  */
 /**
  * Rendering of Java types and type actors.
- * 
- * @author Bernd Mathiske
  */
 package com.sun.max.ins.type;

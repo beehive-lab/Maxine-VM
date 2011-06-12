@@ -21,7 +21,5 @@
  * questions.
  */
 /**
- * 
- * @author Bernd Mathiske
  */
 package test.com.sun.max.ins;

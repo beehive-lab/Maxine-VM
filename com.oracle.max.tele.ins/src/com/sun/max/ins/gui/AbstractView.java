@@ -55,9 +55,6 @@ import com.sun.max.unsafe.*;
  * that wishes to receive such notifications must do so by overriding the appropriate
  * methods in interfaces {@link InspectionListener} and {@link ViewFocusListener},
  * for which empty methods are provided in this abstract class.</p>
- *
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
  */
 public abstract class AbstractView<View_Type extends AbstractView> extends AbstractInspectionHolder implements InspectionListener, ViewFocusListener {
 

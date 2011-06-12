@@ -25,8 +25,6 @@ package com.sun.max.tele.reference;
 import com.sun.max.unsafe.*;
 
 /**
- *
- * @author Bernd Mathiske
  */
 public abstract class RemoteTeleReference extends TeleReference {
 

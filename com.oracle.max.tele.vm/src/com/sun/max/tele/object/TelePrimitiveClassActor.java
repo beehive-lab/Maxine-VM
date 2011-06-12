@@ -29,8 +29,6 @@ import com.sun.max.vm.reference.*;
 
 /**
  * Canonical surrogate for a  {@link PrimitiveClassActor} in the VM.
- *
- * @author Michael Van De Vanter
  */
 public class TelePrimitiveClassActor extends TeleClassActor implements ClassProvider {
 

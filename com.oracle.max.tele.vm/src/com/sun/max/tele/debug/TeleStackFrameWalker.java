@@ -34,9 +34,6 @@ import com.sun.max.vm.thread.*;
 
 /**
  * Specialization of a StackFrameWalker for use with a {@link TeleVM}.
- *
- * @author Laurent Daynes
- * @author Doug Simon
  */
 public final class TeleStackFrameWalker extends StackFrameWalker {
 

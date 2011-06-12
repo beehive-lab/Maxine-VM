@@ -35,8 +35,6 @@ import com.sun.max.unsafe.*;
 /**
  * Access to register state for a thread in the VM.
  * Updates cache of VM state lazily, based on the process {@linkplain TeleProcess#epoch() epoch}.
- *
- * @author Michael Van De Vanter
  */
 public final class TeleRegisterSet extends AbstractTeleVMHolder implements TeleVMCache, MaxRegisterSet {
 

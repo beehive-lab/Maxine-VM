@@ -34,8 +34,6 @@ import com.sun.max.unsafe.*;
  * Description of a single machine code routine in the VM, either compiled from a Java method or a block of external native code.
  * <br>
  * Note that machine code can get patched (changed) at runtime, so any caching of these results should be avoided.
- *
- * @author Michael Van De Vanter
  */
 public interface MaxMachineCode<MachineCode_Type extends MaxMachineCode> extends MaxEntity<MachineCode_Type> {
 

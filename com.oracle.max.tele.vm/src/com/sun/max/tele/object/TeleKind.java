@@ -29,8 +29,6 @@ import com.sun.max.vm.type.*;
 /**
  * Canonical surrogate for a  {@link Kind} in the Target VM.
  *
- * @author Michael Van De Vanter
- *
  */
 public class TeleKind extends TeleTupleObject {
 

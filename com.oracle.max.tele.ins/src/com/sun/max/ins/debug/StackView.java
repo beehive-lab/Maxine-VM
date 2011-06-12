@@ -44,10 +44,6 @@ import com.sun.max.vm.actor.member.*;
 
 /**
  * A singleton view that displays stack contents for the thread in the VM that is the current user focus.
- *
- * @author Doug Simon
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
  */
 public final class StackView extends AbstractView<StackView> {
     private static final int TRACE_VALUE = 1;

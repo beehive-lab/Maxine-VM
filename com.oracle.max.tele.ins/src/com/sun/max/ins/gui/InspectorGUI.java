@@ -32,8 +32,6 @@ import com.sun.max.util.*;
 
 /**
  * Basic GUI services for a VM Inspection session.
- *
- * @author Michael Van De Vanter
  */
 public interface InspectorGUI {
 

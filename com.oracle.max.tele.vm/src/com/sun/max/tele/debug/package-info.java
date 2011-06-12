@@ -23,7 +23,5 @@
 
 /**
  * Facilities for remote debugging of the tele VM.
- *
- * @author Michael Van De Vanter
  */
 package com.sun.max.tele.debug;

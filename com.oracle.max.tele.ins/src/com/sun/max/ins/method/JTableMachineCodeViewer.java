@@ -55,10 +55,6 @@ import com.sun.max.vm.value.*;
  * A table-based viewer for an (immutable) section of {@link MaxMachineCode} in the VM.
  * Supports visual effects for execution state, and permits user selection
  * of instructions for various purposes (e.g. set breakpoint).
- *
- * @author Mick Jordan
- * @author Doug Simon
- * @author Michael Van De Vanter
  */
 public class JTableMachineCodeViewer extends MachineCodeViewer {
 

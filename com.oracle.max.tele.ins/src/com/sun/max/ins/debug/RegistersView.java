@@ -34,8 +34,6 @@ import com.sun.max.tele.*;
 
 /**
  * A singleton view that displays register contents for the thread the VM that is the current user focus.
- *
- * @author Michael Van De Vanter
  */
 public final class RegistersView extends AbstractView<RegistersView> implements TableColumnViewPreferenceListener {
 

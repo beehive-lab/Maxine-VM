@@ -43,7 +43,6 @@ public final class TeleCompiledCodeRegion extends AbstractTeleVMHolder implement
      * We could decompose it into sub-regions containing a method compilation each, but we don't
      * do that at this time.
      *
-     * @author Michael Van De Vanter
      */
     private static final class CompiledCodeRegionMemoryRegion extends TeleDelegatedMemoryRegion implements MaxEntityMemoryRegion<MaxCompiledCodeRegion> {
 

@@ -45,8 +45,6 @@ import com.sun.max.vm.actor.member.*;
 /**
  * Visual view and debugger for a Java method and other routines in the VM, able to display one or more kinds of code
  * associated with the method: compiled code, bytecode, and source.
- *
- * @author Michael Van De Vanter
  */
 public class JavaMethodView extends MethodView<JavaMethodView> {
 

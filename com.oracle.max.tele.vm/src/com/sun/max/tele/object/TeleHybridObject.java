@@ -44,8 +44,6 @@ import com.sun.max.vm.value.*;
  * as an ordinary Java type.
  * It is allocated as if it were an array of words, with length specified in the header as with Java arrays.
  * The detailed breakdown of the object's structure is expressed in the subclass {@link TeleHub}.
- *
- * @author Michael Van De Vanter
   */
 public abstract class TeleHybridObject extends TeleObject {
 

@@ -32,8 +32,6 @@ import com.sun.max.ins.*;
  * A sequence of items suitable for adding to a {@link InspectorPopupMenu}.
  * <br>
  * Contains only instances of {@link InspectorAction} and {@link JMenu}.
- *
- * @author Michael Van De Vanter
  */
 public class InspectorPopupMenuItems implements Iterable<Object>{
 

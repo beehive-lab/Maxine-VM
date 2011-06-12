@@ -49,9 +49,6 @@ import com.sun.max.vm.value.*;
  * like that of a {@link TeleObject}.
  *
  * @see Reference
- *
- * @author Bernd Mathiske
- * @author Athul Acharya
  */
 public final class TeleReferenceValue extends ReferenceValue {
 

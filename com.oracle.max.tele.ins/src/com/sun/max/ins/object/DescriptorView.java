@@ -33,8 +33,6 @@ import com.sun.max.vm.type.*;
 /**
  * An object view specialized for displaying a low-level heap object
  * in the VM that implements a {@link Descriptor}.
- *
- * @author Michael Van De Vanter
  */
 public class DescriptorView extends ObjectView<DescriptorView> {
 

@@ -26,7 +26,5 @@
  * Derived from the JavaInJava interpreter by Antero Taivalsaari.
  * See Sun Labs tech report TR-98-64:
  * http://research.sun.com/techrep/1998/abstract-64.html
- *
- * @author Athul Acharya
  */
 package com.sun.max.tele.interpreter;

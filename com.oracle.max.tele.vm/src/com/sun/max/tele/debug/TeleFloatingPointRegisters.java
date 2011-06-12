@@ -32,10 +32,6 @@ import com.sun.max.tele.util.*;
 
 /**
  * Encapsulates the values of the floating point registers for a tele native thread.
- *
- * @author Bernd Mathiske
- * @author Laurent Daynes
- * @author Michael Van De Vanter
  */
 public final class TeleFloatingPointRegisters extends TeleRegisters {
 

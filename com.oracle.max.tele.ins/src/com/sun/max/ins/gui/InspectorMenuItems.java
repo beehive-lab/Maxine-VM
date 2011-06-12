@@ -26,8 +26,6 @@ import com.sun.max.ins.*;
 
 /**
  * A model for one or more menu items in a menu.
- *
- * @author Bernd Mathiske
  */
 public interface InspectorMenuItems extends Prober {
 

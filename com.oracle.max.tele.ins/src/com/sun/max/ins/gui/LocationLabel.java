@@ -32,8 +32,6 @@ import com.sun.max.unsafe.*;
 /**
  * A selectable, lightweight label for displaying memory
  * locations in the VM with different interpretations.
- *
- * @author Michael Van De Vanter
  */
 public abstract class LocationLabel extends InspectorLabel {
 

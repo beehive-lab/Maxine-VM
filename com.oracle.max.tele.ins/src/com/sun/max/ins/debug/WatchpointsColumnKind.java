@@ -25,9 +25,6 @@ package com.sun.max.ins.debug;
 
 /**
  * Defines the columns that can be displayed describing a watchpoint in the VM.
- *
- * @author Michael Van De Vanter
- * @author Hannes Payer
  */
 public enum WatchpointsColumnKind implements ColumnKind {
 

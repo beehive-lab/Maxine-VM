@@ -35,8 +35,6 @@ import com.sun.max.tele.util.*;
  * It must be the superclass of any implementation of {@link TeleChannelDataIOProtocol} that wishes to participate in
  * remote reflective invocation.
  *
- * @author Mick Jordan
- *
  */
 
 public abstract class RemoteInvocationProtocolAdaptor {

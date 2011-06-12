@@ -29,8 +29,6 @@ import com.sun.max.ins.gui.*;
 
 /**
  * Persistent preferences for viewing register values in the VM.
- *
- * @author Michael Van De Vanter
   */
 public final class RegistersViewPreferences extends TableColumnVisibilityPreferences<RegistersColumnKind> {
 

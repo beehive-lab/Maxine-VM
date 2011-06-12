@@ -42,8 +42,6 @@ import com.sun.max.vm.classfile.*;
 /**
  * A view that displays detailed information about the currently selected location in compiled code,
  * starting with Java frame descriptors, if available.
- *
- * @author Michael Van De Vanter
  */
 public final class CodeLocationView extends AbstractView<CodeLocationView> {
 

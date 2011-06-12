@@ -38,8 +38,6 @@ import com.sun.max.ins.view.InspectionViews.ViewKind;
  * Tabbed views manage change explicitly: removes the contained views
  * from the update listeners managed generally and notifies only the visible one
  * when notified of a change.
- *
- * @author Michael Van De Vanter
  */
 public abstract class TabbedView<View_Type extends TabbedView> extends AbstractView<View_Type> implements ViewContainer {
 

@@ -33,9 +33,6 @@ import com.sun.max.vm.hosted.*;
 
 /**
  * A null VM instance, with the boot image but no process.
- *
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
  */
 public final class ReadOnlyTeleVM extends TeleVM {
 

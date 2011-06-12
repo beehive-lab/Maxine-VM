@@ -39,8 +39,6 @@ import com.sun.max.vm.value.*;
  * A table cell renderer for tables with rows representing memory words: displays in the cell
  * the name of the VM's allocated memory region into which the first word of the area represented
  * by the table row points.
- *
- * @author Michael Van De Vanter
  */
 public final class MemoryRegionPointerTableCellRenderer extends InspectorTableCellRenderer {
 

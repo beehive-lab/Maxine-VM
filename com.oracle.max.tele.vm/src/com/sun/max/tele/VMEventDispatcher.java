@@ -33,8 +33,6 @@ import com.sun.max.tele.method.*;
  * A dispatcher that notifies registered listeners when an event associated with a code location is triggered.
  * The dispatcher takes care of automatically setting / unsetting a system breakpoints at the code location corresponding to the
  * event, and to notify registered listeners.
- *
- * @author Laurent Daynes
  */
 public abstract class VMEventDispatcher<T> {
     private List<T> listeners = new CopyOnWriteArrayList<T>();

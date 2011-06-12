@@ -49,8 +49,6 @@ import com.sun.max.vm.actor.member.*;
  * A table-based viewer for an (immutable) block of bytecodes.
  * Supports visual effects for execution state, and permits user selection
  * of instructions for various purposes (e.g. set breakpoint)
- *
- * @author Michael Van De Vanter
  */
 public class JTableBytecodeViewer extends BytecodeViewer {
 

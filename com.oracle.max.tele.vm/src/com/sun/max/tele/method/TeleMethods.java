@@ -46,9 +46,6 @@ import com.sun.max.vm.type.*;
  * A field of the appropriate {@link TeleMethodAccess} subtype is generated into this file
  * by executing the {@link #main(String[])} method in this class (ensuring that the VM
  * class path contains all the {@code com.sun.max} classes).
- *
- * @author Bernd Mathiske
- * @author Doug Simon
  */
 public class TeleMethods extends AbstractTeleVMHolder {
 

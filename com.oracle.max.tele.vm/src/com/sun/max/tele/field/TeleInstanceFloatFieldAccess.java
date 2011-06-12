@@ -26,7 +26,6 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
 /**
- * @author Athul Acharya
  */
 public class TeleInstanceFloatFieldAccess extends TeleInstanceFieldAccess {
 

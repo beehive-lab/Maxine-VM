@@ -38,9 +38,6 @@ import com.sun.max.vm.hosted.*;
  * A manager for saving and restoring of settings between Inspection sessions, with some
  * specialized machinery to support the saving of window frame geometry (location, size)
  * for both the Inspector's main frame and for views within it.
- *
- * @author Michael Van De Vanter
- * @author Doug Simon
  */
 public class InspectionSettings {
 

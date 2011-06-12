@@ -39,8 +39,6 @@ import com.sun.max.vm.stack.*;
 
 /**
  * Access to the state of a stack in the VM.
- *
- * @author Michael Van De Vanter
  */
 public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
 

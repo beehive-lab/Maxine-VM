@@ -28,9 +28,6 @@ import com.sun.max.tele.*;
 
 /**
  * Convenience methods for classes holding various parts of the interactive inspection session.
- *
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
  */
 public abstract class AbstractInspectionHolder implements InspectionHolder {
 

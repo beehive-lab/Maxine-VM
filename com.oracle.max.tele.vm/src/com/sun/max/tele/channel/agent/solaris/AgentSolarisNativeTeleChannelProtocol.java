@@ -30,8 +30,6 @@ import com.sun.max.tele.debug.solaris.*;
  *
  * Agent-side implementation of {@link TeleChannelProtocol} for Solaris.
  *
- * @author Mick Jordan
- *
  */
 public class AgentSolarisNativeTeleChannelProtocol extends AgentProtocolAdaptor {
     public AgentSolarisNativeTeleChannelProtocol() {

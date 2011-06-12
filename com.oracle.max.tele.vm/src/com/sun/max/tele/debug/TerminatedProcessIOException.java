@@ -27,8 +27,6 @@ package com.sun.max.tele.debug;
  * This is a runtime (unchecked) exception because it gets thrown in
  * situations where data IO code (shared with the Maxine VM code)
  * is on the stack.
- *
- * @author Michael Van De Vanter
  */
 public class TerminatedProcessIOException extends RuntimeException {
 

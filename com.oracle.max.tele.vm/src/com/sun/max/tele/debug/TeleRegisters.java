@@ -37,11 +37,6 @@ import com.sun.max.unsafe.*;
 
 /**
  * Abstract base class for caching the values of a set of ISA defined registers for a given thread.
- *
- * @author Bernd Mathiske
- * @author Mick Jordan
- * @author Doug Simon
- * @author Michael Van De Vanter
  */
 abstract class TeleRegisters extends AbstractTeleVMHolder implements TeleVMCache {
 

@@ -25,8 +25,6 @@ package com.sun.max.ins.debug;
 
 /**
  * Defines the columns that can be displayed describing a compiled stack frame in the VM.
- *
- * @author Michael Van De Vanter
  */
 public enum CompiledStackFrameColumnKind implements ColumnKind {
 

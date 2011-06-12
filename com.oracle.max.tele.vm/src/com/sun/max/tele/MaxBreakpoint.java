@@ -27,8 +27,6 @@ import com.sun.max.tele.debug.BreakpointCondition.*;
 
 /**
  * Access to a breakpoint created in the VM.
- *
- * @author Michael Van De Vanter
  */
 public interface MaxBreakpoint {
 

@@ -25,8 +25,6 @@ package com.sun.max.ins;
 /**
  * A holder of text for unstructured use by users; persists
  * across sessions.
- *
- * @author Michael Van De Vanter
  */
 interface InspectorNotepad {
 

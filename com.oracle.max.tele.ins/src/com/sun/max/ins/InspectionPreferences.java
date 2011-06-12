@@ -40,8 +40,6 @@ import com.sun.max.program.option.*;
 
 /**
  * Manages persistent general preferences for inspection sessions.
- *
- * @author Michael Van De Vanter
  */
 final class InspectionPreferences extends AbstractSaveSettingsListener {
 

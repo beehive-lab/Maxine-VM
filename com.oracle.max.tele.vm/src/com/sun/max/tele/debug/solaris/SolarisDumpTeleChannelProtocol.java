@@ -32,8 +32,6 @@ import com.sun.max.tele.debug.dump.*;
 /**
  * Solaris implementation of the channel protocol for accessing core dump files.
  *
- * @author Mick Jordan
- *
  */
 public class SolarisDumpTeleChannelProtocol extends ELFDumpTeleChannelProtocolAdaptor implements SolarisTeleChannelProtocol {
 

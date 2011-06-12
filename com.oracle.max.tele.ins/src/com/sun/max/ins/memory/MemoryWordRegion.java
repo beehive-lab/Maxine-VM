@@ -29,8 +29,6 @@ import com.sun.max.unsafe.*;
 /**
  * Representation for a region of VM memory constrained to contain
  * only whole words, word aligned.
- *
- * @author Michael Van De Vanter
  */
 public class MemoryWordRegion extends InspectorMemoryRegion {
 

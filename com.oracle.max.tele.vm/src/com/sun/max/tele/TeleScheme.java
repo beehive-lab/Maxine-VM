@@ -28,8 +28,6 @@ import com.sun.max.vm.*;
 
 /**
  * Inspector support for a specific implementation of a {@link VMScheme} in the VM.
- *
- * @author Michael Van De Vanter
  */
 public interface TeleScheme {
 

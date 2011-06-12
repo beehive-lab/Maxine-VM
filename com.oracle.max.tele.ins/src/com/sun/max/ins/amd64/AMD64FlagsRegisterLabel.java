@@ -23,7 +23,6 @@
 package com.sun.max.ins.amd64;
 
 /**
- * @author Bernd Mathiske
  */
 public class AMD64FlagsRegisterLabel {
 

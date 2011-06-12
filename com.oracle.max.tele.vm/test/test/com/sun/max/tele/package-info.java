@@ -21,6 +21,5 @@
  * questions.
  */
 /**
- * @author Michael Van De Vanter
  */
 package test.com.sun.max.tele;

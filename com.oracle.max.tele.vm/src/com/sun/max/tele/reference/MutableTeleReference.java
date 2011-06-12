@@ -26,9 +26,6 @@ import com.sun.max.unsafe.*;
 
 /**
  * Raw bits may change due to tele GC.
- *
- * @author Bernd Mathiske
- * @author Hannes Payer
  */
 public final class MutableTeleReference extends RemoteTeleReference {
 

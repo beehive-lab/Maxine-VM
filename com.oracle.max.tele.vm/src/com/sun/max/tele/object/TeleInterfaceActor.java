@@ -29,8 +29,6 @@ import com.sun.max.vm.reference.*;
 
 /**
  * Canonical surrogate for a  {@link InterfaceActor} in the Target VM.
- *
- * @author Michael Van De Vanter
  */
 public class TeleInterfaceActor extends TeleClassActor implements InterfaceProvider {
 

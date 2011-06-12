@@ -27,8 +27,6 @@ import com.sun.max.unsafe.*;
 
 /**
  * Representation of a span of memory in the VM where the description is immutable.
- *
- * @author Michael Van De Vanter
  */
 public class TeleFixedMemoryRegion extends TeleMemoryRegion {
 

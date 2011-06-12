@@ -28,9 +28,6 @@ import com.sun.max.unsafe.*;
 /**
  *  Buffered reading/writing of bytes from/to a source/destination that can be identified by an {@link Address},
  *  and which has a natural page size and for which generations of modification can be articulated.
- *
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
  */
 public interface TeleIO extends DataIO {
 

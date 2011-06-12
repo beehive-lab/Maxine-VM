@@ -23,6 +23,5 @@
 
 /**
  * Support for types in the tele VM.
- * @author Michael Van De Vanter
  */
 package com.sun.max.tele.type;

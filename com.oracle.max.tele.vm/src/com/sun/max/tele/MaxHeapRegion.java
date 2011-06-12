@@ -24,8 +24,6 @@ package com.sun.max.tele;
 
 /**
  * Access to an individual allocation area of the VM heap.
- *
- * @author Michael Van De Vanter
  */
 public interface MaxHeapRegion extends MaxEntity<MaxHeapRegion> {
 

@@ -27,7 +27,6 @@ import com.sun.max.tele.value.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * @author Bernd Mathiske
  */
 public class ReferenceValueLabel extends WordValueLabel {
 

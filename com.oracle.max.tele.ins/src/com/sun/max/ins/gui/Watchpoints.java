@@ -38,8 +38,6 @@ import com.sun.max.vm.thread.*;
 
 /**
  * Utilities for managing {@linkplain MaxWatchpoint memory watchpoint}s in the VM.
- *
- * @author Michael Van De Vanter
  */
 public final class Watchpoints {
 

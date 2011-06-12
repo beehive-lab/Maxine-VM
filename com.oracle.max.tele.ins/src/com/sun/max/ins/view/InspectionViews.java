@@ -57,7 +57,6 @@ import com.sun.max.program.option.*;
  * A generalized manager for views, some of which are singletons and some of which are not.
  * <p>
  * Not all view kinds have been brought into this framework.
- * @author Michael Van De Vanter
  *
  */
 public final class InspectionViews extends AbstractInspectionHolder {
@@ -67,7 +66,6 @@ public final class InspectionViews extends AbstractInspectionHolder {
     /**
      * The kinds of VM inspection views that can be activated (made visible).
      *
-     * @author Michael Van De Vanter
      */
     public enum ViewKind {
         ALLOCATIONS(true, false, "Regions of memory allocated by the VM") {

@@ -33,8 +33,6 @@ import com.sun.max.vm.type.*;
 
 /**
  *Canonical surrogate for an object of type {@link FieldActor} in the tele VM.
- *
- * @author Michael Van De Vanter
  */
 public final class TeleFieldActor extends TeleMemberActor implements FieldProvider {
 

@@ -26,8 +26,6 @@ import com.sun.max.ins.*;
 
 /**
  * A label that displays the name of a Java entity.
- *
- * @author Michael Van De Vanter
   */
 public class JavaNameLabel extends InspectorLabel {
 

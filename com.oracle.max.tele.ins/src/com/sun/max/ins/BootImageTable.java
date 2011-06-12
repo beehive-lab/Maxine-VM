@@ -43,8 +43,6 @@ import com.sun.max.vm.hosted.*;
 
 /**
  * A table specialized for displaying {@link VMConfiguration}  information in the VM boot image.
- *
- * @author Michael Van De Vanter
  */
 public final class BootImageTable extends InspectorTable {
 

@@ -27,8 +27,6 @@ import com.sun.max.ins.gui.*;
 
 /**
  * Persistent preferences for viewing disassembled machine code in the VM.
- *
- * @author Michael Van De Vanter
   */
 public class MachineCodeViewPreferences extends TableColumnVisibilityPreferences<MachineCodeColumnKind> {
 

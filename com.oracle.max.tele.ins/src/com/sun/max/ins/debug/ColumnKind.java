@@ -25,9 +25,6 @@ package com.sun.max.ins.debug;
 
 /**
  * ColumnKind general interface; must be implemented by Enums.
- *
- * @author Hannes Payer
- * @author Michael Van De Vanter
  */
 public interface ColumnKind {
 

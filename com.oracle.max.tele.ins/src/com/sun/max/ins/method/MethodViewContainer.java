@@ -33,10 +33,6 @@ import com.sun.max.tele.*;
 /**
  * A tabbed container for {@link MethodView}s.  This container is managed
  * as a singleton view.
- *
- * @author Bernd Mathiske
- * @author Mick Jordan
- * @author Michael Van De Vanter
  */
 public final class MethodViewContainer extends TabbedView<MethodViewContainer> {
 

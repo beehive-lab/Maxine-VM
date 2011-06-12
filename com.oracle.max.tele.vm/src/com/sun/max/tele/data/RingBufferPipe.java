@@ -29,8 +29,6 @@ import com.sun.max.unsafe.*;
 
 /**
  * A pipe supported by a ring buffer in memory.
- *
- * @author Bernd Mathiske
  */
 public class RingBufferPipe {
 

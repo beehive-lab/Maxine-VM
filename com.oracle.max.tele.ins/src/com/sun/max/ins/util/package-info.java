@@ -22,7 +22,5 @@
  */
 /**
  * General, non-gui utilities for the Inspector.
- *
- * @author Michael Van De Vanter
  */
 package com.sun.max.ins.util;

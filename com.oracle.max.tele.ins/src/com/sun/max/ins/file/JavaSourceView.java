@@ -37,8 +37,6 @@ import com.sun.max.vm.actor.holder.*;
 
 /**
  * A very simple view for Java source code.
- *
- * @author Michael Van De Vanter
  */
 public final class JavaSourceView extends FileView<JavaSourceView> {
 

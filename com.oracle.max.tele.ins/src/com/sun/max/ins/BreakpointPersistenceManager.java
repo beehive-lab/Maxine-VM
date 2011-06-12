@@ -39,8 +39,6 @@ import com.sun.max.vm.type.*;
 /**
  * Singleton manager for the Inspector's relationship with breakpoints in the VM.
  * Saves breakpoints to persistent storage and reloads at initialization.
- *
- * @author Michael Van De Vanter
  */
 public final class BreakpointPersistenceManager extends AbstractSaveSettingsListener implements MaxBreakpointListener  {
 

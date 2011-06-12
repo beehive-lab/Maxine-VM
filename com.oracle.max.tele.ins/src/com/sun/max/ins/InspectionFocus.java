@@ -40,8 +40,6 @@ import com.sun.max.unsafe.*;
  *  focus as a side effect of some other user action.
  *
  * Other kinds of items could also have focus in the user model.
- *
- * @author Michael Van De Vanter
  */
 public class InspectionFocus extends AbstractInspectionHolder {
 

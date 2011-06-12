@@ -31,8 +31,6 @@ import com.sun.max.tele.object.*;
 
 /**
  * An object view specialized for displaying a low-level character array in the VM.
- *
- * @author Michael Van De Vanter
  */
 public final class CharacterArrayView extends ObjectView<CharacterArrayView> {
 

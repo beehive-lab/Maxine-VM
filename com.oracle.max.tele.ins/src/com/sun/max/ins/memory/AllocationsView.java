@@ -39,8 +39,6 @@ import com.sun.max.tele.*;
 
 /**
  * A singleton view that displays a list of {@linkplain MaxMemoryRegion memory regions} that have been allocated in the VM.
- *
- * @author Michael Van De Vanter
  */
 public final class AllocationsView extends AbstractView<AllocationsView> implements TableColumnViewPreferenceListener {
 

@@ -29,8 +29,6 @@ import com.sun.max.ins.gui.*;
 
 /**
  * Persistent preferences for the table viewing breakpoints in the VM.
- *
- * @author Michael Van De Vanter
   */
 public final class BreakpointsViewPreferences extends TableColumnVisibilityPreferences<BreakpointsColumnKind> {
 

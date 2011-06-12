@@ -32,8 +32,6 @@ import com.sun.max.vm.value.*;
 
 /**
  * Instances of this class represent individual execution frame entries on a given ExecutionThread's execution stack.
- *
- * @author Athul Acharya
  */
 class ExecutionFrame {
 

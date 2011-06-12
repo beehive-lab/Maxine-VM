@@ -32,7 +32,5 @@
 /**
  * VM Inspector.
  * Support viewing of text files
- *
- * @author Michael Van De Vanter
  */
 package com.sun.max.ins.file;

@@ -27,8 +27,6 @@ import java.util.concurrent.atomic.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * @author Bernd Mathiske
- * @author Hannes Payer
  */
 public abstract class TeleReference extends Reference implements TeleObjectMemory {
 

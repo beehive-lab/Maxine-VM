@@ -26,8 +26,6 @@ import com.sun.max.unsafe.*;
 
 /**
  * Thrown when an error occurs accessing memory through a {@link DataIO} or {@link DataAccess}.
- *
- * @author Aritra Bandyopadhyay
  */
 public class DataIOError extends Error {
 

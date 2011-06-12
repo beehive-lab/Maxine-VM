@@ -31,8 +31,6 @@ import com.sun.max.tele.method.CodeLocation.*;
 
 /**
  * Access to breakpoint creation and management in the VM.
- *
- * @author Michael Van De Vanter
  */
 public class TeleBreakpointManager extends AbstractTeleVMHolder implements MaxBreakpointManager {
 

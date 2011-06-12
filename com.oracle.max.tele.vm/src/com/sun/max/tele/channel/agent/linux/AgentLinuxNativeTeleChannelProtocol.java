@@ -30,8 +30,6 @@ import com.sun.max.tele.debug.linux.*;
  *
  * Agent-side implementation of {@link TeleChannelProtocol} for Linux.
  *
- * @author Mick Jordan
- *
  */
 public class AgentLinuxNativeTeleChannelProtocol extends AgentProtocolAdaptor {
     public AgentLinuxNativeTeleChannelProtocol() {

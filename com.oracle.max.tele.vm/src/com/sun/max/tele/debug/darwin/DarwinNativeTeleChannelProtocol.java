@@ -28,8 +28,6 @@ import com.sun.max.tele.debug.unix.*;
 /**
  * An implementation of {@link TeleChannelProtocol} for Darwin that uses direct native method calls.
  *
- * @author Mick Jordan
- *
  */
 public class DarwinNativeTeleChannelProtocol extends UnixNativeTeleChannelProtocolAdaptor implements DarwinTeleChannelProtocol {
 

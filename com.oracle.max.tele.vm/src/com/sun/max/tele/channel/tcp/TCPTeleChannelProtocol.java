@@ -31,8 +31,6 @@ import com.sun.max.tele.channel.iostream.*;
  * An implementation of {@link TeleChannelDataIOProtocol} that communicates via TCP to an agent on the machine running
  * the target VM. It uses the reflective, remote, invocation mechanism of {@link TeleChannelDataIOProtocolImpl}
  *
- * @author Mick Jordan
- *
  */
 
 public class TCPTeleChannelProtocol extends TeleChannelDataIOProtocolAdaptor {

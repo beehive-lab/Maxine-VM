@@ -34,8 +34,6 @@ import com.sun.max.vm.type.*;
 
 /**
  * A factory class that creates pane components, each of which displays a specific part of a low-level heap object in the VM.
- *
- * @author Michael Van De Vanter
  */
 public final class ObjectScrollPane extends InspectorScrollPane {
 

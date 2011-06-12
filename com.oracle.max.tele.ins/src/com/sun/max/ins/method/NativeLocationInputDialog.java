@@ -39,9 +39,6 @@ import com.sun.max.unsafe.*;
  * <br>
  * The dialog works in two modes:  one that includes address, size in bytes, and description
  * fields and one that includes just address and description.
- *
- * @author Mick Jordan
- * @author Michael Van De Vanter
  */
 public abstract class NativeLocationInputDialog extends InspectorDialog {
 

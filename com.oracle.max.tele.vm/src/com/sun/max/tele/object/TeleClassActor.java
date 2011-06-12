@@ -37,8 +37,6 @@ import com.sun.max.vm.type.*;
 
 /**
  * Canonical surrogate for a  {@link ClassActor} in the VM.
- *
- * @author Michael Van De Vanter
  */
 public abstract class TeleClassActor extends TeleActor implements ReferenceTypeProvider {
 

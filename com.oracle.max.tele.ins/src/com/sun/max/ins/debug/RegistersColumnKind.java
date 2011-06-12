@@ -25,8 +25,6 @@ package com.sun.max.ins.debug;
 
 /**
  * Defines the columns that can be displayed describing register values in the VM.
- *
- * @author Michael Van De Vanter
  */
 public enum RegistersColumnKind implements ColumnKind {
     NAME("Name", "Register name", true, -1) {

@@ -28,9 +28,6 @@ import com.sun.max.ins.*;
 /**
  * Static methods for responding with unchecked exceptions
  * in situations that should not occur.
- *
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
  */
 public final class InspectorError extends Error {
     private static final String ERROR_DISPLAY_PROPERTY = "maxine.ins.errordisplay";
