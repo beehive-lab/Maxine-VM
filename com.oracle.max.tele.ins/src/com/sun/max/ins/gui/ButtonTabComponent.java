@@ -40,8 +40,6 @@ import com.sun.max.ins.*;
  * Unfortunately, using this with the VM View's TabbedInspector is a bit
  * tricky; causes there to be children of the TabbedView that aren't themselves
  * Views.  The VM view iterator filters them out.
- *
- * @author Michael Van De Vanter
  */
 class ButtonTabComponent extends InspectorPanel {
     private final TabbedView tabbedView;

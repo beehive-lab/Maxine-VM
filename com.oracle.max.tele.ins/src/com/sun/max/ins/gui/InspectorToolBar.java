@@ -30,8 +30,6 @@ import com.sun.max.tele.*;
 
 /**
  * A tool bar specialized for use in the VM Inspector.
- *
- * @author Michael Van De Vanter
  */
 public class InspectorToolBar extends JToolBar implements InspectionHolder, Prober {
 

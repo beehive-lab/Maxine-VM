@@ -30,8 +30,6 @@ import com.sun.max.vm.runtime.*;
 
 /**
  * Implementation of {@link DataAccess} by direct main memory access.
- *
- * @author Bernd Mathiske
  */
 public final class MemoryDataAccess implements DataAccess {
 

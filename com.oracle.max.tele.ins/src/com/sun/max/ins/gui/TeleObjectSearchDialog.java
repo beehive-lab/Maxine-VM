@@ -28,9 +28,6 @@ import com.sun.max.tele.object.*;
 /**
  * An abstract class for dialogs that enables the user to search for an object in the VM.
  * The dialog is composed of a list of names of objects and a text field that can be used to filter the list.
- *
- * @author Doug Simon
- * @author Michael Van De Vanter
  */
 public abstract class TeleObjectSearchDialog extends FilteredListDialog<TeleObject> {
 

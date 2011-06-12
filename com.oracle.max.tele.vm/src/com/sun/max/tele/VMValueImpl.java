@@ -31,8 +31,6 @@ import com.sun.max.jdwp.vm.proxy.*;
 /**
  * An implementation of a value as seen by the JDWP server.
  *
- * @author Thomas Wuerthinger
- *
  */
 final class VMValueImpl implements VMValue {
 

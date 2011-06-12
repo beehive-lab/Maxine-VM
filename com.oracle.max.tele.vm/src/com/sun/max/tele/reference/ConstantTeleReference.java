@@ -26,8 +26,6 @@ import com.sun.max.unsafe.*;
 
 /**
  * The raw bits do not change.
- *
- * @author Bernd Mathiske
  */
 public abstract class ConstantTeleReference extends RemoteTeleReference {
 

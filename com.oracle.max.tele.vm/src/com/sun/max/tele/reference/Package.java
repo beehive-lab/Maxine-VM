@@ -25,7 +25,6 @@ package com.sun.max.tele.reference;
 import com.sun.max.config.*;
 
 /**
- * @author Bernd Mathiske
  */
 public class Package extends BootImagePackage {
 

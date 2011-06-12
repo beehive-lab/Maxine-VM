@@ -33,8 +33,6 @@ import com.sun.max.ins.util.*;
  * A frame suitable for use by an {@linkplain AbstractView view}.
  * This is a minimal frame without window system decoration, suitable
  * for used in a tabbed container of views.
- *
- * @author Michael Van De Vanter
  */
 final class InspectorRootPane extends JRootPane implements InspectorFrame {
 

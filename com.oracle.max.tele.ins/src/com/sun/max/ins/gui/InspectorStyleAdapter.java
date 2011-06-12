@@ -32,8 +32,6 @@ import com.sun.max.ins.util.*;
 
 /**
  * An adaptor for specifying styles in the VM Inspector.
- *
- * @author Michael Van De Vanter
  */
 public abstract class InspectorStyleAdapter extends AbstractInspectionHolder implements InspectorStyle {
 

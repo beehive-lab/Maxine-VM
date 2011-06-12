@@ -28,8 +28,6 @@ import com.sun.max.ins.*;
 
 /**
  * Persistent preferences for viewing threads in the VM.
- *
- * @author Michael Van De Vanter
   */
 public final class ThreadsViewPreferences extends com.sun.max.ins.gui.TableColumnVisibilityPreferences<ThreadsColumnKind> {
 

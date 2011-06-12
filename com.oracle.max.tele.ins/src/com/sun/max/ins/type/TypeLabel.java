@@ -34,9 +34,6 @@ import com.sun.max.vm.type.*;
 
 /**
  * A label specialized for displaying information about a {@link TypeDescriptor}, even if not yet loaded in the VM.
- *
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
  */
 public class TypeLabel extends InspectorLabel {
 

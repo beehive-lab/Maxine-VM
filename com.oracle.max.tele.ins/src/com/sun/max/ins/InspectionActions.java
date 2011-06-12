@@ -111,9 +111,6 @@ import com.sun.max.vm.value.*;
  *
  * </ol>
  * <p>
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
- * @author Aritra Bandyopadhyay
  */
 public class InspectionActions extends AbstractInspectionHolder implements Prober{
 

@@ -29,7 +29,6 @@ import com.sun.max.program.*;
  * A wrapper for the standard trace package that keeps elapsed time between begin and end.
  *
  * @see Trace
- * @author Michael Van De Vanter
  */
 public final class TimedTrace {
 

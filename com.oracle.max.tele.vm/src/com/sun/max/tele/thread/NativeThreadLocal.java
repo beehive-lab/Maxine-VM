@@ -27,8 +27,6 @@ import com.sun.max.vm.thread.*;
 /**
  * Java access to the NativeThreadLocalsStruct in Native/share/threadLocals.h for use by Inspector.
  * Unlike {@link VmThreadLocal} we use a simple enum as we are only interested in the field offsets.
- *
- * @author Mick Jordan
  */
 public enum NativeThreadLocal {
     STACKBASE(0),

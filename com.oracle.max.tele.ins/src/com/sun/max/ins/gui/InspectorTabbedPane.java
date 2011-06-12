@@ -30,8 +30,6 @@ import com.sun.max.tele.*;
 
 /**
  * A tabbed pane specialized for use in the VM Inspector.
- *
- * @author Michael Van De Vanter
  */
 public class InspectorTabbedPane extends JTabbedPane implements InspectionHolder,  Prober {
 

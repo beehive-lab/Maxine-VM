@@ -34,8 +34,6 @@ import com.sun.max.vm.value.*;
 
 /**
  * Access to an individual thread local variable in the VM.
- *
- * @author Michael Van De Vanter
  */
 public class TeleThreadLocalVariable extends AbstractTeleVMHolder implements MaxThreadLocalVariable {
 

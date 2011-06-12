@@ -29,9 +29,6 @@ import com.sun.max.tele.object.*;
 /**
  * The state of a VM object (or more precisely of a region in VM memory in which
  * object state is or was recorded).
- *
- * @author Hannes Payer
- * @author Michael Van De Vanter
  */
 public interface TeleObjectMemory {
 

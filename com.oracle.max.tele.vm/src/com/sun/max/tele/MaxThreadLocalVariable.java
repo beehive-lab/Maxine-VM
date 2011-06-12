@@ -27,8 +27,6 @@ import com.sun.max.vm.value.*;
 
 /**
  * Descriptive information about a thread local variable defined for this platform.
- *
- * @author Michael Van De Vanter
  */
 public interface MaxThreadLocalVariable extends MaxEntity<MaxThreadLocalVariable> {
 

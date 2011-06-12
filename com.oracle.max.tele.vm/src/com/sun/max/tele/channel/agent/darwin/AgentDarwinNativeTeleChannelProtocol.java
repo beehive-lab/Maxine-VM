@@ -30,7 +30,6 @@ import com.sun.max.tele.debug.darwin.*;
 *
 * Agent-side implementation of {@link TeleChannelProtocol} for Darwin.
 *
-* @author Mick Jordan
 *
 */
 public class AgentDarwinNativeTeleChannelProtocol extends AgentProtocolAdaptor {

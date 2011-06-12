@@ -30,8 +30,6 @@ import com.sun.max.ins.gui.*;
 
 /**
  * Methods for creating views of a particular kind.
- *
- * @author Michael Van De Vanter
  */
 public interface InspectionViewFactory<Inspector_Kind extends AbstractView> {
 

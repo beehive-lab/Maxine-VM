@@ -22,7 +22,5 @@
  */
 /**
  * Tuple field access.
- * 
- * @author Bernd Mathiske
  */
 package com.sun.max.tele.field;

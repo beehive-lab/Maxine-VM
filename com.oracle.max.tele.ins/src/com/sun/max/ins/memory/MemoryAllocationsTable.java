@@ -43,8 +43,6 @@ import com.sun.max.vm.value.*;
 
 /**
  * A table specialized for displaying the memory allocations in the VM.
- *
- * @author Michael Van De Vanter
  */
 public final class MemoryAllocationsTable extends InspectorTable {
 
@@ -150,7 +148,6 @@ public final class MemoryAllocationsTable extends InspectorTable {
     /**
      * A table data model built around the list of currently allocated memory regions in the VM.
      *
-     * @author Michael Van De Vanter
      */
     private final class MemoryAllocationsTableModel extends InspectorMemoryTableModel {
 

@@ -34,8 +34,6 @@ import com.sun.max.vm.type.*;
  * although allocated as a single array of words (see {@link TeleHybridObject},
  * the memory is used in several sections with different properties, summarized
  * by the methods here.
- *
- * @author Michael Van De Vanter
  */
 public abstract class TeleHub extends TeleHybridObject {
 

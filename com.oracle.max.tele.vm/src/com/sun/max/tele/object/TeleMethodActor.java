@@ -37,8 +37,6 @@ import com.sun.max.vm.type.*;
 
 /**
  * Canonical surrogate for an object of type {@link MethodActor} in the VM.
- *
- * @author Michael Van De Vanter
  */
 public abstract class TeleMethodActor extends TeleMemberActor implements MethodProvider {
 

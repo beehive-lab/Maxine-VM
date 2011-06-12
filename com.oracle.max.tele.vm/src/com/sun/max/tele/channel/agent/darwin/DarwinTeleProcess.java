@@ -28,8 +28,6 @@ import com.sun.max.tele.channel.agent.*;
 /**
  * This is a stub implementation that exists only on the agent side of the split communication protocol.
  *
- * @author Mick Jordan
- *
  */
 public class DarwinTeleProcess  extends TeleProcess {
 

@@ -21,8 +21,6 @@
  * questions.
  */
 /**
- * @author Bernd Mathiske
- * @author Mick Jordan
  *
  * Solaris-specific implementation of process/thread machinery of the Inspector.
  *

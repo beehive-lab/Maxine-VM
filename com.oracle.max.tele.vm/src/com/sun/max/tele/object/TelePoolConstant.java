@@ -27,8 +27,6 @@ import com.sun.max.vm.reference.*;
 
 /**
  * Inspector's canonical surrogate for an object of type {@link AbstractPoolConstant} in the tele VM.
- *
- * @author Michael Van De Vanter
  */
 public class TelePoolConstant extends TeleTupleObject {
 

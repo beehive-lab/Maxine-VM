@@ -28,8 +28,6 @@ import com.sun.max.tele.channel.*;
  * Darwin-specific extension of the standard {@link TeleChannelProtocol}.
  * Any Darwin-specific methods would be added here.
  *
-  * @author Mick Jordan
- *
  */
 public interface DarwinTeleChannelProtocol extends TeleChannelProtocol {
 

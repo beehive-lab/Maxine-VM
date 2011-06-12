@@ -46,8 +46,6 @@ import com.sun.max.vm.value.*;
 
 /**
  * A table that displays the header in a heap object; for use in an instance of {@link ObjectView}.
- *
- * @author Michael Van De Vanter
  */
 public final class ObjectHeaderTable extends InspectorTable {
 

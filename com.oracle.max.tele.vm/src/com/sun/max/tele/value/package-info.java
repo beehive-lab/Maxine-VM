@@ -23,7 +23,5 @@
 
 /**
  * Remote rendering of Java values as in com.sun.max.vm.value.*.
- *
- * @author Michael Van De Vanter
  */
 package com.sun.max.tele.value;

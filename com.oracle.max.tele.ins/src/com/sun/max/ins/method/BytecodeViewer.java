@@ -46,8 +46,6 @@ import com.sun.max.vm.type.*;
 
 /**
  * Base class for Bytecodes viewers.
- *
- * @author Michael Van De Vanter
  */
 public abstract class BytecodeViewer extends CodeViewer {
 
@@ -273,7 +271,6 @@ public abstract class BytecodeViewer extends CodeViewer {
      * A representation of a bytecode instruction, suitable for displaying
      * different aspects of it.
      *
-     * @author Michael Van De Vanter
      */
     protected class BytecodeInstruction {
 

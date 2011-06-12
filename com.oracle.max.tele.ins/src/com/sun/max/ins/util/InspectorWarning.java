@@ -27,8 +27,6 @@ import com.sun.max.ins.*;
 /**
  * Static methods for announcing non-fatal situations
  * that should not occur.
- *
- * @author Michael Van De Vanter
  */
 public final class InspectorWarning {
 

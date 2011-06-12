@@ -27,8 +27,6 @@ import com.sun.max.tele.util.*;
 import com.sun.max.vm.type.*;
 
 /**
- * @author Bernd Mathiske
- * @author Doug Simon
  */
 public class TeleVirtualMethodAccess extends TeleMethodAccess {
 

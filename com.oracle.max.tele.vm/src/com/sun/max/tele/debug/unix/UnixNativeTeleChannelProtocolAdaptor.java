@@ -41,8 +41,6 @@ import com.sun.max.vm.hosted.*;
  *
  * Makes use of {@link TeleChannelNatives} to invoke the corresponding native code.
  *
- * @author Mick Jordan
- *
  */
 public class UnixNativeTeleChannelProtocolAdaptor implements TeleChannelProtocol {
 

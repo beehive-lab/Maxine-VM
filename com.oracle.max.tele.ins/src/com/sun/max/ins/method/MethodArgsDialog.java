@@ -32,9 +32,6 @@ import com.sun.max.vm.value.*;
 
 /**
  * Interactive support for remote method interpretation in the VM.
- *
- * @author Athul Acharya
- * @author Michael Van De Vanter
  */
 public final class MethodArgsDialog {
 

@@ -38,10 +38,6 @@ import com.sun.max.ins.util.*;
  * including a title along with affordances for resizing, minimizing,
  * and closing (which is interpreted as a request to remove or "dispose")
  * of an individual view.
- *
- * @author Bernd Mathiske
- * @author Doug Simon
- * @author Michael Van De Vanter
  */
 final class InspectorInternalFrame extends JInternalFrame implements InspectorFrame {
 

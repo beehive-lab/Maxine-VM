@@ -26,8 +26,6 @@ import com.sun.max.tele.object.*;
 
 /**
  * Binds a name to a {@link TeleObject} in the VM.
- *
- * @author Michael Van De Vanter
   */
 public class NamedTeleObject implements Comparable<NamedTeleObject> {
 

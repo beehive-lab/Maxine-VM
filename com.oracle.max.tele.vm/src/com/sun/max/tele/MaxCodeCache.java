@@ -32,8 +32,6 @@ import com.sun.max.unsafe.*;
  * Access to the cache of machine code in the VM.
  * The code cache consists of a part of the boot image
  * and one or more dynamically allocated regions
- *
- * @author Michael Van De Vanter
  */
 public interface MaxCodeCache extends MaxEntity<MaxCodeCache> {
 

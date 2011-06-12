@@ -28,8 +28,6 @@ import com.sun.max.ins.*;
 
 /**
  * A value label that does nothing, displays nothing.
- *
- * @author Michael Van De Vanter
  */
 public final class NullValueLabel extends ValueLabel {
 

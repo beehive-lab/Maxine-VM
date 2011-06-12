@@ -25,8 +25,6 @@ package com.sun.max.ins.method;
 
 /**
  * Constants denoting the kinds of code that can be viewed for a method.
- *
- * @author Michael Van De Vanter
  */
 public enum MethodCodeKind {
     MACHINE_CODE("Machine Code", true),

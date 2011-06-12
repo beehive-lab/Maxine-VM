@@ -32,8 +32,6 @@ import com.sun.max.tele.debug.dump.*;
 /**
  * Linux implementation of the channel protocol for accessing core dump files.
  *
- * @author Mick Jordan
- *
  */
 public class LinuxDumpTeleChannelProtocol extends ELFDumpTeleChannelProtocolAdaptor implements LinuxTeleChannelProtocol {
     private List<TaskData> taskDataList = new ArrayList<TaskData>();

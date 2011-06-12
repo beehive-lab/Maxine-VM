@@ -31,7 +31,6 @@ import com.sun.max.tele.debug.dump.*;
 
 
 /**
- * @author Mick Jordan
  *
  */
 public class DarwinDumpThreadAccess extends ThreadAccess {

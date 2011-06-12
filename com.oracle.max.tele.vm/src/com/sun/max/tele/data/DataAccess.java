@@ -29,9 +29,6 @@ import com.sun.max.unsafe.*;
 /**
  * Reading/writing bytes and other primitive data kinds from/to a source/destination that can be identified by an {@link Address}.
  * For each kind, methods support direct addressing, offset addressing, and indexed addressing for arrays.
- *
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
  */
 public interface DataAccess extends DataIO {
 

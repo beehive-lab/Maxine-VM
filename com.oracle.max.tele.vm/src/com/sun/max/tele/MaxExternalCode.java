@@ -26,8 +26,6 @@ package com.sun.max.tele;
 /**
  * Data describing a single block of external machine code representing a native routine
  * about which little is known.
- *
- * @author Michael Van De Vanter
  */
 public interface MaxExternalCode extends MaxMachineCode<MaxExternalCode> {
 

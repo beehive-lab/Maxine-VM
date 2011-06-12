@@ -35,7 +35,6 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
 
 /**
- * @author Michael Van De Vanter
  *
  */
 public final class AboutSessionDialog extends InspectorDialog {

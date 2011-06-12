@@ -25,8 +25,6 @@ package com.sun.max.tele.util;
 /**
  * Static methods for announcing non-fatal situations
  * that should not occur.
- *
- * @author Michael Van De Vanter
  */
 public final class TeleWarning {
 

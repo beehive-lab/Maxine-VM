@@ -28,9 +28,6 @@ import com.sun.max.tele.method.*;
 /**
  * Parent class for objects that refer to state in the VM,
  * with convenience methods.
- *
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
  */
 public abstract class AbstractTeleVMHolder implements TeleVMAccess {
 

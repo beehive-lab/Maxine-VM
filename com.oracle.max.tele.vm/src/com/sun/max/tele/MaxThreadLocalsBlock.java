@@ -27,8 +27,6 @@ import com.sun.max.vm.runtime.*;
 
 /**
  * Access to the "thread locals block" of storage for a thread in the VM.
- *
- * @author Michael Van De Vanter
  */
 public interface MaxThreadLocalsBlock extends MaxEntity<MaxThreadLocalsBlock> {
 

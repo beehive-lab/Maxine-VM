@@ -26,8 +26,6 @@ package com.sun.max.tele.debug;
  * The possible states of a {@link TeleProcess}.
  *
  * NOTE: This must be kept in sync with ProcessState in Native/tele/teleProcess.h.
- *
- * @author Michael Van De Vanter
  */
 public enum ProcessState {
 

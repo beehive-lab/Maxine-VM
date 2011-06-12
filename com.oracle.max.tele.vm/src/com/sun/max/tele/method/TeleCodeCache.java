@@ -47,7 +47,6 @@ import com.sun.max.vm.value.*;
  * the VM allocates only one dynamic code region.
  *
  * @see com.sun.max.vm.code.CodeManager
- * @author Michael Van De Vanter
  */
 public final class TeleCodeCache extends AbstractTeleVMHolder implements TeleVMCache, MaxCodeCache {
 

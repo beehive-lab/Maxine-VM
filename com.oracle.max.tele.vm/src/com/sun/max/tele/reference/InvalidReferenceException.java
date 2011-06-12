@@ -27,8 +27,6 @@ import com.sun.max.vm.reference.*;
 /**
  * Access to a heap object in the VM was attempted with a {@link Reference}
  * that did not point to a valid object.
- *
- * @author Michael Van De Vanter
  */
 public class InvalidReferenceException extends RuntimeException {
 

@@ -48,9 +48,6 @@ import com.sun.max.vm.value.*;
  * VM memory every time {@link #refresh(DataAccess)} is called.
  *
  * @see VmThreadLocal
- *
- * @author Doug Simon
- * @author Michael Van De Vanter
  */
 public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements TeleVMCache, MaxThreadLocalsArea {
 

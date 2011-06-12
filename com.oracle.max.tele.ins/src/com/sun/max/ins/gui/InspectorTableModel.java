@@ -30,8 +30,6 @@ import com.sun.max.tele.*;
 
 /**
  * A table model specialized for the Inspector's table-based views.
- *
- * @author Michael Van De Vanter
  */
 public abstract class InspectorTableModel extends AbstractTableModel implements InspectionHolder {
 

@@ -37,9 +37,6 @@ import com.sun.max.vm.actor.member.*;
  * A dialog to let the user select a method compilation. The dialog has two flavors; one that shows all the
  * method compilations currently in the VM and one that shows all the method compilations pertaining to the
  * declared methods of a specified class actor.
- *
- * @author Doug Simon
- * @author Michael Van De Vanter
  */
 public final class MethodCompilationSearchDialog extends FilteredListDialog<MaxCompilation> {
 

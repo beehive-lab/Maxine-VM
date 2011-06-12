@@ -27,8 +27,6 @@ import com.sun.max.unsafe.*;
 
 /**
  * Attempt was made to access VM memory with an address that could not be read.
- *
- * @author  Michael Van De Vanter
  */
 public final class MaxInvalidAddressException extends MaxException {
 

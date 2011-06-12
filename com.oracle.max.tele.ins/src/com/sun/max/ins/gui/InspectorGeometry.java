@@ -28,8 +28,6 @@ import com.sun.max.ins.view.InspectionViews.ViewKind;
 
 /**
  * Preferences and policies for layout out inspection windows.
- *
- * @author Michael Van De Vanter
  */
 public interface InspectorGeometry {
 

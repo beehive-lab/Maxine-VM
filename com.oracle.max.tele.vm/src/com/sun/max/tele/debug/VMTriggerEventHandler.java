@@ -27,8 +27,6 @@ import com.sun.max.program.*;
 /**
  * Handler for an event that triggers the VM to stop execution per
  * some request, for example a breakpoint or watchpoint.
- *
- * @author Michael Van De Vanter
  */
 public interface VMTriggerEventHandler {
 

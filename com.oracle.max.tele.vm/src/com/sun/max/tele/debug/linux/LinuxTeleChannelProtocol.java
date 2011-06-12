@@ -28,8 +28,6 @@ import com.sun.max.tele.channel.*;
  * Linux-specific extension of the standard {@link TeleChannelProtocol}.
  * Any Linux-specific methods would be added here.
  *
- * @author Mick Jordan
- *
  */
 public interface LinuxTeleChannelProtocol extends TeleChannelProtocol {
 }

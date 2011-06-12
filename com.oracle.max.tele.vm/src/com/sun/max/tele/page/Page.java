@@ -37,11 +37,6 @@ import com.sun.max.unsafe.*;
  * {@linkplain ByteBuffer#isDirect() direct} {@link ByteBuffer}s are used, unless the target VM is remote. The buffer for each page is
  * allocated from a global buffer until the global buffer is exhausted. If the target VM is remote or the
  * global buffer has been exhausted, then the buffer for each page is a heap allocated byte array.
- *
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
- * @author Doug Simon
- * @author Mick Jordan
  */
 public class Page {
 

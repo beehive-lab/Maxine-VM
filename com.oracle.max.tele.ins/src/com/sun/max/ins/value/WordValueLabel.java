@@ -42,9 +42,6 @@ import com.sun.max.vm.value.*;
 /**
  * A textual label for a word of machine data from the VM,
  * with multiple display modes and user interaction affordances.
- *
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
  */
 public class WordValueLabel extends ValueLabel {
 
@@ -79,11 +76,9 @@ public class WordValueLabel extends ValueLabel {
      * label and its value.
      */
     /**
-     * @author Michael Van De Vanter
      *
      */
     /**
-     * @author Michael Van De Vanter
      *
      */
     private enum DisplayMode {

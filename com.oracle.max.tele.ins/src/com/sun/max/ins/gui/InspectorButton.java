@@ -28,8 +28,6 @@ import com.sun.max.ins.*;
 
 /**
  * A button specialized for use in the VM Inspector.
- *
- * @author Michael Van De Vanter
  */
 public class InspectorButton extends JButton {
 

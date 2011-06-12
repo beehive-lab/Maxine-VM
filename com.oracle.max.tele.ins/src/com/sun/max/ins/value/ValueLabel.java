@@ -29,8 +29,6 @@ import com.sun.max.tele.debug.*;
 import com.sun.max.vm.value.*;
 
 /**
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
  *
  * A textual display label associated with a {@link Value}.
  * When it is to be read from the VM, it is

@@ -32,8 +32,6 @@ import com.sun.max.tele.util.*;
 /**
  * Base class for agent-side implementations of {@link TeleChannelProtocol}.
  *
- * @author Mick Jordan
- *
  */
 public abstract class AgentProtocolAdaptor extends RemoteInvocationProtocolAdaptor implements TeleChannelDataIOProtocol {
     private TeleChannelProtocol impl;

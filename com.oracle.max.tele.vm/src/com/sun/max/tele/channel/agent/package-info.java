@@ -21,7 +21,6 @@
  * questions.
  */
 /**
- * @author Mick Jordan
  *
  * It is possible to run the Inspector on a separate machine from the target Maxine VM using
  * the code in this package. A small agent implemented by {@link com.sun.max.tele.channel.agent.InspectorAgent}

@@ -33,8 +33,6 @@ import com.sun.max.unsafe.*;
 
 /**
  * Simple conditional breakpoints.
- *
- * @author Mick Jordan
  */
 public class BreakpointCondition extends AbstractTeleVMHolder implements VMTriggerEventHandler {
 

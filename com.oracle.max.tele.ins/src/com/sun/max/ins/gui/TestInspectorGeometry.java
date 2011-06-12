@@ -28,8 +28,6 @@ import com.sun.max.ins.view.InspectionViews.*;
 
 /**
  * A set of layout parameters for testing GUI code.
- *
- * @author Michael Van De Vanter
  */
 public class TestInspectorGeometry implements InspectorGeometry {
 

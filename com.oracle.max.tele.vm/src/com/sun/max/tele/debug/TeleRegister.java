@@ -31,8 +31,6 @@ import com.sun.max.unsafe.*;
 /**
  * Access to the description and current state (within a particular thread) of a register
  * in the VM.
- *
- * @author Michael Van De Vanter
  */
 public final class TeleRegister implements MaxRegister {
 

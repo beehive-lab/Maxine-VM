@@ -33,8 +33,6 @@ package com.sun.max.tele.channel.natives;
  * The exact interpretation of {@code processHandle} and {@code tid} in the method signatures is operating system independent,
  * but generically a  {@code processHandle} represents the process hosting the target VM and the {@code tid} denotes a thread.
  * For generality both of these are declared as {@code long}.
- *
- * @author Mick Jordan
  */
 public class TeleChannelNatives {
     // from TeleProcess

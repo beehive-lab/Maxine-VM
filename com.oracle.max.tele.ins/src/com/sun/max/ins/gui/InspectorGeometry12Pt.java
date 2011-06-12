@@ -29,8 +29,6 @@ import com.sun.max.ins.view.InspectionViews.*;
 
 /**
  * Standard choices and policies for inspection window layout, tiled for use with 12 pt. font.
- *
- * @author Michael Van De Vanter
  */
 public final class InspectorGeometry12Pt implements InspectorGeometry {
 

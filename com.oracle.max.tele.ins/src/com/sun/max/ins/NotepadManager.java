@@ -32,8 +32,6 @@ import com.sun.max.program.option.*;
  * where the user can write arbitrary textual data that persists across session.
  * <br>
  * There is only one notepad at present, but this could be generalized to more.
- *
- * @author Michael Van De Vanter
  */
 public final class NotepadManager extends AbstractInspectionHolder {
 
@@ -49,7 +47,6 @@ public final class NotepadManager extends AbstractInspectionHolder {
      * A simple notepad implementation that holds text and can
      * save its contents with other persistent inspection settings.
      *
-     * @author Michael Van De Vanter
      */
     private final class NotepadImpl extends AbstractSaveSettingsListener implements InspectorNotepad {
         private final InspectionSettings inspectionSettings;

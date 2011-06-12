@@ -34,8 +34,6 @@ import com.sun.max.program.*;
 /**
  * A singleton view that displays the different aspects of current user focus.
  * Intended for Inspector testing.
- *
- * @author Michael Van De Vanter
  */
 public final class UserFocusView extends AbstractView<UserFocusView> {
 

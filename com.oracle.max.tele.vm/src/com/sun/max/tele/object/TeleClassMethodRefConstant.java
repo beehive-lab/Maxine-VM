@@ -28,8 +28,6 @@ import com.sun.max.vm.reference.*;
 
 /**
  * Inspector's canonical surrogate for an object of type {@link ClassMethodRefConstant} in the VM.
- *
- * @author Michael Van De Vanter
  */
 public abstract class TeleClassMethodRefConstant extends TelePoolConstant {
 
@@ -45,7 +43,6 @@ public abstract class TeleClassMethodRefConstant extends TelePoolConstant {
     /**
      * Inspector's canonical surrogate for an object of type {@link ClassMethodRefConstant.Resolved} in the VM.
      *
-     * @author Michael Van De Vanter
      */
     public static final class Resolved extends TeleClassMethodRefConstant {
 
@@ -86,7 +83,6 @@ public abstract class TeleClassMethodRefConstant extends TelePoolConstant {
     /**
      * Inspector's canonical surrogate for an object of type {@link ClassMethodRefConstant.Unresolved} in the VM.
      *
-     * @author Michael Van De Vanter
      */
     public static final class Unresolved extends TeleClassMethodRefConstant {
 
@@ -109,7 +105,6 @@ public abstract class TeleClassMethodRefConstant extends TelePoolConstant {
     /**
      * Inspector's canonical surrogate for an object of type {@link ClassMethodRefConstant.UnresolvedIndices} in the VM.
      *
-     * @author Michael Van De Vanter
      */
     public static final class UnresolvedIndices extends TeleClassMethodRefConstant {
 

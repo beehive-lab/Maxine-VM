@@ -44,8 +44,6 @@ import com.sun.max.vm.hosted.*;
 /**
  * Abstracts the common code for {@link TeleProcess} for the various flavors of Unix supported by Maxine.
  *
- * @author Mick Jordan
- *
  */
 public abstract class UnixTeleProcessAdaptor extends TeleProcess {
 

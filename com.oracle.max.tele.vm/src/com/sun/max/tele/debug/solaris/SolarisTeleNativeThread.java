@@ -27,9 +27,6 @@ import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
 
 /**
- * @author Bernd Mathiske
- * @author Aritra Bandyopadhyay
- * @author Doug Simon
  */
 public class SolarisTeleNativeThread extends TeleNativeThread {
 

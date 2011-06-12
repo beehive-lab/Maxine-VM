@@ -40,9 +40,6 @@ import com.sun.max.unsafe.*;
 
 /**
  * A view that displays the content of a low level heap object in the VM.
- *
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
  */
 public abstract class ObjectView<View_Type extends ObjectView> extends AbstractView<View_Type> {
 

@@ -30,8 +30,6 @@ import com.sun.max.vm.value.*;
 /**
  * Wrapper for the description of a machine register in the VM that
  * adds a history of the values.
- *
- * @author Michael Van De Vanter
  */
 public final class RegisterHistory {
 

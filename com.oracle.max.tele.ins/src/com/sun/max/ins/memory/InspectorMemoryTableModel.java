@@ -34,8 +34,6 @@ import com.sun.max.vm.type.*;
 /**
  * A model for data tables that represent regions of memory in the VM, one region per row. In some
  * applications, the contents of each memory region can be expected to contain typed information.
- *
- * @author Michael Van De Vanter
  */
 public abstract class InspectorMemoryTableModel extends InspectorTableModel {
 

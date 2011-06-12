@@ -41,8 +41,6 @@ import com.sun.max.vm.value.*;
 /**
  * Canonical surrogate for an object implemented as a tuple in the VM,
  * one of the three kinds of low level Maxine heap implementation objects.
- *
- * @author Michael Van De Vanter
   */
 public class TeleTupleObject extends TeleObject {
 

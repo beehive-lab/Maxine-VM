@@ -28,8 +28,6 @@ import com.sun.max.ins.*;
 
 /**
  * Persistent preferences for viewing memory allocations in the VM.
- *
- * @author Michael Van De Vanter
   */
 public final class MemoryAllocationsViewPreferences extends com.sun.max.ins.gui.TableColumnVisibilityPreferences<MemoryAllocationsColumnKind> {
 

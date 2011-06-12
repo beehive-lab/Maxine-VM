@@ -24,8 +24,6 @@ package com.sun.max.tele.debug;
 
 /**
  * Exception thrown when an underlying OS process fails to satisfy an execution request.
- *
- * @author Aritra Bandyopadhyay
  */
 public class OSExecutionRequestException extends ProcessException {
 

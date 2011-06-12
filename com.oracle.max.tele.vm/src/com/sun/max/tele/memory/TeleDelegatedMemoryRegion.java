@@ -31,8 +31,6 @@ import com.sun.max.unsafe.*;
 /**
  * Representation of a span of memory in the VM where the description of the memory
  * is held by a object in the VM and might change.
- *
- * @author Michael Van De Vanter
  */
 public abstract class TeleDelegatedMemoryRegion extends TeleMemoryRegion {
 

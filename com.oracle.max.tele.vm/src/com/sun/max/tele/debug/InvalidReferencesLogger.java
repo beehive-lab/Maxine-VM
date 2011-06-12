@@ -31,8 +31,6 @@ import com.sun.max.vm.reference.*;
  * In progress support for tolerating invalid references and reporting them to the end-user.
  * Keeps track of invalid references detected during execution, the epoch when it was first detected it, and the
  * type expected, if any.
- *
- * @author Laurent Daynes
  */
 public class InvalidReferencesLogger {
 

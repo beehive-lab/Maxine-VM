@@ -28,8 +28,6 @@ import com.sun.max.vm.type.*;
 
 /**
  * Canonical surrogate for a {@link Descriptor} in the VM.
- *
- * @author Michael Van De Vanter
  */
 public abstract class TeleDescriptor extends TeleTupleObject {
 

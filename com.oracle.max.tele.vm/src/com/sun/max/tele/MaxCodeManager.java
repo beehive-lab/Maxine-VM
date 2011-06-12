@@ -29,8 +29,6 @@ import com.sun.max.vm.actor.member.*;
 
 /**
  * Client access to code in the VM.
- *
- * @author Michael Van De Vanter
  */
 
 public interface MaxCodeManager {

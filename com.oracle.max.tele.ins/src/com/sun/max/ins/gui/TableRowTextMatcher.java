@@ -34,8 +34,6 @@ import com.sun.max.ins.*;
 /**
  * A row-based engine for locating rows in a {@link JTable} that match a regexp.
  * Requires that cell renderers in the table implement {@link TextSearchable}.
- *
- * @author Michael Van De Vanter
  * @see {@link java.util.regexp.Pattern}
  */
 public class TableRowTextMatcher extends AbstractInspectionHolder implements RowTextMatcher {

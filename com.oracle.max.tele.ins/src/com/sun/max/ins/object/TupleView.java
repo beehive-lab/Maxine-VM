@@ -30,8 +30,6 @@ import com.sun.max.vm.layout.*;
 
 /**
  * An object view specialized for displaying a low-level heap object in the VM constructed using {@link TupleLayout}.
- *
- * @author Michael Van De Vanter
  */
 public class TupleView extends ObjectView<TupleView> {
 

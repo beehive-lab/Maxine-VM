@@ -37,8 +37,6 @@ import com.sun.max.unsafe.*;
  * A collection of classes for transferring Inspector objects during drag and drop.
  * <br>
  * This implementation presumes that each subclass supports exactly one {@link DataFlavor}.
- *
- * @author Michael Van De Vanter
  * @param <Object_Type> The type of object that can be transferred
  */
 public abstract class InspectorTransferable<Object_Type> extends AbstractInspectionHolder implements Transferable {
@@ -100,7 +98,6 @@ public abstract class InspectorTransferable<Object_Type> extends AbstractInspect
     /**
      * Support for passing a VM memory address through drag and drop.
      *
-     * @author Michael Van De Vanter
      */
     public static final class AddressTransferable extends InspectorTransferable<Address> {
 
@@ -112,7 +109,6 @@ public abstract class InspectorTransferable<Object_Type> extends AbstractInspect
     /**
      * Support for passing a VM memory address through drag and drop.
      *
-     * @author Michael Van De Vanter
      */
     public static final class MemoryRegionTransferable extends InspectorTransferable<MaxMemoryRegion> {
 

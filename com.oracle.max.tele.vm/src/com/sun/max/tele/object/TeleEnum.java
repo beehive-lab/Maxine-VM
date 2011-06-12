@@ -29,8 +29,6 @@ import com.sun.max.vm.reference.*;
 
 /**
  * Canonical surrogate for an object of type {@link Enum} in the tele VM.
- *
- * @author Michael Van De Vanter
  */
 public final class TeleEnum extends TeleTupleObject {
 

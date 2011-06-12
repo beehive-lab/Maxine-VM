@@ -28,7 +28,6 @@ import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 
 /**
- * @author Bernd Mathiske
  */
 public class LinuxTeleNativeThread extends TeleNativeThread {
 

@@ -35,8 +35,6 @@ import com.sun.max.program.option.*;
 
 /**
  * Persistent preferences for viewing disassembled bytecodes in the VM.
- *
- * @author Michael Van De Vanter
   */
 public class BytecodeViewPreferences  extends TableColumnVisibilityPreferences<BytecodeColumnKind> {
 

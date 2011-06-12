@@ -28,8 +28,6 @@ import com.sun.max.vm.actor.member.*;
 
 /**
  * A label specialized for displaying information about a {@FieldActor}.
- *
- * @author Michael Van De Vanter
  */
 
 public class FieldActorNameLabel extends InspectorLabel {

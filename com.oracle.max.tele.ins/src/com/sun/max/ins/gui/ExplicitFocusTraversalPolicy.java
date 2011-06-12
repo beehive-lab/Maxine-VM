@@ -30,8 +30,6 @@ import com.sun.max.*;
 
 /**
  * A focus traversal policy that is given a sequence of components.
- *
- * @author Doug Simon
  */
 public class ExplicitFocusTraversalPolicy extends FocusTraversalPolicy {
 

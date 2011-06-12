@@ -25,9 +25,6 @@ package com.sun.max.tele.debug;
 /**
  * This exception is thrown when a {@link TeleProcess} is unable to satisfy some
  * request, either in the VM or native code.
- *
- * @author Aritra Bandyopadhyay
- * @author Michael Van De Vanter
  */
 public class ProcessException extends Exception {
 

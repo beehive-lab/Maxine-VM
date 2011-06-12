@@ -26,8 +26,6 @@ package com.sun.max.tele;
 
 /**
  * Descriptors for various platforms on which the VM may be running.
- *
- * @author Michael Van De Vanter
  */
 public interface MaxPlatform {
 

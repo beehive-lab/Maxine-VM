@@ -33,9 +33,6 @@ import com.sun.max.ins.InspectionActions.*;
 
 /**
  * Support for binding {@link KeyStroke}s to {@link InspectorActions}s.
- *
- * @author Doug Simon
- * @author Michael Van De Vanter
  */
 public class InspectorKeyBindings {
 

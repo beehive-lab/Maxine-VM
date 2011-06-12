@@ -32,8 +32,6 @@ import com.sun.max.tele.*;
 
 /**
  * Display panel specialized for displaying VM stack frames for VM compiled methods.
- *
- * @author Michael Van De Vanter
  */
 public final class DefaultCompiledStackFramePanel extends CompiledStackFramePanel {
 

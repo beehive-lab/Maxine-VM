@@ -36,8 +36,6 @@ import com.sun.max.vm.object.*;
 /**
  * An object view specialized for displaying a low-level {@link Hybrid} object in the VM,
  * constructed using {@link HybridLayout}, representing a {@link Hub}.
- *
- * @author Michael Van De Vanter
  */
 public final class HubView extends ObjectView<HubView> {
 

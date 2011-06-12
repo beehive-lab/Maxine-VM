@@ -48,12 +48,6 @@ import com.sun.max.vm.thread.*;
  * A model of the remote process in which the VM is running,
  * which includes access to the memory state and debugging
  * actions that control execution.
- *
- * @author Bernd Mathiske
- * @author Aritra Bandyopadhyay
- * @author Doug Simon
- * @author Michael Van De Vanter
- * @author Hannes Payer
  */
 public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVMCache, TeleIO {
 

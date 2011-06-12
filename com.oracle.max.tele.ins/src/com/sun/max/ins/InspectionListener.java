@@ -25,9 +25,6 @@ package com.sun.max.ins;
 
 /**
  * Notification service for changes to state in the VM and inspection session.
- *
- *
- * @author Michael Van De Vanter
  */
 public interface InspectionListener {
 

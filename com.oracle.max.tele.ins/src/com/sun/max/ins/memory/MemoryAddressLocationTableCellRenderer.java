@@ -34,8 +34,6 @@ import com.sun.max.ins.gui.*;
 /**
  * A table cell renderer for tables with rows representing memory locations in VM memory: displays in the cell
  * a memory address with a tooltip specified as a byte offset from some origin.
- *
- * @author Michael Van De Vanter
  */
 public final class MemoryAddressLocationTableCellRenderer extends InspectorTableCellRenderer {
 

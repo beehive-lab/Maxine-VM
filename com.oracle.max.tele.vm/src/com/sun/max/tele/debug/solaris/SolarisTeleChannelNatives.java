@@ -26,7 +26,6 @@ import com.sun.max.tele.channel.natives.*;
 
 
 /**
- * @author Mick Jordan
  *
  */
 public class SolarisTeleChannelNatives extends TeleChannelNatives {

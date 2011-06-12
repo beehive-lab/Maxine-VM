@@ -27,9 +27,6 @@ import com.sun.max.tele.util.*;
 
 /**
  * Access to a memory watchpoint in the Maxine VM.
- *
- * @author Michael Van De Vanter
- * @author Hannes Payer
  */
 public interface MaxWatchpoint {
 

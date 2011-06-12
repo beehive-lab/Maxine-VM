@@ -34,8 +34,6 @@ import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
  */
 public final class DirectInspectorReferenceScheme extends TeleReferenceScheme {
 
