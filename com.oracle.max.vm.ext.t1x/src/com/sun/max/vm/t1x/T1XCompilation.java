@@ -867,6 +867,48 @@ public class T1XCompilation {
         return index;
     }
 
+    public void assignTemplateParameters(T1XTemplate template, Object ... args) {
+        SignatureDescriptor signatureDescriptor = template.method.descriptor();
+        for (int i = 0; i < signatureDescriptor.numberOfParameters(); i++) {
+            Kind kind = signatureDescriptor.parameterDescriptorAt(i).toKind();
+            switch (kind.asEnum) {
+                case INT:
+                    assignIntTemplateArgument(i, (Integer) args[i]);
+                    break;
+                case REFERENCE:
+                    assignReferenceLiteralTemplateArgument(i, args[i]);
+                    break;
+
+                default:
+                    assert false : "assignTemplateParameters for unexpected kind: " + kind;
+            }
+        }
+    }
+
+    /*
+     * The following methods mainly exist to be overridden by the VMA extension.
+     * They permit flexibility in the form of the templates for the INVOKE bytecodes
+     * without hard-wiring in additional forms. In particular, they allow access to the
+     * associated {@link MethodActor} in all situations.
+     *
+     * The default implementations do not always require the actor.
+     */
+
+    protected void assignInvokeVirtualTemplateParameters(T1XTemplate template, VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
+        assignTemplateParameters(template, virtualMethodActor.vTableIndex(), receiverStackIndex);
+    }
+
+    protected void assignInvokeInterfaceTemplateParameters(T1XTemplate template, InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
+        assignTemplateParameters(template, interfaceMethodActor, receiverStackIndex);
+    }
+
+    protected void assignInvokeSpecialTemplateParameters(T1XTemplate template, VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
+        assignTemplateParameters(template, receiverStackIndex);
+    }
+
+    protected void assignInvokeStaticTemplateParameters(T1XTemplate template, StaticMethodActor staticMethodActor) {
+    }
+
     protected void emitInvokevirtual(int index) {
         ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
         SignatureDescriptor signature = classMethodRef.signature(cp);
@@ -881,8 +923,7 @@ public class T1XCompilation {
                         tag = INVOKESPECIALS.get(kind.asEnum).resolved;
                         T1XTemplate template = getTemplate(tag);
                         beginBytecode(tag.opcode);
-                        assignReferenceLiteralTemplateArgument(0, virtualMethodActor);
-                        assignIntTemplateArgument(1, receiverStackIndex(signature));
+                        assignInvokeSpecialTemplateParameters(template, virtualMethodActor, receiverStackIndex(signature));
                         recordDirectBytecodeCall(template, virtualMethodActor);
                         return;
 //                    } else if (shouldProfileMethodCall(virtualMethodActor)) {
@@ -899,8 +940,7 @@ public class T1XCompilation {
                         // emit an unprofiled virtual dispatch
                         T1XTemplate template = getTemplate(tag.resolved);
                         beginBytecode(tag.opcode);
-                        assignReferenceLiteralTemplateArgument(0, virtualMethodActor);
-                        assignIntTemplateArgument(1, receiverStackIndex(signature));
+                        assignInvokeVirtualTemplateParameters(template, virtualMethodActor, receiverStackIndex(signature));
                         emitAndRecordStops(template);
                     }
                     return;
@@ -938,8 +978,7 @@ public class T1XCompilation {
 //                    } else {
                     T1XTemplate template = getTemplate(tag.resolved);
                     beginBytecode(tag.opcode);
-                    assignReferenceLiteralTemplateArgument(0, interfaceMethodActor);
-                    assignIntTemplateArgument(1, receiverStackIndex(signature));
+                    assignInvokeInterfaceTemplateParameters(template, interfaceMethodActor, receiverStackIndex(signature));
                     emitAndRecordStops(template);
 //                    }
                     return;
@@ -967,8 +1006,7 @@ public class T1XCompilation {
                 VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(cp, index);
                 T1XTemplate template = getTemplate(tag.resolved);
                 beginBytecode(tag.opcode);
-                assignReferenceLiteralTemplateArgument(0, virtualMethodActor);
-                assignIntTemplateArgument(1, receiverStackIndex(signature));
+                assignInvokeSpecialTemplateParameters(template, virtualMethodActor, receiverStackIndex(signature));
                 recordDirectBytecodeCall(template, virtualMethodActor);
                 return;
             }
@@ -992,7 +1030,7 @@ public class T1XCompilation {
                 if (staticMethodActor.holder().isInitialized()) {
                     T1XTemplate template = getTemplate(tag.initialized);
                     beginBytecode(tag.opcode);
-                    assignReferenceLiteralTemplateArgument(0, staticMethodActor);
+                    assignTemplateParameters(template, staticMethodActor);
                     recordDirectBytecodeCall(template, staticMethodActor);
                     return;
                 }
