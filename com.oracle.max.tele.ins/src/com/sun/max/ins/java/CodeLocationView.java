@@ -26,6 +26,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 import javax.swing.*;
+import javax.swing.border.*;
 
 import com.sun.cri.ci.*;
 import com.sun.max.ins.*;
@@ -78,6 +79,7 @@ public final class CodeLocationView extends AbstractView<CodeLocationView> {
     private MaxCompilation compiledCode = null;
     private CiFrame frames = null;
 
+    private final MatteBorder frameBorder;
 
     private final Rectangle originalFrameGeometry;
     private final InspectorPanel nullPanel;
@@ -88,12 +90,16 @@ public final class CodeLocationView extends AbstractView<CodeLocationView> {
         super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
         Trace.begin(1,  tracePrefix() + " initializing");
 
+        frameBorder = BorderFactory.createMatteBorder(1, 0, 1, 0, style().defaultBorderColor());
+
+
         nullPanel = new InspectorPanel(inspection, new BorderLayout());
         nullPanel.add(new PlainLabel(inspection, inspection.nameDisplay().unavailableDataShortText()), BorderLayout.PAGE_START);
 
         simplePanel = new InspectorPanel(inspection, new BorderLayout());
         simplePanelLabel = new PlainLabel(inspection, "");
         simplePanel.add(simplePanelLabel, BorderLayout.PAGE_START);
+        simplePanel.setBorder(frameBorder);
 
         updateCodeLocation(focus().codeLocation());
 
@@ -135,12 +141,16 @@ public final class CodeLocationView extends AbstractView<CodeLocationView> {
             simplePanelLabel.setText(inspection().nameDisplay().shortName(codeLocation));
             setContentPane(simplePanel);
         } else {
-            final JPanel panel = new InspectorPanel(inspection(), new GridLayout(0, 1));
+            //final JPanel panel = new InspectorPanel(inspection(), new GridLayout(0, 1));
+            final JPanel panel = new InspectorPanel(inspection());
+            panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
             CiFrame frame = frames;
             do {
                 panel.add(createFramePanel(frame), 0);
                 frame = frame.caller();
             } while (frame != null);
+            simplePanelLabel.setText(inspection().nameDisplay().shortName(codeLocation));
+            panel.add(simplePanel, 0);
             setContentPane(new InspectorScrollPane(inspection(), panel));
         }
         setTitle();
@@ -174,7 +184,8 @@ public final class CodeLocationView extends AbstractView<CodeLocationView> {
 
         final CiCodePos codePos = frame;
         final PlainLabel bytecodeLocationLabel = new PlainLabel(inspection(), shortString(codePos));
-        bytecodeLocationLabel.setToolTipText(codePos.toString());
+        final String methodToolTipText = CiUtil.appendLocation(new StringBuilder(10), codePos.method, codePos.bci).toString();
+        bytecodeLocationLabel.setToolTipText(methodToolTipText);
         headerPanel.add(bytecodeLocationLabel);
 
         ClassMethodActor method = (ClassMethodActor) codePos.method;
@@ -186,7 +197,7 @@ public final class CodeLocationView extends AbstractView<CodeLocationView> {
             }
             final String labelText = lineNumber >= 0 ? String.valueOf(lineNumber) : inspection().nameDisplay().unavailableDataShortText();
             final PlainLabel sourceLocationLabel = new PlainLabel(inspection(), " line=" + labelText);
-            sourceLocationLabel.setToolTipText(sourceFileName);
+            sourceLocationLabel.setToolTipText(methodToolTipText);
             sourceLocationLabel.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
@@ -217,7 +228,7 @@ public final class CodeLocationView extends AbstractView<CodeLocationView> {
             }
             panel.add(slotsPanel, BorderLayout.LINE_START);
         }
-        panel.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, style().defaultBorderColor()));
+        panel.setBorder(frameBorder);
         return panel;
     }
 
