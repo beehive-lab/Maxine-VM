@@ -62,18 +62,21 @@ import com.sun.max.vm.thread.*;
  * itables etc) and revert to trampoline references. Concurrent patching is ok here as it is
  * an atomic updated to a constant value.
  * </li>
- * <li>Initiate {@link Mode#Safepoint} VM operation.</li>
- * <li>Each thread that traps at a safepoint instruction does return address patching (described below)
- * for its own stack {@linkplain VmOperation#doAtSafepointBeforeBlocking before} suspending.</li>
+ * <li>{@link #submit() Submit} deoptimization VM operation.</li>
  * <li>
  * Scan each thread looking for frames executing an invalidated method:
  * <ul>
  *    <li>For each non-top frame, patch the callee's return address to the relevant {@linkplain Stubs#deoptStub(CiKind) stub}.</li>
  *    <li>For each top-frame get baseline version (compiling first if necessary) and deoptimize immediately.</li>
  * </ul>
+ * One optimization applied is for each thread to perform the above two operations on itself just
+ * {@linkplain VmOperation#doAtSafepointBeforeBlocking before} suspending. This is
+ * analogous to each thread preparing its own reference map when being stopped
+ * for a garbage collection. In the case of a thread deoptimizing its top-frame,
+ * it continues execution until the next safepoint.
  * </li>
  * <li>
- * Find all references to invalidated target method (i.e. at call sites) and revert to trampolines
+ * Find all references to invalidated target methods (i.e. at call sites) and revert them to trampolines
  * (this code patching is why we must be at a safepoint). That is, we are not guaranteed to be
  * patching call sites that have their offset aligned appropriately for an atomic update.
  * </li>
