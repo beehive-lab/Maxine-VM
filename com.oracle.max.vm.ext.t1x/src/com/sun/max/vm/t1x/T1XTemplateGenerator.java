@@ -93,8 +93,6 @@ public class T1XTemplateGenerator {
         }
     }
 
-    private static AdviceHook adviceHook;
-
     private static final String[] NULL_ARGS = new String[] {};
 
     /**
@@ -138,26 +136,6 @@ public class T1XTemplateGenerator {
             uoTypes.put(type, type.equals("Reference") ? "Object" : uTypes.get(type));
             auTypes.put(type, type.toUpperCase());
         }
-    }
-
-    /**
-     * The stream to use for the generated output.
-     */
-    public static PrintStream out = System.out;
-
-    private static String generatingClassName = T1XTemplateGenerator.class.getSimpleName();
-
-    /**
-     * Set the advice hook explicitly, which may be necessary when generating individual templates
-     * with advice.
-     * @param adviceHook
-     */
-    public static void setAdviceHook(AdviceHook hook) {
-        adviceHook = hook;
-    }
-
-    public static void setGeneratingClass(Class<?> klass) {
-        generatingClassName = klass.getSimpleName();
     }
 
     /**
@@ -355,22 +333,46 @@ public class T1XTemplateGenerator {
     }
 
     /**
+     * The stream to use for the generated output.
+     */
+    public static PrintStream out = System.out;
+
+    // end of static declarations
+
+    private AdviceHook adviceHook;
+
+    private String generatingClassName;
+
+    public T1XTemplateGenerator(Class<?> generatingClass) {
+        generatingClassName = generatingClass.getSimpleName();
+    }
+
+    /**
+     * Set the advice hook explicitly, which may be necessary when generating individual templates
+     * with advice.
+     * @param adviceHook
+     */
+    public void setAdviceHook(AdviceHook hook) {
+        adviceHook = hook;
+    }
+
+    /**
      * Generate a // GENERATED comment with T1XTemplateGenerator to rerun.
      */
-    public static void generateAutoComment() {
+    public void generateAutoComment() {
         if (adviceHook != null) {
             adviceHook.startMethodGeneration();
         }
         out.printf("    // GENERATED -- EDIT AND RUN %s.main() TO MODIFY%n", generatingClassName);
     }
 
-    public static void newLine() {
+    public void newLine() {
         out.println();
     }
 
-    private static StringBuilder tagSB = new StringBuilder();
-    private static Formatter formatter = new Formatter(tagSB);
-    private static T1XTemplateTag currentTemplateTag;
+    private StringBuilder tagSB = new StringBuilder();
+    private Formatter formatter = new Formatter(tagSB);
+    private T1XTemplateTag currentTemplateTag;
 
     /**
      * Generates and outputs a {@link T1XTemplate} annotation from a format string and associated arguments.
@@ -378,7 +380,7 @@ public class T1XTemplateGenerator {
      * @param f
      * @param args
      */
-    private static void generateTemplateTag(String f, Object ... args) {
+    public void generateTemplateTag(String f, Object ... args) {
         tagSB.setLength(0);
         formatter.format(f, args);
         String tagString =  tagSB.toString();
@@ -386,19 +388,19 @@ public class T1XTemplateGenerator {
         out.printf("    @T1X_TEMPLATE(%s)%n", tagString);
     }
 
-    private static void generateBeforeAdvice(T1XTemplateTag tag, String ... args) {
+    private void generateBeforeAdvice(T1XTemplateTag tag, String ... args) {
         if (adviceHook != null) {
             adviceHook.generate(tag, AdviceType.BEFORE, args);
         }
     }
 
-    private static void generateBeforeAdvice(String ... args) {
+    public void generateBeforeAdvice(String ... args) {
         if (adviceHook != null) {
             adviceHook.generate(currentTemplateTag, AdviceType.BEFORE, args);
         }
     }
 
-    private static void generateAfterAdvice(String ... args) {
+    public void generateAfterAdvice(String ... args) {
         if (adviceHook != null) {
             adviceHook.generate(currentTemplateTag, AdviceType.AFTER, args);
         }
@@ -490,13 +492,13 @@ public class T1XTemplateGenerator {
         return null;
     }
 
-    public static void generateStackAdjustTemplates() {
+    public void generateStackAdjustTemplates() {
         for (T1XTemplateTag tag : STACK_ADJUST_TEMPLATES) {
             generateStackAdjustTemplate(tag);
         }
     }
 
-    public static void generateStackAdjustTemplate(T1XTemplateTag tag) {
+    public void generateStackAdjustTemplate(T1XTemplateTag tag) {
         generateAutoComment();
         generateTemplateTag("%s", tag);
         out.printf("    public static void %s() {%n", tag.name().toLowerCase());
@@ -515,7 +517,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link SHORT_CONST_TEMPLATES}.
      */
-    public static void generateShortConstTemplates() {
+    public void generateShortConstTemplates() {
         for (String k : new String[] {"int", "Reference", "Word"}) {
             if (k.equals("int")) {
                 for (String s : new String[] {"0", "1", "2", "3", "4", "5", "M1"}) {
@@ -534,7 +536,7 @@ public class T1XTemplateGenerator {
      * @param k type, one of {@code int}, {@code Word} or {@code Reference}
      * @param arg extra argument specifying the constant, {@code 0-5, M1, NULL}
      */
-    public static void generateShortConstTemplate(String k, String arg) {
+    public void generateShortConstTemplate(String k, String arg) {
         generateAutoComment();
         generateTemplateTag("%sCONST_%s", tagPrefix(k), arg);
         out.printf("    public static void %sconst_%s() {%n", opPrefix(k), arg.toLowerCase());
@@ -550,7 +552,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #CONST_TEMPLATES}.
      */
-    public static void generateConstTemplates() {
+    public void generateConstTemplates() {
         for (String k : new String[] {"float", "double", "long"}) {
             generateConstTemplate(k);
         }
@@ -560,7 +562,7 @@ public class T1XTemplateGenerator {
      * Generates one of the {@link #CONST_TEMPLATES}.
      * @param k type, one of {@code float}, {@code double} or {@code long}
      */
-    public static void generateConstTemplate(String k) {
+    public void generateConstTemplate(String k) {
         generateAutoComment();
         generateTemplateTag("%sCONST", tagPrefix(k));
         out.printf("    public static void %sconst(%s constant) {%n", opPrefix(k), k);
@@ -577,7 +579,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #PUTFIELD_TEMPLATE_TAGS}.
      */
-    public static void generatePutFieldTemplates() {
+    public void generatePutFieldTemplates() {
         for (String k : types) {
             if (hasGetPutTemplates(k)) {
                 generatePutFieldTemplate(k);
@@ -589,7 +591,7 @@ public class T1XTemplateGenerator {
      * Generate the resolved and unresolved {@code PUTFIELD} template tag for given type.
      * @param k type
      */
-    public static void generatePutFieldTemplate(String k) {
+    public void generatePutFieldTemplate(String k) {
         final boolean isTwoStackWords = isTwoStackWords(k);
         final int peekOffset = isTwoStackWords ? 2 : 1;
         final String m = uoType(k).equals("Object") ? "noninlineW" : "w";
@@ -636,7 +638,7 @@ public class T1XTemplateGenerator {
     /**
     * Generate all the {@link #PUTSTATIC_TEMPLATE_TAGS}.
     */
-    public static void generatePutStaticTemplates() {
+    public void generatePutStaticTemplates() {
         for (String k : types) {
             if (hasGetPutTemplates(k)) {
                 generatePutStaticTemplate(k);
@@ -648,7 +650,7 @@ public class T1XTemplateGenerator {
      * Generate the resolved and unresolved {@code PUTSTATIC} template tag for given type.
      * @param k type
      */
-    public static void generatePutStaticTemplate(String k) {
+    public void generatePutStaticTemplate(String k) {
         final String m = uoType(k).equals("Object") ? "noninlineW" : "w";
         generateAutoComment();
         generateTemplateTag("PUTSTATIC$%s$init", lType(k));
@@ -690,7 +692,7 @@ public class T1XTemplateGenerator {
     /**
     * Generate all the {@link #GETFIELD_TEMPLATE_TAGS}.
     */
-    public static void generateGetFieldTemplates() {
+    public void generateGetFieldTemplates() {
         for (String k : types) {
             if (hasGetPutTemplates(k)) {
                 generateGetFieldTemplate(k);
@@ -702,7 +704,7 @@ public class T1XTemplateGenerator {
      * Generate the resolved and unresolved {@code GETFIELD} template tag for given type.
      * @param k type
      */
-    public static void generateGetFieldTemplate(String k) {
+    public void generateGetFieldTemplate(String k) {
         final boolean isTwoStackWords = isTwoStackWords(k);
         generateAutoComment();
         generateTemplateTag("GETFIELD$%s$resolved", lType(k));
@@ -751,7 +753,7 @@ public class T1XTemplateGenerator {
     /**
     * Generate all the {@link #GETSTATIC_TEMPLATE_TAGS}.
     */
-    public static void generateGetStaticTemplates() {
+    public void generateGetStaticTemplates() {
         for (String k : types) {
             if (hasGetPutTemplates(k)) {
                 generateGetStaticTemplate(k);
@@ -763,7 +765,7 @@ public class T1XTemplateGenerator {
      * Generate the resolved and unresolved {@code GETFIELD} template tag for given type.
      * @param k type
      */
-    public static void generateGetStaticTemplate(String k) {
+    public void generateGetStaticTemplate(String k) {
         generateAutoComment();
         generateTemplateTag("GETSTATIC$%s", lType(k));
         out.printf("    public static void getstatic%s(ResolutionGuard.InPool guard) {%n", uType(k));
@@ -803,7 +805,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #LOAD_TEMPLATE_TAGS}.
      */
-    public static void generateLoadTemplates() {
+    public void generateLoadTemplates() {
         for (String k : types) {
             if (hasLoadStoreTemplates(k)) {
                 generateLoadTemplate(k);
@@ -815,7 +817,7 @@ public class T1XTemplateGenerator {
      * Generate the {@code LOAD} template for given type.
      * @param k type
      */
-    public static void generateLoadTemplate(String k) {
+    public void generateLoadTemplate(String k) {
         generateAutoComment();
         generateTemplateTag("%sLOAD", tagPrefix(k));
         out.printf("    public static void %sload(int dispToLocalSlot) {%n", opPrefix(k));
@@ -832,7 +834,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #STORE_TEMPLATE_TAGS}.
      */
-    public static void generateStoreTemplates() {
+    public void generateStoreTemplates() {
         for (String k : types) {
             if (hasLoadStoreTemplates(k)) {
                 generateStoreTemplate(k);
@@ -844,7 +846,7 @@ public class T1XTemplateGenerator {
      * Generate the {@code STORE} template for given type.
      * @param k type
      */
-    public static void generateStoreTemplate(String k) {
+    public void generateStoreTemplate(String k) {
         generateAutoComment();
         generateTemplateTag("%sSTORE", tagPrefix(k));
         out.printf("    public static void %sstore(int dispToLocalSlot) {%n", opPrefix(k));
@@ -860,7 +862,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #LDC_TEMPLATE_TAGS}.
      */
-    public static void generateLDCTemplates() {
+    public void generateLDCTemplates() {
         for (String k : types) {
             if (hasLDCTemplates(k)) {
                 generateLDCTemplate(k);
@@ -872,7 +874,7 @@ public class T1XTemplateGenerator {
      * Generate the {@code LDC} template(s) for given type.
      * @param k type
      */
-    public static void generateLDCTemplate(String k) {
+    public void generateLDCTemplate(String k) {
         String tail = k.equals("Reference") ? "$resolved" : "";
         generateAutoComment();
         generateTemplateTag("LDC$%s%s", lType(k), tail);
@@ -901,7 +903,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #ALOAD_TEMPLATE_TAGS}.
      */
-    public static void generateArrayLoadTemplates() {
+    public void generateArrayLoadTemplates() {
         for (String k : types) {
             if (hasArrayTemplates(k)) {
                 generateArrayLoadTemplate(k);
@@ -913,7 +915,7 @@ public class T1XTemplateGenerator {
      * Generate the {@code ALOAD} template(s) for given type.
      * @param k type
      */
-    public static void generateArrayLoadTemplate(String k) {
+    public void generateArrayLoadTemplate(String k) {
         final boolean isTwoStackWords = isTwoStackWords(k);
         generateAutoComment();
         generateTemplateTag("%sALOAD", tagPrefix(k));
@@ -935,7 +937,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #ASTORE_TEMPLATE_TAGS}.
      */
-    public static void generateArrayStoreTemplates() {
+    public void generateArrayStoreTemplates() {
         for (String k : types) {
             if (hasArrayTemplates(k)) {
                 generateArrayStoreTemplate(k);
@@ -947,7 +949,7 @@ public class T1XTemplateGenerator {
      * Generate the {@code ALOAD} template(s) for given type.
      * @param k type
      */
-    public static void generateArrayStoreTemplate(String k) {
+    public void generateArrayStoreTemplate(String k) {
         final boolean isTwoStackWords = isTwoStackWords(k);
         final int indexSlot = isTwoStackWords ? 2 : 1;
         generateAutoComment();
@@ -972,7 +974,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #IPUSH_TEMPLATE_TAGS).
      */
-    public static void generateIPushTemplates() {
+    public void generateIPushTemplates() {
         generateIPushTemplate("byte");
         generateIPushTemplate("short");
     }
@@ -982,7 +984,7 @@ public class T1XTemplateGenerator {
      * Generate the {@code IPUSH} template(s) for given type.
      * @param k type
      */
-    public static void generateIPushTemplate(String k) {
+    public void generateIPushTemplate(String k) {
         generateAutoComment();
         generateTemplateTag("%sIPUSH", tagPrefix(k));
         out.printf("    public static void %sipush(%s value) {%n", opPrefix(k), k);
@@ -998,7 +1000,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #NEW_TEMPLATE_TAGS}.
      */
-    public static void generateNewTemplates() {
+    public void generateNewTemplates() {
         generateNewTemplate("");
         generateNewTemplate("init");
     }
@@ -1007,7 +1009,7 @@ public class T1XTemplateGenerator {
      * Generate the requested {@code NEW} template.
      * @param init if "" generate {@code NEW} template, else {@code NEW$init}.
      */
-    public static void generateNewTemplate(String init) {
+    public void generateNewTemplate(String init) {
         String t;
         String m;
         if (init.equals("")) {
@@ -1029,7 +1031,7 @@ public class T1XTemplateGenerator {
 
     public static final EnumSet<T1XTemplateTag> NEWARRAY_TEMPLATE_TAGS = EnumSet.of(NEWARRAY);
 
-    public static void generateNewArrayTemplate() {
+    public void generateNewArrayTemplate() {
         generateAutoComment();
         generateTemplateTag("NEWARRAY");
         out.printf("    public static void newarray(Kind<?> kind) {%n");
@@ -1046,7 +1048,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #NEWARRAY_TEMPLATE_TAGS}.
      */
-    public static void generateANewArrayTemplates() {
+    public void generateANewArrayTemplates() {
         generateANewArrayTemplate("");
         generateANewArrayTemplate("resolved");
     }
@@ -1055,7 +1057,7 @@ public class T1XTemplateGenerator {
      * Generate the requested {@code ANEWARRAY} template.
      * @param resolved if "" generate {@code ANEWARRAY} template, else {@code ANEWARRAY$resolved}.
      */
-    public static void generateANewArrayTemplate(String resolved) {
+    public void generateANewArrayTemplate(String resolved) {
         String t;
         String v;
         if (resolved.equals("")) {
@@ -1084,7 +1086,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #MULTINEWARRAY_TEMPLATE_TAGS}.
      */
-    public static void generateMultiANewArrayTemplates() {
+    public void generateMultiANewArrayTemplates() {
         generateMultiANewArrayTemplate("");
         generateMultiANewArrayTemplate("resolved");
     }
@@ -1093,7 +1095,7 @@ public class T1XTemplateGenerator {
      * Generate the requested {@code MULTIANEWARRAY} template.
      * @param resolved if "" generate {@code MULTIANEWARRAY} template, else {@code MULTIANEWARRAY$resolved}.
      */
-    public static void generateMultiANewArrayTemplate(String resolved) {
+    public void generateMultiANewArrayTemplate(String resolved) {
         String t;
         String v;
         if (resolved.equals("")) {
@@ -1132,7 +1134,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #CHECKCAST_TEMPLATE_TAGS}.
      */
-    public static void generateCheckcastTemplates() {
+    public void generateCheckcastTemplates() {
         generateCheckcastTemplate("");
         generateCheckcastTemplate("resolved");
         generateResolveAndCheckCast();
@@ -1142,7 +1144,7 @@ public class T1XTemplateGenerator {
      * Generate the requested {@code CHECKCAST} template.
      * @param resolved if "" generate {@code CHECKCAST} template, else {@code CHECKCAST$resolved}.
      */
-    public static void generateCheckcastTemplate(String resolved) {
+    public void generateCheckcastTemplate(String resolved) {
         String t;
         String m;
         boolean isResolved = resolved.equals("resolved");
@@ -1167,7 +1169,7 @@ public class T1XTemplateGenerator {
         newLine();
     }
 
-    public static void generateResolveAndCheckCast() {
+    public void generateResolveAndCheckCast() {
         generateAutoComment();
         out.printf("    @NEVER_INLINE%n");
         out.printf("    private static void resolveAndCheckcast(ResolutionGuard guard, final Object object) {%n");
@@ -1183,7 +1185,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #INSTANCEOF_TEMPLATE_TAGS}.
      */
-    public static void generateInstanceofTemplates() {
+    public void generateInstanceofTemplates() {
         generateInstanceofTemplate("");
         generateInstanceofTemplate("resolved");
     }
@@ -1192,7 +1194,7 @@ public class T1XTemplateGenerator {
      * Generate the requested {@code INSTANCEOF} template.
      * @param resolved if "" generate {@code INSTANCEOF} template, else {@code INSTANCEOF$resolved}.
      */
-    public static void generateInstanceofTemplate(String resolved) {
+    public void generateInstanceofTemplate(String resolved) {
         String t;
         String v;
         if (resolved.equals("")) {
@@ -1215,7 +1217,7 @@ public class T1XTemplateGenerator {
         newLine();
     }
 
-    public static void generateArraylengthTemplate() {
+    public void generateArraylengthTemplate() {
         generateAutoComment();
         generateTemplateTag("ARRAYLENGTH");
         out.printf("    public static void arraylength() {%n");
@@ -1227,7 +1229,7 @@ public class T1XTemplateGenerator {
         newLine();
     }
 
-    public static void generateAThrowTemplate() {
+    public void generateAThrowTemplate() {
         generateAutoComment();
         generateTemplateTag("ATHROW");
         out.printf("    public static void athrow() {%n");
@@ -1243,7 +1245,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #MONITOR_TEMPLATE_TAGS}.
      */
-    public  static void generateMonitorTemplates() {
+    public  void generateMonitorTemplates() {
         generateMonitorTemplate("enter");
         generateMonitorTemplate("exit");
     }
@@ -1252,7 +1254,7 @@ public class T1XTemplateGenerator {
      * Generate the requested {@code MONITOR} template.
      * @param tag one of "enter" or "exit":
      */
-    public static void generateMonitorTemplate(String tag) {
+    public void generateMonitorTemplate(String tag) {
         generateAutoComment();
         generateTemplateTag("MONITOR%s", tag.toUpperCase());
         out.printf("    public static void monitor%s() {%n", tag);
@@ -1266,13 +1268,13 @@ public class T1XTemplateGenerator {
 
     public static final EnumSet<T1XTemplateTag> LOCK_TEMPLATE_TAGS = EnumSet.of(LOCK_RECEIVER, UNLOCK_RECEIVER, LOCK_CLASS, UNLOCK_CLASS);
 
-    public static void generateLockTemplates() {
+    public void generateLockTemplates() {
         for (T1XTemplateTag tag : LOCK_TEMPLATE_TAGS) {
             generateLockTemplate(tag);
         }
     }
 
-    public static void generateLockTemplate(T1XTemplateTag tag) {
+    public void generateLockTemplate(T1XTemplateTag tag) {
         generateAutoComment();
         generateTemplateTag("%s", tag);
         String param;
@@ -1323,7 +1325,7 @@ public class T1XTemplateGenerator {
      * Laurent Daynes
      */
 
-    public static void generateDirectAndIndirectCalls() {
+    public void generateDirectAndIndirectCalls() {
         for (String k : types) {
             if (hasInvokeTemplates(k)) {
                 generateIndirectCall(k, false);
@@ -1333,7 +1335,7 @@ public class T1XTemplateGenerator {
         }
     }
 
-    public static void generateIndirectCall(String k, boolean hasReceiverArg) {
+    public void generateIndirectCall(String k, boolean hasReceiverArg) {
         boolean isVoid = k.equals("void");
         String receiveParam = hasReceiverArg ? ", Object receiver" : "";
         String receiveArg = hasReceiverArg ? ", receiver" : "";
@@ -1352,7 +1354,7 @@ public class T1XTemplateGenerator {
         newLine();
     }
 
-    public static void generateDirectCall(String k) {
+    public void generateDirectCall(String k) {
         boolean isVoid = k.equals("void");
         generateAutoComment();
         out.printf("    @INLINE%n");
@@ -1380,7 +1382,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #INVOKE_VIRTUAL_TEMPLATE_TAGS}.
      */
-    public static void generateInvokeVirtualTemplates() {
+    public void generateInvokeVirtualTemplates() {
         for (String k : types) {
             if (hasInvokeTemplates(k)) {
                 for (String t : new String[] {"", "resolved", "instrumented"}) {
@@ -1393,7 +1395,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #INVOKE_INTERFACE_TEMPLATE_TAGS}.
      */
-    public static void generateInvokeInterfaceTemplates() {
+    public void generateInvokeInterfaceTemplates() {
         for (String k : types) {
             if (hasInvokeTemplates(k)) {
                 for (String t : new String[] {"", "resolved", "instrumented"}) {
@@ -1409,10 +1411,10 @@ public class T1XTemplateGenerator {
      * @param variant one of "virtual" or "interface"
      * @param tag one of "", "resolved" or "instrumented"
      */
-    public static void generateInvokeVITemplate(String k, String variant, String tag) {
+    public void generateInvokeVITemplate(String k, String variant, String tag) {
         boolean isVoid = k.equals("void");
         String param1 = tag.equals("") ? "ResolutionGuard.InPool guard" :
-            (variant.equals("interface") ? "InterfaceMethodActor interfaceMethodActor" : "VirtualMethodActor methodActor");
+            (variant.equals("interface") ? "InterfaceMethodActor interfaceMethodActor" : "int vTableIndex");
         param1 += ", int receiverStackIndex";
         if (tag.equals("instrumented")) {
             param1 += ", MethodProfile mpo, int mpoIndex";
@@ -1421,27 +1423,24 @@ public class T1XTemplateGenerator {
         generateTemplateTag("INVOKE%s$%s%s", variant.toUpperCase(), lType(k), prefixDollar(tag));
         out.printf("    public static void invoke%s%s(%s) {%n", variant, uType(k), param1);
         out.printf("        Object receiver = peekObject(receiverStackIndex);%n");
+        generateBeforeAdvice(k, variant, tag);
         if (variant.equals("interface")) {
             if (tag.equals("")) {
-                out.printf("        final InterfaceMethodActor interfaceMethodActor = Snippets.resolveInterfaceMethod(guard);%n");
-                out.printf("        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();%n");
+                out.printf("        Address entryPoint = resolveAndSelectInterfaceMethod(guard, receiver);%n");
             } else if (tag.equals("resolved")) {
                 out.printf("        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();%n");
             } else if (tag.equals("instrumented")) {
                 out.printf("        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);%n");
             }
         } else {
-            // virtual
             if (tag.equals("")) {
-                out.printf("        VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);%n");
-                out.printf("        Address entryPoint = Snippets.selectNonPrivateVirtualMethod(receiver, methodActor).asAddress();%n");
+                out.printf("        Address entryPoint = resolveAndSelectVirtualMethod(receiver, guard, receiverStackIndex);%n");
             } else if (tag.equals("resolved")) {
-                out.printf("        Address entryPoint = ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress();%n");
+                out.printf("        Address entryPoint = ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress();%n");
             } else if (tag.equals("instrumented")) {
-                out.printf("        Address entryPoint = selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex);%n");
+                out.printf("        Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);%n");
             }
         }
-        generateBeforeAdvice(k, variant, tag);
         out.printf("        ");
         if (!isVoid) {
             out.printf("final %s result = ", oType(k));
@@ -1466,7 +1465,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #INVOKE_STATIC_TEMPLATE_TAGS}.
      */
-    public static void generateInvokeStaticTemplates() {
+    public void generateInvokeStaticTemplates() {
         for (String k : types) {
             if (hasInvokeTemplates(k)) {
                 for (String t : new String[] {"", "resolved"}) {
@@ -1479,7 +1478,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #INVOKE_SPECIAL_TEMPLATE_TAGS}.
      */
-    public static void generateInvokeSpecialTemplates() {
+    public void generateInvokeSpecialTemplates() {
         for (String k : types) {
             if (hasInvokeTemplates(k)) {
                 for (String t : new String[] {"", "resolved"}) {
@@ -1495,13 +1494,10 @@ public class T1XTemplateGenerator {
      * @param variant one of "special" or "static"
      * @param xtag one of "" or "init" or "resolved"
      */
-    public static void generateInvokeSSTemplate(String k, String variant, String xtag) {
-        boolean resolved = xtag.equals("resolved");
-        boolean isStatic = variant.equals("static");
-        String tag = isStatic && resolved ? "init" : xtag;
+    public void generateInvokeSSTemplate(String k, String variant, String xtag) {
         boolean isVoid = k.equals("void");
-        String params = xtag.equals("") ? "ResolutionGuard.InPool guard" :
-            (isStatic ? "StaticMethodActor methodActor" : "VirtualMethodActor methodActor");
+        String tag = variant.equals("static") && xtag.equals("resolved") ? "init" : xtag;
+        String params = tag.equals("") ? "ResolutionGuard.InPool guard" : "";
         if (variant.equals("special")) {
             if (params.length() > 0) {
                 params += ", ";
@@ -1511,22 +1507,19 @@ public class T1XTemplateGenerator {
         generateAutoComment();
         generateTemplateTag("INVOKE%s$%s%s", variant.toUpperCase(), lType(k), prefixDollar(tag));
         out.printf("    public static void invoke%s%s(%s) {%n", variant, uType(k), params);
-        if (!isStatic) {
+        if (variant.equals("special")) {
             out.printf("        Pointer receiver = peekWord(receiverStackIndex).asPointer();%n");
             out.printf("        nullCheck(receiver);%n");
-        }
-        if (!resolved) {
-            out.printf("        %sMethodActor methodActor = Snippets.resolve%sMethod(guard);%n", isStatic ? "Static" : "Virtual", toFirstUpper(variant));
         }
         generateBeforeAdvice(k, variant, tag);
         out.printf("        ");
         if (!isVoid) {
             out.printf("final %s result = ", oType(k));
         }
-        if (resolved) {
+        if (xtag.equals("resolved")) {
             out.printf("directCall%s();%n", uType(k));
         } else {
-            out.printf("indirectCall%s(initialize%sMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);%n", uType(k), toFirstUpper(variant));
+            out.printf("indirectCall%s(resolve%sMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);%n", uType(k), toFirstUpper(variant));
         }
         generateAfterAdvice(k, variant, tag);
         if (!isVoid) {
@@ -1542,7 +1535,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #I2_TEMPLATE_TAGS}.
      */
-    public static void generateI2Templates() {
+    public void generateI2Templates() {
         for (String k : types) {
             if (hasI2Templates(k)) {
                 generateI2Template(k);
@@ -1554,7 +1547,7 @@ public class T1XTemplateGenerator {
      * Generate a given {@code I2} template.
      * @param k target type
      */
-    public static void generateI2Template(String k) {
+    public void generateI2Template(String k) {
         final boolean isTwoStackWords = isTwoStackWords(k);
         generateAutoComment();
         generateTemplateTag("I2%c", uType(k).charAt(0));
@@ -1576,7 +1569,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #L2_TEMPLATE_TAGS}.
      */
-    public static void generateL2Templates() {
+    public void generateL2Templates() {
         for (String k : types) {
             if (hasL2Templates(k)) {
                 generateL2Template(k);
@@ -1588,7 +1581,7 @@ public class T1XTemplateGenerator {
      * Generate a given {@code L2} template.
      * @param k target type
      */
-    public static void generateL2Template(String k) {
+    public void generateL2Template(String k) {
         final boolean isTwoStackWords = isTwoStackWords(k);
         generateAutoComment();
         generateTemplateTag("L2%c", uType(k).charAt(0));
@@ -1610,7 +1603,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #D2_TEMPLATE_TAGS}.
      */
-    public static void generateD2Templates() {
+    public void generateD2Templates() {
         for (String k : types) {
             if (hasD2Templates(k)) {
                 generateD2Template(k);
@@ -1622,7 +1615,7 @@ public class T1XTemplateGenerator {
      * Generate a given {@code D2} template.
      * @param k target type
      */
-    public static void generateD2Template(String k) {
+    public void generateD2Template(String k) {
         final boolean isTwoStackWords = isTwoStackWords(k);
         generateAutoComment();
         generateTemplateTag("D2%c", uType(k).charAt(0));
@@ -1644,7 +1637,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #F2_TEMPLATE_TAGS}.
      */
-    public static void generateF2Templates() {
+    public void generateF2Templates() {
         for (String k : types) {
             if (hasF2Templates(k)) {
                 generateF2Template(k);
@@ -1656,7 +1649,7 @@ public class T1XTemplateGenerator {
      * Generate a given {@code F2} template.
      * @param k target type
      */
-    public static void generateF2Template(String k) {
+    public void generateF2Template(String k) {
         final boolean isTwoStackWords = isTwoStackWords(k);
         generateAutoComment();
         generateTemplateTag("F2%c", uType(k).charAt(0));
@@ -1677,7 +1670,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #MOV_TEMPLATE_TAGS}.
      */
-    public static void generateMovTemplates() {
+    public void generateMovTemplates() {
         generateMovTemplate("float", "int");
         generateMovTemplate("int", "float");
         generateMovTemplate("double", "long");
@@ -1689,7 +1682,7 @@ public class T1XTemplateGenerator {
      * @param from source type
      * @param target type
      */
-    public static void generateMovTemplate(String from, String to) {
+    public void generateMovTemplate(String from, String to) {
         generateAutoComment();
         generateTemplateTag("MOV_%s2%s", uType(from).charAt(0), uType(to).charAt(0));
         out.printf("    public static void mov_%s2%s() {%n", from.charAt(0), to.charAt(0));
@@ -1705,7 +1698,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all {@link #POP_TEMPLATE_TAGS}.
      */
-    public static void generatePopTemplates() {
+    public void generatePopTemplates() {
         generatePopTemplate(1);
         generatePopTemplate(2);
     }
@@ -1714,7 +1707,7 @@ public class T1XTemplateGenerator {
      * Generate specific {@code POP} template.
      * @param arg 1 or 2
      */
-    public static void generatePopTemplate(int arg) {
+    public void generatePopTemplate(int arg) {
         generateAutoComment();
         final String tag = arg == 1 ? "" : Integer.toString(arg);
         generateTemplateTag("POP%s", tag);
@@ -1730,7 +1723,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all {@link #NEG_TEMPLATE_TAGS}.
      */
-    public static void generateNegTemplates() {
+    public void generateNegTemplates() {
         for (String k : types) {
             if (hasArithTemplates(k)) {
                 generateNegTemplate(k);
@@ -1742,7 +1735,7 @@ public class T1XTemplateGenerator {
      * Generate specific {@code NEG} template.
      * @param k type
      */
-    public static void generateNegTemplate(String k) {
+    public void generateNegTemplate(String k) {
         final String op = "neg";
         final String param = k.equals("float") || k.equals("double") ? k + " zero" : "";
         final String op1 = k.equals("float") || k.equals("double") ? "zero - " : "-";
@@ -1761,7 +1754,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #WDIVREM_TEMPLATE_TAGS}.
      */
-    public static void generateWordDivRemTemplates() {
+    public void generateWordDivRemTemplates() {
         for (String s : new String[] {"div", "rem"}) {
             generateWordDivRemTemplate(s, "");
             generateWordDivRemTemplate(s, "i");
@@ -1773,7 +1766,7 @@ public class T1XTemplateGenerator {
      * @param op "div" or "rem"
      * @param iTag "" or "i"
      */
-    public static void generateWordDivRemTemplate(String op, String iTag) {
+    public void generateWordDivRemTemplate(String op, String iTag) {
         final String m = op.equals("div") ? "dividedBy" : "remainder";
         generateAutoComment();
         generateTemplateTag("W%s%s", op.toUpperCase(), iTag.toUpperCase());
@@ -1798,7 +1791,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #DYADIC_TEMPLATE_TAGS).
      */
-    public static void generateDyadicTemplates() {
+    public void generateDyadicTemplates() {
         for (String k : types) {
             if (hasArithTemplates(k)) {
                 for (String op : new String[] {"add", "sub", "mul", "div", "rem"}) {
@@ -1821,7 +1814,7 @@ public class T1XTemplateGenerator {
      * @param k type
      * @param op one of "add", "sub", "mul", "div", "rem", "or", "and", "xor", "shl", "shr", "ushr"
      */
-    public static void generateDyadicTemplate(String k, String op) {
+    public void generateDyadicTemplate(String k, String op) {
         final boolean forceInt = isShift(op);
         final int removeCount = isTwoStackWords(k) && !forceInt ? 2 : 1;
         generateAutoComment();
@@ -1839,7 +1832,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate the {@code IINC} template.
      */
-    public static void generateIIncTemplate() {
+    public void generateIIncTemplate() {
         generateAutoComment();
         generateTemplateTag("IINC");
         out.printf("    public static void iinc(int dispToLocalSlot, int increment) {%n");
@@ -1857,7 +1850,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #RETURN_TEMPLATE_TAGS}.
      */
-    public static void generateReturnTemplates() {
+    public void generateReturnTemplates() {
         for (String k : types) {
             if (hasReturnTemplates(k)) {
                 for (String lockType : lockVariants) {
@@ -1873,7 +1866,7 @@ public class T1XTemplateGenerator {
      * @param k type
      * @param unlock one of "", {@link #lockVariants} or "registerFinalizer"
      */
-    public static void generateReturnTemplate(String k, String unlock) {
+    public void generateReturnTemplate(String k, String unlock) {
         // Admittedly, the readability goal is a stretch here!
         final String arg = unlock.equals("") ? "" :
             (unlock.equals("unlockClass") ? "Class<?> object" : "int dispToObjectCopy");
@@ -1920,7 +1913,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #IFCMP_TEMPLATE_TAGS}.
      */
-    public static void generateIfCmpTemplates() {
+    public void generateIfCmpTemplates() {
         for (String k : types) {
             if (hasIfCmpTemplates(k)) {
                 for (String s : conditions) {
@@ -1938,7 +1931,7 @@ public class T1XTemplateGenerator {
      * @param k type
      * @param op one of "eq", "ne", "lt", "ge", "gt", "le"
      */
-    public static void generateIfCmpTemplate(String k, String op) {
+    public void generateIfCmpTemplate(String k, String op) {
         generateAutoComment();
         generateTemplateTag("IF_%sCMP%s", tagPrefix(k), op.toUpperCase());
         out.printf("    public static void if_%scmp%s() {%n", opPrefix(k), op);
@@ -1961,7 +1954,7 @@ public class T1XTemplateGenerator {
      * Generate all the {@link #IF_TEMPLATE_TAGS}.
      *
      */
-    public static void generateIfTemplates() {
+    public void generateIfTemplates() {
         for (String s : conditions) {
             generateIfTemplate("int", s);
         }
@@ -1975,7 +1968,7 @@ public class T1XTemplateGenerator {
      * @param k type one of "int" or "Reference"
      * @param op one of "eq", "ne", "lt", "ge", "gt", "le" ("null" or "nonnull" for k == "Reference")
      */
-    public static void generateIfTemplate(String k, String op) {
+    public void generateIfTemplate(String k, String op) {
         generateAutoComment();
         generateTemplateTag("IF%s", op.toUpperCase());
         out.printf("    public static void if%s() {%n", op);
@@ -1995,7 +1988,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #CMP_TEMPLATE_TAGS}.
      */
-    public static void generateCmpTemplates() {
+    public void generateCmpTemplates() {
         generateCmpTemplate("long", "");
         for (String k : new String[] {"float", "double"}) {
             for (String s : new String[] {"g", "l"}) {
@@ -2009,7 +2002,7 @@ public class T1XTemplateGenerator {
      * @param k type one of "long", "float" or "double"
      * @param variant "g" or "l"
      */
-    public static void generateCmpTemplate(String k, String variant) {
+    public void generateCmpTemplate(String k, String variant) {
         int value1Index = isTwoStackWords(k) ? 2 : 1;
         generateAutoComment();
         generateTemplateTag("%sCMP%s", tagPrefix(k), variant.toUpperCase());
@@ -2029,7 +2022,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #PSET_TEMPLATE_TAGS}.
      */
-    public static void generatePSetTemplates() {
+    public void generatePSetTemplates() {
         for (String k : types) {
             if (hasPTemplates(k)) {
                 generatePSetTemplate(k);
@@ -2041,7 +2034,7 @@ public class T1XTemplateGenerator {
      * Generate a specific {@link #PSET_TEMPLATE_TAGS) template.
      * @param k type
      */
-    public static void generatePSetTemplate(String k) {
+    public void generatePSetTemplate(String k) {
         if (k.equals("char")) {
             return;
         }
@@ -2066,7 +2059,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #PGET_TEMPLATE_TAGS}.
      */
-    public static void generatePGetTemplates() {
+    public void generatePGetTemplates() {
         for (String k : types) {
             if (hasPTemplates(k)) {
                 generatePGetTemplate(k);
@@ -2078,7 +2071,7 @@ public class T1XTemplateGenerator {
      * Generate a specific {@link #PSET_TEMPLATE_TAGS) template.
      * @param k type
      */
-    public static void generatePGetTemplate(String k) {
+    public void generatePGetTemplate(String k) {
         final boolean isTwoStackWords = isTwoStackWords(k);
         generateAutoComment();
         generateTemplateTag("PGET_%s", auType(k));
@@ -2099,7 +2092,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #PREAD_TEMPLATE_TAGS}.
      */
-    public static void generatePReadTemplates() {
+    public void generatePReadTemplates() {
         for (String k : types) {
             if (hasPTemplates(k)) {
                 generatePReadTemplate(k, false);
@@ -2113,7 +2106,7 @@ public class T1XTemplateGenerator {
      * @param k type
      * @param isI true iff {@code PREAD_XXX_I} variant
      */
-    public static void generatePReadTemplate(String k, boolean isI) {
+    public void generatePReadTemplate(String k, boolean isI) {
         final boolean isTwoStackWords = isTwoStackWords(k);
         generateAutoComment();
         generateTemplateTag("PREAD_%s%s", auType(k), isI ? "_I" : "");
@@ -2139,7 +2132,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #PWRITE_TEMPLATE_TAGS}.
      */
-    public static void generatePWriteTemplates() {
+    public void generatePWriteTemplates() {
         for (String k : types) {
             if (hasPTemplates(k)) {
                 generatePWriteTemplate(k, false);
@@ -2153,7 +2146,7 @@ public class T1XTemplateGenerator {
      * @param k type
      * @param isI true iff {@code PWRITE_XXX_I} variant
      */
-    public static void generatePWriteTemplate(String k, boolean isI) {
+    public void generatePWriteTemplate(String k, boolean isI) {
         if (k.equals("char")) {
             return;
         }
@@ -2180,7 +2173,7 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #PCMPSWP_TEMPLATE_TAGS}.
      */
-    public static void generatePCmpSwpTemplates() {
+    public void generatePCmpSwpTemplates() {
         for (String k : types) {
             if (hasPCmpSwpTemplates(k)) {
                 generatePCmpSwpTemplate(k, false);
@@ -2194,7 +2187,7 @@ public class T1XTemplateGenerator {
      * @param k type
      * @param isI true iff {@code PCMPSWP_XXX_I} variant
      */
-    public static void generatePCmpSwpTemplate(String k, boolean isI) {
+    public void generatePCmpSwpTemplate(String k, boolean isI) {
         generateAutoComment();
         generateTemplateTag("PCMPSWP_%s%s", auType(k), isI ? "_I" : "");
         out.printf("    public static void pcmpswp_%s%s() {%n", lType(k), isI ? "_i" : "");
@@ -2218,7 +2211,7 @@ public class T1XTemplateGenerator {
      * The order of the output is first the typed operations, per type, followed by the untyped operations.
      * @param hook the advice hook or {@code null} if no advice
      */
-    public static void generateAll(AdviceHook hook) {
+    public void generateAll(AdviceHook hook) {
         adviceHook = hook;
         for (String k : types) {
             // constants
@@ -2357,7 +2350,7 @@ public class T1XTemplateGenerator {
     }
 
     public static void main(String[] args) {
-        generateAll(null);
+        new T1XTemplateGenerator(T1XTemplateGenerator.class).generateAll(null);
     }
 
 }

@@ -50,6 +50,7 @@ public class T1XRuntime {
     // == Resolution routines ===================================================================================
     // ==========================================================================================================
 
+
     public static Address resolveAndSelectVirtualMethod(Object receiver, ResolutionGuard.InPool guard, int receiverStackIndex) {
         final VirtualMethodActor virtualMethodActor = Snippets.resolveVirtualMethod(guard);
         return Snippets.selectNonPrivateVirtualMethod(receiver, virtualMethodActor).asAddress();
@@ -70,15 +71,6 @@ public class T1XRuntime {
         final StaticMethodActor staticMethod = Snippets.resolveStaticMethod(guard);
         Snippets.makeHolderInitialized(staticMethod);
         return Snippets.makeEntrypoint(staticMethod);
-    }
-
-    public static Address initializeStaticMethod(StaticMethodActor staticMethod) {
-        Snippets.makeHolderInitialized(staticMethod);
-        return Snippets.makeEntrypoint(staticMethod);
-    }
-
-    public static Address initializeSpecialMethod(VirtualMethodActor virtualMethod) {
-        return Snippets.makeEntrypoint(virtualMethod);
     }
 
     public static Object resolveClassForNewAndCreate(ResolutionGuard guard) {
