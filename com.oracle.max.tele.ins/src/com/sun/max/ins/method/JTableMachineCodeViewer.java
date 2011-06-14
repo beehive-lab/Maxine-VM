@@ -699,14 +699,14 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
 
     private final class SourceLineRenderer extends PlainLabel implements TableCellRenderer {
 
-        private CiFrame lastFrame;
+        private CiCodePos lastCodePos;
 
         SourceLineRenderer() {
             super(JTableMachineCodeViewer.this.inspection(), null);
             addMouseListener(new InspectorMouseClickAdapter(inspection()) {
                 @Override
                 public void procedure(final MouseEvent mouseEvent) {
-                    final CiCodePos frame = lastFrame;
+                    final CiCodePos frame = lastCodePos;
                     if (frame != null) {
                         final InspectorPopupMenu menu = new InspectorPopupMenu();
                         for (CiCodePos location = frame; location != null; location = location.caller) {
@@ -744,16 +744,17 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object ignore, boolean isSelected, boolean hasFocus, int row, int column) {
-            final CiFrame frame = instructionMap().bytecodeFrames(row);
+            CiDebugInfo debugInfo = instructionMap().debugInfoAt(row);
+            final CiCodePos codePos = debugInfo == null ? null : debugInfo.codePos;
             setText("");
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
             setWrappedToolTipText("Source location not available");
             setBackgroundForRow(this, row);
-            if (frame != null) {
-                final StackTraceElement stackTraceElement = frame.method.toStackTraceElement(frame.bci);
+            if (codePos != null) {
+                final StackTraceElement stackTraceElement = codePos.method.toStackTraceElement(codePos.bci);
                 final StringBuilder stackTrace = new StringBuilder("<table cellpadding=\"1%\"><tr><td></td><td>").append(toolTipText(stackTraceElement)).append("</td></tr>");
                 StackTraceElement top = stackTraceElement;
-                for (CiCodePos caller = frame.caller; caller != null; caller = caller.caller) {
+                for (CiCodePos caller = codePos.caller; caller != null; caller = caller.caller) {
                     StackTraceElement parentSTE = caller.method.toStackTraceElement(caller.bci);
                     stackTrace.append("<tr><td>--&gt;&nbsp;</td><td>").append(toolTipText(parentSTE)).append("</td></tr>");
                     top = parentSTE;
@@ -761,7 +762,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
                 setWrappedToolTipText("Source location = " + stackTrace.append("</table>").toString());
                 setText(String.valueOf(top.getLineNumber()));
             }
-            lastFrame = frame;
+            lastCodePos = codePos;
             setBorderForRow(this, row);
             return this;
         }

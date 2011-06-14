@@ -169,7 +169,8 @@ public final class DebugInfo {
             // Test encoding & decoding while offline
             for (int i = 0; i < debugInfos.length; ++i) {
                 if (debugInfos[i] != null && debugInfos[i].frame() != null) {
-                    CiFrame frame = framesAt(i, null);
+                    CiDebugInfo info = infoAt(i, null);
+                    CiFrame frame = info.frame();
                     CiFrame originalFrame = debugInfos[i].frame();
                     assert frame.equalsIgnoringKind(originalFrame);
                 }
@@ -359,18 +360,19 @@ public final class DebugInfo {
     }
 
     /**
-     * Decodes the frame(s) at a given stop index.
+     * Decodes the debug info at a given stop index.
      *
      * @param index a stop index
      * @param fa access to a live frame (may be {@code null})
      * @return the frame(s) at {@code index}
      */
-    public CiFrame framesAt(int index, FrameAccess fa) {
+    public CiDebugInfo infoAt(int index, FrameAccess fa) {
         final DecodingStream in = new DecodingStream(data);
         int fpt = (tm.totalRefMapSize()) * tm.stopPositions().length;
         CiBitMap regRefMap = regRefMapAt(index);
         CiBitMap frameRefMap = frameRefMapAt(index);
-        return decodeFrame(in, fpt, index, fa, regRefMap, frameRefMap);
+        CiFrame frame = decodeFrame(in, fpt, index, fa, regRefMap, frameRefMap);
+        return new CiDebugInfo(frame, regRefMap, frameRefMap);
     }
 
     /**
@@ -486,10 +488,7 @@ public final class DebugInfo {
         }
         StringBuilder sb = new StringBuilder(1024);
         for (int i = 0; i < tm.stopPositions().length; i++) {
-            CiBitMap regRefMap = regRefMapAt(i);
-            CiBitMap frameRefMap = frameRefMapAt(i);
-            CiFrame frame = framesAt(i, null);
-            CiDebugInfo info = new CiDebugInfo(frame, regRefMap, frameRefMap);
+            CiDebugInfo info = infoAt(i, null);
             if (sb.length() != 0) {
                 sb.append(NEW_LINE);
             }

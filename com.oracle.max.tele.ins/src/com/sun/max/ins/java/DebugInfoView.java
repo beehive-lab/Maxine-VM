@@ -41,43 +41,42 @@ import com.sun.max.vm.classfile.*;
 
 
 /**
- * A view that displays detailed information about the currently selected location in compiled code,
- * starting with Java frame descriptors, if available.
+ * A view that displays {@linkplain CiDebugInfo debug information} (if available) about the currently selected location in compiled code.
  */
-public final class CodeLocationView extends AbstractView<CodeLocationView> {
+public final class DebugInfoView extends AbstractView<DebugInfoView> {
 
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.CODE_LOCATION;
-    private static final String SHORT_NAME = "Code Location";
-    private static final String LONG_NAME = "CodeLocation View";
-    private static final String GEOMETRY_SETTINGS_KEY = "codeLocationViewGeometry";
+    private static final String SHORT_NAME = "Debug Info";
+    private static final String LONG_NAME = "DebugInfo View";
+    private static final String GEOMETRY_SETTINGS_KEY = "debugInfoViewGeometry";
 
 
-    public static final class CodeLocationViewManager extends AbstractSingletonViewManager<CodeLocationView> {
+    public static final class DebugInfoViewManager extends AbstractSingletonViewManager<DebugInfoView> {
 
-        protected CodeLocationViewManager(Inspection inspection) {
+        protected DebugInfoViewManager(Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
 
         @Override
-        protected CodeLocationView createView(Inspection inspection) {
-            return new CodeLocationView(inspection);
+        protected DebugInfoView createView(Inspection inspection) {
+            return new DebugInfoView(inspection);
         }
 
     }
 
-    private static CodeLocationViewManager viewManager = null;
+    private static DebugInfoViewManager viewManager = null;
 
-    public static CodeLocationViewManager makeViewManager(Inspection inspection) {
+    public static DebugInfoViewManager makeViewManager(Inspection inspection) {
         if (viewManager == null) {
-            viewManager = new CodeLocationViewManager(inspection);
+            viewManager = new DebugInfoViewManager(inspection);
         }
         return viewManager;
     }
 
     private MaxCodeLocation codeLocation = null;
     private MaxCompilation compiledCode = null;
-    private CiFrame frames = null;
+    private CiDebugInfo debugInfo = null;
 
     private final MatteBorder frameBorder;
 
@@ -86,7 +85,7 @@ public final class CodeLocationView extends AbstractView<CodeLocationView> {
     private final InspectorPanel simplePanel;
     private final PlainLabel simplePanelLabel;
 
-    protected CodeLocationView(Inspection inspection) {
+    protected DebugInfoView(Inspection inspection) {
         super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
         Trace.begin(1,  tracePrefix() + " initializing");
 
@@ -137,14 +136,19 @@ public final class CodeLocationView extends AbstractView<CodeLocationView> {
     protected void createViewContent() {
         if (codeLocation == null) {
             setContentPane(nullPanel);
-        } else if (frames == null) {
+        } else if (debugInfo == null) {
             simplePanelLabel.setText(inspection().nameDisplay().shortName(codeLocation));
             setContentPane(simplePanel);
         } else {
             //final JPanel panel = new InspectorPanel(inspection(), new GridLayout(0, 1));
             final JPanel panel = new InspectorPanel(inspection());
             panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-            CiFrame frame = frames;
+
+            // TODO: add register and frame reference map information to panel
+            // debugInfo.registerRefMap ...
+            // debugInfo.frameRefMap ...
+
+            CiFrame frame = debugInfo.frame();
             do {
                 panel.add(createFramePanel(frame), 0);
                 frame = frame.caller();
@@ -171,7 +175,7 @@ public final class CodeLocationView extends AbstractView<CodeLocationView> {
     private void updateCodeLocation(MaxCodeLocation codeLocation) {
         this.codeLocation = codeLocation;
         compiledCode = codeLocation.compiledCode();
-        frames = codeLocation.bytecodeFrames();
+        debugInfo = codeLocation.debugInfo();
     }
 
     private String shortString(CiCodePos codePos) {

@@ -327,9 +327,12 @@ public final class T1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public CiFrame debugFramesAt(int stopIndex, FrameAccess fa) {
+    public CiDebugInfo debugInfoAt(int stopIndex, FrameAccess fa) {
+        CiBitMap frameRefMap = new CiBitMap(referenceMaps(), stopIndex * refMapSize(), frameRefMapSize);
+        CiBitMap regRefMap = new CiBitMap(referenceMaps(), (stopIndex * refMapSize()) + frameRefMapSize, regRefMapSize());
         int bci = bciForPos(stopPosition(stopIndex));
-        return frame.asFrame(classMethodActor, bci);
+        CiFrame debugFrame = frame.asFrame(classMethodActor, bci);
+        return new CiDebugInfo(debugFrame, regRefMap, frameRefMap);
     }
 
     @Override

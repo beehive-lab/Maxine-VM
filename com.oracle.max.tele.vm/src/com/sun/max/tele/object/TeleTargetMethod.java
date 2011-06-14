@@ -83,7 +83,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
     private static final List<TargetCodeInstruction> EMPTY_TARGET_INSTRUCTIONS =  Collections.emptyList();
     private static final MachineCodeLocation[] EMPTY_MACHINE_CODE_LOCATIONS = {};
     private static final CodeStopKind[] EMPTY_CODE_STOP_KINDS = {};
-    private static final CiFrame[] EMPTY_BYTECODE_FRAMES_MAP = {};
+    private static final CiDebugInfo[] EMPTY_DEBUG_INFO_MAP = {};
     private static final int[] EMPTY_INT_ARRAY = new int[0];
     private static final List<Integer> EMPTY_INTEGER_LIST = Collections.emptyList();
 
@@ -245,9 +245,9 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
         private final CodeStopKind[] indexToCodeStopKind;
 
         /**
-         * Map: target instruction index -> bytecode frame(s) that compiled into code starting at this instruction, if known; else null.
+         * Map: target instruction index -> debug info, if available; else null.
          */
-        private final CiFrame[] indexToBytecodeFrameMap;
+        private final CiDebugInfo[] indexToDebugInfoMap;
 
         /**
          * Map: target instruction index -> the specific opcode implemented by the group of instructions starting
@@ -294,7 +294,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
                 this.bciToPosMap = null;
                 this.indexToLocation = EMPTY_MACHINE_CODE_LOCATIONS;
                 this.indexToCodeStopKind = EMPTY_CODE_STOP_KINDS;
-                this.indexToBytecodeFrameMap = EMPTY_BYTECODE_FRAMES_MAP;
+                this.indexToDebugInfoMap = EMPTY_DEBUG_INFO_MAP;
                 this.indexToOpcode = EMPTY_INT_ARRAY;
                 this.indexToCalleeCPIndex = EMPTY_INT_ARRAY;
                 this.labelIndexes = EMPTY_INTEGER_LIST;
@@ -372,11 +372,11 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
                 // Get the precise map between bytecode and machine code instructions, null if not available
                 this.bciToPosMap = targetMethod.bciToPosMap();
 
-                 // Build map:  target instruction position (bytes offset from start) -> bytecode frames (as much as can be determined).
-                final CiFrame[] posToBytecodeFramesMap = new CiFrame[targetCodeLength];
+                 // Build map:  target instruction position (bytes offset from start) -> debug infos (as much as can be determined).
+                final CiDebugInfo[] posToDebugInfoMap = new CiDebugInfo[targetCodeLength];
                 if (stopPositions != null) {
                     for (int stopIndex = 0; stopIndex < stopPositions.length(); ++stopIndex) {
-                        posToBytecodeFramesMap[stopPositions.get(stopIndex)] = getBytecodeFramesAtStopIndex(stopIndex);
+                        posToDebugInfoMap[stopPositions.get(stopIndex)] = getDebugInfoAtStopIndex(stopIndex);
                     }
                 }
                 if (bciToPosMap != null) {
@@ -391,7 +391,8 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
                         // for the start of bytecode template.
                         if (bci < bciToPosMap.length && pos == bciToPosMap[bci]) {
                             // This is the start of the machine code block implementing the next bytecode
-                            posToBytecodeFramesMap[pos] = new CiFrame(null, classMethodActor(), bci, new CiValue[0], 0, 0, 0);
+                            CiFrame frame = new CiFrame(null, classMethodActor(), bci, new CiValue[0], 0, 0, 0);
+                            posToDebugInfoMap[pos] = new CiDebugInfo(frame, null, null);
                             do {
                                 ++bci;
                             } while (bci < bciToPosMap.length && bciToPosMap[bci] == 0);
@@ -402,7 +403,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
                 // Now build maps based on target instruction index
                 indexToLocation = new MachineCodeLocation[instructionCount];
                 indexToCodeStopKind = new CodeStopKind[instructionCount];
-                indexToBytecodeFrameMap = new CiFrame[instructionCount];
+                indexToDebugInfoMap = new CiDebugInfo[instructionCount];
                 indexToOpcode = new int[instructionCount];
                 Arrays.fill(indexToOpcode, -1);
                 indexToCalleeCPIndex = new int[instructionCount];
@@ -430,14 +431,15 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
                         continue;
                     }
 
-                    indexToBytecodeFrameMap[instructionIndex] = posToBytecodeFramesMap[pos];
+                    indexToDebugInfoMap[instructionIndex] = posToDebugInfoMap[pos];
 
                     if (posToStopKindMap != null) {
                         final CodeStopKind codeStopKind = posToStopKindMap[pos];
                         if (codeStopKind != null) {
                             // We're at a stop
                             indexToCodeStopKind[instructionIndex] = codeStopKind;
-                            final CiFrame codePos = indexToBytecodeFrameMap[instructionIndex];
+                            CiDebugInfo info = indexToDebugInfoMap[instructionIndex];
+                            final CiCodePos codePos = info == null ? null : info.codePos;
                             // TODO (mlvdv) only works for non-inlined calls
                             if (codePos != null && codePos.method.equals(classMethodActor()) && codePos.bci >= 0) {
                                 indexToCalleeCPIndex[instructionIndex] = findCalleeCPIndex(bytecodes, codePos.bci);
@@ -535,11 +537,11 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
             return indexToOpcode[index] >= 0;
         }
 
-        public CiFrame bytecodeFrames(int index) throws IllegalArgumentException {
+        public CiDebugInfo debugInfoAt(int index) throws IllegalArgumentException {
             if (index < 0 || index >= instructionCount) {
                 throw new IllegalArgumentException();
             }
-            return indexToBytecodeFrameMap[index];
+            return indexToDebugInfoMap[index];
         }
 
         public int opcode(int index) throws IllegalArgumentException {
@@ -572,18 +574,17 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
         }
 
         /**
-         * Gets the Java frames corresponding to a given stop index.
+         * Gets the debug info available for a given stop index.
          *
          * @param stopIndex a stop index
-         * @return the Java frame descriptor corresponding to {@code stopIndex} or null if there is no Java frame descriptor
-         *         for {@code stopIndex}
-         * @see TargetMethod#debugFramesAt(int, FrameAccess)
+         * @return the debug info available for {@code stopIndex} or null if there is none
+         * @see TargetMethod#debugInfoAt(int, FrameAccess)
          */
-        private CiFrame getBytecodeFramesAtStopIndex(final int stopIndex) {
-            return TeleClassRegistry.usingTeleClassIDs(new Function<CiFrame>() {
+        private CiDebugInfo getDebugInfoAtStopIndex(final int stopIndex) {
+            return TeleClassRegistry.usingTeleClassIDs(new Function<CiDebugInfo>() {
                 @Override
-                public CiFrame call() throws Exception {
-                    return targetMethod.debugFramesAt(stopIndex, null);
+                public CiDebugInfo call() throws Exception {
+                    return targetMethod.debugInfoAt(stopIndex, null);
                 }
             });
         }
@@ -836,15 +837,14 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
     }
 
     /**
-     * Gets the Java frames corresponding to a given stop index.
+     * Gets the debug info available for a given stop index.
      *
      * @param stopIndex a stop index
-     * @return the Java frame descriptor corresponding to {@code stopIndex} or null if there is no Java frame descriptor
-     *         for {@code stopIndex}
-     * @see TargetMethod#debugFramesAt(int, FrameAccess)
+     * @return the debug info available for {@code stopIndex} or null if there is none
+     * @see TargetMethod#debugInfoAt(int, FrameAccess)
      */
-    public CiFrame getBytecodeFramesAtStopIndex(final int stopIndex) {
-        return targetMethodCache().getBytecodeFramesAtStopIndex(stopIndex);
+    public CiDebugInfo getDebugInfoAtStopIndex(final int stopIndex) {
+        return targetMethodCache().getDebugInfoAtStopIndex(stopIndex);
     }
 
     /**

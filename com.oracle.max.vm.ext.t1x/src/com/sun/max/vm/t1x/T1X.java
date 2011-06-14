@@ -247,24 +247,17 @@ public class T1X implements RuntimeCompiler {
             StopPositions stopPositions = new StopPositions(t1xMethod.stopPositions());
             Object[] directCallees = t1xMethod.directCallees();
 
-            int frameRefMapSize = t1xMethod.frameRefMapSize;
-            int regRefMapSize = T1XTargetMethod.regRefMapSize();
-            int refMapSize = t1xMethod.refMapSize();
-
             for (int stopIndex = 0; stopIndex < stopPositions.length(); ++stopIndex) {
                 int pos = stopPositions.get(stopIndex);
 
-                CiBitMap frameRefMap = new CiBitMap(t1xMethod.referenceMaps(), stopIndex * refMapSize, frameRefMapSize);
-                CiBitMap regRefMap = new CiBitMap(t1xMethod.referenceMaps(), (stopIndex * refMapSize) + frameRefMapSize, regRefMapSize);
-
-                CiDebugInfo info = new CiDebugInfo(null, regRefMap, frameRefMap);
+                CiDebugInfo info = t1xMethod.debugInfoAt(stopIndex, null);
                 hcf.addComment(pos, CiUtil.append(new StringBuilder(100), info, target().arch, JVMSFrameLayout.JVMS_SLOT_SIZE).toString());
 
                 if (stopIndex < t1xMethod.numberOfDirectCalls()) {
                     Object callee = directCallees[stopIndex];
                     hcf.addOperandComment(pos, String.valueOf(callee));
                 } else if (stopIndex < t1xMethod.numberOfDirectCalls() + t1xMethod.numberOfIndirectCalls()) {
-                    CiCodePos codePos = t1xMethod.debugFramesAt(stopIndex, null);
+                    CiCodePos codePos = info.codePos;
                     if (codePos != null) {
                         RiMethod callee = t1xMethod.codeAttribute.calleeAt(codePos.bci);
                         if (callee != null) {

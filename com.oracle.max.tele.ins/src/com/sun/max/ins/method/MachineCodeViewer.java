@@ -77,7 +77,7 @@ public abstract class MachineCodeViewer extends CodeViewer {
                             if (opcode == Integer.MAX_VALUE) {
                                 rowToTagText[index] = "<epilogue>";
                             } else {
-                                rowToTagText[index] = instructionMap.bytecodeFrames(index).bci + ": " + Bytecodes.nameOf(opcode);
+                                rowToTagText[index] = instructionMap.debugInfoAt(index).codePos.bci + ": " + Bytecodes.nameOf(opcode);
                             }
                         } else {
                             rowToTagText[index] = "";

@@ -43,7 +43,7 @@ import com.sun.max.ins.file.*;
 import com.sun.max.ins.file.JavaSourceView.JavaSourceViewManager;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.java.*;
-import com.sun.max.ins.java.CodeLocationView.CodeLocationViewManager;
+import com.sun.max.ins.java.DebugInfoView.DebugInfoViewManager;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.memory.AllocationsView.AllocationsViewManager;
 import com.sun.max.ins.memory.MemoryBytesView.MemoryBytesViewManager;
@@ -98,8 +98,8 @@ public final class InspectionViews extends AbstractInspectionHolder {
         CODE_LOCATION(true, false, "The details of a position in compiled code") {
 
             @Override
-            public CodeLocationViewManager viewManager() {
-                final CodeLocationViewManager viewManager = CodeLocationView.makeViewManager(inspection);
+            public DebugInfoViewManager viewManager() {
+                final DebugInfoViewManager viewManager = DebugInfoView.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }

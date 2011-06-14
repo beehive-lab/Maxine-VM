@@ -173,7 +173,7 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
             return false;
         }
 
-        public CiFrame bytecodeFrames(int index) throws IllegalArgumentException {
+        public CiDebugInfo debugInfoAt(int index) throws IllegalArgumentException {
             if (index < 0 || index >= instructions.size()) {
                 throw new IllegalArgumentException();
             }

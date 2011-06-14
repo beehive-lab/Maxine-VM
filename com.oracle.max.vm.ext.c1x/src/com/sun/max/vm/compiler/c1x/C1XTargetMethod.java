@@ -888,10 +888,7 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
     }
 
     @Override
-    public CiFrame debugFramesAt(int stopIndex, FrameAccess fa) {
-        if (classMethodActor == null) {
-            return null;
-        }
-        return debugInfo.framesAt(stopIndex, fa);
+    public CiDebugInfo debugInfoAt(int stopIndex, FrameAccess fa) {
+        return debugInfo.infoAt(stopIndex, fa);
     }
 }

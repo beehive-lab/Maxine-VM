@@ -372,16 +372,16 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
-     * Gets the debug frame(s) for a given stop. If {@code fa != null}, then the {@linkplain CiFrame#values values}
-     * in the returned objects are {@link CiConstant}s wrapping the live values. Otherwise, they are
-     * {@link CiStackSlot}, {@link CiRegister} and {@link CiConstant} values describing how to extract
-     * values from a live frame.
+     * Gets the debug info available for a given stop. If {@code fa != null}, then the {@linkplain CiFrame#values values} in the
+     * returned object are {@link CiConstant}s wrapping values from the thread's stack denoted by {@code fa}. Otherwise,
+     * they are {@link CiStackSlot}, {@link CiRegister} and {@link CiConstant} values describing how to extract values
+     * from a live frame.
      *
      * @param stopIndex an index of a stop within this method
      * @param fa access to a live frame (may be {@code null})
-     * @return the debug frame(s) at the denoted stop
+     * @return the debug ino at the denoted stop of {@code null} if none available
      */
-    public CiFrame debugFramesAt(int stopIndex, FrameAccess fa) {
+    public CiDebugInfo debugInfoAt(int stopIndex, FrameAccess fa) {
         return null;
     }
 

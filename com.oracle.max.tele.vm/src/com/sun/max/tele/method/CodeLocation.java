@@ -158,7 +158,7 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
     private final String description;
 
     private TeleCompilation compiledCode;
-    private CiFrame bytecodeFrames = null;
+    private CiDebugInfo debugInfo = null;
 
     protected CodeLocation(TeleVM teleVM, String description) {
         super(teleVM);
@@ -172,22 +172,26 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
         return compiledCode;
     }
 
-    public final CiFrame bytecodeFrames() {
-        if (bytecodeFrames == null && hasAddress()) {
-            bytecodeFrames = addressToBytecodeFrames(address());
+    public final CiDebugInfo debugInfo() {
+        if (debugInfo == null && hasAddress()) {
+            debugInfo = addressToDebugInfo(address());
         }
-        return bytecodeFrames;
+        return debugInfo;
     }
 
     public int bci() {
-        CiFrame frame = bytecodeFrames();
-        if (frame == null) {
+        CiDebugInfo info = debugInfo();
+        if (info == null) {
             return -1;
         }
-        while (frame.caller() != null) {
-            frame = frame.caller();
+        CiCodePos codePos = info.codePos;
+        if (codePos == null) {
+            return -1;
         }
-        return frame.bci;
+        while (codePos.caller != null) {
+            codePos = codePos.caller;
+        }
+        return codePos.bci;
     }
 
     public final String description() {
@@ -300,21 +304,20 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
     }
 
     /**
-     * Attempt to locate bytecode frame information specified by the compiler at the machine
-     * code instruction, if any, at the specified memory location.  This may include more than
-     * one frame when there has been inlining.
+     * Attempt to locate debug info associated with the machine
+     * code instruction, if any, at the specified memory location.
      *
      * @param address an address in the VM, possibly the location of a machine code instruction
      * in the compilation of a method.
-     * @return the bytecode frames specified by the compiler at the machine code instruction, null if not available
+     * @return the debug info for the machine code instruction, null if not available
      */
-    protected CiFrame addressToBytecodeFrames(Address address) {
+    protected CiDebugInfo addressToDebugInfo(Address address) {
         if (address != null && !address.isZero()) {
             if (compiledCode() != null) {
                 final InstructionMap instructionMap = compiledCode().getInstructionMap();
                 final int instructionIndex = instructionMap.findInstructionIndex(address);
                 if (instructionIndex >= 0) {
-                    return instructionMap.bytecodeFrames(instructionIndex);
+                    return instructionMap.debugInfoAt(instructionIndex);
                 }
             }
         }

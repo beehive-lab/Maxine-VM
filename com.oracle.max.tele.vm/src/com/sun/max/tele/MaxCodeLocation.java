@@ -100,14 +100,13 @@ public interface MaxCodeLocation {
     TeleClassMethodActor teleClassMethodActor();
 
     /**
-     * Bytecode frame information specified by the compiler at the machine
-     * code instruction, if specified by this location.  This may include more than
-     * one frame when there has been inlining.
+     * Debug info recorded by the compiler at the machine
+     * code instruction, if specified by this location.
      *
-     * @return the bytecode frames specified by the compiler at the
+     * @return the debug info recorded by the compiler at the
      * machine code instruction, if specified; null otherwise
      */
-    CiFrame bytecodeFrames();
+    CiDebugInfo debugInfo();
 
     /**
      * Is there an abstract intentional representation of the location, in terms of method name and signature, available?

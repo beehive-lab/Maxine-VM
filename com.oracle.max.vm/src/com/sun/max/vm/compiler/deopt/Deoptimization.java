@@ -310,6 +310,8 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
         // That is, stacks grow "upwards" towards the "top most" frame. One most systems, this
         // correlates with stacks physically growing down to lower addresses.
 
+        assert Safepoint.isDisabled() : "safepoints must be disabled when deoptimizing";
+
         TargetMethod tm = info.tm;
         Pointer sp = info.sp;
         Pointer fp = info.fp;
@@ -324,7 +326,8 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
         }
 
         FrameAccess fa = new FrameAccess(csa, rsa, sp, fp, info.callerSP, info.callerFP);
-        CiFrame topFrame = tm.debugFramesAt(stopIndex, fa);
+        CiDebugInfo debugInfo = tm.debugInfoAt(stopIndex, fa);
+        CiFrame topFrame = debugInfo.frame();
 
         logFrames(topFrame);
 
