@@ -171,8 +171,8 @@ public class LargeObjectSpace extends Sweeper {
                         start.isAligned(ALIGNMENT_REQUIREMENT),
                         "Incorrect initial setup for large object space");
 
-        Size adjustedMaxSize = maxSize.roundedUpBy(MIN_LARGE_OBJECT_SIZE);
-        Size adjustedInitSize = maxSize.roundedUpBy(MIN_LARGE_OBJECT_SIZE);
+        Size adjustedMaxSize = maxSize.alignUp(MIN_LARGE_OBJECT_SIZE);
+        Size adjustedInitSize = maxSize.alignUp(MIN_LARGE_OBJECT_SIZE);
 
         // The chunkSizeTableStart pointer is set so that chunkSizeTableStart.getWord(size >> LOG2_BLOCK_SIZE)
         // points to the appropriate list.
