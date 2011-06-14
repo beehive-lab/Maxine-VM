@@ -1308,7 +1308,7 @@ public class VmThread {
     public final void start0() {
         assert state == Thread.State.NEW;
         state = Thread.State.RUNNABLE;
-        VmThreadMap.ACTIVE.startThread(this, STACK_SIZE_OPTION.getValue().aligned(platform().pageSize).asSize(), javaThread.getPriority());
+        VmThreadMap.ACTIVE.startThread(this, STACK_SIZE_OPTION.getValue().alignUp(platform().pageSize).asSize(), javaThread.getPriority());
     }
 
     public final boolean isInterrupted(boolean clearInterrupted) {

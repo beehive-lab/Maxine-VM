@@ -168,8 +168,14 @@ public abstract class Size extends Address {
 
     @INLINE(override = true)
     @Override
-    public Size aligned(int alignment) {
-        return asAddress().aligned(alignment).asSize();
+    public Size alignUp(int alignment) {
+        return asAddress().alignUp(alignment).asSize();
+    }
+
+    @INLINE(override = true)
+    @Override
+    public Size alignDown(int alignment) {
+        return asAddress().alignDown(alignment).asSize();
     }
 
     @INLINE(override = true)

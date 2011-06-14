@@ -368,13 +368,17 @@ public abstract class Address extends Word {
 
     @INLINE(override = true)
     public Address wordAligned() {
-        final int n = Word.size();
-        return plus(n - 1).and(Address.fromInt(n - 1).not());
+        return alignUp(Word.size());
     }
 
     @INLINE(override = true)
-    public Address aligned(int alignment) {
-        return plus(alignment - 1).and(Address.fromInt(alignment - 1).not());
+    public Address alignUp(int alignment) {
+        return plus(alignment - 1).alignDown(alignment);
+    }
+
+    @INLINE(override = true)
+    public Address alignDown(int alignment) {
+        return and(Address.fromInt(alignment - 1).not());
     }
 
     @INLINE(override = true)

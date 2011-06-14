@@ -117,7 +117,7 @@ class LargeObjectTag extends DLinkedHeapFreeChunk {
      * @return the size a chunk storing the specified large object must have
      */
     private static Size getLargeObjectChunkSize(Size largeObjectSize) {
-        return largeObjectSize.plus(tagSize()).roundedUpBy(TaggedLargeObjectSpace.BLOCK_SIZE);
+        return largeObjectSize.plus(tagSize()).alignUp(TaggedLargeObjectSpace.BLOCK_SIZE);
     }
 
     /**
