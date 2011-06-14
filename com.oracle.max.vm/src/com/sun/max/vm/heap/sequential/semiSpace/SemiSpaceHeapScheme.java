@@ -1090,7 +1090,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
         @Override
         protected void doIt() {
-            final Size pageAlignedAmount = amount.asAddress().aligned(Platform.platform().pageSize).asSize().dividedBy(2);
+            final Size pageAlignedAmount = amount.asAddress().alignUp(Platform.platform().pageSize).asSize().dividedBy(2);
             logSpaces();
             executeGC();
             if (immediateFreeSpace().greaterEqual(pageAlignedAmount)) {
@@ -1139,7 +1139,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
              * This could be smaller than the existing spaces so we need to check.
              * It's unfortunate but that's the nature of the semispace scheme.
              */
-            final Size pageAlignedAmount = amount.asAddress().aligned(Platform.platform().pageSize).asSize().dividedBy(2);
+            final Size pageAlignedAmount = amount.asAddress().alignUp(Platform.platform().pageSize).asSize().dividedBy(2);
             if (pageAlignedAmount.greaterThan(fromSpace.size())) {
                 // grow adds the current space size to the amount in the grow policy
                 increaseGrowPolicy.setAmount(pageAlignedAmount.minus(fromSpace.size()));

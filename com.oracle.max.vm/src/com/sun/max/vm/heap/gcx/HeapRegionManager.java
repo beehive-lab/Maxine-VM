@@ -200,7 +200,7 @@ public final class HeapRegionManager implements HeapAccountOwner {
         // Initialize region constants (size and log constants).
         HeapRegionConstants.initializeConstants();
         // Adjust reserved space to region boundaries.
-        final Address startOfManagedSpace = reservedSpace.roundedUpBy(regionSizeInBytes);
+        final Address startOfManagedSpace = reservedSpace.alignUp(regionSizeInBytes);
         final Address endOfManagedSpace = startOfManagedSpace.plus(reservedSpaceSize).roundedDownBy(regionSizeInBytes);
         final Size managedSpaceSize = endOfManagedSpace.minus(startOfManagedSpace).asSize();
         final int numRegions = managedSpaceSize.unsignedShiftedRight(log2RegionSizeInBytes).toInt();
