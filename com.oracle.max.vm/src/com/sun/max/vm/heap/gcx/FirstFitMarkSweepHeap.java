@@ -655,9 +655,9 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         tlabAllocationRegions.checkIsAddressOrdered();
         allocationRegions.checkIsAddressOrdered();
         HeapRegionRangeIterable allRegions = heapAccount.allocatedRegions();
-        allRegions.reset();
+        allRegions.resetToFirstIterable();
         while (allRegions.hasNext()) {
-            HeapRegionInfo.walk(allRegions.next(), verifier);
+            HeapRegionInfo.walk(allRegions.nextIterableRange(), verifier);
         }
     }
 
