@@ -44,8 +44,6 @@ import com.sun.max.vm.runtime.*;
 
 /**
  * A singleton views that displays thread local areas for the thread the VM that is the current user focus.
- *
- * @author Michael Van De Vanter
  */
 public final class ThreadLocalsView extends AbstractView<ThreadLocalsView> implements TableColumnViewPreferenceListener {
 

@@ -35,8 +35,6 @@ import com.sun.max.tele.*;
  * A menu bar specialized for use in the VM Inspector.
  * <br>
  * Instances of {@link InspectorMenu} can be added, and they can be retrieved by name.
- *
- * @author Michael Van De Vanter
  */
 public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHolder {
 

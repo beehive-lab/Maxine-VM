@@ -26,7 +26,6 @@ import com.sun.max.tele.*;
 import com.sun.max.vm.type.*;
 
 /**
- * @author Doug Simon
  */
 public class TeleStaticFloadFieldAccess extends TeleStaticFieldAccess {
 

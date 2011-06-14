@@ -30,8 +30,6 @@ import com.sun.max.vm.heap.gcx.ms.*;
 /**
  * Implementation details about the heap in the VM, specialized for the mark-sweep implementation.
  *
- * @author Laurent Daynes
- *
  */
 public final class TeleMSHeapScheme extends AbstractTeleVMHolder implements TeleHeapScheme {
 

@@ -31,6 +31,8 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import javax.xml.transform.*;
+
 import com.oracle.max.hcfdis.*;
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
@@ -39,7 +41,6 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiCallingConvention.Type;
 import com.sun.cri.ri.*;
 import com.sun.cri.util.*;
-import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
@@ -131,6 +132,14 @@ public class T1X implements RuntimeCompiler {
             return t1XCompilationFactory.newT1XCompilation(T1X.this);
         }
     };
+
+    @HOSTED_ONLY
+    public void deoptimizationNotSupported() {
+    }
+
+    public boolean canProduceDeoptimizedCode() {
+        return true;
+    }
 
     public void resetMetrics() {
         for (Field f : T1XMetrics.class.getFields()) {
@@ -320,17 +329,10 @@ public class T1X implements RuntimeCompiler {
         }
     }
 
-    public <T extends TargetMethod> Class<T> compiledType() {
-        Class<Class<T>> type = null;
-        return Utils.cast(type, T1XTargetMethod.class);
-    }
-
-    @Override
     public CallEntryPoint calleeEntryPoint() {
         return CallEntryPoint.BASELINE_ENTRY_POINT;
     }
 
-    @Override
     public void initialize(Phase phase) {
         if (isHosted() && phase == Phase.COMPILING) {
             createTemplates(templateSource, altT1X, true);

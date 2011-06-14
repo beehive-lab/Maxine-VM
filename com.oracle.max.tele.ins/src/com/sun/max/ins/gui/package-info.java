@@ -22,7 +22,5 @@
  */
 /**
  * GUI framework classes and utilities for the VM Inspector.
- *
- * @author Michael Van De Vanter
  */
 package com.sun.max.ins.gui;

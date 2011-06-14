@@ -29,8 +29,6 @@ import com.sun.max.tele.debug.unix.*;
 /**
  * An implementation of {@link TeleChannelProtocol} for Solaris that uses direct native method calls.
  *
- * @author Mick Jordan
- *
  */
 public class SolarisNativeTeleChannelProtocol extends UnixNativeTeleChannelProtocolAdaptor implements SolarisTeleChannelProtocol {
 

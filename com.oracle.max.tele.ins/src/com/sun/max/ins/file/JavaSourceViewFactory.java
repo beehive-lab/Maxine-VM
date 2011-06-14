@@ -31,8 +31,6 @@ import com.sun.max.vm.actor.holder.*;
 
 /**
  * Methods for creating views on Java source files.
- *
- * @author Michael Van De Vanter
  */
 public interface JavaSourceViewFactory extends InspectionViewFactory<JavaSourceView> {
 

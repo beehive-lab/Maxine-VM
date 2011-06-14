@@ -30,7 +30,6 @@ import com.sun.max.tele.*;
 import com.sun.max.vm.hosted.*;
 
 /**
- * @author Bernd Mathiske
  */
 public final class DarwinTeleVM extends TeleVM {
 

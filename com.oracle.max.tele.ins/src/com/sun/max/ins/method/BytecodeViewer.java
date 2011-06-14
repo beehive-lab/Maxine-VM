@@ -46,8 +46,6 @@ import com.sun.max.vm.type.*;
 
 /**
  * Base class for Bytecodes viewers.
- *
- * @author Michael Van De Vanter
  */
 public abstract class BytecodeViewer extends CodeViewer {
 
@@ -82,12 +80,12 @@ public abstract class BytecodeViewer extends CodeViewer {
         return methodKey;
     }
 
-    private final MaxCompiledCode compiledCode;
+    private final MaxCompilation compiledCode;
 
     /**
      * The compilation associated with this view, if exists.
      */
-    protected MaxCompiledCode compiledCode() {
+    protected MaxCompilation compiledCode() {
         return compiledCode;
     }
 
@@ -135,7 +133,7 @@ public abstract class BytecodeViewer extends CodeViewer {
      * Base class for bytecode viewers. Machine code is optional, since a method may not yet be compiled, but may appear
      * and change as method is compiled and recompiled.
      */
-    protected BytecodeViewer(Inspection inspection, MethodView parent, TeleClassMethodActor teleClassMethodActor, MaxCompiledCode compiledCode) {
+    protected BytecodeViewer(Inspection inspection, MethodView parent, TeleClassMethodActor teleClassMethodActor, MaxCompilation compiledCode) {
         super(inspection, parent);
         this.teleClassMethodActor = teleClassMethodActor;
         this.compiledCode = compiledCode;
@@ -273,7 +271,6 @@ public abstract class BytecodeViewer extends CodeViewer {
      * A representation of a bytecode instruction, suitable for displaying
      * different aspects of it.
      *
-     * @author Michael Van De Vanter
      */
     protected class BytecodeInstruction {
 

@@ -29,8 +29,6 @@ import com.sun.max.tele.object.*;
 /**
  * An object view specialized for displaying a low-level object
  * in the VM, constructed using {@link ArrayLayout}.
- *
- * @author Michael Van De Vanter
  */
 public final class ArrayView extends ObjectView<ArrayView> {
 

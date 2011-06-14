@@ -30,8 +30,6 @@ import com.sun.max.vm.layout.*;
 
 /**
  * An object view specialized for displaying a low-level heap object in the VM constructed using {@link TupleLayout}.
- *
- * @author Michael Van De Vanter
  */
 public class TupleView extends ObjectView<TupleView> {
 
@@ -41,7 +39,7 @@ public class TupleView extends ObjectView<TupleView> {
         super(inspection, factory, teleObject);
         final InspectorFrame frame = createFrame(true);
 
-        final MaxCompiledCode compiledCode = vm().codeCache().findCompiledCode(teleObject.origin());
+        final MaxCompilation compiledCode = vm().codeCache().findCompiledCode(teleObject.origin());
         if (compiledCode != null) {
             frame.makeMenu(MenuKind.DEBUG_MENU).add(actions().setMachineCodeBreakpointAtEntry(compiledCode));
         }

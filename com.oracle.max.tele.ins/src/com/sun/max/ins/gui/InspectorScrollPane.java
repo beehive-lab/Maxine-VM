@@ -33,8 +33,6 @@ import com.sun.max.tele.*;
 /**
  * A scroll pane specialized for use in the VM Inspector.
  * By default uses policies VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER
- *
- * @author Michael Van De Vanter
  */
 public class InspectorScrollPane extends JScrollPane implements Prober, InspectionHolder {
 

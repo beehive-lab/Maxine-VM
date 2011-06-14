@@ -34,8 +34,6 @@ import com.sun.max.ins.gui.*;
 /**
  * A table cell renderer for tables with rows representing memory words: displays in the cell
  * the contents of a row's memory region in the VM, expressed as bytes.
- *
- * @author Michael Van De Vanter
  */
 public final class MemoryBytesTableCellRenderer extends InspectorTableCellRenderer {
 

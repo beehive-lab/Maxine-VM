@@ -30,8 +30,6 @@ import com.sun.max.vm.actor.member.*;
 /**
  * Instances of this class contain the execution state of a single thread in the system.
  * NOTE: currently there _is_ only one thread. Please ignore the man behind the curtain.
- *
- * @author Athul Acharya
  */
 class ExecutionThread {
 

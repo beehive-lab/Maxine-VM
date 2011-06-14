@@ -29,8 +29,6 @@ import com.sun.max.ins.gui.*;
 
 /**
  * Persistent preferences for viewing thread local values in the VM.
- *
- * @author Michael Van De Vanter
   */
 public final class ThreadLocalsViewPreferences extends TableColumnVisibilityPreferences<ThreadLocalVariablesColumnKind> {
 

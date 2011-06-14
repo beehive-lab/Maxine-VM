@@ -36,8 +36,6 @@ import com.sun.max.ins.object.*;
 
 /**
  * A rudimentary Preferences dialog; leveraging {@link JPanel}s provided by various {@link AbstractView}s.
- *
- * @author Michael Van De Vanter
  */
 public class PreferenceDialog extends SimpleDialog {
 

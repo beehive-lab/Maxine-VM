@@ -57,6 +57,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.object.*;
@@ -461,13 +462,13 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
     }
 
     @Override
-    public void fixupCallSite(int callOffset, Address callEntryPoint) {
-        AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
+    public Address fixupCallSite(int callOffset, Address callEntryPoint) {
+        return AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
     }
 
     @Override
-    public void patchCallSite(int callOffset, Address callEntryPoint) {
-        AMD64TargetMethodUtil.mtSafePatchCallDisplacement(this, codeStart().plus(callOffset), callEntryPoint.asAddress());
+    public Address patchCallSite(int callOffset, Address callEntryPoint) {
+        return AMD64TargetMethodUtil.mtSafePatchCallDisplacement(this, codeStart().plus(callOffset), callEntryPoint.asAddress());
     }
 
     @Override
@@ -791,9 +792,21 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
                 Log.println(catchAddress.minus(codeStart()).toInt());
             }
 
-            if (current.targetMethod().invalidated() != null) {
-                // TODO (ds)
-                FatalError.unimplemented();
+            if (invalidated() != null) {
+                // Instead of unwinding to the invalidated method, execution is redirected to the void deopt stub.
+                // And the original return address (i.e. current.ip()) is saved in the DEOPT_RETURN_ADDRESS_OFFSET
+                // slot instead of the handler address. This is required so that the debug info associated with
+                // the call site is used during deopt. This debug info matches the state on entry to the handler
+                // except that the stack is empty (the exception object is explicitly retrieved and pushed by
+                // the handler in the deoptimized code).
+                current.sp().writeWord(DEOPT_RETURN_ADDRESS_OFFSET, ip);
+                Stub stub = vm().stubs.deoptStub(CiKind.Void);
+                Pointer deoptStub = stub.codeStart().asPointer();
+                if (Deoptimization.TraceDeopt) {
+                    Log.println("DEOPT: changed exception handler address " + catchAddress.to0xHexString() + " in " + this + " to redirect to deopt stub " +
+                                    deoptStub.to0xHexString() + " [sp=" + sp.to0xHexString() + ", fp=" + fp.to0xHexString() + "]");
+                }
+                catchAddress = deoptStub;
             }
 
             TargetMethod calleeMethod = callee.targetMethod();

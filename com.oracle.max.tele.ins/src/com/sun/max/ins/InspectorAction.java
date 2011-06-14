@@ -32,9 +32,6 @@ import com.sun.max.program.*;
 
 /**
  * Base class for all "actions" in the Inspector that can be bound to menus, buttons, and keystrokes.
- *
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
  */
 public abstract class InspectorAction extends AbstractAction implements Prober {
 

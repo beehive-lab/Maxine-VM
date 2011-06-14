@@ -33,10 +33,6 @@ import com.sun.max.vm.runtime.*;
 
 /**
  * Encapsulates the values of the integer (or general purpose) registers for a tele native thread.
- *
- * @author Bernd Mathiske
- * @author Doug Simon
- * @author Michael Van De Vanter
  */
 public final class TeleIntegerRegisters extends TeleRegisters {
 

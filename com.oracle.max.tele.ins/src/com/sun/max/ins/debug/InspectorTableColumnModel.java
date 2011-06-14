@@ -32,9 +32,6 @@ import com.sun.max.ins.gui.*;
 
 /**
  * An abstract table column model specialized for Inspector table-based views.
- *
- * @author Hannes Payer
- * @author Michael Van De Vanter
  */
 public abstract class InspectorTableColumnModel<ColumnKind_Type extends  ColumnKind> extends DefaultTableColumnModel implements Prober {
 

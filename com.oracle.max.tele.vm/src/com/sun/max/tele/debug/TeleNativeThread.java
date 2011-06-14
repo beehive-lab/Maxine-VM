@@ -50,11 +50,6 @@ import com.sun.max.vm.value.*;
 
 /**
  * Represents a thread executing in a {@linkplain TeleProcess tele process}.
- *
- * @author Bernd Mathiske
- * @author Aritra Bandyopadhyay
- * @author Doug Simon
- * @author Michael Van De Vanter
  */
 public abstract class TeleNativeThread extends AbstractTeleVMHolder implements TeleVMCache, Comparable<TeleNativeThread>, MaxThread, ThreadProvider {
 
@@ -664,7 +659,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
                 z++;
 
                 final Address address = stackFrame.ip;
-                TeleCompiledCode compiledCode = vm().codeCache().findCompiledCode(address);
+                TeleCompilation compiledCode = vm().codeCache().findCompiledCode(address);
                 if (compiledCode == null) {
                     if (stackFrame.targetMethod() == null) {
                         LOGGER.warning("Target method of stack frame (" + stackFrame + ") was null!");

@@ -43,9 +43,6 @@ import com.sun.max.unsafe.*;
 
 /**
  * A view that renders memory contents, letting you select the start address, etc.
- *
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
  */
 public final class MemoryBytesView extends AbstractView<MemoryBytesView> {
 

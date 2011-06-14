@@ -27,7 +27,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.type.*;
 
 /**
- * @author Bernd Mathiske
  */
 public abstract class TeleFieldAccess {
 

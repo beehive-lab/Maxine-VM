@@ -46,8 +46,6 @@ import com.sun.max.vm.value.*;
 
 /**
  * A table that displays object fields; for use in an instance of {@link ObjectView}.
- *
- * @author Michael Van De Vanter
  */
 public final class ObjectFieldsTable extends InspectorTable {
 

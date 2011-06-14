@@ -63,9 +63,6 @@ import com.sun.max.vm.tele.*;
  * a class that contains knowledge of the heap implementation
  * configured into the VM.
  *
- * @author Michael Van De Vanter
- * @author Hannes Payer
- *
  * @see InspectableHeapInfo
  * @see TeleRoots
  * @see HeapScheme

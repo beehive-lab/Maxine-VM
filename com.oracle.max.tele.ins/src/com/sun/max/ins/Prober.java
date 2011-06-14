@@ -28,9 +28,6 @@ import com.sun.max.ins.gui.*;
  * A display element of an {@link AbstractView} that presents visually some aspect of the
  * state of the VM, and so may need to take some action should either the VM state or
  * visual display preferences change.
- *
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
  */
 public interface Prober {
 

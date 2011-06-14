@@ -29,9 +29,6 @@ import com.sun.max.unsafe.*;
 
 /**
  * Description of a region of memory in the VM.
- *
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
  */
 public interface MaxMemoryRegion {
 

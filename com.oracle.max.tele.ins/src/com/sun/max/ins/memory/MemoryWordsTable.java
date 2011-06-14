@@ -42,8 +42,6 @@ import com.sun.max.vm.value.*;
 
 /**
  * A table specialized for displaying a range of memory words in the VM.
- *
- * @author Michael Van De Vanter
  */
 public final class MemoryWordsTable extends InspectorTable {
 

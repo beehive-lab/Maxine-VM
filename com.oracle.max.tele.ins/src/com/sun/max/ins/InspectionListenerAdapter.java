@@ -31,8 +31,6 @@ package com.sun.max.ins;
  * register with the inspection via
  * {@link Inspection#addInspectionListener(InspectionListener)} and
  * {@link Inspection#removeInspectionListener(InspectionListener)}.
- *
- * @author Michael Van De Vanter
  */
 public abstract class InspectionListenerAdapter implements InspectionListener {
 

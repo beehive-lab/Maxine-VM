@@ -47,9 +47,6 @@ import com.sun.max.vm.classfile.*;
 
 /**
  * Holds the user interaction state for the inspection of a VM, which is accessed via a surrogate implementing {@link MaxVM}.
- *
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
  */
 public final class Inspection implements InspectionHolder {
 
@@ -137,7 +134,7 @@ public final class Inspection implements InspectionHolder {
                 inspectionViews.activateInitialViews();
                 focus.setCodeLocation(focus.thread().ipLocation());
             } catch (Throwable throwable) {
-                InspectorWarning.message("Error during initialization", throwable);
+                InspectorWarning.message(null, "Error during initialization", throwable);
                 throwable.printStackTrace();
                 System.exit(1);
             }
@@ -547,7 +544,7 @@ public final class Inspection implements InspectionHolder {
                 vm().terminateVM();
             }
         } catch (Exception exception) {
-            InspectorWarning.message("error during VM termination: " + exception);
+            InspectorWarning.message(null, "error during VM termination: " + exception);
         } finally {
             Trace.line(1, tracePrefix() + " exiting, Goodbye");
             System.exit(0);
@@ -602,7 +599,7 @@ public final class Inspection implements InspectionHolder {
                         Trace.line(1, tracePrefix() + "Opening file by executing " + command);
                         Runtime.getRuntime().exec(command);
                     } catch (IOException ioException) {
-                        InspectorWarning.message("Error opening file by executing " + command, ioException);
+                        InspectorWarning.message(this, "Error opening file by executing " + command, ioException);
                         return false;
                     }
                 }
@@ -622,7 +619,7 @@ public final class Inspection implements InspectionHolder {
                         fileViewerStream.flush();
                         fileViewer.close();
                     } catch (IOException ioException) {
-                        InspectorWarning.message("Error opening file via localhost:" + portString + ": " + ioException);
+                        InspectorWarning.message(this, "Error opening file via localhost:" + portString + ": " + ioException);
                         return false;
                     }
                 }

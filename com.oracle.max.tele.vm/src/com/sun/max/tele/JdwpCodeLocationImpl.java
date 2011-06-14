@@ -27,8 +27,6 @@ import com.sun.max.jdwp.vm.proxy.*;
 
 /**
  * Class representing a location that can either point to a machine code instruction or a Java bytecode.
- *
- * @author Thomas Wuerthinger
  */
 class JdwpCodeLocationImpl implements JdwpCodeLocation{
 

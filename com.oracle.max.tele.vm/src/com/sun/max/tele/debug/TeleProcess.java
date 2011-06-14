@@ -48,12 +48,6 @@ import com.sun.max.vm.thread.*;
  * A model of the remote process in which the VM is running,
  * which includes access to the memory state and debugging
  * actions that control execution.
- *
- * @author Bernd Mathiske
- * @author Aritra Bandyopadhyay
- * @author Doug Simon
- * @author Michael Van De Vanter
- * @author Hannes Payer
  */
 public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVMCache, TeleIO {
 
@@ -900,12 +894,12 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
             // Executed a return
             return null;
         }
-        final TeleCompiledCode oldCompiledCode = vm().codeCache().findCompiledCode(oldInstructionPointer);
+        final TeleCompilation oldCompiledCode = vm().codeCache().findCompiledCode(oldInstructionPointer);
         if (oldCompiledCode == null) {
             // Stepped from external native code:
             return null;
         }
-        final TeleCompiledCode newCompiledCode = vm().codeCache().findCompiledCode(newInstructionPointer);
+        final TeleCompilation newCompiledCode = vm().codeCache().findCompiledCode(newInstructionPointer);
         if (newCompiledCode == null) {
             // Stepped into external native code:
             return null;

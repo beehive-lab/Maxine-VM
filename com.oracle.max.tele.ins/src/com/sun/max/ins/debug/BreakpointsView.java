@@ -33,9 +33,6 @@ import com.sun.max.tele.*;
 /**
  * Singleton view that displays information about all kinds of breakpoints that might be set in the VM.
  * Wrappers with extra information about each breakpoint are kept in a model.
- *
- * @author Mick Jordan
- * @author Michael Van De Vanter
  */
 public final class BreakpointsView extends AbstractView<BreakpointsView> implements TableColumnViewPreferenceListener {
 

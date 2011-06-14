@@ -29,8 +29,6 @@ import com.sun.max.vm.type.*;
 /**
  * Canonical surrogate for a  {@link TypeDescriptor} in the Target VM.
  *
- * @author Michael Van De Vanter
- *
  */
 public final class TeleTypeDescriptor extends TeleDescriptor {
 

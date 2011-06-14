@@ -29,8 +29,6 @@ import com.sun.max.unsafe.*;
 
 /**
  * Representation of a span of memory in the VM.
- *
- * @author Michael Van De Vanter
  */
 public class InspectorMemoryRegion implements MaxMemoryRegion {
 

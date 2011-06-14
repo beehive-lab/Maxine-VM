@@ -24,8 +24,6 @@ package com.sun.max.tele;
 
 /**
  * Interface for listening to changes in the watchpoints set in the VM.
- *
- * @author Michael Van De Vanter
  */
 public interface MaxWatchpointListener {
 

@@ -39,9 +39,6 @@ import com.sun.max.vm.type.*;
 
 /**
  * A dialog to let the user select a reference to a method actor defined by a given class actor.
- *
- * @author Doug Simon
- * @author Bernd Mathiske
  */
 public final class MethodSearchDialog extends FilteredListDialog<MethodKey> {
 
@@ -99,7 +96,7 @@ public final class MethodSearchDialog extends FilteredListDialog<MethodKey> {
                 methodKeys.add(createMethodKey(SignatureDescriptor.create(Void.TYPE), holderTypeDescriptor, SymbolTable.CLINIT));
             }
         } catch (Error error) {
-            InspectorWarning.message("Error loading class " + className, error);
+            InspectorWarning.message(inspection, "Error loading class " + className, error);
         }
         rebuildList();
     }

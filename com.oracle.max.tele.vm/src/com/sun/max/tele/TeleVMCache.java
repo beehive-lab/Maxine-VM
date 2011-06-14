@@ -26,8 +26,6 @@ package com.sun.max.tele;
 /**
  * An object that refers to a resource in the VM, and which reads
  * and caches some related state from the VM.
- *
- * @author Michael Van De Vanter
  */
 public interface TeleVMCache {
 

@@ -41,9 +41,6 @@ import com.sun.max.vm.hosted.BootImage.Header;
 
 /**
  * A null process that "contains" the boot image for inspection, as if it were a VM.
- *
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
  */
 public final class ReadOnlyTeleProcess extends TeleProcess {
     private final DataAccess dataAccess;

@@ -21,6 +21,5 @@
  * questions.
  */
 /** 
- * @author Bernd Mathiske
  */
 package com.sun.max.ins.sparc;

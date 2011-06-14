@@ -28,7 +28,6 @@ import com.sun.max.vm.*;
 /**
 * Defines the columns that can be displayed describing {@link VMConfiguration}  information in the VM boot image.
 *
-* @author Michael Van De Vanter
 */
 public enum BootImageColumnKind implements ColumnKind {
     NAME ("Parameter", "Boot Image configuration parameter", true, 20) {

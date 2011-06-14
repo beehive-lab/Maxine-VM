@@ -29,8 +29,6 @@ import com.sun.max.tele.debug.*;
 
 /**
  * Implements the (mostly) immutable history of Maxine VM states during a debugging sessions.
- *
- * @author Michael Van De Vanter
  */
 public final class TeleVMState implements MaxVMState {
 

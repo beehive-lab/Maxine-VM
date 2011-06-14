@@ -32,10 +32,6 @@ import com.sun.max.unsafe.*;
 
 /**
  * Encapsulates the values of the state registers for a tele native thread.
- *
- * @author Bernd Mathiske
- * @author Laurent Daynes
- * @author Michael Van De Vanter
  */
 public final class TeleStateRegisters extends TeleRegisters {
 

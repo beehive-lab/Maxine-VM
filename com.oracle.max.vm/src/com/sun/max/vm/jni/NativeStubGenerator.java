@@ -317,10 +317,21 @@ public final class NativeStubGenerator extends BytecodeAssembler {
         Log.print(VmThread.current().getName());
     }
 
+    /**
+     * @see #link
+     */
     @INTRINSIC(JNIOP_LINK)
     public static native Address link();
+
+    /**
+     * @see #nativeToJava
+     */
     @INTRINSIC(JNIOP_N2J)
     public static native void nativeToJava();
+
+    /**
+     * @see #javaToNative
+     */
     @INTRINSIC(JNIOP_J2N)
     public static native void javaToNative();
 

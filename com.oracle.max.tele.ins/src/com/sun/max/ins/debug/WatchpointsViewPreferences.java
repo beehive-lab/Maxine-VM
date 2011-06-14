@@ -35,8 +35,6 @@ import com.sun.max.tele.MaxWatchpoint.*;
 
 /**
  * Persistent preferences for managing and viewing watchpoints in the VM.
- *
- * @author Michael Van De Vanter
   */
 public final class WatchpointsViewPreferences extends TableColumnVisibilityPreferences<WatchpointsColumnKind> {
 

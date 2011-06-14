@@ -42,8 +42,6 @@ import com.sun.max.tele.*;
  * - tracking which rows are "active", i.e. have some frame at that location for the thread of current focus
  * - an action, attached to a toolbar button, that scrolls to the next active row
  * - a "search" function that causes a separate toolbar to appear that permits regexp row-based searching.
- *
- * @author Michael Van De Vanter
  */
 public abstract class CodeViewer extends InspectorPanel {
 

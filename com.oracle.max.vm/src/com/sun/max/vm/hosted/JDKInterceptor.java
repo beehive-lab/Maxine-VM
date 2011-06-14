@@ -204,6 +204,8 @@ public final class JDKInterceptor {
             new ArrayBaseOffsetRecomputation("arrayBaseOffset", JDK.java_nio_DirectShortBufferS, short[].class),
         JDK.java_nio_DirectShortBufferU,
             new ArrayBaseOffsetRecomputation("arrayBaseOffset", JDK.java_nio_DirectShortBufferU, short[].class),
+        JDK.java_nio_charset_CharsetEncoder,
+            "cachedDecoder",
         JDK.java_util_concurrent_atomic_AtomicBoolean,
             new FieldOffsetRecomputation("valueOffset", JDK.java_util_concurrent_atomic_AtomicBoolean, "value"),
         JDK.java_util_concurrent_atomic_AtomicInteger,

@@ -34,8 +34,6 @@ import com.sun.max.program.option.*;
 
 /**
  * Persistent preferences for viewing heap objects in the VM.
- *
- * @author Michael Van De Vanter
   */
 public class ObjectViewPreferences extends TableColumnVisibilityPreferences<ObjectColumnKind> {
 

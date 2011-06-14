@@ -43,8 +43,6 @@ import com.sun.max.vm.stack.*;
  * {@link TruncatedFrame}, which is <em>synthetic</em>: it
  * corresponds to no VM frame type, but is rather used to as a marker by the stack walker for
  * communicating truncated stack walks.
- *
- * @author Michael Van De Vanter
  */
 public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends AbstractTeleVMHolder implements MaxStackFrame {
 
@@ -115,7 +113,7 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
     private final TeleStack teleStack;
     private final int position;
     private final CodeLocation codeLocation;
-    private final TeleCompiledCode teleCompiledCode;
+    private final TeleCompilation teleCompiledCode;
 
     protected TeleStackFrame(TeleVM teleVM, TeleStack teleStack, int position, StackFrame_Type stackFrame) {
         super(teleVM);
@@ -184,7 +182,7 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
         return codeLocation;
     }
 
-    public final TeleCompiledCode compiledCode() {
+    public final TeleCompilation compiledCode() {
         return teleCompiledCode;
     }
 
@@ -247,7 +245,7 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
         }
 
         public String sourceVariableName(int slot) {
-            final TeleCompiledCode compiledCode = compiledCode();
+            final TeleCompilation compiledCode = compiledCode();
             return compiledCode == null ? null : compiledCode.sourceVariableName(this, slot);
         }
     }

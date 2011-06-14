@@ -29,8 +29,6 @@ import com.sun.max.tele.channel.TeleChannelDataIOProtocol;
 /**
  * This is a stub implementation that exists only on the agent side of the split communication protocol.
  *
- * @author Mick Jordan
- *
  */
 
 public class TeleProcess {

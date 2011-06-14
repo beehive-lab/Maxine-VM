@@ -39,10 +39,6 @@ import com.sun.max.unsafe.*;
 /**
  * A singleton view that displays the contents of the stack frame in
  * the VM that is the current user focus.
- *
- * @author Doug Simon
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
  */
 public final class StackFrameView extends AbstractView<StackFrameView> implements TableColumnViewPreferenceListener {
 
@@ -144,7 +140,7 @@ public final class StackFrameView extends AbstractView<StackFrameView> implement
             sb.append(inspection().nameDisplay().unavailableDataShortText());
         } else {
             if (stackFrame instanceof MaxStackFrame.Compiled) {
-                final MaxCompiledCode compiledCode = stackFrame.compiledCode();
+                final MaxCompilation compiledCode = stackFrame.compiledCode();
                 sb.append(inspection().nameDisplay().veryShortName(compiledCode));
             } else if (stackFrame instanceof MaxStackFrame.Native) {
                 sb.append("<native>");

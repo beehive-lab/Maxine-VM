@@ -29,7 +29,6 @@ import com.sun.max.tele.debug.dump.*;
 import com.sun.max.tele.debug.linux.LinuxDumpTeleChannelProtocol.TaskData;
 
 /**
- * @author Mick Jordan
  *
  */
 public class LinuxDumpThreadAccess extends ThreadAccess {

@@ -28,9 +28,6 @@ import com.sun.max.unsafe.*;
 
 /**
  * Buffered reading/writing of bytes from/to a source/destination that can be identified by an {@link Address}.
- *
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
  */
 public interface DataIO {
 

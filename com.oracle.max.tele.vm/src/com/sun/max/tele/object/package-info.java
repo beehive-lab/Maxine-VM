@@ -23,7 +23,5 @@
 
 /**
  * Remote access to objects in the tele VM heap.
- *
- * @author Michael Van De Vanter
  */
 package com.sun.max.tele.object;

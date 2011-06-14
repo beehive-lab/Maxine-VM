@@ -37,8 +37,6 @@ import com.sun.max.tele.*;
  * A table cell renderer for tables in which each row is associated with a memory region, and which displays
  * information about any registers in the current thread that point into the information, along with information
  * about any watchpoints set and possibly triggered n the region.
- *
- * @author Michael Van De Vanter
  */
 public final class MemoryTagTableCellRenderer extends InspectorTableCellRenderer {
 

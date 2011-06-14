@@ -22,7 +22,5 @@
  */
 /**
  *  Debugger support/implementation, e.g. breakpoint setting.
- * 
- * @author Bernd Mathiske
  */
 package com.sun.max.ins.debug;

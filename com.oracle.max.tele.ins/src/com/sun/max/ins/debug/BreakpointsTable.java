@@ -39,8 +39,6 @@ import com.sun.max.vm.actor.member.*;
 
 /**
  * A table specialized for displaying code breakpoints in the VM.
- *
- * @author Michael Van De Vanter
  */
 public final class BreakpointsTable extends InspectorTable {
 
@@ -134,7 +132,6 @@ public final class BreakpointsTable extends InspectorTable {
     /**
      * A table data model built around the list of current breakpoints in the VM.
      *
-     * @author Michael Van De Vanter
      */
     private final class BreakpointsTableModel extends InspectorTableModel {
 
@@ -457,7 +454,6 @@ public final class BreakpointsTable extends InspectorTable {
     /**
      * Summary of information about a breakpoint that is useful for inspection.
      *
-     * @author Michael Van De Vanter
      */
     private abstract class BreakpointData implements Comparable {
 
@@ -632,7 +628,7 @@ public final class BreakpointsTable extends InspectorTable {
         MachineCodeBreakpointData(MaxBreakpoint machineCodeBreakpoint) {
             super(machineCodeBreakpoint);
             final Address address = codeLocation().address();
-            final MaxCompiledCode compiledCode = vm().codeCache().findCompiledCode(address);
+            final MaxCompilation compiledCode = vm().codeCache().findCompiledCode(address);
             if (compiledCode != null) {
                 shortName = inspection().nameDisplay().shortName(compiledCode);
                 final StringBuilder sb = new StringBuilder();

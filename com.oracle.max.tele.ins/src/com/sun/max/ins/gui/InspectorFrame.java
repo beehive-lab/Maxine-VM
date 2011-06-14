@@ -35,8 +35,6 @@ import com.sun.max.ins.util.*;
  * hold an {@link AbstractView}, either a simple internal frame suitable
  * for a {@link JDesktopPane} or the contents of a single tab in a
  * "tabbed pane".
- *
- * @author Michael Van De Vanter
  */
 public interface InspectorFrame extends RootPaneContainer, Prober {
 

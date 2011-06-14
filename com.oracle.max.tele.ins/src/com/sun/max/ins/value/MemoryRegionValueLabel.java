@@ -39,8 +39,6 @@ import com.sun.max.vm.value.*;
  * sort of value is being used, followed by "points into ", followed by the name of the region.
  * <br>
  * Updated every refresh.
- *
- * @author Michael Van De Vanter
  */
 public class MemoryRegionValueLabel extends ValueLabel {
 

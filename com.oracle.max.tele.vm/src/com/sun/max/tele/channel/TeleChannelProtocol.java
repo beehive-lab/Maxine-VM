@@ -34,8 +34,6 @@ import com.sun.max.tele.debug.*;
  *
  * An in-process implementation typically will implement this entire interface directly. A communication-based
  * implementation will use an adaptor to convert to the methods support by {@link TeleChannelDataIOProtocol}.
- *
- * @author Mick Jordan
  */
 public interface TeleChannelProtocol extends TeleChannelDataIOProtocol {
     /**

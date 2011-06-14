@@ -131,13 +131,13 @@ public abstract class Adapter extends TargetMethod {
     }
 
     @Override
-    public void fixupCallSite(int callOffset, Address callEntryPoint) {
-        FatalError.unexpected("Adapter should never be patched");
+    public Address fixupCallSite(int callOffset, Address callEntryPoint) {
+        throw FatalError.unexpected("Adapter should never be patched");
     }
 
     @Override
-    public void patchCallSite(int callOffset, Address callEntryPoint) {
-        FatalError.unexpected("Adapter should never be patched");
+    public Address patchCallSite(int callOffset, Address callEntryPoint) {
+        throw FatalError.unexpected("Adapter should never be patched");
     }
 
     @Override

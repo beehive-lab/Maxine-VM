@@ -34,9 +34,6 @@ import com.sun.max.vm.thread.*;
 
 /**
  * Specialization of a StackFrameWalker for use with a {@link TeleVM}.
- *
- * @author Laurent Daynes
- * @author Doug Simon
  */
 public final class TeleStackFrameWalker extends StackFrameWalker {
 
@@ -164,7 +161,7 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
 
     @Override
     public TargetMethod targetMethodFor(Pointer instructionPointer) {
-        final TeleCompiledCode compiledCode = teleVM.codeCache().findCompiledCode(instructionPointer);
+        final TeleCompilation compiledCode = teleVM.codeCache().findCompiledCode(instructionPointer);
         if (compiledCode != null) {
             return compiledCode.teleTargetMethod().targetMethod();
         }

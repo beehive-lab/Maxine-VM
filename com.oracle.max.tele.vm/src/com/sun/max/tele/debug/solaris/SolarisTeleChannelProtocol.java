@@ -28,8 +28,6 @@ import com.sun.max.tele.channel.*;
  * Solaris-specific extension of the standard {@link TeleChannelProtocol}.
  * Any Solaris-specific methods would be added here.
  *
- * @author Mick Jordan
- *
  */
 public interface SolarisTeleChannelProtocol extends TeleChannelProtocol {
 

@@ -34,9 +34,6 @@ import com.sun.max.vm.actor.holder.*;
 /**
  * A label specialized for displaying a reference in the header of a low-level
  * object in the VM to the object's {@link Hub}.
- *
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
  */
 public final class HubLabel extends InspectorLabel {
 

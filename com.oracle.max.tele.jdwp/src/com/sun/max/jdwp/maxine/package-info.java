@@ -21,7 +21,6 @@
  * questions.
  */
 /**
- * @author Thomas Wuerthinger
  *
  * Use the class {@link Main} to start the Maxine JDWP server. This class bridges between the JDWP implementation and the Tele layer.
  */

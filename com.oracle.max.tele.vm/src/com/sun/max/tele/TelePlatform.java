@@ -28,8 +28,6 @@ import static com.sun.max.platform.Platform.*;
 
 /*
  * An abstraction of the underlying platform on which a VM is running.
- *
- * @author Michael Van De Vanter
  */
 public final class TelePlatform implements MaxPlatform {
     private final com.sun.max.platform.Platform maxinePlatform;

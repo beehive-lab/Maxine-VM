@@ -38,8 +38,6 @@ import com.sun.max.ins.view.InspectionViews.ViewKind;
  * <p>
  * The manager is both a source of meta-information about the kind
  * of view, and an implementation that manages the view(s).
- *
- * @author Michael Van De Vanter
  */
 public interface ViewManager<Inspector_Kind extends AbstractView>  {
 

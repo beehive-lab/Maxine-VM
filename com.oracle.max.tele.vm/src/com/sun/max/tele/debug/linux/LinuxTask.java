@@ -40,9 +40,6 @@ import com.sun.max.util.*;
  * {@linkplain SingleThread single dedicated thread} fulfilling a requirement of ptrace. Because all operations
  * on the single dedicated thread are synchronized, there's no need to synchronize the methods in this class that
  * delegate to it.
- *
- * @author Bernd Mathiske
- * @author Doug Simon
  */
 public final class LinuxTask {
 

@@ -31,8 +31,6 @@ import com.sun.max.ins.*;
 
 /**
  * A fully specified style, designed to be evolve slowly and resemble earlier prototypes.
- *
- * @author Michael Van De Vanter
  */
 public class StandardInspectorStyle extends InspectorStyleAdapter {
 

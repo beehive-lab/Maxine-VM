@@ -22,7 +22,5 @@
  */
 /**
  * A look at raw memory.
- * 
- * @author Bernd Mathiske
  */
 package com.sun.max.ins.memory;

@@ -32,8 +32,6 @@ import com.sun.max.vm.stack.*;
 /**
  * A selectable, lightweight, label for basic kinds of data
  * about which little is known.
- *
- * @author Michael Van De Vanter
  */
 public abstract class DataLabel extends InspectorLabel {
 

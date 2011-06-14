@@ -32,11 +32,6 @@ import com.sun.max.tele.debug.unix.*;
 import com.sun.max.vm.hosted.*;
 
 /**
- * @author Bernd Mathiske
- * @author Aritra Bandyopadhyay
- * @author Doug Simon
- * @author Hannes Payer
- * @author Mick Jordan
  */
 public final class SolarisTeleProcess extends UnixTeleProcessAdaptor {
 

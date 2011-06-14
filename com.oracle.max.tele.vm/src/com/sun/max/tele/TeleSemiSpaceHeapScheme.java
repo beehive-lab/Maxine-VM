@@ -37,9 +37,6 @@ import com.sun.max.vm.runtime.*;
  * for the semi-space implementation.
  * <br>
  * Forwarding pointer stored in the "Hub" field of objects.
- *
- * @author Hannes Payer
- * @author Michael Van De Vanter
  * @see SemiSpaceHeapScheme
  */
 public final class TeleSemiSpaceHeapScheme extends AbstractTeleVMHolder implements TeleHeapScheme{

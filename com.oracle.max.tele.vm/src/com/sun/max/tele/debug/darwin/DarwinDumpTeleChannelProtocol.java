@@ -39,8 +39,6 @@ import com.sun.max.vm.hosted.*;
 /**
  * Core file handling for Darwin. Of course, it doesn't use ELF. Mach_O instead.
  *
- * @author Mick Jordan
- *
  */
 public class DarwinDumpTeleChannelProtocol extends TeleChannelDataIOProtocolAdaptor implements DarwinTeleChannelProtocol {
     protected int tlaSize;

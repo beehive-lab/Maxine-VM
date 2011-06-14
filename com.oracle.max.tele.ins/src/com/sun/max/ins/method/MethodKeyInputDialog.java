@@ -42,8 +42,6 @@ import com.sun.max.vm.type.*;
 /**
  * A dialog for obtaining a {@linkplain MethodKey method key} based on a name, signature and declaring class entered by
  * the user. This dialog implements input validation so that only a valid method key can be specified.
- *
- * @author Doug Simon
  */
 public class MethodKeyInputDialog extends InspectorDialog implements DocumentListener {
 

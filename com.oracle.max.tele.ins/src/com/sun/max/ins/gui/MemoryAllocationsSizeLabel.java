@@ -27,8 +27,6 @@ import com.sun.max.tele.*;
 
 /**
  * A label that displays the allocation percentage of an allocated VM memory region and acts as a drag source.
- *
- * @author Michael Van De Vanter
  */
 public final class MemoryAllocationsSizeLabel extends AbstractMemoryRegionLabel implements Prober {
 

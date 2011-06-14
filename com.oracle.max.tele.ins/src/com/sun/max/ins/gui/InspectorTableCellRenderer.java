@@ -30,8 +30,6 @@ import com.sun.max.ins.*;
 
 /**
  * An abstract table cell renderer specialized for use with {@link InspectorTable}s.
- *
- * @author Michael Van De Vanter
  */
 public abstract class InspectorTableCellRenderer extends AbstractInspectionHolder implements TableCellRenderer, Prober {
 

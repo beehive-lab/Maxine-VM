@@ -30,7 +30,6 @@ import com.sun.max.vm.reference.*;
 /**
 * Canonical surrogate for an object of type {@link Field} in the VM.
 *
-* @author Michael Van De Vanter
 */
 public class TeleField extends TeleTupleObject {
 

@@ -32,8 +32,6 @@ import com.sun.max.tele.*;
 
 /**
  * A panel specialized for use in the VM Inspector.
- *
- * @author Michael Van De Vanter
  */
 public class InspectorPanel extends JPanel implements Prober, InspectionHolder {
 

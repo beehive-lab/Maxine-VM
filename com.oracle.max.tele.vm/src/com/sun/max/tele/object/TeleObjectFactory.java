@@ -66,9 +66,6 @@ import com.sun.max.vm.value.*;
  * <li>A {@link TeleObject} that is either "dead" or "obsolete" is removed from the maps and cannot be discovered,
  * either by location or OID.</li>
  * </ul>
- *
- * @author Michael Van De Vanter
- * @author Hannes Payer
  * @see TeleObject
  */
 public final class TeleObjectFactory extends AbstractTeleVMHolder implements TeleVMCache {
@@ -124,7 +121,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
      * Map: Reference to {@link Object}s in the VM --> canonical local {@link TeleObject} that represents the
      * object in the VM. Relies on References being canonical and GC-safe.
      */
-    private  final Map<Reference, WeakReference<TeleObject>> referenceToTeleObject = new IdentityHashMap<Reference, WeakReference<TeleObject>>();
+    private  final Map<Reference, WeakReference<TeleObject>> referenceToTeleObject = new HashMap<Reference, WeakReference<TeleObject>>();
 
     /**
      * Map: OID --> {@link TeleObject}.

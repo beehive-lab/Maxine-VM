@@ -40,8 +40,6 @@ import static com.sun.max.tele.channel.agent.RemoteInvocationProtocolAdaptor.*;
 /**
  * An agent that handles the target side of the Maxine Inspector {@link TeleChannelProtocol} communication channel.
  *
- * @author Mick Jordan
- *
  */
 public class InspectorAgent {
 

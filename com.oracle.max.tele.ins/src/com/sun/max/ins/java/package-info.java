@@ -22,7 +22,5 @@
  */
 /**
  * Java source code related inspecting.
- *
- * @author Bernd Mathiske
  */
 package com.sun.max.ins.java;

@@ -22,7 +22,5 @@
  */
 /**
  * Rendering of Java methods.
- * 
- * @author Bernd Mathiske
  */
 package com.sun.max.ins.method;

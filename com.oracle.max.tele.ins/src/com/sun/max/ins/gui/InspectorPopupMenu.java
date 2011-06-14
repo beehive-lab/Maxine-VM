@@ -29,8 +29,6 @@ import com.sun.max.ins.util.*;
 
 /**
  * A specialization of popup menus for use in the VM Inspector.
- *
- * @author Michael Van De Vanter
  */
 public class InspectorPopupMenu extends JPopupMenu {
 

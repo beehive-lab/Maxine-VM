@@ -36,8 +36,6 @@ import com.sun.max.vm.type.*;
 /**
  * A table cell renderer for tables with rows representing memory regions that are expected
  * to contain data of a specified type; displays in the cell information about the type.
- *
- * @author Michael Van De Vanter
  */
 public final class MemoryContentsTypeTableCellRenderer extends InspectorTableCellRenderer {
 

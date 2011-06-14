@@ -43,9 +43,6 @@ import com.sun.max.vm.value.*;
 
 /**
  * A table specialized for displaying memory watchpoints in the VM.
- *
- * @author Michael Van De Vanter
- * @author Hannes Payer
  */
 public final class WatchpointsTable extends InspectorTable {
 
@@ -133,7 +130,6 @@ public final class WatchpointsTable extends InspectorTable {
     /**
      * A table data model built around the list of current watchpoints in the VM.
      *
-     * @author Michael Van De Vanter
      */
     private final class WatchpointsTableModel extends InspectorTableModel {
 

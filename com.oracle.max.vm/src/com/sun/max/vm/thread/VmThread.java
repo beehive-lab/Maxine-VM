@@ -267,7 +267,9 @@ public class VmThread {
     private ConditionVariable waitingCondition = ConditionVariableFactory.create();
 
     /**
-     * Holds the exception object for the exception currently being raised. This value will only be non-null very briefly.
+     * Holds the exception object for the exception currently being raised. This value will only be
+     * non-null during the unwinding process between calls to {@link #storeExceptionForHandler(Throwable, TargetMethod, int)}
+     * and {@link #loadExceptionForHandler()}.
      */
     private Throwable exception;
 
@@ -365,6 +367,15 @@ public class VmThread {
             }
         }
         return e;
+    }
+
+    /**
+     * Gets the exception currently in flight.
+     *
+     * @return {@code null} if there is not exception in flight
+     */
+    public Throwable pendingException() {
+        return exception;
     }
 
     /**

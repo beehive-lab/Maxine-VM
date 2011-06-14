@@ -22,7 +22,5 @@
  */
 /**
  * Access to memory state in the VM.
- *
- * @author Michael Van De Vanter
  */
 package com.sun.max.tele.memory;

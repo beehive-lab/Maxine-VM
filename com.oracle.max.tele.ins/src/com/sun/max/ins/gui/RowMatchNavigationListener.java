@@ -25,8 +25,6 @@ package com.sun.max.ins.gui;
 /**
  * Callback interface for views that incorporate of row-based matching
  * with user invokable navigation.
- *
- * @author Michael Van De Vanter
  */
 public interface RowMatchNavigationListener extends RowMatchListener {
 

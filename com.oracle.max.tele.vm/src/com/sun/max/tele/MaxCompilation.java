@@ -29,10 +29,8 @@ import com.sun.max.vm.actor.member.*;
 
 /**
  * Data describing a single compilation of a method, stub, adaptor, or other routine in the VM.
- *
- * @author Michael Van De Vanter
  */
-public interface MaxCompiledCode extends MaxMachineCode<MaxCompiledCode> {
+public interface MaxCompilation extends MaxMachineCode<MaxCompilation> {
 
     /**
      * @return the 0-based sequence number of this compilation among the

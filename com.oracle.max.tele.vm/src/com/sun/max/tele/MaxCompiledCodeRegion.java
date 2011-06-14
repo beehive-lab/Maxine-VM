@@ -27,8 +27,6 @@ import java.util.*;
 
 /**
  * Access to an individual allocation area of the compiled code cache.
- *
- * @author Michael Van De Vanter
  */
 public interface MaxCompiledCodeRegion extends MaxEntity<MaxCompiledCodeRegion> {
 
@@ -46,6 +44,6 @@ public interface MaxCompiledCodeRegion extends MaxEntity<MaxCompiledCodeRegion> 
     /**
      * @return all known compilations in the region, {@code length = #compilationCount()}
      */
-    List<MaxCompiledCode> compilations();
+    List<MaxCompilation> compilations();
 
 }

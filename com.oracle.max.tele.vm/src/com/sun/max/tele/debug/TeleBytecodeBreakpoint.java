@@ -58,9 +58,6 @@ import com.sun.max.vm.tele.*;
  * <br>
  * Conditions are supported; they are set in each target code
  * breakpoint created for this breakpoint.
- *
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
  */
 public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
 
@@ -242,7 +239,6 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
      * A key for recording abstract bytecode instruction location in a method;
      * defines equality to be same method descriptor, same offset.
      *
-     * @author Michael Van De Vanter
      */
     private static final class MethodPositionKey extends DefaultMethodKey {
 
@@ -299,12 +295,10 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
      * A bytecode breakpoint causes a target code breakpoint to be created for every
      * compilation of the specified method, current and future.
      *
-     * @author Michael Van De Vanter
      */
     public static final class BytecodeBreakpointManager extends AbstractTeleVMHolder {
 
         /**
-         * @author Doug Simon
          *
          */
         protected final class CompilationEventHandler implements VMTriggerEventHandler {
@@ -669,13 +663,17 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             }
             if (teleTargetBreakpointManager.getTargetBreakpointAt(address) == null) {
                 final CodeLocation location = CodeLocation.createMachineCodeLocation(vm(), address, "For bytecode breapoint=" + owner.codeLocation());
-                final VMTriggerEventHandler vmTriggerEventHandler = new VMTriggerEventHandler() {
-
-                    public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
-                        return owner.handleTriggerEvent(teleNativeThread);
-                    }
-                };
-                teleTargetBreakpoints.add(teleTargetBreakpointManager.makeSystemBreakpoint(location, vmTriggerEventHandler, owner));
+                if (bci == -1) {
+                    teleTargetBreakpointManager.makeTransientBreakpoint(location);
+                } else {
+                    final VMTriggerEventHandler vmTriggerEventHandler;
+                    vmTriggerEventHandler = new VMTriggerEventHandler() {
+                        public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
+                            return owner.handleTriggerEvent(teleNativeThread);
+                        }
+                    };
+                    teleTargetBreakpoints.add(teleTargetBreakpointManager.makeSystemBreakpoint(location, vmTriggerEventHandler, owner));
+                }
             } else {
                 Trace.line(TRACE_VALUE, tracePrefix + "Target breakpoint already exists at 0x" + address.toHexString() + " in " + teleTargetMethod);
             }

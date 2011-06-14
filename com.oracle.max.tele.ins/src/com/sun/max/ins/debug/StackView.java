@@ -44,10 +44,6 @@ import com.sun.max.vm.actor.member.*;
 
 /**
  * A singleton view that displays stack contents for the thread in the VM that is the current user focus.
- *
- * @author Doug Simon
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
  */
 public final class StackView extends AbstractView<StackView> {
     private static final int TRACE_VALUE = 1;
@@ -105,7 +101,7 @@ public final class StackView extends AbstractView<StackView> {
             String methodName = "";
             String toolTip = null;
             if (stackFrame instanceof MaxStackFrame.Compiled) {
-                final MaxCompiledCode compiledCode = stackFrame.compiledCode();
+                final MaxCompilation compiledCode = stackFrame.compiledCode();
                 methodName += inspection().nameDisplay().veryShortName(compiledCode);
                 toolTip = htmlify(inspection().nameDisplay().longName(compiledCode, stackFrame.ip()));
                 if (compiledCode != null) {
@@ -141,7 +137,7 @@ public final class StackView extends AbstractView<StackView> {
                     methodName += "*select here to extend the display*";
                 }
             } else {
-                InspectorWarning.check(stackFrame instanceof MaxStackFrame.Native, "Unhandled type of non-native stack frame: " + stackFrame.getClass().getName());
+                InspectorWarning.check(inspection(), stackFrame instanceof MaxStackFrame.Native, "Unhandled type of non-native stack frame: " + stackFrame.getClass().getName());
                 final Pointer instructionPointer = stackFrame.ip();
                 final MaxExternalCode externalCode = vm().codeCache().findExternalCode(instructionPointer);
                 if (externalCode != null) {
@@ -414,7 +410,7 @@ public final class StackView extends AbstractView<StackView> {
 
     private String javaStackFrameName(MaxStackFrame.Compiled javaStackFrame) {
         final Address address = javaStackFrame.ip();
-        final MaxCompiledCode compiledCode = vm().codeCache().findCompiledCode(address);
+        final MaxCompilation compiledCode = vm().codeCache().findCompiledCode(address);
         String name;
         if (compiledCode != null) {
             name = inspection().nameDisplay().veryShortName(compiledCode);

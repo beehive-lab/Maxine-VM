@@ -31,8 +31,6 @@ import com.sun.max.vm.reference.*;
 
 /**
  * Access to the heap in the VM.
- *
- * @author Michael Van De Vanter
  */
 public interface MaxHeap extends MaxEntity<MaxHeap> {
 

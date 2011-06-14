@@ -29,8 +29,6 @@ import java.nio.*;
 /**
  * Access to Mach_O 64-bit format for Darwin core dumps.
  *
- * @author Mick Jordan
- *
  */
 public class DarwinMachO {
 

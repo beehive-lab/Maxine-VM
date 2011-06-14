@@ -32,7 +32,6 @@ import com.sun.max.tele.debug.unix.*;
 import com.sun.max.vm.hosted.*;
 
 /**
- * @author Bernd Mathiske
  */
 public final class DarwinTeleProcess extends UnixTeleProcessAdaptor {
 

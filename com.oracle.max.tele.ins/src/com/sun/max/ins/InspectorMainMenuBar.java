@@ -31,8 +31,6 @@ import com.sun.max.ins.view.InspectionViews.*;
 
 /**
  * MenuBar for the Inspection; shows VM state with background color.
- *
- * @author Michael Van De Vanter
  */
 public final class InspectorMainMenuBar extends InspectorMenuBar {
 

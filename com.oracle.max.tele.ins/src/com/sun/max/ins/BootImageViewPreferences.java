@@ -29,8 +29,6 @@ import com.sun.max.vm.*;
 
 /**
  * Persistent preferences for viewing {@link VMConfiguration} information in the VM boot image.
- *
- * @author Michael Van De Vanter
   */
 public final class BootImageViewPreferences extends TableColumnVisibilityPreferences<BootImageColumnKind> {
 

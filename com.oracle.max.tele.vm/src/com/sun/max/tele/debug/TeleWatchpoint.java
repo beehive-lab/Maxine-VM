@@ -75,8 +75,6 @@ import com.sun.max.vm.type.*;
  * <br>
  * <strong>Concurrency:</strong> operations that modify a watchpoint must necessarily be implemented by directly affecting
  * the VM processes.  Such operations fail if they are unable to acquire the VM lock held during the execution of VM commands.
- *
- * @author Michael Van De Vanter
  */
 public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMTriggerEventHandler, MaxWatchpoint {
 
@@ -505,7 +503,6 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
      * Abstraction for watchpoints covering some or all of an object, and which will
      * be relocated to follow the absolute location of the object whenever it is relocated by GC.
      *
-     * @author Michael Van De Vanter
      */
     private abstract static class TeleObjectWatchpoint extends TeleWatchpoint {
 
@@ -711,7 +708,6 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
      * <br>
      * Overlapping watchpoints are not permitted.
      *
-     * @author Michael Van De Vanter
      */
     public static final class WatchpointManager extends AbstractTeleVMHolder implements MaxWatchpointManager {
 

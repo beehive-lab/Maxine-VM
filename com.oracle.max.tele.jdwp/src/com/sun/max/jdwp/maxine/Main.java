@@ -61,8 +61,6 @@ import com.sun.max.vm.tele.Inspectable;
 /**
  * Class containing the main function to startup the Maxine JDWP server. The server is listening for incoming
  * connections on port.
- *
- * @author Thomas Wuerthinger
  */
 public class Main {
 

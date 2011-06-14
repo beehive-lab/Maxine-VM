@@ -33,8 +33,6 @@ import com.sun.max.vm.value.*;
  * instances of {@link Actor} in the VM.
  *
  * @see TeleActor
- *
- * @author Michael Van De Vanter
  */
 public final class ActorFlagsValueLabel extends ValueLabel {
 

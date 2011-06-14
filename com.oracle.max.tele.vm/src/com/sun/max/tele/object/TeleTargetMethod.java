@@ -75,8 +75,6 @@ import com.sun.max.vm.reference.*;
  * <p>
  * <strong>Important</strong>: this implementation assumes that compilations in the VM, once created, <strong>do not
  * move in memory</strong> and <strong>are never evicted</strong>.
- *
- * @author Michael Van De Vanter
  * @see TeleClassMethodActor
  */
 public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetMethodAccess {
@@ -179,7 +177,6 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
      * @see TargetMethod
      * @see TeleVM#tryLock()
      *
-     * @author Michael Van De Vanter
      */
     private final class TargetMethodCache implements InstructionMap {
 

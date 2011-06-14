@@ -29,8 +29,6 @@ import com.sun.max.vm.reference.*;
 
 /**
  * Canonical surrogate for an object of type {@link Class} in the VM.
- *
- * @author Michael Van De Vanter
  */
 public final class TeleClass extends TeleTupleObject implements ClassObjectProvider {
 

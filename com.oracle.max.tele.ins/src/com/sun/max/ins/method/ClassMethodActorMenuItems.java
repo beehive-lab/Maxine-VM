@@ -29,10 +29,6 @@ import com.sun.max.vm.actor.member.*;
 
 /**
  * Provides menu items related to a specific {@link MethodActor} in the VM.
- *
- * @author Bernd Mathiske
- * @author Doug Simon
- * @author Michael Van De Vanter
  */
 public final class ClassMethodActorMenuItems extends AbstractInspectorMenuItems {
 

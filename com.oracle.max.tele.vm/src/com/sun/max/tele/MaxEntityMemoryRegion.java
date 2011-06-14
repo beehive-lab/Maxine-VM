@@ -42,8 +42,6 @@ import java.util.*;
  * <br>
  * A memory region may have an owner, which would be a representation of the entity in the VM that
  * owns the memory, for example a thread, stack, or object.
- *
- * @author Michael Van De Vanter
  */
 public interface MaxEntityMemoryRegion<Entity_Type extends MaxEntity> extends MaxMemoryRegion {
 

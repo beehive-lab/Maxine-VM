@@ -30,8 +30,6 @@ import com.sun.max.unsafe.*;
  * There is some complexity involved in transferring byte arrays to./from the target VM, owing to the possibility of
  * limitations on the size of the array that can be used for a given communication channel. This is handled here.
  *
- * @author Mick Jordan
- *
  */
 public class TeleChannelTransferBytes {
 

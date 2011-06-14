@@ -30,6 +30,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.CompilationScheme.CompilationFlag;
 import com.sun.max.vm.compiler.target.*;
 
 /**
@@ -79,16 +80,21 @@ public interface RuntimeCompiler {
     TargetMethod compile(ClassMethodActor classMethodActor, boolean install, CiStatistics stats);
 
     /**
+     * Determines if this compiler can support a {@linkplain CompilationScheme#synchronousCompile(ClassMethodActor, int) compilation request}
+     * with the {@link CompilationFlag#DEOPTIMIZING} flag set.
+     */
+    boolean canProduceDeoptimizedCode();
+
+    /**
+     * Informs this compiler that the VM does not support deoptimization.
+     */
+    @HOSTED_ONLY
+    void deoptimizationNotSupported();
+
+    /**
      * Resets any metrics gathered by this compiler.
      */
     void resetMetrics();
-
-    /**
-     * Gets the exact subtype of {@link TargetMethod} produces by this compiler.
-     *
-     * @param <Type> the exact type of the object returned by {@link #compile(ClassMethodActor, boolean, CiStatistics)}
-     */
-    <Type extends TargetMethod> Class<Type> compiledType();
 
     CallEntryPoint calleeEntryPoint();
 }

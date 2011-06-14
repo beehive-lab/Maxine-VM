@@ -35,9 +35,6 @@ import com.sun.max.vm.thread.*;
 
 /**
  * Interactive, visual tool for debugging a running instance of the Maxine VM.
- *
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
  */
 public final class MaxineInspector {
 

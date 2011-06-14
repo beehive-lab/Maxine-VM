@@ -26,8 +26,6 @@ package com.sun.max.tele;
 
 /**
  * Possible states for the process running the {@linkplain MaxVM VM}.
- *
- * @author Michael Van De Vanter
  */
 public enum MaxProcessState {
 

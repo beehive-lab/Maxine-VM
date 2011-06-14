@@ -26,8 +26,6 @@ import com.sun.max.ins.*;
 
 /**
  *  A label for presenting a general, unchanging Bytecodes operand.
- *
- * @author Michael Van De Vanter
  */
 public final class BytecodeOperandLabel extends InspectorLabel {
 

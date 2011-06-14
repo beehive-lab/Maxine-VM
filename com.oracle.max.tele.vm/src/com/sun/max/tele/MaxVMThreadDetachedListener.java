@@ -26,8 +26,6 @@ package com.sun.max.tele;
 /**
  * Listener interface for VM thread detach.
  * Notification of thread detach is made when a VMThread has detached itself from the ACTIVE list.
- *
- * @author Laurent Daynes
  */
 public interface MaxVMThreadDetachedListener {
     void detached(MaxThread thread);

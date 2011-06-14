@@ -46,9 +46,6 @@ import com.sun.max.vm.value.*;
  * partially complete.
  * <br>
  * This could in the future be merged with the JDWP interface.
- *
- * @author Michael Van De Vanter
- * @author Hannes Payer
  */
 public interface MaxVM extends MaxEntity<MaxVM> {
 

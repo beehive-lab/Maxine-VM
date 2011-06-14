@@ -35,8 +35,6 @@ import com.sun.max.vm.reference.*;
  * {@link StaticTuple}s are special in the VM in that, although represented as an ordinary tuple, they have no Java
  * type, not even in the extended type system supported by Maxine. Any code that acts based on the type of a
  * {@link TeleObject} must handle this type specially.
- *
- * @author Michael Van De Vanter
  * @see StaticTuple
  */
 public class TeleStaticTuple extends TeleTupleObject {

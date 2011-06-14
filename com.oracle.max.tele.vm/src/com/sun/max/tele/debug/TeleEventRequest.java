@@ -27,10 +27,6 @@ package com.sun.max.tele.debug;
  * {@linkplain TeleProcess#processState() state} of the tele process as well as some
  * {@linkplain TeleEventRequest#afterExecution(WaitResult) action} to take when the tele process next stops after the
  * request has been issued.
- *
- * @author Aritra Bandyopadhyay
- * @author Doug Simon
- * @author Michael Van De Vanter
  */
 public abstract class TeleEventRequest {
 

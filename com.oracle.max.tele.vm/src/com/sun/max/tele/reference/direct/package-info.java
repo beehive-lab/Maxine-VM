@@ -22,7 +22,5 @@
  */
 /**
  * Direct references.
- *
- * @author Bernd Mathiske
  */
 package com.sun.max.tele.reference.direct;

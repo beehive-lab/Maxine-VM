@@ -30,9 +30,6 @@ import com.sun.max.vm.reference.*;
 
 /**
  * Access to the singleton {@link CodeManager} in the VM.
- *
- * @author Michael Van De Vanter
- * @author Hannes Payer
  */
 public final class TeleCodeManager extends TeleTupleObject {
 

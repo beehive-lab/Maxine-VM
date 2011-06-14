@@ -46,8 +46,6 @@ import com.sun.max.unsafe.*;
 
 /**
  * An view that displays the contents of a region of memory in the VM, word aligned, one word per row.
- *
- * @author Michael Van De Vanter
  */
 public final class MemoryView extends AbstractView<MemoryView> {
 

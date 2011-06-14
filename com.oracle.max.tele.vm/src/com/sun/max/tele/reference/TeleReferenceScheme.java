@@ -43,10 +43,6 @@ import com.sun.max.vm.reference.Reference;
  * <br>
  * References are intended to be canonical, i.e. refer to only one object.  However, in the course of inspection
  * duplicates may appear.  These are resolved at the conclusion of each GC.
- *
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
- * @author Hannes Payer
  */
 public abstract class TeleReferenceScheme extends AbstractVMScheme implements TeleVMCache, ReferenceScheme {
 

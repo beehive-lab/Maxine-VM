@@ -26,9 +26,6 @@ package com.sun.max.ins.gui;
  * A marker interface for an {@link AbstractView} that contains other views.
  * The contained views have the container as their parent.
   *
- * @author Mick Jordan
- * @author Doug Simon
- * @author Michael Van De Vanter
  */
 public interface ViewContainer extends Iterable<AbstractView> {
 

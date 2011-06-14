@@ -32,8 +32,6 @@ import com.sun.max.tele.object.*;
  * Methods for creating views on objects in different variations.  Some are direct
  * actions; others are for possibly interactive {@link InspectorAction}s
  * that can be put on menus.
- *
- * @author Michael Van De Vanter
  */
 public interface ObjectViewFactory extends InspectionViewFactory<ObjectView>{
 

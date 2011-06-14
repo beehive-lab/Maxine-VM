@@ -34,8 +34,6 @@ import com.sun.max.ins.util.*;
 
 /**
  * A toolbar containing controls for identifying rows that match a (optionally regexp) pattern.
- *
- * @author Michael Van De Vanter
  */
 public class TableRowFilterToolBar extends InspectorToolBar {
 

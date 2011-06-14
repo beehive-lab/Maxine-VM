@@ -29,7 +29,6 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
 /**
- * @author Bernd Mathiske
  */
 public class TeleInstanceReferenceFieldAccess extends TeleInstanceFieldAccess {
 

@@ -26,7 +26,6 @@ import com.sun.max.tele.channel.tcp.*;
 
 
 /**
- * @author Mick Jordan
  *
  */
 public class LinuxTCPTeleChannelProtocol extends TCPTeleChannelProtocol implements LinuxTeleChannelProtocol {

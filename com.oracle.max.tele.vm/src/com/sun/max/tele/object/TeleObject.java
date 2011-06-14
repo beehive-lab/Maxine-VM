@@ -78,8 +78,6 @@ import com.sun.max.vm.value.*;
  *
  * @see TeleObjectFactory
  * @see TeleHeap
- * @author Michael Van De Vanter
- * @author Hannes Payer
  */
 public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMCache, ObjectProvider, TeleObjectMemory {
 

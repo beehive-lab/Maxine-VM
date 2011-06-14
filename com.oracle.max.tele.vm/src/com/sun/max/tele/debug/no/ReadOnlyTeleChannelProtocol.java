@@ -30,7 +30,6 @@ import com.sun.max.tele.util.*;
 
 
 /**
- * @author Mick Jordan
  *
  */
 public class ReadOnlyTeleChannelProtocol implements TeleChannelProtocol {

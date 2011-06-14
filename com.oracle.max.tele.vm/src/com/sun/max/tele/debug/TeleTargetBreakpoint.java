@@ -39,10 +39,6 @@ import com.sun.max.vm.tele.*;
 
 /**
  * Target code breakpoints.
- *
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
- * @author Doug Simon
  */
 public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
 

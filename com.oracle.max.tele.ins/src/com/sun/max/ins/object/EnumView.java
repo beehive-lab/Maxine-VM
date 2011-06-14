@@ -32,8 +32,6 @@ import com.sun.max.tele.object.*;
 /**
  * An object view specialized for displaying a low-level heap object
  * in the VM that implements a {@link Enum}.
- *
- * @author Michael Van De Vanter
  */
 public class EnumView extends ObjectView<EnumView> {
 

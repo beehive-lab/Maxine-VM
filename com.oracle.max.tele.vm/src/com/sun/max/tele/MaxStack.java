@@ -29,8 +29,6 @@ import com.sun.max.unsafe.*;
 
 /**
  * Access to the stack for a thread in the VM.
- *
- * @author Michael Van De Vanter
  */
 public interface MaxStack extends MaxEntity<MaxStack> {
 

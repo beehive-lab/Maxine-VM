@@ -54,9 +54,6 @@ import com.sun.max.tele.*;
  *  <li>Override {@link #setIsVisible(ColumnKind, boolean)} and take measures, either before or after the super method has
  *  updated the internal state of the preferences.</li>
  *  </ol>
- *
- * @author Doug Simon
- * @author Michael Van De Vanter
  */
 public abstract class TableColumnVisibilityPreferences<ColumnKind_Type extends ColumnKind> implements InspectionHolder {
 
