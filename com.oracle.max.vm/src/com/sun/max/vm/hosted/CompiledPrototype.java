@@ -794,13 +794,7 @@ public class CompiledPrototype extends Prototype {
         Trace.begin(1, "linkNonVirtualCalls");
         for (TargetMethod targetMethod : Code.bootCodeRegion().copyOfTargetMethods()) {
             if (!(targetMethod instanceof Adapter)) {
-                Adapter adapter = null;
-                ClassMethodActor classMethodActor = targetMethod.classMethodActor;
-                if (classMethodActor != null) {
-                    AdapterGenerator gen = AdapterGenerator.forCallee(classMethodActor, targetMethod.callEntryPoint);
-                    adapter = gen != null ? gen.make(classMethodActor) : null;
-                }
-                if (!targetMethod.linkDirectCalls(adapter)) {
+                if (!targetMethod.linkDirectCalls()) {
                     final Object[] directCallees = targetMethod.directCallees();
                     if (directCallees != null) {
                         for (int i = 0; i < directCallees.length; i++) {

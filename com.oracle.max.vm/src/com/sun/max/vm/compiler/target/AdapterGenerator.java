@@ -311,14 +311,6 @@ public abstract class AdapterGenerator {
     }
 
     /**
-     * Links the call to a given adapter in a given method's prologue.
-     *
-     * @param targetMethod a method containing a call to an adapter
-     * @param adapter the adapter called from the prologue of {@code targetMethod}
-     */
-    public abstract void linkAdapterCallInPrologue(TargetMethod targetMethod, Adapter adapter);
-
-    /**
      * Determines if a given instruction pointer denotes a position in a given method's adapter prologue.
      */
     public boolean inPrologue(Address ip, TargetMethod targetMethod) {

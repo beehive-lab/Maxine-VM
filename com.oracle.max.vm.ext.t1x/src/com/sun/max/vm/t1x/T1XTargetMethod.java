@@ -162,7 +162,7 @@ public final class T1XTargetMethod extends TargetMethod {
         StopsBuilder stops = comp.stops;
         int firstTemplateSlot = frame.numberOfNonParameterSlots() + frame.numberOfOperandStackSlots();
         int firstTemplateSlotIndexInFrameReferenceMap = firstTemplateSlot * JVMSFrameLayout.STACK_SLOTS_PER_JVMS_SLOT;
-        stops.pack(frameRefMapSize, regRefMapSize(), firstTemplateSlotIndexInFrameReferenceMap);
+        stops.pack(frameRefMapSize, regRefMapSize(), firstTemplateSlotIndexInFrameReferenceMap, comp.adapter);
         setStopPositions(stops.stopPositions, stops.directCallees, stops.indirectCalls.size, stops.safepoints.size);
         refMaps = stops.refMaps;
         isDirectCallToRuntime = stops.isDirectCallToRuntime;
@@ -210,7 +210,7 @@ public final class T1XTargetMethod extends TargetMethod {
 
         if (!MaxineVM.isHosted()) {
             if (install) {
-                linkDirectCalls(comp.adapter);
+                linkDirectCalls();
             } else {
                 // the displacement between a call site in the heap and a code cache location may not fit in the offset operand of a call
             }

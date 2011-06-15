@@ -120,6 +120,11 @@ public abstract class Adapter extends TargetMethod {
 
     public static final Object[] NO_DIRECT_CALLEES = {};
 
+    /**
+     * Gets the offset of the call to this in a method's prologue.
+     */
+    public abstract int callOffsetInPrologue();
+
     @Override
     public void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls, Set<MethodActor> inlinedMethods) {
     }
