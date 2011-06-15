@@ -99,17 +99,24 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
      * Adds a target method to this sorted list of target methods.
      */
     public void add(TargetMethod targetMethod) {
-        int index = Arrays.binarySearch(targetMethods, 0, length, targetMethod, COMPARATOR);
-        if (index < 0) {
-            int insertionPoint = -(index + 1);
-            if (length == targetMethods.length) {
-                int newCapacity = (targetMethods.length * 3) / 2 + 1;
-                targetMethods = Arrays.copyOf(targetMethods, newCapacity);
-            }
-            System.arraycopy(targetMethods, insertionPoint, targetMethods, insertionPoint + 1, length - insertionPoint);
-            targetMethods[insertionPoint] = targetMethod;
-            length++;
+        int insertionPoint;
+        if (length == 0) {
+            insertionPoint = 0;
+        } else if (COMPARATOR.compare(targetMethods[length - 1], targetMethod) < 0) {
+            // 'targetMethod' comes after the last entry in 'targetMethods' so we can avoid the binary search
+            insertionPoint = length;
+        } else {
+            int index = Arrays.binarySearch(targetMethods, 0, length, targetMethod, COMPARATOR);
+            assert index < 0 : targetMethod + " overlaps " + targetMethods[index];
+            insertionPoint = -(index + 1);
         }
+        if (length == targetMethods.length) {
+            int newCapacity = (targetMethods.length * 3) / 2 + 1;
+            targetMethods = Arrays.copyOf(targetMethods, newCapacity);
+        }
+        System.arraycopy(targetMethods, insertionPoint, targetMethods, insertionPoint + 1, length - insertionPoint);
+        targetMethods[insertionPoint] = targetMethod;
+        length++;
     }
 
     /**
