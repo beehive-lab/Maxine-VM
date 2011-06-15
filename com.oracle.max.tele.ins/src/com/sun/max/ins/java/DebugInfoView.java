@@ -46,9 +46,9 @@ import com.sun.max.vm.classfile.*;
 public final class DebugInfoView extends AbstractView<DebugInfoView> {
 
     private static final int TRACE_VALUE = 1;
-    private static final ViewKind VIEW_KIND = ViewKind.CODE_LOCATION;
+    private static final ViewKind VIEW_KIND = ViewKind.DEBUG_INFO;
     private static final String SHORT_NAME = "Debug Info";
-    private static final String LONG_NAME = "DebugInfo View";
+    private static final String LONG_NAME = "Debug Info View";
     private static final String GEOMETRY_SETTINGS_KEY = "debugInfoViewGeometry";
 
 
@@ -134,13 +134,14 @@ public final class DebugInfoView extends AbstractView<DebugInfoView> {
 
     @Override
     protected void createViewContent() {
+        // TODO (mlvdv) convert this to some kind of tabular display with useful
+        // functionality (inspection, navigation, etc.) over each cell.
         if (codeLocation == null) {
             setContentPane(nullPanel);
         } else if (debugInfo == null) {
             simplePanelLabel.setText(inspection().nameDisplay().shortName(codeLocation));
             setContentPane(simplePanel);
         } else {
-            //final JPanel panel = new InspectorPanel(inspection(), new GridLayout(0, 1));
             final JPanel panel = new InspectorPanel(inspection());
             panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
@@ -235,6 +236,5 @@ public final class DebugInfoView extends AbstractView<DebugInfoView> {
         panel.setBorder(frameBorder);
         return panel;
     }
-
 
 }
