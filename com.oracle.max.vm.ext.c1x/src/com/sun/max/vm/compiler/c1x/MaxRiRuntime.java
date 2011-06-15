@@ -225,12 +225,13 @@ public class MaxRiRuntime implements RiRuntime {
         }
     }
 
-    static class CachedInvocation {
-        public CachedInvocation(Value[] args) {
+    protected static class CachedInvocation {
+        public CachedInvocation(Value[] args, CiConstant result) {
             this.args = args;
+            this.result = result;
         }
-        final Value[] args;
-        CiConstant result;
+        protected final Value[] args;
+        protected final CiConstant result;
     }
 
     /**
@@ -275,17 +276,11 @@ public class MaxRiRuntime implements RiRuntime {
                     }
                 }
 
-                CachedInvocation cachedInvocation = null;
                 if (!isHosted()) {
                     synchronized (cache) {
-                        cachedInvocation = cache.get(methodActor);
-                        if (cachedInvocation != null) {
-                            if (Arrays.equals(values, cachedInvocation.args)) {
-                                return cachedInvocation.result;
-                            }
-                        } else {
-                            cachedInvocation = new CachedInvocation(values);
-                            cache.put(methodActor, cachedInvocation);
+                        CachedInvocation cachedInvocation = cache.get(methodActor);
+                        if (cachedInvocation != null && Arrays.equals(values, cachedInvocation.args)) {
+                            return cachedInvocation.result;
                         }
                     }
                 }
@@ -297,7 +292,9 @@ public class MaxRiRuntime implements RiRuntime {
                     C1XMetrics.MethodsFolded++;
 
                     if (!isHosted()) {
-                        cachedInvocation.result = result;
+                        synchronized (cache) {
+                            cache.put(methodActor, new CachedInvocation(values, result));
+                        }
                     }
 
                     return result;
