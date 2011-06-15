@@ -55,9 +55,6 @@ import com.sun.max.program.option.*;
 
 /**
  * A generalized manager for views, some of which are singletons and some of which are not.
- * <p>
- * Not all view kinds have been brought into this framework.
- *
  */
 public final class InspectionViews extends AbstractInspectionHolder {
 
@@ -95,7 +92,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
                 return viewManager;
             }
         },
-        CODE_LOCATION(true, false, "The details of a position in compiled code") {
+        DEBUG_INFO(true, false, "Debugging details at the currently selected position in compiled code") {
 
             @Override
             public DebugInfoViewManager viewManager() {

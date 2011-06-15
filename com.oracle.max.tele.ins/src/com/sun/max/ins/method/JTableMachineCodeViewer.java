@@ -264,7 +264,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
                 menu.add(actions().toggleMachineCodeBreakpoint(codeLocation, "Toggle breakpoint (double-click)"));
                 menu.add(actions().setMachineCodeBreakpoint(codeLocation, "Set breakpoint"));
                 menu.add(actions().removeMachineCodeBreakpoint(codeLocation, "Unset breakpoint"));
-                menu.add(views().activateSingletonViewAction(ViewKind.CODE_LOCATION));
+                menu.add(views().activateSingletonViewAction(ViewKind.DEBUG_INFO));
                 return menu;
             }
             return null;
