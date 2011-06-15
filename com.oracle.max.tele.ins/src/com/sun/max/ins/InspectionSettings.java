@@ -51,7 +51,7 @@ public class InspectionSettings {
     private static final String INSPECTOR_SETTINGS_VERSION_KEY = "settingsVersion";
 
     // This should be incremented any time that any of the persistent settings keys changes.
-    private static final String INSPECTOR_SETTINGS_VERSION = "2";
+    private static final String INSPECTOR_SETTINGS_VERSION = "3";
 
     private static final String COMPONENT_X_KEY = "x";
     private static final String COMPONENT_Y_KEY = "y";
