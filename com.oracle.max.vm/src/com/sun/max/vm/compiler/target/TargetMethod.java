@@ -174,6 +174,9 @@ public abstract class TargetMethod extends MemoryRegion {
      */
     protected int[] stopPositions;
 
+    /**
+     * @see #directCallees()
+     */
     protected Object[] directCallees;
 
     private int numberOfIndirectCalls;
@@ -390,10 +393,11 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
-     * Answer an array containing the direct callees of this method.
+     * Gets an array containing the direct callees of this method.
      * The array can contain instances of {@link ClassMethodActor} and {@link TargetMethod} side by side.
      * In case a callee is an actual method, it is represented by a {@link ClassMethodActor}.
-     * In case it is a stub, a {@link TargetMethod} is used.
+     * In case it is a stub or the adapter, a {@link TargetMethod} is used.
+     *
      * @return entities referenced by direct call instructions, matched to the stop positions array above by array index
      */
     public final Object[] directCallees() {
@@ -402,8 +406,7 @@ public abstract class TargetMethod extends MemoryRegion {
 
     /**
      * Gets the call entry point to be used for a direct call from this target method. By default, the
-     * call entry point will be the one specified by the {@linkplain #abi() ABI} of this target method.
-     * This models a direct call to another target method compiled with the same compiler as this target method.
+     * {@linkplain #callEntryPoint call entry point} of this target method will be used.
      *
      * @param directCallIndex an index into the {@linkplain #directCallees() direct callees} of this target method
      */
@@ -561,6 +564,7 @@ public abstract class TargetMethod extends MemoryRegion {
      * @return {@code true} if the call site was not already pointing to the static trampoline
      */
     public final boolean resetDirectCall(int dc) {
+        assert !(directCallees[dc] instanceof Adapter);
         final int offset = getCallEntryOffset(directCallees[dc], dc);
         final int pos = stopPosition(dc);
         Pointer trampoline = vm().stubs.staticTrampoline().codeStart.plus(offset);
@@ -574,11 +578,9 @@ public abstract class TargetMethod extends MemoryRegion {
      * been evicted from the code cache), the address of a {@linkplain StaticTrampoline static trampoline} is patched
      * into the call instruction.
      *
-     * @param adapter the adapter called by the prologue of this method. This will be {@code null} if this method does
-     *            not have an adapter prologue.
      * @return true if target code was available for all the direct callees
      */
-    public final boolean linkDirectCalls(Adapter adapter) {
+    public final boolean linkDirectCalls() {
         boolean linkedAll = true;
         final Object[] directCallees = directCallees();
         if (directCallees != null) {
@@ -611,9 +613,6 @@ public abstract class TargetMethod extends MemoryRegion {
             }
         }
 
-        if (adapter != null) {
-            adapter.generator.linkAdapterCallInPrologue(this, adapter);
-        }
         return linkedAll;
     }
 
@@ -628,6 +627,9 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     private int getCallEntryOffset(Object callee, int index) {
+        if (callee instanceof Adapter) {
+            return 0;
+        }
         final CallEntryPoint callEntryPoint = callEntryPointForDirectCall(index);
         return callEntryPoint.offsetInCallee();
     }

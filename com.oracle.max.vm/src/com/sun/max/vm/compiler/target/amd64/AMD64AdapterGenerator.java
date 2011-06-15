@@ -94,6 +94,11 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
                 super(generator, description, frameSize, code, callPosition);
             }
 
+            @Override
+            public int callOffsetInPrologue() {
+                return 0;
+            }
+
             /**
              * Computes the state of an adapter frame based on an execution point in this adapter.
              *
@@ -337,11 +342,6 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             return size;
         }
 
-        @Override
-        public void linkAdapterCallInPrologue(TargetMethod targetMethod, Adapter adapter) {
-            targetMethod.fixupCallSite(0, adapter.codeStart());
-        }
-
         /**
          * Creates a BASELINE2OPT adapter.
          *
@@ -479,6 +479,11 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
 
             Opt2BaselineAdapter(AdapterGenerator generator, String description, int frameSize, byte[] code, int callPosition) {
                 super(generator, description, frameSize, code, callPosition);
+            }
+
+            @Override
+            public int callOffsetInPrologue() {
+                return 8;
             }
 
             /**
@@ -653,11 +658,6 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             assert size == PROLOGUE_SIZE;
             copyIfOutputStream(asm.codeBuffer, out);
             return size;
-        }
-
-        @Override
-        public void linkAdapterCallInPrologue(TargetMethod targetMethod, Adapter adapter) {
-            targetMethod.fixupCallSite(8, adapter.codeStart());
         }
 
         /**

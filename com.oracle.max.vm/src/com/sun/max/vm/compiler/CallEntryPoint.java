@@ -70,14 +70,12 @@ public enum CallEntryPoint {
     public static final List<CallEntryPoint> VALUES = Arrays.asList(values());
 
     /**
-     * The offset of this call entry point in a target method associated (via its
-     * {@linkplain TargetMethod#abi() ABI}) with this entry point.
+     * The offset of this call entry point in a target method associated with this entry point.
      */
     private int offset = -1;
 
     /**
-     * The offset of this call entry point in a callee of a target method associated (via its
-     * {@linkplain TargetMethod#abi() ABI}) with this entry point.
+     * The offset of this call entry point in a callee of a target method associated with this entry point.
      */
     private int offsetInCallee = -1;
 
@@ -102,8 +100,7 @@ public enum CallEntryPoint {
     }
 
     /**
-     * Gets the offset of this call entry point in a target method associated (via its
-     * {@linkplain TargetMethod#abi() ABI}) with this entry point.
+     * Gets the offset of this call entry point in a target method associated with this entry point.
      *
      * @return the number of bytes that must be added to the address of a target method's first instruction to obtain
      *         the address of this entry point
@@ -121,8 +118,7 @@ public enum CallEntryPoint {
     }
 
     /**
-     * Gets the offset of this call entry point in a callee of a target method associated (via its
-     * {@linkplain TargetMethod#abi() ABI}) with this entry point.
+     * Gets the offset of this call entry point in a callee of a target method associated with this entry point.
      *
      * @return the number of bytes that must be added to the address of a target method's first instruction to obtain
      *         the address of this entry point

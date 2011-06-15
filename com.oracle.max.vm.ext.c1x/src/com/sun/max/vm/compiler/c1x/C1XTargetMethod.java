@@ -146,13 +146,8 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
         initExceptionTable(ciTargetMethod);
 
         if (!isHosted()) {
-            Adapter adapter = null;
-            AdapterGenerator generator = AdapterGenerator.forCallee(this);
-            if (generator != null) {
-                adapter = generator.make(classMethodActor);
-            }
             if (install) {
-                linkDirectCalls(adapter);
+                linkDirectCalls();
             } else {
                 // the displacement between a call site in the heap and a code cache location may not fit in the offset operand of a call
             }
@@ -350,15 +345,32 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
     }
 
     private void initStopPositions(CiTargetMethod ciTargetMethod) {
+        Adapter adapter = null;
+        int adapterCount = 0;
+        AdapterGenerator generator = AdapterGenerator.forCallee(this);
+        if (generator != null) {
+            adapter = generator.make(classMethodActor);
+            if (adapter != null) {
+                adapterCount = 1;
+            }
+        }
+
         int numberOfIndirectCalls = ciTargetMethod.indirectCalls.size();
         int numberOfSafepoints = ciTargetMethod.safepoints.size();
-        int totalStopPositions = ciTargetMethod.directCalls.size() + numberOfIndirectCalls + numberOfSafepoints;
+        int totalStopPositions = ciTargetMethod.directCalls.size() + numberOfIndirectCalls + numberOfSafepoints + adapterCount;
+
 
         int index = 0;
         int[] stopPositions = new int[totalStopPositions];
-        Object[] directCallees = new Object[ciTargetMethod.directCalls.size()];
+        Object[] directCallees = new Object[ciTargetMethod.directCalls.size() + adapterCount];
 
         CiDebugInfo[] debugInfos = new CiDebugInfo[totalStopPositions];
+
+        if (adapter != null) {
+            directCallees[index] = adapter;
+            stopPositions[index] = adapter.callOffsetInPrologue();
+            index++;
+        }
 
         for (CiTargetMethod.Call site : ciTargetMethod.directCalls) {
             stopPositions[index] = site.pcOffset;

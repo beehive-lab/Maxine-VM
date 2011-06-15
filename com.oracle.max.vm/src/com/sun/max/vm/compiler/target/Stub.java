@@ -59,7 +59,7 @@ public class Stub extends TargetMethod {
             setStopPositions(new int[] {callPosition}, new Object[] {callee}, 0, 0);
         }
         if (!isHosted()) {
-            linkDirectCalls(null); // stubs don't have adapters
+            linkDirectCalls();
         }
     }
 
