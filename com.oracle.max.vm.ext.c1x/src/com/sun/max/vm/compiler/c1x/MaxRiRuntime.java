@@ -30,6 +30,7 @@ import static com.sun.max.vm.stack.VMFrameLayout.*;
 
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.concurrent.*;
 
 import com.oracle.max.hcfdis.*;
 import com.sun.c1x.*;
@@ -238,7 +239,7 @@ public class MaxRiRuntime implements RiRuntime {
      * Cache to speed up compile-time folding. This works as an invocation of a {@linkplain FOLD foldable}
      * method is guaranteed to be idempotent with respect its arguments.
      */
-    private final HashMap<MethodActor, CachedInvocation> cache = new HashMap<MethodActor, CachedInvocation>();
+    private final ConcurrentHashMap<MethodActor, CachedInvocation> cache = new ConcurrentHashMap<MethodActor, CachedInvocation>();
 
     @Override
     public CiConstant invoke(RiMethod method, CiMethodInvokeArguments args) {
@@ -277,11 +278,9 @@ public class MaxRiRuntime implements RiRuntime {
                 }
 
                 if (!isHosted()) {
-                    synchronized (cache) {
-                        CachedInvocation cachedInvocation = cache.get(methodActor);
-                        if (cachedInvocation != null && Arrays.equals(values, cachedInvocation.args)) {
-                            return cachedInvocation.result;
-                        }
+                    CachedInvocation cachedInvocation = cache.get(methodActor);
+                    if (cachedInvocation != null && Arrays.equals(values, cachedInvocation.args)) {
+                        return cachedInvocation.result;
                     }
                 }
 
@@ -292,9 +291,7 @@ public class MaxRiRuntime implements RiRuntime {
                     C1XMetrics.MethodsFolded++;
 
                     if (!isHosted()) {
-                        synchronized (cache) {
-                            cache.put(methodActor, new CachedInvocation(values, result));
-                        }
+                        cache.put(methodActor, new CachedInvocation(values, result));
                     }
 
                     return result;
