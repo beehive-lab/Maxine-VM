@@ -157,7 +157,7 @@ public final class ClassRegistry {
     @INSPECTED
     private final ConcurrentHashMap<TypeDescriptor, ClassActor> typeDescriptorToClassActor = new ConcurrentHashMap<TypeDescriptor, ClassActor>(16384);
 
-    private final HashMap<Object, Object>[] propertyMaps;
+    private final ConcurrentHashMap<Object, Object>[] propertyMaps;
 
     /**
      * The class loader associated with this registry.
@@ -165,7 +165,7 @@ public final class ClassRegistry {
     public final ClassLoader classLoader;
 
     private ClassRegistry(ClassLoader classLoader) {
-        propertyMaps = Utils.cast(new HashMap[Property.VALUES.size()]);
+        propertyMaps = Utils.cast(new ConcurrentHashMap[Property.VALUES.size()]);
         for (Property property : Property.VALUES) {
             propertyMaps[property.ordinal()] = property.createMap();
         }
@@ -366,8 +366,8 @@ public final class ClassRegistry {
             this(true, keyType, valueType, defaultValue);
         }
 
-        HashMap<Object, Object> createMap() {
-            return new HashMap<Object, Object>();
+        ConcurrentHashMap<Object, Object> createMap() {
+            return new ConcurrentHashMap<Object, Object>();
         }
 
         /**
@@ -377,7 +377,7 @@ public final class ClassRegistry {
          * @param object the object for which the value of this property is to be retrieved
          * @param value the value to be set
          */
-        void set(HashMap<Object, Object> map, Object object, Object value) {
+        void set(ConcurrentHashMap<Object, Object> map, Object object, Object value) {
             assert keyType.isInstance(object);
             if (value != null && value != defaultValue) {
                 assert valueType.isInstance(value);
@@ -394,7 +394,7 @@ public final class ClassRegistry {
          * @param mapping the mapping from keys to values for this property
          * @param object the object for which the value of this property is to be retrieved
          */
-        Object get(HashMap<Object, Object> mapping, Object object) {
+        Object get(ConcurrentHashMap<Object, Object> mapping, Object object) {
             assert keyType.isInstance(object);
             final Object value = mapping.get(object);
             if (value != null) {
@@ -411,14 +411,14 @@ public final class ClassRegistry {
      * @param object the object for which the property is to be set
      * @param value the value of the property
      */
-    public synchronized <Key_Type, Value_Type> void set(Property property, Key_Type object, Value_Type value) {
+    public <Key_Type, Value_Type> void set(Property property, Key_Type object, Value_Type value) {
         property.set(propertyMaps[property.ordinal()], object, value);
     }
 
     /**
      * Gets the value of a given property for a given object.
      */
-    public synchronized <Key_Type, Value_Type> Value_Type get(Property property, Key_Type object) {
+    public <Key_Type, Value_Type> Value_Type get(Property property, Key_Type object) {
         final Class<Value_Type> type = null;
         return Utils.cast(type, property.get(propertyMaps[property.ordinal()], object));
     }
