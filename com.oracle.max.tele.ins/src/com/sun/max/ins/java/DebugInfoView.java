@@ -26,6 +26,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 import javax.swing.*;
+import javax.swing.border.*;
 
 import com.sun.cri.ci.*;
 import com.sun.max.ins.*;
@@ -40,55 +41,56 @@ import com.sun.max.vm.classfile.*;
 
 
 /**
- * A view that displays detailed information about the currently selected location in compiled code,
- * starting with Java frame descriptors, if available.
- *
- * @author Michael Van De Vanter
+ * A view that displays {@linkplain CiDebugInfo debug information} (if available) about the currently selected location in compiled code.
  */
-public final class CodeLocationView extends AbstractView<CodeLocationView> {
+public final class DebugInfoView extends AbstractView<DebugInfoView> {
 
     private static final int TRACE_VALUE = 1;
-    private static final ViewKind VIEW_KIND = ViewKind.CODE_LOCATION;
-    private static final String SHORT_NAME = "Code Location";
-    private static final String LONG_NAME = "CodeLocation View";
-    private static final String GEOMETRY_SETTINGS_KEY = "codeLocationViewGeometry";
+    private static final ViewKind VIEW_KIND = ViewKind.DEBUG_INFO;
+    private static final String SHORT_NAME = "Debug Info";
+    private static final String LONG_NAME = "Debug Info View";
+    private static final String GEOMETRY_SETTINGS_KEY = "debugInfoViewGeometry";
 
 
-    public static final class CodeLocationViewManager extends AbstractSingletonViewManager<CodeLocationView> {
+    public static final class DebugInfoViewManager extends AbstractSingletonViewManager<DebugInfoView> {
 
-        protected CodeLocationViewManager(Inspection inspection) {
+        protected DebugInfoViewManager(Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
 
         @Override
-        protected CodeLocationView createView(Inspection inspection) {
-            return new CodeLocationView(inspection);
+        protected DebugInfoView createView(Inspection inspection) {
+            return new DebugInfoView(inspection);
         }
 
     }
 
-    private static CodeLocationViewManager viewManager = null;
+    private static DebugInfoViewManager viewManager = null;
 
-    public static CodeLocationViewManager makeViewManager(Inspection inspection) {
+    public static DebugInfoViewManager makeViewManager(Inspection inspection) {
         if (viewManager == null) {
-            viewManager = new CodeLocationViewManager(inspection);
+            viewManager = new DebugInfoViewManager(inspection);
         }
         return viewManager;
     }
 
     private MaxCodeLocation codeLocation = null;
     private MaxCompilation compiledCode = null;
-    private CiFrame frames = null;
+    private CiDebugInfo debugInfo = null;
 
+    private final MatteBorder frameBorder;
 
     private final Rectangle originalFrameGeometry;
     private final InspectorPanel nullPanel;
     private final InspectorPanel simplePanel;
     private final PlainLabel simplePanelLabel;
 
-    protected CodeLocationView(Inspection inspection) {
+    protected DebugInfoView(Inspection inspection) {
         super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
         Trace.begin(1,  tracePrefix() + " initializing");
+
+        frameBorder = BorderFactory.createMatteBorder(1, 0, 1, 0, style().defaultBorderColor());
+
 
         nullPanel = new InspectorPanel(inspection, new BorderLayout());
         nullPanel.add(new PlainLabel(inspection, inspection.nameDisplay().unavailableDataShortText()), BorderLayout.PAGE_START);
@@ -96,6 +98,7 @@ public final class CodeLocationView extends AbstractView<CodeLocationView> {
         simplePanel = new InspectorPanel(inspection, new BorderLayout());
         simplePanelLabel = new PlainLabel(inspection, "");
         simplePanel.add(simplePanelLabel, BorderLayout.PAGE_START);
+        simplePanel.setBorder(frameBorder);
 
         updateCodeLocation(focus().codeLocation());
 
@@ -131,18 +134,28 @@ public final class CodeLocationView extends AbstractView<CodeLocationView> {
 
     @Override
     protected void createViewContent() {
+        // TODO (mlvdv) convert this to some kind of tabular display with useful
+        // functionality (inspection, navigation, etc.) over each cell.
         if (codeLocation == null) {
             setContentPane(nullPanel);
-        } else if (frames == null) {
+        } else if (debugInfo == null) {
             simplePanelLabel.setText(inspection().nameDisplay().shortName(codeLocation));
             setContentPane(simplePanel);
         } else {
-            final JPanel panel = new InspectorPanel(inspection(), new GridLayout(0, 1));
-            CiFrame frame = frames;
+            final JPanel panel = new InspectorPanel(inspection());
+            panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+
+            // TODO: add register and frame reference map information to panel
+            // debugInfo.registerRefMap ...
+            // debugInfo.frameRefMap ...
+
+            CiFrame frame = debugInfo.frame();
             do {
                 panel.add(createFramePanel(frame), 0);
                 frame = frame.caller();
             } while (frame != null);
+            simplePanelLabel.setText(inspection().nameDisplay().shortName(codeLocation));
+            panel.add(simplePanel, 0);
             setContentPane(new InspectorScrollPane(inspection(), panel));
         }
         setTitle();
@@ -163,7 +176,7 @@ public final class CodeLocationView extends AbstractView<CodeLocationView> {
     private void updateCodeLocation(MaxCodeLocation codeLocation) {
         this.codeLocation = codeLocation;
         compiledCode = codeLocation.compiledCode();
-        frames = codeLocation.bytecodeFrames();
+        debugInfo = codeLocation.debugInfo();
     }
 
     private String shortString(CiCodePos codePos) {
@@ -176,7 +189,8 @@ public final class CodeLocationView extends AbstractView<CodeLocationView> {
 
         final CiCodePos codePos = frame;
         final PlainLabel bytecodeLocationLabel = new PlainLabel(inspection(), shortString(codePos));
-        bytecodeLocationLabel.setToolTipText(codePos.toString());
+        final String methodToolTipText = CiUtil.appendLocation(new StringBuilder(10), codePos.method, codePos.bci).toString();
+        bytecodeLocationLabel.setToolTipText(methodToolTipText);
         headerPanel.add(bytecodeLocationLabel);
 
         ClassMethodActor method = (ClassMethodActor) codePos.method;
@@ -188,7 +202,7 @@ public final class CodeLocationView extends AbstractView<CodeLocationView> {
             }
             final String labelText = lineNumber >= 0 ? String.valueOf(lineNumber) : inspection().nameDisplay().unavailableDataShortText();
             final PlainLabel sourceLocationLabel = new PlainLabel(inspection(), " line=" + labelText);
-            sourceLocationLabel.setToolTipText(sourceFileName);
+            sourceLocationLabel.setToolTipText(methodToolTipText);
             sourceLocationLabel.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
@@ -219,9 +233,8 @@ public final class CodeLocationView extends AbstractView<CodeLocationView> {
             }
             panel.add(slotsPanel, BorderLayout.LINE_START);
         }
-        panel.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, style().defaultBorderColor()));
+        panel.setBorder(frameBorder);
         return panel;
     }
-
 
 }

@@ -34,8 +34,6 @@ import com.sun.max.program.option.*;
 
 /**
  * Persistent preferences for table-based viewing of compiled stack frames in the VM.
- *
- * @author Michael Van De Vanter
   */
 public final class CompiledStackFrameViewPreferences extends TableColumnVisibilityPreferences<CompiledStackFrameColumnKind> {
 

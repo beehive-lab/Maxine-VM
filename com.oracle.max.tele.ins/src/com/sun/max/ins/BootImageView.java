@@ -31,8 +31,6 @@ import com.sun.max.vm.*;
 
 /**
  * A singleton view that displays {@link VMConfiguration}  information in the VM boot image.
- *
- * @author Michael Van De Vanter
  */
 public final class BootImageView extends AbstractView<BootImageView>  implements TableColumnViewPreferenceListener {
 

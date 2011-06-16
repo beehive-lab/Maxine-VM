@@ -24,8 +24,6 @@ package com.sun.max.tele;
 
 /**
  * Listener interface for state changes in the VM.
- *
- * @author Michael Van De Vanter
  */
 public interface MaxVMStateListener {
 

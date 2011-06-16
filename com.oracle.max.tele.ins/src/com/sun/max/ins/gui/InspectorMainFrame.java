@@ -47,8 +47,6 @@ import com.sun.max.util.*;
 /**
  * The main GUI window for an inspection of a VM, with related GUI services.
  * Contains multiple instances of {@link AbstractView} in a {@link JDesktopPane}.
- *
- * @author Michael Van De Vanter
  */
 public final class InspectorMainFrame extends JFrame implements InspectorGUI, Prober {
 
@@ -94,7 +92,6 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
      * Support for the desktop pane to act as a Drag and Drop <em>target</em>.
      * Only copy operations are supported.
      *
-     * @author Michael Van De Vanter
      */
     private final class MainFrameTransferHandler extends TransferHandler {
 
@@ -316,7 +313,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         desktopMenu.add(views.activateSingletonViewAction(ViewKind.ALLOCATIONS));
         desktopMenu.add(views.activateSingletonViewAction(ViewKind.BOOT_IMAGE));
         desktopMenu.add(views.activateSingletonViewAction(ViewKind.BREAKPOINTS));
-        desktopMenu.add(views.activateSingletonViewAction(ViewKind.CODE_LOCATION));
+        desktopMenu.add(views.activateSingletonViewAction(ViewKind.DEBUG_INFO));
         desktopMenu.add(views.memory().viewMenu());
         desktopMenu.add(views.memoryBytes().viewMenu());
         desktopMenu.add(views.activateSingletonViewAction(ViewKind.METHODS));

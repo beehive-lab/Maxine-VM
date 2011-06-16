@@ -39,8 +39,6 @@ import com.sun.max.vm.reference.*;
  * <i>allocation mark</i> that represents the limit of the current allocation.
  * <br>
  * Usage defaults to 100% if nothing can be determined about the allocation mark.
- *
- * @author Michael Van De Vanter
  */
 public class TeleLinearAllocationMemoryRegion extends TeleRuntimeMemoryRegion {
 

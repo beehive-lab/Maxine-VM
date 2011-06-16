@@ -32,9 +32,6 @@ import com.sun.max.unsafe.*;
 
 /**
  * A dialog that permits entering of a hex-specified memory address.
- *
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
  */
 public abstract class AddressInputDialog extends InspectorDialog {
 

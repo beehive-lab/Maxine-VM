@@ -21,7 +21,6 @@
  * questions.
  */
 /**
- * @author Mick Jordan
  *
  * Common code for the Unix-specific implementations of process/thread machinery of the Inspector.
  *

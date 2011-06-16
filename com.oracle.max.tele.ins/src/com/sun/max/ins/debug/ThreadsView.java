@@ -34,8 +34,6 @@ import com.sun.max.tele.*;
 
 /**
  * A singleton view that displays the list of threads running in the process of the VM.
- *
- * @author Michael Van De Vanter
  */
 public final class ThreadsView extends AbstractView<ThreadsView> implements TableColumnViewPreferenceListener {
 

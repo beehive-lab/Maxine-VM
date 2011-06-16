@@ -36,8 +36,6 @@ import com.sun.max.ins.view.InspectionViews.ViewKind;
 /**
  * Abstract manager for a kind of view that can occur in multiple
  * instances.
- *
- * @author Michael Van De Vanter
  */
 public abstract class AbstractMultiViewManager<View_Kind extends AbstractView>
     extends AbstractInspectionHolder

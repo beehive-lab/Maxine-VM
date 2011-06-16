@@ -1212,9 +1212,9 @@ function run_inspect() {
         run sudo -E -p \
 "Debugging is a privileged operation on Mac OS X.
 Please enter your 'sudo' password:" \
-        ${jvm_exe} $system_props -cp $(jmax classpath) com.sun.max.ins.MaxineInspector -trace=$trace_level ${inspector_args} -a="$vm_args"
+        ${jvm_exe} $system_props -cp $(jmax classpath)${inspector_cp} com.sun.max.ins.MaxineInspector -trace=$trace_level ${inspector_args} -a="$vm_args"
     else
-        run ${jvm_exe} $system_props -cp $(jmax classpath) com.sun.max.ins.MaxineInspector -trace=$trace_level ${inspector_args} -a="$vm_args"
+        run ${jvm_exe} $system_props -cp $(jmax classpath)${inspector_cp} com.sun.max.ins.MaxineInspector -trace=$trace_level ${inspector_args} -a="$vm_args"
     fi
 }
 

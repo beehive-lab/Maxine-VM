@@ -29,8 +29,6 @@ import com.sun.max.tele.*;
 
 /**
  * A label that displays some property of a known MV memory region and acts as a drag source.
- *
- * @author Michael Van De Vanter
  */
 public abstract class AbstractMemoryRegionLabel extends InspectorLabel {
 

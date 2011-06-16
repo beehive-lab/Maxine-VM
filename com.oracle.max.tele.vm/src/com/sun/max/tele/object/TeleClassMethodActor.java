@@ -48,9 +48,6 @@ import com.sun.max.vm.reference.*;
  * @see ClassMethodActor
  * @see TargetState
  * @see TeleObject
- *
- * @author Michael Van De Vanter
- * @author Ben L. Titzer
  */
 public abstract class TeleClassMethodActor extends TeleMethodActor implements MethodProvider {
 

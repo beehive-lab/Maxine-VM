@@ -32,8 +32,6 @@ import com.sun.max.vm.classfile.constant.*;
 
 /**
  * An object view specialized for displaying a low-level heap object in the VMk that implements a {@link Utf8Constant}.
- *
- * @author Michael Van De Vanter
  */
 class Utf8ConstantView extends ObjectView<Utf8ConstantView> {
 

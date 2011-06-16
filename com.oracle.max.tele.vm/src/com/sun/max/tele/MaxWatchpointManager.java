@@ -33,8 +33,6 @@ import com.sun.max.vm.type.*;
 
 /**
  * Client access to VM watchpoint creation and management.
- *
- * @author Michael Van De Vanter
  */
 public interface MaxWatchpointManager {
 

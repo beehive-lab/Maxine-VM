@@ -24,8 +24,6 @@ package test.com.sun.max.tele;
 
 /**
  * The empty program.
- *
- * @author Michael Van De Vanter
  */
 public class Empty {
     public static void main(String[] args) {

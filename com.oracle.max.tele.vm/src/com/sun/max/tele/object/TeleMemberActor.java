@@ -29,8 +29,6 @@ import com.sun.max.vm.reference.*;
 
 /**
  * Inspector's surrogate for an object of type {@link MemberActor} in the VM.
- *
- * @author Michael Van De Vanter
  */
 public abstract class TeleMemberActor extends TeleActor {
 

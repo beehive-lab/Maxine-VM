@@ -46,8 +46,6 @@ import com.sun.max.vm.value.*;
  * Creates a stack frame header at the top of the panel.
  * <p>
  * Concrete subclasses can be specialized for different kinds of frames, if necessary.
- *
- * @author Michael Van De Vanter
  */
 abstract class CompiledStackFramePanel extends InspectorPanel {
 

@@ -136,18 +136,6 @@ public interface CompilationScheme extends VMScheme {
         }
 
         /**
-         * Get the entrypoint to a method that has already been compiled. This is needed, for example, at startup, to
-         * get the entrypoint address of some critical VM methods.
-         *
-         * @param classMethodActor the method for which to get the entrypoint
-         * @param callEntryPoint the call entrypoint for which to get the address (@see CallEntryPoint)
-         * @return an address representing the entrypoint to the compiled code of the specified method
-         */
-        public static Address getCriticalEntryPoint(ClassMethodActor classMethodActor, CallEntryPoint callEntryPoint) {
-            return classMethodActor.currentTargetMethod().getEntryPoint(callEntryPoint).asAddress();
-        }
-
-        /**
          * Get the current target method for the specified class method actor.
          *
          * @param classMethodActor the method for which to get the target method
@@ -251,7 +239,7 @@ public interface CompilationScheme extends VMScheme {
             TargetMethod oldMethod = mpo.method;
             TargetMethod newMethod = TargetState.currentTargetMethod(classMethodActor.targetState, true);
 
-            if (oldMethod == newMethod) {
+            if (oldMethod == newMethod || newMethod == null) {
                 // There is no newer compiled version available yet that we could just patch to, so recompile
                 logCounterOverflow(mpo, "");
                 synchronized (mpo) {
@@ -265,6 +253,7 @@ public interface CompilationScheme extends VMScheme {
                 // We don't want to see another counter overflow in the near future.
                 mpo.entryCount = 10000;
             } else {
+                assert newMethod != null : oldMethod;
                 logPatching(classMethodActor, oldMethod, newMethod);
                 mpo.entryCount = 0;
 

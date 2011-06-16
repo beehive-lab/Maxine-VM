@@ -33,8 +33,6 @@ import com.sun.max.vm.type.*;
  * TargetMethodSearchDialog. The latter should be refactored to disentangle
  * the logic used here from the GUI aspects.
  * TODO: The command parsing is very picky - it needs a real lexer to deal with white space properly.
- *
- * @author Mick Jordan
  */
 public class FileCommands {
     private static final String DEFAULT_COMMAND_FILE_PROPERTY = "max.ins.defaultcommandfile";

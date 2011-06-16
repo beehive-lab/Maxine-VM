@@ -26,8 +26,6 @@ import com.sun.max.vm.reference.*;
 
 /**
  * A local object wrapped into a {@link Reference} for tele interpreter use.
- *
- * @author Bernd Mathiske
  */
 public class LocalTeleReference extends TeleReference {
 

@@ -33,8 +33,6 @@ import com.sun.max.vm.thread.*;
  * Variables are word sized, stored in index-order, and are accessible by either name or index.
  * If the region starts at {@link Address#zero()} then the {@linkplain VmThreadLocal thread local variables}
  * are assumed to be invalid.
- *
- * @author Michael Van De Vanter
  */
 public interface MaxThreadLocalsArea extends MaxEntity<MaxThreadLocalsArea> {
 

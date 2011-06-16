@@ -32,8 +32,6 @@ import com.sun.max.vm.actor.member.*;
 
 /**
  * Factory and manager for descriptions of locations in code in the VM.
- *
- * @author Michael Van De Vanter
  */
 public final class CodeManager extends AbstractTeleVMHolder implements MaxCodeManager {
 

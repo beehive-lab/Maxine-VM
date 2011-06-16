@@ -26,8 +26,6 @@ import com.sun.max.ins.debug.*;
 
 /**
  * Defines the columns that can be displayed describing a region of memory word values in the VM.
- *
- * @author Michael Van De Vanter
  */
 public enum MemoryColumnKind implements ColumnKind {
     TAG("Tag", "Additional information", true, -1),

@@ -26,8 +26,6 @@ package com.sun.max.ins.gui;
 
 /**
  * Notification service for window-related events that affect a single {@link AbstractView}.
- *
- * @author Michael Van De Vanter
  */
 public interface ViewEventListener {
 

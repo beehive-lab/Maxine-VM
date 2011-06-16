@@ -35,8 +35,6 @@ import com.sun.max.vm.type.*;
  * <br>
  * This implementation eagerly caches descriptions of every {@TargetMethod} object allocated
  * in the region.
- *
- * @author Michael Van De Vanter
  * @see CodeRegion
  */
 public final class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {

@@ -38,9 +38,6 @@ import com.sun.max.vm.value.*;
  * A label specialized for use in the {@link AbstractView}.
  * <br>
  * Labels can act as a source for drag and drop operations.
- *
- * @author Doug Simon
- * @author Michael Van De Vanter
  */
 public abstract class InspectorLabel extends JLabel implements InspectionHolder, TextSearchable, Prober {
 
@@ -49,7 +46,6 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
     /**
      * Support for labels that can act as a source for a drag and drop gesture.
      *
-     * @author Michael Van De Vanter
      */
     private class InspectorLabelDragSource implements DragGestureListener, DragSourceListener {
 

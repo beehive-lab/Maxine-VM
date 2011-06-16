@@ -29,8 +29,6 @@ import com.sun.max.unsafe.*;
 
 /**
  * Abstract representation of a span of memory in the VM.
- *
- * @author Michael Van De Vanter
  */
 public abstract class TeleMemoryRegion implements MaxMemoryRegion {
 

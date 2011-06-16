@@ -30,8 +30,6 @@ import com.sun.max.tele.*;
 
 /**
  * A dialog specialized for use in the VM Inspector.
- *
- * @author Michael Van De Vanter
  */
 public abstract class InspectorDialog extends JDialog implements InspectionHolder {
 

@@ -31,8 +31,6 @@ import com.sun.max.ins.util.*;
  * An implementation of {@link MouseListener} that only responds to single
  * mouse clicks, in which the abstract method {@link #procedure(MouseEvent)}
  * is called.
- *
- * @author Michael Van De Vanter
  */
 public abstract class InspectorMouseClickAdapter implements MouseListener {
 

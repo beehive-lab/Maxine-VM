@@ -55,6 +55,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.profile.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.CalleeKind;
@@ -161,7 +162,7 @@ public final class T1XTargetMethod extends TargetMethod {
         StopsBuilder stops = comp.stops;
         int firstTemplateSlot = frame.numberOfNonParameterSlots() + frame.numberOfOperandStackSlots();
         int firstTemplateSlotIndexInFrameReferenceMap = firstTemplateSlot * JVMSFrameLayout.STACK_SLOTS_PER_JVMS_SLOT;
-        stops.pack(frameRefMapSize, regRefMapSize(), firstTemplateSlotIndexInFrameReferenceMap);
+        stops.pack(frameRefMapSize, regRefMapSize(), firstTemplateSlotIndexInFrameReferenceMap, comp.adapter);
         setStopPositions(stops.stopPositions, stops.directCallees, stops.indirectCalls.size, stops.safepoints.size);
         refMaps = stops.refMaps;
         isDirectCallToRuntime = stops.isDirectCallToRuntime;
@@ -209,7 +210,7 @@ public final class T1XTargetMethod extends TargetMethod {
 
         if (!MaxineVM.isHosted()) {
             if (install) {
-                linkDirectCalls(comp.adapter);
+                linkDirectCalls();
             } else {
                 // the displacement between a call site in the heap and a code cache location may not fit in the offset operand of a call
             }
@@ -281,8 +282,8 @@ public final class T1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public void fixupCallSite(int callOffset, Address callEntryPoint) {
-        AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
+    public Address fixupCallSite(int callOffset, Address callEntryPoint) {
+        return AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
     }
 
     public byte[] referenceMaps() {
@@ -299,8 +300,8 @@ public final class T1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public void patchCallSite(int callOffset, Address callEntryPoint) {
-        AMD64TargetMethodUtil.mtSafePatchCallDisplacement(this, codeStart().plus(callOffset), callEntryPoint.asAddress());
+    public Address patchCallSite(int callOffset, Address callEntryPoint) {
+        return AMD64TargetMethodUtil.mtSafePatchCallDisplacement(this, codeStart().plus(callOffset), callEntryPoint.asAddress());
     }
 
     @Override
@@ -326,9 +327,12 @@ public final class T1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public CiFrame debugFramesAt(int stopIndex, FrameAccess fa) {
+    public CiDebugInfo debugInfoAt(int stopIndex, FrameAccess fa) {
+        CiBitMap frameRefMap = new CiBitMap(referenceMaps(), stopIndex * refMapSize(), frameRefMapSize);
+        CiBitMap regRefMap = new CiBitMap(referenceMaps(), (stopIndex * refMapSize()) + frameRefMapSize, regRefMapSize());
         int bci = bciForPos(stopPosition(stopIndex));
-        return frame.asFrame(classMethodActor, bci);
+        CiFrame debugFrame = frame.asFrame(classMethodActor, bci);
+        return new CiDebugInfo(debugFrame, regRefMap, frameRefMap);
     }
 
     @Override
@@ -652,6 +656,41 @@ public final class T1XTargetMethod extends TargetMethod {
         }
     }
 
+    private Pointer adjustSPForHandler(Pointer sp, Pointer fp) {
+        if (isAMD64()) {
+            Pointer localVariablesBase = fp;
+            // The Java operand stack of the T1X method that handles the exception is cleared
+            // when unwinding. The T1X generated handler is responsible for loading the
+            // exception from VmThreadLocal.EXCEPTION_OBJECT to the operand stack.
+            //
+            // Compute the offset to the first stack slot of the Java Stack:
+            //
+            //    frame size - (space for locals + saved RBP + space of the first slot itself).
+            //
+            Pointer catcherSP = localVariablesBase.minus(sizeOfNonParameterLocals());
+
+            // The ref maps for the handler address will expect a valid reference to
+            // to in stack slot 0 so we store a null there.
+            Pointer slot0 = catcherSP.minus(JVMS_SLOT_SIZE);
+            for (int i = 0; i < STACK_SLOTS_PER_JVMS_SLOT; i++) {
+                slot0.writeReference(i, Reference.zero());
+            }
+
+            return catcherSP;
+        } else {
+            throw unimplISA();
+        }
+    }
+
+    @Override
+    public void adjustFrameForHandler(FrameInfo frame) {
+        if (isAMD64()) {
+            frame.sp = adjustSPForHandler(frame.sp, frame.fp);
+        } else {
+            throw unimplISA();
+        }
+    }
+
     @Override
     public void catchException(Cursor current, Cursor callee, Throwable throwable) {
         StackFrameWalker sfw = current.stackFrameWalker();
@@ -668,15 +707,7 @@ public final class T1XTargetMethod extends TargetMethod {
 
             if (isAMD64()) {
                 Pointer localVariablesBase = current.fp();
-                // The Java operand stack of the T1X method that handles the exception is cleared
-                // when unwinding. The T1X generated handler is responsible for loading the
-                // exception from VmThreadLocal.EXCEPTION_OBJECT to the operand stack.
-                //
-                // Compute the offset to the first stack slot of the Java Stack:
-                //
-                //    frame size - (space for locals + saved RBP + space of the first slot itself).
-                //
-                Pointer catcherSP = localVariablesBase.minus(sizeOfNonParameterLocals());
+                Pointer catcherSP = adjustSPForHandler(current.sp(), current.fp());
 
                 // Done with the stack walker
                 sfw.reset();

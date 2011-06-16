@@ -28,8 +28,6 @@ import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 
 /**
- *
- * @author Doug Simon
  */
 public final class MappedByteBufferDataAccess extends DataAccessAdapter {
 

@@ -34,8 +34,6 @@ import com.sun.max.ins.view.InspectionViews.ViewKind;
  * <p>
  * Subclasses must implement {@link SingletonViewManager#activateView()} and set the view in this abstract
  * class.
- *
- * @author Michael Van De Vanter
  * @param <View_Kind> a kind of view that is to be managed as a singleton
  */
 public abstract class AbstractSingletonViewManager<View_Kind extends AbstractView> extends AbstractInspectionHolder implements SingletonViewManager {

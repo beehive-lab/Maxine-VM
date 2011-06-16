@@ -55,10 +55,6 @@ import com.sun.max.vm.value.*;
  * A table-based viewer for an (immutable) section of {@link MaxMachineCode} in the VM.
  * Supports visual effects for execution state, and permits user selection
  * of instructions for various purposes (e.g. set breakpoint).
- *
- * @author Mick Jordan
- * @author Doug Simon
- * @author Michael Van De Vanter
  */
 public class JTableMachineCodeViewer extends MachineCodeViewer {
 
@@ -268,7 +264,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
                 menu.add(actions().toggleMachineCodeBreakpoint(codeLocation, "Toggle breakpoint (double-click)"));
                 menu.add(actions().setMachineCodeBreakpoint(codeLocation, "Set breakpoint"));
                 menu.add(actions().removeMachineCodeBreakpoint(codeLocation, "Unset breakpoint"));
-                menu.add(views().activateSingletonViewAction(ViewKind.CODE_LOCATION));
+                menu.add(views().activateSingletonViewAction(ViewKind.DEBUG_INFO));
                 return menu;
             }
             return null;
@@ -703,14 +699,14 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
 
     private final class SourceLineRenderer extends PlainLabel implements TableCellRenderer {
 
-        private CiFrame lastFrame;
+        private CiCodePos lastCodePos;
 
         SourceLineRenderer() {
             super(JTableMachineCodeViewer.this.inspection(), null);
             addMouseListener(new InspectorMouseClickAdapter(inspection()) {
                 @Override
                 public void procedure(final MouseEvent mouseEvent) {
-                    final CiCodePos frame = lastFrame;
+                    final CiCodePos frame = lastCodePos;
                     if (frame != null) {
                         final InspectorPopupMenu menu = new InspectorPopupMenu();
                         for (CiCodePos location = frame; location != null; location = location.caller) {
@@ -748,16 +744,17 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object ignore, boolean isSelected, boolean hasFocus, int row, int column) {
-            final CiFrame frame = instructionMap().bytecodeFrames(row);
+            CiDebugInfo debugInfo = instructionMap().debugInfoAt(row);
+            final CiCodePos codePos = debugInfo == null ? null : debugInfo.codePos;
             setText("");
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
             setWrappedToolTipText("Source location not available");
             setBackgroundForRow(this, row);
-            if (frame != null) {
-                final StackTraceElement stackTraceElement = frame.method.toStackTraceElement(frame.bci);
+            if (codePos != null) {
+                final StackTraceElement stackTraceElement = codePos.method.toStackTraceElement(codePos.bci);
                 final StringBuilder stackTrace = new StringBuilder("<table cellpadding=\"1%\"><tr><td></td><td>").append(toolTipText(stackTraceElement)).append("</td></tr>");
                 StackTraceElement top = stackTraceElement;
-                for (CiCodePos caller = frame.caller; caller != null; caller = caller.caller) {
+                for (CiCodePos caller = codePos.caller; caller != null; caller = caller.caller) {
                     StackTraceElement parentSTE = caller.method.toStackTraceElement(caller.bci);
                     stackTrace.append("<tr><td>--&gt;&nbsp;</td><td>").append(toolTipText(parentSTE)).append("</td></tr>");
                     top = parentSTE;
@@ -765,7 +762,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
                 setWrappedToolTipText("Source location = " + stackTrace.append("</table>").toString());
                 setText(String.valueOf(top.getLineNumber()));
             }
-            lastFrame = frame;
+            lastCodePos = codePos;
             setBorderForRow(this, row);
             return this;
         }

@@ -90,7 +90,7 @@ public class C1XRuntimeCalls {
     }
 
     private static void verifyRefMaps() {
-        if (ENABLE_REFMAP_VERIFICATION) {
+        if (ENABLE_REFMAP_VERIFICATION && StackReferenceMapPreparer.VerifyRefMaps) {
             StackReferenceMapPreparer.verifyReferenceMapsForThisThread();
         }
     }

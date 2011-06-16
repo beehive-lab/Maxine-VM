@@ -39,9 +39,6 @@ import com.sun.max.vm.type.*;
 
 /**
  * A dialog to let the user select a reference to a method actor defined by a given class actor.
- *
- * @author Doug Simon
- * @author Bernd Mathiske
  */
 public final class MethodSearchDialog extends FilteredListDialog<MethodKey> {
 

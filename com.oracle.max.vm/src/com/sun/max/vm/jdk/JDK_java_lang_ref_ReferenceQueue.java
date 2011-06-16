@@ -39,7 +39,7 @@ import com.sun.max.vm.type.*;
  * Substitutions for java.lang.ref.ReferenceQueue.
  */
 @METHOD_SUBSTITUTIONS(ReferenceQueue.class)
-final class JDK_java_lang_ref_ReferenceQueue {
+public final class JDK_java_lang_ref_ReferenceQueue {
 
     private JDK_java_lang_ref_ReferenceQueue() {
     }
@@ -48,10 +48,10 @@ final class JDK_java_lang_ref_ReferenceQueue {
     private volatile java.lang.ref.Reference head;
 
     @ALIAS(declaringClass = ReferenceQueue.class)
-    static ReferenceQueue NULL;
+    public static ReferenceQueue NULL;
 
     @ALIAS(declaringClass = ReferenceQueue.class)
-    static ReferenceQueue ENQUEUED;
+    public static ReferenceQueue ENQUEUED;
 
     @ALIAS(declaringClass = ReferenceQueue.class)
     private long queueLength;

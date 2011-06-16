@@ -32,8 +32,6 @@ import com.sun.max.vm.reference.*;
 
 /**
  * Access to an instance of {@link RootTableMemoryRegion} in the VM.
- *
- * @author Michael Van De Vanter
  */
 public class TeleRootTableMemoryRegion extends TeleRuntimeMemoryRegion{
 

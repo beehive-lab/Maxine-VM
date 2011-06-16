@@ -35,8 +35,6 @@ import com.sun.max.ins.util.*;
 /**
  * A toolbar containing controls for identifying rows that match a regexp pattern
  * and for navigating forward and backward among the matching rows.
- *
- * @author Michael Van De Vanter
  */
 public class RowTextSearchToolBar extends InspectorToolBar {
 

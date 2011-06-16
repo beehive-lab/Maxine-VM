@@ -39,10 +39,6 @@ import com.sun.max.unsafe.*;
 /**
  * A singleton view that displays the contents of the stack frame in
  * the VM that is the current user focus.
- *
- * @author Doug Simon
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
  */
 public final class StackFrameView extends AbstractView<StackFrameView> implements TableColumnViewPreferenceListener {
 

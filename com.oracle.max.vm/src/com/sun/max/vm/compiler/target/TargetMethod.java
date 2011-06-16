@@ -44,9 +44,9 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.deopt.*;
+import com.sun.max.vm.compiler.deopt.Deoptimization.Continuation;
 import com.sun.max.vm.compiler.deopt.Deoptimization.Info;
-import com.sun.max.vm.compiler.deopt.Deoptimization.*;
+import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.ArrayField;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.*;
@@ -174,6 +174,9 @@ public abstract class TargetMethod extends MemoryRegion {
      */
     protected int[] stopPositions;
 
+    /**
+     * @see #directCallees()
+     */
     protected Object[] directCallees;
 
     private int numberOfIndirectCalls;
@@ -332,6 +335,11 @@ public abstract class TargetMethod extends MemoryRegion {
      */
     public static class FrameAccess {
         /**
+         * Description of the register save area.
+         */
+        public final CiCalleeSaveArea csa;
+
+        /**
          * Register save area.
          */
         public final Pointer rsa;
@@ -346,24 +354,37 @@ public abstract class TargetMethod extends MemoryRegion {
          */
         public final Pointer fp;
 
-        public FrameAccess(Pointer rsa, Pointer sp, Pointer fp) {
+        /**
+         * Stack pointer.
+         */
+        public final Pointer callerSP;
+
+        /**
+         * Frame pointer.
+         */
+        public final Pointer callerFP;
+
+        public FrameAccess(CiCalleeSaveArea csa, Pointer rsa, Pointer sp, Pointer fp, Pointer callerSP, Pointer callerFP) {
+            this.csa = csa;
             this.rsa = rsa;
             this.sp = sp;
             this.fp = fp;
+            this.callerSP = callerSP;
+            this.callerFP = callerFP;
         }
     }
 
     /**
-     * Gets the debug frame(s) for a given stop. If {@code fa != null}, then the {@linkplain CiFrame#values values}
-     * in the returned objects are {@link CiConstant}s wrapping the live values. Otherwise, they are
-     * {@link CiStackSlot}, {@link CiRegister} and {@link CiConstant} values describing how to extract
-     * values from a live frame.
+     * Gets the debug info available for a given stop. If {@code fa != null}, then the {@linkplain CiFrame#values values} in the
+     * returned object are {@link CiConstant}s wrapping values from the thread's stack denoted by {@code fa}. Otherwise,
+     * they are {@link CiStackSlot}, {@link CiRegister} and {@link CiConstant} values describing how to extract values
+     * from a live frame.
      *
      * @param stopIndex an index of a stop within this method
      * @param fa access to a live frame (may be {@code null})
-     * @return the debug frame(s) at the denoted stop
+     * @return the debug ino at the denoted stop of {@code null} if none available
      */
-    public CiFrame debugFramesAt(int stopIndex, FrameAccess fa) {
+    public CiDebugInfo debugInfoAt(int stopIndex, FrameAccess fa) {
         return null;
     }
 
@@ -372,10 +393,11 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
-     * Answer an array containing the direct callees of this method.
+     * Gets an array containing the direct callees of this method.
      * The array can contain instances of {@link ClassMethodActor} and {@link TargetMethod} side by side.
      * In case a callee is an actual method, it is represented by a {@link ClassMethodActor}.
-     * In case it is a stub, a {@link TargetMethod} is used.
+     * In case it is a stub or the adapter, a {@link TargetMethod} is used.
+     *
      * @return entities referenced by direct call instructions, matched to the stop positions array above by array index
      */
     public final Object[] directCallees() {
@@ -384,8 +406,7 @@ public abstract class TargetMethod extends MemoryRegion {
 
     /**
      * Gets the call entry point to be used for a direct call from this target method. By default, the
-     * call entry point will be the one specified by the {@linkplain #abi() ABI} of this target method.
-     * This models a direct call to another target method compiled with the same compiler as this target method.
+     * {@linkplain #callEntryPoint call entry point} of this target method will be used.
      *
      * @param directCallIndex an index into the {@linkplain #directCallees() direct callees} of this target method
      */
@@ -540,11 +561,14 @@ public abstract class TargetMethod extends MemoryRegion {
      * Resets a direct call site, make it point to the static trampoline again.
      *
      * @param dc the index of the direct call
+     * @return {@code true} if the call site was not already pointing to the static trampoline
      */
-    public final void resetDirectCall(int dc) {
+    public final boolean resetDirectCall(int dc) {
+        assert !(directCallees[dc] instanceof Adapter);
         final int offset = getCallEntryOffset(directCallees[dc], dc);
         final int pos = stopPosition(dc);
-        fixupCallSite(pos, vm().stubs.staticTrampoline().codeStart.plus(offset));
+        Pointer trampoline = vm().stubs.staticTrampoline().codeStart.plus(offset);
+        return !patchCallSite(pos, trampoline).equals(trampoline);
     }
 
     /**
@@ -554,11 +578,9 @@ public abstract class TargetMethod extends MemoryRegion {
      * been evicted from the code cache), the address of a {@linkplain StaticTrampoline static trampoline} is patched
      * into the call instruction.
      *
-     * @param adapter the adapter called by the prologue of this method. This will be {@code null} if this method does
-     *            not have an adapter prologue.
      * @return true if target code was available for all the direct callees
      */
-    public final boolean linkDirectCalls(Adapter adapter) {
+    public final boolean linkDirectCalls() {
         boolean linkedAll = true;
         final Object[] directCallees = directCallees();
         if (directCallees != null) {
@@ -591,9 +613,6 @@ public abstract class TargetMethod extends MemoryRegion {
             }
         }
 
-        if (adapter != null) {
-            adapter.generator.linkAdapterCallInPrologue(this, adapter);
-        }
         return linkedAll;
     }
 
@@ -608,6 +627,9 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     private int getCallEntryOffset(Object callee, int index) {
+        if (callee instanceof Adapter) {
+            return 0;
+        }
         final CallEntryPoint callEntryPoint = callEntryPointForDirectCall(index);
         return callEntryPoint.offsetInCallee();
     }
@@ -951,18 +973,20 @@ public abstract class TargetMethod extends MemoryRegion {
      *
      * @param callSite offset to a call site relative to the start of the code of this target method
      * @param callEntryPoint entry point the call site should call after patching
+     * @return the entry point of the call prior to patching
      */
-    public abstract void patchCallSite(int callOffset, Address callEntryPoint);
+    public abstract Address patchCallSite(int callOffset, Address callEntryPoint);
 
     /**
-     * Fixup of call site in the method. This differs from the above in that the call site is updated before
+     * Fixup a call site in the method. This differs from the above in that the call site is updated before
      * any thread can see it. Thus there isn't any concurrency between modifying the call site and threads
      * trying to run it.
      *
      * @param callOffset offset to a call site relative to the start of the code of this target method
      * @param callEntryPoint entry point the call site should call after fixup
+     * @return the entry point of the call prior to patching
      */
-    public abstract void fixupCallSite(int callOffset, Address callEntryPoint);
+    public abstract Address fixupCallSite(int callOffset, Address callEntryPoint);
 
     /**
      * Indicates whether a call site can be patched safely when multiple threads may execute this target method concurrently.
@@ -990,6 +1014,25 @@ public abstract class TargetMethod extends MemoryRegion {
      * @param preparer the reference map preparer which receives the reference map
      */
     public abstract void prepareReferenceMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer);
+
+    /**
+     * The stack and frame pointers describing the extent of a physical frame.
+     */
+    public static class FrameInfo {
+        public FrameInfo(Pointer sp, Pointer fp) {
+            this.sp = sp;
+            this.fp = fp;
+        }
+        public Pointer sp;
+        public Pointer fp;
+    }
+
+    /**
+     * Adjusts the stack and frame pointers for the frame about to handle an exception.
+     * This is provided mainly for the benefit of deoptimization.
+     */
+    public void adjustFrameForHandler(FrameInfo frame) {
+    }
 
     /**
      * Attempts to catch an exception thrown by this method or a callee method. This method should not return

@@ -148,7 +148,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
         FatalError.check(Heap.bootHeapRegion.start() == Heap.startOfReservedVirtualSpace(),
             "Boot heap region must be mapped at start of reserved virtual space");
 
-        final Address endOfBootCodeRegion = Code.bootCodeRegion().end().roundedUpBy(pageSize);
+        final Address endOfBootCodeRegion = Code.bootCodeRegion().end().alignUp(pageSize);
         final Address endOfCodeRegion = Code.getCodeManager().getRuntimeCodeRegion().end();
         final Address endOfReservedSpace = Heap.bootHeapRegion.start().plus(reservedSpace);
 
@@ -366,8 +366,8 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
             theHeap.makeParsable();
             theHeap.mark(heapMarker);
             startTimer(reclaimTimer);
-            /*Size freeSpaceAfterGC = */
             theHeap.sweep(heapMarker);
+           // Size freeSpaceAfterGC = theHeap.freeSpaceAfterSweep();
             stopTimer(reclaimTimer);
             if (VerifyAfterGC) {
                 afterGCVerifier.run();

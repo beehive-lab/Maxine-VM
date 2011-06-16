@@ -22,7 +22,5 @@
  */
 /**
  * Page-based memory buffer for reads and writes to tele process memory.
- * 
- * @author Bernd Mathiske
  */
 package com.sun.max.tele.page;

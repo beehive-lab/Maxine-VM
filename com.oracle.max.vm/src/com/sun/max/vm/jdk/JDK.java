@@ -75,6 +75,8 @@ public class JDK {
     public static final ClassRef java_nio_DirectShortBufferS         = new ClassRef("java.nio.DirectShortBufferS");
     public static final ClassRef java_nio_DirectShortBufferU         = new ClassRef("java.nio.DirectShortBufferU");
 
+    public static final ClassRef java_nio_charset_CharsetEncoder     = new ClassRef(java.nio.charset.CharsetEncoder.class);
+
     public static final ClassRef java_lang_reflect_Constructor       = new ClassRef(java.lang.reflect.Constructor.class);
     public static final ClassRef java_lang_reflect_Field             = new ClassRef(java.lang.reflect.Field.class);
     public static final ClassRef java_lang_reflect_Method            = new ClassRef(java.lang.reflect.Method.class);

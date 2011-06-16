@@ -31,8 +31,6 @@ import com.sun.max.vm.value.*;
  *
  * Instances of this exception type are constructed in the context of the interpreter's {@linkplain Machine machine}
  * state which is used to construct a stack trace of the interpreter's call stack at the time of the exception.
- *
- * @author Doug Simon
  */
 public class TeleInterpreterException extends InvocationTargetException {
 

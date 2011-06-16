@@ -27,8 +27,6 @@ import com.sun.max.tele.*;
 
 /**
  * A label that displays the name of a known VM memory region and acts as a drag source.
- *
- * @author Michael Van De Vanter
  */
 public final class MemoryRegionNameLabel extends AbstractMemoryRegionLabel implements Prober {
 

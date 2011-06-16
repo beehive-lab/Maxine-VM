@@ -31,8 +31,6 @@ import com.sun.max.vm.type.*;
 /**
  * A dialog for selecting a type available via the {@linkplain MaxVM#loadableTypeDescriptors()} including those that may not have yet
  * been loaded into the {@linkplain TeleClassRegistry Inspector class registry}.
- *
- * @author Doug Simon
  */
 public final class TypeSearchDialog extends FilteredListDialog<TypeDescriptor> {
 

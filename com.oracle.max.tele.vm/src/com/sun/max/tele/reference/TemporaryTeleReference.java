@@ -28,8 +28,6 @@ import com.sun.max.unsafe.*;
  * Non-GC safe.
  * Constant tele reference without canonicalization.
  * For temporary use only.
- *
- * @author Bernd Mathiske
  */
 public final class TemporaryTeleReference extends ConstantTeleReference {
 

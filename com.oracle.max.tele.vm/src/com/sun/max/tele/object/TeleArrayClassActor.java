@@ -31,9 +31,6 @@ import com.sun.max.vm.reference.*;
 /**
  *
  * Class representing a reference to an array class in the {@link TeleVM}.
- *
- * @author Michael Van De Vanter
- * @author Thomas Wuerthinger
  */
 public class TeleArrayClassActor extends TeleReferenceClassActor implements ArrayTypeProvider {
 

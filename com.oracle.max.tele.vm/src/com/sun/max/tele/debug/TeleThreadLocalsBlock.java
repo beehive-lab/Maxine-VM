@@ -40,8 +40,6 @@ import com.sun.max.vm.thread.*;
  * Access to a block of thread local storage.
  *
  * @see VmThreadLocal
- *
- * @author Michael Van De Vanter
  */
 public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements TeleVMCache, MaxThreadLocalsBlock {
 

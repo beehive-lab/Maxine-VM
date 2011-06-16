@@ -29,8 +29,6 @@ import com.sun.max.unsafe.*;
 
 /**
  * Access to information about threads in the VM.
- *
- * @author Michael Van De Vanter
  */
 public interface MaxThreadManager {
 

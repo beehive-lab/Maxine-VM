@@ -22,7 +22,5 @@
  */
 /**
  * Special reference schemes used for remote access to a tele VM.
- *
- * @author Bernd Mathiske
  */
 package com.sun.max.tele.reference;

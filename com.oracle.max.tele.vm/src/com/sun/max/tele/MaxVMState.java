@@ -39,8 +39,6 @@ import com.sun.max.tele.debug.*;
  * States are linked backwards; a new summary is prepended (and the serial id incremented) each time a new state instance is created.</p>
  * <p>
  * <b>Note:</b> Although all state concerning the identity of threads is immutable, the internal state of those threads may not be.</p>
- *
- * @author Michael Van De Vanter
   */
 public interface MaxVMState  {
 

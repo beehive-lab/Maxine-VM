@@ -34,8 +34,6 @@ import com.sun.max.vm.hosted.*;
 
 /**
  * Creates a running {@link TeleVM}, suitable for testing.
- *
- * @author Michael Van De Vanter
  */
 public class TestTeleVM {
 

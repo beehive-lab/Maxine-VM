@@ -42,8 +42,6 @@ import com.sun.max.vm.value.*;
 /**
  * The Interpreter's interface to the VM.  Encapsulates all the state of the VM.
  * Can run without VM for testing.
- *
- * @author Athul Acharya
  */
 public final class Machine extends AbstractTeleVMHolder{
 

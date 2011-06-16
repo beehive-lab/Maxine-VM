@@ -40,10 +40,6 @@ import com.sun.max.vm.tele.*;
  * across GC invocations, a mirror of this table is maintained in the
  * VM, where it can be updated by the GC.
  *
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
- * @author Hannes Payer
- *
  * @see InspectableHeapInfo
  * @see TeleHeap
  */

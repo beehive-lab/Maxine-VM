@@ -32,8 +32,6 @@ import com.sun.max.vm.reference.*;
 /**
  * Canonical surrogate for a  {@link ClassLoader} in the {@link TeleVM}.
  *
- * @author Michael Van De Vanter
- *
  */
 public class TeleClassLoader extends TeleTupleObject implements ClassLoaderProvider {
 

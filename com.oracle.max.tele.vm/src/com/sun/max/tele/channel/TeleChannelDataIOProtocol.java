@@ -30,8 +30,6 @@ import java.io.Serializable;
  * {@link DataOutputStream}. Specifically, method argument and results types must be capable of being transmitted using
  * the methods of those classes; in particular no object types other than {@link String}, are allowed.
  *
- * @author Mick Jordan
- *
  */
 
 public interface TeleChannelDataIOProtocol {

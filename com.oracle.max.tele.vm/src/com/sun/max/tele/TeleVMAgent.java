@@ -36,8 +36,6 @@ import com.sun.max.vm.hosted.*;
  * as a work around for the lack of support on Darwin for intercepting system calls. On systems
  * that support such functionality, the boot image address can be discovered by intercepting the
  * call to 'mmap' that loads the boot image.
- *
- * @author Doug Simon
  */
 public class TeleVMAgent {
 

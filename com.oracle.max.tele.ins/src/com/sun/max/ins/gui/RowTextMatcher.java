@@ -26,8 +26,6 @@ import java.util.regex.*;
 
 /**
  * Regular expression pattern matcher; identifies by number the rows that match a pattern.
- *
- * @author Michael Van De Vanter
  * @see {@link java.util.regex.Pattern}
  */
 public interface RowTextMatcher {

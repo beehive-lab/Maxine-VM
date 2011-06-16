@@ -27,8 +27,6 @@ import com.sun.max.tele.channel.agent.TeleProcess;
 /**
  * This is a stub implementation that exists only on the agent side of the split communication protocol.
  *
- * @author Mick Jordan
- *
  */
 
 public class LinuxTeleProcess extends TeleProcess {

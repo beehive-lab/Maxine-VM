@@ -65,12 +65,12 @@ public final class JavaPrototype extends Prototype {
 
     private static JavaPrototype theJavaPrototype;
     private final Set<BootImagePackage> loadedBootImagePackages = new HashSet<BootImagePackage>();
-    private final Map<MethodActor, AccessibleObject> methodActorMap = new HashMap<MethodActor, AccessibleObject>();
-    private final Map<FieldActor, Field> fieldActorMap = new HashMap<FieldActor, Field>();
-    private final Map<ClassActor, Class> classActorMap = new ConcurrentHashMap<ClassActor, Class>();
-    private final Map<Method, MethodActor> javaMethodMap = new HashMap<Method, MethodActor>();
-    private final Map<Constructor, MethodActor> javaConstructorMap = new HashMap<Constructor, MethodActor>();
-    private final Map<Field, FieldActor> javaFieldMap = new HashMap<Field, FieldActor>();
+    private final ConcurrentHashMap<MethodActor, AccessibleObject> methodActorMap = new ConcurrentHashMap<MethodActor, AccessibleObject>();
+    private final ConcurrentHashMap<FieldActor, Field> fieldActorMap = new ConcurrentHashMap<FieldActor, Field>();
+    private final ConcurrentHashMap<ClassActor, Class> classActorMap = new ConcurrentHashMap<ClassActor, Class>();
+    private final ConcurrentHashMap<Method, MethodActor> javaMethodMap = new ConcurrentHashMap<Method, MethodActor>();
+    private final ConcurrentHashMap<Constructor, MethodActor> javaConstructorMap = new ConcurrentHashMap<Constructor, MethodActor>();
+    private final ConcurrentHashMap<Field, FieldActor> javaFieldMap = new ConcurrentHashMap<Field, FieldActor>();
 
     /**
      * Gets a reference to the singleton Java prototype.
@@ -310,20 +310,18 @@ public final class JavaPrototype extends Prototype {
      * @return the Java reflection method for the specified method actor
      */
     public Method toJava(MethodActor methodActor) {
-        synchronized (methodActorMap) {
-            Method javaMethod = (Method) methodActorMap.get(methodActor);
-            if (javaMethod == null) {
-                final Class<?> holder = methodActor.holder().toJava();
-                final SignatureDescriptor descriptor = methodActor.descriptor();
-                final Class[] parameterTypes = descriptor.resolveParameterTypes(holder.getClassLoader());
-                final ClassLoader classLoader = holder.getClassLoader();
-                final String name = methodActor.isLocalSubstitute() ? LOCAL_SUBSTITUTION.Static.toSubstituteName(methodActor.name.toString()) : methodActor.name.toString();
-                javaMethod = Classes.getDeclaredMethod(holder, descriptor.resultDescriptor().resolveType(classLoader), name, parameterTypes);
-                methodActorMap.put(methodActor, javaMethod);
-            }
-            assert MethodActor.fromJava(javaMethod) == methodActor;
-            return javaMethod;
+        Method javaMethod = (Method) methodActorMap.get(methodActor);
+        if (javaMethod == null) {
+            final Class<?> holder = methodActor.holder().toJava();
+            final SignatureDescriptor descriptor = methodActor.descriptor();
+            final Class[] parameterTypes = descriptor.resolveParameterTypes(holder.getClassLoader());
+            final ClassLoader classLoader = holder.getClassLoader();
+            final String name = methodActor.isLocalSubstitute() ? LOCAL_SUBSTITUTION.Static.toSubstituteName(methodActor.name.toString()) : methodActor.name.toString();
+            javaMethod = Classes.getDeclaredMethod(holder, descriptor.resultDescriptor().resolveType(classLoader), name, parameterTypes);
+            methodActorMap.put(methodActor, javaMethod);
         }
+        assert MethodActor.fromJava(javaMethod) == methodActor;
+        return javaMethod;
     }
 
     /**
@@ -333,17 +331,15 @@ public final class JavaPrototype extends Prototype {
      * @return the Java reflection method for the specified method actor
      */
     public Constructor toJavaConstructor(MethodActor methodActor) {
-        synchronized (methodActorMap) {
-            Constructor javaConstructor = (Constructor) methodActorMap.get(methodActor);
-            if (javaConstructor == null) {
-                final Class<?> holder = methodActor.holder().toJava();
-                final Class[] parameterTypes = methodActor.descriptor().resolveParameterTypes(holder.getClassLoader());
-                javaConstructor = Classes.getDeclaredConstructor(holder, parameterTypes);
-                methodActorMap.put(methodActor, javaConstructor);
-            }
-            assert MethodActor.fromJavaConstructor(javaConstructor) == methodActor;
-            return javaConstructor;
+        Constructor javaConstructor = (Constructor) methodActorMap.get(methodActor);
+        if (javaConstructor == null) {
+            final Class<?> holder = methodActor.holder().toJava();
+            final Class[] parameterTypes = methodActor.descriptor().resolveParameterTypes(holder.getClassLoader());
+            javaConstructor = Classes.getDeclaredConstructor(holder, parameterTypes);
+            methodActorMap.put(methodActor, javaConstructor);
         }
+        assert MethodActor.fromJavaConstructor(javaConstructor) == methodActor;
+        return javaConstructor;
     }
 
     /**
@@ -353,15 +349,13 @@ public final class JavaPrototype extends Prototype {
      * @return the Java reflection field for the specified field actor
      */
     public Field toJava(FieldActor fieldActor) {
-        synchronized (fieldActorMap) {
-            Field javaField = fieldActorMap.get(fieldActor);
-            if (javaField == null) {
-                final Class javaHolder = fieldActor.holder().toJava();
-                javaField = Classes.getDeclaredField(javaHolder, fieldActor.name.toString());
-                fieldActorMap.put(fieldActor, javaField);
-            }
-            return javaField;
+        Field javaField = fieldActorMap.get(fieldActor);
+        if (javaField == null) {
+            final Class javaHolder = fieldActor.holder().toJava();
+            javaField = Classes.getDeclaredField(javaHolder, fieldActor.name.toString());
+            fieldActorMap.put(fieldActor, javaField);
         }
+        return javaField;
     }
 
     /**
@@ -410,21 +404,19 @@ public final class JavaPrototype extends Prototype {
      * @return the method actor for {@code javaMethod}
      */
     public MethodActor toMethodActor(Method javaMethod) {
-        synchronized (javaMethodMap) {
-            MethodActor methodActor = javaMethodMap.get(javaMethod);
+        MethodActor methodActor = javaMethodMap.get(javaMethod);
+        if (methodActor == null) {
+            final Utf8Constant name = SymbolTable.makeSymbol(javaMethod.getAnnotation(LOCAL_SUBSTITUTION.class) != null ? toSubstituteeName(javaMethod.getName()) : javaMethod.getName());
+            final ClassActor holder = toClassActor(javaMethod.getDeclaringClass());
+            ProgramError.check(holder != null, "Could not find " + javaMethod.getDeclaringClass());
+            final SignatureDescriptor signature = SignatureDescriptor.fromJava(javaMethod);
+            methodActor = holder.findLocalMethodActor(name, signature);
             if (methodActor == null) {
-                final Utf8Constant name = SymbolTable.makeSymbol(javaMethod.getAnnotation(LOCAL_SUBSTITUTION.class) != null ? toSubstituteeName(javaMethod.getName()) : javaMethod.getName());
-                final ClassActor holder = toClassActor(javaMethod.getDeclaringClass());
-                ProgramError.check(holder != null, "Could not find " + javaMethod.getDeclaringClass());
-                final SignatureDescriptor signature = SignatureDescriptor.fromJava(javaMethod);
-                methodActor = holder.findLocalMethodActor(name, signature);
-                if (methodActor == null) {
-                    throw new NoSuchMethodError("Could not find " + name + signature + " in " + holder);
-                }
-                javaMethodMap.put(javaMethod, methodActor);
+                throw new NoSuchMethodError("Could not find " + name + signature + " in " + holder);
             }
-            return methodActor;
+            javaMethodMap.put(javaMethod, methodActor);
         }
+        return methodActor;
     }
 
     /**
@@ -434,19 +426,17 @@ public final class JavaPrototype extends Prototype {
      * @return the method actor for {@code javaConstructor}
      */
     public MethodActor toMethodActor(Constructor javaConstructor) {
-        synchronized (javaConstructorMap) {
-            MethodActor methodActor = javaConstructorMap.get(javaConstructor);
+        MethodActor methodActor = javaConstructorMap.get(javaConstructor);
+        if (methodActor == null) {
+            final ClassActor holder = toClassActor(javaConstructor.getDeclaringClass());
+            final SignatureDescriptor signature = SignatureDescriptor.fromJava(javaConstructor);
+            methodActor = holder.findLocalMethodActor(SymbolTable.INIT, signature);
             if (methodActor == null) {
-                final ClassActor holder = toClassActor(javaConstructor.getDeclaringClass());
-                final SignatureDescriptor signature = SignatureDescriptor.fromJava(javaConstructor);
-                methodActor = holder.findLocalMethodActor(SymbolTable.INIT, signature);
-                if (methodActor == null) {
-                    throw new NoSuchMethodError("Could not find <init>" + signature + " in " + holder);
-                }
-                javaConstructorMap.put(javaConstructor, methodActor);
+                throw new NoSuchMethodError("Could not find <init>" + signature + " in " + holder);
             }
-            return methodActor;
+            javaConstructorMap.put(javaConstructor, methodActor);
         }
+        return methodActor;
     }
 
     /**
@@ -456,20 +446,18 @@ public final class JavaPrototype extends Prototype {
      * @return the field actor for {@code javaField}
      */
     public FieldActor toFieldActor(Field javaField) {
-        synchronized (javaFieldMap) {
-            FieldActor fieldActor = javaFieldMap.get(javaField);
+        FieldActor fieldActor = javaFieldMap.get(javaField);
+        if (fieldActor == null) {
+            final ClassActor holder = toClassActor(javaField.getDeclaringClass());
+            final TypeDescriptor signature = JavaTypeDescriptor.forJavaClass(javaField.getType());
+            final Utf8Constant name = SymbolTable.makeSymbol(javaField.getName());
+            fieldActor = holder.findFieldActor(name, signature);
             if (fieldActor == null) {
-                final ClassActor holder = toClassActor(javaField.getDeclaringClass());
-                final TypeDescriptor signature = JavaTypeDescriptor.forJavaClass(javaField.getType());
-                final Utf8Constant name = SymbolTable.makeSymbol(javaField.getName());
-                fieldActor = holder.findFieldActor(name, signature);
-                if (fieldActor == null) {
-                    throw new NoSuchFieldError("Could not find " + name + signature + " in " + holder);
-                }
-                javaFieldMap.put(javaField, fieldActor);
+                throw new NoSuchFieldError("Could not find " + name + signature + " in " + holder);
             }
-            return fieldActor;
+            javaFieldMap.put(javaField, fieldActor);
         }
+        return fieldActor;
     }
 
     /**

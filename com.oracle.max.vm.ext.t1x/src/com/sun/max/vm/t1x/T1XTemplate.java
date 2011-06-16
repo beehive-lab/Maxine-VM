@@ -31,6 +31,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.c1x.*;
+import com.sun.max.vm.compiler.target.*;
 
 /**
  * A T1X template is a piece of machine code (and its associated metadata) that
@@ -172,7 +173,7 @@ public class T1XTemplate {
         private int bciWithStopCount;
 
         public int[] stopPositions;
-        public ClassMethodActor[] directCallees;
+        public Object[] directCallees;
         public byte[] refMaps;
         public CiBitMap isDirectCallToRuntime;
         public BytecodeStopsIterator bytecodeStopsIterator;
@@ -283,8 +284,9 @@ public class T1XTemplate {
             }
         }
 
-        public void pack(int frameRefMapSize, int regRefMapSize, int firstTemplateSlot) {
-            final int numberOfDirectCalls = directCalls.size;
+        public void pack(int frameRefMapSize, int regRefMapSize, int firstTemplateSlot, Adapter adapter) {
+            final int adapterCount = adapter == null ? 0 : 1;
+            final int numberOfDirectCalls = directCalls.size + adapterCount;
             final int numberOfIndirectCalls = indirectCalls.size;
             final int numberOfSafepoints = safepoints.size;
             final int numberOfStopPositions = numberOfDirectCalls + numberOfIndirectCalls + numberOfSafepoints;
@@ -306,16 +308,22 @@ public class T1XTemplate {
                 last = null;
                 if (numberOfDirectCalls > 0) {
                     isDirectCallToRuntime = new CiBitMap(numberOfDirectCalls);
-                    directCallees = new ClassMethodActor[numberOfDirectCalls];
+                    directCallees = new Object[numberOfDirectCalls];
                 }
 
                 final ByteArrayBitMap bitMap = new ByteArrayBitMap(refMaps, 0, 0);
 
                 int stopIndex = 0;
-                for (int i = 0; i < numberOfDirectCalls; ++i, ++stopIndex) {
+                if (adapter != null) {
+                    directCallees[stopIndex] = adapter;
+                    stopPositions[stopIndex] = adapter.callOffsetInPrologue();
+                    stopIndex++;
+                }
+
+                for (int i = 0; i < directCalls.size; ++i, ++stopIndex) {
                     T1XStop stop = directCalls.get(i);
                     assert stop.regRefMap == null;
-                    directCallees[i] = stop.callee;
+                    directCallees[stopIndex] = stop.callee;
 
                     int bsmIndex = insertInBSM(bsm, stop);
 

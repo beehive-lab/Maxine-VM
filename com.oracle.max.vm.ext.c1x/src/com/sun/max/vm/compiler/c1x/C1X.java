@@ -164,11 +164,15 @@ public class C1X implements RuntimeCompiler {
             if (!optionsRegistered) {
                 C1XOptions.setOptimizationLevel(optLevelOption.getValue());
                 C1XOptions.UseConstDirectCall = true; // Default
-                C1XOptions.UseAssumptions = deoptimizationSupported;
                 C1XOptions.OptIntrinsify = false; // TODO (ds): remove once intrinisification works for Maxine
                 C1XOptions.StackShadowPages = VmThread.STACK_SHADOW_PAGES;
                 VMOptions.addFieldOptions("-C1X:", C1XOptions.class, getHelpMap());
                 VMOptions.addFieldOptions("-ASM:", AsmOptions.class, getHelpMap());
+
+                // Boot image code may not be safely deoptimizable due to metacircular issues
+                // so only enable speculative optimizations at runtime
+                C1XOptions.UseAssumptions = false;
+
                 optionsRegistered = true;
             }
             compiler = new C1XCompiler(runtime, target, xirGenerator, vm().registerConfigs.globalStub);
@@ -187,7 +191,10 @@ public class C1X implements RuntimeCompiler {
             uncommonTrap.classMethodActor.targetState = vm().stubs.genUncommonTrapStub();
 
         }
-        if (phase == Phase.TERMINATING) {
+        if (phase == Phase.STARTING) {
+            // Now it is safe to use speculative opts
+            C1XOptions.UseAssumptions = deoptimizationSupported;
+        } else if (phase == Phase.TERMINATING) {
             if (C1XOptions.PrintMetrics) {
                 C1XMetrics.print();
                 DebugInfo.dumpStats(Log.out);
@@ -235,7 +242,10 @@ public class C1X implements RuntimeCompiler {
         return false;
     }
 
-    @HOSTED_ONLY
+    /**
+     * Specifies whether or not the VM context supports deoptimization. By default, this
+     * is true and is only changed if {@link #deoptimizationNotSupported()} is called.
+     */
     private static boolean deoptimizationSupported = true;
 
     @HOSTED_ONLY

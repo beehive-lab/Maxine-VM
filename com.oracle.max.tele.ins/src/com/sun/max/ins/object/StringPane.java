@@ -30,8 +30,6 @@ import com.sun.max.tele.*;
 
 /**
  * A factory class that creates scrollable pane components, each of which displays a string representation of some value in the VM.
- *
- * @author Michael Van De Vanter
  */
 public final class StringPane extends InspectorScrollPane {
 

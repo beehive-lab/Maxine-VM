@@ -31,8 +31,6 @@ import com.sun.max.tele.*;
 
 /**
  * A label that displays the allocation percentage of a known memory region and acts as a drag source.
- *
- * @author Michael Van De Vanter
  */
 public final class MemoryRegionAllocationLabel extends AbstractMemoryRegionLabel implements Prober {
 

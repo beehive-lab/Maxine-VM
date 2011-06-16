@@ -22,7 +22,5 @@
  */
 /**
  * Rendering of Java objects - tuples and arrays, that is.
- * 
- * @author Bernd Mathiske
  */
 package com.sun.max.ins.object;

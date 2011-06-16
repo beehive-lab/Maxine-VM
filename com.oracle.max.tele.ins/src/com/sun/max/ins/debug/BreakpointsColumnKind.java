@@ -25,8 +25,6 @@ package com.sun.max.ins.debug;
 
 /**
  * Defines the columns that can be displayed describing a breakpoint in the VM.
- *
- * @author Michael Van De Vanter
  */
 public enum BreakpointsColumnKind implements ColumnKind {
     TAG ("Tag", "[T]arget, [B]ytecode, [S]ource", true, 20) {

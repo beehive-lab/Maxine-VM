@@ -59,7 +59,7 @@ public class Stub extends TargetMethod {
             setStopPositions(new int[] {callPosition}, new Object[] {callee}, 0, 0);
         }
         if (!isHosted()) {
-            linkDirectCalls(null); // stubs don't have adapters
+            linkDirectCalls();
         }
     }
 
@@ -105,13 +105,13 @@ public class Stub extends TargetMethod {
     }
 
     @Override
-    public void fixupCallSite(int callOffset, Address callEntryPoint) {
-        AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
+    public Address fixupCallSite(int callOffset, Address callEntryPoint) {
+        return AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
     }
 
     @Override
-    public void patchCallSite(int callOffset, Address callEntryPoint) {
-        FatalError.unexpected("Stub should never be patched");
+    public Address patchCallSite(int callOffset, Address callEntryPoint) {
+        throw FatalError.unexpected("Stub should never be patched");
     }
 
     @Override

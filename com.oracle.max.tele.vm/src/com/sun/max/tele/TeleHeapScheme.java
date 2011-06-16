@@ -26,8 +26,6 @@ import com.sun.max.unsafe.*;
 
 /**
  * Implementation details about a specific implementation of {@link HeapScheme} in the VM.
- *
- * @author Michael Van De Vanter
  */
 public interface TeleHeapScheme extends TeleScheme {
 

@@ -28,8 +28,6 @@ import com.sun.max.ins.*;
 
 /**
  * A checkbox specialized for use in the VM Inspector.
- *
- * @author Michael Van De Vanter
  */
 public final class InspectorCheckBox extends JCheckBoxMenuItem {
 

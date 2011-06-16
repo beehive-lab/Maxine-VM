@@ -24,8 +24,6 @@ package com.sun.max.tele.debug;
 
 /**
  * This exception is thrown when a debugging request is issued with the VM process in some inappropriate state.
- *
- * @author Aritra Bandyopadhyay
  */
 public class InvalidVMRequestException extends Exception {
 

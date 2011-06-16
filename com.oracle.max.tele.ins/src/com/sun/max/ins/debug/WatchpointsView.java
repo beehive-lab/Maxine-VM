@@ -33,8 +33,6 @@ import com.sun.max.tele.*;
 /**
  * Singleton view that displays information about memory watchpoints set in the VM.
  * Wrappers with extra information about each breakpoint are kept in a model.
- *
- * @author Michael Van De Vanter
  */
 public final class WatchpointsView extends AbstractView<WatchpointsView> implements TableColumnViewPreferenceListener {
 

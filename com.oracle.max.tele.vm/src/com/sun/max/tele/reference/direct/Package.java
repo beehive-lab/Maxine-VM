@@ -26,7 +26,6 @@ import com.sun.max.config.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * @author Bernd Mathiske
  */
 public class Package extends BootImagePackage {
     public Package() {

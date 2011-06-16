@@ -29,8 +29,6 @@
  * {@link com.sun.max.tele.TeleChannelDataIOProtocolAdaptor} is a subclass
  * that handles the methods containing object types, translating them into simple
  * types that can be handled by {@link com.sun.max.tele.TeleChannelDataIOProtocolImpl}.
- *
- * @author Mick Jordan
  */
 package com.sun.max.tele.channel.iostream;
 

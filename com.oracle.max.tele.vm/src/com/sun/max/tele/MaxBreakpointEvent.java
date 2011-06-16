@@ -26,8 +26,6 @@ import com.sun.max.unsafe.*;
 
 /**
  * An immutable (thread-safe) record of a thread in the VM triggering a  breakpoint.
- *
- * @author Michael Van De Vanter
   */
 public interface MaxBreakpointEvent {
 

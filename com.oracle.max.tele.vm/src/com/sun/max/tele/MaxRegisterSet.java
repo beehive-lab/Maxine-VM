@@ -28,8 +28,6 @@ import com.sun.max.unsafe.*;
 
 /**
  * Access to register state for a thread in the VM.
- *
- * @author Michael Van De Vanter
  */
 public interface MaxRegisterSet extends MaxEntity<MaxRegisterSet> {
 

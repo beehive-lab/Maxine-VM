@@ -28,8 +28,6 @@ import com.sun.max.vm.reference.*;
 
 /**
  *Canonical surrogate for a {@link VirtualMethodActor} in the VM.
- *
- * @author Michael Van De Vanter
  */
 public final class TeleVirtualMethodActor extends TeleClassMethodActor {
 

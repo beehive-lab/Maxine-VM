@@ -264,7 +264,7 @@ public class RescanMap {
      */
     void initialize(TricolorHeapMarker tricolorHeapMarker) {
         coveredAreaStart = tricolorHeapMarker.coveredAreaStart;
-        rescanRegionSize = rescanRegionSizeOption.getValue().roundedUpBy(1 << tricolorHeapMarker.log2BytesCoveredPerBit).toInt();
+        rescanRegionSize = rescanRegionSizeOption.getValue().alignUp(1 << tricolorHeapMarker.log2BytesCoveredPerBit).toInt();
         final int log2RescanRegionSize = Integer.numberOfTrailingZeros(rescanRegionSize);
         log2NumWordsPerRescanRegion = log2RescanRegionSize - WordWidth.BITS_64.log2numberOfBytes;
         log2BitmapWord = tricolorHeapMarker.log2BitmapWord;

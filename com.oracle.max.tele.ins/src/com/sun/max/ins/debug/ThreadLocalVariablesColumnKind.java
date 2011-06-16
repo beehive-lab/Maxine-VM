@@ -25,8 +25,6 @@ package com.sun.max.ins.debug;
 
 /**
  * Defines the columns that can be displayed describing thread local variables in the VM.
- *
- * @author Michael Van De Vanter
  */
 public enum ThreadLocalVariablesColumnKind implements ColumnKind {
     TAG("Tag", "Tags: register targets, watchpoints, ...", true, -1) {

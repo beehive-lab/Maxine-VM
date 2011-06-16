@@ -74,11 +74,6 @@ public final class JDK_java_lang_Throwable {
      */
     @SUBSTITUTE
     public synchronized Throwable fillInStackTrace() {
-        return fillInStackTraceNoSync();
-    }
-
-    @INLINE
-    private Throwable fillInStackTraceNoSync() {
         final Throwable throwable = thisThrowable();
         if (throwable instanceof OutOfMemoryError) {
             // Don't record stack traces in situations where memory may be exhausted

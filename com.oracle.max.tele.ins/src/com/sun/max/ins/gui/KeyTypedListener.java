@@ -26,8 +26,6 @@ import java.awt.event.*;
 
 /**
  * A narrowed {@link KeyListener}.
- *
- * @author Bernd Mathiske
  */
 abstract class KeyTypedListener implements KeyListener {
 

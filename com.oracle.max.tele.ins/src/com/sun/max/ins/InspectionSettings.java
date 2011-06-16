@@ -38,9 +38,6 @@ import com.sun.max.vm.hosted.*;
  * A manager for saving and restoring of settings between Inspection sessions, with some
  * specialized machinery to support the saving of window frame geometry (location, size)
  * for both the Inspector's main frame and for views within it.
- *
- * @author Michael Van De Vanter
- * @author Doug Simon
  */
 public class InspectionSettings {
 
@@ -54,7 +51,7 @@ public class InspectionSettings {
     private static final String INSPECTOR_SETTINGS_VERSION_KEY = "settingsVersion";
 
     // This should be incremented any time that any of the persistent settings keys changes.
-    private static final String INSPECTOR_SETTINGS_VERSION = "2";
+    private static final String INSPECTOR_SETTINGS_VERSION = "3";
 
     private static final String COMPONENT_X_KEY = "x";
     private static final String COMPONENT_Y_KEY = "y";

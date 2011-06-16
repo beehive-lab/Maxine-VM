@@ -28,8 +28,6 @@ import com.sun.max.tele.method.*;
 /**
  * An object that refer to some aspect of the VM state, with
  * convenience methods for access to other aspects.
- *
- * @author Michael Van De Vanter
  */
 public interface TeleVMAccess {
 

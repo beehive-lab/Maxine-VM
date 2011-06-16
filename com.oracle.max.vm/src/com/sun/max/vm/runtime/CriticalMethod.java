@@ -104,7 +104,7 @@ public class CriticalMethod {
      */
     public Address address() {
         if (address.isZero()) {
-            address = CompilationScheme.Static.getCriticalEntryPoint(classMethodActor, callEntryPoint);
+            address = classMethodActor.currentTargetMethod().getEntryPoint(callEntryPoint).asAddress();
         }
         return address;
     }

@@ -37,7 +37,7 @@ public class FixedAddressCodeManager extends CodeManager {
      */
     @Override
     void initialize() {
-        final Address address = Code.bootCodeRegion().end().roundedUpBy(Platform.platform().pageSize);
+        final Address address = Code.bootCodeRegion().end().alignUp(Platform.platform().pageSize);
         final Size size = runtimeCodeRegionSize.getValue();
         if (!VirtualMemory.allocateAtFixedAddress(address, size, VirtualMemory.Type.CODE)) {
             ProgramError.unexpected("could not allocate runtime code region");

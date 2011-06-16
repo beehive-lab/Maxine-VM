@@ -34,8 +34,6 @@ import com.sun.max.tele.debug.solaris.SolarisDumpTeleChannelProtocol.LwpData;
  * code to access the critical fields, which means we need to load
  * the tele library (it isn't loaded by default for dump mode).
  *
- * @author Mick Jordan
- *
  */
 public class SolarisDumpThreadAccess extends ThreadAccess {
 

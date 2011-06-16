@@ -29,8 +29,6 @@ import com.sun.max.vm.reference.*;
 
 /**
  * Canonical surrogate for a {@link InterfaceMethodActor} in the {@link TeleVM}.
- *
- * @author Michael Van De Vanter
  */
 public final class TeleInterfaceMethodActor extends TeleMethodActor {
 

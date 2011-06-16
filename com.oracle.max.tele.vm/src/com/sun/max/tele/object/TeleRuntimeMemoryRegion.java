@@ -35,8 +35,6 @@ import com.sun.max.vm.reference.*;
  * Canonical surrogate for a {@link MemoryRegion} object in the VM, which represents a region of VM memory.
  * <br>
  * Usage defaults to 100%.
- *
- * @author Michael Van De Vanter
  */
 public class TeleRuntimeMemoryRegion extends TeleTupleObject {
 

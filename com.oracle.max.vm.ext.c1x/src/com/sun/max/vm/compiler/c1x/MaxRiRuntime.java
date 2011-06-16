@@ -30,6 +30,7 @@ import static com.sun.max.vm.stack.VMFrameLayout.*;
 
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.concurrent.*;
 
 import com.oracle.max.hcfdis.*;
 import com.sun.c1x.*;
@@ -225,19 +226,20 @@ public class MaxRiRuntime implements RiRuntime {
         }
     }
 
-    static class CachedInvocation {
-        public CachedInvocation(Value[] args) {
+    protected static class CachedInvocation {
+        public CachedInvocation(Value[] args, CiConstant result) {
             this.args = args;
+            this.result = result;
         }
-        final Value[] args;
-        CiConstant result;
+        protected final Value[] args;
+        protected final CiConstant result;
     }
 
     /**
      * Cache to speed up compile-time folding. This works as an invocation of a {@linkplain FOLD foldable}
      * method is guaranteed to be idempotent with respect its arguments.
      */
-    private final HashMap<MethodActor, CachedInvocation> cache = new HashMap<MethodActor, CachedInvocation>();
+    private final ConcurrentHashMap<MethodActor, CachedInvocation> cache = new ConcurrentHashMap<MethodActor, CachedInvocation>();
 
     @Override
     public CiConstant invoke(RiMethod method, CiMethodInvokeArguments args) {
@@ -275,18 +277,10 @@ public class MaxRiRuntime implements RiRuntime {
                     }
                 }
 
-                CachedInvocation cachedInvocation = null;
                 if (!isHosted()) {
-                    synchronized (cache) {
-                        cachedInvocation = cache.get(methodActor);
-                        if (cachedInvocation != null) {
-                            if (Arrays.equals(values, cachedInvocation.args)) {
-                                return cachedInvocation.result;
-                            }
-                        } else {
-                            cachedInvocation = new CachedInvocation(values);
-                            cache.put(methodActor, cachedInvocation);
-                        }
+                    CachedInvocation cachedInvocation = cache.get(methodActor);
+                    if (cachedInvocation != null && Arrays.equals(values, cachedInvocation.args)) {
+                        return cachedInvocation.result;
                     }
                 }
 
@@ -297,7 +291,7 @@ public class MaxRiRuntime implements RiRuntime {
                     C1XMetrics.MethodsFolded++;
 
                     if (!isHosted()) {
-                        cachedInvocation.result = result;
+                        cache.put(methodActor, new CachedInvocation(values, result));
                     }
 
                     return result;

@@ -26,8 +26,6 @@ import com.sun.max.ins.debug.*;
 
 /**
  * Defines the columns that can be displayed describing a region of allocated memory in the VM.
- *
- * @author Michael Van De Vanter
  */
 public enum MemoryAllocationsColumnKind implements ColumnKind {
 

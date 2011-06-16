@@ -36,8 +36,6 @@ import com.sun.max.unsafe.*;
  * VM entities are often, but not always, represented in a region of memory.  Note, however, that a
  * region of VM memory is not the same thing as a VM entity.  In particular, memory regions occupy
  * a separate containment hierarchy, depending on how each VM entity manages memory.
- *
- * @author Michael Van De Vanter
  */
 public interface MaxEntity<Entity_Type extends MaxEntity> {
 

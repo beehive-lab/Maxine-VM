@@ -31,9 +31,6 @@ import com.sun.max.tele.debug.*;
 /**
  * Represents a thread group used for logical grouping in the JDWP
  * protocol. Currently we only distinguish between Java and native threads.
- *
- * @author Thomas Wuerthinger
- * @author Michael Van De Vanter
  */
 public class ThreadGroupProviderImpl implements ThreadGroupProvider {
 

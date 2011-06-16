@@ -28,8 +28,6 @@ import com.sun.max.vm.reference.*;
 
 /**
  * Inspector's canonical surrogate for an object of type {@link StaticHub} in the tele VM.
- *
- * @author Michael Van De Vanter
  */
 public final class TeleStaticHub extends TeleHub {
 

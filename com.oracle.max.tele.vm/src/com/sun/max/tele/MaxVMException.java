@@ -24,8 +24,6 @@ package com.sun.max.tele;
 
 /**
  * A general exception for methods on {@link MaxVM}.
- *
- * @author Michael Van De Vanter
  */
 public class MaxVMException extends Exception {
 

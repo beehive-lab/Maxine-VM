@@ -28,8 +28,6 @@ import com.sun.max.vm.reference.*;
 
 /**
  * Canonical surrogate for an object of type {@link CodeAttribute} in the VM.
- *
- * @author Michael Van De Vanter
  */
 public class TeleCodeAttribute extends TeleTupleObject {
 

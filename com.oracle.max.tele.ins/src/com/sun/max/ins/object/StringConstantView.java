@@ -32,8 +32,6 @@ import com.sun.max.vm.classfile.constant.*;
 
 /**
  * An object view specialized for displaying a low-level heap object in the VM that implements a {@link StringConstant}.
- *
- * @author Michael Van De Vanter
  */
 public class StringConstantView extends ObjectView<StringConstantView> {
 

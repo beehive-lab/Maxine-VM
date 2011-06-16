@@ -43,10 +43,6 @@ import com.sun.max.unsafe.*;
  * Views are managed via the container class {@link MethodViewContainer}, in which method views are displayed.
  * <p>
  * Instance view creation follows the user focus, and a static listener here drives the factory for method views.
- *
- *
- * @author Michael Van De Vanter
- * @author Doug Simon
  */
 public abstract class MethodView<View_Kind extends MethodView> extends AbstractView<View_Kind> {
 

@@ -26,8 +26,6 @@ import com.sun.max.unsafe.*;
 
 /**
  * Canonicalized constant tele reference, for locations known not to change under GC.
- *
- * @author Bernd Mathiske
  */
 public class CanonicalConstantTeleReference extends ConstantTeleReference {
 

@@ -26,8 +26,6 @@ import com.sun.max.ins.*;
 
 /**
  * A very simple provider of display styles, at this time only varying by font size.
- *
- * @author Michael Van De Vanter
  */
 public class InspectorStyleFactory extends AbstractInspectionHolder {
 

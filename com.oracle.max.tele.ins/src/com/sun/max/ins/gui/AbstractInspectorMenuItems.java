@@ -26,8 +26,6 @@ import com.sun.max.ins.*;
 
 /**
  * A default implementation of menu items that makes unnecessary some seldom needed methods.
- *
- * @author Michael Van De Vanter
  */
 public abstract class AbstractInspectorMenuItems extends AbstractInspectionHolder implements InspectorMenuItems {
 

@@ -32,8 +32,6 @@ import com.sun.max.unsafe.*;
  *<br>
  * Assume that any address in a region known to be a heap region is live, and that
  * anything else is not.
- *
- * @author Michael Van De Vanter
  */
 public final class TeleUnknownHeapScheme extends AbstractTeleVMHolder implements TeleHeapScheme{
 

@@ -37,8 +37,6 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 /**
  * A table specialized for displaying the threads in the VM.
- *
- * @author Michael Van De Vanter
  */
 public final class ThreadsTable extends InspectorTable {
 

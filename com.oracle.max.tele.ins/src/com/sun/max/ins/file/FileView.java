@@ -31,8 +31,6 @@ import com.sun.max.ins.view.InspectionViews.ViewKind;
 
 /**
  * Base class for views that display information from files.
- *
- * @author Michael Van De Vanter
  */
 public abstract class FileView<View_Kind extends FileView> extends AbstractView<View_Kind> {
 

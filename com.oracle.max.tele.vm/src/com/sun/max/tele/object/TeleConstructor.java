@@ -29,8 +29,6 @@ import com.sun.max.vm.reference.*;
 
 /**
  * Canonical surrogate for an object of type {@link Constructor} in the {@link TeleVM}.
- *
- * @author Michael Van De Vanter
  */
 public final class TeleConstructor extends TeleTupleObject {
 

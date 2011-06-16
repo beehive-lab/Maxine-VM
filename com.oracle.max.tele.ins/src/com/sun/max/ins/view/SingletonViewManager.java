@@ -28,8 +28,6 @@ import com.sun.max.ins.gui.*;
 /**
  * Manager for a kind of Inspector view that is a singleton which can either be active (the instance
  * exists and is visible) or not.
- *
- * @author Michael Van De Vanter
  */
 public interface SingletonViewManager<Inspector_Kind extends AbstractView> extends ViewManager<Inspector_Kind> {
 

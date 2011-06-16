@@ -26,7 +26,7 @@ import java.util.*;
 
 
 /**
- * The register save area (CSA) is contiguous space in a stack frame
+ * The callee save area (CSA) is a contiguous space in a stack frame
  * used to save (and restore) the values of the caller's registers.
  * This class describes the layout of a CSA in terms of its
  * {@linkplain #size size}, {@linkplain #slotSize slot size} and

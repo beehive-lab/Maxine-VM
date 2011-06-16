@@ -28,8 +28,6 @@ import com.sun.max.unsafe.*;
 
 /**
  * Interface for listening to changes of focus (view state) in the Inspector.
- *
- * @author Michael Van De Vanter
  */
 public interface ViewFocusListener {
 

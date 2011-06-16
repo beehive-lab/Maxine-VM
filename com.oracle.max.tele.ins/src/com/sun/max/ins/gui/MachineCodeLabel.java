@@ -26,8 +26,6 @@ import com.sun.max.ins.*;
 
 /**
  * A bold label for displaying machine code from the VM.
- *
- * @author Michael Van De Vanter
  */
 public class MachineCodeLabel extends InspectorLabel {
 

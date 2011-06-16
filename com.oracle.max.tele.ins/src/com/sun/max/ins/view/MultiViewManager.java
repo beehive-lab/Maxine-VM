@@ -29,8 +29,6 @@ import com.sun.max.ins.gui.*;
 /**
  * Manager for a kind of Inspector view that may have an arbitrary
  * number of instances active.
- *
- * @author Michael Van De Vanter
  */
 public interface MultiViewManager<Inspector_Kind extends AbstractView> extends ViewManager<Inspector_Kind> {
 

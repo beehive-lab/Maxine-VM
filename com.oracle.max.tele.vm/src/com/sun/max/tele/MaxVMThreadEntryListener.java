@@ -27,8 +27,6 @@ package com.sun.max.tele;
  * Listener interface for VM thread entry.
  * Notification of thread enter is made when a thread hit the first instruction of the VMThread run method.
  *
- * @author Laurent Daynes
- *
  */
 public interface MaxVMThreadEntryListener {
     void entered(MaxThread thread);

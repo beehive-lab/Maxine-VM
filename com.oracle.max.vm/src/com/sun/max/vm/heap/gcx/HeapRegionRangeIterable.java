@@ -21,6 +21,7 @@
  * questions.
  */
 package com.sun.max.vm.heap.gcx;
+import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 
 public final class HeapRegionRangeIterable extends HeapRegionListIterable {
     HeapRegionRangeIterable() {
@@ -36,6 +37,40 @@ public final class HeapRegionRangeIterable extends HeapRegionListIterable {
         }
         final int numRegions = endRange - firstRegion;
         cursor = next;
+        return RegionRange.from(firstRegion, numRegions);
+    }
+
+    /**
+     * Reset the iterator to the first iterable region if any.
+     * @see HeapRegionInfo#isIterable()
+     */
+    public void resetToFirstIterable() {
+        nextIterable();
+    }
+
+    private void nextIterable() {
+        while (cursor != INVALID_REGION_ID) {
+            if (RegionTable.theRegionTable().regionInfo(cursor).isIterable()) {
+                return;
+            }
+            cursor = regionList.next(cursor);
+        }
+    }
+
+    public RegionRange nextIterableRange() {
+        final int firstRegion = cursor;
+        int endRange = cursor + 1;
+        int next = regionList.next(cursor);
+        while (next == endRange) {
+            if (!RegionTable.theRegionTable().regionInfo(next).isIterable()) {
+                break;
+            }
+            endRange++;
+            next = regionList.next(next);
+        }
+        final int numRegions = endRange - firstRegion;
+        cursor = next;
+        nextIterable();
         return RegionRange.from(firstRegion, numRegions);
     }
 }

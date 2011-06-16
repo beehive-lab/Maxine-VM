@@ -39,8 +39,6 @@ import com.sun.max.vm.thread.*;
  * Access to Maxine threads in a core dump or other similarly uncooperative environment,
  * where we have to troll memory to get the information.
  *
- * @author Mick Jordan
- *
  */
 public abstract class ThreadAccess {
     protected TeleChannelDataIOProtocol protocol;

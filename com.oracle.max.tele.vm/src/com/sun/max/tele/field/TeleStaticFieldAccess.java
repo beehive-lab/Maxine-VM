@@ -29,8 +29,6 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
 /**
- * @author Bernd Mathiske
- * @author Doug Simon
  */
 public class TeleStaticFieldAccess extends TeleFieldAccess {
 

@@ -28,8 +28,6 @@ import com.sun.max.vm.reference.*;
 
 /**
  * Canonical surrogate for a {@link StaticMethodActor} in the tele VM.
- *
- * @author Michael Van De Vanter
  */
 public final class TeleStaticMethodActor extends TeleClassMethodActor {
 

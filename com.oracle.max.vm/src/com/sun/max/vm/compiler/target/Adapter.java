@@ -120,6 +120,11 @@ public abstract class Adapter extends TargetMethod {
 
     public static final Object[] NO_DIRECT_CALLEES = {};
 
+    /**
+     * Gets the offset of the call to this in a method's prologue.
+     */
+    public abstract int callOffsetInPrologue();
+
     @Override
     public void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls, Set<MethodActor> inlinedMethods) {
     }
@@ -131,13 +136,13 @@ public abstract class Adapter extends TargetMethod {
     }
 
     @Override
-    public void fixupCallSite(int callOffset, Address callEntryPoint) {
-        FatalError.unexpected("Adapter should never be patched");
+    public Address fixupCallSite(int callOffset, Address callEntryPoint) {
+        throw FatalError.unexpected("Adapter should never be patched");
     }
 
     @Override
-    public void patchCallSite(int callOffset, Address callEntryPoint) {
-        FatalError.unexpected("Adapter should never be patched");
+    public Address patchCallSite(int callOffset, Address callEntryPoint) {
+        throw FatalError.unexpected("Adapter should never be patched");
     }
 
     @Override

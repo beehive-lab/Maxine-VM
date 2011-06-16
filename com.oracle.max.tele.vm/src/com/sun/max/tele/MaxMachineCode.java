@@ -34,8 +34,6 @@ import com.sun.max.unsafe.*;
  * Description of a single machine code routine in the VM, either compiled from a Java method or a block of external native code.
  * <br>
  * Note that machine code can get patched (changed) at runtime, so any caching of these results should be avoided.
- *
- * @author Michael Van De Vanter
  */
 public interface MaxMachineCode<MachineCode_Type extends MaxMachineCode> extends MaxEntity<MachineCode_Type> {
 
@@ -134,11 +132,11 @@ public interface MaxMachineCode<MachineCode_Type extends MaxMachineCode> extends
         boolean isBytecodeBoundary(int index) throws IllegalArgumentException;
 
         /**
-         * @return the bytecode frames corresponding to the machine code instruction at the beginning
+         * @return the debug info corresponding to the machine code instruction at the beginning
          * of a sequence of machine code instructions that implement a bytecode, if known, else null
          * @throws IllegalArgumentException unless {@code 0 <= index < length()}
          */
-        CiFrame bytecodeFrames(int index) throws IllegalArgumentException;
+        CiDebugInfo debugInfoAt(int index) throws IllegalArgumentException;
 
         /**
          * @return the opcode corresponding to the instruction at the beginning

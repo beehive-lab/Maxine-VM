@@ -27,7 +27,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.type.*;
 
 /**
- * @author Doug Simon
  */
 public class TeleStaticWordFieldAccess extends TeleStaticFieldAccess {
 

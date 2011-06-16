@@ -22,7 +22,7 @@
  */
 package com.sun.max.annotate;
 import java.lang.annotation.*;
-import java.util.*;
+import java.util.concurrent.*;
 
 import com.sun.max.lang.*;
 import com.sun.max.vm.*;
@@ -126,12 +126,12 @@ public @interface ALIAS {
         /**
          * Map from method alias to aliased method.
          */
-        private static final HashMap<MethodActor, MethodActor> aliasedMethods = new HashMap<MethodActor, MethodActor>();
+        private static final ConcurrentHashMap<MethodActor, MethodActor> aliasedMethods = new ConcurrentHashMap<MethodActor, MethodActor>();
 
         /**
          * Map from aliased field to aliased field.
          */
-        private static final HashMap<FieldActor, FieldActor> aliasedFields = new HashMap<FieldActor, FieldActor>();
+        private static final ConcurrentHashMap<FieldActor, FieldActor> aliasedFields = new ConcurrentHashMap<FieldActor, FieldActor>();
 
         /**
          * Gets the field aliased by a given field, if any.
@@ -149,7 +149,7 @@ public @interface ALIAS {
         }
 
         @HOSTED_ONLY
-        private static synchronized void registerAliasedField(FieldActor field) {
+        private static void registerAliasedField(FieldActor field) {
             ALIAS alias = field.getAnnotation(ALIAS.class);
             if (alias != null) {
                 FieldActor aliasedField = aliasedFields.get(field);
@@ -196,7 +196,7 @@ public @interface ALIAS {
         }
 
         @HOSTED_ONLY
-        public static synchronized void registerAliasedMethod(MethodActor method) {
+        public static void registerAliasedMethod(MethodActor method) {
             ALIAS alias = method.getAnnotation(ALIAS.class);
             if (alias != null) {
                 MethodActor aliasedMethod = aliasedMethods.get(method);
@@ -250,11 +250,11 @@ public @interface ALIAS {
             return result;
         }
 
-        public static synchronized boolean isAliased(FieldActor field) {
+        public static boolean isAliased(FieldActor field) {
             return aliasedFields.containsValue(field);
         }
 
-        public static synchronized boolean isAliased(MethodActor method) {
+        public static boolean isAliased(MethodActor method) {
             return aliasedMethods.containsValue(method);
         }
 

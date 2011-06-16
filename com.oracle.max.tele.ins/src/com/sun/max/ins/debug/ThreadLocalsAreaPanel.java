@@ -38,9 +38,6 @@ import com.sun.max.vm.runtime.*;
 /**
  * A panel for displaying the values of thread local variables in one of VM thread local areas associated
  * with a VM thread.
- *
- * @author Doug Simon
- * @author Michael Van De Vanter
  */
 public final class ThreadLocalsAreaPanel extends InspectorPanel {
 

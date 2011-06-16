@@ -42,8 +42,6 @@ import com.sun.max.vm.value.*;
 /**
  * A table that displays VM thread local variable names and values in a thread locals area, to be used within an
  * instance of {@link ThreadLocalsView}.
- *
- * @author Michael Van De Vanter
   */
 public final class ThreadLocalsAreaTable extends InspectorTable {
 

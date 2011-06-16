@@ -24,7 +24,5 @@
  * Classes that model state in the tele VM.
  * These classes are in transition from the Inspector to an eventual separate project
  * that will contain classes independent of any actual tools.
- *
- * @author Michael Van De Vanter
  */
 package com.sun.max.tele;

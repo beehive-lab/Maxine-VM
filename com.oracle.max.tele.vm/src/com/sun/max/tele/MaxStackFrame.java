@@ -29,8 +29,6 @@ import com.sun.max.vm.stack.StackFrameWalker.*;
 
 /**
  * Description of a stack frame in the VM.
- *
- * @author Michael Van De Vanter
  */
 public interface MaxStackFrame extends MaxEntity<MaxStackFrame> {
 

@@ -31,8 +31,6 @@ import com.sun.max.vm.reference.*;
 
 /**
  * Canonical surrogate for an object of type {@link Actor} in the VM.
- *
- * @author Michael Van De Vanter
  */
 public abstract class TeleActor extends TeleTupleObject {
 

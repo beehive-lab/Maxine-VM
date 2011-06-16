@@ -32,8 +32,6 @@ import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 
 /**
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
  */
 public class PageDataAccess extends DataAccessAdapter {
 

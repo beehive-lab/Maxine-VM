@@ -30,8 +30,6 @@ import com.sun.max.vm.type.*;
 
 /**
  * Canonical surrogate for an object of type {@link ConstantPool} in the VM .
- *
- * @author Michael Van De Vanter
  */
 public final class TeleConstantPool extends TeleTupleObject{
 

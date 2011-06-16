@@ -37,8 +37,6 @@ import com.sun.max.vm.value.*;
 
 /**
  * A table specialized for displaying register values for a thread in the VM.
- *
- * @author Michael Van De Vanter
  */
 public final class RegistersTable extends InspectorTable {
 
@@ -72,7 +70,6 @@ public final class RegistersTable extends InspectorTable {
      * Displays all three kinds of registers in a single table in the following order:
      * <ol><li>Integer registers</li><li>State registers</li><li>Floating point registers</li></ol>
      *
-     * @author Michael Van De Vanter
      */
     private final class RegistersTableModel extends InspectorTableModel {
 

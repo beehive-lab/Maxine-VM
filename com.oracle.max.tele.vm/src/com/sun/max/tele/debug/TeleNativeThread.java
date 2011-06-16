@@ -50,11 +50,6 @@ import com.sun.max.vm.value.*;
 
 /**
  * Represents a thread executing in a {@linkplain TeleProcess tele process}.
- *
- * @author Bernd Mathiske
- * @author Aritra Bandyopadhyay
- * @author Doug Simon
- * @author Michael Van De Vanter
  */
 public abstract class TeleNativeThread extends AbstractTeleVMHolder implements TeleVMCache, Comparable<TeleNativeThread>, MaxThread, ThreadProvider {
 
@@ -692,7 +687,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
                 }
                 if (index != -1) {
                     final int stopIndex = index;
-                    CiFrame frames = compiledCode.teleTargetMethod().getBytecodeFramesAtStopIndex(stopIndex);
+                    CiFrame frames = compiledCode.teleTargetMethod().getDebugInfoAtStopIndex(stopIndex).frame();
 
                     if (frames == null) {
                         LOGGER.info("WARNING: No Java frame descriptor found for Java stop " + stopIndex);

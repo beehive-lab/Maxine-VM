@@ -267,7 +267,9 @@ public class VmThread {
     private ConditionVariable waitingCondition = ConditionVariableFactory.create();
 
     /**
-     * Holds the exception object for the exception currently being raised. This value will only be non-null very briefly.
+     * Holds the exception object for the exception currently being raised. This value will only be
+     * non-null during the unwinding process between calls to {@link #storeExceptionForHandler(Throwable, TargetMethod, int)}
+     * and {@link #loadExceptionForHandler()}.
      */
     private Throwable exception;
 
@@ -365,6 +367,15 @@ public class VmThread {
             }
         }
         return e;
+    }
+
+    /**
+     * Gets the exception currently in flight.
+     *
+     * @return {@code null} if there is not exception in flight
+     */
+    public Throwable pendingException() {
+        return exception;
     }
 
     /**
@@ -1297,7 +1308,7 @@ public class VmThread {
     public final void start0() {
         assert state == Thread.State.NEW;
         state = Thread.State.RUNNABLE;
-        VmThreadMap.ACTIVE.startThread(this, STACK_SIZE_OPTION.getValue().aligned(platform().pageSize).asSize(), javaThread.getPriority());
+        VmThreadMap.ACTIVE.startThread(this, STACK_SIZE_OPTION.getValue().alignUp(platform().pageSize).asSize(), javaThread.getPriority());
     }
 
     public final boolean isInterrupted(boolean clearInterrupted) {

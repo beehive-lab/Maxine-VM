@@ -26,8 +26,6 @@ import com.sun.max.ins.debug.*;
 
 /**
  * Defines the columns supported by the object view.
- *
- * @author Michael Van De Vanter
  */
 public enum ObjectColumnKind implements ColumnKind {
 
