@@ -28,12 +28,10 @@ import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
 import java.lang.reflect.*;
 
 import com.oracle.max.vm.ext.vma.log.*;
-import com.sun.max.vm.t1x.*;
-
 
 public class DupVMAdviceHandlerLogGenerator {
     public static void main(String[] args) {
-        T1XTemplateGenerator.setGeneratingClass(DupVMAdviceHandlerLogGenerator.class);
+        createGenerator(DupVMAdviceHandlerLogGenerator.class);
         for (Method m : VMAdviceHandlerLog.class.getMethods()) {
             if (m.getName().startsWith("advise")) {
                 generate(m);

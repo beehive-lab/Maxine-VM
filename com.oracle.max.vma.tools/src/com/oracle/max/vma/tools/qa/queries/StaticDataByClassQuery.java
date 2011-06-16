@@ -53,7 +53,7 @@ public class StaticDataByClassQuery extends QueryBase {
                     ObjectRecord.TraceElement te = td.getTraceElements().get(j);
                     boolean isWrite = te instanceof ObjectRecord.WriteTraceElement;
                     String accessType = isWrite ? "modified" : "read";
-                    ps.println("  field " + te.getFieldName() + " "
+                    ps.println("  field " + te.getField() + " "
                             + accessType + " at " + ms(te.getAccessTime()));
                 }
                 if (className != null) {

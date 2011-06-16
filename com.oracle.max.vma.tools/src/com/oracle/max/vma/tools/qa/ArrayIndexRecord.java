@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,31 +20,28 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
-package com.oracle.max.vma.tools.qa.queries;
+package com.oracle.max.vma.tools.qa;
 
 import java.util.*;
 
-import com.oracle.max.vma.tools.qa.*;
-
 /**
- * Iterates over all the {@link ObjectRecord objects} and places then on a list associated with a map of threads.
+ * A slight hack; we represent an array index as a field with name set to the string representation of the value
+ * and a null class.
  */
+public class ArrayIndexRecord extends FieldRecord {
 
-public class DataByThreadsQueryHelper  {
-    public static Map<String, ArrayList<ObjectRecord>> getObjectsByThread(TraceRun traceRun) {
-        Iterator<ObjectRecord> iter = traceRun.getObjects().values().iterator();
-        Map<String, ArrayList<ObjectRecord>> threadMap = new HashMap<String, ArrayList<ObjectRecord>>();
-        while (iter.hasNext()) {
-            ObjectRecord td = iter.next();
-            String threadId = td.getThread().getName();
-            ArrayList<ObjectRecord> thObjects = threadMap.get(threadId);
-            if (thObjects == null) {
-                thObjects = new ArrayList<ObjectRecord>();
-                threadMap.put(threadId, thObjects);
-            }
-            thObjects.add(td);
+    private static Map<Integer, ArrayIndexRecord> cache = new HashMap<Integer, ArrayIndexRecord> ();
+
+    private ArrayIndexRecord(int index) {
+        super(null, Integer.toString(index));
+    }
+
+    public static ArrayIndexRecord create(int index) {
+        ArrayIndexRecord result = cache.get(index);
+        if (result == null) {
+            result = new ArrayIndexRecord(index);
+            cache.put(index, result);
         }
-        return threadMap;
+        return result;
     }
 }

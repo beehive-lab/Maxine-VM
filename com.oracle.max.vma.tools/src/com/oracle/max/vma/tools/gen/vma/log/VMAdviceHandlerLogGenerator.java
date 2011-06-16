@@ -29,7 +29,6 @@ import java.lang.reflect.*;
 
 import com.oracle.max.vm.ext.vma.*;
 import com.sun.max.annotate.*;
-import com.sun.max.vm.t1x.*;
 
 /**
  * Generates the {@link VMAdviceHandlerLog} interface that operates in terms of {@link String strings}
@@ -52,7 +51,7 @@ import com.sun.max.vm.t1x.*;
 public class VMAdviceHandlerLogGenerator {
 
     public static void main(String[] args) {
-        T1XTemplateGenerator.setGeneratingClass(VMAdviceHandlerLogGenerator.class);
+        createGenerator(VMAdviceHandlerLogGenerator.class);
         for (Method m : VMAdviceHandler.class.getMethods()) {
             if (m.getName().startsWith("advise")) {
                 generate(m);
@@ -71,15 +70,15 @@ public class VMAdviceHandlerLogGenerator {
         if (name.endsWith("ConstLoad")) {
             out.printf(", %s value", getLastParameterNameHandlingObject(m));
         } else if (name.endsWith("GetField")) {
-            out.print(", long objId, String fieldName");
+            out.print(", long objId, QualName fieldName");
             getFieldDone = true;
         } else if (name.endsWith("PutField")) {
-            out.printf(", long objId, String fieldName, %s value", getLastParameterNameHandlingObject(m));
+            out.printf(", long objId, QualName fieldName, %s value", getLastParameterNameHandlingObject(m));
         } else if (name.endsWith("GetStatic")) {
-            out.print(", String className, long clId, String fieldName");
+            out.print(", QualName fieldName");
             getStaticDone = true;
         } else if (name.endsWith("PutStatic")) {
-            out.printf(", String className, long clId, String fieldName, %s value", getLastParameterNameHandlingObject(m));
+            out.printf(", QualName fieldName, %s value", getLastParameterNameHandlingObject(m));
         } else if (name.endsWith("ArrayLoad")) {
             out.print(", long objId, int index");
             arrayLoadDone = true;
@@ -88,7 +87,7 @@ public class VMAdviceHandlerLogGenerator {
         } else if (name.endsWith("Store")) {
             out.printf(", int dispToLocalSlot, %s value", getLastParameterNameHandlingObject(m));
         } else if (name.contains("New")) {
-            out.print(", long objId, String className, long clId");
+            out.print(", long objId, ClassName className");
             if (name.contains("NewArray")) {
                 out.print(", int length");
             }
@@ -105,13 +104,13 @@ public class VMAdviceHandlerLogGenerator {
                 out.printf(", %s value", getLastParameterNameHandlingObject(m));
             }
         } else if (name.contains("Invoke")) {
-            out.print(", long objId, String methodName");
+            out.print(", long objId, QualName methodName");
         } else if (name.endsWith("ArrayLength")) {
             out.print(", long objId, int length");
         } else if (name.contains("Monitor") || name.contains("Throw")) {
             out.print(", long objId");
         } else if (name.contains("CheckCast") || name.contains("InstanceOf")) {
-            out.print(", long objId, String className, long clId");
+            out.print(", long objId, ClassName className");
         } else if (name.contains("Thread")) {
             // drop VmThread arg
         } else {

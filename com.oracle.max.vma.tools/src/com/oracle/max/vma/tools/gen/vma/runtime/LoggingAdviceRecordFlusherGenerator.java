@@ -23,11 +23,11 @@
 package com.oracle.max.vma.tools.gen.vma.runtime;
 
 import static com.sun.max.vm.t1x.T1XTemplateGenerator.*;
+import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
 import static com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.*;
 
 import com.oracle.max.vm.ext.vma.*;
 import com.sun.max.annotate.*;
-import com.sun.max.vm.t1x.*;
 
 /**
  * Generates the case statements for logging the records.
@@ -36,7 +36,7 @@ import com.sun.max.vm.t1x.*;
 @HOSTED_ONLY
 public class LoggingAdviceRecordFlusherGenerator {
     public static void main(String[] args) {
-        T1XTemplateGenerator.setGeneratingClass(LoggingAdviceRecordFlusherGenerator.class);
+        createGenerator(LoggingAdviceRecordFlusherGenerator.class);
         generateAutoComment();
         for (RecordType m : RecordType.values()) {
             generate(m);

@@ -31,31 +31,27 @@ import java.util.ArrayList;
  * a list of all the associated {@link ObjectRecord object instances} in the
  * trace.
  *
- * @author Mick Jordan
+ * The name is in the canonical name in "language" format (modulo $ in nested classes)
+ * even if the trace contains JVM style names.
  *
  */
-public class ClassRecord {
+public class ClassRecord extends NamedRecord {
     /**
      * By convention, the first element of the list contains the traces for
      * static fields of this class.
      */
     private ArrayList<ObjectRecord> objects;
     /**
-     * This is the canonical name in "language" format (modulo $ in nested classes)
-     * even if the trace contains JVM style names.
-     */
-    private String name;
-
-    /**
      * A unique id that identifies the {@link ClassLoader} that loaded this class.
      */
-    private long classLoaderId;
+    private String classLoaderId;
 
-    public ClassRecord(String name, long classLoaderId,
-            ArrayList<ObjectRecord> objects) {
-        this.name = name;
+    public ClassRecord(String name, String classLoaderId) {
+        super(name);
         this.classLoaderId = classLoaderId;
-        this.objects = objects;
+        this.objects = new ArrayList<ObjectRecord>();
+        ObjectRecord std = new ObjectRecord(null, -1, this, null, -1);
+        this.objects.add(std);
     }
 
     public ArrayList<ObjectRecord> getObjects() {
@@ -113,19 +109,16 @@ public class ClassRecord {
         return result;
     }
 
-    public String getName() {
-        return name;
-    }
-
     /**
      * Use to update a forward reference from a short form.
      * @param name
      */
-    public void setName(String name) {
+    public void setName(String name, String classLoaderId) {
         this.name = name;
+        this.classLoaderId = classLoaderId;
     }
 
-    public long getClassLoaderId() {
+    public String getClassLoaderId() {
         return classLoaderId;
     }
 

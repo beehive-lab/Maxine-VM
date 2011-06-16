@@ -20,31 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vma.tools.gen.vma.runtime;
-
-import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
-import static com.sun.max.vm.t1x.T1XTemplateGenerator.*;
-
-import java.lang.reflect.*;
-
-import com.oracle.max.vm.ext.vma.*;
+package test;
 
 
-public class NullVMAdviceHandlerGenerator {
+public class InvokeStatic {
+
+    public static void staticMethod() {
+
+    }
+
+    private static void privatestaticMethod() {
+
+    }
     public static void main(String[] args) {
-        createGenerator(NullVMAdviceHandlerGenerator.class);
-        for (Method m : VMAdviceHandler.class.getMethods()) {
-            String name = m.getName();
-            if (name.startsWith("advise")) {
-                generate(m);
-            }
-        }
+        staticMethod();
+        privatestaticMethod();
+
     }
 
-    private static void generate(Method m) {
-        generateAutoComment();
-        out.printf("    @Override%n");
-        generateSignature(m, null);
-        out.printf(" {%n    }%n%n");
-    }
 }

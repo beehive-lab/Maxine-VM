@@ -135,17 +135,13 @@ public abstract class QueryBase implements Query {
         }
     }
 
-    public static String getShowClassLoader(TraceRun traceRun, long classLoaderId) {
-        if (classLoaderId == 0) {
-            return "bootstrap";
+    public static String getShowClassLoader(TraceRun traceRun, String classLoaderId) {
+        final String defaultName = classLoaderId;
+        ObjectRecord ctd = traceRun.getObjects().get(defaultName);
+        if (ctd == null) {
+            return "id=" + defaultName;
         } else {
-            final String defaultName = Long.toString(classLoaderId);
-            ObjectRecord ctd = traceRun.getObjects().get(defaultName);
-            if (ctd == null) {
-                return "id=" + defaultName;
-            } else {
-                return ctd.getClassName();
-            }
+            return ctd.getClassName();
         }
     }
 }

@@ -28,13 +28,11 @@ import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
 import java.lang.reflect.*;
 
 import com.oracle.max.vm.ext.vma.log.*;
-import com.sun.max.vm.t1x.*;
-
 
 public class CompactTextVMAdviceHandlerLogGenerator {
 
     public static void main(String[] args) {
-        T1XTemplateGenerator.setGeneratingClass(CompactTextVMAdviceHandlerLogGenerator.class);
+        createGenerator(CompactTextVMAdviceHandlerLogGenerator.class);
         for (Method m : VMAdviceHandlerLog.class.getMethods()) {
             if (m.getName().startsWith("advise")) {
                 generate(m);
@@ -62,9 +60,9 @@ public class CompactTextVMAdviceHandlerLogGenerator {
             }
             out.printf(");%n");
         } else if (name.contains("GetStatic") || name.contains("PutStatic")) {
-            out.print(", getClassShortForm(arg2, arg3), arg3, getFieldShortForm(arg4)");
+            out.print(", getFieldShortForm(arg2)");
             if (name.contains("PutStatic")) {
-                out.print(", arg5");
+                out.print(", arg3");
             }
             out.printf(");%n");
         } else if (name.contains("ArrayLoad") || name.contains("ArrayStore")) {
@@ -74,9 +72,9 @@ public class CompactTextVMAdviceHandlerLogGenerator {
             }
             out.printf(");%n");
         } else if (name.contains("New")) {
-            out.print(", checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4");
+            out.print(", checkRepeatId(arg2, arg1), getClassShortForm(arg3)");
             if (name.contains("NewArray")) {
-                out.print(", arg5");
+                out.print(", arg4");
             }
             out.printf(");%n");
         } else if (name.contains("Invoke")) {
@@ -86,7 +84,7 @@ public class CompactTextVMAdviceHandlerLogGenerator {
             out.print(", checkRepeatId(arg2, arg1)");
             out.printf(");%n");
         } else if (name.contains("CheckCast") || name.contains("InstanceOf")) {
-            out.print(", checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4");
+            out.print(", checkRepeatId(arg2, arg1), getClassShortForm(arg3)");
             out.printf(");%n");
         } else {
             Class<?>[] params = m.getParameterTypes();

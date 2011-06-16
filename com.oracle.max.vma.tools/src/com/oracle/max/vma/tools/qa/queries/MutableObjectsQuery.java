@@ -66,7 +66,7 @@ public class MutableObjectsQuery extends QueryBase {
                         for (int j = 0; j < td.getTraceElements().size(); j++) {
                             ObjectRecord.TraceElement te = td.getTraceElements().get(j);
                             if ((te instanceof ObjectRecord.WriteTraceElement) && (te.getAccessTime() > td.getEndCreationTime())) {
-                                ps.println("  field " + te.getFieldName() + " modified at " + ms(te.getAccessTime()));
+                                ps.println("  field " + te.getField() + " modified at " + ms(te.getAccessTime()));
                             }
                         }
                     }

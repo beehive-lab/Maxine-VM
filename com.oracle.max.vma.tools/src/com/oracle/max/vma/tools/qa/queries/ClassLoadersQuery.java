@@ -37,7 +37,7 @@ public class ClassLoadersQuery extends QueryBase {
     @Override
     public Object execute(ArrayList<TraceRun> traceRuns, int traceFocus, PrintStream ps, String[] args) {
         TraceRun traceRun = traceRuns.get(traceFocus);
-        for (Long id : traceRun.getClassLoaders().keySet()) {
+        for (String id : traceRun.getClassLoaders().keySet()) {
             ps.format("%8d %s\n", id, getShowClassLoader(traceRun, id));
         }
         return null;

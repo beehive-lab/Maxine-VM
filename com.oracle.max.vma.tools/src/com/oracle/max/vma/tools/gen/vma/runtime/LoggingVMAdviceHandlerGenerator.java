@@ -40,7 +40,7 @@ import com.sun.max.annotate.*;
 public class LoggingVMAdviceHandlerGenerator {
 
     public static void main(String[] args) {
-        setGeneratingClass(LoggingVMAdviceHandlerGenerator.class);
+        createGenerator(LoggingVMAdviceHandlerGenerator.class);
         for (Method m : VMAdviceHandler.class.getMethods()) {
             if (m.getName().startsWith("advise")) {
                 generate(m);
@@ -60,8 +60,10 @@ public class LoggingVMAdviceHandlerGenerator {
             generateValueArg(m, 1);
             out.printf(");%n");
         } else if (name.endsWith("GetField")  || name.endsWith("PutField")) {
+            out.printf("        ClassActor ca = ObjectAccess.readClassActor(arg1);%n");
+            out.printf("        FieldActor fa = ca.findInstanceFieldActor(arg2);%n");
             generateLogCallPrefix(oname);
-            out.printf(", state.readId(arg1), ObjectAccess.readClassActor(arg1).findInstanceFieldActor(arg2).name()");
+            out.printf(", state.readId(arg1), new QualName(fa.holder().name(), state.readId(ca.classLoader), fa.name())");
             if (name.endsWith("PutField")) {
                 generateValueArg(m, 3);
             }
@@ -69,7 +71,7 @@ public class LoggingVMAdviceHandlerGenerator {
         } else if (name.endsWith("GetStatic")  || name.endsWith("PutStatic")) {
             out.printf("        ClassActor ca = ObjectAccess.readClassActor(arg1);%n");
             generateLogCallPrefix(oname);
-            out.printf(", ca.name(), state.readId(ca.classLoader), ca.findStaticFieldActor(arg2).name()");
+            out.printf(", new QualName(ca.name(), state.readId(ca.classLoader), ca.findStaticFieldActor(arg2).name())");
             if (name.endsWith("PutStatic")) {
                 if (name.endsWith("PutStatic")) {
                     generateValueArg(m, 3);
@@ -92,7 +94,7 @@ public class LoggingVMAdviceHandlerGenerator {
             out.printf("        final Reference objRef = Reference.fromJava(arg1);%n");
             out.printf("        final Hub hub = UnsafeCast.asHub(Layout.readHubReference(objRef));%n");
             generateLogCallPrefix(oname);
-            out.printf(", state.readId(arg1), hub.classActor.name(), state.readId(hub.classActor.classLoader)");
+            out.printf(", state.readId(arg1), new ClassName(hub.classActor.name(), state.readId(hub.classActor.classLoader))");
             if (name.endsWith("NewArray")) {
                 out.print(", arg2");
             }
@@ -114,7 +116,7 @@ public class LoggingVMAdviceHandlerGenerator {
         } else if (name.contains("Invoke")) {
             generateLogCallPrefix(oname);
             String arg1 = name.contains("Static") ? "0" : "state.readId(arg1)";
-            out.printf(", %s, arg2.name()", arg1);
+            out.printf(", %s, new QualName(arg2.holder().name(), state.readId(arg2.holder().classLoader), arg2.name())", arg1);
             out.printf(");%n");
         } else if (name.endsWith("ArrayLength")) {
             generateLogCallPrefix(oname);
@@ -125,9 +127,9 @@ public class LoggingVMAdviceHandlerGenerator {
             out.print(", state.readId(arg1)");
             out.printf(");%n");
         } else if (name.contains("CheckCast") || name.contains("InstanceOf")) {
-            out.printf("        ClassActor ca = ObjectAccess.readClassActor(arg2);%n");
+            out.printf("        ClassActor ca = (ClassActor) arg2;%n");
             generateLogCallPrefix(oname);
-            out.print(", state.readId(arg1), ca.name(), state.readId(ca.classLoader)");
+            out.print(", state.readId(arg1), new ClassName(ca.name(), state.readId(ca.classLoader))");
             out.printf(");%n");
         } else if (name.contains("Thread")) {
             // drop VmThread arg

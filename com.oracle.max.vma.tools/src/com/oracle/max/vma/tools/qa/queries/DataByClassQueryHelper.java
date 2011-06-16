@@ -204,7 +204,7 @@ public class DataByClassQueryHelper extends QueryBase {
                 String immutableForArg = percent ?
                     (TimeFunctions.ftime(percentImmutableTime, TimeFunctions.format6d) + "%") :
                     Long.toString(immutableTime);
-                String threadArg = thread ? " th " + td.getThreadId() : "";
+                String threadArg = thread ? " th " + td.getThread() : "";
                 ps.println(indent + INDENT_TWO + td.getId() +
                         threadArg +
                         ", ct " + TimeFunctions.formatTime(td.getEndCreationTime()) +

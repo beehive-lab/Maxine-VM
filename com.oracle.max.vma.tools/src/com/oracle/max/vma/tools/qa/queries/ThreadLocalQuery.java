@@ -48,9 +48,9 @@ public class ThreadLocalQuery extends QueryBase {
             ps.println("Check objects allocated by thread " + me.getKey());
             ArrayList<ObjectRecord> thObjects = me.getValue();
             for (ObjectRecord obj : thObjects) {
-                final Set<String> threads = accessedByAnotherThread(obj);
+                final Set<ThreadRecord> threads = accessedByAnotherThread(obj);
                 if (threads != null) {
-                    for (String thread : threads) {
+                    for (ThreadRecord thread : threads) {
                         ps.println("object " + obj.getId() + " is accessed by thread " + thread);
                     }
                 }
@@ -64,15 +64,14 @@ public class ThreadLocalQuery extends QueryBase {
      * @param obj
      * @return
      */
-    private static Set<String> accessedByAnotherThread(ObjectRecord obj) {
-        HashSet<String> result = null;
-        final String threadId = obj.getThreadId();
+    private static Set<ThreadRecord> accessedByAnotherThread(ObjectRecord obj) {
+        HashSet<ThreadRecord> result = null;
         for (ObjectRecord.TraceElement te : obj.getTraceElements()) {
-            if (!te.getThreadId().equals(threadId)) {
+            if (!(te.getThread() == obj.getThread())) {
                 if (result == null) {
-                    result = new HashSet<String>();
+                    result = new HashSet<ThreadRecord>();
                 }
-                result.add(te.getThreadId());
+                result.add(te.getThread());
             }
         }
         return result;

@@ -29,9 +29,11 @@ import java.util.*;
 
 import com.oracle.max.vm.ext.vma.*;
 import com.sun.max.annotate.*;
+import com.sun.max.vm.t1x.*;
 
 /**
  * Helper methods for auto-generation of code related to the advice interface.
+ * We use {@link T1XTemplateGenerator} for basic support methods.
  */
 
 @HOSTED_ONLY
@@ -47,6 +49,16 @@ public class AdviceGeneratorHelper {
         for (VMABytecodes bc : VMABytecodeValues) {
             codeMap.put(bc.code, bc);
         }
+    }
+
+    public static T1XTemplateGenerator t1xTemplateGen;
+
+    public static void generateAutoComment() {
+        t1xTemplateGen.generateAutoComment();
+    }
+
+    public static void createGenerator(Class<?> klass) {
+        t1xTemplateGen = new T1XTemplateGenerator(klass);
     }
 
     /**

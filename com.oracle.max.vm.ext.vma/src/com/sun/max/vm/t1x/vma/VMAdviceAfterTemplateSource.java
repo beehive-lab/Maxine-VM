@@ -53,7 +53,7 @@ public class VMAdviceAfterTemplateSource {
     public static void invokevirtualFloat(ResolutionGuard.InPool guard, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
         VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
-        Address entryPoint = Snippets.selectNonPrivateVirtualMethod(receiver, methodActor).asAddress();
+        Address entryPoint = VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor);
         final float result = indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
         if (isAdvising()) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
@@ -90,7 +90,7 @@ public class VMAdviceAfterTemplateSource {
     public static void invokeinterfaceFloat(ResolutionGuard.InPool guard, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
         final InterfaceMethodActor interfaceMethodActor = Snippets.resolveInterfaceMethod(guard);
-        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
         final float result = indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
         if (isAdvising()) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
@@ -102,7 +102,7 @@ public class VMAdviceAfterTemplateSource {
     @T1X_TEMPLATE(INVOKEINTERFACE$float$resolved)
     public static void invokeinterfaceFloat(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
         final float result = indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
         if (isAdvising()) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
@@ -127,8 +127,8 @@ public class VMAdviceAfterTemplateSource {
     public static void invokespecialFloat(ResolutionGuard.InPool guard, int receiverStackIndex) {
         Pointer receiver = peekWord(receiverStackIndex).asPointer();
         nullCheck(receiver);
-        VirtualMethodActor methodActor = Snippets.resolveSpecialMethod(guard);
-        final float result = indirectCallFloat(initializeSpecialMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
+        final float result = indirectCallFloat(VMAT1XRuntime.initializeSpecialMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         if (isAdvising()) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(Reference.fromOrigin(receiver).toJava(), methodActor);
         }
@@ -150,8 +150,8 @@ public class VMAdviceAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKESTATIC$float)
     public static void invokestaticFloat(ResolutionGuard.InPool guard) {
-        StaticMethodActor methodActor = Snippets.resolveStaticMethod(guard);
-        final float result = indirectCallFloat(initializeStaticMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        StaticMethodActor methodActor = VMAT1XRuntime.resolveStaticMethod(guard);
+        final float result = indirectCallFloat(VMAT1XRuntime.initializeStaticMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         if (isAdvising()) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(null, methodActor);
         }
@@ -173,7 +173,7 @@ public class VMAdviceAfterTemplateSource {
     public static void invokevirtualLong(ResolutionGuard.InPool guard, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
         VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
-        Address entryPoint = Snippets.selectNonPrivateVirtualMethod(receiver, methodActor).asAddress();
+        Address entryPoint = VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor);
         final long result = indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
         if (isAdvising()) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
@@ -210,7 +210,7 @@ public class VMAdviceAfterTemplateSource {
     public static void invokeinterfaceLong(ResolutionGuard.InPool guard, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
         final InterfaceMethodActor interfaceMethodActor = Snippets.resolveInterfaceMethod(guard);
-        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
         final long result = indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
         if (isAdvising()) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
@@ -222,7 +222,7 @@ public class VMAdviceAfterTemplateSource {
     @T1X_TEMPLATE(INVOKEINTERFACE$long$resolved)
     public static void invokeinterfaceLong(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
         final long result = indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
         if (isAdvising()) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
@@ -247,8 +247,8 @@ public class VMAdviceAfterTemplateSource {
     public static void invokespecialLong(ResolutionGuard.InPool guard, int receiverStackIndex) {
         Pointer receiver = peekWord(receiverStackIndex).asPointer();
         nullCheck(receiver);
-        VirtualMethodActor methodActor = Snippets.resolveSpecialMethod(guard);
-        final long result = indirectCallLong(initializeSpecialMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
+        final long result = indirectCallLong(VMAT1XRuntime.initializeSpecialMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         if (isAdvising()) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(Reference.fromOrigin(receiver).toJava(), methodActor);
         }
@@ -270,8 +270,8 @@ public class VMAdviceAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKESTATIC$long)
     public static void invokestaticLong(ResolutionGuard.InPool guard) {
-        StaticMethodActor methodActor = Snippets.resolveStaticMethod(guard);
-        final long result = indirectCallLong(initializeStaticMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        StaticMethodActor methodActor = VMAT1XRuntime.resolveStaticMethod(guard);
+        final long result = indirectCallLong(VMAT1XRuntime.initializeStaticMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         if (isAdvising()) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(null, methodActor);
         }
@@ -293,7 +293,7 @@ public class VMAdviceAfterTemplateSource {
     public static void invokevirtualDouble(ResolutionGuard.InPool guard, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
         VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
-        Address entryPoint = Snippets.selectNonPrivateVirtualMethod(receiver, methodActor).asAddress();
+        Address entryPoint = VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor);
         final double result = indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
         if (isAdvising()) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
@@ -330,7 +330,7 @@ public class VMAdviceAfterTemplateSource {
     public static void invokeinterfaceDouble(ResolutionGuard.InPool guard, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
         final InterfaceMethodActor interfaceMethodActor = Snippets.resolveInterfaceMethod(guard);
-        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
         final double result = indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
         if (isAdvising()) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
@@ -342,7 +342,7 @@ public class VMAdviceAfterTemplateSource {
     @T1X_TEMPLATE(INVOKEINTERFACE$double$resolved)
     public static void invokeinterfaceDouble(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
         final double result = indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
         if (isAdvising()) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
@@ -367,8 +367,8 @@ public class VMAdviceAfterTemplateSource {
     public static void invokespecialDouble(ResolutionGuard.InPool guard, int receiverStackIndex) {
         Pointer receiver = peekWord(receiverStackIndex).asPointer();
         nullCheck(receiver);
-        VirtualMethodActor methodActor = Snippets.resolveSpecialMethod(guard);
-        final double result = indirectCallDouble(initializeSpecialMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
+        final double result = indirectCallDouble(VMAT1XRuntime.initializeSpecialMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         if (isAdvising()) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(Reference.fromOrigin(receiver).toJava(), methodActor);
         }
@@ -390,8 +390,8 @@ public class VMAdviceAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKESTATIC$double)
     public static void invokestaticDouble(ResolutionGuard.InPool guard) {
-        StaticMethodActor methodActor = Snippets.resolveStaticMethod(guard);
-        final double result = indirectCallDouble(initializeStaticMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        StaticMethodActor methodActor = VMAT1XRuntime.resolveStaticMethod(guard);
+        final double result = indirectCallDouble(VMAT1XRuntime.initializeStaticMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         if (isAdvising()) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(null, methodActor);
         }
@@ -413,7 +413,7 @@ public class VMAdviceAfterTemplateSource {
     public static void invokevirtualWord(ResolutionGuard.InPool guard, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
         VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
-        Address entryPoint = Snippets.selectNonPrivateVirtualMethod(receiver, methodActor).asAddress();
+        Address entryPoint = VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor);
         final Word result = indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
         if (isAdvising()) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
@@ -450,7 +450,7 @@ public class VMAdviceAfterTemplateSource {
     public static void invokeinterfaceWord(ResolutionGuard.InPool guard, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
         final InterfaceMethodActor interfaceMethodActor = Snippets.resolveInterfaceMethod(guard);
-        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
         final Word result = indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
         if (isAdvising()) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
@@ -462,7 +462,7 @@ public class VMAdviceAfterTemplateSource {
     @T1X_TEMPLATE(INVOKEINTERFACE$word$resolved)
     public static void invokeinterfaceWord(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
         final Word result = indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
         if (isAdvising()) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
@@ -487,8 +487,8 @@ public class VMAdviceAfterTemplateSource {
     public static void invokespecialWord(ResolutionGuard.InPool guard, int receiverStackIndex) {
         Pointer receiver = peekWord(receiverStackIndex).asPointer();
         nullCheck(receiver);
-        VirtualMethodActor methodActor = Snippets.resolveSpecialMethod(guard);
-        final Word result = indirectCallWord(initializeSpecialMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
+        final Word result = indirectCallWord(VMAT1XRuntime.initializeSpecialMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         if (isAdvising()) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(Reference.fromOrigin(receiver).toJava(), methodActor);
         }
@@ -510,8 +510,8 @@ public class VMAdviceAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKESTATIC$word)
     public static void invokestaticWord(ResolutionGuard.InPool guard) {
-        StaticMethodActor methodActor = Snippets.resolveStaticMethod(guard);
-        final Word result = indirectCallWord(initializeStaticMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        StaticMethodActor methodActor = VMAT1XRuntime.resolveStaticMethod(guard);
+        final Word result = indirectCallWord(VMAT1XRuntime.initializeStaticMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         if (isAdvising()) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(null, methodActor);
         }
@@ -533,7 +533,7 @@ public class VMAdviceAfterTemplateSource {
     public static void invokevirtualVoid(ResolutionGuard.InPool guard, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
         VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
-        Address entryPoint = Snippets.selectNonPrivateVirtualMethod(receiver, methodActor).asAddress();
+        Address entryPoint = VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor);
         indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
         if (isAdvising()) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
@@ -567,7 +567,7 @@ public class VMAdviceAfterTemplateSource {
     public static void invokeinterfaceVoid(ResolutionGuard.InPool guard, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
         final InterfaceMethodActor interfaceMethodActor = Snippets.resolveInterfaceMethod(guard);
-        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
         indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
         if (isAdvising()) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
@@ -578,7 +578,7 @@ public class VMAdviceAfterTemplateSource {
     @T1X_TEMPLATE(INVOKEINTERFACE$void$resolved)
     public static void invokeinterfaceVoid(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
         indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
         if (isAdvising()) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
@@ -601,8 +601,8 @@ public class VMAdviceAfterTemplateSource {
     public static void invokespecialVoid(ResolutionGuard.InPool guard, int receiverStackIndex) {
         Pointer receiver = peekWord(receiverStackIndex).asPointer();
         nullCheck(receiver);
-        VirtualMethodActor methodActor = Snippets.resolveSpecialMethod(guard);
-        indirectCallVoid(initializeSpecialMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
+        indirectCallVoid(VMAT1XRuntime.initializeSpecialMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         if (isAdvising()) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(Reference.fromOrigin(receiver).toJava(), methodActor);
         }
@@ -622,8 +622,8 @@ public class VMAdviceAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKESTATIC$void)
     public static void invokestaticVoid(ResolutionGuard.InPool guard) {
-        StaticMethodActor methodActor = Snippets.resolveStaticMethod(guard);
-        indirectCallVoid(initializeStaticMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        StaticMethodActor methodActor = VMAT1XRuntime.resolveStaticMethod(guard);
+        indirectCallVoid(VMAT1XRuntime.initializeStaticMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         if (isAdvising()) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(null, methodActor);
         }
@@ -734,7 +734,6 @@ public class VMAdviceAfterTemplateSource {
         }
         pushObject(array);
     }
-
 
 
 }

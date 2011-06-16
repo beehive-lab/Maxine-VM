@@ -63,7 +63,7 @@ public abstract class ObjectStateHandler {
     public abstract long assignUnseenId(Object obj);
 
     /**
-     * Return the unique id for given object.
+     * Return the unique id for given object or zero if {@code obj == null}.
      * @param obj
      * @return
      */
