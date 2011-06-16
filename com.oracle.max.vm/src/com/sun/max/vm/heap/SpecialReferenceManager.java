@@ -126,6 +126,11 @@ public class SpecialReferenceManager {
         @ALIAS(declaringClass = java.lang.ref.Reference.class)
         static java.lang.ref.Reference pending;
 
+        /**
+         * The field points to the containing Reference itself if it has already been
+         * {@linkplain ReferenceQueue#enqueue enqueued} on a reference queue by the
+         * {@link Reference.ReferenceHandler} thread.
+         */
         @ALIAS(declaringClass = java.lang.ref.Reference.class)
         public java.lang.ref.Reference next;
 
@@ -206,6 +211,13 @@ public class SpecialReferenceManager {
         java.lang.ref.Reference end = sentinel;
         final boolean updateReachableReferent = gc.mayRelocateLiveObjects();
 
+        if (TraceReferenceGC || Heap.traceGC()) {
+            Log.print("ReferenceQueue.NULL = ");
+            Log.println(Reference.fromJava(JDK_java_lang_ref_ReferenceQueue.NULL).toOrigin());
+            Log.print("ReferenceQueue.ENQUEUED = ");
+            Log.println(Reference.fromJava(JDK_java_lang_ref_ReferenceQueue.ENQUEUED).toOrigin());
+        }
+
         // Process the discovered list until it is empty (new elements may be
         // prepended while processing).
         do {
@@ -233,8 +245,20 @@ public class SpecialReferenceManager {
                             preserved = true;
                         }
 
-                        refAlias.next = last;
-                        last = ref;
+                        // only add references to the pending list that have not already
+                        // been enqueued on a ReferenceQueue or are not associated with
+                        // a ReferenceQueue
+                        if (refAlias.next == ref) {
+                            // An enqueued reference has ENQUEUED in its 'queue' field,
+                            // a reference without a queue has NULL instead
+                            if (refAlias.queue != JDK_java_lang_ref_ReferenceQueue.ENQUEUED &&
+                                refAlias.queue != JDK_java_lang_ref_ReferenceQueue.NULL) {
+                                FatalError.unexpected("reference with 'next' field pointing to itself should be enqueued");
+                            }
+                        } else {
+                            refAlias.next = last;
+                            last = ref;
+                        }
                     }
                 } else if (updateReachableReferent) {
                     // this object is reachable, however the "referent" field was not scanned.
@@ -274,6 +298,9 @@ public class SpecialReferenceManager {
                     } else if (updateReachableReferent) {
                         Log.print(" moved to ");
                         Log.print(ObjectAccess.toOrigin(newReferent));
+                    }
+                    if (refAlias.next == ref) {
+                        Log.print(" {not added to Reference.pending list}");
                     }
                     Log.println();
                     Log.unlock(lockDisabledSafepoints);
