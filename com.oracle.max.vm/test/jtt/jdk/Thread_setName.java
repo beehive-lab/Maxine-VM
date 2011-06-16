@@ -29,8 +29,11 @@ package jtt.jdk;
 public class Thread_setName {
 
     public static String test(String name) {
+        String oldName = Thread.currentThread().getName();
         Thread.currentThread().setName(name);
-        return Thread.currentThread().getName();
+        name = Thread.currentThread().getName();
+        Thread.currentThread().setName(oldName);
+        return name;
     }
 
     public static void main(String[] args) throws Exception {
