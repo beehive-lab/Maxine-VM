@@ -42,7 +42,7 @@ import com.sun.max.annotate.*;
 public class ObjectStateHandlerAdaptorGenerator {
 
     public static void main(String[] args) {
-        setGeneratingClass(ObjectStateHandlerAdaptorGenerator.class);
+        createGenerator(ObjectStateHandlerAdaptorGenerator.class);
         for (Method m : VMAdviceHandler.class.getMethods()) {
             String name = m.getName();
             if (name.startsWith("advise")) {
@@ -67,11 +67,15 @@ public class ObjectStateHandlerAdaptorGenerator {
             out.printf("        state.assignId(objRef);%n");
             out.printf("        checkId(hub.classActor.classLoader);%n");
         } else {
+            boolean arg1CheckClId = name.contains("PutStatic") || name.contains("GetStatic");
+            boolean arg2NotChecked = name.contains("CheckCast") || name.contains("InstanceOf"); // arg2 is a ClassActor
             int i = 1;
             Class<?>[] params = m.getParameterTypes();
             for (Class<?> param : params) {
-                if (param == Object.class) {
-                    out.printf("        checkId(arg%d);%n", i);
+                boolean check = i == 2 ? !arg2NotChecked : true;
+                if (param == Object.class && check) {
+                    String mm = i == 1 && arg1CheckClId ? "ClassLoader" : "";
+                    out.printf("        check%sId(arg%d);%n", mm, i);
                 }
                 i++;
             }

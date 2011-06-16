@@ -44,7 +44,7 @@ public class DataByObjectQueryHelper extends QueryBase {
                 + ", loader "
                 + getShowClassLoader(traceRun, td.getClassLoaderId())
                 + ", thread "
-                + td.getThreadId()
+                + td.getThread()
                 + ", start cons at "
                 + ms(td.getBeginCreationTime())
                 + " end cons at "
@@ -55,8 +55,8 @@ public class DataByObjectQueryHelper extends QueryBase {
         for (int i = 0; i < td.getTraceElements().size(); i++) {
             TraceElement te =  td.getTraceElements().get(i);
             if (showAllAccesses) {
-                ps.println("  field " + te.getFieldName() + " accessed (" + te.name() + ") at "
-                        + ms(te.getAccessTime()) + " in thread " + te.getThreadId());
+                ps.println("  field " + getQualName(te) + " accessed (" + te.name() + ") at "
+                        + ms(te.getAccessTime()) + " in thread " + te.getThread());
             }
         }
 
@@ -66,6 +66,10 @@ public class DataByObjectQueryHelper extends QueryBase {
         ps.println("  Unchanged for "
                 + d6d(percent(lifeTime - modifyLifeTime, lifeTime))
                 + "% of lifetime");
+    }
+
+    private String getQualName(TraceElement te) {
+        return te.getClassRecord().getName() + "." + te.getField();
     }
 
 }

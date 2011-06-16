@@ -40,18 +40,14 @@ public class ObjectRecord {
      */
     private String id;
     /**
-     * The
-     */
-    /**
      * The runtime class of this object.
      */
     private ClassRecord cr;
 
     /**
-     * The id of the thread that created this object.
-     * N.B. An object whose creation is not traced will appear to have been created by the thread in which it the first use first appears.
+     * The {@link ThreadRecord} of the thread that created this object.
      */
-    private String threadId;
+    private ThreadRecord thread;
 
     /**
      * The time at which the object was allocated, but before the constructor has executed.
@@ -104,11 +100,16 @@ public class ObjectRecord {
 
     private int length;  // if an array
 
-    public ObjectRecord(String id, int gcEpoch, ClassRecord cr, String threadId, long beginCreationTime) {
+    public ObjectRecord(String id, int gcEpoch, ClassRecord cr, ThreadRecord threadRecord, long beginCreationTime) {
         this.id = getMapId(id, gcEpoch);
         this.cr = cr;
-        this.threadId = threadId;
+        this.thread = threadRecord;
         this.beginCreationTime = beginCreationTime;
+    }
+
+    @Override
+    public String toString() {
+        return getId();
     }
 
     /**
@@ -134,14 +135,14 @@ public class ObjectRecord {
      */
     public String getId() {
         if (id == null) {
-            return "static";
+            return "staticTuple";
         } else {
             return id;
         }
     }
 
-    public String getThreadId() {
-        return threadId;
+    public ThreadRecord getThread() {
+        return thread;
     }
 
     public boolean isStaticTrace() {
@@ -157,7 +158,7 @@ public class ObjectRecord {
         return result;
     }
 
-    public long getClassLoaderId() {
+    public String getClassLoaderId() {
         return cr.getClassLoaderId();
     }
 
@@ -214,15 +215,6 @@ public class ObjectRecord {
         } else {
             this.deletionTime = deletionTime;
         }
-    }
-
-    public void setThreadId(String threadId) {
-        if (immutable) {
-            throw new IllegalAccessError();
-        } else {
-            this.threadId = threadId;
-        }
-
     }
 
     public void addTraceElement(TraceElement te) {
@@ -297,39 +289,42 @@ public class ObjectRecord {
         public static final String ARRAYCOPY = "ARRAYCOPY";
         public static final String LITERAL = "LITERAL";
 
+        ClassRecord classRecord;
         /**
          * If the access was to a field, the name of the field, if to an array the symbolic name of the index.
          */
-        private String fieldName;
+        private FieldRecord field;
         /**
          * Thread on which the event occurred.
          */
-        private String threadId;
+        private ThreadRecord thread;
         /**
          * The time the event occurred.
          */
         protected long accessTime;
 
-        protected TraceElement(String fieldName, String threadId, long accessTime) {
-            this.fieldName = fieldName;
-            this.threadId = threadId;
+        protected TraceElement(ClassRecord classRecord, FieldRecord field, ThreadRecord thread, long accessTime) {
+            this.classRecord = classRecord;
+            this.field = field;
+            this.thread = thread;
             this.accessTime = accessTime;
         }
 
-        public String getFieldName() {
-            return fieldName;
+        public FieldRecord getField() {
+            return field;
         }
 
         /**
          * For forward reference fixup.
          * @param name
          */
-        public void setFieldName(String name) {
-            this.fieldName = name;
+        public void setField(ClassRecord classRecord, FieldRecord field) {
+            this.classRecord = classRecord;
+            this.field = field;
         }
 
-        public String getThreadId() {
-            return threadId;
+        public ThreadRecord getThread() {
+            return thread;
         }
 
         public long getAccessTime() {
@@ -337,7 +332,11 @@ public class ObjectRecord {
         }
 
         public static int getSize() {
-            return 24;
+            return 32;
+        }
+
+        public ClassRecord getClassRecord() {
+            return classRecord;
         }
 
         public abstract String name();
@@ -345,8 +344,8 @@ public class ObjectRecord {
 
 
     public static abstract class WriteTraceElement extends TraceElement {
-        public WriteTraceElement(String fieldName, String threadId, long writeTime) {
-            super(fieldName, threadId, writeTime);
+        public WriteTraceElement(ClassRecord classRecord, FieldRecord field, ThreadRecord thread, long writeTime) {
+            super(classRecord, field, thread, writeTime);
         }
 
         public long getWriteTime() {
@@ -365,22 +364,8 @@ public class ObjectRecord {
     }
 
     public static class NullWriteTraceElement extends WriteTraceElement {
-        public NullWriteTraceElement(String fieldName, String threadId, long writeTime) {
-            super(fieldName, threadId, writeTime);
-        }
-
-    }
-
-    public static class UnseenWriteTraceElement extends WriteTraceElement {
-        private String value;
-
-        public UnseenWriteTraceElement(String fieldName, String threadId, long writeTime, String value) {
-            super(fieldName, threadId, writeTime);
-            this.value = value;
-        }
-
-        public String getValue() {
-            return value;
+        public NullWriteTraceElement(ClassRecord classRecord, FieldRecord field, ThreadRecord thread, long writeTime) {
+            super(classRecord, field, thread, writeTime);
         }
 
     }
@@ -388,8 +373,8 @@ public class ObjectRecord {
     public static class ObjectWriteTraceElement extends WriteTraceElement {
         private ObjectRecord value;
 
-        public ObjectWriteTraceElement(String fieldName, String threadId, long writeTime, ObjectRecord value) {
-            super(fieldName, threadId, writeTime);
+        public ObjectWriteTraceElement(ClassRecord classRecord, FieldRecord field, ThreadRecord thread, long writeTime, ObjectRecord value) {
+            super(classRecord, field, thread, writeTime);
             this.value = value;
         }
 
@@ -398,24 +383,11 @@ public class ObjectRecord {
         }
     }
 
-    public static class IntWriteTraceElement extends WriteTraceElement {
-        private int value;
-
-        public IntWriteTraceElement(String fieldName, String threadId, long writeTime, int value) {
-            super(fieldName, threadId, writeTime);
-            this.value = value;
-        }
-
-        public int getValue() {
-            return value;
-        }
-    }
-
     public static class LongWriteTraceElement extends WriteTraceElement {
         private long value;
 
-        public LongWriteTraceElement(String fieldName, String threadId, long writeTime, long value) {
-            super(fieldName, threadId, writeTime);
+        public LongWriteTraceElement(ClassRecord classRecord, FieldRecord field, ThreadRecord thread, long writeTime, long value) {
+            super(classRecord, field, thread, writeTime);
             this.value = value;
         }
 
@@ -427,8 +399,8 @@ public class ObjectRecord {
     public static class FloatWriteTraceElement extends WriteTraceElement {
         private float value;
 
-        public FloatWriteTraceElement(String fieldName, String threadId, long writeTime, float value) {
-            super(fieldName, threadId, writeTime);
+        public FloatWriteTraceElement(ClassRecord classRecord, FieldRecord field, ThreadRecord thread, long writeTime, float value) {
+            super(classRecord, field, thread, writeTime);
             this.value = value;
         }
 
@@ -440,8 +412,8 @@ public class ObjectRecord {
     public static class DoubleWriteTraceElement extends WriteTraceElement {
         private double value;
 
-        public DoubleWriteTraceElement(String fieldName, String threadId, long writeTime, double value) {
-            super(fieldName, threadId, writeTime);
+        public DoubleWriteTraceElement(ClassRecord classRecord, FieldRecord field, ThreadRecord thread, long writeTime, double value) {
+            super(classRecord, field, thread, writeTime);
             this.value = value;
         }
 
@@ -455,8 +427,8 @@ public class ObjectRecord {
      *
      */
     public static class ReadTraceElement extends TraceElement {
-        public ReadTraceElement(String fieldName, String threadId, long readTime) {
-            super(fieldName, threadId, readTime);
+        public ReadTraceElement(ClassRecord classRecord, FieldRecord field, ThreadRecord thread, long readTime) {
+            super(classRecord, field, thread, readTime);
         }
 
         public long getReadTime() {
@@ -471,7 +443,7 @@ public class ObjectRecord {
 
     /**
      * Denotes an array copy.
-     * The inherited state, i.e., {@link #fieldName array index} refers to the destination array.
+     * The inherited state, i.e., {@link #field array index} refers to the destination array.
      *
      */
     public static class ArrayCopyTraceElement extends TraceElement {
@@ -480,10 +452,10 @@ public class ObjectRecord {
         private int srcPos;
         private int length;
 
-        public ArrayCopyTraceElement(String threadId, long writeTime, int destPos, ObjectRecord srcTd,
+        public ArrayCopyTraceElement(ThreadRecord thread, long writeTime, int destPos, ObjectRecord srcTd,
                 int srcPos, int length) {
 
-            super(ARRAYCOPY, threadId, writeTime);
+            super(null, null/*ARRAYCOPY*/, thread, writeTime); // TODO fix this
             this.srcTd = srcTd;
             this.srcPos = srcPos;
             this.destPos = destPos;

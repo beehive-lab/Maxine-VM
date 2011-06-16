@@ -28,8 +28,8 @@ public class UIntFieldWrite {
      * @param args
      */
     public static void main(String[] args) {
-        IntFieldWrite obj = new IntFieldWrite();
-        obj.f = 1;
+        IntFieldWrite.A obj = new IntFieldWrite.A();
+        obj.public_f = 1;
 
     }
 

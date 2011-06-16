@@ -52,7 +52,7 @@ public class TraceRun {
 
     private Map<String, ObjectRecord> objects;
 
-    private Map<Long, SortedMap<String, ClassRecord>> classLoaders;
+    private Map<String, SortedMap<String, ClassRecord>> classLoaders;
 
     private Map<String, ObjectRecord> missingConstructors;
 
@@ -80,7 +80,7 @@ public class TraceRun {
         long checkObjCount;
     }
 
-    public TraceRun(String name, Map<String, ObjectRecord>  objects, Map<Long, SortedMap<String, ClassRecord>> classLoaders,
+    public TraceRun(String name, Map<String, ObjectRecord>  objects, Map<String, SortedMap<String, ClassRecord>> classLoaders,
             Map<String, ObjectRecord> missingConstructors, long objectCount, long arrayCount,
             int missingConstructorCount, ArrayList<GCEpoch> garbageCollections, long lastTime) {
         this.name = name;
@@ -140,7 +140,7 @@ public class TraceRun {
      * by that class loader.
      * @return
      */
-    public Map<Long, SortedMap<String, ClassRecord>> getClassLoaders() {
+    public Map<String, SortedMap<String, ClassRecord>> getClassLoaders() {
         return classLoaders;
     }
 

@@ -27,6 +27,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 
 /**
@@ -53,7 +54,7 @@ public abstract class ObjectStateHandlerAdaptor extends VMAdviceHandler {
      * @param obj
      * @return
      */
-    public Object checkId(Object obj) {
+    private void checkId(Object obj) {
         if (obj != null) {
             long id = state.readId(obj);
             if (id == 0) {
@@ -65,7 +66,10 @@ public abstract class ObjectStateHandlerAdaptor extends VMAdviceHandler {
                 handleUnseen(obj);
             }
         }
-        return obj;
+    }
+
+    private void checkClassLoaderId(Object staticTuple) {
+        checkId(ObjectAccess.readClassActor(staticTuple).classLoader);
     }
 
 
@@ -264,32 +268,32 @@ public abstract class ObjectStateHandlerAdaptor extends VMAdviceHandler {
     // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeGetStatic(Object arg1, int arg2) {
-        checkId(arg1);
+        checkClassLoaderId(arg1);
     }
 
     // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforePutStatic(Object arg1, int arg2, float arg3) {
-        checkId(arg1);
+        checkClassLoaderId(arg1);
     }
 
     // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforePutStatic(Object arg1, int arg2, Object arg3) {
-        checkId(arg1);
+        checkClassLoaderId(arg1);
         checkId(arg3);
     }
 
     // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforePutStatic(Object arg1, int arg2, double arg3) {
-        checkId(arg1);
+        checkClassLoaderId(arg1);
     }
 
     // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforePutStatic(Object arg1, int arg2, long arg3) {
-        checkId(arg1);
+        checkClassLoaderId(arg1);
     }
 
     // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
@@ -363,14 +367,12 @@ public abstract class ObjectStateHandlerAdaptor extends VMAdviceHandler {
     @Override
     public void adviseBeforeCheckCast(Object arg1, Object arg2) {
         checkId(arg1);
-        checkId(arg2);
     }
 
     // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeInstanceOf(Object arg1, Object arg2) {
         checkId(arg1);
-        checkId(arg2);
     }
 
     // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
@@ -419,6 +421,7 @@ public abstract class ObjectStateHandlerAdaptor extends VMAdviceHandler {
     public void adviseAfterMultiNewArray(Object arg1, int[] arg2) {
         checkId(arg1);
     }
+
 
 
 }

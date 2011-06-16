@@ -32,7 +32,7 @@ import java.io.*;
  * the system class loader. This will cause the assertion check to fail.
  *
  * To get the real effect of the test you must set the <code>-cp</code> argument
- * to the directory containing the <code>test</code> package. Then the custom
+ * to a different directory containing the <code>test.New0</code> classes. Then the custom
  * class loaders {@link CLA} and {@link CLB} will load the class from there and
  * not delegate to the system class loader.
  *

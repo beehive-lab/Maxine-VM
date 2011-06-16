@@ -91,4 +91,25 @@ public class VMAT1XCompilation extends T1XCompilation {
         return templates[tag.ordinal()];
     }
 
+    @Override
+    protected void assignInvokeVirtualTemplateParameters(T1XTemplate template, VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
+        assignTemplateParameters(template, virtualMethodActor, receiverStackIndex);
+    }
+
+    @Override
+    protected void assignInvokeInterfaceTemplateParameters(T1XTemplate template, InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
+        assignTemplateParameters(template, interfaceMethodActor, receiverStackIndex);
+    }
+
+    @Override
+    protected void assignInvokeSpecialTemplateParameters(T1XTemplate template, VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
+        assignTemplateParameters(template, virtualMethodActor, receiverStackIndex);
+    }
+
+    @Override
+    protected void assignInvokeStaticTemplateParameters(T1XTemplate template, StaticMethodActor staticMethodActor) {
+        assignTemplateParameters(template, staticMethodActor);
+    }
+
+
 }

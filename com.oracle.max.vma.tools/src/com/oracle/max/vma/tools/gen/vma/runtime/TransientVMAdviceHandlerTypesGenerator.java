@@ -44,7 +44,7 @@ public class TransientVMAdviceHandlerTypesGenerator {
     public static Map<String, ArrayList<String>> recordToEnumList = new HashMap<String, ArrayList<String>>();
 
     public static void main(String[] args) {
-        setGeneratingClass(TransientVMAdviceHandlerTypesGenerator.class);
+        createGenerator(TransientVMAdviceHandlerTypesGenerator.class);
         generateAutoComment();
         for (Method m : VMAdviceHandler.class.getMethods()) {
             if (m.getName().startsWith("advise")) {

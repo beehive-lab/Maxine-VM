@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,31 +20,17 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vma.tools.gen.vma.runtime;
-
-import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
-import static com.sun.max.vm.t1x.T1XTemplateGenerator.*;
-
-import java.lang.reflect.*;
-
-import com.oracle.max.vm.ext.vma.*;
+package test;
 
 
-public class NullVMAdviceHandlerGenerator {
+public class InstanceOf {
+
     public static void main(String[] args) {
-        createGenerator(NullVMAdviceHandlerGenerator.class);
-        for (Method m : VMAdviceHandler.class.getMethods()) {
-            String name = m.getName();
-            if (name.startsWith("advise")) {
-                generate(m);
-            }
-        }
+        Object integer = new Integer(0);
+        assert integer instanceof Integer;
+
+        int x = (Integer) integer;
+        assert x == 0;
     }
 
-    private static void generate(Method m) {
-        generateAutoComment();
-        out.printf("    @Override%n");
-        generateSignature(m, null);
-        out.printf(" {%n    }%n%n");
-    }
 }

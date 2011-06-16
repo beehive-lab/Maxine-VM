@@ -55,6 +55,10 @@ import com.sun.max.vm.t1x.*;
  * For example, the {@link Bytecodes#ILOAD ILOAD_N} variants do not have separate
  * templates, so must be distinguished at advice time by a runtime argument.
  *
+ * The end result is that the generated API collapses families of similar bytecodes into single
+ * methods, with a possible fanout for denoting type-specific variants. To see the family that
+ * a given bytecode falls into, see the {@link VMABytecodes#methodName} value.
+ *
  * We use some of the auto-generation facilities from {@link T1XTemplateGenerator}.
  */
 
@@ -76,6 +80,7 @@ public class BytecodeAdviceGenerator {
     private static boolean logNotGenerated;
     private static ByteArrayOutputStream logByteOutput;
     private static PrintStream logOutput;
+    private static T1XTemplateGenerator templateGen;
 
     public static void main(String[] args) {
         for (String arg : args) {
@@ -85,7 +90,7 @@ public class BytecodeAdviceGenerator {
                 logOutput = new PrintStream(logByteOutput);
             }
         }
-        setGeneratingClass(BytecodeAdviceGenerator.class);
+        templateGen = new T1XTemplateGenerator(BytecodeAdviceGenerator.class);
         for (String k : types) {
             if (!(k.equals("boolean") || k.equals("byte") || k.equals("char") || k.equals("short") || k.equals("int") || k.equals("Word"))) {
                 getPutTypes.add(oType(k));
@@ -123,7 +128,7 @@ public class BytecodeAdviceGenerator {
     private static void checkTemplates() {
         final PrintStream saveOut = out;
         out = new PrintStream(new ByteArrayOutputStream());
-        T1XTemplateGenerator.generateAll(new CheckAdviceHook());
+        templateGen.generateAll(new CheckAdviceHook());
         out = saveOut;
     }
 
@@ -198,7 +203,7 @@ public class BytecodeAdviceGenerator {
 
     private static void generateGetStatic(VMABytecodes bytecode) {
         assert adviceMode == BEFORE;
-        generateAutoComment();
+        templateGen.generateAutoComment();
         // StaticTuple but ClassActor.staticTuple returns Object
         out.printf(METHOD_PREFIX + "Object staticTuple, int offset);%n%n", adviceModeString, bytecode.methodName);
     }
@@ -207,7 +212,7 @@ public class BytecodeAdviceGenerator {
         assert adviceMode == BEFORE;
         for (String k : getPutTypes) {
             if (hasGetPutTemplates(k)) {
-                generateAutoComment();
+                templateGen.generateAutoComment();
                 out.printf(METHOD_PREFIX + "Object object, int offset, %s value);%n%n", adviceModeString, bytecode.methodName, k);
             }
         }
@@ -217,7 +222,7 @@ public class BytecodeAdviceGenerator {
         assert adviceMode == BEFORE;
         for (String k : getPutTypes) {
             if (hasGetPutTemplates(k)) {
-                generateAutoComment();
+                templateGen.generateAutoComment();
                 // StaticTuple but ClassActor.staticTuple returns Object
                 out.printf(METHOD_PREFIX + "Object staticTuple, int offset, %s value);%n%n", adviceModeString, bytecode.methodName, k);
             }
@@ -226,7 +231,7 @@ public class BytecodeAdviceGenerator {
 
     private static void generateNew(VMABytecodes bytecode) {
         assert adviceMode == AFTER;
-        generateAutoComment();
+        templateGen.generateAutoComment();
         out.printf(METHOD_PREFIX + "Object object);%n%n", adviceModeString, bytecode.methodName);
     }
 
@@ -235,7 +240,7 @@ public class BytecodeAdviceGenerator {
     private static void generateNewArray(VMABytecodes bytecode) {
         if (!newArrayDone) {
             assert adviceMode == AFTER;
-            generateAutoComment();
+            templateGen.generateAutoComment();
             out.printf(METHOD_PREFIX + "Object object, int length);%n%n", adviceModeString, bytecode.methodName);
             newArrayDone = true;
         }
@@ -243,12 +248,12 @@ public class BytecodeAdviceGenerator {
 
     private static void generateMultiNewArray(VMABytecodes bytecode) {
         assert adviceMode == AFTER;
-        generateAutoComment();
+        templateGen.generateAutoComment();
         out.printf(METHOD_PREFIX + "Object object, int[] lengths);%n%n", adviceModeString, bytecode.methodName);
     }
 
     private static void generateInvoke(VMABytecodes bytecode) {
-        generateAutoComment();
+        templateGen.generateAutoComment();
         out.printf(METHOD_PREFIX + "Object object, MethodActor methodActor);%n%n", adviceModeString, bytecode.methodName);
     }
 
@@ -265,7 +270,7 @@ public class BytecodeAdviceGenerator {
         }
         String type = typeFor(bytecode.name().charAt(0));
         if (!scalarArraySet.contains(bytecode.methodName + type)) {
-            generateAutoComment();
+            templateGen.generateAutoComment();
             out.printf(METHOD_PREFIX + "Object array, int index" + value + ");%n%n", adviceModeString, bytecode.methodName, type);
             scalarArraySet.add(bytecode.methodName + type);
             if (isLoad) {
@@ -280,7 +285,7 @@ public class BytecodeAdviceGenerator {
         assert adviceMode == BEFORE;
         String type = typeFor(bytecode.name().charAt(0));
         if (!scalarConstSet.contains(bytecode.methodName + type)) {
-            generateAutoComment();
+            templateGen.generateAutoComment();
             out.printf(METHOD_PREFIX + "%s value);%n%n", adviceModeString, bytecode.methodName, type);
             scalarConstSet.add(bytecode.methodName + type);
         }
@@ -299,7 +304,7 @@ public class BytecodeAdviceGenerator {
         }
         String type = typeFor(bytecode.name().charAt(0));
         if (!scalarLoadSet.contains(bytecode.methodName + type)) {
-            generateAutoComment();
+            templateGen.generateAutoComment();
             out.printf(METHOD_PREFIX + "int dispToLocalSlot" + value + ");%n%n", adviceModeString, bytecode.methodName, type);
             scalarLoadSet.add(bytecode.methodName + type);
             if (isLoad) {
@@ -314,7 +319,7 @@ public class BytecodeAdviceGenerator {
         if (iPushDone) {
             return;
         }
-        generateAutoComment();
+        templateGen.generateAutoComment();
         out.printf(METHOD_PREFIX + "int value);%n%n", adviceModeString, bytecode.methodName);
         iPushDone = true;
     }
@@ -325,7 +330,7 @@ public class BytecodeAdviceGenerator {
         assert adviceMode == BEFORE;
         String type = typeFor(bytecode.name().charAt(0));
         if (!scalarOpSet.contains(bytecode.methodName + type)) {
-            generateAutoComment();
+            templateGen.generateAutoComment();
             out.printf(METHOD_PREFIX + "int opcode, %s op1, %s op2);%n%n", adviceModeString, bytecode.methodName, type, type);
             scalarOpSet.add(bytecode.methodName + type);
         }
@@ -335,7 +340,7 @@ public class BytecodeAdviceGenerator {
         assert adviceMode == BEFORE;
         String type = typeFor(bytecode.name().charAt(0));
         if (!scalarOpSet.contains(bytecode.methodName + type)) {
-            generateAutoComment();
+            templateGen.generateAutoComment();
             out.printf(METHOD_PREFIX + "int opcode, %s op);%n%n", adviceModeString, bytecode.methodName, type);
             scalarOpSet.add(bytecode.methodName + type);
         }
@@ -347,7 +352,7 @@ public class BytecodeAdviceGenerator {
         assert adviceMode == BEFORE;
         String type = bytecode.name().charAt(3) == 'A' ? "Object" : "int";
         if (!scalarIfSet.contains(bytecode.methodName + type)) {
-            generateAutoComment();
+            templateGen.generateAutoComment();
             out.printf(METHOD_PREFIX + "int opcode, %s op1, %s op2);%n%n", adviceModeString, bytecode.methodName, type, type);
             scalarIfSet.add(bytecode.methodName + type);
         }
@@ -355,27 +360,27 @@ public class BytecodeAdviceGenerator {
 
     private static void generateTypeCheck(VMABytecodes bytecode) {
         assert adviceMode == BEFORE;
-        generateAutoComment();
+        templateGen.generateAutoComment();
         out.printf(METHOD_PREFIX + "Object object, Object classActor);%n%n", adviceModeString, bytecode.methodName);
     }
 
     private static void generateArrayLength() {
         assert adviceMode == BEFORE;
-        generateAutoComment();
+        templateGen.generateAutoComment();
         out.printf(METHOD_PREFIX + "Object array, int length);%n%n", adviceModeString, ARRAYLENGTH.methodName);
 
     }
 
     private static void generateThrow() {
         assert adviceMode == BEFORE;
-        generateAutoComment();
+        templateGen.generateAutoComment();
         out.printf(METHOD_PREFIX + "Object object);%n%n", adviceModeString, ATHROW.methodName);
 
     }
 
     private static void generateMonitor(VMABytecodes bytecode) {
         assert adviceMode == BEFORE;
-        generateAutoComment();
+        templateGen.generateAutoComment();
         out.printf(METHOD_PREFIX + "Object object);%n%n", adviceModeString, bytecode.methodName);
     }
 
@@ -389,7 +394,7 @@ public class BytecodeAdviceGenerator {
         }
         String type = typeFor(bytecode.name().charAt(0));
         if (!scalarReturnSet.contains(bytecode.methodName + type)) {
-            generateAutoComment();
+            templateGen.generateAutoComment();
             out.printf(METHOD_PREFIX + "%s value);%n%n", adviceModeString, bytecode.methodName, type);
             scalarReturnSet.add(bytecode.methodName + type);
         }
@@ -400,7 +405,7 @@ public class BytecodeAdviceGenerator {
     private static void generateStack(VMABytecodes bytecode) {
         assert adviceMode == BEFORE;
         if (!stackOpDone) {
-            generateAutoComment();
+            templateGen.generateAutoComment();
             out.printf(METHOD_PREFIX + "int opcode);%n%n", adviceModeString, bytecode.methodName);
             stackOpDone = true;
         }
@@ -408,7 +413,7 @@ public class BytecodeAdviceGenerator {
 
     private static void generateIInc(VMABytecodes bytecode) {
         assert adviceMode == BEFORE;
-        generateAutoComment();
+        templateGen.generateAutoComment();
         out.printf(METHOD_PREFIX + "int dispToLocalSlot, int value, int increment);%n%n", adviceModeString, bytecode.methodName);
     }
 
@@ -417,7 +422,7 @@ public class BytecodeAdviceGenerator {
     private static void generateBytecode(VMABytecodes bytecode) {
         assert adviceMode == BEFORE;
         if (!bytecodeDone) {
-            generateAutoComment();
+            templateGen.generateAutoComment();
             out.printf(METHOD_PREFIX + "int opcode);%n%n", adviceModeString, bytecode.methodName);
             bytecodeDone = true;
         }

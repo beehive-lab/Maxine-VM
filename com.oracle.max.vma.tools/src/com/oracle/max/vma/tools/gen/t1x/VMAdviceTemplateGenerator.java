@@ -22,7 +22,6 @@
  */
 package com.oracle.max.vma.tools.gen.t1x;
 
-import static com.sun.max.vm.t1x.T1XTemplateGenerator.*;
 import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
 
 import java.io.*;
@@ -30,9 +29,8 @@ import java.util.*;
 import com.oracle.max.vm.ext.vma.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
-import com.sun.max.vm.t1x.T1XTemplateGenerator.AdviceType;
+import com.sun.max.vm.t1x.T1XTemplateGenerator;
 import com.sun.max.vm.t1x.T1XTemplateTag;
-import com.sun.max.vm.t1x.T1XTemplateGenerator.AdviceHook;
 
 /**
  * Template generation that supports the {@link VMAdviceHandler} interface.
@@ -46,10 +44,13 @@ import com.sun.max.vm.t1x.T1XTemplateGenerator.AdviceHook;
  * <li>Only the templates that provide after advice, with only after advice generated.
  * <li>Only the templates that provide before and after advice, with before and advice generated.
  * </ul>
+ *
+ * Unfortunately, we cannot reuse the standard templates for INVOKE as we need consistent access to the
+ * {@link MethodActor} to pass to the advice handler. So we override the standard definitions in this class.
  */
 
 @HOSTED_ONLY
-public class VMAdviceTemplateGenerator {
+public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
 
     /**
      * This records the advice capability for each {@link T1XTemplateTag}.
@@ -939,6 +940,10 @@ public class VMAdviceTemplateGenerator {
         }
     }
 
+    VMAdviceTemplateGenerator() {
+        super(VMAdviceTemplateGenerator.class);
+    }
+
     public static void main(String[] args) {
         if (args.length == 0) {
             generateAll = true;
@@ -952,13 +957,118 @@ public class VMAdviceTemplateGenerator {
         }
         byteArrayOut = new ThisByteArrayOutputStream();
         out = new PrintStream(byteArrayOut);
-        setGeneratingClass(VMAdviceTemplateGenerator.class);
+
+        t1xTemplateGen = new VMAdviceTemplateGenerator();
         // discover what the advice capabilities are for each tag
-        generateAll(new DiscoverCapabilitiesHook());
+        t1xTemplateGen.generateAll(new DiscoverCapabilitiesHook());
 
         byteArrayOut.reset();
-        generateAll(new VMAT1XAdvice());
+        t1xTemplateGen.generateAll(new VMAT1XAdvice());
         byteArrayOut.writeOut();
     }
+
+    /**
+     * Generate a specific {@code INVOKE} template.
+     * @param k type
+     * @param variant one of "virtual" or "interface"
+     * @param tag one of "", "resolved" or "instrumented"
+     */
+    @Override
+    public void generateInvokeVITemplate(String k, String variant, String tag) {
+        boolean isVoid = k.equals("void");
+        String param1 = tag.equals("") ? "ResolutionGuard.InPool guard" :
+            (variant.equals("interface") ? "InterfaceMethodActor interfaceMethodActor" : "VirtualMethodActor methodActor");
+        param1 += ", int receiverStackIndex";
+        if (tag.equals("instrumented")) {
+            param1 += ", MethodProfile mpo, int mpoIndex";
+        }
+        t1xTemplateGen.generateAutoComment();
+        t1xTemplateGen.generateTemplateTag("INVOKE%s$%s%s", variant.toUpperCase(), lType(k), prefixDollar(tag));
+        out.printf("    public static void invoke%s%s(%s) {%n", variant, uType(k), param1);
+        out.printf("        Object receiver = peekObject(receiverStackIndex);%n");
+        if (variant.equals("interface")) {
+            if (tag.equals("")) {
+                out.printf("        final InterfaceMethodActor interfaceMethodActor = Snippets.resolveInterfaceMethod(guard);%n");
+                out.printf("        Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);%n");
+            } else if (tag.equals("resolved")) {
+                out.printf("        Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);%n");
+            } else if (tag.equals("instrumented")) {
+                out.printf("        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);%n");
+            }
+        } else {
+            // virtual
+            if (tag.equals("")) {
+                out.printf("        VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);%n");
+                out.printf("        Address entryPoint = VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor);%n");
+            } else if (tag.equals("resolved")) {
+                out.printf("        Address entryPoint = ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress();%n");
+            } else if (tag.equals("instrumented")) {
+                out.printf("        Address entryPoint = selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex);%n");
+            }
+        }
+        generateBeforeAdvice(k, variant, tag);
+        out.printf("        ");
+        if (!isVoid) {
+            out.printf("final %s result = ", oType(k));
+        }
+        out.printf("indirectCall%s(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);%n", uType(k));
+        generateAfterAdvice(k, variant, tag);
+        if (!isVoid) {
+            out.printf("        push%s(result);%n", uoType(k));
+        }
+        out.printf("    }%n");
+        newLine();
+    }
+
+
+    /**
+     * Generate a specific {@code INVOKE} template.
+     * @param k type
+     * @param variant one of "special" or "static"
+     * @param xtag one of "" or "init" or "resolved"
+     */
+    @Override
+    public void generateInvokeSSTemplate(String k, String variant, String xtag) {
+        boolean resolved = xtag.equals("resolved");
+        boolean isStatic = variant.equals("static");
+        String tag = isStatic && resolved ? "init" : xtag;
+        boolean isVoid = k.equals("void");
+        String params = xtag.equals("") ? "ResolutionGuard.InPool guard" :
+            (isStatic ? "StaticMethodActor methodActor" : "VirtualMethodActor methodActor");
+        if (variant.equals("special")) {
+            if (params.length() > 0) {
+                params += ", ";
+            }
+            params += "int receiverStackIndex";
+        }
+        t1xTemplateGen.generateAutoComment();
+        t1xTemplateGen.generateTemplateTag("INVOKE%s$%s%s", variant.toUpperCase(), lType(k), prefixDollar(tag));
+        out.printf("    public static void invoke%s%s(%s) {%n", variant, uType(k), params);
+        if (!isStatic) {
+            out.printf("        Pointer receiver = peekWord(receiverStackIndex).asPointer();%n");
+            out.printf("        nullCheck(receiver);%n");
+        }
+        if (!resolved) {
+            out.printf("        %sMethodActor methodActor = VMAT1XRuntime.resolve%sMethod(guard);%n", isStatic ? "Static" : "Virtual", toFirstUpper(variant));
+        }
+        generateBeforeAdvice(k, variant, tag);
+        out.printf("        ");
+        if (!isVoid) {
+            out.printf("final %s result = ", oType(k));
+        }
+        if (resolved) {
+            out.printf("directCall%s();%n", uType(k));
+        } else {
+            out.printf("indirectCall%s(VMAT1XRuntime.initialize%sMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);%n", uType(k), toFirstUpper(variant));
+        }
+        generateAfterAdvice(k, variant, tag);
+        if (!isVoid) {
+            out.printf("        push%s(result);%n", uoType(k));
+        }
+        out.printf("    }%n");
+        newLine();
+    }
+
+
 
 }

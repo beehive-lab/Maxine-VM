@@ -29,12 +29,11 @@ import java.lang.reflect.*;
 
 import com.oracle.max.vm.ext.vma.*;
 import com.sun.max.annotate.*;
-import com.sun.max.vm.t1x.*;
 
 @HOSTED_ONLY
 public class SyncLogVMAdviceHandlerGenerator {
     public static void main(String[] args) {
-        T1XTemplateGenerator.setGeneratingClass(SyncLogVMAdviceHandlerGenerator.class);
+        createGenerator(SyncLogVMAdviceHandlerGenerator.class);
         for (Method m : VMAdviceHandler.class.getMethods()) {
             String name = m.getName();
             if (name.startsWith("advise")) {

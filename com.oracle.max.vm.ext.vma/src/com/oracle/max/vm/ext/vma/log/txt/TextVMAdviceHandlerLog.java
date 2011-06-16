@@ -44,11 +44,11 @@ import com.oracle.max.vm.ext.vma.log.*;
 
 public abstract class TextVMAdviceHandlerLog extends VMAdviceHandlerLog {
 
-    public static final int REPEAT_ID_VALUE = -1;
+    public static final int REPEAT_ID_VALUE = 0;
     public static final char REPEAT_ID = '*';
 
     public static final EnumSet<Key> noTimeSet = EnumSet.of(Key.CLASS_DEFINITION, Key.FIELD_DEFINITION, Key.THREAD_DEFINITION,
-                                                      Key.REMOVAL);
+                                                      Key.METHOD_DEFINITION, Key.REMOVAL);
     public static final Map<String, Key> commandMap = new HashMap<String, Key>();
 
     static {
@@ -62,8 +62,18 @@ public abstract class TextVMAdviceHandlerLog extends VMAdviceHandlerLog {
     public static final char FLOAT_VALUE = 'F';
     public static final char DOUBLE_VALUE = 'D';
 
+    // Argument indices for frequently accessed parts of the majority of records
+    public static final int KEY_INDEX = 0;
+    public static final int TIME_INDEX = 1;
+    public static final int THREAD_INDEX = 2;
+    public static final int OBJ_ID_INDEX = 3;
+    public static final int STATIC_CLASSNAME_INDEX = 3;
+    public static final int ID_CLASSNAME_INDEX = 4;
+    public static final int ARRAY_INDEX_INDEX = 4;
+    public static final int FIRST_ARG_INDEX = 1;
+
     public static boolean hasId(Key code) {
-        return hasIdSet.contains(code);
+        return code == Key.UNSEEN || hasIdSet.contains(code);
     }
 
     public static boolean hasTime(Key key) {
@@ -71,7 +81,7 @@ public abstract class TextVMAdviceHandlerLog extends VMAdviceHandlerLog {
     }
 
     public static boolean hasTimeAndThread(Key key) {
-        return hasTime(key) && !(key == Key.UNSEEN || key == Key.INITIALIZE_LOG | key == Key.FINALIZE_LOG);
+        return hasTime(key) && !(key == Key.INITIALIZE_LOG | key == Key.FINALIZE_LOG);
     }
 
     // BEGIN GENERATED CODE

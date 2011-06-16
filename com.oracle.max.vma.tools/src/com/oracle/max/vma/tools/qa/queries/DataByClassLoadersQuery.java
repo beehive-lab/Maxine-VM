@@ -37,10 +37,9 @@ public class DataByClassLoadersQuery extends DataByClassQueryHelper {
             PrintStream ps, String[] args) {
         TraceRun traceRun = traceRuns.get(traceFocus);
         ps.println("\nObjects organized by classloader");
-        for (long cl : traceRun.getClassLoaders().keySet()) {
+        for (String cl : traceRun.getClassLoaders().keySet()) {
             ps.println("Classloader: " + getShowClassLoader(traceRun, cl));
-            Map<String, ClassRecord> classes = traceRun.getClassLoaders().get(
-                    cl);
+            Map<String, ClassRecord> classes = traceRun.getClassLoaders().get(cl);
             showXDataByClasses(traceRun, ps, args, classes.values().iterator(),
                     INDENT_TWO);
         }

@@ -32,22 +32,20 @@ import com.sun.max.vm.layout.xohm.XOhmGeneralLayout;
 import com.sun.max.vm.reference.Reference;
 
 /**
- * This implementation uses two bitsets for tracking objects.
- * The {@link #idSet} records the id of a live object, an id
- * simply being an index into the set. The set has a bit set
- * for an object that is currently live.
+ * This implementation uses two bitsets for tracking objects. The {@link #idSet} records the id of a live object, an id
+ * simply being an index into the set. The set has a bit set for an object that is currently live.
  *
- * Evidently dead objects can have their ids reused, which the analysis
- * tool must cope with.
+ * The ids of dead objects can be reused, which an analysis tool must cope with.
  *
- * The {@link #gcSet} records whether an object that was
- * live at the start of a gc is still live at the end.
+ * The {@link #gcSet} records whether an object that was live at the start of a gc is still live at the end.
  *
- * The bitsets are sized according to the property {@value #MAX_IDS_PROPERTY}
- * and expected to be allocated in bootstrap memory. (Immortal memory would
- * also work).
+ * The bitsets are sized according to the property {@value #MAX_IDS_PROPERTY} and expected to be allocated in bootstrap
+ * memory. (Immortal memory would also work).
  *
  * Access to the bitsets is synchronized.
+ *
+ * Ids for objects whose creation was not tracked (unseen) are negative and descend from {@value UNSEEN_ID_BASE}.
+ * Zero is not a valid id; instead it denotes "no id assigned" or the null object.
  *
  * @author Mick Jordan
  *
@@ -60,7 +58,7 @@ public class BitSetObjectStateHandler extends ObjectStateHandler {
     private BitSet gcSet;
     private int lowestFreeBit = 1;
     private long nextUnseenId;
-    private static final long UNSEEN_ID_BASE = (long) Integer.MAX_VALUE + 1;
+    private static final long UNSEEN_ID_BASE = -1;
 
     private BitSetObjectStateHandler(int size) {
         idSet = new BitSet(size);
@@ -93,7 +91,7 @@ public class BitSetObjectStateHandler extends ObjectStateHandler {
 
     @Override
     public synchronized long assignUnseenId(Object obj) {
-        long id = nextUnseenId++;
+        long id = nextUnseenId--;
         writeId(Reference.fromJava(obj), id);
         return id;
     }
@@ -101,7 +99,7 @@ public class BitSetObjectStateHandler extends ObjectStateHandler {
     @Override
     @INLINE(override = true)
     public long readId(Object obj) {
-        return XOhmGeneralLayout.Static.readXtra(Reference.fromJava(obj)).asAddress().toLong();
+        return obj == null ? 0 : XOhmGeneralLayout.Static.readXtra(Reference.fromJava(obj)).asAddress().toLong();
     }
 
     @INLINE(override = true)
@@ -113,7 +111,7 @@ public class BitSetObjectStateHandler extends ObjectStateHandler {
     @Override
     public void incrementLifetime(Pointer cell) {
         long id = XOhmGeneralLayout.Static.readXtra(cell).asAddress().toLong();
-        if (id != 0 && id < UNSEEN_ID_BASE) {
+        if (id > 0) {
             safeSet(gcSet, (int) id);
         }
     }

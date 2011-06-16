@@ -52,10 +52,10 @@ public class VMAOptions {
         B, A, BA;
     }
 
-    static class AB {
+    static class BM {
         VMABytecodes bytecode;
         AdviceModeOption adviceModeOption;
-        AB(VMABytecodes bytecode, AdviceModeOption adviceModeOption) {
+        BM(VMABytecodes bytecode, AdviceModeOption adviceModeOption) {
             this.bytecode = bytecode;
             this.adviceModeOption = adviceModeOption;
         }
@@ -69,42 +69,51 @@ public class VMAOptions {
         }
     }
 
-    private static final AB[] LIFETIME_AB = new AB[] {
-        new AB(NEW, A), new AB(NEWARRAY, A), new AB(ANEWARRAY, A),
-        new AB(MULTIANEWARRAY, A), new AB(INVOKESPECIAL, A)
+    private static final BM[] LIFETIME_BM = new BM[] {
+        new BM(NEW, A), new BM(NEWARRAY, A), new BM(ANEWARRAY, A),
+        new BM(MULTIANEWARRAY, A), new BM(INVOKESPECIAL, A)
     };
 
-    private static final AB[] READ_AB = compose(LIFETIME_AB, new AB[] {new AB(GETFIELD, B), new AB(GETSTATIC, B)});
+    private static final BM[] READ_BM = compose(LIFETIME_BM, new BM[] {new BM(GETFIELD, B), new BM(GETSTATIC, B)});
 
-    private static final AB[] WRITE_AB = compose(LIFETIME_AB, new AB[] {new AB(PUTFIELD, B), new AB(PUTSTATIC, B)});
+    private static final BM[] WRITE_BM = compose(LIFETIME_BM, new BM[] {new BM(PUTFIELD, B), new BM(PUTSTATIC, B)});
 
-    private static final AB[] READWRITE_AB = compose(READ_AB, new AB[] {new AB(PUTFIELD, B), new AB(PUTSTATIC, B)});
+    private static final BM[] READWRITE_BM = compose(READ_BM, new BM[] {new BM(PUTFIELD, B), new BM(PUTSTATIC, B)});
 
-    private static final AB[] MONITOR_AB = new AB[] {new AB(MONITORENTER, B), new AB(MONITOREXIT, B)};
+    private static final BM[] MONITOR_BM = new BM[] {new BM(MONITORENTER, B), new BM(MONITOREXIT, B)};
 
-    private static final AB[] INVOKE_AB = new AB[] {
-        new AB(INVOKEVIRTUAL, B), new AB(INVOKEINTERFACE, B),
-        new AB(INVOKESTATIC, B), new AB(INVOKESPECIAL, B)
+    private static final BM[] BEFOREINVOKE_BM = new BM[] {
+        new BM(INVOKEVIRTUAL, B), new BM(INVOKEINTERFACE, B),
+        new BM(INVOKESTATIC, B), new BM(INVOKESPECIAL, B)
     };
+
+    private static final BM[] AFTERINVOKE_BM = new BM[] {
+        new BM(INVOKEVIRTUAL, A), new BM(INVOKEINTERFACE, A),
+        new BM(INVOKESTATIC, A), new BM(INVOKESPECIAL, A)
+    };
+
+    private static final BM[] INVOKE_BM = compose(BEFOREINVOKE_BM, AFTERINVOKE_BM);
 
     enum StdConfig {
-        LIFETIME("lifetime", LIFETIME_AB),
-        READ("read", READ_AB),
-        WRITE("write", WRITE_AB),
-        MONITOR("monitor", MONITOR_AB),
-        INVOKE("invoke", INVOKE_AB);
+        LIFETIME("lifetime", LIFETIME_BM),
+        READ("read", READ_BM),
+        WRITE("write", WRITE_BM),
+        MONITOR("monitor", MONITOR_BM),
+        BEFOREINVOKE("beforeinvoke", BEFOREINVOKE_BM),
+        AFTERINVOKE("afterinvoke", AFTERINVOKE_BM),
+        INVOKE("invoke", INVOKE_BM);
 
         private String name;
-        private AB[] bytecodesToApply;
+        private BM[] bytecodesToApply;
 
-        private StdConfig(String name, AB[] bytecodesToApply) {
+        private StdConfig(String name, BM[] bytecodesToApply) {
             this.name = name;
             this.bytecodesToApply = bytecodesToApply;
         }
     }
 
-    private static AB[] compose(AB[] a, AB[] b) {
-        AB[] result = new AB[a.length + b.length];
+    private static BM[] compose(BM[] a, BM[] b) {
+        BM[] result = new BM[a.length + b.length];
         System.arraycopy(a, 0, result, 0, a.length);
         System.arraycopy(b, 0, result, a.length, b.length);
         return result;
@@ -262,7 +271,7 @@ public class VMAOptions {
                     if (stdConfig == null) {
                         ProgramError.unexpected(vmaConfig + " is not a standard VMA configuration");
                     }
-                    for (AB ab : stdConfig.bytecodesToApply) {
+                    for (BM ab : stdConfig.bytecodesToApply) {
                         for (AdviceMode am : AdviceMode.values()) {
                             boolean isApplied = ab.isApplied(am);
                             bytecodeApply[ab.bytecode.ordinal()][am.ordinal()] = isApplied;

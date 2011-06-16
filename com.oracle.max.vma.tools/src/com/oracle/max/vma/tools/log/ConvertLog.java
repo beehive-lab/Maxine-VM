@@ -28,7 +28,11 @@ import static com.oracle.max.vm.ext.vma.log.txt.TextVMAdviceHandlerLog.*;
 import java.io.*;
 import java.util.*;
 
+import com.oracle.max.vm.ext.vma.*;
+import com.oracle.max.vm.ext.vma.log.*;
 import com.oracle.max.vm.ext.vma.log.txt.*;
+import com.oracle.max.vma.tools.qa.*;
+import com.sun.max.program.*;
 
 /**
  * Rewrites a log file making various transformations:
@@ -47,6 +51,7 @@ public class ConvertLog {
 
     private static boolean toAbsTime;
     private static boolean toRelTime;
+    private static PrintStream out;
 
     public static void main(String[] args) throws Exception {
         String logFileIn = null;
@@ -67,28 +72,33 @@ public class ConvertLog {
                 command = new BatchCommand();
             } else if (arg.equals("-unbatch")) {
                 command = new UnBatchCommand();
+            } else if (arg.equals("-ajtrace")) {
+                command = new AJcommand();
+            } else if (arg.equals("-readable")) {
+                command = new ReadableCommand();
+            } else {
+                usage();
             }
         }
         // Checkstyle: resume modified control variable check
 
-        if (logFileIn == null || command == null) {
-            usage();
+        if (logFileIn == null) {
+            logFileIn = VMAdviceHandlerLogFile.DEFAULT_LOGFILE;
         }
         processLogFile(logFileIn, logFileOut, command);
     }
 
     private static void usage() {
-        System.err.println("usage: -f logfileIn [-o logFileOut] [-batch | -unbatch] [-abstime] [-reltime]");
+        System.err.println("usage: -f logfileIn [-o logFileOut] [-batch | -unbatch | -ajtrace] [-abstime] [-reltime]");
         System.exit(1);
     }
 
     private static void processLogFile(String inFile, String outFile, Command command) throws IOException {
         BufferedReader r = null;
-        PrintStream ps = null;
         int lineCount = 1;
         try {
             r = new BufferedReader(new FileReader(inFile));
-            ps = outFile == null ? System.out : new PrintStream(
+            out = outFile == null ? System.out : new PrintStream(
                     new FileOutputStream(outFile));
 
             while (true) {
@@ -100,10 +110,10 @@ public class ConvertLog {
                     continue;
                 }
 
-                command.visitLine(line, ps);
+                command.visitLine(line);
                 lineCount++;
             }
-            command.finish(ps);
+            command.finish();
         } finally {
             if (r != null) {
                 try {
@@ -111,8 +121,8 @@ public class ConvertLog {
                 } catch (IOException ex) {
                 }
             }
-            if (outFile != null && ps != null) {
-                ps.close();
+            if (outFile != null && out != null) {
+                out.close();
             }
         }
     }
@@ -133,7 +143,7 @@ public class ConvertLog {
         Key command;
         String[] lineParts;
 
-        void visitLine(String line, PrintStream ps) {
+        void visitLine(String line) {
             setCommand(line);
             if (TextVMAdviceHandlerLog.hasTime(command)) {
                 lineTime = Long.parseLong(lineParts[1]);
@@ -143,13 +153,15 @@ public class ConvertLog {
             }
         }
 
-        void finish(PrintStream ps) {
+        void finish() {
 
         }
 
         void setCommand(String line) {
             lineParts = line.split(" ");
             command = commandMap.get(lineParts[0]);
+            lineTime = -1;
+            lineAbsTime = -1;
         }
 
         void checkTimeFormat() {
@@ -195,8 +207,8 @@ public class ConvertLog {
         private ArrayList<TimedLine> lines = new ArrayList<TimedLine>();
 
         @Override
-        void visitLine(String line, PrintStream ps) {
-            super.visitLine(line, ps);
+        void visitLine(String line) {
+            super.visitLine(line);
             if (command == Key.RESET_TIME) {
                 // drop these records
                 return;
@@ -205,7 +217,7 @@ public class ConvertLog {
         }
 
         @Override
-        void finish(PrintStream ps) {
+        void finish() {
             TimedLine[] linesArray = lines.toArray(new TimedLine[lines.size()]);
             Arrays.sort(linesArray);
             long lastTime = linesArray[0].time;
@@ -218,7 +230,7 @@ public class ConvertLog {
                 } else {
                     line = concat(linesArray[i].lineParts);
                 }
-                ps.println(line);
+                out.println(line);
             }
 
         }
@@ -264,8 +276,8 @@ public class ConvertLog {
         BatchData initialBatch;
 
         @Override
-        void visitLine(String line, PrintStream ps) {
-            super.visitLine(line, ps);
+        void visitLine(String line) {
+            super.visitLine(line);
             if (TextVMAdviceHandlerLog.hasTime(command)) {
                 if (TextVMAdviceHandlerLog.hasTimeAndThread(command)) {
                     // thread is in lineParts[2]
@@ -294,18 +306,18 @@ public class ConvertLog {
         }
 
         @Override
-        void finish(PrintStream ps) {
-            ps.println(initialize);
+        void finish() {
+            out.println(initialize);
             // output batches
             for (String batchLine : initialBatch.lines) {
-                ps.println(batchLine);
+                out.println(batchLine);
             }
             for (BatchData batch : batchMap.values()) {
                 for (String batchLine : batch.lines) {
-                    ps.println(batchLine);
+                    out.println(batchLine);
                 }
             }
-            ps.println(finalize);
+            out.println(finalize);
 
         }
 
@@ -333,11 +345,11 @@ public class ConvertLog {
      */
     private static class CloneCommand extends Command {
         @Override
-        void visitLine(String line, PrintStream ps) {
-            super.visitLine(line, ps);
+        void visitLine(String line) {
+            super.visitLine(line);
             if ((logUsesAbsTime && toAbsTime) || (!logUsesAbsTime && toRelTime)) {
                 // no change
-                ps.println(line);
+                out.println(line);
             } else {
                 if (TextVMAdviceHandlerLog.hasTime(command)) {
                     if (logUsesAbsTime) {
@@ -357,8 +369,372 @@ public class ConvertLog {
                 } else if (command == Key.INITIALIZE_LOG) {
                     line = lineParts[0] + " " + lineAbsTime + " " + !logUsesAbsTime;
                 }
-                ps.println(line);
+                out.println(line);
             }
         }
     }
+
+    /**
+     * Converts to the format expect by the AJTrace analyser tool for viewing call graph hierarchies.
+     */
+    private static class AJcommand extends Command {
+
+        private static EnumSet<Key> INVOKE_BEFORE_SET = EnumSet.of(
+                        Key.ADVISE_BEFORE_INVOKE_INTERFACE, Key.ADVISE_BEFORE_INVOKE_VIRTUAL,
+                        Key.ADVISE_BEFORE_INVOKE_SPECIAL, Key.ADVISE_BEFORE_INVOKE_STATIC);
+
+
+        private static EnumSet<Key> INVOKE_AFTER_SET = EnumSet.of(
+                        Key.ADVISE_AFTER_INVOKE_INTERFACE, Key.ADVISE_AFTER_INVOKE_VIRTUAL,
+                        Key.ADVISE_AFTER_INVOKE_SPECIAL, Key.ADVISE_AFTER_INVOKE_STATIC);
+
+        private long startTime;
+        private int callDepth = 1;
+        private int fullMethodIndex;
+        private Map<String, String> classShortForms = new HashMap<String, String>();
+        private Map<String, String> methodShortForms = new HashMap<String, String>();
+        private Map<String, String> classMethodDefs = new HashMap<String, String>();
+
+        @Override
+        void visitLine(String line) {
+            super.visitLine(line);
+            StringBuilder sb = new StringBuilder();
+            if (command == Key.INITIALIZE_LOG) {
+                sb.append("0 S S ");
+                sb.append(lineAbsTime);
+                startTime = lineAbsTime;
+            } else if (command == Key.CLASS_DEFINITION) {
+                classShortForms.put(lineParts[2], ClassRecord.getCanonicalName(lineParts[1]));
+                return;
+            } else if (command == Key.THREAD_DEFINITION) {
+                sb.append("0 D T");
+                sb.append(lineParts[2]);
+                sb.append(' ');
+                sb.append(lineParts[1]);
+            } else if (command == Key.METHOD_DEFINITION) {
+                methodShortForms.put(lineParts[2], lineParts[1]);
+                return;
+            } else if (INVOKE_BEFORE_SET.contains(command)) {
+                String mid = checkMethodDef();
+                sb.append(callDepth);
+                sb.append(" E");
+                sb.append(lineAbsTime - startTime);
+                sb.append(" T");
+                sb.append(lineParts[2]);
+                sb.append(" M");
+                sb.append(mid);
+                callDepth++;
+            } else if (INVOKE_AFTER_SET.contains(command)) {
+                String mid = checkMethodDef();
+                callDepth--;
+                sb.append(callDepth);
+                sb.append(" R");
+                sb.append(lineAbsTime - startTime);
+                sb.append(" T");
+                sb.append(lineParts[2]);
+                sb.append(" M");
+                sb.append(mid);
+            } else {
+                return;
+            }
+            out.println(sb.toString());
+        }
+
+        private String checkMethodDef() {
+            StringBuilder sb = new StringBuilder();
+            String fullName = classShortForms.get(lineParts[4]) + "." + methodShortForms.get(lineParts[5]);
+            String id = classMethodDefs.get(fullName);
+            if (id == null) {
+                id = new String(Integer.toString(fullMethodIndex++));
+                sb.append("0 M M");
+                sb.append(id);
+                sb.append(' ');
+                sb.append(fullName);
+                out.println(sb.toString());
+                classMethodDefs.put(fullName, id);
+            }
+            return id;
+        }
+
+    }
+
+    /**
+     * Converts to a readable format from the compressed form.
+     */
+    private static class ReadableCommand extends Command {
+        private Map<String, String> lastId = new HashMap<String, String>();
+
+        @Override
+        void visitLine(String line) {
+            super.visitLine(line);
+            String arg1 = lineParts[1];
+            String arg2 = lineParts.length > 2 ? lineParts[2] : null;
+            String arg3 = lineParts.length > 3 ? lineParts[3] : null;
+            String arg4 = lineParts.length > 4 ? lineParts[4] : null;
+            String arg5 = lineParts.length > 5 ? lineParts[5] : null;
+            String arg6 = lineParts.length > 6 ? lineParts[6] : null;
+            String logTimeArg = arg1;
+            String threadArg = arg2;
+            String objIdArg = "???";
+
+            if (TextVMAdviceHandlerLog.hasTime(command) &&
+                    (!(command == Key.INITIALIZE_LOG || command == Key.FINALIZE_LOG))) {
+                String atTime = "@" + logTimeArg;
+                out.printf("%-10s ", atTime);
+            } else {
+                out.printf("%-11c", ' ');
+            }
+
+            if (TextVMAdviceHandlerLog.hasId(command)) {
+                if (arg3.charAt(0) == REPEAT_ID) {
+                    objIdArg = lastId.get(threadArg);
+                } else {
+                    objIdArg = arg3;
+                    lastId.put(threadArg, objIdArg);
+                }
+            }
+            out.printf("%s ", command);
+
+            if (TextVMAdviceHandlerLog.hasTimeAndThread(command)) {
+                printThreadId(threadArg);
+            }
+
+            if (TextVMAdviceHandlerLog.hasId(command)) {
+                printObjId(objIdArg);
+            }
+
+
+            switch (command) {
+                case INITIALIZE_LOG:
+                    out.printf("%s %s", logTimeArg, arg2);
+                    break;
+
+                case RESET_TIME:
+                case FINALIZE_LOG:
+                    out.printf("%s", logTimeArg);
+                    break;
+
+                case CLASS_DEFINITION:
+                    printClassId(arg3);
+                    out.printf(" %s", arg1);
+                    printClId(arg2);
+                    break;
+
+                case THREAD_DEFINITION:
+                    printThreadId(arg2);
+                    out.printf(" %s", arg1);
+                    break;
+
+                case METHOD_DEFINITION:
+                    printMethodId(arg3);
+                    printClassId(arg1);
+                    out.printf(" %s", arg2);
+                    break;
+
+                case FIELD_DEFINITION:
+                    printFieldId(arg3);
+                    printClassId(arg1);
+                    out.printf(" %s", arg2);
+                    break;
+
+                case ADVISE_AFTER_NEW:
+                case ADVISE_AFTER_NEW_ARRAY:
+                    printClassId(lineParts[ID_CLASSNAME_INDEX]);
+                    if (command == Key.ADVISE_AFTER_NEW_ARRAY) {
+                        out.printf(" %s", lineParts[ID_CLASSNAME_INDEX + 1]);
+                    }
+                    break;
+
+                case UNSEEN:
+                    printClassId(lineParts[ID_CLASSNAME_INDEX]);
+                    break;
+
+                case ADVISE_BEFORE_CONST_LOAD:
+                    printValue(arg3, arg4);
+                    break;
+
+                case ADVISE_BEFORE_LOAD:
+                case ADVISE_BEFORE_STORE:
+                    out.printf(" %s", arg3);
+                    if (command == Key.ADVISE_BEFORE_STORE) {
+                        printValue(arg4, lineParts[5]);
+                    }
+                    break;
+
+                case ADVISE_BEFORE_IPUSH:
+                    break;
+
+                case ADVISE_BEFORE_ARRAY_LOAD:
+                case ADVISE_BEFORE_ARRAY_STORE:
+                    out.printf(" %s", threadArg, objIdArg, lineParts[ARRAY_INDEX_INDEX]);
+                    if (command == Key.ADVISE_BEFORE_ARRAY_STORE) {
+                        out.printf(" %s", lineParts[ARRAY_INDEX_INDEX + 1]);
+                    }
+                    break;
+
+                case ADVISE_BEFORE_ARRAY_LENGTH:
+                    out.printf(" %s", arg4);
+                    break;
+
+                case ADVISE_BEFORE_GET_STATIC:
+                case ADVISE_BEFORE_PUT_STATIC:
+                    printClassIdAndClId(lineParts[STATIC_CLASSNAME_INDEX], lineParts[STATIC_CLASSNAME_INDEX + 1]);
+                    if (command == Key.ADVISE_BEFORE_PUT_STATIC) {
+                        out.printf(" %s %s", lineParts[STATIC_CLASSNAME_INDEX + 2], lineParts[STATIC_CLASSNAME_INDEX + 3]);
+                    }
+                    break;
+
+                case ADVISE_BEFORE_GET_FIELD:
+                case ADVISE_BEFORE_PUT_FIELD:
+                    printClassIdAndClId(lineParts[ID_CLASSNAME_INDEX], lineParts[ID_CLASSNAME_INDEX + 1]);
+                    if (command == Key.ADVISE_BEFORE_PUT_FIELD) {
+                        out.printf(" %s %s", lineParts[ID_CLASSNAME_INDEX + 2], lineParts[ID_CLASSNAME_INDEX + 3]);
+                    }
+                    break;
+
+                case ADVISE_BEFORE_IF:
+                    printIfOpcode(arg3);
+                    if (arg4.equals("J")) {
+                        out.printf(" %s %s", arg5, arg6);
+                    } else {
+                        printObjId(arg5);
+                        printObjId(arg6);
+                    }
+                    break;
+
+                case ADVISE_BEFORE_IINC:
+                    out.printf(" %s %s inc:%s", arg3, arg4, arg5);
+                    break;
+
+                case ADVISE_BEFORE_OPERATION:
+                    printOperation(arg3);
+                    printValue(arg4, arg5);
+                    printValue(arg4, arg6);
+                    break;
+
+                case ADVISE_BEFORE_INSTANCE_OF:
+                case ADVISE_BEFORE_CHECK_CAST:
+                    printClassId(arg4);
+                    break;
+
+                case ADVISE_BEFORE_CONVERSION:
+                    printOperation(arg3);
+                    printValue(arg4, arg5);
+                    break;
+
+                case REMOVAL:
+                    ProgramError.unexpected("unimplemented");
+                    break;
+
+                case ADVISE_BEFORE_INVOKE_INTERFACE:
+                case ADVISE_AFTER_INVOKE_INTERFACE:
+                case ADVISE_BEFORE_INVOKE_STATIC:
+                case ADVISE_AFTER_INVOKE_STATIC:
+                case ADVISE_BEFORE_INVOKE_VIRTUAL:
+                case ADVISE_AFTER_INVOKE_VIRTUAL:
+                case ADVISE_BEFORE_INVOKE_SPECIAL:
+                case ADVISE_AFTER_INVOKE_SPECIAL:
+                    printClassIdAndMethodId(lineParts[ID_CLASSNAME_INDEX], lineParts[ID_CLASSNAME_INDEX + 1]);
+                    break;
+
+
+                case ADVISE_BEFORE_RETURN:
+                    if (arg3 != null) {
+                        printValue(arg3, arg4);
+                    }
+                    break;
+
+                case ADVISE_BEFORE_STACK_ADJUST:
+                case ADVISE_BEFORE_BYTECODE:
+                    out.printf(" %s", VMABytecodes.values()[Integer.parseInt(arg3)]);
+                    break;
+
+                case ADVISE_AFTER_GC:
+                case ADVISE_BEFORE_THROW:
+                case ADVISE_BEFORE_MONITOR_ENTER:
+                case ADVISE_BEFORE_MONITOR_EXIT:
+                case ADVISE_BEFORE_GC:
+                case ADVISE_BEFORE_THREAD_TERMINATING:
+                case ADVISE_BEFORE_THREAD_STARTING:
+                    // nothing else
+                    break;
+
+                case ADVISE_AFTER_MULTI_NEW_ARRAY:
+            }
+            out.println();
+        }
+
+        private static void printThreadId(String thread) {
+            out.printf("t:%s", thread);
+        }
+
+        private static void printObjId(String objId) {
+            if (objId.equals("0")) {
+                out.printf(" null");
+            } else {
+                out.printf(" oid:%s", objId);
+            }
+        }
+
+        private static void printClassId(String klass) {
+            out.printf(" cid:%s", klass);
+        }
+
+        private static void printClassIdAndClId(String klass, String clId) {
+            printClassId(klass);
+            printClId(clId);
+        }
+
+        private static void printClId(String clId) {
+            out.printf(" clid:%s", clId);
+        }
+
+        private static void printClassIdAndMethodId(String klass, String method) {
+            printClassId(klass);
+            printMethodId(method);
+        }
+
+        private static void printClassIdAndFieldId(String klass, String field) {
+            printClassId(klass);
+            printFieldId(field);
+        }
+
+        private static void printFieldId(String field) {
+            out.printf(" fid:%s", field);
+        }
+
+        private static void printMethodId(String method) {
+            out.printf(" mid:%s", method);
+        }
+
+        private static void printValue(String type, String value) {
+            char typeCode = type.charAt(0);
+            String rType = "???";
+            switch (typeCode) {
+                case 'J':
+                    rType = "long";
+                    break;
+                case 'F':
+                    rType = "float";
+                    break;
+                case 'D':
+                    rType = "double";
+                    break;
+                case 'O':
+                    rType = "oid:";
+                    break;
+            }
+            out.printf(" %s %s", rType, value);
+        }
+
+        private static void printIfOpcode(String opcode) {
+            out.printf(" %s", VMABytecodes.values()[Integer.parseInt(opcode)]);
+        }
+
+        private static void printOperation(String opcode) {
+            out.printf(" %s", VMABytecodes.values()[Integer.parseInt(opcode)]);
+        }
+
+    }
+
 }

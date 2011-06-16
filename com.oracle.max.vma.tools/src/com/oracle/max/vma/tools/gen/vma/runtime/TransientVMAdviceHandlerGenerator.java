@@ -30,13 +30,12 @@ import java.lang.reflect.*;
 
 import com.oracle.max.vm.ext.vma.*;
 import com.sun.max.annotate.*;
-import com.sun.max.vm.t1x.*;
 
 @HOSTED_ONLY
 public class TransientVMAdviceHandlerGenerator {
 
     public static void main(String[] args) {
-        T1XTemplateGenerator.setGeneratingClass(TransientVMAdviceHandlerGenerator.class);
+        createGenerator(TransientVMAdviceHandlerGenerator.class);
         TransientVMAdviceHandlerTypesGenerator.createEnumMaps();
         TransientVMAdviceHandlerTypesGenerator.generateRecordToEnumList();
         for (Method m : VMAdviceHandler.class.getMethods()) {

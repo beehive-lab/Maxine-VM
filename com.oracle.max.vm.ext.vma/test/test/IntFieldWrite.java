@@ -23,9 +23,37 @@
 package test;
 
 public class IntFieldWrite {
-    public int f;
+    public static class A {
+        public int public_f;
+        private int private_f;
+        protected int protected_f;
+        @Override
+        public String toString() {
+            return "public_f: " + public_f + ", private_f: " + private_f + ", protected_f: " + protected_f;
+        }
+    }
+
+    public static class B extends A {
+        private int private_f;
+        @Override
+        public String toString() {
+            return super.toString() + ", private_f: " + private_f;
+        }
+
+    }
+
     public static void main(String[] args) {
-        IntFieldWrite obj = new IntFieldWrite();
-        obj.f = 1;
+        A a = new A();
+        a.public_f = 1;
+        a.private_f = 2;
+        a.protected_f = 3;
+        //System.out.println(a);
+
+        B b = new B();
+        b.public_f = 4;
+        b.private_f = 5;
+        b.protected_f = 6;
+        ((A) b).private_f = 7;
+        //System.out.println(b);
     }
 }

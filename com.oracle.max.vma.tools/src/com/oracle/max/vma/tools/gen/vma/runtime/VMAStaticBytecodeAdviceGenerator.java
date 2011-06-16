@@ -35,7 +35,7 @@ import com.sun.max.annotate.*;
 @HOSTED_ONLY
 public class VMAStaticBytecodeAdviceGenerator {
     public static void main(String[] args) {
-        setGeneratingClass(VMAStaticBytecodeAdvice.class);
+        createGenerator(VMAStaticBytecodeAdvice.class);
         for (Method m : BytecodeAdvice.class.getDeclaredMethods()) {
             generateStatic(m);
         }

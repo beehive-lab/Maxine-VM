@@ -325,46 +325,4 @@ public class GrowableArrayImpl {
         }
     }
 
-    public static void main(String[] args) {
-        GrowableArray g = GrowableArrayImpl.create();
-        iterate(g);
-        g = g.add(new TestTraceElement(0));
-        iterate(g);
-        for (int i = 1; i < 8; i++) {
-            g = g.add(new TestTraceElement(i));
-            iterate(g);
-        }
-        iterate(g);
-        g = g.add(new TestTraceElement(8));
-        iterate(g);
-        g = g.add(new TestTraceElement(9));
-        g = g.add(new TestTraceElement(10));
-        iterate(g);
-    }
-
-    private static void iterate(GrowableArray g) {
-        System.out.print("iterating " + g + ": ");
-        for (TraceElement te : g) {
-            System.out.print(te + " ");
-        }
-        System.out.println();
-    }
-
-    static class TestTraceElement extends TraceElement {
-        private int id;
-        TestTraceElement(int i) {
-            super("a", "t", i);
-            this.id = i;
-        }
-
-        @Override
-        public String toString() {
-            return "e: " + id;
-        }
-
-        @Override
-        public String name() {
-            return "test";
-        }
-    }
 }

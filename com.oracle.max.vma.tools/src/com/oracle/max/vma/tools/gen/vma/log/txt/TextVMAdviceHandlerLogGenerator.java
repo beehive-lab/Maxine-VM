@@ -29,7 +29,6 @@ import java.util.*;
 
 import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.log.*;
-import com.sun.max.vm.t1x.*;
 
 /**
  * Generate the string codes used to identify advice methods in textual log files.
@@ -87,7 +86,7 @@ public class TextVMAdviceHandlerLogGenerator {
         if (duplicates) {
             System.err.println("duplicate codes");
         } else {
-            T1XTemplateGenerator.setGeneratingClass(TextVMAdviceHandlerLogGenerator.class);
+            createGenerator(TextVMAdviceHandlerLogGenerator.class);
             generateAutoComment();
             out.printf("    public enum Key {%n");
             out.printf("        CLASS_DEFINITION(\"C\"),%n");

@@ -116,96 +116,57 @@ public class QueryAnalysis {
         System.exit(1);
     }
 
-    private static void interact(InputStream in, ArrayList<TraceRun> traceRuns) {
-        StreamTokenizer st = new StreamTokenizer(new BufferedReader(new InputStreamReader(in)));
-        Util.resetStreamTokenizer(st);
+    private static void interact(InputStream in, ArrayList<TraceRun> traceRuns) throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(in));
         PrintStream ps = System.out;
         int traceFocus = 0;
-        System.out.print("%% ");
         while (true) {
+            System.out.print("%% ");
+            String line = reader.readLine();
+            if (line == null) {
+                break;
+            }
+            if (line.length() == 0) {
+                continue;
+            }
             try {
-                if (st.nextToken() == StreamTokenizer.TT_EOF) {
-                    break;
-                }
-                switch (st.ttype) {
-                    case StreamTokenizer.TT_EOL:
-                        System.out.print("%% ");
+                String[] lineParts = line.split(" ");
+                switch (lineParts[0].charAt(0)) {
+                    case 'v':
+                        verbose = !verbose;
                         break;
 
-                    case StreamTokenizer.TT_WORD:
-                        switch (st.sval.charAt(0)) {
-                            case 'v':
-                                verbose = !verbose;
-                                break;
+                    case 'p':
+                        prettyTrace = !prettyTrace;
+                        break;
 
-                            case 'p':
-                                prettyTrace = !prettyTrace;
-                                break;
+                    case 'e':
+                        String queryName = lineParts[1];
+                        String[] args = new String[lineParts.length - 2];
+                        System.arraycopy(lineParts, 2, args, 0, args.length);
+                        Query query = QueryBase.ensureLoaded(queryName);
+                        query.execute(traceRuns, traceFocus, ps, args);
+                        break;
 
-                            case 'e':
-                                st.nextToken();
-                                String queryName = st.sval;
-                                ArrayList<String> aargs = new ArrayList<String>();
-                                int i = 0;
-                                while (st.nextToken() != StreamTokenizer.TT_EOL) {
-                                    aargs.add(st.sval);
-                                    i++;
-                                }
-                                st.pushBack();
-                                String[] args = aargs.toArray(new String[i]);
-                                Query query = QueryBase.ensureLoaded(queryName);
-                                query.execute(traceRuns, traceFocus, ps, args);
-                                break;
-
-                            case 'o':
-                                st.nextToken();
-                                if (st.ttype == StreamTokenizer.TT_EOL) {
-                                    if (ps != System.out) {
-                                        ps.close();
-                                        ps = System.out;
-                                    }
-                                    st.pushBack();
-                                } else {
-                                    PrintStream nps = new PrintStream(new FileOutputStream(st.sval));
-                                    ps = nps;
-                                }
-                                break;
-
-                            case 't':
-                                st.nextToken();
-                                if (st.ttype == StreamTokenizer.TT_WORD) {
-                                    int tn = Integer.parseInt(st.sval);
-                                    if ((tn >= 0) && (tn < traceRuns.size())) {
-                                        traceFocus = tn;
-                                    } else {
-                                        System.err.println("tracefile number out of range");
-                                    }
-                                } else {
-                                    System.err.println("tracefile number expected");
-                                }
-                                break;
-
-                            case 'f':
-                                st.nextToken();
-                                if (st.ttype == StreamTokenizer.TT_EOL) {
-                                    System.err.println("tracefile expected");
-                                } else {
-                                    traceRuns.add(ProcessLog.processTrace(st.sval, verbose, prettyTrace, maxLines));
-                                    System.out.println("trace stored at index " + (traceRuns.size() - 1));
-                                }
-                                break;
-
-                            case 'q':
-                            case 'x':
-                                return;
-                            default:
-                                System.err.println("unknown command " + st.sval);
+                    case 'o':
+                        if (lineParts.length == 1) {
+                            if (ps != System.out) {
+                                ps.close();
+                                ps = System.out;
+                            }
+                        } else {
+                            PrintStream nps = new PrintStream(new FileOutputStream(lineParts[1]));
+                            ps = nps;
                         }
                         break;
 
-                    case StreamTokenizer.TT_NUMBER:
-                        System.err.println("command expected");
+                    case 'q':
+                    case 'x':
+                        return;
+                    default:
+                        System.err.println("unknown command " + lineParts[0]);
                 }
+
             } catch (Exception e) {
                 System.err.println(e);
                 e.printStackTrace();
