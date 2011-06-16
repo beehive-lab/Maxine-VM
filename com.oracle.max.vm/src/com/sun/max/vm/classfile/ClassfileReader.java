@@ -1161,11 +1161,11 @@ public final class ClassfileReader {
     /**
      * Loads a class from the configured {@linkplain #classfileStream class file stream}.
      *
-     * @param name the expected name of the class in the stream
+     * @param nameExpected the expected name of the class in the stream (can be {@code null})
      * @param isRemote specifies if the stream is from a remote/untrusted (e.g. network) source. This is mainly used to
      *            determine the default bytecode verification policy for the class.
      */
-    private ClassActor loadClass0(Utf8Constant name, boolean isRemote) {
+    private ClassActor loadClass0(String nameExpected, boolean isRemote) {
         readMagic();
         final char minorVersionChar = (char) classfileStream.readUnsigned2();
         final char majorVersionChar = (char) classfileStream.readUnsigned2();
@@ -1181,7 +1181,9 @@ public final class ClassfileReader {
 
         final int thisClassIndex = classfileStream.readUnsigned2();
         classDescriptor = constantPool.classAt(thisClassIndex, "this class descriptor").typeDescriptor();
-        if (!classDescriptor.equals(getDescriptorForJavaString(name.toString()))) {
+
+        String nameLoaded = classDescriptor.toJavaString();
+        if (nameExpected != null && !nameExpected.equals(nameLoaded)) {
             /*
              * VMSpec 5.3.5:
              *
@@ -1192,6 +1194,7 @@ public final class ClassfileReader {
              */
             throw noClassDefFoundError("'this_class' indicates wrong type");
         }
+        Utf8Constant name = SymbolTable.makeSymbol(nameLoaded);
 
         final int superClassIndex = classfileStream.readUnsigned2();
         final ClassActor superClassActor = resolveSuperClass(superClassIndex, isInterface);
@@ -1321,13 +1324,13 @@ public final class ClassfileReader {
     /**
      * Loads a class from the configured {@linkplain #classfileStream class file stream}.
      *
-     * @param name the expected name of the class in the stream
+     * @param name the expected name of the class in the stream (can be {@code null})
      * @param source
      * @param isRemote specifies if the stream is from a remote/untrusted (e.g. network) source. This is mainly used to
      *            determine the default bytecode verification policy for the class.
      * @return
      */
-    private ClassActor loadClass(final Utf8Constant name, Object source, boolean isRemote) {
+    private ClassActor loadClass(final String name, Object source, boolean isRemote) {
         try {
             String optSource = null;
             boolean verbose = verboseOption.verboseClass || Trace.hasLevel(2);
@@ -1385,7 +1388,7 @@ public final class ClassfileReader {
     /**
      * Converts an array of bytes into a {@code ClassActor}.
      *
-     * @param name the name of the class being defined
+     * @param name the name of the class being defined (can be {@code null})
      * @param classLoader the defining class loader
      * @param bytes the bytes that make up the class data. The bytes in positions {@code offset} through
      *            {@code offset + length - 1} should have the format of a valid class file as defined by the <a
@@ -1412,7 +1415,7 @@ public final class ClassfileReader {
                 System.arraycopy(bytes, offset, classfileBytes, 0, length);
                 offset = 0;
             }
-            final byte[] tBytes = InstrumentationManager.transform(classLoader == BootClassLoader.BOOT_CLASS_LOADER ? null : classLoader, name.replace('.', '/'), null, protectionDomain, classfileBytes, false);
+            final byte[] tBytes = InstrumentationManager.transform(classLoader == BootClassLoader.BOOT_CLASS_LOADER ? null : classLoader, name != null ? name.replace('.', '/') : null, null, protectionDomain, classfileBytes, false);
             if (tBytes != null) {
                 classfileBytes = tBytes;
                 length = tBytes.length;
@@ -1421,7 +1424,7 @@ public final class ClassfileReader {
         saveClassfile(name, classfileBytes);
         final ClassfileStream classfileStream = new ClassfileStream(classfileBytes, offset, length);
         final ClassfileReader classfileReader = new ClassfileReader(classfileStream, classLoader);
-        final ClassActor classActor = classfileReader.loadClass(SymbolTable.makeSymbol(name), source, isRemote);
+        final ClassActor classActor = classfileReader.loadClass(name, source, isRemote);
         classActor.setProtectionDomain(protectionDomain);
         return ClassRegistry.define(classActor);
     }
