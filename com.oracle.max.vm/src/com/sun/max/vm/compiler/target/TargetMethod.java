@@ -61,11 +61,6 @@ import com.sun.max.vm.stack.StackFrameWalker.Cursor;
  */
 public abstract class TargetMethod extends MemoryRegion {
 
-    protected static String PrintTargetMethods;
-    static {
-        VMOptions.addFieldOption("-XX:", "PrintTargetMethods", "Print compiled target methods whose fully qualified name contains <value>.");
-    }
-
     static final boolean COMPILED = true;
 
     /**
