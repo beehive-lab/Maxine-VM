@@ -27,6 +27,7 @@ import static com.sun.max.vm.MaxineVM.*;
 
 import java.util.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
@@ -45,6 +46,7 @@ import com.sun.max.vm.stack.StackFrameWalker.Cursor;
  * Stack walking of stub frames is done with the same code as for optimized compiler frames.
  */
 public class Stub extends TargetMethod {
+
     public Stub(Flavor flavor, String stubName, int frameSize, byte[] code, int callPosition, ClassMethodActor callee, int registerRestoreEpilogueOffset) {
         super(flavor, stubName, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         this.setFrameSize(frameSize);
@@ -60,6 +62,17 @@ public class Stub extends TargetMethod {
         }
         if (!isHosted()) {
             linkDirectCalls();
+        }
+    }
+
+    public Stub(Flavor flavor, String name, CiTargetMethod tm) {
+        super(flavor, name, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+
+        initCodeBuffer(tm, true);
+        initFrameLayout(tm);
+        CiDebugInfo[] debugInfos = initStopPositions(tm);
+        for (CiDebugInfo info : debugInfos) {
+            assert info == null;
         }
     }
 
@@ -92,7 +105,7 @@ public class Stub extends TargetMethod {
 
     @Override
     public void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls, Set<MethodActor> inlinedMethods) {
-        if (directCallees != null) {
+        if (directCallees != null && directCallees.length != 0) {
             assert directCallees.length == 1 && directCallees[0] instanceof ClassMethodActor;
             directCalls.add((MethodActor) directCallees[0]);
         }

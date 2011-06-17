@@ -326,21 +326,8 @@ public class MaxRiRuntime implements RiRuntime {
         return null;
     }
 
-    public Object registerGlobalStub(CiTargetMethod tm, String name) {
-        byte[] code = Arrays.copyOf(tm.targetCode(), tm.targetCodeSize());
-        assert tm.indirectCalls.isEmpty();
-        assert tm.safepoints.isEmpty();
-        int callPosition = -1;
-        ClassMethodActor callee = null;
-        if (tm.directCalls.size() == 1) {
-            Call call = tm.directCalls.get(0);
-            callPosition = call.pcOffset;
-            callee = (ClassMethodActor) call.method;
-            assert call.debugInfo == null;
-        } else {
-            assert tm.directCalls.isEmpty();
-        }
-        return new Stub(GlobalStub, name, tm.frameSize(), code, callPosition, callee, tm.registerRestoreEpilogueOffset());
+    public Object registerGlobalStub(CiTargetMethod ciTargetMethod, String name) {
+        return new Stub(GlobalStub, name, ciTargetMethod);
     }
 
     public RiType getRiType(Class<?> javaClass) {
