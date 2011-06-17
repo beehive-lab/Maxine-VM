@@ -85,11 +85,17 @@ import com.sun.max.vm.thread.*;
 public class Deoptimization extends VmOperation implements TargetMethod.Closure {
 
     /**
+     * Option for disabling use of deoptimization.
+     */
+    public static boolean DisableDeopt;
+
+    /**
      * A VM option for triggering deoptimization at fixed intervals.
      */
     public static int DeoptimizeALot;
     public static boolean TraceDeopt;
     static {
+        VMOptions.addFieldOption("-XX:", "DisableDeopt", "Disable deoptimization.");
         VMOptions.addFieldOption("-XX:", "TraceDeopt", "Trace deoptimization.");
         VMOptions.addFieldOption("-XX:", "DeoptimizeALot", Deoptimization.class,
             "Invalidate and deoptimize a selection of executing optimized methods every <n> milliseconds. " +
