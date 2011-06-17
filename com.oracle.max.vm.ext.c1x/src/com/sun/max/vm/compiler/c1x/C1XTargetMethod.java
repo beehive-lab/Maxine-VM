@@ -98,28 +98,10 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
 
     public C1XTargetMethod(ClassMethodActor classMethodActor, CiTargetMethod ciTargetMethod, boolean install) {
         super(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        assert classMethodActor != null;
         List<CodeAnnotation> annotations = ciTargetMethod.annotations();
         this.annotations = annotations == null ? null : annotations.toArray(new CodeAnnotation[annotations.size()]);
         init(ciTargetMethod, install);
-
-        if (PrintTargetMethods != null) {
-            if (classMethodActor.format("%H.%n").contains(PrintTargetMethods)) {
-                Log.println(traceToString());
-            }
-        }
-    }
-
-    public C1XTargetMethod(Flavor flavor, String stubName, CiTargetMethod ciTargetMethod) {
-        super(flavor, stubName, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        List<CodeAnnotation> annotations = ciTargetMethod.annotations();
-        this.annotations = annotations == null ? null : annotations.toArray(new CodeAnnotation[annotations.size()]);
-        init(ciTargetMethod, true);
-
-        if (PrintTargetMethods != null) {
-            if (stubName.contains(PrintTargetMethods)) {
-                Log.println(traceToString());
-            }
-        }
     }
 
     private void init(CiTargetMethod ciTargetMethod, boolean install) {

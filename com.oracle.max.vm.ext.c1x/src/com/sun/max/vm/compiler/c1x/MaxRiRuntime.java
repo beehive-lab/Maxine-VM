@@ -49,6 +49,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.value.*;
 
@@ -325,8 +326,21 @@ public class MaxRiRuntime implements RiRuntime {
         return null;
     }
 
-    public Object registerGlobalStub(CiTargetMethod ciTargetMethod, String name) {
-        return new C1XTargetMethod(GlobalStub, name, ciTargetMethod);
+    public Object registerGlobalStub(CiTargetMethod tm, String name) {
+        byte[] code = Arrays.copyOf(tm.targetCode(), tm.targetCodeSize());
+        assert tm.indirectCalls.isEmpty();
+        assert tm.safepoints.isEmpty();
+        int callPosition = -1;
+        ClassMethodActor callee = null;
+        if (tm.directCalls.size() == 1) {
+            Call call = tm.directCalls.get(0);
+            callPosition = call.pcOffset;
+            callee = (ClassMethodActor) call.method;
+            assert call.debugInfo == null;
+        } else {
+            assert tm.directCalls.isEmpty();
+        }
+        return new Stub(GlobalStub, name, tm.frameSize(), code, callPosition, callee, tm.registerRestoreEpilogueOffset());
     }
 
     public RiType getRiType(Class<?> javaClass) {
