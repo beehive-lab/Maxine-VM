@@ -118,14 +118,26 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
     }
 
     private Pointer allocateSingleRegionLargeObject(HeapRegionInfo rinfo, Pointer allocated, Size requestedSize, Size totalChunkSize) {
+        final boolean traceAllocateLarge = MaxineVM.isDebug() && true;
         final int regionID = rinfo.toRegionID();
         allocationRegions.remove(regionID);
         Pointer leftover = allocated.plus(requestedSize);
         Size spaceLeft = totalChunkSize.minus(requestedSize);
+        if (traceAllocateLarge) {
+            Log.print("allocateLarge region #");
+            Log.println(regionID);
+        }
         if (spaceLeft.lessThan(minReclaimableSpace)) {
             HeapSchemeAdaptor.fillWithDeadObject(leftover, leftover.plus(spaceLeft));
             rinfo.setFull();
         } else {
+            if (traceAllocateLarge) {
+                Log.print("allocateLarge putback region #");
+                Log.print(regionID);
+                Log.print(" in TLAB allocation list with ");
+                Log.print(spaceLeft.toInt());
+                Log.println(" bytes");
+            }
             HeapFreeChunk.format(leftover, spaceLeft);
             rinfo.setFreeChunks(leftover,  spaceLeft, 1);
             tlabAllocationRegions.append(regionID);
@@ -143,6 +155,13 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         final Size tailSize = roundedUpSize.minus(size);
         final int extraRegion = tailSize.greaterThan(0) && tailSize.lessThan(HeapSchemeAdaptor.MIN_OBJECT_SIZE)  ? 1 : 0;
         int numContiguousRegionNeeded = roundedUpSize.unsignedShiftedRight(log2RegionSizeInBytes).toInt() + extraRegion;
+
+        final boolean traceAllocateLarge = MaxineVM.isDebug() && true;
+        if (traceAllocateLarge) {
+            Log.print("requesting #");
+            Log.print(numContiguousRegionNeeded);
+            Log.println(" contiguous regions");
+        }
         synchronized (heapLock()) {
             do {
                 regionInfoIterable.initialize(allocationRegions);
@@ -185,6 +204,13 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                                     // Got the number of requested contiguous regions.
                                     // Remove them all from the list (except the tail if it leaves enough space for overflow allocation)
                                     // and turn them into large object regions.
+                                    if (traceAllocateLarge) {
+                                        Log.print("allocate contiguous regions [");
+                                        Log.print(firstRegion);
+                                        Log.print(", ");
+                                        Log.print(lastRegion);
+                                        Log.println("]");
+                                    }
                                     allocationRegions.remove(firstRegion);
                                     HeapRegionInfo firstRegionInfo = HeapRegionInfo.fromRegionID(firstRegion);
                                     firstRegionInfo.setLargeHead();
@@ -440,11 +466,14 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
     private Address overflowRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
         final int minFreeWords = minOverflowRefillSize.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
         int gcCount = 0;
-        final boolean traceOverflowRefill = true;
+        final boolean traceOverflowRefill =  MaxineVM.isDebug() && true;
         synchronized (heapLock()) {
             if (currentOverflowAllocatingRegion != INVALID_REGION_ID) {
                 final HeapRegionInfo regionInfo = fromRegionID(currentOverflowAllocatingRegion);
-                FatalError.check(!regionInfo.hasFreeChunks(), "must not have any free chunks");
+                if (regionInfo.hasFreeChunks()) {
+                    regionInfo.dump(true);
+                    FatalError.unexpected("must not have any free chunks");
+                }
                 if (spaceLeft.greaterEqual(minReclaimableSpace)) {
                     if (traceOverflowRefill) {
                         Log.print("overflow allocator putback region #");

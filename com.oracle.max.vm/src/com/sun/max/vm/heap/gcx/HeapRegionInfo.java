@@ -27,8 +27,10 @@ import static com.sun.max.vm.heap.gcx.HeapRegionInfo.Flag.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.reference.*;
 /**
  * Descriptor of heap region.
  * The information recorded is carefully crafted so that a zero-filled HeapRegionInfo
@@ -171,7 +173,8 @@ public class HeapRegionInfo {
      */
     short freeSpace;
     /**
-     * Amount of live data. Zero if the region is empty.
+     * Amount of live data, in words. Zero if the region is empty.
+     * Can be used  with {@link #freeSpace} to determine dark matter.
      */
     short liveData;
 
@@ -195,8 +198,56 @@ public class HeapRegionInfo {
     public final int freeBytes() {
         return freeSpace << Word.widthValue().log2numberOfBytes;
     }
+
+    public final int liveBytes() {
+        return liveData << Word.widthValue().log2numberOfBytes;
+    }
+
     public final int numFreeChunks() {
         return numFreeChunks;
+    }
+
+
+    public final void dumpSetFlags() {
+        for (Flag f : Flag.values()) {
+            if (f.isSet(flags)) {
+                Log.print(f.toString());
+                Log.print(" ");
+            }
+        }
+    }
+
+    public void dump(boolean enumerateFreeChunks) {
+        Log.print("region #");
+        Log.print(toRegionID());
+        Log.print(" [");
+        Log.print(regionStart());
+        Log.print(",");
+        Log.print(regionStart().plus(regionSizeInBytes));
+        Log.print("[");
+        dumpSetFlags();
+        Log.print(" free: ");
+        Log.print(freeBytes());
+        Log.print(" live: ");
+        Log.print(liveBytes());
+        Log.print(" owner: ");
+        Log.print(Reference.fromJava(owner).toOrigin());
+        Log.print(" #free chunks: ");
+        Log.print(numFreeChunks);
+        if (numFreeChunks > 0) {
+            if (enumerateFreeChunks) {
+                Log.print("free chunks: ");
+                HeapFreeChunk c = HeapFreeChunk.toHeapFreeChunk(firstFreeBytes());
+                do {
+                    c.dump();
+                    c = c.next;
+                } while(c != null);
+            } else {
+                Log.print("first free chunk");
+                Log.print(firstFreeBytes());
+            }
+        }
+        Log.println();
     }
 
     /**

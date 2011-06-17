@@ -116,6 +116,12 @@ public class HeapFreeChunk {
         return false;
     }
 
+    void dump() {
+        Log.print(fromHeapFreeChunk(this));
+        Log.print(", ");
+        Log.print(size);
+    }
+
     static HeapFreeChunk format(Address deadSpace, Size numBytes, Address nextChunk, DynamicHub hub) {
         final Pointer cell = deadSpace.asPointer();
         if (MaxineVM.isDebug()) {

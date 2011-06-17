@@ -55,7 +55,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
 
     // TODO: clean this up. Used just for testing with and without inlined XIR tlab allocation.
-    public static boolean GenInlinedTLABAlloc;
+    public static boolean GenInlinedTLABAlloc = true;
 
     private static boolean TraceTLAB;
 
