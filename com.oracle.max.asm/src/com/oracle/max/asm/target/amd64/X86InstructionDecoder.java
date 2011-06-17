@@ -20,12 +20,9 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.compiler.c1x;
+package com.oracle.max.asm.target.amd64;
 
-import com.sun.c1x.util.*;
 
-/**
- */
 public final class X86InstructionDecoder {
 
     private boolean targetIs64Bit;
@@ -192,7 +189,7 @@ public final class X86InstructionDecoder {
                                 againAfterPrefix = true;
                                 break;
                             default:
-                                Util.shouldNotReachHere();
+                                throw new InternalError("should not reach here");
                         }
                     }
                     break;
@@ -304,7 +301,7 @@ public final class X86InstructionDecoder {
                             currentDisplacementPosition = ip;
                             return;
                         default:
-                            Util.shouldNotReachHere();
+                            throw new InternalError("should not reach here");
                     }
                     break;
 
@@ -327,7 +324,7 @@ public final class X86InstructionDecoder {
                             hasDisp32 = true;
                             break;
                         default:
-                            Util.shouldNotReachHere();
+                            throw new InternalError("should not reach here");
                     }
                     break;
 
@@ -429,8 +426,7 @@ public final class X86InstructionDecoder {
                     break;
 
                 default:
-                    Util.shouldNotReachHere();
-
+                    throw new InternalError("should not reach here");
             }
         }
 

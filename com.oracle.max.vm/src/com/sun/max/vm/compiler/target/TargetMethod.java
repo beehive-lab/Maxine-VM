@@ -29,8 +29,10 @@ import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
 import java.io.*;
 import java.util.*;
 
+import com.oracle.max.asm.target.amd64.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiTargetMethod.DataPatch;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
@@ -509,6 +511,212 @@ public abstract class TargetMethod extends MemoryRegion {
     protected final void setFrameSize(int frameSize) {
         assert frameSize != -1 : "invalid frame size!";
         this.frameSize = frameSize;
+    }
+
+    protected void initCodeBuffer(CiTargetMethod ciTargetMethod, boolean install) {
+        // Create the arrays for the scalar and the object reference literals
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        List<Object> objectReferences = new ArrayList<Object>();
+        int[] relativeDataPos = serializeLiterals(ciTargetMethod, output, objectReferences);
+        byte[] scalarLiterals = output.toByteArray();
+        Object[] referenceLiterals = objectReferences.toArray();
+
+        // Allocate and set the code and data buffer
+        final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(scalarLiterals.length, referenceLiterals.length, ciTargetMethod.targetCodeSize());
+        if (install) {
+            Code.allocate(targetBundleLayout, this);
+        } else {
+            Code.allocateInHeap(targetBundleLayout, this);
+        }
+        this.setData(scalarLiterals, referenceLiterals, ciTargetMethod.targetCode());
+
+        // Patch relative instructions in the code buffer
+        patchInstructions(targetBundleLayout, ciTargetMethod, relativeDataPos);
+    }
+
+    private int[] serializeLiterals(CiTargetMethod ciTargetMethod, ByteArrayOutputStream output, List<Object> objectReferences) {
+        Endianness endianness = platform().endianness();
+        int[] relativeDataPos = new int[ciTargetMethod.dataReferences.size()];
+        int z = 0;
+        int currentPos = 0;
+        for (DataPatch site : ciTargetMethod.dataReferences) {
+            final CiConstant data = site.constant;
+            relativeDataPos[z] = currentPos;
+
+            try {
+                switch (data.kind) {
+                    case Double:
+                        endianness.writeLong(output, Double.doubleToLongBits(data.asDouble()));
+                        currentPos += Long.SIZE / Byte.SIZE;
+                        break;
+
+                    case Float:
+                        endianness.writeInt(output, Float.floatToIntBits(data.asFloat()));
+                        currentPos += Integer.SIZE / Byte.SIZE;
+                        break;
+
+                    case Int:
+                        endianness.writeInt(output, data.asInt());
+                        currentPos += Integer.SIZE / Byte.SIZE;
+                        break;
+
+                    case Long:
+                        endianness.writeLong(output, data.asLong());
+                        currentPos += Long.SIZE / Byte.SIZE;
+                        break;
+
+                    case Object:
+                        objectReferences.add(data.asObject());
+                        break;
+
+                    default:
+                        throw new IllegalArgumentException("Unknown constant type!");
+                }
+
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            // Align on double word boundary
+            while (currentPos % (Platform.platform().wordWidth().numberOfBytes * 2) != 0) {
+                output.write(0);
+                currentPos++;
+            }
+
+            z++;
+        }
+
+        return relativeDataPos;
+    }
+
+    private void patchInstructions(TargetBundleLayout targetBundleLayout, CiTargetMethod ciTargetMethod, int[] relativeDataPositions) {
+        Offset codeStart = targetBundleLayout.cellOffset(TargetBundleLayout.ArrayField.code);
+
+        Offset dataDiff = Offset.zero();
+        if (this.scalarLiterals != null) {
+            Offset dataStart = targetBundleLayout.cellOffset(TargetBundleLayout.ArrayField.scalarLiterals);
+            dataDiff = dataStart.minus(codeStart).asOffset();
+        }
+
+        Offset referenceDiff = Offset.zero();
+        if (this.referenceLiterals() != null) {
+            Offset referenceStart = targetBundleLayout.cellOffset(TargetBundleLayout.ArrayField.referenceLiterals);
+            referenceDiff = referenceStart.minus(codeStart).asOffset();
+        }
+
+        int objectReferenceIndex = 0;
+        int refSize = Platform.platform().wordWidth().numberOfBytes;
+
+        int z = 0;
+        for (DataPatch site : ciTargetMethod.dataReferences) {
+
+            switch (site.constant.kind) {
+
+                case Double: // fall through
+                case Float: // fall through
+                case Int: // fall through
+                case Long:
+                    patchRelativeInstruction(site.pcOffset, dataDiff.plus(relativeDataPositions[z] - site.pcOffset).toInt());
+                    break;
+
+                case Object:
+                    patchRelativeInstruction(site.pcOffset, referenceDiff.plus(objectReferenceIndex * refSize - site.pcOffset).toInt());
+                    objectReferenceIndex++;
+                    break;
+
+                default:
+                    throw new IllegalArgumentException("Unknown constant type!");
+            }
+
+            z++;
+        }
+    }
+
+    private void patchRelativeInstruction(int codePos, int displacement) {
+        if (platform().isa == ISA.AMD64) {
+            X86InstructionDecoder.patchRelativeInstruction(code(), codePos, displacement);
+        } else {
+            throw FatalError.unimplemented();
+        }
+    }
+
+    protected void initFrameLayout(CiTargetMethod ciTargetMethod) {
+        this.setFrameSize(ciTargetMethod.frameSize());
+        this.setRegisterRestoreEpilogueOffset(ciTargetMethod.registerRestoreEpilogueOffset());
+    }
+
+    protected ClassMethodActor toMethodActor(CiRuntimeCall rtCall) {
+        throw new UnsupportedOperationException();
+    }
+
+    protected CiDebugInfo[] initStopPositions(CiTargetMethod ciTargetMethod) {
+        Adapter adapter = null;
+        int adapterCount = 0;
+        AdapterGenerator generator = AdapterGenerator.forCallee(this);
+        if (generator != null) {
+            adapter = generator.make(classMethodActor);
+            if (adapter != null) {
+                adapterCount = 1;
+            }
+        }
+
+        int numberOfIndirectCalls = ciTargetMethod.indirectCalls.size();
+        int numberOfSafepoints = ciTargetMethod.safepoints.size();
+        int totalStopPositions = ciTargetMethod.directCalls.size() + numberOfIndirectCalls + numberOfSafepoints + adapterCount;
+
+
+        int index = 0;
+        int[] stopPositions = new int[totalStopPositions];
+        Object[] directCallees = new Object[ciTargetMethod.directCalls.size() + adapterCount];
+
+        CiDebugInfo[] debugInfos = new CiDebugInfo[totalStopPositions];
+
+        if (adapter != null) {
+            directCallees[index] = adapter;
+            stopPositions[index] = adapter.callOffsetInPrologue();
+            index++;
+        }
+
+        for (CiTargetMethod.Call site : ciTargetMethod.directCalls) {
+            stopPositions[index] = site.pcOffset;
+            debugInfos[index] = site.debugInfo;
+
+            RiMethod method = site.method;
+            if (method != null) {
+                final ClassMethodActor cma = (ClassMethodActor) method;
+                assert cma != null : "unresolved direct call!";
+                directCallees[index] = cma;
+            } else if (site.runtimeCall != null) {
+                final ClassMethodActor cma = toMethodActor(site.runtimeCall);
+                assert cma != null : "unresolved runtime call!";
+                directCallees[index] = cma;
+            } else if (site.globalStubID != null) {
+                TargetMethod globalStubMethod = (TargetMethod) site.globalStubID;
+                directCallees[index] = globalStubMethod;
+            } else {
+                // template call
+                directCallees[index] = null;
+            }
+            index++;
+        }
+
+        for (CiTargetMethod.Call site : ciTargetMethod.indirectCalls) {
+            stopPositions[index] = site.pcOffset;
+            debugInfos[index] = site.debugInfo;
+            if (site.symbol != null) {
+                stopPositions[index] |= StopPositions.NATIVE_FUNCTION_CALL;
+            }
+            index++;
+        }
+
+        for (CiTargetMethod.Safepoint site : ciTargetMethod.safepoints) {
+            stopPositions[index] = site.pcOffset;
+            debugInfos[index] = site.debugInfo;
+            index++;
+        }
+
+        setStopPositions(stopPositions, directCallees, numberOfIndirectCalls, numberOfSafepoints);
+        return debugInfos;
     }
 
     /**
