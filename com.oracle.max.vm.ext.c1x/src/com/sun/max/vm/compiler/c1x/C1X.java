@@ -43,6 +43,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.c1x.MaxXirGenerator.RuntimeCalls;
+import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.deps.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
@@ -193,7 +194,7 @@ public class C1X implements RuntimeCompiler {
         }
         if (phase == Phase.STARTING) {
             // Now it is safe to use speculative opts
-            C1XOptions.UseAssumptions = deoptimizationSupported;
+            C1XOptions.UseAssumptions = deoptimizationSupported && !Deoptimization.DisableDeopt;
         } else if (phase == Phase.TERMINATING) {
             if (C1XOptions.PrintMetrics) {
                 C1XMetrics.print();
