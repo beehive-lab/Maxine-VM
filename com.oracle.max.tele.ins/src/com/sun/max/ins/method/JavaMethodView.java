@@ -149,7 +149,7 @@ public class JavaMethodView extends MethodView<JavaMethodView> {
         this.methodViewPreferences = MethodViewPreferences.globalPreferences(inspection);
         this.teleClassMethodActor = teleClassMethodActor;
         this.compiledCode = compiledCode;
-        this.vmCodeGeneration = compiledCode.vmCodeGeneration();
+        this.vmCodeGeneration = compiledCode != null ? compiledCode.vmCodeGeneration() : 0;
 
         // Determine which code viewers it is possible to present for this method.
         // This doesn't change.
@@ -284,7 +284,7 @@ public class JavaMethodView extends MethodView<JavaMethodView> {
 
     @Override
     protected void refreshState(boolean force) {
-        if (compiledCode.vmCodeGeneration() > vmCodeGeneration) {
+        if (compiledCode != null && compiledCode.vmCodeGeneration() > vmCodeGeneration) {
             reconstructView();
             vmCodeGeneration = compiledCode.vmCodeGeneration();
             Trace.line(TRACE_VALUE, tracePrefix() + "Updated after code change in method " + getToolTip());
