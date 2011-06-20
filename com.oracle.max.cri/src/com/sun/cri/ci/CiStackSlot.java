@@ -129,6 +129,26 @@ public final class CiStackSlot extends CiValue {
     }
 
     /**
+     * Gets this stack slot used to pass an argument from the perspective of a caller.
+     */
+    public CiStackSlot asOutArg() {
+        if (inCallerFrame()) {
+            return get(kind, index(), false);
+        }
+        return this;
+    }
+
+    /**
+     * Gets this stack slot used to pass an argument from the perspective of a callee.
+     */
+    public CiStackSlot asInArg() {
+        if (!inCallerFrame()) {
+            return get(kind, index(), true);
+        }
+        return this;
+    }
+
+    /**
      * Default size of the cache to generate per kind.
      */
     private static final int CACHE_PER_KIND_SIZE = 100;

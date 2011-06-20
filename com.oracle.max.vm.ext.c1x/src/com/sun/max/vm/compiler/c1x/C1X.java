@@ -176,7 +176,7 @@ public class C1X implements RuntimeCompiler {
 
                 optionsRegistered = true;
             }
-            compiler = new C1XCompiler(runtime, target, xirGenerator, vm().registerConfigs.globalStub);
+            compiler = new C1XCompiler(runtime, target, xirGenerator, vm().registerConfigs.compilerStub);
 
             // search for the runtime call and register critical methods
             for (Method m : RuntimeCalls.class.getDeclaredMethods()) {

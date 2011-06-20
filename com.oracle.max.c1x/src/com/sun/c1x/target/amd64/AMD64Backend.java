@@ -22,15 +22,16 @@
  */
 package com.sun.c1x.target.amd64;
 
-import static com.sun.c1x.C1XCompilation.*;
-
 import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.amd64.*;
 import com.sun.c1x.*;
+import com.sun.c1x.asm.*;
 import com.sun.c1x.gen.*;
-import com.sun.c1x.globalstub.*;
 import com.sun.c1x.lir.*;
+import com.sun.c1x.stub.*;
+import com.sun.c1x.stub.CompilerStub.Id;
 import com.sun.c1x.target.*;
+import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
 
@@ -58,13 +59,13 @@ public class AMD64Backend extends Backend {
      * @return an appropriate LIR assembler instance
      */
     @Override
-    public LIRAssembler newLIRAssembler(C1XCompilation compilation) {
-        return new AMD64LIRAssembler(compilation);
+    public LIRAssembler newLIRAssembler(C1XCompilation compilation, TargetMethodAssembler tasm) {
+        return new AMD64LIRAssembler(compilation, tasm);
     }
 
     @Override
-    public FrameMap newFrameMap(RiMethod method, int numberOfLocks) {
-        return new FrameMap(compilation(), method, numberOfLocks);
+    public FrameMap newFrameMap(C1XCompilation compilation, RiMethod method, int numberOfLocks) {
+        return new FrameMap(compilation, method, numberOfLocks);
     }
     @Override
     public AbstractAssembler newAssembler(RiRegisterConfig registerConfig) {
@@ -77,7 +78,42 @@ public class AMD64Backend extends Backend {
     }
 
     @Override
-    public GlobalStubEmitter newGlobalStubEmitter() {
-        return new AMD64GlobalStubEmitter(compiler);
+    public CompilerStub emit(Id stub) {
+        final C1XCompilation comp = new C1XCompilation(compiler, null, -1, null);
+        try {
+            return new AMD64CompilerStubEmitter(comp, stub.arguments, stub.resultKind).emit(stub);
+        } finally {
+            comp.close();
+        }
+    }
+
+    @Override
+    public CompilerStub emit(CiRuntimeCall rtCall) {
+        final C1XCompilation comp = new C1XCompilation(compiler, null, -1, null);
+        try {
+            return new AMD64CompilerStubEmitter(comp, rtCall.arguments, rtCall.resultKind).emit(rtCall);
+        } finally {
+            comp.close();
+        }
+    }
+
+    private static CiKind[] getArgumentKinds(XirTemplate template) {
+        CiXirAssembler.XirParameter[] params = template.parameters;
+        CiKind[] result = new CiKind[params.length];
+        for (int i = 0; i < params.length; i++) {
+            result[i] = params[i].kind;
+        }
+        return result;
+    }
+
+
+    @Override
+    public CompilerStub emit(XirTemplate t) {
+        final C1XCompilation comp = new C1XCompilation(compiler, null, -1, null);
+        try {
+            return new AMD64CompilerStubEmitter(comp, getArgumentKinds(t), t.resultOperand.kind).emit(t);
+        } finally {
+            comp.close();
+        }
     }
 }

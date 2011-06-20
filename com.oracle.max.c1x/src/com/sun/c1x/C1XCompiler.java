@@ -25,8 +25,8 @@ package com.sun.c1x;
 import java.util.*;
 
 import com.sun.c1x.debug.*;
-import com.sun.c1x.globalstub.*;
 import com.sun.c1x.observer.*;
+import com.sun.c1x.stub.*;
 import com.sun.c1x.target.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -37,7 +37,7 @@ import com.sun.cri.xir.*;
  */
 public class C1XCompiler extends ObservableCompiler {
 
-    public final Map<Object, GlobalStub> stubs = new HashMap<Object, GlobalStub>();
+    public final Map<Object, CompilerStub> stubs = new HashMap<Object, CompilerStub>();
 
     /**
      * The target that this compiler has been configured for.
@@ -66,13 +66,13 @@ public class C1XCompiler extends ObservableCompiler {
      */
     public final Backend backend;
 
-    public final RiRegisterConfig globalStubRegisterConfig;
+    public final RiRegisterConfig compilerStubRegisterConfig;
 
-    public C1XCompiler(RiRuntime runtime, CiTarget target, RiXirGenerator xirGen, RiRegisterConfig globalStubRegisterConfig) {
+    public C1XCompiler(RiRuntime runtime, CiTarget target, RiXirGenerator xirGen, RiRegisterConfig compilerStubRegisterConfig) {
         this.runtime = runtime;
         this.target = target;
         this.xir = xirGen;
-        this.globalStubRegisterConfig = globalStubRegisterConfig;
+        this.compilerStubRegisterConfig = compilerStubRegisterConfig;
         this.backend = Backend.create(target.arch, this);
         init();
     }
@@ -113,23 +113,22 @@ public class C1XCompiler extends ObservableCompiler {
 
     private void init() {
         final List<XirTemplate> xirTemplateStubs = xir.buildTemplates(backend.newXirAssembler());
-        final GlobalStubEmitter emitter = backend.newGlobalStubEmitter();
 
         if (xirTemplateStubs != null) {
             for (XirTemplate template : xirTemplateStubs) {
                 TTY.Filter filter = new TTY.Filter(C1XOptions.PrintFilter, template.name);
                 try {
-                    stubs.put(template, emitter.emit(template, runtime));
+                    stubs.put(template, backend.emit(template));
                 } finally {
                     filter.remove();
                 }
             }
         }
 
-        for (GlobalStub.Id id : GlobalStub.Id.values()) {
+        for (CompilerStub.Id id : CompilerStub.Id.values()) {
             TTY.Filter suppressor = new TTY.Filter(C1XOptions.PrintFilter, id);
             try {
-                stubs.put(id, emitter.emit(id, runtime));
+                stubs.put(id, backend.emit(id));
             } finally {
                 suppressor.remove();
             }
@@ -140,26 +139,26 @@ public class C1XCompiler extends ObservableCompiler {
         }
     }
 
-    public GlobalStub lookupGlobalStub(GlobalStub.Id id) {
-        GlobalStub globalStub = stubs.get(id);
-        assert globalStub != null : "no stub for global stub id: " + id;
-        return globalStub;
+    public CompilerStub lookupStub(CompilerStub.Id id) {
+        CompilerStub stub = stubs.get(id);
+        assert stub != null : "no stub for compiler stub id: " + id;
+        return stub;
     }
 
-    public GlobalStub lookupGlobalStub(XirTemplate template) {
-        GlobalStub globalStub = stubs.get(template);
-        assert globalStub != null : "no stub for XirTemplate: " + template;
-        return globalStub;
+    public CompilerStub lookupStub(XirTemplate template) {
+        CompilerStub stub = stubs.get(template);
+        assert stub != null : "no stub for XirTemplate: " + template;
+        return stub;
     }
 
-    public GlobalStub lookupGlobalStub(CiRuntimeCall runtimeCall) {
-        GlobalStub globalStub = stubs.get(runtimeCall);
-        if (globalStub == null) {
-            globalStub = backend.newGlobalStubEmitter().emit(runtimeCall, runtime);
-            stubs.put(runtimeCall, globalStub);
+    public CompilerStub lookupStub(CiRuntimeCall runtimeCall) {
+        CompilerStub stub = stubs.get(runtimeCall);
+        if (stub == null) {
+            stub = backend.emit(runtimeCall);
+            stubs.put(runtimeCall, stub);
         }
 
-        assert globalStub != null : "could not find global stub for runtime call: " + runtimeCall;
-        return globalStub;
+        assert stub != null : "could not find compiler stub for runtime call: " + runtimeCall;
+        return stub;
     }
 }

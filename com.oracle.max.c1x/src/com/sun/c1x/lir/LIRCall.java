@@ -31,7 +31,7 @@ import com.sun.cri.xir.CiXirAssembler.XirMark;
 
 /**
  * This class represents a call instruction; either to a {@linkplain CiRuntimeCall runtime method},
- * a {@linkplain RiMethod Java method}, a native function or a global stub.
+ * a {@linkplain RiMethod Java method}, a native function or a compiler stub.
  */
 public class LIRCall extends LIRInstruction {
 

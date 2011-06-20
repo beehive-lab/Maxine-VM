@@ -25,12 +25,11 @@ package com.sun.max.vm.compiler.c1x;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.compiler.deopt.Deoptimization.*;
-import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
+import static com.sun.max.vm.compiler.target.Stub.Type.*;
 import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
 
 import java.util.*;
 
-import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiCallingConvention.Type;
 import com.sun.cri.ci.CiRegister.RegisterFlag;
@@ -45,7 +44,6 @@ import com.sun.max.asm.*;
 import com.sun.max.asm.InlineDataDescriptor.JumpTable32;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
-import com.sun.max.lang.Bytes;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -401,61 +399,27 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
 
     /**
      * Prepares the reference map for this frame.
+     *
      * @param current the current frame
      * @param callee the callee frame
      * @param preparer the reference map preparer
      */
     @Override
     public void prepareReferenceMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer) {
-        StackFrameWalker.CalleeKind calleeKind = callee.calleeKind();
-        Pointer registerState = Pointer.zero();
-        CiCalleeSaveArea csa = null;
-        switch (calleeKind) {
-            case NONE:
-                // 'current' is a C1X method trapped at a safepoint/implicit exception.
-                // The register save area in the trap stub frame will be processed
-                // when completing the stack reference map
-                assert preparer.completingReferenceMapLimit().isZero();
-                break;
-            case JAVA:
-                // Normal call - no registers need scanning
-                break;
-            case TRAMPOLINE:
+        CiCalleeSaveLayout csl = callee.csl();
+        Pointer csa = callee.csa();
+        TargetMethod calleeTM = callee.targetMethod();
+        if (calleeTM != null) {
+            Stub.Type st = calleeTM.stubType();
+            if (st == InterfaceTrampoline || st == VirtualTrampoline || st == InterfaceTrampoline) {
                 prepareTrampolineRefMap(current, callee, preparer);
-                break;
-            case TRAP_STUB:  // fall through
-                // The register state *is* the trap stub frame
-                registerState = callee.sp();
-                if (Trap.Number.isStackOverflow(registerState)) {
-                    // a method can never catch stack overflow for itself so there
-                    // is no need to prepare the map for the registers of the trapped method
-                    return;
-                }
-
-                assert callee.targetMethod().getRegisterConfig() == vm().registerConfigs.trapStub;
-                csa = callee.targetMethod().getRegisterConfig().getCalleeSaveArea();
-                break;
-            case CALLEE_SAVED:
-                // can simply use the register ref map at the call site
-                TargetMethod calleeMethod = callee.targetMethod();
-                csa = calleeMethod.getRegisterConfig().getCalleeSaveArea();
-                if (calleeMethod.is(GlobalStub)) {
-                    // The register state *is* the frame
-                    registerState = callee.sp();
-                } else {
-                    assert calleeMethod.is(Standard);
-
-                    // (dns) I want to step through this in the Inspector to ensure it's correct
-                    Bytecodes.breakpointTrap();
-
-                    // Register state/callee save area is at the top of the frame.
-                    Pointer calleeSaveAreaEnd = callee.sp().plus(calleeMethod.frameSize());
-                    registerState = calleeSaveAreaEnd.minus(csa.size);
-                }
-                break;
-            case NATIVE:
-                break;
+            } else if (calleeTM.is(TrapStub) && Trap.Number.isStackOverflow(csa)) {
+                // a method can never catch stack overflow for itself so there
+                // is no need to scan the references in the trapped method
+                return;
+            }
         }
+
         int stopIndex = findClosestStopIndex(current.ip());
         if (stopIndex < 0) {
             // this is very bad.
@@ -463,10 +427,10 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
         }
 
         int frameRefMapSize = frameRefMapSize();
-        if (!registerState.isZero()) {
+        if (!csa.isZero()) {
             // the callee contains register state from this frame;
             // use register reference maps in this method to fill in the map for the callee
-            Pointer slotPointer = registerState;
+            Pointer slotPointer = csa;
             int byteIndex = debugInfo.regRefMapStart(stopIndex);
             preparer.tracePrepareReferenceMap(this, stopIndex, slotPointer, "C1X registers frame");
 
@@ -476,10 +440,10 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
                 int reg = i * 8;
                 while (b != 0) {
                     if ((b & 1) != 0) {
-                        int offset = csa.offsetOf(reg);
+                        int offset = csl.offsetOf(reg);
                         if (traceStackRootScanning()) {
                             Log.print("    register: ");
-                            Log.println(csa.registers[reg].name);
+                            Log.println(csl.registers[reg].name);
                         }
                         preparer.setReferenceMapBits(callee, slotPointer.plus(offset), 1, 1);
                     }
@@ -511,7 +475,6 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
      * @param current
      * @param callee
      * @param preparer
-     * @param registerConfig TODO
      */
     public static void prepareTrampolineRefMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer) {
         RiRegisterConfig registerConfig = vm().registerConfigs.trampoline;
@@ -519,8 +482,9 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
         ClassMethodActor calledMethod;
         TargetMethod targetMethod = current.targetMethod();
 
-        Pointer calleeSaveStart = callee.sp();
-        CiCalleeSaveArea csa = registerConfig.getCalleeSaveArea();
+        CiCalleeSaveLayout csl = callee.csl();
+        Pointer csa = callee.csa();
+        FatalError.check(csl != null && !csa.isZero(), "trampoline must have callee save area");
         CiRegister[] regs = registerConfig.getCallingConventionRegisters(Type.JavaCall, RegisterFlag.CPU);
 
         // figure out what method the caller is trying to call
@@ -530,11 +494,11 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
         } else {
             // this is a virtual or interface call; figure out the receiver method based on the
             // virtual or interface index
-            Object receiver = calleeSaveStart.plus(csa.offsetOf(regs[0])).getReference().toJava();
+            Object receiver = csa.plus(csl.offsetOf(regs[0])).getReference().toJava();
             ClassActor classActor = ObjectAccess.readClassActor(receiver);
             // The virtual dispatch trampoline stubs put the virtual dispatch index into the
             // scratch register and then saves it to the stack.
-            int index = vm().stubs.readVirtualDispatchIndexFromTrampolineFrame(calleeSaveStart);
+            int index = vm().stubs.readVirtualDispatchIndexFromTrampolineFrame(csa);
             if (trampoline.is(VirtualTrampoline)) {
                 calledMethod = classActor.getVirtualMethodActorByVTableIndex(index);
             } else {
@@ -546,8 +510,8 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
         int regIndex = 0;
         if (!calledMethod.isStatic()) {
             // set a bit for the receiver object
-            int offset = csa.offsetOf(regs[regIndex++]);
-            preparer.setReferenceMapBits(current, calleeSaveStart.plus(offset), 1, 1);
+            int offset = csl.offsetOf(regs[regIndex++]);
+            preparer.setReferenceMapBits(current, csa.plus(offset), 1, 1);
         }
 
         SignatureDescriptor sig = calledMethod.descriptor();
@@ -557,8 +521,8 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
             Kind kind = arg.toKind();
             if (kind.isReference) {
                 // set a bit for this parameter
-                int offset = csa.offsetOf(reg);
-                preparer.setReferenceMapBits(current, calleeSaveStart.plus(offset), 1, 1);
+                int offset = csl.offsetOf(reg);
+                preparer.setReferenceMapBits(current, csa.plus(offset), 1, 1);
             }
             if (kind != Kind.FLOAT && kind != Kind.DOUBLE) {
                 // Only iterating over the integral arg registers
@@ -653,7 +617,13 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
     @Override
     public void advance(Cursor current) {
         if (platform().isa == ISA.AMD64) {
-            AMD64TargetMethodUtil.advance(current);
+            CiCalleeSaveLayout csl = calleeSaveLayout();
+            Pointer csa = Pointer.zero();
+            if (csl != null) {
+                // See com.sun.c1x.lir.FrameMap
+                csa = current.sp().plus(frameSize() - csl.size);
+            }
+            AMD64TargetMethodUtil.advance(current, csl, csa);
         } else {
             throw FatalError.unimplemented();
         }

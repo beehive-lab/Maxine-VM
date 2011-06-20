@@ -26,9 +26,10 @@ import java.lang.reflect.*;
 
 import com.oracle.max.asm.*;
 import com.sun.c1x.*;
+import com.sun.c1x.asm.*;
 import com.sun.c1x.gen.*;
-import com.sun.c1x.globalstub.*;
 import com.sun.c1x.lir.*;
+import com.sun.c1x.stub.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
@@ -54,10 +55,14 @@ public abstract class Backend {
         }
     }
 
-    public abstract FrameMap newFrameMap(RiMethod method, int numberOfLocks);
+    public abstract FrameMap newFrameMap(C1XCompilation compilation, RiMethod method, int numberOfLocks);
     public abstract LIRGenerator newLIRGenerator(C1XCompilation compilation);
-    public abstract LIRAssembler newLIRAssembler(C1XCompilation compilation);
+    public abstract LIRAssembler newLIRAssembler(C1XCompilation compilation, TargetMethodAssembler tasm);
     public abstract AbstractAssembler newAssembler(RiRegisterConfig registerConfig);
-    public abstract GlobalStubEmitter newGlobalStubEmitter();
     public abstract CiXirAssembler newXirAssembler();
+
+    public abstract CompilerStub emit(CompilerStub.Id stub);
+    public abstract CompilerStub emit(CiRuntimeCall runtimeCall);
+    public abstract CompilerStub emit(XirTemplate t);
+
 }

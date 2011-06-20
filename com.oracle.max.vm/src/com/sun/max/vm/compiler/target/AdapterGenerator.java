@@ -173,7 +173,7 @@ public abstract class AdapterGenerator {
     }
 
     public static int prologueSizeForCallee(TargetMethod callee) {
-        if (!callee.isCompiled()) {
+        if (callee.classMethodActor == null) {
             return 0;
         }
         AdapterGenerator generator = forCallee(callee.classMethodActor, callee.callEntryPoint);

@@ -20,21 +20,21 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.c1x.globalstub;
+package com.sun.c1x.stub;
 
 import static com.sun.cri.ci.CiKind.*;
 
 import com.sun.cri.ci.*;
 
 /**
- * A global stub is a shared routine that performs an operation on behalf of compiled code.
+ * A compiler stub is a shared routine that performs an operation on behalf of compiled code.
  * Typically the routine is too large to inline, is infrequent, or requires runtime support.
- * Global stubs are called with a callee-save convention; the global stub must save any
+ * Compiler stubs are called with a callee-save convention; the compiler stub must save any
  * registers it may destroy and then restore them upon return. This allows the register
- * allocator to ignore calls to global stubs. Parameters to global stubs are
+ * allocator to ignore calls to compiler stubs. Parameters to compiler stubs are
  * passed on the stack in order to preserve registers for the rest of the code.
  */
-public class GlobalStub {
+public class CompilerStub {
 
     public enum Id {
 
@@ -57,17 +57,27 @@ public class GlobalStub {
     public final Id id;
     public final CiKind resultKind;
     public final Object stubObject;
-    public final int argsSize;
-    public final int[] argOffsets;
-    public final int resultOffset;
 
-    public GlobalStub(Id id, CiKind resultKind, Object stubObject, int argsSize, int[] argOffsets, int resultOffset) {
+    /**
+     * The slots in which the stub finds its incoming arguments.
+     * To get the arguments from the perspective of the stub's caller,
+     * use {@link CiStackSlot#asOutArg()}.
+     */
+    public final CiStackSlot[] inArgs;
+
+    /**
+     * The slot in which the stub places its return value (if any).
+     * To get the value from the perspective of the stub's caller,
+     * use {@link CiStackSlot#asOutArg()}.
+     */
+    public final CiStackSlot outResult;
+
+    public CompilerStub(Id id, CiKind resultKind, Object stubObject, CiStackSlot[] argSlots, CiStackSlot resultSlot) {
         this.id = id;
         this.resultKind = resultKind;
         this.stubObject = stubObject;
-        this.argsSize = argsSize;
-        this.argOffsets = argOffsets;
-        this.resultOffset = resultOffset;
+        this.inArgs = argSlots;
+        this.outResult = resultSlot;
     }
 
 }

@@ -1589,7 +1589,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         for (Method m : runtimeCalls.getMethods()) {
             int flags = m.getModifiers();
             if (Modifier.isStatic(flags) && Modifier.isPublic(flags) && m.getName().equals(method)) {
-                // runtime call found. create a global stub that calls the runtime method
+                // runtime call found. create a compiler stub that calls the runtime method
                 MethodActor methodActor = MethodActor.fromJava(m);
                 SignatureDescriptor signature = methodActor.descriptor();
                 if (result == null) {
@@ -1632,7 +1632,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             for (Method m : runtimeCalls.getMethods()) {
                 int flags = m.getModifiers();
                 if (Modifier.isStatic(flags) && Modifier.isPublic(flags) && m.getName().equals(method)) {
-                    // runtime call found. create a global stub that calls the runtime method
+                    // runtime call found. create a compiler stub that calls the runtime method
                     MethodActor methodActor = MethodActor.fromJava(m);
                     rtMethod = methodActor;
                     runtimeMethods.put(method, rtMethod);

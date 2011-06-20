@@ -96,7 +96,7 @@ public class JVMFunctions {
         @Override
         public boolean visitFrame(Cursor current, Cursor callee) {
             TargetMethod targetMethod = current.targetMethod();
-            if (current.isTopFrame() || targetMethod == null || !targetMethod.isCompiled() || targetMethod.classMethodActor() == javaLangReflectMethodInvoke.classMethodActor) {
+            if (current.isTopFrame() || targetMethod == null || targetMethod.classMethodActor == null || targetMethod.classMethodActor() == javaLangReflectMethodInvoke.classMethodActor) {
                 return true;
             }
             final ClassLoader cl = targetMethod.classMethodActor().holder().classLoader;

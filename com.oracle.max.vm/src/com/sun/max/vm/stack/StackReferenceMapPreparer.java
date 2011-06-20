@@ -536,10 +536,10 @@ public final class StackReferenceMapPreparer {
      * @param trapState the trap state
      */
     public void prepareStackReferenceMapFromTrap(Pointer tla, Pointer trapState) {
-        final TrapStateAccess trapStateAccess = vm().trapStateAccess;
-        final Pointer instructionPointer = trapStateAccess.getPC(trapState);
-        final Pointer stackPointer = trapStateAccess.getSP(trapState);
-        final Pointer framePointer = trapStateAccess.getFP(trapState);
+        final TrapFrameAccess tfa = vm().trapFrameAccess;
+        final Pointer instructionPointer = tfa.getPC(trapState);
+        final Pointer stackPointer = tfa.getSP(trapState);
+        final Pointer framePointer = tfa.getFP(trapState);
         prepareStackReferenceMap(tla, instructionPointer, stackPointer, framePointer, false);
     }
 

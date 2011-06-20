@@ -349,7 +349,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
          */
         @Override
         protected Adapter create(Sig sig) {
-            CiValue[] optArgs = opt.getCallingConvention(JavaCall, sig.kinds, target()).locations;
+            CiValue[] optArgs = opt.getCallingConvention(JavaCall, sig.kinds, target(), false).locations;
 
             AMD64Assembler asm = new AMD64Assembler(target(), null);
 
@@ -543,7 +543,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
 
                 // Rescue a return address that has been patched for deoptimization
                 TargetMethod caller = sfw.targetMethodFor(callerIP);
-                if (caller != null && MaxineVM.vm().stubs.isDeoptStub(caller)) {
+                if (caller != null && caller.is(Stub.Type.DeoptStub)) {
                     Pointer originalReturnAddress = sfw.readWord(callerSP, DEOPT_RETURN_ADDRESS_OFFSET).asPointer();
                     callerIP = originalReturnAddress;
                 }
@@ -667,7 +667,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
          */
         @Override
         protected Adapter create(Sig sig) {
-            CiValue[] optArgs = opt.getCallingConvention(JavaCall, sig.kinds, target()).locations;
+            CiValue[] optArgs = opt.getCallingConvention(JavaCall, sig.kinds, target(), false).locations;
             AMD64Assembler asm = new AMD64Assembler(target(), null);
 
             // On entry to the frame, there are 2 return addresses at [RSP] and [RSP + 8].
