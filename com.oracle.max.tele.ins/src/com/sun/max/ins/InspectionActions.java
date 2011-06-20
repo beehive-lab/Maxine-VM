@@ -1556,7 +1556,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             final List<MaxCompilation> compilations =
-                MethodCompilationSearchDialog.show(inspection(), null, "View ompiled code for method...", "View Code", false);
+                MethodCompilationSearchDialog.show(inspection(), null, "View compiled code for method...", "View Code", false);
             if (compilations != null) {
                 focus().setCodeLocation(Utils.first(compilations).getCallEntryLocation(), false);
             }
