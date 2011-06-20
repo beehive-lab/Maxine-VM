@@ -28,6 +28,7 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
 import com.sun.max.tele.memory.*;
@@ -187,11 +188,11 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
             return -1;
         }
 
-        public int calleeConstantPoolIndex(int index) throws IllegalArgumentException {
+        public RiMethod calleeAt(int index) throws IllegalArgumentException {
             if (index < 0 || index >= instructions.size()) {
                 throw new IllegalArgumentException();
             }
-            return -1;
+            return null;
         }
 
         public List<Integer> labelIndexes() {

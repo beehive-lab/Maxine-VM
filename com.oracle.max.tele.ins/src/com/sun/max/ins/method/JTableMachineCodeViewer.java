@@ -33,15 +33,15 @@ import javax.swing.event.*;
 import javax.swing.table.*;
 
 import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 import com.sun.max.ins.*;
-import com.sun.max.ins.constant.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.LocationLabel.AsAddressWithPosition;
 import com.sun.max.ins.object.*;
 import com.sun.max.ins.util.*;
 import com.sun.max.ins.value.*;
-import com.sun.max.ins.view.InspectionViews.*;
+import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -806,12 +806,12 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
                     inspectorLabels[row] = renderer;
                 } else {
                     InstructionMap instructionMap = instructionMap();
-                    if (instructionMap.calleeConstantPoolIndex(row) >= 0 && machineCodeInstruction.mnemonic.contains("call")) {
-                        final PoolConstantLabel poolConstantLabel =
-                            PoolConstantLabel.make(inspection, instructionMap.calleeConstantPoolIndex(row), localConstantPool(), teleConstantPool(), PoolConstantLabel.Mode.TERSE);
-                        poolConstantLabel.setToolTipPrefix(text);
-                        poolConstantLabel.redisplay();
-                        renderer = poolConstantLabel;
+                    final RiMethod callee = instructionMap.calleeAt(row);
+                    if (machineCodeInstruction.mnemonic.contains("call") && callee != null) {
+                        renderer = new TextLabel(inspection, CiUtil.format("%h.%n()", callee, false));
+                        renderer.setToolTipPrefix(tableModel.getRowDescription(row) + ":");
+                        renderer.setToolTipSuffix("<br>" + CiUtil.format("%r %H.%n(%p)", callee, false));
+                        renderer.setWrappedToolTipText("<br>operands = " + text);
                         renderer.setForeground(cellForegroundColor(row, column));
                     } else {
                         if (instructionMap.isNativeCall(row)) {
