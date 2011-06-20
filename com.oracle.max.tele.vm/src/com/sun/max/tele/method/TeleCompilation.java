@@ -32,7 +32,6 @@ import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.target.*;
 
 /**
@@ -82,43 +81,6 @@ public final class TeleCompilation extends AbstractTeleVMHolder implements MaxCo
 
         public boolean isBootRegion() {
             return isBootCode;
-        }
-    }
-
-    /**
-     * Adapter for bytecode scanning that only knows the constant pool
-     * index argument of the last method invocation instruction scanned.
-     */
-    private static final class MethodRefIndexFinder extends BytecodeAdapter  {
-        int methodRefIndex = -1;
-
-        public MethodRefIndexFinder reset() {
-            methodRefIndex = -1;
-            return this;
-        }
-
-        @Override
-        protected void invokestatic(int index) {
-            methodRefIndex = index;
-        }
-
-        @Override
-        protected void invokespecial(int index) {
-            methodRefIndex = index;
-        }
-
-        @Override
-        protected void invokevirtual(int index) {
-            methodRefIndex = index;
-        }
-
-        @Override
-        protected void invokeinterface(int index, int count) {
-            methodRefIndex = index;
-        }
-
-        public int methodRefIndex() {
-            return methodRefIndex;
         }
     }
 
