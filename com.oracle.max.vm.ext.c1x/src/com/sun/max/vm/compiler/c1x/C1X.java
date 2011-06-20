@@ -194,7 +194,7 @@ public class C1X implements RuntimeCompiler {
         }
         if (phase == Phase.STARTING) {
             // Now it is safe to use speculative opts
-            C1XOptions.UseAssumptions = deoptimizationSupported && !Deoptimization.DisableDeopt;
+            C1XOptions.UseAssumptions = deoptimizationSupported && Deoptimization.UseDeopt;
         } else if (phase == Phase.TERMINATING) {
             if (C1XOptions.PrintMetrics) {
                 C1XMetrics.print();
