@@ -832,7 +832,7 @@ public class T1XCompilation {
                 // the backward branch is not taken but that cost should not be noticeable.
                 byte[] safepointCode = vm().safepoint.code;
                 buf.emitBytes(safepointCode, 0, safepointCode.length);
-                stops.addBytecodeBackwardBranch(bci, pos);
+                stops.addSafepoint(bci, pos);
 
                 // Compute relative offset.
                 final int target = bciToPos[targetBCI];
@@ -1690,7 +1690,14 @@ public class T1XCompilation {
             case Bytecodes.INFOPOINT: {
                 opcode = opcode | (stream.readUByte(stream.currentBCI() + 1) << 16);
                 if (opcode == Bytecodes.UNCOMMON_TRAP) {
-                    bciToPos[stream.currentBCI()] = buf.position();
+                    // Use a safepoint so that this position is not overlapping
+                    // with the subsequent instruction. In all other senses,
+                    // an uncommon trap is essentially a nop in baseline code.
+                    beginBytecode(Bytecodes.UNCOMMON_TRAP);
+                    int pos = buf.position();
+                    byte[] safepointCode = vm().safepoint.code;
+                    buf.emitBytes(safepointCode, 0, safepointCode.length);
+                    stops.addSafepoint(stream.currentBCI(), pos);
                     break;
                 } else {
                     throw new CiBailout("Unsupported opcode" + errorSuffix());

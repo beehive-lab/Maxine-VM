@@ -27,7 +27,7 @@ import static com.sun.cri.ci.CiKind.*;
 import static java.lang.reflect.Modifier.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.globalstub.*;
+import com.sun.c1x.stub.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
@@ -142,10 +142,6 @@ public final class FrameMap {
         if (method == null) {
             incomingArguments = new CiCallingConvention(new CiValue[0], 0);
         } else {
-            if (compilation.method.toString().startsWith("com.sun.max.vm.MaxineVM.run")) {
-                System.console();
-            }
-
             CiKind receiver = !isStatic(method.accessFlags()) ? method.holder().kind() : null;
             incomingArguments = getCallingConvention(CRIUtil.signatureToKinds(method.signature(), receiver), JavaCallee);
         }
@@ -159,7 +155,7 @@ public final class FrameMap {
      * @return a {@link CiCallingConvention} instance describing the location of parameters and the return value
      */
     public CiCallingConvention getCallingConvention(CiKind[] signature, Type type) {
-        CiCallingConvention cc = compilation.registerConfig.getCallingConvention(type, signature, compilation.target);
+        CiCallingConvention cc = compilation.registerConfig.getCallingConvention(type, signature, compilation.target, false);
         if (type == RuntimeCall) {
             assert cc.stackSize == 0 : "runtime call should not have stack arguments";
         } else if (type.out) {
@@ -206,18 +202,23 @@ public final class FrameMap {
 
         this.spillSlotCount = spillSlotCount;
         int frameSize = offsetToStackBlocksEnd();
-        frameSize += compilation.registerConfig.getCalleeSaveArea().size;
+        CiCalleeSaveLayout csl = compilation.registerConfig.getCalleeSaveLayout();
+        if (csl != null) {
+            frameSize += csl.size;
+        }
         this.frameSize = compilation.target.alignFrameSize(frameSize);
     }
 
     /**
-     * Informs the frame map that the compiled code uses a particular global stub, which
+     * Informs the frame map that the compiled code uses a particular compiler stub, which
      * may need stack space for outgoing arguments.
      *
-     * @param stub the global stub
+     * @param stub the compiler stub
      */
-    public void usesGlobalStub(GlobalStub stub) {
-        reserveOutgoing(stub.argsSize);
+    public void usesStub(CompilerStub stub) {
+        int argsSize = stub.inArgs.length * compilation.target.spillSlotSize;
+        int resultSize = stub.resultKind.isVoid() ? 0 : compilation.target.spillSlotSize;
+        reserveOutgoing(Math.max(argsSize, resultSize));
     }
 
     /**
@@ -229,9 +230,6 @@ public final class FrameMap {
     public CiAddress toStackAddress(CiStackSlot slot) {
         int size = compilation.target.sizeInBytes(slot.kind);
         if (slot.inCallerFrame()) {
-            if (compilation.method.toString().startsWith("com.sun.max.vm.MaxineVM.run")) {
-                System.console();
-            }
             int callerFrame = frameSize() + compilation.target.arch.returnAddressSize;
             final int callerFrameOffset = slot.index() * compilation.target.spillSlotSize;
             int offset = callerFrame + callerFrameOffset;
@@ -265,7 +263,7 @@ public final class FrameMap {
     }
 
     /**
-     * Converts the monitor index into the stack address of the on-stak monitor.
+     * Converts the monitor index into the stack address of the on-stack monitor.
      *
      * @param monitorIndex the monitor index
      * @return a representation of the stack address
@@ -386,7 +384,12 @@ public final class FrameMap {
     }
 
     public int offsetToCalleeSaveAreaStart() {
-        return offsetToCalleeSaveAreaEnd() - compilation.registerConfig.getCalleeSaveArea().size;
+        CiCalleeSaveLayout csl = compilation.registerConfig.getCalleeSaveLayout();
+        if (csl != null) {
+            return offsetToCalleeSaveAreaEnd() - csl.size;
+        } else {
+            return offsetToCalleeSaveAreaEnd();
+        }
     }
 
     public int offsetToCalleeSaveAreaEnd() {

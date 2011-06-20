@@ -47,8 +47,51 @@ import com.sun.max.vm.stack.StackFrameWalker.Cursor;
  */
 public class Stub extends TargetMethod {
 
-    public Stub(Flavor flavor, String stubName, int frameSize, byte[] code, int callPosition, ClassMethodActor callee, int registerRestoreEpilogueOffset) {
-        super(flavor, stubName, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+    public enum Type {
+        /**
+         * Trampoline for virtual method dispatch (i.e. translation of {@link Bytecodes#INVOKEVIRTUAL}).
+         */
+        VirtualTrampoline,
+
+        /**
+         * Trampoline for interface method dispatch (i.e. translation of {@link Bytecodes#INVOKEINTERFACE}).
+         */
+        InterfaceTrampoline,
+
+        /**
+         * Trampoline for static method call (i.e. translation of {@link Bytecodes#INVOKESPECIAL} or {@link Bytecodes#INVOKESTATIC}).
+         */
+        StaticTrampoline,
+
+        /**
+         * A compiler stub.
+         */
+        CompilerStub,
+
+        UnwindStub,
+
+        UnrollStub,
+
+        UncommonTrapStub,
+
+        DeoptStub,
+
+        /**
+         * The trap stub.
+         */
+        TrapStub;
+    }
+
+    public final Type type;
+
+    @Override
+    public Stub.Type stubType() {
+        return type;
+    }
+
+    public Stub(Type type, String stubName, int frameSize, byte[] code, int callPosition, ClassMethodActor callee, int registerRestoreEpilogueOffset) {
+        super(stubName, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        this.type = type;
         this.setFrameSize(frameSize);
         this.setRegisterRestoreEpilogueOffset(registerRestoreEpilogueOffset);
 
@@ -65,8 +108,9 @@ public class Stub extends TargetMethod {
         }
     }
 
-    public Stub(Flavor flavor, String name, CiTargetMethod tm) {
-        super(flavor, name, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+    public Stub(Type type, String name, CiTargetMethod tm) {
+        super(name, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        this.type = type;
 
         initCodeBuffer(tm, true);
         initFrameLayout(tm);
@@ -74,6 +118,24 @@ public class Stub extends TargetMethod {
         for (CiDebugInfo info : debugInfos) {
             assert info == null;
         }
+    }
+
+    @Override
+    public CiCalleeSaveLayout calleeSaveLayout() {
+        final RegisterConfigs rc = vm().registerConfigs;
+        switch (type) {
+            case CompilerStub:
+                return rc.compilerStub.csl;
+            case VirtualTrampoline:
+            case StaticTrampoline:
+            case InterfaceTrampoline:
+                return rc.trampoline.csl;
+            case TrapStub:
+                return rc.trapStub.csl;
+            case UncommonTrapStub:
+                return rc.uncommonTrapStub.csl;
+        }
+        return null;
     }
 
     @Override
@@ -88,7 +150,13 @@ public class Stub extends TargetMethod {
     @Override
     public void advance(Cursor current) {
         if (platform().isa == ISA.AMD64) {
-            AMD64TargetMethodUtil.advance(current);
+            CiCalleeSaveLayout csl = calleeSaveLayout();
+            Pointer csa = Pointer.zero();
+            if (csl != null) {
+                assert csl.frameOffsetToCSA != Integer.MAX_VALUE : "stub should have fixed offset for CSA";
+                csa = current.sp().plus(csl.frameOffsetToCSA);
+            }
+            AMD64TargetMethodUtil.advance(current, csl, csa);
         } else {
             throw FatalError.unimplemented();
         }

@@ -221,7 +221,7 @@ public class T1XTemplate {
             return stop.bsmIndex;
         }
 
-        public void addBytecodeBackwardBranch(int bci, int pos) {
+        public void addSafepoint(int bci, int pos) {
             T1XStop dst = safepoints.makeNext();
             dst.bci = bci;
             dst.pos = pos;

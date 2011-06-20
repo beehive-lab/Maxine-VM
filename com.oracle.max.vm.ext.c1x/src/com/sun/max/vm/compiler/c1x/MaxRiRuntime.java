@@ -25,7 +25,7 @@ package com.sun.max.vm.compiler.c1x;
 import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
+import static com.sun.max.vm.compiler.target.Stub.Type.*;
 import static com.sun.max.vm.stack.VMFrameLayout.*;
 
 import java.lang.reflect.*;
@@ -218,8 +218,8 @@ public class MaxRiRuntime implements RiRuntime {
             return "{" + call.runtimeCall.name() + "}";
         } else if (call.symbol != null) {
             return "{" + call.symbol + "}";
-        } else if (call.globalStubID != null) {
-            return "{" + call.globalStubID + "}";
+        } else if (call.stubID != null) {
+            return "{" + call.stubID + "}";
         } else if (call.method != null) {
             return "{" + call.method + "}";
         } else {
@@ -326,8 +326,8 @@ public class MaxRiRuntime implements RiRuntime {
         return null;
     }
 
-    public Object registerGlobalStub(CiTargetMethod ciTargetMethod, String name) {
-        return new Stub(GlobalStub, name, ciTargetMethod);
+    public Object registerCompilerStub(CiTargetMethod ciTargetMethod, String name) {
+        return new Stub(CompilerStub, name, ciTargetMethod);
     }
 
     public RiType getRiType(Class<?> javaClass) {

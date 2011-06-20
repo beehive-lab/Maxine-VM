@@ -35,12 +35,13 @@ import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.asm.target.amd64.AMD64Assembler.ConditionFlag;
 import com.sun.c1x.*;
+import com.sun.c1x.asm.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.gen.LIRGenerator.DeoptimizationStub;
-import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.FrameMap.StackBlock;
 import com.sun.c1x.lir.*;
+import com.sun.c1x.stub.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiAddress.Scale;
@@ -68,9 +69,9 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     final int wordSize;
     final CiRegister rscratch1;
 
-    public AMD64LIRAssembler(C1XCompilation compilation) {
-        super(compilation);
-        masm = (AMD64MacroAssembler) asm;
+    public AMD64LIRAssembler(C1XCompilation compilation, TargetMethodAssembler tasm) {
+        super(compilation, tasm);
+        masm = (AMD64MacroAssembler) tasm.asm;
         target = compilation.target;
         wordSize = target.wordSize;
         rscratch1 = compilation.registerConfig.getScratchRegister();
@@ -237,6 +238,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
             case Int     : masm.movl(frameMap.toStackAddress(slot), c.asInt()); break;
             case Float   : masm.movl(frameMap.toStackAddress(slot), floatToRawIntBits(c.asFloat())); break;
             case Object  : movoop(frameMap.toStackAddress(slot), c); break;
+            case Word    :
             case Long    : masm.mov64(frameMap.toStackAddress(slot), c.asLong()); break;
             case Double  : masm.mov64(frameMap.toStackAddress(slot), doubleToRawLongBits(c.asDouble())); break;
             default      : throw Util.shouldNotReachHere("Unknown constant kind for const2stack: " + c.kind);
@@ -642,7 +644,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                 masm.cvttss2sil(dest.asRegister(), srcRegister);
                 masm.cmp32(dest.asRegister(), Integer.MIN_VALUE);
                 masm.jcc(ConditionFlag.notEqual, endLabel);
-                callGlobalStub(op.globalStub, null, dest.asRegister(), src);
+                callStub(op.stub, null, dest.asRegister(), src);
                 // cannot cause an exception
                 masm.bind(endLabel);
                 break;
@@ -652,7 +654,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                 masm.cvttsd2sil(dest.asRegister(), asXmmDoubleReg(src));
                 masm.cmp32(dest.asRegister(), Integer.MIN_VALUE);
                 masm.jcc(ConditionFlag.notEqual, endLabel);
-                callGlobalStub(op.globalStub, null, dest.asRegister(), src);
+                callStub(op.stub, null, dest.asRegister(), src);
                 // cannot cause an exception
                 masm.bind(endLabel);
                 break;
@@ -671,7 +673,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                 masm.movq(rscratch1, java.lang.Long.MIN_VALUE);
                 masm.cmpq(dest.asRegister(), rscratch1);
                 masm.jcc(ConditionFlag.notEqual, endLabel);
-                callGlobalStub(op.globalStub, null, dest.asRegister(), src);
+                callStub(op.stub, null, dest.asRegister(), src);
                 masm.bind(endLabel);
                 break;
             }
@@ -682,7 +684,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                 masm.movq(rscratch1, java.lang.Long.MIN_VALUE);
                 masm.cmpq(dest.asRegister(), rscratch1);
                 masm.jcc(ConditionFlag.notEqual, endLabel);
-                callGlobalStub(op.globalStub, null, dest.asRegister(), src);
+                callStub(op.stub, null, dest.asRegister(), src);
                 masm.bind(endLabel);
                 break;
             }
@@ -1537,14 +1539,14 @@ public final class AMD64LIRAssembler extends LIRAssembler {
             if (asXmmFloatReg(left) != asXmmFloatReg(dest)) {
                 masm.movflt(asXmmFloatReg(dest), asXmmFloatReg(left));
             }
-            callGlobalStub(op.globalStub, null, asXmmFloatReg(dest), dest);
+            callStub(op.stub, null, asXmmFloatReg(dest), dest);
 
         } else if (dest.kind.isDouble()) {
             if (asXmmDoubleReg(left) != asXmmDoubleReg(dest)) {
                 masm.movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(left));
             }
 
-            callGlobalStub(op.globalStub, null, asXmmDoubleReg(dest), dest);
+            callStub(op.stub, null, asXmmDoubleReg(dest), dest);
         } else {
             CiRegister lreg = left.asRegister();
             CiRegister dreg = dest.asRegister();
@@ -1841,7 +1843,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     for (int i = 0; i < args.length; i++) {
                         args[i] = operands[inst.arguments[i].index];
                     }
-                    callGlobalStub(stubId, info, result, args);
+                    callStub(stubId, info, result, args);
                     break;
                 }
                 case CallRuntime: {
@@ -1986,23 +1988,23 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                             masm.movl(new CiAddress(CiKind.Int, AMD64.rsp.asValue(), i * intSize), 0xC1C1C1C1);
                         }
                     }
-                    CiCalleeSaveArea csa = compilation.registerConfig.getCalleeSaveArea();
-                    if (csa.size != 0) {
+                    CiCalleeSaveLayout csl = compilation.registerConfig.getCalleeSaveLayout();
+                    if (csl != null && csl.size != 0) {
                         int frameToCSA = frameMap.offsetToCalleeSaveAreaStart();
                         assert frameToCSA >= 0;
-                        masm.save(csa, frameToCSA);
+                        masm.save(csl, frameToCSA);
                     }
                     break;
                 }
                 case PopFrame: {
                     int frameSize = initialFrameSizeInBytes();
 
-                    CiCalleeSaveArea csa = compilation.registerConfig.getCalleeSaveArea();
-                    if (csa.size != 0) {
+                    CiCalleeSaveLayout csl = compilation.registerConfig.getCalleeSaveLayout();
+                    if (csl != null && csl.size != 0) {
                         registerRestoreEpilogueOffset = masm.codeBuffer.position();
                         // saved all registers, restore all registers
                         int frameToCSA = frameMap.offsetToCalleeSaveAreaStart();
-                        masm.restore(csa, frameToCSA);
+                        masm.restore(csl, frameToCSA);
                     }
 
                     masm.incrementq(AMD64.rsp, frameSize);
@@ -2095,67 +2097,76 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         shouldNotReachHere();
     }
 
-    public GlobalStub lookupGlobalStub(XirTemplate template) {
-        return compilation.compiler.lookupGlobalStub(template);
+    public CompilerStub lookupStub(XirTemplate template) {
+        return compilation.compiler.lookupStub(template);
     }
 
-    public void callGlobalStub(XirTemplate stub, LIRDebugInfo info, CiRegister result, CiValue... args) {
-        callGlobalStubHelper(lookupGlobalStub(stub), stub.resultOperand.kind, info, result, args);
+    public void callStub(XirTemplate stub, LIRDebugInfo info, CiRegister result, CiValue... args) {
+        callStubHelper(lookupStub(stub), stub.resultOperand.kind, info, result, args);
     }
 
-    public void callGlobalStub(GlobalStub stub, LIRDebugInfo info, CiRegister result, CiValue... args) {
-        callGlobalStubHelper(stub, stub.resultKind, info, result, args);
+    public void callStub(CompilerStub stub, LIRDebugInfo info, CiRegister result, CiValue... args) {
+        callStubHelper(stub, stub.resultKind, info, result, args);
     }
 
-    private void callGlobalStubHelper(GlobalStub stub, CiKind resultKind, LIRDebugInfo info, CiRegister result, CiValue... args) {
-        assert args.length == stub.argOffsets.length;
+    private void callStubHelper(CompilerStub stub, CiKind resultKind, LIRDebugInfo info, CiRegister result, CiValue... args) {
+        assert args.length == stub.inArgs.length;
 
         for (int i = 0; i < args.length; i++) {
-            storeParameter(args[i], stub.argOffsets[i]);
+            CiStackSlot inArg = stub.inArgs[i];
+            assert inArg.inCallerFrame();
+            CiStackSlot outArg = inArg.asOutArg();
+            storeParameter(args[i], outArg);
         }
 
         directCall(stub.stubObject, info);
 
         if (result != CiRegister.None) {
-            loadResult(result, stub.resultOffset, resultKind);
+            final CiAddress src = compilation.frameMap().toStackAddress(stub.outResult.asOutArg());
+            loadResult(result, src);
         }
 
         // Clear out parameters
         if (C1XOptions.GenAssertionCode) {
             for (int i = 0; i < args.length; i++) {
-                masm.movptr(new CiAddress(CiKind.Word, AMD64.RSP, stub.argOffsets[i]), 0);
+                CiStackSlot inArg = stub.inArgs[i];
+                CiStackSlot outArg = inArg.asOutArg();
+                CiAddress dst = compilation.frameMap().toStackAddress(outArg);
+                masm.movptr(dst, 0);
             }
         }
     }
 
-    private void loadResult(CiRegister r, int offset, CiKind kind) {
+    private void loadResult(CiRegister dst, CiAddress src) {
+        final CiKind kind = src.kind;
         if (kind == CiKind.Int || kind == CiKind.Boolean) {
-            masm.movl(r, new CiAddress(CiKind.Int, AMD64.RSP, offset));
+            masm.movl(dst, src);
         } else if (kind == CiKind.Float) {
-            masm.movss(r, new CiAddress(CiKind.Float, AMD64.RSP, offset));
+            masm.movss(dst, src);
         } else if (kind == CiKind.Double) {
-            masm.movsd(r, new CiAddress(CiKind.Double, AMD64.RSP, offset));
+            masm.movsd(dst, src);
         } else {
-            masm.movq(r, new CiAddress(CiKind.Word, AMD64.RSP, offset));
+            masm.movq(dst, src);
         }
     }
 
-    private void storeParameter(CiValue registerOrConstant, int offset) {
+    private void storeParameter(CiValue registerOrConstant, CiStackSlot outArg) {
+        CiAddress dst = compilation.frameMap().toStackAddress(outArg);
         CiKind k = registerOrConstant.kind;
         if (registerOrConstant.isConstant()) {
             CiConstant c = (CiConstant) registerOrConstant;
             if (c.kind == CiKind.Object) {
-                movoop(new CiAddress(CiKind.Word, AMD64.RSP, offset), c);
+                movoop(dst, c);
             } else {
-                masm.movptr(new CiAddress(CiKind.Word, AMD64.RSP, offset), c.asInt());
+                masm.movptr(dst, c.asInt());
             }
         } else if (registerOrConstant.isRegister()) {
             if (k.isFloat()) {
-                masm.movss(new CiAddress(CiKind.Float, AMD64.RSP, offset), registerOrConstant.asRegister());
+                masm.movss(dst, registerOrConstant.asRegister());
             } else if (k.isDouble()) {
-                masm.movsd(new CiAddress(CiKind.Double, AMD64.RSP, offset), registerOrConstant.asRegister());
+                masm.movsd(dst, registerOrConstant.asRegister());
             } else {
-                masm.movq(new CiAddress(CiKind.Word, AMD64.RSP, offset), registerOrConstant.asRegister());
+                masm.movq(dst, registerOrConstant.asRegister());
             }
         } else {
             throw new InternalError("should not reach here");

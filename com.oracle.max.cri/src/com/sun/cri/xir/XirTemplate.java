@@ -42,14 +42,17 @@ public class XirTemplate {
          * Contains a call to a {@link GlobalFlags#GLOBAL_STUB} template.
          */
         HAS_STUB_CALL,
+
         /**
          * Contains a call to the runtime.
          */
         HAS_RUNTIME_CALL,
+
         /**
          * Not simply a linear sequence of instructions, contains control transfers.
          */
         HAS_CONTROL_FLOW,
+
         /**
          * Is a shared instruction sequence for use by other templates.
          */
@@ -62,53 +65,54 @@ public class XirTemplate {
      * Name of the template.
      */
     public final String name;
-    /**
-     * TBD.
-     */
+
     public final XirOperand resultOperand;
+
     /**
      * The sequence of instructions for the fast (inline) path.
      */
     public final CiXirAssembler.XirInstruction[] fastPath;
+
     /**
      * The sequence of instructions for the slow (out of line) path.
      */
     public final CiXirAssembler.XirInstruction[] slowPath;
+
     /**
      * Labels used in control transfers.
      */
     public final XirLabel[] labels;
+
     /**
      * Parameters to the template.
      */
     public final XirParameter[] parameters;
+
     /**
      * An array of same length as {@link #parameters} where {@code parameterDestroyed[i]} is {@code true}
      * iff {@code parameters[i]} is the {@link XirInstruction#result result} of any {@link XirInstruction} in either
      * {@link #fastPath} or {@link #slowPath}.
      */
     public final boolean[] parameterDestroyed;
+
     /**
      * Temporary variables used by the template.
      */
     public final XirTemp[] temps;
+
     /**
      * Constants used in the template.
      */
     public final XirConstant[] constants;
+
     /**
      * The total number of variables. (relation to temps/parameters???)
      */
     public final int variableCount;
-    /**
-     * TBD.
-     */
-    public final boolean allocateResultOperand;
-    /**
-     * TBD.
-     */
-    public final XirTemplate[] calleeTemplates;
 
+    public final boolean allocateResultOperand;
+
+    public final XirTemplate[] calleeTemplates;
 
     public final XirMark[] marks;
 

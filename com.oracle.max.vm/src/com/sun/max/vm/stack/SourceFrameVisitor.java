@@ -22,7 +22,7 @@
  */
 package com.sun.max.vm.stack;
 
-import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
+import static com.sun.max.vm.compiler.target.Stub.Type.*;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
@@ -77,7 +77,7 @@ public class SourceFrameVisitor extends RawStackFrameVisitor implements CodePosC
             visitNativeFrame(current.ip.toLong());
             return true;
         }
-        if (!targetMethod.isCompiled()) {
+        if (targetMethod.classMethodActor == null) {
             // ignore stubs, trampolines, adapters etc
             return true;
         }
