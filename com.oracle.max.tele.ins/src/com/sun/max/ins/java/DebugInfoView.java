@@ -150,10 +150,10 @@ public final class DebugInfoView extends AbstractView<DebugInfoView> {
             // debugInfo.frameRefMap ...
 
             CiFrame frame = debugInfo.frame();
-            do {
+            while (frame != null) {
                 panel.add(createFramePanel(frame), 0);
                 frame = frame.caller();
-            } while (frame != null);
+            }
             simplePanelLabel.setText(inspection().nameDisplay().shortName(codeLocation));
             panel.add(simplePanel, 0);
             setContentPane(new InspectorScrollPane(inspection(), panel));

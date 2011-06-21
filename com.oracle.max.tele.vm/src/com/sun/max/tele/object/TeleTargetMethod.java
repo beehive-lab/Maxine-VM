@@ -441,10 +441,9 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
                             indexToCodeStopKind[instructionIndex] = codeStopKind;
                             CiDebugInfo info = indexToDebugInfoMap[instructionIndex];
                             final CiCodePos codePos = info == null ? null : info.codePos;
-                            // TODO (mlvdv) only works for non-inlined calls
                             if (codePos != null && codePos.bci >= 0) {
                                 ClassMethodActor method = (ClassMethodActor) codePos.method;
-                                indexToCallee[instructionIndex] =  method.codeAttribute().calleeAt(codePos.bci);
+                                indexToCallee[instructionIndex] = method.codeAttribute().calleeAt(codePos.bci);
                             }
                         }
                     }
