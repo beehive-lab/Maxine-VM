@@ -30,7 +30,7 @@ import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.compiler.CompilationScheme.Static.*;
 import static com.sun.max.vm.compiler.deopt.Deoptimization.*;
-import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
+import static com.sun.max.vm.compiler.target.Stub.Type.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.util.*;
@@ -50,7 +50,7 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.CompilationScheme.CompilationFlag;
 import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.deopt.Deoptimization.Info;
-import com.sun.max.vm.compiler.target.TargetMethod.Flavor;
+import com.sun.max.vm.compiler.target.Stub.Type;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
@@ -124,29 +124,6 @@ public class Stubs {
     }
 
     /**
-     * Determines if a given target method is one of the deoptimization stubs.
-     */
-    public boolean isDeoptStub(TargetMethod tm) {
-        if (!(tm instanceof Stub)) {
-            return false;
-        }
-        for (Stub stub : deoptStubs) {
-            if (isHosted()) {
-                // Object identity of stubs is not preserved when in the Inspector;
-                // use region name instead
-                if (stub != null && tm.regionName().equals(stub.regionName())) {
-                    return true;
-                }
-            } else {
-                if (stub == tm) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
      * Performs all stub-related runtime initialization.
      */
     public void intialize() {
@@ -163,15 +140,15 @@ public class Stubs {
                 resolveVirtualCall = new CriticalMethod(Stubs.class, "resolveVirtualCall", null);
                 resolveInterfaceCall = new CriticalMethod(Stubs.class, "resolveInterfaceCall", null);
                 resolveVirtualCallArgs = registerConfigs.trampoline.getCallingConvention(JavaCall,
-                                CRIUtil.signatureToKinds(resolveVirtualCall.classMethodActor.signature(), CiKind.Object), target()).locations;
+                                CRIUtil.signatureToKinds(resolveVirtualCall.classMethodActor.signature(), CiKind.Object), target(), false).locations;
                 resolveInterfaceCallArgs = registerConfigs.trampoline.getCallingConvention(JavaCall,
-                                CRIUtil.signatureToKinds(resolveInterfaceCall.classMethodActor.signature(), CiKind.Object), target()).locations;
+                                CRIUtil.signatureToKinds(resolveInterfaceCall.classMethodActor.signature(), CiKind.Object), target(), false).locations;
                 staticTrampoline = genStaticTrampoline();
                 trapStub = genTrapStub();
 
                 CriticalMethod unroll = new CriticalMethod(Stubs.class, "unroll", null);
-                CiValue[] unrollArgs = registerConfigs.globalStub.getCallingConvention(JavaCall,
-                                CRIUtil.signatureToKinds(unroll.classMethodActor.signature(), null), target()).locations;
+                CiValue[] unrollArgs = registerConfigs.standard.getCallingConvention(JavaCall,
+                                CRIUtil.signatureToKinds(unroll.classMethodActor.signature(), null), target(), false).locations;
                 unroll.classMethodActor.targetState = genUnroll(unrollArgs);
 
                 for (CiKind kind : CiKind.VALUES) {
@@ -183,8 +160,8 @@ public class Stubs {
                     }
                     try {
                         CriticalMethod unwind = new CriticalMethod(Stubs.class, name, null);
-                        CiValue[] unwindArgs = registerConfigs.globalStub.getCallingConvention(JavaCall,
-                                        CRIUtil.signatureToKinds(unwind.classMethodActor.signature(), null), target()).locations;
+                        CiValue[] unwindArgs = registerConfigs.standard.getCallingConvention(JavaCall,
+                                        CRIUtil.signatureToKinds(unwind.classMethodActor.signature(), null), target(), false).locations;
                         unwind.classMethodActor.targetState = genUnwind(unwindArgs);
                     } catch (NoSuchMethodError e) {
                         // No unwind method for this kind
@@ -286,9 +263,9 @@ public class Stubs {
         if (platform().isa == ISA.AMD64) {
             CiRegisterConfig registerConfig = registerConfigs.trampoline;
             AMD64MacroAssembler asm = new AMD64MacroAssembler(target(), registerConfig);
-            CiCalleeSaveArea csa = registerConfig.getCalleeSaveArea();
-            int frameSize = target().alignFrameSize(csa.size);
-            final int frameToCSA = 0;
+            CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
+            int frameSize = target().alignFrameSize(csl.size);
+            final int frameToCSA = csl.frameOffsetToCSA;
 
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
@@ -302,7 +279,7 @@ public class Stubs {
             asm.movl(registerConfig.getScratchRegister(), index);
 
             // save all the callee save registers
-            asm.save(csa, frameToCSA);
+            asm.save(csl, frameToCSA);
 
             CiValue[] args = isInterface ? resolveInterfaceCallArgs : resolveVirtualCallArgs;
 
@@ -330,17 +307,16 @@ public class Stubs {
 
             // Restore all parameter registers before returning
             int registerRestoreEpilogueOffset = asm.codeBuffer.position();
-            asm.restore(csa, frameToCSA);
+            asm.restore(csl, frameToCSA);
 
             // Adjust RSP as mentioned above and do the 'ret' that lands us in the
             // trampolined-to method.
             asm.addq(AMD64.rsp, frameSize - 8);
             asm.ret(0);
 
-            Flavor flavor = isInterface ? InterfaceTrampoline : VirtualTrampoline;
             byte[] code = asm.codeBuffer.close(true);
-
-            return new Stub(flavor, stubName, frameSize, code, callPosition, callee, registerRestoreEpilogueOffset);
+            final Type type = isInterface ? InterfaceTrampoline : VirtualTrampoline;
+            return new Stub(type, stubName, frameSize, code, callPosition, callee, registerRestoreEpilogueOffset);
         }
         throw FatalError.unimplemented();
     }
@@ -367,9 +343,9 @@ public class Stubs {
         if (platform().isa == ISA.AMD64) {
             CiRegisterConfig registerConfig = registerConfigs.trampoline;
             AMD64MacroAssembler asm = new AMD64MacroAssembler(target(), registerConfig);
-            CiCalleeSaveArea csa = registerConfig.getCalleeSaveArea();
-            int frameSize = target().alignFrameSize(csa.size);
-            int frameToCSA = 0;
+            CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
+            int frameSize = target().alignFrameSize(csl.size);
+            int frameToCSA = csl.frameOffsetToCSA;
 
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
@@ -384,11 +360,11 @@ public class Stubs {
             asm.subq(AMD64.rsp, frameSize);
 
             // save all the callee save registers
-            asm.save(csa, frameToCSA);
+            asm.save(csl, frameToCSA);
 
             CriticalMethod patchStaticTrampoline = new CriticalMethod(Stubs.class, "patchStaticTrampolineCallSiteAMD64", null);
             CiKind[] trampolineParameters = {CiKind.Object};
-            CiValue[] locations = registerConfig.getCallingConvention(JavaCall, trampolineParameters, target()).locations;
+            CiValue[] locations = registerConfig.getCallingConvention(JavaCall, trampolineParameters, target(), false).locations;
 
             // load the static trampoline call site into the first parameter register
             asm.movq(locations[0].asRegister(), callSite);
@@ -400,7 +376,7 @@ public class Stubs {
 
             // restore all parameter registers before returning
             int registerRestoreEpilogueOffset = asm.codeBuffer.position();
-            asm.restore(csa, frameToCSA);
+            asm.restore(csl, frameToCSA);
 
             // undo the frame
             asm.addq(AMD64.rsp, frameSize);
@@ -437,20 +413,20 @@ public class Stubs {
      * will directly transfer execution to the exception handler, by-passing steps 4 and 5 above.
      *
      * @see Trap
-     * @see AMD64TrapStateAccess
+     * @see AMD64TrapFrameAccess
      */
     @HOSTED_ONLY
     public Stub genTrapStub() {
         if (platform().isa == ISA.AMD64) {
             CiRegisterConfig registerConfig = registerConfigs.trapStub;
             AMD64MacroAssembler asm = new AMD64MacroAssembler(target(), registerConfig);
-            CiCalleeSaveArea csa = registerConfig.getCalleeSaveArea();
+            CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
             CiRegister latch = AMD64Safepoint.LATCH_REGISTER;
             CiRegister scratch = registerConfig.getScratchRegister();
-            int frameSize = platform().target.alignFrameSize(csa.size);
-            int frameToCSA = 0;
+            int frameSize = platform().target.alignFrameSize(csl.size);
+            int frameToCSA = csl.frameOffsetToCSA;
             CiKind[] handleTrapParameters = CRIUtil.signatureToKinds(Trap.handleTrap.classMethodActor.signature(), null);
-            CiValue[] args = registerConfig.getCallingConvention(JavaCallee, handleTrapParameters, target()).locations;
+            CiValue[] args = registerConfig.getCallingConvention(JavaCallee, handleTrapParameters, target(), false).locations;
 
             // the very first instruction must save the flags.
             // we save them twice and overwrite the first copy with the trap instruction/return address.
@@ -461,12 +437,12 @@ public class Stubs {
             asm.subq(AMD64.rsp, frameSize - 8);
 
             // save all the callee save registers
-            asm.save(csa, frameToCSA);
+            asm.save(csl, frameToCSA);
 
             // Now that we have saved all general purpose registers (including the scratch register),
             // store the value of the latch register from the thread locals into the trap state
             asm.movq(scratch, new CiAddress(CiKind.Word, latch.asValue(), TRAP_LATCH_REGISTER.offset));
-            asm.movq(new CiAddress(CiKind.Word, AMD64.rsp.asValue(), frameToCSA + csa.offsetOf(latch)), scratch);
+            asm.movq(new CiAddress(CiKind.Word, AMD64.rsp.asValue(), frameToCSA + csl.offsetOf(latch)), scratch);
 
             // write the return address pointer to the end of the frame
             asm.movq(scratch, new CiAddress(CiKind.Word, latch.asValue(), TRAP_INSTRUCTION_POINTER.offset));
@@ -476,8 +452,8 @@ public class Stubs {
             // load the trap number from the thread locals into the first parameter register
             asm.movq(args[0].asRegister(), new CiAddress(CiKind.Word, latch.asValue(), TRAP_NUMBER.offset));
             // also save the trap number into the trap state
-            asm.movq(new CiAddress(CiKind.Word, AMD64.rsp.asValue(), frameToCSA + AMD64TrapStateAccess.TRAP_NUMBER_OFFSET), args[0].asRegister());
-            // load the trap state pointer into the second parameter register
+            asm.movq(new CiAddress(CiKind.Word, AMD64.rsp.asValue(), frameToCSA + AMD64TrapFrameAccess.TRAP_NUMBER_OFFSET), args[0].asRegister());
+            // load the trap frame pointer into the second parameter register
             asm.leaq(args[1].asRegister(), new CiAddress(CiKind.Word, AMD64.rsp.asValue(), frameToCSA));
             // load the fault address from the thread locals into the third parameter register
             asm.movq(args[2].asRegister(), new CiAddress(CiKind.Word, latch.asValue(), TRAP_FAULT_ADDRESS.offset));
@@ -487,7 +463,7 @@ public class Stubs {
             ClassMethodActor callee = Trap.handleTrap.classMethodActor;
             asm.call();
 
-            asm.restore(csa, frameToCSA);
+            asm.restore(csl, frameToCSA);
 
             // now pop the flags register off the stack before returning
             asm.addq(AMD64.rsp, frameSize - 8);
@@ -548,7 +524,7 @@ public class Stubs {
     @HOSTED_ONLY
     private Stub genUnwind(CiValue[] unwindArgs) {
         if (platform().isa == ISA.AMD64) {
-            CiRegisterConfig registerConfig = MaxineVM.vm().stubs.registerConfigs.globalStub;
+            CiRegisterConfig registerConfig = MaxineVM.vm().stubs.registerConfigs.standard;
             AMD64MacroAssembler asm = new AMD64MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(0);
 
@@ -597,7 +573,7 @@ public class Stubs {
             asm.ret(0);
 
             byte[] code = asm.codeBuffer.close(true);
-            return new Stub(GlobalStub, name, frameSize, code, -1, null, -1);
+            return new Stub(UnwindStub, name, frameSize, code, -1, null, -1);
         }
         throw FatalError.unimplemented();
     }
@@ -617,7 +593,7 @@ public class Stubs {
     @HOSTED_ONLY
     private Stub genUnroll(CiValue[] unrollArgs) {
         if (platform().isa == ISA.AMD64) {
-            CiRegisterConfig registerConfig = MaxineVM.vm().stubs.registerConfigs.globalStub;
+            CiRegisterConfig registerConfig = MaxineVM.vm().stubs.registerConfigs.standard;
             AMD64MacroAssembler asm = new AMD64MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(0);
 
@@ -637,7 +613,7 @@ public class Stubs {
             asm.hlt();
 
             byte[] code = asm.codeBuffer.close(true);
-            return new Stub(GlobalStub, "unrollStub", frameSize, code, callPosition, callee, -1);
+            return new Stub(UnrollStub, "unrollStub", frameSize, code, callPosition, callee, -1);
         }
         throw FatalError.unimplemented();
     }
@@ -703,7 +679,7 @@ public class Stubs {
              *   mov  [rsp], scratch                           // ... routine into second slot
              *   ret                                           // call deopt method by "returning" to it
              */
-            CiRegisterConfig registerConfig = registerConfigs.globalStub;
+            CiRegisterConfig registerConfig = registerConfigs.standard;
             AMD64MacroAssembler asm = new AMD64MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(0);
 
@@ -718,7 +694,7 @@ public class Stubs {
 
             CiValue[] args;
             if (!kind.isVoid()) {
-                args = registerConfig.getCallingConvention(JavaCall, new CiKind[] {CiKind.Word, CiKind.Word, CiKind.Word, kind}, target()).locations;
+                args = registerConfig.getCallingConvention(JavaCall, new CiKind[] {CiKind.Word, CiKind.Word, CiKind.Word, kind}, target(), false).locations;
                 // Copy return value into arg 3
                 CiRegister returnRegister = registerConfig.getReturnRegister(kind);
                 CiRegister arg3 = args[3].asRegister();
@@ -732,7 +708,7 @@ public class Stubs {
                     }
                 }
             } else {
-                args = registerConfig.getCallingConvention(JavaCall, new CiKind[] {CiKind.Word, CiKind.Word, CiKind.Word}, target()).locations;
+                args = registerConfig.getCallingConvention(JavaCall, new CiKind[] {CiKind.Word, CiKind.Word, CiKind.Word}, target(), false).locations;
             }
 
             // Copy original return address into arg 0 (i.e. 'ip')
@@ -764,7 +740,7 @@ public class Stubs {
 
             String stubName = name + "Stub";
             byte[] code = asm.codeBuffer.close(true);
-            final Stub stub = new Stub(GlobalStub, stubName, frameSize, code, -1, null, -1);
+            final Stub stub = new Stub(DeoptStub, stubName, frameSize, code, -1, null, -1);
 
             AMD64DeoptStubPatch patch = new AMD64DeoptStubPatch(patchPos, runtimeRoutine, stub);
             runtimeInits = Arrays.copyOf(runtimeInits, runtimeInits.length + 1);
@@ -782,11 +758,11 @@ public class Stubs {
     @HOSTED_ONLY
     public Stub genUncommonTrapStub() {
         if (platform().isa == ISA.AMD64) {
-            CiRegisterConfig registerConfig = registerConfigs.globalStub;
+            CiRegisterConfig registerConfig = registerConfigs.uncommonTrapStub;
             AMD64MacroAssembler asm = new AMD64MacroAssembler(target(), registerConfig);
-            CiCalleeSaveArea csa = registerConfig.getCalleeSaveArea();
-            int frameSize = platform().target.alignFrameSize(csa.size);
-            int frameToCSA = 0;
+            CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
+            int frameSize = platform().target.alignFrameSize(csl.size);
+            int frameToCSA = csl.frameOffsetToCSA;
 
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
@@ -796,14 +772,14 @@ public class Stubs {
             asm.subq(AMD64.rsp, frameSize);
 
             // save all the registers
-            asm.save(csa, frameToCSA);
+            asm.save(csl, frameToCSA);
 
             String name = "uncommonTrap";
             final CriticalMethod uncommonTrap = new CriticalMethod(Deoptimization.class, name, null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
 
-            CiValue[] args = registerConfig.getCallingConvention(JavaCall, new CiKind[] {CiKind.Word, CiKind.Word, CiKind.Word, CiKind.Word}, target()).locations;
+            CiValue[] args = registerConfig.getCallingConvention(JavaCall, new CiKind[] {CiKind.Word, CiKind.Word, CiKind.Word, CiKind.Word}, target(), false).locations;
 
-            // Copy register save area address into arg 0 (i.e. 'rsa')
+            // Copy callee save area address into arg 0 (i.e. 'csa')
             CiRegister arg0 = args[0].asRegister();
             asm.leaq(arg0, new CiAddress(CiKind.Word, AMD64.RSP, frameToCSA));
 
@@ -825,11 +801,12 @@ public class Stubs {
             asm.call();
 
             // Should never reach here
+            int registerRestoreEpilogueOffset = asm.codeBuffer.position();
             asm.hlt();
 
             String stubName = name + "Stub";
             byte[] code = asm.codeBuffer.close(true);
-            return new Stub(GlobalStub, stubName, frameSize, code, callPosition, callee, -1);
+            return new Stub(UncommonTrapStub, stubName, frameSize, code, callPosition, callee, registerRestoreEpilogueOffset);
         }
         throw FatalError.unimplemented();
     }
@@ -841,7 +818,7 @@ public class Stubs {
      */
     public int readVirtualDispatchIndexFromTrampolineFrame(Pointer calleeSaveStart) {
         CiRegisterConfig registerConfig = registerConfigs.trampoline;
-        CiCalleeSaveArea csa = registerConfig.getCalleeSaveArea();
-        return calleeSaveStart.plus(csa.offsetOf(registerConfig.getScratchRegister())).getInt();
+        CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
+        return calleeSaveStart.plus(csl.offsetOf(registerConfig.getScratchRegister())).getInt();
     }
 }

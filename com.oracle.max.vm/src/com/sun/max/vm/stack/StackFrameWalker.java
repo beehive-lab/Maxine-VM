@@ -22,10 +22,11 @@
  */
 package com.sun.max.vm.stack;
 
-import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
+import static com.sun.max.vm.compiler.target.Stub.Type.*;
 import static com.sun.max.vm.stack.StackFrameWalker.Purpose.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
@@ -42,14 +43,6 @@ import com.sun.max.vm.thread.*;
  */
 public abstract class StackFrameWalker {
 
-    public enum CalleeKind {
-        NONE,
-        NATIVE,
-        JAVA,
-        TRAP_STUB,
-        TRAMPOLINE,
-        CALLEE_SAVED
-    }
     /**
      * A VM option for enabling stack frame walk tracing.
      */
@@ -72,6 +65,8 @@ public abstract class StackFrameWalker {
         Pointer ip = Pointer.zero();
         Pointer sp = Pointer.zero();
         Pointer fp = Pointer.zero();
+        CiCalleeSaveLayout csl;
+        Pointer csa;
         boolean isTopFrame = false;
         boolean ipIsReturnAddress;
 
@@ -87,7 +82,7 @@ public abstract class StackFrameWalker {
          * @param fp the new frame pointer
          * @param ipIsReturnAddress
          */
-        public Cursor advance(Pointer ip, Pointer sp, Pointer fp, boolean ipIsReturnAddress) {
+        Cursor advance(Pointer ip, Pointer sp, Pointer fp, boolean ipIsReturnAddress) {
             return setFields(null, ip, sp, fp, false, ipIsReturnAddress);
         }
 
@@ -97,6 +92,7 @@ public abstract class StackFrameWalker {
 
         private void copyFrom(Cursor other) {
             setFields(other.targetMethod, other.ip, other.sp, other.fp, other.isTopFrame, other.ipIsReturnAddress);
+            setCalleeSaveArea(other.csl, other.csa);
         }
 
         private Cursor setFields(TargetMethod targetMethod, Pointer ip, Pointer sp, Pointer fp, boolean isTopFrame, boolean ipIsReturnAddress) {
@@ -106,7 +102,23 @@ public abstract class StackFrameWalker {
             this.fp = fp;
             this.isTopFrame = isTopFrame;
             this.ipIsReturnAddress = ipIsReturnAddress;
+            this.csl = null;
+            this.csa = Pointer.zero();
             return this;
+        }
+
+        /**
+         * Sets the callee save details for this frame cursor. This must be called
+         * while this cursor denotes the "current" frame just before {@link StackFrameWalker#advance(Word, Word, Word, boolean)
+         * is called (after which this cursor will be the "callee" frame).
+         *
+         * @param csl the layout of the callee save area in the frame denoted by this cursor
+         * @param csa the address of the callee save area in the frame denoted by this cursor
+         */
+        public void setCalleeSaveArea(CiCalleeSaveLayout csl, Pointer csa) {
+            FatalError.check((csl == null) == csa.isZero(), "inconsistent callee save area info");
+            this.csl = csl;
+            this.csa = csa;
         }
 
         /**
@@ -173,29 +185,21 @@ public abstract class StackFrameWalker {
         }
 
         /**
-         * Get the callee kind of this method, which determines if there is register state in this frame
-         * and where it is stored.
-         * @return the callee kind of this method
+         * Gets the layout of the callee save area in this frame.
+         *
+         * @return {@code null} if there is no callee save area in this frame
          */
-        public CalleeKind calleeKind() {
-            if (targetMethod == null) {
-                if (sp.isZero()) {
-                    assert callee == this;
-                    assert current.isTopFrame;
-                    return CalleeKind.NONE;
-                }
-                return CalleeKind.NATIVE;
-            }
-            if (targetMethod.is(TrapStub)) {
-                return CalleeKind.TRAP_STUB;
-            }
-            if (targetMethod.isTrampoline()) {
-                return CalleeKind.TRAMPOLINE;
-            }
-            if (targetMethod.isCalleeSaved()) {
-                return CalleeKind.CALLEE_SAVED;
-            }
-            return CalleeKind.JAVA;
+        public CiCalleeSaveLayout csl() {
+            return csl;
+        }
+
+        /**
+         * Gets the address of the callee save area in this frame.
+         *
+         * @return {@link Pointer#zero()} if there is no callee save area in this frame
+         */
+        public Pointer csa() {
+            return csa;
         }
     }
 
@@ -347,8 +351,8 @@ public abstract class StackFrameWalker {
                             // native code.
                             advanceFrameInNative(anchor, purpose);
                         } else {
-                            // This can only occur in the inspector and implies that execution is in the platform specific
-                            // prologue of Trap.trapStub() before the point where the trap frame has been completed. In
+                            // This can only occur in the Inspector and implies that execution is in the trab stub
+                            // before the point where the trap frame has been completed. In
                             // particular, the return instruction pointer slot has not been updated with the instruction
                             // pointer at which the fault occurred.
                             break;
@@ -705,6 +709,13 @@ public abstract class StackFrameWalker {
         return !current.sp.isZero();
     }
 
+    /**
+     * Advances this stack walker such that {@link #current} becomes {@link #callee}.
+     *
+     * @param ip the instruction pointer of the new current frame
+     * @param sp the stack pointer of the new current frame
+     * @param fp the frame pointer of the new current frame
+     */
     public final void advance(Word ip, Word sp, Word fp, boolean ipIsReturnAddress) {
         callee.copyFrom(current);
         current.advance(ip.asPointer(), sp.asPointer(), fp.asPointer(), ipIsReturnAddress);

@@ -23,9 +23,10 @@
 package com.sun.max.vm.compiler.target.amd64;
 
 import static com.sun.max.vm.compiler.deopt.Deoptimization.*;
-import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
+import static com.sun.max.vm.compiler.target.Stub.Type.*;
 
 import com.oracle.max.asm.target.amd64.*;
+import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
@@ -33,7 +34,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.stack.amd64.*;
@@ -225,7 +225,15 @@ public final class AMD64TargetMethodUtil {
         return visitor.visitFrame(stackFrame);
     }
 
-    public static void advance(Cursor current) {
+    /**
+     * Advances the stack walker such that {@code current} becomes the callee.
+     *
+     * @param current the frame just visited by the current stack walk
+     * @param csl the layout of the callee save area in {@code current}
+     * @param csa the address of the callee save area in {@code current}
+     */
+    public static void advance(Cursor current, CiCalleeSaveLayout csl, Pointer csa) {
+        assert csa.isZero() == (csl == null);
         TargetMethod targetMethod = current.targetMethod();
         Pointer sp = current.sp();
         Pointer ripPointer = sp.plus(targetMethod.frameSize());
@@ -245,22 +253,22 @@ public final class AMD64TargetMethodUtil {
         Pointer callerIP = sfw.readWord(ripPointer, 0).asPointer();
         Pointer callerSP = ripPointer.plus(Word.size()); // Skip return instruction pointer on stack
         Pointer callerFP;
-        if (targetMethod.is(TrapStub)) {
-            // RBP is whatever was in the frame pointer register at the time of the trap
-            Pointer calleeSaveArea = sp;
-            callerFP = sfw.readWord(calleeSaveArea, AMD64TrapStateAccess.CSA.offsetOf(AMD64.rbp)).asPointer();
+        if (!csa.isZero() && csl.contains(AMD64.rbp.number)) {
+            // Read RBP from the callee save area
+            callerFP = sfw.readWord(csa, csl.offsetOf(AMD64.rbp)).asPointer();
         } else {
-            // Propagate RBP unchanged as OPT methods do not touch this register.
+            // Propagate RBP unchanged
             callerFP = current.fp();
         }
 
         // Rescue a return address that has been patched for deoptimization
         TargetMethod caller = sfw.targetMethodFor(callerIP);
-        if (caller != null && MaxineVM.vm().stubs.isDeoptStub(caller)) {
+        if (caller != null && caller.is(DeoptStub)) {
             Pointer originalReturnAddress = sfw.readWord(callerSP, DEOPT_RETURN_ADDRESS_OFFSET).asPointer();
             callerIP = originalReturnAddress;
         }
 
+        current.setCalleeSaveArea(csl, csa);
         sfw.advance(callerIP, callerSP, callerFP, !targetMethod.is(TrapStub));
     }
 

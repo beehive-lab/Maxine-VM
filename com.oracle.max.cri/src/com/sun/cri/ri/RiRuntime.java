@@ -120,14 +120,14 @@ public interface RiRuntime {
     String disassemble(RiMethod method);
 
     /**
-     * Registers the given global stub and returns an object that can be used to identify it in the relocation
+     * Registers the given compiler stub and returns an object that can be used to identify it in the relocation
      * information.
      *
-     * @param targetMethod the target method representing the code of the global stub
+     * @param targetMethod the target method representing the code of the compiler stub
      * @param name the name of the stub, used for debugging purposes only
      * @return the identification object
      */
-    Object registerGlobalStub(CiTargetMethod targetMethod, String name);
+    Object registerCompilerStub(CiTargetMethod targetMethod, String name);
 
     /**
      * Returns the RiType object representing the base type for the given kind.

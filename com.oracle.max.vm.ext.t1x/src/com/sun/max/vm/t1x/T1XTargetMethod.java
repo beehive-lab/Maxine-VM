@@ -25,6 +25,7 @@ package com.sun.max.vm.t1x;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.compiler.deopt.Deoptimization.*;
+import static com.sun.max.vm.compiler.target.Stub.Type.*;
 import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
 import static com.sun.max.vm.t1x.T1XCompilation.*;
@@ -58,7 +59,6 @@ import com.sun.max.vm.profile.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.CalleeKind;
 import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.stack.amd64.*;
 import com.sun.max.vm.t1x.T1XTemplate.StopsBuilder;
@@ -579,50 +579,28 @@ public final class T1XTargetMethod extends TargetMethod {
     public void prepareReferenceMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer) {
         finalizeReferenceMaps();
 
-        CiCalleeSaveArea csa = null;
-        Pointer registerState = Pointer.zero();
-        CalleeKind calleeKind = callee.calleeKind();
-        switch (calleeKind) {
-            case NONE:
-                // 'current' is a T1X method trapped at a safepoint/implicit exception.
-                // The register save area in the trap stub frame will be processed
-                // when completing the stack reference map
-                assert preparer.completingReferenceMapLimit().isZero();
-                break;
-            case JAVA:
-                // Normal call - no registers need scanning
-                break;
-            case TRAMPOLINE:
+        CiCalleeSaveLayout csl = callee.csl();
+        Pointer csa = callee.csa();
+        TargetMethod calleeTM = callee.targetMethod();
+        if (calleeTM != null) {
+            Stub.Type st = calleeTM.stubType();
+            if (st == InterfaceTrampoline || st == VirtualTrampoline || st == InterfaceTrampoline) {
                 prepareTrampolineRefMap(current, preparer);
-                break;
-            case TRAP_STUB:
-                // The register state *is* the trap stub frame
-                registerState = callee.sp();
-                if (Trap.Number.isStackOverflow(registerState)) {
-                    // a method can never catch stack overflow for itself so there
-                    // is no need to scan the registers of the trapped method
-                    return;
-                }
-
-                assert callee.targetMethod().getRegisterConfig() == vm().registerConfigs.trapStub;
-                csa = callee.targetMethod().getRegisterConfig().getCalleeSaveArea();
-                break;
-            case CALLEE_SAVED:
-                FatalError.unexpected("T1X methods never directly calls callee-saved methods");
-                break;
-            case NATIVE:
-                FatalError.unexpected("T1X methods never directly calls native methods");
-                break;
+            } else if (calleeTM.is(TrapStub) && Trap.Number.isStackOverflow(csa)) {
+                // a method can never catch stack overflow for itself so there
+                // is no need to scan the references in the trapped method
+                return;
+            }
         }
 
         int stopIndex = findClosestStopIndex(current.ip());
         int refMapSize = refMapSize();
 
-        if (!registerState.isZero()) {
-            assert csa != null;
+        if (!csa.isZero()) {
+            assert csl != null;
             // the callee contains register state from this frame;
             // use register reference maps in this method to fill in the map for the callee
-            Pointer slotPointer = registerState;
+            Pointer slotPointer = csa;
             int byteIndex = (stopIndex * refMapSize) + frameRefMapSize;
             preparer.tracePrepareReferenceMap(this, stopIndex, slotPointer, "C1X registers frame");
             // Need to translate from register numbers (as stored in the reg ref maps) to frame slots.
@@ -631,10 +609,10 @@ public final class T1XTargetMethod extends TargetMethod {
                 int reg = i * 8;
                 while (b != 0) {
                     if ((b & 1) != 0) {
-                        int offset = csa.offsetOf(reg);
+                        int offset = csl.offsetOf(reg);
                         if (traceStackRootScanning()) {
                             Log.print("    register: ");
-                            Log.println(csa.registers[reg].name);
+                            Log.println(csl.registers[reg].name);
                         }
                         preparer.setReferenceMapBits(callee, slotPointer.plus(offset), 1, 1);
                     }
@@ -811,7 +789,7 @@ public final class T1XTargetMethod extends TargetMethod {
 
             // Rescue a return address that has been patched for deoptimization
             TargetMethod caller = sfw.targetMethodFor(callerIP);
-            if (caller != null && MaxineVM.vm().stubs.isDeoptStub(caller)) {
+            if (caller != null && caller.is(Stub.Type.DeoptStub)) {
                 Pointer originalReturnAddress = sfw.readWord(callerSP, DEOPT_RETURN_ADDRESS_OFFSET).asPointer();
                 callerIP = originalReturnAddress;
             }

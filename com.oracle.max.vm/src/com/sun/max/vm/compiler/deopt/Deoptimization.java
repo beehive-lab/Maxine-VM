@@ -287,17 +287,17 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
     protected void doAtSafepointBeforeBlocking(final Pointer trapState) {
         Safepoint.disable();
 
-        TrapStateAccess trapStateAccess = vm().trapStateAccess;
-        Pointer ip = trapStateAccess.getPC(trapState);
-        Pointer sp = trapStateAccess.getSP(trapState);
-        Pointer fp = trapStateAccess.getFP(trapState);
+        TrapFrameAccess tfa = vm().trapFrameAccess;
+        Pointer ip = tfa.getPC(trapState);
+        Pointer sp = tfa.getSP(trapState);
+        Pointer fp = tfa.getFP(trapState);
 
         Info info = new Info(VmThread.current(), ip, sp, fp, this);
 
         TargetMethod tm = info.tm;
         if (tm != null && methods.contains(tm)) {
-            Pointer rsa = trapStateAccess.getRegisterState(trapState);
-            deoptimize(info, vm().registerConfigs.trapStub.getCalleeSaveArea(), rsa, null);
+            Pointer csa = tfa.getCalleeSaveArea(trapState);
+            deoptimize(info, vm().registerConfigs.trapStub.getCalleeSaveLayout(), csa, null);
         }
     }
 
@@ -306,17 +306,22 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
      * in the top most deoptimized frame.
      *
      * @param info information about the optimized frame being deoptimized
-     * @param csa describes the layout of the register save area pointed to by {@code rsa}
-     * @param rsa the address of the register save area (may be null)
+     * @param csl the layout of the callee save area pointed to by {@code csa}
+     * @param csa the address of the callee save area (may be zero)
      * @param returnValue the value being returned. This will be {@code null} if returning from a void method
      *        or deoptimization is taking place at an uncommon trap or during exception unwinding
      */
-    private static void deoptimize(Info info, CiCalleeSaveArea csa, Pointer rsa, CiConstant returnValue) {
+    private static void deoptimize(Info info, CiCalleeSaveLayout csl, Pointer csa, CiConstant returnValue) {
         // Note: all stack related terminology in this method and its comments is logical, not physical.
         // That is, stacks grow "upwards" towards the "top most" frame. One most systems, this
         // correlates with stacks physically growing down to lower addresses.
 
         assert Safepoint.isDisabled() : "safepoints must be disabled when deoptimizing";
+
+        if (StackReferenceMapPreparer.VerifyRefMaps || TraceDeopt || DeoptimizeALot != 0) {
+            StackReferenceMapPreparer.verifyReferenceMapsForThisThread();
+            System.gc();
+        }
 
         TargetMethod tm = info.tm;
         Pointer sp = info.sp;
@@ -331,7 +336,7 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
             Log.println("DEOPT: " + tm + ", stopIndex=" + stopIndex + ", pos=" + tm.stopPosition(stopIndex));
         }
 
-        FrameAccess fa = new FrameAccess(csa, rsa, sp, fp, info.callerSP, info.callerFP);
+        FrameAccess fa = new FrameAccess(csl, csa, sp, fp, info.callerSP, info.callerFP);
         CiDebugInfo debugInfo = tm.debugInfoAt(stopIndex, fa);
         CiFrame topFrame = debugInfo.frame();
 
@@ -845,7 +850,7 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
      * @param sp the stack pointer of the frame executing the method
      * @param fp the frame pointer of the frame executing the method
      */
-    public static void uncommonTrap(Pointer rsa, Pointer ip, Pointer sp, Pointer fp) {
+    public static void uncommonTrap(Pointer csa, Pointer ip, Pointer sp, Pointer fp) {
         Safepoint.disable();
         Info info = new Info(VmThread.current(), ip, sp, fp, null);
 
@@ -855,9 +860,8 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
             new Throwable("DEOPT: Bytecode stack frames:").printStackTrace(Log.out);
         }
 
-        // The uncommon trap stub uses the 'globalStub' frame layout.
-        CiCalleeSaveArea csa = vm().registerConfigs.globalStub.getCalleeSaveArea();
-        deoptimize(info, csa, rsa, null);
+        CiCalleeSaveLayout csl = vm().registerConfigs.uncommonTrapStub.getCalleeSaveLayout();
+        deoptimize(info, csl, csa, null);
     }
 
     @NEVER_INLINE // makes inspecting easier

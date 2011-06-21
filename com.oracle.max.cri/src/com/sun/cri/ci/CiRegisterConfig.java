@@ -36,7 +36,7 @@ public class CiRegisterConfig implements RiRegisterConfig {
     /**
      * The object describing the callee save area of this register configuration.
      */
-    public CiCalleeSaveArea calleeSaveArea;
+    public CiCalleeSaveLayout csl;
 
     /**
      * The minimum register role identifier.
@@ -114,11 +114,11 @@ public class CiRegisterConfig implements RiRegisterConfig {
                     CiRegister[] allocatable,
                     CiRegister[] callerSave,
                     CiRegister[] parameters,
-                    CiCalleeSaveArea calleeSave,
+                    CiCalleeSaveLayout csl,
                     CiRegister[] allRegisters,
                     Map<Integer, CiRegister> roles) {
         this.frame = frame;
-        this.calleeSaveArea = calleeSave;
+        this.csl = csl;
         this.allocatable = allocatable;
         this.callerSave = callerSave;
         assert !Arrays.asList(allocatable).contains(scratch);
@@ -150,9 +150,9 @@ public class CiRegisterConfig implements RiRegisterConfig {
         minRole = minRoleId;
     }
 
-    public CiRegisterConfig(CiRegisterConfig src, CiCalleeSaveArea calleeSaveArea) {
+    public CiRegisterConfig(CiRegisterConfig src, CiCalleeSaveLayout csl) {
         this.frame = src.frame;
-        this.calleeSaveArea = calleeSaveArea;
+        this.csl = csl;
         this.allocatable = src.allocatable;
         this.callerSave = src.callerSave;
         this.scratch = src.scratch;
@@ -188,7 +188,7 @@ public class CiRegisterConfig implements RiRegisterConfig {
      * This implementation assigns all available registers to parameters before assigning
      * any stack slots to parameters.
      */
-    public CiCallingConvention getCallingConvention(Type type, CiKind[] parameters, CiTarget target) {
+    public CiCallingConvention getCallingConvention(Type type, CiKind[] parameters, CiTarget target, boolean stackOnly) {
         CiValue[] locations = new CiValue[parameters.length];
 
         int currentGeneral = 0;
@@ -211,7 +211,7 @@ public class CiRegisterConfig implements RiRegisterConfig {
                 case Long:
                 case Word:
                 case Object:
-                    if (currentGeneral < cpuParameters.length) {
+                    if (!stackOnly && currentGeneral < cpuParameters.length) {
                         CiRegister register = cpuParameters[currentGeneral++];
                         locations[i] = register.asValue(kind);
                     }
@@ -219,7 +219,7 @@ public class CiRegisterConfig implements RiRegisterConfig {
 
                 case Float:
                 case Double:
-                    if (currentXMM < fpuParameters.length) {
+                    if (!stackOnly && currentXMM < fpuParameters.length) {
                         CiRegister register = fpuParameters[currentXMM++];
                         locations[i] = register.asValue(kind);
                     }
@@ -258,8 +258,8 @@ public class CiRegisterConfig implements RiRegisterConfig {
         return callerSave;
     }
 
-    public CiCalleeSaveArea getCalleeSaveArea() {
-        return calleeSaveArea;
+    public CiCalleeSaveLayout getCalleeSaveLayout() {
+        return csl;
     }
 
     public RiRegisterAttributes[] getAttributesMap() {
@@ -292,7 +292,7 @@ public class CiRegisterConfig implements RiRegisterConfig {
         String res = String.format(
              "Allocatable: " + Arrays.toString(getAllocatableRegisters()) + "%n" +
              "CallerSave:  " + Arrays.toString(getCallerSaveRegisters()) + "%n" +
-             "CalleeSave:  " + getCalleeSaveArea() + "%n" +
+             "CalleeSave:  " + getCalleeSaveLayout() + "%n" +
              "CPU Params:  " + Arrays.toString(cpuParameters) + "%n" +
              "FPU Params:  " + Arrays.toString(fpuParameters) + "%n" +
              "VMRoles:     " + roleMap + "%n" +

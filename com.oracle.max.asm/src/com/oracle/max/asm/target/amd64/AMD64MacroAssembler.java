@@ -308,23 +308,23 @@ public class AMD64MacroAssembler extends AMD64Assembler {
     }
 
     /**
-     * Emit code to save a given set of callee save registers to the
-     * {@linkplain CiCalleeSaveArea CSA} within the frame.
-     * @param csa the description of the CSA
+     * Emit code to save a given set of callee save registers in the
+     * {@linkplain CiCalleeSaveLayout CSA} within the frame.
+     * @param csl the description of the CSA
      * @param frameToCSA offset from the frame pointer to the CSA
      */
-    public void save(CiCalleeSaveArea csa, int frameToCSA) {
+    public void save(CiCalleeSaveLayout csl, int frameToCSA) {
         CiRegisterValue frame = frameRegister.asValue();
-        for (CiRegister r : csa.registers) {
-            int offset = csa.offsetOf(r);
+        for (CiRegister r : csl.registers) {
+            int offset = csl.offsetOf(r);
             movq(new CiAddress(CiKind.Word, frame, frameToCSA + offset), r);
         }
     }
 
-    public void restore(CiCalleeSaveArea csa, int frameToCSA) {
+    public void restore(CiCalleeSaveLayout csl, int frameToCSA) {
         CiRegisterValue frame = frameRegister.asValue();
-        for (CiRegister r : csa.registers) {
-            int offset = csa.offsetOf(r);
+        for (CiRegister r : csl.registers) {
+            int offset = csl.offsetOf(r);
             movq(r, new CiAddress(CiKind.Word, frame, frameToCSA + offset));
         }
     }
