@@ -28,7 +28,6 @@ import com.sun.max.vm.actor.member.*;
 
 /**
  * Source frame visitor for building a stack trace.
- *
  */
 public class StackTraceVisitor extends SourceFrameVisitor {
     /**
@@ -37,6 +36,8 @@ public class StackTraceVisitor extends SourceFrameVisitor {
      * If this value is {@code null}, then the stack trace is not for an exception and no eliding is performed.
      */
     ClassActor exceptionClass;
+
+    boolean seenConstructor;
 
     /**
      * The maximum number of elements in the returned array or {@link Integer#MAX_VALUE} if the complete
@@ -57,10 +58,14 @@ public class StackTraceVisitor extends SourceFrameVisitor {
         }
         if (exceptionClass != null) {
             if (method.holder() == exceptionClass && method.isInstanceInitializer()) {
+                seenConstructor = true;
+                return true;
+            } else if (seenConstructor) {
                 // This will initiate filling the stack trace.
                 exceptionClass = null;
+            } else {
+                return true;
             }
-            return true;
         }
 
         // Undo effect of method substitution
