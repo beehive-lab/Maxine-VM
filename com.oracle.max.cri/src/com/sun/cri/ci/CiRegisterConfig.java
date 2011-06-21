@@ -194,9 +194,6 @@ public class CiRegisterConfig implements RiRegisterConfig {
         int currentGeneral = 0;
         int currentXMM = 0;
         int firstStackIndex = (stackArg0Offsets[type.ordinal()]) / target.spillSlotSize;
-        if (type == Type.NativeCall) {
-            firstStackIndex = 0;
-        }
         int currentStackIndex = firstStackIndex;
 
         for (int i = 0; i < parameters.length; i++) {

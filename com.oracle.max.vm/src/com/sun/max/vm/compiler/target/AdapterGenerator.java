@@ -31,7 +31,6 @@ import java.util.*;
 
 import com.oracle.max.asm.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.util.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
@@ -76,7 +75,7 @@ public abstract class AdapterGenerator {
     public static class Sig {
         public final CiKind[] kinds;
         public Sig(SignatureDescriptor signature, int receiver) {
-            kinds = CRIUtil.signatureToKinds(signature, receiver == 1 ? CiKind.Object : null);
+            kinds = CiUtil.signatureToKinds(signature, receiver == 1 ? CiKind.Object : null);
         }
         @Override
         public boolean equals(Object obj) {

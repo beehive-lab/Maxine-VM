@@ -33,7 +33,6 @@ import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiCallingConvention.Type;
 import com.sun.cri.ri.*;
-import com.sun.cri.util.*;
 
 /**
  * This class is used to build the stack frame layout for a compiled method.
@@ -143,7 +142,7 @@ public final class FrameMap {
             incomingArguments = new CiCallingConvention(new CiValue[0], 0);
         } else {
             CiKind receiver = !isStatic(method.accessFlags()) ? method.holder().kind() : null;
-            incomingArguments = getCallingConvention(CRIUtil.signatureToKinds(method.signature(), receiver), JavaCallee);
+            incomingArguments = getCallingConvention(CiUtil.signatureToKinds(method.signature(), receiver), JavaCallee);
         }
     }
 

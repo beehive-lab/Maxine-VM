@@ -542,11 +542,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
                 Pointer callerFP = cursor.fp();
 
                 // Rescue a return address that has been patched for deoptimization
-                TargetMethod caller = sfw.targetMethodFor(callerIP);
-                if (caller != null && caller.is(Stub.Type.DeoptStub)) {
-                    Pointer originalReturnAddress = sfw.readWord(callerSP, DEOPT_RETURN_ADDRESS_OFFSET).asPointer();
-                    callerIP = originalReturnAddress;
-                }
+                callerIP = AMD64TargetMethodUtil.rescuePatchedReturnAddress(sfw, callerIP, callerSP);
 
                 sfw.advance(callerIP, callerSP, callerFP, true);
             }

@@ -262,14 +262,30 @@ public final class AMD64TargetMethodUtil {
         }
 
         // Rescue a return address that has been patched for deoptimization
-        TargetMethod caller = sfw.targetMethodFor(callerIP);
-        if (caller != null && caller.is(DeoptStub)) {
-            Pointer originalReturnAddress = sfw.readWord(callerSP, DEOPT_RETURN_ADDRESS_OFFSET).asPointer();
-            callerIP = originalReturnAddress;
-        }
+        callerIP = rescuePatchedReturnAddress(sfw, callerIP, callerSP);
 
         current.setCalleeSaveArea(csl, csa);
         sfw.advance(callerIP, callerSP, callerFP, !targetMethod.is(TrapStub));
+    }
+
+    /**
+     * Gets the original return address for a method on the stack that may be deoptimized when it is returned to.
+     *
+     * @param callerIP the return address read from the "current" frame
+     * @param callerSP the stack pointer in the caller's frame
+     * @return the value of {@code callerIP} altered if necessary to "undo" the patching done for deoptimization
+     */
+    public static Pointer rescuePatchedReturnAddress(StackFrameWalker sfw, Pointer callerIP, Pointer callerSP) {
+        TargetMethod caller = sfw.targetMethodFor(callerIP);
+        if (caller != null && (caller.is(DeoptStub) || caller.is(DeoptStubFromCompilerStub))) {
+            if (callerIP.equals(caller.codeStart())) {
+                Pointer originalReturnAddress = sfw.readWord(callerSP, DEOPT_RETURN_ADDRESS_OFFSET).asPointer();
+                callerIP = originalReturnAddress;
+            } else {
+                // callerIP is a real return address to the frame of a deopt stub
+            }
+        }
+        return callerIP;
     }
 
     public static Pointer returnAddressPointer(Cursor frame) {
