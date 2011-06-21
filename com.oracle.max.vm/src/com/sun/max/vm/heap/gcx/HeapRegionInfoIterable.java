@@ -34,7 +34,9 @@ public final class HeapRegionInfoIterable extends HeapRegionListIterable  implem
 
     @Override
     public HeapRegionInfo next() {
-        return RegionTable.theRegionTable().regionInfo(cursor++);
+        HeapRegionInfo rinfo =  RegionTable.theRegionTable().regionInfo(cursor);
+        cursor = regionList.next(cursor);
+        return rinfo;
     }
 
     public void remove() {
