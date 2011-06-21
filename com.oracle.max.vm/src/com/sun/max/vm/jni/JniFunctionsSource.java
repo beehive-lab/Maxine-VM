@@ -435,7 +435,18 @@ public final class JniFunctionsSource {
         }
     }
 
-    private static Value CallValueMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
+    private static Value checkResult(Kind expectedReturnKind, final MethodActor methodActor, Value result) {
+        if (expectedReturnKind != result.kind()) {
+            Value zero = expectedReturnKind.zeroValue();
+            if (CheckJNI) {
+                Log.println("JNI warning: returning " + zero + " for " + expectedReturnKind + " call to " + methodActor);
+            }
+            result = zero;
+        }
+        return result;
+    }
+
+    private static Value CallValueMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments, Kind expectedReturnKind) throws Exception {
         final MethodActor methodActor = MethodID.toMethodActor(methodID);
         if (methodActor == null) {
             throw new NoSuchMethodException("Invalid method ID " + methodID.asAddress().toLong());
@@ -459,13 +470,13 @@ public final class JniFunctionsSource {
         argumentValues[0] = ReferenceValue.from(object.unhand());
         copyJValueArrayToValueArray(arguments, signature, argumentValues, 1);
         traceReflectiveInvocation(selectedMethod);
-        return selectedMethod.invoke(argumentValues);
+        return checkResult(expectedReturnKind, methodActor, selectedMethod.invoke(argumentValues));
 
     }
 
     @VM_ENTRY_POINT
     private static JniHandle CallObjectMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
-        return JniHandles.createLocalHandle(CallValueMethodA(env, object, methodID, arguments).asObject());
+        return JniHandles.createLocalHandle(CallValueMethodA(env, object, methodID, arguments, Kind.REFERENCE).asObject());
     }
 
     @VM_ENTRY_POINT
@@ -476,7 +487,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static boolean CallBooleanMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
-        return CallValueMethodA(env, object, methodID, arguments).asBoolean();
+        return CallValueMethodA(env, object, methodID, arguments, Kind.BOOLEAN).asBoolean();
     }
 
     @VM_ENTRY_POINT
@@ -487,7 +498,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static byte CallByteMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
-        return CallValueMethodA(env, object, methodID, arguments).asByte();
+        return CallValueMethodA(env, object, methodID, arguments, Kind.BYTE).asByte();
     }
 
     @VM_ENTRY_POINT
@@ -498,7 +509,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static char CallCharMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
-        return CallValueMethodA(env, object, methodID, arguments).asChar();
+        return CallValueMethodA(env, object, methodID, arguments, Kind.CHAR).asChar();
     }
 
     @VM_ENTRY_POINT
@@ -509,7 +520,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static short CallShortMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
-        return CallValueMethodA(env, object, methodID, arguments).asShort();
+        return CallValueMethodA(env, object, methodID, arguments, Kind.SHORT).asShort();
     }
 
     @VM_ENTRY_POINT
@@ -520,7 +531,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int CallIntMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
-        return CallValueMethodA(env, object, methodID, arguments).asInt();
+        return CallValueMethodA(env, object, methodID, arguments, Kind.INT).asInt();
     }
 
     @VM_ENTRY_POINT
@@ -531,7 +542,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static long CallLongMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
-        return CallValueMethodA(env, object, methodID, arguments).asLong();
+        return CallValueMethodA(env, object, methodID, arguments, Kind.LONG).asLong();
     }
 
     @VM_ENTRY_POINT
@@ -542,7 +553,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static float CallFloatMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
-        return CallValueMethodA(env, object, methodID, arguments).asFloat();
+        return CallValueMethodA(env, object, methodID, arguments, Kind.FLOAT).asFloat();
     }
 
     @VM_ENTRY_POINT
@@ -553,10 +564,10 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static double CallDoubleMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
-        return CallValueMethodA(env, object, methodID, arguments).asDouble();
+        return CallValueMethodA(env, object, methodID, arguments, Kind.DOUBLE).asDouble();
     }
 
-    private static Value CallNonvirtualValueMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
+    private static Value CallNonvirtualValueMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments, Kind expectedReturnKind) throws Exception {
         final ClassActor classActor = ClassActor.fromJava((Class) javaClass.unhand());
         if (!(classActor instanceof TupleClassActor)) {
             throw new NoSuchMethodException();
@@ -577,7 +588,7 @@ public final class JniFunctionsSource {
         argumentValues[0] = ReferenceValue.from(object.unhand());
         copyJValueArrayToValueArray(arguments, signature, argumentValues, 1);
         traceReflectiveInvocation(virtualMethodActor);
-        return virtualMethodActor.invoke(argumentValues);
+        return checkResult(expectedReturnKind, methodActor, virtualMethodActor.invoke(argumentValues));
     }
 
     @VM_ENTRY_POINT
@@ -588,7 +599,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static void CallVoidMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
-        CallValueMethodA(env, object, methodID, arguments);
+        CallValueMethodA(env, object, methodID, arguments, Kind.VOID);
     }
 
     @VM_ENTRY_POINT
@@ -599,7 +610,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static JniHandle CallNonvirtualObjectMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return JniHandles.createLocalHandle(CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asObject());
+        return JniHandles.createLocalHandle(CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments, Kind.REFERENCE).asObject());
     }
 
     @VM_ENTRY_POINT
@@ -610,7 +621,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static boolean CallNonvirtualBooleanMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asBoolean();
+        return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments, Kind.BOOLEAN).asBoolean();
     }
 
     @VM_ENTRY_POINT
@@ -621,7 +632,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static byte CallNonvirtualByteMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asByte();
+        return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments, Kind.BYTE).asByte();
     }
 
     @VM_ENTRY_POINT
@@ -632,7 +643,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static char CallNonvirtualCharMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asChar();
+        return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments, Kind.CHAR).asChar();
     }
 
     @VM_ENTRY_POINT
@@ -643,7 +654,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static short CallNonvirtualShortMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asShort();
+        return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments, Kind.SHORT).asShort();
     }
 
     @VM_ENTRY_POINT
@@ -654,7 +665,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int CallNonvirtualIntMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asInt();
+        return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments, Kind.INT).asInt();
     }
 
     @VM_ENTRY_POINT
@@ -665,7 +676,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static long CallNonvirtualLongMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asLong();
+        return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments, Kind.LONG).asLong();
     }
 
     @VM_ENTRY_POINT
@@ -676,7 +687,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static float CallNonvirtualFloatMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asFloat();
+        return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments, Kind.FLOAT).asFloat();
     }
 
     @VM_ENTRY_POINT
@@ -687,7 +698,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static double CallNonvirtualDoubleMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asDouble();
+        return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments, Kind.DOUBLE).asDouble();
     }
 
     @VM_ENTRY_POINT
@@ -698,7 +709,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static void CallNonvirtualVoidMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments);
+        CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments, Kind.VOID);
     }
 
     @VM_ENTRY_POINT
@@ -838,7 +849,7 @@ public final class JniFunctionsSource {
         }
     }
 
-    private static Value CallStaticValueMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
+    private static Value CallStaticValueMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments, Kind expectedReturnKind) throws Exception {
         final ClassActor classActor = ClassActor.fromJava((Class) javaClass.unhand());
         if (!(classActor instanceof TupleClassActor)) {
             throw new NoSuchMethodException(classActor + " is not a class with static methods");
@@ -859,7 +870,7 @@ public final class JniFunctionsSource {
         final Value[] argumentValues = new Value[signature.numberOfParameters()];
         copyJValueArrayToValueArray(arguments, signature, argumentValues, 0);
         traceReflectiveInvocation(methodActor);
-        return methodActor.invoke(argumentValues);
+        return checkResult(expectedReturnKind, methodActor, methodActor.invoke(argumentValues));
     }
 
     @VM_ENTRY_POINT
@@ -870,7 +881,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static JniHandle CallStaticObjectMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return JniHandles.createLocalHandle(CallStaticValueMethodA(env, javaClass, methodID, arguments).asObject());
+        return JniHandles.createLocalHandle(CallStaticValueMethodA(env, javaClass, methodID, arguments, Kind.REFERENCE).asObject());
     }
 
     @VM_ENTRY_POINT
@@ -881,7 +892,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static boolean CallStaticBooleanMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return CallStaticValueMethodA(env, javaClass, methodID, arguments).asBoolean();
+        return CallStaticValueMethodA(env, javaClass, methodID, arguments, Kind.BOOLEAN).asBoolean();
     }
 
     @VM_ENTRY_POINT
@@ -892,7 +903,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static byte CallStaticByteMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return CallStaticValueMethodA(env, javaClass, methodID, arguments).asByte();
+        return CallStaticValueMethodA(env, javaClass, methodID, arguments, Kind.BYTE).asByte();
     }
 
     @VM_ENTRY_POINT
@@ -903,7 +914,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static char CallStaticCharMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return CallStaticValueMethodA(env, javaClass, methodID, arguments).asChar();
+        return CallStaticValueMethodA(env, javaClass, methodID, arguments, Kind.CHAR).asChar();
     }
 
     @VM_ENTRY_POINT
@@ -914,7 +925,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static short CallStaticShortMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return CallStaticValueMethodA(env, javaClass, methodID, arguments).asShort();
+        return CallStaticValueMethodA(env, javaClass, methodID, arguments, Kind.SHORT).asShort();
     }
 
     @VM_ENTRY_POINT
@@ -925,7 +936,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int CallStaticIntMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return CallStaticValueMethodA(env, javaClass, methodID, arguments).asInt();
+        return CallStaticValueMethodA(env, javaClass, methodID, arguments, Kind.INT).asInt();
     }
 
     @VM_ENTRY_POINT
@@ -936,7 +947,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static long CallStaticLongMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return CallStaticValueMethodA(env, javaClass, methodID, arguments).asLong();
+        return CallStaticValueMethodA(env, javaClass, methodID, arguments, Kind.LONG).asLong();
     }
 
     @VM_ENTRY_POINT
@@ -947,7 +958,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static float CallStaticFloatMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return CallStaticValueMethodA(env, javaClass, methodID, arguments).asFloat();
+        return CallStaticValueMethodA(env, javaClass, methodID, arguments, Kind.FLOAT).asFloat();
     }
 
     @VM_ENTRY_POINT
@@ -958,7 +969,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static double CallStaticDoubleMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return CallStaticValueMethodA(env, javaClass, methodID, arguments).asDouble();
+        return CallStaticValueMethodA(env, javaClass, methodID, arguments, Kind.DOUBLE).asDouble();
     }
 
     @VM_ENTRY_POINT
@@ -969,7 +980,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static void CallStaticVoidMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        CallStaticValueMethodA(env, javaClass, methodID, arguments);
+        CallStaticValueMethodA(env, javaClass, methodID, arguments, Kind.VOID);
     }
 
     @VM_ENTRY_POINT
