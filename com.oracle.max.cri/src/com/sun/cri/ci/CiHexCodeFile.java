@@ -89,7 +89,7 @@ public class CiHexCodeFile {
     public static final Pattern SECTION = Pattern.compile("(\\S+)\\s+(.*)", Pattern.DOTALL);
     public static final Pattern COMMENT = Pattern.compile("(\\d+)\\s+(.*)", Pattern.DOTALL);
     public static final Pattern OPERAND_COMMENT = COMMENT;
-    public static final Pattern JUMP_TABLE = Pattern.compile("(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s*");
+    public static final Pattern JUMP_TABLE = Pattern.compile("(\\d+)\\s+(\\d+)\\s+(-{0,1}\\d+)\\s+(-{0,1}\\d+)\\s*");
     public static final Pattern LOOKUP_TABLE = Pattern.compile("(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s*");
     public static final Pattern HEX_CODE = Pattern.compile("(\\p{XDigit}+)\\s+(\\p{XDigit}+)");
     public static final Pattern PLATFORM = Pattern.compile("(\\S+)\\s+(\\S+)", Pattern.DOTALL);
