@@ -278,20 +278,33 @@ public class HeapRegionInfo {
         return RegionTable.theRegionTable().regionAddress(this);
     }
 
-    final void setFull() {
-        flags = FULL_REGION;
+    /**
+     * Change heap region to full state (iterable, not allocating and without free chunks).
+     */
+    final void toFullState() {
+        flags = IS_ITERABLE.or(HAS_FREE_CHUNK.clear(IS_ALLOCATING.clear(flags)));
     }
 
-    final void setAllocating() {
+    /**
+     * Change heap region to allocating state (not iterable, backing an allocator).
+     */
+    final void toAllocatingState() {
         flags = IS_ALLOCATING.or(IS_ITERABLE.clear(flags));
     }
 
-    final void setIterable() {
+    /**
+     * Change heap region to iterable state (not backing an allocator an allocator).
+     */
+    final void toIterable() {
         flags = IS_ITERABLE.and(IS_ALLOCATING.clear(flags));
     }
 
     final void setEmpty() {
         flags = EMPTY_REGION;
+    }
+
+    final void setFull() {
+        flags = FULL_REGION;
     }
 
     final void setLargeBody() {

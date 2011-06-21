@@ -30,6 +30,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 /**
@@ -41,6 +42,10 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
      */
     private static final OutOfMemoryError outOfMemoryError = new OutOfMemoryError();
 
+    static boolean DebugMSE = false;
+    static {
+        VMOptions.addFieldOption("-XX:", "DebugMSE", FirstFitMarkSweepHeap.class, "Debug FirstFitMarkSweepHeap", Phase.PRISTINE);
+    }
     /**
      * Heap account tracking the pool of regions allocated to this heap.
      */
@@ -119,7 +124,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
     }
 
     private Pointer allocateSingleRegionLargeObject(HeapRegionInfo rinfo, Pointer allocated, Size requestedSize, Size totalChunkSize) {
-        final boolean traceAllocateLarge = MaxineVM.isDebug() && true;
+        final boolean traceAllocateLarge = MaxineVM.isDebug() && DebugMSE;
         final int regionID = rinfo.toRegionID();
         allocationRegions.remove(regionID);
         Pointer leftover = allocated.plus(requestedSize);
@@ -157,7 +162,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         final int extraRegion = tailSize.greaterThan(0) && tailSize.lessThan(HeapSchemeAdaptor.MIN_OBJECT_SIZE)  ? 1 : 0;
         int numContiguousRegionNeeded = roundedUpSize.unsignedShiftedRight(log2RegionSizeInBytes).toInt() + extraRegion;
 
-        final boolean traceAllocateLarge = MaxineVM.isDebug() && true;
+        final boolean traceAllocateLarge = MaxineVM.isDebug() && DebugMSE;
         if (traceAllocateLarge) {
             Log.print("requesting #");
             Log.print(numContiguousRegionNeeded);
@@ -349,7 +354,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                 FatalError.check(regionInfo != null, "must never be null");
                 nextFreeChunkInRegion = regionInfo.firstFreeBytes();
                 if (regionInfo.hasFreeChunks()) {
-                    if (MaxineVM.isDebug()) {
+                    if (MaxineVM.isDebug() && DebugMSE) {
                         final boolean lockDisabledSafepoints = Log.lock();
                         Log.print("changing allocation region to region ");
                         Log.print(currentTLABAllocatingRegion);
@@ -428,7 +433,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                 FatalError.check(regionStart(end).lessEqual(start), "space left must be in the same regions");
             }
             HeapSchemeAdaptor.fillWithDeadObject(start, end);
-            theRegionTable().regionInfo(start).setIterable();
+            theRegionTable().regionInfo(start).toIterable();
             currentTLABAllocatingRegion = INVALID_REGION_ID;
             nextFreeChunkInRegion = Address.zero();
             freeSpace = Size.zero();
@@ -443,7 +448,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         synchronized (heapLock()) {
             int gcCount = 0;
             // No more free chunk in this region.
-            fromRegionID(currentTLABAllocatingRegion).setFull();
+            fromRegionID(currentTLABAllocatingRegion).toFullState();
             do {
                 HeapRegionList regionList = tlabAllocationRegions.isEmpty() ? allocationRegions : tlabAllocationRegions;
 
@@ -451,7 +456,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                 if (currentTLABAllocatingRegion != INVALID_REGION_ID) {
                     final HeapRegionInfo regionInfo = fromRegionID(currentTLABAllocatingRegion);
                     final int numFreeBytes = regionInfo.isEmpty() ?  regionSizeInBytes : regionInfo.freeBytesInChunks();
-                    if (MaxineVM.isDebug() && true) {
+                    if (MaxineVM.isDebug() && DebugMSE) {
                         Log.print("changeAllocatingRegion: ");
                         Log.print(currentTLABAllocatingRegion);
                         Log.print(" ( ");
@@ -461,7 +466,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                         Log.println(")");
                     }
                     allocationRegionsFreeSpace = allocationRegionsFreeSpace.minus(numFreeBytes);
-                    regionInfo.setAllocating();
+                    regionInfo.toAllocatingState();
                     return regionInfo;
                 }
 
@@ -497,7 +502,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
     private Address overflowRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
         final int minFreeWords = minOverflowRefillSize.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
         int gcCount = 0;
-        final boolean traceOverflowRefill =  MaxineVM.isDebug() && true;
+        final boolean traceOverflowRefill =  MaxineVM.isDebug() && DebugMSE;
         synchronized (heapLock()) {
             if (currentOverflowAllocatingRegion != INVALID_REGION_ID) {
                 final HeapRegionInfo regionInfo = fromRegionID(currentOverflowAllocatingRegion);
@@ -556,7 +561,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                         Log.println(currentOverflowAllocatingRegion);
                     }
                     allocationRegions.remove(currentOverflowAllocatingRegion);
-                    regionInfo.setAllocating();
+                    regionInfo.toAllocatingState();
                     return refill;
                 }
 
@@ -635,7 +640,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         // Initialize TLAB allocator with first region.
         currentTLABAllocatingRegion = allocationRegions.removeHead();
         final HeapRegionInfo regionInfo = fromRegionID(currentTLABAllocatingRegion);
-        regionInfo.setAllocating();
+        regionInfo.toAllocatingState();
         final Size allocatorsHeadroom = HeapSchemeAdaptor.MIN_OBJECT_SIZE;
         tlabAllocator.initialize(regionInfo.firstFreeBytes(), regionSize, regionSize, allocatorsHeadroom);
         overflowAllocator.initialize(Address.zero(), Size.zero(), allocatorsHeadroom);
@@ -690,7 +695,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
     @Override
     public Size freeSpace() {
         // TODO: temp trace. Remove me
-        if (Heap.verbose()) {
+        if (DebugMSE) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("allocationRegionsFreeSpace = ");
             Log.print(allocationRegionsFreeSpace.toInt());
