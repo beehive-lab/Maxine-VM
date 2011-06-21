@@ -64,7 +64,11 @@ public class Stub extends TargetMethod {
         StaticTrampoline,
 
         /**
-         * A compiler stub.
+         * A stub that performs an operation on behalf of compiled code.
+         * These stubs are called with a callee-save convention; the stub must save any
+         * registers it may destroy and then restore them upon return. This allows the register
+         * allocator to ignore calls to such stubs. Parameters to compiler stubs are
+         * passed on the stack in order to preserve registers for the rest of the code.
          */
         CompilerStub,
 
@@ -74,7 +78,19 @@ public class Stub extends TargetMethod {
 
         UncommonTrapStub,
 
+        /**
+         * Transition when returning from a normal call to a method being deoptimized.
+         */
         DeoptStub,
+
+        /**
+         * Transition when returning from a compiler stub call to a method being deoptimized.
+         * This stub saves all registers (as a compiler stub call has callee save sematics)
+         * and retrieves the return value from the stack.
+         *
+         * @see #CompilerStub
+         */
+        DeoptStubFromCompilerStub,
 
         /**
          * The trap stub.
@@ -124,6 +140,7 @@ public class Stub extends TargetMethod {
     public CiCalleeSaveLayout calleeSaveLayout() {
         final RegisterConfigs rc = vm().registerConfigs;
         switch (type) {
+            case DeoptStubFromCompilerStub:
             case CompilerStub:
                 return rc.compilerStub.csl;
             case VirtualTrampoline:

@@ -67,12 +67,7 @@ public class RegisterConfigs {
     public final CiRegisterConfig bytecodeTemplate;
 
     /**
-     * The register configuration for compiling a stub that performs an operation on behalf of compiled code.
-     * Typically the routine is too large to inline, is infrequent, or requires runtime support.
-     * These stubs are called with a callee-save convention; the stub must save any
-     * registers it may destroy and then restore them upon return. This allows the register
-     * allocator to ignore calls to such stubs. Parameters to compiler stubs are
-     * passed on the stack in order to preserve registers for the rest of the code.
+     * The register configuration for a {@link Stub.Type#CompilerStub compiler stub}.
      */
     public final CiRegisterConfig compilerStub;
 

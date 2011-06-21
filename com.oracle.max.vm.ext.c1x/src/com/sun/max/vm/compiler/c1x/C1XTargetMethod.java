@@ -559,7 +559,7 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
                 // except that the stack is empty (the exception object is explicitly retrieved and pushed by
                 // the handler in the deoptimized code).
                 current.sp().writeWord(DEOPT_RETURN_ADDRESS_OFFSET, ip);
-                Stub stub = vm().stubs.deoptStub(CiKind.Void);
+                Stub stub = vm().stubs.deoptStub(CiKind.Void, false);
                 Pointer deoptStub = stub.codeStart().asPointer();
                 if (Deoptimization.TraceDeopt) {
                     Log.println("DEOPT: changed exception handler address " + catchAddress.to0xHexString() + " in " + this + " to redirect to deopt stub " +

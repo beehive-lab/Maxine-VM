@@ -38,7 +38,6 @@ import java.util.*;
 import com.oracle.max.asm.target.amd64.*;
 import com.sun.cri.bytecode.Bytecodes.Infopoints;
 import com.sun.cri.ci.*;
-import com.sun.cri.util.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
@@ -90,6 +89,11 @@ public class Stubs {
      */
     private final Stub[] deoptStubs = new Stub[CiKind.VALUES.length];
 
+    /**
+     * The deopt stub per return value kind for deoptimizing upon returning from a compiler stub.
+     */
+    private final Stub[] deoptStubsForCompilerStubs = new Stub[CiKind.VALUES.length];
+
     private CriticalMethod resolveVirtualCall;
     private CriticalMethod resolveInterfaceCall;
     private CiValue[] resolveVirtualCallArgs;
@@ -118,8 +122,14 @@ public class Stubs {
 
     /**
      * Gets the deoptimization stub for a given return value kind.
+     *
+     * @param fromCompilerStub specifies if the requested deopt stub is for use when patching a return from a
+     *            {@linkplain Stub.Type#CompilerStub compiler stub}. Compiler stubs return values via the stack.
      */
-    public Stub deoptStub(CiKind returnValueKind) {
+    public Stub deoptStub(CiKind returnValueKind, boolean fromCompilerStub) {
+        if (fromCompilerStub) {
+            return deoptStubsForCompilerStubs[returnValueKind.stackKind().ordinal()];
+        }
         return deoptStubs[returnValueKind.stackKind().ordinal()];
     }
 
@@ -140,19 +150,20 @@ public class Stubs {
                 resolveVirtualCall = new CriticalMethod(Stubs.class, "resolveVirtualCall", null);
                 resolveInterfaceCall = new CriticalMethod(Stubs.class, "resolveInterfaceCall", null);
                 resolveVirtualCallArgs = registerConfigs.trampoline.getCallingConvention(JavaCall,
-                                CRIUtil.signatureToKinds(resolveVirtualCall.classMethodActor.signature(), CiKind.Object), target(), false).locations;
+                                CiUtil.signatureToKinds(resolveVirtualCall.classMethodActor.signature(), CiKind.Object), target(), false).locations;
                 resolveInterfaceCallArgs = registerConfigs.trampoline.getCallingConvention(JavaCall,
-                                CRIUtil.signatureToKinds(resolveInterfaceCall.classMethodActor.signature(), CiKind.Object), target(), false).locations;
+                                CiUtil.signatureToKinds(resolveInterfaceCall.classMethodActor.signature(), CiKind.Object), target(), false).locations;
                 staticTrampoline = genStaticTrampoline();
                 trapStub = genTrapStub();
 
                 CriticalMethod unroll = new CriticalMethod(Stubs.class, "unroll", null);
                 CiValue[] unrollArgs = registerConfigs.standard.getCallingConvention(JavaCall,
-                                CRIUtil.signatureToKinds(unroll.classMethodActor.signature(), null), target(), false).locations;
+                                CiUtil.signatureToKinds(unroll.classMethodActor.signature(), null), target(), false).locations;
                 unroll.classMethodActor.targetState = genUnroll(unrollArgs);
 
                 for (CiKind kind : CiKind.VALUES) {
                     deoptStubs[kind.ordinal()] = genDeoptStub(kind);
+                    deoptStubsForCompilerStubs[kind.ordinal()] = genDeoptStubFromCompilerStub(kind);
 
                     String name = "unwind";
                     if (!kind.isVoid()) {
@@ -161,7 +172,7 @@ public class Stubs {
                     try {
                         CriticalMethod unwind = new CriticalMethod(Stubs.class, name, null);
                         CiValue[] unwindArgs = registerConfigs.standard.getCallingConvention(JavaCall,
-                                        CRIUtil.signatureToKinds(unwind.classMethodActor.signature(), null), target(), false).locations;
+                                        CiUtil.signatureToKinds(unwind.classMethodActor.signature(), null), target(), false).locations;
                         unwind.classMethodActor.targetState = genUnwind(unwindArgs);
                     } catch (NoSuchMethodError e) {
                         // No unwind method for this kind
@@ -363,7 +374,7 @@ public class Stubs {
             asm.save(csl, frameToCSA);
 
             CriticalMethod patchStaticTrampoline = new CriticalMethod(Stubs.class, "patchStaticTrampolineCallSiteAMD64", null);
-            CiKind[] trampolineParameters = {CiKind.Object};
+            CiKind[] trampolineParameters = CiUtil.signatureToKinds(patchStaticTrampoline.classMethodActor.signature(), null);
             CiValue[] locations = registerConfig.getCallingConvention(JavaCall, trampolineParameters, target(), false).locations;
 
             // load the static trampoline call site into the first parameter register
@@ -425,7 +436,7 @@ public class Stubs {
             CiRegister scratch = registerConfig.getScratchRegister();
             int frameSize = platform().target.alignFrameSize(csl.size);
             int frameToCSA = csl.frameOffsetToCSA;
-            CiKind[] handleTrapParameters = CRIUtil.signatureToKinds(Trap.handleTrap.classMethodActor.signature(), null);
+            CiKind[] handleTrapParameters = CiUtil.signatureToKinds(Trap.handleTrap.classMethodActor.signature(), null);
             CiValue[] args = registerConfig.getCallingConvention(JavaCallee, handleTrapParameters, target(), false).locations;
 
             // the very first instruction must save the flags.
@@ -440,7 +451,7 @@ public class Stubs {
             asm.save(csl, frameToCSA);
 
             // Now that we have saved all general purpose registers (including the scratch register),
-            // store the value of the latch register from the thread locals into the trap state
+            // store the value of the latch register from the thread locals into the trap frame
             asm.movq(scratch, new CiAddress(CiKind.Word, latch.asValue(), TRAP_LATCH_REGISTER.offset));
             asm.movq(new CiAddress(CiKind.Word, AMD64.rsp.asValue(), frameToCSA + csl.offsetOf(latch)), scratch);
 
@@ -451,7 +462,7 @@ public class Stubs {
 
             // load the trap number from the thread locals into the first parameter register
             asm.movq(args[0].asRegister(), new CiAddress(CiKind.Word, latch.asValue(), TRAP_NUMBER.offset));
-            // also save the trap number into the trap state
+            // also save the trap number into the trap frame
             asm.movq(new CiAddress(CiKind.Word, AMD64.rsp.asValue(), frameToCSA + AMD64TrapFrameAccess.TRAP_NUMBER_OFFSET), args[0].asRegister());
             // load the trap frame pointer into the second parameter register
             asm.leaq(args[1].asRegister(), new CiAddress(CiKind.Word, AMD64.rsp.asValue(), frameToCSA));
@@ -559,7 +570,7 @@ public class Stubs {
                         asm.movdbl(registerConfig.getReturnRegister(CiKind.Double), reg);
                         break;
                     default:
-                        FatalError.unexpected("unexpecte kind: " + kind);
+                        FatalError.unexpected("unexpected kind: " + kind);
                 }
             }
 
@@ -660,6 +671,13 @@ public class Stubs {
         }
     }
 
+    /**
+     * Generates a stub to deoptimize an method upon returning to it.
+     *
+     * @param kind the return value kind
+     * @param fromCompilerStub specifies if the requested deopt stub is for use when patching a return from a
+     *            {@linkplain Stub.Type#CompilerStub compiler stub}. Compiler stubs return values via the stack.
+     */
     @HOSTED_ONLY
     private Stub genDeoptStub(CiKind kind) {
         if (platform().isa == ISA.AMD64) {
@@ -669,7 +687,7 @@ public class Stubs {
              * routine via "returning" to it. As execution enters the deopt routine, the stack looks like
              * the about-to-be-deoptimized frame called the deopt routine directly.
              *
-             * [ mov  rcx, rax ]                               // copy return value into arg3 (omitted for void/float/double values)
+             * [ mov  rcx, rax ]                               // if non-void return value, copy it into arg3 (omitted for void/float/double values)
              *   mov  rdi [rsp + DEOPT_RETURN_ADDRESS_OFFSET]  // copy deopt IP into arg0
              *   mov  rsi, rsp                                 // copy deopt SP into arg1
              *   mov  rdx, rbp                                 // copy deopt FP into arg2
@@ -680,35 +698,37 @@ public class Stubs {
              *   ret                                           // call deopt method by "returning" to it
              */
             CiRegisterConfig registerConfig = registerConfigs.standard;
+            CiCalleeSaveLayout csl = registerConfig.csl;
             AMD64MacroAssembler asm = new AMD64MacroAssembler(target(), registerConfig);
-            int frameSize = platform().target.alignFrameSize(0);
+            int frameSize = platform().target.alignFrameSize(csl == null ? 0 : csl.size);
 
-            String name = "deoptimize" + kind.name();
+            String runtimeRoutineName = "deoptimize" + kind.name();
             final CriticalMethod runtimeRoutine;
             try {
-                runtimeRoutine = new CriticalMethod(Deoptimization.class, name, null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+                runtimeRoutine = new CriticalMethod(Deoptimization.class, runtimeRoutineName, null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
             } catch (NoSuchMethodError e) {
                 // No deoptimization stub for kind
                 return null;
             }
 
+            CiKind[] params = CiUtil.signatureToKinds(runtimeRoutine.classMethodActor.signature(), null);
             CiValue[] args;
             if (!kind.isVoid()) {
-                args = registerConfig.getCallingConvention(JavaCall, new CiKind[] {CiKind.Word, CiKind.Word, CiKind.Word, kind}, target(), false).locations;
-                // Copy return value into arg 3
+                args = registerConfig.getCallingConvention(JavaCall, params, target(), false).locations;
+                // Copy return value into arg 4
+                CiRegister arg4 = args[4].asRegister();
                 CiRegister returnRegister = registerConfig.getReturnRegister(kind);
-                CiRegister arg3 = args[3].asRegister();
-                if (arg3 != returnRegister) {
+                if (arg4 != returnRegister) {
                     if (kind.isFloat()) {
-                        asm.movflt(arg3, returnRegister);
+                        asm.movflt(arg4, returnRegister);
                     } else if (kind.isDouble()) {
-                        asm.movdbl(arg3, returnRegister);
+                        asm.movdbl(arg4, returnRegister);
                     } else {
-                        asm.movq(arg3, returnRegister);
+                        asm.movq(arg4, returnRegister);
                     }
                 }
             } else {
-                args = registerConfig.getCallingConvention(JavaCall, new CiKind[] {CiKind.Word, CiKind.Word, CiKind.Word}, target(), false).locations;
+                args = registerConfig.getCallingConvention(JavaCall, params, target(), false).locations;
             }
 
             // Copy original return address into arg 0 (i.e. 'ip')
@@ -722,6 +742,10 @@ public class Stubs {
             // Copy original frame pointer into arg 2 (i.e. 'sp')
             CiRegister arg2 = args[2].asRegister();
             asm.movq(arg2, AMD64.rbp);
+
+            // Zero arg 3 (i.e. 'csa')
+            CiRegister arg3 = args[3].asRegister();
+            asm.xorq(arg3, arg3);
 
             // Allocate 2 extra stack slots
             asm.subq(AMD64.rsp, 16);
@@ -738,7 +762,7 @@ public class Stubs {
             // "return" to deopt routine
             asm.ret(0);
 
-            String stubName = name + "Stub";
+            String stubName = runtimeRoutineName + "Stub";
             byte[] code = asm.codeBuffer.close(true);
             final Stub stub = new Stub(DeoptStub, stubName, frameSize, code, -1, null, -1);
 
@@ -747,6 +771,101 @@ public class Stubs {
             runtimeInits[runtimeInits.length - 1] = patch;
 
             return stub;
+        }
+        throw FatalError.unimplemented();
+    }
+
+    @HOSTED_ONLY
+    private Stub genDeoptStubFromCompilerStub(CiKind kind) {
+        if (platform().isa == ISA.AMD64) {
+            /*
+             * The deopt stub initially executes in the frame of the method that was returned to (i.e. the method about to be
+             * deoptimized). It then allocates a new frame, saves all registers, sets up args to deopt routine
+             * and calls it.
+             *
+             *   subq rsp <frame size>                         // allocate frame
+             *   mov  [rsp], rax                               // save ...
+             *   mov  [rsp + 8], rcx                           //   all ...
+             *   ...                                           //     the ...
+             *   movq [rsp + 248], xmm15                       //       registers
+             * { mov  rdx/xmm0, [rsp + <cfo> + 8] }            // if non-void return value, copy it from stack into arg4 (or xmm0)
+             *   mov  rdi  [rsp + <cfo> + DEOPT_RETURN_ADDRESS_OFFSET]  // copy deopt IP into arg0
+             *   lea  rsi, [rsp + <cfo>]                       // copy deopt SP into arg1
+             *   mov  rdx, rbp                                 // copy deopt FP into arg2
+             *   mov  rcx, rbp                                 // copy callee save area into arg3
+             *   mov  [rsp + <frame size>], rdi                // restore deopt IP (i.e. original return address) into return address slot
+             *   call <deopt routine>                          // call deoptimization routine
+             *   int3                                          // should not reach here
+             */
+            CiRegisterConfig registerConfig = registerConfigs.compilerStub;
+            CiCalleeSaveLayout csl = registerConfig.csl;
+            AMD64MacroAssembler asm = new AMD64MacroAssembler(target(), registerConfig);
+            int frameSize = platform().target.alignFrameSize(csl.size);
+            int cfo = frameSize + 8; // Caller frame offset
+
+            String runtimeRoutineName = "deoptimize" + kind.name();
+            final CriticalMethod runtimeRoutine;
+            try {
+                runtimeRoutine = new CriticalMethod(Deoptimization.class, runtimeRoutineName, null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+            } catch (NoSuchMethodError e) {
+                // No deoptimization stub for kind
+                return null;
+            }
+
+            // now allocate the frame for this method (including return address slot)
+            asm.subq(AMD64.rsp, frameSize + 8);
+
+            // save all the callee save registers
+            asm.save(csl, csl.frameOffsetToCSA);
+
+            CiKind[] params = CiUtil.signatureToKinds(runtimeRoutine.classMethodActor.signature(), null);
+            CiValue[] args;
+            if (!kind.isVoid()) {
+                args = registerConfig.getCallingConvention(JavaCall, params, target(), false).locations;
+                // Copy return value into arg 4
+                CiRegister arg4 = args[4].asRegister();
+                CiStackSlot ss = (CiStackSlot) registerConfigs.compilerStub.getCallingConvention(JavaCall, new CiKind[] {kind}, target(), true).locations[0];
+                assert ss.index() == 1 : "compiler stub return value slot index has changed?";
+                CiAddress src = new CiAddress(kind, AMD64.RSP, cfo + (ss.index() * 8));
+                if (kind.isFloat()) {
+                    asm.movflt(arg4, src);
+                } else if (kind.isDouble()) {
+                    asm.movdbl(arg4, src);
+                } else {
+                    asm.movq(arg4, src);
+                }
+            } else {
+                args = registerConfig.getCallingConvention(JavaCall, params, target(), false).locations;
+            }
+
+
+            // Copy original return address into arg 0 (i.e. 'ip')
+            CiRegister arg0 = args[0].asRegister();
+            asm.movq(arg0, new CiAddress(CiKind.Word, AMD64.RSP, cfo + DEOPT_RETURN_ADDRESS_OFFSET));
+
+            // Copy original stack pointer into arg 1 (i.e. 'sp')
+            CiRegister arg1 = args[1].asRegister();
+            asm.leaq(arg1, new CiAddress(CiKind.Word, AMD64.RSP, cfo));
+
+            // Copy original frame pointer into arg 2 (i.e. 'sp')
+            CiRegister arg2 = args[2].asRegister();
+            asm.movq(arg2, AMD64.rbp);
+
+            // Copy callee save area into arg4 (i.e. 'csa')
+            CiRegister arg3 = args[3].asRegister();
+            asm.movq(arg3, AMD64.rsp);
+
+            // Call runtime routine
+            asm.alignCall();
+            int callPosition = asm.codeBuffer.position();
+            asm.call();
+
+            // should never reach here
+            asm.int3();
+
+            String stubName = runtimeRoutineName + "StubFromCompilerStub";
+            byte[] code = asm.codeBuffer.close(true);
+            return new Stub(DeoptStubFromCompilerStub, stubName, frameSize, code, callPosition, runtimeRoutine.classMethodActor, -1);
         }
         throw FatalError.unimplemented();
     }

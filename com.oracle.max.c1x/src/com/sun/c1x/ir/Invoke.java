@@ -26,7 +26,6 @@ import com.sun.c1x.debug.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
-import com.sun.cri.util.*;
 
 /**
  * The {@code Invoke} instruction represents all kinds of method calls.
@@ -145,7 +144,7 @@ public final class Invoke extends StateSplit {
 
     public CiKind[] signature() {
         CiKind receiver = isStatic() ? null : target.holder().kind();
-        return CRIUtil.signatureToKinds(target.signature(), receiver);
+        return CiUtil.signatureToKinds(target.signature(), receiver);
     }
 
     @Override
