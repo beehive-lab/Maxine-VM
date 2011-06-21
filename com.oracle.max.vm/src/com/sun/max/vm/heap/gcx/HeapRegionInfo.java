@@ -191,12 +191,21 @@ public class HeapRegionInfo {
         return regionSizeInWords - (liveData + freeSpace);
     }
 
-    public final int freeWords() {
+    public final int freeWordsInChunks() {
         return freeSpace;
     }
 
-    public final int freeBytes() {
+    /**
+     * Total number of free bytes in free chunks. This is only relevant for region with at least one free chunk.
+     * Empty regions have a free bytes count of zero.
+     * @return
+     */
+    public final int freeBytesInChunks() {
         return freeSpace << Word.widthValue().log2numberOfBytes;
+    }
+
+    public final int freeBytes() {
+        return isEmpty() ?  regionSizeInBytes : freeBytesInChunks();
     }
 
     public final int liveBytes() {
@@ -237,11 +246,7 @@ public class HeapRegionInfo {
         if (numFreeChunks > 0) {
             if (enumerateFreeChunks) {
                 Log.print("free chunks: ");
-                HeapFreeChunk c = HeapFreeChunk.toHeapFreeChunk(firstFreeBytes());
-                do {
-                    c.dump();
-                    c = c.next;
-                } while(c != null);
+                HeapFreeChunk.dumpList(HeapFreeChunk.toHeapFreeChunk(firstFreeBytes()));
             } else {
                 Log.print("first free chunk");
                 Log.print(firstFreeBytes());
@@ -327,6 +332,7 @@ public class HeapRegionInfo {
         flags = EMPTY_REGION;
         liveData = 0;
         numFreeChunks  = 0;
+        firstFreeChunkIndex = 0;
         freeSpace = 0;
     }
 
