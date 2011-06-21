@@ -31,6 +31,7 @@ import java.util.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.bytecode.Bytes;
 import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.io.*;
@@ -84,7 +85,8 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
     private static final MachineCodeLocation[] EMPTY_MACHINE_CODE_LOCATIONS = {};
     private static final CodeStopKind[] EMPTY_CODE_STOP_KINDS = {};
     private static final CiDebugInfo[] EMPTY_DEBUG_INFO_MAP = {};
-    private static final int[] EMPTY_INT_ARRAY = new int[0];
+    private static final int[] EMPTY_INT_ARRAY = {};
+    private static final RiMethod[] EMPTY_METHOD_ARRAY = {};
     private static final List<Integer> EMPTY_INTEGER_LIST = Collections.emptyList();
 
     /**
@@ -258,7 +260,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
         /**
          * Map: target instruction index -> constant pool index of {@Link MethodRefConstant} if this is a call instruction; else -1.
          */
-        private final int[] indexToCalleeCPIndex;
+        private final RiMethod[] indexToCallee;
 
         /**
          * Unmodifiable list of indexes for instructions that are labeled.
@@ -296,7 +298,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
                 this.indexToCodeStopKind = EMPTY_CODE_STOP_KINDS;
                 this.indexToDebugInfoMap = EMPTY_DEBUG_INFO_MAP;
                 this.indexToOpcode = EMPTY_INT_ARRAY;
-                this.indexToCalleeCPIndex = EMPTY_INT_ARRAY;
+                this.indexToCallee = EMPTY_METHOD_ARRAY;
                 this.labelIndexes = EMPTY_INTEGER_LIST;
             } else {
                 // The size of the compilation's machine code in bytes.
@@ -395,7 +397,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
                             posToDebugInfoMap[pos] = new CiDebugInfo(frame, null, null);
                             do {
                                 ++bci;
-                            } while (bci < bciToPosMap.length && bciToPosMap[bci] == 0);
+                            } while (bci < bciToPosMap.length && (bciToPosMap[bci] == 0 || bciToPosMap[bci] == pos));
                         }
                     }
                 }
@@ -406,8 +408,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
                 indexToDebugInfoMap = new CiDebugInfo[instructionCount];
                 indexToOpcode = new int[instructionCount];
                 Arrays.fill(indexToOpcode, -1);
-                indexToCalleeCPIndex = new int[instructionCount];
-                Arrays.fill(indexToCalleeCPIndex, -1);
+                indexToCallee = new RiMethod[instructionCount];
 
                 // Also build list of instruction indices where there are labels
                 final List<Integer> labels = new ArrayList<Integer>();
@@ -441,8 +442,9 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
                             CiDebugInfo info = indexToDebugInfoMap[instructionIndex];
                             final CiCodePos codePos = info == null ? null : info.codePos;
                             // TODO (mlvdv) only works for non-inlined calls
-                            if (codePos != null && codePos.method.equals(classMethodActor()) && codePos.bci >= 0) {
-                                indexToCalleeCPIndex[instructionIndex] = findCalleeCPIndex(bytecodes, codePos.bci);
+                            if (codePos != null && codePos.bci >= 0) {
+                                ClassMethodActor method = (ClassMethodActor) codePos.method;
+                                indexToCallee[instructionIndex] =  method.codeAttribute().calleeAt(codePos.bci);
                             }
                         }
                     }
@@ -463,7 +465,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
                                 // Move bytecode position cursor to start of next instruction
                                 do {
                                     ++bci;
-                                } while (bci < bciToPosMap.length &&  bciToPosMap[bci] == 0);
+                                } while (bci < bciToPosMap.length && (bciToPosMap[bci] == 0 || bciToPosMap[bci] == pos));
                             }
                         }
                     }
@@ -551,11 +553,11 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
             return indexToOpcode[index];
         }
 
-        public int calleeConstantPoolIndex(int index) {
+        public RiMethod calleeAt(int index) {
             if (index < 0 || index >= instructionCount) {
                 throw new IllegalArgumentException();
             }
-            return indexToCalleeCPIndex[index];
+            return indexToCallee[index];
         }
 
         public List<Integer> labelIndexes() {

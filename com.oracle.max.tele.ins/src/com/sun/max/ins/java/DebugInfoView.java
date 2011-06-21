@@ -175,8 +175,10 @@ public final class DebugInfoView extends AbstractView<DebugInfoView> {
 
     private void updateCodeLocation(MaxCodeLocation codeLocation) {
         this.codeLocation = codeLocation;
-        compiledCode = codeLocation.compiledCode();
-        debugInfo = codeLocation.debugInfo();
+        if (codeLocation != null) {
+            compiledCode = codeLocation.compiledCode();
+            debugInfo = codeLocation.debugInfo();
+        }
     }
 
     private String shortString(CiCodePos codePos) {

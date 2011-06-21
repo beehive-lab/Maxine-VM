@@ -23,7 +23,7 @@
 package com.sun.max.tele.debug;
 
 import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
+import static com.sun.max.vm.compiler.target.Stub.Type.*;
 
 import java.io.*;
 import java.lang.management.*;

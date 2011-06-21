@@ -24,13 +24,11 @@ package com.sun.max.vm.compiler.target;
 
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
 
 import java.io.*;
 import java.util.*;
 
 import com.oracle.max.asm.target.amd64.*;
-import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.DataPatch;
 import com.sun.cri.ri.*;
@@ -63,8 +61,6 @@ import com.sun.max.vm.stack.StackFrameWalker.Cursor;
  */
 public abstract class TargetMethod extends MemoryRegion {
 
-    static final boolean COMPILED = true;
-
     /**
      * Implemented by a client wanting to do something to a target method.
      */
@@ -79,87 +75,10 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
-     * Categorization of target methods.
+     * The (bytecode) method from which this target method was compiled.
+     * This will be {@code null} iff this target method is a {@link Stub} or
+     * and {@link Adapter}.
      */
-    public enum Flavor {
-
-        /**
-         * A compiled method.
-         */
-        Standard(COMPILED),
-
-        /**
-         * A piece of compiled machine code representing the implementation of a single bytecode instruction.
-         */
-        BytecodeTemplate(COMPILED),
-
-        /**
-         * Trampoline for virtual method dispatch (i.e. translation of {@link Bytecodes#INVOKEVIRTUAL}).
-         */
-        VirtualTrampoline(!COMPILED),
-
-        /**
-         * Trampoline for interface method dispatch (i.e. translation of {@link Bytecodes#INVOKEINTERFACE}).
-         */
-        InterfaceTrampoline(!COMPILED),
-
-        /**
-         * Trampoline for static method call (i.e. translation of {@link Bytecodes#INVOKESPECIAL} or {@link Bytecodes#INVOKESTATIC}).
-         */
-        StaticTrampoline(!COMPILED),
-
-        /**
-         * A global stub.
-         */
-        GlobalStub(!COMPILED),
-
-        /**
-         * An {@linkplain Adapter adapter}.
-         */
-        Adapter(!COMPILED),
-
-        /**
-         * The trap stub.
-         */
-        TrapStub(!COMPILED);
-
-        /**
-         * Determines if a target method of this flavor represents compiled code.
-         * A target method has a non-null {@link TargetMethod#classMethodActor})
-         * iff is it compiled.
-         */
-        public final boolean compiled;
-
-        Flavor(boolean compiled) {
-            this.compiled = compiled;
-        }
-    }
-
-    public final Flavor flavor;
-
-    /**
-     * Determines if this method is of a given flavor.
-     */
-    public final boolean is(Flavor flavor) {
-        return this.flavor == flavor;
-    }
-
-    /**
-     * Determines if this target method represents compiled code.
-     * A target method has a non-null {@link TargetMethod#classMethodActor}
-     * iff is it compiled.
-     */
-    public final boolean isCompiled() {
-        return flavor.compiled;
-    }
-
-    /**
-     * Determines if this method is a trampoline.
-     */
-    public final boolean isTrampoline() {
-        return this.flavor == VirtualTrampoline || this.flavor == InterfaceTrampoline || flavor == StaticTrampoline;
-    }
-
     @INSPECTED
     public final ClassMethodActor classMethodActor;
 
@@ -212,25 +131,20 @@ public abstract class TargetMethod extends MemoryRegion {
      */
     private int registerRestoreEpilogueOffset = -1;
 
-    public TargetMethod(Flavor flavor, String description, CallEntryPoint callEntryPoint) {
+    public TargetMethod(String description, CallEntryPoint callEntryPoint) {
+        assert this instanceof Stub || this instanceof Adapter;
         this.classMethodActor = null;
         this.callEntryPoint = callEntryPoint;
-        this.flavor = flavor;
         setRegionName(description);
-        assert isCompiled() == (classMethodActor != null);
     }
 
     public TargetMethod(ClassMethodActor classMethodActor, CallEntryPoint callEntryPoint) {
+        assert classMethodActor != null;
+        assert !(this instanceof Stub);
+        assert !(this instanceof Adapter);
         this.classMethodActor = classMethodActor;
         this.callEntryPoint = callEntryPoint;
         setRegionName(classMethodActor.name.toString());
-
-        if (classMethodActor.isTemplate()) {
-            flavor = BytecodeTemplate;
-        } else {
-            flavor = Standard;
-        }
-        assert isCompiled() == (classMethodActor != null);
     }
 
     public int registerRestoreEpilogueOffset() {
@@ -332,14 +246,14 @@ public abstract class TargetMethod extends MemoryRegion {
      */
     public static class FrameAccess {
         /**
-         * Description of the register save area.
+         * Layout of the callee save area.
          */
-        public final CiCalleeSaveArea csa;
+        public final CiCalleeSaveLayout csl;
 
         /**
-         * Register save area.
+         * Callee save area.
          */
-        public final Pointer rsa;
+        public final Pointer csa;
 
         /**
          * Stack pointer.
@@ -361,9 +275,9 @@ public abstract class TargetMethod extends MemoryRegion {
          */
         public final Pointer callerFP;
 
-        public FrameAccess(CiCalleeSaveArea csa, Pointer rsa, Pointer sp, Pointer fp, Pointer callerSP, Pointer callerFP) {
+        public FrameAccess(CiCalleeSaveLayout csl, Pointer csa, Pointer sp, Pointer fp, Pointer callerSP, Pointer callerFP) {
+            this.csl = csl;
             this.csa = csa;
-            this.rsa = rsa;
             this.sp = sp;
             this.fp = fp;
             this.callerSP = callerSP;
@@ -690,8 +604,8 @@ public abstract class TargetMethod extends MemoryRegion {
                 final ClassMethodActor cma = toMethodActor(site.runtimeCall);
                 assert cma != null : "unresolved runtime call!";
                 directCallees[index] = cma;
-            } else if (site.globalStubID != null) {
-                TargetMethod globalStubMethod = (TargetMethod) site.globalStubID;
+            } else if (site.stubID != null) {
+                TargetMethod globalStubMethod = (TargetMethod) site.stubID;
                 directCallees[index] = globalStubMethod;
             } else {
                 // template call
@@ -1296,37 +1210,39 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
-     * Gets the register configuration used to compile this method.
-     */
-    public final RiRegisterConfig getRegisterConfig() {
-        RegisterConfigs configs = vm().registerConfigs;
-        switch (flavor) {
-            case Adapter:
-                return null;
-            case GlobalStub:
-                return configs.globalStub;
-            case VirtualTrampoline:
-            case StaticTrampoline:
-            case InterfaceTrampoline:
-                return configs.trampoline;
-            case BytecodeTemplate:
-                return configs.bytecodeTemplate;
-            case Standard:
-                assert classMethodActor != null : "cannot determine register configuration for " + this;
-                return configs.getRegisterConfig(classMethodActor);
-            case TrapStub:
-                return configs.trapStub;
-            default:
-                throw FatalError.unexpected(flavor.toString());
-        }
-    }
-
-    /**
      * Gets the profile data gathered during execution of this method.
      *
      * @return {@code null} if this method has no profiling info
      */
     public MethodProfile profile() {
+        return null;
+    }
+
+    /**
+     * Gets the stub type of this target method.
+     *
+     * @return {@code null} if this is not {@linkplain Stub stub}
+     */
+    public Stub.Type stubType() {
+        return null;
+    }
+
+    /**
+     * Determines if this is a stub of a give type.
+     */
+    public final boolean is(Stub.Type type) {
+        return stubType() == type;
+    }
+
+    /**
+     * Gets the layout of the CSA in this target method.
+     *
+     * @return {@code null} if this is not a callee-saved target method
+     */
+    public CiCalleeSaveLayout calleeSaveLayout() {
+        if (classMethodActor != null) {
+            return vm().registerConfigs.getRegisterConfig(classMethodActor).csl;
+        }
         return null;
     }
 }

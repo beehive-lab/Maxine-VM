@@ -32,12 +32,7 @@ import java.util.*;
  * {@linkplain #size size}, {@linkplain #slotSize slot size} and
  * the {@linkplain #registers callee save registers} covered by the CSA.
  */
-public class CiCalleeSaveArea {
-
-    /**
-     * An empty callee-save area.
-     */
-    public static final CiCalleeSaveArea EMPTY = new CiCalleeSaveArea(0, 0, new CiRegister[0]);
+public class CiCalleeSaveLayout {
 
     /**
      * The size (in bytes) of the CSA.
@@ -62,13 +57,20 @@ public class CiCalleeSaveArea {
     public final CiRegister[] registers;
 
     /**
-     * Creates an CSA descriptor.
+     * The offset from the frame pointer to the CSA. If this is not known, then this field
+     * will have the value {@link Integer#MAX_VALUE}.
+     */
+    public final int frameOffsetToCSA;
+
+    /**
+     * Creates a CSA layout.
      *
      * @param size size (in bytes) of the CSA. If this is {@code -1}, then the CSA size will be computed from {@code registers}.
      * @param slotSize the size (in bytes) of an {@linkplain #registerAtIndex(int) indexable} slot in the CSA
      * @param registers the registers that can be saved in the CSA
      */
-    public CiCalleeSaveArea(int size, int slotSize, CiRegister... registers) {
+    public CiCalleeSaveLayout(int frameOffsetToCSA, int size, int slotSize, CiRegister... registers) {
+        this.frameOffsetToCSA = frameOffsetToCSA;
         assert slotSize == 0 || CiUtil.isPowerOf2(slotSize);
         this.slotSize = slotSize;
         int maxRegNum = -1;

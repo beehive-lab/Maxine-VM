@@ -287,7 +287,10 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
         frame.makeMenu(EDIT_MENU);
 
         final InspectorMenu memoryMenu = frame.makeMenu(MEMORY_MENU);
-        memoryMenu.add(views().memory().makeViewAction(machineCode().memoryRegion(), machineCode().entityName(), "View memory for machine code"));
+        final MaxMachineCode machineCode = machineCode();
+        if (machineCode != null) {
+            memoryMenu.add(views().memory().makeViewAction(machineCode.memoryRegion(), machineCode.entityName(), "View memory for machine code"));
+        }
         memoryMenu.add(defaultMenuItems(MEMORY_MENU));
         memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
 

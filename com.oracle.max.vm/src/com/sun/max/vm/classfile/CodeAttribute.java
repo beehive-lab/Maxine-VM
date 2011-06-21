@@ -231,8 +231,6 @@ public final class CodeAttribute {
         if (opcode == INVOKEINTERFACE || opcode == INVOKESPECIAL || opcode == INVOKESTATIC || opcode == INVOKEVIRTUAL) {
             int cpi = com.sun.cri.bytecode.Bytes.beU2(code, bci + 1);
             MethodRefConstant callee = cp.methodAt(cpi);
-
-
             if (callee.isResolved()) {
                 return callee.resolve(cp, cpi);
             }

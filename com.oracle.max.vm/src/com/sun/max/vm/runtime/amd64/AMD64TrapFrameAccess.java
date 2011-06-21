@@ -32,16 +32,33 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.runtime.*;
 
 /**
- * The trap state area on AMD64 contains the {@linkplain Trap.Number trap number} and the values of the
- * processor's registers when a trap occurs. The trap state area is as follows:
+ * The trap frame on AMD64 contains the {@linkplain Trap.Number trap number} and the values of the
+ * processor's registers when a trap occurs. The trap frame is as follows:
  *
  * <pre>
- *   <-- stack grows downward                       higher addresses -->
- * | ---- trap state area --- | RIP |==== stack as it was when trap occurred ===>
- * |<---  TRAP_STATE_SIZE --->|<-8->|
+ *   Base       Contents
  *
+ *          :                                :
+ *          |                                | Trapped frame
+ *   -------+--------------------------------+----------
+ *          | trapped PC                     | Trap frame
+ *          +--------------------------------+     ---
+ *          | flags register                 |      ^
+ *          +--------------------------------+      |
+ *          | trap number                    |      |
+ *          +--------------------------------+      |
+ *          |                                |    frame
+ *          : XMM0 - XMM15  save area        :    size
+ *          |                                |      |
+ *          +--------------------------------+      |
+ *          |                                |      |
+ *          : GPR (rax - r15)  save area     :      |
+ *    %sp   |                                |      v
+ *   -------+--------------------------------+----------
  * </pre>
- * The layout of the trap state area is described by the following C-like struct declaration:
+ *
+ * Or, alternatively, the trap frame is described by the following C-like struct declaration:
+ *
  * <pre>
  * trap_state {
  *     Word generalPurposeRegisters[16];
@@ -51,17 +68,17 @@ import com.sun.max.vm.runtime.*;
  * }
  * </pre>
  *
- * The fault address is stored in the RIP slot, making this frame appear as if the trap location
- * called the trap stub directly.
+ * The fault address (i.e. trapped PC) is stored in the return address slot, making the
+ * trap frame appear as if the trapped method called the trap stub directly.
  */
-public final class AMD64TrapStateAccess extends TrapStateAccess {
+public final class AMD64TrapFrameAccess extends TrapFrameAccess {
 
     public static final int TRAP_NUMBER_OFFSET;
     public static final int FLAGS_OFFSET;
 
-    public static final CiCalleeSaveArea CSA;
+    public static final CiCalleeSaveLayout CSL;
     static {
-        CiRegister[] rsaRegs = {
+        CiRegister[] csaRegs = {
             rax,  rcx,  rdx,   rbx,   rsp,   rbp,   rsi,   rdi,
             r8,   r9,   r10,   r11,   r12,   r13,   r14,   r15,
             xmm0, xmm1, xmm2,  xmm3,  xmm4,  xmm5,  xmm6,  xmm7,
@@ -74,62 +91,62 @@ public final class AMD64TrapStateAccess extends TrapStateAccess {
         FLAGS_OFFSET = size;
         size += 8;
 
-        CSA = new CiCalleeSaveArea(size, 8, rsaRegs);
+        CSL = new CiCalleeSaveLayout(0, size, 8, csaRegs);
     }
 
     @Override
-    public Pointer getPCPointer(Pointer trapState) {
-        return trapState.plus(vm().stubs.trapStub().frameSize());
+    public Pointer getPCPointer(Pointer trapFrame) {
+        return trapFrame.plus(vm().stubs.trapStub().frameSize());
     }
 
     @Override
-    public Pointer getSP(Pointer trapState) {
-        return trapState.plus(vm().stubs.trapStub().frameSize() + 8);
+    public Pointer getSP(Pointer trapFrame) {
+        return trapFrame.plus(vm().stubs.trapStub().frameSize() + 8);
     }
 
     @Override
-    public Pointer getFP(Pointer trapState) {
-        return trapState.readWord(CSA.offsetOf(rbp)).asPointer();
+    public Pointer getFP(Pointer trapFrame) {
+        return trapFrame.readWord(CSL.offsetOf(rbp)).asPointer();
     }
 
     @Override
-    public Pointer getSafepointLatch(Pointer trapState) {
-        Pointer rsa = getRegisterState(trapState);
-        int offset = CSA.offsetOf(LATCH_REGISTER);
-        return rsa.readWord(offset).asPointer();
+    public Pointer getSafepointLatch(Pointer trapFrame) {
+        Pointer csa = getCalleeSaveArea(trapFrame);
+        int offset = CSL.offsetOf(LATCH_REGISTER);
+        return csa.readWord(offset).asPointer();
     }
 
     @Override
-    public void setSafepointLatch(Pointer trapState, Pointer value) {
-        Pointer rsa = getRegisterState(trapState);
-        int offset = CSA.offsetOf(LATCH_REGISTER);
-        rsa.writeWord(offset, value);
+    public void setSafepointLatch(Pointer trapFrame, Pointer value) {
+        Pointer csa = getCalleeSaveArea(trapFrame);
+        int offset = CSL.offsetOf(LATCH_REGISTER);
+        csa.writeWord(offset, value);
     }
 
     @Override
-    public Pointer getRegisterState(Pointer trapState) {
-        return trapState;
+    public Pointer getCalleeSaveArea(Pointer trapFrame) {
+        return trapFrame.plus(CSL.frameOffsetToCSA);
     }
 
     @Override
-    public int getTrapNumber(Pointer trapState) {
-        return trapState.readWord(TRAP_NUMBER_OFFSET).asAddress().toInt();
+    public int getTrapNumber(Pointer trapFrame) {
+        return trapFrame.readWord(TRAP_NUMBER_OFFSET).asAddress().toInt();
     }
 
     @Override
-    public void setTrapNumber(Pointer trapState, int trapNumber) {
-        trapState.writeWord(TRAP_NUMBER_OFFSET, Address.fromInt(trapNumber));
+    public void setTrapNumber(Pointer trapFrame, int trapNumber) {
+        trapFrame.writeWord(TRAP_NUMBER_OFFSET, Address.fromInt(trapNumber));
     }
 
     @Override
-    public void logTrapState(Pointer trapState) {
-        final Pointer rsa = getRegisterState(trapState);
+    public void logTrapFrame(Pointer trapFrame) {
+        final Pointer csa = getCalleeSaveArea(trapFrame);
         Log.println("Non-zero registers:");
 
-        for (CiRegister reg : CSA.registers) {
+        for (CiRegister reg : CSL.registers) {
             if (reg.isCpu()) {
-                int offset = CSA.offsetOf(reg);
-                final Word value = rsa.readWord(offset);
+                int offset = CSL.offsetOf(reg);
+                final Word value = csa.readWord(offset);
                 if (!value.isZero()) {
                     Log.print("  ");
                     Log.print(reg.name);
@@ -139,19 +156,19 @@ public final class AMD64TrapStateAccess extends TrapStateAccess {
             }
         }
         Log.print("  rip=");
-        Log.println(getPC(trapState));
+        Log.println(getPC(trapFrame));
         Log.print("  rflags=");
-        final Word flags = rsa.readWord(FLAGS_OFFSET);
+        final Word flags = csa.readWord(FLAGS_OFFSET);
         Log.print(flags);
         Log.print(' ');
         logFlags(flags.asAddress().toInt());
         Log.println();
         if (false) {
             boolean seenNonZeroXMM = false;
-            for (CiRegister reg : CSA.registers) {
+            for (CiRegister reg : CSL.registers) {
                 if (reg.isFpu()) {
-                    int offset = CSA.offsetOf(reg);
-                    final double value = rsa.readDouble(offset);
+                    int offset = CSL.offsetOf(reg);
+                    final double value = csa.readDouble(offset);
                     if (value != 0) {
                         if (!seenNonZeroXMM) {
                             Log.println("Non-zero XMM registers:");
@@ -168,7 +185,7 @@ public final class AMD64TrapStateAccess extends TrapStateAccess {
                 }
             }
         }
-        final int trapNumber = getTrapNumber(trapState);
+        final int trapNumber = getTrapNumber(trapFrame);
         Log.print("Trap number: ");
         Log.print(trapNumber);
         Log.print(" == ");

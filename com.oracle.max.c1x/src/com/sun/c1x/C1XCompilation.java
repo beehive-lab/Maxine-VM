@@ -92,7 +92,7 @@ public final class C1XCompilation {
         this.method = method;
         this.osrBCI = osrBCI;
         this.stats = stats == null ? new CiStatistics() : stats;
-        this.registerConfig = method == null ? compiler.globalStubRegisterConfig : runtime.getRegisterConfig(method);
+        this.registerConfig = method == null ? compiler.compilerStubRegisterConfig : runtime.getRegisterConfig(method);
         this.placeholderState = method != null && method.minimalDebugInfo() ? new MutableFrameState(new IRScope(null, null, method, -1), 0, 0, 0) : null;
 
         if (compiler.isObserved()) {
@@ -274,7 +274,7 @@ public final class C1XCompilation {
     }
 
     public void initFrameMap(int numberOfLocks) {
-        frameMap = this.compiler.backend.newFrameMap(method, numberOfLocks);
+        frameMap = compiler.backend.newFrameMap(this, method, numberOfLocks);
     }
 
     private void emitLIR() {
@@ -300,7 +300,7 @@ public final class C1XCompilation {
 
     private CiTargetMethod emitCode() {
         if (C1XOptions.GenLIR && C1XOptions.GenCode) {
-            final LIRAssembler lirAssembler = compiler.backend.newLIRAssembler(this);
+            final LIRAssembler lirAssembler = compiler.backend.newLIRAssembler(this, assembler());
             lirAssembler.emitCode(hir.linearScanOrder());
 
             // generate code for slow cases

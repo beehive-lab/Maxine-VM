@@ -99,7 +99,7 @@ public final class CodeCacheMetricsPrinter {
             if (profile != null) {
                 invocations = MethodInstrumentation.initialEntryCount - profile.entryCount;
             }
-            String type = targetMethod.getClass().getSimpleName() + ":" + targetMethod.flavor;
+            String type = targetMethod.getClass().getSimpleName();
             add(metrics, type, bcSize, mcSize, invocations);
             if (invocations > 0 && invocations < 10) {
                 add(metrics2, type + "#" + invocations, bcSize, mcSize, invocations);

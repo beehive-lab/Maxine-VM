@@ -220,13 +220,13 @@ public class T1XReferenceMapEditor implements ReferenceMapInterpreterContext, Re
                         }
                         Log.print(" }");
                         Log.print(", registers={");
-                        CiCalleeSaveArea csa = vm().registerConfigs.trapStub.getCalleeSaveArea();
+                        CiCalleeSaveLayout csl = vm().registerConfigs.trapStub.getCalleeSaveLayout();
                         for (int i = 0; i < regRefMapSize(); i++) {
                             int b = refMaps[offset + t1xMethod.frameRefMapSize + i] & 0xff;
                             int bit = i * 8;
                             while (b != 0) {
                                 if ((b & 1) != 0) {
-                                    CiRegister reg = csa.registerAt(bit);
+                                    CiRegister reg = csl.registerAt(bit);
                                     Log.print(' ');
                                     Log.print(reg.name);
                                 }
