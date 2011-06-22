@@ -24,6 +24,7 @@ package com.sun.max.vm.heap.gcx;
 
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 import static com.sun.max.vm.heap.gcx.HeapRegionInfo.*;
+import static com.sun.max.vm.heap.gcx.HeapRegionInfo.HeapRegionState.*;
 import static com.sun.max.vm.heap.gcx.RegionTable.*;
 
 import com.sun.max.annotate.*;
@@ -135,7 +136,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         }
         if (spaceLeft.lessThan(minReclaimableSpace)) {
             HeapSchemeAdaptor.fillWithDeadObject(leftover, leftover.plus(spaceLeft));
-            rinfo.setFull();
+            FULL_REGION.setState(rinfo);
         } else {
             if (traceAllocateLarge) {
                 Log.print("allocateLarge putback region #");
@@ -219,11 +220,11 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                                     }
                                     allocationRegions.remove(firstRegion);
                                     HeapRegionInfo firstRegionInfo = HeapRegionInfo.fromRegionID(firstRegion);
-                                    firstRegionInfo.setLargeHead();
+                                    LARGE_HEAD_ONLY.setState(firstRegionInfo);
                                     if (n > 2) {
                                         for (int i = firstRegion + 1; i < lastRegion; i++) {
                                             allocationRegions.remove(i);
-                                            HeapRegionInfo.fromRegionID(i).setLargeBody();
+                                            LARGE_BODY.setState(HeapRegionInfo.fromRegionID(i));
                                         }
                                     }
                                     HeapRegionInfo lastRegionInfo =  HeapRegionInfo.fromRegionID(lastRegion);
@@ -232,7 +233,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                                     if (tailSize.lessThan(minReclaimableSpace)) {
                                         HeapSchemeAdaptor.fillWithDeadObject(tail, tailEnd);
                                         allocationRegions.remove(lastRegion);
-                                        lastRegionInfo.setLargeTail();
+                                        LARGE_FULL_TAIL.setState(lastRegionInfo);
                                     } else {
                                         // Format the tail as a free chunk.
                                         HeapFreeChunk.format(tail, tailSize);
@@ -534,7 +535,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                         overflowRefillWaste = overflowRefillWaste.plus(spaceLeft);
                         HeapSchemeAdaptor.fillWithDeadObject(startOfSpaceLeft, startOfSpaceLeft.plus(spaceLeft));
                     }
-                    regionInfo.setFull();
+                    FULL_REGION.setState(regionInfo);
                 }
                 currentOverflowAllocatingRegion = INVALID_REGION_ID;
             }
@@ -797,18 +798,22 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
             } else {
                 // Free all intermediate regions. The tail needs to be swept
                 // in case it was used for allocating small objects, so we
-                // don't free it. It'll be set as the next sweeping region by the next call to beginSweep.
-                while (!csrInfo.next().isTailOfLargeObject()) {
-                    csrInfo = regionInfoIterable.next();
-                    csrInfo.setEmpty();
+                // don't free it. It'll be set as the next sweeping region by the next call to beginSweep, so
+                // be careful not to consume it from the iterable.
+                do {
+                    EMPTY_REGION.setState(csrInfo);
                     allocationRegions.append(csrInfo.toRegionID());
                     allocationRegionsFreeSpace =  allocationRegionsFreeSpace.plus(regionSizeInBytes);
-                }
+                    if (csrInfo.next().isTailOfLargeObject()) {
+                        break;
+                    }
+                    csrInfo = regionInfoIterable.next();
+                } while (true);
             }
         } else if (csrFreeBytes == 0) {
-            csrInfo.setFull();
+            FULL_REGION.setState(csrInfo);
         } else if (csrFreeBytes == regionSizeInBytes) {
-            csrInfo.setEmpty();
+            EMPTY_REGION.setState(csrInfo);
             allocationRegions.append(csrInfo.toRegionID());
             allocationRegionsFreeSpace =  allocationRegionsFreeSpace.plus(regionSizeInBytes);
         } else {
