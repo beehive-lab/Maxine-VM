@@ -20,10 +20,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
 package com.oracle.max.vma.tools.qa;
 
 import java.io.PrintStream;
+
+import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.AdviceRecord;
+import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.RecordType;
 
 /**
  * Maintains the basic information on an object instance encountered in a trace.
@@ -35,44 +37,33 @@ public class ObjectRecord {
     /**
      * The unique identifier associated with this object.
      * If {@code id == null} then this record does not denote an object instance; rather it
-     * it is used to carry the trace elements for the static fields of the class denoted by {@link #cr}.
+     * it is used to carry the trace elements for the static fields of the class denoted by {@link #klass}.
      *
      */
-    private String id;
+    public final String id;
     /**
      * The runtime class of this object.
      */
-    private ClassRecord cr;
+    public final ClassRecord klass;
 
     /**
      * The {@link ThreadRecord} of the thread that created this object.
      */
-    private ThreadRecord thread;
+    public final ThreadRecord thread;
 
     /**
-     * The time at which the object was allocated, but before the constructor has executed.
+     * The list of {@link AdviceRecord instances} manipulating this object.
      */
-    private long beginCreationTime;
+    private GrowableArray adviceRecords = GrowableArrayImpl.create();
 
     /**
-     * The time at which constructor execution is complete.
+     * The record in the trace that corresponds to the creation of this object.
      */
-    private long endCreationTime;
+    private AdviceRecord beginCreationRecord;
 
-    /**
-     * The time at which the object was known to have been garbage collected.
-     * N.B. The trace may not reflect the fact that an object has been collected since
-     * there is an inevitable lag between this state and our ability to detect it.
-     * I.e., even if this value is non-zero, it may be an arbitrary interval after the
-     * object was collected.
-     *
-     */
-    private long deletionTime;
+    private AdviceRecord endCreationRecord;
 
-    /**
-     * The list of {@link TraceElement trace elements} associated with this object, ordered chronologically.
-     */
-    private GrowableArray traceElements = GrowableArrayImpl.create();
+    private AdviceRecord removalRecord;
 
     /**
      * Indicates that the no more changes will be made to this record and
@@ -98,18 +89,16 @@ public class ObjectRecord {
 
     public int traceOccurrences = 1;  // number of times this id appears in the trace
 
-    private int length;  // if an array
-
-    public ObjectRecord(String id, int gcEpoch, ClassRecord cr, ThreadRecord threadRecord, long beginCreationTime) {
+    public ObjectRecord(String id, int gcEpoch, ClassRecord cr, ThreadRecord threadRecord, AdviceRecord beginCreationRecord) {
         this.id = getMapId(id, gcEpoch);
-        this.cr = cr;
+        this.klass = cr;
         this.thread = threadRecord;
-        this.beginCreationTime = beginCreationTime;
+        this.beginCreationRecord = beginCreationRecord;
     }
 
     @Override
     public String toString() {
-        return getId();
+        return "(" + klass.getName() + ") " + getId();
     }
 
     /**
@@ -141,45 +130,47 @@ public class ObjectRecord {
         }
     }
 
-    public ThreadRecord getThread() {
-        return thread;
-    }
-
-    public boolean isStaticTrace() {
-        return id == null;
-    }
-
     public ClassRecord getClassRecord() {
-        return cr;
+        return klass;
     }
 
     public String getClassName() {
-        String result = cr.getName();
+        String result = klass.getName();
         return result;
     }
 
     public String getClassLoaderId() {
-        return cr.getClassLoaderId();
+        return klass.getClassLoaderId();
     }
 
+    /**
+     * The time at which the object was allocated, but before the constructor has executed.
+     */
     public long getBeginCreationTime() {
-        return beginCreationTime;
+        return beginCreationRecord.time;
     }
 
+    /**
+     * The time at which constructor execution is complete.
+     */
     public long getEndCreationTime() {
-        return endCreationTime;
+        return endCreationRecord.time;
     }
 
+    /**
+     * The time at which the object was known to have been garbage collected.
+     * N.B. The trace may not reflect the fact that an object has been collected since
+     * there is an inevitable lag between this state and our ability to detect it.
+     * I.e., even if this value is non-zero, it may be an arbitrary interval after the
+     * object was collected.
+     *
+     */
     public long getDeletionTime() {
-        return deletionTime;
-    }
-
-    public GrowableArray getTraceElements() {
-        return traceElements;
+        return removalRecord == null ? 0 : removalRecord.time;
     }
 
     public boolean isArray() {
-        return cr.isArray();
+        return klass.isArray();
     }
 
     /**
@@ -191,47 +182,55 @@ public class ObjectRecord {
 
     /**
      * Only used for objects whose construction we learn about after the
-     * constructor has executed, i.e., created by Class.newInstance().
+     * constructor has executed, i.e, those whose allocation was not logged..
      */
-    public void setBeginCreationTime(long beginCreationTime) {
+    public void setBeginCreationRecord(AdviceRecord beginCreationRecord) {
         if (immutable) {
             throw new IllegalAccessError();
         } else {
-            this.beginCreationTime = beginCreationTime;
+            this.beginCreationRecord = beginCreationRecord;
         }
     }
 
-    public void setEndCreationTime(long endCreationTime) {
+    public void setEndCreationRecord(AdviceRecord endCreationRecord) {
         if (immutable) {
             throw new IllegalAccessError();
         } else {
-            this.endCreationTime = endCreationTime;
+            this.endCreationRecord = endCreationRecord;
         }
     }
 
-    public void setDeletionTime(long deletionTime) {
+    public void setRemovalRecord(AdviceRecord removalRecord) {
         if (immutable) {
             throw new IllegalAccessError();
         } else {
-            this.deletionTime = deletionTime;
+            this.removalRecord = removalRecord;
         }
     }
 
-    public void addTraceElement(TraceElement te) {
+    public void addTraceElement(AdviceRecord adviceRecord) {
         if (immutable) {
             throw new IllegalAccessError();
         } else {
-            traceElements = traceElements.add(te);
+            adviceRecords = adviceRecords.add(adviceRecord);
         }
+    }
+
+    public GrowableArray getAdviceRecords() {
+        return adviceRecords;
     }
 
     /**
      * Returns the time period from the end of the object construction to its
-     * deletion, if known, else to lastTime.
+     * removal, if known, else to lastTime.
      */
     public long getLifeTime(long lastTime) {
-        return ((deletionTime == 0) ? lastTime : deletionTime)
-                - endCreationTime;
+        long result =  ((removalRecord == null) ? lastTime : removalRecord.time)
+                - endCreationRecord.time;
+        if (result < 0) {
+            System.console();
+        }
+        return result;
     }
 
     public long getLastModifyTime() {
@@ -253,235 +252,28 @@ public class ObjectRecord {
             return modifyLifeTime;
         }
 
-        lastModifyTime = endCreationTime;
-        int s = traceElements.size();
+        lastModifyTime = endCreationRecord.time;
+        int s = adviceRecords.size();
         if (s > 0) {
             for (int i = s - 1; i >= 0; i--) {
-                TraceElement te = traceElements.get(i);
-                if (te instanceof WriteTraceElement) {
-                    lastModifyTime = te.accessTime;
+                AdviceRecord ar = adviceRecords.get(i);
+                if (RecordType.MODIFY_OPERATIONS.contains(ar.getRecordType())) {
+                    lastModifyTime = ar.time;
                     break;
                 }
             }
         }
 
-        if (lastModifyTime <= endCreationTime) {
+        if (lastModifyTime <= endCreationRecord.time) {
             return 0;
         } else {
-            return lastModifyTime - endCreationTime;
+            return lastModifyTime - endCreationRecord.time;
         }
-    }
-
-    public void setLength(int length) {
-        this.length = length;
     }
 
     public int getLength() {
-        return length;
-    }
-
-    /**
-     * Represents an event on a particular object instance.
-     *
-     */
-    public static abstract class TraceElement {
-        // pseudo field name to indicate entire array update
-        public static final String ARRAYCOPY = "ARRAYCOPY";
-        public static final String LITERAL = "LITERAL";
-
-        ClassRecord classRecord;
-        /**
-         * If the access was to a field, the name of the field, if to an array the symbolic name of the index.
-         */
-        private FieldRecord field;
-        /**
-         * Thread on which the event occurred.
-         */
-        private ThreadRecord thread;
-        /**
-         * The time the event occurred.
-         */
-        protected long accessTime;
-
-        protected TraceElement(ClassRecord classRecord, FieldRecord field, ThreadRecord thread, long accessTime) {
-            this.classRecord = classRecord;
-            this.field = field;
-            this.thread = thread;
-            this.accessTime = accessTime;
-        }
-
-        public FieldRecord getField() {
-            return field;
-        }
-
-        /**
-         * For forward reference fixup.
-         * @param name
-         */
-        public void setField(ClassRecord classRecord, FieldRecord field) {
-            this.classRecord = classRecord;
-            this.field = field;
-        }
-
-        public ThreadRecord getThread() {
-            return thread;
-        }
-
-        public long getAccessTime() {
-            return accessTime;
-        }
-
-        public static int getSize() {
-            return 32;
-        }
-
-        public ClassRecord getClassRecord() {
-            return classRecord;
-        }
-
-        public abstract String name();
-    }
-
-
-    public static abstract class WriteTraceElement extends TraceElement {
-        public WriteTraceElement(ClassRecord classRecord, FieldRecord field, ThreadRecord thread, long writeTime) {
-            super(classRecord, field, thread, writeTime);
-        }
-
-        public long getWriteTime() {
-            return accessTime;
-        }
-
-        public static int getSize() {
-            return TraceElement.getSize();
-        }
-
-        @Override
-        public String name() {
-            return "write";
-        }
-
-    }
-
-    public static class NullWriteTraceElement extends WriteTraceElement {
-        public NullWriteTraceElement(ClassRecord classRecord, FieldRecord field, ThreadRecord thread, long writeTime) {
-            super(classRecord, field, thread, writeTime);
-        }
-
-    }
-
-    public static class ObjectWriteTraceElement extends WriteTraceElement {
-        private ObjectRecord value;
-
-        public ObjectWriteTraceElement(ClassRecord classRecord, FieldRecord field, ThreadRecord thread, long writeTime, ObjectRecord value) {
-            super(classRecord, field, thread, writeTime);
-            this.value = value;
-        }
-
-        public ObjectRecord getValue() {
-            return value;
-        }
-    }
-
-    public static class LongWriteTraceElement extends WriteTraceElement {
-        private long value;
-
-        public LongWriteTraceElement(ClassRecord classRecord, FieldRecord field, ThreadRecord thread, long writeTime, long value) {
-            super(classRecord, field, thread, writeTime);
-            this.value = value;
-        }
-
-        public long getValue() {
-            return value;
-        }
-    }
-
-    public static class FloatWriteTraceElement extends WriteTraceElement {
-        private float value;
-
-        public FloatWriteTraceElement(ClassRecord classRecord, FieldRecord field, ThreadRecord thread, long writeTime, float value) {
-            super(classRecord, field, thread, writeTime);
-            this.value = value;
-        }
-
-        public float getValue() {
-            return value;
-        }
-    }
-
-    public static class DoubleWriteTraceElement extends WriteTraceElement {
-        private double value;
-
-        public DoubleWriteTraceElement(ClassRecord classRecord, FieldRecord field, ThreadRecord thread, long writeTime, double value) {
-            super(classRecord, field, thread, writeTime);
-            this.value = value;
-        }
-
-        public double getValue() {
-            return value;
-        }
-    }
-
-    /**
-     * Denotes a read of an object instance.
-     *
-     */
-    public static class ReadTraceElement extends TraceElement {
-        public ReadTraceElement(ClassRecord classRecord, FieldRecord field, ThreadRecord thread, long readTime) {
-            super(classRecord, field, thread, readTime);
-        }
-
-        public long getReadTime() {
-            return accessTime;
-        }
-
-        @Override
-        public String name() {
-            return "read";
-        }
-    }
-
-    /**
-     * Denotes an array copy.
-     * The inherited state, i.e., {@link #field array index} refers to the destination array.
-     *
-     */
-    public static class ArrayCopyTraceElement extends TraceElement {
-        private ObjectRecord srcTd;
-        private int destPos;
-        private int srcPos;
-        private int length;
-
-        public ArrayCopyTraceElement(ThreadRecord thread, long writeTime, int destPos, ObjectRecord srcTd,
-                int srcPos, int length) {
-
-            super(null, null/*ARRAYCOPY*/, thread, writeTime); // TODO fix this
-            this.srcTd = srcTd;
-            this.srcPos = srcPos;
-            this.destPos = destPos;
-            this.length = length;
-        }
-
-        public ObjectRecord getSrcTd() {
-            return srcTd;
-        }
-
-        public int getSrcPos() {
-            return srcPos;
-        }
-
-        public int getDestPos() {
-            return destPos;
-        }
-
-        public int getLength() {
-            return length;
-        }
-
-        @Override
-        public String name() {
-            return "arraycopy";
-        }
+        assert klass.isArray();
+        return beginCreationRecord.getPackedValue();
     }
 
     /**
@@ -489,7 +281,7 @@ public class ObjectRecord {
      */
     public static abstract class Visitor {
         public abstract void visit(TraceRun traceRun, ObjectRecord td,
-                TraceElement te, PrintStream ps, Object[] args);
+                AdviceRecord te, PrintStream ps, Object[] args);
 
         public abstract Object getResult();
     }
@@ -505,8 +297,8 @@ public class ObjectRecord {
      */
     public Object visit(TraceRun traceRun, ObjectRecord td, Visitor visitor,
             PrintStream ps, Object[] args) {
-        for (int i = 0; i < td.getTraceElements().size(); i++) {
-            TraceElement te = td.getTraceElements().get(i);
+        for (int i = 0; i < td.adviceRecords.size(); i++) {
+            AdviceRecord te = td.adviceRecords.get(i);
             visitor.visit(traceRun, td, te, ps, args);
         }
         return visitor.getResult();

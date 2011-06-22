@@ -30,7 +30,7 @@ import java.util.*;
  */
 public class ArrayIndexRecord extends FieldRecord {
 
-    private static Map<Integer, ArrayIndexRecord> cache = new HashMap<Integer, ArrayIndexRecord> ();
+    private static Map<Integer, ArrayIndexRecord> cache = new HashMap<Integer, ArrayIndexRecord>();
 
     private ArrayIndexRecord(int index) {
         super(null, Integer.toString(index));

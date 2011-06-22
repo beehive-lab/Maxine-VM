@@ -37,13 +37,21 @@ import com.oracle.max.vm.ext.vma.log.*;
 public class QueryAnalysis {
 
     private static boolean verbose = false;
-    private static boolean prettyTrace = false;
     private static int maxLines = Integer.MAX_VALUE;
 
     public static void main(String[] args) {
         ArrayList<String> dataFiles = new ArrayList<String>();
+        ArrayList<String> queryClassDirs = new ArrayList<String>();
         String commandFile = null;
-        String queryClassDir = System.getProperty("query.dir");
+
+        // Add the default query directory
+        final String classpath = System.getProperty("java.class.path");
+        final String[] entries = classpath.split(File.pathSeparator);
+        for (String entry : entries) {
+            if (entry.contains("com.oracle.max.vma.tools")) {
+                queryClassDirs.add(entry);
+            }
+        }
 
         // Checkstyle: stop modified control variable check
         for (int i = 0; i < args.length; i++) {
@@ -62,11 +70,15 @@ public class QueryAnalysis {
                 commandFile = args[i];
             } else if (arg.equals("-q")) {
                 i++;
-                queryClassDir = args[i];
+                while ((i < args.length) && !args[i].startsWith("-")) {
+                    queryClassDirs.add(args[i]);
+                    i++;
+                }
+                if (i < args.length) {
+                    i--; // pushback next command
+                }
             } else if (arg.equals("-v")) {
                 verbose = true;
-            } else if (arg.equals("-p")) {
-                prettyTrace = true;
             } else if (arg.equals("-l")) {
                 maxLines = Integer.parseInt(args[++i]);
             } else {
@@ -80,34 +92,23 @@ public class QueryAnalysis {
             dataFiles.add(VMAdviceHandlerLogFile.DEFAULT_LOGFILE);
         }
 
-        if (queryClassDir == null) {
-            final String classpath = System.getProperty("java.class.path");
-            final String[] entries = classpath.split(File.pathSeparator);
-            for (String entry : entries) {
-                if (entry.contains("com.oracle.max.vma.tools")) {
-                    queryClassDir = entry;
-                    break;
+        for (String queryClassDir : queryClassDirs) {
+            try {
+                String queryClassDirCanon = new File(queryClassDir).getCanonicalPath();
+                String queryClassUrl = "file://" + queryClassDirCanon + File.separator;
+                QueryBase.addQueryClassDir(queryClassUrl);
+                ArrayList<TraceRun> traceRuns = new ArrayList<TraceRun>(dataFiles.size());
+                for (int t = 0; t < dataFiles.size(); t++) {
+                    traceRuns.add(ProcessLog.processTrace(dataFiles.get(t), verbose, maxLines));
                 }
-            }
-        }
 
-        try {
-            queryClassDir = new File(queryClassDir).getCanonicalPath();
-            String queryClassUrl = "file://" + queryClassDir + File.separator;
-            QueryBase.setClassDir(queryClassUrl);
-            ArrayList<TraceRun> traceRuns = new ArrayList<TraceRun>(
-                    dataFiles.size());
-            for (int t = 0; t < dataFiles.size(); t++) {
-                traceRuns.add(ProcessLog.processTrace(
-                        dataFiles.get(t), verbose, prettyTrace, maxLines));
+                if (commandFile != null) {
+                    interact(new FileInputStream(commandFile), traceRuns);
+                }
+                interact(System.in, traceRuns);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-
-            if (commandFile != null) {
-                interact(new FileInputStream(commandFile), traceRuns);
-            }
-            interact(System.in, traceRuns);
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
@@ -136,15 +137,12 @@ public class QueryAnalysis {
                         verbose = !verbose;
                         break;
 
-                    case 'p':
-                        prettyTrace = !prettyTrace;
-                        break;
-
                     case 'e':
                         String queryName = lineParts[1];
                         String[] args = new String[lineParts.length - 2];
                         System.arraycopy(lineParts, 2, args, 0, args.length);
-                        Query query = QueryBase.ensureLoaded(queryName);
+                        QueryBase query = QueryBase.ensureLoaded(queryName);
+                        query.parseStandardArgs(args);
                         query.execute(traceRuns, traceFocus, ps, args);
                         break;
 

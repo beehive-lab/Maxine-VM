@@ -47,8 +47,17 @@ public abstract class TextVMAdviceHandlerLog extends VMAdviceHandlerLog {
     public static final int REPEAT_ID_VALUE = 0;
     public static final char REPEAT_ID = '*';
 
-    public static final EnumSet<Key> noTimeSet = EnumSet.of(Key.CLASS_DEFINITION, Key.FIELD_DEFINITION, Key.THREAD_DEFINITION,
-                                                      Key.METHOD_DEFINITION, Key.REMOVAL);
+    /**
+     * Log records that do not have a time component.
+     * N.B. {@link Key#INITIALIZE_LOG}, {@link Key#FINALIZE_LOG} and {@link Key.RESET_TIME}
+     * are in this set because their time component is always absolute.
+     */
+    public static final EnumSet<Key> noTimeSet = EnumSet.of(
+                    Key.INITIALIZE_LOG, Key.FINALIZE_LOG, Key.RESET_TIME,
+                    Key.CLASS_DEFINITION, Key.FIELD_DEFINITION,
+                    Key.THREAD_DEFINITION, Key.METHOD_DEFINITION,
+                    Key.REMOVAL);
+
     public static final Map<String, Key> commandMap = new HashMap<String, Key>();
 
     static {
@@ -81,7 +90,7 @@ public abstract class TextVMAdviceHandlerLog extends VMAdviceHandlerLog {
     }
 
     public static boolean hasTimeAndThread(Key key) {
-        return hasTime(key) && !(key == Key.INITIALIZE_LOG | key == Key.FINALIZE_LOG);
+        return hasTime(key);
     }
 
     // BEGIN GENERATED CODE

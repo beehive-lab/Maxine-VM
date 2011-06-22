@@ -38,9 +38,9 @@ public class ImmutableCountQuery extends QueryBase {
             PrintStream ps, String[] args) {
         TraceRun traceRun = traceRuns.get(traceFocus);
         long iobjs = traceRun.getImmutableObjectCount();
-        long objs = traceRun.getObjectCount();
+        long objs = traceRun.objectCount;
         long iarrays = traceRun.getImmutableArrayCount();
-        long arrays = traceRun.getArrayCount();
+        long arrays = traceRun.arrayCount;
         ps.println("Immutable instance percentage: "
                 + d4d(percent(iobjs + iarrays, objs + arrays)));
         ps.println("Immutable object percentage: " + d4d(percent(iobjs, objs)));

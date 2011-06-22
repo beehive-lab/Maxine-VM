@@ -33,11 +33,10 @@ public class DataOnObjectQuery extends DataByObjectQueryHelper {
     public Object execute(ArrayList<TraceRun> traceRuns, int traceFocus,
             PrintStream ps, String[] args) {
         TraceRun traceRun = traceRuns.get(traceFocus);
-        parseArgs(args);
         if (id == null) {
             usage();
         } else {
-            ObjectRecord td = traceRun.getObjects().get(id);
+            ObjectRecord td = traceRun.objects.get(id);
             if (td == null) {
                 ps.println("no data on object " + id);
             } else {

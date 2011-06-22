@@ -23,10 +23,9 @@
 
 package com.oracle.max.vma.tools.qa.queries;
 
-import static com.oracle.max.vma.tools.qa.ObjectRecord.*;
-
 import java.io.*;
 
+import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.*;
 import com.oracle.max.vma.tools.qa.*;
 
 /**
@@ -44,7 +43,7 @@ public class DataByObjectQueryHelper extends QueryBase {
                 + ", loader "
                 + getShowClassLoader(traceRun, td.getClassLoaderId())
                 + ", thread "
-                + td.getThread()
+                + td.thread
                 + ", start cons at "
                 + ms(td.getBeginCreationTime())
                 + " end cons at "
@@ -52,15 +51,15 @@ public class DataByObjectQueryHelper extends QueryBase {
                 + ((td.getDeletionTime() == 0) ? ", still alive"
                         : ", deleted at " + ms(td.getDeletionTime())));
 
-        for (int i = 0; i < td.getTraceElements().size(); i++) {
-            TraceElement te =  td.getTraceElements().get(i);
+        for (int i = 0; i < td.getAdviceRecords().size(); i++) {
+            AdviceRecord ar =  td.getAdviceRecords().get(i);
             if (showAllAccesses) {
-                ps.println("  field " + getQualName(te) + " accessed (" + te.name() + ") at "
-                        + ms(te.getAccessTime()) + " in thread " + te.getThread());
+                ps.println("  field " + getQualName(ar) + " accessed (" + AdviceRecordHelper.accessType(ar) + ") at "
+                        + ms(ar.time) + " in thread " + ar.thread);
             }
         }
 
-        long lifeTime = td.getLifeTime(traceRun.getLastTime());
+        long lifeTime = td.getLifeTime(traceRun.lastTime);
         long modifyLifeTime = td.getModifyLifeTime();
 
         ps.println("  Unchanged for "
@@ -68,8 +67,12 @@ public class DataByObjectQueryHelper extends QueryBase {
                 + "% of lifetime");
     }
 
-    private String getQualName(TraceElement te) {
-        return te.getClassRecord().getName() + "." + te.getField();
+    private String getQualName(AdviceRecord ar) {
+        ObjectFieldAdviceRecord far = (ObjectFieldAdviceRecord) ar;
+        ObjectRecord or = (ObjectRecord) far.value;
+        FieldRecord fr = (FieldRecord) far.field;
+        return or.getClassName() + "." + fr.getName();
     }
+
 
 }

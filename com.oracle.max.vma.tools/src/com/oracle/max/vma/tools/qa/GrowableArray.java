@@ -25,18 +25,16 @@ package com.oracle.max.vma.tools.qa;
 
 import java.util.*;
 
-import com.oracle.max.vma.tools.qa.ObjectRecord.*;
+import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.AdviceRecord;
 
 /**
  * Manages the list of trace elements for an {@link ObjectRecord}. This is where
  * most of the space goes, so it pays to have custom implementations that
- * minimise space.
- *
- * @author Mick Jordan
+ * minimize space.
  *
  */
-public abstract class GrowableArray implements Iterable<TraceElement> {
-    public abstract Iterator<TraceElement> iterator();
+public abstract class GrowableArray implements Iterable<AdviceRecord> {
+    public abstract Iterator<AdviceRecord> iterator();
 
     /**
      * Add a new element to the array, possible changing the representation.
@@ -44,9 +42,9 @@ public abstract class GrowableArray implements Iterable<TraceElement> {
      * @param element element to be added
      * @return possibly new representation instance
      */
-    public abstract GrowableArray add(TraceElement element);
+    public abstract GrowableArray add(AdviceRecord element);
 
-    public abstract TraceElement get(int index);
+    public abstract AdviceRecord get(int index);
 
     public abstract int size();
 

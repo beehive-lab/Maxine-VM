@@ -112,7 +112,8 @@ public class TransientVMAdviceHandlerTypesGenerator {
                 adviceRecordName = uLastParam;
             } else if (name.contains("GetField") || name.contains("GetStatic")) {
                 adviceRecordName = "Object";
-            } else if (name.contains("PutField") || name.contains("PutStatic") || name.startsWith("ArrayStore")) {
+            } else if (name.contains("PutField") || name.contains("PutStatic") ||
+                            name.startsWith("ArrayStore")) {
                 adviceRecordName = "Object" + uLastParam;
             } else if (name.contains("Operation")) {
                 adviceRecordName = uLastParam + uLastParam;
@@ -122,7 +123,7 @@ public class TransientVMAdviceHandlerTypesGenerator {
                             name.endsWith("MultiNewArray")) {
                 adviceRecordName = "ObjectObject";
             } else if (name.endsWith("ArrayLength") || name.endsWith("Throw") ||
-                            name.contains("Monitor") || name.contains("New")) {
+                            name.contains("Monitor") || name.contains("New") || name.startsWith("ArrayLoad")) {
                 adviceRecordName = "Object";
             } else if (name.contains("Invoke")) {
                 adviceRecordName = "ObjectMethodActor";

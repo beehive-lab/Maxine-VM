@@ -22,12 +22,12 @@
  */
 package com.oracle.max.vma.tools.qa;
 
-import static com.oracle.max.vma.tools.qa.ObjectRecord.*;
-
 import java.util.*;
 
+import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.AdviceRecord;
+
 /**
- * Manages the list of trace elements for an {@link ObjectRecord}.
+ * Manages the list of {@link } instances for an {@link ObjectRecord}.
  * This is where most of the space goes, so it pays to have a custom implementation
  * that tries to use the minimum space. There are the following implementations:
  * <ul>
@@ -50,7 +50,7 @@ public class GrowableArrayImpl {
         return new Empty();
     }
 
-    static abstract class GAIteratorAdaptor implements Iterator<TraceElement> {
+    static abstract class GAIteratorAdaptor implements Iterator<AdviceRecord> {
         public void remove() {
             throw new UnsupportedOperationException();
         }
@@ -59,7 +59,7 @@ public class GrowableArrayImpl {
     static class Empty extends GrowableArray {
 
         @Override
-        public GrowableArray add(TraceElement te) {
+        public GrowableArray add(AdviceRecord te) {
             return new Singleton(te);
         }
 
@@ -69,12 +69,12 @@ public class GrowableArrayImpl {
         }
 
         @Override
-        public TraceElement get(int index) {
+        public AdviceRecord get(int index) {
             throw new IndexOutOfBoundsException();
         }
 
         @Override
-        public Iterator<TraceElement> iterator() {
+        public Iterator<AdviceRecord> iterator() {
             return new GAIterator();
         }
 
@@ -83,7 +83,7 @@ public class GrowableArrayImpl {
                 return false;
             }
 
-            public TraceElement next() {
+            public AdviceRecord next() {
                 throw new NoSuchElementException();
             }
         }
@@ -93,14 +93,14 @@ public class GrowableArrayImpl {
      * Single element.
      */
     static class Singleton extends GrowableArray {
-        private final TraceElement te;
+        private final AdviceRecord te;
 
-        Singleton(TraceElement te) {
+        Singleton(AdviceRecord te) {
             this.te = te;
         }
 
         @Override
-        public GrowableArray add(TraceElement te) {
+        public GrowableArray add(AdviceRecord te) {
             return new Doubleton(this.te, te);
         }
 
@@ -110,7 +110,7 @@ public class GrowableArrayImpl {
         }
 
         @Override
-        public TraceElement get(int index) {
+        public AdviceRecord get(int index) {
             if (index > 0) {
                 throw new IndexOutOfBoundsException();
             }
@@ -118,7 +118,7 @@ public class GrowableArrayImpl {
         }
 
         @Override
-        public Iterator<TraceElement> iterator() {
+        public Iterator<AdviceRecord> iterator() {
             return new GAIterator();
         }
 
@@ -128,7 +128,7 @@ public class GrowableArrayImpl {
                 return !processed;
             }
 
-            public TraceElement next() {
+            public AdviceRecord next() {
                 processed = true;
                 return te;
             }
@@ -140,16 +140,16 @@ public class GrowableArrayImpl {
      *
      */
     static class Doubleton extends GrowableArray {
-        private final TraceElement first;
-        private final TraceElement second;
+        private final AdviceRecord first;
+        private final AdviceRecord second;
 
-        Doubleton(TraceElement first, TraceElement second) {
+        Doubleton(AdviceRecord first, AdviceRecord second) {
             this.first = first;
             this.second = second;
         }
 
         @Override
-        public TraceElement get(int index) {
+        public AdviceRecord get(int index) {
             if (index > 1) {
                 throw new IndexOutOfBoundsException();
             }
@@ -163,13 +163,13 @@ public class GrowableArrayImpl {
         }
 
         @Override
-        public GrowableArray add(TraceElement te) {
+        public GrowableArray add(AdviceRecord te) {
             GrowableArray result = new SimpleArray(first, second, te);
             return result;
         }
 
         @Override
-        public Iterator<TraceElement> iterator() {
+        public Iterator<AdviceRecord> iterator() {
             return new GAIterator();
         }
 
@@ -179,18 +179,18 @@ public class GrowableArrayImpl {
                 return iterIndex < 2;
             }
 
-            public TraceElement next() {
+            public AdviceRecord next() {
                 return iterIndex++ == 0 ? first : second;
             }
         }
     }
 
     static class SimpleArray extends GrowableArray {
-        TraceElement[] array;
+        AdviceRecord[] array;
         int nextIndex;
 
-        SimpleArray(TraceElement first, TraceElement second, TraceElement third) {
-            array = new TraceElement[3];
+        SimpleArray(AdviceRecord first, AdviceRecord second, AdviceRecord third) {
+            array = new AdviceRecord[3];
             array[0] = first;
             array[1] = second;
             array[2] = third;
@@ -198,12 +198,12 @@ public class GrowableArrayImpl {
         }
 
         @Override
-        public GrowableArray add(TraceElement element) {
+        public GrowableArray add(AdviceRecord element) {
             if (nextIndex < array.length) {
                 array[nextIndex++] = element;
                 return this;
             } else if (array.length < ChunkedArray.CHUNK_SIZE - 1) {
-                final TraceElement[] newArray = new TraceElement[array.length + 1];
+                final AdviceRecord[] newArray = new AdviceRecord[array.length + 1];
                 System.arraycopy(array, 0, newArray, 0, array.length);
                 array = newArray;
                 array[nextIndex++] = element;
@@ -216,7 +216,7 @@ public class GrowableArrayImpl {
         }
 
         @Override
-        public TraceElement get(int index) {
+        public AdviceRecord get(int index) {
             return array[index];
         }
 
@@ -226,7 +226,7 @@ public class GrowableArrayImpl {
         }
 
         @Override
-        public Iterator<TraceElement> iterator() {
+        public Iterator<AdviceRecord> iterator() {
             return new GAIterator();
         }
 
@@ -236,7 +236,7 @@ public class GrowableArrayImpl {
                 return iterIndex < nextIndex;
             }
 
-            public TraceElement next() {
+            public AdviceRecord next() {
                 return array[iterIndex++];
             }
         }
@@ -248,21 +248,21 @@ public class GrowableArrayImpl {
      * For large lists.
      */
     static class ChunkedArray extends GrowableArray {
-        private ArrayList<TraceElement[]> chunks = new ArrayList<TraceElement[]>();
-        private TraceElement[] currentChunk;
+        private ArrayList<AdviceRecord[]> chunks = new ArrayList<AdviceRecord[]>();
+        private AdviceRecord[] currentChunk;
         private int indexInChunk;
         private static final int CHUNK_SIZE = 8;
 
-        ChunkedArray(TraceElement[] starter) {
-            for (TraceElement te : starter) {
+        ChunkedArray(AdviceRecord[] starter) {
+            for (AdviceRecord te : starter) {
                 add(te);
             }
         }
 
         @Override
-        public GrowableArray add(TraceElement element) {
+        public GrowableArray add(AdviceRecord element) {
             if (currentChunk == null || indexInChunk >= CHUNK_SIZE) {
-                currentChunk = new TraceElement[CHUNK_SIZE];
+                currentChunk = new AdviceRecord[CHUNK_SIZE];
                 chunks.add(currentChunk);
                 indexInChunk = 0;
             }
@@ -271,7 +271,7 @@ public class GrowableArrayImpl {
         }
 
         @Override
-        public TraceElement get(int index) {
+        public AdviceRecord get(int index) {
             final int chunkIndex = index / CHUNK_SIZE;
             final int thisIndexInChunk = index % CHUNK_SIZE;
             return chunks.get(chunkIndex)[thisIndexInChunk];
@@ -287,12 +287,12 @@ public class GrowableArrayImpl {
         }
 
         @Override
-        public Iterator<TraceElement> iterator() {
+        public Iterator<AdviceRecord> iterator() {
             return new ThisIterator();
         }
 
-        class ThisIterator implements Iterator<TraceElement> {
-            private TraceElement[] iterCurrentChunk;
+        class ThisIterator implements Iterator<AdviceRecord> {
+            private AdviceRecord[] iterCurrentChunk;
             private int iterChunkIndex;
             private int iterIndexInChunk;
             private int iterChunkLimit;
@@ -307,8 +307,8 @@ public class GrowableArrayImpl {
                         && iterIndexInChunk < iterChunkLimit;
             }
 
-            public TraceElement next() {
-                final TraceElement result = iterCurrentChunk[iterIndexInChunk++];
+            public AdviceRecord next() {
+                final AdviceRecord result = iterCurrentChunk[iterIndexInChunk++];
                 if (iterIndexInChunk >= iterChunkLimit) {
                     iterIndexInChunk = 0;
                     iterChunkIndex++;

@@ -32,16 +32,14 @@ import com.sun.max.annotate.*;
 
 /**
  * Generates the {@link VMAdviceHandlerLog} interface that operates in terms of {@link String strings}
- * and scalar types suitable for saving to a file. This mapping isn't very amenable to automation
+ * and scalar types suitable for saving to a file. The mapping is generated from the
+ * {@link VMAdviceHandler} interface. This mapping isn't very amenable to automation
  * simply based on the type signatures, as the interpretation of {@link Object} arguments is
  * method specific (e.g., whether it denotes an instance or a static tuple).
  *
  * One consequence of the type mapping is that the method signatures with values of type {@link Object} and
  * {@code long} map to the same, as {@link Object} is converted to a unique id. Rather than
  * qualify every method with a type name, we just qualify the {@link Object} case.
- *
- * Methods relating to static values (Static occurs in the name) have the id of the associated
- * {@link ClassLoader} appended.
  *
  * The generating thread (name) is added as the first argument to all the methods.
  *

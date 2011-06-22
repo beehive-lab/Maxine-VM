@@ -38,7 +38,7 @@ public class MissingConstructorCountQuery extends QueryBase {
     public Object execute(ArrayList<TraceRun> traceRuns, int traceFocus,
             PrintStream ps, String[] args) {
         TraceRun traceRun = traceRuns.get(traceFocus);
-        int r = traceRun.getMissingConstructorCount();
+        int r = traceRun.missingConstructorCount;
         ps.println("Missing Constructor Count: " + r);
         return new Integer(r);
     }

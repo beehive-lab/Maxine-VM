@@ -22,11 +22,11 @@
  */
 package com.oracle.max.vm.ext.vma.runtime;
 
-import static com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandler.*;
 import com.oracle.max.vm.ext.vma.log.VMAdviceHandlerLog.TimeStampGenerator;
 import com.oracle.max.vm.ext.vma.run.java.*;
 import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.*;
 import com.sun.max.annotate.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -167,7 +167,7 @@ public class LoggingAdviceRecordFlusher extends Thread implements AdviceRecordFl
                 // force time reset to this batch
                 logHandler.getLog().resetTime();
             }
-            RecordType rt = getRecordType(thisRecord);
+            RecordType rt = thisRecord.getRecordType();
             switch (rt) {
                 // BEGIN GENERATED CODE
 
@@ -178,351 +178,352 @@ public class LoggingAdviceRecordFlusher extends Thread implements AdviceRecordFl
                     break;
                 }
                 case Removal: {
-                    logHandler.removal(getPackedValue(thisRecord));
+                    logHandler.removal(thisRecord.getPackedValue());
                     break;
                 }
                 case GC: {
-                    assert getAdviceMode(thisRecord) == 1;
+                    assert thisRecord.getAdviceMode() == 1;
                     logHandler.adviseAfterGC();
                     break;
                 }
                 case ThreadStarting: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     break;
                 }
                 case ThreadTerminating: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     break;
                 }
                 case ConstLoadLong: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     LongAdviceRecord record = (LongAdviceRecord) thisRecord;
                     logHandler.adviseBeforeConstLoad(record.value);
                     break;
                 }
                 case ConstLoadObject: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     ObjectAdviceRecord record = (ObjectAdviceRecord) thisRecord;
                     logHandler.adviseBeforeConstLoad(record.value);
                     break;
                 }
                 case ConstLoadFloat: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     FloatAdviceRecord record = (FloatAdviceRecord) thisRecord;
                     logHandler.adviseBeforeConstLoad(record.value);
                     break;
                 }
                 case ConstLoadDouble: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     DoubleAdviceRecord record = (DoubleAdviceRecord) thisRecord;
                     logHandler.adviseBeforeConstLoad(record.value);
                     break;
                 }
                 case IPush: {
-                    assert getAdviceMode(thisRecord) == 0;
-                    logHandler.adviseBeforeIPush(getPackedValue(thisRecord));
+                    assert thisRecord.getAdviceMode() == 0;
+                    logHandler.adviseBeforeIPush(thisRecord.getPackedValue());
                     break;
                 }
                 case Load: {
-                    assert getAdviceMode(thisRecord) == 0;
-                    logHandler.adviseBeforeLoad(getPackedValue(thisRecord));
+                    assert thisRecord.getAdviceMode() == 0;
+                    logHandler.adviseBeforeLoad(thisRecord.getPackedValue());
                     break;
                 }
                 case ArrayLoad: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     ObjectAdviceRecord record = (ObjectAdviceRecord) thisRecord;
-                    logHandler.adviseBeforeArrayLoad(record.value, getArrayIndex(record));
+                    logHandler.adviseBeforeArrayLoad(record.value, record.getArrayIndex());
                     break;
                 }
                 case StoreLong: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     LongAdviceRecord record = (LongAdviceRecord) thisRecord;
-                    logHandler.adviseBeforeStore(getPackedValue(record), record.value);
+                    logHandler.adviseBeforeStore(record.getPackedValue(), record.value);
                     break;
                 }
                 case StoreFloat: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     FloatAdviceRecord record = (FloatAdviceRecord) thisRecord;
-                    logHandler.adviseBeforeStore(getPackedValue(record), record.value);
+                    logHandler.adviseBeforeStore(record.getPackedValue(), record.value);
                     break;
                 }
                 case StoreDouble: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     DoubleAdviceRecord record = (DoubleAdviceRecord) thisRecord;
-                    logHandler.adviseBeforeStore(getPackedValue(record), record.value);
+                    logHandler.adviseBeforeStore(record.getPackedValue(), record.value);
                     break;
                 }
                 case StoreObject: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     ObjectAdviceRecord record = (ObjectAdviceRecord) thisRecord;
-                    logHandler.adviseBeforeStore(getPackedValue(record), record.value);
+                    logHandler.adviseBeforeStore(record.getPackedValue(), record.value);
                     break;
                 }
                 case ArrayStoreFloat: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     ObjectFloatAdviceRecord record = (ObjectFloatAdviceRecord) thisRecord;
-                    logHandler.adviseBeforeArrayStore(record.value, getArrayIndex(record), record.value2);
+                    logHandler.adviseBeforeArrayStore(record.value, record.getArrayIndex(), record.value2);
                     break;
                 }
                 case ArrayStoreLong: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     ObjectLongAdviceRecord record = (ObjectLongAdviceRecord) thisRecord;
-                    logHandler.adviseBeforeArrayStore(record.value, getArrayIndex(record), record.value2);
+                    logHandler.adviseBeforeArrayStore(record.value, record.getArrayIndex(), record.value2);
                     break;
                 }
                 case ArrayStoreDouble: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     ObjectDoubleAdviceRecord record = (ObjectDoubleAdviceRecord) thisRecord;
-                    logHandler.adviseBeforeArrayStore(record.value, getArrayIndex(record), record.value2);
+                    logHandler.adviseBeforeArrayStore(record.value, record.getArrayIndex(), record.value2);
                     break;
                 }
                 case ArrayStoreObject: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     ObjectObjectAdviceRecord record = (ObjectObjectAdviceRecord) thisRecord;
-                    logHandler.adviseBeforeArrayStore(record.value, getArrayIndex(record), record.value2);
+                    logHandler.adviseBeforeArrayStore(record.value, record.getArrayIndex(), record.value2);
                     break;
                 }
                 case StackAdjust: {
-                    assert getAdviceMode(thisRecord) == 0;
-                    logHandler.adviseBeforeStackAdjust(getPackedValue(thisRecord));
+                    assert thisRecord.getAdviceMode() == 0;
+                    logHandler.adviseBeforeStackAdjust(thisRecord.getPackedValue());
                     break;
                 }
                 case OperationLong: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     LongLongAdviceRecord record = (LongLongAdviceRecord) thisRecord;
-                    logHandler.adviseBeforeOperation(getPackedValue(record), record.value, record.value2);
+                    logHandler.adviseBeforeOperation(record.getPackedValue(), record.value, record.value2);
                     break;
                 }
                 case OperationFloat: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     FloatFloatAdviceRecord record = (FloatFloatAdviceRecord) thisRecord;
-                    logHandler.adviseBeforeOperation(getPackedValue(record), record.value, record.value2);
+                    logHandler.adviseBeforeOperation(record.getPackedValue(), record.value, record.value2);
                     break;
                 }
                 case OperationDouble: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     DoubleDoubleAdviceRecord record = (DoubleDoubleAdviceRecord) thisRecord;
-                    logHandler.adviseBeforeOperation(getPackedValue(record), record.value, record.value2);
+                    logHandler.adviseBeforeOperation(record.getPackedValue(), record.value, record.value2);
                     break;
                 }
                 case IInc: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     LongLongAdviceRecord record = (LongLongAdviceRecord) thisRecord;
-                    logHandler.adviseBeforeIInc(getPackedValue(record), (int) record.value, (int) record.value2);
+                    logHandler.adviseBeforeIInc(record.getPackedValue(), (int) record.value, (int) record.value2);
                     break;
                 }
                 case ConversionLong: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     LongAdviceRecord record = (LongAdviceRecord) thisRecord;
-                    logHandler.adviseBeforeConversion(getPackedValue(record), record.value);
+                    logHandler.adviseBeforeConversion(record.getPackedValue(), record.value);
                     break;
                 }
                 case ConversionFloat: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     FloatAdviceRecord record = (FloatAdviceRecord) thisRecord;
-                    logHandler.adviseBeforeConversion(getPackedValue(record), record.value);
+                    logHandler.adviseBeforeConversion(record.getPackedValue(), record.value);
                     break;
                 }
                 case ConversionDouble: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     DoubleAdviceRecord record = (DoubleAdviceRecord) thisRecord;
-                    logHandler.adviseBeforeConversion(getPackedValue(record), record.value);
+                    logHandler.adviseBeforeConversion(record.getPackedValue(), record.value);
                     break;
                 }
                 case IfInt: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     LongLongAdviceRecord record = (LongLongAdviceRecord) thisRecord;
-                    logHandler.adviseBeforeIf(getPackedValue(record), (int) record.value, (int) record.value2);
+                    logHandler.adviseBeforeIf(record.getPackedValue(), (int) record.value, (int) record.value2);
                     break;
                 }
                 case IfObject: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     ObjectObjectAdviceRecord record = (ObjectObjectAdviceRecord) thisRecord;
-                    logHandler.adviseBeforeIf(getPackedValue(record), record.value, record.value2);
+                    logHandler.adviseBeforeIf(record.getPackedValue(), record.value, record.value2);
                     break;
                 }
                 case ReturnObject: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     ObjectAdviceRecord record = (ObjectAdviceRecord) thisRecord;
                     logHandler.adviseBeforeReturn(record.value);
                     break;
                 }
                 case ReturnLong: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     LongAdviceRecord record = (LongAdviceRecord) thisRecord;
                     logHandler.adviseBeforeReturn(record.value);
                     break;
                 }
                 case ReturnFloat: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     FloatAdviceRecord record = (FloatAdviceRecord) thisRecord;
                     logHandler.adviseBeforeReturn(record.value);
                     break;
                 }
                 case ReturnDouble: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     DoubleAdviceRecord record = (DoubleAdviceRecord) thisRecord;
                     logHandler.adviseBeforeReturn(record.value);
                     break;
                 }
                 case Return: {
-                    assert getAdviceMode(thisRecord) == 0;
-                    logHandler.adviseBeforeReturn(getPackedValue(thisRecord));
+                    assert thisRecord.getAdviceMode() == 0;
+                    logHandler.adviseBeforeReturn(thisRecord.getPackedValue());
                     break;
                 }
                 case GetStatic: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     ObjectAdviceRecord record = (ObjectAdviceRecord) thisRecord;
-                    logHandler.adviseBeforeGetStatic(record.value, getPackedValue(record));
+                    logHandler.adviseBeforeGetStatic(record.value, record.getPackedValue());
                     break;
                 }
                 case PutStaticDouble: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     ObjectDoubleAdviceRecord record = (ObjectDoubleAdviceRecord) thisRecord;
-                    logHandler.adviseBeforePutStatic(record.value, getPackedValue(record), record.value2);
+                    logHandler.adviseBeforePutStatic(record.value, record.getPackedValue(), record.value2);
                     break;
                 }
                 case PutStaticLong: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     ObjectLongAdviceRecord record = (ObjectLongAdviceRecord) thisRecord;
-                    logHandler.adviseBeforePutStatic(record.value, getPackedValue(record), record.value2);
+                    logHandler.adviseBeforePutStatic(record.value, record.getPackedValue(), record.value2);
                     break;
                 }
                 case PutStaticFloat: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     ObjectFloatAdviceRecord record = (ObjectFloatAdviceRecord) thisRecord;
-                    logHandler.adviseBeforePutStatic(record.value, getPackedValue(record), record.value2);
+                    logHandler.adviseBeforePutStatic(record.value, record.getPackedValue(), record.value2);
                     break;
                 }
                 case PutStaticObject: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     ObjectObjectAdviceRecord record = (ObjectObjectAdviceRecord) thisRecord;
-                    logHandler.adviseBeforePutStatic(record.value, getPackedValue(record), record.value2);
+                    logHandler.adviseBeforePutStatic(record.value, record.getPackedValue(), record.value2);
                     break;
                 }
                 case GetField: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     ObjectAdviceRecord record = (ObjectAdviceRecord) thisRecord;
-                    logHandler.adviseBeforeGetField(record.value, getPackedValue(record));
+                    logHandler.adviseBeforeGetField(record.value, record.getPackedValue());
                     break;
                 }
                 case PutFieldDouble: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     ObjectDoubleAdviceRecord record = (ObjectDoubleAdviceRecord) thisRecord;
-                    logHandler.adviseBeforePutField(record.value, getPackedValue(record), record.value2);
+                    logHandler.adviseBeforePutField(record.value, record.getPackedValue(), record.value2);
                     break;
                 }
                 case PutFieldLong: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     ObjectLongAdviceRecord record = (ObjectLongAdviceRecord) thisRecord;
-                    logHandler.adviseBeforePutField(record.value, getPackedValue(record), record.value2);
+                    logHandler.adviseBeforePutField(record.value, record.getPackedValue(), record.value2);
                     break;
                 }
                 case PutFieldFloat: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     ObjectFloatAdviceRecord record = (ObjectFloatAdviceRecord) thisRecord;
-                    logHandler.adviseBeforePutField(record.value, getPackedValue(record), record.value2);
+                    logHandler.adviseBeforePutField(record.value, record.getPackedValue(), record.value2);
                     break;
                 }
                 case PutFieldObject: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     ObjectObjectAdviceRecord record = (ObjectObjectAdviceRecord) thisRecord;
-                    logHandler.adviseBeforePutField(record.value, getPackedValue(record), record.value2);
+                    logHandler.adviseBeforePutField(record.value, record.getPackedValue(), record.value2);
                     break;
                 }
                 case InvokeVirtual: {
-                    ObjectMethodActorAdviceRecord record = (ObjectMethodActorAdviceRecord) thisRecord;
-                    if (getAdviceMode(thisRecord) == 0) {
-                        logHandler.adviseBeforeInvokeVirtual(record.value, record.value2);
+                    ObjectMethodAdviceRecord record = (ObjectMethodAdviceRecord) thisRecord;
+                    if (thisRecord.getAdviceMode() == 0) {
+                        logHandler.adviseBeforeInvokeVirtual(record.value, (MethodActor) record.value2);
                     } else {
-                        logHandler.adviseAfterInvokeVirtual(record.value, record.value2);
+                        logHandler.adviseAfterInvokeVirtual(record.value, (MethodActor) record.value2);
                     }
                     break;
                 }
                 case InvokeSpecial: {
-                    ObjectMethodActorAdviceRecord record = (ObjectMethodActorAdviceRecord) thisRecord;
-                    if (getAdviceMode(thisRecord) == 0) {
-                        logHandler.adviseBeforeInvokeSpecial(record.value, record.value2);
+                    ObjectMethodAdviceRecord record = (ObjectMethodAdviceRecord) thisRecord;
+                    if (thisRecord.getAdviceMode() == 0) {
+                        logHandler.adviseBeforeInvokeSpecial(record.value, (MethodActor) record.value2);
                     } else {
-                        logHandler.adviseAfterInvokeSpecial(record.value, record.value2);
+                        logHandler.adviseAfterInvokeSpecial(record.value, (MethodActor) record.value2);
                     }
                     break;
                 }
                 case InvokeStatic: {
-                    ObjectMethodActorAdviceRecord record = (ObjectMethodActorAdviceRecord) thisRecord;
-                    if (getAdviceMode(thisRecord) == 0) {
-                        logHandler.adviseBeforeInvokeStatic(record.value, record.value2);
+                    ObjectMethodAdviceRecord record = (ObjectMethodAdviceRecord) thisRecord;
+                    if (thisRecord.getAdviceMode() == 0) {
+                        logHandler.adviseBeforeInvokeStatic(record.value, (MethodActor) record.value2);
                     } else {
-                        logHandler.adviseAfterInvokeStatic(record.value, record.value2);
+                        logHandler.adviseAfterInvokeStatic(record.value, (MethodActor) record.value2);
                     }
                     break;
                 }
                 case InvokeInterface: {
-                    ObjectMethodActorAdviceRecord record = (ObjectMethodActorAdviceRecord) thisRecord;
-                    if (getAdviceMode(thisRecord) == 0) {
-                        logHandler.adviseBeforeInvokeInterface(record.value, record.value2);
+                    ObjectMethodAdviceRecord record = (ObjectMethodAdviceRecord) thisRecord;
+                    if (thisRecord.getAdviceMode() == 0) {
+                        logHandler.adviseBeforeInvokeInterface(record.value, (MethodActor) record.value2);
                     } else {
-                        logHandler.adviseAfterInvokeInterface(record.value, record.value2);
+                        logHandler.adviseAfterInvokeInterface(record.value, (MethodActor) record.value2);
                     }
                     break;
                 }
                 case ArrayLength: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     ObjectAdviceRecord record = (ObjectAdviceRecord) thisRecord;
-                    logHandler.adviseBeforeArrayLength(record.value, getArrayIndex(record));
+                    logHandler.adviseBeforeArrayLength(record.value, record.getArrayIndex());
                     break;
                 }
                 case Throw: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     ObjectAdviceRecord record = (ObjectAdviceRecord) thisRecord;
                     logHandler.adviseBeforeThrow(record.value);
                     break;
                 }
                 case CheckCast: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     ObjectObjectAdviceRecord record = (ObjectObjectAdviceRecord) thisRecord;
                     logHandler.adviseBeforeCheckCast(record.value, record.value2);
                     break;
                 }
                 case InstanceOf: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     ObjectObjectAdviceRecord record = (ObjectObjectAdviceRecord) thisRecord;
                     logHandler.adviseBeforeInstanceOf(record.value, record.value2);
                     break;
                 }
                 case MonitorEnter: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     ObjectAdviceRecord record = (ObjectAdviceRecord) thisRecord;
                     logHandler.adviseBeforeMonitorEnter(record.value);
                     break;
                 }
                 case MonitorExit: {
-                    assert getAdviceMode(thisRecord) == 0;
+                    assert thisRecord.getAdviceMode() == 0;
                     ObjectAdviceRecord record = (ObjectAdviceRecord) thisRecord;
                     logHandler.adviseBeforeMonitorExit(record.value);
                     break;
                 }
                 case Bytecode: {
-                    assert getAdviceMode(thisRecord) == 0;
-                    logHandler.adviseBeforeBytecode(getPackedValue(thisRecord));
+                    assert thisRecord.getAdviceMode() == 0;
+                    logHandler.adviseBeforeBytecode(thisRecord.getPackedValue());
                     break;
                 }
                 case New: {
-                    assert getAdviceMode(thisRecord) == 1;
+                    assert thisRecord.getAdviceMode() == 1;
                     ObjectAdviceRecord record = (ObjectAdviceRecord) thisRecord;
                     logHandler.adviseAfterNew(record.value);
                     break;
                 }
                 case NewArray: {
-                    assert getAdviceMode(thisRecord) == 1;
+                    assert thisRecord.getAdviceMode() == 1;
                     ObjectAdviceRecord record = (ObjectAdviceRecord) thisRecord;
-                    logHandler.adviseAfterNewArray(record.value, getPackedValue(record));
+                    logHandler.adviseAfterNewArray(record.value, record.getPackedValue());
                     break;
                 }
                 case MultiNewArray: {
                     assert false;
                     break;
                 }
+
 
                 // END GENERATED CODE
                 default:
@@ -531,7 +532,7 @@ public class LoggingAdviceRecordFlusher extends Thread implements AdviceRecordFl
 
             }
             // it would be better to cache this with the thread
-            thisRecord.owner = null;
+            thisRecord.thread = null;
         }
     }
 }

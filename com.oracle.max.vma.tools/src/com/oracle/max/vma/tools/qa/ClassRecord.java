@@ -20,10 +20,11 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
 package com.oracle.max.vma.tools.qa;
 
 import java.util.ArrayList;
+
+import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.*;
 
 /**
  * Maintains the basic information on a class instance that occurred in a trace.
@@ -37,8 +38,7 @@ import java.util.ArrayList;
  */
 public class ClassRecord extends NamedRecord {
     /**
-     * By convention, the first element of the list contains the traces for
-     * static fields of this class.
+     * All the instances of this class in the trace.
      */
     private ArrayList<ObjectRecord> objects;
     /**
@@ -46,12 +46,15 @@ public class ClassRecord extends NamedRecord {
      */
     private String classLoaderId;
 
+    /**
+     * The list of {@link AdviceRecord instances} manipulating the static fields.
+     */
+    private GrowableArray adviceRecords = GrowableArrayImpl.create();
+
     public ClassRecord(String name, String classLoaderId) {
         super(name);
         this.classLoaderId = classLoaderId;
         this.objects = new ArrayList<ObjectRecord>();
-        ObjectRecord std = new ObjectRecord(null, -1, this, null, -1);
-        this.objects.add(std);
     }
 
     public ArrayList<ObjectRecord> getObjects() {
@@ -60,6 +63,14 @@ public class ClassRecord extends NamedRecord {
 
     public void addObject(ObjectRecord td) {
         objects.add(td);
+    }
+
+    public void addTraceElement(AdviceRecord adviceRecord) {
+        adviceRecords = adviceRecords.add(adviceRecord);
+    }
+
+    public GrowableArray getAdviceRecords() {
+        return adviceRecords;
     }
 
     public static String getCanonicalName(String name) {

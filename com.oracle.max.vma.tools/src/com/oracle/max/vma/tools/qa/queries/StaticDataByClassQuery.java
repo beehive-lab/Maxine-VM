@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.io.PrintStream;
 
+import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.AdviceRecord;
 import com.oracle.max.vma.tools.qa.*;
 
 /**
@@ -40,21 +41,16 @@ public class StaticDataByClassQuery extends QueryBase {
         TraceRun traceRun = traceRuns.get(traceFocus);
         Iterator<ClassRecord> iter = traceRun.getClassesIterator();
 
-        parseArgs(args);
         while (iter.hasNext()) {
             ClassRecord cr = iter.next();
-            ArrayList<ObjectRecord> a = cr.getObjects();
-            ObjectRecord td = a.get(0);
-            if (((className == null) || td.getClassName().equals(className))
-                    && !td.isArray()) {
-                ps.println("Static accesses for class " + td.getClassName()
-                        + " in classloader " + td.getClassLoaderId());
-                for (int j = 0; j < td.getTraceElements().size(); j++) {
-                    ObjectRecord.TraceElement te = td.getTraceElements().get(j);
-                    boolean isWrite = te instanceof ObjectRecord.WriteTraceElement;
-                    String accessType = isWrite ? "modified" : "read";
-                    ps.println("  field " + te.getField() + " "
-                            + accessType + " at " + ms(te.getAccessTime()));
+            if (((className == null) || cr.getName().equals(className))
+                    && !cr.isArray()) {
+                ps.println("Static accesses for class " + cr.getName()
+                        + " in classloader " + cr.getClassLoaderId());
+                for (int j = 0; j < cr.getAdviceRecords().size(); j++) {
+                    AdviceRecord te = cr.getAdviceRecords().get(j);
+                    ps.println("  field " + AdviceRecordHelper.getField(te) + " "
+                            + AdviceRecordHelper.accessType(te) + " at " + ms(te.time));
                 }
                 if (className != null) {
                     break;

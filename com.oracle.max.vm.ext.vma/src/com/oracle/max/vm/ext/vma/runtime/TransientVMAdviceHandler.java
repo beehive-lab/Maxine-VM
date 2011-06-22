@@ -22,11 +22,11 @@
  */
 package com.oracle.max.vm.ext.vma.runtime;
 
+import static com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.*;
 import static com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.RecordType.*;
 import static com.oracle.max.vm.ext.vma.runtime.AdviceRecordFlusher.*;
 
 import com.oracle.max.vm.ext.vma.*;
-import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.*;
 
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.heap.*;
@@ -49,7 +49,6 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
     private static final String RECORD_BUF_SIZE_PROPERTY = "max.vma.recordbuf.size";
     private static final int DEFAULT_RECORD_BUF_SIZE = 16 * 1024;
     private static final int DEFAULT_RECORD_QUOTA_SIZE = 1024;
-    private static final RecordType[] RECORD_TYPE_VALUES = RecordType.values();
 
 
     /**
@@ -81,7 +80,7 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
         @Override
         public void removed(long id) {
-            LongAdviceRecord record = (LongAdviceRecord) lta.getCheckFlush(Removal, 0);
+            LongAdviceRecord record = (LongAdviceRecord) lta.getCheckFlush(Removal, 1);
             if (record != null) {
                 record.value = id;
             }
@@ -112,8 +111,8 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
         while (count < 10) {
             synchronized (list) {
                 for (AdviceRecord record : list) {
-                    if (record.owner == null) {
-                        record.owner = VmThread.current();
+                    if (record.thread == null) {
+                        record.thread = VmThread.current();
                         return record;
                     }
                 }
@@ -130,14 +129,15 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
     public void initialise(ObjectStateHandler state) {
         super.initialise(state);
         try {
+            // TODO is this really necessary?
             Heap.enableImmortalMemoryAllocation();
             tb = new ThreadRecordBuffer();
             super.setRemovalTracker(new ASyncRemovalTracker(this));
-            recordFlusher = AdviceRecordFlusherFactory.create();
-            recordFlusher.initialise(state);
         } finally {
             Heap.disableImmortalMemoryAllocation();
         }
+        recordFlusher = AdviceRecordFlusherFactory.create();
+        recordFlusher.initialise(state);
     }
 
     @Override
@@ -170,7 +170,7 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
         }
         final AdviceRecord record = getRecord(rt);
         record.time = System.nanoTime();
-        record.codeAndValue = rt.ordinal() | (adviceMode << AdviceRecord.ADVICE_MODE_SHIFT);
+        record.setCodeAndMode(rt, adviceMode);
         buffer.records[buffer.index++] = record;
         return record;
     }
@@ -190,7 +190,7 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
     private ObjectAdviceRecord storeRecord(RecordType rt, int adviceMode, Object obj, int arg) {
         ObjectAdviceRecord record = (ObjectAdviceRecord) getCheckFlush(rt, adviceMode);
         if (record != null) {
-            record.codeAndValue |= arg << AdviceRecord.VALUE_SHIFT;
+            record.setValue(arg);
             record.value = obj;
         }
         return record;
@@ -199,7 +199,7 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
     private AdviceRecord storeRecord(RecordType rt, int adviceMode, int arg) {
         AdviceRecord record = getCheckFlush(rt, adviceMode);
         if (record != null) {
-            record.codeAndValue |= arg << AdviceRecord.VALUE_SHIFT;
+            record.setValue(arg);
         }
         return record;
     }
@@ -207,26 +207,9 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
     private AdviceRecord storeRecord(RecordType rt, int adviceMode, long arg) {
         AdviceRecord record = getCheckFlush(rt, adviceMode);
         if (record != null) {
-            record.codeAndValue |= arg << AdviceRecord.VALUE_SHIFT;
+            record.setValue((int) arg);
         }
         return record;
-    }
-
-    public static RecordType getRecordType(AdviceRecord record) {
-        int recordOrd = (int) (record.codeAndValue & 0xFF);
-        return RECORD_TYPE_VALUES[recordOrd];
-    }
-
-    public static int getArrayIndex(AdviceRecord record) {
-        return getPackedValue(record);
-    }
-
-    public static int getPackedValue(AdviceRecord record) {
-        return (int) (record.codeAndValue >> AdviceRecord.VALUE_SHIFT);
-    }
-
-    public static int getAdviceMode(AdviceRecord record) {
-        return (int) ((record.codeAndValue >> AdviceRecord.ADVICE_MODE_SHIFT) & 0xFF);
     }
 
     @Override
@@ -620,7 +603,7 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
     @Override
     public void adviseBeforeInvokeVirtual(Object arg1, MethodActor arg2) {
         super.adviseBeforeInvokeVirtual(arg1, arg2);
-        ObjectMethodActorAdviceRecord r = (ObjectMethodActorAdviceRecord) storeRecord(InvokeVirtual, 0, arg1);
+        ObjectMethodAdviceRecord r = (ObjectMethodAdviceRecord) storeRecord(InvokeVirtual, 0, arg1);
         if (r != null) {
             r.value2 = arg2;
         }
@@ -630,7 +613,7 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
     @Override
     public void adviseBeforeInvokeSpecial(Object arg1, MethodActor arg2) {
         super.adviseBeforeInvokeSpecial(arg1, arg2);
-        ObjectMethodActorAdviceRecord r = (ObjectMethodActorAdviceRecord) storeRecord(InvokeSpecial, 0, arg1);
+        ObjectMethodAdviceRecord r = (ObjectMethodAdviceRecord) storeRecord(InvokeSpecial, 0, arg1);
         if (r != null) {
             r.value2 = arg2;
         }
@@ -640,7 +623,7 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
     @Override
     public void adviseBeforeInvokeStatic(Object arg1, MethodActor arg2) {
         super.adviseBeforeInvokeStatic(arg1, arg2);
-        ObjectMethodActorAdviceRecord r = (ObjectMethodActorAdviceRecord) storeRecord(InvokeStatic, 0, arg1);
+        ObjectMethodAdviceRecord r = (ObjectMethodAdviceRecord) storeRecord(InvokeStatic, 0, arg1);
         if (r != null) {
             r.value2 = arg2;
         }
@@ -650,7 +633,7 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
     @Override
     public void adviseBeforeInvokeInterface(Object arg1, MethodActor arg2) {
         super.adviseBeforeInvokeInterface(arg1, arg2);
-        ObjectMethodActorAdviceRecord r = (ObjectMethodActorAdviceRecord) storeRecord(InvokeInterface, 0, arg1);
+        ObjectMethodAdviceRecord r = (ObjectMethodAdviceRecord) storeRecord(InvokeInterface, 0, arg1);
         if (r != null) {
             r.value2 = arg2;
         }
@@ -715,7 +698,7 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
     @Override
     public void adviseAfterInvokeVirtual(Object arg1, MethodActor arg2) {
         super.adviseAfterInvokeVirtual(arg1, arg2);
-        ObjectMethodActorAdviceRecord r = (ObjectMethodActorAdviceRecord) storeRecord(InvokeVirtual, 1, arg1);
+        ObjectMethodAdviceRecord r = (ObjectMethodAdviceRecord) storeRecord(InvokeVirtual, 1, arg1);
         if (r != null) {
             r.value2 = arg2;
         }
@@ -725,7 +708,7 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
     @Override
     public void adviseAfterInvokeSpecial(Object arg1, MethodActor arg2) {
         super.adviseAfterInvokeSpecial(arg1, arg2);
-        ObjectMethodActorAdviceRecord r = (ObjectMethodActorAdviceRecord) storeRecord(InvokeSpecial, 1, arg1);
+        ObjectMethodAdviceRecord r = (ObjectMethodAdviceRecord) storeRecord(InvokeSpecial, 1, arg1);
         if (r != null) {
             r.value2 = arg2;
         }
@@ -735,7 +718,7 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
     @Override
     public void adviseAfterInvokeStatic(Object arg1, MethodActor arg2) {
         super.adviseAfterInvokeStatic(arg1, arg2);
-        ObjectMethodActorAdviceRecord r = (ObjectMethodActorAdviceRecord) storeRecord(InvokeStatic, 1, arg1);
+        ObjectMethodAdviceRecord r = (ObjectMethodAdviceRecord) storeRecord(InvokeStatic, 1, arg1);
         if (r != null) {
             r.value2 = arg2;
         }
@@ -745,7 +728,7 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
     @Override
     public void adviseAfterInvokeInterface(Object arg1, MethodActor arg2) {
         super.adviseAfterInvokeInterface(arg1, arg2);
-        ObjectMethodActorAdviceRecord r = (ObjectMethodActorAdviceRecord) storeRecord(InvokeInterface, 1, arg1);
+        ObjectMethodAdviceRecord r = (ObjectMethodAdviceRecord) storeRecord(InvokeInterface, 1, arg1);
         if (r != null) {
             r.value2 = arg2;
         }

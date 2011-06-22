@@ -33,11 +33,11 @@ import com.oracle.max.vma.tools.qa.*;
 
 public class DataByThreadsQueryHelper  {
     public static Map<String, ArrayList<ObjectRecord>> getObjectsByThread(TraceRun traceRun) {
-        Iterator<ObjectRecord> iter = traceRun.getObjects().values().iterator();
+        Iterator<ObjectRecord> iter = traceRun.objects.values().iterator();
         Map<String, ArrayList<ObjectRecord>> threadMap = new HashMap<String, ArrayList<ObjectRecord>>();
         while (iter.hasNext()) {
             ObjectRecord td = iter.next();
-            String threadId = td.getThread().getName();
+            String threadId = td.thread.getName();
             ArrayList<ObjectRecord> thObjects = threadMap.get(threadId);
             if (thObjects == null) {
                 thObjects = new ArrayList<ObjectRecord>();

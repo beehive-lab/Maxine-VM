@@ -23,10 +23,7 @@
 
 package com.oracle.max.vma.tools.qa.queries;
 
-/**
- * Query checks whether any object allocated by a thread is accessed by another thread.
- */
-
+import static com.oracle.max.vma.tools.qa.AdviceRecordHelper.*;
 import java.io.PrintStream;
 import java.util.*;
 
@@ -35,6 +32,7 @@ import java.util.*;
  * N.B. This requires that the trace was generated with read tracking.
  */
 
+import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.AdviceRecord;
 import com.oracle.max.vma.tools.qa.*;
 
 public class ThreadLocalQuery extends QueryBase {
@@ -66,12 +64,12 @@ public class ThreadLocalQuery extends QueryBase {
      */
     private static Set<ThreadRecord> accessedByAnotherThread(ObjectRecord obj) {
         HashSet<ThreadRecord> result = null;
-        for (ObjectRecord.TraceElement te : obj.getTraceElements()) {
-            if (!(te.getThread() == obj.getThread())) {
+        for (AdviceRecord ar : obj.getAdviceRecords()) {
+            if (!(ar.thread == obj.thread)) {
                 if (result == null) {
                     result = new HashSet<ThreadRecord>();
                 }
-                result.add(te.getThread());
+                result.add(getThread(ar));
             }
         }
         return result;

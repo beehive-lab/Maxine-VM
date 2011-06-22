@@ -69,14 +69,14 @@ public class LoggingAdviceRecordFlusherGenerator {
                 }
                 outAssertMode(AdviceMode.BEFORE.ordinal());
                 out.printf("                Object%sAdviceRecord record = (Object%sAdviceRecord) thisRecord;%n", splitType[1], splitType[1]);
-                out.printf("                logHandler.adviseBefore%s(record.value, getPackedValue(record), record.value2);%n", splitType[0]);
+                out.printf("                logHandler.adviseBefore%s(record.value, record.getPackedValue(), record.value2);%n", splitType[0]);
                 break;
 
             case GetStatic:
             case GetField:
                 outAssertMode(AdviceMode.BEFORE.ordinal());
                 out.printf("                ObjectAdviceRecord record = (ObjectAdviceRecord) thisRecord;%n");
-                out.printf("                logHandler.adviseBefore%s(record.value, getPackedValue(record));%n", e.name());
+                out.printf("                logHandler.adviseBefore%s(record.value, record.getPackedValue());%n", e.name());
                 break;
 
             case ArrayStoreObject:
@@ -86,7 +86,7 @@ public class LoggingAdviceRecordFlusherGenerator {
                 splitType = splitType(e, "ArrayStore");
                 outAssertMode(AdviceMode.BEFORE.ordinal());
                 out.printf("                Object%sAdviceRecord record = (Object%sAdviceRecord) thisRecord;%n", splitType[1], splitType[1]);
-                out.printf("                logHandler.adviseBefore%s(record.value, getArrayIndex(record), record.value2);%n", splitType[0]);
+                out.printf("                logHandler.adviseBefore%s(record.value, record.getArrayIndex(), record.value2);%n", splitType[0]);
                 break;
 
             case New:
@@ -98,7 +98,7 @@ public class LoggingAdviceRecordFlusherGenerator {
             case NewArray:
                 outAssertMode(AdviceMode.AFTER.ordinal());
                 out.printf("                ObjectAdviceRecord record = (ObjectAdviceRecord) thisRecord;%n");
-                out.printf("                logHandler.adviseAfterNewArray(record.value, getPackedValue(record));%n");
+                out.printf("                logHandler.adviseAfterNewArray(record.value, record.getPackedValue());%n");
                 break;
 
             case Unseen:
@@ -107,7 +107,7 @@ public class LoggingAdviceRecordFlusherGenerator {
                 break;
 
             case Removal:
-                out.printf("                logHandler.removal(getPackedValue(thisRecord));%n");
+                out.printf("                logHandler.removal(thisRecord.getPackedValue());%n");
                 break;
 
             case ConversionLong:
@@ -116,7 +116,7 @@ public class LoggingAdviceRecordFlusherGenerator {
                 splitType = splitType(e, "Conversion");
                 outAssertMode(AdviceMode.BEFORE.ordinal());
                 out.printf("                %sAdviceRecord record = (%sAdviceRecord) thisRecord;%n", splitType[1], splitType[1]);
-                out.printf("                logHandler.adviseBefore%s(getPackedValue(record), record.value);%n", splitType[0]);
+                out.printf("                logHandler.adviseBefore%s(record.getPackedValue(), record.value);%n", splitType[0]);
                 break;
 
             case ReturnFloat:
@@ -146,14 +146,14 @@ public class LoggingAdviceRecordFlusherGenerator {
                 splitType = splitType(e, "Store");
                 outAssertMode(AdviceMode.BEFORE.ordinal());
                 out.printf("                %sAdviceRecord record = (%sAdviceRecord) thisRecord;%n", splitType[1], splitType[1]);
-                out.printf("                logHandler.adviseBefore%s(getPackedValue(record), record.value);%n", splitType[0]);
+                out.printf("                logHandler.adviseBefore%s(record.getPackedValue(), record.value);%n", splitType[0]);
                 break;
 
             case ArrayLoad:
             case ArrayLength:
                 outAssertMode(AdviceMode.BEFORE.ordinal());
                 out.printf("                ObjectAdviceRecord record = (ObjectAdviceRecord) thisRecord;%n");
-                out.printf("                logHandler.adviseBefore%s(record.value, getArrayIndex(record));%n", e.name());
+                out.printf("                logHandler.adviseBefore%s(record.value, record.getArrayIndex());%n", e.name());
                 break;
 
             case GC:
@@ -167,7 +167,7 @@ public class LoggingAdviceRecordFlusherGenerator {
             case Return:
             case StackAdjust:
                 outAssertMode(AdviceMode.BEFORE.ordinal());
-                out.printf("                logHandler.adviseBefore%s(getPackedValue(thisRecord));%n", e.name());
+                out.printf("                logHandler.adviseBefore%s(thisRecord.getPackedValue());%n", e.name());
                 break;
 
             case OperationDouble:
@@ -177,14 +177,14 @@ public class LoggingAdviceRecordFlusherGenerator {
                 outAssertMode(AdviceMode.BEFORE.ordinal());
                 out.printf("                %s%sAdviceRecord record = (%s%sAdviceRecord) thisRecord;%n",
                                 splitType[1], splitType[1], splitType[1], splitType[1]);
-                out.printf("                logHandler.adviseBefore%s(getPackedValue(record), record.value, record.value2);%n", splitType[0]);
+                out.printf("                logHandler.adviseBefore%s(record.getPackedValue(), record.value, record.value2);%n", splitType[0]);
                 break;
 
             case IInc:
             case IfInt:
                 outAssertMode(AdviceMode.BEFORE.ordinal());
                 out.printf("                LongLongAdviceRecord record = (LongLongAdviceRecord) thisRecord;%n");
-                out.printf("                logHandler.adviseBefore%s(getPackedValue(record), (int) record.value, (int) record.value2);%n", e == RecordType.IfInt ? "If" : e.name());
+                out.printf("                logHandler.adviseBefore%s(record.getPackedValue(), (int) record.value, (int) record.value2);%n", e == RecordType.IfInt ? "If" : e.name());
                 break;
 
             case CheckCast:
@@ -199,17 +199,17 @@ public class LoggingAdviceRecordFlusherGenerator {
             case InvokeStatic:
             case InvokeVirtual:
                 out.printf("                ObjectMethodActorAdviceRecord record = (ObjectMethodActorAdviceRecord) thisRecord;%n");
-                out.printf("                if (getAdviceMode(thisRecord) == 0) {%n");
-                out.printf("                    logHandler.adviseBefore%s(record.value, record.value2);%n", e.name());
+                out.printf("                if (thisRecord.getAdviceMode() == 0) {%n");
+                out.printf("                    logHandler.adviseBefore%s(record.value, (MethodActor) record.value2);%n", e.name());
                 out.printf("                } else {%n");
-                out.printf("                    logHandler.adviseAfter%s(record.value, record.value2);%n", e.name());
+                out.printf("                    logHandler.adviseAfter%s(record.value, (MethodActor) record.value2);%n", e.name());
                 out.printf("                }%n");
                 break;
 
             case IfObject:
                 outAssertMode(AdviceMode.BEFORE.ordinal());
                 out.printf("                ObjectObjectAdviceRecord record = (ObjectObjectAdviceRecord) thisRecord;%n");
-                out.printf("                logHandler.adviseBeforeIf(getPackedValue(record), record.value, record.value2);%n");
+                out.printf("                logHandler.adviseBeforeIf(record.getPackedValue(), record.value, record.value2);%n");
                 break;
 
             case MultiNewArray:
@@ -233,7 +233,7 @@ public class LoggingAdviceRecordFlusherGenerator {
     }
 
     private static void outAssertMode(int mode) {
-        out.printf("                assert getAdviceMode(thisRecord) == %d;%n", mode);
+        out.printf("                assert thisRecord.getAdviceMode() == %d;%n", mode);
     }
 
     private static String[] splitType(RecordType e, String k) {

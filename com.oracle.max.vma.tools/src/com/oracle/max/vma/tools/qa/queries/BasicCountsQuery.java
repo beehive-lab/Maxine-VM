@@ -37,11 +37,11 @@ public class BasicCountsQuery extends QueryBase {
     public Object execute(ArrayList<TraceRun> traceRuns, int traceFocus, PrintStream ps, String[] args) {
         TraceRun traceRun = traceRuns.get(traceFocus);
         ps.println("Classes: " + getNumClasses(traceRun));
-        ps.println("ClassLoaders: " + traceRun.getClassLoaders().size());
-        long objs = traceRun.getObjectCount();
-        long arrays = traceRun.getArrayCount();
+        ps.println("ClassLoaders: " + traceRun.classLoaders.size());
+        long objs = traceRun.objectCount;
+        long arrays = traceRun.arrayCount;
         ps.format("Instances: %d (Arrays: %d, Non-Arrays: %d)\n", objs + arrays, arrays, objs);
-        ps.println("Missing Constructors: " + traceRun.getMissingConstructorCount());
+        ps.println("Missing Constructors: " + traceRun.missingConstructorCount);
         return null;
     }
 

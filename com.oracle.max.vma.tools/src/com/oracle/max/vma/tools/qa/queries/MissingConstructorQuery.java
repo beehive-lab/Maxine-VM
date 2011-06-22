@@ -38,11 +38,11 @@ public class MissingConstructorQuery extends QueryBase {
             PrintStream ps, String[] args) {
         TraceRun traceRun = traceRuns.get(traceFocus);
         ps.println("Objects with missing constructor traces");
-        if (traceRun.getMissingConstructors().size() != 0) {
-            Iterator<String> iter = traceRun.getMissingConstructors().keySet().iterator();
+        if (traceRun.missingConstructors.size() != 0) {
+            Iterator<String> iter = traceRun.missingConstructors.keySet().iterator();
             while (iter.hasNext()) {
                 String id = iter.next();
-                ObjectRecord td = traceRun.getMissingConstructors().get(id);
+                ObjectRecord td = traceRun.missingConstructors.get(id);
                 ps.println("  " + id + " " + td.getClassName());
             }
         }
