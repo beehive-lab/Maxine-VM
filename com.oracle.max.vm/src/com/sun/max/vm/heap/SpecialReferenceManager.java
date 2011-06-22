@@ -405,7 +405,6 @@ public class SpecialReferenceManager {
             JLRRAlias sentinelAlias = asJLRRAlias(sentinel);
             sentinelAlias.discovered = null;
             sentinelAlias.next = null;
-            sentinelAlias.queue = null;
             sentinelAlias.referent = null;
             startReferenceHandlerThread();
             startFinalizerThread();
