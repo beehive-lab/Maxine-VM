@@ -69,6 +69,7 @@ public final class JDK_java_lang_Throwable {
     /**
      * Fills in the stack trace for this exception. This implementation eagerly creates a
      * stack trace and fills in all the {@link java.lang.StackTraceElement stack trace elements}.
+     *
      * @see java.lang.Throwable#fillInStackTrace()
      * @return the throwable with a filled-in stack trace (typically this object)
      */

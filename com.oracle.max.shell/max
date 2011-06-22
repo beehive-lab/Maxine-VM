@@ -1148,7 +1148,6 @@ function run_inspect() {
     save_class_dir="$MAXVM_DIR/inspected_classes"
     vm_args="-XX:SaveClassDir=$save_class_dir -XX:+TrapOnError $MAXVM_OPTIONS"
     inspector_args="-vmdir=$MAXVM_DIR"
-    inspector_cp="$MAXVM_DIR/inspected_classes"
     mkdir -p $save_class_dir || { echo "Failed to created directory $save_class_dir"; exit 1; }
     system_props=""
 
@@ -1202,11 +1201,15 @@ function run_inspect() {
         esac
         shift
     done
-
+    
 	if [ -n "$inspector_cp" ]; then
-	    inspector_args="$inspector_args -cp=${inspector_cp/#:/}"
-	fi
-
+        inspector_cp="${inspector_cp/#:/}:$MAXVM_DIR/inspected_classes"
+    else
+        inspector_cp=$MAXVM_DIR/inspected_classes
+    fi
+	
+	inspector_args="$inspector_args -cp=${inspector_cp/#:/}"
+	
     if [[ "$remote" -eq 0 && "$MAXINE_OS" = "darwin" ]]; then
         # The -E option propagates the environment variables into the sudo process
         run sudo -E -p \

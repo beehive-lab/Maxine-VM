@@ -52,8 +52,9 @@ public interface RiRegisterConfig {
      * @param type the type of calling convention being requested
      * @param parameters the types of the arguments of the call
      * @param target the target platform
+     * @param stackOnly ignore registers
      */
-    CiCallingConvention getCallingConvention(Type type, CiKind[] parameters, CiTarget target);
+    CiCallingConvention getCallingConvention(Type type, CiKind[] parameters, CiTarget target, boolean stackOnly);
 
     /**
      * Gets the ordered set of registers that are can be used to pass parameters
@@ -87,10 +88,11 @@ public interface RiRegisterConfig {
     CiRegister[] getCallerSaveRegisters();
 
     /**
-     * Gets the object describing the callee save area of this register configuration.
-     * Note that this area may be {@linkplain CiCalleeSaveArea#EMPTY empty}.
+     * Gets the layout of the callee save area of this register configuration.
+     *
+     * @return {@code null} if there is no callee save area
      */
-    CiCalleeSaveArea getCalleeSaveArea();
+    CiCalleeSaveLayout getCalleeSaveLayout();
 
     /**
      * Gets a map from register {@linkplain CiRegister#number numbers} to register

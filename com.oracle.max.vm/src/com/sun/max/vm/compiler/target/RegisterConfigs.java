@@ -23,7 +23,6 @@
 package com.sun.max.vm.compiler.target;
 
 import static com.oracle.max.asm.target.amd64.AMD64.*;
-import static com.sun.cri.ci.CiCalleeSaveArea.*;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.runtime.VMRegister.Role.*;
@@ -68,14 +67,19 @@ public class RegisterConfigs {
     public final CiRegisterConfig bytecodeTemplate;
 
     /**
-     * The register configuration for compiling a {@linkplain GlobalStub global stub}.
+     * The register configuration for a {@link Stub.Type#CompilerStub compiler stub}.
      */
-    public final CiRegisterConfig globalStub;
+    public final CiRegisterConfig compilerStub;
 
     /**
-     * The register configuration for compiling the {@linkplain Stubs#trapStub trap stub}.
+     * The register configuration for the {@linkplain Stubs#trapStub trap stub}.
      */
     public final CiRegisterConfig trapStub;
+
+    /**
+     * The register configuration for the {@linkplain Stubs#genUncommonTrapStub() uncommon trap stub}.
+     */
+    public final CiRegisterConfig uncommonTrapStub;
 
     public CiRegisterConfig getRegisterConfig(ClassMethodActor method) {
         if (method.isVmEntryPoint()) {
@@ -93,13 +97,15 @@ public class RegisterConfigs {
                     CiRegisterConfig n2j,
                     CiRegisterConfig trampoline,
                     CiRegisterConfig template,
-                    CiRegisterConfig globalStub,
+                    CiRegisterConfig compilerStub,
+                    CiRegisterConfig uncommonTrapStub,
                     CiRegisterConfig trapStub) {
         this.standard = standard;
         this.n2j = n2j;
         this.trampoline = trampoline;
         this.bytecodeTemplate = template;
-        this.globalStub = globalStub;
+        this.compilerStub = compilerStub;
+        this.uncommonTrapStub = uncommonTrapStub;
         this.trapStub = trapStub;
 
         assert Arrays.equals(standard.getAllocatableRegisters(), standard.getCallerSaveRegisters()) : "VM requires caller-save for VM to VM calls";
@@ -117,6 +123,7 @@ public class RegisterConfigs {
         if (platform().isa == ISA.AMD64) {
             OS os = platform().os;
             if (os == OS.LINUX || os == OS.SOLARIS || os == OS.DARWIN || os == OS.MAXVE) {
+
                 /**
                  * The set of allocatable registers shared by most register configurations.
                  */
@@ -153,7 +160,7 @@ public class RegisterConfigs {
                                 allocatable,         // allocatable
                                 allocatable,         // caller save
                                 parameters,          // parameter registers
-                                EMPTY,               // no callee save
+                                null,                // no callee save
                                 allRegisters,        // all AMD64 registers
                                 roleMap);            // VM register role map
 
@@ -168,16 +175,17 @@ public class RegisterConfigs {
 
                 setNonZero(standard.getAttributesMap(), r14, rsp);
 
-                CiRegisterConfig globalStub = new CiRegisterConfig(standard, new CiCalleeSaveArea(-1, 8, allRegisters));
-                CiRegisterConfig trapStub = new CiRegisterConfig(standard, AMD64TrapStateAccess.CSA);
-                CiRegisterConfig trampoline = new CiRegisterConfig(standard, new CiCalleeSaveArea(-1, 8,
+                CiRegisterConfig compilerStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, allRegisters));
+                CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, allRegisters));
+                CiRegisterConfig trapStub = new CiRegisterConfig(standard, AMD64TrapFrameAccess.CSL);
+                CiRegisterConfig trampoline = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8,
                     rdi, rsi, rdx, rcx, r8, r9,                       // parameters
                     rbp,                                              // must be preserved for baseline compiler
                     standard.getScratchRegister(),                    // dynamic dispatch index is saved here for stack frame walker
                     xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7    // parameters
                 ));
 
-                CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveArea(-1, 8, rbx, rbp, r12, r13, r14, r15));
+                CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveLayout(Integer.MAX_VALUE, -1, 8, rbx, rbp, r12, r13, r14, r15));
                 n2j.stackArg0Offsets[JavaCallee.ordinal()] = nativeStackArg0Offset;
 
                 roleMap.put(ABI_FRAME_POINTER.ordinal(), rbp);
@@ -189,12 +197,12 @@ public class RegisterConfigs {
                                 allocatable,         // allocatable
                                 allocatable,         // caller save
                                 parameters,          // parameter registers
-                                EMPTY,               // no callee save
+                                null,                // no callee save
                                 allRegisters,        // all AMD64 registers
                                 roleMap);            // VM register role map
                 setNonZero(template.getAttributesMap(), r14, rsp, rbp);
 
-                return new RegisterConfigs(standard, n2j, trampoline, template, globalStub, trapStub);
+                return new RegisterConfigs(standard, n2j, trampoline, template, compilerStub, uncommonTrapStub, trapStub);
             }
         }
         throw FatalError.unimplemented();

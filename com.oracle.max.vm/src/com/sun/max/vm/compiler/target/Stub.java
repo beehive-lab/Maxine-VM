@@ -27,6 +27,7 @@ import static com.sun.max.vm.MaxineVM.*;
 
 import java.util.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
@@ -45,8 +46,68 @@ import com.sun.max.vm.stack.StackFrameWalker.Cursor;
  * Stack walking of stub frames is done with the same code as for optimized compiler frames.
  */
 public class Stub extends TargetMethod {
-    public Stub(Flavor flavor, String stubName, int frameSize, byte[] code, int callPosition, ClassMethodActor callee, int registerRestoreEpilogueOffset) {
-        super(flavor, stubName, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+
+    public enum Type {
+        /**
+         * Trampoline for virtual method dispatch (i.e. translation of {@link Bytecodes#INVOKEVIRTUAL}).
+         */
+        VirtualTrampoline,
+
+        /**
+         * Trampoline for interface method dispatch (i.e. translation of {@link Bytecodes#INVOKEINTERFACE}).
+         */
+        InterfaceTrampoline,
+
+        /**
+         * Trampoline for static method call (i.e. translation of {@link Bytecodes#INVOKESPECIAL} or {@link Bytecodes#INVOKESTATIC}).
+         */
+        StaticTrampoline,
+
+        /**
+         * A stub that performs an operation on behalf of compiled code.
+         * These stubs are called with a callee-save convention; the stub must save any
+         * registers it may destroy and then restore them upon return. This allows the register
+         * allocator to ignore calls to such stubs. Parameters to compiler stubs are
+         * passed on the stack in order to preserve registers for the rest of the code.
+         */
+        CompilerStub,
+
+        UnwindStub,
+
+        UnrollStub,
+
+        UncommonTrapStub,
+
+        /**
+         * Transition when returning from a normal call to a method being deoptimized.
+         */
+        DeoptStub,
+
+        /**
+         * Transition when returning from a compiler stub call to a method being deoptimized.
+         * This stub saves all registers (as a compiler stub call has callee save sematics)
+         * and retrieves the return value from the stack.
+         *
+         * @see #CompilerStub
+         */
+        DeoptStubFromCompilerStub,
+
+        /**
+         * The trap stub.
+         */
+        TrapStub;
+    }
+
+    public final Type type;
+
+    @Override
+    public Stub.Type stubType() {
+        return type;
+    }
+
+    public Stub(Type type, String stubName, int frameSize, byte[] code, int callPosition, ClassMethodActor callee, int registerRestoreEpilogueOffset) {
+        super(stubName, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        this.type = type;
         this.setFrameSize(frameSize);
         this.setRegisterRestoreEpilogueOffset(registerRestoreEpilogueOffset);
 
@@ -63,6 +124,37 @@ public class Stub extends TargetMethod {
         }
     }
 
+    public Stub(Type type, String name, CiTargetMethod tm) {
+        super(name, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        this.type = type;
+
+        initCodeBuffer(tm, true);
+        initFrameLayout(tm);
+        CiDebugInfo[] debugInfos = initStopPositions(tm);
+        for (CiDebugInfo info : debugInfos) {
+            assert info == null;
+        }
+    }
+
+    @Override
+    public CiCalleeSaveLayout calleeSaveLayout() {
+        final RegisterConfigs rc = vm().registerConfigs;
+        switch (type) {
+            case DeoptStubFromCompilerStub:
+            case CompilerStub:
+                return rc.compilerStub.csl;
+            case VirtualTrampoline:
+            case StaticTrampoline:
+            case InterfaceTrampoline:
+                return rc.trampoline.csl;
+            case TrapStub:
+                return rc.trapStub.csl;
+            case UncommonTrapStub:
+                return rc.uncommonTrapStub.csl;
+        }
+        return null;
+    }
+
     @Override
     public Pointer returnAddressPointer(Cursor frame) {
         if (platform().isa == ISA.AMD64) {
@@ -75,7 +167,13 @@ public class Stub extends TargetMethod {
     @Override
     public void advance(Cursor current) {
         if (platform().isa == ISA.AMD64) {
-            AMD64TargetMethodUtil.advance(current);
+            CiCalleeSaveLayout csl = calleeSaveLayout();
+            Pointer csa = Pointer.zero();
+            if (csl != null) {
+                assert csl.frameOffsetToCSA != Integer.MAX_VALUE : "stub should have fixed offset for CSA";
+                csa = current.sp().plus(csl.frameOffsetToCSA);
+            }
+            AMD64TargetMethodUtil.advance(current, csl, csa);
         } else {
             throw FatalError.unimplemented();
         }
@@ -92,7 +190,7 @@ public class Stub extends TargetMethod {
 
     @Override
     public void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls, Set<MethodActor> inlinedMethods) {
-        if (directCallees != null) {
+        if (directCallees != null && directCallees.length != 0) {
             assert directCallees.length == 1 && directCallees[0] instanceof ClassMethodActor;
             directCalls.add((MethodActor) directCallees[0]);
         }
