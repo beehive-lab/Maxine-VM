@@ -342,7 +342,9 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
             }
             if (nextFreeChunkInRegion.isZero()) {
                 if (MaxineVM.isDebug() && !freeSpace.isZero()) {
-                    Log.print("Has ");
+                    Log.print("Region #");
+                    Log.print(currentTLABAllocatingRegion);
+                    Log.print(" has ");
                     Log.print(freeSpace.toInt());
                     Log.println(" free space but not free chunk!");
                 }
@@ -768,9 +770,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         Log.print("#");
         Log.print(csrInfo.toRegionID());
         if (csrInfo.hasFreeChunks()) {
-            if (csrIsLarge) {
-                Log.print("T");
-            }
+            Log.print(csrInfo.isTailOfLargeObject() ? " T" : " ");
             if (csrFreeChunks > 1 || minOverflowRefillSize.greaterThan(csrFreeBytes)) {
                 Log.print("A,  nc: ");
                 Log.print(csrFreeChunks);
@@ -779,26 +779,28 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                 Log.print("A,  nc: 1, nb: ");
             }
             Log.println(csrFreeBytes);
-        } else if (csrIsLarge) {
+        } else if (csrInfo.isEmpty()) {
+            Log.println("  E");
+        } else if (csrInfo.isLarge()) {
             if (LARGE_HEAD_ONLY.isInState(csrInfo)) {
                 Log.println(" H");
             } else if (LARGE_BODY.isInState(csrInfo)) {
                 Log.println(" B");
+            } else if (LARGE_FULL_TAIL.isInState(csrInfo)) {
+                Log.println(" T");
             } else {
-                FatalError.unexpected("Unknown large region state");
+                FatalError.unexpected("Unexpected large region state after sweep");
             }
         } else if (csrInfo.isFull()) {
             Log.println("  F");
-        } else if (csrInfo.isEmpty()) {
-            Log.println("  E");
         } else {
-            FatalError.unexpected("Unknown region state after sweep");
+            FatalError.unexpected("Unexpected region state after sweep");
         }
     }
 
     @Override
     public void endSweep() {
-        if (csrIsLarge) {
+        if (csrIsMultiRegionObject) {
             // Large object regions are at least 2 regions long.
             if (csrFreeBytes == 0) {
                 // Skip all intermediate region. They are full.

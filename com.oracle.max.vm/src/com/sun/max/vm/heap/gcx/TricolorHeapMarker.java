@@ -2044,7 +2044,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      */
     private void impreciseSweep(HeapRegionSweeper sweeper) {
         final Pointer colorMapBase = base.asPointer();
-        final int minBitsBetweenMark = sweeper.minReclaimableSpace().toInt() >> log2BytesCoveredPerBit;
         final Address regionLeftmost = sweeper.startOfSweepingRegion();
         final Address regionRightmost = sweeper.endOfSweepingRegion();
         final Address rightmost =  regionRightmost.greaterThan(forwardScanState.rightmost) ? forwardScanState.rightmost : regionRightmost.minus(Word.size());
@@ -2056,6 +2055,10 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             sweeper.processFreeRegion();
             return;
         }
+        if (lastLiveMark == leftmostBitIndex && sweeper.sweepingRegionIsLarge()) {
+            return;
+        }
+        final int minBitsBetweenMark = sweeper.minReclaimableSpace().toInt() >> log2BytesCoveredPerBit;
         // Indicate the closest position the next live mark should be at to make the space reclaimable.
         int nextReclaimableMark = leftmostBitIndex + minBitsBetweenMark;
         if (lastLiveMark > leftmostBitIndex) {
@@ -2065,7 +2068,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             nextReclaimableMark = lastLiveMark + 2 + minBitsBetweenMark;
         }
 
-        int bitmapWordIndex =  bitmapWordIndex(lastLiveMark + 2);
+        int bitmapWordIndex =  bitmapWordIndex(lastLiveMark + 2); // FIXME: 2 here is to skip the object header. Need to derive that from some named constants.
 
         // Loop over the color map and call the sweeper only when the distance between two live mark is larger than
         // the minimum reclaimable space specified.
