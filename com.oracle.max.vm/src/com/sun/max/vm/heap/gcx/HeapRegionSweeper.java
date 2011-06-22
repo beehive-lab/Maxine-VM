@@ -24,8 +24,11 @@ package com.sun.max.vm.heap.gcx;
 
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.Phase;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
 
@@ -35,6 +38,10 @@ import com.sun.max.vm.runtime.*;
  * Dead space within the region is notified to the sweeper via three interface: processLargeGap, processDeadSpace, and processFreeRegion.
  */
 public abstract class HeapRegionSweeper extends Sweeper {
+    static int SweepBreakAtRegion = -1;
+    static {
+        VMOptions.addFieldOption("-XX:", "SweepBreakAtRegion", HeapRegionSweeper.class, "Break before sweeping region", Phase.PRISTINE);
+    }
 
     protected Size minReclaimableSpace;
 
@@ -71,7 +78,7 @@ public abstract class HeapRegionSweeper extends Sweeper {
     /**
      * Indicate whether the region is part of a multi-regions object.
      */
-    boolean csrIsLarge;
+    boolean csrIsMultiRegionObject;
 
     /**
      * Cursor on the last live address seen during sweeping of the csr.
@@ -125,8 +132,15 @@ public abstract class HeapRegionSweeper extends Sweeper {
         return csrEnd;
     }
 
+    @NEVER_INLINE
+    private void breakpoint() {
+    }
 
     final void resetSweepingRegion(HeapRegionInfo rinfo) {
+        if (MaxineVM.isDebug() && SweepBreakAtRegion >= 0 && SweepBreakAtRegion == rinfo.toRegionID()) {
+            breakpoint();
+        }
+
         csrInfo = rinfo;
         csrFreeBytes = 0;
         csrHead = null;
@@ -135,7 +149,7 @@ public abstract class HeapRegionSweeper extends Sweeper {
 
         csrLiveBytes = 0;
         csrLastLiveAddress = csrInfo.regionStart();
-        csrIsLarge = csrInfo.isLarge();
+        csrIsMultiRegionObject = csrInfo.isHeadOfLargeObject();
         csrInfo.resetOccupancy();
         csrEnd = csrLastLiveAddress.plus(regionSizeInBytes);
     }
@@ -158,6 +172,10 @@ public abstract class HeapRegionSweeper extends Sweeper {
 
     public abstract boolean hasNextSweepingRegion();
     public abstract void reachedRightmostLiveRegion();
+
+    public final boolean sweepingRegionIsLarge() {
+        return csrIsMultiRegionObject;
+    }
 
     @Override
     public abstract void beginSweep();
@@ -185,7 +203,7 @@ public abstract class HeapRegionSweeper extends Sweeper {
         Pointer endOfLeftObject = leftLiveObject.plus(Layout.size(Layout.cellToOrigin(leftLiveObject)));
         csrLiveBytes += endOfLeftObject.minus(csrLastLiveAddress).asSize().toInt();
         Size numDeadBytes = rightLiveObject.minus(endOfLeftObject).asSize();
-        if (MaxineVM.isDebug() && TraceSweep) {
+        if (MaxineVM.isDebug() && TraceSweep && Heap.verbose()) {
             printNotifiedGap(leftLiveObject, rightLiveObject, endOfLeftObject, numDeadBytes);
         }
         if (numDeadBytes.greaterEqual(minReclaimableSpace)) {
@@ -206,7 +224,7 @@ public abstract class HeapRegionSweeper extends Sweeper {
     public void processDeadSpace(Address freeChunk, Size size) {
         assert freeChunk.plus(size).lessEqual(endOfSweepingRegion());
         csrLastLiveAddress = freeChunk.plus(size);
-        if (MaxineVM.isDebug() && TraceSweep) {
+        if (MaxineVM.isDebug() && TraceSweep && Heap.verbose()) {
             printNotifiedDeadSpace(freeChunk, size);
         }
         recordFreeSpace(freeChunk, size);
