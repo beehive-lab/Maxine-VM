@@ -46,7 +46,6 @@ public class DataByThreadsQuery extends QueryBase {
     @Override
     public Object execute(ArrayList<TraceRun> traceRuns, int traceFocus, PrintStream ps, String[] args) {
         parseArgs(args);
-
         TraceRun traceRun = traceRuns.get(traceFocus);
         Map<String, ArrayList<ObjectRecord>> threadMap = DataByThreadsQueryHelper.getObjectsByThread(traceRun);
 
@@ -61,7 +60,7 @@ public class DataByThreadsQuery extends QueryBase {
                 }
                 for (int i = 0; i < thObjectsArray.length; i++) {
                     ObjectRecord td = thObjectsArray[i];
-                    long lifeTime = td.getLifeTime(traceRun.getLastTime());
+                    long lifeTime = td.getLifeTime(traceRun.lastTime);
                     if (!summary) {
                         ps.println("  " + td.getId() + ", class " + td.getClassName() + ", immutable for " + d6d(percent(lifeTime - td.getModifyLifeTime(), lifeTime)) + ", " +
                                         (td.getDeletionTime() == 0 ? "live" : "dead"));
@@ -77,9 +76,7 @@ public class DataByThreadsQuery extends QueryBase {
         return null;
     }
 
-    @Override
-    protected void parseArgs(String[] args) {
-        super.parseArgs(args);
+    private void parseArgs(String[] args) {
         summary = false;
         sort = false;
 

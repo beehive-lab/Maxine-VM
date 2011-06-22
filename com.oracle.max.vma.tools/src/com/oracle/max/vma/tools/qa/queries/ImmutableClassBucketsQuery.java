@@ -68,7 +68,7 @@ public class ImmutableClassBucketsQuery extends QueryBase {
                 // class
                 for (int i = 1; i <= ocount; i++) {
                     ObjectRecord td = a.get(i);
-                    long lifeTime = td.getLifeTime(traceRun.getLastTime());
+                    long lifeTime = td.getLifeTime(traceRun.lastTime);
                     percents[i - 1] = percent(
                             lifeTime - td.getModifyLifeTime(), lifeTime);
                 }

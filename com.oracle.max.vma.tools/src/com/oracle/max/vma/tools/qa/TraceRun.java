@@ -26,6 +26,8 @@ package com.oracle.max.vma.tools.qa;
 import java.util.*;
 import java.io.*;
 
+import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.AdviceRecord;
+
 /**
  * This is essentially the raw data read by {@link ProcessLog} organized
  * differently. The {@link #objects} map contains all objects present in the trace,
@@ -48,23 +50,35 @@ public class TraceRun {
     /**
      * Uniquely identifies the trace.
      */
-    private String name;
+    public final String name;
 
-    private Map<String, ObjectRecord> objects;
+    public final ArrayList<AdviceRecord> adviceRecordList;
 
-    private Map<String, SortedMap<String, ClassRecord>> classLoaders;
+    /**
+     * The objects map. The key is the id, qualified by the allocation, aka {@link ObjectRecord#id}.
+     */
+    public final Map<String, ObjectRecord> objects;
 
-    private Map<String, ObjectRecord> missingConstructors;
+    /**
+     * The class loaders map. The key is the id of the class loader instance
+     *  and the value is a map from class names
+     * to {@link ClassRecord class records}, denoting all the classes loaded
+     * by that class loader.
+     */
+    public final Map<String, SortedMap<String, ClassRecord>> classLoaders;
 
-    private ArrayList<GCEpoch> garbageCollections;
+    public final Map<String, ObjectRecord> missingConstructors;
 
-    private long objectCount = 0;
+    public final ArrayList<AllocationEpoch> allocationEpochs;
 
-    private long arrayCount = 0;
+    public final long objectCount;
 
-    private int missingConstructorCount;
+    public final long arrayCount;
 
-    private long lastTime;
+    public final int missingConstructorCount;
+
+    public final long lastTime;
+    public final long startTime;
 
     /**
      * The following fields are caches for performance reasons. A value of -1
@@ -80,17 +94,19 @@ public class TraceRun {
         long checkObjCount;
     }
 
-    public TraceRun(String name, Map<String, ObjectRecord>  objects, Map<String, SortedMap<String, ClassRecord>> classLoaders,
+    public TraceRun(String name, ArrayList<AdviceRecord> adviceRecordList, Map<String, ObjectRecord>  objects, Map<String, SortedMap<String, ClassRecord>> classLoaders,
             Map<String, ObjectRecord> missingConstructors, long objectCount, long arrayCount,
-            int missingConstructorCount, ArrayList<GCEpoch> garbageCollections, long lastTime) {
+            int missingConstructorCount, ArrayList<AllocationEpoch> allocationEpochs, long startTime, long lastTime) {
         this.name = name;
+        this.adviceRecordList = adviceRecordList;
         this.objects = objects;
         this.classLoaders = classLoaders;
         this.missingConstructors = missingConstructors;
         this.objectCount = objectCount;
         this.arrayCount = arrayCount;
         this.missingConstructorCount = missingConstructorCount;
-        this.garbageCollections = garbageCollections;
+        this.allocationEpochs = allocationEpochs;
+        this.startTime = startTime;
         this.lastTime = lastTime;
 
         Visitor visitor = new Visitor() {
@@ -116,56 +132,10 @@ public class TraceRun {
         CheckCounts checkCounts = (CheckCounts) visitor.getResult();
         assert checkCounts.checkArrayCount == arrayCount;
         assert checkCounts.checkObjCount == objectCount;
-
-        Iterator<ClassRecord> iter = getClassesIterator();
-        while (iter.hasNext()) {
-            ClassRecord cr = iter.next();
-            ObjectRecord std = cr.getObjects().get(0);
-            std.setImmutable();
-        }
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public Map<String, ObjectRecord> getObjects() {
-        return objects;
-    }
-
-    /**
-     * Gets the class loaders map. The key is the id of the class loader instance
-     * (zero for the bootstrap class loader) and the value is a map from class names
-     * to {@link ClassRecord class records}, denoting all the classes loaded
-     * by that class loader.
-     * @return
-     */
-    public Map<String, SortedMap<String, ClassRecord>> getClassLoaders() {
-        return classLoaders;
-    }
-
-    public long getObjectCount() {
-        return objectCount;
-    }
-
-    public long getArrayCount() {
-        return arrayCount;
-    }
-
-    public Map<String, ObjectRecord> getMissingConstructors() {
-        return missingConstructors;
-    }
-
-    public int getMissingConstructorCount() {
-        return missingConstructorCount;
-    }
-
-    public long getLastTime() {
-        return lastTime;
-    }
-
-    public ArrayList<GCEpoch> getGarbageCollections()  {
-        return garbageCollections;
+    public long relTime(long time) {
+        return time - startTime;
     }
 
     /**
@@ -252,7 +222,7 @@ public class TraceRun {
     }
 
     public Object visit(Visitor visitor, PrintStream ps, Object[] args) {
-        Iterator<ObjectRecord> iter = getObjects().values().iterator();
+        Iterator<ObjectRecord> iter = objects.values().iterator();
         while (iter.hasNext()) {
             ObjectRecord td = iter.next();
             visitor.visit(this, td, ps, args);

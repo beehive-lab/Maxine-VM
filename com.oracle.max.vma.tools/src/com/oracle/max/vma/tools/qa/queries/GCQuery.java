@@ -22,21 +22,62 @@
  */
 package com.oracle.max.vma.tools.qa.queries;
 
+import static com.oracle.max.vma.tools.qa.AllocationEpoch.*;
+
 import java.io.PrintStream;
 import java.util.ArrayList;
 
 import com.oracle.max.vma.tools.qa.*;
 
 public class GCQuery extends QueryBase {
+    private boolean showRemovals;
+
     @Override
-    public Object execute(ArrayList<TraceRun> traceRuns, int traceFocus, PrintStream ps,
-            String[] args) {
+    public Object execute(ArrayList<TraceRun> traceRuns, int traceFocus, PrintStream ps, String[] args) {
+        parseArgs(args);
         TraceRun traceRun = traceRuns.get(traceFocus);
-        ArrayList<GCEpoch> gcs = traceRun.getGarbageCollections();
-        for (GCEpoch gce : gcs) {
-            ps.println(gce);
+        ArrayList<AllocationEpoch> gcs = traceRun.allocationEpochs;
+        ps.println("Allocation epochs");
+        for (AllocationEpoch gce : gcs) {
+            if (absTime) {
+                ps.println(gce);
+            } else {
+                long end = gce.endTime;
+                long start = gce.startTime;
+                ps.println(gce.toString(traceRun.relTime(start), traceRun.relTime(end)));
+            }
+            if (showRemovals) {
+                RemovalRange rr = gce.getRemovalRange();
+                if (rr != null) {
+                    int charCount = 0;
+                    ps.print("  Objects collected at end of epoch");
+                    for (int i = rr.startRemovalRange; i <= rr.endRemovalRange; i++) {
+                        ObjectRecord or = AdviceRecordHelper.getObjectRecord(traceRun.adviceRecordList.get(i));
+                        String ors = or.toString();
+
+                        if (charCount + ors.length() > 80 || i == rr.startRemovalRange) {
+                            ps.println();
+                            ps.print("  ");
+                            charCount = 0;
+                        } else {
+                            ps.print(' ');
+                        }
+                        charCount += ors.length();
+                        ps.print(or);
+                    }
+                    ps.println();
+                }
+            }
         }
         return null;
+    }
+
+    private void parseArgs(String[] args) {
+        for (String arg : args) {
+            if (arg.equals("-r")) {
+                showRemovals = true;
+            }
+        }
     }
 
 }

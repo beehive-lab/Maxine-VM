@@ -26,7 +26,10 @@ package com.oracle.max.vma.tools.qa.queries;
 import java.util.*;
 import java.io.*;
 
+import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.AdviceRecord;
+import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.ObjectFieldAdviceRecord;
 import com.oracle.max.vma.tools.qa.*;
+import com.oracle.max.vma.tools.qa.AdviceRecordHelper.*;
 
 /**
  * List the mutable objects for all classes or a specific class.
@@ -63,10 +66,11 @@ public class MutableObjectsQuery extends QueryBase {
                     ObjectRecord td = a.get(i);
                     if (td.getModifyLifeTime() > 0) {
                         ps.println("Object " + td.getId());
-                        for (int j = 0; j < td.getTraceElements().size(); j++) {
-                            ObjectRecord.TraceElement te = td.getTraceElements().get(j);
-                            if ((te instanceof ObjectRecord.WriteTraceElement) && (te.getAccessTime() > td.getEndCreationTime())) {
-                                ps.println("  field " + te.getField() + " modified at " + ms(te.getAccessTime()));
+                        for (int j = 0; j < td.getAdviceRecords().size(); j++) {
+                            AdviceRecord ar = td.getAdviceRecords().get(j);
+                            if (AdviceRecordHelper.accessType(ar) == AccessType.WRITE && ar.time > td.getEndCreationTime()) {
+                                ObjectFieldAdviceRecord far = (ObjectFieldAdviceRecord) ar;
+                                ps.println("  field " + ((FieldRecord) far.field).getName() + " modified at " + ms(ar.time));
                             }
                         }
                     }

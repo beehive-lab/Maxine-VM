@@ -31,7 +31,7 @@ import java.util.regex.PatternSyntaxException;
 import com.oracle.max.vma.tools.qa.*;
 
 /**
- * Helper class with common implementation of queryies showing data by class
+ * Helper class with common implementation of queries showing data by class
  *
  * The following arguments are interpreted by such queries:
  *
@@ -55,7 +55,7 @@ public class DataByClassQueryHelper extends QueryBase {
     static ArrayList<Pattern> excludeList;
 
     protected static void showXDataByClasses(TraceRun traceRun, PrintStream ps,
-            String[] args, Iterator<ClassRecord> classIter, String indent) {
+            String[] args, Iterator<ClassRecord> classIter, String indent, boolean showCl) {
         String className = null;
         sort_mlt = false;
         sort_lt = false;
@@ -136,17 +136,16 @@ public class DataByClassQueryHelper extends QueryBase {
         while (classIter.hasNext()) {
             ClassRecord cr = classIter.next();
             if ((className == null) || cr.getName().equals(className)) {
-                boolean matched = false;
+                boolean excluded = false;
                 for (Pattern pattern : excludeList) {
                     if (pattern.matcher(cr.getName()).matches()) {
                         System.out.println("excluding " + cr.getName());
-                        matched = true;
+                        excluded = true;
                         break;
                     }
                 }
-                if (!matched) {
-                    ArrayList<ObjectRecord> a = cr.getObjects();
-                    showDataOnClass(traceRun, ps, a, indent);
+                if (!excluded) {
+                    showDataOnClass(traceRun, ps, cr, indent, showCl);
                 }
             }
         }
@@ -171,29 +170,29 @@ public class DataByClassQueryHelper extends QueryBase {
         }
     }
 
-    private static void showDataOnClass(TraceRun traceRun, PrintStream ps, ArrayList<ObjectRecord> a,
-            String indent) {
-        String className = a.get(0).getClassName();
-        int ocount = a.size() - 1; ocount_g += ocount;
+    private static void showDataOnClass(TraceRun traceRun, PrintStream ps, ClassRecord cr,
+            String indent, boolean showCl) {
+        String className = cr.getName();
+        ArrayList<ObjectRecord> objects = cr.getObjects();
+        int ocount = objects.size(); ocount_g += ocount;
         int pcount = 0;
         if (!percentOnly) {
-            ps.print(indent + className + "  Total objects " + ocount);
+            ps.printf(indent + className  + ", total objects " + ocount + (showCl ? ", cl: " + traceRun.objects.get(cr.getClassLoaderId()) : ""));
         }
-        // skip index 0 as that contains the static traces
-        ObjectRecord[] ods = a.toArray(new ObjectRecord[a.size()]);
+        ObjectRecord[] ods = objects.toArray(new ObjectRecord[objects.size()]);
         if (sort_lt) {
-            SortUtil.sortByLifeTime(ods, 1, traceRun);
+            SortUtil.sortByLifeTime(ods, 0, traceRun);
         } else if (sort_mlt) {
-            SortUtil.sortByModifyLifeTime(ods, 1);
+            SortUtil.sortByModifyLifeTime(ods, 0);
         }
 
         if (!summary) {
             ps.println("");
         }
 
-        for (int i = 1; i < ods.length; i++) {
+        for (int i = 0; i < ods.length; i++) {
             ObjectRecord td = ods[i];
-            long lifeTime = td.getLifeTime(traceRun.getLastTime());
+            long lifeTime = td.getLifeTime(traceRun.lastTime);
             long immutableTime = lifeTime - td.getModifyLifeTime();
             double percentImmutableTime = percent(immutableTime, lifeTime);
             if (percentImmutableTime >= percentile) {
@@ -204,10 +203,10 @@ public class DataByClassQueryHelper extends QueryBase {
                 String immutableForArg = percent ?
                     (TimeFunctions.ftime(percentImmutableTime, TimeFunctions.format6d) + "%") :
                     Long.toString(immutableTime);
-                String threadArg = thread ? " th " + td.getThread() : "";
+                String threadArg = thread ? " th " + td.thread : "";
                 ps.println(indent + INDENT_TWO + td.getId() +
                         threadArg +
-                        ", ct " + TimeFunctions.formatTime(td.getEndCreationTime()) +
+                        ", ct " + TimeFunctions.formatTime(td.getEndCreationTime() - traceRun.startTime) +
                         ", lt " + TimeFunctions.formatTime(lifeTime) +
                         (td.getDeletionTime() == 0 ? ", alive" : ", dead") +
                         ", mlt " + TimeFunctions.formatTime(td.getModifyLifeTime()) +

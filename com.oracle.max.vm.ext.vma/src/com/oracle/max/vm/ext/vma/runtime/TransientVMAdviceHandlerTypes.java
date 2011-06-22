@@ -22,8 +22,7 @@
  */
 package com.oracle.max.vm.ext.vma.runtime;
 
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.thread.*;
+import java.util.*;
 
 /**
  * Definitions of the types used by {@link TransientVMAdviceHandler} to record advice events.
@@ -107,7 +106,6 @@ public class TransientVMAdviceHandlerTypes {
                 case ReturnLong:
                 case StoreLong:
                     return new LongAdviceRecord();
-                case ArrayLoad:
                 case Bytecode:
                 case GC:
                 case IPush:
@@ -129,7 +127,7 @@ public class TransientVMAdviceHandlerTypes {
                 case InvokeSpecial:
                 case InvokeStatic:
                 case InvokeVirtual:
-                    return new ObjectMethodActorAdviceRecord();
+                    return new ObjectMethodAdviceRecord();
                 case ArrayStoreObject:
                 case CheckCast:
                 case IfObject:
@@ -144,6 +142,7 @@ public class TransientVMAdviceHandlerTypes {
                 case StoreDouble:
                     return new DoubleAdviceRecord();
                 case ArrayLength:
+                case ArrayLoad:
                 case ConstLoadObject:
                 case GetField:
                 case GetStatic:
@@ -186,63 +185,124 @@ public class TransientVMAdviceHandlerTypes {
             }
         }
 
+        public static final EnumSet<RecordType> MODIFY_OPERATIONS = EnumSet.of(
+                        RecordType.PutFieldLong, RecordType.PutFieldFloat, RecordType.PutFieldDouble,
+                        RecordType.PutStaticLong, RecordType.PutStaticFloat, RecordType.PutStaticDouble,
+                        RecordType.ArrayStoreLong, RecordType.ArrayStoreFloat, RecordType.ArrayStoreDouble);
+
+        public static final RecordType[] RECORD_TYPE_VALUES = RecordType.values();
+
     }
 
     public static class AdviceRecord {
-        static final int ADVICE_MODE_SHIFT = 8;
-        static final int VALUE_SHIFT = 16;
+        private static final int ADVICE_MODE_SHIFT = 8;
+        private static final int VALUE_SHIFT = 16;
 
-        VmThread owner;
-        long time;
-        long codeAndValue;
+        public Object thread; // a class that denotes a thread
+        public long time;
+        private long codeAndValue;
+
+        public void setCodeAndMode(RecordType rt, int adviceMode) {
+            codeAndValue = rt.ordinal() | (adviceMode << AdviceRecord.ADVICE_MODE_SHIFT);
+        }
+
+        public void setValue(int value) {
+            codeAndValue |= value << AdviceRecord.VALUE_SHIFT;
+        }
+
+        public RecordType getRecordType() {
+            int recordOrd = (int) (codeAndValue & 0xFF);
+            return RecordType.RECORD_TYPE_VALUES[recordOrd];
+        }
+
+        public int getAdviceMode() {
+            return (int) ((codeAndValue >> AdviceRecord.ADVICE_MODE_SHIFT) & 0xFF);
+        }
+
+        public int getPackedValue() {
+            return (int) (codeAndValue >> AdviceRecord.VALUE_SHIFT);
+        }
+
+        public int getArrayIndex() {
+            return getPackedValue();
+        }
     }
 
-    static class ObjectAdviceRecord extends AdviceRecord {
-        Object value;
+    public static class ObjectAdviceRecord extends AdviceRecord {
+        public Object value;
     }
 
-    static class LongAdviceRecord extends AdviceRecord {
-        long value;
+    public static class LongAdviceRecord extends AdviceRecord {
+        public long value;
     }
 
-    static class LongLongAdviceRecord extends LongAdviceRecord {
-        long value2;
+    public static class LongLongAdviceRecord extends LongAdviceRecord {
+        public long value2;
     }
 
-    static class FloatAdviceRecord extends AdviceRecord {
-        float value;
+    public static class FloatAdviceRecord extends AdviceRecord {
+        public float value;
     }
 
-    static class FloatFloatAdviceRecord extends FloatAdviceRecord {
-        float value2;
+    public static class FloatFloatAdviceRecord extends FloatAdviceRecord {
+        public float value2;
     }
 
-    static class DoubleAdviceRecord extends AdviceRecord {
-        double value;
+    public static class DoubleAdviceRecord extends AdviceRecord {
+        public double value;
     }
 
-    static class DoubleDoubleAdviceRecord extends DoubleAdviceRecord {
-        double value2;
+    public static class DoubleDoubleAdviceRecord extends DoubleAdviceRecord {
+        public double value2;
     }
 
-    static class ObjectObjectAdviceRecord extends ObjectAdviceRecord {
-        Object value2;
+    public static class ObjectObjectAdviceRecord extends ObjectAdviceRecord {
+        public Object value2;
     }
 
-    static class ObjectLongAdviceRecord extends ObjectAdviceRecord {
-        long value2;
+    public static class ObjectLongAdviceRecord extends ObjectAdviceRecord {
+        public long value2;
     }
 
-    static class ObjectFloatAdviceRecord extends ObjectAdviceRecord {
-        float value2;
+    public static class ObjectFloatAdviceRecord extends ObjectAdviceRecord {
+        public float value2;
     }
 
-    static class ObjectDoubleAdviceRecord extends ObjectAdviceRecord {
-        double value2;
+    public static class ObjectDoubleAdviceRecord extends ObjectAdviceRecord {
+        public double value2;
     }
 
-    static class ObjectMethodActorAdviceRecord extends ObjectAdviceRecord {
-        MethodActor value2;
+    public static class ObjectMethodAdviceRecord extends ObjectAdviceRecord {
+        public Object value2;  // a class that denotes a method
     }
 
+    /*
+     * The following types are not currently used at VM runtime since field offsets
+     * are recorded by their integer offset. If we used FieldActor, similar to
+     * the way method invocations use MethodActor, they would be used.
+     * However, they are used in the analysis tool so are defined here for completeness.
+     *
+     * No multiple inheritance, so we pick "field" as the super type, so we can't cast
+     * to the non-field value forms.
+     */
+
+    public static class ObjectFieldAdviceRecord extends ObjectAdviceRecord {
+        public Object field;  // a class that denotes a field
+    }
+
+    public static class ObjectFieldLongAdviceRecord extends ObjectFieldAdviceRecord {
+        public long value2;
+    }
+
+    public static class ObjectFieldFloatAdviceRecord extends ObjectFieldAdviceRecord {
+        public float value2;
+    }
+
+    public static class ObjectFieldDoubleAdviceRecord extends ObjectFieldAdviceRecord {
+        public double value2;
+    }
+
+    public static class ObjectFieldObjectAdviceRecord extends ObjectFieldAdviceRecord {
+        public Object value2;
+    }
 }

@@ -40,6 +40,11 @@ import com.oracle.max.vm.ext.vma.log.txt.*;
  * N.B. The classloader id associated with a class, cf. {@link ClassName} is only output when the
  * short form is defined.
  *
+ * At one time this class could be used directly as an implementation of {@link VMAdviceHandlerLog}.
+ * However, it is now dependent on {@link SBPSCompactTextVMAdviceHandlerLog}. For example
+ * the optimization on classloader id only works with short forms. In any event, for serious
+ * use short forms are essential.
+ *
  */
 public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
 
@@ -53,7 +58,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     StringBuilder sb;
     private int flushLogAt;
 
-    public SBPSTextVMAdviceHandlerLog() {
+    SBPSTextVMAdviceHandlerLog() {
         super();
     }
 
@@ -129,6 +134,11 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
         sb.append(key.code);
     }
 
+    /**
+     * Append the log entry key code, then the time associated with the entry, followed by the thread.
+     * @param key
+     * @param threadName
+     */
     private void appendTT(Key key, String threadName) {
         appendCode(key);
         appendSpace();
@@ -137,6 +147,12 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
         sb.append(threadName);
     }
 
+    /**
+     * As {@link #appendTT} followed by the {@code objId}.
+     * @param key
+     * @param objId
+     * @param threadName
+     */
     private void appendTTId(Key key, long objId, String threadName) {
         appendTT(key, threadName);
         appendSpace();
@@ -144,6 +160,13 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
         appendSpace();
     }
 
+    /**
+     * As {@link #appendTTId} followed by an array index.
+     * @param key
+     * @param objId
+     * @param threadName
+     * @param index
+     */
     private void appendTTIdIndex(Key key, long objId, String threadName, int index) {
         appendTT(key, threadName);
         appendSpace();
@@ -153,20 +176,38 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
         appendSpace();
     }
 
+    /**
+     * Append a class name.
+     * This must be a short form because the associated classloader id is not output,
+     * since it is output when the short form is defined. I.e, the short form
+     * stands for the {@code name:clid} pair.
+     * @param className
+     */
     private void appendClassName(ClassName className) {
         sb.append(className.name);
     }
 
+    /**
+     * Append a qualified name.
+     * First append the class name and then the (short form) of the qualified name.
+     * @param qualName
+     */
     private void appendQualName(QualName qualName) {
         appendClassName(qualName.className);
         appendSpace();
         sb.append(qualName.name);
     }
 
-    private void appendTTC(Key key, String className, String threadName) {
+    /**
+     * As {@link #appendTT} then append a class name.
+     * @param key
+     * @param className
+     * @param threadName
+     */
+    private void appendTTC(Key key, ClassName className, String threadName) {
         appendTT(key, threadName);
         appendSpace();
-        sb.append(className);
+        appendClassName(className);
         appendSpace();
     }
 
@@ -177,8 +218,9 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     private void appendPutStaticPrefix(QualName fieldName, String threadName) {
-        appendTTC(ADVISE_BEFORE_PUT_STATIC, fieldName.className.name, threadName);
-        sb.append(fieldName.name);
+        appendTT(ADVISE_BEFORE_PUT_STATIC, threadName);
+        appendSpace();
+        appendQualName(fieldName);
         appendSpace();
     }
 
@@ -222,10 +264,9 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
 
     @Override
     public synchronized void adviseBeforeGetStatic(String threadName, QualName fieldName) {
-        appendTTC(ADVISE_BEFORE_GET_STATIC, fieldName.className.name, threadName);
-        sb.append(fieldName.name);
+        appendTT(ADVISE_BEFORE_GET_STATIC, threadName);
         appendSpace();
-        sb.append(fieldName.className.clId);
+        appendQualName(fieldName);
         end();
     }
 
@@ -486,7 +527,6 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     @Override
     public synchronized void adviseBeforeStackAdjust(String threadName, int arg1) {
         appendTT(ADVISE_BEFORE_STACK_ADJUST, threadName);
-
         appendSpace();
         sb.append(arg1);
         end();

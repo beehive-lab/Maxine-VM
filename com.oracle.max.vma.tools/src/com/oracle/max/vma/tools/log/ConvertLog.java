@@ -160,8 +160,6 @@ public class ConvertLog {
         void setCommand(String line) {
             lineParts = line.split(" ");
             command = commandMap.get(lineParts[0]);
-            lineTime = -1;
-            lineAbsTime = -1;
         }
 
         void checkTimeFormat() {
@@ -232,7 +230,6 @@ public class ConvertLog {
                 }
                 out.println(line);
             }
-
         }
 
         private String fixupTime(TimedLine timedLine, long absTime) {
@@ -354,7 +351,7 @@ public class ConvertLog {
                 if (TextVMAdviceHandlerLog.hasTime(command)) {
                     if (logUsesAbsTime) {
                         // to relative
-
+                        ProgramError.unexpected("abs to rel not implemented");
                     } else {
                         // to absolute
                         final StringBuilder sb = new StringBuilder(lineParts[0]);
@@ -477,8 +474,7 @@ public class ConvertLog {
             String threadArg = arg2;
             String objIdArg = "???";
 
-            if (TextVMAdviceHandlerLog.hasTime(command) &&
-                    (!(command == Key.INITIALIZE_LOG || command == Key.FINALIZE_LOG))) {
+            if (TextVMAdviceHandlerLog.hasTime(command)) {
                 String atTime = "@" + logTimeArg;
                 out.printf("%-10s ", atTime);
             } else {
@@ -568,7 +564,7 @@ public class ConvertLog {
                 case ADVISE_BEFORE_ARRAY_STORE:
                     out.printf(" %s", threadArg, objIdArg, lineParts[ARRAY_INDEX_INDEX]);
                     if (command == Key.ADVISE_BEFORE_ARRAY_STORE) {
-                        out.printf(" %s", lineParts[ARRAY_INDEX_INDEX + 1]);
+                        printValue(lineParts[ARRAY_INDEX_INDEX + 1], lineParts[ARRAY_INDEX_INDEX + 2]);
                     }
                     break;
 
@@ -578,17 +574,17 @@ public class ConvertLog {
 
                 case ADVISE_BEFORE_GET_STATIC:
                 case ADVISE_BEFORE_PUT_STATIC:
-                    printClassIdAndClId(lineParts[STATIC_CLASSNAME_INDEX], lineParts[STATIC_CLASSNAME_INDEX + 1]);
+                    printClassIdAndFieldId(lineParts[STATIC_CLASSNAME_INDEX], lineParts[STATIC_CLASSNAME_INDEX + 1]);
                     if (command == Key.ADVISE_BEFORE_PUT_STATIC) {
-                        out.printf(" %s %s", lineParts[STATIC_CLASSNAME_INDEX + 2], lineParts[STATIC_CLASSNAME_INDEX + 3]);
+                        printValue(lineParts[STATIC_CLASSNAME_INDEX + 2], lineParts[STATIC_CLASSNAME_INDEX + 3]);
                     }
                     break;
 
                 case ADVISE_BEFORE_GET_FIELD:
                 case ADVISE_BEFORE_PUT_FIELD:
-                    printClassIdAndClId(lineParts[ID_CLASSNAME_INDEX], lineParts[ID_CLASSNAME_INDEX + 1]);
+                    printClassIdAndFieldId(lineParts[ID_CLASSNAME_INDEX], lineParts[ID_CLASSNAME_INDEX + 1]);
                     if (command == Key.ADVISE_BEFORE_PUT_FIELD) {
-                        out.printf(" %s %s", lineParts[ID_CLASSNAME_INDEX + 2], lineParts[ID_CLASSNAME_INDEX + 3]);
+                        printValue(lineParts[ID_CLASSNAME_INDEX + 2], lineParts[ID_CLASSNAME_INDEX + 3]);
                     }
                     break;
 
@@ -623,7 +619,7 @@ public class ConvertLog {
                     break;
 
                 case REMOVAL:
-                    ProgramError.unexpected("unimplemented");
+                    printObjId(arg1);
                     break;
 
                 case ADVISE_BEFORE_INVOKE_INTERFACE:
@@ -721,10 +717,10 @@ public class ConvertLog {
                     rType = "double";
                     break;
                 case 'O':
-                    rType = "oid:";
+                    rType = "oid";
                     break;
             }
-            out.printf(" %s %s", rType, value);
+            out.printf(" %s:%s", rType, value);
         }
 
         private static void printIfOpcode(String opcode) {

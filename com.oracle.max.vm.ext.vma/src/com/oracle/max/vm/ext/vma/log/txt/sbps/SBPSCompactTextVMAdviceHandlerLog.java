@@ -26,12 +26,7 @@ import com.oracle.max.vm.ext.vma.log.txt.*;
 
 /**
  * A compact variant of {@link SBPSTextVMAdviceHandlerLog} using {@link CompactTextVMAdviceHandlerLog}.
- *
- * @author Mick Jordan
- *
  */
-
-
 public class SBPSCompactTextVMAdviceHandlerLog extends CompactTextVMAdviceHandlerLog {
 
     private final SBPSTextVMAdviceHandlerLog jdel;
@@ -39,6 +34,12 @@ public class SBPSCompactTextVMAdviceHandlerLog extends CompactTextVMAdviceHandle
     public SBPSCompactTextVMAdviceHandlerLog() {
         super(new SBPSTextVMAdviceHandlerLog());
         this.jdel = (SBPSTextVMAdviceHandlerLog) del;
+    }
+
+    @Override
+    public void setTimeStampGenerator(TimeStampGenerator timeStampGenerator) {
+        super.setTimeStampGenerator(timeStampGenerator);
+        jdel.setTimeStampGenerator(timeStampGenerator);
     }
 
     @Override

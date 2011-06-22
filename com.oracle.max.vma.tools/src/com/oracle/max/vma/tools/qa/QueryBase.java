@@ -32,11 +32,9 @@ import java.net.*;
 /**
  * Base class for query implementations that defines some useful methods.
  *
- * @author Mick Jordan
- *
  */
 
-public abstract class QueryBase implements Query {
+public abstract class QueryBase {
     protected final static String INDENT_TWO = "  ";
     protected final static String INDENT_FOUR = "    ";
     protected final static String DEFAULT_QUERY_PACKAGE = "com.oracle.max.vma.tools.qa.queries";
@@ -46,17 +44,19 @@ public abstract class QueryBase implements Query {
     protected static DecimalFormat format2 = new DecimalFormat("#.00");
     protected static FieldPosition fpos0 = new FieldPosition(0);
 
-    private static URL[] classDirs;
+    private static ArrayList<URL> queryClassURLs = new ArrayList<URL>();
+    private static URLClassLoader urlClassLoader;
     private static String packageName = DEFAULT_QUERY_PACKAGE;
 
     protected boolean verbose;
     protected String className;
     protected String id;
     protected String thread;
+    protected boolean absTime = false;
 
-    public static void setClassDir(String dir) {
+    public static void addQueryClassDir(String dir) {
         try {
-            classDirs = new URL[] {new URL(dir)};
+            queryClassURLs.add(new URL(dir));
         } catch (Exception e) {
             throw new RuntimeException("malformed class directory " + dir);
         }
@@ -66,11 +66,13 @@ public abstract class QueryBase implements Query {
         packageName = p;
     }
 
-    public static Query ensureLoaded(String queryName) {
+    public static QueryBase ensureLoaded(String queryName) {
         try {
-            URLClassLoader cl = new URLClassLoader(classDirs);
-            Class<?> q = cl.loadClass(packageName + "." + queryName + "Query");
-            Query query = (Query) q.newInstance();
+            if (urlClassLoader == null) {
+                urlClassLoader  = new URLClassLoader(queryClassURLs.toArray(new URL[queryClassURLs.size()]));
+            }
+            Class<?> q = urlClassLoader.loadClass(packageName + "." + queryName + "Query");
+            QueryBase query = (QueryBase) q.newInstance();
             return query;
         } catch (Exception e) {
             throw new RuntimeException("failed to load query class " + queryName);
@@ -82,7 +84,7 @@ public abstract class QueryBase implements Query {
         return null;
     }
 
-    protected void parseArgs(String[] args) {
+    public void parseStandardArgs(String[] args) {
         verbose = false;
         className = null;
         id = null;
@@ -98,6 +100,8 @@ public abstract class QueryBase implements Query {
                 thread = args[++i];
             } else if (arg.equals("-id")) {
                 id = args[++i];
+            } else if (arg.equals("-abs")) {
+                absTime = true;
             }
         }
         // Checkstyle: resume modified control variable check
@@ -137,7 +141,7 @@ public abstract class QueryBase implements Query {
 
     public static String getShowClassLoader(TraceRun traceRun, String classLoaderId) {
         final String defaultName = classLoaderId;
-        ObjectRecord ctd = traceRun.getObjects().get(defaultName);
+        ObjectRecord ctd = traceRun.objects.get(defaultName);
         if (ctd == null) {
             return "id=" + defaultName;
         } else {

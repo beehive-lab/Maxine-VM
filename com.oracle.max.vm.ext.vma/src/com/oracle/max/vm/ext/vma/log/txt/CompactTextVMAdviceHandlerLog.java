@@ -175,7 +175,7 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
 
     @Override
     public void unseenObject(String threadName, long objId, ClassName className) {
-        del.unseenObject(getThreadShortForm(threadName), objId, getClassShortForm(className));
+        del.unseenObject(getThreadShortForm(threadName), checkRepeatId(objId, threadName), getClassShortForm(className));
     }
 
     @Override

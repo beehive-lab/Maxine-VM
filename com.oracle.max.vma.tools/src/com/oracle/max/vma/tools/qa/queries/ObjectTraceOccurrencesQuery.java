@@ -35,7 +35,6 @@ public class ObjectTraceOccurrencesQuery extends QueryBase {
     @Override
     public Object execute(ArrayList<TraceRun> traceRuns, int traceFocus,
             PrintStream ps, String[] args) {
-        parseArgs(args);
         final int[] buckets = new int[65536];
         for (int i = 0; i < buckets.length; i++) {
             buckets[i] = 0;

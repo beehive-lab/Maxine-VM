@@ -38,7 +38,7 @@ public class LiveObjectsSizeQuery extends QueryBase {
     public Object execute(ArrayList<TraceRun> traceRuns, int traceFocus,
             PrintStream ps, String[] args) {
         TraceRun traceRun = traceRuns.get(traceFocus);
-        Iterator<ObjectRecord> iter = traceRun.getObjects().values().iterator();
+        Iterator<ObjectRecord> iter = traceRun.objects.values().iterator();
         int totalNumber = 0;
         int totalArray = 0;
         while (iter.hasNext()) {
