@@ -767,22 +767,32 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
     private void traceSweptRegion() {
         Log.print("#");
         Log.print(csrInfo.toRegionID());
-        if (csrInfo.isAllocating()) {
+        if (csrInfo.hasFreeChunks()) {
+            if (csrIsLarge) {
+                Log.print("T");
+            }
             if (csrFreeChunks > 1 || minOverflowRefillSize.greaterThan(csrFreeBytes)) {
-                Log.print("'T (");
-                Log.print("'A,  nc: ");
+                Log.print("A,  nc: ");
                 Log.print(csrFreeChunks);
                 Log.print(", nb: ");
             } else {
-                Log.print("'A,  nc: 1, nb: ");
+                Log.print("A,  nc: 1, nb: ");
             }
             Log.println(csrFreeBytes);
+        } else if (csrIsLarge) {
+            if (LARGE_HEAD_ONLY.isInState(csrInfo)) {
+                Log.println(" H");
+            } else if (LARGE_BODY.isInState(csrInfo)) {
+                Log.println(" B");
+            } else {
+                FatalError.unexpected("Unknown large region state");
+            }
         } else if (csrInfo.isFull()) {
             Log.println("  F");
         } else if (csrInfo.isEmpty()) {
             Log.println("  E");
         } else {
-            FatalError.unexpected("Unknown region state");
+            FatalError.unexpected("Unknown region state after sweep");
         }
     }
 
@@ -792,8 +802,14 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
             // Large object regions are at least 2 regions long.
             if (csrFreeBytes == 0) {
                 // Skip all intermediate region. They are full.
+                if (TraceSweep) {
+                    traceSweptRegion();
+                }
                 while (!csrInfo.next().isTailOfLargeObject()) {
                     csrInfo = regionInfoIterable.next();
+                    if (TraceSweep) {
+                        traceSweptRegion();
+                    }
                 }
             } else {
                 // Free all intermediate regions. The tail needs to be swept
@@ -804,31 +820,36 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                     EMPTY_REGION.setState(csrInfo);
                     allocationRegions.append(csrInfo.toRegionID());
                     allocationRegionsFreeSpace =  allocationRegionsFreeSpace.plus(regionSizeInBytes);
+                    if (TraceSweep) {
+                        traceSweptRegion();
+                    }
                     if (csrInfo.next().isTailOfLargeObject()) {
                         break;
                     }
                     csrInfo = regionInfoIterable.next();
                 } while (true);
             }
-        } else if (csrFreeBytes == 0) {
-            FULL_REGION.setState(csrInfo);
-        } else if (csrFreeBytes == regionSizeInBytes) {
-            EMPTY_REGION.setState(csrInfo);
-            allocationRegions.append(csrInfo.toRegionID());
-            allocationRegionsFreeSpace =  allocationRegionsFreeSpace.plus(regionSizeInBytes);
         } else {
-            allocationRegionsFreeSpace =  allocationRegionsFreeSpace.plus(csrFreeBytes);
-            if (csrFreeChunks == 1 && minOverflowRefillSize.lessEqual(csrFreeBytes)) {
-                csrInfo.setFreeChunks(HeapFreeChunk.fromHeapFreeChunk(csrHead), (short) csrFreeBytes, (short) csrFreeChunks);
+            if (csrFreeBytes == 0) {
+                FULL_REGION.setState(csrInfo);
+            } else if (csrFreeBytes == regionSizeInBytes) {
+                EMPTY_REGION.setState(csrInfo);
                 allocationRegions.append(csrInfo.toRegionID());
+                allocationRegionsFreeSpace =  allocationRegionsFreeSpace.plus(regionSizeInBytes);
             } else {
-                FatalError.check(csrFreeBytes > 0 && (csrFreeChunks > 1 || minOverflowRefillSize.greaterThan(csrFreeBytes)) && csrHead != null, "unknown state for a swept region");
-                csrInfo.setFreeChunks(HeapFreeChunk.fromHeapFreeChunk(csrHead), (short) csrFreeBytes, (short) csrFreeChunks);
-                tlabAllocationRegions.append(csrInfo.toRegionID());
+                allocationRegionsFreeSpace =  allocationRegionsFreeSpace.plus(csrFreeBytes);
+                if (csrFreeChunks == 1 && minOverflowRefillSize.lessEqual(csrFreeBytes)) {
+                    csrInfo.setFreeChunks(HeapFreeChunk.fromHeapFreeChunk(csrHead), (short) csrFreeBytes, (short) csrFreeChunks);
+                    allocationRegions.append(csrInfo.toRegionID());
+                } else {
+                    FatalError.check(csrFreeBytes > 0 && (csrFreeChunks > 1 || minOverflowRefillSize.greaterThan(csrFreeBytes)) && csrHead != null, "unknown state for a swept region");
+                    csrInfo.setFreeChunks(HeapFreeChunk.fromHeapFreeChunk(csrHead), (short) csrFreeBytes, (short) csrFreeChunks);
+                    tlabAllocationRegions.append(csrInfo.toRegionID());
+                }
             }
-        }
-        if (TraceSweep) {
-            traceSweptRegion();
+            if (TraceSweep) {
+                traceSweptRegion();
+            }
         }
     }
 
