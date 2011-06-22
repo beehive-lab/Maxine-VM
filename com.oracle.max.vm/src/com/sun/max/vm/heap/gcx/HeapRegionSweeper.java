@@ -157,6 +157,8 @@ public abstract class HeapRegionSweeper extends Sweeper {
     }
 
     public abstract boolean hasNextSweepingRegion();
+    public abstract void reachedRightmostLiveRegion();
+
     @Override
     public abstract void beginSweep();
     @Override

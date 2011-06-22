@@ -2028,6 +2028,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             impreciseSweep(regionsSweeper);
             regionsSweeper.endSweep();
         } while(regionsSweeper.endOfSweepingRegion().lessEqual(rightmostLiveObject));
+        regionsSweeper.reachedRightmostLiveRegion();
     }
 
     @INLINE
