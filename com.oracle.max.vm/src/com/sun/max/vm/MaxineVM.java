@@ -525,14 +525,14 @@ public final class MaxineVM {
     public final RegisterConfigs registerConfigs;
     public final Stubs stubs;
     public final Safepoint safepoint;
-    public final TrapStateAccess trapStateAccess;
+    public final TrapFrameAccess trapFrameAccess;
 
     public MaxineVM(VMConfiguration configuration) {
         this.config = configuration;
         this.registerConfigs = RegisterConfigs.create();
         this.stubs = new Stubs(registerConfigs);
         this.safepoint = Safepoint.create();
-        this.trapStateAccess = TrapStateAccess.create();
+        this.trapFrameAccess = TrapFrameAccess.create();
     }
 
     public static void reportPristineMemoryFailure(String memoryAreaName, String operation, Size numberOfBytes) {

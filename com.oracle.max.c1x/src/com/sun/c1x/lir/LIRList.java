@@ -29,9 +29,9 @@ import com.sun.c1x.*;
 import com.sun.c1x.alloc.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.gen.*;
-import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.FrameMap.StackBlock;
+import com.sun.c1x.stub.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.Mark;
 import com.sun.cri.ri.*;
@@ -109,9 +109,9 @@ public final class LIRList {
         append(new LIRLabel(lbl));
     }
 
-    public void negate(CiValue src, CiValue dst, GlobalStub globalStub) {
+    public void negate(CiValue src, CiValue dst, CompilerStub stub) {
         LIRNegate op = new LIRNegate(src, dst);
-        op.globalStub = globalStub;
+        op.stub = stub;
         append(op);
     }
 
@@ -163,9 +163,9 @@ public final class LIRList {
         append(new LIRStackAllocate(dst, stackBlock));
     }
 
-    public void convert(int code, CiValue left, CiValue dst, GlobalStub globalStub) {
+    public void convert(int code, CiValue left, CiValue dst, CompilerStub stub) {
         LIRConvert op = new LIRConvert(code, left, dst);
-        op.globalStub = globalStub;
+        op.stub = stub;
         append(op);
     }
 

@@ -26,6 +26,7 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
 import com.sun.max.unsafe.*;
@@ -149,10 +150,10 @@ public interface MaxMachineCode<MachineCode_Type extends MaxMachineCode> extends
         int opcode(int index) throws IllegalArgumentException;
 
         /**
-         * @return if the instruction is a call, the index into the constant pool of the operand/callee; else -1.
+         * @return if the instruction is a call, the RiMethod denoting the callee; else -1.
          * @throws IllegalArgumentException unless {@code 0 <= index < length()}
          */
-        int calleeConstantPoolIndex(int index) throws IllegalArgumentException;
+        RiMethod calleeAt(int index) throws IllegalArgumentException;
 
         /**
          * Gets the instruction indexes of all labels synthesized by disassembly of this method.

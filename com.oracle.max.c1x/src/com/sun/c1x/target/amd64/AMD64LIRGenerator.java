@@ -30,9 +30,9 @@ import com.oracle.max.asm.target.amd64.*;
 import com.sun.c1x.*;
 import com.sun.c1x.alloc.OperandPool.VariableFlag;
 import com.sun.c1x.gen.*;
-import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
+import com.sun.c1x.stub.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
@@ -134,13 +134,13 @@ public class AMD64LIRGenerator extends LIRGenerator {
         value.setDestroysRegister();
         value.loadItem();
         CiVariable reg = newVariable(x.kind);
-        GlobalStub globalStub = null;
+        CompilerStub stub = null;
         if (x.kind == CiKind.Float) {
-            globalStub = stubFor(GlobalStub.Id.fneg);
+            stub = stubFor(CompilerStub.Id.fneg);
         } else if (x.kind == CiKind.Double) {
-            globalStub = stubFor(GlobalStub.Id.dneg);
+            stub = stubFor(CompilerStub.Id.dneg);
         }
-        lir.negate(value.result(), reg, globalStub);
+        lir.negate(value.result(), reg, stub);
         setResult(x, reg);
     }
 
@@ -614,22 +614,22 @@ public class AMD64LIRGenerator extends LIRGenerator {
         CiValue input = load(x.value());
         CiVariable result = newVariable(x.kind);
         // arguments of lirConvert
-        GlobalStub globalStub = null;
+        CompilerStub stub = null;
         // Checkstyle: off
         switch (x.opcode) {
-            case Bytecodes.F2I: globalStub = stubFor(GlobalStub.Id.f2i); break;
-            case Bytecodes.F2L: globalStub = stubFor(GlobalStub.Id.f2l); break;
-            case Bytecodes.D2I: globalStub = stubFor(GlobalStub.Id.d2i); break;
-            case Bytecodes.D2L: globalStub = stubFor(GlobalStub.Id.d2l); break;
+            case Bytecodes.F2I: stub = stubFor(CompilerStub.Id.f2i); break;
+            case Bytecodes.F2L: stub = stubFor(CompilerStub.Id.f2l); break;
+            case Bytecodes.D2I: stub = stubFor(CompilerStub.Id.d2i); break;
+            case Bytecodes.D2L: stub = stubFor(CompilerStub.Id.d2l); break;
         }
         // Checkstyle: on
-        if (globalStub != null) {
-            // Force result to be rax to match global stubs expectation.
+        if (stub != null) {
+            // Force result to be rax to match compiler stubs expectation.
             CiValue stubResult = x.kind == CiKind.Int ? RAX_I : RAX_L;
-            lir.convert(x.opcode, input, stubResult, globalStub);
+            lir.convert(x.opcode, input, stubResult, stub);
             lir.move(stubResult, result);
         } else {
-            lir.convert(x.opcode, input, result, globalStub);
+            lir.convert(x.opcode, input, result, stub);
         }
         setResult(x, result);
     }

@@ -121,8 +121,8 @@ public abstract class Trap {
         private Number() {
         }
 
-        public static boolean isStackOverflow(Pointer trapState) {
-            return vm().trapStateAccess.getTrapNumber(trapState) == STACK_FAULT;
+        public static boolean isStackOverflow(Pointer trapFrame) {
+            return vm().trapFrameAccess.getTrapNumber(trapFrame) == STACK_FAULT;
         }
     }
 
@@ -191,10 +191,10 @@ public abstract class Trap {
      * This method is called from the {@linkplain Stubs#trapStub trap stub} and does the actual trap handling.
      *
      * @param trapNumber the trap that occurred
-     * @param trapState a pointer to the stack location where trap state is stored
+     * @param trapFrame the trap frame
      * @param faultAddress the faulting address that caused this trap (memory faults only)
      */
-    private static void handleTrap(int trapNumber, Pointer trapState, Address faultAddress) {
+    private static void handleTrap(int trapNumber, Pointer trapFrame, Address faultAddress) {
         // From this point on until we return from the trap stub,
         // this variable is used to communicate to the VM operation thread
         // whether a thread was stopped at a safepoint or
@@ -206,18 +206,18 @@ public abstract class Trap {
             return;
         }
 
-        final TrapStateAccess trapStateAccess = vm().trapStateAccess;
-        final Pointer pc = trapStateAccess.getPC(trapState);
-        final Object origin = checkTrapOrigin(trapNumber, trapState, faultAddress, pc);
+        final TrapFrameAccess tfa = vm().trapFrameAccess;
+        final Pointer pc = tfa.getPC(trapFrame);
+        final Object origin = checkTrapOrigin(trapNumber, trapFrame, faultAddress, pc);
         if (origin instanceof TargetMethod) {
             // the trap occurred in Java
             final TargetMethod targetMethod = (TargetMethod) origin;
-            final Pointer sp = trapStateAccess.getSP(trapState);
-            final Pointer fp = trapStateAccess.getFP(trapState);
+            final Pointer sp = tfa.getSP(trapFrame);
+            final Pointer fp = tfa.getFP(trapFrame);
 
             switch (trapNumber) {
                 case MEMORY_FAULT:
-                    handleMemoryFault(pc, targetMethod, sp, fp, trapState, faultAddress);
+                    handleMemoryFault(pc, targetMethod, sp, fp, trapFrame, faultAddress);
                     break;
                 case STACK_FAULT:
                     // stack overflow:
@@ -226,23 +226,23 @@ public abstract class Trap {
                     // propagate this to the thread object
                     VmThread.current().nativeTrapHandlerUnprotectedYellowZone();
 
-                    raiseImplicitException(trapState, targetMethod, new StackOverflowError(), sp, fp, pc);
+                    raiseImplicitException(trapFrame, targetMethod, new StackOverflowError(), sp, fp, pc);
                     break; // unreachable, except when returning to a local exception handler
                 case ILLEGAL_INSTRUCTION:
                     // deoptimization
                     // TODO: deoptimization
-                    FatalError.unexpected("illegal instruction", false, null, trapState);
+                    FatalError.unexpected("illegal instruction", false, null, trapFrame);
                     break;
                 case ARITHMETIC_EXCEPTION:
                     // integer divide by zero
-                    raiseImplicitException(trapState, targetMethod, new ArithmeticException(), sp, fp, pc);
+                    raiseImplicitException(trapFrame, targetMethod, new ArithmeticException(), sp, fp, pc);
                     break; // unreachable
                 case STACK_FATAL:
                     // fatal stack overflow
-                    FatalError.unexpected("fatal stack fault in red zone", false, null, trapState);
+                    FatalError.unexpected("fatal stack fault in red zone", false, null, trapFrame);
                     break; // unreachable
                 default:
-                    FatalError.unexpected("unknown trap number", false, null, trapState);
+                    FatalError.unexpected("unknown trap number", false, null, trapFrame);
 
             }
         } else {
@@ -250,7 +250,7 @@ public abstract class Trap {
             Log.print("Trap in native code (or a runtime stub) @ ");
             Log.print(pc);
             Log.println(", exiting.");
-            FatalError.unexpected("Trap in native code or a runtime stub", true, null, trapState);
+            FatalError.unexpected("Trap in native code or a runtime stub", true, null, trapFrame);
         }
     }
 
@@ -261,14 +261,14 @@ public abstract class Trap {
      * indicating the trap occurred in native code.
      *
      * @param trapNumber the trap number
-     * @param trapState the trap state area
+     * @param trapFrame the trap frame
      * @param faultAddress the faulting address that caused the trap (memory faults only)
      * @param pc the address of instruction causing the trap
      * @return a reference to the {@code TargetMethod} or {@link RuntimeStub} containing the instruction pointer that
      *         caused the trap or {@code null} if trap occurred in native code
      */
-    private static Object checkTrapOrigin(int trapNumber, Pointer trapState, Address faultAddress, Pointer pc) {
-        final TrapStateAccess trapStateAccess = vm().trapStateAccess;
+    private static Object checkTrapOrigin(int trapNumber, Pointer trapFrame, Address faultAddress, Pointer pc) {
+        final TrapFrameAccess tfa = vm().trapFrameAccess;
 
         // check to see if this fault originated in a target method
         final TargetMethod targetMethod = Code.codePointerToTargetMethod(pc);
@@ -288,9 +288,9 @@ public abstract class Trap {
             Log.println(pc);
             Log.print("  Fault address=");
             Log.println(faultAddress);
-            trapStateAccess.logTrapState(trapState);
+            tfa.logTrapFrame(trapFrame);
             if (DumpStackOnTrap) {
-                Throw.stackDump("Stack trace:", pc, trapStateAccess.getSP(trapState), trapStateAccess.getFP(trapState));
+                Throw.stackDump("Stack trace:", pc, tfa.getSP(trapFrame), tfa.getFP(trapFrame));
             }
             Log.unlock(lockDisabledSafepoints);
         }
@@ -311,18 +311,18 @@ public abstract class Trap {
      * @param targetMethod the TargetMethod containing {@code instructionPointer}
      * @param stackPointer the stack pointer at the time of the fault
      * @param framePointer the frame pointer at the time of the fault
-     * @param trapState a pointer to the trap state at the time of the fault
+     * @param trapFrame a pointer to the trap frame
      * @param faultAddress the address that caused the fault
      */
-    private static void handleMemoryFault(Pointer instructionPointer, TargetMethod targetMethod, Pointer stackPointer, Pointer framePointer, Pointer trapState, Address faultAddress) {
+    private static void handleMemoryFault(Pointer instructionPointer, TargetMethod targetMethod, Pointer stackPointer, Pointer framePointer, Pointer trapFrame, Address faultAddress) {
         final Pointer dtla = currentTLA();
         final Safepoint safepoint = vm().safepoint;
-        final TrapStateAccess trapStateAccess = vm().trapStateAccess;
+        final TrapFrameAccess tfa = vm().trapFrameAccess;
         final Pointer ttla = TTLA.load(dtla);
-        final Pointer safepointLatch = trapStateAccess.getSafepointLatch(trapState);
+        final Pointer safepointLatch = tfa.getSafepointLatch(trapFrame);
 
         if (VmThread.current().isVmOperationThread()) {
-            FatalError.unexpected("Memory fault on the VM operation thread", false, null, trapState);
+            FatalError.unexpected("Memory fault on the VM operation thread", false, null, trapFrame);
         }
 
         // check to see if a safepoint has been triggered for this thread
@@ -331,10 +331,10 @@ public abstract class Trap {
             final Pointer etla = ETLA.load(dtla);
             final Reference reference = VM_OPERATION.loadRef(etla);
             final VmOperation vmOperation = (VmOperation) reference.toJava();
-            trapStateAccess.setTrapNumber(trapState, Number.SAFEPOINT);
+            tfa.setTrapNumber(trapFrame, Number.SAFEPOINT);
             if (vmOperation != null) {
                 TRAP_INSTRUCTION_POINTER.store3(instructionPointer);
-                vmOperation.doAtSafepoint(trapState);
+                vmOperation.doAtSafepoint(trapFrame);
                 TRAP_INSTRUCTION_POINTER.store3(Pointer.zero());
             } else {
                 /*
@@ -365,15 +365,15 @@ public abstract class Trap {
             // The state of the safepoint latch was TRIGGERED when the trap happened. It must be reset back to ENABLED
             // here otherwise another trap will occur as soon as the trap stub returns and re-executes the
             // safepoint instruction.
-            trapStateAccess.setSafepointLatch(trapState, etla);
+            tfa.setSafepointLatch(trapFrame, etla);
 
         } else if (inJava(dtla)) {
-            trapStateAccess.setTrapNumber(trapState, Number.NULL_POINTER_EXCEPTION);
+            tfa.setTrapNumber(trapFrame, Number.NULL_POINTER_EXCEPTION);
             // null pointer exception
-            raiseImplicitException(trapState, targetMethod, new NullPointerException(), stackPointer, framePointer, instructionPointer);
+            raiseImplicitException(trapFrame, targetMethod, new NullPointerException(), stackPointer, framePointer, instructionPointer);
         } else {
             // segmentation fault happened in native code somewhere, die.
-            FatalError.unexpected("Trap in native code", true, null, trapState);
+            FatalError.unexpected("Trap in native code", true, null, trapFrame);
         }
     }
 
@@ -389,14 +389,14 @@ public abstract class Trap {
      * Otherwise, the {@linkplain Throw#raise(Throwable, Pointer, Pointer, Pointer) standard mechanism} for throwing an
      * exception is used.
      *
-     * @param trapState a pointer to the buffer on the stack containing the trap state
+     * @param trapFrame a pointer to the trap frame
      * @param targetMethod the target method containing the trap address
      * @param throwable the throwable to raise
      * @param sp the stack pointer at the time of the trap
      * @param fp the frame pointer at the time of the trap
      * @param ip the instruction pointer which caused the trap
      */
-    private static void raiseImplicitException(Pointer trapState, TargetMethod targetMethod, Throwable throwable, Pointer sp, Pointer fp, Pointer ip) {
+    private static void raiseImplicitException(Pointer trapFrame, TargetMethod targetMethod, Throwable throwable, Pointer sp, Pointer fp, Pointer ip) {
         Throw.traceThrow(throwable);
         if (targetMethod.preserveRegistersForLocalExceptionHandler()) {
             final Address catchAddress = targetMethod.throwAddressToCatchAddress(true, ip, throwable.getClass());
@@ -404,8 +404,8 @@ public abstract class Trap {
                 // Store the exception so that the handler can find it.
                 VmThread.current().storeExceptionForHandler(throwable, targetMethod, targetMethod.posFor(catchAddress));
 
-                final TrapStateAccess trapStateAccess = vm().trapStateAccess;
-                trapStateAccess.setPC(trapState, catchAddress.asPointer());
+                final TrapFrameAccess tfa = vm().trapFrameAccess;
+                tfa.setPC(trapFrame, catchAddress.asPointer());
                 return;
             }
         }

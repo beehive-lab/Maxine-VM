@@ -452,13 +452,13 @@ public final class DebugInfo {
     private static CiValue toLiveSlot(FrameAccess fa, CiValue value) {
         if (value.isRegister()) {
             CiRegister reg = value.asRegister();
-            CiCalleeSaveArea csa = fa.csa;
-            int offset = csa.offsetOf(reg);
+            CiCalleeSaveLayout csl = fa.csl;
+            int offset = csl.offsetOf(reg);
             if (value.kind.isObject()) {
-                Reference ref = fa.rsa.readReference(offset);
+                Reference ref = fa.csa.readReference(offset);
                 value = CiConstant.forObject(ref.toJava());
             } else {
-                Word w = fa.rsa.readWord(offset);
+                Word w = fa.csa.readWord(offset);
                 value = CiConstant.forWord(w.asAddress().toLong());
             }
         } else if (value.isStackSlot()) {

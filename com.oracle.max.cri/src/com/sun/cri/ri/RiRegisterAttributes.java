@@ -76,9 +76,10 @@ public class RiRegisterAttributes {
         RiRegisterAttributes[] map = new RiRegisterAttributes[registers.length];
         for (CiRegister reg : registers) {
             if (reg != null) {
+                CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
                 RiRegisterAttributes attr = new RiRegisterAttributes(
                                 Arrays.asList(registerConfig.getCallerSaveRegisters()).contains(reg),
-                                Arrays.asList(registerConfig.getCalleeSaveArea().registers).contains(reg),
+                                csl == null ? false : Arrays.asList(csl.registers).contains(reg),
                                 Arrays.asList(registerConfig.getAllocatableRegisters()).contains(reg));
                 if (map.length <= reg.number) {
                     map = Arrays.copyOf(map, reg.number + 1);

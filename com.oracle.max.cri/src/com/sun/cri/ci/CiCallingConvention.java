@@ -32,7 +32,7 @@ public class CiCallingConvention {
 
     /**
      * Constants denoting the type of a call for which a calling convention is
-     * {@linkplain RiRegisterConfig#getCallingConvention(Type, CiKind[], CiTarget) requested}.
+     * {@linkplain RiRegisterConfig#getCallingConvention(Type, CiKind[], CiTarget, boolean) requested}.
      */
     public enum Type {
         /**

@@ -78,21 +78,21 @@ public class CiTargetMethod implements Serializable {
 
     /**
      * Represents a call in the code and includes a stack reference map and optionally a register reference map. The
-     * call can either be a runtime call, a global stub call, a native call or a call to a normal method.
+     * call can either be a runtime call, a compiler stub call, a native call or a call to a normal method.
      */
     public static final class Call extends Site {
         public final CiRuntimeCall runtimeCall;
         public final RiMethod method;
         public final String symbol;
-        public final Object globalStubID;
+        public final Object stubID;
         public final CiDebugInfo debugInfo;
 
-        Call(int pcOffset, CiRuntimeCall runtimeCall, RiMethod method, String symbol, Object globalStubID, CiDebugInfo debugInfo) {
+        Call(int pcOffset, CiRuntimeCall runtimeCall, RiMethod method, String symbol, Object stubID, CiDebugInfo debugInfo) {
             super(pcOffset);
             this.runtimeCall = runtimeCall;
             this.method = method;
             this.symbol = symbol;
-            this.globalStubID = globalStubID;
+            this.stubID = stubID;
             this.debugInfo = debugInfo;
         }
 
@@ -110,9 +110,9 @@ public class CiTargetMethod implements Serializable {
             } else if (symbol != null) {
                 sb.append("Native call to ");
                 sb.append(symbol);
-            } else if (globalStubID != null) {
-                sb.append("Global stub call to ");
-                sb.append(globalStubID);
+            } else if (stubID != null) {
+                sb.append("Compiler stub call to ");
+                sb.append(stubID);
             } else if (method != null) {
                 sb.append("Method call to ");
                 sb.append(method.toString());
@@ -417,9 +417,9 @@ public class CiTargetMethod implements Serializable {
         RiMethod meth = target instanceof RiMethod ? (RiMethod) target : null;
         String symbol = target instanceof String ? (String) target : null;
         // make sure that only one is non-null
-        Object globalStubID = (rt == null && meth == null && symbol == null) ? target : null;
+        Object stubID = (rt == null && meth == null && symbol == null) ? target : null;
 
-        final Call callSite = new Call(codePos, rt, meth, symbol, globalStubID, debugInfo);
+        final Call callSite = new Call(codePos, rt, meth, symbol, stubID, debugInfo);
         if (direct) {
             directCalls.add(callSite);
         } else {

@@ -22,7 +22,7 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.globalstub.*;
+import com.sun.c1x.stub.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 
@@ -33,7 +33,7 @@ import com.sun.cri.ci.*;
 public class LIRConvert extends LIROp1 {
 
     public final int bytecode;
-    public GlobalStub globalStub;
+    public CompilerStub stub;
 
     /**
      * Constructs a new instruction LIRConvert for a given operand.

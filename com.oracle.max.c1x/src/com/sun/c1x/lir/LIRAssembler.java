@@ -68,9 +68,9 @@ public abstract class LIRAssembler {
         }
     }
 
-    public LIRAssembler(C1XCompilation compilation) {
+    public LIRAssembler(C1XCompilation compilation, TargetMethodAssembler tasm) {
         this.compilation = compilation;
-        this.tasm = compilation.assembler();
+        this.tasm = tasm;
         this.asm = tasm.asm;
         this.frameMap = compilation.frameMap();
         this.branchTargetBlocks = new ArrayList<BlockBegin>();

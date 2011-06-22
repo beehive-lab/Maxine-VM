@@ -118,12 +118,12 @@ public final class FatalError extends Error {
      * @param trappedInNative specifies if this is a fatal error due to a trap in native code. If so, then the native
      *            code instruction pointer at which the trap occurred can be extracted from {@code trapState}
      * @param throwable an exception given more detail on the cause of the error condition. This value may be {@code null}.
-     * @param trapState if non-zero, then this is a pointer to the {@linkplain TrapStateAccess trap state} for the trap
+     * @param trapFrame if non-zero, then this is a pointer to the {@linkplain TrapFrameAccess trap frame} for the trap
      *            resulting in this fatal error
      * @return never
      */
     @NEVER_INLINE
-    public static FatalError unexpected(String message, boolean trappedInNative, Throwable throwable, Pointer trapState) {
+    public static FatalError unexpected(String message, boolean trappedInNative, Throwable throwable, Pointer trapFrame) {
         if (MaxineVM.isHosted()) {
             throw new FatalError(message, throwable);
         }
@@ -154,11 +154,11 @@ public final class FatalError extends Error {
         Log.print("Faulting thread: ");
         Log.printThread(vmThread, true);
 
-        if (!trapState.isZero()) {
+        if (!trapFrame.isZero()) {
             Log.print("------ Trap State for thread ");
             Log.printThread(vmThread, false);
             Log.println(" ------");
-            vm().trapStateAccess.logTrapState(trapState);
+            vm().trapFrameAccess.logTrapFrame(trapFrame);
         }
 
         if (vmThread != null) {
@@ -177,8 +177,8 @@ public final class FatalError extends Error {
         }
         Log.unlock(lockDisabledSafepoints);
         Address ip = Address.zero();
-        if (trappedInNative && !trapState.isZero())  {
-            ip = vm().trapStateAccess.getPC(trapState);
+        if (trappedInNative && !trapFrame.isZero())  {
+            ip = vm().trapFrameAccess.getPC(trapFrame);
         }
         exit(trappedInNative, ip);
 

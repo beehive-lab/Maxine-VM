@@ -35,13 +35,13 @@ import com.sun.c1x.*;
 import com.sun.c1x.alloc.*;
 import com.sun.c1x.alloc.OperandPool.VariableFlag;
 import com.sun.c1x.debug.*;
-import com.sun.c1x.globalstub.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.ir.Value.Flag;
 import com.sun.c1x.lir.FrameMap.StackBlock;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.opt.*;
+import com.sun.c1x.stub.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.c1x.value.FrameState.PhiProcedure;
@@ -50,7 +50,6 @@ import com.sun.cri.bytecode.Bytecodes.MemoryBarriers;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiAddress.Scale;
 import com.sun.cri.ri.*;
-import com.sun.cri.util.*;
 import com.sun.cri.xir.CiXirAssembler.XirConstant;
 import com.sun.cri.xir.CiXirAssembler.XirInstruction;
 import com.sun.cri.xir.CiXirAssembler.XirOperand;
@@ -630,7 +629,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         LIRDebugInfo info = stateFor(x, x.stateBefore());
         CiValue resultOperand = resultOperandFor(x.kind);
         CiValue callAddress = load(x.address());
-        CiKind[] signature = CRIUtil.signatureToKinds(x.signature, null);
+        CiKind[] signature = CiUtil.signatureToKinds(x.signature, null);
         CiCallingConvention cc = compilation.frameMap().getCallingConvention(signature, NativeCall);
         List<CiValue> argList = visitInvokeArguments(cc, x.arguments, null);
         argList.add(callAddress);
@@ -846,21 +845,21 @@ public abstract class LIRGenerator extends ValueVisitor {
         emitXir(snippet, x, maybeStateFor(x), null, true);
     }
 
-    protected GlobalStub stubFor(CiRuntimeCall runtimeCall) {
-        GlobalStub stub = compilation.compiler.lookupGlobalStub(runtimeCall);
-        compilation.frameMap().usesGlobalStub(stub);
+    protected CompilerStub stubFor(CiRuntimeCall runtimeCall) {
+        CompilerStub stub = compilation.compiler.lookupStub(runtimeCall);
+        compilation.frameMap().usesStub(stub);
         return stub;
     }
 
-    protected GlobalStub stubFor(GlobalStub.Id globalStub) {
-        GlobalStub stub = compilation.compiler.lookupGlobalStub(globalStub);
-        compilation.frameMap().usesGlobalStub(stub);
+    protected CompilerStub stubFor(CompilerStub.Id compilerStub) {
+        CompilerStub stub = compilation.compiler.lookupStub(compilerStub);
+        compilation.frameMap().usesStub(stub);
         return stub;
     }
 
-    protected GlobalStub stubFor(XirTemplate template) {
-        GlobalStub stub = compilation.compiler.lookupGlobalStub(template);
-        compilation.frameMap().usesGlobalStub(stub);
+    protected CompilerStub stubFor(XirTemplate template) {
+        CompilerStub stub = compilation.compiler.lookupStub(template);
+        compilation.frameMap().usesStub(stub);
         return stub;
     }
 
@@ -897,13 +896,20 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitNullCheck(NullCheck x) {
-        // TODO: this is suboptimal because it may result in an unnecessary move
-        CiValue value = load(x.object());
+        CiValue value = makeOperand(x.object());
+        if (value.isVariable()) {
+            // null check does not create a new value, so we can re-use an already existing virtual register
+            x.setOperand(value);
+        } else {
+            CiValue result = createResultVariable(x);
+            lir.move(value, result);
+            value = result;
+        }
+
         if (x.canTrap()) {
             LIRDebugInfo info = stateFor(x);
             lir.nullCheck(value, info);
         }
-        x.setOperand(value);
     }
 
     @Override

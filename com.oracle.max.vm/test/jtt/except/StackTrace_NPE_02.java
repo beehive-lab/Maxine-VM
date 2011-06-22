@@ -26,7 +26,7 @@ package jtt.except;
  * @Harness: java
  * @Runs: 0=0; 1=0; -2=-1; 3=0
  */
-public class    StackTrace_NPE_02 {
+public class StackTrace_NPE_02 {
 
     private static String[] trace = {"test1", "test"};
 

@@ -791,25 +791,34 @@ public class Bytecodes {
         public static final int WITH_FRAME = 1 << 8;
 
         @INTRINSIC(SAFEPOINT | WITH_FRAME)
-        public static native void safepoint();
+        public static void safepoint() {
+        }
 
         @INTRINSIC(SAFEPOINT)
-        public static native void safepointWithoutFrame();
+        public static void safepointWithoutFrame() {
+        }
 
         @INTRINSIC(HERE)
-        public static native long here();
+        public static long here() {
+            return 0L;
+        }
 
         @INTRINSIC(HERE | WITH_FRAME)
-        public static native long hereWithFrame();
+        public static long hereWithFrame() {
+            return 0L;
+        }
 
         @INTRINSIC(INFO | WITH_FRAME)
-        public static native void info();
+        public static void info() {
+        }
 
         @INTRINSIC(UNCOMMON_TRAP | WITH_FRAME)
-        public static native void uncommonTrap();
+        public static void uncommonTrap() {
+        }
 
         @INTRINSIC(INFO)
-        public static native void infoWithoutFrame();
+        public static void infoWithoutFrame() {
+        }
     }
 
     /**

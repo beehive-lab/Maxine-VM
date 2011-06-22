@@ -170,15 +170,15 @@
  * case he would finish the implementation and test it.</li>
  *
  * <li>
- * Calls to global stubs should allocate space on the caller's stack. On AMD64 currently, calls to global stubs poke the
+ * Calls to compiler stubs should allocate space on the caller's stack. On AMD64 currently, calls to compiler stubs poke the
  * arguments onto the stack below the RSP (i.e. in the callee's stack). While normally this code sequence is
  * uninterruptible and works fine in the VM, signal handlers triggered when debugging or inspecting this code sequence
- * may destroy these values when the OS calls the signal handler. This requires knowing which global stubs are called
+ * may destroy these values when the OS calls the signal handler. This requires knowing which compiler stubs are called
  * before finalizing the frame size; currently only the calls to
  * {@link com.oracle.max.asm.target.amd64.AMD64MacroAssembler#callRuntimeCalleeSaved}
- * do not fit this pattern. This needs to be fixed so that all global stubs that are called by the assembled code are
- * known before beginning assembling. The {@link com.sun.c1x.target.amd64.AMD64GlobalStubEmitter} controls how the global stubs accept their
- * parameters. See {@link com.sun.c1x.target.amd64.AMD64GlobalStubEmitter#callerFrameContainsArguments} and its usages.
+ * do not fit this pattern. This needs to be fixed so that all compiler stubs that are called by the assembled code are
+ * known before beginning assembling. The {@link com.sun.c1x.target.amd64.AMD64CompilerStubEmitter} controls how the compiler stubs accept their
+ * parameters. See {@link com.sun.c1x.target.amd64.AMD64CompilerStubEmitter#callerFrameContainsArguments} and its usages.
  *
  * </li>
  * </ul>
