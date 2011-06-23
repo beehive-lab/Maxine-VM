@@ -107,8 +107,8 @@ public class CFGPrinter {
      */
     public void printCompilation(RiMethod method) {
         begin("compilation");
-        out.print("name \" ").print(CiUtil.format("%H::%n", method, true)).println('"');
-        out.print("method \"").print(CiUtil.format("%f %r %H.%n(%p)", method, true)).println('"');
+        out.print("name \"").print(CiUtil.format("%H.%n(%P)", method, false)).println('"');
+        out.print("method \"").print(CiUtil.format("%f %R %H.%n(%P)", method, false)).println('"');
         out.print("date ").println(System.currentTimeMillis());
         end("compilation");
     }

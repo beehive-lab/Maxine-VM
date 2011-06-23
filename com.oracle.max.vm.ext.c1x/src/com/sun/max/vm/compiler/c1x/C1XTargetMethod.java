@@ -641,6 +641,8 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
     @Override
     public int forEachCodePos(CodePosClosure cpc, Pointer ip, boolean ipIsReturnAddress) {
         if (ipIsReturnAddress && platform().isa.offsetToReturnPC == 0) {
+            // Make sure IP is within a call instruction so the stop for the call is found, not the
+            // stop for a safepoint that may be immediately succeeding the call
             ip = ip.minus(1);
         }
 
