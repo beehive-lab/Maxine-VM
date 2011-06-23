@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.compiler.deopt;
 
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
@@ -337,7 +338,7 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
         }
 
         if (TraceDeopt) {
-            logFrames(tm.debugInfoAt(stopIndex, null).frame(), "frame location values");
+            logFrames(tm.debugInfoAt(stopIndex, null).frame(), "locations");
         }
 
         FrameAccess fa = new FrameAccess(csl, csa, sp, fp, info.callerSP, info.callerFP);
@@ -345,7 +346,7 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
         CiFrame topFrame = debugInfo.frame();
 
         if (TraceDeopt) {
-            logFrames(topFrame, "frame values");
+            logFrames(topFrame, "values");
         }
 
         // Construct the deoptimized frames for each frame in the debuf info
@@ -830,6 +831,12 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
      */
     public static void deoptimizeOnReturn(Pointer ip, Pointer sp, Pointer fp, CiConstant returnValue, Pointer csa) {
         Safepoint.disable();
+
+        if (platform().isa.offsetToReturnPC == 0) {
+            // Make sure IP is within a call instruction so the stop for the call is found, not the
+            // stop for a safepoint that may be immediately succeeding the call
+            ip = ip.minus(1);
+        }
 
         Info info = new Info(VmThread.current(), ip, sp, fp, null);
 
