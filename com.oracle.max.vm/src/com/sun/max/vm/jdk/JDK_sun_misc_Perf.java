@@ -30,6 +30,7 @@ import sun.misc.*;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 
@@ -160,8 +161,7 @@ final class JDK_sun_misc_Perf {
      */
     @SUBSTITUTE
     public long highResCounter() {
-        FatalError.unimplemented();
-        return 0L;
+        return System.nanoTime() - MaxineVM.getStartupTimeNano();
     }
 
     /**
@@ -171,7 +171,6 @@ final class JDK_sun_misc_Perf {
      */
     @SUBSTITUTE
     public long highResFrequency() {
-        FatalError.unimplemented();
-        return 0L;
+        return 1000000000L;
     }
 }

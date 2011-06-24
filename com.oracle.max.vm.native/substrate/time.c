@@ -30,7 +30,8 @@
 #if os_DARWIN
 #include <mach/mach_time.h>
 #include <mach/kern_return.h>
-
+#elif os_LINUX
+#include <dlfcn.h>
 #endif
 
 
@@ -71,11 +72,50 @@ jlong native_nanoTime(void) {
 	gettimeofday(&tv, NULL);
 	return (uint64_t)tv.tv_sec * (uint64_t)(1000 * 1000 * 1000) + (uint64_t)(tv.tv_usec * 1000);
 #elif os_LINUX
-	 struct timeval time;
-	 int status = gettimeofday(&time, NULL);
-	 c_ASSERT(status != -1);
-	 jlong usecs = ((jlong) time.tv_sec) * (1000 * 1000) + (jlong) time.tv_usec;
-	 return 1000 * usecs;
+
+#ifndef CLOCK_MONOTONIC
+#define CLOCK_MONOTONIC (1)
+#endif
+
+    static int (*clock_gettime_func)(clockid_t, struct timespec*) = NULL;
+    static int initialized = 0;
+
+    if (!initialized) {
+        initialized = 1;
+
+        /* This code is adopted from the HotSpot handling of System.nanoTime for Linux */
+        /* we do dlopen's in this particular order due to bug in linux
+           dynamical loader (see 6348968) leading to crash on exit */
+        void* handle = dlopen("librt.so.1", RTLD_LAZY);
+        if (handle == NULL) {
+            handle = dlopen("librt.so", RTLD_LAZY);
+        }
+
+        if (handle) {
+            clock_gettime_func = (int(*)(clockid_t, struct timespec*))dlsym(handle, "clock_gettime");
+            if (clock_gettime_func) {
+                struct timespec tp;
+                if (clock_gettime_func(CLOCK_MONOTONIC, &tp) != 0) {
+                    /* monotonic clock is not supported */
+                    clock_gettime_func = NULL;
+                    dlclose(handle);
+                }
+            }
+        }
+	}
+
+    if (clock_gettime_func != NULL) {
+        struct timespec tp;
+        clock_gettime_func(CLOCK_MONOTONIC, &tp);
+        return ((jlong)tp.tv_sec) * (1000 * 1000 * 1000) + (jlong) tp.tv_nsec;
+    }
+
+    /* worst case: fallback to gettimeofday(). */
+    struct timeval time;
+    int status = gettimeofday(&time, NULL);
+    c_ASSERT(status != -1);
+    jlong usecs = ((jlong) time.tv_sec) * (1000 * 1000) + (jlong) time.tv_usec;
+    return 1000 * usecs;
 #else
 	return 1;
 #endif

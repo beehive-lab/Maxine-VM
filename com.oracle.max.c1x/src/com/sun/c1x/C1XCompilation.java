@@ -204,7 +204,7 @@ public final class C1XCompilation {
             throw new CiBailout("build of BlockMap failed for " + method);
         } else {
             if (compiler.isObserved()) {
-                String label = CiUtil.format("BlockListBuilder %f %r %H.%n(%p)", method, true);
+                String label = CiUtil.format("BlockListBuilder %f %R %H.%n(%P)", method, false);
                 compiler.fireCompilationEvent(new CompilationEvent(this, label, map, method.code().length));
             }
         }
