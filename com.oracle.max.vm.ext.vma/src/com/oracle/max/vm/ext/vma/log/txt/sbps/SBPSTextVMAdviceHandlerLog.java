@@ -108,7 +108,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
         }
     }
 
-    private void appendId(long objId) {
+    private void appendCheckRepeatId(long objId) {
         if (objId == REPEAT_ID_VALUE) {
             sb.append('*');
         } else {
@@ -156,7 +156,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     private void appendTTId(Key key, long objId, String threadName) {
         appendTT(key, threadName);
         appendSpace();
-        appendId(objId);
+        appendCheckRepeatId(objId);
         appendSpace();
     }
 
@@ -170,7 +170,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     private void appendTTIdIndex(Key key, long objId, String threadName, int index) {
         appendTT(key, threadName);
         appendSpace();
-        appendId(objId);
+        appendCheckRepeatId(objId);
         appendSpace();
         sb.append(index);
         appendSpace();
@@ -234,7 +234,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     public synchronized void removal(long id) {
         appendCode(REMOVAL);
         appendSpace();
-        appendId(id);
+        sb.append(id);
         end();
     }
 
@@ -302,7 +302,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
         appendPutStaticPrefix(fieldName, threadName);
         sb.append(OBJ_VALUE);
         appendSpace();
-        appendId(valueId);
+        sb.append(valueId);
         end();
     }
 
@@ -345,7 +345,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
         appendPutFieldPrefix(objId, fieldName, threadName);
         sb.append(OBJ_VALUE);
         appendSpace();
-        appendId(valueId);
+        sb.append(valueId);
         end();
     }
 
@@ -387,7 +387,7 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
         appendTTIdIndex(ADVISE_BEFORE_ARRAY_STORE, objId, threadName, index);
         sb.append(OBJ_VALUE);
         appendSpace();
-        appendId(valueId);
+        sb.append(valueId);
         end();
     }
 

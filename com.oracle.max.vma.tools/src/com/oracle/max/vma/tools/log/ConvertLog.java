@@ -401,7 +401,7 @@ public class ConvertLog {
                 sb.append(lineAbsTime);
                 startTime = lineAbsTime;
             } else if (command == Key.CLASS_DEFINITION) {
-                classShortForms.put(lineParts[2], ClassRecord.getCanonicalName(lineParts[1]));
+                classShortForms.put(lineParts[3], ClassRecord.getCanonicalName(lineParts[1]));
                 return;
             } else if (command == Key.THREAD_DEFINITION) {
                 sb.append("0 D T");
@@ -409,7 +409,7 @@ public class ConvertLog {
                 sb.append(' ');
                 sb.append(lineParts[1]);
             } else if (command == Key.METHOD_DEFINITION) {
-                methodShortForms.put(lineParts[2], lineParts[1]);
+                methodShortForms.put(lineParts[3], lineParts[2]);
                 return;
             } else if (INVOKE_BEFORE_SET.contains(command)) {
                 String mid = checkMethodDef();

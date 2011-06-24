@@ -92,6 +92,12 @@ public class TransientVMAdviceHandlerGenerator {
                 out.printf("        if (r != null) {%n");
                 out.printf("            r.value = arg2;%n");
                 out.printf("        }%n");
+            } else if (name.contains("ConstLoad")) {
+                outRecordDeclAndStore(adviceRecordName, recordType, adviceMode);
+                out.printf(");%n");
+                out.printf("        if (r != null) {%n");
+                out.printf("            r.value = arg1;%n");
+                out.printf("        }%n");
             } else if (name.contains("Throw") || name.contains("Monitor") || name.contains("New") ||
                             name.contains("Conversion")  ||
                             name.contains("StackAdjust") || name.contains("Bytecode") || name.contains("IPush") ||

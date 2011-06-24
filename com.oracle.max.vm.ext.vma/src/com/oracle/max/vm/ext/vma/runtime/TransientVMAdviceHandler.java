@@ -239,28 +239,40 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
     @Override
     public void adviseBeforeConstLoad(double arg1) {
         super.adviseBeforeConstLoad(arg1);
-        storeRecord(ConstLoadDouble, 0, arg1);
+        DoubleAdviceRecord r = (DoubleAdviceRecord) storeRecord(ConstLoadDouble, 0);
+        if (r != null) {
+            r.value = arg1;
+        }
     }
 
     // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeConstLoad(long arg1) {
         super.adviseBeforeConstLoad(arg1);
-        storeRecord(ConstLoadLong, 0, arg1);
+        LongAdviceRecord r = (LongAdviceRecord) storeRecord(ConstLoadLong, 0);
+        if (r != null) {
+            r.value = arg1;
+        }
     }
 
     // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeConstLoad(float arg1) {
         super.adviseBeforeConstLoad(arg1);
-        storeRecord(ConstLoadFloat, 0, arg1);
+        FloatAdviceRecord r = (FloatAdviceRecord) storeRecord(ConstLoadFloat, 0);
+        if (r != null) {
+            r.value = arg1;
+        }
     }
 
     // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeConstLoad(Object arg1) {
         super.adviseBeforeConstLoad(arg1);
-        storeRecord(ConstLoadObject, 0, arg1);
+        ObjectAdviceRecord r = (ObjectAdviceRecord) storeRecord(ConstLoadObject, 0);
+        if (r != null) {
+            r.value = arg1;
+        }
     }
 
     // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
