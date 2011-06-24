@@ -766,6 +766,7 @@ public class ProcessLog {
 
             case ADVISE_BEFORE_PUT_FIELD: {
                 objectRecord = getTraceRecord(objIdArg);
+                getFieldRecord(recordParts[ID_CLASSNAME_INDEX], recordParts[ID_CLASSNAME_INDEX + 1]);
                 ObjectFieldAdviceRecord objectFieldAdviceRecord = (ObjectFieldAdviceRecord) createAdviceRecordAndSetTimeThreadValue("PutField", AdviceMode.BEFORE, recordParts[ID_CLASSNAME_INDEX + 2], recordParts[ID_CLASSNAME_INDEX + 3]);
                 objectFieldAdviceRecord.value = objectRecord;
                 objectFieldAdviceRecord.field = fieldRecord;

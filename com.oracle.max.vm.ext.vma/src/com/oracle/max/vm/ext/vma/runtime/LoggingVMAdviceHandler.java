@@ -26,14 +26,17 @@ import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.log.*;
 import com.oracle.max.vm.ext.vma.log.VMAdviceHandlerLog.ClassName;
 import com.oracle.max.vm.ext.vma.log.VMAdviceHandlerLog.QualName;
+import com.oracle.max.vm.ext.vma.runtime.AdviceRecordFlusher.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -55,7 +58,7 @@ public class LoggingVMAdviceHandler extends VMAdviceHandler {
         @INLINE(override = true)
         @Override
         String getThreadName() {
-            return Thread.currentThread().getName();
+            return VmThread.current().getName();
         }
     }
 
@@ -483,13 +486,37 @@ public class LoggingVMAdviceHandler extends VMAdviceHandler {
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseAfterInvokeVirtual(Object arg1, MethodActor arg2) {
+        try {
+            assert arg1 != null;
+            assert arg2 != null;
+            assert arg2.holder() != null;
+            assert  arg2.holder().classLoader != null;
         log.adviseAfterInvokeVirtual(tng.getThreadName(), state.readId(arg1), new QualName(arg2.holder().name(), state.readId(arg2.holder().classLoader), arg2.name()));
+        } catch (Throwable ex) {
+            ex.printStackTrace();
+            Log.println("NPE in InvokeVirtual");
+            Log.print(arg1); Log.println();
+            Log.print(arg2); Log.println();
+            FatalError.unexpected("exiting", ex);
+        }
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseAfterInvokeSpecial(Object arg1, MethodActor arg2) {
+        try {
+            assert arg1 != null;
+            assert arg2 != null;
+            assert arg2.holder() != null;
+            assert  arg2.holder().classLoader != null;
         log.adviseAfterInvokeSpecial(tng.getThreadName(), state.readId(arg1), new QualName(arg2.holder().name(), state.readId(arg2.holder().classLoader), arg2.name()));
+        } catch (Throwable ex) {
+            ex.printStackTrace();
+            Log.println("NPE in InvokeSpecial");
+            Log.print(arg1); Log.println();
+            Log.print(arg2); Log.println();
+            FatalError.unexpected("exiting", ex);
+        }
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY

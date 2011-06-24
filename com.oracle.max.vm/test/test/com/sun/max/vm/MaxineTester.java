@@ -66,8 +66,18 @@ public class MaxineTester {
                     "timing out and killing it.");
     private static final Option<String> javaExecutableOption = options.newStringOption("refvm", "java",
                     "The name of or full path to the reference Java VM executable to use. This must be a JDK 6 or greater VM.");
+    /*
+     * Why is the refvm-args option a String but the maxvm-args option a List<String>? Well the refvm-args option
+     * is intimately tied into the "max" shell script and it's value is used in contexts where a space separated list
+     * is required. But it's rather hard to set it on the command line and avoid the spaces being reinterpreted as
+     * distinct args. Since maxvm-args is only used as an additional command line argument to the "max test"
+     * command, life is much easier if it is a comma separated list.
+     */
+
     private static final Option<String> javaVMArgsOption = options.newStringOption("refvm-args", "-d64 -Xmx1g",
                     "The VM options to be used when running the reference Java VM.");
+    private static final Option<List<String>> maxVMArgsOption = options.newStringListOption("maxvm-args", "",
+                    "Additional VM options to be used when running the Maxine VM.");
     private static final Option<Integer> javaTesterTimeOutOption = options.newIntegerOption("java-tester-timeout", 50,
                     "The number of seconds to wait for the Java tester tests to complete before " +
                     "timing out and killing it.");
@@ -695,7 +705,8 @@ public class MaxineTester {
             return;
         }
         List<String> maxvmConfigs = maxvmConfigListOption.getValue();
-        ExternalCommand[] commands = createVMCommands(testName, maxvmConfigs, imageDir, command, outputDir, workingDir, inputFile);
+        List<String> maxVMOptions = maxVMArgsOption.getValue();
+        ExternalCommand[] commands = createVMCommands(testName, maxvmConfigs, maxVMOptions, imageDir, command, outputDir, workingDir, inputFile);
         printStartOfRefvm(testName);
         ExternalCommand.Result refResult = commands[0].exec(false, javaRunTimeOutOption.getValue());
         printRefvmResult(testName, refResult);
@@ -1139,7 +1150,7 @@ public class MaxineTester {
         }
     }
 
-    private static ExternalCommand[] createVMCommands(String name, List<String> configs, File imageDir, JavaCommand command, File outputDir, File workingDir, File inputFile) {
+    private static ExternalCommand[] createVMCommands(String name, List<String> configs, List<String> maxVMOptions, File imageDir, JavaCommand command, File outputDir, File workingDir, File inputFile) {
         if (workingDir == null) {
             workingDir = imageDir;
         }
@@ -1147,14 +1158,15 @@ public class MaxineTester {
         List<ExternalCommand> commands = new ArrayList<ExternalCommand>();
         commands.add(new ExternalCommand(workingDir, inputFile, new Logs(outputDir, "REFVM_" + name, null), command.getExecArgs(javaExecutableOption.getValue()), null));
         for (String config : configs) {
-            commands.add(createMaxvmCommand(config, imageDir, command, workingDir, inputFile, new Logs(outputDir, "MAXVM_" + name + "_" + config, null)));
+            commands.add(createMaxvmCommand(config, maxVMOptions, imageDir, command, workingDir, inputFile, new Logs(outputDir, "MAXVM_" + name + "_" + config, null)));
         }
         return commands.toArray(new ExternalCommand[commands.size()]);
     }
 
-    private static ExternalCommand createMaxvmCommand(String config, File imageDir, JavaCommand command, File workingDir, File inputFile, Logs logs) {
+    private static ExternalCommand createMaxvmCommand(String config, List<String> maxVMOptions, File imageDir, JavaCommand command, File workingDir, File inputFile, Logs logs) {
         JavaCommand maxvmCommand = command.copy();
         maxvmCommand.addVMOptions(MaxineTesterConfiguration.getVMOptions(config));
+        maxvmCommand.addVMOptions(maxVMOptions.toArray(new String[maxVMOptions.size()]));
         String[] envp = null;
         if (OS.current() == OS.LINUX) {
             // Since the executable may not be in the default location, then the -rpath linker option used when

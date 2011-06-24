@@ -126,7 +126,7 @@ public class TransientVMAdviceHandlerTypesGenerator {
                             name.contains("Monitor") || name.contains("New") || name.startsWith("ArrayLoad")) {
                 adviceRecordName = "Object";
             } else if (name.contains("Invoke")) {
-                adviceRecordName = "ObjectMethodActor";
+                adviceRecordName = "ObjectMethod";
             }
             adviceRecordName += ADVICE_RECORD;
             ArrayList<String> list = recordToEnumList.get(adviceRecordName);
