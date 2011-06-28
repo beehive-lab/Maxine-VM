@@ -37,10 +37,10 @@ public class DataByObjectQuery extends DataByObjectQueryHelper {
             @Override
             public void visit(TraceRun traceRun, ObjectRecord td,
                     PrintStream ps, Object[] args) {
-                showDataOnTD(traceRun, td, ps, false);
+                showDataOnTD(traceRun, td, ps, (String[]) args);
             }
         };
-        traceRun.visit(visitor, ps, null);
+        traceRun.visit(visitor, ps, args);
         return null;
     }
 }

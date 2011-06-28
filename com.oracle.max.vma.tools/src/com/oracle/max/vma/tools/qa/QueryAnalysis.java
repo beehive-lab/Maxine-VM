@@ -133,18 +133,28 @@ public class QueryAnalysis {
             try {
                 String[] lineParts = line.split(" ");
                 switch (lineParts[0].charAt(0)) {
-                    case 'v':
-                        verbose = !verbose;
-                        break;
-
                     case 'e':
                         String queryName = lineParts[1];
                         String[] args = new String[lineParts.length - 2];
                         System.arraycopy(lineParts, 2, args, 0, args.length);
                         QueryBase query = QueryBase.ensureLoaded(queryName);
-                        query.parseStandardArgs(args);
-                        query.execute(traceRuns, traceFocus, ps, args);
+                        query.execute(traceRuns, traceFocus, ps, query.parseStandardArgs(args));
                         break;
+
+                    case 'i': {
+                        FileInputStream iin = null;
+                        try {
+                            iin = new FileInputStream(lineParts[1]);
+                            interact(iin, traceRuns);
+                        } catch (Exception ex) {
+                            System.err.println(ex);
+                        } finally {
+                            if (iin != null) {
+                                iin.close();
+                            }
+                        }
+                        break;
+                    }
 
                     case 'o':
                         if (lineParts.length == 1) {
@@ -160,7 +170,9 @@ public class QueryAnalysis {
 
                     case 'q':
                     case 'x':
-                        return;
+                        System.exit(0);
+                        break;
+
                     default:
                         System.err.println("unknown command " + lineParts[0]);
                 }

@@ -29,9 +29,9 @@
  * <ul>
  * <li>{@link com.oracle.max.vma.tools.qa.queries.BasicCountsQuery basic information on object instances}.
  * <li>{@link com.oracle.max.vma.tools.qa.queries.ClassLoadersQuery list class loader instances}.
- * <li>{@link com.oracle.max.vma.tools.qa.queries.DataByClassesQuery show data on instances, organised by class}.
+ * <li>{@link com.oracle.max.vma.tools.qa.queries.DataByClassQuery show data on instances, organised by class}.
  * <li>{@link com.oracle.max.vma.tools.qa.queries.ImmutableClassBucketsQuery analyse immutable instances into 1% buckets}.
- * <li>{@link com.oracle.max.vma.tools.qa.queries.LiveObjectsSizeQuery show info on objects still live at end of run}.
+ * <li>{@link com.oracle.max.vma.tools.qa.queries.LiveObjectsQuery show info on objects still live at end of run}.
  * </ul>
  */
 

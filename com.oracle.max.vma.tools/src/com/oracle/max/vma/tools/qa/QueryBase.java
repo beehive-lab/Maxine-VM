@@ -26,6 +26,7 @@ package com.oracle.max.vma.tools.qa;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
 import java.util.ArrayList;
+import java.util.regex.*;
 import java.io.PrintStream;
 import java.net.*;
 
@@ -48,11 +49,14 @@ public abstract class QueryBase {
     private static URLClassLoader urlClassLoader;
     private static String packageName = DEFAULT_QUERY_PACKAGE;
 
-    protected boolean verbose;
-    protected String className;
-    protected String id;
-    protected String thread;
-    protected boolean absTime = false;
+    public boolean verbose;
+    public String className;
+    public String id;
+    public String clId;
+    public String thread;
+    public boolean absTime = false;
+
+    private Pattern classPattern;
 
     public static void addQueryClassDir(String dir) {
         try {
@@ -84,27 +88,71 @@ public abstract class QueryBase {
         return null;
     }
 
-    public void parseStandardArgs(String[] args) {
+    /**
+     * Return true if {@code cr.getName()} matches {@link #className}.
+     * @param cr
+     * @return
+     */
+    public boolean classMatches(ClassRecord cr) {
+        if (className == null) {
+            return true;
+        }
+        if (classPattern == null) {
+            classPattern = Pattern.compile(className);
+        }
+        return classPattern.matcher(cr.getName()).matches();
+    }
+
+    /**
+     * Parse standard arguments and return an array with them removed.
+     *
+     * @param args
+     * @return
+     */
+    public String[] parseStandardArgs(String[] args) {
         verbose = false;
         className = null;
+        classPattern = null;
         id = null;
+        clId = null;
         thread = null;
+        absTime = false;
+        int removed = 0;
         // Checkstyle: stop modified control variable check
         for (int i = 0; i < args.length; i++) {
+            removed++;
             final String arg = args[i];
+            args[i] = null;
             if (arg.equals("-v")) {
                 verbose = true;
-            } else if (arg.equals("-class") || arg.equals("-c"))  {
+            } else if (arg.equals("-class") || arg.equals("-c")) {
                 className = args[++i];
-            } else if (arg.equals("-thread") || arg.equals("-t"))  {
+            } else if (arg.equals("-thread") || arg.equals("-t")) {
                 thread = args[++i];
             } else if (arg.equals("-id")) {
                 id = args[++i];
+            } else if (arg.equals("-clid")) {
+                clId = args[++i];
             } else if (arg.equals("-abs")) {
                 absTime = true;
+            } else {
+                removed--;
+                args[i] = arg;
             }
         }
         // Checkstyle: resume modified control variable check
+        if (removed > 0) {
+            String[] result = new String[args.length - removed];
+            int i = 0;
+            for (String arg : args) {
+                if (arg != null) {
+                    result[i++] = arg;
+                }
+            }
+            return result;
+        } else {
+            return args;
+        }
     }
 
     public static double ms(long t) {
@@ -142,10 +190,7 @@ public abstract class QueryBase {
     public static String getShowClassLoader(TraceRun traceRun, String classLoaderId) {
         final String defaultName = classLoaderId;
         ObjectRecord ctd = traceRun.objects.get(defaultName);
-        if (ctd == null) {
-            return "id=" + defaultName;
-        } else {
-            return ctd.getClassName();
-        }
+        assert ctd != null;
+        return ctd.toString();
     }
 }

@@ -20,19 +20,19 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.log.nullit;
+package com.oracle.max.vm.ext.vma.log.debug;
 
 import com.oracle.max.vm.ext.vma.log.*;
 
 /**
- * A debugging tool; allows the advice handler machinery to execute without actually generating a log,
- * so removes any side effects of the actual logging.
+ * Debugging aid, runs advice handlers but dumps output.
  */
 public class NullVMAdviceHandlerLog extends VMAdviceHandlerLog {
 
     @Override
     public boolean initializeLog() {
-        return true;
+
+        return false;
     }
 
     @Override
@@ -48,7 +48,7 @@ public class NullVMAdviceHandlerLog extends VMAdviceHandlerLog {
     }
 
     @Override
-    public void unseenObject(String threadName, long objId, ClassName className) {
+    public void unseenObject(String threadName, long objId, String className, long clId) {
 
 
     }
@@ -264,85 +264,85 @@ public class NullVMAdviceHandlerLog extends VMAdviceHandlerLog {
     }
 
     @Override
-    public void adviseBeforeGetStatic(String threadName, QualName fieldName) {
+    public void adviseBeforeGetStatic(String threadName, String className, long clId, String fieldName) {
 
 
     }
 
     @Override
-    public void adviseBeforePutStatic(String threadName, QualName fieldName, double value) {
+    public void adviseBeforePutStatic(String threadName, String className, long clId, String fieldName, double value) {
 
 
     }
 
     @Override
-    public void adviseBeforePutStatic(String threadName, QualName fieldName, long value) {
+    public void adviseBeforePutStatic(String threadName, String className, long clId, String fieldName, long value) {
 
 
     }
 
     @Override
-    public void adviseBeforePutStatic(String threadName, QualName fieldName, float value) {
+    public void adviseBeforePutStatic(String threadName, String className, long clId, String fieldName, float value) {
 
 
     }
 
     @Override
-    public void adviseBeforePutStaticObject(String threadName, QualName fieldName, long value) {
+    public void adviseBeforePutStaticObject(String threadName, String className, long clId, String fieldName, long value) {
 
 
     }
 
     @Override
-    public void adviseBeforeGetField(String threadName, long objId, QualName fieldName) {
+    public void adviseBeforeGetField(String threadName, long objId, String className, long clId, String fieldName) {
 
 
     }
 
     @Override
-    public void adviseBeforePutField(String threadName, long objId, QualName fieldName, double value) {
+    public void adviseBeforePutField(String threadName, long objId, String className, long clId, String fieldName, double value) {
 
 
     }
 
     @Override
-    public void adviseBeforePutField(String threadName, long objId, QualName fieldName, long value) {
+    public void adviseBeforePutField(String threadName, long objId, String className, long clId, String fieldName, long value) {
 
 
     }
 
     @Override
-    public void adviseBeforePutField(String threadName, long objId, QualName fieldName, float value) {
+    public void adviseBeforePutField(String threadName, long objId, String className, long clId, String fieldName, float value) {
 
 
     }
 
     @Override
-    public void adviseBeforePutFieldObject(String threadName, long objId, QualName fieldName, long value) {
+    public void adviseBeforePutFieldObject(String threadName, long objId, String className, long clId, String fieldName, long value) {
 
 
     }
 
     @Override
-    public void adviseBeforeInvokeVirtual(String threadName, long objId, QualName methodName) {
+    public void adviseBeforeInvokeVirtual(String threadName, long objId, String className, long clId, String methodName) {
 
 
     }
 
     @Override
-    public void adviseBeforeInvokeSpecial(String threadName, long objId, QualName methodName) {
+    public void adviseBeforeInvokeSpecial(String threadName, long objId, String className, long clId, String methodName) {
 
 
     }
 
     @Override
-    public void adviseBeforeInvokeStatic(String threadName, long objId, QualName methodName) {
+    public void adviseBeforeInvokeStatic(String threadName, long objId, String className, long clId, String methodName) {
 
 
     }
 
     @Override
-    public void adviseBeforeInvokeInterface(String threadName, long objId, QualName methodName) {
+    public void adviseBeforeInvokeInterface(String threadName, long objId, String className, long clId, String methodName) {
 
 
     }
@@ -360,13 +360,13 @@ public class NullVMAdviceHandlerLog extends VMAdviceHandlerLog {
     }
 
     @Override
-    public void adviseBeforeCheckCast(String threadName, long objId, ClassName className) {
+    public void adviseBeforeCheckCast(String threadName, long objId, String className, long clId) {
 
 
     }
 
     @Override
-    public void adviseBeforeInstanceOf(String threadName, long objId, ClassName className) {
+    public void adviseBeforeInstanceOf(String threadName, long objId, String className, long clId) {
 
 
     }
@@ -390,43 +390,43 @@ public class NullVMAdviceHandlerLog extends VMAdviceHandlerLog {
     }
 
     @Override
-    public void adviseAfterInvokeVirtual(String threadName, long objId, QualName methodName) {
+    public void adviseAfterInvokeVirtual(String threadName, long objId, String className, long clId, String methodName) {
 
 
     }
 
     @Override
-    public void adviseAfterInvokeSpecial(String threadName, long objId, QualName methodName) {
+    public void adviseAfterInvokeSpecial(String threadName, long objId, String className, long clId, String methodName) {
 
 
     }
 
     @Override
-    public void adviseAfterInvokeStatic(String threadName, long objId, QualName methodName) {
+    public void adviseAfterInvokeStatic(String threadName, long objId, String className, long clId, String methodName) {
 
 
     }
 
     @Override
-    public void adviseAfterInvokeInterface(String threadName, long objId, QualName methodName) {
+    public void adviseAfterInvokeInterface(String threadName, long objId, String className, long clId, String methodName) {
 
 
     }
 
     @Override
-    public void adviseAfterNew(String threadName, long objId, ClassName className) {
+    public void adviseAfterNew(String threadName, long objId, String className, long clId) {
 
 
     }
 
     @Override
-    public void adviseAfterNewArray(String threadName, long objId, ClassName className, int length) {
+    public void adviseAfterNewArray(String threadName, long objId, String className, long clId, int length) {
 
 
     }
 
     @Override
-    public void adviseAfterMultiNewArray(String threadName, long objId, ClassName className, int length) {
+    public void adviseAfterMultiNewArray(String threadName, long objId, String className, long clId, int length) {
 
 
     }

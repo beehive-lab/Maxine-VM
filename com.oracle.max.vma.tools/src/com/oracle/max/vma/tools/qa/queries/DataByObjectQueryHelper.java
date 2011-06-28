@@ -34,40 +34,32 @@ import com.oracle.max.vma.tools.qa.*;
 
 public class DataByObjectQueryHelper extends QueryBase {
 
-    protected void showDataOnTD(TraceRun traceRun, ObjectRecord td,
-            PrintStream ps, boolean showAllAccesses) {
-        ps.println("Object "
-                + td.getId()
-                + ", class "
-                + td.getClassName()
-                + ", loader "
-                + getShowClassLoader(traceRun, td.getClassLoaderId())
-                + ", thread "
-                + td.thread
-                + ", start cons at "
-                + ms(td.getBeginCreationTime())
-                + " end cons at "
-                + ms(td.getEndCreationTime())
-                + ((td.getDeletionTime() == 0) ? ", still alive"
-                        : ", deleted at " + ms(td.getDeletionTime())));
+    static void showDataOnTD(TraceRun traceRun, ObjectRecord td,
+            PrintStream ps, String[] args) {
+
+        boolean showThread = false;
+        boolean showAllAccesses = false;
+
+        for (String arg : args) {
+            if (arg.equals("-accesses")) {
+                showAllAccesses = true;
+            } else if (arg.equals("-showthread")) {
+                showThread = true;
+            }
+        }
+        ps.println(td.toString(traceRun, true, showThread, true, true, true, true));
 
         for (int i = 0; i < td.getAdviceRecords().size(); i++) {
             AdviceRecord ar =  td.getAdviceRecords().get(i);
             if (showAllAccesses) {
                 ps.println("  field " + getQualName(ar) + " accessed (" + AdviceRecordHelper.accessType(ar) + ") at "
-                        + ms(ar.time) + " in thread " + ar.thread);
+                        + ms(traceRun.relTime(ar.time)) + " in thread " + ar.thread);
             }
         }
 
-        long lifeTime = td.getLifeTime(traceRun.lastTime);
-        long modifyLifeTime = td.getModifyLifeTime();
-
-        ps.println("  Unchanged for "
-                + d6d(percent(lifeTime - modifyLifeTime, lifeTime))
-                + "% of lifetime");
     }
 
-    private String getQualName(AdviceRecord ar) {
+    private static String getQualName(AdviceRecord ar) {
         ObjectFieldAdviceRecord far = (ObjectFieldAdviceRecord) ar;
         ObjectRecord or = (ObjectRecord) far.value;
         FieldRecord fr = (FieldRecord) far.field;

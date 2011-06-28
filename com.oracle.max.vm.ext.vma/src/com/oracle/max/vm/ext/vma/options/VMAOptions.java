@@ -78,8 +78,6 @@ public class VMAOptions {
 
     private static final BM[] WRITE_BM = compose(LIFETIME_BM, new BM[] {new BM(PUTFIELD, B), new BM(PUTSTATIC, B)});
 
-    private static final BM[] READWRITE_BM = compose(READ_BM, new BM[] {new BM(PUTFIELD, B), new BM(PUTSTATIC, B)});
-
     private static final BM[] MONITOR_BM = new BM[] {new BM(MONITORENTER, B), new BM(MONITOREXIT, B)};
 
     private static final BM[] BEFOREINVOKE_BM = new BM[] {

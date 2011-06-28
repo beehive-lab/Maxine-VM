@@ -68,6 +68,82 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
     private static boolean doRepeats;
     private static boolean doPrefix;
 
+    /**
+     * Denotes a class name and classloader id.
+     * Used as the value in the short forms map for a class.
+     */
+    public static class ClassNameId {
+        public String name;
+        public long clId;
+        public ClassNameId(String name, long clId) {
+            this.name = name;
+            this.clId = clId;
+        }
+
+        @Override
+        public int hashCode() {
+            return (int) (name.hashCode() ^ clId);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            ClassNameId otherClassName = (ClassNameId) other;
+            return name.equals(otherClassName.name) && clId == otherClassName.clId;
+        }
+    }
+
+    /**
+     * Denotes a qualified name. Used as the value in the short form maps for fields and methods.
+     */
+    public static class QualName {
+        public ClassNameId className;
+        public String name;
+        public QualName(String className, long clId, String name) {
+            this.className = new ClassNameId(className, clId);
+            this.name = name;
+        }
+
+        public QualName(ClassNameId className, String name) {
+            this.className = className;
+            this.name = name;
+        }
+
+        @Override
+        public int hashCode() {
+            return className.hashCode() ^ name.hashCode();
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            QualName otherQualName = (QualName) other;
+            return className.equals(otherQualName.className) && name.equals(otherQualName.name);
+        }
+    }
+
+    /**
+     * Per-thread value that is used to check the map for existence.
+     */
+    private class ClassNameIdTL extends ThreadLocal<ClassNameId> {
+        @Override
+        public ClassNameId initialValue() {
+            return new ClassNameId(null, 0);
+        }
+    }
+
+    private final ClassNameIdTL classNameIdTL = new ClassNameIdTL();
+
+    /**
+     * Per-thread value that is used to check the map for existence.
+     */
+    private class QualNameTL extends ThreadLocal<QualName> {
+        @Override
+        public QualName initialValue() {
+            return new QualName(classNameIdTL.get(), null);
+        }
+    }
+
+    private final QualNameTL qualNameTL = new QualNameTL();
+
     public static enum ShortForm {
         C("C"),
         F("F"),
@@ -76,36 +152,35 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
 
         public final String code;
 
-        private Map<Object, Object> shortForms = new HashMap<Object, Object>();
+        private Map<Object, String> shortForms = new HashMap<Object, String>();
         private int nextId;
 
-        Object createShortForm(CompactTextVMAdviceHandlerLog handler, Object key) {
+        String createShortForm(CompactTextVMAdviceHandlerLog handler, Object key) {
             synchronized (shortForms) {
-                Object cached = shortForms.get(key);
-                if (cached == null) {
-                    Object defKey = key;
-                    String shortForm = doPrefix ? (code + nextId) : Integer.toString(nextId);
+                String shortForm = shortForms.get(key);
+                String classShortForm = null;
+                if (shortForm == null) {
+                    Object newKey = key;
+                    shortForm = doPrefix ? (code + nextId) : Integer.toString(nextId);
                     nextId++;
                     switch (this) {
                         case T:
-                            cached = shortForm;
                             break;
                         case C:
-                            cached = new ClassName(shortForm, ((ClassName) key).clId);
+                            ClassNameId tlKey = (ClassNameId) key;
+                            newKey = new ClassNameId(tlKey.name, tlKey.clId);
                             break;
                         case F:
                         case M:
-                            QualName qualName = (QualName) key;
-                            ClassName cachedClassName = (ClassName) C.createShortForm(handler, qualName.className);
-                            cached = new QualName(cachedClassName, shortForm);
-                            // need a hybrid QualName for the define
-                            defKey = new QualName(cachedClassName, qualName.name);
+                            QualName tlQualName = (QualName) key;
+                            newKey = new QualName(new ClassNameId(tlQualName.className.name, tlQualName.className.clId), tlQualName.name);
+                            classShortForm = ShortForm.C.createShortForm(handler, tlQualName.className);
                             break;
                     }
-                    shortForms.put(key, cached);
-                    handler.defineShortForm(this, defKey, shortForm);
+                    shortForms.put(newKey, shortForm);
+                    handler.defineShortForm(this, key, shortForm, classShortForm);
                 }
-                return cached;
+                return shortForm;
             }
 
         }
@@ -174,8 +249,8 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
     }
 
     @Override
-    public void unseenObject(String threadName, long objId, ClassName className) {
-        del.unseenObject(getThreadShortForm(threadName), checkRepeatId(objId, threadName), getClassShortForm(className));
+    public void unseenObject(String threadName, long objId, String className, long clId) {
+        del.unseenObject(getThreadShortForm(threadName), checkRepeatId(objId, threadName), getClassShortForm(className, clId), clId);
     }
 
     @Override
@@ -184,20 +259,31 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
     }
 
 
-    protected ClassName getClassShortForm(ClassName className) {
-        return (ClassName) ShortForm.C.createShortForm(this, className);
+    protected String getClassShortForm(String className, long clId) {
+        ClassNameId classNameId = classNameIdTL.get();
+        classNameId.name = className;
+        classNameId.clId = clId;
+        return ShortForm.C.createShortForm(this, classNameId);
     }
 
-    protected QualName getFieldShortForm(QualName fieldName) {
-        return (QualName) ShortForm.F.createShortForm(this, fieldName);
+    protected String getFieldShortForm(String className, long clId, String fieldName) {
+        QualName qualNameId = qualNameTL.get();
+        qualNameId.className.name = className;
+        qualNameId.className.clId = clId;
+        qualNameId.name = fieldName;
+        return ShortForm.F.createShortForm(this, qualNameId);
     }
 
     protected String getThreadShortForm(String threadName) {
-        return (String) ShortForm.T.createShortForm(this, threadName);
+        return ShortForm.T.createShortForm(this, threadName);
     }
 
-    protected QualName getMethodShortForm(QualName methodName) {
-        return (QualName) ShortForm.M.createShortForm(this, methodName);
+    protected String getMethodShortForm(String className, long clId, String fieldName) {
+        QualName qualNameId = qualNameTL.get();
+        qualNameId.className.name = className;
+        qualNameId.className.clId = clId;
+        qualNameId.name = fieldName;
+        return ShortForm.M.createShortForm(this, qualNameId);
     }
 
     /**
@@ -206,14 +292,15 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
      * @param type
      * @param key
      * @param shortForm
+     * @param classShortForm only for fields and methods
      */
-    public abstract void defineShortForm(ShortForm type, Object key, String shortForm);
+    public abstract void defineShortForm(ShortForm type, Object key, String shortForm, String classShortForm);
 
     // BEGIN GENERATED CODE
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterMultiNewArray(String arg1, long arg2, ClassName arg3, int arg4) {
+    public void adviseAfterMultiNewArray(String arg1, long arg2, String arg3, long arg4, int arg5) {
         ProgramError.unexpected("adviseAfterMultiNewArray");
     }
 
@@ -423,86 +510,86 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeGetStatic(String arg1, QualName arg2) {
-        del.adviseBeforeGetStatic(getThreadShortForm(arg1), getFieldShortForm(arg2));
+    public void adviseBeforeGetStatic(String arg1, String arg2, long arg3, String arg4) {
+        del.adviseBeforeGetStatic(getThreadShortForm(arg1), getClassShortForm(arg2, arg3), arg3, getFieldShortForm(arg2, arg3, arg4));
     }
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforePutStatic(String arg1, QualName arg2, long arg3) {
-        del.adviseBeforePutStatic(getThreadShortForm(arg1), getFieldShortForm(arg2), arg3);
+    public void adviseBeforePutStatic(String arg1, String arg2, long arg3, String arg4, long arg5) {
+        del.adviseBeforePutStatic(getThreadShortForm(arg1), getClassShortForm(arg2, arg3), arg3, getFieldShortForm(arg2, arg3, arg4), arg5);
     }
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforePutStatic(String arg1, QualName arg2, float arg3) {
-        del.adviseBeforePutStatic(getThreadShortForm(arg1), getFieldShortForm(arg2), arg3);
+    public void adviseBeforePutStatic(String arg1, String arg2, long arg3, String arg4, float arg5) {
+        del.adviseBeforePutStatic(getThreadShortForm(arg1), getClassShortForm(arg2, arg3), arg3, getFieldShortForm(arg2, arg3, arg4), arg5);
     }
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforePutStatic(String arg1, QualName arg2, double arg3) {
-        del.adviseBeforePutStatic(getThreadShortForm(arg1), getFieldShortForm(arg2), arg3);
+    public void adviseBeforePutStatic(String arg1, String arg2, long arg3, String arg4, double arg5) {
+        del.adviseBeforePutStatic(getThreadShortForm(arg1), getClassShortForm(arg2, arg3), arg3, getFieldShortForm(arg2, arg3, arg4), arg5);
     }
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforePutStaticObject(String arg1, QualName arg2, long arg3) {
-        del.adviseBeforePutStaticObject(getThreadShortForm(arg1), getFieldShortForm(arg2), arg3);
+    public void adviseBeforePutStaticObject(String arg1, String arg2, long arg3, String arg4, long arg5) {
+        del.adviseBeforePutStaticObject(getThreadShortForm(arg1), getClassShortForm(arg2, arg3), arg3, getFieldShortForm(arg2, arg3, arg4), arg5);
     }
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeGetField(String arg1, long arg2, QualName arg3) {
-        del.adviseBeforeGetField(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getFieldShortForm(arg3));
+    public void adviseBeforeGetField(String arg1, long arg2, String arg3, long arg4, String arg5) {
+        del.adviseBeforeGetField(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4, getFieldShortForm(arg3, arg4, arg5));
     }
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforePutField(String arg1, long arg2, QualName arg3, long arg4) {
-        del.adviseBeforePutField(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getFieldShortForm(arg3), arg4);
+    public void adviseBeforePutField(String arg1, long arg2, String arg3, long arg4, String arg5, long arg6) {
+        del.adviseBeforePutField(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4, getFieldShortForm(arg3, arg4, arg5), arg6);
     }
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforePutField(String arg1, long arg2, QualName arg3, float arg4) {
-        del.adviseBeforePutField(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getFieldShortForm(arg3), arg4);
+    public void adviseBeforePutField(String arg1, long arg2, String arg3, long arg4, String arg5, float arg6) {
+        del.adviseBeforePutField(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4, getFieldShortForm(arg3, arg4, arg5), arg6);
     }
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforePutField(String arg1, long arg2, QualName arg3, double arg4) {
-        del.adviseBeforePutField(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getFieldShortForm(arg3), arg4);
+    public void adviseBeforePutField(String arg1, long arg2, String arg3, long arg4, String arg5, double arg6) {
+        del.adviseBeforePutField(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4, getFieldShortForm(arg3, arg4, arg5), arg6);
     }
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforePutFieldObject(String arg1, long arg2, QualName arg3, long arg4) {
-        del.adviseBeforePutFieldObject(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getFieldShortForm(arg3), arg4);
+    public void adviseBeforePutFieldObject(String arg1, long arg2, String arg3, long arg4, String arg5, long arg6) {
+        del.adviseBeforePutFieldObject(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4, getFieldShortForm(arg3, arg4, arg5), arg6);
     }
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeVirtual(String arg1, long arg2, QualName arg3) {
-        del.adviseBeforeInvokeVirtual(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getMethodShortForm(arg3));
+    public void adviseBeforeInvokeVirtual(String arg1, long arg2, String arg3, long arg4, String arg5) {
+        del.adviseBeforeInvokeVirtual(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4, getMethodShortForm(arg3, arg4, arg5));
     }
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeSpecial(String arg1, long arg2, QualName arg3) {
-        del.adviseBeforeInvokeSpecial(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getMethodShortForm(arg3));
+    public void adviseBeforeInvokeSpecial(String arg1, long arg2, String arg3, long arg4, String arg5) {
+        del.adviseBeforeInvokeSpecial(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4, getMethodShortForm(arg3, arg4, arg5));
     }
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeStatic(String arg1, long arg2, QualName arg3) {
-        del.adviseBeforeInvokeStatic(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getMethodShortForm(arg3));
+    public void adviseBeforeInvokeStatic(String arg1, long arg2, String arg3, long arg4, String arg5) {
+        del.adviseBeforeInvokeStatic(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4, getMethodShortForm(arg3, arg4, arg5));
     }
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeInterface(String arg1, long arg2, QualName arg3) {
-        del.adviseBeforeInvokeInterface(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getMethodShortForm(arg3));
+    public void adviseBeforeInvokeInterface(String arg1, long arg2, String arg3, long arg4, String arg5) {
+        del.adviseBeforeInvokeInterface(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4, getMethodShortForm(arg3, arg4, arg5));
     }
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
@@ -519,14 +606,14 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeCheckCast(String arg1, long arg2, ClassName arg3) {
-        del.adviseBeforeCheckCast(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3));
+    public void adviseBeforeCheckCast(String arg1, long arg2, String arg3, long arg4) {
+        del.adviseBeforeCheckCast(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4);
     }
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInstanceOf(String arg1, long arg2, ClassName arg3) {
-        del.adviseBeforeInstanceOf(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3));
+    public void adviseBeforeInstanceOf(String arg1, long arg2, String arg3, long arg4) {
+        del.adviseBeforeInstanceOf(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4);
     }
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
@@ -549,39 +636,40 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeVirtual(String arg1, long arg2, QualName arg3) {
-        del.adviseAfterInvokeVirtual(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getMethodShortForm(arg3));
+    public void adviseAfterInvokeVirtual(String arg1, long arg2, String arg3, long arg4, String arg5) {
+        del.adviseAfterInvokeVirtual(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4, getMethodShortForm(arg3, arg4, arg5));
     }
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeSpecial(String arg1, long arg2, QualName arg3) {
-        del.adviseAfterInvokeSpecial(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getMethodShortForm(arg3));
+    public void adviseAfterInvokeSpecial(String arg1, long arg2, String arg3, long arg4, String arg5) {
+        del.adviseAfterInvokeSpecial(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4, getMethodShortForm(arg3, arg4, arg5));
     }
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeStatic(String arg1, long arg2, QualName arg3) {
-        del.adviseAfterInvokeStatic(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getMethodShortForm(arg3));
+    public void adviseAfterInvokeStatic(String arg1, long arg2, String arg3, long arg4, String arg5) {
+        del.adviseAfterInvokeStatic(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4, getMethodShortForm(arg3, arg4, arg5));
     }
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeInterface(String arg1, long arg2, QualName arg3) {
-        del.adviseAfterInvokeInterface(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getMethodShortForm(arg3));
+    public void adviseAfterInvokeInterface(String arg1, long arg2, String arg3, long arg4, String arg5) {
+        del.adviseAfterInvokeInterface(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4, getMethodShortForm(arg3, arg4, arg5));
     }
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterNew(String arg1, long arg2, ClassName arg3) {
-        del.adviseAfterNew(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3));
+    public void adviseAfterNew(String arg1, long arg2, String arg3, long arg4) {
+        del.adviseAfterNew(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4);
     }
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterNewArray(String arg1, long arg2, ClassName arg3, int arg4) {
-        del.adviseAfterNewArray(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3), arg4);
+    public void adviseAfterNewArray(String arg1, long arg2, String arg3, long arg4, int arg5) {
+        del.adviseAfterNewArray(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4, arg5);
     }
+
 
 
 }

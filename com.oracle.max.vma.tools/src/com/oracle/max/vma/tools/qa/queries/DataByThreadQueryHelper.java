@@ -24,25 +24,27 @@
 package com.oracle.max.vma.tools.qa.queries;
 
 import java.util.*;
-import java.io.*;
 
 import com.oracle.max.vma.tools.qa.*;
 
 /**
- * Similar to {@link DataByClassesQuery} but outputs the information per class loader.
+ * Iterates over all the {@link ObjectRecord objects} and places then on a list associated with a map of threads.
  */
-public class DataByClassLoadersQuery extends DataByClassQueryHelper {
-    @Override
-    public Object execute(ArrayList<TraceRun> traceRuns, int traceFocus,
-            PrintStream ps, String[] args) {
-        TraceRun traceRun = traceRuns.get(traceFocus);
-        ps.println("\nObjects organized by classloader");
-        for (String cl : traceRun.classLoaders.keySet()) {
-            ps.println("Classloader: " + getShowClassLoader(traceRun, cl));
-            Map<String, ClassRecord> classes = traceRun.classLoaders.get(cl);
-            showXDataByClasses(traceRun, ps, args, classes.values().iterator(),
-                    INDENT_TWO, false);
+
+public class DataByThreadQueryHelper  {
+    public static Map<String, ArrayList<ObjectRecord>> getObjectsByThread(TraceRun traceRun) {
+        Iterator<ObjectRecord> iter = traceRun.objects.values().iterator();
+        Map<String, ArrayList<ObjectRecord>> threadMap = new HashMap<String, ArrayList<ObjectRecord>>();
+        while (iter.hasNext()) {
+            ObjectRecord td = iter.next();
+            String threadId = td.thread.getName();
+            ArrayList<ObjectRecord> thObjects = threadMap.get(threadId);
+            if (thObjects == null) {
+                thObjects = new ArrayList<ObjectRecord>();
+                threadMap.put(threadId, thObjects);
+            }
+            thObjects.add(td);
         }
-        return null;
+        return threadMap;
     }
 }

@@ -40,7 +40,7 @@ public class DataOnObjectQuery extends DataByObjectQueryHelper {
             if (td == null) {
                 ps.println("no data on object " + id);
             } else {
-                showDataOnTD(traceRun, td, ps, verbose);
+                showDataOnTD(traceRun, td, ps, args);
             }
         }
         return null;

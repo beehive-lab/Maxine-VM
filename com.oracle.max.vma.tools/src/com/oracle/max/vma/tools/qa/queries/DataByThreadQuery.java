@@ -38,16 +38,17 @@ import com.oracle.max.vma.tools.qa.*;
  * <li><code>-sort</code>: sort instance by lifetime.
  * </ul>
  */
-public class DataByThreadsQuery extends QueryBase {
+public class DataByThreadQuery extends QueryBase {
 
     private boolean summary;
-    private boolean sort;
+    private boolean sort_lt;
+    private boolean sort_mlt;
 
     @Override
     public Object execute(ArrayList<TraceRun> traceRuns, int traceFocus, PrintStream ps, String[] args) {
         parseArgs(args);
         TraceRun traceRun = traceRuns.get(traceFocus);
-        Map<String, ArrayList<ObjectRecord>> threadMap = DataByThreadsQueryHelper.getObjectsByThread(traceRun);
+        Map<String, ArrayList<ObjectRecord>> threadMap = DataByThreadQueryHelper.getObjectsByThread(traceRun);
 
         for (Map.Entry<String, ArrayList<ObjectRecord>> me : threadMap.entrySet()) {
             if (thread == null || thread.equals(me.getKey())) {
@@ -55,15 +56,15 @@ public class DataByThreadsQuery extends QueryBase {
                 ArrayList<ObjectRecord> thObjects = me.getValue();
                 int totalLiveObjects = 0;
                 ObjectRecord[] thObjectsArray = thObjects.toArray(new ObjectRecord[thObjects.size()]);
-                if (sort) {
+                if (sort_lt) {
                     SortUtil.sortByLifeTime(thObjectsArray, 0, traceRun);
+                } else if (sort_mlt) {
+                    SortUtil.sortByModifyLifeTime(thObjectsArray, 0);
                 }
                 for (int i = 0; i < thObjectsArray.length; i++) {
                     ObjectRecord td = thObjectsArray[i];
-                    long lifeTime = td.getLifeTime(traceRun.lastTime);
                     if (!summary) {
-                        ps.println("  " + td.getId() + ", class " + td.getClassName() + ", immutable for " + d6d(percent(lifeTime - td.getModifyLifeTime(), lifeTime)) + ", " +
-                                        (td.getDeletionTime() == 0 ? "live" : "dead"));
+                        ps.println(td.toString(traceRun, true, false, true, true, true, true));
                     }
                     if (td.getDeletionTime() == 0) {
                         totalLiveObjects++;
@@ -78,14 +79,17 @@ public class DataByThreadsQuery extends QueryBase {
 
     private void parseArgs(String[] args) {
         summary = false;
-        sort = false;
+        sort_lt = false;
+        sort_mlt = false;
 
         for (int i = 0; i < args.length; i++) {
             String arg = args[i];
             if (arg.equals("-summary")) {
                 summary = true;
-            } else if (arg.equals("-sort")) {
-                sort = true;
+            } else if (arg.equals("-sort_lt")) {
+                sort_lt = true;
+            } else if (arg.equals("-sort_mlt")) {
+                sort_mlt = true;
             }
         }
     }

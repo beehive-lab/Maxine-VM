@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,25 +20,15 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package test;
 
-package com.oracle.max.vma.tools.qa.queries;
 
-import java.io.*;
-import java.util.ArrayList;
+public class InvokeVirtualArray {
 
-import com.oracle.max.vma.tools.qa.*;
-
-/**
- * Show data on all classes (in all class loaders).
- */
-
-public class DataByClassesQuery extends DataByClassQueryHelper {
-    @Override
-    public Object execute(ArrayList<TraceRun> traceRuns, int traceFocus, PrintStream ps,
-            String[] args) {
-        TraceRun traceRun = traceRuns.get(traceFocus);
-        ps.println("\n");
-        showXDataByClasses(traceRun, ps, args, traceRun.getClassesIterator(), "", true);
-        return null;
+    public static void main(String[] args) {
+        Object[] oa = new Object[10];
+        oa.hashCode();
+        oa.toString();
     }
+
 }

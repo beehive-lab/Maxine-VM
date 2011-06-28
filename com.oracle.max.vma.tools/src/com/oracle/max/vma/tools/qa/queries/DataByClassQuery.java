@@ -23,28 +23,22 @@
 
 package com.oracle.max.vma.tools.qa.queries;
 
-import java.util.*;
+import java.io.*;
+import java.util.ArrayList;
 
 import com.oracle.max.vma.tools.qa.*;
 
 /**
- * Iterates over all the {@link ObjectRecord objects} and places then on a list associated with a map of threads.
+ * Show data on all classes (in all class loaders).
  */
 
-public class DataByThreadsQueryHelper  {
-    public static Map<String, ArrayList<ObjectRecord>> getObjectsByThread(TraceRun traceRun) {
-        Iterator<ObjectRecord> iter = traceRun.objects.values().iterator();
-        Map<String, ArrayList<ObjectRecord>> threadMap = new HashMap<String, ArrayList<ObjectRecord>>();
-        while (iter.hasNext()) {
-            ObjectRecord td = iter.next();
-            String threadId = td.thread.getName();
-            ArrayList<ObjectRecord> thObjects = threadMap.get(threadId);
-            if (thObjects == null) {
-                thObjects = new ArrayList<ObjectRecord>();
-                threadMap.put(threadId, thObjects);
-            }
-            thObjects.add(td);
-        }
-        return threadMap;
+public class DataByClassQuery extends DataByClassQueryHelper {
+    @Override
+    public Object execute(ArrayList<TraceRun> traceRuns, int traceFocus, PrintStream ps,
+            String[] args) {
+        TraceRun traceRun = traceRuns.get(traceFocus);
+        ps.println("\n");
+        showXDataByClasses(this, traceRun, ps, args, traceRun.getClassesIterator(), "", true);
+        return null;
     }
 }

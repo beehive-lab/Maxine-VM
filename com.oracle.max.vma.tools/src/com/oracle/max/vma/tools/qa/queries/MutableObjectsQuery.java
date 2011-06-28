@@ -46,31 +46,21 @@ public class MutableObjectsQuery extends QueryBase {
     public Object execute(ArrayList<TraceRun> traceRuns, int traceFocus, PrintStream ps, String[] args) {
         TraceRun traceRun = traceRuns.get(traceFocus);
 
-        String className = null;
-        // Checkstyle: stop modified control variable check
-        for (int i = 0; i < args.length; i++) {
-            final String arg = args[i];
-            if (arg.equals("-class")) {
-                className = args[++i];
-            }
-        }
-        // Checkstyle: resume modified control variable check
-
         Iterator<ClassRecord> iter = traceRun.getClassesIterator();
         while (iter.hasNext()) {
             ClassRecord cr = iter.next();
-            ArrayList<ObjectRecord> a = cr.getObjects();
-            if ((className == null) || a.get(0).getClassName().equals(className)) {
-                ps.println("Mutable objects for class " + a.get(0).getClassName());
-                for (int i = 1; i < a.size(); i++) {
+            if (classMatches(cr)) {
+                ArrayList<ObjectRecord> a = cr.getObjects();
+                ps.println("Mutable objects for class " + cr.getName());
+                for (int i = 0; i < a.size(); i++) {
                     ObjectRecord td = a.get(i);
                     if (td.getModifyLifeTime() > 0) {
-                        ps.println("Object " + td.getId());
+                        ps.printf("  %s%n", td.toString(traceRun, false, false, true, true, true, true));
                         for (int j = 0; j < td.getAdviceRecords().size(); j++) {
                             AdviceRecord ar = td.getAdviceRecords().get(j);
                             if (AdviceRecordHelper.accessType(ar) == AccessType.WRITE && ar.time > td.getEndCreationTime()) {
                                 ObjectFieldAdviceRecord far = (ObjectFieldAdviceRecord) ar;
-                                ps.println("  field " + ((FieldRecord) far.field).getName() + " modified at " + ms(ar.time));
+                                ps.println("    field '" + ((FieldRecord) far.field).getName() + "' modified at " + ms(traceRun.relTime(ar.time)));
                             }
                         }
                     }

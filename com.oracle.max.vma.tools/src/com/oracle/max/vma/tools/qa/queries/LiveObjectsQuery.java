@@ -23,23 +23,39 @@
 
 package com.oracle.max.vma.tools.qa.queries;
 
-import java.io.*;
-import java.util.ArrayList;
+import java.io.PrintStream;
+import java.util.*;
 
 import com.oracle.max.vma.tools.qa.*;
 
 /**
- * Outputs the number of objects for which the log does not contain a
- * construction event. Typically these are objects allocated outside of tracked
- * code but used in tracked code.
+ * Reports on the number of live instances at the end of the trace, where live
+ * is defined a zero deletion time in the {@link ObjectRecord}, i.e. no
+ * {@link TextObjectTrackerLog#REMOVAL_ID}.
  */
-public class MissingConstructorCountQuery extends QueryBase {
+public class LiveObjectsQuery extends QueryBase {
     @Override
     public Object execute(ArrayList<TraceRun> traceRuns, int traceFocus,
             PrintStream ps, String[] args) {
         TraceRun traceRun = traceRuns.get(traceFocus);
-        int r = traceRun.missingConstructorCount;
-        ps.println("Missing Constructor Count: " + r);
-        return new Integer(r);
+        Iterator<ObjectRecord> iter = traceRun.objects.values().iterator();
+        int totalNumber = 0;
+        int totalArray = 0;
+        while (iter.hasNext()) {
+            ObjectRecord td = iter.next();
+            if (td.getDeletionTime() == 0) {
+                if (td.isArray()) {
+                    totalArray++;
+                } else {
+                    totalNumber++;
+                }
+            }
+        }
+        ps.println("Total number of live instances: "
+                + (totalNumber + totalArray) + ", objects: " + totalNumber
+                + ", live arrays: " + totalArray);
+        return null;
     }
+
 }
+
