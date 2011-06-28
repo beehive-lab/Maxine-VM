@@ -37,7 +37,6 @@ public class DataByClassQuery extends DataByClassQueryHelper {
     public Object execute(ArrayList<TraceRun> traceRuns, int traceFocus, PrintStream ps,
             String[] args) {
         TraceRun traceRun = traceRuns.get(traceFocus);
-        ps.println("\n");
         showXDataByClasses(this, traceRun, ps, args, traceRun.getClassesIterator(), "", true);
         return null;
     }

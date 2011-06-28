@@ -839,12 +839,11 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
 
     private static void generateInvokeSpecial(boolean resolved) {
         outIsAdvising();
-        out.printf(METHOD_PREFIX + "(Reference.fromOrigin(receiver).toJava(), methodActor);%n", adviceType.methodNameComponent, methodName);
+        out.printf(METHOD_PREFIX + "(receiver, methodActor);%n", adviceType.methodNameComponent, methodName);
         closeBrace();
     }
 
     private static void generateInvokeStatic(boolean resolved) {
-        // TODO fix arguments
         outIsAdvising();
         out.printf(METHOD_PREFIX + "(null, methodActor);%n", adviceType.methodNameComponent, methodName);
         closeBrace();
@@ -1045,8 +1044,8 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         t1xTemplateGen.generateTemplateTag("INVOKE%s$%s%s", variant.toUpperCase(), lType(k), prefixDollar(tag));
         out.printf("    public static void invoke%s%s(%s) {%n", variant, uType(k), params);
         if (!isStatic) {
-            out.printf("        Pointer receiver = peekWord(receiverStackIndex).asPointer();%n");
-            out.printf("        nullCheck(receiver);%n");
+            out.printf("        Object receiver = peekObject(receiverStackIndex);%n");
+            out.printf("        nullCheck(Reference.fromJava(receiver).toOrigin());%n");
         }
         if (!resolved) {
             out.printf("        %sMethodActor methodActor = VMAT1XRuntime.resolve%sMethod(guard);%n", isStatic ? "Static" : "Virtual", toFirstUpper(variant));
