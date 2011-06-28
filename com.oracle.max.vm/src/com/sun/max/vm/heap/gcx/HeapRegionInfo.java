@@ -101,6 +101,19 @@ public class HeapRegionInfo {
         public final boolean only(int flags) {
             return flags == mask;
         }
+
+        static private Flag [] allFlags = values();
+
+        static void log(int flags) {
+            String sep = "";
+            for (Flag f : allFlags) {
+                if (f.isSet(flags)) {
+                    Log.print(sep);
+                    Log.print(f.toString());
+                    sep = " | ";
+                }
+            }
+        }
     }
 
     enum HeapRegionState {
@@ -237,15 +250,6 @@ public class HeapRegionInfo {
     }
 
 
-    public final void dumpSetFlags() {
-        for (Flag f : Flag.values()) {
-            if (f.isSet(flags)) {
-                Log.print(f.toString());
-                Log.print(" ");
-            }
-        }
-    }
-
     public void dump(boolean enumerateFreeChunks) {
         Log.print("region #");
         Log.print(toRegionID());
@@ -253,9 +257,9 @@ public class HeapRegionInfo {
         Log.print(regionStart());
         Log.print(",");
         Log.print(regionStart().plus(regionSizeInBytes));
-        Log.print("[");
-        dumpSetFlags();
-        Log.print(" free: ");
+        Log.print(" [ ");
+        Flag.log(flags);
+        Log.print(", free: ");
         Log.print(freeBytes());
         Log.print(" live: ");
         Log.print(liveBytes());
@@ -333,9 +337,13 @@ public class HeapRegionInfo {
         freeSpace = numFreeWords;
     }
 
-    final void setFreeChunks(Address firstChunkAddress, Size numBytes, int numChunks) {
-        final short numFreeWords = (short) numBytes.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
+    final void setFreeChunks(Address firstChunkAddress, int numBytes, int numChunks) {
+        final short numFreeWords = (short) (numBytes >>> Word.widthValue().log2numberOfBytes);
         setFreeChunks(firstChunkAddress, numFreeWords, (short) numChunks);
+    }
+
+    final void setFreeChunks(Address firstChunkAddress, Size numBytes, int numChunks) {
+        setFreeChunks(firstChunkAddress, numBytes.toInt(),  numChunks);
     }
 
     final void clearFreeChunks() {
