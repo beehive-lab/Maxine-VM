@@ -43,13 +43,16 @@ import com.sun.max.vm.actor.member.*;
 public final class BreakpointsTable extends InspectorTable {
 
     private final BreakpointsTableModel tableModel;
-    private BreakpointsColumnModel columnModel;
 
     public BreakpointsTable(Inspection inspection, BreakpointsViewPreferences viewPreferences) {
         super(inspection);
         tableModel = new BreakpointsTableModel(inspection);
-        columnModel = new BreakpointsColumnModel(viewPreferences);
+        BreakpointsColumnModel columnModel = new BreakpointsColumnModel(viewPreferences);
         configureDefaultTable(tableModel, columnModel);
+    }
+
+    BreakpointsColumnModel columnModel() {
+        return (BreakpointsColumnModel) getColumnModel();
     }
 
     @Override
@@ -184,7 +187,7 @@ public final class BreakpointsTable extends InspectorTable {
                         breakpointData.setEnabled(newState);
                         inspection().settings().save();
                     } catch (MaxVMBusyException maxVMBusyException) {
-                        final DefaultCellEditor editor = (DefaultCellEditor) columnModel.columnAt(column).getCellEditor();
+                        final DefaultCellEditor editor = (DefaultCellEditor) columnModel().columnAt(column).getCellEditor();
                         final JCheckBox checkBox = (JCheckBox) editor.getComponent();
                         // System.out.println("Reset enabled checkbox at row=" + row + ", col=" + column);
                         checkBox.setSelected(!newState);

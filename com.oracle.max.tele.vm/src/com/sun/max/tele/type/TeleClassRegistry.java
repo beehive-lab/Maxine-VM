@@ -149,10 +149,8 @@ public final class TeleClassRegistry extends AbstractTeleVMHolder implements Max
                     if (!table.isZero()) {
                         int tableLength = Layout.readArrayLength(table);
                         for (int j = 0; j != tableLength; j++) {
-                            int n = 0;
                             Reference entry = vm().readReference(table, j);
                             while (!entry.isZero()) {
-                                n++;
                                 if (entry instanceof TemporaryTeleReference && TeleVM.isAttaching()) {
                                     // this is likely to be a reference in the dynamic heap that we can't see because TeleHeap is not
                                     // fully initialized yet so we add it to a fix-up list and handle it later
