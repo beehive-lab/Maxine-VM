@@ -51,11 +51,13 @@ public class VMAT1XCompilation extends T1XCompilation {
      * being applied.
       */
     private T1XTemplate[] templates;
+    private final T1XTemplate[] defaultTemplates;
 
     public VMAT1XCompilation(T1X t1x) {
         super(t1x);
         this.vmaT1X = (VMAT1X) t1x;
         templates = vmaT1X.getAltT1X().templates;
+        defaultTemplates = templates;
     }
 
     @Override
@@ -69,6 +71,7 @@ public class VMAT1XCompilation extends T1XCompilation {
 
     @Override
     protected void processBytecode(int opcode) throws InternalError {
+        // Based on the option settings for this bytecode, we choose the correct templates
         boolean[] adviceTypeOptions = VMAOptions.getVMATemplateOptions(opcode);
         if (adviceTypeOptions[BEFORE_INDEX]) {
             if (adviceTypeOptions[AFTER_INDEX]) {
@@ -91,24 +94,45 @@ public class VMAT1XCompilation extends T1XCompilation {
         return templates[tag.ordinal()];
     }
 
+    /*
+     * If and, only if, we are advising the relevant invoke bytecode, we override the default parameter assignment
+     * to always pass the MethodActor.
+     */
+
     @Override
     protected void assignInvokeVirtualTemplateParameters(T1XTemplate template, VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
-        assignTemplateParameters(template, virtualMethodActor, receiverStackIndex);
+        if (templates == defaultTemplates) {
+            super.assignInvokeVirtualTemplateParameters(template, virtualMethodActor, receiverStackIndex);
+        } else {
+            assignTemplateParameters(template, virtualMethodActor, receiverStackIndex);
+        }
     }
 
     @Override
     protected void assignInvokeInterfaceTemplateParameters(T1XTemplate template, InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
-        assignTemplateParameters(template, interfaceMethodActor, receiverStackIndex);
+        if (templates == defaultTemplates) {
+            super.assignInvokeInterfaceTemplateParameters(template, interfaceMethodActor, receiverStackIndex);
+        } else {
+            assignTemplateParameters(template, interfaceMethodActor, receiverStackIndex);
+        }
     }
 
     @Override
     protected void assignInvokeSpecialTemplateParameters(T1XTemplate template, VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
-        assignTemplateParameters(template, virtualMethodActor, receiverStackIndex);
+        if (templates == defaultTemplates) {
+            super.assignInvokeSpecialTemplateParameters(template, virtualMethodActor, receiverStackIndex);
+        } else {
+            assignTemplateParameters(template, virtualMethodActor, receiverStackIndex);
+        }
     }
 
     @Override
     protected void assignInvokeStaticTemplateParameters(T1XTemplate template, StaticMethodActor staticMethodActor) {
-        assignTemplateParameters(template, staticMethodActor);
+        if (templates == defaultTemplates) {
+            super.assignInvokeStaticTemplateParameters(template, staticMethodActor);
+        } else {
+            assignTemplateParameters(template, staticMethodActor);
+        }
     }
 
 
