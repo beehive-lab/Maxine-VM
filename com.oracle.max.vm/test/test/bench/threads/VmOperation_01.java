@@ -106,6 +106,7 @@ public class VmOperation_01 extends RunBench {
             @Override
             public void run() {
                 startGate.waitForRelease();
+                @SuppressWarnings("unused")
                 long count = 0;
                 while (!done) {
                     count++;

@@ -46,7 +46,6 @@ import com.sun.max.vm.value.*;
 public final class ThreadLocalsAreaTable extends InspectorTable {
 
     private final ThreadLocalsAreaTableModel tableModel;
-    private final ThreadLocalsAreaTableColumnModel columnModel;
 
     /**
      * A table specialized to display thread local fields.
@@ -54,7 +53,7 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
     public ThreadLocalsAreaTable(Inspection inspection, final MaxThreadLocalsArea tla, ThreadLocalsViewPreferences viewPreferences) {
         super(inspection);
         this.tableModel = new ThreadLocalsAreaTableModel(inspection, tla);
-        this.columnModel = new ThreadLocalsAreaTableColumnModel(this, this.tableModel, viewPreferences);
+        ThreadLocalsAreaTableColumnModel columnModel = new ThreadLocalsAreaTableColumnModel(this, this.tableModel, viewPreferences);
         configureMemoryTable(tableModel, columnModel);
     }
 

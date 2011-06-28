@@ -53,7 +53,6 @@ public final class ObjectHeaderTable extends InspectorTable {
     private final HeaderField[] headerFields;
 
     private final ObjectHeaderTableModel tableModel;
-    private final ObjectHeaderColumnModel columnModel;
 
     private final class ToggleObjectHeaderWatchpointAction extends InspectorAction {
 
@@ -89,7 +88,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         this.instanceViewPreferences = instanceViewPreferences;
         headerFields = teleObject.headerFields();
         this.tableModel = new ObjectHeaderTableModel(inspection, teleObject.origin());
-        this.columnModel = new ObjectHeaderColumnModel(this, this.tableModel, instanceViewPreferences);
+        ObjectHeaderColumnModel columnModel = new ObjectHeaderColumnModel(this, this.tableModel, instanceViewPreferences);
         configureMemoryTable(tableModel, columnModel);
         setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, style().defaultBorderColor()));
         updateFocusSelection();

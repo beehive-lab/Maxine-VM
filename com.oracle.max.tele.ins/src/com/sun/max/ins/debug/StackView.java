@@ -334,7 +334,6 @@ public final class StackView extends AbstractView<StackView> {
                         // bunch of list GUI update events. This really helps for deep stacks.
                         stackFrameList.setModel(emptyModel);
                         stackFrameListModel.clear();
-                        int position = 0;
                         int omitted = -1;
                         for (MaxStackFrame stackFrame : frames) {
                             if (stackFrame instanceof MaxStackFrame.Truncated) {
@@ -346,7 +345,6 @@ public final class StackView extends AbstractView<StackView> {
                                 }
                             }
                             stackFrameListModel.addElement(stackFrame);
-                            position++;
                         }
                         stackFrameList.setModel(stackFrameListModel);
                         if (omitted >= 0) {

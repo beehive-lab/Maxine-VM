@@ -41,12 +41,11 @@ import com.sun.max.tele.object.*;
 public final class ThreadsTable extends InspectorTable {
 
     private final ThreadsTableModel tableModel;
-    private final ThreadsColumnModel columnModel;
 
     ThreadsTable(Inspection inspection, ThreadsViewPreferences viewPreferences) {
         super(inspection);
         tableModel = new ThreadsTableModel(inspection);
-        columnModel = new ThreadsColumnModel(viewPreferences);
+        ThreadsColumnModel columnModel = new ThreadsColumnModel(viewPreferences);
         configureDefaultTable(tableModel, columnModel);
     }
 

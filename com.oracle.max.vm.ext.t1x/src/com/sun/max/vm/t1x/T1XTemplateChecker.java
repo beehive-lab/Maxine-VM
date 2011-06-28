@@ -107,11 +107,9 @@ public class T1XTemplateChecker extends C1XCompilerExtension {
         this.ir = ir;
         FatalError.check(ir.compilation.method.exceptionHandlers().length == 0, "T1X template cannot have exception handlers: " + ir.compilation.method);
         Helper helper = new Helper();
-        int iterations = 0;
         do {
             changed = false;
             ir.startBlock.iterateAnyOrder(helper, false);
-            iterations++;
         } while (changed);
     }
 }

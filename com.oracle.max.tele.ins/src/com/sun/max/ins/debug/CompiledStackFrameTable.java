@@ -50,7 +50,6 @@ public class CompiledStackFrameTable extends InspectorTable {
     private final MaxStackFrame.Compiled compiledStackFrame;
     private final CompiledStackFrameViewPreferences viewPreferences;
     private final CompiledStackFrameTableModel tableModel;
-    private final CompiledStackFrameTableColumnModel columnModel;
 
     /**
      * A table specialized to display the slots in a Java method stack frame in the VM.
@@ -64,7 +63,7 @@ public class CompiledStackFrameTable extends InspectorTable {
         this.compiledStackFrame = compiledStackFrame;
         this.viewPreferences = viewPreferences;
         this.tableModel = new CompiledStackFrameTableModel(inspection, compiledStackFrame);
-        this.columnModel = new CompiledStackFrameTableColumnModel(this, this.tableModel, viewPreferences);
+        CompiledStackFrameTableColumnModel columnModel = new CompiledStackFrameTableColumnModel(this, this.tableModel, viewPreferences);
         configureMemoryTable(tableModel, columnModel);
     }
 
