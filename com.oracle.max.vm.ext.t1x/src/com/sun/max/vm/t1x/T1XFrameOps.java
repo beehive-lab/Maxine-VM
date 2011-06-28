@@ -26,8 +26,6 @@ import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -381,90 +379,4 @@ public final class T1XFrameOps {
         return VMRegister.getAbiFramePointer().readDouble(slotOffset);
     }
 
-    @INLINE
-    public static void directCallVoid() {
-        Intrinsics.call();
-    }
-
-    @INLINE
-    public static void directCallFloat() {
-        final float result = Intrinsics.callFloat();
-        pushFloat(result);
-    }
-
-    @INLINE
-    public static void directCallLong() {
-        final long result = Intrinsics.callLong();
-        pushLong(result);
-    }
-
-    @INLINE
-    public static void directCallDouble() {
-        final double result = Intrinsics.callDouble();
-        pushDouble(result);
-    }
-
-    @INLINE
-    public static void directCallWord() {
-        final Word result = Intrinsics.callWord();
-        pushWord(result);
-    }
-
-    @INLINE
-    public static void indirectCallVoid(Address address, CallEntryPoint callEntryPoint) {
-        Intrinsics.call(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset()));
-    }
-
-    @INLINE
-    public static void indirectCallFloat(Address address, CallEntryPoint callEntryPoint) {
-        final float result = Intrinsics.callFloat(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset()));
-        pushFloat(result);
-    }
-
-    @INLINE
-    public static void indirectCallLong(Address address, CallEntryPoint callEntryPoint) {
-        final long result = Intrinsics.callLong(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset()));
-        pushLong(result);
-    }
-
-    @INLINE
-    public static void indirectCallDouble(Address address, CallEntryPoint callEntryPoint) {
-        final double result = Intrinsics.callDouble(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset()));
-        pushDouble(result);
-    }
-
-    @INLINE
-    public static void indirectCallWord(Address address, CallEntryPoint callEntryPoint) {
-        final Word result = Intrinsics.callWord(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset()));
-        pushWord(result);
-    }
-
-    @INLINE
-    public static void indirectCallVoid(Address address, CallEntryPoint callEntryPoint, Object receiver) {
-        Intrinsics.call(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset()), receiver);
-    }
-
-    @INLINE
-    public static void indirectCallFloat(Address address, CallEntryPoint callEntryPoint, Object receiver) {
-        final float result = Intrinsics.callFloat(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset()), receiver);
-        pushFloat(result);
-    }
-
-    @INLINE
-    public static void indirectCallLong(Address address, CallEntryPoint callEntryPoint, Object receiver) {
-        final long result = Intrinsics.callLong(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset()), receiver);
-        pushLong(result);
-    }
-
-    @INLINE
-    public static void indirectCallDouble(Address address, CallEntryPoint callEntryPoint, Object receiver) {
-        final double result = Intrinsics.callDouble(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset()), receiver);
-        pushDouble(result);
-    }
-
-    @INLINE
-    public static void indirectCallWord(Address address, CallEntryPoint callEntryPoint, Object receiver) {
-        final Word result = Intrinsics.callWord(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset()), receiver);
-        pushWord(result);
-    }
 }

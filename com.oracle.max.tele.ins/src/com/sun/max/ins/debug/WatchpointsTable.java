@@ -47,13 +47,16 @@ import com.sun.max.vm.value.*;
 public final class WatchpointsTable extends InspectorTable {
 
     private final WatchpointsTableModel tableModel;
-    private final WatchpointsColumnModel columnModel;
 
     WatchpointsTable(Inspection inspection, WatchpointsViewPreferences viewPreferences) {
         super(inspection);
         tableModel = new WatchpointsTableModel(inspection);
-        columnModel = new WatchpointsColumnModel(viewPreferences);
+        WatchpointsColumnModel columnModel = new WatchpointsColumnModel(viewPreferences);
         configureDefaultTable(tableModel, columnModel);
+    }
+
+    WatchpointsColumnModel columnModel() {
+        return (WatchpointsColumnModel) getColumnModel();
     }
 
     @Override
@@ -183,7 +186,7 @@ public final class WatchpointsTable extends InspectorTable {
                             inspection().settings().save();
                         }
                     } catch (MaxVMBusyException maxVMBusyException) {
-                        final DefaultCellEditor editor = (DefaultCellEditor) columnModel.columnAt(column).getCellEditor();
+                        final DefaultCellEditor editor = (DefaultCellEditor) columnModel().columnAt(column).getCellEditor();
                         final JCheckBox checkBox = (JCheckBox) editor.getComponent();
                         // System.out.println("Reset READ checkbox at row=" + row + ", col=" + column);
                         checkBox.setSelected(!newState);
@@ -198,7 +201,7 @@ public final class WatchpointsTable extends InspectorTable {
                             inspection().settings().save();
                         }
                     } catch (MaxVMBusyException maxVMBusyException) {
-                        final DefaultCellEditor editor = (DefaultCellEditor) columnModel.columnAt(column).getCellEditor();
+                        final DefaultCellEditor editor = (DefaultCellEditor) columnModel().columnAt(column).getCellEditor();
                         final JCheckBox checkBox = (JCheckBox) editor.getComponent();
                         // System.out.println("Reset WRITE checkbox at row=" + row + ", col=" + column);
                         checkBox.setSelected(!newState);
@@ -213,7 +216,7 @@ public final class WatchpointsTable extends InspectorTable {
                             inspection().settings().save();
                         }
                     } catch (MaxVMBusyException maxVMBusyException) {
-                        final DefaultCellEditor editor = (DefaultCellEditor) columnModel.columnAt(column).getCellEditor();
+                        final DefaultCellEditor editor = (DefaultCellEditor) columnModel().columnAt(column).getCellEditor();
                         final JCheckBox checkBox = (JCheckBox) editor.getComponent();
                         // System.out.println("Reset EXEC checkbox at row=" + row + ", col=" + column);
                         checkBox.setSelected(!newState);
@@ -227,7 +230,7 @@ public final class WatchpointsTable extends InspectorTable {
                         watchpoint.setEnabledDuringGC(newState);
                         inspection().settings().save();
                     } catch (MaxVMBusyException maxVMBusyException) {
-                        final DefaultCellEditor editor = (DefaultCellEditor) columnModel.columnAt(column).getCellEditor();
+                        final DefaultCellEditor editor = (DefaultCellEditor) columnModel().columnAt(column).getCellEditor();
                         final JCheckBox checkBox = (JCheckBox) editor.getComponent();
                         // System.out.println("Reset GC checkbox at row=" + row + ", col=" + column);
                         checkBox.setSelected(!newState);

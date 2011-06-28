@@ -46,14 +46,9 @@ import com.sun.max.vm.hosted.*;
  */
 public final class BootImageTable extends InspectorTable {
 
-    private final BootImageTableModel tableModel;
-    private BootImageColumnModel columnModel;
-
     public BootImageTable(Inspection inspection, BootImageViewPreferences viewPreferences) {
         super(inspection);
-        tableModel = new BootImageTableModel(inspection);
-        this.columnModel = new BootImageColumnModel(viewPreferences);
-        configureMemoryTable(tableModel, columnModel);
+        configureMemoryTable(new BootImageTableModel(inspection), new BootImageColumnModel(viewPreferences));
         setRowSelectionAllowed(false);
     }
 

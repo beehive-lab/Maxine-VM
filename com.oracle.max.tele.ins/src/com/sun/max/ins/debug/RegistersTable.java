@@ -44,13 +44,12 @@ public final class RegistersTable extends InspectorTable {
 
     private final String isaName;
     private final RegistersTableModel tableModel;
-    private RegistersColumnModel columnModel;
 
     public RegistersTable(Inspection inspection, MaxThread thread, RegistersViewPreferences viewPreferences) {
         super(inspection);
         this.isaName = inspection.vm().platform().getISA().name();
         tableModel = new RegistersTableModel(inspection, thread);
-        columnModel = new RegistersColumnModel(viewPreferences);
+        RegistersColumnModel columnModel = new RegistersColumnModel(viewPreferences);
         configureMemoryTable(tableModel, columnModel);
         setRowSelectionAllowed(false);
     }
