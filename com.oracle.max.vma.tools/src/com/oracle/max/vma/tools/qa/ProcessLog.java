@@ -42,9 +42,7 @@ import com.oracle.max.vm.ext.vma.runtime.*;
  * stored as "X:allocationEpoch", e.g. "X:0, X:3, ..."
  *
  * Note that although the map may contain many instances of X:n, at any point in time there can only be one active
- * instance, which is the value of "n" given by the {@link #maxAllocationEpoch} map. Note also, in logs that are not time ordered
- * it is not entirely trivial to map an unqualified id to the correct definition, since a use may precede its definition
- * (construction). This is resolved by correlating the time of the event and the time of the gc epochs.
+ * instance, which is the value of "n" given by the {@link #maxAllocationEpoch} map.
  *
  * The log must be time ordered. To convert logs consisting of batches of per-thread logs as produced by
  * {@link TransientVMAdviceHandler} use the {@link ConvertLog} tool.
@@ -126,6 +124,10 @@ public class ProcessLog {
 
     private AllocationEpoch allocationEpoch;
     private AllocationEpoch prevAllocationEpoch;
+    /**
+     * Key is an unqualified id and the value is the last allocation epoch that id was defined (allocated) in.
+     * I.e., to get a qualified id, look up the value mapped from the unqualified id and append it.
+     */
     private Map<String, Integer> maxAllocationEpoch = new HashMap<String, Integer>();
     private int startRemoval = -1;
     private int endRemoval;
@@ -525,7 +527,13 @@ public class ProcessLog {
     }
 
     private String getClassLoaderIdAsString(long clId) {
-        return ObjectRecord.getMapId(Long.toString(clId), allocationEpoch.epoch);
+        String clIdString = Long.toString(clId);
+        Integer epoch = maxAllocationEpoch.get(clIdString);
+        if (epoch == null) {
+            // This is a special case for the self referring bootstrap class loader
+            epoch = allocationEpoch.epoch;
+        }
+        return ObjectRecord.getMapId(Long.toString(clId), epoch);
     }
 
     private void defineField() {

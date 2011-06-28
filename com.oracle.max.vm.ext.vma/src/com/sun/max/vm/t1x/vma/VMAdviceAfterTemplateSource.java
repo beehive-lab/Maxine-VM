@@ -125,12 +125,12 @@ public class VMAdviceAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKESPECIAL$float)
     public static void invokespecialFloat(ResolutionGuard.InPool guard, int receiverStackIndex) {
-        Pointer receiver = peekWord(receiverStackIndex).asPointer();
-        nullCheck(receiver);
+        Object receiver = peekObject(receiverStackIndex);
+        nullCheck(Reference.fromJava(receiver).toOrigin());
         VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
         final float result = indirectCallFloat(VMAT1XRuntime.initializeSpecialMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         if (isAdvising()) {
-            VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(Reference.fromOrigin(receiver).toJava(), methodActor);
+            VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
         pushFloat(result);
     }
@@ -138,11 +138,11 @@ public class VMAdviceAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKESPECIAL$float$resolved)
     public static void invokespecialFloat(VirtualMethodActor methodActor, int receiverStackIndex) {
-        Pointer receiver = peekWord(receiverStackIndex).asPointer();
-        nullCheck(receiver);
+        Object receiver = peekObject(receiverStackIndex);
+        nullCheck(Reference.fromJava(receiver).toOrigin());
         final float result = directCallFloat();
         if (isAdvising()) {
-            VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(Reference.fromOrigin(receiver).toJava(), methodActor);
+            VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
         pushFloat(result);
     }
@@ -245,12 +245,12 @@ public class VMAdviceAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKESPECIAL$long)
     public static void invokespecialLong(ResolutionGuard.InPool guard, int receiverStackIndex) {
-        Pointer receiver = peekWord(receiverStackIndex).asPointer();
-        nullCheck(receiver);
+        Object receiver = peekObject(receiverStackIndex);
+        nullCheck(Reference.fromJava(receiver).toOrigin());
         VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
         final long result = indirectCallLong(VMAT1XRuntime.initializeSpecialMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         if (isAdvising()) {
-            VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(Reference.fromOrigin(receiver).toJava(), methodActor);
+            VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
         pushLong(result);
     }
@@ -258,11 +258,11 @@ public class VMAdviceAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKESPECIAL$long$resolved)
     public static void invokespecialLong(VirtualMethodActor methodActor, int receiverStackIndex) {
-        Pointer receiver = peekWord(receiverStackIndex).asPointer();
-        nullCheck(receiver);
+        Object receiver = peekObject(receiverStackIndex);
+        nullCheck(Reference.fromJava(receiver).toOrigin());
         final long result = directCallLong();
         if (isAdvising()) {
-            VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(Reference.fromOrigin(receiver).toJava(), methodActor);
+            VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
         pushLong(result);
     }
@@ -365,12 +365,12 @@ public class VMAdviceAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKESPECIAL$double)
     public static void invokespecialDouble(ResolutionGuard.InPool guard, int receiverStackIndex) {
-        Pointer receiver = peekWord(receiverStackIndex).asPointer();
-        nullCheck(receiver);
+        Object receiver = peekObject(receiverStackIndex);
+        nullCheck(Reference.fromJava(receiver).toOrigin());
         VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
         final double result = indirectCallDouble(VMAT1XRuntime.initializeSpecialMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         if (isAdvising()) {
-            VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(Reference.fromOrigin(receiver).toJava(), methodActor);
+            VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
         pushDouble(result);
     }
@@ -378,11 +378,11 @@ public class VMAdviceAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKESPECIAL$double$resolved)
     public static void invokespecialDouble(VirtualMethodActor methodActor, int receiverStackIndex) {
-        Pointer receiver = peekWord(receiverStackIndex).asPointer();
-        nullCheck(receiver);
+        Object receiver = peekObject(receiverStackIndex);
+        nullCheck(Reference.fromJava(receiver).toOrigin());
         final double result = directCallDouble();
         if (isAdvising()) {
-            VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(Reference.fromOrigin(receiver).toJava(), methodActor);
+            VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
         pushDouble(result);
     }
@@ -485,12 +485,12 @@ public class VMAdviceAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKESPECIAL$word)
     public static void invokespecialWord(ResolutionGuard.InPool guard, int receiverStackIndex) {
-        Pointer receiver = peekWord(receiverStackIndex).asPointer();
-        nullCheck(receiver);
+        Object receiver = peekObject(receiverStackIndex);
+        nullCheck(Reference.fromJava(receiver).toOrigin());
         VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
         final Word result = indirectCallWord(VMAT1XRuntime.initializeSpecialMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         if (isAdvising()) {
-            VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(Reference.fromOrigin(receiver).toJava(), methodActor);
+            VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
         pushWord(result);
     }
@@ -498,11 +498,11 @@ public class VMAdviceAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKESPECIAL$word$resolved)
     public static void invokespecialWord(VirtualMethodActor methodActor, int receiverStackIndex) {
-        Pointer receiver = peekWord(receiverStackIndex).asPointer();
-        nullCheck(receiver);
+        Object receiver = peekObject(receiverStackIndex);
+        nullCheck(Reference.fromJava(receiver).toOrigin());
         final Word result = directCallWord();
         if (isAdvising()) {
-            VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(Reference.fromOrigin(receiver).toJava(), methodActor);
+            VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
         pushWord(result);
     }
@@ -599,23 +599,23 @@ public class VMAdviceAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKESPECIAL$void)
     public static void invokespecialVoid(ResolutionGuard.InPool guard, int receiverStackIndex) {
-        Pointer receiver = peekWord(receiverStackIndex).asPointer();
-        nullCheck(receiver);
+        Object receiver = peekObject(receiverStackIndex);
+        nullCheck(Reference.fromJava(receiver).toOrigin());
         VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
         indirectCallVoid(VMAT1XRuntime.initializeSpecialMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         if (isAdvising()) {
-            VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(Reference.fromOrigin(receiver).toJava(), methodActor);
+            VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
     }
 
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKESPECIAL$void$resolved)
     public static void invokespecialVoid(VirtualMethodActor methodActor, int receiverStackIndex) {
-        Pointer receiver = peekWord(receiverStackIndex).asPointer();
-        nullCheck(receiver);
+        Object receiver = peekObject(receiverStackIndex);
+        nullCheck(Reference.fromJava(receiver).toOrigin());
         directCallVoid();
         if (isAdvising()) {
-            VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(Reference.fromOrigin(receiver).toJava(), methodActor);
+            VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
     }
 
