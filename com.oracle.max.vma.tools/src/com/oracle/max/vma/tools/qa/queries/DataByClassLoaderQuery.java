@@ -36,7 +36,7 @@ public class DataByClassLoaderQuery extends DataByClassQueryHelper {
     @Override
     public Object execute(ArrayList<TraceRun> traceRuns, int traceFocus, PrintStream ps, String[] args) {
         TraceRun traceRun = traceRuns.get(traceFocus);
-        ps.println("\nObjects organized by classloader");
+        ps.println("Objects organized by classloader");
         for (String cl : traceRun.classLoaders.keySet()) {
             if (clId == null || clId.equals(cl)) {
                 ps.println("Classloader: " + getShowClassLoader(traceRun, cl));
