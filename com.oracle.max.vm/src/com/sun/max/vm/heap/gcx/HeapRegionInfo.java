@@ -349,6 +349,7 @@ public class HeapRegionInfo {
     final void clearFreeChunks() {
         numFreeChunks = 0;
         freeSpace = 0;
+        flags = HAS_FREE_CHUNK.clear(flags);
     }
 
     final void resetOccupancy() {
