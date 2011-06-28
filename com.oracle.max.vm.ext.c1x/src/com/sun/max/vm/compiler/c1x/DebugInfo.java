@@ -196,7 +196,6 @@ public final class DebugInfo {
         int fpt = out.pos;
         out.skip(fptSize * fps);
 
-        int i = 0;
         for (CiFrame frame : framesMap.keySet()) {
             int framePos = out.pos;
 
@@ -249,7 +248,6 @@ public final class DebugInfo {
             if (fps == 2 && (out.pos & 0xFFFF) != out.pos) {
                 return false;
             }
-            i++;
         }
         return true;
     }

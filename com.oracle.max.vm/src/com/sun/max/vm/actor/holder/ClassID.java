@@ -170,7 +170,6 @@ public final class ClassID {
         if (!traceArrayClassIDs) {
             return;
         }
-        int totalUsedNotCreated = 0;
         int id = 0;
         id = createdArrayClassIDs.nextSetBit(0);
         while (id >= 0) {
@@ -179,7 +178,6 @@ public final class ClassID {
                 System.out.print("Class ID " + id + " created for array isn't assigned");
                 if (usedIDs.get(id)) {
                     System.out.print(" but recorded used");
-                    totalUsedNotCreated++;
                 }
                 System.out.println();
             } else if (!(classActor instanceof ArrayClassActor)) {

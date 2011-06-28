@@ -46,7 +46,6 @@ import com.sun.max.vm.value.*;
 public final class MemoryWordsTable extends InspectorTable {
 
     private final MemoryWordsTableModel tableModel;
-    private final MemoryWordsColumnModel columnModel;
     private final InspectorAction setOriginToSelectionAction;
     private final int nBytesInWord;
 
@@ -58,7 +57,7 @@ public final class MemoryWordsTable extends InspectorTable {
         super(inspection);
         this.nBytesInWord = inspection.vm().platform().nBytesInWord();
         this.tableModel = new MemoryWordsTableModel(inspection, memoryWordRegion, origin);
-        this.columnModel = new MemoryWordsColumnModel(this, this.tableModel, instanceViewPreferences);
+        MemoryWordsColumnModel columnModel = new MemoryWordsColumnModel(this, this.tableModel, instanceViewPreferences);
         this.setOriginToSelectionAction = setOriginToSelectionAction;
         configureMemoryTable(tableModel, columnModel);
     }
