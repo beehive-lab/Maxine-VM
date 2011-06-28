@@ -43,6 +43,11 @@ import com.sun.max.annotate.*;
  *
  * The generating thread (name) is added as the first argument to all the methods.
  *
+ * The API is designed to avoid object allocation as far as possible. For example it would be convenient
+ * to encapsulate a class name and the class loader id as a (value) object and, similarly, for (qualified) field
+ * and method names. However, measurements showed that that would place a significant load on the heap just
+ * to pass those values.
+ *
  *
  */
 @HOSTED_ONLY
@@ -68,15 +73,15 @@ public class VMAdviceHandlerLogGenerator {
         if (name.endsWith("ConstLoad")) {
             out.printf(", %s value", getLastParameterNameHandlingObject(m));
         } else if (name.endsWith("GetField")) {
-            out.print(", long objId, QualName fieldName");
+            out.print(", long objId, String className, long clId, String fieldName");
             getFieldDone = true;
         } else if (name.endsWith("PutField")) {
-            out.printf(", long objId, QualName fieldName, %s value", getLastParameterNameHandlingObject(m));
+            out.printf(", long objId, String className, long clId, String fieldName, %s value", getLastParameterNameHandlingObject(m));
         } else if (name.endsWith("GetStatic")) {
-            out.print(", QualName fieldName");
+            out.print(", String className, long clId, String fieldName");
             getStaticDone = true;
         } else if (name.endsWith("PutStatic")) {
-            out.printf(", QualName fieldName, %s value", getLastParameterNameHandlingObject(m));
+            out.printf(", String className, long clId, String fieldName, %s value", getLastParameterNameHandlingObject(m));
         } else if (name.endsWith("ArrayLoad")) {
             out.print(", long objId, int index");
             arrayLoadDone = true;
@@ -85,7 +90,7 @@ public class VMAdviceHandlerLogGenerator {
         } else if (name.endsWith("Store")) {
             out.printf(", int dispToLocalSlot, %s value", getLastParameterNameHandlingObject(m));
         } else if (name.contains("New")) {
-            out.print(", long objId, ClassName className");
+            out.print(", long objId, String className, long clId");
             if (name.contains("NewArray")) {
                 out.print(", int length");
             }
@@ -102,13 +107,13 @@ public class VMAdviceHandlerLogGenerator {
                 out.printf(", %s value", getLastParameterNameHandlingObject(m));
             }
         } else if (name.contains("Invoke")) {
-            out.print(", long objId, QualName methodName");
+            out.print(", long objId, String className, long clId, String methodName");
         } else if (name.endsWith("ArrayLength")) {
             out.print(", long objId, int length");
         } else if (name.contains("Monitor") || name.contains("Throw")) {
             out.print(", long objId");
         } else if (name.contains("CheckCast") || name.contains("InstanceOf")) {
-            out.print(", long objId, ClassName className");
+            out.print(", long objId, String className, long clId");
         } else if (name.contains("Thread")) {
             // drop VmThread arg
         } else {

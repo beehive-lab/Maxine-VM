@@ -34,6 +34,7 @@ import com.oracle.max.vma.tools.qa.*;
  *
  */
 public class ClassesQuery extends QueryBase {
+
     @Override
     public Object execute(ArrayList<TraceRun> traceRuns, int traceFocus, PrintStream ps, String[] args) {
         boolean sortByCount = false;
@@ -51,18 +52,22 @@ public class ClassesQuery extends QueryBase {
                 final ArrayList<ClassAndCount> classArrayList = new ArrayList<ClassAndCount>();
                 while (iter.hasNext()) {
                     final ClassRecord cr = iter.next();
-                    final int length = cr.getName().length();
-                    if (length > longestClassName) {
-                        longestClassName = length;
+                    if (classMatches(cr)) {
+                        final int length = cr.getName().length();
+                        if (length > longestClassName) {
+                            longestClassName = length;
+                        }
+                        classArrayList.add(new ClassAndCount(cr, cr.getObjects().size()));
                     }
-                    classArrayList.add(new ClassAndCount(cr, cr.getObjects().size() - 1));
                 }
                 ClassAndCount[] classArray = new ClassAndCount[classArrayList.size()];
                 classArrayList.toArray(classArray);
                 if (sortByCount) {
                     Arrays.sort(classArray, new ClassAndCount(null, 0));
                 }
-                ps.print("Instances |  Class"); space(ps, longestClassName - 5); ps.println("|  Classloader ");
+                ps.print("Instances    Class");
+                space(ps, longestClassName - 5 + 2);
+                ps.println(" Classloader ");
                 for (ClassAndCount cc : classArray) {
                     ps.format("%10d   %s", cc.count, cc.classRecord.getName());
                     space(ps, longestClassName + 3 - cc.classRecord.getName().length());

@@ -25,8 +25,6 @@ package com.oracle.max.vma.tools.qa.queries;
 
 import java.util.*;
 import java.io.*;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 import com.oracle.max.vma.tools.qa.*;
 
@@ -48,41 +46,32 @@ public class DataByClassQueryHelper extends QueryBase {
     static double percentile;
     static boolean summary;
     static boolean percentOnly;
-    static boolean thread;
     static long ocount_g;
     static long pcount_g;
     static ArrayList<SummaryArrayElement> summaryArray;
-    static ArrayList<Pattern> excludeList;
 
-    protected static void showXDataByClasses(TraceRun traceRun, PrintStream ps,
-            String[] args, Iterator<ClassRecord> classIter, String indent, boolean showCl) {
-        String className = null;
+    protected static void showXDataByClasses(QueryBase query, TraceRun traceRun,
+            PrintStream ps, String[] args, Iterator<ClassRecord> classIter, String indent, boolean showCl) {
         sort_mlt = false;
         sort_lt = false;
         percent = true;
         percentile = 100.0;
         summary = false;
-        thread = false;
         percentOnly = false;
         ocount_g = pcount_g = 0;
         summaryArray = null;
+        boolean showThread = false;
         SummaryArrayElement.SortKey summaryArraySortKey = SummaryArrayElement.SortKey.Total;
-        excludeList = new ArrayList<Pattern>();
 
         // Checkstyle: stop modified control variable check
         for (int i = 0; i < args.length; i++) {
             String arg = args[i];
-            if (arg.equals("-class")) {
-                i++;
-                className = args[i];
-            } else if (arg.equals("-sort_lt")) {
+            if (arg.equals("-sort_lt")) {
                 sort_lt = true;
             } else if (arg.equals("-sort_mlt")) {
                 sort_mlt = true;
             } else if (arg.equals("-abs")) {
                 percent = false;
-            } else if (arg.equals("-th")) {
-                thread = true;
             } else if (arg.equals("-pci")) {
                 i++;
                 percentile = Double.parseDouble(args[i]);
@@ -106,26 +95,13 @@ public class DataByClassQueryHelper extends QueryBase {
             } else if (arg.equals("-percent")) {
                 summary = true;
                 percentOnly = true;
-            } else if (arg.equals("-exclude")) {
-                i++;
-                while (i < args.length) {
-                    if (args[i].startsWith("-"))
-                        break;
-                    try {
-                        excludeList.add(Pattern.compile(args[i]));
-                    } catch (PatternSyntaxException ex) {
-                        System.out.println("bad regex: " + args[i]);
-                    }
-                    i++;
-                }
+            } else if (arg.equals("-showthread")) {
+                showThread = true;
             }
         }
         // Checkstyle: resume modified control variable check
 
         ps.print(indent + "Objects organized by class");
-        if (className != null) {
-            ps.print(" (" + className + ")");
-        }
         if (sort_lt) {
             ps.print(", sorted by lifetime");
         } else if (sort_mlt) {
@@ -135,22 +111,12 @@ public class DataByClassQueryHelper extends QueryBase {
 
         while (classIter.hasNext()) {
             ClassRecord cr = classIter.next();
-            if ((className == null) || cr.getName().equals(className)) {
-                boolean excluded = false;
-                for (Pattern pattern : excludeList) {
-                    if (pattern.matcher(cr.getName()).matches()) {
-                        System.out.println("excluding " + cr.getName());
-                        excluded = true;
-                        break;
-                    }
-                }
-                if (!excluded) {
-                    showDataOnClass(traceRun, ps, cr, indent, showCl);
-                }
+            if (query.classMatches(cr)) {
+                showDataOnClass(query, traceRun, ps, cr, indent, showCl, showThread);
             }
         }
 
-        if (summary && className == null) {
+        if (summary) {
             double pp = ((double) pcount_g / (double) ocount_g) * 100.0;
             ps.println("Total objects immutable for >= "
                     + TimeFunctions.ftime(percentile, TimeFunctions.format2d)
@@ -170,8 +136,8 @@ public class DataByClassQueryHelper extends QueryBase {
         }
     }
 
-    private static void showDataOnClass(TraceRun traceRun, PrintStream ps, ClassRecord cr,
-            String indent, boolean showCl) {
+    private static void showDataOnClass(QueryBase query, TraceRun traceRun, PrintStream ps,
+            ClassRecord cr, String indent, boolean showCl, boolean showThread) {
         String className = cr.getName();
         ArrayList<ObjectRecord> objects = cr.getObjects();
         int ocount = objects.size(); ocount_g += ocount;
@@ -187,9 +153,10 @@ public class DataByClassQueryHelper extends QueryBase {
         }
 
         if (!summary) {
-            ps.println("");
+            ps.println();
         }
 
+        String idIndent = indent + INDENT_TWO;
         for (int i = 0; i < ods.length; i++) {
             ObjectRecord td = ods[i];
             long lifeTime = td.getLifeTime(traceRun.lastTime);
@@ -203,14 +170,7 @@ public class DataByClassQueryHelper extends QueryBase {
                 String immutableForArg = percent ?
                     (TimeFunctions.ftime(percentImmutableTime, TimeFunctions.format6d) + "%") :
                     Long.toString(immutableTime);
-                String threadArg = thread ? " th " + td.thread : "";
-                ps.println(indent + INDENT_TWO + td.getId() +
-                        threadArg +
-                        ", ct " + TimeFunctions.formatTime(td.getEndCreationTime() - traceRun.startTime) +
-                        ", lt " + TimeFunctions.formatTime(lifeTime) +
-                        (td.getDeletionTime() == 0 ? ", alive" : ", dead") +
-                        ", mlt " + TimeFunctions.formatTime(td.getModifyLifeTime()) +
-                        ", immutable for " + immutableForArg);
+                ps.printf("%s%s, immutable for %s%n", idIndent, td.toString(traceRun, false, showThread, true, true, true, true), immutableForArg);
             }
         }
 

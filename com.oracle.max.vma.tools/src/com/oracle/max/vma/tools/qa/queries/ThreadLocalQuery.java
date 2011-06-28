@@ -40,7 +40,7 @@ public class ThreadLocalQuery extends QueryBase {
     @Override
     public Object execute(ArrayList<TraceRun> traceRuns, int traceFocus, PrintStream ps, String[] args) {
         TraceRun traceRun = traceRuns.get(traceFocus);
-        Map<String, ArrayList<ObjectRecord>> threadMap = DataByThreadsQueryHelper.getObjectsByThread(traceRun);
+        Map<String, ArrayList<ObjectRecord>> threadMap = DataByThreadQueryHelper.getObjectsByThread(traceRun);
 
         for (Map.Entry<String, ArrayList<ObjectRecord>> me : threadMap.entrySet()) {
             ps.println("Check objects allocated by thread " + me.getKey());

@@ -606,7 +606,7 @@ public class ProcessLog {
             case INITIALIZE_LOG:
                 startTime = Long.parseLong(logTimeArg);
                 lastTime = startTime;
-                allocationEpoch = new AllocationEpoch(0);
+                allocationEpoch = new AllocationEpoch(startTime);
                 allocationEpochs.add(allocationEpoch);
                 absTime = Boolean.parseBoolean(arg2);
                 return;

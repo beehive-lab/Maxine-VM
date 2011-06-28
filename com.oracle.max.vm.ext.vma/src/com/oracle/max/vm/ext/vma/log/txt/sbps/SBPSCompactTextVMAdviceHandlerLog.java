@@ -43,13 +43,13 @@ public class SBPSCompactTextVMAdviceHandlerLog extends CompactTextVMAdviceHandle
     }
 
     @Override
-    public void defineShortForm(CompactTextVMAdviceHandlerLog.ShortForm type, Object key, String shortForm) {
-        ClassName className = null;
+    public void defineShortForm(CompactTextVMAdviceHandlerLog.ShortForm type, Object key, String shortForm, String classShortForm) {
+        ClassNameId className = null;
         synchronized (jdel) {
             jdel.sb.append(type.code);
             jdel.sb.append(' ');
             if (type == ShortForm.C) {
-                className = (ClassName) key;
+                className = (ClassNameId) key;
                 jdel.sb.append(className.name);
                 jdel.sb.append(' ');
                 jdel.sb.append(className.clId);
@@ -59,7 +59,7 @@ public class SBPSCompactTextVMAdviceHandlerLog extends CompactTextVMAdviceHandle
                 // F/M
                 QualName qualName = (QualName) key;
                 // guaranteed to have already created the short form for the class name
-                jdel.sb.append(qualName.className.name);
+                jdel.sb.append(classShortForm);
                 jdel.sb.append(' ');
                 jdel.sb.append(qualName.name);
             }

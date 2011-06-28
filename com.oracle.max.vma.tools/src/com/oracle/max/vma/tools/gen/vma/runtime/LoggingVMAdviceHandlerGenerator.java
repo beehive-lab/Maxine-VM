@@ -63,7 +63,7 @@ public class LoggingVMAdviceHandlerGenerator {
             out.printf("        ClassActor ca = ObjectAccess.readClassActor(arg1);%n");
             out.printf("        FieldActor fa = ca.findInstanceFieldActor(arg2);%n");
             generateLogCallPrefix(oname);
-            out.printf(", state.readId(arg1), new QualName(fa.holder().name(), state.readId(ca.classLoader), fa.name())");
+            out.printf(", state.readId(arg1), fa.holder().name(), state.readId(ca.classLoader), fa.name()");
             if (name.endsWith("PutField")) {
                 generateValueArg(m, 3);
             }
@@ -71,7 +71,7 @@ public class LoggingVMAdviceHandlerGenerator {
         } else if (name.endsWith("GetStatic")  || name.endsWith("PutStatic")) {
             out.printf("        ClassActor ca = ObjectAccess.readClassActor(arg1);%n");
             generateLogCallPrefix(oname);
-            out.printf(", new QualName(ca.name(), state.readId(ca.classLoader), ca.findStaticFieldActor(arg2).name())");
+            out.printf(", ca.name(), state.readId(ca.classLoader), ca.findStaticFieldActor(arg2).name()");
             if (name.endsWith("PutStatic")) {
                 if (name.endsWith("PutStatic")) {
                     generateValueArg(m, 3);
@@ -94,7 +94,7 @@ public class LoggingVMAdviceHandlerGenerator {
             out.printf("        final Reference objRef = Reference.fromJava(arg1);%n");
             out.printf("        final Hub hub = UnsafeCast.asHub(Layout.readHubReference(objRef));%n");
             generateLogCallPrefix(oname);
-            out.printf(", state.readId(arg1), new ClassName(hub.classActor.name(), state.readId(hub.classActor.classLoader))");
+            out.printf(", state.readId(arg1), hub.classActor.name(), state.readId(hub.classActor.classLoader)");
             if (name.endsWith("NewArray")) {
                 out.print(", arg2");
             }
@@ -116,7 +116,7 @@ public class LoggingVMAdviceHandlerGenerator {
         } else if (name.contains("Invoke")) {
             generateLogCallPrefix(oname);
             String arg1 = name.contains("Static") ? "0" : "state.readId(arg1)";
-            out.printf(", %s, new QualName(arg2.holder().name(), state.readId(arg2.holder().classLoader), arg2.name())", arg1);
+            out.printf(", %s, arg2.holder().name(), state.readId(arg2.holder().classLoader), arg2.name()", arg1);
             out.printf(");%n");
         } else if (name.endsWith("ArrayLength")) {
             generateLogCallPrefix(oname);
@@ -129,7 +129,7 @@ public class LoggingVMAdviceHandlerGenerator {
         } else if (name.contains("CheckCast") || name.contains("InstanceOf")) {
             out.printf("        ClassActor ca = (ClassActor) arg2;%n");
             generateLogCallPrefix(oname);
-            out.print(", state.readId(arg1), new ClassName(ca.name(), state.readId(ca.classLoader))");
+            out.print(", state.readId(arg1), ca.name(), state.readId(ca.classLoader)");
             out.printf(");%n");
         } else if (name.contains("Thread")) {
             // drop VmThread arg

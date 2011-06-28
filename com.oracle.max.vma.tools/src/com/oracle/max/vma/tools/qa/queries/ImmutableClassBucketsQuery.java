@@ -45,31 +45,18 @@ public class ImmutableClassBucketsQuery extends QueryBase {
     @Override
     public Object execute(ArrayList<TraceRun> traceRuns, int traceFocus,
             PrintStream ps, String[] args) {
-        String className = null;
         TraceRun traceRun = traceRuns.get(traceFocus);
-        // Checkstyle: stop modified control variable check
-        for (int i = 0; i < args.length; i++) {
-            String arg = args[i];
-            if (arg.equals("-class")) {
-                i++;
-                className = args[i];
-            }
-        }
-        // Checkstyle: resume modified control variable check
         Iterator<ClassRecord> iter = traceRun.getClassesIterator();
         while (iter.hasNext()) {
             ClassRecord cr = iter.next();
             if ((className == null) || cr.getName().equals(className)) {
                 ArrayList<ObjectRecord> a = cr.getObjects();
-                int ocount = a.size() - 1;
-                String thisClassName = a.get(0).getClassName();
+                int ocount = a.size();
                 double[] percents = new double[ocount];
-                // skip index 0 as that contains the static traces for this
-                // class
-                for (int i = 1; i <= ocount; i++) {
+                for (int i = 0; i < ocount; i++) {
                     ObjectRecord td = a.get(i);
                     long lifeTime = td.getLifeTime(traceRun.lastTime);
-                    percents[i - 1] = percent(
+                    percents[i] = percent(
                             lifeTime - td.getModifyLifeTime(), lifeTime);
                 }
                 Arrays.sort(percents);
@@ -82,7 +69,7 @@ public class ImmutableClassBucketsQuery extends QueryBase {
                     }
                     buckets[p]++;
                 }
-                ps.println("Class " + thisClassName + ", Object count "
+                ps.println("Class " + cr.getName() + ", Object count "
                         + ocount);
                 for (int px = 0; px < buckets.length; px++) {
                     int bv = buckets[px];

@@ -101,6 +101,37 @@ public class ObjectRecord {
         return "(" + klass.getName() + ") " + getId();
     }
 
+    public String toString(TraceRun traceRun, boolean showClass, boolean showThread, boolean showCt, boolean showEc,
+                    boolean showLt, boolean showMlt) {
+        StringBuilder result = new StringBuilder(id);
+        if (showClass) {
+            result.append(", ");
+            result.append(klass.name);
+        }
+        if (showThread) {
+            result.append(", th ");
+            result.append(thread);
+        }
+        if (showCt) {
+            result.append(", ct ");
+            result.append(TimeFunctions.formatTime(getBeginCreationTime() - traceRun.startTime));
+        }
+        if (showEc) {
+            result.append(", ec ");
+            result.append(TimeFunctions.formatTime(getEndCreationTime() - traceRun.startTime));
+        }
+        if (showLt) {
+            result.append(", lt ");
+            result.append(TimeFunctions.formatTime(getLifeTime(traceRun.lastTime)));
+        }
+        if (showLt) {
+            result.append(", mlt ");
+            result.append(TimeFunctions.formatTime(getModifyLifeTime()));
+        }
+        result.append(removalRecord == null ? ", alive" : ", dead");
+        return result.toString();
+    }
+
     /**
      * An estimate of the size of an instance of this class.
      * @return

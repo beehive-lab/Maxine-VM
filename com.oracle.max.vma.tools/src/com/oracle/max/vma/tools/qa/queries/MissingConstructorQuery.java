@@ -37,13 +37,13 @@ public class MissingConstructorQuery extends QueryBase {
     public Object execute(ArrayList<TraceRun> traceRuns, int traceFocus,
             PrintStream ps, String[] args) {
         TraceRun traceRun = traceRuns.get(traceFocus);
-        ps.println("Objects with missing constructor traces");
-        if (traceRun.missingConstructors.size() != 0) {
+        ps.printf("Objects with missing constructor traces: %d%n", traceRun.missingConstructors.size());
+        if (traceRun.missingConstructors.size() != 0 && verbose) {
             Iterator<String> iter = traceRun.missingConstructors.keySet().iterator();
             while (iter.hasNext()) {
                 String id = iter.next();
                 ObjectRecord td = traceRun.missingConstructors.get(id);
-                ps.println("  " + id + " " + td.getClassName());
+                ps.printf("  %s%n", td.toString(traceRun, true, true, false, false, false, false));
             }
         }
         return null;

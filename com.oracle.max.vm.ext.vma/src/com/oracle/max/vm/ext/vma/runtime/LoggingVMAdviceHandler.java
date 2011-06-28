@@ -24,19 +24,14 @@ package com.oracle.max.vm.ext.vma.runtime;
 
 import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.log.*;
-import com.oracle.max.vm.ext.vma.log.VMAdviceHandlerLog.ClassName;
-import com.oracle.max.vm.ext.vma.log.VMAdviceHandlerLog.QualName;
-import com.oracle.max.vm.ext.vma.runtime.AdviceRecordFlusher.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -100,7 +95,7 @@ public class LoggingVMAdviceHandler extends VMAdviceHandler {
     protected void unseenObject(Object obj) {
         final Reference objRef = Reference.fromJava(obj);
         final Hub hub = UnsafeCast.asHub(Layout.readHubReference(objRef));
-        log.unseenObject(tng.getThreadName(), state.readId(obj), new ClassName(hub.classActor.name(), state.readId(hub.classActor.classLoader)));
+        log.unseenObject(tng.getThreadName(), state.readId(obj), hub.classActor.name(), state.readId(hub.classActor.classLoader));
     }
 
     @Override
@@ -143,7 +138,7 @@ public class LoggingVMAdviceHandler extends VMAdviceHandler {
     public void adviseAfterNew(Object arg1) {
         final Reference objRef = Reference.fromJava(arg1);
         final Hub hub = UnsafeCast.asHub(Layout.readHubReference(objRef));
-        log.adviseAfterNew(tng.getThreadName(), state.readId(arg1), new ClassName(hub.classActor.name(), state.readId(hub.classActor.classLoader)));
+        log.adviseAfterNew(tng.getThreadName(), state.readId(arg1), hub.classActor.name(), state.readId(hub.classActor.classLoader));
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
@@ -151,7 +146,7 @@ public class LoggingVMAdviceHandler extends VMAdviceHandler {
     public void adviseAfterNewArray(Object arg1, int arg2) {
         final Reference objRef = Reference.fromJava(arg1);
         final Hub hub = UnsafeCast.asHub(Layout.readHubReference(objRef));
-        log.adviseAfterNewArray(tng.getThreadName(), state.readId(arg1), new ClassName(hub.classActor.name(), state.readId(hub.classActor.classLoader)), arg2);
+        log.adviseAfterNewArray(tng.getThreadName(), state.readId(arg1), hub.classActor.name(), state.readId(hub.classActor.classLoader), arg2);
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
@@ -344,35 +339,35 @@ public class LoggingVMAdviceHandler extends VMAdviceHandler {
     @Override
     public void adviseBeforeGetStatic(Object arg1, int arg2) {
         ClassActor ca = ObjectAccess.readClassActor(arg1);
-        log.adviseBeforeGetStatic(tng.getThreadName(), new QualName(ca.name(), state.readId(ca.classLoader), ca.findStaticFieldActor(arg2).name()));
+        log.adviseBeforeGetStatic(tng.getThreadName(), ca.name(), state.readId(ca.classLoader), ca.findStaticFieldActor(arg2).name());
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforePutStatic(Object arg1, int arg2, Object arg3) {
         ClassActor ca = ObjectAccess.readClassActor(arg1);
-        log.adviseBeforePutStaticObject(tng.getThreadName(), new QualName(ca.name(), state.readId(ca.classLoader), ca.findStaticFieldActor(arg2).name()), state.readId(arg3));
+        log.adviseBeforePutStaticObject(tng.getThreadName(), ca.name(), state.readId(ca.classLoader), ca.findStaticFieldActor(arg2).name(), state.readId(arg3));
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforePutStatic(Object arg1, int arg2, float arg3) {
         ClassActor ca = ObjectAccess.readClassActor(arg1);
-        log.adviseBeforePutStatic(tng.getThreadName(), new QualName(ca.name(), state.readId(ca.classLoader), ca.findStaticFieldActor(arg2).name()), arg3);
+        log.adviseBeforePutStatic(tng.getThreadName(), ca.name(), state.readId(ca.classLoader), ca.findStaticFieldActor(arg2).name(), arg3);
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforePutStatic(Object arg1, int arg2, long arg3) {
         ClassActor ca = ObjectAccess.readClassActor(arg1);
-        log.adviseBeforePutStatic(tng.getThreadName(), new QualName(ca.name(), state.readId(ca.classLoader), ca.findStaticFieldActor(arg2).name()), arg3);
+        log.adviseBeforePutStatic(tng.getThreadName(), ca.name(), state.readId(ca.classLoader), ca.findStaticFieldActor(arg2).name(), arg3);
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforePutStatic(Object arg1, int arg2, double arg3) {
         ClassActor ca = ObjectAccess.readClassActor(arg1);
-        log.adviseBeforePutStatic(tng.getThreadName(), new QualName(ca.name(), state.readId(ca.classLoader), ca.findStaticFieldActor(arg2).name()), arg3);
+        log.adviseBeforePutStatic(tng.getThreadName(), ca.name(), state.readId(ca.classLoader), ca.findStaticFieldActor(arg2).name(), arg3);
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
@@ -380,7 +375,7 @@ public class LoggingVMAdviceHandler extends VMAdviceHandler {
     public void adviseBeforeGetField(Object arg1, int arg2) {
         ClassActor ca = ObjectAccess.readClassActor(arg1);
         FieldActor fa = ca.findInstanceFieldActor(arg2);
-        log.adviseBeforeGetField(tng.getThreadName(), state.readId(arg1), new QualName(fa.holder().name(), state.readId(ca.classLoader), fa.name()));
+        log.adviseBeforeGetField(tng.getThreadName(), state.readId(arg1), fa.holder().name(), state.readId(ca.classLoader), fa.name());
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
@@ -388,7 +383,7 @@ public class LoggingVMAdviceHandler extends VMAdviceHandler {
     public void adviseBeforePutField(Object arg1, int arg2, Object arg3) {
         ClassActor ca = ObjectAccess.readClassActor(arg1);
         FieldActor fa = ca.findInstanceFieldActor(arg2);
-        log.adviseBeforePutFieldObject(tng.getThreadName(), state.readId(arg1), new QualName(fa.holder().name(), state.readId(ca.classLoader), fa.name()), state.readId(arg3));
+        log.adviseBeforePutFieldObject(tng.getThreadName(), state.readId(arg1), fa.holder().name(), state.readId(ca.classLoader), fa.name(), state.readId(arg3));
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
@@ -396,7 +391,7 @@ public class LoggingVMAdviceHandler extends VMAdviceHandler {
     public void adviseBeforePutField(Object arg1, int arg2, float arg3) {
         ClassActor ca = ObjectAccess.readClassActor(arg1);
         FieldActor fa = ca.findInstanceFieldActor(arg2);
-        log.adviseBeforePutField(tng.getThreadName(), state.readId(arg1), new QualName(fa.holder().name(), state.readId(ca.classLoader), fa.name()), arg3);
+        log.adviseBeforePutField(tng.getThreadName(), state.readId(arg1), fa.holder().name(), state.readId(ca.classLoader), fa.name(), arg3);
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
@@ -404,7 +399,7 @@ public class LoggingVMAdviceHandler extends VMAdviceHandler {
     public void adviseBeforePutField(Object arg1, int arg2, double arg3) {
         ClassActor ca = ObjectAccess.readClassActor(arg1);
         FieldActor fa = ca.findInstanceFieldActor(arg2);
-        log.adviseBeforePutField(tng.getThreadName(), state.readId(arg1), new QualName(fa.holder().name(), state.readId(ca.classLoader), fa.name()), arg3);
+        log.adviseBeforePutField(tng.getThreadName(), state.readId(arg1), fa.holder().name(), state.readId(ca.classLoader), fa.name(), arg3);
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
@@ -412,31 +407,31 @@ public class LoggingVMAdviceHandler extends VMAdviceHandler {
     public void adviseBeforePutField(Object arg1, int arg2, long arg3) {
         ClassActor ca = ObjectAccess.readClassActor(arg1);
         FieldActor fa = ca.findInstanceFieldActor(arg2);
-        log.adviseBeforePutField(tng.getThreadName(), state.readId(arg1), new QualName(fa.holder().name(), state.readId(ca.classLoader), fa.name()), arg3);
+        log.adviseBeforePutField(tng.getThreadName(), state.readId(arg1), fa.holder().name(), state.readId(ca.classLoader), fa.name(), arg3);
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeInvokeVirtual(Object arg1, MethodActor arg2) {
-        log.adviseBeforeInvokeVirtual(tng.getThreadName(), state.readId(arg1), new QualName(arg2.holder().name(), state.readId(arg2.holder().classLoader), arg2.name()));
+        log.adviseBeforeInvokeVirtual(tng.getThreadName(), state.readId(arg1), arg2.holder().name(), state.readId(arg2.holder().classLoader), arg2.name());
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeInvokeSpecial(Object arg1, MethodActor arg2) {
-        log.adviseBeforeInvokeSpecial(tng.getThreadName(), state.readId(arg1), new QualName(arg2.holder().name(), state.readId(arg2.holder().classLoader), arg2.name()));
+        log.adviseBeforeInvokeSpecial(tng.getThreadName(), state.readId(arg1), arg2.holder().name(), state.readId(arg2.holder().classLoader), arg2.name());
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeInvokeStatic(Object arg1, MethodActor arg2) {
-        log.adviseBeforeInvokeStatic(tng.getThreadName(), 0, new QualName(arg2.holder().name(), state.readId(arg2.holder().classLoader), arg2.name()));
+        log.adviseBeforeInvokeStatic(tng.getThreadName(), 0, arg2.holder().name(), state.readId(arg2.holder().classLoader), arg2.name());
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeInvokeInterface(Object arg1, MethodActor arg2) {
-        log.adviseBeforeInvokeInterface(tng.getThreadName(), state.readId(arg1), new QualName(arg2.holder().name(), state.readId(arg2.holder().classLoader), arg2.name()));
+        log.adviseBeforeInvokeInterface(tng.getThreadName(), state.readId(arg1), arg2.holder().name(), state.readId(arg2.holder().classLoader), arg2.name());
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
@@ -455,14 +450,14 @@ public class LoggingVMAdviceHandler extends VMAdviceHandler {
     @Override
     public void adviseBeforeCheckCast(Object arg1, Object arg2) {
         ClassActor ca = (ClassActor) arg2;
-        log.adviseBeforeCheckCast(tng.getThreadName(), state.readId(arg1), new ClassName(ca.name(), state.readId(ca.classLoader)));
+        log.adviseBeforeCheckCast(tng.getThreadName(), state.readId(arg1), ca.name(), state.readId(ca.classLoader));
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeInstanceOf(Object arg1, Object arg2) {
         ClassActor ca = (ClassActor) arg2;
-        log.adviseBeforeInstanceOf(tng.getThreadName(), state.readId(arg1), new ClassName(ca.name(), state.readId(ca.classLoader)));
+        log.adviseBeforeInstanceOf(tng.getThreadName(), state.readId(arg1), ca.name(), state.readId(ca.classLoader));
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
@@ -486,50 +481,27 @@ public class LoggingVMAdviceHandler extends VMAdviceHandler {
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseAfterInvokeVirtual(Object arg1, MethodActor arg2) {
-        try {
-            assert arg1 != null;
-            assert arg2 != null;
-            assert arg2.holder() != null;
-            assert  arg2.holder().classLoader != null;
-        log.adviseAfterInvokeVirtual(tng.getThreadName(), state.readId(arg1), new QualName(arg2.holder().name(), state.readId(arg2.holder().classLoader), arg2.name()));
-        } catch (Throwable ex) {
-            ex.printStackTrace();
-            Log.println("NPE in InvokeVirtual");
-            Log.print(arg1); Log.println();
-            Log.print(arg2); Log.println();
-            FatalError.unexpected("exiting", ex);
-        }
+        log.adviseAfterInvokeVirtual(tng.getThreadName(), state.readId(arg1), arg2.holder().name(), state.readId(arg2.holder().classLoader), arg2.name());
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseAfterInvokeSpecial(Object arg1, MethodActor arg2) {
-        try {
-            assert arg1 != null;
-            assert arg2 != null;
-            assert arg2.holder() != null;
-            assert  arg2.holder().classLoader != null;
-        log.adviseAfterInvokeSpecial(tng.getThreadName(), state.readId(arg1), new QualName(arg2.holder().name(), state.readId(arg2.holder().classLoader), arg2.name()));
-        } catch (Throwable ex) {
-            ex.printStackTrace();
-            Log.println("NPE in InvokeSpecial");
-            Log.print(arg1); Log.println();
-            Log.print(arg2); Log.println();
-            FatalError.unexpected("exiting", ex);
-        }
+        log.adviseAfterInvokeSpecial(tng.getThreadName(), state.readId(arg1), arg2.holder().name(), state.readId(arg2.holder().classLoader), arg2.name());
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseAfterInvokeStatic(Object arg1, MethodActor arg2) {
-        log.adviseAfterInvokeStatic(tng.getThreadName(), 0, new QualName(arg2.holder().name(), state.readId(arg2.holder().classLoader), arg2.name()));
+        log.adviseAfterInvokeStatic(tng.getThreadName(), 0, arg2.holder().name(), state.readId(arg2.holder().classLoader), arg2.name());
     }
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseAfterInvokeInterface(Object arg1, MethodActor arg2) {
-        log.adviseAfterInvokeInterface(tng.getThreadName(), state.readId(arg1), new QualName(arg2.holder().name(), state.readId(arg2.holder().classLoader), arg2.name()));
+        log.adviseAfterInvokeInterface(tng.getThreadName(), state.readId(arg1), arg2.holder().name(), state.readId(arg2.holder().classLoader), arg2.name());
     }
+
 
 
 }

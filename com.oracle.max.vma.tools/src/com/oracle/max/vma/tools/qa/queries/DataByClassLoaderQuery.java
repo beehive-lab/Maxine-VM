@@ -23,38 +23,25 @@
 
 package com.oracle.max.vma.tools.qa.queries;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.io.PrintStream;
+import java.util.*;
+import java.io.*;
 
-import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.AdviceRecord;
 import com.oracle.max.vma.tools.qa.*;
 
 /**
- *
- * Reports on access to the static data in all classes or a given class.
+ * Similar to {@link DataByClassQuery} but outputs the information per class loader.
  */
-public class StaticDataByClassQuery extends QueryBase {
-    @Override
-    public Object execute(ArrayList<TraceRun> traceRuns, int traceFocus,
-            PrintStream ps, String[] args) {
-        TraceRun traceRun = traceRuns.get(traceFocus);
-        Iterator<ClassRecord> iter = traceRun.getClassesIterator();
+public class DataByClassLoaderQuery extends DataByClassQueryHelper {
 
-        while (iter.hasNext()) {
-            ClassRecord cr = iter.next();
-            if (((className == null) || cr.getName().equals(className))
-                    && !cr.isArray()) {
-                ps.println("Static accesses for class " + cr.getName()
-                        + " in classloader " + cr.getClassLoaderId());
-                for (int j = 0; j < cr.getAdviceRecords().size(); j++) {
-                    AdviceRecord te = cr.getAdviceRecords().get(j);
-                    ps.println("  field " + AdviceRecordHelper.getField(te) + " "
-                            + AdviceRecordHelper.accessType(te) + " at " + ms(te.time));
-                }
-                if (className != null) {
-                    break;
-                }
+    @Override
+    public Object execute(ArrayList<TraceRun> traceRuns, int traceFocus, PrintStream ps, String[] args) {
+        TraceRun traceRun = traceRuns.get(traceFocus);
+        ps.println("\nObjects organized by classloader");
+        for (String cl : traceRun.classLoaders.keySet()) {
+            if (clId == null || clId.equals(cl)) {
+                ps.println("Classloader: " + getShowClassLoader(traceRun, cl));
+                Map<String, ClassRecord> classes = traceRun.classLoaders.get(cl);
+                showXDataByClasses(this, traceRun, ps, args, classes.values().iterator(), INDENT_TWO, false);
             }
         }
         return null;

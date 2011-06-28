@@ -23,39 +23,40 @@
 
 package com.oracle.max.vma.tools.qa.queries;
 
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.io.PrintStream;
-import java.util.*;
 
+import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.AdviceRecord;
 import com.oracle.max.vma.tools.qa.*;
 
 /**
- * Reports on the number of live instances at the end of the trace, where live
- * is defined a zero deletion time in the {@link ObjectRecord}, i.e. no
- * {@link TextObjectTrackerLog#REMOVAL_ID}.
+ *
+ * Reports on access to the static data in all classes or a given class.
  */
-public class LiveObjectsSizeQuery extends QueryBase {
+public class StaticFieldAccessQuery extends QueryBase {
     @Override
     public Object execute(ArrayList<TraceRun> traceRuns, int traceFocus,
             PrintStream ps, String[] args) {
         TraceRun traceRun = traceRuns.get(traceFocus);
-        Iterator<ObjectRecord> iter = traceRun.objects.values().iterator();
-        int totalNumber = 0;
-        int totalArray = 0;
+        Iterator<ClassRecord> iter = traceRun.getClassesIterator();
+
         while (iter.hasNext()) {
-            ObjectRecord td = iter.next();
-            if (td.getDeletionTime() == 0) {
-                if (td.isArray()) {
-                    totalArray++;
-                } else {
-                    totalNumber++;
+            ClassRecord cr = iter.next();
+
+            if (!cr.isArray() && classMatches(cr)) {
+                ps.println("Static accesses for class " + cr.getName()
+                        + " in classloader " + cr.getClassLoaderId());
+                for (int j = 0; j < cr.getAdviceRecords().size(); j++) {
+                    AdviceRecord te = cr.getAdviceRecords().get(j);
+                    ps.println("  field '" + AdviceRecordHelper.getField(te).getName() + "' "
+                            + AdviceRecordHelper.accessType(te) + " at " + ms(traceRun.relTime(te.time)));
+                }
+                if (className != null) {
+                    break;
                 }
             }
         }
-        ps.println("Total number of live instances: "
-                + (totalNumber + totalArray) + ", objects: " + totalNumber
-                + ", live arrays: " + totalArray);
         return null;
     }
-
 }
-

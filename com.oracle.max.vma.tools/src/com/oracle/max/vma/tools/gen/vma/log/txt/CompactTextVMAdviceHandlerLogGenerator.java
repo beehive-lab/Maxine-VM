@@ -54,15 +54,15 @@ public class CompactTextVMAdviceHandlerLogGenerator {
         out.printf("        del.%s(", m.getName());
         out.print("getThreadShortForm(arg1)");
         if (name.contains("GetField") || name.contains("PutField")) {
-            out.print(", checkRepeatId(arg2, arg1), getFieldShortForm(arg3)");
+            out.print(", checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4, getFieldShortForm(arg3, arg4, arg5)");
             if (name.contains("PutField")) {
-                out.print(", arg4");
+                out.print(", arg6");
             }
             out.printf(");%n");
         } else if (name.contains("GetStatic") || name.contains("PutStatic")) {
-            out.print(", getFieldShortForm(arg2)");
+            out.print(", getClassShortForm(arg2, arg3), arg3, getFieldShortForm(arg2, arg3, arg4)");
             if (name.contains("PutStatic")) {
-                out.print(", arg3");
+                out.print(", arg5");
             }
             out.printf(");%n");
         } else if (name.contains("ArrayLoad") || name.contains("ArrayStore")) {
@@ -72,19 +72,19 @@ public class CompactTextVMAdviceHandlerLogGenerator {
             }
             out.printf(");%n");
         } else if (name.contains("New")) {
-            out.print(", checkRepeatId(arg2, arg1), getClassShortForm(arg3)");
+            out.print(", checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4");
             if (name.contains("NewArray")) {
-                out.print(", arg4");
+                out.print(", arg5");
             }
             out.printf(");%n");
         } else if (name.contains("Invoke")) {
-            out.print(", checkRepeatId(arg2, arg1), getMethodShortForm(arg3)");
+            out.print(", checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4, getMethodShortForm(arg3, arg4, arg5)");
             out.printf(");%n");
         } else if (name.contains("Monitor") || name.contains("Throw")) {
             out.print(", checkRepeatId(arg2, arg1)");
             out.printf(");%n");
         } else if (name.contains("CheckCast") || name.contains("InstanceOf")) {
-            out.print(", checkRepeatId(arg2, arg1), getClassShortForm(arg3)");
+            out.print(", checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4");
             out.printf(");%n");
         } else {
             Class<?>[] params = m.getParameterTypes();

@@ -31,8 +31,8 @@ package test;
 public class Simple {
 
     public int stationary;
-    public int p;
-    public int q;
+    public final int p;
+    public final int q;
 
     Simple(int p, int q) {
         this.p = p;
