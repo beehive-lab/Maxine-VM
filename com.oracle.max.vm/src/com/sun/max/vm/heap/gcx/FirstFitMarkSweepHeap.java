@@ -388,6 +388,10 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                 do {
                     Size chunkSize = HeapFreeChunk.getFreechunkSize(chunk);
                     if (chunkSize.greaterThan(spaceNeeded)) {
+                        if (spaceNeeded.lessThan(minChunkSize)) {
+                            // Adjust last chunk size. Can't be smaller than min chunk size (TLAB invariant)
+                            spaceNeeded = minChunkSize;
+                        }
                         Address next = HeapFreeChunk.getFreeChunkNext(chunk);
                         // Split if leftover larger that min tlab size.
                         if (chunkSize.minus(spaceNeeded).greaterEqual(minChunkSize)) {

@@ -402,6 +402,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
     private Size setNextTLABChunk(Pointer chunk) {
         if (MaxineVM.isDebug()) {
             FatalError.check(!chunk.isZero(), "TLAB chunk must not be null");
+            FatalError.check(HeapFreeChunk.getFreechunkSize(chunk).greaterEqual(theHeap.minReclaimableSpace()), "TLAB chunk must be greater than min reclaimable space");
         }
         Size chunkSize =  HeapFreeChunk.getFreechunkSize(chunk);
         Size effectiveSize = chunkSize.minus(TLAB_HEADROOM);
@@ -425,20 +426,22 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
      *
      * @param etla Pointer to enabled VMThreadLocals
      * @param tlabMark current mark of the TLAB
-     * @param tlabHardLimit hard limit of the current TLAB
+     * @param tlabHardLimit soft end of the current TLAB
      * @param chunk next chunk of this TLAB
      * @param size requested amount of memory
      * @return a pointer to the allocated memory
      */
     private Pointer changeTLABChunkOrAllocate(Pointer etla, Pointer tlabMark, Pointer tlabHardLimit, Pointer chunk, Size size) {
         Size chunkSize =  HeapFreeChunk.getFreechunkSize(chunk);
-        Size effectiveSize = chunkSize.minus(TLAB_HEADROOM);
-        if (size.greaterThan(effectiveSize))  {
-            // Don't bother with searching another TLAB chunk that fits. Allocate out of TLAB.
+        if (size.greaterThan(chunkSize.minus(MIN_OBJECT_SIZE)))  {
+            // Don't bother with searching another TLAB chunk that fits. Allocate directly in the heap.
             return theHeap.allocate(size);
         }
+        // Otherwise, the chunk can accommodate the request AND
+        // we'll have enough room left in the chunk to format a dead object or to store the next chunk pointer.
         Address nextChunk = HeapFreeChunk.getFreeChunkNext(chunk);
-        fillWithDeadObject(tlabMark, tlabHardLimit);
+        fillWithDeadObject(tlabMark,  tlabHardLimit);
+        Size effectiveSize = chunkSize.minus(TLAB_HEADROOM);
         // Zap chunk data to leave allocation area clean.
         Memory.clearWords(chunk, effectiveSize.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt());
         chunk.plus(effectiveSize).setWord(nextChunk);
