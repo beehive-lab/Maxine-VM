@@ -100,7 +100,7 @@ Address virtualMemory_mapFile(Size size, jint fd, Size offset) {
 	return check_mmap_result(mmap(0, (size_t) size, PROT, MAP_PRIVATE, fd, (off_t) offset));
  }
 
-JNIEXPORT Address JNICALL
+JNIEXPORT jlong JNICALL
 Java_com_sun_max_memory_VirtualMemory_virtualMemory_1mapFile(JNIEnv *env, jclass c, jlong size, jint fd, jlong offset) {
     return virtualMemory_mapFile((Size) size, fd, (Size) offset);
 }
@@ -109,7 +109,7 @@ Address virtualMemory_mapFileIn31BitSpace(jint size, jint fd, Size offset) {
 	return check_mmap_result(mmap(0, (size_t) size, PROT, MAP_PRIVATE | MAP_32BIT, fd, (off_t) offset));
 }
 
-JNIEXPORT Address JNICALL
+JNIEXPORT jlong JNICALL
 Java_com_sun_max_memory_VirtualMemory_virtualMemory_1mapFileIn31BitSpace(JNIEnv *env, jclass c, jint size, jint fd, jlong offset) {
     return virtualMemory_mapFileIn31BitSpace(size, fd, (Size) offset);
 }
