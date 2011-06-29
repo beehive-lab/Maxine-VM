@@ -226,7 +226,9 @@ public final class CodeAttribute {
      *         {@code bci} does not denote an invoke instruction
      */
     public RiMethod calleeAt(int bci) {
-        assert bci >= 0 && bci < code.length;
+        if (bci < 0 || bci >= code.length) {
+            return null;
+        }
         int opcode = code[bci] & 0xFF;
         if (opcode == INVOKEINTERFACE || opcode == INVOKESPECIAL || opcode == INVOKESTATIC || opcode == INVOKEVIRTUAL) {
             int cpi = com.sun.cri.bytecode.Bytes.beU2(code, bci + 1);
