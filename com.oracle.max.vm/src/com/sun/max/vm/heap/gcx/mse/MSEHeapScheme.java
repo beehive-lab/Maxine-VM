@@ -68,7 +68,13 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
         // Need to plant a dead object in the leftover to make the heap parseable (required for sweeping).
         Pointer hardLimit = tlabEnd.plus(TLAB_HEADROOM);
         if (tlabAllocationMark.greaterThan(tlabEnd)) {
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("TLAB_MARK = ");
+            Log.print(tlabAllocationMark);
+            Log.print(", TLAB end = ");
+            Log.println(tlabEnd);
             FatalError.check(hardLimit.equals(tlabAllocationMark), "TLAB allocation mark cannot be greater than TLAB End");
+            Log.unlock(lockDisabledSafepoints);
             return;
         }
         fillWithDeadObject(tlabAllocationMark, hardLimit);

@@ -374,35 +374,41 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                     HeapFreeChunk.format(nextFreeChunkInRegion, freeSpace);
                 }
             }
-            // Grab enough chunks to satisfy TLAB refill
-            Size allocatedSize = tlabSize;   // remember how much space was initially requested.
-            Size spaceNeeded = tlabSize;  // space left to allocate
-            Address lastChunk = Address.zero();
-            Address chunk = nextFreeChunkInRegion.asPointer();
-            do {
-                Size chunkSize = HeapFreeChunk.getFreechunkSize(chunk);
-                if (chunkSize.greaterThan(spaceNeeded)) {
-                    Address next = HeapFreeChunk.getFreeChunkNext(chunk);
-                    // Split if leftover larger that min tlab size.
-                    if (chunkSize.minus(spaceNeeded).greaterEqual(minChunkSize)) {
-                        lastChunk = HeapFreeChunk.splitRight(chunk, spaceNeeded, next);
-                    } else {
-                        lastChunk = next;
-                        // Adjust allocated size, to keep accounting correct.
-                        allocatedSize = allocatedSize.plus(chunkSize.minus(spaceNeeded));
+            Address result = Address.zero();
+            if (freeSpace.lessEqual(tlabSize)) {
+                result = nextFreeChunkInRegion;
+                nextFreeChunkInRegion = Address.zero();
+                freeSpace = Size.zero();
+            } else {
+                // Grab enough chunks to satisfy TLAB refill
+                Size allocatedSize = tlabSize;   // remember how much space was initially requested.
+                Size spaceNeeded = tlabSize;  // space left to allocate
+                Address lastChunk = Address.zero();
+                Address chunk = nextFreeChunkInRegion.asPointer();
+                do {
+                    Size chunkSize = HeapFreeChunk.getFreechunkSize(chunk);
+                    if (chunkSize.greaterThan(spaceNeeded)) {
+                        Address next = HeapFreeChunk.getFreeChunkNext(chunk);
+                        // Split if leftover larger that min tlab size.
+                        if (chunkSize.minus(spaceNeeded).greaterEqual(minChunkSize)) {
+                            lastChunk = HeapFreeChunk.splitRight(chunk, spaceNeeded, next);
+                        } else {
+                            lastChunk = next;
+                            // Adjust allocated size, to keep accounting correct.
+                            allocatedSize = allocatedSize.plus(chunkSize.minus(spaceNeeded));
+                        }
+                        HeapFreeChunk.setFreeChunkNext(chunk, Address.zero());
+                        break;
                     }
-                    spaceNeeded = Size.zero();
-                    HeapFreeChunk.setFreeChunkNext(chunk, Address.zero());
-                    break;
-                }
-                spaceNeeded = spaceNeeded.minus(chunkSize);
-                chunk = HeapFreeChunk.getFreeChunkNext(chunk);
-            } while(!chunk.isZero());
-            Address result = nextFreeChunkInRegion;
-            nextFreeChunkInRegion = lastChunk;
-            freeSpace = freeSpace.minus(allocatedSize.minus(spaceNeeded));
+                    spaceNeeded = spaceNeeded.minus(chunkSize);
+                    chunk = HeapFreeChunk.getFreeChunkNext(chunk);
+                } while(!chunk.isZero());
+                result = nextFreeChunkInRegion;
+                nextFreeChunkInRegion = lastChunk;
+                freeSpace = freeSpace.minus(allocatedSize);
+            }
             if (!firstChunk.isZero()) {
-                HeapFreeChunk.setFreeChunkNext(firstChunk, chunk);
+                HeapFreeChunk.setFreeChunkNext(firstChunk, result);
                 result = firstChunk;
             }
             return result;
@@ -841,11 +847,11 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
             } else {
                 allocationRegionsFreeSpace =  allocationRegionsFreeSpace.plus(csrFreeBytes);
                 if (csrFreeChunks == 1 && minOverflowRefillSize.lessEqual(csrFreeBytes)) {
-                    csrInfo.setFreeChunks(HeapFreeChunk.fromHeapFreeChunk(csrHead), (short) csrFreeBytes, (short) csrFreeChunks);
+                    csrInfo.setFreeChunks(HeapFreeChunk.fromHeapFreeChunk(csrHead), csrFreeBytes,  csrFreeChunks);
                     allocationRegions.append(csrInfo.toRegionID());
                 } else {
                     FatalError.check(csrFreeBytes > 0 && (csrFreeChunks > 1 || minOverflowRefillSize.greaterThan(csrFreeBytes)) && csrHead != null, "unknown state for a swept region");
-                    csrInfo.setFreeChunks(HeapFreeChunk.fromHeapFreeChunk(csrHead), (short) csrFreeBytes, (short) csrFreeChunks);
+                    csrInfo.setFreeChunks(HeapFreeChunk.fromHeapFreeChunk(csrHead),  csrFreeBytes, csrFreeChunks);
                     tlabAllocationRegions.append(csrInfo.toRegionID());
                 }
             }
