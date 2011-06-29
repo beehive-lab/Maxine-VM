@@ -233,7 +233,6 @@ public final class VirtualMemory {
      */
     public static Pointer mapFile(Size size, FileDescriptor fileDescriptor, Address fileOffset) throws IOException {
         final int fd = asJIOFDAlias(fileDescriptor).fd;
-        // final Integer fd = (Integer) WithoutAccessCheck.getInstanceField(fileDescriptor, "fd");
         return Pointer.fromLong(virtualMemory_mapFile(size.toLong(), fd, fileOffset.toLong()));
     }
 
@@ -251,7 +250,6 @@ public final class VirtualMemory {
         if (Platform.platform().os != OS.LINUX) {
             throw new UnsupportedOperationException();
         }
-        // final Integer fd = (Integer) WithoutAccessCheck.getInstanceField(fileDescriptor, "fd");
         final int fd = asJIOFDAlias(fileDescriptor).fd;
         return Pointer.fromLong(virtualMemory_mapFileIn31BitSpace(size, fd, fileOffset.toLong()));
     }
