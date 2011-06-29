@@ -873,6 +873,11 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
             allocationRegionsFreeSpace =  allocationRegionsFreeSpace.plus(regionSizeInBytes);
             allocationRegions.append(rinfo.toRegionID());
         }
+        // Done with sweeping now. Clean state of the sweeper, especially those holding address of free
+        // heap chunks (as they may be taken for valid live objects by the next GC!
+        // FIXME(ld) should we have some system wide GC epilogue for these type of cleanup ?
+        csrHead = null;
+        csrTail = null;
     }
 
     @Override
