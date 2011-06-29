@@ -24,6 +24,7 @@ package com.oracle.max.vm.ext.vma.log.debug;
 
 import java.util.*;
 
+import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.log.*;
 import com.sun.max.vm.*;
 
@@ -32,12 +33,23 @@ public class GCTestVMAdviceHandlerLog extends VMAdviceHandlerLog {
 
     private Random random = new Random(46737);
     private boolean gcAlways;
+    private static AdviceMethod[] methodValues = AdviceMethod.values();
+    private static AdviceMode[] modeValues = AdviceMode.values();
 
 
-    private void randomlyGC() {
+    private void randomlyGC(int methodOrd, int adviceOrd) {
+        randomlyGC(methodValues[methodOrd].name(), modeValues[adviceOrd].name());
+    }
+
+    private void randomlyGC(String ident1, String ident2) {
         int next = random.nextInt(100);
         if (next == 57 || gcAlways) {
-            Log.println("GCTestVMAdviceHandlerLog.GC");
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("GCTestVMAdviceHandlerLog.GC: ");
+            Log.print(ident1);
+            Log.print(":");
+            Log.println(ident2);
+            Log.unlock(lockDisabledSafepoints);
             System.gc();
         }
     }
@@ -54,392 +66,433 @@ public class GCTestVMAdviceHandlerLog extends VMAdviceHandlerLog {
 
     @Override
     public void removal(long id) {
-        randomlyGC();
-
     }
 
     @Override
     public void unseenObject(String threadName, long objId, String className, long clId) {
-        randomlyGC();
+        randomlyGC("Unseen", "");
 
     }
 
     @Override
     public void resetTime() {
-        randomlyGC();
-
     }
 
+    // BEGIN GENERATED CODE
+
+    enum AdviceMethod {
+        GC,
+        ThreadStarting,
+        ThreadTerminating,
+        ConstLoad,
+        ConstLoadObject,
+        IPush,
+        Load,
+        ArrayLoad,
+        Store,
+        StoreObject,
+        ArrayStore,
+        ArrayStoreObject,
+        StackAdjust,
+        Operation,
+        IInc,
+        Conversion,
+        If,
+        IfObject,
+        ReturnObject,
+        Return,
+        GetStatic,
+        PutStatic,
+        PutStaticObject,
+        GetField,
+        PutField,
+        PutFieldObject,
+        InvokeVirtual,
+        InvokeSpecial,
+        InvokeStatic,
+        InvokeInterface,
+        ArrayLength,
+        Throw,
+        CheckCast,
+        InstanceOf,
+        MonitorEnter,
+        MonitorExit,
+        Bytecode,
+        New,
+        NewArray,
+        MultiNewArray;
+    }
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeGC(String threadName) {
-        randomlyGC();
-
+    public void adviseBeforeGC(String arg1) {
+        randomlyGC(0, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterGC(String threadName) {
-        randomlyGC();
-
+    public void adviseAfterGC(String arg1) {
+        randomlyGC(0, 1);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeThreadStarting(String threadName) {
-        randomlyGC();
-
+    public void adviseBeforeThreadStarting(String arg1) {
+        randomlyGC(1, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeThreadTerminating(String threadName) {
-        randomlyGC();
-
+    public void adviseBeforeThreadTerminating(String arg1) {
+        randomlyGC(2, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeConstLoad(String threadName, long value) {
-        randomlyGC();
-
+    public void adviseBeforeConstLoad(String arg1, long arg2) {
+        randomlyGC(3, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeConstLoadObject(String threadName, long value) {
-        randomlyGC();
-
+    public void adviseBeforeConstLoad(String arg1, float arg2) {
+        randomlyGC(3, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeConstLoad(String threadName, float value) {
-        randomlyGC();
-
+    public void adviseBeforeConstLoad(String arg1, double arg2) {
+        randomlyGC(3, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeConstLoad(String threadName, double value) {
-        randomlyGC();
-
+    public void adviseBeforeConstLoadObject(String arg1, long arg2) {
+        randomlyGC(4, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeIPush(String threadName, int arg1) {
-        randomlyGC();
-
+    public void adviseBeforeIPush(String arg1, int arg2) {
+        randomlyGC(5, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeLoad(String threadName, int arg1) {
-        randomlyGC();
-
+    public void adviseBeforeLoad(String arg1, int arg2) {
+        randomlyGC(6, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeArrayLoad(String threadName, long objId, int index) {
-        randomlyGC();
-
+    public void adviseBeforeArrayLoad(String arg1, long arg2, int arg3) {
+        randomlyGC(7, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeStore(String threadName, int dispToLocalSlot, long value) {
-        randomlyGC();
-
+    public void adviseBeforeStore(String arg1, int arg2, long arg3) {
+        randomlyGC(8, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeStore(String threadName, int dispToLocalSlot, float value) {
-        randomlyGC();
-
+    public void adviseBeforeStore(String arg1, int arg2, float arg3) {
+        randomlyGC(8, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeStore(String threadName, int dispToLocalSlot, double value) {
-        randomlyGC();
-
+    public void adviseBeforeStore(String arg1, int arg2, double arg3) {
+        randomlyGC(8, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeStoreObject(String threadName, int dispToLocalSlot, long value) {
-        randomlyGC();
-
+    public void adviseBeforeStoreObject(String arg1, int arg2, long arg3) {
+        randomlyGC(9, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeArrayStore(String threadName, long objId, int index, float value) {
-        randomlyGC();
-
+    public void adviseBeforeArrayStore(String arg1, long arg2, int arg3, float arg4) {
+        randomlyGC(10, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeArrayStore(String threadName, long objId, int index, long value) {
-        randomlyGC();
-
+    public void adviseBeforeArrayStore(String arg1, long arg2, int arg3, long arg4) {
+        randomlyGC(10, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeArrayStore(String threadName, long objId, int index, double value) {
-        randomlyGC();
-
+    public void adviseBeforeArrayStore(String arg1, long arg2, int arg3, double arg4) {
+        randomlyGC(10, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeArrayStoreObject(String threadName, long objId, int index, long value) {
-        randomlyGC();
-
+    public void adviseBeforeArrayStoreObject(String arg1, long arg2, int arg3, long arg4) {
+        randomlyGC(11, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeStackAdjust(String threadName, int arg1) {
-        randomlyGC();
-
+    public void adviseBeforeStackAdjust(String arg1, int arg2) {
+        randomlyGC(12, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeOperation(String threadName, int arg1, long arg2, long arg3) {
-        randomlyGC();
-
+    public void adviseBeforeOperation(String arg1, int arg2, long arg3, long arg4) {
+        randomlyGC(13, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeOperation(String threadName, int arg1, float arg2, float arg3) {
-        randomlyGC();
-
+    public void adviseBeforeOperation(String arg1, int arg2, float arg3, float arg4) {
+        randomlyGC(13, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeOperation(String threadName, int arg1, double arg2, double arg3) {
-        randomlyGC();
-
+    public void adviseBeforeOperation(String arg1, int arg2, double arg3, double arg4) {
+        randomlyGC(13, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeIInc(String threadName, int arg1, int arg2, int arg3) {
-        randomlyGC();
-
+    public void adviseBeforeIInc(String arg1, int arg2, int arg3, int arg4) {
+        randomlyGC(14, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeConversion(String threadName, int arg1, long arg2) {
-        randomlyGC();
-
+    public void adviseBeforeConversion(String arg1, int arg2, long arg3) {
+        randomlyGC(15, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeConversion(String threadName, int arg1, float arg2) {
-        randomlyGC();
-
+    public void adviseBeforeConversion(String arg1, int arg2, float arg3) {
+        randomlyGC(15, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeConversion(String threadName, int arg1, double arg2) {
-        randomlyGC();
-
+    public void adviseBeforeConversion(String arg1, int arg2, double arg3) {
+        randomlyGC(15, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeIf(String threadName, int opcode, int op1, int op2) {
-        randomlyGC();
-
+    public void adviseBeforeIf(String arg1, int arg2, int arg3, int arg4) {
+        randomlyGC(16, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeIfObject(String threadName, int opcode, long objId1, long objId2) {
-        randomlyGC();
-
+    public void adviseBeforeIfObject(String arg1, int arg2, long arg3, long arg4) {
+        randomlyGC(17, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeReturnObject(String threadName, long value) {
-        randomlyGC();
-
+    public void adviseBeforeReturnObject(String arg1, long arg2) {
+        randomlyGC(18, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeReturn(String threadName, long value) {
-        randomlyGC();
-
+    public void adviseBeforeReturn(String arg1, long arg2) {
+        randomlyGC(19, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeReturn(String threadName, float value) {
-        randomlyGC();
-
+    public void adviseBeforeReturn(String arg1, float arg2) {
+        randomlyGC(19, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeReturn(String threadName, double value) {
-        randomlyGC();
-
+    public void adviseBeforeReturn(String arg1, double arg2) {
+        randomlyGC(19, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeReturn(String threadName) {
-        randomlyGC();
-
+    public void adviseBeforeReturn(String arg1) {
+        randomlyGC(19, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeGetStatic(String threadName, String className, long clId, String fieldName) {
-        randomlyGC();
-
+    public void adviseBeforeGetStatic(String arg1, String arg2, long arg3, String arg4) {
+        randomlyGC(20, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforePutStatic(String threadName, String className, long clId, String fieldName, double value) {
-        randomlyGC();
-
+    public void adviseBeforePutStatic(String arg1, String arg2, long arg3, String arg4, double arg5) {
+        randomlyGC(21, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforePutStatic(String threadName, String className, long clId, String fieldName, long value) {
-        randomlyGC();
-
+    public void adviseBeforePutStatic(String arg1, String arg2, long arg3, String arg4, long arg5) {
+        randomlyGC(21, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforePutStatic(String threadName, String className, long clId, String fieldName, float value) {
-        randomlyGC();
-
+    public void adviseBeforePutStatic(String arg1, String arg2, long arg3, String arg4, float arg5) {
+        randomlyGC(21, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforePutStaticObject(String threadName, String className, long clId, String fieldName, long value) {
-        randomlyGC();
-
+    public void adviseBeforePutStaticObject(String arg1, String arg2, long arg3, String arg4, long arg5) {
+        randomlyGC(22, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeGetField(String threadName, long objId, String className, long clId, String fieldName) {
-        randomlyGC();
-
+    public void adviseBeforeGetField(String arg1, long arg2, String arg3, long arg4, String arg5) {
+        randomlyGC(23, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforePutField(String threadName, long objId, String className, long clId, String fieldName, double value) {
-        randomlyGC();
-
+    public void adviseBeforePutField(String arg1, long arg2, String arg3, long arg4, String arg5, double arg6) {
+        randomlyGC(24, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforePutField(String threadName, long objId, String className, long clId, String fieldName, long value) {
-        randomlyGC();
-
+    public void adviseBeforePutField(String arg1, long arg2, String arg3, long arg4, String arg5, long arg6) {
+        randomlyGC(24, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforePutField(String threadName, long objId, String className, long clId, String fieldName, float value) {
-        randomlyGC();
-
+    public void adviseBeforePutField(String arg1, long arg2, String arg3, long arg4, String arg5, float arg6) {
+        randomlyGC(24, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforePutFieldObject(String threadName, long objId, String className, long clId, String fieldName, long value) {
-        randomlyGC();
-
+    public void adviseBeforePutFieldObject(String arg1, long arg2, String arg3, long arg4, String arg5, long arg6) {
+        randomlyGC(25, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeVirtual(String threadName, long objId, String className, long clId, String methodName) {
-        randomlyGC();
-
+    public void adviseBeforeInvokeVirtual(String arg1, long arg2, String arg3, long arg4, String arg5) {
+        randomlyGC(26, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeSpecial(String threadName, long objId, String className, long clId, String methodName) {
-        randomlyGC();
-
+    public void adviseBeforeInvokeSpecial(String arg1, long arg2, String arg3, long arg4, String arg5) {
+        randomlyGC(27, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeStatic(String threadName, long objId, String className, long clId, String methodName) {
-        randomlyGC();
-
+    public void adviseBeforeInvokeStatic(String arg1, long arg2, String arg3, long arg4, String arg5) {
+        randomlyGC(28, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInvokeInterface(String threadName, long objId, String className, long clId, String methodName) {
-        randomlyGC();
-
+    public void adviseBeforeInvokeInterface(String arg1, long arg2, String arg3, long arg4, String arg5) {
+        randomlyGC(29, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeArrayLength(String threadName, long objId, int length) {
-        randomlyGC();
-
+    public void adviseBeforeArrayLength(String arg1, long arg2, int arg3) {
+        randomlyGC(30, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeThrow(String threadName, long objId) {
-        randomlyGC();
-
+    public void adviseBeforeThrow(String arg1, long arg2) {
+        randomlyGC(31, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeCheckCast(String threadName, long objId, String className, long clId) {
-        randomlyGC();
-
+    public void adviseBeforeCheckCast(String arg1, long arg2, String arg3, long arg4) {
+        randomlyGC(32, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeInstanceOf(String threadName, long objId, String className, long clId) {
-        randomlyGC();
-
+    public void adviseBeforeInstanceOf(String arg1, long arg2, String arg3, long arg4) {
+        randomlyGC(33, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeMonitorEnter(String threadName, long objId) {
-        randomlyGC();
-
+    public void adviseBeforeMonitorEnter(String arg1, long arg2) {
+        randomlyGC(34, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeMonitorExit(String threadName, long objId) {
-        randomlyGC();
-
+    public void adviseBeforeMonitorExit(String arg1, long arg2) {
+        randomlyGC(35, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeBytecode(String threadName, int arg1) {
-        randomlyGC();
-
+    public void adviseBeforeBytecode(String arg1, int arg2) {
+        randomlyGC(36, 0);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeVirtual(String threadName, long objId, String className, long clId, String methodName) {
-        randomlyGC();
-
+    public void adviseAfterInvokeVirtual(String arg1, long arg2, String arg3, long arg4, String arg5) {
+        randomlyGC(26, 1);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeSpecial(String threadName, long objId, String className, long clId, String methodName) {
-        randomlyGC();
-
+    public void adviseAfterInvokeSpecial(String arg1, long arg2, String arg3, long arg4, String arg5) {
+        randomlyGC(27, 1);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeStatic(String threadName, long objId, String className, long clId, String methodName) {
-        randomlyGC();
-
+    public void adviseAfterInvokeStatic(String arg1, long arg2, String arg3, long arg4, String arg5) {
+        randomlyGC(28, 1);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterInvokeInterface(String threadName, long objId, String className, long clId, String methodName) {
-        randomlyGC();
-
+    public void adviseAfterInvokeInterface(String arg1, long arg2, String arg3, long arg4, String arg5) {
+        randomlyGC(29, 1);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterNew(String threadName, long objId, String className, long clId) {
-        randomlyGC();
-
+    public void adviseAfterNew(String arg1, long arg2, String arg3, long arg4) {
+        randomlyGC(37, 1);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterNewArray(String threadName, long objId, String className, long clId, int length) {
-        randomlyGC();
-
+    public void adviseAfterNewArray(String arg1, long arg2, String arg3, long arg4, int arg5) {
+        randomlyGC(38, 1);
     }
 
+    // GENERATED -- EDIT AND RUN GCTestAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseAfterMultiNewArray(String threadName, long objId, String className, long clId, int length) {
-        randomlyGC();
-
+    public void adviseAfterMultiNewArray(String arg1, long arg2, String arg3, long arg4, int arg5) {
+        randomlyGC(39, 1);
     }
+
 
 }
