@@ -22,13 +22,14 @@
  */
 
 package com.sun.max.memory;
+import static com.sun.cri.bytecode.Bytecodes.*;
 
 import java.io.*;
 
+import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.hosted.*;
 
 /**
  * Access to the virtual memory facilities of the underlying operating system.
@@ -210,6 +211,18 @@ public final class VirtualMemory {
     /* File mapping methods */
 
     /**
+     * An alias type for accessing the file descriptor field "fd" in java.io.FileDescriptor without
+     * having to use reflection.
+     */
+    public static class JIOFDAlias {
+        @ALIAS(declaringClass = java.io.FileDescriptor.class)
+        int fd;
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static native JIOFDAlias asJIOFDAlias(Object o);
+
+    /**
      * Maps an open file into virtual memory.
      *
      * @param size
@@ -218,9 +231,8 @@ public final class VirtualMemory {
      * @return
      * @throws IOException
      */
-    @HOSTED_ONLY
     public static Pointer mapFile(Size size, FileDescriptor fileDescriptor, Address fileOffset) throws IOException {
-        final Integer fd = (Integer) WithoutAccessCheck.getInstanceField(fileDescriptor, "fd");
+        final int fd = asJIOFDAlias(fileDescriptor).fd;
         return Pointer.fromLong(virtualMemory_mapFile(size.toLong(), fd, fileOffset.toLong()));
     }
 
@@ -234,12 +246,11 @@ public final class VirtualMemory {
      * @return
      * @throws IOException
      */
-    @HOSTED_ONLY
     public static Pointer mapFileIn31BitSpace(int size, FileDescriptor fileDescriptor, Address fileOffset) throws IOException {
         if (Platform.platform().os != OS.LINUX) {
             throw new UnsupportedOperationException();
         }
-        final Integer fd = (Integer) WithoutAccessCheck.getInstanceField(fileDescriptor, "fd");
+        final int fd = asJIOFDAlias(fileDescriptor).fd;
         return Pointer.fromLong(virtualMemory_mapFileIn31BitSpace(size, fd, fileOffset.toLong()));
     }
 
