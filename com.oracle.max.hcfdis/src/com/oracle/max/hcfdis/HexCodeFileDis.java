@@ -98,6 +98,20 @@ public class HexCodeFileDis extends DisassemblyPrinter {
     }
 
     /**
+     * Decoding method called from c1visualizer. The visualizer loads this class and calls this method using reflection.
+     */
+    public static String processEmbeddedString(String source) {
+        if (!source.startsWith(EMBEDDED_HCF_OPEN) || !source.endsWith(EMBEDDED_HCF_CLOSE)) {
+            throw new IllegalArgumentException("Input string is not in embedded format");
+        }
+        source = source.substring(EMBEDDED_HCF_OPEN.length(), source.length() - EMBEDDED_HCF_OPEN.length() - EMBEDDED_HCF_CLOSE.length());
+
+        HexCodeFileDis dis = new HexCodeFileDis(false);
+        CiHexCodeFile hcf = CiHexCodeFile.parse(source, "");
+        return dis.process(hcf, null);
+    }
+
+    /**
      * Disassembles all HexCodeFiles embedded in a given input string.
      *
      * @param input some input containing 0 or more HexCodeFiles
