@@ -33,6 +33,9 @@ import com.sun.cri.bytecode.*;
  * Generates the {@link VMABytecodes} enum that is a clone of {@link Bytecodes} but
  * with the code provided as a field and a methodname that is used in {@link BytecodeAdvice}.
  *
+ * One pseudo bytecode, MENTRY, is added for method entry; it corresponds to the
+ * {@link T1XTemplateTag#TRACE_METHOD_ENTRY} template.
+ *
  */
 public class VMABytecodesGenerator {
 
@@ -45,6 +48,8 @@ public class VMABytecodesGenerator {
             }
             first = false;
         }
+        // pseudo bytecode for method entry
+        out.printf(",%n    %s(-1, \"%s\")", "MENTRY", "MethodEntry");
         out.printf(";%n");
     }
 

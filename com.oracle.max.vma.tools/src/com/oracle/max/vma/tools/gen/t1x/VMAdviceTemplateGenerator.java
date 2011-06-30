@@ -23,6 +23,8 @@
 package com.oracle.max.vma.tools.gen.t1x;
 
 import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
+import static com.sun.max.vm.t1x.T1XFrameOps.*;
+import static com.sun.max.vm.t1x.T1XTemplateTag.*;
 
 import java.io.*;
 import java.util.*;
@@ -700,6 +702,10 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                     generateDefault(tag);
                     break;
 
+                case TRACE_METHOD_ENTRY:
+                    generateTraceMethodEntry();
+                    break;
+
                 default:
                     ProgramError.unexpected("tag " + tag + " not implemented");
             }
@@ -847,6 +853,13 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         outIsAdvising();
         out.printf(METHOD_PREFIX + "(null, methodActor);%n", adviceType.methodNameComponent, methodName);
         closeBrace();
+    }
+
+    private static void generateTraceMethodEntry() {
+        outIsAdvising();
+        out.printf(METHOD_PREFIX + "(receiver, methodActor);%n", adviceType.methodNameComponent, "MethodEntry");
+        closeBrace();
+
     }
 
     private static void generateIf(T1XTemplateTag tag) {
@@ -1069,5 +1082,16 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
     }
 
 
+    @Override
+    public void generateTraceMethodEntryTemplate() {
+        generateAutoComment();
+        generateTemplateTag("%s", TRACE_METHOD_ENTRY);
+        out.printf("    public static void traceMethodEntry(MethodActor methodActor, int receiverStackIndex) {%n");
+        out.printf("        Object receiver = peekObject(receiverStackIndex);%n");
+        generateAfterAdvice();
+        out.printf("    }%n");
+        newLine();
+
+    }
 
 }

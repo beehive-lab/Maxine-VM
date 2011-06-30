@@ -22,11 +22,14 @@
  */
 package com.sun.max.vm.t1x.vma;
 
+import static com.sun.max.vm.t1x.T1XTemplateTag.*;
+
 import com.oracle.max.vm.ext.vma.options.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.t1x.*;
 import com.sun.max.vm.t1x.T1XTemplateGenerator.AdviceType;
+import com.sun.max.vm.type.*;
 
 /**
  * Overrides some {@link T1XCompilation} methods to provide finer compile time control over advising.
@@ -135,5 +138,16 @@ public class VMAT1XCompilation extends T1XCompilation {
         }
     }
 
-
+    @Override
+    protected void emitMethodTraceEntry() {
+        // We turn this into advice if we are advising
+        if (templates == defaultTemplates) {
+            super.emitMethodTraceEntry();
+        } else {
+            T1XTemplate template = getTemplate(TRACE_METHOD_ENTRY);
+            SignatureDescriptor signature = method.descriptor();
+            assignTemplateParameters(template, method, receiverStackIndex(signature));
+            emitAndRecordStops(template);
+        }
+    }
 }

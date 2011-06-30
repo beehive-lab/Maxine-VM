@@ -406,6 +406,18 @@ public class T1XTemplateGenerator {
         }
     }
 
+    // Here starts the actual template generation methods
+
+    public void generateTraceMethodEntryTemplate() {
+        generateAutoComment();
+        generateTemplateTag("%s", TRACE_METHOD_ENTRY);
+        out.printf("    public static void traceMethodEntry(String method) {%n");
+        out.printf("        Log.println(method);%n");
+        generateAfterAdvice();
+        out.printf("    }%n");
+        newLine();
+    }
+
     public static final EnumSet<T1XTemplateTag> STACK_ADJUST_TEMPLATES = EnumSet.of(DUP, DUP_X1, DUP_X2, DUP2, DUP2_X1, DUP2_X2, SWAP);
 
 
@@ -2347,6 +2359,7 @@ public class T1XTemplateGenerator {
         if (adviceHook == null) {
             generateDirectAndIndirectCalls();
         }
+        generateTraceMethodEntryTemplate();
     }
 
     public static void main(String[] args) {

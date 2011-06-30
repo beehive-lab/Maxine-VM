@@ -65,6 +65,11 @@ public class NullVMAdviceHandler extends VMAdviceHandler {
 
     // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
+    public void adviseAfterMethodEntry(Object arg1, MethodActor arg2) {
+    }
+
+    // GENERATED -- EDIT AND RUN NullVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
     public void adviseBeforeConstLoad(long arg1) {
     }
 
@@ -352,6 +357,7 @@ public class NullVMAdviceHandler extends VMAdviceHandler {
     @Override
     public void adviseAfterMultiNewArray(Object arg1, int[] arg2) {
     }
+
 
 
 }
