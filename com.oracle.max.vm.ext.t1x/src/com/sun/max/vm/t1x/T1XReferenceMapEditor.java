@@ -185,36 +185,53 @@ public class T1XReferenceMapEditor implements ReferenceMapInterpreterContext, Re
                         Log.print(", locals={");
                         byte[] refMaps = t1xMethod.referenceMaps();
                         for (int localVariableIndex = 0; localVariableIndex < codeAttribute.maxLocals; ++localVariableIndex) {
-                            final int fpRelativeIndex = frame.localVariableReferenceMapIndex(localVariableIndex);
-                            if (ByteArrayBitMap.isSet(refMaps, offset, t1xMethod.frameRefMapSize, fpRelativeIndex)) {
+                            final int refMapIndex = frame.localVariableReferenceMapIndex(localVariableIndex);
+                            CiRegister fp = frame.framePointer();
+                            if (ByteArrayBitMap.isSet(refMaps, offset, t1xMethod.frameRefMapSize, refMapIndex)) {
+                                int fpOffset = frame.localVariableOffset(localVariableIndex);
                                 Log.print(' ');
                                 Log.print(localVariableIndex);
-                                Log.print("[fp+");
-                                Log.print(fpRelativeIndex * STACK_SLOT_SIZE);
+                                Log.print('[');
+                                Log.print(fp.name);
+                                if (fpOffset >= 0) {
+                                    Log.print('+');
+                                }
+                                Log.print(fpOffset);
                                 Log.print("]");
                             }
                         }
                         Log.print(" }");
                         Log.print(", stack={");
                         for (int operandStackIndex = 0; operandStackIndex < codeAttribute.maxStack; ++operandStackIndex) {
-                            final int fpRelativeIndex = frame.operandStackReferenceMapIndex(operandStackIndex);
-                            if (ByteArrayBitMap.isSet(refMaps, offset, t1xMethod.frameRefMapSize, fpRelativeIndex)) {
+                            final int refMapIndex = frame.operandStackReferenceMapIndex(operandStackIndex);
+                            CiRegister fp = frame.framePointer();
+                            if (ByteArrayBitMap.isSet(refMaps, offset, t1xMethod.frameRefMapSize, refMapIndex)) {
+                                int fpOffset = frame.operandStackOffset(operandStackIndex);
                                 Log.print(' ');
                                 Log.print(operandStackIndex);
-                                Log.print("[fp+");
-                                Log.print(fpRelativeIndex * STACK_SLOT_SIZE);
+                                Log.print('[');
+                                Log.print(fp.name);
+                                if (fpOffset >= 0) {
+                                    Log.print('+');
+                                }
+                                Log.print(fpOffset);
                                 Log.print("]");
                             }
                         }
                         Log.print(" }");
                         Log.print(", template={");
                         for (int i = 0; i < frame.numberOfTemplateSlots(); i++) {
-                            int fpRelativeIndex = Unsigned.idiv(-t1xMethod.frameRefMapOffset, STACK_SLOT_SIZE) + i;
-                            if (ByteArrayBitMap.isSet(refMaps, offset, t1xMethod.frameRefMapSize, fpRelativeIndex)) {
+                            int refMapIndex = Unsigned.idiv(-t1xMethod.frameRefMapOffset, STACK_SLOT_SIZE) + i;
+                            CiRegister fp = frame.framePointer();
+                            if (ByteArrayBitMap.isSet(refMaps, offset, t1xMethod.frameRefMapSize, refMapIndex)) {
                                 Log.print(' ');
                                 Log.print(i);
-                                Log.print("[fp+");
-                                Log.print(fpRelativeIndex * STACK_SLOT_SIZE);
+                                Log.print('[');
+                                Log.print(fp.name);
+                                if (i >= 0) {
+                                    Log.print('+');
+                                }
+                                Log.print(i * STACK_SLOT_SIZE);
                                 Log.print("]");
                             }
                         }
