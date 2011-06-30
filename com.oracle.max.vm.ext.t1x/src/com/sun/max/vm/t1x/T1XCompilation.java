@@ -146,7 +146,7 @@ public class T1XCompilation {
     /**
      * The method being compiled.
      */
-    ClassMethodActor method;
+    protected ClassMethodActor method;
 
     CodeAttribute codeAttribute;
 
@@ -365,7 +365,7 @@ public class T1XCompilation {
         }
     }
 
-    void emitMethodTraceEntry() {
+    protected void emitMethodTraceEntry() {
         if (T1XOptions.TraceMethods) {
             T1XTemplate template = getTemplate(TRACE_METHOD_ENTRY);
             assignReferenceLiteralTemplateArgument(0, method.toString());
@@ -509,7 +509,7 @@ public class T1XCompilation {
      *
      * @param template the compiled code to emit
      */
-    private void emitAndRecordStops(T1XTemplate template) {
+    protected void emitAndRecordStops(T1XTemplate template) {
         if (template.numberOfStops != 0) {
             int bci = stream.currentBCI();
             stops.add(template, buf.position(), bci == stream.endBCI() ? -1 : bci, null);
@@ -858,7 +858,7 @@ public class T1XCompilation {
         return resultKind;
     }
 
-    private static int receiverStackIndex(SignatureDescriptor signatureDescriptor) {
+    protected static int receiverStackIndex(SignatureDescriptor signatureDescriptor) {
         int index = 0;
         for (int i = 0; i < signatureDescriptor.numberOfParameters(); i++) {
             Kind kind = signatureDescriptor.parameterDescriptorAt(i).toKind();

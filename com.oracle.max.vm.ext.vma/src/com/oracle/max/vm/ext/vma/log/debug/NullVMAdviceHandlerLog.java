@@ -402,6 +402,12 @@ public class NullVMAdviceHandlerLog extends VMAdviceHandlerLog {
     }
 
     @Override
+    public void adviseAfterMethodEntry(String threadName, long objId, String className, long clId, String methodName) {
+
+
+    }
+
+    @Override
     public void adviseAfterInvokeStatic(String threadName, long objId, String className, long clId, String methodName) {
 
 

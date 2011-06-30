@@ -40,7 +40,9 @@ import com.sun.max.vm.actor.member.*;
 
 public class VMAStaticBytecodeAdvice {
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // BGEIN GENERATED CODE
+
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeConstLoad(long arg1) {
         disableAdvising();
@@ -48,7 +50,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeConstLoad(Object arg1) {
         disableAdvising();
@@ -56,7 +58,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeConstLoad(float arg1) {
         disableAdvising();
@@ -64,7 +66,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeConstLoad(double arg1) {
         disableAdvising();
@@ -72,7 +74,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeIPush(int arg1) {
         disableAdvising();
@@ -80,7 +82,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeLoad(int arg1) {
         disableAdvising();
@@ -88,7 +90,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeArrayLoad(Object arg1, int arg2) {
         disableAdvising();
@@ -96,7 +98,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeStore(int arg1, long arg2) {
         disableAdvising();
@@ -104,7 +106,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeStore(int arg1, float arg2) {
         disableAdvising();
@@ -112,7 +114,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeStore(int arg1, double arg2) {
         disableAdvising();
@@ -120,7 +122,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeStore(int arg1, Object arg2) {
         disableAdvising();
@@ -128,7 +130,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeArrayStore(Object arg1, int arg2, float arg3) {
         disableAdvising();
@@ -136,7 +138,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeArrayStore(Object arg1, int arg2, long arg3) {
         disableAdvising();
@@ -144,7 +146,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeArrayStore(Object arg1, int arg2, double arg3) {
         disableAdvising();
@@ -152,7 +154,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeArrayStore(Object arg1, int arg2, Object arg3) {
         disableAdvising();
@@ -160,7 +162,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeStackAdjust(int arg1) {
         disableAdvising();
@@ -168,7 +170,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeOperation(int arg1, long arg2, long arg3) {
         disableAdvising();
@@ -176,7 +178,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeOperation(int arg1, float arg2, float arg3) {
         disableAdvising();
@@ -184,7 +186,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeOperation(int arg1, double arg2, double arg3) {
         disableAdvising();
@@ -192,7 +194,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeIInc(int arg1, int arg2, int arg3) {
         disableAdvising();
@@ -200,7 +202,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeConversion(int arg1, long arg2) {
         disableAdvising();
@@ -208,7 +210,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeConversion(int arg1, float arg2) {
         disableAdvising();
@@ -216,7 +218,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeConversion(int arg1, double arg2) {
         disableAdvising();
@@ -224,7 +226,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeIf(int arg1, int arg2, int arg3) {
         disableAdvising();
@@ -232,7 +234,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeIf(int arg1, Object arg2, Object arg3) {
         disableAdvising();
@@ -240,7 +242,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeReturn(Object arg1) {
         disableAdvising();
@@ -248,7 +250,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeReturn(long arg1) {
         disableAdvising();
@@ -256,7 +258,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeReturn(float arg1) {
         disableAdvising();
@@ -264,7 +266,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeReturn(double arg1) {
         disableAdvising();
@@ -272,7 +274,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeReturn() {
         disableAdvising();
@@ -280,7 +282,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeGetStatic(Object arg1, int arg2) {
         disableAdvising();
@@ -288,7 +290,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforePutStatic(Object arg1, int arg2, double arg3) {
         disableAdvising();
@@ -296,7 +298,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforePutStatic(Object arg1, int arg2, long arg3) {
         disableAdvising();
@@ -304,7 +306,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforePutStatic(Object arg1, int arg2, float arg3) {
         disableAdvising();
@@ -312,7 +314,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforePutStatic(Object arg1, int arg2, Object arg3) {
         disableAdvising();
@@ -320,7 +322,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeGetField(Object arg1, int arg2) {
         disableAdvising();
@@ -328,7 +330,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforePutField(Object arg1, int arg2, double arg3) {
         disableAdvising();
@@ -336,7 +338,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforePutField(Object arg1, int arg2, long arg3) {
         disableAdvising();
@@ -344,7 +346,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforePutField(Object arg1, int arg2, float arg3) {
         disableAdvising();
@@ -352,7 +354,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforePutField(Object arg1, int arg2, Object arg3) {
         disableAdvising();
@@ -360,7 +362,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeInvokeVirtual(Object arg1, MethodActor arg2) {
         disableAdvising();
@@ -368,7 +370,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeInvokeSpecial(Object arg1, MethodActor arg2) {
         disableAdvising();
@@ -376,7 +378,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeInvokeStatic(Object arg1, MethodActor arg2) {
         disableAdvising();
@@ -384,7 +386,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeInvokeInterface(Object arg1, MethodActor arg2) {
         disableAdvising();
@@ -392,7 +394,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeArrayLength(Object arg1, int arg2) {
         disableAdvising();
@@ -400,7 +402,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeThrow(Object arg1) {
         disableAdvising();
@@ -408,7 +410,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeCheckCast(Object arg1, Object arg2) {
         disableAdvising();
@@ -416,7 +418,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeInstanceOf(Object arg1, Object arg2) {
         disableAdvising();
@@ -424,7 +426,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeMonitorEnter(Object arg1) {
         disableAdvising();
@@ -432,7 +434,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeMonitorExit(Object arg1) {
         disableAdvising();
@@ -440,7 +442,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseBeforeBytecode(int arg1) {
         disableAdvising();
@@ -448,7 +450,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseAfterInvokeVirtual(Object arg1, MethodActor arg2) {
         disableAdvising();
@@ -456,7 +458,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseAfterInvokeSpecial(Object arg1, MethodActor arg2) {
         disableAdvising();
@@ -464,7 +466,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseAfterInvokeStatic(Object arg1, MethodActor arg2) {
         disableAdvising();
@@ -472,7 +474,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseAfterInvokeInterface(Object arg1, MethodActor arg2) {
         disableAdvising();
@@ -480,7 +482,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseAfterNew(Object arg1) {
         disableAdvising();
@@ -488,7 +490,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseAfterNewArray(Object arg1, int arg2) {
         disableAdvising();
@@ -496,7 +498,7 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
-    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdvice.main() TO MODIFY
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
     @NEVER_INLINE
     public static void adviseAfterMultiNewArray(Object arg1, int[] arg2) {
         disableAdvising();
@@ -504,6 +506,13 @@ public class VMAStaticBytecodeAdvice {
         enableAdvising();
     }
 
+    // GENERATED -- EDIT AND RUN VMAStaticBytecodeAdviceGenerator.main() TO MODIFY
+    @NEVER_INLINE
+    public static void adviseAfterMethodEntry(Object arg1, MethodActor arg2) {
+        disableAdvising();
+        adviceHandler().adviseAfterMethodEntry(arg1, arg2);
+        enableAdvising();
+    }
 
 
 }

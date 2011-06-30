@@ -110,8 +110,8 @@ public abstract class TextVMAdviceHandlerLog extends VMAdviceHandlerLog {
         ADVISE_BEFORE_STORE("BS"),
         ADVISE_BEFORE_INSTANCE_OF("BIO"),
         ADVISE_BEFORE_ARRAY_STORE("BAS"),
-        ADVISE_BEFORE_GET_STATIC("BGS"),
         ADVISE_BEFORE_PUT_FIELD("BPF"),
+        ADVISE_BEFORE_GET_STATIC("BGS"),
         ADVISE_AFTER_INVOKE_INTERFACE("AII"),
         ADVISE_BEFORE_INVOKE_STATIC("BIS"),
         ADVISE_BEFORE_PUT_STATIC("BPS"),
@@ -138,6 +138,7 @@ public abstract class TextVMAdviceHandlerLog extends VMAdviceHandlerLog {
         INITIALIZE_LOG("IL"),
         ADVISE_BEFORE_THREAD_STARTING("BTS"),
         ADVISE_BEFORE_CONST_LOAD("BCL"),
+        ADVISE_AFTER_METHOD_ENTRY("AME"),
         FINALIZE_LOG("FL"),
         ADVISE_AFTER_NEW("AN"),
         RESET_TIME("ZT"),
@@ -152,6 +153,7 @@ public abstract class TextVMAdviceHandlerLog extends VMAdviceHandlerLog {
 
     // GENERATED -- EDIT AND RUN TextVMAdviceHandlerLogGenerator.main() TO MODIFY
     public static final EnumSet<Key> hasIdSet = EnumSet.of(
+        Key.ADVISE_AFTER_METHOD_ENTRY,
         Key.ADVISE_BEFORE_ARRAY_LOAD,
         Key.ADVISE_BEFORE_ARRAY_STORE,
         Key.ADVISE_BEFORE_GET_FIELD,

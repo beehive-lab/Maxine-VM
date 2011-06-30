@@ -126,6 +126,9 @@ public abstract class VMAdviceHandlerLog {
     public abstract void adviseBeforeThreadTerminating(String threadName);
 
     // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
+    public abstract void adviseAfterMethodEntry(String threadName, long objId, String className, long clId, String methodName);
+
+    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
     public abstract void adviseBeforeConstLoad(String threadName, long value);
 
     // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY

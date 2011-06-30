@@ -104,6 +104,13 @@ public class SyncLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
     // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
+    public void adviseAfterMethodEntry(Object arg1, MethodActor arg2) {
+        super.adviseAfterMethodEntry(arg1, arg2);
+        logHandler.adviseAfterMethodEntry(arg1, arg2);
+    }
+
+    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
     public void adviseBeforeConstLoad(long arg1) {
         super.adviseBeforeConstLoad(arg1);
         logHandler.adviseBeforeConstLoad(arg1);

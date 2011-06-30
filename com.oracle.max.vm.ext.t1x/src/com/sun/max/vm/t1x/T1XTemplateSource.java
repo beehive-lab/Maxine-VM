@@ -99,11 +99,6 @@ public class T1XTemplateSource {
         MethodInstrumentation.recordBackwardBranch(mpo);
     }
 
-    @T1X_TEMPLATE(TRACE_METHOD_ENTRY)
-    public static void traceMethodEntry(String method) {
-        Log.println(method);
-    }
-
     @T1X_TEMPLATE(NOP)
     public static void nop() {
         // do nothing.
@@ -3927,6 +3922,12 @@ public class T1XTemplateSource {
     @INLINE
     public static void directCallVoid() {
         Intrinsics.call();
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(TRACE_METHOD_ENTRY)
+    public static void traceMethodEntry(String method) {
+        Log.println(method);
     }
 
 

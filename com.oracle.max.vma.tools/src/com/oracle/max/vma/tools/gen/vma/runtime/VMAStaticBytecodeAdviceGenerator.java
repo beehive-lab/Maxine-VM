@@ -28,17 +28,18 @@ import static com.sun.max.vm.t1x.T1XTemplateGenerator.*;
 import java.lang.reflect.*;
 
 import com.oracle.max.vm.ext.vma.*;
-import com.oracle.max.vm.ext.vma.runtime.*;
 import com.sun.max.annotate.*;
+import com.sun.max.vm.actor.member.*;
 
 
 @HOSTED_ONLY
 public class VMAStaticBytecodeAdviceGenerator {
-    public static void main(String[] args) {
-        createGenerator(VMAStaticBytecodeAdvice.class);
+    public static void main(String[] args) throws Exception {
+        createGenerator(VMAStaticBytecodeAdviceGenerator.class);
         for (Method m : BytecodeAdvice.class.getDeclaredMethods()) {
             generateStatic(m);
         }
+        generateStatic(RuntimeAdvice.class.getDeclaredMethod("adviseAfterMethodEntry", Object.class, MethodActor.class));
     }
 
     private static void generateStatic(Method m) {

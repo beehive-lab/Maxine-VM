@@ -4953,6 +4953,14 @@ public class VMAdviceBeforeAfterTemplateSource {
         T1XRuntime.monitorexit(object);
     }
 
+    // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(TRACE_METHOD_ENTRY)
+    public static void traceMethodEntry(MethodActor methodActor, int receiverStackIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        if (isAdvising()) {
+            VMAStaticBytecodeAdvice.adviseAfterMethodEntry(receiver, methodActor);
+        }
+    }
 
 
 }

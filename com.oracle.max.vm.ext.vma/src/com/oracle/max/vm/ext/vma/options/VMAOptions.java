@@ -80,6 +80,8 @@ public class VMAOptions {
 
     private static final BM[] MONITOR_BM = new BM[] {new BM(MONITORENTER, B), new BM(MONITOREXIT, B)};
 
+    private static final BM[] METHOD_ENTRY_EXIT = new BM[] {};
+
     private static final BM[] BEFOREINVOKE_BM = new BM[] {
         new BM(INVOKEVIRTUAL, B), new BM(INVOKEINTERFACE, B),
         new BM(INVOKESTATIC, B), new BM(INVOKESPECIAL, B)

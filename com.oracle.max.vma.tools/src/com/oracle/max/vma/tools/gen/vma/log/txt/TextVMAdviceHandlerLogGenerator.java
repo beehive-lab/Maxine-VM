@@ -92,6 +92,7 @@ public class TextVMAdviceHandlerLogGenerator {
             out.printf("        CLASS_DEFINITION(\"C\"),%n");
             out.printf("        FIELD_DEFINITION(\"F\"),%n");
             out.printf("        THREAD_DEFINITION(\"T\"),%n");
+            out.printf("        METHOD_DEFINITION(\"M\"),%n");
             int size = codeMap.size();
             int count = 1;
             for (Map.Entry<String, String> entry : codeMap.entrySet()) {

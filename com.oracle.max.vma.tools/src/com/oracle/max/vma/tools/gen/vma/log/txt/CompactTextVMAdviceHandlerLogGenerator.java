@@ -77,7 +77,7 @@ public class CompactTextVMAdviceHandlerLogGenerator {
                 out.print(", arg5");
             }
             out.printf(");%n");
-        } else if (name.contains("Invoke")) {
+        } else if (name.contains("Invoke") || name.contains("MethodEntry")) {
             out.print(", checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4, getMethodShortForm(arg3, arg4, arg5)");
             out.printf(");%n");
         } else if (name.contains("Monitor") || name.contains("Throw")) {
