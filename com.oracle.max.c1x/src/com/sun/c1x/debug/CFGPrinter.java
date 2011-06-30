@@ -23,6 +23,7 @@
 package com.sun.c1x.debug;
 
 import java.io.*;
+import java.text.*;
 import java.util.*;
 
 import com.sun.c1x.*;
@@ -51,6 +52,8 @@ public class CFGPrinter {
 
     private static OutputStream cfgFileStream;
 
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmm");
+
     /**
      * Gets the output stream  on the file "output.cfg" in the current working directory.
      * This stream is first opened if necessary.
@@ -59,7 +62,7 @@ public class CFGPrinter {
      */
     public static synchronized OutputStream cfgFileStream() {
         if (cfgFileStream == null) {
-            File cfgFile = new File("output.cfg");
+            File cfgFile = new File("compilations-" + dateFormat.format(new Date()) + ".cfg");
             try {
                 cfgFileStream = new FileOutputStream(cfgFile);
             } catch (FileNotFoundException e) {
@@ -667,5 +670,15 @@ public class CFGPrinter {
         out.print(code);
         out.println(" <|@");
         end("nmethod");
+    }
+
+    public void printBytecodes(String code) {
+        if (code.length() == 0) {
+            return;
+        }
+        begin("bytecodes");
+        out.print(code);
+        out.println(" <|@");
+        end("bytecodes");
     }
 }

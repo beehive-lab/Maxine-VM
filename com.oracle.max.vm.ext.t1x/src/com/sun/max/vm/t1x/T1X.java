@@ -33,7 +33,6 @@ import java.util.*;
 
 import javax.xml.transform.*;
 
-import com.oracle.max.hcfdis.*;
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.cri.bytecode.*;
@@ -48,6 +47,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.c1x.*;
@@ -174,17 +174,6 @@ public class T1X implements RuntimeCompiler {
 
         TTY.Filter filter = PrintFilter == null ? null : new TTY.Filter(PrintFilter, method);
 
-        CFGPrinter cfgPrinter = null;
-        ByteArrayOutputStream cfgPrinterBuffer = null;
-        if (!reentrant && PrintCFGToFile && method != null && !TTY.isSuppressed()) {
-            // Cannot write to file system at runtime until the VM is in the RUNNING phase
-            if (isHosted() || isRunning()) {
-                cfgPrinterBuffer = new ByteArrayOutputStream();
-                cfgPrinter = new CFGPrinter(cfgPrinterBuffer, target());
-                cfgPrinter.printCompilation(method);
-            }
-        }
-
         try {
             T1XTargetMethod t1xMethod = c.compile(method, install);
             T1XMetrics.BytecodesCompiled += t1xMethod.codeAttribute.code().length;
@@ -192,7 +181,7 @@ public class T1X implements RuntimeCompiler {
             if (stats != null) {
                 stats.bytecodeCount = t1xMethod.codeAttribute.code().length;
             }
-            printMachineCodeTo(t1xMethod, c, cfgPrinter);
+            printMachineCode(c, t1xMethod, reentrant);
             return t1xMethod;
         } finally {
             if (filter != null) {
@@ -202,41 +191,51 @@ public class T1X implements RuntimeCompiler {
                 long time = (System.nanoTime() - startTime) / 100000;
                 TTY.println(String.format("%3d.%dms", time / 10, time % 10));
             }
-            if (cfgPrinter != null) {
-                cfgPrinter.flush();
-                OutputStream cfgFileStream = CFGPrinter.cfgFileStream();
-                if (cfgFileStream != null) {
-                    synchronized (cfgFileStream) {
-                        try {
-                            cfgFileStream.write(cfgPrinterBuffer.toByteArray());
-                        } catch (IOException e) {
-                            TTY.println("WARNING: Error writing CFGPrinter output for %s to disk: %s", method, e.getMessage());
-                        }
-                    }
-                }
-            }
             c.cleanup();
         }
     }
 
     private static final int MIN_OPCODE_LINE_LENGTH = 100;
 
-    void printMachineCodeTo(T1XTargetMethod t1xMethod, T1XCompilation c, CFGPrinter cfgPrinter) {
-        if (cfgPrinter != null) {
-            byte[] code = t1xMethod.code();
+    void printMachineCode(T1XCompilation c, T1XTargetMethod t1xMethod, boolean reentrant) {
+        if (!PrintCFGToFile || reentrant || c.method == null || TTY.isSuppressed()) {
+            return;
+        }
+        if (!isHosted() && !isRunning()) {
+            // Cannot write to file system at runtime until the VM is in the RUNNING phase
+            return;
+        }
 
-            final Platform platform = Platform.platform();
-            CiHexCodeFile hcf = new CiHexCodeFile(code, t1xMethod.codeStart().toLong(), platform.isa.name(), platform.wordWidth().numberOfBits);
+        ByteArrayOutputStream cfgPrinterBuffer = new ByteArrayOutputStream();
+        CFGPrinter cfgPrinter = new CFGPrinter(cfgPrinterBuffer, target());
 
-            CiUtil.addAnnotations(hcf, c.codeAnnotations);
-            addOpcodeComments(hcf, t1xMethod);
-            addExceptionHandlersComment(t1xMethod, hcf);
-            addStopPositionComments(t1xMethod, hcf);
+        cfgPrinter.printCompilation(c.method);
 
-            if (isHosted()) {
-                cfgPrinter.printMachineCode(new HexCodeFileDis(false).process(hcf, null), "After code generation");
-            } else {
-                cfgPrinter.printMachineCode(hcf.toEmbeddedString(), "After code generation");
+        byte[] code = t1xMethod.code();
+        final Platform platform = Platform.platform();
+        CiHexCodeFile hcf = new CiHexCodeFile(code, t1xMethod.codeStart().toLong(), platform.isa.name(), platform.wordWidth().numberOfBits);
+
+        CiUtil.addAnnotations(hcf, c.codeAnnotations);
+        addOpcodeComments(hcf, t1xMethod);
+        addExceptionHandlersComment(t1xMethod, hcf);
+        addStopPositionComments(t1xMethod, hcf);
+
+        String label = CiUtil.format("T1X %f %R %H.%n(%P)", c.method, false);
+
+        cfgPrinter.printMachineCode(hcf.toEmbeddedString(), label);
+
+        String bytecodes = c.method.format("%f %R %H.%n(%P)") + String.format("%n%s", CodeAttributePrinter.toString(c.method.codeAttribute()));
+        cfgPrinter.printBytecodes(bytecodes);
+
+        cfgPrinter.flush();
+        OutputStream cfgFileStream = CFGPrinter.cfgFileStream();
+        if (cfgFileStream != null) {
+            synchronized (cfgFileStream) {
+                try {
+                    cfgFileStream.write(cfgPrinterBuffer.toByteArray());
+                } catch (IOException e) {
+                    TTY.println("WARNING: Error writing CFGPrinter output for %s to disk: %s", c.method, e.getMessage());
+                }
             }
         }
     }
