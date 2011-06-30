@@ -158,12 +158,11 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
     }
 
     private final FocusTableModel tableModel;
-    private final FocusColumnModel columnModel;
 
     FocusTable(Inspection inspection, FocusViewPreferences viewPreferences) {
         super(inspection);
         tableModel = new FocusTableModel(inspection);
-        columnModel = new FocusColumnModel(viewPreferences);
+        FocusColumnModel columnModel = new FocusColumnModel(viewPreferences);
         configureDefaultTable(tableModel, columnModel);
         setRowSelectionAllowed(false);
     }

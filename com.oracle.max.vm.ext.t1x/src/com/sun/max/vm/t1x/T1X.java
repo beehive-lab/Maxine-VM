@@ -31,13 +31,12 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-import javax.xml.transform.*;
-
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiCallingConvention.Type;
+import com.sun.cri.ci.CiUtil.SlotFormatter;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -240,16 +239,18 @@ public class T1X implements RuntimeCompiler {
         }
     }
 
-    private static void addStopPositionComments(T1XTargetMethod t1xMethod, CiHexCodeFile hcf) {
+    private static void addStopPositionComments(final T1XTargetMethod t1xMethod, CiHexCodeFile hcf) {
         if (t1xMethod.stopPositions() != null) {
             StopPositions stopPositions = new StopPositions(t1xMethod.stopPositions());
             Object[] directCallees = t1xMethod.directCallees();
 
+            JVMSFrameLayout frame = t1xMethod.frame;
+            SlotFormatter slotFormatter = new SlotFormatter(VMFrameLayout.STACK_SLOT_SIZE, frame.framePointer(), frame.frameReferenceMapOffset());
             for (int stopIndex = 0; stopIndex < stopPositions.length(); ++stopIndex) {
                 int pos = stopPositions.get(stopIndex);
 
                 CiDebugInfo info = t1xMethod.debugInfoAt(stopIndex, null);
-                hcf.addComment(pos, CiUtil.append(new StringBuilder(100), info, target().arch, JVMSFrameLayout.JVMS_SLOT_SIZE).toString());
+                hcf.addComment(pos, CiUtil.append(new StringBuilder(100), info, target().arch, slotFormatter).toString());
 
                 if (stopIndex < t1xMethod.numberOfDirectCalls()) {
                     Object callee = directCallees[stopIndex];
@@ -326,7 +327,7 @@ public class T1X implements RuntimeCompiler {
 
     public void initialize(Phase phase) {
         if (isHosted() && phase == Phase.COMPILING) {
-            createTemplates(templateSource, altT1X, true);
+            createTemplates(templateSource, altT1X, true, templates);
         }
         if (phase == Phase.STARTING) {
             if (T1XOptions.PrintBytecodeHistogram) {
@@ -363,12 +364,16 @@ public class T1X implements RuntimeCompiler {
      * @param templateSourceClass class containing template methods
      * @param altT1X alternate compiler to use for undefined templates
      * @param checkComplete If {@code true} check the array for completeness.
-     * @param templates an existing instance that will be incrementally updated. May be null.
-     * @return a {@link Templates} instance.
+     * @param templates an existing instance that will be incrementally updated.
+     *        Value may be null, in which case a new array will be created.
+     * @return the templates array, either as passed in or created.
      */
     @HOSTED_ONLY
-    public void createTemplates(Class<?> templateSourceClass, T1X altT1X, boolean checkComplete) {
+    public static T1XTemplate[] createTemplates(Class<?> templateSourceClass, T1X altT1X, boolean checkComplete, T1XTemplate[] templates) {
         Trace.begin(1, "creating T1X templates from " + templateSourceClass.getName());
+        if (templates == null) {
+            templates = new T1XTemplate[T1XTemplateTag.values().length];
+        }
         long startTime = System.currentTimeMillis();
 
         // Create a C1X compiler to compile the templates
@@ -444,6 +449,7 @@ public class T1X implements RuntimeCompiler {
         }
         Trace.end(1, "creating T1X templates from " + templateSourceClass.getName() + " [templates code size: " + codeSize + "]", startTime);
         comp.extensions = oldExtensions;
+        return templates;
     }
 
     @HOSTED_ONLY

@@ -47,12 +47,11 @@ import com.sun.max.vm.value.*;
 public final class MemoryAllocationsTable extends InspectorTable {
 
     private final MemoryAllocationsTableModel tableModel;
-    private final MemoryAllocationsColumnModel columnModel;
 
     MemoryAllocationsTable(Inspection inspection, MemoryAllocationsViewPreferences viewPreferences) {
         super(inspection);
         this.tableModel = new MemoryAllocationsTableModel(inspection);
-        this.columnModel = new MemoryAllocationsColumnModel(this, this.tableModel, viewPreferences);
+        MemoryAllocationsColumnModel columnModel = new MemoryAllocationsColumnModel(this, this.tableModel, viewPreferences);
         configureDefaultTable(tableModel, columnModel);
     }
 

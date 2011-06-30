@@ -214,8 +214,6 @@ public final class ConstantPool implements RiConstantPool {
         this.classLoader = classLoader;
         this.length = poolLength;
 
-        int numberOfResolvableConstants = 0;
-
         // Pass 1: read in the primitive values
         int i = 1;
         while (i < poolLength) {
@@ -225,7 +223,6 @@ public final class ConstantPool implements RiConstantPool {
             switch (tag) {
                 case CLASS: {
                     rawEntries[i] = classfileStream.readUnsigned2();
-                    ++numberOfResolvableConstants;
                     break;
                 }
                 case STRING: {
@@ -238,7 +235,6 @@ public final class ConstantPool implements RiConstantPool {
                     final int classIndex = classfileStream.readUnsigned2();
                     final int nameAndTypeIndex = classfileStream.readUnsigned2();
                     rawEntries[i] = (classIndex << 16) | (nameAndTypeIndex & 0xFFFF);
-                    ++numberOfResolvableConstants;
                     break;
                 }
                 case NAME_AND_TYPE: {

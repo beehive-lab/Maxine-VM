@@ -215,7 +215,7 @@ if [ -z "${MAXINE_OS}" ]; then
     OS=`uname -s`
     case $OS in
         Darwin* )
-            supported_macosx_jdks="1.6.0_20 1.6.0_22 1.6.0_25"
+            supported_macosx_jdks="1.6.0_20 1.6.0_22 1.6.0_25 1.6.0_26"
             version_found=0
             for maxos_java_version in $supported_macosx_jdks; do
                 if [ "$java_version" = "$maxos_java_version" ]; then
@@ -850,7 +850,7 @@ function run_image() {
                 export MAXINE_LOG_FILE
                 ;;
             -vma )
-                system_props="$system_props -Dmax.permsize=8 -Dmax.vmthread.factory.class=com.oracle.max.vm.ext.vma.runtime.VMAVmThreadFactory -Dmax.vma.advice.class=com.sun.max.vm.t1x.vma.VMAAdviceTemplateSource"
+                system_props="$system_props -Dmax.permsize=2 -Dmax.vmthread.factory.class=com.oracle.max.vm.ext.vma.runtime.VMAVmThreadFactory"
                 ;;
             *)
                 image_args="$image_args $1"

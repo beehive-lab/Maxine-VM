@@ -389,7 +389,6 @@ public abstract class ReferenceMapInterpreter {
         }
 
         // This only runs if the map for at least one block was uninitialized
-        int iterations = 0;
         while (changed) {
             changed = false;
             for (int blockIndex = 0; blockIndex < numberOfBlocks; ++blockIndex) {
@@ -397,7 +396,6 @@ public abstract class ReferenceMapInterpreter {
                     changed = interpretBlock(blockIndex, null, null, trace) || changed;
                 }
             }
-            ++iterations;
         }
         this.context = null;
     }
