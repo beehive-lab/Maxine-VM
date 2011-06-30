@@ -98,6 +98,6 @@ public class CiDebugInfo implements Serializable {
 
     @Override
     public String toString() {
-        return CiUtil.append(new StringBuilder(100), this, null, -1).toString();
+        return CiUtil.append(new StringBuilder(100), this, null, null).toString();
     }
 }

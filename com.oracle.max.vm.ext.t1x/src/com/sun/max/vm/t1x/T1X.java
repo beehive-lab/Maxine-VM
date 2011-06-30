@@ -37,6 +37,7 @@ import com.sun.c1x.debug.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiCallingConvention.Type;
+import com.sun.cri.ci.CiUtil.SlotFormatter;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -239,16 +240,18 @@ public class T1X implements RuntimeCompiler {
         }
     }
 
-    private static void addStopPositionComments(T1XTargetMethod t1xMethod, CiHexCodeFile hcf) {
+    private static void addStopPositionComments(final T1XTargetMethod t1xMethod, CiHexCodeFile hcf) {
         if (t1xMethod.stopPositions() != null) {
             StopPositions stopPositions = new StopPositions(t1xMethod.stopPositions());
             Object[] directCallees = t1xMethod.directCallees();
 
+            JVMSFrameLayout frame = t1xMethod.frame;
+            SlotFormatter slotFormatter = new SlotFormatter(VMFrameLayout.STACK_SLOT_SIZE, frame.framePointer(), frame.frameReferenceMapOffset());
             for (int stopIndex = 0; stopIndex < stopPositions.length(); ++stopIndex) {
                 int pos = stopPositions.get(stopIndex);
 
                 CiDebugInfo info = t1xMethod.debugInfoAt(stopIndex, null);
-                hcf.addComment(pos, CiUtil.append(new StringBuilder(100), info, target().arch, JVMSFrameLayout.JVMS_SLOT_SIZE).toString());
+                hcf.addComment(pos, CiUtil.append(new StringBuilder(100), info, target().arch, slotFormatter).toString());
 
                 if (stopIndex < t1xMethod.numberOfDirectCalls()) {
                     Object callee = directCallees[stopIndex];

@@ -602,17 +602,51 @@ public class CiUtil {
     }
 
     /**
-     * Appends a formatted debuginfo to a {@link StringBuilder}.
+     * Helper for formatting a slot denoted to hold an object value by a frame reference map.
+     */
+    public static class SlotFormatter {
+        /**
+         * The size of a stack slot.
+         */
+        public final int slotSize;
+
+        /**
+         * The register used as the frame pointer.
+         */
+        public final CiRegister fp;
+
+        /**
+         * The offset (in bytes) from the slot pointed to by {@link #fp} to the slot
+         * corresponding to bit 0 in the frame reference map.
+         */
+        public final int refMapToFPOffset;
+
+        public SlotFormatter(int slotSize, CiRegister fp, int refMapToFPOffset) {
+            this.slotSize = slotSize;
+            this.fp = fp;
+            this.refMapToFPOffset = refMapToFPOffset;
+        }
+
+        public String format(int slot) {
+            int refMapOffset = slot * slotSize;
+            int fpOffset = refMapOffset + refMapToFPOffset;
+            if (fpOffset >= 0) {
+                return fp + "+" + fpOffset;
+            }
+            return fp.name + fpOffset;
+        }
+    }
+
+    /**
+     * Appends a formatted debug info to a {@link StringBuilder}.
      *
      * @param sb the {@link StringBuilder} to append to
      * @param info the debug info to format and append to {@code sb}
      * @param arch if not {@code null}, this object is used to augment the output with register names denoted by the
      *            register reference map in {@code info}
-     * @param slotSize if {@code -1}, this value is used to augment the output with the slot offsets denoted by the
-     *            frame reference map in {@code info}
      * @return the value of {@code sb}
      */
-    public static StringBuilder append(StringBuilder sb, CiDebugInfo info, CiArchitecture arch, int slotSize) {
+    public static StringBuilder append(StringBuilder sb, CiDebugInfo info, CiArchitecture arch, SlotFormatter slotFormatter) {
         String nl = NEW_LINE;
         if (info.hasRegisterRefMap()) {
             sb.append("  reg-ref-map:");
@@ -627,9 +661,9 @@ public class CiUtil {
         if (info.hasStackRefMap()) {
             sb.append("frame-ref-map:");
             CiBitMap bm = info.frameRefMap;
-            if (slotSize != -1) {
+            if (slotFormatter != null) {
                 for (int i = bm.nextSetBit(0); i >= 0; i = bm.nextSetBit(i + 1)) {
-                    sb.append(" +" + i * slotSize);
+                    sb.append(" " + slotFormatter.format(i));
                 }
             }
             sb.append(' ').append(bm).append(nl);
@@ -641,13 +675,6 @@ public class CiUtil {
             append(sb, info.codePos);
         }
         return sb;
-    }
-
-    /**
-     * Formats a debug info to a string and adds it as a comment to a given {@link CiHexCodeFile}.
-     */
-    public static void addDebugInfo(CiHexCodeFile hcf, int pos, CiDebugInfo info, int slotSize, CiArchitecture arch) {
-        hcf.addComment(pos, append(new StringBuilder(100), info, arch, slotSize).toString());
     }
 
     /**
