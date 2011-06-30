@@ -78,9 +78,11 @@ public class CFGPrinterObserver implements CompilationObserver {
         }
 
         boolean cfgprinted = false;
+        RiRuntime runtime = event.getCompilation().runtime;
 
         if (event.getBlockMap() != null && event.getCodeSize() >= 0) {
             o.cfgPrinter.printCFG(event.getMethod(), event.getBlockMap(), event.getCodeSize(), label, event.isHIRValid(), event.isLIRValid());
+            o.cfgPrinter.printBytecodes(runtime.disassemble(event.getMethod()));
             cfgprinted = true;
         }
 
@@ -94,8 +96,6 @@ public class CFGPrinterObserver implements CompilationObserver {
                 // Avoid duplicate "cfg" section
                 label = null;
             }
-
-            RiRuntime runtime = event.getCompilation().runtime;
             o.cfgPrinter.printMachineCode(runtime.disassemble(event.getTargetMethod()), label);
         }
     }

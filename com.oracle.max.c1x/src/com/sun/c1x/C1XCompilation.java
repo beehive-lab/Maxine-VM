@@ -205,7 +205,7 @@ public final class C1XCompilation {
         } else {
             if (compiler.isObserved()) {
                 String label = CiUtil.format("BlockListBuilder %f %R %H.%n(%P)", method, false);
-                compiler.fireCompilationEvent(new CompilationEvent(this, label, map, method.code().length));
+                compiler.fireCompilationEvent(new CompilationEvent(this, label, method, map, method.code().length));
             }
         }
         map.cleanup();
