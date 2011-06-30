@@ -55,7 +55,7 @@ import com.sun.cri.ci.CiTargetMethod.LookupTable;
  *
  *     Position, EntrySize, Low, High, NPairs KeySize OffsetSize ::= int
  *
- *     Delim := "<|@"
+ *     Delim := "<||@"
  * </pre>
  *
  * There must be exactly one HexCode and Platform part in a HexCodeFile. The length of HexDigits must be even
@@ -64,21 +64,21 @@ import com.sun.cri.ci.CiTargetMethod.LookupTable;
  * Below is an example of a valid Code input:
  * <pre>
  *
- *  Platform AMD64 64  <|@
- *  HexCode 0 e8000000009090904883ec084889842410d0ffff48893c24e800000000488b3c24488bf0e8000000004883c408c3  <|@
+ *  Platform AMD64 64  <||@
+ *  HexCode 0 e8000000009090904883ec084889842410d0ffff48893c24e800000000488b3c24488bf0e8000000004883c408c3  <||@
  *  Comment 24 frame-ref-map: +0 {0}
  *  at java.lang.String.toLowerCase(String.java:2496) [bci: 1]
  *              |0
  *     locals:  |stack:0:a
  *     stack:   |stack:0:a
- *    <|@
- *  OperandComment 24 {java.util.Locale.getDefault()}  <|@
+ *    <||@
+ *  OperandComment 24 {java.util.Locale.getDefault()}  <||@
  *  Comment 36 frame-ref-map: +0 {0}
  *  at java.lang.String.toLowerCase(String.java:2496) [bci: 4]
  *              |0
  *     locals:  |stack:0:a
- *    <|@
- *  OperandComment 36 {java.lang.String.toLowerCase(Locale)}  <|@
+ *    <||@
+ *  OperandComment 36 {java.lang.String.toLowerCase(Locale)}  <||@
  *
  * </pre>
  */
