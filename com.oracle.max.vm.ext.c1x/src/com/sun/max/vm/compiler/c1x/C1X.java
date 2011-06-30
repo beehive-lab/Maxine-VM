@@ -158,24 +158,25 @@ public class C1X implements RuntimeCompiler {
 
     @Override
     public void initialize(Phase phase) {
+        if (isHosted() && !optionsRegistered) {
+            C1XOptions.setOptimizationLevel(optLevelOption.getValue());
+            C1XOptions.UseConstDirectCall = true; // Default
+            C1XOptions.OptIntrinsify = false; // TODO (ds): remove once intrinisification works for Maxine
+            C1XOptions.StackShadowPages = VmThread.STACK_SHADOW_PAGES;
+            VMOptions.addFieldOptions("-C1X:", C1XOptions.class, getHelpMap());
+            VMOptions.addFieldOptions("-ASM:", AsmOptions.class, getHelpMap());
+
+            // Boot image code may not be safely deoptimizable due to metacircular issues
+            // so only enable speculative optimizations at runtime
+            C1XOptions.UseAssumptions = false;
+
+            optionsRegistered = true;
+        }
+
         if (isHosted() && phase == Phase.COMPILING) {
             // Temporary work-around to support the @ACCESSOR annotation.
             GraphBuilder.setAccessor(ClassActor.fromJava(Accessor.class));
 
-            if (!optionsRegistered) {
-                C1XOptions.setOptimizationLevel(optLevelOption.getValue());
-                C1XOptions.UseConstDirectCall = true; // Default
-                C1XOptions.OptIntrinsify = false; // TODO (ds): remove once intrinisification works for Maxine
-                C1XOptions.StackShadowPages = VmThread.STACK_SHADOW_PAGES;
-                VMOptions.addFieldOptions("-C1X:", C1XOptions.class, getHelpMap());
-                VMOptions.addFieldOptions("-ASM:", AsmOptions.class, getHelpMap());
-
-                // Boot image code may not be safely deoptimizable due to metacircular issues
-                // so only enable speculative optimizations at runtime
-                C1XOptions.UseAssumptions = false;
-
-                optionsRegistered = true;
-            }
             compiler = new C1XCompiler(runtime, target, xirGenerator, vm().registerConfigs.compilerStub);
 
             // search for the runtime call and register critical methods
