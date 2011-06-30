@@ -24,6 +24,7 @@ package com.sun.max.vm.stack;
 
 import java.util.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.collect.*;
@@ -44,6 +45,11 @@ public abstract class VMFrameLayout {
      * return instruction address on architectures that push it on calls.
      */
     public abstract int frameSize();
+
+    /**
+     * Gets the register used as the frame pointer.
+     */
+    public abstract CiRegister framePointer();
 
     /**
      * Gets the size of the reference map for all the stack words whose value may be changed by this frame's method.

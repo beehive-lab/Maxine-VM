@@ -278,6 +278,11 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             }
 
             @Override
+            public CiRegister framePointer() {
+                return AMD64.rsp;
+            }
+
+            @Override
             public Slots slots() {
                 return new Slots() {
                     @Override
@@ -580,6 +585,11 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
 
             public Opt2BaselineAdapterFrameLayout(int frameSize) {
                 super(frameSize, true);
+            }
+
+            @Override
+            public CiRegister framePointer() {
+                return AMD64.rsp;
             }
 
             @Override
