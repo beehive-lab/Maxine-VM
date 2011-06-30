@@ -199,7 +199,7 @@ public final class T1XTargetMethod extends TargetMethod {
             final T1XReferenceMapEditor referenceMapEditor = new T1XReferenceMapEditor(this, comp.numberOfBlocks, comp.blockBCIs, stops.bytecodeStopsIterator, frame);
             this.refMapEditor.set(referenceMapEditor);
             final ReferenceMapInterpreter interpreter = ReferenceMapInterpreter.from(referenceMapEditor.blockFrames());
-            if (interpreter.performsAllocation() || T1XOptions.EagerRefMaps) {
+            if (interpreter.performsAllocation() || T1XOptions.EagerRefMaps || T1XOptions.PrintCFGToFile) {
                 if (isHosted() && T1XOptions.EagerRefMaps) {
                     StackReferenceMapPreparer.TraceSRS = true;
                 }
@@ -330,7 +330,7 @@ public final class T1XTargetMethod extends TargetMethod {
         CiBitMap frameRefMap = new CiBitMap(referenceMaps(), stopIndex * refMapSize(), frameRefMapSize);
         CiBitMap regRefMap = new CiBitMap(referenceMaps(), (stopIndex * refMapSize()) + frameRefMapSize, regRefMapSize());
         int bci = bciForPos(stopPosition(stopIndex));
-        CiFrame debugFrame = frame.asFrame(classMethodActor, bci);
+        CiFrame debugFrame = frame.asFrame(classMethodActor, bci, frameRefMap);
         return new CiDebugInfo(debugFrame, regRefMap, frameRefMap);
     }
 

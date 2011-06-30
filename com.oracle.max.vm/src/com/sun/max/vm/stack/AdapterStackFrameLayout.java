@@ -25,7 +25,7 @@ package com.sun.max.vm.stack;
 /**
  * Describes the layout of an adapter frame.
  */
-public class AdapterStackFrameLayout extends VMFrameLayout {
+public abstract class AdapterStackFrameLayout extends VMFrameLayout {
 
     private final int frameSize;
     private final boolean isReturnAddressPushedByCall;

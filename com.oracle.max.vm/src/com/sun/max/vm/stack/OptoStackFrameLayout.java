@@ -22,8 +22,7 @@
  */
 package com.sun.max.vm.stack;
 
-import static com.sun.max.platform.Platform.*;
-
+import com.sun.cri.ci.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.collect.*;
 
@@ -34,19 +33,22 @@ public class OptoStackFrameLayout extends VMFrameLayout {
 
     private final int frameSize;
     private final boolean isReturnAddressPushedByCall;
+    private final CiRegister fp;
 
-    public OptoStackFrameLayout(int frameSize) {
-        this(frameSize, platform().isa.callsPushReturnAddressOnStack());
-    }
-
-    public OptoStackFrameLayout(int frameSize, boolean isReturnAddressPushedByCall) {
+    public OptoStackFrameLayout(int frameSize, boolean isReturnAddressPushedByCall, CiRegister fp) {
         this.frameSize = frameSize;
         this.isReturnAddressPushedByCall = isReturnAddressPushedByCall;
+        this.fp = fp;
     }
 
     @Override
     public int frameSize() {
         return frameSize;
+    }
+
+    @Override
+    public CiRegister framePointer() {
+        return fp;
     }
 
     @Override
