@@ -905,6 +905,16 @@ public final class Log {
         }
     }
 
+    private static VmThread lockOwner;
+    private static int lockDepth;
+
+    /**
+     * Gets the thread that current holds the log lock.
+     */
+    public static VmThread lockOwner() {
+        return lockOwner;
+    }
+
     /**
      * Attempts to acquire the global lock on all debug output, blocking until the lock is successfully acquired. This
      * lock can be acquired recursively by a thread. The lock is not released for other threads until the thread that
@@ -921,8 +931,14 @@ public final class Log {
         if (isHosted()) {
             return true;
         }
+
         boolean wasDisabled = Safepoint.disable();
         Log.log_lock();
+        if (lockDepth == 0) {
+            FatalError.check(lockOwner == null, "log lock should have no owner with depth 0");
+            lockOwner = VmThread.current();
+        }
+        lockDepth++;
         return !wasDisabled;
     }
 
@@ -937,6 +953,12 @@ public final class Log {
     public static void unlock(boolean lockDisabledSafepoints) {
         if (isHosted()) {
             return;
+        }
+
+        --lockDepth;
+        FatalError.check(lockOwner == VmThread.current(), "log lock should be owned by current thread");
+        if (lockDepth == 0) {
+            lockOwner = null;
         }
         Log.log_unlock();
         ProgramError.check(Safepoint.isDisabled(), "Safepoints must not be re-enabled in code surrounded by Debug.lock() and Debug.unlock()");
