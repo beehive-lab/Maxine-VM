@@ -602,9 +602,9 @@ public class CiUtil {
     }
 
     /**
-     * Helper for formatting a slot denoted to hold an object value by a frame reference map.
+     * Formats a location present in a register or frame reference map.
      */
-    public static class SlotFormatter {
+    public static class RefMapFormatter {
         /**
          * The size of a stack slot.
          */
@@ -615,25 +615,32 @@ public class CiUtil {
          */
         public final CiRegister fp;
 
+        public final CiArchitecture arch;
+
         /**
          * The offset (in bytes) from the slot pointed to by {@link #fp} to the slot
          * corresponding to bit 0 in the frame reference map.
          */
         public final int refMapToFPOffset;
 
-        public SlotFormatter(int slotSize, CiRegister fp, int refMapToFPOffset) {
+        public RefMapFormatter(CiArchitecture arch, int slotSize, CiRegister fp, int refMapToFPOffset) {
+            this.arch = arch;
             this.slotSize = slotSize;
             this.fp = fp;
             this.refMapToFPOffset = refMapToFPOffset;
         }
 
-        public String format(int slot) {
-            int refMapOffset = slot * slotSize;
+        public String formatStackSlot(int frameRefMapIndex) {
+            int refMapOffset = frameRefMapIndex * slotSize;
             int fpOffset = refMapOffset + refMapToFPOffset;
             if (fpOffset >= 0) {
                 return fp + "+" + fpOffset;
             }
             return fp.name + fpOffset;
+        }
+
+        public String formatRegister(int regRefMapIndex) {
+            return arch.registers[regRefMapIndex].toString();
         }
     }
 
@@ -642,18 +649,16 @@ public class CiUtil {
      *
      * @param sb the {@link StringBuilder} to append to
      * @param info the debug info to format and append to {@code sb}
-     * @param arch if not {@code null}, this object is used to augment the output with register names denoted by the
-     *            register reference map in {@code info}
      * @return the value of {@code sb}
      */
-    public static StringBuilder append(StringBuilder sb, CiDebugInfo info, CiArchitecture arch, SlotFormatter slotFormatter) {
+    public static StringBuilder append(StringBuilder sb, CiDebugInfo info, RefMapFormatter formatter) {
         String nl = NEW_LINE;
         if (info.hasRegisterRefMap()) {
             sb.append("  reg-ref-map:");
             CiBitMap bm = info.registerRefMap;
-            if (arch != null) {
+            if (formatter != null) {
                 for (int reg = bm.nextSetBit(0); reg >= 0; reg = bm.nextSetBit(reg + 1)) {
-                    sb.append(" " + arch.registers[reg]);
+                    sb.append(" " + formatter.formatRegister(reg));
                 }
             }
             sb.append(' ').append(bm).append(nl);
@@ -661,9 +666,9 @@ public class CiUtil {
         if (info.hasStackRefMap()) {
             sb.append("frame-ref-map:");
             CiBitMap bm = info.frameRefMap;
-            if (slotFormatter != null) {
+            if (formatter != null) {
                 for (int i = bm.nextSetBit(0); i >= 0; i = bm.nextSetBit(i + 1)) {
-                    sb.append(" " + slotFormatter.format(i));
+                    sb.append(" " + formatter.formatStackSlot(i));
                 }
             }
             sb.append(' ').append(bm).append(nl);

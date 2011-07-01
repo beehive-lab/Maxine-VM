@@ -22,7 +22,6 @@
  */
 package com.sun.max.vm.stack.amd64;
 
-import com.oracle.max.asm.target.amd64.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.stack.*;
@@ -30,7 +29,7 @@ import com.sun.max.vm.stack.*;
 public class AMD64JavaStackFrame extends VMStackFrame {
 
     public AMD64JavaStackFrame(StackFrame callee, TargetMethod targetMethod, Pointer ip, Pointer fp, Pointer sp) {
-        super(callee, new OptoStackFrameLayout(targetMethod.frameSize(), true, AMD64.rsp), targetMethod, ip, fp, sp);
+        super(callee, targetMethod, ip, fp, sp);
     }
 
     @Override

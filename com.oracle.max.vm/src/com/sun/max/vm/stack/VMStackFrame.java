@@ -35,9 +35,9 @@ public abstract class VMStackFrame extends StackFrame {
 
     private final TargetMethod targetMethod;
 
-    public VMStackFrame(StackFrame callee, VMFrameLayout layout, TargetMethod targetMethod, Pointer ip, Pointer fp, Pointer sp) {
+    public VMStackFrame(StackFrame callee, TargetMethod targetMethod, Pointer ip, Pointer fp, Pointer sp) {
         super(callee, ip, sp, fp);
-        this.layout = layout;
+        this.layout = targetMethod.frameLayout();
         this.targetMethod = targetMethod;
     }
 

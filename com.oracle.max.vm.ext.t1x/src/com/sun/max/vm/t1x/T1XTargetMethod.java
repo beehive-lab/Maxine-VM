@@ -217,6 +217,11 @@ public final class T1XTargetMethod extends TargetMethod {
     }
 
     @Override
+    public VMFrameLayout frameLayout() {
+        return frame;
+    }
+
+    @Override
     public MethodProfile profile() {
         return profile;
     }
@@ -745,7 +750,7 @@ public final class T1XTargetMethod extends TargetMethod {
                 FramePointerStateAMD64 framePointerState = computeFramePointerState(current, sfw, lastPrologueInstruction);
                 localVariablesBase = framePointerState.localVariablesBase(current);
             }
-            StackFrame stackFrame = new AMD64JVMSFrame(sfw.calleeStackFrame(), frame, current.targetMethod(), current.ip(), current.sp(), localVariablesBase, localVariablesBase);
+            StackFrame stackFrame = new AMD64JVMSFrame(sfw.calleeStackFrame(), current.targetMethod(), current.ip(), current.sp(), localVariablesBase, localVariablesBase);
             return visitor.visitFrame(stackFrame);
         } else {
             throw unimplISA();

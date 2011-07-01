@@ -23,6 +23,7 @@
 package com.sun.max.vm.compiler.c1x;
 
 import static com.sun.cri.ci.CiUtil.*;
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.compiler.c1x.C1XTargetMethod.*;
 import static com.sun.max.vm.compiler.c1x.ValueCodec.*;
@@ -30,15 +31,18 @@ import static com.sun.max.vm.compiler.c1x.ValueCodec.*;
 import java.io.*;
 import java.util.*;
 
+import com.oracle.max.asm.target.amd64.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetMethod.FrameAccess;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * The debug info for the stops in a {@link C1XTargetMethod}.
@@ -169,7 +173,7 @@ public final class DebugInfo {
             // Test encoding & decoding while offline
             for (int i = 0; i < debugInfos.length; ++i) {
                 if (debugInfos[i] != null && debugInfos[i].frame() != null) {
-                    CiDebugInfo info = infoAt(i, null);
+                    CiDebugInfo info = infoAt(i, null, false);
                     CiFrame frame = info.frame();
                     CiFrame originalFrame = debugInfos[i].frame();
                     assert frame.equalsIgnoringKind(originalFrame);
@@ -362,14 +366,15 @@ public final class DebugInfo {
      *
      * @param index a stop index
      * @param fa access to a live frame (may be {@code null})
+     * @param stackSlotAsAddress translate stack slots to stack addresses
      * @return the frame(s) at {@code index}
      */
-    public CiDebugInfo infoAt(int index, FrameAccess fa) {
+    public CiDebugInfo infoAt(int index, FrameAccess fa, boolean stackSlotAsAddress) {
         final DecodingStream in = new DecodingStream(data);
         int fpt = (tm.totalRefMapSize()) * tm.stopPositions().length;
         CiBitMap regRefMap = regRefMapAt(index);
         CiBitMap frameRefMap = frameRefMapAt(index);
-        CiFrame frame = decodeFrame(in, fpt, index, fa, regRefMap, frameRefMap);
+        CiFrame frame = decodeFrame(in, fpt, index, fa, regRefMap, frameRefMap, stackSlotAsAddress);
         return new CiDebugInfo(frame, regRefMap, frameRefMap);
     }
 
@@ -402,9 +407,10 @@ public final class DebugInfo {
      * Decodes a frame denoted by a given frame index.
      * @param fpt the position of the FPT in {@link #data}
      * @param frameIndex the index of an entry in the FPT
+     * @param stackSlotAsAddress translate stack slots to stack addresses
      * @return the decoded frame
      */
-    CiFrame decodeFrame(DecodingStream in, int fpt, int frameIndex, FrameAccess fa, CiBitMap regRefMap, CiBitMap frameRefMap) {
+    CiFrame decodeFrame(DecodingStream in, int fpt, int frameIndex, FrameAccess fa, CiBitMap regRefMap, CiBitMap frameRefMap, boolean stackSlotAsAddress) {
         int framePos = framePos(fpt, frameIndex);
         if (framePos == 0) {
             return null;
@@ -435,14 +441,37 @@ public final class DebugInfo {
         int n = numLocals + numStack + numLocks;
         CiValue[] values = new CiValue[n];
         for (int i = 0; i < n; i++) {
-            values[i] = fa != null ? toLiveSlot(fa, readValue(in, regRefMap, frameRefMap)) : readValue(in, regRefMap, frameRefMap);
+            CiValue value = readValue(in, regRefMap, frameRefMap);
+            if (fa != null) {
+                value = toLiveSlot(fa, value);
+            } else {
+                if (stackSlotAsAddress && value != null && value.isStackSlot()) {
+                    CiStackSlot ss = (CiStackSlot) value;
+                    CiRegister fp;
+                    if (platform().isa == ISA.AMD64) {
+                        fp = AMD64.rsp;
+                    } else {
+                        throw FatalError.unimplemented();
+                    }
+                    final int offsetInFrame = ss.index() * target().spillSlotSize;
+                    if (ss.inCallerFrame()) {
+                        int callerFrame = tm.frameSize() + target().arch.returnAddressSize;
+                        int offset = callerFrame + offsetInFrame;
+                        value = new CiAddress(ss.kind, fp.asValue(), offset);
+                    } else {
+                        value = new CiAddress(ss.kind, fp.asValue(), offsetInFrame);
+                    }
+                }
+            }
+
+            values[i] = value;
         }
 
         CiFrame caller = null;
         if (encCallerIndex != NO_FRAME) {
             int callerIndex = encCallerIndex - FIRST_FRAME;
             assert frameIndex != callerIndex;
-            caller = decodeFrame(in, fpt, callerIndex, fa, regRefMap, frameRefMap);
+            caller = decodeFrame(in, fpt, callerIndex, fa, regRefMap, frameRefMap, stackSlotAsAddress);
         }
         return new CiFrame(caller, method, bci, values, numLocals, numStack, numLocks);
     }
@@ -486,7 +515,7 @@ public final class DebugInfo {
         }
         StringBuilder sb = new StringBuilder(1024);
         for (int i = 0; i < tm.stopPositions().length; i++) {
-            CiDebugInfo info = infoAt(i, null);
+            CiDebugInfo info = infoAt(i, null, true);
             if (sb.length() != 0) {
                 sb.append(NEW_LINE);
             }
