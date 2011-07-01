@@ -432,7 +432,7 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
         TargetMethod calleeTM = callee.targetMethod();
         if (calleeTM != null) {
             Stub.Type st = calleeTM.stubType();
-            if (st == InterfaceTrampoline || st == VirtualTrampoline || st == InterfaceTrampoline) {
+            if (st == StaticTrampoline || st == VirtualTrampoline || st == InterfaceTrampoline) {
                 prepareTrampolineRefMap(current, callee, preparer);
             } else if (calleeTM.is(TrapStub) && Trap.Number.isStackOverflow(csa)) {
                 // a method can never catch stack overflow for itself so there
