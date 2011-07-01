@@ -43,7 +43,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.CompilationScheme.*;
+import com.sun.max.vm.compiler.CompilationScheme.CompilationFlag;
 import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.hosted.CompiledPrototype.Link.Relationship;
@@ -860,25 +860,16 @@ public class CompiledPrototype extends Prototype {
     private void linkITable(ClassActor classActor, final IntHashMap<InterfaceActor> serialToInterfaceActor) {
         final DynamicHub hub = classActor.dynamicHub();
         Word[] words = hub.expansion.words;
-        for (int mTableIndex = hub.mTableStartIndex; mTableIndex < hub.mTableStartIndex + hub.mTableLength; mTableIndex++) {
-            final int interfaceITableIndex = hub.getInt(mTableIndex);
-            if (interfaceITableIndex > 0) {
-                final int serial = hub.getWord(interfaceITableIndex).asAddress().toInt();
-                final InterfaceActor interfaceActor = serialToInterfaceActor.get(serial);
-                if (interfaceActor != null) {
-                    for (InterfaceMethodActor interfaceMethodActor : interfaceActor.localInterfaceMethodActors()) {
-                        final int methodITableIndex = interfaceITableIndex + interfaceMethodActor.iIndexInInterface();
-                        final int iIndex = methodITableIndex - hub.iTableStartIndex;
-                        try {
-                            final VirtualMethodActor virtualMethodActor = classActor.getVirtualMethodActorByIIndex(iIndex);
-                            final TargetMethod targetMethod = CompilationScheme.Static.getCurrentTargetMethod(virtualMethodActor);
-                            if (targetMethod != null) {
-                                words[methodITableIndex] = VTABLE_ENTRY_POINT.in(targetMethod);
-                            }
-                        } catch (Throwable e) {
-                            throw FatalError.unexpected("Error linking itable entry " + iIndex + " {" + interfaceMethodActor + "} in hub of " + classActor, e);
-                        }
-                    }
+        for (InterfaceActor interfaceActor : classActor.getAllInterfaceActors()) {
+            final int interfaceIndex = hub.getITableIndex(interfaceActor.id);
+            for (InterfaceMethodActor interfaceMethodActor : interfaceActor.localInterfaceMethodActors()) {
+                final int iTableIndex = interfaceIndex + interfaceMethodActor.iIndexInInterface();
+                final int iIndex = iTableIndex - hub.iTableStartIndex;
+                final VirtualMethodActor virtualMethodActor = classActor.getVirtualMethodActorByIIndex(iIndex);
+                final TargetMethod targetMethod = CompilationScheme.Static.getCurrentTargetMethod(virtualMethodActor);
+                assert virtualMethodActor.name == interfaceMethodActor.name;
+                if (targetMethod != null) {
+                    words[iTableIndex] = VTABLE_ENTRY_POINT.in(targetMethod);
                 }
             }
         }
