@@ -186,7 +186,7 @@ public class T1XReferenceMapEditor implements ReferenceMapInterpreterContext, Re
                         byte[] refMaps = t1xMethod.referenceMaps();
                         for (int localVariableIndex = 0; localVariableIndex < codeAttribute.maxLocals; ++localVariableIndex) {
                             final int refMapIndex = frame.localVariableReferenceMapIndex(localVariableIndex);
-                            CiRegister fp = frame.framePointer();
+                            CiRegister fp = frame.framePointerReg();
                             if (ByteArrayBitMap.isSet(refMaps, offset, t1xMethod.frameRefMapSize, refMapIndex)) {
                                 int fpOffset = frame.localVariableOffset(localVariableIndex);
                                 Log.print(' ');
@@ -204,7 +204,7 @@ public class T1XReferenceMapEditor implements ReferenceMapInterpreterContext, Re
                         Log.print(", stack={");
                         for (int operandStackIndex = 0; operandStackIndex < codeAttribute.maxStack; ++operandStackIndex) {
                             final int refMapIndex = frame.operandStackReferenceMapIndex(operandStackIndex);
-                            CiRegister fp = frame.framePointer();
+                            CiRegister fp = frame.framePointerReg();
                             if (ByteArrayBitMap.isSet(refMaps, offset, t1xMethod.frameRefMapSize, refMapIndex)) {
                                 int fpOffset = frame.operandStackOffset(operandStackIndex);
                                 Log.print(' ');
@@ -222,7 +222,7 @@ public class T1XReferenceMapEditor implements ReferenceMapInterpreterContext, Re
                         Log.print(", template={");
                         for (int i = 0; i < frame.numberOfTemplateSlots(); i++) {
                             int refMapIndex = Unsigned.idiv(-t1xMethod.frameRefMapOffset, STACK_SLOT_SIZE) + i;
-                            CiRegister fp = frame.framePointer();
+                            CiRegister fp = frame.framePointerReg();
                             if (ByteArrayBitMap.isSet(refMaps, offset, t1xMethod.frameRefMapSize, refMapIndex)) {
                                 Log.print(' ');
                                 Log.print(i);

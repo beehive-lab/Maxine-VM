@@ -47,7 +47,7 @@ public class OptoStackFrameLayout extends VMFrameLayout {
     }
 
     @Override
-    public CiRegister framePointer() {
+    public CiRegister framePointerReg() {
         return fp;
     }
 

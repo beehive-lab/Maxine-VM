@@ -175,7 +175,12 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
                 int ripAdjustment = MaxineVM.isHosted() ? computeFrameState(current) & ~1 : frameSize();
                 Pointer ripPointer = current.sp().plus(ripAdjustment);
                 Pointer fp = ripPointer.minus(frameSize());
-                return visitor.visitFrame(new AdapterStackFrame(current.stackFrameWalker().calleeStackFrame(), new Baseline2OptAdapterFrameLayout(frameSize()), current.targetMethod(), current.ip(), fp, current.sp()));
+                return visitor.visitFrame(new AdapterStackFrame(current.stackFrameWalker().calleeStackFrame(), current.targetMethod(), current.ip(), fp, current.sp()));
+            }
+
+            @Override
+            public VMFrameLayout frameLayout() {
+                return new Baseline2OptAdapterFrameLayout(frameSize());
             }
         }
 
@@ -278,7 +283,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             }
 
             @Override
-            public CiRegister framePointer() {
+            public CiRegister framePointerReg() {
                 return AMD64.rsp;
             }
 
@@ -558,7 +563,12 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
 
                 Pointer ripPointer = cursor.sp().plus(ripAdjustment);
                 Pointer fp = ripPointer.minus(frameSize());
-                return visitor.visitFrame(new AdapterStackFrame(cursor.stackFrameWalker().calleeStackFrame(), new Opt2BaselineAdapterFrameLayout(frameSize()), cursor.targetMethod(), cursor.ip(), fp, cursor.sp()));
+                return visitor.visitFrame(new AdapterStackFrame(cursor.stackFrameWalker().calleeStackFrame(), cursor.targetMethod(), cursor.ip(), fp, cursor.sp()));
+            }
+
+            @Override
+            public VMFrameLayout frameLayout() {
+                return new Opt2BaselineAdapterFrameLayout(frameSize());
             }
         }
 
@@ -588,7 +598,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             }
 
             @Override
-            public CiRegister framePointer() {
+            public CiRegister framePointerReg() {
                 return AMD64.rsp;
             }
 

@@ -55,10 +55,10 @@ public class CFGPrinter {
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmm");
 
     /**
-     * Gets the output stream  on the file "output.cfg" in the current working directory.
+     * Gets the output stream  on the file "compilations-`date`" in the current working directory.
      * This stream is first opened if necessary.
      *
-     * @return the output stream to "output.cfg" or {@code null} if there was an error opening this file for writing
+     * @return the output stream or {@code null} if there was an error opening this file for writing
      */
     public static synchronized OutputStream cfgFileStream() {
         if (cfgFileStream == null) {

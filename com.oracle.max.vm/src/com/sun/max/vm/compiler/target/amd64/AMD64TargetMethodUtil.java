@@ -225,6 +225,10 @@ public final class AMD64TargetMethodUtil {
         return visitor.visitFrame(stackFrame);
     }
 
+    public static VMFrameLayout frameLayout(TargetMethod targetMethod) {
+        return new OptoStackFrameLayout(targetMethod.frameSize(), true, AMD64.rsp);
+    }
+
     /**
      * Advances the stack walker such that {@code current} becomes the callee.
      *

@@ -29,8 +29,8 @@ import com.sun.max.vm.compiler.target.*;
  */
 public abstract class JVMSFrame extends VMStackFrame {
 
-    public JVMSFrame(StackFrame callee, JVMSFrameLayout layout, TargetMethod targetMethod, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer) {
-        super(callee, layout, targetMethod, instructionPointer, framePointer, stackPointer);
+    public JVMSFrame(StackFrame callee, TargetMethod targetMethod, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer) {
+        super(callee, targetMethod, instructionPointer, framePointer, stackPointer);
     }
 
     /**

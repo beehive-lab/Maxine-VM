@@ -231,7 +231,7 @@ public abstract class JVMSFrameLayout extends VMFrameLayout {
         int numLocals = codeAttribute.maxLocals;
         int numStack = codeAttribute.maxStack;
         CiValue[] values = new CiValue[numLocals + numStack];
-        CiValue fp = framePointer().asValue();
+        CiValue fp = framePointerReg().asValue();
         for (int i = 0; i < numLocals; i++) {
             CiKind kind = CiKind.Word;
             if (frameRefMap != null && frameRefMap.get(localVariableReferenceMapIndex(i))) {

@@ -33,6 +33,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.stack.*;
 
 /**
  * Representation of compilation in the VM:  a method, stub, adapter, or other routine.
@@ -186,6 +187,14 @@ public final class TeleCompilation extends AbstractTeleVMHolder implements MaxCo
 
     public TeleTargetMethod teleTargetMethod() {
         return teleTargetMethod;
+    }
+
+    public VMFrameLayout frameLayout() {
+        TargetMethod targetMethod = teleTargetMethod.targetMethod();
+        if (targetMethod != null) {
+            return targetMethod.frameLayout();
+        }
+        return null;
     }
 
     /**

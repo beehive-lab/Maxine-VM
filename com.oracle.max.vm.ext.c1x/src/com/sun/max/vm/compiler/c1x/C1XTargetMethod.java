@@ -172,6 +172,15 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
         return frameSize() / Word.size();
     }
 
+    @Override
+    public VMFrameLayout frameLayout() {
+        if (platform().isa == ISA.AMD64) {
+            return AMD64TargetMethodUtil.frameLayout(this);
+        } else {
+            throw FatalError.unimplemented();
+        }
+    }
+
     /**
      * @return the size (in bytes) of a reference map covering an activation frame for this target method.
      */
@@ -251,17 +260,29 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
 
     @Override
     public boolean isPatchableCallSite(Address callSite) {
-        return AMD64TargetMethodUtil.isPatchableCallSite(callSite);
+        if (platform().isa == ISA.AMD64) {
+            return AMD64TargetMethodUtil.isPatchableCallSite(callSite);
+        } else {
+            throw FatalError.unimplemented();
+        }
     }
 
     @Override
     public Address fixupCallSite(int callOffset, Address callEntryPoint) {
-        return AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
+        if (platform().isa == ISA.AMD64) {
+            return AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
+        } else {
+            throw FatalError.unimplemented();
+        }
     }
 
     @Override
     public Address patchCallSite(int callOffset, Address callEntryPoint) {
-        return AMD64TargetMethodUtil.mtSafePatchCallDisplacement(this, codeStart().plus(callOffset), callEntryPoint.asAddress());
+        if (platform().isa == ISA.AMD64) {
+            return AMD64TargetMethodUtil.mtSafePatchCallDisplacement(this, codeStart().plus(callOffset), callEntryPoint.asAddress());
+        } else {
+            throw FatalError.unimplemented();
+        }
     }
 
     @Override
@@ -656,6 +677,6 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
 
     @Override
     public CiDebugInfo debugInfoAt(int stopIndex, FrameAccess fa) {
-        return debugInfo.infoAt(stopIndex, fa);
+        return debugInfo.infoAt(stopIndex, fa, true);
     }
 }
