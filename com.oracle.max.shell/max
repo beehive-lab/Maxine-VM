@@ -972,21 +972,29 @@ function run_copyvm() {
 # 'eclipse' command
 #=======================================
 
+# see http://wiki.eclipse.org/FAQ_How_do_I_run_Eclipse%3F
+# and http://wiki.eclipse.org/Starting_Eclipse_Commandline_With_Equinox_Launcher
+
 eclipse_usage="[options]"
 eclipse_defaults="-Xms1g -Xmx3g -XX:ReservedCodeCacheSize=512m -XX:+ShowConfiguration"
 eclipse_help="launch Eclipse with the Maxine VM
 
-    Run Eclipse under Maxine VM with the given options supplied as
-    the value of the '-vmargs' Eclipse launcher option.
-    The expansion of the MAXVM_OPTIONS environment variable is inserted
-    before any other VM options specified on the command line."
+    Run Eclipse with the Maxine VM, by-passing the native Eclipse launcher.
+    The ECLIPSE_HOME environment variable must be set and point to
+    the parent of the 'plugins' directory in an Eclipse installation."
 
 function run_eclipse() {
-    if [ -z "$(type -t eclipse)" ]; then
-        echo "The Eclipse executable 'eclipse' must be on your PATH"
+    if [ ! -d "$ECLIPSE_HOME/plugins" ]; then
+        echo "The ECLIPSE_HOME variable must denote the parent of the 'plugins' directory in an Eclipse installation"
         exit 1
     fi
-    run eclipse -vm ${maxine_vm} -vmargs $eclipse_defaults $MAXVM_OPTIONS $@
+    launcher_jar=$(ls $ECLIPSE_HOME/plugins/org.eclipse.equinox.launcher_*.jar | sort | tail -1);
+    if [ ! -f $launcher_jar ]; then
+        echo "Could not find org.eclipse.equinox.launcher_*.jar in $ECLIPSE_HOME/plugins"
+        exit 1;
+    fi
+    
+    run ${maxine_vm} $eclipse_defaults $MAXVM_OPTIONS $@ -jar $launcher_jar 
 }
 
 #=======================================
