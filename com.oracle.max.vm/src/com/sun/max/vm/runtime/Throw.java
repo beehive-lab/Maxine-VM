@@ -46,7 +46,7 @@ public final class Throw {
     }
 
     public static int TraceExceptions;
-    private static boolean TraceExceptionsRaw;
+    public static boolean TraceExceptionsRaw;
     private static int TraceExceptionsMaxFrames = 200;
     private static int TraceExceptionsRawMaxFrames = 200;
     private static String TraceExceptionsFilter;
