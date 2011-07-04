@@ -61,6 +61,12 @@ public final class FatalError extends Error {
         });
     }
 
+    private static boolean DUMPING_STACKS_IN_FATAL_ERROR;
+    private static FatalError FATAL_ERROR_WHILE_DUMPING_STACKS = new FatalError(null, null);
+    static {
+        FATAL_ERROR_WHILE_DUMPING_STACKS.setStackTrace(new StackTraceElement[0]);
+    }
+
     /**
      * A breakpoint should be set on this method when debugging the VM so that
      * fatal errors can be investigated before the VM exits.
@@ -130,6 +136,18 @@ public final class FatalError extends Error {
 
         Safepoint.disable();
 
+        Throw.TraceExceptions = 0;
+        Throw.TraceExceptionsRaw = false;
+
+        // Try to recover from a fatal error while dumping stacks of the other threads
+        if (DUMPING_STACKS_IN_FATAL_ERROR && FATAL_ERROR_WHILE_DUMPING_STACKS != null) {
+            FatalError error = FATAL_ERROR_WHILE_DUMPING_STACKS;
+            VmThread.current().stackDumpStackFrameWalker().reset();
+            // Nulling FATAL_ERROR_WHILE_DUMPING_STACKS makes this is a one shot attempt at recovery
+            FATAL_ERROR_WHILE_DUMPING_STACKS = null;
+            throw error;
+        }
+
         if (recursionCount >= MAX_RECURSION_COUNT) {
             Log.println("FATAL VM ERROR: Error occurred while handling previous fatal VM error");
             exit(false, Address.zero());
@@ -168,7 +186,10 @@ public final class FatalError extends Error {
                 Log.print("------ Cause Exception ------");
                 throwable.printStackTrace(Log.out);
             }
+
+            DUMPING_STACKS_IN_FATAL_ERROR = true;
             VmThreadMap.ACTIVE.forAllThreadLocals(null, dumpStackOfNonCurrentThread);
+            DUMPING_STACKS_IN_FATAL_ERROR = false;
         }
 
         if (vmThread == null || trappedInNative || Throw.ScanStackOnFatalError) {
@@ -265,7 +286,11 @@ public final class FatalError extends Error {
     static final class DumpStackOfNonCurrentThread implements Pointer.Procedure {
         public void run(Pointer tla) {
             if (ETLA.load(tla) != ETLA.load(currentTLA())) {
-                dumpStackAndThreadLocals(tla, false);
+                try {
+                    dumpStackAndThreadLocals(tla, false);
+                } catch (FatalError e) {
+                    Log.println("--- STACK TRACE TERMINATED DUE TO RECURSIVE FATAL ERROR ---");
+                }
             }
         }
     }
