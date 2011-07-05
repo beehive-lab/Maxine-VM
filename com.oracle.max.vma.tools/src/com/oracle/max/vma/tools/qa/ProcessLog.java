@@ -1135,6 +1135,9 @@ public class ProcessLog {
             case ADVISE_AFTER_INVOKE_VIRTUAL:
                 return InvokeVirtual;
 
+            case ADVISE_AFTER_METHOD_ENTRY:
+                return MethodEntry;
+
             case ADVISE_BEFORE_STACK_ADJUST:
                 return StackAdjust;
 
