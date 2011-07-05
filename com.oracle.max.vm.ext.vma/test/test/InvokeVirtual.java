@@ -22,6 +22,9 @@
  */
 package test;
 
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.reference.*;
+
 
 public class InvokeVirtual {
 
@@ -29,16 +32,31 @@ public class InvokeVirtual {
 
     }
 
-    private void pmethod() {
-
+    private Integer objMethod() {
+        return new Integer(999);
     }
+
+    private int intMethod() {
+        return 998;
+    }
+
+    private Word wordMethod() {
+        Integer x = new Integer(997);
+        return Reference.fromJava(x).toOrigin().asAddress();
+    }
+
     /**
      * @param args
      */
     public static void main(String[] args) {
         InvokeVirtual obj = new InvokeVirtual();
         obj.method();
-        obj.pmethod();
+        @SuppressWarnings("unused")
+        Integer pr = obj.objMethod();
+        @SuppressWarnings("unused")
+        int i = obj.intMethod();
+        @SuppressWarnings("unused")
+        Word w = obj.wordMethod();
     }
 
 }
