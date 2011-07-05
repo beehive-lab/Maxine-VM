@@ -328,7 +328,7 @@ public class T1X implements RuntimeCompiler {
 
     public void initialize(Phase phase) {
         if (isHosted() && phase == Phase.COMPILING) {
-            createTemplates(templateSource, altT1X, true, templates);
+            createTemplates(templateSource, altT1X, true, templates, false);
         }
         if (phase == Phase.STARTING) {
             if (T1XOptions.PrintBytecodeHistogram) {
@@ -364,13 +364,14 @@ public class T1X implements RuntimeCompiler {
      *
      * @param templateSourceClass class containing template methods
      * @param altT1X alternate compiler to use for undefined templates
-     * @param checkComplete If {@code true} check the array for completeness.
+     * @param checkComplete if {@code true} check the array for completeness.
      * @param templates an existing instance that will be incrementally updated.
      *        Value may be null, in which case a new array will be created.
+     * @param useTemplateCallRefMaps if true fold in any ref-maps associated with a template call
      * @return the templates array, either as passed in or created.
      */
     @HOSTED_ONLY
-    public static T1XTemplate[] createTemplates(Class<?> templateSourceClass, T1X altT1X, boolean checkComplete, T1XTemplate[] templates) {
+    public T1XTemplate[] createTemplates(Class<?> templateSourceClass, T1X altT1X, boolean checkComplete, T1XTemplate[] templates, boolean useTemplateCallRefMaps) {
         Trace.begin(1, "creating T1X templates from " + templateSourceClass.getName());
         if (templates == null) {
             templates = new T1XTemplate[T1XTemplateTag.values().length];
@@ -432,7 +433,7 @@ public class T1X implements RuntimeCompiler {
                     if (template != null) {
                         FatalError.unexpected("Template tag " + tag + " is already bound to " + template.method + ", cannot rebind to " + templateSource);
                     }
-                    templates[tag.ordinal()] = new T1XTemplate(templateCode, tag, templateSource);
+                    templates[tag.ordinal()] = new T1XTemplate(templateCode, tag, templateSource, useTemplateCallRefMaps);
                 }
             }
         }

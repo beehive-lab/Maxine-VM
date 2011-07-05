@@ -1395,9 +1395,9 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void emitTemplateCall(CiValue address) {
+    protected void emitTemplateCall(CiValue address, LIRDebugInfo info) {
         if (address == null) {
-            directCall(null, null);
+            directCall(null, info);
             return;
         }
 
@@ -1407,7 +1407,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         } else {
             moveOp(address, reg.asValue(address.kind), address.kind, null, false);
         }
-        indirectCall(reg, null, null);
+        indirectCall(reg, null, info);
     }
 
     @Override
