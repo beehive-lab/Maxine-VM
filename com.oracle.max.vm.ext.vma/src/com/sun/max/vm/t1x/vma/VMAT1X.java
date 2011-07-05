@@ -72,11 +72,21 @@ public class VMAT1X extends T1X {
         if (isHosted() && phase == Phase.COMPILING) {
             setTemplateSource(VMAdviceBeforeAfterTemplateSource.class);
             super.initialize(phase);
-            beforeTemplates = T1X.createTemplates(VMAdviceBeforeTemplateSource.class, altT1X, true, null);
-            afterTemplates = T1X.createTemplates(VMAdviceAfterTemplateSource.class, altT1X, true, null);
+            beforeTemplates = createTemplates(VMAdviceBeforeTemplateSource.class, altT1X, true, null, true);
+            afterTemplates = createTemplates(VMAdviceAfterTemplateSource.class, altT1X, true, null, true);
         } else {
             super.initialize(phase);
         }
+    }
+
+    /**
+     * By default {@link T1X} sets {@code useTemplateCallRefMaps} to false, so we override that decision here,
+     * as after advice on any template that contains a template call must honor the ref maps.
+     */
+    @Override
+    @HOSTED_ONLY
+    public T1XTemplate[] createTemplates(Class<?> templateSourceClass, T1X altT1X, boolean checkComplete, T1XTemplate[] templates, boolean useTemplateCallRefMaps) {
+        return super.createTemplates(templateSourceClass, altT1X, checkComplete, templates, true);
     }
 
     @Override

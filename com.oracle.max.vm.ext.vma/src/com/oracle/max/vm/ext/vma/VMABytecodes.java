@@ -366,7 +366,7 @@ public enum VMABytecodes {
 
     public static void main(String[] args) {
         for (VMABytecodes b : VMABytecodes.values()) {
-            System.out.println(b + "ord=" + b.ordinal() + ", code=" + b.code);
+            System.out.println(b + ", ord=" + b.ordinal() + ", code=" + b.code);
         }
     }
 

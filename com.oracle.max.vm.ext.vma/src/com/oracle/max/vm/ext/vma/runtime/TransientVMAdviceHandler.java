@@ -476,9 +476,9 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
     // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeReturn(Object arg1) {
-        super.adviseBeforeReturn(arg1);
-        storeRecord(ReturnObject, 0, arg1);
+    public void adviseBeforeReturn() {
+        super.adviseBeforeReturn();
+        storeRecord(Return, 0);
     }
 
     // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
@@ -504,9 +504,9 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
     // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeReturn() {
-        super.adviseBeforeReturn();
-        storeRecord(Return, 0);
+    public void adviseBeforeReturn(Object arg1) {
+        super.adviseBeforeReturn(arg1);
+        storeRecord(ReturnObject, 0, arg1);
     }
 
     // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
@@ -758,6 +758,16 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
     public void adviseAfterNewArray(Object arg1, int arg2) {
         super.adviseAfterNewArray(arg1, arg2);
         storeRecord(NewArray, 1, arg1, arg2);
+    }
+
+    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseAfterMethodEntry(Object arg1, MethodActor arg2) {
+        super.adviseAfterMethodEntry(arg1, arg2);
+        ObjectMethodAdviceRecord r = (ObjectMethodAdviceRecord) storeRecord(MethodEntry, 1, arg1);
+        if (r != null) {
+            r.value2 = arg2;
+        }
     }
 
 

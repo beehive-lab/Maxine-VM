@@ -3751,6 +3751,156 @@ public class VMAdviceBeforeAfterTemplateSource {
     }
 
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEVIRTUAL$reference)
+    public static void invokevirtualReference(ResolutionGuard.InPool guard, int receiverStackIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
+        Address entryPoint = VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor);
+        if (isAdvising()) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
+        }
+        final Object result = indirectCallObject(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+        if (isAdvising()) {
+            VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
+        }
+        pushObject(result);
+    }
+
+    // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEVIRTUAL$reference$resolved)
+    public static void invokevirtualReference(VirtualMethodActor methodActor, int receiverStackIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress();
+        if (isAdvising()) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
+        }
+        final Object result = indirectCallObject(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+        if (isAdvising()) {
+            VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
+        }
+        pushObject(result);
+    }
+
+    // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEVIRTUAL$reference$instrumented)
+    public static void invokevirtualReference(VirtualMethodActor methodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex);
+        if (isAdvising()) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
+        }
+        final Object result = indirectCallObject(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+        if (isAdvising()) {
+            VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
+        }
+        pushObject(result);
+    }
+
+    // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEINTERFACE$reference)
+    public static void invokeinterfaceReference(ResolutionGuard.InPool guard, int receiverStackIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        final InterfaceMethodActor interfaceMethodActor = Snippets.resolveInterfaceMethod(guard);
+        Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
+        if (isAdvising()) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, interfaceMethodActor);
+        }
+        final Object result = indirectCallObject(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+        if (isAdvising()) {
+            VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
+        }
+        pushObject(result);
+    }
+
+    // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEINTERFACE$reference$resolved)
+    public static void invokeinterfaceReference(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
+        if (isAdvising()) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, interfaceMethodActor);
+        }
+        final Object result = indirectCallObject(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+        if (isAdvising()) {
+            VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
+        }
+        pushObject(result);
+    }
+
+    // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEINTERFACE$reference$instrumented)
+    public static void invokeinterfaceReference(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
+        if (isAdvising()) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, interfaceMethodActor);
+        }
+        final Object result = indirectCallObject(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+        if (isAdvising()) {
+            VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
+        }
+        pushObject(result);
+    }
+
+    // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(INVOKESPECIAL$reference)
+    public static void invokespecialReference(ResolutionGuard.InPool guard, int receiverStackIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        nullCheck(Reference.fromJava(receiver).toOrigin());
+        VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
+        if (isAdvising()) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(receiver, methodActor);
+        }
+        final Object result = indirectCallObject(VMAT1XRuntime.initializeSpecialMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        if (isAdvising()) {
+            VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
+        }
+        pushObject(result);
+    }
+
+    // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(INVOKESPECIAL$reference$resolved)
+    public static void invokespecialReference(VirtualMethodActor methodActor, int receiverStackIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        nullCheck(Reference.fromJava(receiver).toOrigin());
+        if (isAdvising()) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(receiver, methodActor);
+        }
+        final Object result = directCallObject();
+        if (isAdvising()) {
+            VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
+        }
+        pushObject(result);
+    }
+
+    // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(INVOKESTATIC$reference)
+    public static void invokestaticReference(ResolutionGuard.InPool guard) {
+        StaticMethodActor methodActor = VMAT1XRuntime.resolveStaticMethod(guard);
+        if (isAdvising()) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(null, methodActor);
+        }
+        final Object result = indirectCallObject(VMAT1XRuntime.initializeStaticMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        if (isAdvising()) {
+            VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(null, methodActor);
+        }
+        pushObject(result);
+    }
+
+    // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(INVOKESTATIC$reference$init)
+    public static void invokestaticReference(StaticMethodActor methodActor) {
+        if (isAdvising()) {
+            VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(null, methodActor);
+        }
+        final Object result = directCallObject();
+        if (isAdvising()) {
+            VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(null, methodActor);
+        }
+        pushObject(result);
+    }
+
+    // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(PGET_REFERENCE)
     public static void pget_reference() {
         int index = peekInt(0);
@@ -4955,8 +5105,8 @@ public class VMAdviceBeforeAfterTemplateSource {
 
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(TRACE_METHOD_ENTRY)
-    public static void traceMethodEntry(MethodActor methodActor, int receiverStackIndex) {
-        Object receiver = peekObject(receiverStackIndex);
+    public static void traceMethodEntry(MethodActor methodActor, int dispToLocalSlot) {
+        Object receiver = dispToLocalSlot == 0 ? null : getLocalObject(dispToLocalSlot);
         if (isAdvising()) {
             VMAStaticBytecodeAdvice.adviseAfterMethodEntry(receiver, methodActor);
         }
