@@ -643,6 +643,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitTemplateCall(TemplateCall x) {
         CiValue resultOperand = resultOperandFor(x.kind);
+        LIRDebugInfo info = /*new LIRDebugInfo(x.stateBefore(), x.exceptionHandlers());*/ stateFor(x, x.stateBefore());
         List<CiValue> argList;
         if (x.receiver() != null) {
             CiCallingConvention cc = compilation.frameMap().getCallingConvention(new CiKind[] {CiKind.Object}, JavaCall);
@@ -655,7 +656,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             CiValue callAddress = load(x.address());
             argList.add(callAddress);
         }
-        lir.templateCall(resultOperand, argList);
+        lir.templateCall(resultOperand, argList, info);
         if (resultOperand.isLegal()) {
             CiValue result = createResultVariable(x);
             lir.move(resultOperand, result);

@@ -244,7 +244,7 @@ public abstract class LIRAssembler {
                 break;
             }
             case TemplateCall: {
-                emitTemplateCall(op.targetAddress());
+                emitTemplateCall(op.targetAddress(), op.info);
                 break;
             }
             default:
@@ -510,7 +510,7 @@ public abstract class LIRAssembler {
 
     protected abstract void emitNativeCall(String symbol, LIRDebugInfo info, CiValue callAddress);
 
-    protected abstract void emitTemplateCall(CiValue address);
+    protected abstract void emitTemplateCall(CiValue address, LIRDebugInfo info);
 
     protected abstract void emitMemoryBarriers(int barriers);
 

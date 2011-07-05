@@ -74,7 +74,7 @@ public final class T1XTargetMethod extends TargetMethod {
     /**
      * The number of slots to be reserved in each T1X frame for template spill slots.
      * This is the max number of slots used by any template and is computed when the templates are
-     * {@linkplain T1X#createTemplates(Class, T1X, boolean, com.sun.max.vm.t1x.T1X.Templates) created}.
+     * {@linkplain T1X#createTemplates(Class, T1X, boolean, com.sun.max.vm.t1x.T1X.Templates, boolean) created}.
      */
     static int templateSlots;
 

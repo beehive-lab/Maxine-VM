@@ -29,7 +29,7 @@ import com.sun.cri.ci.*;
 /**
  * Represents a {@linkplain Bytecodes#TEMPLATE_CALL template call}.
  */
-public final class TemplateCall extends Instruction {
+public final class TemplateCall extends StateSplit {
 
     /**
      * The address to call (null implies a direct call that will be patched).
@@ -39,7 +39,7 @@ public final class TemplateCall extends Instruction {
     private Value receiver;
 
     public TemplateCall(CiKind returnKind, Value address, Value receiver) {
-        super(returnKind.stackKind());
+        super(returnKind.stackKind(), null);
         this.address = address;
         this.receiver = receiver;
         setFlag(Flag.LiveSideEffect); // ensure this instruction is not eliminated
