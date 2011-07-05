@@ -447,7 +447,7 @@ public class SpecialReferenceManager {
             clock = System.currentTimeMillis();
             discoveredList = sentinel;
             JLRRAlias sentinelAlias = asJLRRAlias(sentinel);
-            sentinelAlias.discovered = null;
+            sentinelAlias.discovered = sentinel;
             sentinelAlias.next = sentinel;
             sentinelAlias.referent = null;
             assert sentinelAlias.isInactive();
