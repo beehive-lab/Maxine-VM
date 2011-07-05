@@ -189,6 +189,15 @@ public class Stub extends TargetMethod {
     }
 
     @Override
+    public VMFrameLayout frameLayout() {
+        if (platform().isa == ISA.AMD64) {
+            return AMD64TargetMethodUtil.frameLayout(this);
+        } else {
+            throw FatalError.unimplemented();
+        }
+    }
+
+    @Override
     public void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls, Set<MethodActor> inlinedMethods) {
         if (directCallees != null && directCallees.length != 0) {
             assert directCallees.length == 1 && directCallees[0] instanceof ClassMethodActor;

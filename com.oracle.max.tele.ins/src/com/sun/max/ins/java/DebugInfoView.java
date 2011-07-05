@@ -22,6 +22,8 @@
  */
 package com.sun.max.ins.java;
 
+import static com.sun.max.platform.Platform.*;
+
 import java.awt.*;
 import java.awt.event.*;
 
@@ -38,6 +40,7 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.stack.*;
 
 
 /**
@@ -154,6 +157,9 @@ public final class DebugInfoView extends AbstractView<DebugInfoView> {
                 panel.add(createFramePanel(frame), 0);
                 frame = frame.caller();
             }
+
+            panel.add(createRefMapsPanel(debugInfo), 0);
+
             simplePanelLabel.setText(inspection().nameDisplay().shortName(codeLocation));
             panel.add(simplePanel, 0);
             setContentPane(new InspectorScrollPane(inspection(), panel));
@@ -183,6 +189,42 @@ public final class DebugInfoView extends AbstractView<DebugInfoView> {
 
     private String shortString(CiCodePos codePos) {
         return codePos.method.name() + "() bci=" + codePos.bci;
+    }
+
+    private JPanel createRefMapsPanel(CiDebugInfo info) {
+        final JPanel panel = new InspectorPanel(inspection(), new BorderLayout());
+        final JPanel headerPanel = new InspectorPanel(inspection(), new FlowLayout(FlowLayout.LEADING));
+        headerPanel.add(new TextLabel(inspection(), "Reference Map"));
+        panel.add(headerPanel, BorderLayout.PAGE_START);
+
+        final JPanel slotsPanel = new JPanel();
+        slotsPanel.setLayout(new BoxLayout(slotsPanel, BoxLayout.PAGE_AXIS));
+
+        if (info.hasRegisterRefMap()) {
+            CiBitMap bm = info.registerRefMap;
+            CiArchitecture arch = target().arch;
+            for (int reg = bm.nextSetBit(0); reg >= 0; reg = bm.nextSetBit(reg + 1)) {
+                slotsPanel.add(new TextLabel(inspection(), arch.registers[reg].asValue(CiKind.Object).toString()));
+            }
+        }
+
+        if (info.hasStackRefMap()) {
+            CiBitMap bm = info.frameRefMap;
+            for (int i = bm.nextSetBit(0); i >= 0; i = bm.nextSetBit(i + 1)) {
+                VMFrameLayout layout = compiledCode.frameLayout();
+                CiRegister fp = layout.framePointerReg();
+                int refMapOffset = i * VMFrameLayout.STACK_SLOT_SIZE;
+                int fpOffset = refMapOffset + layout.frameReferenceMapOffset();
+                String slot = new CiAddress(CiKind.Object, fp.asValue(), fpOffset).toString();
+                slotsPanel.add(new TextLabel(inspection(), slot));
+            }
+        }
+
+        if (slotsPanel.getComponentCount() != 0) {
+            panel.add(slotsPanel, BorderLayout.LINE_START);
+        }
+        panel.setBorder(frameBorder);
+        return panel;
     }
 
     private JPanel createFramePanel(CiFrame frame) {
@@ -215,7 +257,7 @@ public final class DebugInfoView extends AbstractView<DebugInfoView> {
         }
         panel.add(headerPanel, BorderLayout.PAGE_START);
 
-        if (frame.numLocals + frame.numStack > 0) {
+        if (frame.values.length > 0) {
             final JPanel slotsPanel = new JPanel();
             slotsPanel.setLayout(new BoxLayout(slotsPanel, BoxLayout.PAGE_AXIS));
             final CodeAttribute codeAttribute = method.codeAttribute();
@@ -232,6 +274,11 @@ public final class DebugInfoView extends AbstractView<DebugInfoView> {
                 String stackSlot = "stack #" + i;
                 stackSlot += " = " + frame.getStackValue(i);
                 slotsPanel.add(new TextLabel(inspection(), stackSlot));
+            }
+            for (int i = 0; i < frame.numLocks; i++) {
+                String lock = "lock #" + i;
+                lock += " = " + frame.getLockValue(i);
+                slotsPanel.add(new TextLabel(inspection(), lock));
             }
             panel.add(slotsPanel, BorderLayout.LINE_START);
         }

@@ -1245,4 +1245,6 @@ public abstract class TargetMethod extends MemoryRegion {
         }
         return null;
     }
+
+    public abstract VMFrameLayout frameLayout();
 }

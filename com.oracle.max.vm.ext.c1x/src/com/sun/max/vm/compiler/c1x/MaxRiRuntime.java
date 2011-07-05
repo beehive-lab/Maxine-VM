@@ -40,7 +40,7 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.Call;
 import com.sun.cri.ci.CiTargetMethod.DataPatch;
 import com.sun.cri.ci.CiTargetMethod.Site;
-import com.sun.cri.ci.CiUtil.SlotFormatter;
+import com.sun.cri.ci.CiUtil.RefMapFormatter;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -186,7 +186,6 @@ public class MaxRiRuntime implements RiRuntime {
 
         CiHexCodeFile hcf = new CiHexCodeFile(code, 0L, platform.isa.name(), platform.wordWidth().numberOfBits);
         CiUtil.addAnnotations(hcf, targetMethod.annotations());
-        int spillSlotSize = target().spillSlotSize;
         CiRegister fp;
         int refMapToFPOffset;
         if (platform.isa == ISA.AMD64) {
@@ -195,23 +194,22 @@ public class MaxRiRuntime implements RiRuntime {
         } else {
             throw FatalError.unimplemented();
         }
-        SlotFormatter slotFormatter = new SlotFormatter(spillSlotSize, fp, refMapToFPOffset);
-        CiArchitecture arch = target().arch;
+        RefMapFormatter slotFormatter = new RefMapFormatter(target().arch, target().spillSlotSize, fp, refMapToFPOffset);
         for (Call site : targetMethod.directCalls) {
             if (site.debugInfo() != null) {
-                hcf.addComment(site.pcOffset, CiUtil.append(new StringBuilder(100), site.debugInfo, arch, slotFormatter).toString());
+                hcf.addComment(site.pcOffset, CiUtil.append(new StringBuilder(100), site.debugInfo, slotFormatter).toString());
             }
             hcf.addOperandComment(site.pcOffset, calleeString(site));
         }
         for (Call site : targetMethod.indirectCalls) {
             if (site.debugInfo() != null) {
-                hcf.addComment(site.pcOffset, CiUtil.append(new StringBuilder(100), site.debugInfo, arch, slotFormatter).toString());
+                hcf.addComment(site.pcOffset, CiUtil.append(new StringBuilder(100), site.debugInfo, slotFormatter).toString());
             }
             hcf.addOperandComment(site.pcOffset, calleeString(site));
         }
         for (Site site : targetMethod.safepoints) {
             if (site.debugInfo() != null) {
-                hcf.addComment(site.pcOffset, CiUtil.append(new StringBuilder(100), site.debugInfo(), arch, slotFormatter).toString());
+                hcf.addComment(site.pcOffset, CiUtil.append(new StringBuilder(100), site.debugInfo(), slotFormatter).toString());
             }
             hcf.addOperandComment(site.pcOffset, "{safepoint}");
         }

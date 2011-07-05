@@ -25,6 +25,7 @@ package com.sun.max.tele;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.stack.*;
 
 
 /**
@@ -61,4 +62,5 @@ public interface MaxCompilation extends MaxMachineCode<MaxCompilation> {
      */
     ClassActor classActorForObjectType();
 
+    VMFrameLayout frameLayout();
 }

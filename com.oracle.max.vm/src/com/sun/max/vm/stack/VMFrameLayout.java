@@ -49,7 +49,7 @@ public abstract class VMFrameLayout {
     /**
      * Gets the register used as the frame pointer.
      */
-    public abstract CiRegister framePointer();
+    public abstract CiRegister framePointerReg();
 
     /**
      * Gets the size of the reference map for all the stack words whose value may be changed by this frame's method.
