@@ -44,7 +44,7 @@ import com.oracle.max.vm.ext.vma.log.*;
 
 public abstract class TextVMAdviceHandlerLog extends VMAdviceHandlerLog {
 
-    public static final int REPEAT_ID_VALUE = 0;
+    public static final long REPEAT_ID_VALUE = Long.MIN_VALUE;
     public static final char REPEAT_ID = '*';
 
     /**

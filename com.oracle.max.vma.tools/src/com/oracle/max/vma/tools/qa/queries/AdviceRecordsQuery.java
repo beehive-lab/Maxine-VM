@@ -159,6 +159,16 @@ public class AdviceRecordsQuery extends QueryBase {
                     }
                     break;
 
+                case MethodEntry: {
+                    ps.print(getMethod(ar).getQualName());
+                    ObjectRecord oar = getObjectRecord(ar);
+                    if (oar != null) {
+                        ps.printf("(%s)", oar);
+                    }
+                    break;
+                }
+
+
                 case StackAdjust:
                 case Bytecode:
                     ps.printf("%s", VMABytecodes.values()[ar.getPackedValue()]);

@@ -191,7 +191,7 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
     }
 
     static class LastId {
-        long id = -1;
+        long id = REPEAT_ID_VALUE;
     }
 
     protected CompactTextVMAdviceHandlerLog(TextVMAdviceHandlerLog del) {
@@ -204,7 +204,7 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
      * Note that all traces that start with an {@code objId} must call this method!
      * @param id
      * @param threadName
-     * @return -1 for a match, {@code id} otherwise
+     * @return {@link TextVMAdviceHandlerLog#REPEAT_ID_VALUE} for a match, {@code id} otherwise
      */
     private static long checkRepeatId(long id, String threadName) {
         LastId lastId;
