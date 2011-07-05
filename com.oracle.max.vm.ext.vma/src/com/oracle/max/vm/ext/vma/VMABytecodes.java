@@ -351,7 +351,8 @@ public enum VMABytecodes {
     JNIOP_N2J(Bytecodes.JNIOP_N2J, "Bytecode"),
     ILLEGAL(Bytecodes.ILLEGAL, "Bytecode"),
     END(Bytecodes.END, "Bytecode"),
-    LAST_JVM_OPCODE(Bytecodes.LAST_JVM_OPCODE, "Bytecode");
+    LAST_JVM_OPCODE(Bytecodes.LAST_JVM_OPCODE, "Bytecode"),
+    MENTRY(-1, "MethodEntry");
 
     // END GENERATED CODE
 
@@ -365,7 +366,7 @@ public enum VMABytecodes {
 
     public static void main(String[] args) {
         for (VMABytecodes b : VMABytecodes.values()) {
-            System.out.println(b + "ord=" + b.ordinal() + ", code=" + b.code);
+            System.out.println(b + ", ord=" + b.ordinal() + ", code=" + b.code);
         }
     }
 

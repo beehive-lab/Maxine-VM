@@ -116,7 +116,7 @@ public class BytecodeAdviceGenerator {
         }
 
         public void generate(T1XTemplateTag tag, AdviceType adviceType, String... args) {
-            if (tag.opcode >= 0) {
+            if (tag.opcode >= 0 || tag == T1XTemplateTag.TRACE_METHOD_ENTRY) {
                 checks[codeMap.get(tag.opcode).ordinal()][adviceType.ordinal()] = true;
             }
         }
@@ -158,7 +158,7 @@ public class BytecodeAdviceGenerator {
             generateMonitor(bytecode);
         } else if (Pattern.matches(".{1}RETURN|RETURN", name)) {
             generateReturn(bytecode);
-        } else if (Pattern.matches("INVOKE.*", name)) {
+        } else if (Pattern.matches("INVOKE.*", name) || name.equals("MENTRY")) {
             generateInvoke(bytecode);
         } else if (Pattern.matches(".{1}ALOAD", name)) {
             generateArrayLoadStore(bytecode);

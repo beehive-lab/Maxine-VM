@@ -22,11 +22,15 @@
  */
 package com.sun.max.vm.t1x.vma;
 
+import static com.sun.max.vm.t1x.T1XTemplateTag.*;
+
+import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.options.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.t1x.*;
 import com.sun.max.vm.t1x.T1XTemplateGenerator.AdviceType;
+import com.sun.max.vm.type.*;
 
 /**
  * Overrides some {@link T1XCompilation} methods to provide finer compile time control over advising.
@@ -66,12 +70,19 @@ public class VMAT1XCompilation extends T1XCompilation {
         // we do not want code to be recompiled as the optimizing compiler does not
         // currently support advising.
         methodProfileBuilder = null;
+        // Simulate the method entry, so that emitMethodTraceEntry gets the right template
+        selectTemplates(VMABytecodes.MENTRY.ordinal());
     }
 
 
     @Override
     protected void processBytecode(int opcode) throws InternalError {
         // Based on the option settings for this bytecode, we choose the correct templates
+        selectTemplates(opcode);
+        super.processBytecode(opcode);
+    }
+
+    private void selectTemplates(int opcode) {
         boolean[] adviceTypeOptions = VMAOptions.getVMATemplateOptions(opcode);
         if (adviceTypeOptions[BEFORE_INDEX]) {
             if (adviceTypeOptions[AFTER_INDEX]) {
@@ -86,7 +97,6 @@ public class VMAT1XCompilation extends T1XCompilation {
                 templates = vmaT1X.getAltT1X().templates;
             }
         }
-        super.processBytecode(opcode);
     }
 
     @Override
@@ -135,5 +145,20 @@ public class VMAT1XCompilation extends T1XCompilation {
         }
     }
 
-
+    @Override
+    protected void emitMethodTraceEntry() {
+        // We turn this into advice if we are advising
+        if (templates == defaultTemplates) {
+            super.emitMethodTraceEntry();
+        } else {
+            T1XTemplate template = getTemplate(TRACE_METHOD_ENTRY);
+            assignReferenceLiteralTemplateArgument(0, method);
+            if (method.isStatic()) {
+                assignIntTemplateArgument(1, 0);
+            } else {
+                assignLocalDisplacementTemplateArgument(1, 0, Kind.REFERENCE);
+            }
+            emitAndRecordStops(template);
+        }
+    }
 }

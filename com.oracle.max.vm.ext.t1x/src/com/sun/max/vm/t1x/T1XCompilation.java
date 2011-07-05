@@ -146,7 +146,7 @@ public class T1XCompilation {
     /**
      * The method being compiled.
      */
-    ClassMethodActor method;
+    protected ClassMethodActor method;
 
     CodeAttribute codeAttribute;
 
@@ -365,7 +365,7 @@ public class T1XCompilation {
         }
     }
 
-    void emitMethodTraceEntry() {
+    protected void emitMethodTraceEntry() {
         if (T1XOptions.TraceMethods) {
             T1XTemplate template = getTemplate(TRACE_METHOD_ENTRY);
             assignReferenceLiteralTemplateArgument(0, method.toString());
@@ -509,7 +509,7 @@ public class T1XCompilation {
      *
      * @param template the compiled code to emit
      */
-    private void emitAndRecordStops(T1XTemplate template) {
+    protected void emitAndRecordStops(T1XTemplate template) {
         if (template.numberOfStops != 0) {
             int bci = stream.currentBCI();
             stops.add(template, buf.position(), bci == stream.endBCI() ? -1 : bci, null);
@@ -852,13 +852,13 @@ public class T1XCompilation {
      */
     private Kind invokeKind(SignatureDescriptor signature) {
         Kind resultKind = signature.resultKind();
-        if (resultKind.isWord || resultKind.isReference || resultKind.stackKind == Kind.INT) {
+        if (resultKind.isWord || resultKind.stackKind == Kind.INT) {
             return Kind.WORD;
         }
         return resultKind;
     }
 
-    private static int receiverStackIndex(SignatureDescriptor signatureDescriptor) {
+    protected static int receiverStackIndex(SignatureDescriptor signatureDescriptor) {
         int index = 0;
         for (int i = 0; i < signatureDescriptor.numberOfParameters(); i++) {
             Kind kind = signatureDescriptor.parameterDescriptorAt(i).toKind();
@@ -1455,7 +1455,7 @@ public class T1XCompilation {
         }
     }
 
-    private void assignIntTemplateArgument(int parameterIndex, int argument) {
+    protected void assignIntTemplateArgument(int parameterIndex, int argument) {
         if (isAMD64()) {
             AMD64Assembler asm = (AMD64Assembler) this.asm;
             final CiRegister dst = cpuRegParams[parameterIndex];
@@ -1497,7 +1497,7 @@ public class T1XCompilation {
         }
     }
 
-    private void assignLocalDisplacementTemplateArgument(int parameterIndex, int localIndex, Kind kind) {
+    protected void assignLocalDisplacementTemplateArgument(int parameterIndex, int localIndex, Kind kind) {
         // Long locals (ones that use two slots in the locals area) take two slots,
         // as required by the JVM spec. The value of the long local is stored in
         // the second slot so that it can be loaded/stored without further adjustments

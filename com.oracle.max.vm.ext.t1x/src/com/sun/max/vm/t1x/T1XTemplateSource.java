@@ -99,11 +99,6 @@ public class T1XTemplateSource {
         MethodInstrumentation.recordBackwardBranch(mpo);
     }
 
-    @T1X_TEMPLATE(TRACE_METHOD_ENTRY)
-    public static void traceMethodEntry(String method) {
-        Log.println(method);
-    }
-
     @T1X_TEMPLATE(NOP)
     public static void nop() {
         // do nothing.
@@ -2981,6 +2976,92 @@ public class T1XTemplateSource {
     }
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEVIRTUAL$reference)
+    public static void invokevirtualReference(ResolutionGuard.InPool guard, int receiverStackIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = resolveAndSelectVirtualMethod(receiver, guard, receiverStackIndex);
+        final Object result = indirectCallObject(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+        pushObject(result);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEVIRTUAL$reference$resolved)
+    public static void invokevirtualReference(int vTableIndex, int receiverStackIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress();
+        final Object result = indirectCallObject(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+        pushObject(result);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEVIRTUAL$reference$instrumented)
+    public static void invokevirtualReference(int vTableIndex, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);
+        final Object result = indirectCallObject(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+        pushObject(result);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEINTERFACE$reference)
+    public static void invokeinterfaceReference(ResolutionGuard.InPool guard, int receiverStackIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = resolveAndSelectInterfaceMethod(guard, receiver);
+        final Object result = indirectCallObject(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+        pushObject(result);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEINTERFACE$reference$resolved)
+    public static void invokeinterfaceReference(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        final Object result = indirectCallObject(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+        pushObject(result);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(INVOKEINTERFACE$reference$instrumented)
+    public static void invokeinterfaceReference(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
+        Object receiver = peekObject(receiverStackIndex);
+        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
+        final Object result = indirectCallObject(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
+        pushObject(result);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(INVOKESPECIAL$reference)
+    public static void invokespecialReference(ResolutionGuard.InPool guard, int receiverStackIndex) {
+        Pointer receiver = peekWord(receiverStackIndex).asPointer();
+        nullCheck(receiver);
+        final Object result = indirectCallObject(resolveSpecialMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        pushObject(result);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(INVOKESPECIAL$reference$resolved)
+    public static void invokespecialReference(int receiverStackIndex) {
+        Pointer receiver = peekWord(receiverStackIndex).asPointer();
+        nullCheck(receiver);
+        final Object result = directCallObject();
+        pushObject(result);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(INVOKESTATIC$reference)
+    public static void invokestaticReference(ResolutionGuard.InPool guard) {
+        final Object result = indirectCallObject(resolveStaticMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        pushObject(result);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(INVOKESTATIC$reference$init)
+    public static void invokestaticReference() {
+        final Object result = directCallObject();
+        pushObject(result);
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(PGET_REFERENCE)
     public static void pget_reference() {
         int index = peekInt(0);
@@ -3892,6 +3973,27 @@ public class T1XTemplateSource {
 
     // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
     @INLINE
+    public static Object indirectCallObject(Address address, CallEntryPoint callEntryPoint) {
+        final Word result = Intrinsics.callWord(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset()));
+        return Reference.fromOrigin(result.asAddress().asPointer()).toJava();
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @INLINE
+    public static Object indirectCallObject(Address address, CallEntryPoint callEntryPoint, Object receiver) {
+        final Word result = Intrinsics.callWord(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset()), receiver);
+        return Reference.fromOrigin(result.asAddress().asPointer()).toJava();
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @INLINE
+    public static Object directCallObject() {
+        final Word result = Intrinsics.callWord();
+        return Reference.fromOrigin(result.asAddress().asPointer()).toJava();
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @INLINE
     public static Word indirectCallWord(Address address, CallEntryPoint callEntryPoint) {
         final Word result = Intrinsics.callWord(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset()));
         return result;
@@ -3927,6 +4029,12 @@ public class T1XTemplateSource {
     @INLINE
     public static void directCallVoid() {
         Intrinsics.call();
+    }
+
+    // GENERATED -- EDIT AND RUN T1XTemplateGenerator.main() TO MODIFY
+    @T1X_TEMPLATE(TRACE_METHOD_ENTRY)
+    public static void traceMethodEntry(String method) {
+        Log.println(method);
     }
 
 

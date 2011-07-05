@@ -20,39 +20,39 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vma.tools.gen.vma.runtime;
+package com.oracle.max.vma.tools.gen.vma.log.debug;
 
 import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
 import static com.sun.max.vm.t1x.T1XTemplateGenerator.*;
 
 import java.lang.reflect.*;
+import java.util.*;
 
 import com.oracle.max.vm.ext.vma.*;
-import com.sun.max.annotate.*;
-import com.sun.max.vm.actor.member.*;
+import com.oracle.max.vm.ext.vma.log.*;
+import com.oracle.max.vma.tools.gen.vma.runtime.*;
 
 
-@HOSTED_ONLY
-public class VMAStaticBytecodeAdviceGenerator {
-    public static void main(String[] args) throws Exception {
-        createGenerator(VMAStaticBytecodeAdviceGenerator.class);
-        for (Method m : BytecodeAdvice.class.getDeclaredMethods()) {
-            generateStatic(m);
+public class GCTestAdviceHandlerLogGenerator {
+
+    public static void main(String[] args) {
+        createGenerator(GCTestAdviceHandlerLogGenerator.class);
+        SortedMap<String, Integer> enumMap = CountVMAdviceHandlerGenerator.createEnum(VMAdviceHandlerLog.class);
+        for (Method m : VMAdviceHandlerLog.class.getMethods()) {
+            String name = m.getName();
+            if (name.startsWith("advise")) {
+                generate(m, enumMap);
+            }
         }
-        generateStatic(RuntimeAdvice.class.getDeclaredMethod("adviseAfterMethodEntry", Object.class, MethodActor.class));
     }
 
-    private static void generateStatic(Method m) {
+    private static void generate(Method m, SortedMap<String, Integer> enumMap) {
         generateAutoComment();
-        out.printf("    @NEVER_INLINE%n");
-        int argCount = generateSignature(m, "static");
+        out.printf("    @Override%n");
+        generateSignature(m, null);
         out.printf(" {%n");
-        out.printf("        disableAdvising();%n");
-        out.printf("        adviceHandler().%s(", m.getName());
-        generateInvokeArgs(argCount);
-        out.printf("        enableAdvising();%n");
+        String[] name = CountVMAdviceHandlerGenerator.stripPrefix(m.getName());
+        out.printf("        randomlyGC(%d, %d);%n", enumMap.get(name[1]), AdviceMode.valueOf(name[0]).ordinal());
         out.printf("    }%n%n");
     }
-
-
 }

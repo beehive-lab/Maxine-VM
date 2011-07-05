@@ -211,7 +211,7 @@ public class BytecodeStopsIterator implements BCIIterator {
                 stopCount++;
             }
         }
-        assert stopCount != 0 : "Entry " + entry + " in stop index table has 0 stop indexes";
+        assert stopCount != 0 || map.length == 0 : "Entry " + entry + " in stop index table has 0 stop indexes";
         return true;
     }
 }

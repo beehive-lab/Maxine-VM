@@ -31,22 +31,21 @@ import java.util.*;
 import com.oracle.max.vm.ext.vma.*;
 
 public class CountVMAdviceHandlerGenerator {
-    private static SortedMap<String, Integer> enumMap = new TreeMap<String, Integer>();
     private static int maxLength;
 
     public static void main(String[] args) {
         createGenerator(CountVMAdviceHandlerGenerator.class);
-        createEnum();
+        SortedMap<String, Integer> enumMap = createEnum(VMAdviceHandler.class);
         out.printf("%n    private static final int MAX_LENGTH = %d;%n%n", maxLength);
         for (Method m : VMAdviceHandler.class.getMethods()) {
             String name = m.getName();
             if (name.startsWith("advise")) {
-                generate(m);
+                generate(m, enumMap);
             }
         }
     }
 
-    private static void generate(Method m) {
+    private static void generate(Method m, SortedMap<String, Integer> enumMap) {
         generateAutoComment();
         out.printf("    @Override%n");
         generateSignature(m, null);
@@ -59,7 +58,7 @@ public class CountVMAdviceHandlerGenerator {
     private static final String ADVISE_BEFORE = "adviseBefore";
     private static final String ADVISE_AFTER = "adviseAfter";
 
-    private static String[] stripPrefix(String name) {
+    public static String[] stripPrefix(String name) {
         String[] result = new String[2];
         int index = name.indexOf(ADVISE_BEFORE);
         if (index >= 0) {
@@ -77,19 +76,20 @@ public class CountVMAdviceHandlerGenerator {
         return null;
     }
 
-    private static void createEnum() {
+    public static SortedMap<String, Integer> createEnum(Class<?> adviceClass) {
+        SortedMap<String, Integer> result = new TreeMap<String, Integer>();
         out.printf("    enum AdviceMethod {%n");
         int ordinal = 0;
         boolean first = true;
-        for (Method m : VMAdviceHandler.class.getMethods()) {
+        for (Method m : adviceClass.getMethods()) {
             if (m.getName().startsWith("advise")) {
                 String[] name = stripPrefix(m.getName());
-                if (enumMap.get(name[1]) == null) {
+                if (result.get(name[1]) == null) {
                     if (!first) {
                         out.printf(",%n");
                     }
                     out.printf("        %s", name[1]);
-                    enumMap.put(name[1], ordinal++);
+                    result.put(name[1], ordinal++);
                     first = false;
                     if (name[1].length() > maxLength) {
                         maxLength = name[1].length();
@@ -98,5 +98,6 @@ public class CountVMAdviceHandlerGenerator {
             }
         }
         out.printf(";%n    }%n");
+        return result;
     }
 }

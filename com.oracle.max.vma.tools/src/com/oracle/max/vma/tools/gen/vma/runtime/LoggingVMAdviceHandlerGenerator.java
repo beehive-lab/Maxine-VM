@@ -113,7 +113,7 @@ public class LoggingVMAdviceHandlerGenerator {
                 generateValueArg(m, 1);
             }
             out.printf(");%n");
-        } else if (name.contains("Invoke")) {
+        } else if (name.contains("Invoke") || name.contains("MethodEntry")) {
             generateLogCallPrefix(oname);
             String arg1 = name.contains("Static") ? "0" : "state.readId(arg1)";
             out.printf(", %s, arg2.holder().name(), state.readId(arg2.holder().classLoader), arg2.name()", arg1);

@@ -23,7 +23,12 @@
 package com.oracle.max.vm.ext.vma;
 
 /**
- * VM events can be advised either before or after their execution.
+ * In general, VM operations can be advised either before or after their execution.
+ *
+ * However, before/after does not make sense for all operations and limitations may
+ * be imposed by the implementation. In which case either before or after is chosen,
+ * (usually before) as appropriate.
+ *
  */
 
 public enum AdviceMode {

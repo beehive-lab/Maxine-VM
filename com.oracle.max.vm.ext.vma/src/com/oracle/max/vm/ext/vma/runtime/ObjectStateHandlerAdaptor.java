@@ -88,6 +88,12 @@ public abstract class ObjectStateHandlerAdaptor extends VMAdviceHandler {
 
     // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
+    public void adviseAfterMethodEntry(Object arg1, MethodActor arg2) {
+        checkId(arg1);
+    }
+
+    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
+    @Override
     public void adviseAfterNew(Object arg1) {
         final Reference objRef = Reference.fromJava(arg1);
         final Hub hub = UnsafeCast.asHub(Layout.readHubReference(objRef));

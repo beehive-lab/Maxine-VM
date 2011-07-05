@@ -793,5 +793,12 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
         end();
     }
 
+    @Override
+    public synchronized void adviseAfterMethodEntry(String threadName, long objId, String className, long clId, String memberName) {
+        appendTTId(ADVISE_AFTER_METHOD_ENTRY, objId, threadName);
+        appendQualName(className, clId, memberName);
+        end();
+    }
+
 
 }

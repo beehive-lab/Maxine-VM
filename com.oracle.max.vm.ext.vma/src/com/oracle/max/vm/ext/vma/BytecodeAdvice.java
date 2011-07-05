@@ -207,6 +207,8 @@ public abstract class BytecodeAdvice {
     // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
     public abstract void adviseAfterMultiNewArray(Object object, int[] lengths);
 
+    // GENERATED -- EDIT AND RUN BytecodeAdviceGenerator.main() TO MODIFY
+    public abstract void adviseAfterMethodEntry(Object object, MethodActor methodActor);
 
 
 }

@@ -135,6 +135,12 @@ public class LoggingVMAdviceHandler extends VMAdviceHandler {
 
     // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
+    public void adviseAfterMethodEntry(Object arg1, MethodActor arg2) {
+        log.adviseAfterMethodEntry(tng.getThreadName(), state.readId(arg1), arg2.holder().name(), state.readId(arg2.holder().classLoader), arg2.name());
+    }
+
+    // GENERATED -- EDIT AND RUN LoggingVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
     public void adviseAfterNew(Object arg1) {
         final Reference objRef = Reference.fromJava(arg1);
         final Hub hub = UnsafeCast.asHub(Layout.readHubReference(objRef));
