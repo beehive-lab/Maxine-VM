@@ -46,6 +46,7 @@ public class CompilationEvent {
     private BlockMap blockMap;
     private int codeSize = -1;
 
+    private RiMethod method;
     private LinearScan allocator;
     private CiTargetMethod targetMethod;
     private boolean hirValid = false;
@@ -63,6 +64,7 @@ public class CompilationEvent {
         assert compilation != null;
         this.label = label;
         this.compilation = compilation;
+        this.method = compilation.method;
     }
 
     public CompilationEvent(C1XCompilation compilation, String label, BlockBegin startBlock, boolean hirValid, boolean lirValid) {
@@ -77,10 +79,11 @@ public class CompilationEvent {
         this.targetMethod = targetMethod;
     }
 
-    public CompilationEvent(C1XCompilation compilation, String label, BlockMap blockMap, int codeSize) {
+    public CompilationEvent(C1XCompilation compilation, String label, RiMethod method, BlockMap blockMap, int codeSize) {
         this(compilation, label);
         this.blockMap = blockMap;
         this.codeSize = codeSize;
+        this.method = method;
     }
 
     public CompilationEvent(C1XCompilation compilation, String label, LinearScan allocator, Interval[] intervals, int intervalsSize) {
@@ -99,7 +102,7 @@ public class CompilationEvent {
     }
 
     public RiMethod getMethod() {
-        return compilation.method;
+        return method;
     }
 
     public BlockMap getBlockMap() {

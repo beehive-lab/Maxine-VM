@@ -245,9 +245,9 @@ public class T1XTemplate {
                     dst.callee = directBytecodeCallee;
                     dst.flags = DirectCall.mask;
 
-                    // No GC maps needed: the template slots are dead for the remainder of the template
+                    // The decision as to whether ref-maps are used is made when the template is created
+                    dst.frameRefMap = src.frameRefMap;
                     dst.regRefMap = null;
-                    dst.frameRefMap = null;
 
                     // Make sure the direct bytecode callee is bound at most once
                     directBytecodeCallee = null;
@@ -304,7 +304,8 @@ public class T1XTemplate {
                 int refMapSize = frameRefMapSize + regRefMapSize;
                 refMaps = new byte[numberOfStopPositions * refMapSize];
                 stopPositions = new int[numberOfStopPositions];
-                int[] bsm = new int[last.bsmIndex() + 1];
+                // An empty method with no method profile only has an adapter and no stops
+                int[] bsm = new int[last == null ? 0 : last.bsmIndex() + 1];
                 last = null;
                 if (numberOfDirectCalls > 0) {
                     isDirectCallToRuntime = new CiBitMap(numberOfDirectCalls);
@@ -342,7 +343,13 @@ public class T1XTemplate {
                         }
 
                     } else {
-                        assert stop.frameRefMap == null;
+                        if (stop.frameRefMap != null) {
+                            bitMap.setOffset(stopIndex * refMapSize);
+                            bitMap.setSize(frameRefMapSize);
+                            for (int bit = stop.frameRefMap.nextSetBit(0); bit >= 0; bit = stop.frameRefMap.nextSetBit(bit + 1)) {
+                                bitMap.set(bit + firstTemplateSlot);
+                            }
+                        }
                         assert bsmIndex >= 0;
                         bsm[bsmIndex] = stopIndex;
                     }
@@ -416,7 +423,7 @@ public class T1XTemplate {
     }
 
     @HOSTED_ONLY
-    public T1XTemplate(C1XTargetMethod source, T1XTemplateTag tag, ClassMethodActor method) {
+    public T1XTemplate(C1XTargetMethod source, T1XTemplateTag tag, ClassMethodActor method, boolean useTemplateCallRefMaps) {
         this.method = method;
         this.code = source.code();
         this.tag = tag;
@@ -442,8 +449,12 @@ public class T1XTemplate {
                     assert bytecodeCall == null : "template can have at most one TEMPLATE_CALL";
                     T1XStop stop = new T1XStop(DirectCall.mask, source.stopPosition(stopIndex), -1);
                     stop.callee = null;
-                    // No GC maps needed: the template slots are dead for the remainder of the template
-                    stop.frameRefMap = null;
+                    if (useTemplateCallRefMaps) {
+                        stop.frameRefMap = nullIfEmpty(source.debugInfo().frameRefMapAt(stopIndex));
+                    } else {
+                      // No GC maps needed: the template slots are dead for the remainder of the template
+                        stop.frameRefMap = null;
+                    }
                     stop.regRefMap = null;
                     bytecodeCall = stop;
                     directCalls[i] = stop;

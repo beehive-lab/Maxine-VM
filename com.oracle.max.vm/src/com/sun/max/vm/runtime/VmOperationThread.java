@@ -201,6 +201,8 @@ public class VmOperationThread extends Thread implements UncaughtExceptionHandle
         VmThread vmThread = VmThread.current();
         VmOperationThread vmOperationThread = instance();
 
+        FatalError.check(Log.lockOwner() != VmThread.current(), "log should not be locked by thread submitting a VM operation");
+
         if (!vmThread.isVmOperationThread()) {
 
             if (!operation.doItPrologue(false)) {

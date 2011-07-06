@@ -35,13 +35,10 @@ import com.sun.cri.ci.CiCallingConvention.Type;
 import com.sun.cri.ci.CiRegister.RegisterFlag;
 import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
 import com.sun.cri.ci.CiTargetMethod.ExceptionHandler;
-import com.sun.cri.ci.CiTargetMethod.JumpTable;
 import com.sun.cri.ci.CiTargetMethod.Mark;
 import com.sun.cri.ci.CiTargetMethod.Site;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
-import com.sun.max.asm.*;
-import com.sun.max.asm.InlineDataDescriptor.JumpTable32;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -132,28 +129,9 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
         }
     }
 
-    public static InlineDataDecoder inlineDataDecoder(CodeAnnotation[] annotations) {
-        if (annotations == null) {
-            return null;
-        }
-        ArrayList<InlineDataDescriptor> descriptors = new ArrayList<InlineDataDescriptor>();
-        for (CodeAnnotation c : annotations) {
-            if (c instanceof JumpTable) {
-                JumpTable jt = (JumpTable) c;
-                if (jt.entrySize == 4) {
-                    descriptors.add(new JumpTable32(jt.position, jt.low, jt.high));
-                }
-            }
-        }
-        if (descriptors.isEmpty()) {
-            return null;
-        }
-        return new InlineDataDecoder(descriptors);
-    }
-
     @Override
-    public InlineDataDecoder inlineDataDecoder() {
-        return inlineDataDecoder(annotations);
+    public CodeAnnotation[] annotations() {
+        return annotations;
     }
 
     /**
@@ -170,6 +148,15 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
      */
     private int frameWords() {
         return frameSize() / Word.size();
+    }
+
+    @Override
+    public VMFrameLayout frameLayout() {
+        if (platform().isa == ISA.AMD64) {
+            return AMD64TargetMethodUtil.frameLayout(this);
+        } else {
+            throw FatalError.unimplemented();
+        }
     }
 
     /**
@@ -251,17 +238,29 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
 
     @Override
     public boolean isPatchableCallSite(Address callSite) {
-        return AMD64TargetMethodUtil.isPatchableCallSite(callSite);
+        if (platform().isa == ISA.AMD64) {
+            return AMD64TargetMethodUtil.isPatchableCallSite(callSite);
+        } else {
+            throw FatalError.unimplemented();
+        }
     }
 
     @Override
     public Address fixupCallSite(int callOffset, Address callEntryPoint) {
-        return AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
+        if (platform().isa == ISA.AMD64) {
+            return AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
+        } else {
+            throw FatalError.unimplemented();
+        }
     }
 
     @Override
     public Address patchCallSite(int callOffset, Address callEntryPoint) {
-        return AMD64TargetMethodUtil.mtSafePatchCallDisplacement(this, codeStart().plus(callOffset), callEntryPoint.asAddress());
+        if (platform().isa == ISA.AMD64) {
+            return AMD64TargetMethodUtil.mtSafePatchCallDisplacement(this, codeStart().plus(callOffset), callEntryPoint.asAddress());
+        } else {
+            throw FatalError.unimplemented();
+        }
     }
 
     @Override
@@ -411,7 +410,7 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
         TargetMethod calleeTM = callee.targetMethod();
         if (calleeTM != null) {
             Stub.Type st = calleeTM.stubType();
-            if (st == InterfaceTrampoline || st == VirtualTrampoline || st == InterfaceTrampoline) {
+            if (st == StaticTrampoline || st == VirtualTrampoline || st == InterfaceTrampoline) {
                 prepareTrampolineRefMap(current, callee, preparer);
             } else if (calleeTM.is(TrapStub) && Trap.Number.isStackOverflow(csa)) {
                 // a method can never catch stack overflow for itself so there
@@ -641,6 +640,8 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
     @Override
     public int forEachCodePos(CodePosClosure cpc, Pointer ip, boolean ipIsReturnAddress) {
         if (ipIsReturnAddress && platform().isa.offsetToReturnPC == 0) {
+            // Make sure IP is within a call instruction so the stop for the call is found, not the
+            // stop for a safepoint that may be immediately succeeding the call
             ip = ip.minus(1);
         }
 
@@ -654,6 +655,6 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
 
     @Override
     public CiDebugInfo debugInfoAt(int stopIndex, FrameAccess fa) {
-        return debugInfo.infoAt(stopIndex, fa);
+        return debugInfo.infoAt(stopIndex, fa, true);
     }
 }

@@ -32,8 +32,8 @@ import com.sun.max.vm.compiler.target.*;
  */
 public class AdapterStackFrame extends VMStackFrame {
 
-    public AdapterStackFrame(StackFrame callee, AdapterStackFrameLayout layout, TargetMethod targetMethod, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer) {
-        super(callee, layout, targetMethod, instructionPointer, framePointer, stackPointer);
+    public AdapterStackFrame(StackFrame callee, TargetMethod targetMethod, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer) {
+        super(callee, targetMethod, instructionPointer, framePointer, stackPointer);
     }
 
     /**

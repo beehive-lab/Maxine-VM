@@ -32,15 +32,17 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.*;
 
-import com.oracle.max.hcfdis.*;
+import com.oracle.max.asm.target.amd64.*;
 import com.sun.c1x.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.Call;
 import com.sun.cri.ci.CiTargetMethod.DataPatch;
 import com.sun.cri.ci.CiTargetMethod.Site;
+import com.sun.cri.ci.CiUtil.RefMapFormatter;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -170,9 +172,6 @@ public class MaxRiRuntime implements RiRuntime {
     public String disassemble(byte[] code, long address) {
         final Platform platform = Platform.platform();
         CiHexCodeFile hcf = new CiHexCodeFile(code, address, platform.isa.name(), platform.wordWidth().numberOfBits);
-        if (isHosted()) {
-            return new HexCodeFileDis(false).process(hcf, null);
-        }
         return hcf.toEmbeddedString();
     }
 
@@ -183,23 +182,30 @@ public class MaxRiRuntime implements RiRuntime {
 
         CiHexCodeFile hcf = new CiHexCodeFile(code, 0L, platform.isa.name(), platform.wordWidth().numberOfBits);
         CiUtil.addAnnotations(hcf, targetMethod.annotations());
-        int spillSlotSize = target().spillSlotSize;
-        CiArchitecture arch = target().arch;
+        CiRegister fp;
+        int refMapToFPOffset;
+        if (platform.isa == ISA.AMD64) {
+            fp = AMD64.rsp;
+            refMapToFPOffset = 0;
+        } else {
+            throw FatalError.unimplemented();
+        }
+        RefMapFormatter slotFormatter = new RefMapFormatter(target().arch, target().spillSlotSize, fp, refMapToFPOffset);
         for (Call site : targetMethod.directCalls) {
             if (site.debugInfo() != null) {
-                hcf.addComment(site.pcOffset, CiUtil.append(new StringBuilder(100), site.debugInfo, arch, spillSlotSize).toString());
+                hcf.addComment(site.pcOffset, CiUtil.append(new StringBuilder(100), site.debugInfo, slotFormatter).toString());
             }
             hcf.addOperandComment(site.pcOffset, calleeString(site));
         }
         for (Call site : targetMethod.indirectCalls) {
             if (site.debugInfo() != null) {
-                hcf.addComment(site.pcOffset, CiUtil.append(new StringBuilder(100), site.debugInfo, arch, spillSlotSize).toString());
+                hcf.addComment(site.pcOffset, CiUtil.append(new StringBuilder(100), site.debugInfo, slotFormatter).toString());
             }
             hcf.addOperandComment(site.pcOffset, calleeString(site));
         }
         for (Site site : targetMethod.safepoints) {
             if (site.debugInfo() != null) {
-                hcf.addComment(site.pcOffset, CiUtil.append(new StringBuilder(100), site.debugInfo(), arch, spillSlotSize).toString());
+                hcf.addComment(site.pcOffset, CiUtil.append(new StringBuilder(100), site.debugInfo(), slotFormatter).toString());
             }
             hcf.addOperandComment(site.pcOffset, "{safepoint}");
         }
@@ -207,9 +213,6 @@ public class MaxRiRuntime implements RiRuntime {
             hcf.addOperandComment(site.pcOffset, "{" + site.constant + "}");
         }
 
-        if (isHosted()) {
-            return new HexCodeFileDis(false).process(hcf, null);
-        }
         return hcf.toEmbeddedString();
     }
 

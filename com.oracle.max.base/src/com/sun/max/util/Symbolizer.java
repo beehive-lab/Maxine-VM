@@ -24,7 +24,6 @@ package com.sun.max.util;
 
 import java.lang.reflect.*;
 import java.util.*;
-import java.util.Arrays;
 
 import com.sun.max.lang.*;
 
@@ -121,6 +120,7 @@ public interface Symbolizer<S extends Symbol> extends Iterable<S> {
             return initialize(symbolType, symbolType);
         }
 
+        @SuppressWarnings("unchecked")
         public static <S extends Symbol> Symbolizer<S> fromSymbolizer(Symbolizer<S> symbolizer, Predicate<S> predicate) {
             if (predicate == null) {
                 return symbolizer;

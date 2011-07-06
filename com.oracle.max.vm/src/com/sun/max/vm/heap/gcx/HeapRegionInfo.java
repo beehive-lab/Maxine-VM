@@ -24,11 +24,14 @@ package com.sun.max.vm.heap.gcx;
 
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 import static com.sun.max.vm.heap.gcx.HeapRegionInfo.Flag.*;
+import static com.sun.max.vm.heap.gcx.HeapRegionInfo.HeapRegionState.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.reference.*;
 /**
  * Descriptor of heap region.
  * The information recorded is carefully crafted so that a zero-filled HeapRegionInfo
@@ -45,7 +48,7 @@ public class HeapRegionInfo {
          */
         IS_ITERABLE,
         /**
-         * Indicates that the region is used by an allocator. An allocation region must be made iterable before iterating over it.
+         * Indicates that the region is used by an allocator and may not be iterable. An allocation region must be made iterable before iterating over it.
          */
         IS_ALLOCATING,
         /**
@@ -95,20 +98,51 @@ public class HeapRegionInfo {
             return flag.mask & mask;
         }
 
-        public static int allFlagsMask() {
-            return IS_ITERABLE.or(IS_ALLOCATING.or(HAS_FREE_CHUNK));
+        public final boolean only(int flags) {
+            return flags == mask;
+        }
+
+        static private Flag [] allFlags = values();
+
+        static void log(int flags) {
+            String sep = "";
+            for (Flag f : allFlags) {
+                if (f.isSet(flags)) {
+                    Log.print(sep);
+                    Log.print(f.toString());
+                    sep = " | ";
+                }
+            }
         }
     }
 
-    static final int EMPTY_REGION = 0;
-    static final int ALLOCATING_REGION = IS_ALLOCATING.or(0);
-    static final int FULL_REGION = IS_ITERABLE.or(0);
-    static final int FREE_CHUNKS_REGION = IS_ITERABLE.or(HAS_FREE_CHUNK.or(0));
-    static final int LARGE_SINGLE_REGION = IS_LARGE.or(IS_HEAD.or(IS_TAIL.or(0)));
-    static final int LARGE_HEAD_ONLY =  IS_ITERABLE.or(IS_LARGE.or(IS_HEAD.or(0)));
-    static final int LARGE_FULL_TAIL =  IS_ITERABLE.or(IS_LARGE.or(IS_TAIL.or(0)));
-    static final int LARGE_TAIL = IS_ITERABLE.or(HAS_FREE_CHUNK.or(IS_LARGE.or(IS_TAIL.or(0))));
-    static final int LARGE_BODY =  IS_ITERABLE.or(IS_LARGE.or(0));
+    enum HeapRegionState {
+        EMPTY_REGION(0),
+        ALLOCATING_FROM_EMPTY_REGION(IS_ALLOCATING.or(0)),
+        ALLOCATING_REGION(IS_ALLOCATING.or(HAS_FREE_CHUNK.or(0))),
+        FULL_REGION(IS_ITERABLE.or(0)),
+        FREE_CHUNKS_REGION(IS_ITERABLE.or(HAS_FREE_CHUNK.or(0))),
+        LARGE_HEAD_ONLY(IS_ITERABLE.or(IS_LARGE.or(IS_HEAD.or(0)))),
+        LARGE_BODY(IS_ITERABLE.or(IS_LARGE.or(0))),
+        LARGE_FULL_TAIL(IS_ITERABLE.or(IS_LARGE.or(IS_TAIL.or(0)))),
+        LARGE_TAIL(IS_ITERABLE.or(IS_LARGE.or(IS_TAIL.or(HAS_FREE_CHUNK.or(0))))),
+        LARGE_ALLOCATING_TAIL(IS_ALLOCATING.or(IS_LARGE.or(IS_TAIL.or(HAS_FREE_CHUNK.or(0)))));
+
+        final int flags;
+        HeapRegionState(int flags) {
+            this.flags = flags;
+        }
+
+        final boolean isInState(HeapRegionInfo rinfo) {
+            return rinfo.flags == flags;
+        }
+
+        final void setState(HeapRegionInfo rinfo) {
+            rinfo.flags = flags;
+        }
+    }
+
+    static final int LARGE_REGION_FLAGS = IS_LARGE.or(IS_TAIL.or(IS_HEAD.or(0)));
 
     /**
      * A 32-bit vector compounding several flags information. See {@link Flag} for usage of each of the bits.
@@ -116,14 +150,15 @@ public class HeapRegionInfo {
     int flags; // NOTE: don't want to use an EnumSet here. Don't want a long for storing flags; and want the flags embedded in the heap region info.
 
     public final boolean isEmpty() {
-        return flags == EMPTY_REGION;
+        return flags == EMPTY_REGION.flags;
     }
+
     public final boolean isFull() {
-        return flags == FULL_REGION;
+        return IS_ITERABLE.only(flags & ~LARGE_REGION_FLAGS);
     }
 
     public final boolean isAllocating() {
-        return IS_ALLOCATING.isSet(ALLOCATING_REGION);
+        return IS_ALLOCATING.isSet(flags);
     }
 
     public final boolean isIterable() {
@@ -171,7 +206,8 @@ public class HeapRegionInfo {
      */
     short freeSpace;
     /**
-     * Amount of live data. Zero if the region is empty.
+     * Amount of live data, in words. Zero if the region is empty.
+     * Can be used  with {@link #freeSpace} to determine dark matter.
      */
     short liveData;
 
@@ -188,15 +224,59 @@ public class HeapRegionInfo {
         return regionSizeInWords - (liveData + freeSpace);
     }
 
-    public final int freeWords() {
+    public final int freeWordsInChunks() {
         return freeSpace;
     }
 
-    public final int freeBytes() {
+    /**
+     * Total number of free bytes in free chunks. This is only relevant for region with at least one free chunk.
+     * Empty regions have a free bytes count of zero.
+     * @return
+     */
+    public final int freeBytesInChunks() {
         return freeSpace << Word.widthValue().log2numberOfBytes;
     }
+
+    public final int freeBytes() {
+        return isEmpty() ?  regionSizeInBytes : freeBytesInChunks();
+    }
+
+    public final int liveBytes() {
+        return liveData << Word.widthValue().log2numberOfBytes;
+    }
+
     public final int numFreeChunks() {
         return numFreeChunks;
+    }
+
+
+    public void dump(boolean enumerateFreeChunks) {
+        Log.print("region #");
+        Log.print(toRegionID());
+        Log.print(" [");
+        Log.print(regionStart());
+        Log.print(",");
+        Log.print(regionStart().plus(regionSizeInBytes));
+        Log.print(" [ ");
+        Flag.log(flags);
+        Log.print(", free: ");
+        Log.print(freeBytes());
+        Log.print(" live: ");
+        Log.print(liveBytes());
+        Log.print(" owner: ");
+        Log.print(Reference.fromJava(owner).toOrigin());
+        Log.print(" #free chunks: ");
+        Log.print(numFreeChunks);
+        if (numFreeChunks > 0) {
+            if (enumerateFreeChunks) {
+                Log.print("free chunks: ");
+                HeapFreeChunk.dumpList(HeapFreeChunk.toHeapFreeChunk(firstFreeBytes()));
+            } else {
+                Log.print("first free chunk");
+                Log.print(firstFreeBytes());
+            }
+        }
+        Log.println();
     }
 
     /**
@@ -222,60 +302,61 @@ public class HeapRegionInfo {
         return RegionTable.theRegionTable().regionAddress(this);
     }
 
-    final void setFull() {
-        flags = FULL_REGION;
+    /**
+     * Change heap region to full state (iterable, not allocating and without free chunks).
+     */
+    final void toFullState() {
+        flags = IS_ITERABLE.or(HAS_FREE_CHUNK.clear(IS_ALLOCATING.clear(flags)));
     }
 
-    final void setAllocating() {
+    /**
+     * Change heap region to allocating state (not iterable, backing an allocator).
+     */
+    final void toAllocatingState() {
         flags = IS_ALLOCATING.or(IS_ITERABLE.clear(flags));
     }
 
-    final void setIterable() {
+    /**
+     * Change heap region to iterable state (region stopped allocating).
+     */
+    final void toIterable() {
         flags = IS_ITERABLE.and(IS_ALLOCATING.clear(flags));
     }
 
-    final void setEmpty() {
-        flags = EMPTY_REGION;
-    }
-
-    final void setLargeBody() {
-        flags = LARGE_BODY;
-    }
-    final void setLargeHead() {
-        flags = IS_ITERABLE.and(LARGE_HEAD_ONLY);
-    }
-
-    final void setLargeTail() {
-        flags = LARGE_FULL_TAIL;
-    }
     final void setLargeTail(Address firstChunkAddress, Size numBytes) {
-        flags = LARGE_TAIL;
+        LARGE_TAIL.setState(this);
         firstFreeChunkIndex = (short) indexInRegion(firstChunkAddress);
         numFreeChunks = 1;
         freeSpace = (short) numBytes.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
     }
 
     final void setFreeChunks(Address firstChunkAddress, short numFreeWords, short numChunks) {
-        flags = FREE_CHUNKS_REGION;
+        flags = HAS_FREE_CHUNK.or(flags);
         firstFreeChunkIndex = (short) indexInRegion(firstChunkAddress);
         numFreeChunks = numChunks;
         freeSpace = numFreeWords;
     }
 
-    final void setFreeChunks(Address firstChunkAddress, Size numBytes, int numChunks) {
-        final short numFreeWords = (short) numBytes.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
+    final void setFreeChunks(Address firstChunkAddress, int numBytes, int numChunks) {
+        final short numFreeWords = (short) (numBytes >>> Word.widthValue().log2numberOfBytes);
         setFreeChunks(firstChunkAddress, numFreeWords, (short) numChunks);
+    }
+
+    final void setFreeChunks(Address firstChunkAddress, Size numBytes, int numChunks) {
+        setFreeChunks(firstChunkAddress, numBytes.toInt(),  numChunks);
     }
 
     final void clearFreeChunks() {
         numFreeChunks = 0;
         freeSpace = 0;
+        flags = HAS_FREE_CHUNK.clear(flags);
     }
 
     final void resetOccupancy() {
-        flags = EMPTY_REGION;
+        EMPTY_REGION.setState(this);
         liveData = 0;
         numFreeChunks  = 0;
+        firstFreeChunkIndex = 0;
         freeSpace = 0;
     }
 

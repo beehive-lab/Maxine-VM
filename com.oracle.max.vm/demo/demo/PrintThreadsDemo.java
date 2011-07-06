@@ -64,6 +64,7 @@ public class PrintThreadsDemo {
     }
 
     private static class AllocatingSpinner extends Thread {
+        @SuppressWarnings("unused")
         @Override
         public void run() {
             long counter = 0;

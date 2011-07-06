@@ -33,7 +33,6 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -215,8 +214,6 @@ public final class ConstantPool implements RiConstantPool {
         this.classLoader = classLoader;
         this.length = poolLength;
 
-        int numberOfResolvableConstants = 0;
-
         // Pass 1: read in the primitive values
         int i = 1;
         while (i < poolLength) {
@@ -226,7 +223,6 @@ public final class ConstantPool implements RiConstantPool {
             switch (tag) {
                 case CLASS: {
                     rawEntries[i] = classfileStream.readUnsigned2();
-                    ++numberOfResolvableConstants;
                     break;
                 }
                 case STRING: {
@@ -239,7 +235,6 @@ public final class ConstantPool implements RiConstantPool {
                     final int classIndex = classfileStream.readUnsigned2();
                     final int nameAndTypeIndex = classfileStream.readUnsigned2();
                     rawEntries[i] = (classIndex << 16) | (nameAndTypeIndex & 0xFFFF);
-                    ++numberOfResolvableConstants;
                     break;
                 }
                 case NAME_AND_TYPE: {
@@ -846,15 +841,15 @@ public final class ConstantPool implements RiConstantPool {
 
     public RiField lookupField(int cpi, int opcode) {
         FieldRefConstant constant = fieldAt(cpi);
-        if (constant.isResolved() || attemptResolution(constant)) {
+        if (constant.isResolvableWithoutClassLoading(this)) {
             // the resolution can occur without side effects
             try {
                 FieldActor field = checkResolvedFieldAccess(constant.resolve(this, cpi), opcode);
                 if (field != null) {
                     return field;
                 }
-            } catch (HostOnlyFieldError hostOnlyFieldError) {
-                // Treat as unresolved
+            } catch (LinkageError error) {
+                // Treat as unresolved so that error is thrown later at run time
             }
         }
         RiType holder = UnresolvedType.toRiType(constant.holder(this), holder());
@@ -902,14 +897,14 @@ public final class ConstantPool implements RiConstantPool {
 
     public RiMethod lookupMethod(int cpi, int opcode) {
         MethodRefConstant constant = methodAt(cpi);
-        if (constant.isResolved() || attemptResolution(constant)) {
+        if (constant.isResolvableWithoutClassLoading(this)) {
             // the resolution can occur without side effects
             try {
                 MethodActor method = checkResolvedMethodAccess(constant.resolve(this, cpi), opcode);
                 if (method != null) {
                     return method;
                 }
-            } catch (HostOnlyMethodError hostOnlyMethodError) {
+            } catch (LinkageError error) {
                 // Treat as unresolved
             }
         }
@@ -959,11 +954,15 @@ public final class ConstantPool implements RiConstantPool {
     }
 
     private RiType typeFrom(ClassConstant constant, int cpi, int opcode) {
-        if (constant.isResolved() || attemptResolution(constant)) {
-            // the resolution can occur without side effects
-            ClassActor type = checkResolvedTypeAccess(constant.resolve(this, cpi), opcode);
-            if (type != null) {
-                return type;
+        if (constant.isResolvableWithoutClassLoading(this)) {
+            try {
+                // the resolution can occur without side effects
+                ClassActor type = checkResolvedTypeAccess(constant.resolve(this, cpi), opcode);
+                if (type != null) {
+                    return type;
+                }
+            } catch (LinkageError error) {
+                // Treat as unresolved so that error is thrown later at run time
             }
         }
         return new UnresolvedType.InPool(constant.typeDescriptor(), this, cpi);
@@ -990,10 +989,6 @@ public final class ConstantPool implements RiConstantPool {
             }
         }
         return classActor;
-    }
-
-    private boolean attemptResolution(ResolvableConstant constant) {
-        return constant.isResolvableWithoutClassLoading(this);
     }
 
     public CiConstant encoding() {

@@ -46,7 +46,7 @@ public final class Throw {
     }
 
     public static int TraceExceptions;
-    private static boolean TraceExceptionsRaw;
+    public static boolean TraceExceptionsRaw;
     private static int TraceExceptionsMaxFrames = 200;
     private static int TraceExceptionsRawMaxFrames = 200;
     private static String TraceExceptionsFilter;
@@ -148,22 +148,17 @@ public final class Throw {
             Log.println(": Throwing " + throwable);
         } else if (TraceExceptions >= 2) {
             StackTraceElement[] trace = throwable.getStackTrace();
-            boolean lockDisabledSafepoints = Log.lock();
-            try {
-                Log.printThread(VmThread.current(), false);
-                Log.print(": Throwing ");
-                Log.println(throwable);
-                for (int i = 0; i < trace.length && i < TraceExceptionsMaxFrames; i++) {
-                    Log.println("\tat " + trace[i]);
-                }
-                int elided = trace.length - TraceExceptionsMaxFrames;
-                if (elided > 0) {
-                    Log.print("\t[");
-                    Log.print(elided);
-                    Log.println(" frames elided]");
-                }
-            } finally {
-                Log.unlock(lockDisabledSafepoints);
+            Log.printThread(VmThread.current(), false);
+            Log.print(": Throwing ");
+            Log.println(throwable);
+            for (int i = 0; i < trace.length && i < TraceExceptionsMaxFrames; i++) {
+                Log.println("\tat " + trace[i]);
+            }
+            int elided = trace.length - TraceExceptionsMaxFrames;
+            if (elided > 0) {
+                Log.print("\t[");
+                Log.print(elided);
+                Log.println(" frames elided]");
             }
         }
         if (TraceExceptionsRaw) {

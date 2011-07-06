@@ -329,7 +329,6 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
 
             final List<Argument> arguments = new ArrayList<Argument>();
             final AddressMapper addressMapper = new AddressMapper();
-            int parameterIndex = 0;
             for (Parameter p : template.parameters()) {
                 final Argument exampleArg = p.getExampleArgument();
                 if (exampleArg != null) {
@@ -337,7 +336,6 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
                 } else {
                     break;
                 }
-                parameterIndex++;
             }
             if (arguments.size() == template.parameters().size()) {
                 try {

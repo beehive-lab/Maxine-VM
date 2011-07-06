@@ -215,7 +215,7 @@ if [ -z "${MAXINE_OS}" ]; then
     OS=`uname -s`
     case $OS in
         Darwin* )
-            supported_macosx_jdks="1.6.0_20 1.6.0_22 1.6.0_25"
+            supported_macosx_jdks="1.6.0_20 1.6.0_22 1.6.0_25 1.6.0_26"
             version_found=0
             for maxos_java_version in $supported_macosx_jdks; do
                 if [ "$java_version" = "$maxos_java_version" ]; then
@@ -850,7 +850,7 @@ function run_image() {
                 export MAXINE_LOG_FILE
                 ;;
             -vma )
-                system_props="$system_props -Dmax.permsize=8 -Dmax.vmthread.factory.class=com.oracle.max.vm.ext.vma.runtime.VMAVmThreadFactory -Dmax.vma.advice.class=com.sun.max.vm.t1x.vma.VMAAdviceTemplateSource"
+                system_props="$system_props -Dmax.permsize=2 -Dmax.vmthread.factory.class=com.oracle.max.vm.ext.vma.runtime.VMAVmThreadFactory"
                 ;;
             *)
                 image_args="$image_args $1"
@@ -972,21 +972,29 @@ function run_copyvm() {
 # 'eclipse' command
 #=======================================
 
+# see http://wiki.eclipse.org/FAQ_How_do_I_run_Eclipse%3F
+# and http://wiki.eclipse.org/Starting_Eclipse_Commandline_With_Equinox_Launcher
+
 eclipse_usage="[options]"
 eclipse_defaults="-Xms1g -Xmx3g -XX:ReservedCodeCacheSize=512m -XX:+ShowConfiguration"
 eclipse_help="launch Eclipse with the Maxine VM
 
-    Run Eclipse under Maxine VM with the given options supplied as
-    the value of the '-vmargs' Eclipse launcher option.
-    The expansion of the MAXVM_OPTIONS environment variable is inserted
-    before any other VM options specified on the command line."
+    Run Eclipse with the Maxine VM, by-passing the native Eclipse launcher.
+    The ECLIPSE_HOME environment variable must be set and point to
+    the parent of the 'plugins' directory in an Eclipse installation."
 
 function run_eclipse() {
-    if [ -z "$(type -t eclipse)" ]; then
-        echo "The Eclipse executable 'eclipse' must be on your PATH"
+    if [ ! -d "$ECLIPSE_HOME/plugins" ]; then
+        echo "The ECLIPSE_HOME variable must denote the parent of the 'plugins' directory in an Eclipse installation"
         exit 1
     fi
-    run eclipse -vm ${maxine_vm} -vmargs $eclipse_defaults $MAXVM_OPTIONS $@
+    launcher_jar=$(ls $ECLIPSE_HOME/plugins/org.eclipse.equinox.launcher_*.jar | sort | tail -1);
+    if [ ! -f $launcher_jar ]; then
+        echo "Could not find org.eclipse.equinox.launcher_*.jar in $ECLIPSE_HOME/plugins"
+        exit 1;
+    fi
+    
+    run ${maxine_vm} $eclipse_defaults $MAXVM_OPTIONS $@ -jar $launcher_jar 
 }
 
 #=======================================

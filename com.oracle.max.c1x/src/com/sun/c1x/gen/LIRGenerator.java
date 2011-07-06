@@ -643,6 +643,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitTemplateCall(TemplateCall x) {
         CiValue resultOperand = resultOperandFor(x.kind);
+        LIRDebugInfo info = /*new LIRDebugInfo(x.stateBefore(), x.exceptionHandlers());*/ stateFor(x, x.stateBefore());
         List<CiValue> argList;
         if (x.receiver() != null) {
             CiCallingConvention cc = compilation.frameMap().getCallingConvention(new CiKind[] {CiKind.Object}, JavaCall);
@@ -655,7 +656,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             CiValue callAddress = load(x.address());
             argList.add(callAddress);
         }
-        lir.templateCall(resultOperand, argList);
+        lir.templateCall(resultOperand, argList, info);
         if (resultOperand.isLegal()) {
             CiValue result = createResultVariable(x);
             lir.move(resultOperand, result);
@@ -896,13 +897,20 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitNullCheck(NullCheck x) {
-        // TODO: this is suboptimal because it may result in an unnecessary move
-        CiValue value = load(x.object());
+        CiValue value = makeOperand(x.object());
+        if (value.isVariable()) {
+            // null check does not create a new value, so we can re-use an already existing virtual register
+            x.setOperand(value);
+        } else {
+            CiValue result = createResultVariable(x);
+            lir.move(value, result);
+            value = result;
+        }
+
         if (x.canTrap()) {
             LIRDebugInfo info = stateFor(x);
             lir.nullCheck(value, info);
         }
-        x.setOperand(value);
     }
 
     @Override

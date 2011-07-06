@@ -38,7 +38,6 @@ final class InspectorRootPane extends JRootPane implements InspectorFrame {
 
     private final AbstractView view;
     private final TabbedView parent;
-    private final InspectorMenuBar menuBar;
 
     private String title = null;
 
@@ -57,12 +56,15 @@ final class InspectorRootPane extends JRootPane implements InspectorFrame {
     public InspectorRootPane(AbstractView view, TabbedView parent, boolean addMenuBar) {
         this.view = view;
         this.parent = parent;
-        menuBar = addMenuBar ? new InspectorMenuBar(view.inspection()) : null;
-        setJMenuBar(menuBar);
+        setJMenuBar(addMenuBar ? new InspectorMenuBar(view.inspection()) : null);
     }
 
     public JComponent getJComponent() {
         return this;
+    }
+
+    private InspectorMenuBar menuBar() {
+        return (InspectorMenuBar) getJMenuBar();
     }
 
     /** {@inheritDoc}
@@ -72,8 +74,8 @@ final class InspectorRootPane extends JRootPane implements InspectorFrame {
      * certain commands.
      */
     public void refresh(boolean force) {
-        if (menuBar != null) {
-            menuBar.refresh(force);
+        if (menuBar() != null) {
+            menuBar().refresh(force);
         }
     }
 
@@ -91,8 +93,8 @@ final class InspectorRootPane extends JRootPane implements InspectorFrame {
     }
 
     public InspectorMenu makeMenu(MenuKind menuKind) throws InspectorError {
-        InspectorError.check(menuBar != null);
-        return menuBar.makeMenu(menuKind);
+        InspectorError.check(menuBar() != null);
+        return menuBar().makeMenu(menuKind);
     }
 
     public void setSelected() {
@@ -125,8 +127,8 @@ final class InspectorRootPane extends JRootPane implements InspectorFrame {
     }
 
     public void setStateColor(Color color) {
-        if (menuBar != null) {
-            menuBar.setBackground(color);
+        if (menuBar() != null) {
+            menuBar().setBackground(color);
         }
     }
 

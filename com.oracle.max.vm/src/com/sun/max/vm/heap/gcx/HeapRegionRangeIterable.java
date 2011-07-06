@@ -23,6 +23,10 @@
 package com.sun.max.vm.heap.gcx;
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 
+/**
+ * An iterator over a {@link HeapRegionList}.
+ * The iterator return ranges of contiguous regions in the order of the list.
+ */
 public final class HeapRegionRangeIterable extends HeapRegionListIterable {
     HeapRegionRangeIterable() {
     }

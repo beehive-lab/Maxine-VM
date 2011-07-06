@@ -64,7 +64,6 @@ public final class ObjectFieldsTable extends InspectorTable {
     private final int endOffset;
 
     private final ObjectFieldsTableModel tableModel;
-    private final ObjectFieldsTableColumnModel columnModel;
 
     private final ObjectViewPreferences instanceViewPreferences;
 
@@ -102,7 +101,7 @@ public final class ObjectFieldsTable extends InspectorTable {
             endOffset = 0;
         }
         this.tableModel = new ObjectFieldsTableModel(inspection, teleObject.origin());
-        this.columnModel = new ObjectFieldsTableColumnModel(this, this.tableModel, instanceViewPreferences);
+        ObjectFieldsTableColumnModel columnModel = new ObjectFieldsTableColumnModel(this, this.tableModel, instanceViewPreferences);
         configureMemoryTable(tableModel, columnModel);
         updateFocusSelection();
     }

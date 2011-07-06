@@ -65,7 +65,6 @@ public final class ArrayElementsTable extends InspectorTable {
     private final WordValueLabel.ValueMode wordValueMode;
 
     private final ArrayElementsTableModel tableModel;
-    private final ArrayElementsTableColumnModel columnModel;
 
     private final ObjectViewPreferences instanceViewPreferences;
 
@@ -100,7 +99,7 @@ public final class ArrayElementsTable extends InspectorTable {
         this.instanceViewPreferences = instanceViewPreferences;
 
         this.tableModel = new ArrayElementsTableModel(inspection, teleObject.origin());
-        this.columnModel = new ArrayElementsTableColumnModel(this, this.tableModel, instanceViewPreferences);
+        ArrayElementsTableColumnModel columnModel = new ArrayElementsTableColumnModel(this, this.tableModel, instanceViewPreferences);
         configureMemoryTable(tableModel, columnModel);
         setFillsViewportHeight(true);
         updateFocusSelection();

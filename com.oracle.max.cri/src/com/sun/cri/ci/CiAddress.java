@@ -211,14 +211,21 @@ public final class CiAddress extends CiValue {
         return "v" + ((CiVariable) location).index;
     }
 
+    private static String signed(int i) {
+        if (i >= 0) {
+            return "+" + i;
+        }
+        return String.valueOf(i);
+    }
+
     @Override
     public String name() {
         // Checkstyle: stop
         switch (format()) {
             case BASE            : return "[" + s(base) + "]";
-            case BASE_DISP       : return "[" + s(base) + " + " + displacement + "]";
-            case BASE_INDEX      : return "[" + s(base) + " + " + s(index) + "]";
-            case BASE_INDEX_DISP : return "[" + s(base) + " + " + s(index) + "*" + scale.value + " + " + displacement + "]";
+            case BASE_DISP       : return "[" + s(base) + signed(displacement) + "]";
+            case BASE_INDEX      : return "[" + s(base) + "+" + s(index) + "]";
+            case BASE_INDEX_DISP : return "[" + s(base) + "+(" + s(index) + "*" + scale.value + ")" + signed(displacement) + "]";
             case PLACEHOLDER     : return "[<placeholder>]";
             default              : throw new IllegalArgumentException("unknown format: " + format());
         }

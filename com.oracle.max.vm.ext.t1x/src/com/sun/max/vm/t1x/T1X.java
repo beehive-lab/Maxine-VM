@@ -31,14 +31,12 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-import javax.xml.transform.*;
-
-import com.oracle.max.hcfdis.*;
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiCallingConvention.Type;
+import com.sun.cri.ci.CiUtil.RefMapFormatter;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -48,6 +46,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.c1x.*;
@@ -174,17 +173,6 @@ public class T1X implements RuntimeCompiler {
 
         TTY.Filter filter = PrintFilter == null ? null : new TTY.Filter(PrintFilter, method);
 
-        CFGPrinter cfgPrinter = null;
-        ByteArrayOutputStream cfgPrinterBuffer = null;
-        if (!reentrant && PrintCFGToFile && method != null && !TTY.isSuppressed()) {
-            // Cannot write to file system at runtime until the VM is in the RUNNING phase
-            if (isHosted() || isRunning()) {
-                cfgPrinterBuffer = new ByteArrayOutputStream();
-                cfgPrinter = new CFGPrinter(cfgPrinterBuffer, target());
-                cfgPrinter.printCompilation(method);
-            }
-        }
-
         try {
             T1XTargetMethod t1xMethod = c.compile(method, install);
             T1XMetrics.BytecodesCompiled += t1xMethod.codeAttribute.code().length;
@@ -192,7 +180,7 @@ public class T1X implements RuntimeCompiler {
             if (stats != null) {
                 stats.bytecodeCount = t1xMethod.codeAttribute.code().length;
             }
-            printMachineCodeTo(t1xMethod, c, cfgPrinter);
+            printMachineCode(c, t1xMethod, reentrant);
             return t1xMethod;
         } finally {
             if (filter != null) {
@@ -202,55 +190,67 @@ public class T1X implements RuntimeCompiler {
                 long time = (System.nanoTime() - startTime) / 100000;
                 TTY.println(String.format("%3d.%dms", time / 10, time % 10));
             }
-            if (cfgPrinter != null) {
-                cfgPrinter.flush();
-                OutputStream cfgFileStream = CFGPrinter.cfgFileStream();
-                if (cfgFileStream != null) {
-                    synchronized (cfgFileStream) {
-                        try {
-                            cfgFileStream.write(cfgPrinterBuffer.toByteArray());
-                        } catch (IOException e) {
-                            TTY.println("WARNING: Error writing CFGPrinter output for %s to disk: %s", method, e.getMessage());
-                        }
-                    }
-                }
-            }
             c.cleanup();
         }
     }
 
     private static final int MIN_OPCODE_LINE_LENGTH = 100;
 
-    void printMachineCodeTo(T1XTargetMethod t1xMethod, T1XCompilation c, CFGPrinter cfgPrinter) {
-        if (cfgPrinter != null) {
-            byte[] code = t1xMethod.code();
+    void printMachineCode(T1XCompilation c, T1XTargetMethod t1xMethod, boolean reentrant) {
+        if (!PrintCFGToFile || reentrant || c.method == null || TTY.isSuppressed()) {
+            return;
+        }
+        if (!isHosted() && !isRunning()) {
+            // Cannot write to file system at runtime until the VM is in the RUNNING phase
+            return;
+        }
 
-            final Platform platform = Platform.platform();
-            CiHexCodeFile hcf = new CiHexCodeFile(code, t1xMethod.codeStart().toLong(), platform.isa.name(), platform.wordWidth().numberOfBits);
+        ByteArrayOutputStream cfgPrinterBuffer = new ByteArrayOutputStream();
+        CFGPrinter cfgPrinter = new CFGPrinter(cfgPrinterBuffer, target());
 
-            CiUtil.addAnnotations(hcf, c.codeAnnotations);
-            addOpcodeComments(hcf, t1xMethod);
-            addExceptionHandlersComment(t1xMethod, hcf);
-            addStopPositionComments(t1xMethod, hcf);
+        cfgPrinter.printCompilation(c.method);
 
-            if (isHosted()) {
-                cfgPrinter.printMachineCode(new HexCodeFileDis(false).process(hcf, null), "After code generation");
-            } else {
-                cfgPrinter.printMachineCode(hcf.toEmbeddedString(), "After code generation");
+        byte[] code = t1xMethod.code();
+        final Platform platform = Platform.platform();
+        CiHexCodeFile hcf = new CiHexCodeFile(code, t1xMethod.codeStart().toLong(), platform.isa.name(), platform.wordWidth().numberOfBits);
+
+        CiUtil.addAnnotations(hcf, c.codeAnnotations);
+        addOpcodeComments(hcf, t1xMethod);
+        addExceptionHandlersComment(t1xMethod, hcf);
+        addStopPositionComments(t1xMethod, hcf);
+
+        String label = CiUtil.format("T1X %f %R %H.%n(%P)", c.method, false);
+
+        cfgPrinter.printMachineCode(hcf.toEmbeddedString(), label);
+
+        String bytecodes = c.method.format("%f %R %H.%n(%P)") + String.format("%n%s", CodeAttributePrinter.toString(c.method.codeAttribute()));
+        cfgPrinter.printBytecodes(bytecodes);
+
+        cfgPrinter.flush();
+        OutputStream cfgFileStream = CFGPrinter.cfgFileStream();
+        if (cfgFileStream != null) {
+            synchronized (cfgFileStream) {
+                try {
+                    cfgFileStream.write(cfgPrinterBuffer.toByteArray());
+                } catch (IOException e) {
+                    TTY.println("WARNING: Error writing CFGPrinter output for %s to disk: %s", c.method, e.getMessage());
+                }
             }
         }
     }
 
-    private static void addStopPositionComments(T1XTargetMethod t1xMethod, CiHexCodeFile hcf) {
+    private static void addStopPositionComments(final T1XTargetMethod t1xMethod, CiHexCodeFile hcf) {
         if (t1xMethod.stopPositions() != null) {
             StopPositions stopPositions = new StopPositions(t1xMethod.stopPositions());
             Object[] directCallees = t1xMethod.directCallees();
 
+            JVMSFrameLayout frame = t1xMethod.frame;
+            RefMapFormatter slotFormatter = new RefMapFormatter(target().arch, target().spillSlotSize, frame.framePointerReg(), frame.frameReferenceMapOffset());
             for (int stopIndex = 0; stopIndex < stopPositions.length(); ++stopIndex) {
                 int pos = stopPositions.get(stopIndex);
 
                 CiDebugInfo info = t1xMethod.debugInfoAt(stopIndex, null);
-                hcf.addComment(pos, CiUtil.append(new StringBuilder(100), info, target().arch, JVMSFrameLayout.JVMS_SLOT_SIZE).toString());
+                hcf.addComment(pos, CiUtil.append(new StringBuilder(100), info, slotFormatter).toString());
 
                 if (stopIndex < t1xMethod.numberOfDirectCalls()) {
                     Object callee = directCallees[stopIndex];
@@ -327,7 +327,7 @@ public class T1X implements RuntimeCompiler {
 
     public void initialize(Phase phase) {
         if (isHosted() && phase == Phase.COMPILING) {
-            createTemplates(templateSource, altT1X, true);
+            createTemplates(templateSource, altT1X, true, templates, false);
         }
         if (phase == Phase.STARTING) {
             if (T1XOptions.PrintBytecodeHistogram) {
@@ -363,13 +363,18 @@ public class T1X implements RuntimeCompiler {
      *
      * @param templateSourceClass class containing template methods
      * @param altT1X alternate compiler to use for undefined templates
-     * @param checkComplete If {@code true} check the array for completeness.
-     * @param templates an existing instance that will be incrementally updated. May be null.
-     * @return a {@link Templates} instance.
+     * @param checkComplete if {@code true} check the array for completeness.
+     * @param templates an existing instance that will be incrementally updated.
+     *        Value may be null, in which case a new array will be created.
+     * @param useTemplateCallRefMaps if true fold in any ref-maps associated with a template call
+     * @return the templates array, either as passed in or created.
      */
     @HOSTED_ONLY
-    public void createTemplates(Class<?> templateSourceClass, T1X altT1X, boolean checkComplete) {
+    public T1XTemplate[] createTemplates(Class<?> templateSourceClass, T1X altT1X, boolean checkComplete, T1XTemplate[] templates, boolean useTemplateCallRefMaps) {
         Trace.begin(1, "creating T1X templates from " + templateSourceClass.getName());
+        if (templates == null) {
+            templates = new T1XTemplate[T1XTemplateTag.values().length];
+        }
         long startTime = System.currentTimeMillis();
 
         // Create a C1X compiler to compile the templates
@@ -406,15 +411,6 @@ public class T1X implements RuntimeCompiler {
                             Object literal = templateCode.referenceLiterals()[i];
                             sb.append("\n  " + i + ": " + literal.getClass().getName() + " // \"" + literal + "\"\n");
                         }
-
-                        templateCode.disassemble(new OutputStream() {
-                            @Override
-                            public void write(int b) throws IOException {
-                                // Only expecting ASCII so this should be safe
-                                sb.append((char) b);
-                            }
-                        });
-
                         throw FatalError.unexpected(sb.toString());
                     }
                     FatalError.check(templateCode.scalarLiterals() == null, "Template must not have *any* scalar literals: " + templateCode + "\n\n" + templateCode);
@@ -427,7 +423,7 @@ public class T1X implements RuntimeCompiler {
                     if (template != null) {
                         FatalError.unexpected("Template tag " + tag + " is already bound to " + template.method + ", cannot rebind to " + templateSource);
                     }
-                    templates[tag.ordinal()] = new T1XTemplate(templateCode, tag, templateSource);
+                    templates[tag.ordinal()] = new T1XTemplate(templateCode, tag, templateSource, useTemplateCallRefMaps);
                 }
             }
         }
@@ -445,6 +441,7 @@ public class T1X implements RuntimeCompiler {
         }
         Trace.end(1, "creating T1X templates from " + templateSourceClass.getName() + " [templates code size: " + codeSize + "]", startTime);
         comp.extensions = oldExtensions;
+        return templates;
     }
 
     @HOSTED_ONLY

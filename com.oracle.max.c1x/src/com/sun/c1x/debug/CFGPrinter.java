@@ -23,6 +23,7 @@
 package com.sun.c1x.debug;
 
 import java.io.*;
+import java.text.*;
 import java.util.*;
 
 import com.sun.c1x.*;
@@ -51,15 +52,17 @@ public class CFGPrinter {
 
     private static OutputStream cfgFileStream;
 
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmm");
+
     /**
-     * Gets the output stream  on the file "output.cfg" in the current working directory.
+     * Gets the output stream  on the file "compilations-`date`" in the current working directory.
      * This stream is first opened if necessary.
      *
-     * @return the output stream to "output.cfg" or {@code null} if there was an error opening this file for writing
+     * @return the output stream or {@code null} if there was an error opening this file for writing
      */
     public static synchronized OutputStream cfgFileStream() {
         if (cfgFileStream == null) {
-            File cfgFile = new File("output.cfg");
+            File cfgFile = new File("compilations-" + dateFormat.format(new Date()) + ".cfg");
             try {
                 cfgFileStream = new FileOutputStream(cfgFile);
             } catch (FileNotFoundException e) {
@@ -107,8 +110,8 @@ public class CFGPrinter {
      */
     public void printCompilation(RiMethod method) {
         begin("compilation");
-        out.print("name \" ").print(CiUtil.format("%H::%n", method, true)).println('"');
-        out.print("method \"").print(CiUtil.format("%f %r %H.%n(%p)", method, true)).println('"');
+        out.print("name \"").print(CiUtil.format("%H.%n(%P)", method, false)).println('"');
+        out.print("method \"").print(CiUtil.format("%f %R %H.%n(%P)", method, false)).println('"');
         out.print("date ").println(System.currentTimeMillis());
         end("compilation");
     }
@@ -667,5 +670,15 @@ public class CFGPrinter {
         out.print(code);
         out.println(" <|@");
         end("nmethod");
+    }
+
+    public void printBytecodes(String code) {
+        if (code.length() == 0) {
+            return;
+        }
+        begin("bytecodes");
+        out.print(code);
+        out.println(" <|@");
+        end("bytecodes");
     }
 }

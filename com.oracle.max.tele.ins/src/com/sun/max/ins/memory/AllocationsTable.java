@@ -47,12 +47,11 @@ import com.sun.max.vm.value.*;
 public final class AllocationsTable extends InspectorTable {
 
     private final AllocationsTableModel tableModel;
-    private final AllocationsColumnModel columnModel;
 
     AllocationsTable(Inspection inspection, AllocationsViewPreferences viewPreferences) {
         super(inspection);
         this.tableModel = new AllocationsTableModel(inspection);
-        this.columnModel = new AllocationsColumnModel(this, this.tableModel, viewPreferences);
+        AllocationsColumnModel columnModel = new AllocationsColumnModel(this, this.tableModel, viewPreferences);
         configureDefaultTable(tableModel, columnModel);
     }
 

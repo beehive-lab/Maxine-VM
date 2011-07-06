@@ -109,6 +109,8 @@ public final class MaxineVM {
     private static int exitCode = 0;
 
     private static long startupTime;
+    private static long startupTimeNano;
+
 
     public enum Phase {
         /**
@@ -379,6 +381,10 @@ public final class MaxineVM {
         return startupTime;
     }
 
+    public static long getStartupTimeNano() {
+        return startupTimeNano;
+    }
+
     /**
      * Determines if a given class name denotes a class that is specified as part of the boot image.
      * This cannot be based solely on the package name as the package may enumerate
@@ -435,6 +441,7 @@ public final class MaxineVM {
 
         // Perhaps this should be later, after VM has initialized
         startupTime = System.currentTimeMillis();
+        startupTimeNano = System.nanoTime();
 
         MaxineVM vm = vm();
         vmConfig().initializeSchemes(MaxineVM.Phase.PRIMORDIAL);

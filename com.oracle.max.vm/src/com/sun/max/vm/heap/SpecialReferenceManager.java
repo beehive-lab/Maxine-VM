@@ -24,6 +24,7 @@ package com.sun.max.vm.heap;
 
 
 import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.max.vm.jdk.JDK_java_lang_ref_ReferenceQueue.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
@@ -42,7 +43,6 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.type.*;
 
 /**
  * This class implements support for collecting and processing special references
@@ -108,29 +108,61 @@ public class SpecialReferenceManager {
     private static java.lang.ref.Reference discoveredList;
 
     /**
-     * The head of the list of discovered references.
-     * This field must only be used by the GC. Accessing it should not trigger any read/write barriers.
-     */
-    private static java.lang.ref.Reference processedList;
-
-    /**
-     * The origin-relative, word-scaled index of the 'referent' field in java.lang.re.Reference.
-     */
-    private static final int referentIndex = ClassRegistry.findField(java.lang.ref.Reference.class, "referent").offset() / Word.size();
-
-    /**
-     * An alias type for accessing the fields in java.lang.ref.Reference without
-     * having to use reflection.
+     * An alias type for accessing the fields in java.lang.ref.Reference without having to use reflection.
+     * <p>
+     * The comment below is from the JDK source for java.lang.ref.Reference and explains
+     * the meaning of the {@link #next} and {@link #queue} as pertaining to the state of a reference.
+     * <p>
+     * A Reference instance is in one of four possible internal states:
+     * <p>
+     *     Active: Subject to special treatment by the garbage collector.  Some
+     *     time after the collector detects that the reachability of the
+     *     referent has changed to the appropriate state, it changes the
+     *     instance's state to either Pending or Inactive, depending upon
+     *     whether or not the instance was registered with a queue when it was
+     *     created.  In the former case it also adds the instance to the
+     *     pending-Reference list.  Newly-created instances are Active.
+     * <p>
+     *     Pending: An element of the pending-Reference list, waiting to be
+     *     enqueued by the Reference-handler thread.  Unregistered instances
+     *     are never in this state.
+     * <p>
+     *     Enqueued: An element of the queue with which the instance was
+     *     registered when it was created.  When an instance is removed from
+     *     its ReferenceQueue, it is made Inactive.  Unregistered instances are
+     *     never in this state.
+     * <p>
+     *     Inactive: Nothing more to do.  Once an instance becomes Inactive its
+     *     state will never change again.
+     * <p>
+     * The state is encoded in the queue and next fields as follows:
+     * <p>
+     *     Active: queue = ReferenceQueue with which instance is registered, or
+     *     ReferenceQueue.NULL if it was not registered with a queue; next =
+     *     null.
+     * <p>
+     *     Pending: queue = ReferenceQueue with which instance is registered;
+     *     next = Following instance in queue, or this if at end of list.
+     * <p>
+     *     Enqueued: queue = ReferenceQueue.ENQUEUED; next = Following instance
+     *     in queue, or this if at end of list.
+     * <p>
+     *     Inactive: queue = ReferenceQueue.NULL; next = this.
+     * <p>
+     * With this scheme the collector need only examine the next field in order
+     * to determine whether a Reference instance requires special treatment: If
+     * the next field is null then the instance is active; if it is non-null,
+     * then the collector should treat the instance normally.
+     * <p>
+     * To ensure that concurrent collector can discover active Reference
+     * objects without interfering with application threads that may apply
+     * the enqueue() method to those objects, collectors should link
+     * discovered objects through the discovered field.
      */
     public static class JLRRAlias {
         @ALIAS(declaringClass = java.lang.ref.Reference.class)
         static java.lang.ref.Reference pending;
 
-        /**
-         * The field points to the containing Reference itself if it has already been
-         * {@linkplain ReferenceQueue#enqueue enqueued} on a reference queue by the
-         * {@link Reference.ReferenceHandler} thread.
-         */
         @ALIAS(declaringClass = java.lang.ref.Reference.class)
         public java.lang.ref.Reference next;
 
@@ -147,6 +179,22 @@ public class SpecialReferenceManager {
 
         @ALIAS(declaringClass = java.lang.ref.Reference.class)
         public java.lang.ref.ReferenceQueue queue;
+
+        final boolean isActive() {
+            return next == null;
+        }
+
+        final boolean isPending() {
+            return next != null && queue != ENQUEUED && queue != NULL;
+        }
+
+        final boolean isEnqueued() {
+            return next != null && queue == ENQUEUED;
+        }
+
+        final boolean isInactive() {
+            return next != null && queue == NULL;
+        }
     }
 
     @INTRINSIC(UNSAFE_CAST)
@@ -169,26 +217,29 @@ public class SpecialReferenceManager {
 
         if (refAlias.discovered == null) {
             // the discovered field of this object is null, queue it for later processing
-            if (MaxineVM.isDebug()) {
-                if (ref == discoveredList) {
-                    final boolean lockDisabledSafepoints = Log.lock();
-                    Log.print("Discovered reference ");
-                    Log.print(cell);
-                    Log.print(" ");
-                    Log.unlock(lockDisabledSafepoints);
-                    FatalError.unexpected(": already discovered");
-                }
+            if (ref == discoveredList) {
+                final boolean lockDisabledSafepoints = Log.lock();
+                Log.print("Reference ");
+                Log.print(ObjectAccess.readClassActor(ref).name.string);
+                Log.print(" at ");
+                Log.print(cell);
+                Log.println(" is already on discovered list");
+                Log.unlock(lockDisabledSafepoints);
+                FatalError.unexpected("Duplicate on discovered list");
             }
+            final Reference referent = Reference.fromJava(refAlias.referent);
             refAlias.discovered = discoveredList;
             discoveredList = ref;
             if (TraceReferenceGC || Heap.traceGC()) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("Added ");
                 Log.print(cell);
-                Log.print(" ");
+                Log.print(' ');
                 final Hub hub = UnsafeCast.asHub(Layout.readHubReference(origin).toJava());
                 Log.print(hub.classActor.name.string);
-                Log.println(" to list of discovered references");
+                Log.print(" {referent=");
+                Log.print(referent.toOrigin());
+                Log.println("} to list of discovered references");
                 Log.unlock(lockDisabledSafepoints);
             }
         }
@@ -222,10 +273,11 @@ public class SpecialReferenceManager {
         // prepended while processing).
         do {
             java.lang.ref.Reference ref = head;
-            java.lang.ref.Reference last = JLRRAlias.pending;
+            java.lang.ref.Reference pending = JLRRAlias.pending;
 
             while (ref != end) {
                 boolean preserved = false;
+                boolean addedToPending = false;
                 JLRRAlias refAlias = asJLRRAlias(ref);
                 final Reference referent = Reference.fromJava(refAlias.referent);
                 if (referent.isZero()) {
@@ -245,19 +297,16 @@ public class SpecialReferenceManager {
                             preserved = true;
                         }
 
-                        // only add references to the pending list that have not already
-                        // been enqueued on a ReferenceQueue or are not associated with
-                        // a ReferenceQueue
-                        if (refAlias.next == ref) {
-                            // An enqueued reference has ENQUEUED in its 'queue' field,
-                            // a reference without a queue has NULL instead
-                            if (refAlias.queue != JDK_java_lang_ref_ReferenceQueue.ENQUEUED &&
-                                refAlias.queue != JDK_java_lang_ref_ReferenceQueue.NULL) {
-                                FatalError.unexpected("reference with 'next' field pointing to itself should be enqueued");
+                        // Add active reference whose reachability has changed to pending list
+                        if (refAlias.isActive()) {
+                            if (pending == null) {
+                                // 'ref' will be at the end of the pending list
+                                refAlias.next = ref;
+                            } else {
+                                refAlias.next = pending;
                             }
-                        } else {
-                            refAlias.next = last;
-                            last = ref;
+                            pending = ref;
+                            addedToPending = true;
                         }
                     }
                 } else if (updateReachableReferent) {
@@ -299,14 +348,14 @@ public class SpecialReferenceManager {
                         Log.print(" moved to ");
                         Log.print(ObjectAccess.toOrigin(newReferent));
                     }
-                    if (refAlias.next == ref) {
+                    if (!addedToPending) {
                         Log.print(" {not added to Reference.pending list}");
                     }
                     Log.println();
                     Log.unlock(lockDisabledSafepoints);
                 }
             }
-            JLRRAlias.pending = last;
+            JLRRAlias.pending = pending;
 
             if (head == discoveredList) {
                 // No further special references were discovered
@@ -403,10 +452,10 @@ public class SpecialReferenceManager {
             clock = System.currentTimeMillis();
             discoveredList = sentinel;
             JLRRAlias sentinelAlias = asJLRRAlias(sentinel);
-            sentinelAlias.discovered = null;
-            sentinelAlias.next = null;
-            sentinelAlias.queue = null;
+            sentinelAlias.discovered = sentinel;
+            sentinelAlias.next = sentinel;
             sentinelAlias.referent = null;
+            assert sentinelAlias.isInactive();
             startReferenceHandlerThread();
             startFinalizerThread();
         }
