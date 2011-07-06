@@ -80,7 +80,7 @@ public class TransientVMAdviceHandlerGenerator {
                 out.printf("            r.value = arg2;%n");
                 out.printf("            r.value2 = arg3;%n");
                 out.printf("        }%n");
-            } else if (name.contains("CheckCast") || name.contains("InstanceOf") || name.contains("Invoke")) {
+            } else if (name.contains("CheckCast") || name.contains("InstanceOf") || name.contains("Invoke") || name.contains("MethodEntry")) {
                 outRecordDeclAndStore(adviceRecordName, recordType, adviceMode);
                 out.printf(", arg1);%n");
                 out.printf("        if (r != null) {%n");

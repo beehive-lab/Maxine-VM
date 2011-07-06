@@ -1006,6 +1006,9 @@ public final class DataPrototype extends Prototype {
         }
         final Pointer origin = specificLayout.cellToOrigin(cell.asPointer());
         TupleReferenceMap.visitReferences(hub, origin, originVisitor);
+        if (hub.isJLRReference) {
+            originVisitor.visit(origin, ClassRegistry.JLRReference_referent.offset() / Word.size());
+        }
         return 1 + hub.referenceMapLength;
     }
 

@@ -191,7 +191,7 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
     }
 
     static class LastId {
-        long id = -1;
+        long id = REPEAT_ID_VALUE;
     }
 
     protected CompactTextVMAdviceHandlerLog(TextVMAdviceHandlerLog del) {
@@ -204,7 +204,7 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
      * Note that all traces that start with an {@code objId} must call this method!
      * @param id
      * @param threadName
-     * @return -1 for a match, {@code id} otherwise
+     * @return {@link TextVMAdviceHandlerLog#REPEAT_ID_VALUE} for a match, {@code id} otherwise
      */
     private static long checkRepeatId(long id, String threadName) {
         LastId lastId;
@@ -297,7 +297,6 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
     public abstract void defineShortForm(ShortForm type, Object key, String shortForm, String classShortForm);
 
     // BEGIN GENERATED CODE
-
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
     public void adviseAfterMultiNewArray(String arg1, long arg2, String arg3, long arg4, int arg5) {
@@ -326,6 +325,12 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
     @Override
     public void adviseBeforeThreadTerminating(String arg1) {
         del.adviseBeforeThreadTerminating(getThreadShortForm(arg1));
+    }
+
+    // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
+    @Override
+    public void adviseAfterMethodEntry(String arg1, long arg2, String arg3, long arg4, String arg5) {
+        del.adviseAfterMethodEntry(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4, getMethodShortForm(arg3, arg4, arg5));
     }
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
@@ -456,13 +461,13 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeConversion(String arg1, int arg2, float arg3) {
+    public void adviseBeforeConversion(String arg1, int arg2, long arg3) {
         del.adviseBeforeConversion(getThreadShortForm(arg1), arg2, arg3);
     }
 
     // GENERATED -- EDIT AND RUN CompactTextVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
-    public void adviseBeforeConversion(String arg1, int arg2, long arg3) {
+    public void adviseBeforeConversion(String arg1, int arg2, float arg3) {
         del.adviseBeforeConversion(getThreadShortForm(arg1), arg2, arg3);
     }
 
@@ -669,6 +674,7 @@ public abstract class CompactTextVMAdviceHandlerLog extends TextVMAdviceHandlerL
     public void adviseAfterNewArray(String arg1, long arg2, String arg3, long arg4, int arg5) {
         del.adviseAfterNewArray(getThreadShortForm(arg1), checkRepeatId(arg2, arg1), getClassShortForm(arg3, arg4), arg4, arg5);
     }
+
 
 
 

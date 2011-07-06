@@ -125,7 +125,7 @@ public class TransientVMAdviceHandlerTypesGenerator {
             } else if (name.endsWith("ArrayLength") || name.endsWith("Throw") ||
                             name.contains("Monitor") || name.contains("New") || name.startsWith("ArrayLoad")) {
                 adviceRecordName = "Object";
-            } else if (name.contains("Invoke")) {
+            } else if (name.contains("Invoke") || name.contains("MethodEntry")) {
                 adviceRecordName = "ObjectMethod";
             }
             adviceRecordName += ADVICE_RECORD;

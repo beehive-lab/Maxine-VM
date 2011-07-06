@@ -23,6 +23,8 @@
 package com.oracle.max.vma.tools.gen.t1x;
 
 import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
+import static com.sun.max.vm.t1x.T1XFrameOps.*;
+import static com.sun.max.vm.t1x.T1XTemplateTag.*;
 
 import java.io.*;
 import java.util.*;
@@ -492,6 +494,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                 case INVOKEVIRTUAL$long:
                 case INVOKEVIRTUAL$double:
                 case INVOKEVIRTUAL$word:
+                case INVOKEVIRTUAL$reference:
                     generateInvokeVirtual(false);
                     break;
                 case INVOKEVIRTUAL$void$resolved:
@@ -499,11 +502,13 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                 case INVOKEVIRTUAL$long$resolved:
                 case INVOKEVIRTUAL$double$resolved:
                 case INVOKEVIRTUAL$word$resolved:
+                case INVOKEVIRTUAL$reference$resolved:
                 case INVOKEVIRTUAL$void$instrumented:
                 case INVOKEVIRTUAL$float$instrumented:
                 case INVOKEVIRTUAL$long$instrumented:
                 case INVOKEVIRTUAL$double$instrumented:
                 case INVOKEVIRTUAL$word$instrumented:
+                case INVOKEVIRTUAL$reference$instrumented:
                     generateInvokeVirtual(true);
                     break;
 
@@ -512,6 +517,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                 case INVOKESPECIAL$long:
                 case INVOKESPECIAL$double:
                 case INVOKESPECIAL$word:
+                case INVOKESPECIAL$reference:
                     generateInvokeSpecial(false);
                     break;
                 case INVOKESPECIAL$void$resolved:
@@ -519,6 +525,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                 case INVOKESPECIAL$long$resolved:
                 case INVOKESPECIAL$double$resolved:
                 case INVOKESPECIAL$word$resolved:
+                case INVOKESPECIAL$reference$resolved:
                     generateInvokeSpecial(true);
                     break;
 
@@ -527,6 +534,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                 case INVOKESTATIC$long:
                 case INVOKESTATIC$double:
                 case INVOKESTATIC$word:
+                case INVOKESTATIC$reference:
                     generateInvokeStatic(false);
                     break;
                 case INVOKESTATIC$void$init:
@@ -534,6 +542,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                 case INVOKESTATIC$long$init:
                 case INVOKESTATIC$double$init:
                 case INVOKESTATIC$word$init:
+                case INVOKESTATIC$reference$init:
                     generateInvokeStatic(true);
                     break;
 
@@ -542,6 +551,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                 case INVOKEINTERFACE$long:
                 case INVOKEINTERFACE$double:
                 case INVOKEINTERFACE$word:
+                case INVOKEINTERFACE$reference:
                     generateInvokeInterface(false);
                     break;
 
@@ -550,11 +560,13 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                 case INVOKEINTERFACE$long$resolved:
                 case INVOKEINTERFACE$double$resolved:
                 case INVOKEINTERFACE$word$resolved:
+                case INVOKEINTERFACE$reference$resolved:
                 case INVOKEINTERFACE$void$instrumented:
                 case INVOKEINTERFACE$float$instrumented:
                 case INVOKEINTERFACE$long$instrumented:
                 case INVOKEINTERFACE$double$instrumented:
                 case INVOKEINTERFACE$word$instrumented:
+                case INVOKEINTERFACE$reference$instrumented:
                     generateInvokeInterface(true);
                     break;
 
@@ -698,6 +710,10 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                 case PCMPSWP_WORD_I:
                 case PCMPSWP_REFERENCE_I:
                     generateDefault(tag);
+                    break;
+
+                case TRACE_METHOD_ENTRY:
+                    generateTraceMethodEntry();
                     break;
 
                 default:
@@ -847,6 +863,13 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         outIsAdvising();
         out.printf(METHOD_PREFIX + "(null, methodActor);%n", adviceType.methodNameComponent, methodName);
         closeBrace();
+    }
+
+    private static void generateTraceMethodEntry() {
+        outIsAdvising();
+        out.printf(METHOD_PREFIX + "(receiver, methodActor);%n", adviceType.methodNameComponent, "MethodEntry");
+        closeBrace();
+
     }
 
     private static void generateIf(T1XTemplateTag tag) {
@@ -1010,7 +1033,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         if (!isVoid) {
             out.printf("final %s result = ", oType(k));
         }
-        out.printf("indirectCall%s(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);%n", uType(k));
+        out.printf("indirectCall%s(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);%n", uoType(k));
         generateAfterAdvice(k, variant, tag);
         if (!isVoid) {
             out.printf("        push%s(result);%n", uoType(k));
@@ -1056,9 +1079,9 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
             out.printf("final %s result = ", oType(k));
         }
         if (resolved) {
-            out.printf("directCall%s();%n", uType(k));
+            out.printf("directCall%s();%n", uoType(k));
         } else {
-            out.printf("indirectCall%s(VMAT1XRuntime.initialize%sMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);%n", uType(k), toFirstUpper(variant));
+            out.printf("indirectCall%s(VMAT1XRuntime.initialize%sMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);%n", uoType(k), toFirstUpper(variant));
         }
         generateAfterAdvice(k, variant, tag);
         if (!isVoid) {
@@ -1069,5 +1092,16 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
     }
 
 
+    @Override
+    public void generateTraceMethodEntryTemplate() {
+        generateAutoComment();
+        generateTemplateTag("%s", TRACE_METHOD_ENTRY);
+        out.printf("    public static void traceMethodEntry(MethodActor methodActor, int dispToLocalSlot) {%n");
+        out.printf("        Object receiver = dispToLocalSlot == 0 ? null : getLocalObject(dispToLocalSlot);%n");
+        generateAfterAdvice();
+        out.printf("    }%n");
+        newLine();
+
+    }
 
 }

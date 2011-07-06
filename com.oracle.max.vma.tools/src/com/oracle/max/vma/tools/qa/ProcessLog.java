@@ -873,6 +873,7 @@ public class ProcessLog {
             case ADVISE_BEFORE_INVOKE_SPECIAL:
                 adviceModeInt = AdviceMode.BEFORE.ordinal();
             // Checkstyle: stop
+            case ADVISE_AFTER_METHOD_ENTRY:
             case ADVISE_AFTER_INVOKE_INTERFACE:
             case ADVISE_AFTER_INVOKE_STATIC:
             case ADVISE_AFTER_INVOKE_VIRTUAL:
@@ -923,6 +924,10 @@ public class ProcessLog {
 
             case ADVISE_AFTER_MULTI_NEW_ARRAY:
                 assert false : key + " unexpected";
+                break;
+
+            default:
+                throw new TraceException("unimplemented key: " + key);
         }
 
 
@@ -1129,6 +1134,9 @@ public class ProcessLog {
             case ADVISE_BEFORE_INVOKE_VIRTUAL:
             case ADVISE_AFTER_INVOKE_VIRTUAL:
                 return InvokeVirtual;
+
+            case ADVISE_AFTER_METHOD_ENTRY:
+                return MethodEntry;
 
             case ADVISE_BEFORE_STACK_ADJUST:
                 return StackAdjust;

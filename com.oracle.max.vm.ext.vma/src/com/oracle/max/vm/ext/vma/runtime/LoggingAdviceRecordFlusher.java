@@ -341,10 +341,9 @@ public class LoggingAdviceRecordFlusher extends Thread implements AdviceRecordFl
                     logHandler.adviseBeforeIf(record.getPackedValue(), record.value, record.value2);
                     break;
                 }
-                case ReturnObject: {
+                case Return: {
                     assert thisRecord.getAdviceMode() == 0;
-                    ObjectAdviceRecord record = (ObjectAdviceRecord) thisRecord;
-                    logHandler.adviseBeforeReturn(record.value);
+                    logHandler.adviseBeforeReturn(thisRecord.getPackedValue());
                     break;
                 }
                 case ReturnLong: {
@@ -365,9 +364,10 @@ public class LoggingAdviceRecordFlusher extends Thread implements AdviceRecordFl
                     logHandler.adviseBeforeReturn(record.value);
                     break;
                 }
-                case Return: {
+                case ReturnObject: {
                     assert thisRecord.getAdviceMode() == 0;
-                    logHandler.adviseBeforeReturn(thisRecord.getPackedValue());
+                    ObjectAdviceRecord record = (ObjectAdviceRecord) thisRecord;
+                    logHandler.adviseBeforeReturn(record.value);
                     break;
                 }
                 case GetStatic: {
@@ -523,7 +523,12 @@ public class LoggingAdviceRecordFlusher extends Thread implements AdviceRecordFl
                     assert false;
                     break;
                 }
-
+                case MethodEntry: {
+                    assert thisRecord.getAdviceMode() == 1;
+                    ObjectMethodAdviceRecord record = (ObjectMethodAdviceRecord) thisRecord;
+                    logHandler.adviseAfterMethodEntry(record.value, (MethodActor) record.value2);
+                    break;
+                }
 
                 // END GENERATED CODE
                 default:

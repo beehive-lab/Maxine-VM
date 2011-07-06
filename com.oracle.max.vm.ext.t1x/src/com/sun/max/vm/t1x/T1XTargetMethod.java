@@ -74,7 +74,7 @@ public final class T1XTargetMethod extends TargetMethod {
     /**
      * The number of slots to be reserved in each T1X frame for template spill slots.
      * This is the max number of slots used by any template and is computed when the templates are
-     * {@linkplain T1X#createTemplates(Class, T1X, boolean, com.sun.max.vm.t1x.T1X.Templates) created}.
+     * {@linkplain T1X#createTemplates(Class, T1X, boolean, com.sun.max.vm.t1x.T1X.Templates, boolean) created}.
      */
     static int templateSlots;
 
@@ -199,7 +199,7 @@ public final class T1XTargetMethod extends TargetMethod {
             final T1XReferenceMapEditor referenceMapEditor = new T1XReferenceMapEditor(this, comp.numberOfBlocks, comp.blockBCIs, stops.bytecodeStopsIterator, frame);
             this.refMapEditor.set(referenceMapEditor);
             final ReferenceMapInterpreter interpreter = ReferenceMapInterpreter.from(referenceMapEditor.blockFrames());
-            if (interpreter.performsAllocation() || T1XOptions.EagerRefMaps) {
+            if (interpreter.performsAllocation() || T1XOptions.EagerRefMaps || T1XOptions.PrintCFGToFile) {
                 if (isHosted() && T1XOptions.EagerRefMaps) {
                     StackReferenceMapPreparer.TraceSRS = true;
                 }
@@ -214,6 +214,11 @@ public final class T1XTargetMethod extends TargetMethod {
                 // the displacement between a call site in the heap and a code cache location may not fit in the offset operand of a call
             }
         }
+    }
+
+    @Override
+    public VMFrameLayout frameLayout() {
+        return frame;
     }
 
     @Override
@@ -330,7 +335,7 @@ public final class T1XTargetMethod extends TargetMethod {
         CiBitMap frameRefMap = new CiBitMap(referenceMaps(), stopIndex * refMapSize(), frameRefMapSize);
         CiBitMap regRefMap = new CiBitMap(referenceMaps(), (stopIndex * refMapSize()) + frameRefMapSize, regRefMapSize());
         int bci = bciForPos(stopPosition(stopIndex));
-        CiFrame debugFrame = frame.asFrame(classMethodActor, bci);
+        CiFrame debugFrame = frame.asFrame(classMethodActor, bci, frameRefMap);
         return new CiDebugInfo(debugFrame, regRefMap, frameRefMap);
     }
 
@@ -583,7 +588,7 @@ public final class T1XTargetMethod extends TargetMethod {
         TargetMethod calleeTM = callee.targetMethod();
         if (calleeTM != null) {
             Stub.Type st = calleeTM.stubType();
-            if (st == InterfaceTrampoline || st == VirtualTrampoline || st == InterfaceTrampoline) {
+            if (st == StaticTrampoline || st == VirtualTrampoline || st == InterfaceTrampoline) {
                 prepareTrampolineRefMap(current, preparer);
             } else if (calleeTM.is(TrapStub) && Trap.Number.isStackOverflow(csa)) {
                 // a method can never catch stack overflow for itself so there
@@ -745,7 +750,7 @@ public final class T1XTargetMethod extends TargetMethod {
                 FramePointerStateAMD64 framePointerState = computeFramePointerState(current, sfw, lastPrologueInstruction);
                 localVariablesBase = framePointerState.localVariablesBase(current);
             }
-            StackFrame stackFrame = new AMD64JVMSFrame(sfw.calleeStackFrame(), frame, current.targetMethod(), current.ip(), current.sp(), localVariablesBase, localVariablesBase);
+            StackFrame stackFrame = new AMD64JVMSFrame(sfw.calleeStackFrame(), current.targetMethod(), current.ip(), current.sp(), localVariablesBase, localVariablesBase);
             return visitor.visitFrame(stackFrame);
         } else {
             throw unimplISA();

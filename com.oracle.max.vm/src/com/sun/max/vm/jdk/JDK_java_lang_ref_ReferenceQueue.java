@@ -33,6 +33,7 @@ import com.sun.max.vm.heap.SpecialReferenceManager.JLRRAlias;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.Reference;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -79,12 +80,15 @@ public final class JDK_java_lang_ref_ReferenceQueue {
                 }
                 lock.notifyAll();
                 if (SpecialReferenceManager.TraceReferenceGC) {
-                    Log.print("Enqueued ");
+                    boolean lockDisabledSafepoints = Log.lock();
+                    Log.printThread(VmThread.current(), false);
+                    Log.print(": Enqueued ");
                     Log.print(ObjectAccess.readClassActor(r).name.string);
                     Log.print(" at ");
                     Log.print(Reference.fromJava(r).toOrigin());
                     Log.print(" to queue ");
                     Log.println(Reference.fromJava(this).toOrigin());
+                    Log.unlock(lockDisabledSafepoints);
                 }
                 return true;
             }
@@ -96,6 +100,7 @@ public final class JDK_java_lang_ref_ReferenceQueue {
      */
     @SUBSTITUTE
     private java.lang.ref.Reference reallyPoll() {
+        FatalError.check(Thread.holdsLock(lock), "ReferenceQueue.lock should be held");
         if (head != null) {
             java.lang.ref.Reference r = head;
             JLRRAlias rAlias = asJLRRAlias(r);
@@ -120,12 +125,15 @@ public final class JDK_java_lang_ref_ReferenceQueue {
                 sun.misc.VM.addFinalRefCount(-1);
             }
             if (SpecialReferenceManager.TraceReferenceGC) {
-                Log.print("Removed ");
+                boolean lockDisabledSafepoints = Log.lock();
+                Log.printThread(VmThread.current(), false);
+                Log.print(": Removed ");
                 Log.print(ObjectAccess.readClassActor(r).name.string);
                 Log.print(" at ");
                 Log.print(Reference.fromJava(r).toOrigin());
                 Log.print(" from queue ");
                 Log.println(Reference.fromJava(this).toOrigin());
+                Log.unlock(lockDisabledSafepoints);
             }
             return r;
         }

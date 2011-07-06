@@ -198,12 +198,18 @@ public class LoggingAdviceRecordFlusherGenerator {
             case InvokeSpecial:
             case InvokeStatic:
             case InvokeVirtual:
-                out.printf("                ObjectMethodActorAdviceRecord record = (ObjectMethodActorAdviceRecord) thisRecord;%n");
+                out.printf("                ObjectMethodAdviceRecord record = (ObjectMethodAdviceRecord) thisRecord;%n");
                 out.printf("                if (thisRecord.getAdviceMode() == 0) {%n");
                 out.printf("                    logHandler.adviseBefore%s(record.value, (MethodActor) record.value2);%n", e.name());
                 out.printf("                } else {%n");
                 out.printf("                    logHandler.adviseAfter%s(record.value, (MethodActor) record.value2);%n", e.name());
                 out.printf("                }%n");
+                break;
+
+            case MethodEntry:
+                outAssertMode(AdviceMode.AFTER.ordinal());
+                out.printf("                ObjectMethodAdviceRecord record = (ObjectMethodAdviceRecord) thisRecord;%n");
+                out.printf("                logHandler.adviseAfter%s(record.value, (MethodActor) record.value2);%n", e.name());
                 break;
 
             case IfObject:

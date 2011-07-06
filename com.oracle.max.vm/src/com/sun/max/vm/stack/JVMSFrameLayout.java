@@ -225,21 +225,27 @@ public abstract class JVMSFrameLayout extends VMFrameLayout {
         return numberOfLocalSlots - numberOfParameterSlots;
     }
 
-    public abstract CiRegister framePointer();
-
-    public CiFrame asFrame(ClassMethodActor method, int bci) {
+    public CiFrame asFrame(ClassMethodActor method, int bci, CiBitMap frameRefMap) {
         CodeAttribute codeAttribute = method.codeAttribute();
         int numLocks = 0; // TODO: get the real value
         int numLocals = codeAttribute.maxLocals;
         int numStack = codeAttribute.maxStack;
         CiValue[] values = new CiValue[numLocals + numStack];
-        CiValue fp = framePointer().asValue();
+        CiValue fp = framePointerReg().asValue();
         for (int i = 0; i < numLocals; i++) {
-            CiAddress value = new CiAddress(CiKind.Word, fp, localVariableOffset(i));
+            CiKind kind = CiKind.Word;
+            if (frameRefMap != null && frameRefMap.get(localVariableReferenceMapIndex(i))) {
+                kind = CiKind.Object;
+            }
+            CiAddress value = new CiAddress(kind, fp, localVariableOffset(i));
             values[i] = value;
         }
         for (int i = 0; i < numStack; i++) {
-            CiAddress value = new CiAddress(CiKind.Word, fp, operandStackOffset(i));
+            CiKind kind = CiKind.Word;
+            if (frameRefMap != null && frameRefMap.get(operandStackReferenceMapIndex(i))) {
+                kind = CiKind.Object;
+            }
+            CiAddress value = new CiAddress(kind, fp, operandStackOffset(i));
             values[i + numLocals] = value;
         }
         return new CiFrame(null, method, bci, values, numLocals, numStack, numLocks);

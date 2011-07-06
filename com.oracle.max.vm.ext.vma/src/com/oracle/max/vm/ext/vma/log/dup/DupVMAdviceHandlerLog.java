@@ -118,6 +118,20 @@ public class DupVMAdviceHandlerLog extends VMAdviceHandlerLog {
 
     // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
+    public void adviseAfterMethodEntry(String arg1, long arg2, String arg3, long arg4, String arg5) {
+        a.adviseAfterMethodEntry(arg1, arg2, arg3, arg4, arg5);
+        b.adviseAfterMethodEntry(arg1, arg2, arg3, arg4, arg5);
+    }
+
+    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeConstLoad(String arg1, double arg2) {
+        a.adviseBeforeConstLoad(arg1, arg2);
+        b.adviseBeforeConstLoad(arg1, arg2);
+    }
+
+    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
+    @Override
     public void adviseBeforeConstLoad(String arg1, long arg2) {
         a.adviseBeforeConstLoad(arg1, arg2);
         b.adviseBeforeConstLoad(arg1, arg2);
@@ -126,13 +140,6 @@ public class DupVMAdviceHandlerLog extends VMAdviceHandlerLog {
     // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeConstLoad(String arg1, float arg2) {
-        a.adviseBeforeConstLoad(arg1, arg2);
-        b.adviseBeforeConstLoad(arg1, arg2);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeConstLoad(String arg1, double arg2) {
         a.adviseBeforeConstLoad(arg1, arg2);
         b.adviseBeforeConstLoad(arg1, arg2);
     }
@@ -258,6 +265,13 @@ public class DupVMAdviceHandlerLog extends VMAdviceHandlerLog {
 
     // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
+    public void adviseBeforeConversion(String arg1, int arg2, double arg3) {
+        a.adviseBeforeConversion(arg1, arg2, arg3);
+        b.adviseBeforeConversion(arg1, arg2, arg3);
+    }
+
+    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
+    @Override
     public void adviseBeforeConversion(String arg1, int arg2, long arg3) {
         a.adviseBeforeConversion(arg1, arg2, arg3);
         b.adviseBeforeConversion(arg1, arg2, arg3);
@@ -266,13 +280,6 @@ public class DupVMAdviceHandlerLog extends VMAdviceHandlerLog {
     // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeConversion(String arg1, int arg2, float arg3) {
-        a.adviseBeforeConversion(arg1, arg2, arg3);
-        b.adviseBeforeConversion(arg1, arg2, arg3);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeConversion(String arg1, int arg2, double arg3) {
         a.adviseBeforeConversion(arg1, arg2, arg3);
         b.adviseBeforeConversion(arg1, arg2, arg3);
     }

@@ -69,11 +69,11 @@ public class TransientVMAdviceHandlerTypes {
         ConversionDouble,
         IfInt,
         IfObject,
-        ReturnObject,
+        Return,
         ReturnLong,
         ReturnFloat,
         ReturnDouble,
-        Return,
+        ReturnObject,
         GetStatic,
         PutStaticDouble,
         PutStaticLong,
@@ -97,7 +97,8 @@ public class TransientVMAdviceHandlerTypes {
         Bytecode,
         New,
         NewArray,
-        MultiNewArray;
+        MultiNewArray,
+        MethodEntry;
 
         public AdviceRecord newAdviceRecord() {
             switch (this) {
@@ -123,11 +124,6 @@ public class TransientVMAdviceHandlerTypes {
                 case PutFieldFloat:
                 case PutStaticFloat:
                     return new ObjectFloatAdviceRecord();
-                case InvokeInterface:
-                case InvokeSpecial:
-                case InvokeStatic:
-                case InvokeVirtual:
-                    return new ObjectMethodAdviceRecord();
                 case ArrayStoreObject:
                 case CheckCast:
                 case IfObject:
@@ -161,6 +157,12 @@ public class TransientVMAdviceHandlerTypes {
                 case ReturnFloat:
                 case StoreFloat:
                     return new FloatAdviceRecord();
+                case InvokeInterface:
+                case InvokeSpecial:
+                case InvokeStatic:
+                case InvokeVirtual:
+                case MethodEntry:
+                    return new ObjectMethodAdviceRecord();
                 case OperationFloat:
                     return new FloatFloatAdviceRecord();
                 case ArrayStoreDouble:

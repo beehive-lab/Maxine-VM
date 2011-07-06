@@ -321,7 +321,7 @@ public class T1XTemplateGenerator {
     }
 
     public static boolean hasInvokeTemplates(String k) {
-        return k.equals("void") || k.equals("float") || k.equals("long") || k.equals("double") || k.equals("Word");
+        return k.equals("void") || k.equals("float") || k.equals("long") || k.equals("double") || k.equals("Reference") || k.equals("Word");
     }
 
     public static boolean hasIfCmpTemplates(String k) {
@@ -404,6 +404,18 @@ public class T1XTemplateGenerator {
         if (adviceHook != null) {
             adviceHook.generate(currentTemplateTag, AdviceType.AFTER, args);
         }
+    }
+
+    // Here starts the actual template generation methods
+
+    public void generateTraceMethodEntryTemplate() {
+        generateAutoComment();
+        generateTemplateTag("%s", TRACE_METHOD_ENTRY);
+        out.printf("    public static void traceMethodEntry(String method) {%n");
+        out.printf("        Log.println(method);%n");
+        generateAfterAdvice();
+        out.printf("    }%n");
+        newLine();
     }
 
     public static final EnumSet<T1XTemplateTag> STACK_ADJUST_TEMPLATES = EnumSet.of(DUP, DUP_X1, DUP_X2, DUP2, DUP2_X1, DUP2_X2, SWAP);
@@ -1337,6 +1349,7 @@ public class T1XTemplateGenerator {
 
     public void generateIndirectCall(String k, boolean hasReceiverArg) {
         boolean isVoid = k.equals("void");
+        String wk = k.equals("Reference") ? "Word" : k;
         String receiveParam = hasReceiverArg ? ", Object receiver" : "";
         String receiveArg = hasReceiverArg ? ", receiver" : "";
         generateAutoComment();
@@ -1344,11 +1357,16 @@ public class T1XTemplateGenerator {
         out.printf("    public static %s indirectCall%s(Address address, CallEntryPoint callEntryPoint%s) {%n", oType(k), uoType(k), receiveParam);
         out.printf("        ");
         if (!isVoid) {
-            out.printf("final %s result = ", oType(k));
+            out.printf("final %s result = ", oType(wk));
         }
-        out.printf("Intrinsics.call%s(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset())%s);%n", isVoid ? "" : uoType(k), receiveArg);
+        out.printf("Intrinsics.call%s(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset())%s);%n", isVoid ? "" : uoType(wk), receiveArg);
         if (!isVoid) {
-            out.printf("        return result;%n");
+            out.print("        return ");
+            if (wk == k) {
+                out.printf("result;%n");
+            } else {
+                out.printf("Reference.fromOrigin(result.asAddress().asPointer()).toJava();%n");
+            }
         }
         out.printf("    }%n");
         newLine();
@@ -1356,16 +1374,22 @@ public class T1XTemplateGenerator {
 
     public void generateDirectCall(String k) {
         boolean isVoid = k.equals("void");
+        String wk = k.equals("Reference") ? "Word" : k;
         generateAutoComment();
         out.printf("    @INLINE%n");
         out.printf("    public static %s directCall%s() {%n", oType(k), uoType(k));
         out.printf("        ");
         if (!isVoid) {
-            out.printf("final %s result = ", oType(k));
+            out.printf("final %s result = ", oType(wk));
         }
-        out.printf("Intrinsics.call%s();%n", isVoid ? "" : uoType(k));
+        out.printf("Intrinsics.call%s();%n", isVoid ? "" : uoType(wk));
         if (!isVoid) {
-            out.printf("        return result;%n", uoType(k));
+            out.print("        return ");
+            if (wk == k) {
+                out.printf("result;%n");
+            } else {
+                out.printf("Reference.fromOrigin(result.asAddress().asPointer()).toJava();%n");
+            }
         }
         out.printf("    }%n");
         newLine();
@@ -1445,7 +1469,7 @@ public class T1XTemplateGenerator {
         if (!isVoid) {
             out.printf("final %s result = ", oType(k));
         }
-        out.printf("indirectCall%s(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);%n", uType(k));
+        out.printf("indirectCall%s(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);%n", uoType(k));
         generateAfterAdvice(k, variant, tag);
         if (!isVoid) {
             out.printf("        push%s(result);%n", uoType(k));
@@ -1517,9 +1541,9 @@ public class T1XTemplateGenerator {
             out.printf("final %s result = ", oType(k));
         }
         if (xtag.equals("resolved")) {
-            out.printf("directCall%s();%n", uType(k));
+            out.printf("directCall%s();%n", uoType(k));
         } else {
-            out.printf("indirectCall%s(resolve%sMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);%n", uType(k), toFirstUpper(variant));
+            out.printf("indirectCall%s(resolve%sMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);%n", uoType(k), toFirstUpper(variant));
         }
         generateAfterAdvice(k, variant, tag);
         if (!isVoid) {
@@ -2347,6 +2371,7 @@ public class T1XTemplateGenerator {
         if (adviceHook == null) {
             generateDirectAndIndirectCalls();
         }
+        generateTraceMethodEntryTemplate();
     }
 
     public static void main(String[] args) {

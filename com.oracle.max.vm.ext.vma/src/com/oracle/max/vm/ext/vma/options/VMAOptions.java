@@ -80,6 +80,12 @@ public class VMAOptions {
 
     private static final BM[] MONITOR_BM = new BM[] {new BM(MONITORENTER, B), new BM(MONITOREXIT, B)};
 
+    private static final BM[] METHOD_ENTRY_EXIT_BM = new BM[] {
+        new BM(MENTRY, A),
+        new BM(IRETURN, B), new BM(LRETURN, B), new BM(FRETURN, B),
+        new BM(DRETURN, B), new BM(ARETURN, B), new BM(RETURN, B)
+    };
+
     private static final BM[] BEFOREINVOKE_BM = new BM[] {
         new BM(INVOKEVIRTUAL, B), new BM(INVOKEINTERFACE, B),
         new BM(INVOKESTATIC, B), new BM(INVOKESPECIAL, B)
@@ -99,7 +105,8 @@ public class VMAOptions {
         MONITOR("monitor", MONITOR_BM),
         BEFOREINVOKE("beforeinvoke", BEFOREINVOKE_BM),
         AFTERINVOKE("afterinvoke", AFTERINVOKE_BM),
-        INVOKE("invoke", INVOKE_BM);
+        INVOKE("invoke", INVOKE_BM),
+        ENTRYEXIT("entryexit", METHOD_ENTRY_EXIT_BM);
 
         private String name;
         private BM[] bytecodesToApply;
@@ -272,7 +279,9 @@ public class VMAOptions {
                     for (BM ab : stdConfig.bytecodesToApply) {
                         for (AdviceMode am : AdviceMode.values()) {
                             boolean isApplied = ab.isApplied(am);
-                            bytecodeApply[ab.bytecode.ordinal()][am.ordinal()] = isApplied;
+                            if (isApplied) {
+                                bytecodeApply[ab.bytecode.ordinal()][am.ordinal()] = isApplied;
+                            }
                         }
                     }
                 }

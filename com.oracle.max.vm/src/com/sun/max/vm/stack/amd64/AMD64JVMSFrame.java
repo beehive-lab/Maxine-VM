@@ -36,12 +36,11 @@ public class AMD64JVMSFrame extends JVMSFrame {
 
     private final Pointer localVariablesBase;
 
-    public AMD64JVMSFrame(StackFrame callee, JVMSFrameLayout layout, TargetMethod targetMethod,
-                    Pointer instructionPointer,
+    public AMD64JVMSFrame(StackFrame callee, TargetMethod targetMethod, Pointer instructionPointer,
                     Pointer stackPointer,
                     Pointer framePointer,
                     Pointer localVariablesBase) {
-        super(callee, layout, targetMethod, instructionPointer, framePointer, stackPointer);
+        super(callee, targetMethod, instructionPointer, framePointer, stackPointer);
         this.localVariablesBase = localVariablesBase;
     }
 

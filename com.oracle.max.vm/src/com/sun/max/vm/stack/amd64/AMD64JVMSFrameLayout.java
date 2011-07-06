@@ -108,7 +108,7 @@ public class AMD64JVMSFrameLayout extends JVMSFrameLayout {
     }
 
     @Override
-    public CiRegister framePointer() {
+    public CiRegister framePointerReg() {
         return AMD64.rbp;
     }
 
