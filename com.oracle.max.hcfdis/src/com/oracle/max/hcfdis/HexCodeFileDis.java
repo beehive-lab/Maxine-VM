@@ -29,8 +29,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiTargetMethod.JumpTable;
-import com.sun.cri.ci.CiTargetMethod.LookupTable;
+import com.sun.cri.ci.CiTargetMethod.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.InlineDataDescriptor.JumpTable32;
 import com.sun.max.asm.InlineDataDescriptor.LookupTable32;
@@ -193,7 +192,30 @@ public class HexCodeFileDis extends DisassemblyPrinter {
         return null;
     }
 
-    private InlineDataDecoder makeInlineDataDecoder(CiHexCodeFile hcf) {
+    public static InlineDataDecoder makeInlineDataDecoder(CodeAnnotation[] annotations) {
+        ArrayList<InlineDataDescriptor> descriptors = new ArrayList<InlineDataDescriptor>();
+        for (CodeAnnotation a : annotations) {
+            if (a instanceof JumpTable) {
+                JumpTable table = (JumpTable) a;
+                if (table.entrySize == 4) {
+                    descriptors.add(new JumpTable32(table.position, table.low, table.high));
+                } else {
+                    System.err.println("WARNING: Ignoring jump table with an entry size != 4");
+                }
+            } else if (a instanceof LookupTable) {
+                LookupTable table = (LookupTable) a;
+                if (table.keySize == 4 && table.offsetSize == 4) {
+                    descriptors.add(new LookupTable32(table.position, table.npairs));
+                } else {
+                    System.err.println("WARNING: Ignoring lookup table with a key or offset size != 4");
+                }
+            }
+        }
+        final InlineDataDecoder inlineDataDecoder = descriptors.isEmpty() ? null : new InlineDataDecoder(descriptors);
+        return inlineDataDecoder;
+    }
+
+    public static InlineDataDecoder makeInlineDataDecoder(CiHexCodeFile hcf) {
         ArrayList<InlineDataDescriptor> descriptors = new ArrayList<InlineDataDescriptor>();
         for (JumpTable table : hcf.jumpTables) {
             if (table.entrySize == 4) {

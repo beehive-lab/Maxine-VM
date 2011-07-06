@@ -411,15 +411,6 @@ public class T1X implements RuntimeCompiler {
                             Object literal = templateCode.referenceLiterals()[i];
                             sb.append("\n  " + i + ": " + literal.getClass().getName() + " // \"" + literal + "\"\n");
                         }
-
-                        templateCode.disassemble(new OutputStream() {
-                            @Override
-                            public void write(int b) throws IOException {
-                                // Only expecting ASCII so this should be safe
-                                sb.append((char) b);
-                            }
-                        });
-
                         throw FatalError.unexpected(sb.toString());
                     }
                     FatalError.check(templateCode.scalarLiterals() == null, "Template must not have *any* scalar literals: " + templateCode + "\n\n" + templateCode);

@@ -110,7 +110,7 @@ public class CiHexCodeFile {
     public final Map<Integer, List<String>> comments = new TreeMap<Integer, List<String>>();
 
     /**
-     * Map from a machine code position to a comment the operands of the instruction at the position.
+     * Map from a machine code position to a comment for the operands of the instruction at the position.
      */
     public final Map<Integer, String> operandComments = new TreeMap<Integer, String>();
 

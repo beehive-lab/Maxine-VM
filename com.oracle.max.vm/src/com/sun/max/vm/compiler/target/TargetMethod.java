@@ -30,11 +30,10 @@ import java.util.*;
 
 import com.oracle.max.asm.target.amd64.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
 import com.sun.cri.ci.CiTargetMethod.DataPatch;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
-import com.sun.max.asm.*;
-import com.sun.max.asm.dis.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
@@ -761,9 +760,11 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
-     * Gets an object to help decode inline data in this target method's code.
+     * Gets the code annotations (if any) associated with this target method.
+     *
+     * @return {@code null} if there are no code annotations
      */
-    public InlineDataDecoder inlineDataDecoder() {
+    public CodeAnnotation[] annotations() {
         return null;
     }
 
@@ -940,62 +941,6 @@ public abstract class TargetMethod extends MemoryRegion {
 
     public String name() {
         return regionName();
-    }
-
-    public final String traceToString() {
-        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        final IndentWriter writer = new IndentWriter(new OutputStreamWriter(byteArrayOutputStream));
-        writer.println("target method: " + this);
-        traceBundle(writer);
-        writer.flush();
-        if (MaxineVM.isHosted()) {
-            disassemble(byteArrayOutputStream);
-        }
-        return byteArrayOutputStream.toString();
-    }
-
-
-    /**
-     * Prints a textual disassembly the code in a target method.
-     *
-     * @param out where to print the disassembly
-     * @param targetMethod the target method whose code is to be disassembled
-     */
-    @HOSTED_ONLY
-    public void disassemble(OutputStream out) {
-        final Platform platform = Platform.platform();
-        final InlineDataDecoder inlineDataDecoder = inlineDataDecoder();
-        final Pointer startAddress = codeStart();
-        final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false) {
-            @Override
-            protected String disassembledObjectString(Disassembler disassembler, DisassembledObject disassembledObject) {
-                String string = super.disassembledObjectString(disassembler, disassembledObject);
-                if (string.startsWith("call ")) {
-                    final Pointer ip = startAddress.plus(disassembledObject.startPosition());
-                    final CiCodePos[] result = {null};
-                    CodePosClosure cpc = new CodePosClosure() {
-                        public boolean doCodePos(ClassMethodActor method, int bci) {
-                            result[0] = new CiCodePos(null, method, bci);
-                            return false;
-                        }
-                    };
-                    forEachCodePos(cpc, ip, true);
-                    CiCodePos codePos = result[0];
-                    if (codePos != null) {
-                        RiMethod callee = ((ClassMethodActor) codePos.method).codeAttribute().calleeAt(codePos.bci);
-                        if (callee != null) {
-                            string += " [" + callee + "]";
-                        }
-                    }
-
-                    if (StopPositions.isNativeFunctionCallPosition(stopPositions(), disassembledObject.startPosition())) {
-                        string += " <native function call>";
-                    }
-                }
-                return string;
-            }
-        };
-        Disassembler.disassemble(out, code(), platform.isa, platform.wordWidth(), startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
     }
 
     /**
