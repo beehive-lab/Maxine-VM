@@ -43,7 +43,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
      */
     private static final OutOfMemoryError outOfMemoryError = new OutOfMemoryError();
 
-    static boolean DebugMSE = false;
+    public static boolean DebugMSE = false;
     static {
         VMOptions.addFieldOption("-XX:", "DebugMSE", FirstFitMarkSweepHeap.class, "Debug FirstFitMarkSweepHeap", Phase.PRISTINE);
     }
