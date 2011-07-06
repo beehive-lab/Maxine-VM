@@ -33,6 +33,7 @@ import java.util.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiTargetMethod.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.atomic.*;
@@ -144,6 +145,11 @@ public final class T1XTargetMethod extends TargetMethod {
     public final CiExceptionHandler[] handlers;
 
     /**
+     * The code annotations (if any) recorded when compiling this T1X method.
+     */
+    public final CodeAnnotation[] annotations;
+
+    /**
      * The profile for this method - if there is one (otherwise, null).
      */
     public final MethodProfile profile;
@@ -157,6 +163,11 @@ public final class T1XTargetMethod extends TargetMethod {
         frameRefMapOffset = frame.frameReferenceMapOffset();
         setFrameSize(frame.frameSize());
         frameRefMapSize = frame.frameReferenceMapSize();
+        if (comp.codeAnnotations == null || comp.codeAnnotations.isEmpty()) {
+            annotations = null;
+        } else {
+            annotations = comp.codeAnnotations.toArray(new CodeAnnotation[comp.codeAnnotations.size()]);
+        }
 
         StopsBuilder stops = comp.stops;
         int firstTemplateSlot = frame.numberOfNonParameterSlots() + frame.numberOfOperandStackSlots();
@@ -328,6 +339,11 @@ public final class T1XTargetMethod extends TargetMethod {
 
     public int posForBci(int bci) {
         return bciToPos[bci];
+    }
+
+    @Override
+    public CodeAnnotation[] annotations() {
+        return annotations;
     }
 
     @Override

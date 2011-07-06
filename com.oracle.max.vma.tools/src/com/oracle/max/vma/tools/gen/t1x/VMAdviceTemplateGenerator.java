@@ -23,16 +23,16 @@
 package com.oracle.max.vma.tools.gen.t1x;
 
 import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
-import static com.sun.max.vm.t1x.T1XFrameOps.*;
 import static com.sun.max.vm.t1x.T1XTemplateTag.*;
 
 import java.io.*;
 import java.util.*;
+
 import com.oracle.max.vm.ext.vma.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
-import com.sun.max.vm.t1x.T1XTemplateGenerator;
-import com.sun.max.vm.t1x.T1XTemplateTag;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.t1x.*;
 
 /**
  * Template generation that supports the {@link VMAdviceHandler} interface.

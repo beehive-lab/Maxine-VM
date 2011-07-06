@@ -35,13 +35,10 @@ import com.sun.cri.ci.CiCallingConvention.Type;
 import com.sun.cri.ci.CiRegister.RegisterFlag;
 import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
 import com.sun.cri.ci.CiTargetMethod.ExceptionHandler;
-import com.sun.cri.ci.CiTargetMethod.JumpTable;
 import com.sun.cri.ci.CiTargetMethod.Mark;
 import com.sun.cri.ci.CiTargetMethod.Site;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
-import com.sun.max.asm.*;
-import com.sun.max.asm.InlineDataDescriptor.JumpTable32;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -132,28 +129,9 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
         }
     }
 
-    public static InlineDataDecoder inlineDataDecoder(CodeAnnotation[] annotations) {
-        if (annotations == null) {
-            return null;
-        }
-        ArrayList<InlineDataDescriptor> descriptors = new ArrayList<InlineDataDescriptor>();
-        for (CodeAnnotation c : annotations) {
-            if (c instanceof JumpTable) {
-                JumpTable jt = (JumpTable) c;
-                if (jt.entrySize == 4) {
-                    descriptors.add(new JumpTable32(jt.position, jt.low, jt.high));
-                }
-            }
-        }
-        if (descriptors.isEmpty()) {
-            return null;
-        }
-        return new InlineDataDecoder(descriptors);
-    }
-
     @Override
-    public InlineDataDecoder inlineDataDecoder() {
-        return inlineDataDecoder(annotations);
+    public CodeAnnotation[] annotations() {
+        return annotations;
     }
 
     /**
