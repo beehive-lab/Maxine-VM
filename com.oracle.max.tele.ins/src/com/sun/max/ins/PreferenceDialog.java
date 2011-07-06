@@ -131,7 +131,7 @@ public class PreferenceDialog extends SimpleDialog {
         memoryAllocationsLabelPanel.add(new TextLabel(inspection, "Memory allocations"), BorderLayout.WEST);
         prefPanel.add(memoryAllocationsLabelPanel);
 
-        final JPanel memoryAllocationsInspectorPanel = MemoryAllocationsViewPreferences.globalPreferencesPanel(inspection);
+        final JPanel memoryAllocationsInspectorPanel = AllocationsViewPreferences.globalPreferencesPanel(inspection);
         memoryAllocationsInspectorPanel.setBorder(border);
         prefPanel.add(memoryAllocationsInspectorPanel);
 
