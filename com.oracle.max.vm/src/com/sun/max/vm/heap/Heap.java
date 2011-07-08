@@ -598,13 +598,14 @@ public final class Heap {
     }
 
     /**
-     * Currently, a number of memory regions containing object are treated as "permanent" root by the GC.
-     * This method checks whether an address points into one of these regions.
-     * @param address an address
-     * @return true if the address points to one of the root regions of the heap.
+     * Determines if a given object is in the boot image.
+     *
+     * @param object and object to check
+     * @return true if {@code object} is in the boot image
      */
-    public static boolean isInHeapRootRegion(Address address) {
-        return bootHeapRegion.contains(address) || Code.contains(address) || ImmortalHeap.contains(address);
+    public static boolean isInBootImage(Object object) {
+        Pointer origin = Reference.fromJava(object).toOrigin();
+        return bootHeapRegion.contains(origin) || Code.contains(origin) || ImmortalHeap.contains(origin);
     }
 
     public static boolean isValidRef(Reference ref) {

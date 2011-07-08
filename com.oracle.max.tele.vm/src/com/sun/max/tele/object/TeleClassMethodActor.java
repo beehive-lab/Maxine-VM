@@ -149,6 +149,9 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
      * @param targetState an object that represents an encoded compilation history
      */
     private void translateTargetState(TeleObject targetState) {
+        if (targetState == null) {
+            return;
+        }
         if (targetState instanceof TeleTargetMethod) {
             // The state object is an instance of TargetMethod, which means that
             // it is the first and only compilation so far.
