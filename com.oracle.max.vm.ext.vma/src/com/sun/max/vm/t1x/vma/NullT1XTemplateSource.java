@@ -25,7 +25,6 @@ package com.sun.max.vm.t1x.vma;
 /**
  * Defines no templates; allows a subclass of {@link T1X} to incrementally fill the templates.
  */
-
 public class NullT1XTemplateSource {
 
 }
