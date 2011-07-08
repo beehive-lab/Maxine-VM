@@ -688,6 +688,14 @@ public class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
+    public void visitIfBit(IfBit i) {
+        CiAddress address = new CiAddress(CiKind.Byte, i.register.asValue(i.kind), i.offset.asConstant().asInt());
+        lir.testbit(address, i.bitNo.asConstant());
+        lir.branch(i.condition == Condition.EQ ? Condition.AE : Condition.BT, CiKind.Int, i.trueSuccessor());
+        lir.jump(i.falseSuccessor());
+    }
+
+    @Override
     protected void genGetObjectUnsafe(CiValue dst, CiValue src, CiValue offset, CiKind kind, boolean isVolatile) {
         if (isVolatile && kind == CiKind.Long) {
             CiAddress addr = new CiAddress(CiKind.Double, src, offset);

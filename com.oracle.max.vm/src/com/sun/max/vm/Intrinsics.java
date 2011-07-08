@@ -28,6 +28,7 @@ import static com.sun.cri.bytecode.Bytecodes.UnsignedComparisons.*;
 import com.sun.cri.bytecode.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * A set of methods {@linkplain INTRINSIC intrinsified} via extended bytecodes.
@@ -191,4 +192,8 @@ public class Intrinsics {
      */
     @INTRINSIC(WCMP)
     public static native void compareWords(Word value1, Word value2);
+
+    @INTRINSIC(READBIT | VMRegister.LATCH << 8)
+    public static native boolean readLatchBit(int offset, int bit);
+
 }
