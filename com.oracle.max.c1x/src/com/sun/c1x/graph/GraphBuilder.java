@@ -2498,6 +2498,7 @@ public final class GraphBuilder {
             case PAUSE          : genPause(); break;
             case LSB            : // fall through
             case MSB            : genSignificantBit(opcode);break;
+            case READBIT        : genReadBit(s.readCPI()); break;
 
             case TEMPLATE_CALL  : genTemplateCall(constantPool().lookupMethod(s.readCPI(), (byte)Bytecodes.TEMPLATE_CALL)); break;
             case ICMP           : genCompareOp(CiKind.Int, opcode, CiKind.Void); break;
@@ -2549,6 +2550,37 @@ public final class GraphBuilder {
     private void genSignificantBit(int opcode) {
         Value value = pop(CiKind.Word);
         push(CiKind.Int, append(new SignificantBitOp(value, opcode)));
+    }
+
+    private void genReadBit(int registerId) {
+        /*
+         * To achieve the effect we want, which is to branch directly on the value of the bit,
+         * we assert that the next opcode in the stream is an IFEQ/IFNE, and combine them into a single
+         * instruction. This perhaps should be done as a more principled HIR optimization.
+         */
+        CiRegister register = compilation.registerConfig.getRegisterForRole(registerId);
+        if (register == null) {
+            throw new CiBailout("Unsupported READBIT operand " + registerId);
+        }
+        Value bitNo = pop(CiKind.Int);
+        Value tlOffset = pop(CiKind.Int);
+        if (!(bitNo.isConstant() && tlOffset.isConstant())) {
+            throw new CiBailout("READBIT operands must be constants");
+        }
+        stream().next();
+        int opcode = stream().currentBC();
+        if (!(opcode == IFEQ || opcode == IFNE)) {
+            throw new CiBailout("READBIT must be followed by IFEQ/NE");
+        }
+        Condition cond = opcode == IFEQ ? Condition.EQ : Condition.NE;
+        /*
+         * IFEQ is comparing the (logical) operand against zero and branching if equal.
+         * So the "true" successor (cf IfNode) is the bit "unset" case.
+         */
+        BlockBegin tSucc = blockAt(stream().readBranchDest());
+        BlockBegin fSucc = blockAt(stream().nextBCI());
+
+        append(new IfBit(register, tlOffset, bitNo, cond, tSucc, fSucc));
     }
 
     private void appendSnippetCall(RiSnippetCall snippetCall) {

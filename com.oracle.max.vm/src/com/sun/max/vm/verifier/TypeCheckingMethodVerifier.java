@@ -2013,6 +2013,8 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                 case READREG            : frame.push(WORD); break;
                 case WRITEREG           : frame.pop(WORD); break;
 
+                case READBIT            : frame.pop(INTEGER); break;
+
                 default: {
                     verifyError("Unsupported bytecode: " + Bytecodes.nameOf(opcode));
                 }

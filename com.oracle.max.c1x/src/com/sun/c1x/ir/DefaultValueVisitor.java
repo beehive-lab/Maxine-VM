@@ -104,4 +104,5 @@ public class DefaultValueVisitor extends ValueVisitor {
     @Override public void visitUnsafePutObject(UnsafePutObject i) { visit(i); }
     @Override public void visitUnsafePutRaw(UnsafePutRaw i) { visit(i); }
     @Override public void visitUnsignedCompareOp(UnsignedCompareOp i) { visit(i); }
+    @Override public void visitIfBit(IfBit i) { visit(i); }
 }

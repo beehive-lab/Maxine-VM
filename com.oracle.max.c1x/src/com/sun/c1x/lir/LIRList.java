@@ -315,6 +315,10 @@ public final class LIRList {
         append(new LIROp0(LIROpcode.Breakpoint));
     }
 
+    public void testbit(CiAddress address, CiValue bitNo) {
+        append(new LIROp2(LIROpcode.IfBit, address, bitNo, CiValue.IllegalValue));
+    }
+
     public void prefetch(CiAddress addr, boolean isStore) {
         append(new LIROp1(isStore ? LIROpcode.Prefetchw : LIROpcode.Prefetchr, addr));
     }
