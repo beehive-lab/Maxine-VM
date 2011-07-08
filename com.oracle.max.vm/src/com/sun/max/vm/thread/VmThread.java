@@ -599,9 +599,7 @@ public class VmThread {
      */
     @VM_ENTRY_POINT
     @INSPECTED
-    private static void run(Pointer etla,
-                    Pointer stackBase,
-                    Pointer stackEnd) {
+    private static void run(Pointer etla, Pointer stackBase, Pointer stackEnd) {
 
         // Enable safepoints:
         Pointer anchor = JniFunctions.prologue(JNI_ENV.addressIn(etla), null);
