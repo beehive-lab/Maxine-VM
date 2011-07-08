@@ -44,6 +44,7 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -554,14 +555,28 @@ public final class MaxineVM {
     }
 
     /**
-     * Application-requested exit.
-     * @param exitCode code to exit the VM process with.
-     * @param halt  true if this is a halt, not an exit.
+     * Low level VM exit. This method does not run any shutdown hooks or finalizers.
+     * This is where {@link Runtime#exit(int)} and {@link Runtime#halt(int)} bottom out.
+     *
+     * @param code exit code for the VM process
      */
-    public static void exit(int exitCode, boolean halt) {
+    public static void exit(int code) {
+
+        VMOptions.beforeExit();
+
+        // This prevents further thread creation
+        VmThreadMap.ACTIVE.setVMTerminating();
+        SignalDispatcher.terminate();
+
         // TODO: need to revisit this. Likely, we would want to bring all
         // threads to a safepoint before running the terminating phase.
         vmConfig().initializeSchemes(MaxineVM.Phase.TERMINATING);
-        native_exit(exitCode);
+        VmOperationThread.terminate();
+
+        // Drop back to PRIMORDIAL
+        MaxineVM vm = vm();
+        vm.phase = MaxineVM.Phase.PRIMORDIAL;
+
+        native_exit(code);
     }
 }

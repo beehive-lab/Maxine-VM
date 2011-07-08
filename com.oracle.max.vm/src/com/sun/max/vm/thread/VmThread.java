@@ -23,7 +23,6 @@
 package com.sun.max.vm.thread;
 
 import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
@@ -650,17 +649,9 @@ public class VmThread {
         // If this is the main thread terminating, initiate shutdown hooks after waiting for other non-daemons to terminate
         if (thread == mainThread) {
             VmThreadMap.ACTIVE.joinAllNonDaemons();
-            invokeShutdownHooks();
-            // This prevents further thread creation
-            VmThreadMap.ACTIVE.setVMTerminating();
-            SignalDispatcher.terminate();
-            // scheme-specific termination
-            vmConfig().initializeSchemes(MaxineVM.Phase.TERMINATING);
-            VmOperationThread.terminate();
 
-            // Drop back to PRIMORDIAL
-            MaxineVM vm = vm();
-            vm.phase = MaxineVM.Phase.PRIMORDIAL;
+            // Calling java.lang.Shutdown.exit() ensures all the shutdown hooks and finalizers are run
+            JavaLangShutdown.exit(0);
         }
 
         JniFunctions.epilogue(anchor, null);
@@ -792,15 +783,9 @@ public class VmThread {
         JniFunctions.epilogue(anchor, null);
     }
 
-    @ALIAS(declaringClassName = "java.lang.Shutdown")
-    private static native void shutdown();
-
-    private static void invokeShutdownHooks() {
-        VMOptions.beforeExit();
-        if (TraceThreads) {
-            Log.println("invoking Shutdown hooks");
-        }
-        shutdown();
+    static class JavaLangShutdown {
+        @ALIAS(declaringClassName = "java.lang.Shutdown", name = "exit")
+        static native void exit(int code);
     }
 
     /*
