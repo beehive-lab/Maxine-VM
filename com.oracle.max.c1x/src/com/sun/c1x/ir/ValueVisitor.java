@@ -94,4 +94,5 @@ public abstract class ValueVisitor {
     public abstract void visitUnsafePutObject(UnsafePutObject i);
     public abstract void visitUnsafePutRaw(UnsafePutRaw i);
     public abstract void visitUnsignedCompareOp(UnsignedCompareOp i);
+    public abstract void visitIfBit(IfBit i);
 }

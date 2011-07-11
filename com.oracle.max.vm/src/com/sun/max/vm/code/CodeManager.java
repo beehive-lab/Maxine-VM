@@ -123,7 +123,7 @@ public abstract class CodeManager {
             }
             Heap.enableAllocationForCurrentThread();
             Log.println("PermGen: try larger value for -XX:ReservedCodeCacheSize=<n>)");
-            MaxineVM.exit(11, true);
+            MaxineVM.exit(11);
         }
 
         targetMethod.setStart(start);

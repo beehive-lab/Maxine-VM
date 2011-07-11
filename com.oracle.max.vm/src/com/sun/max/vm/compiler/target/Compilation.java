@@ -139,15 +139,26 @@ public class Compilation /*implements Future<TargetMethod>*/ {
      *
      * @return the target method that resulted from this compilation
      */
-    public TargetMethod get() throws InterruptedException {
+    public TargetMethod get() {
         synchronized (classMethodActor) {
+            boolean interrupted = false;
             if (!done) {
                 if (compilingThread == Thread.currentThread()) {
                     throw new RuntimeException("Compilation of " + classMethodActor.format("%H.%n(%p)") + " is recursive, current compilation scheme: " + this.compilationScheme);
                 }
 
                 // the class method actor is used here as the condition variable
-                classMethodActor.wait();
+                try {
+                    classMethodActor.wait();
+                } catch (InterruptedException ex) {
+                    // Interrupting a thread that is waiting for a compilation to finish means that we still have to continue the waiting.
+                    // After the code is available, we can interrupt() our thread again so that the flag gets passed down to the actual
+                    // application code.
+                    interrupted = true;
+                }
+            }
+            if (interrupted) {
+                Thread.currentThread().interrupt();
             }
             return classMethodActor.currentTargetMethod();
         }
