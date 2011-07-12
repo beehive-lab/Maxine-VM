@@ -1751,6 +1751,37 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
+     * Action:  copies to the system clipboard a textual representation of the
+     * disassembled machine code for a method compilation.
+     */
+    final class CopyBytecodeToClipboardAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Copy disassembled bytecode to clipboard";
+
+        private final TeleClassMethodActor teleClassMethodActor;
+
+        private CopyBytecodeToClipboardAction(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+            this.teleClassMethodActor = teleClassMethodActor;
+        }
+
+        @Override
+        public void procedure() {
+            final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            final PrintStream printStream = new PrintStream(outputStream);
+            teleClassMethodActor.writeSummary(printStream);
+            gui().postToClipboard(outputStream.toString());
+        }
+    }
+
+    /**
+     * @return an Action that copies to the system clipboard a textual disassembly of machine code.
+     */
+    public InspectorAction copyBytecodeToClipboard(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
+        return new CopyBytecodeToClipboardAction(teleClassMethodActor, actionTitle);
+    }
+
+    /**
      * Menu: display a sub-menu of commands for setting breakpoints at standard locations.
      */
     final class BuiltinBreakpointsMenu extends InspectorMenu {
