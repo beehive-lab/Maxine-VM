@@ -220,6 +220,9 @@ public class JavaMethodView extends MethodView<JavaMethodView> {
         }
 
         if (teleClassMethodActor != null) {
+            final InspectorAction copyAction = actions().copyBytecodeToClipboard(teleClassMethodActor, null);
+            copyAction.setEnabled(true);
+            editMenu.add(copyAction);
             objectMenu.add(views().objects().makeViewAction(teleClassMethodActor, "Method: " + teleClassMethodActor.classActorForObjectType().simpleName()));
             final TeleClassActor teleClassActor = teleClassMethodActor.getTeleHolder();
             objectMenu.add(views().objects().makeViewAction(teleClassActor, "Holder: " + teleClassActor.classActorForObjectType().simpleName()));

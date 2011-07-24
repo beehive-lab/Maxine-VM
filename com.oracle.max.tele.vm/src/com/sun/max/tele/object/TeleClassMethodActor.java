@@ -22,6 +22,7 @@
  */
 package com.sun.max.tele.object;
 
+import java.io.*;
 import java.util.*;
 
 import com.sun.max.jdwp.vm.data.*;
@@ -32,7 +33,9 @@ import com.sun.max.tele.data.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.LineNumberTable.Entry;
+import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.reference.*;
@@ -283,5 +286,25 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
         return actorName().string;
     }
 
+
+    public void writeSummary(PrintStream printStream) {
+        final TeleCodeAttribute codeAttribute = getTeleCodeAttribute();
+        // Always use the {@link ConstantPool} taken from the {@link CodeAttribute}; in a substituted method, the
+        // constant pool for the bytecodes is the one from the origin of the substitution, not the current holder of the method.
+        final TeleConstantPool teleConstantPool = codeAttribute.getTeleConstantPool();
+        final ConstantPool constantPool = teleConstantPool.getTeleHolder().classActor().constantPool();
+        final byte[] methodBytes = codeAttribute.readBytecodes();
+        final PrintWriter printWriter = new PrintWriter(printStream);
+        printWriter.println("code for: " + classMethodActor().format("%H.%n(%p)"));
+        final BytecodePrinter bytecodePrinter = new BytecodePrinter(printWriter, constantPool);
+        final BytecodeScanner bytecodeScanner = new BytecodeScanner(bytecodePrinter);
+        try {
+            bytecodeScanner.scan(new BytecodeBlock(methodBytes));
+        } catch (Throwable throwable) {
+            printWriter.flush();
+            ProgramWarning.message("could not print bytecodes: " + throwable);
+        }
+        printWriter.flush();
+    }
 
 }
