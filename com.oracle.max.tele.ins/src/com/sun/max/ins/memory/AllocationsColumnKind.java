@@ -25,12 +25,12 @@ package com.sun.max.ins.memory;
 import com.sun.max.ins.debug.*;
 
 /**
- * Defines the columns that can be displayed describing a region of allocated memory in the VM.
+ * Defines the columns that can be displayed describing memory regions that the VM has allocated from the OS.
  */
-public enum MemoryAllocationsColumnKind implements ColumnKind {
+public enum AllocationsColumnKind implements ColumnKind {
 
     TAG("Tag", "Additional information", true, -1),
-    NAME("Name", "Role played by the region", true, -1) {
+    NAME("Name", "Role played by the allocated memory region", true, -1) {
 
         @Override
         public boolean canBeMadeInvisible() {
@@ -47,7 +47,7 @@ public enum MemoryAllocationsColumnKind implements ColumnKind {
     private final boolean defaultVisibility;
     private final int minWidth;
 
-    private MemoryAllocationsColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
+    private AllocationsColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
         this.label = label;
         this.toolTipText = toolTipText;
         this.defaultVisibility = defaultVisibility;
