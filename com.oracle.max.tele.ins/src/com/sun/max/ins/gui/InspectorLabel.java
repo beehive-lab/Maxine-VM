@@ -311,7 +311,7 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
      */
     public final void setTextPrefix(String textPrefix) {
         this.textPrefix = textPrefix == null ? "" : textPrefix;
-        redisplay();
+        //redisplay();
     }
 
     /**
@@ -327,7 +327,7 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
         } else {
             this.textSuffix = "";
         }
-        redisplay();
+        //redisplay();
     }
 
     /**
@@ -362,7 +362,7 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
         } else {
             this.toolTipPrefix = "";
         }
-        redisplay();
+        //redisplay();
     }
 
     /**
@@ -378,7 +378,7 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
         } else {
             this.toolTipSuffix = "";
         }
-        redisplay();
+        //redisplay();
     }
 
     /**

@@ -72,11 +72,11 @@ public final class AllocationsView extends AbstractView<AllocationsView> impleme
     }
 
     // This is a singleton viewer, so only use a single level of view preferences.
-    private final MemoryAllocationsViewPreferences viewPreferences;
+    private final AllocationsViewPreferences viewPreferences;
 
     private InspectorPanel contentPane;
 
-    private MemoryAllocationsTable table;
+    private AllocationsTable table;
 
     private TableRowFilterToolBar filterToolBar = null;
     private JCheckBoxMenuItem showFilterCheckboxMenuItem;
@@ -85,7 +85,7 @@ public final class AllocationsView extends AbstractView<AllocationsView> impleme
     private AllocationsView(Inspection inspection) {
         super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
         Trace.begin(1, tracePrefix() + "initializing");
-        viewPreferences = MemoryAllocationsViewPreferences.globalPreferences(inspection());
+        viewPreferences = AllocationsViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
         showFilterCheckboxMenuItem = new InspectorCheckBox(inspection, "Filter view", "Show Filter Field", false);
         showFilterCheckboxMenuItem.addItemListener(new ItemListener() {
@@ -135,7 +135,7 @@ public final class AllocationsView extends AbstractView<AllocationsView> impleme
             table = null;
             contentPane = new InspectorPanel(inspection());
         } else {
-            table = new MemoryAllocationsTable(inspection(), viewPreferences);
+            table = new AllocationsTable(inspection(), viewPreferences);
             final InspectorScrollPane memoryAllocationsScrollPane = new InspectorScrollPane(inspection(), table);
             contentPane = new InspectorPanel(inspection(), new BorderLayout());
             contentPane.add(memoryAllocationsScrollPane, BorderLayout.CENTER);
@@ -172,7 +172,7 @@ public final class AllocationsView extends AbstractView<AllocationsView> impleme
         return new InspectorAction(inspection(), "View Options") {
             @Override
             public void procedure() {
-                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<MemoryAllocationsColumnKind>(inspection(), viewManager.shortName() + " View Options", viewPreferences);
+                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<AllocationsColumnKind>(inspection(), viewManager.shortName() + " View Options", viewPreferences);
             }
         };
     }

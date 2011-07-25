@@ -150,7 +150,7 @@ public class jmax {
      */
     static Project project(String name) {
         Project p = projects.get(name);
-        assert p != null : "project named ' " + name + "' not found";
+        assert p != null : "project named '" + name + "' not found";
         return p;
     }
 
