@@ -632,7 +632,7 @@ public class BootImage {
     private ByteBuffer heap;
     private ByteBuffer code;
     private ByteBuffer heapAndCode;
-    private final File imageFile;
+    public final File imageFile;
 
     /**
      * Creates a BootImage object representing the information in a given boot image file.
