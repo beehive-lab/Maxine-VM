@@ -26,10 +26,11 @@ import static com.sun.max.vm.t1x.T1XFrameOps.*;
 import static com.sun.max.vm.t1x.T1XRuntime.*;
 import static com.sun.max.vm.t1x.T1XTemplateTag.*;
 import static com.sun.max.vm.t1x.T1XTemplateSource.*;
-import static com.oracle.max.vm.ext.vma.run.java.VMAJavaRunScheme.*;
 
+import com.oracle.max.vm.ext.vma.run.java.*;
 import com.oracle.max.vm.ext.vma.runtime.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
@@ -55,7 +56,7 @@ public class VMAdviceAfterTemplateSource {
         VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
         Address entryPoint = VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor);
         final float result = indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
         pushFloat(result);
@@ -67,7 +68,7 @@ public class VMAdviceAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress();
         final float result = indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
         pushFloat(result);
@@ -79,7 +80,7 @@ public class VMAdviceAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex);
         final float result = indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
         pushFloat(result);
@@ -92,7 +93,7 @@ public class VMAdviceAfterTemplateSource {
         final InterfaceMethodActor interfaceMethodActor = Snippets.resolveInterfaceMethod(guard);
         Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
         final float result = indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
         pushFloat(result);
@@ -104,7 +105,7 @@ public class VMAdviceAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
         final float result = indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
         pushFloat(result);
@@ -116,7 +117,7 @@ public class VMAdviceAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
         final float result = indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
         pushFloat(result);
@@ -129,7 +130,7 @@ public class VMAdviceAfterTemplateSource {
         nullCheck(Reference.fromJava(receiver).toOrigin());
         VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
         final float result = indirectCallFloat(VMAT1XRuntime.initializeSpecialMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
         pushFloat(result);
@@ -141,7 +142,7 @@ public class VMAdviceAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         nullCheck(Reference.fromJava(receiver).toOrigin());
         final float result = directCallFloat();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
         pushFloat(result);
@@ -152,7 +153,7 @@ public class VMAdviceAfterTemplateSource {
     public static void invokestaticFloat(ResolutionGuard.InPool guard) {
         StaticMethodActor methodActor = VMAT1XRuntime.resolveStaticMethod(guard);
         final float result = indirectCallFloat(VMAT1XRuntime.initializeStaticMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(null, methodActor);
         }
         pushFloat(result);
@@ -162,7 +163,7 @@ public class VMAdviceAfterTemplateSource {
     @T1X_TEMPLATE(INVOKESTATIC$float$init)
     public static void invokestaticFloat(StaticMethodActor methodActor) {
         final float result = directCallFloat();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(null, methodActor);
         }
         pushFloat(result);
@@ -175,7 +176,7 @@ public class VMAdviceAfterTemplateSource {
         VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
         Address entryPoint = VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor);
         final long result = indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
         pushLong(result);
@@ -187,7 +188,7 @@ public class VMAdviceAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress();
         final long result = indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
         pushLong(result);
@@ -199,7 +200,7 @@ public class VMAdviceAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex);
         final long result = indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
         pushLong(result);
@@ -212,7 +213,7 @@ public class VMAdviceAfterTemplateSource {
         final InterfaceMethodActor interfaceMethodActor = Snippets.resolveInterfaceMethod(guard);
         Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
         final long result = indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
         pushLong(result);
@@ -224,7 +225,7 @@ public class VMAdviceAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
         final long result = indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
         pushLong(result);
@@ -236,7 +237,7 @@ public class VMAdviceAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
         final long result = indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
         pushLong(result);
@@ -249,7 +250,7 @@ public class VMAdviceAfterTemplateSource {
         nullCheck(Reference.fromJava(receiver).toOrigin());
         VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
         final long result = indirectCallLong(VMAT1XRuntime.initializeSpecialMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
         pushLong(result);
@@ -261,7 +262,7 @@ public class VMAdviceAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         nullCheck(Reference.fromJava(receiver).toOrigin());
         final long result = directCallLong();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
         pushLong(result);
@@ -272,7 +273,7 @@ public class VMAdviceAfterTemplateSource {
     public static void invokestaticLong(ResolutionGuard.InPool guard) {
         StaticMethodActor methodActor = VMAT1XRuntime.resolveStaticMethod(guard);
         final long result = indirectCallLong(VMAT1XRuntime.initializeStaticMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(null, methodActor);
         }
         pushLong(result);
@@ -282,7 +283,7 @@ public class VMAdviceAfterTemplateSource {
     @T1X_TEMPLATE(INVOKESTATIC$long$init)
     public static void invokestaticLong(StaticMethodActor methodActor) {
         final long result = directCallLong();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(null, methodActor);
         }
         pushLong(result);
@@ -295,7 +296,7 @@ public class VMAdviceAfterTemplateSource {
         VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
         Address entryPoint = VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor);
         final double result = indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
         pushDouble(result);
@@ -307,7 +308,7 @@ public class VMAdviceAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress();
         final double result = indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
         pushDouble(result);
@@ -319,7 +320,7 @@ public class VMAdviceAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex);
         final double result = indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
         pushDouble(result);
@@ -332,7 +333,7 @@ public class VMAdviceAfterTemplateSource {
         final InterfaceMethodActor interfaceMethodActor = Snippets.resolveInterfaceMethod(guard);
         Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
         final double result = indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
         pushDouble(result);
@@ -344,7 +345,7 @@ public class VMAdviceAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
         final double result = indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
         pushDouble(result);
@@ -356,7 +357,7 @@ public class VMAdviceAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
         final double result = indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
         pushDouble(result);
@@ -369,7 +370,7 @@ public class VMAdviceAfterTemplateSource {
         nullCheck(Reference.fromJava(receiver).toOrigin());
         VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
         final double result = indirectCallDouble(VMAT1XRuntime.initializeSpecialMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
         pushDouble(result);
@@ -381,7 +382,7 @@ public class VMAdviceAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         nullCheck(Reference.fromJava(receiver).toOrigin());
         final double result = directCallDouble();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
         pushDouble(result);
@@ -392,7 +393,7 @@ public class VMAdviceAfterTemplateSource {
     public static void invokestaticDouble(ResolutionGuard.InPool guard) {
         StaticMethodActor methodActor = VMAT1XRuntime.resolveStaticMethod(guard);
         final double result = indirectCallDouble(VMAT1XRuntime.initializeStaticMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(null, methodActor);
         }
         pushDouble(result);
@@ -402,7 +403,7 @@ public class VMAdviceAfterTemplateSource {
     @T1X_TEMPLATE(INVOKESTATIC$double$init)
     public static void invokestaticDouble(StaticMethodActor methodActor) {
         final double result = directCallDouble();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(null, methodActor);
         }
         pushDouble(result);
@@ -415,7 +416,7 @@ public class VMAdviceAfterTemplateSource {
         VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
         Address entryPoint = VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor);
         final Object result = indirectCallObject(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
         pushObject(result);
@@ -427,7 +428,7 @@ public class VMAdviceAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress();
         final Object result = indirectCallObject(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
         pushObject(result);
@@ -439,7 +440,7 @@ public class VMAdviceAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex);
         final Object result = indirectCallObject(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
         pushObject(result);
@@ -452,7 +453,7 @@ public class VMAdviceAfterTemplateSource {
         final InterfaceMethodActor interfaceMethodActor = Snippets.resolveInterfaceMethod(guard);
         Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
         final Object result = indirectCallObject(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
         pushObject(result);
@@ -464,7 +465,7 @@ public class VMAdviceAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
         final Object result = indirectCallObject(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
         pushObject(result);
@@ -476,7 +477,7 @@ public class VMAdviceAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
         final Object result = indirectCallObject(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
         pushObject(result);
@@ -489,7 +490,7 @@ public class VMAdviceAfterTemplateSource {
         nullCheck(Reference.fromJava(receiver).toOrigin());
         VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
         final Object result = indirectCallObject(VMAT1XRuntime.initializeSpecialMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
         pushObject(result);
@@ -501,7 +502,7 @@ public class VMAdviceAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         nullCheck(Reference.fromJava(receiver).toOrigin());
         final Object result = directCallObject();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
         pushObject(result);
@@ -512,7 +513,7 @@ public class VMAdviceAfterTemplateSource {
     public static void invokestaticReference(ResolutionGuard.InPool guard) {
         StaticMethodActor methodActor = VMAT1XRuntime.resolveStaticMethod(guard);
         final Object result = indirectCallObject(VMAT1XRuntime.initializeStaticMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(null, methodActor);
         }
         pushObject(result);
@@ -522,7 +523,7 @@ public class VMAdviceAfterTemplateSource {
     @T1X_TEMPLATE(INVOKESTATIC$reference$init)
     public static void invokestaticReference(StaticMethodActor methodActor) {
         final Object result = directCallObject();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(null, methodActor);
         }
         pushObject(result);
@@ -535,7 +536,7 @@ public class VMAdviceAfterTemplateSource {
         VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
         Address entryPoint = VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor);
         final Word result = indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
         pushWord(result);
@@ -547,7 +548,7 @@ public class VMAdviceAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress();
         final Word result = indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
         pushWord(result);
@@ -559,7 +560,7 @@ public class VMAdviceAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex);
         final Word result = indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
         pushWord(result);
@@ -572,7 +573,7 @@ public class VMAdviceAfterTemplateSource {
         final InterfaceMethodActor interfaceMethodActor = Snippets.resolveInterfaceMethod(guard);
         Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
         final Word result = indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
         pushWord(result);
@@ -584,7 +585,7 @@ public class VMAdviceAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
         final Word result = indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
         pushWord(result);
@@ -596,7 +597,7 @@ public class VMAdviceAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
         final Word result = indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
         pushWord(result);
@@ -609,7 +610,7 @@ public class VMAdviceAfterTemplateSource {
         nullCheck(Reference.fromJava(receiver).toOrigin());
         VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
         final Word result = indirectCallWord(VMAT1XRuntime.initializeSpecialMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
         pushWord(result);
@@ -621,7 +622,7 @@ public class VMAdviceAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         nullCheck(Reference.fromJava(receiver).toOrigin());
         final Word result = directCallWord();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
         pushWord(result);
@@ -632,7 +633,7 @@ public class VMAdviceAfterTemplateSource {
     public static void invokestaticWord(ResolutionGuard.InPool guard) {
         StaticMethodActor methodActor = VMAT1XRuntime.resolveStaticMethod(guard);
         final Word result = indirectCallWord(VMAT1XRuntime.initializeStaticMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(null, methodActor);
         }
         pushWord(result);
@@ -642,7 +643,7 @@ public class VMAdviceAfterTemplateSource {
     @T1X_TEMPLATE(INVOKESTATIC$word$init)
     public static void invokestaticWord(StaticMethodActor methodActor) {
         final Word result = directCallWord();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(null, methodActor);
         }
         pushWord(result);
@@ -655,7 +656,7 @@ public class VMAdviceAfterTemplateSource {
         VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
         Address entryPoint = VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor);
         indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
     }
@@ -666,7 +667,7 @@ public class VMAdviceAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress();
         indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
     }
@@ -677,7 +678,7 @@ public class VMAdviceAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex);
         indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
     }
@@ -689,7 +690,7 @@ public class VMAdviceAfterTemplateSource {
         final InterfaceMethodActor interfaceMethodActor = Snippets.resolveInterfaceMethod(guard);
         Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
         indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
     }
@@ -700,7 +701,7 @@ public class VMAdviceAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
         indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
     }
@@ -711,7 +712,7 @@ public class VMAdviceAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
         indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
     }
@@ -723,7 +724,7 @@ public class VMAdviceAfterTemplateSource {
         nullCheck(Reference.fromJava(receiver).toOrigin());
         VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
         indirectCallVoid(VMAT1XRuntime.initializeSpecialMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
     }
@@ -734,7 +735,7 @@ public class VMAdviceAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         nullCheck(Reference.fromJava(receiver).toOrigin());
         directCallVoid();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
     }
@@ -744,7 +745,7 @@ public class VMAdviceAfterTemplateSource {
     public static void invokestaticVoid(ResolutionGuard.InPool guard) {
         StaticMethodActor methodActor = VMAT1XRuntime.resolveStaticMethod(guard);
         indirectCallVoid(VMAT1XRuntime.initializeStaticMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(null, methodActor);
         }
     }
@@ -753,7 +754,7 @@ public class VMAdviceAfterTemplateSource {
     @T1X_TEMPLATE(INVOKESTATIC$void$init)
     public static void invokestaticVoid(StaticMethodActor methodActor) {
         directCallVoid();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(null, methodActor);
         }
     }
@@ -762,7 +763,7 @@ public class VMAdviceAfterTemplateSource {
     @T1X_TEMPLATE(NEW)
     public static void new_(ResolutionGuard arg) {
         Object object = resolveClassForNewAndCreate(arg);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterNew(object);
         }
         pushObject(object);
@@ -772,7 +773,7 @@ public class VMAdviceAfterTemplateSource {
     @T1X_TEMPLATE(NEW$init)
     public static void new_(ClassActor arg) {
         Object object = createTupleOrHybrid(arg);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterNew(object);
         }
         pushObject(object);
@@ -783,7 +784,7 @@ public class VMAdviceAfterTemplateSource {
     public static void newarray(Kind<?> kind) {
         int length = peekInt(0);
         Object array = createPrimitiveArray(kind, length);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterNewArray(array, length);
         }
         pokeObject(0, array);
@@ -795,7 +796,7 @@ public class VMAdviceAfterTemplateSource {
         ArrayClassActor<?> arrayClassActor = UnsafeCast.asArrayClassActor(Snippets.resolveArrayClass(guard));
         int length = peekInt(0);
         Object array = T1XRuntime.createReferenceArray(arrayClassActor, length);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterNewArray(array, length);
         }
         pokeObject(0, array);
@@ -806,7 +807,7 @@ public class VMAdviceAfterTemplateSource {
     public static void anewarray(ArrayClassActor<?> arrayClassActor) {
         int length = peekInt(0);
         Object array = T1XRuntime.createReferenceArray(arrayClassActor, length);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterNewArray(array, length);
         }
         pokeObject(0, array);
@@ -828,7 +829,7 @@ public class VMAdviceAfterTemplateSource {
         }
 
         Object array = Snippets.createMultiReferenceArray(arrayClassActor, lengths);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterMultiNewArray(array, lengths);
         }
         pushObject(array);
@@ -849,7 +850,7 @@ public class VMAdviceAfterTemplateSource {
         }
 
         Object array = Snippets.createMultiReferenceArray(arrayClassActor, lengths);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterMultiNewArray(array, lengths);
         }
         pushObject(array);
@@ -859,7 +860,7 @@ public class VMAdviceAfterTemplateSource {
     @T1X_TEMPLATE(TRACE_METHOD_ENTRY)
     public static void traceMethodEntry(MethodActor methodActor, int dispToLocalSlot) {
         Object receiver = dispToLocalSlot == 0 ? null : getLocalObject(dispToLocalSlot);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterMethodEntry(receiver, methodActor);
         }
     }

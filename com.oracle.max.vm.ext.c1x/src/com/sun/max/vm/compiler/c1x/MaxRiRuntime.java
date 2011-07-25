@@ -33,7 +33,6 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import com.oracle.max.asm.target.amd64.*;
-import com.oracle.max.hcfdis.*;
 import com.sun.c1x.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
@@ -173,9 +172,6 @@ public class MaxRiRuntime implements RiRuntime {
     public String disassemble(byte[] code, long address) {
         final Platform platform = Platform.platform();
         CiHexCodeFile hcf = new CiHexCodeFile(code, address, platform.isa.name(), platform.wordWidth().numberOfBits);
-        if (isHosted()) {
-            return new HexCodeFileDis(false).process(hcf, null);
-        }
         return hcf.toEmbeddedString();
     }
 
@@ -217,9 +213,6 @@ public class MaxRiRuntime implements RiRuntime {
             hcf.addOperandComment(site.pcOffset, "{" + site.constant + "}");
         }
 
-        if (isHosted()) {
-            return new HexCodeFileDis(false).process(hcf, null);
-        }
         return hcf.toEmbeddedString();
     }
 

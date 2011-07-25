@@ -219,22 +219,27 @@ public class SpecialReferenceManager {
             // the discovered field of this object is null, queue it for later processing
             if (ref == discoveredList) {
                 final boolean lockDisabledSafepoints = Log.lock();
-                Log.print("Discovered reference ");
+                Log.print("Reference ");
+                Log.print(ObjectAccess.readClassActor(ref).name.string);
+                Log.print(" at ");
                 Log.print(cell);
-                Log.print(" ");
+                Log.println(" is already on discovered list");
                 Log.unlock(lockDisabledSafepoints);
-                FatalError.unexpected(": already discovered");
+                FatalError.unexpected("Duplicate on discovered list");
             }
+            final Reference referent = Reference.fromJava(refAlias.referent);
             refAlias.discovered = discoveredList;
             discoveredList = ref;
             if (TraceReferenceGC || Heap.traceGC()) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("Added ");
                 Log.print(cell);
-                Log.print(" ");
+                Log.print(' ');
                 final Hub hub = UnsafeCast.asHub(Layout.readHubReference(origin).toJava());
                 Log.print(hub.classActor.name.string);
-                Log.println(" to list of discovered references");
+                Log.print(" {referent=");
+                Log.print(referent.toOrigin());
+                Log.println("} to list of discovered references");
                 Log.unlock(lockDisabledSafepoints);
             }
         }

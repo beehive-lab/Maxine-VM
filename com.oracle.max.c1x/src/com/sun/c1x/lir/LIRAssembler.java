@@ -376,6 +376,10 @@ public abstract class LIRAssembler {
                 emitThrow(op.operand1(), op.operand2(), op.info, op.code == LIROpcode.Unwind);
                 break;
 
+            case IfBit:
+                emitIfBit(op.operand1(), op.operand2());
+                break;
+
             default:
                 throw Util.shouldNotReachHere();
         }
@@ -451,6 +455,8 @@ public abstract class LIRAssembler {
     protected abstract void emitAlignment();
 
     protected abstract void emitBreakpoint();
+
+    protected abstract void emitIfBit(CiValue address, CiValue bitNo);
 
     protected abstract void emitLea(CiValue src, CiValue dst);
 

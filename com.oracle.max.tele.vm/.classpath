@@ -6,5 +6,6 @@
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.vm"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.elf"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.vmdi"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.hcfdis"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

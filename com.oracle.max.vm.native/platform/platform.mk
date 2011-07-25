@@ -322,7 +322,7 @@ ifeq ($(OS),maxve)
     
 else
     ifeq ($(OS),darwin)
-        JNI_H_PATH=$(shell ls $(foreach base,/Developer/SDKs/MacOSX10.*.sdk/ /,$(base)System/Library/Frameworks/JavaVM.framework/Versions/1.6*/Headers/jni.h) 2>/dev/null | tail -1)
+        JNI_H_PATH=$(shell ls $(foreach base,/Developer/SDKs/MacOSX10.*.sdk/ /,$(base)System/Library/Frameworks/JavaVM.framework/Versions/*/Headers/jni.h) 2>/dev/null | tail -1)
         JNI_INCLUDES = -I $(dir $(JNI_H_PATH))
     else
         JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(OS)

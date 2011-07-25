@@ -28,9 +28,11 @@ import static com.sun.max.vm.VMConfiguration.*;
 import java.io.*;
 import java.util.*;
 
+import com.oracle.max.hcfdis.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.bytecode.Bytes;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
 import com.sun.cri.ri.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
@@ -324,7 +326,14 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
                     this.callEntryPoint = callEntryAddress;
                 }
 
-                inlineDataDecoder = targetMethod.inlineDataDecoder();
+                CodeAnnotation[] annotations = targetMethod.annotations();
+                if (annotations != null && annotations.length > 0) {
+                    inlineDataDecoder = HexCodeFileDis.makeInlineDataDecoder(annotations);
+                } else {
+                    inlineDataDecoder = null;
+                }
+
+
 
                 // Disassemble the target code
                 this.instructions = TeleDisassembler.decode(platform(), codeStart, code, inlineDataDecoder);

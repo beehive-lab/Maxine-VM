@@ -610,6 +610,21 @@ public class Bytecodes {
      */
     public static final int MSB                  = 248;
 
+    /**
+     * Reads/tests the value of a bit specified by a register playing a runtime-defined role, a byte offset,
+     * and a bit number (LSB=0).
+     *
+     * <pre>
+     * Format: { u1 opcode;   // READBIT
+     *           u2 role;     // runtime-defined register role id
+     *         }
+     *
+     * Operand Stack:
+     *     ..., offset, bitno => ..., 1 if bit is set, 0 otherwise
+     * </pre>
+     */
+    public static final int READBIT              = 249;
+
     // End extended bytecodes
 
     // Extended bytecodes with operand:
@@ -1315,6 +1330,7 @@ public class Bytecodes {
         def(FLUSHW              , "flushw"          , "bii"  , EXTENSION);
         def(LSB                 , "lsb"             , "bii"  , EXTENSION);
         def(MSB                 , "msb"             , "bii"  , EXTENSION);
+        def(READBIT             , "readbit"         , "bii"  , EXTENSION);
 
         def(JNIOP_J2N           , "jniop_j2n"         );
         def(JNIOP_LINK          , "jniop_link"        );
