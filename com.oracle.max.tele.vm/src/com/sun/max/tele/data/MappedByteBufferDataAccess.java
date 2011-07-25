@@ -28,16 +28,25 @@ import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 
 /**
+ * Data access to a mapped byte buffer, e.g., the boot image code and data.
  */
 public final class MappedByteBufferDataAccess extends DataAccessAdapter {
 
     private final MappedByteBuffer buffer;
+    /**
+     * The virtual address that the start of this buffer corresponds to.
+     */
     private final Address base;
+    /**
+     * The virtual address that the end of the buffer corresponds to.
+     */
+    private final Address limit;
 
     public MappedByteBufferDataAccess(MappedByteBuffer buffer, Address base, WordWidth wordWidth) {
         super(wordWidth, buffer.order());
         this.buffer = buffer;
         this.base = base;
+        this.limit = base.plus(buffer.limit() - 1); // assumes pos() == 0;
     }
 
     public int read(Address src, ByteBuffer dst, int dstOffset, int length) throws DataIOError {
@@ -56,12 +65,17 @@ public final class MappedByteBufferDataAccess extends DataAccessAdapter {
         return length;
     }
 
+    /**
+     * Returns the offset into the buffer that corresponds to {@code address}, checking validity.
+     * @param address
+     * @return
+     */
     private int asOffset(Address address) {
+        if (address.lessThan(base) || address.greaterThan(limit)) {
+            throw new DataIOError(address);
+        }
         if (base.isZero()) {
             return address.toInt();
-        }
-        if (address.lessThan(base)) {
-            throw new DataIOError(address);
         }
         return address.minus(base).toInt();
     }

@@ -173,7 +173,7 @@ public abstract class TeleVM implements MaxVM {
                     }
                 }
                 if (size == 3) {
-                    id = Integer.parseInt(targetLocationValue.get(1));
+                    id = Integer.parseInt(targetLocationValue.get(2));
                 }
             } else if (targetKind.equals("file")) {
                 kind = Kind.FILE;
@@ -214,7 +214,7 @@ public abstract class TeleVM implements MaxVM {
     /**
      * The mode of the inspection, which require different startup behavior.
      */
-    private static MaxInspectionMode mode;
+    public static MaxInspectionMode mode;
 
     /**
      * Information about where the (running/dumped) target VM is located.
@@ -283,7 +283,7 @@ public abstract class TeleVM implements MaxVM {
         return targetLocation.kind == TargetLocation.Kind.LOCAL;
     }
 
-    public static boolean isAttaching() {
+    public boolean isAttaching() {
         return mode == MaxInspectionMode.ATTACH;
     }
 
@@ -297,7 +297,7 @@ public abstract class TeleVM implements MaxVM {
      *
      * @param os
      */
-    private void setTeleChannelProtocol(OS os) {
+    protected void setTeleChannelProtocol(OS os) {
         if (mode == MaxInspectionMode.IMAGE) {
             teleChannelProtocol = new ReadOnlyTeleChannelProtocol();
             return;
@@ -463,7 +463,7 @@ public abstract class TeleVM implements MaxVM {
      *
      * @param bootImageConfig
      */
-    private static void initializeVM(VMConfiguration bootImageConfig) {
+    public static void initializeVM(VMConfiguration bootImageConfig) {
         MaxineVM vm = new MaxineVM(bootImageConfig);
         MaxineVM.set(vm);
         bootImageConfig.loadAndInstantiateSchemes(null);
@@ -500,8 +500,8 @@ public abstract class TeleVM implements MaxVM {
         final String className = "com.sun.max.tele.debug." + os.asPackageName() + "." + os.className + "TeleVM";
         try {
             final Class< ? > klass = Class.forName(className);
-            final Constructor< ? > cons = klass.getDeclaredConstructor(new Class[] {File.class, BootImage.class, Classpath.class, String[].class});
-            teleVM = (TeleVM) cons.newInstance(new Object[] {bootImageFile, bootImage, sourcepath, commandlineArguments});
+            final Constructor< ? > cons = klass.getDeclaredConstructor(new Class[] {BootImage.class, Classpath.class, String[].class});
+            teleVM = (TeleVM) cons.newInstance(new Object[] {bootImage, sourcepath, commandlineArguments});
         } catch (Exception ex) {
             TeleError.unexpected("failed to instantiate " + className, ex);
         }
@@ -528,7 +528,7 @@ public abstract class TeleVM implements MaxVM {
     private static TeleVM createReadOnly(File bootImageFile, Classpath sourcepath) throws BootImageException {
         final BootImage bootImage = new BootImage(bootImageFile);
         initializeVM(bootImage.vmConfiguration);
-        return new ReadOnlyTeleVM(bootImageFile, bootImage, sourcepath);
+        return new ReadOnlyTeleVM(bootImage, sourcepath);
     }
 
     private static final Logger LOGGER = Logger.getLogger(TeleVM.class.getName());
@@ -691,11 +691,11 @@ public abstract class TeleVM implements MaxVM {
      *            overridden by this object to use a different mechanism for discovering the boot image address.
      * @throws BootImageException
      */
-    protected TeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments) throws BootImageException {
+    protected TeleVM(BootImage bootImage, Classpath sourcepath, String[] commandLineArguments) throws BootImageException {
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
         tracer.begin();
         this.teleVMState = TeleVMState.nullState(mode);
-        this.bootImageFile = bootImageFile;
+        this.bootImageFile = bootImage.imageFile;
         this.bootImage = bootImage;
 
         this.sourcepath = sourcepath;
