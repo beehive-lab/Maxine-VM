@@ -65,7 +65,7 @@ public final class DynamicLinker {
      * The non-moving raw memory buffer used to pass data to the native dynamic linker functions.
      * Any use of the buffer must synchronize on this object once the VM is multi-threaded.
      */
-    private static final BootMemory buffer = new BootMemory(Ints.K);
+    private static final BootMemory buffer = new BootMemory(4 * Ints.K);
 
     /**
      * Initialize the system, "opening" the main program dynamic library.
