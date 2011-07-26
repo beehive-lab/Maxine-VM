@@ -22,8 +22,6 @@
  */
 package com.sun.max.tele.debug.no;
 
-import java.io.*;
-
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -34,17 +32,16 @@ import com.sun.max.vm.hosted.*;
 /**
  * A null VM instance, with the boot image but no process.
  */
-public final class ReadOnlyTeleVM extends TeleVM {
+public class ReadOnlyTeleVM extends TeleVM {
 
     /**
      * Creates a tele VM instance for inspecting a boot image without executing it.
      *
-     * @param bootImageFile a file containing a boot image
      * @param bootImage the metadata describing the boot image in {@code bootImageFile}
      * @param sourcepath the source code path to search for class or interface definitions
      */
-    public ReadOnlyTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath) throws BootImageException {
-        super(bootImageFile, bootImage, sourcepath, TeleProcess.EMPTY_COMMAND_LINE_ARGUMENTS);
+    public ReadOnlyTeleVM(BootImage bootImage, Classpath sourcepath) throws BootImageException {
+        super(bootImage, sourcepath, TeleProcess.EMPTY_COMMAND_LINE_ARGUMENTS);
     }
 
     @Override
