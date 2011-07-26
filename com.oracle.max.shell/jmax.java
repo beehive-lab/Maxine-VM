@@ -967,7 +967,7 @@ public class jmax {
             "org.eclipse.jdt.core.compiler.problem.autoboxing=ignore",
             "org.eclipse.jdt.core.compiler.problem.comparingIdentical=warning",
             "org.eclipse.jdt.core.compiler.problem.deadCode=ignore",
-            "org.eclipse.jdt.core.compiler.problem.deprecation=error",
+            "org.eclipse.jdt.core.compiler.problem.deprecation=warning",
             "org.eclipse.jdt.core.compiler.problem.deprecationInDeprecatedCode=enabled",
             "org.eclipse.jdt.core.compiler.problem.deprecationWhenOverridingDeprecatedMethod=enabled",
             "org.eclipse.jdt.core.compiler.problem.discouragedReference=warning",

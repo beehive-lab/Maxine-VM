@@ -1606,7 +1606,7 @@ public final class JniFunctionsSource {
                     // tables. If they're not there, the method doesn't exist.
                     throw new NoSuchMethodError();
                 }
-                final Word fnPtr = a.readWord(FNPTR);
+                final Address fnPtr = a.readWord(FNPTR).asAddress();
 
                 final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
                 final ClassMethodActor classMethodActor = classActor.findClassMethodActor(name, descriptor);
@@ -1629,11 +1629,11 @@ public final class JniFunctionsSource {
     private static int UnregisterNatives(Pointer env, JniHandle javaType) {
         ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
         for (VirtualMethodActor method : classActor.allVirtualMethodActors()) {
-            method.nativeFunction.setAddress(Word.zero());
+            method.nativeFunction.setAddress(Address.zero());
         }
         do {
             for (StaticMethodActor method : classActor.localStaticMethodActors()) {
-                method.nativeFunction.setAddress(Word.zero());
+                method.nativeFunction.setAddress(Address.zero());
             }
             classActor = classActor.superClassActor;
         } while (classActor != null);

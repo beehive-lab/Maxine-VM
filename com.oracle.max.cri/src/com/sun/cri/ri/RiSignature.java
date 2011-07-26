@@ -31,9 +31,10 @@ import com.sun.cri.ci.*;
  */
 public interface RiSignature {
     /**
-     * Gets the number of arguments to this signature, not including a receiver object.
-     * @param receiver true if there is a receiver, false otherwise
-     * @return the number of arguments
+     * Gets the number of arguments in this signature, adding 1 for a receiver if requested.
+     *
+     * @param receiver true if 1 is to be added to the result for a receiver
+     * @return the number of arguments + 1 iff {@code receiver == true}
      */
     int argumentCount(boolean receiver);
 

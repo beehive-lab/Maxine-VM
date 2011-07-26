@@ -1184,6 +1184,7 @@ public class VmThread {
 
     /**
      * Gets the JNI handles for this thread. This should only be called when the caller expects
+     * the JNI handles to have been allocated for this thread.
      */
     @INLINE
     public final JniHandles jniHandles() {

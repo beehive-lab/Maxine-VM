@@ -240,7 +240,6 @@ public class JavaMonitorManager {
      * Class that can be used to instantiate a named lock that is used by the VM.
      * The name is useful in combination with the {@link Monitor#TraceMonitors}
      * VM option.
-     *
      */
     public static class VmLock {
 

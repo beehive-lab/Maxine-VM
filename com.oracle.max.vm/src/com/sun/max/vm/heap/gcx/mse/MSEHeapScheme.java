@@ -263,9 +263,6 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
         return theHeap.usedSpace();
     }
 
-    public void runFinalization() {
-    }
-
     @INLINE(override = true)
     public void unpin(Object object) {
     }

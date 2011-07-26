@@ -976,9 +976,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         return toSpace.contains(address);
     }
 
-    public void runFinalization() {
-    }
-
     @INLINE(override = true)
     public boolean pin(Object object) {
         return false;

@@ -30,8 +30,8 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 
 /**
- * This class represents a critical native method that is used by the virtual machine
- * and must be linked while the VM is starting up. Some critical native methods are JNI functions,
+ * This class represents a critical native method that
+ * must be linked while the VM is starting up. Some critical native methods are JNI functions,
  * and this class will pre-allocate the required mangled string name in order to link
  * these methods before allocation works.
  */
@@ -40,7 +40,13 @@ public class CriticalNativeMethod extends CriticalMethod {
     private static CriticalNativeMethod[] criticalNativeMethods = {};
 
     @HOSTED_ONLY
-    private static void registerCriticalNativeMethod(CriticalNativeMethod criticalNativeMethod) {
+    private static synchronized void registerCriticalNativeMethod(CriticalNativeMethod criticalNativeMethod) {
+        for (CriticalNativeMethod cnm : criticalNativeMethods) {
+            if (cnm.classMethodActor == criticalNativeMethod.classMethodActor) {
+                // Already registered
+                return;
+            }
+        }
         criticalNativeMethods = Arrays.copyOf(criticalNativeMethods, criticalNativeMethods.length + 1);
         criticalNativeMethods[criticalNativeMethods.length - 1] = criticalNativeMethod;
     }

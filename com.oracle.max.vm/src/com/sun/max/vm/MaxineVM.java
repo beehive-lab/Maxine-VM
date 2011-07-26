@@ -419,7 +419,7 @@ public final class MaxineVM {
      * @return 0 indicating initialization succeeded, non-0 if not
      */
     @VM_ENTRY_POINT
-    public static int run(Pointer etla, Pointer bootHeapRegionStart, Word nativeOpenDynamicLibrary, Word dlsym, Word dlerror, Pointer jniEnv, Pointer jmmInterface, int argc, Pointer argv) {
+    public static int run(Pointer etla, Pointer bootHeapRegionStart, Word dlopen, Word dlsym, Word dlerror, Pointer jniEnv, Pointer jmmInterface, int argc, Pointer argv) {
         Safepoint.setLatchRegister(etla);
 
         // This one field was not marked by the data prototype for relocation
@@ -428,7 +428,7 @@ public final class MaxineVM {
         Heap.bootHeapRegion.setStart(bootHeapRegionStart);
 
         // The dynamic linker must be initialized before linking critical native methods
-        DynamicLinker.initialize(nativeOpenDynamicLibrary, dlsym, dlerror);
+        DynamicLinker.initialize(dlopen, dlsym, dlerror);
 
         // Link the critical native methods:
         CriticalNativeMethod.linkAll();

@@ -113,10 +113,6 @@ public class HostedHeapScheme extends HeapSchemeAdaptor implements HeapScheme {
         throw ProgramError.unexpected();
     }
 
-    public void runFinalization() {
-        ProgramError.unexpected();
-    }
-
     public boolean pin(Object object) {
         return false;
     }

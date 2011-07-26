@@ -554,10 +554,6 @@ public final class Heap {
         return heapScheme().maxObjectInspectionAge();
     }
 
-    public static void runFinalization() {
-        heapScheme().runFinalization();
-    }
-
     @INLINE
     public static boolean pin(Object object) {
         return heapScheme().pin(object);

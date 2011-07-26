@@ -2587,8 +2587,10 @@ public final class GraphBuilder {
         Value[] args = new Value[snippetCall.arguments.length];
         RiMethod snippet = snippetCall.snippet;
         RiSignature signature = snippet.signature();
-        assert signature.argumentCount(!isStatic(snippet.accessFlags())) == args.length;
-        for (int i = args.length - 1; i >= 0; --i) {
+        boolean isStatic = isStatic(snippet.accessFlags());
+        int rcvr = isStatic ? -1 : 0;
+        assert signature.argumentCount(!isStatic) == args.length;
+        for (int i = args.length - 1; i > rcvr; --i) {
             CiKind argKind = signature.argumentKindAt(i);
             if (snippetCall.arguments[i] == null) {
                 args[i] = pop(argKind);
@@ -2596,10 +2598,17 @@ public final class GraphBuilder {
                 args[i] = append(new Constant(snippetCall.arguments[i]));
             }
         }
+        if (!isStatic) {
+            if (snippetCall.arguments[0] == null) {
+                args[0] = pop(CiKind.Object);
+            } else {
+                args[0] = append(new Constant(snippetCall.arguments[0]));
+            }
+        }
 
         if (!tryRemoveCall(snippet, args, true)) {
             if (!tryInline(snippet, args)) {
-                appendInvoke(snippetCall.opcode, snippet, args, true, (char) 0, constantPool());
+                appendInvoke(snippetCall.opcode, snippet, args, isStatic, (char) 0, constantPool());
             }
         }
     }
