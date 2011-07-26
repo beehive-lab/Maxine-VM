@@ -22,8 +22,6 @@
  */
 package com.sun.max.tele.debug.linux;
 
-import java.io.*;
-
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -34,8 +32,8 @@ import com.sun.max.vm.hosted.*;
 public final class LinuxTeleVM extends TeleVM {
 
 
-    public LinuxTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments) throws BootImageException {
-        super(bootImageFile, bootImage, sourcepath, commandLineArguments);
+    public LinuxTeleVM(BootImage bootImage, Classpath sourcepath, String[] commandLineArguments) throws BootImageException {
+        super(bootImage, sourcepath, commandLineArguments);
     }
 
     @Override
