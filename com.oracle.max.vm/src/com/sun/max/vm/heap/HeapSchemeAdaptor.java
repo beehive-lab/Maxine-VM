@@ -25,6 +25,8 @@ package com.sun.max.vm.heap;
 import static com.sun.max.vm.thread.VmThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
+import javax.management.*;
+
 import com.sun.management.*;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
@@ -63,6 +65,14 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
             return 0;
         }
 
+        @Override
+        public ObjectName getObjectName() {
+            try {
+                return ObjectName.getInstance("java.lang:type=GarbageCollector,name=" + getName());
+            } catch (MalformedObjectNameException e) {
+                throw new IllegalArgumentException(e);
+            }
+        }
     }
 
     /**

@@ -25,6 +25,8 @@ package com.sun.max.vm.management;
 import java.lang.management.*;
 import java.util.*;
 
+import javax.management.*;
+
 /**
  * Adaptor class for the Maxine implementations of MemoryManagerMXBean.
  */
@@ -69,5 +71,11 @@ public class MemoryManagerMXBeanAdaptor implements MemoryManagerMXBean, MemoryMa
         return true;
     }
 
-
+    public ObjectName getObjectName() {
+        try {
+            return ObjectName.getInstance("java.lang:type=MemoryManager,name=" + getName());
+        } catch (MalformedObjectNameException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
 }
