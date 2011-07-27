@@ -29,6 +29,7 @@ import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 import static com.sun.max.vm.type.ClassRegistry.*;
 
+import java.lang.Thread.State;
 import java.security.*;
 
 import sun.misc.*;
@@ -788,17 +789,6 @@ public class VmThread {
         static native void exit(int code);
     }
 
-    /*
-     * This function exists for the benefit of the primordial thread, as per nonJniNativeSleep.
-     */
-    @C_FUNCTION
-    private static native boolean nonJniNativeJoin(Word nativeThread);
-
-    /*
-     * This cannot be a C_FUNCTION as it blocks!
-     */
-    private static native boolean nativeJoin(Word nativeThread);
-
     public static VmThread fromJniEnv(Pointer jniEnv) {
         final Pointer tla = jniEnv.minus(JNI_ENV.offset);
         return fromTLA(tla);
@@ -839,7 +829,10 @@ public class VmThread {
 
     public static void sleep(long millis) throws InterruptedException {
         final VmThread current = current();
+        State oldState = current.state();
+        current.setState(State.TIMED_WAITING);
         boolean interrupted = current.sleep0(millis);
+        current.setState(oldState);
         if (interrupted) {
             current.interrupted = false;
             throw new InterruptedException();
@@ -1158,16 +1151,6 @@ public class VmThread {
             Log.println("\"]");
             Log.unlock(lockDisabledSafepoints);
         }
-    }
-
-    public final boolean join() {
-        return nativeJoin(nativeThread);
-    }
-
-    // Only used by the EIR interpreter(s)
-    @HOSTED_ONLY
-    public void setTLA(Address address) {
-        tla = address.asPointer();
     }
 
     @INLINE
