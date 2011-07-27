@@ -1315,7 +1315,7 @@ public class jmax {
             "org.eclipse.jdt.core.formatter.tabulation.size=4",
             "org.eclipse.jdt.core.formatter.use_tabs_only_for_leading_indentations=false",
             "org.eclipse.jdt.core.formatter.wrap_before_binary_operator=false",
-            "org.eclipse.jdt.core.incompatibleJDKLevel=error",
+            "org.eclipse.jdt.core.incompatibleJDKLevel=ignore",
             "org.eclipse.jdt.core.incompleteClasspath=error"
         };
     }
