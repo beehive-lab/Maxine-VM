@@ -115,7 +115,7 @@ public class TeleTupleObject extends TeleObject {
         final ClassActor classActor = classActorForObjectType();
         final Class<?> javaClass = classActor.toJava();
         try {
-            final Object newTupleObject = Objects.allocateInstance(javaClass);
+            final Object newTupleObject = ObjectUtils.allocateInstance(javaClass);
             ClassActor holderClassActor = classActor;
             do {
                 for (FieldActor fieldActor : holderClassActor.localInstanceFieldActors()) {
@@ -149,7 +149,7 @@ public class TeleTupleObject extends TeleObject {
         final String classMessage = "Copying instance fields of " + javaClass + " from VM";
         Trace.begin(COPY_TRACE_VALUE, classMessage);
         try {
-            final Object newTuple = Objects.allocateInstance(javaClass);
+            final Object newTuple = ObjectUtils.allocateInstance(javaClass);
 
             if (javaClass.getName().startsWith("java.lang") && !Number.class.isAssignableFrom(javaClass)) {
                 TeleWarning.message("Deep copying instance of " + javaClass.getName());
