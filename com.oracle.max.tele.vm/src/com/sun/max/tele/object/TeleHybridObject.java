@@ -119,7 +119,7 @@ public abstract class TeleHybridObject extends TeleObject {
         final ClassActor classActor = classActorForObjectType();
         final Class<?> javaClass = classActor.toJava();
         try {
-            final Object protoHybridObject =  Objects.allocateInstance(javaClass);
+            final Object protoHybridObject =  ObjectUtils.allocateInstance(javaClass);
             ClassActor holderClassActor = classActor;
             // The tuple part
             do {
