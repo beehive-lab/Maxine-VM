@@ -41,7 +41,7 @@ import com.sun.max.vm.type.*;
  *
  * This class plays a key role in the VM bootstrap by providing a simple path to resolve critical
  * native symbols, e.g., for debugging and monitor support. Everything actually hinges on three native functions,
- * "dlsym", "dlerror" and "nativeOpenDynamicLibrary", which are passed to the {@link #initialize} method. Every other native
+ * "dlsym", "dlerror" and "dlopen", which are passed to the {@link #initialize} method. Every other native
  *  symbol  can be found from there.
  */
 public final class DynamicLinker {
@@ -49,40 +49,36 @@ public final class DynamicLinker {
     private DynamicLinker() {
     }
 
-    @CONSTANT_WHEN_NOT_ZERO
-    private static Word nativeOpenDynamicLibrary = Word.zero();
-
-    @CONSTANT_WHEN_NOT_ZERO
-    private static Word dlsym = Word.zero();
-
-    @CONSTANT_WHEN_NOT_ZERO
-    private static Word dlerror = Word.zero();
-
-    @CONSTANT_WHEN_NOT_ZERO
     private static Word mainHandle = Word.zero();
+
+    private static final NativeFunction dlopen = resolveNativeFunction("dlopen", Address.class);
+    private static final NativeFunction dlsym = resolveNativeFunction("dlsym", Word.class, Address.class);
+    private static final NativeFunction dlerror = resolveNativeFunction("dlerror");
+
+    @HOSTED_ONLY
+    private static NativeFunction resolveNativeFunction(String name, Class... parameterTypes) {
+        ClassMethodActor cma = (ClassMethodActor) ClassRegistry.findMethod(DynamicLinker.class, name, parameterTypes);
+        return cma.nativeFunction;
+    }
 
     /**
      * The non-moving raw memory buffer used to pass data to the native dynamic linker functions.
      * Any use of the buffer must synchronize on this object once the VM is multi-threaded.
      */
-    private static final BootMemory buffer = new BootMemory(Ints.K);
+    private static final BootMemory buffer = new BootMemory(4 * Ints.K);
 
     /**
      * Initialize the system, "opening" the main program dynamic library.
-     *
-     * @param nativeOpenDynamicLibrary
-     * @param dlsym
-     * @param dlerror
     */
-    public static void initialize(Word nativeOpenDynamicLibraryAddress, Word dlsymAddress, Word dlerrorAddress) {
-        nativeOpenDynamicLibrary = nativeOpenDynamicLibraryAddress;
-        dlsym = dlsymAddress;
-        dlerror = dlerrorAddress;
-        mainHandle = nativeOpenDynamicLibrary(Address.zero());
+    public static void initialize(Word dlopenAddress, Word dlsymAddress, Word dlerrorAddress) {
+        dlopen.setAddress(dlopenAddress.asAddress());
+        dlsym.setAddress(dlsymAddress.asAddress());
+        dlerror.setAddress(dlerrorAddress.asAddress());
+        mainHandle = dlopen(Address.zero());
     }
 
     @C_FUNCTION
-    private static native Word nativeOpenDynamicLibrary(Address absolutePath);
+    private static native Word dlopen(Address absolutePath);
 
     @C_FUNCTION
     private static native Word dlerror();
@@ -102,7 +98,7 @@ public final class DynamicLinker {
         } else {
             final int i = CString.writePartialUtf8(absolutePath, 0, absolutePath.length(), buffer.address(), buffer.size()) - 1;
             FatalError.check(i == absolutePath.length(), "Dynamic library path is too long for buffer");
-            handle = nativeOpenDynamicLibrary(buffer.address());
+            handle = dlopen(buffer.address());
         }
         if (handle.isZero()) {
             try {
@@ -147,18 +143,8 @@ public final class DynamicLinker {
     public static Word lookupSymbol(Word handle, String symbol) {
         Word h = handle;
         if (h.isZero()) {
-            if ("nativeOpenDynamicLibrary".equals(symbol)) {
-                return nativeOpenDynamicLibrary;
-            } else if ("dlsym".equals(symbol)) {
-                return dlsym;
-            } else if ("dlerror".equals(symbol)) {
-                return dlerror;
-            }
             h = mainHandle;
             if (MaxineVM.isPrimordialOrPristine()) {
-                // N.B. the first call to dlsym will cause a recursive call to this
-                // method since it is not yet resolved. The recursion is broken by the
-                // explicit check above.
                 return dlsym(symbol, h);
             }
         }
@@ -221,21 +207,16 @@ public final class DynamicLinker {
         if (MaxineVM.isHosted()) {
             symbolAddress = MethodID.fromMethodActor(classMethodActor);
         } else {
-            // First look in the boot image
-            // TODO: This could be removed if ClassLoader.findNative could find symbols in the boot image
-            symbolAddress = lookupSymbol(Word.zero(), symbol);
-            if (symbolAddress.isZero()) {
-                // Now look in the native libraries loaded by the class loader of the class in which this native method was declared
-                final ClassLoader classLoader = classMethodActor.holder().classLoader;
-                symbolAddress = Address.fromLong(findNative(classLoader, symbol));
-                // Now look in the system library path
-                if (symbolAddress.isZero() && classLoader != null) {
-                    symbolAddress = Address.fromLong(findNative(null, symbol));
-                }
+            // First look in the native libraries loaded by the class loader of the class in which this native method was declared
+            ClassLoader classLoader = classMethodActor.holder().classLoader;
+            symbolAddress = Address.fromLong(findNative(classLoader, symbol));
+            // Now look in the system library path
+            if (symbolAddress.isZero() && classLoader != null) {
+                symbolAddress = Address.fromLong(findNative(null, symbol));
             }
-            if (symbolAddress.isZero()) {
-                throw new UnsatisfiedLinkError(symbol);
-            }
+        }
+        if (symbolAddress.isZero()) {
+            throw new UnsatisfiedLinkError(symbol);
         }
         return symbolAddress;
     }

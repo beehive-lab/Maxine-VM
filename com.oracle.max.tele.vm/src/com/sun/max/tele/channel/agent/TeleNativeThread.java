@@ -32,7 +32,7 @@ import com.sun.max.tele.channel.TeleChannelDataIOProtocol;
 public class TeleNativeThread {
     private TeleChannelDataIOProtocol.GatherThreadData data;
 
-    TeleNativeThread(TeleChannelDataIOProtocol.GatherThreadData data) {
+    public TeleNativeThread(TeleChannelDataIOProtocol.GatherThreadData data) {
         this.data = data;
     }
 

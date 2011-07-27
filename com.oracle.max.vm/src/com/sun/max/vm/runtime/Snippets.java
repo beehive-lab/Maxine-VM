@@ -22,7 +22,6 @@
  */
 package com.sun.max.vm.runtime;
 
-import static com.sun.cri.bytecode.Bytecodes.Infopoints.*;
 import static com.sun.cri.bytecode.Bytecodes.MemoryBarriers.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.compiler.CompilationScheme.Static.*;
@@ -499,14 +498,14 @@ public class Snippets {
     }
 
     /**
-     * Performs any operations necessary immediately before entering native code.
+     * Performs the transition into a native function call.
      */
     @INLINE
-    public static void nativeCallPrologue() {
+    public static void nativeCallPrologue(NativeFunction nf) {
         Pointer etla = ETLA.load(currentTLA());
         Pointer previousAnchor = LAST_JAVA_FRAME_ANCHOR.load(etla);
-        Pointer anchor = JavaFrameAnchor.create(getCpuStackPointer(), getCpuFramePointer(), Pointer.fromLong(here()), previousAnchor);
-
+        Pointer ip = nf.nativeCallAddress().asPointer();
+        Pointer anchor = JavaFrameAnchor.create(getCpuStackPointer(), getCpuFramePointer(), ip, previousAnchor);
         nativeCallPrologue0(etla, anchor);
     }
 
@@ -536,7 +535,7 @@ public class Snippets {
     }
 
     /**
-     * Performs any operations necessary immediately after returning from native code.
+     * Performs the transition out of a native function call.
      */
     @INLINE
     public static void nativeCallEpilogue() {
@@ -583,7 +582,7 @@ public class Snippets {
                 // Signal that we intend to go back into Java:
                 MUTATOR_STATE.store(etla, THREAD_IN_JAVA);
 
-                // Ensure that the freezer thread sees the above state transition:
+                // Ensure that the VM operation thread sees the above state transition:
                 MemoryBarriers.storeLoad();
 
                 // Ask if current thread is frozen:
@@ -611,10 +610,11 @@ public class Snippets {
      *            use memory barriers properly.
      */
     @INLINE
-    public static void nativeCallPrologueForC() {
+    public static void nativeCallPrologueForC(NativeFunction f) {
         Pointer etla = ETLA.load(currentTLA());
         Pointer previousAnchor = LAST_JAVA_FRAME_ANCHOR.load(etla);
-        Pointer anchor = JavaFrameAnchor.create(VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer(), Pointer.fromLong(here()), previousAnchor);
+        Pointer ip = f.nativeCallAddress().asPointer();
+        Pointer anchor = JavaFrameAnchor.create(getCpuStackPointer(), getCpuFramePointer(), ip, previousAnchor);
         LAST_JAVA_FRAME_ANCHOR.store(etla, anchor);
     }
 

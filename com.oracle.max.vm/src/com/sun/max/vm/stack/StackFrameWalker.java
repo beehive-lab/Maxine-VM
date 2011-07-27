@@ -481,7 +481,7 @@ public abstract class StackFrameWalker {
             final Word lastJavaCallerInstructionPointer = readWord(anchor, JavaFrameAnchor.PC.offset);
             final Word lastJavaCallerStackPointer = readWord(anchor, JavaFrameAnchor.SP.offset);
             final Word lastJavaCallerFramePointer = readWord(anchor, JavaFrameAnchor.FP.offset);
-            advance(getNativeFunctionCallInstructionPointerInNativeStub(lastJavaCallerInstructionPointer.asPointer(), true),
+            advance(checkNativeFunctionCall(lastJavaCallerInstructionPointer.asPointer(), true),
                     lastJavaCallerStackPointer,
                     lastJavaCallerFramePointer, false);
             return true;
@@ -495,13 +495,13 @@ public abstract class StackFrameWalker {
      */
     private void advanceFrameInNative(Pointer anchor, Purpose purpose) {
         FatalError.check(!anchor.isZero(), "No native stub frame anchor found when executing 'in native'");
-        Pointer lastJavaCallerInstructionPointer = readWord(anchor, JavaFrameAnchor.PC.offset).asPointer();
-        if (lastJavaCallerInstructionPointer.isZero()) {
-            FatalError.check(!lastJavaCallerInstructionPointer.isZero(), "Thread cannot be 'in native' without having recorded the last Java caller in thread locals");
+        Pointer nativeFunctionCall = readWord(anchor, JavaFrameAnchor.PC.offset).asPointer();
+        if (nativeFunctionCall.isZero()) {
+            FatalError.unexpected("Thread cannot be 'in native' without having recorded the last Java caller in thread locals");
         }
-        Pointer ip = getNativeFunctionCallInstructionPointerInNativeStub(lastJavaCallerInstructionPointer, purpose != INSPECTING && purpose != RAW_INSPECTING);
+        Pointer ip = checkNativeFunctionCall(nativeFunctionCall, purpose != INSPECTING && purpose != RAW_INSPECTING);
         if (ip.isZero()) {
-            ip = lastJavaCallerInstructionPointer;
+            ip = nativeFunctionCall;
         }
         advance(ip, readWord(anchor, JavaFrameAnchor.SP.offset), readWord(anchor, JavaFrameAnchor.FP.offset), false);
     }
@@ -566,47 +566,31 @@ public abstract class StackFrameWalker {
     }
 
     /**
-     * Gets the address corresponding to a native function call in a {@linkplain NativeStubGenerator native stub}.
+     * Checks the address of the native function call in a native method stub.
      *
-     * @param ip the instruction pointer saved by {@link NativeCallPrologue} or {@link NativeCallPrologueForC}
-     * @param fatalIfNotFound specifies whether a fatal error should be raised if a native call cannot be found
-     * @return the address of the native function call derived from {@code ip} or zero if no such call exists
+     * @param pc the address of a native function call saved by {@link Snippets#nativeCallPrologue(NativeFunction)} or
+     *            {@link Snippets#nativeCallPrologueForC(NativeFunction)}
+     * @param fatalIfNotFound specifies whether a fatal error should be raised if {@code pc} is not a native call site
+     * @return the value of {@code pc} if it is valid or zero if not
      */
-    private Pointer getNativeFunctionCallInstructionPointerInNativeStub(Pointer ip, boolean fatalIfNotFound) {
-        final TargetMethod nativeStubTargetMethod = targetMethodFor(ip);
-        if (nativeStubTargetMethod != null) {
-            final int pos = nativeStubTargetMethod.posFor(ip);
-            final int nativeFunctionCallPos = nativeStubTargetMethod.findNextCall(pos, true);
-            final Pointer nativeFunctionCall = nativeFunctionCallPos < 0 ? Pointer.zero() : nativeStubTargetMethod.codeStart().plus(nativeFunctionCallPos);
-            if (!nativeFunctionCall.isZero()) {
-                // The returned instruction pointer must be one past the actual address of the
-                // native function call. This makes it match the pattern expected by the
-                // StackReferenceMapPreparer where the instruction pointer in all but the
-                // top frame is past the address of the call.
-                if (TraceStackWalk && purpose == Purpose.REFERENCE_MAP_PREPARING) {
-                    Log.print("IP for stack frame preparation of stub for native method ");
-                    Log.print(nativeStubTargetMethod.name());
-                    Log.print(" [");
-                    Log.print(nativeStubTargetMethod.codeStart());
-                    Log.print("+");
-                    Log.print(nativeFunctionCallPos + 1);
-                    Log.println(']');
-                }
-                return nativeFunctionCall;
+    private Pointer checkNativeFunctionCall(Pointer pc, boolean fatalIfNotFound) {
+        final TargetMethod nativeStub = targetMethodFor(pc);
+        if (nativeStub != null) {
+            if (TraceStackWalk && purpose == Purpose.REFERENCE_MAP_PREPARING) {
+                final int nativeFunctionCallPos = nativeStub.posFor(pc);
+                Log.print("IP for stack frame preparation of stub for native method ");
+                Log.print(nativeStub.name());
+                Log.print(" [");
+                Log.print(nativeStub.codeStart());
+                Log.print("+");
+                Log.print(nativeFunctionCallPos);
+                Log.println(']');
             }
+            return pc;
         }
         if (fatalIfNotFound) {
-            if (nativeStubTargetMethod == null) {
-                Log.print("Could not find native stub for instruction pointer ");
-                Log.println(ip);
-            } else {
-                Log.print("Could not find native function call after ");
-                Log.print(nativeStubTargetMethod.codeStart());
-                Log.print("+");
-                Log.print(ip.minus(nativeStubTargetMethod.codeStart()).toLong());
-                Log.print(" in ");
-                Log.printMethod(nativeStubTargetMethod, true);
-            }
+            Log.print("Could not find native stub for instruction pointer ");
+            Log.println(pc);
             throw FatalError.unexpected("Could not find native function call in native stub");
         }
         return Pointer.zero();

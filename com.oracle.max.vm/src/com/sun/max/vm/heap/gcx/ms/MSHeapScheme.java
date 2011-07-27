@@ -253,9 +253,6 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         return objectSpace.committedHeapSpace().committedSize().minus(reportFreeSpace());
     }
 
-    public void runFinalization() {
-    }
-
     @INLINE(override = true)
     public void unpin(Object object) {
     }

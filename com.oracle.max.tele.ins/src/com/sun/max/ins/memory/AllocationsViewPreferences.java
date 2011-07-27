@@ -27,18 +27,18 @@ import javax.swing.*;
 import com.sun.max.ins.*;
 
 /**
- * Persistent preferences for viewing memory allocations in the VM.
+ * Persistent preferences for viewing memory regions that the VM has allocated from the OS.
   */
-public final class MemoryAllocationsViewPreferences extends com.sun.max.ins.gui.TableColumnVisibilityPreferences<MemoryAllocationsColumnKind> {
+public final class AllocationsViewPreferences extends com.sun.max.ins.gui.TableColumnVisibilityPreferences<AllocationsColumnKind> {
 
-    private static MemoryAllocationsViewPreferences globalPreferences;
+    private static AllocationsViewPreferences globalPreferences;
 
     /**
      * @return the global, persistent set of user preferences for viewing a table of memory allocations.
      */
-    static MemoryAllocationsViewPreferences globalPreferences(Inspection inspection) {
+    static AllocationsViewPreferences globalPreferences(Inspection inspection) {
         if (globalPreferences == null) {
-            globalPreferences = new MemoryAllocationsViewPreferences(inspection);
+            globalPreferences = new AllocationsViewPreferences(inspection);
         }
         return globalPreferences;
     }
@@ -57,8 +57,8 @@ public final class MemoryAllocationsViewPreferences extends com.sun.max.ins.gui.
     * Creates a set of preferences specified for use by singleton instances, where local and
     * persistent global choices are identical.
     */
-    private MemoryAllocationsViewPreferences(Inspection inspection) {
-        super(inspection, ALLOCATIONS_COLUMN_PREFERENCE, MemoryAllocationsColumnKind.values());
+    private AllocationsViewPreferences(Inspection inspection) {
+        super(inspection, ALLOCATIONS_COLUMN_PREFERENCE, AllocationsColumnKind.values());
         // There are no view preferences beyond the column choices, so no additional machinery needed here.
     }
 }

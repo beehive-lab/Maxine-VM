@@ -89,9 +89,13 @@ public abstract class MemberActor extends Actor {
         this.memberIndex = (char) index;
         if (MaxineVM.isHosted() && this instanceof ClassMethodActor) {
             ClassMethodActor classMethodActor = (ClassMethodActor) this;
-            if (classMethodActor.isNative() && classMethodActor.intrinsic() == 0) {
-                // Make sure the C symbol for a native method is cooked into the boot image
-                classMethodActor.nativeFunction.makeSymbol();
+            if (classMethodActor.isNative()) {
+                if (classMethodActor.intrinsic() != 0 || classMethodActor.isVmEntryPoint()) {
+                    // Ignore native methods that will never be linked by the VM
+                } else {
+                    // Make sure the C symbol for a native method is cooked into the boot image
+                    classMethodActor.nativeFunction.makeSymbol();
+                }
             }
         }
     }

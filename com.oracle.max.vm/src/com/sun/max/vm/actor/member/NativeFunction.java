@@ -22,9 +22,9 @@
  */
 package com.sun.max.vm.actor.member;
 
-import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jni.*;
 
 /**
@@ -34,8 +34,22 @@ import com.sun.max.vm.jni.*;
 public class NativeFunction {
     private final ClassMethodActor classMethodActor;
     private String symbol;
-    @CONSTANT_WHEN_NOT_ZERO
-    private Word address = Address.zero();
+
+    private Address address = Address.zero();
+
+    /**
+     * The stub generated for calling this native function.
+     */
+    private TargetMethod stub;
+
+    /**
+     * The position of the native call in this native function's stub.
+     */
+    private int nativeCallPos;
+
+    public Address address() {
+        return address;
+    }
 
     public NativeFunction(ClassMethodActor classMethodActor) {
         this.classMethodActor = classMethodActor;
@@ -43,6 +57,22 @@ public class NativeFunction {
 
     public ClassMethodActor classMethodActor() {
         return classMethodActor;
+    }
+
+    /**
+     * Gets the address of the call to this native function from within its native stub.
+     */
+    public Address nativeCallAddress() {
+        return stub.codeStart().plus(nativeCallPos);
+    }
+
+    /**
+     * Sets the address of the call to this native function from within its native stub.
+     */
+    public void setCallSite(TargetMethod stub, int pos) {
+        assert this.stub == null : "cannot have more than one stub per native method";
+        this.stub = stub;
+        this.nativeCallPos = pos;
     }
 
     /**
@@ -69,9 +99,9 @@ public class NativeFunction {
      *
      * @throws UnsatisfiedLinkError if the native function cannot be found
      */
-    public Word link() throws UnsatisfiedLinkError {
+    public Address link() throws UnsatisfiedLinkError {
         if (address.isZero()) {
-            address = DynamicLinker.lookup(classMethodActor, makeSymbol());
+            address = DynamicLinker.lookup(classMethodActor, makeSymbol()).asAddress();
             if (!MaxineVM.isPrimordialOrPristine()) {
                 if (NativeInterfaces.verbose()) {
                     Log.println("[Dynamic-linking native method " + classMethodActor.holder().name + "." + classMethodActor.name + " = " + address.toHexString() + "]");
@@ -91,7 +121,7 @@ public class NativeFunction {
     /**
      * Sets (or clears) the machine code address for this native function.
      */
-    public void setAddress(Word address) {
+    public void setAddress(Address address) {
         this.address = address;
         if (!MaxineVM.isPrimordialOrPristine()) {
             if (NativeInterfaces.verbose()) {

@@ -30,11 +30,13 @@ import java.util.*;
 import sun.misc.*;
 
 import com.sun.max.program.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jdk.JDK.ClassRef;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -85,6 +87,20 @@ public final class JDKInterceptor {
         WithoutAccessCheck.setStaticField(ClassLoader.class, "usr_paths", pathArray);
     }
 
+    private static final Vector<Object> systemNativeLibraries = new Vector<Object>();
+    static {
+        Object lib = null;
+        try {
+            Class<?> c = JDK.java_lang_ClassLoader$NativeLibrary.javaClass();
+            Constructor cons = c.getConstructor(Class.class, String.class);
+            cons.setAccessible(true);
+            lib = cons.newInstance(MaxineVM.class, "maxvm");
+        } catch (Exception e) {
+            throw FatalError.unexpected("Could not construct VM native library", e);
+        }
+        systemNativeLibraries.add(lib);
+    }
+
     /**
      * This array contains all the intercepted fields that are either ignored (i.e. set to zero) or
      * specially handled when building the prototype.
@@ -119,7 +135,7 @@ public final class JDKInterceptor {
             "usr_paths",
             "sys_paths",
             new ValueField("loadedLibraryNames", ReferenceValue.from(new Vector())),
-            new ValueField("systemNativeLibraries", ReferenceValue.from(new Vector())),
+            new ValueField("systemNativeLibraries", ReferenceValue.from(systemNativeLibraries)),
         JDK.java_util_EnumMap,
             "entrySet",
         JDK.java_lang_reflect_Field,
