@@ -444,11 +444,11 @@ function run_build() {
             javac_input=/tmp/javacfiles.txt.$$
             find . -name *.java | grep -v 'package-info.java' >$javac_input
 	        echo "Compiling Java sources in ${source_dir}..."
-                run ${javac} -source 1.6 -g -J-Xmx1g -classpath $(jmax classpath $project) -d ${project_dest} @$javac_input 2>&1 | \
+                run ${javac} -g -J-Xmx1g -classpath $(jmax classpath $project) -d ${project_dest} @$javac_input 2>&1 | \
                    awk ' BEGIN                    { s=0; c=-1}
-                         /is Sun proprietary API/ { s++; c=2; }
+                         /proprietary API/        { s++; c=2; }
                                                   { if (c-- >= 0) next; print; }
-                         END                      { if (s > 0) print "Suppressed " s " warnings about use of Sun implementation classes." }'
+                         END                      { if (s > 0) print "Suppressed " s " warnings about use of proprietary implementation classes." }'
 
             result=${PIPESTATUS[0]}
             if [ $result -eq 0 ]; then
@@ -734,7 +734,7 @@ function run_javadoc() {
     done
 
     echo "Running javadoc over Java sources..."
-    run ${javadoc} -quiet -source 1.6 -J-Xmx1g \
+    run ${javadoc} -quiet -J-Xmx1g \
         -classpath $(jmax classpath) \
         -sourcepath $source_path \
         -d $javadoc_output_dir \
