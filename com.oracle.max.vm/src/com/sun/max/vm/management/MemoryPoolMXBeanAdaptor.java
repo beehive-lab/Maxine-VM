@@ -24,7 +24,9 @@ package com.sun.max.vm.management;
 
  import java.lang.management.*;
 
- import com.sun.max.memory.*;
+import javax.management.*;
+
+import com.sun.max.memory.*;
 
 /**
  * Adaptor class for the Maxine implementations of MemoryPoolMXBean.
@@ -113,5 +115,13 @@ public class MemoryPoolMXBeanAdaptor implements MemoryPoolMXBean {
     }
 
     public void setUsageThreshold(long threshold) {
+    }
+
+    public ObjectName getObjectName() {
+        try {
+            return ObjectName.getInstance("java.lang:type=MemoryPool,name=" + getName());
+        } catch (MalformedObjectNameException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 }
