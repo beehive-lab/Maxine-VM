@@ -29,6 +29,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
@@ -189,14 +190,16 @@ public @interface ALIAS {
         public static MethodActor aliasedMethod(MethodActor method) {
             if (MaxineVM.isHosted()) {
                 registerAliasedMethod(method);
+                return aliasedMethods.get(method);
+            } else {
+                MethodActor aliasedMethod = aliasedMethods.get(method);
+                assert aliasedMethod != null || Heap.isInBootImage(method) || method.getAnnotation(ALIAS.class) == null : "All aliased fields and methods must be registered at boot time";
+                return aliasedMethod;
             }
-            MethodActor aliasedMethod = aliasedMethods.get(method);
-            assert aliasedMethod != null || method.getAnnotation(ALIAS.class) == null : "All aliased fields and methods must be registered at boot time";
-            return aliasedMethod;
         }
 
         @HOSTED_ONLY
-        public static void registerAliasedMethod(MethodActor method) {
+        private static void registerAliasedMethod(MethodActor method) {
             ALIAS alias = method.getAnnotation(ALIAS.class);
             if (alias != null) {
                 MethodActor aliasedMethod = aliasedMethods.get(method);

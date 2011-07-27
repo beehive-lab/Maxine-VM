@@ -131,6 +131,11 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     }
 
     @Override
+    protected void emitIfBit(CiValue address, CiValue bitNo) {
+        masm.btli((CiAddress) address, ((CiConstant) bitNo).asInt());
+    }
+
+    @Override
     protected void emitStackAllocate(StackBlock stackBlock, CiValue dst) {
         masm.leaq(dst.asRegister(), compilation.frameMap().toStackAddress(stackBlock));
     }
@@ -585,6 +590,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     case GT : acond = ConditionFlag.greater; break;
                     case BE : acond = ConditionFlag.belowEqual; break;
                     case AE : acond = ConditionFlag.aboveEqual; break;
+                    case BT : acond = ConditionFlag.below; break;
                     default : throw Util.shouldNotReachHere();
                 }
                 // Checkstyle: on

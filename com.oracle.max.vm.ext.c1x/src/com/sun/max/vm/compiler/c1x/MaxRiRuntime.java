@@ -129,6 +129,14 @@ public class MaxRiRuntime implements RiRuntime {
             return false;
         }
         final ClassMethodActor classMethodActor = asClassMethodActor(method, "mustNotInline()");
+        if (classMethodActor.isNative()) {
+            // Native stubs must not be inlined as there is a 1:1 relationship between
+            // a NativeFunction and the TargetMethod from which it is called. This
+            // required so that the exact position of the native function call
+            // site can be recorded in the NativeFunction instance. The call site
+            // is used by
+            return true;
+        }
         return classMethodActor.codeAttribute() == null || classMethodActor.isNeverInline();
     }
 

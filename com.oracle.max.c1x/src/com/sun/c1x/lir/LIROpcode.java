@@ -82,6 +82,7 @@ public enum LIROpcode {
         Throw,
         Unwind,
         CompareTo,
+        IfBit,
     EndOp2,
     BeginOp3,
         Idiv,

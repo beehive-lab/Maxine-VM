@@ -20,28 +20,27 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele.debug.darwin;
+package com.sun.max.vm.jdk;
 
-import com.sun.max.platform.*;
-import com.sun.max.program.*;
-import com.sun.max.tele.*;
-import com.sun.max.vm.hosted.*;
+import com.sun.max.annotate.*;
+import com.sun.max.vm.*;
 
 /**
+ * Method substitutions for {@link java.lang.Shutdown}.
  */
-public final class DarwinTeleVM extends TeleVM {
+@METHOD_SUBSTITUTIONS(className = "java.lang.Shutdown")
+public class JDK_java_lang_Shutdown {
 
-    @Override
-    protected DarwinTeleProcess createTeleProcess(String[] commandLineArguments) throws BootImageException {
-        return new DarwinTeleProcess(this, Platform.platform(), programFile(), commandLineArguments);
+    @SUBSTITUTE
+    static void halt0(int status) {
+        MaxineVM.exit(status);
     }
 
-    public DarwinTeleVM(BootImage bootImage, Classpath sourcepath, String[] commandLineArguments) throws BootImageException {
-        super(bootImage, sourcepath, commandLineArguments);
-    }
+    @ALIAS(declaringClassName = "java.lang.ref.Finalizer", name = "runAllFinalizers")
+    static native void raf();
 
-    @Override
-    protected DarwinTeleProcess attachToTeleProcess() throws BootImageException {
-        return new DarwinTeleProcess(this, Platform.platform(), programFile(), targetLocation().id);
+    @SUBSTITUTE
+    private static void runAllFinalizers() {
+        raf();
     }
 }

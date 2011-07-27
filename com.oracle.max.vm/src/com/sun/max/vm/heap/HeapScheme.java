@@ -203,8 +203,6 @@ public interface HeapScheme extends VMScheme {
      */
     long maxObjectInspectionAge();
 
-    void runFinalization();
-
     /**
      * A request for the heap scheme to attempt to reduce its memory usage.
      * @param amount suggested amount to reduce

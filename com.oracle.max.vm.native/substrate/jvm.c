@@ -219,13 +219,13 @@ void JVM_OnExit(void (*func)(void)) {
  */
 void JVM_Exit(jint code) {
     JNIEnv *env = currentJniEnv();
-     JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/MaxineVM", "exit", "(IZ)V");
-     (*env)->CallStaticVoidMethod(env, result.jClass, result.jMethod, code, JNI_FALSE);
+     JNIMethod result = resolveCriticalStaticMethod(env, "java/lang/System", "exit", "(I)V");
+     (*env)->CallStaticVoidMethod(env, result.jClass, result.jMethod, code);
 }
 
 void JVM_Halt(jint code) {
     JNIEnv *env = currentJniEnv();
-    JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/MaxineVM", "exit", "(IZ)V");
+    JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/MaxineVM", "exit", "(I)V");
     (*env)->CallStaticVoidMethod(env, result.jClass, result.jMethod, code, JNI_TRUE);
 }
 

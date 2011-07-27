@@ -460,7 +460,7 @@ public class VmOperation {
      *            {@link #operateOnThread(VmThread)} is called to determine which threads are to be operated on.
      */
     public VmOperation(String name, VmThread singleThread, Mode mode) {
-        if (!MaxineVM.isHosted() && !Heap.bootHeapRegion.contains(Reference.fromJava(ClassActor.fromJava(getClass())).toOrigin())) {
+        if (!MaxineVM.isHosted() && !Heap.isInBootImage(ClassActor.fromJava(getClass()))) {
             // All VM operation classes must be in the image so that their vtables don't contain any pointers to
             // trampolines as resolving these trampolines can involve allocation which may not be possible when
             // executing VM operations. In addition all the methods of these classes should not be subject

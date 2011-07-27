@@ -109,21 +109,21 @@ static int loadImage(void) {
     return image_load(imageFilePath);
 }
 
-static void *openDynamicLibrary(char *path) {
+static void *openLibrary(char *path) {
 #if log_LINKER
     if (path == NULL) {
-        log_println("openDynamicLibrary(null)");
+        log_println("openLibrary(null)");
     } else {
-        log_println("openDynamicLibrary(\"%s\")", path);
+        log_println("openLibrary(\"%s\")", path);
     }
 #endif
     void *result = dlopen(path, RTLD_LAZY);
 #if log_LINKER
     char* errorMessage = dlerror();
     if (path == NULL) {
-        log_println("openDynamicLibrary(null) = %p", result);
+        log_println("openLibrary(null) = %p", result);
     } else {
-        log_println("openDynamicLibrary(\"%s\") = %p", path, result);
+        log_println("openLibrary(\"%s\") = %p", path, result);
     }
     if (errorMessage != NULL) {
         log_println("Error message: %s", errorMessage);
@@ -281,7 +281,7 @@ void* getJMMInterface(int version);
 typedef jint (*VMRunMethod)(
                 Address etla,
                 Address bootHeapRegionStart,
-                void *openDynamicLibrary(char *),
+                void *openLibrary(char *),
                 void *dlsym(void *, const char *),
                 char *dlerror(void),
                 JNIEnv jniEnv,
@@ -345,10 +345,10 @@ int maxine(int argc, char *argv[], char *executablePath) {
     Address etla = ETLA_FROM_TLBLOCK(tlBlock);
 
 #if log_LOADER
-    log_println("entering Java by calling MaxineVM.run(etla=%p, bootHeapRegionStart=%p, openDynamicLibrary=%p, dlsym=%p, dlerror=%p, jniEnv=%p, jmmInterface=%p, argc=%d, argv=%p)",
-                    etla, image_heap(), openDynamicLibrary, loadSymbol, dlerror, jniEnv(), getJMMInterface(-1), argc, argv);
+    log_println("entering Java by calling MaxineVM.run(etla=%p, bootHeapRegionStart=%p, openLibrary=%p, dlsym=%p, dlerror=%p, jniEnv=%p, jmmInterface=%p, argc=%d, argv=%p)",
+                    etla, image_heap(), openLibrary, loadSymbol, dlerror, jniEnv(), getJMMInterface(-1), argc, argv);
 #endif
-    exitCode = (*method)(etla, image_heap(), openDynamicLibrary, loadSymbol, dlerror, jniEnv(), getJMMInterface(-1), argc, argv);
+    exitCode = (*method)(etla, image_heap(), openLibrary, loadSymbol, dlerror, jniEnv(), getJMMInterface(-1), argc, argv);
 
 #if log_LOADER
     log_println("start method exited with code: %d", exitCode);

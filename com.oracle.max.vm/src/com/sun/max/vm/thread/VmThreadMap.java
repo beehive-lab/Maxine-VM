@@ -214,7 +214,7 @@ public final class VmThreadMap {
      */
     private volatile boolean vmTerminating;
 
-    void setVMTerminating() {
+    public void setVMTerminating() {
         vmTerminating = true;
     }
 

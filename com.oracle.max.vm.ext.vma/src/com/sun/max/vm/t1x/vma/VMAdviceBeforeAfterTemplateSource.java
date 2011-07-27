@@ -26,8 +26,8 @@ import static com.sun.max.vm.t1x.T1XFrameOps.*;
 import static com.sun.max.vm.t1x.T1XRuntime.*;
 import static com.sun.max.vm.t1x.T1XTemplateTag.*;
 import static com.sun.max.vm.t1x.T1XTemplateSource.*;
-import static com.oracle.max.vm.ext.vma.run.java.VMAJavaRunScheme.*;
 
+import com.oracle.max.vm.ext.vma.run.java.*;
 import com.oracle.max.vm.ext.vma.runtime.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
@@ -56,7 +56,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(GETFIELD$boolean$resolved)
     public static void getfieldBoolean(int offset) {
         Object object = peekObject(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetField(object, offset);
         }
         pokeBoolean(0, TupleAccess.readBoolean(object, offset));
@@ -73,7 +73,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @NEVER_INLINE
     public static boolean resolveAndGetFieldBoolean(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetField(object, f.offset());
         }
         if (f.isVolatile()) {
@@ -97,7 +97,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static boolean resolveAndGetStaticBoolean(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetStatic(f.holder().staticTuple(), f.offset());
         }
         if (f.isVolatile()) {
@@ -113,7 +113,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(GETSTATIC$boolean$init)
     public static void getstaticBoolean(Object staticTuple, int offset) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetStatic(staticTuple, offset);
         }
         pushBoolean(TupleAccess.readBoolean(staticTuple, offset));
@@ -124,7 +124,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void putfieldBoolean(int offset) {
         Object object = peekObject(1);
         boolean value = peekBoolean(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutField(object, offset, value ? 1 : 0);
         }
         removeSlots(2);
@@ -144,7 +144,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @NEVER_INLINE
     public static void resolveAndPutFieldBoolean(ResolutionGuard.InPool guard, Object object, boolean value) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutField(object, f.offset(), value ? 1 : 0);
         }
         if (f.isVolatile()) {
@@ -160,7 +160,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(PUTSTATIC$boolean$init)
     public static void putstaticBoolean(Object staticTuple, int offset) {
         boolean value = popBoolean();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutStatic(staticTuple, offset, value ? 1 : 0);
         }
         TupleAccess.writeBoolean(staticTuple, offset, value);
@@ -176,7 +176,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @NEVER_INLINE
     public static void resolveAndPutStaticBoolean(ResolutionGuard.InPool guard, boolean value) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutStatic(f.holder().staticTuple(), f.offset(), value ? 1 : 0);
         }
         Snippets.makeHolderInitialized(f);
@@ -195,7 +195,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         int index = peekInt(0);
         Object array = peekObject(1);
         ArrayAccess.checkIndex(array, index);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeArrayLoad(array, index);
         }
         removeSlots(1);
@@ -209,7 +209,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         Object array = peekObject(2);
         ArrayAccess.checkIndex(array, index);
         boolean value = peekBoolean(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeArrayStore(array, index, value ? 1 : 0);
         }
         ArrayAccess.setBoolean(array, index, value);
@@ -220,7 +220,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(GETFIELD$byte$resolved)
     public static void getfieldByte(int offset) {
         Object object = peekObject(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetField(object, offset);
         }
         pokeByte(0, TupleAccess.readByte(object, offset));
@@ -237,7 +237,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @NEVER_INLINE
     public static byte resolveAndGetFieldByte(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetField(object, f.offset());
         }
         if (f.isVolatile()) {
@@ -261,7 +261,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static byte resolveAndGetStaticByte(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetStatic(f.holder().staticTuple(), f.offset());
         }
         if (f.isVolatile()) {
@@ -277,7 +277,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(GETSTATIC$byte$init)
     public static void getstaticByte(Object staticTuple, int offset) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetStatic(staticTuple, offset);
         }
         pushByte(TupleAccess.readByte(staticTuple, offset));
@@ -288,7 +288,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void putfieldByte(int offset) {
         Object object = peekObject(1);
         byte value = peekByte(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutField(object, offset, value);
         }
         removeSlots(2);
@@ -308,7 +308,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @NEVER_INLINE
     public static void resolveAndPutFieldByte(ResolutionGuard.InPool guard, Object object, byte value) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutField(object, f.offset(), value);
         }
         if (f.isVolatile()) {
@@ -324,7 +324,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(PUTSTATIC$byte$init)
     public static void putstaticByte(Object staticTuple, int offset) {
         byte value = popByte();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutStatic(staticTuple, offset, value);
         }
         TupleAccess.writeByte(staticTuple, offset, value);
@@ -340,7 +340,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @NEVER_INLINE
     public static void resolveAndPutStaticByte(ResolutionGuard.InPool guard, byte value) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutStatic(f.holder().staticTuple(), f.offset(), value);
         }
         Snippets.makeHolderInitialized(f);
@@ -357,7 +357,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(I2B)
     public static void i2b() {
         int value = peekInt(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConversion(145, value);
         }
         pokeByte(0, (byte) value);
@@ -369,7 +369,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         int index = peekInt(0);
         int disp = peekInt(1);
         Pointer ptr = peekWord(2).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(481);
         }
         removeSlots(2);
@@ -383,7 +383,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         int index = peekInt(1);
         int disp = peekInt(2);
         Pointer ptr = peekWord(3).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(482);
         }
         removeSlots(4);
@@ -395,7 +395,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void pread_byte() {
         Offset off = peekWord(0).asOffset();
         Pointer ptr = peekWord(1).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(479);
         }
         removeSlots(1);
@@ -408,7 +408,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         Pointer ptr = peekWord(2).asPointer();
         Offset off = peekWord(1).asOffset();
         byte value = peekByte(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(480);
         }
         removeSlots(3);
@@ -420,7 +420,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void pread_byte_i() {
         int off = peekInt(0);
         Pointer ptr = peekWord(1).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(2783);
         }
         removeSlots(1);
@@ -433,7 +433,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         Pointer ptr = peekWord(2).asPointer();
         int off = peekInt(1);
         byte value = peekByte(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(2528);
         }
         removeSlots(3);
@@ -444,7 +444,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(GETFIELD$char$resolved)
     public static void getfieldChar(int offset) {
         Object object = peekObject(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetField(object, offset);
         }
         pokeChar(0, TupleAccess.readChar(object, offset));
@@ -461,7 +461,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @NEVER_INLINE
     public static char resolveAndGetFieldChar(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetField(object, f.offset());
         }
         if (f.isVolatile()) {
@@ -485,7 +485,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static char resolveAndGetStaticChar(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetStatic(f.holder().staticTuple(), f.offset());
         }
         if (f.isVolatile()) {
@@ -501,7 +501,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(GETSTATIC$char$init)
     public static void getstaticChar(Object staticTuple, int offset) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetStatic(staticTuple, offset);
         }
         pushChar(TupleAccess.readChar(staticTuple, offset));
@@ -512,7 +512,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void putfieldChar(int offset) {
         Object object = peekObject(1);
         char value = peekChar(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutField(object, offset, value);
         }
         removeSlots(2);
@@ -532,7 +532,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @NEVER_INLINE
     public static void resolveAndPutFieldChar(ResolutionGuard.InPool guard, Object object, char value) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutField(object, f.offset(), value);
         }
         if (f.isVolatile()) {
@@ -548,7 +548,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(PUTSTATIC$char$init)
     public static void putstaticChar(Object staticTuple, int offset) {
         char value = popChar();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutStatic(staticTuple, offset, value);
         }
         TupleAccess.writeChar(staticTuple, offset, value);
@@ -564,7 +564,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @NEVER_INLINE
     public static void resolveAndPutStaticChar(ResolutionGuard.InPool guard, char value) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutStatic(f.holder().staticTuple(), f.offset(), value);
         }
         Snippets.makeHolderInitialized(f);
@@ -581,7 +581,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(I2C)
     public static void i2c() {
         int value = peekInt(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConversion(146, value);
         }
         pokeChar(0, (char) value);
@@ -593,7 +593,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         int index = peekInt(0);
         Object array = peekObject(1);
         ArrayAccess.checkIndex(array, index);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeArrayLoad(array, index);
         }
         removeSlots(1);
@@ -607,7 +607,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         Object array = peekObject(2);
         ArrayAccess.checkIndex(array, index);
         char value = peekChar(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeArrayStore(array, index, value);
         }
         ArrayAccess.setChar(array, index, value);
@@ -620,7 +620,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         int index = peekInt(0);
         int disp = peekInt(1);
         Pointer ptr = peekWord(2).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(737);
         }
         removeSlots(2);
@@ -632,7 +632,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void pread_char() {
         Offset off = peekWord(0).asOffset();
         Pointer ptr = peekWord(1).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(735);
         }
         removeSlots(1);
@@ -644,7 +644,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void pread_char_i() {
         int off = peekInt(0);
         Pointer ptr = peekWord(1).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(3039);
         }
         removeSlots(1);
@@ -655,7 +655,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(GETFIELD$short$resolved)
     public static void getfieldShort(int offset) {
         Object object = peekObject(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetField(object, offset);
         }
         pokeShort(0, TupleAccess.readShort(object, offset));
@@ -672,7 +672,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @NEVER_INLINE
     public static short resolveAndGetFieldShort(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetField(object, f.offset());
         }
         if (f.isVolatile()) {
@@ -696,7 +696,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static short resolveAndGetStaticShort(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetStatic(f.holder().staticTuple(), f.offset());
         }
         if (f.isVolatile()) {
@@ -712,7 +712,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(GETSTATIC$short$init)
     public static void getstaticShort(Object staticTuple, int offset) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetStatic(staticTuple, offset);
         }
         pushShort(TupleAccess.readShort(staticTuple, offset));
@@ -723,7 +723,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void putfieldShort(int offset) {
         Object object = peekObject(1);
         short value = peekShort(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutField(object, offset, value);
         }
         removeSlots(2);
@@ -743,7 +743,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @NEVER_INLINE
     public static void resolveAndPutFieldShort(ResolutionGuard.InPool guard, Object object, short value) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutField(object, f.offset(), value);
         }
         if (f.isVolatile()) {
@@ -759,7 +759,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(PUTSTATIC$short$init)
     public static void putstaticShort(Object staticTuple, int offset) {
         short value = popShort();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutStatic(staticTuple, offset, value);
         }
         TupleAccess.writeShort(staticTuple, offset, value);
@@ -775,7 +775,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @NEVER_INLINE
     public static void resolveAndPutStaticShort(ResolutionGuard.InPool guard, short value) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutStatic(f.holder().staticTuple(), f.offset(), value);
         }
         Snippets.makeHolderInitialized(f);
@@ -792,7 +792,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(I2S)
     public static void i2s() {
         int value = peekInt(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConversion(147, value);
         }
         pokeShort(0, (short) value);
@@ -804,7 +804,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         int index = peekInt(0);
         Object array = peekObject(1);
         ArrayAccess.checkIndex(array, index);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeArrayLoad(array, index);
         }
         removeSlots(1);
@@ -818,7 +818,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         Object array = peekObject(2);
         ArrayAccess.checkIndex(array, index);
         short value = peekShort(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeArrayStore(array, index, value);
         }
         ArrayAccess.setShort(array, index, value);
@@ -831,7 +831,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         int index = peekInt(0);
         int disp = peekInt(1);
         Pointer ptr = peekWord(2).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(993);
         }
         removeSlots(2);
@@ -845,7 +845,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         int index = peekInt(1);
         int disp = peekInt(2);
         Pointer ptr = peekWord(3).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(738);
         }
         removeSlots(4);
@@ -857,7 +857,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void pread_short() {
         Offset off = peekWord(0).asOffset();
         Pointer ptr = peekWord(1).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(991);
         }
         removeSlots(1);
@@ -870,7 +870,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         Pointer ptr = peekWord(2).asPointer();
         Offset off = peekWord(1).asOffset();
         short value = peekShort(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(736);
         }
         removeSlots(3);
@@ -882,7 +882,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void pread_short_i() {
         int off = peekInt(0);
         Pointer ptr = peekWord(1).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(3295);
         }
         removeSlots(1);
@@ -895,7 +895,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         Pointer ptr = peekWord(2).asPointer();
         int off = peekInt(1);
         short value = peekShort(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(2784);
         }
         removeSlots(3);
@@ -905,7 +905,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(ICONST_0)
     public static void iconst_0() {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConstLoad(0);
         }
         pushInt(0);
@@ -914,7 +914,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(ICONST_1)
     public static void iconst_1() {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConstLoad(1);
         }
         pushInt(1);
@@ -923,7 +923,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(ICONST_2)
     public static void iconst_2() {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConstLoad(2);
         }
         pushInt(2);
@@ -932,7 +932,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(ICONST_3)
     public static void iconst_3() {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConstLoad(3);
         }
         pushInt(3);
@@ -941,7 +941,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(ICONST_4)
     public static void iconst_4() {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConstLoad(4);
         }
         pushInt(4);
@@ -950,7 +950,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(ICONST_5)
     public static void iconst_5() {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConstLoad(5);
         }
         pushInt(5);
@@ -959,7 +959,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(ICONST_M1)
     public static void iconst_m1() {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConstLoad(-1);
         }
         pushInt(-1);
@@ -969,7 +969,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(GETFIELD$int$resolved)
     public static void getfieldInt(int offset) {
         Object object = peekObject(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetField(object, offset);
         }
         pokeInt(0, TupleAccess.readInt(object, offset));
@@ -986,7 +986,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @NEVER_INLINE
     public static int resolveAndGetFieldInt(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetField(object, f.offset());
         }
         if (f.isVolatile()) {
@@ -1010,7 +1010,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static int resolveAndGetStaticInt(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetStatic(f.holder().staticTuple(), f.offset());
         }
         if (f.isVolatile()) {
@@ -1026,7 +1026,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(GETSTATIC$int$init)
     public static void getstaticInt(Object staticTuple, int offset) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetStatic(staticTuple, offset);
         }
         pushInt(TupleAccess.readInt(staticTuple, offset));
@@ -1037,7 +1037,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void putfieldInt(int offset) {
         Object object = peekObject(1);
         int value = peekInt(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutField(object, offset, value);
         }
         removeSlots(2);
@@ -1057,7 +1057,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @NEVER_INLINE
     public static void resolveAndPutFieldInt(ResolutionGuard.InPool guard, Object object, int value) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutField(object, f.offset(), value);
         }
         if (f.isVolatile()) {
@@ -1073,7 +1073,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(PUTSTATIC$int$init)
     public static void putstaticInt(Object staticTuple, int offset) {
         int value = popInt();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutStatic(staticTuple, offset, value);
         }
         TupleAccess.writeInt(staticTuple, offset, value);
@@ -1089,7 +1089,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @NEVER_INLINE
     public static void resolveAndPutStaticInt(ResolutionGuard.InPool guard, int value) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutStatic(f.holder().staticTuple(), f.offset(), value);
         }
         Snippets.makeHolderInitialized(f);
@@ -1105,7 +1105,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(ILOAD)
     public static void iload(int dispToLocalSlot) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeLoad(dispToLocalSlot);
         }
         int value = getLocalInt(dispToLocalSlot);
@@ -1116,7 +1116,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(ISTORE)
     public static void istore(int dispToLocalSlot) {
         int value = popInt();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeStore(dispToLocalSlot, value);
         }
         setLocalInt(dispToLocalSlot, value);
@@ -1125,7 +1125,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(LDC$int)
     public static void ildc(int constant) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConstLoad(constant);
         }
         pushInt(constant);
@@ -1136,7 +1136,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void l2i() {
         long value = peekLong(0);
         removeSlots(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConversion(136, value);
         }
         pokeInt(0, (int) value);
@@ -1146,7 +1146,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(F2I)
     public static void f2i() {
         float value = peekFloat(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConversion(139, value);
         }
         pokeInt(0, T1XRuntime.f2i(value));
@@ -1157,7 +1157,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void d2i() {
         double value = peekDouble(0);
         removeSlots(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConversion(142, value);
         }
         pokeInt(0, T1XRuntime.d2i(value));
@@ -1168,7 +1168,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void iadd() {
         int value2 = peekInt(0);
         int value1 = peekInt(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(96, value1, value2);
         }
         removeSlots(1);
@@ -1180,7 +1180,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void isub() {
         int value2 = peekInt(0);
         int value1 = peekInt(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(100, value1, value2);
         }
         removeSlots(1);
@@ -1192,7 +1192,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void imul() {
         int value2 = peekInt(0);
         int value1 = peekInt(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(104, value1, value2);
         }
         removeSlots(1);
@@ -1204,7 +1204,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void idiv() {
         int value2 = peekInt(0);
         int value1 = peekInt(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(108, value1, value2);
         }
         removeSlots(1);
@@ -1216,7 +1216,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void irem() {
         int value2 = peekInt(0);
         int value1 = peekInt(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(112, value1, value2);
         }
         removeSlots(1);
@@ -1227,7 +1227,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(INEG)
     public static void ineg() {
         int value = peekInt(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(116, value, 0);
         }
         pokeInt(0, -value);
@@ -1238,7 +1238,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void ior() {
         int value2 = peekInt(0);
         int value1 = peekInt(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(128, value1, value2);
         }
         removeSlots(1);
@@ -1250,7 +1250,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void iand() {
         int value2 = peekInt(0);
         int value1 = peekInt(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(126, value1, value2);
         }
         removeSlots(1);
@@ -1262,7 +1262,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void ixor() {
         int value2 = peekInt(0);
         int value1 = peekInt(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(130, value1, value2);
         }
         removeSlots(1);
@@ -1274,7 +1274,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void ishl() {
         int value2 = peekInt(0);
         int value1 = peekInt(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(120, value1, value2);
         }
         removeSlots(1);
@@ -1286,7 +1286,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void ishr() {
         int value2 = peekInt(0);
         int value1 = peekInt(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(122, value1, value2);
         }
         removeSlots(1);
@@ -1298,7 +1298,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void iushr() {
         int value2 = peekInt(0);
         int value1 = peekInt(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(124, value1, value2);
         }
         removeSlots(1);
@@ -1310,7 +1310,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void if_icmpeq() {
         int value2 = peekInt(0);
         int value1 = peekInt(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIf(159, value1, value2);
         }
         removeSlots(2);
@@ -1321,7 +1321,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(IFEQ)
     public static void ifeq() {
         int value = popInt();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIf(153, value, 0);
         }
         Intrinsics.compareInts(value, 0);
@@ -1332,7 +1332,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void if_icmpne() {
         int value2 = peekInt(0);
         int value1 = peekInt(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIf(160, value1, value2);
         }
         removeSlots(2);
@@ -1343,7 +1343,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(IFNE)
     public static void ifne() {
         int value = popInt();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIf(154, value, 0);
         }
         Intrinsics.compareInts(value, 0);
@@ -1354,7 +1354,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void if_icmplt() {
         int value2 = peekInt(0);
         int value1 = peekInt(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIf(161, value1, value2);
         }
         removeSlots(2);
@@ -1365,7 +1365,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(IFLT)
     public static void iflt() {
         int value = popInt();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIf(155, value, 0);
         }
         Intrinsics.compareInts(value, 0);
@@ -1376,7 +1376,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void if_icmpge() {
         int value2 = peekInt(0);
         int value1 = peekInt(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIf(162, value1, value2);
         }
         removeSlots(2);
@@ -1387,7 +1387,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(IFGE)
     public static void ifge() {
         int value = popInt();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIf(156, value, 0);
         }
         Intrinsics.compareInts(value, 0);
@@ -1398,7 +1398,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void if_icmpgt() {
         int value2 = peekInt(0);
         int value1 = peekInt(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIf(163, value1, value2);
         }
         removeSlots(2);
@@ -1409,7 +1409,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(IFGT)
     public static void ifgt() {
         int value = popInt();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIf(157, value, 0);
         }
         Intrinsics.compareInts(value, 0);
@@ -1420,7 +1420,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void if_icmple() {
         int value2 = peekInt(0);
         int value1 = peekInt(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIf(164, value1, value2);
         }
         removeSlots(2);
@@ -1431,7 +1431,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(IFLE)
     public static void ifle() {
         int value = popInt();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIf(158, value, 0);
         }
         Intrinsics.compareInts(value, 0);
@@ -1441,7 +1441,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(IRETURN)
     public static int ireturn() {
         int result = popInt();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeReturn(result);
         }
         return result;
@@ -1450,12 +1450,12 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(IRETURN$unlockClass)
     public static int ireturnUnlockClass(Class<?> object) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(object);
         }
         Monitor.noninlineExit(object);
         int result = popInt();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeReturn(result);
         }
         return result;
@@ -1465,12 +1465,12 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(IRETURN$unlockReceiver)
     public static int ireturnUnlockReceiver(int dispToObjectCopy) {
         Object object = getLocalObject(dispToObjectCopy);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(object);
         }
         Monitor.noninlineExit(object);
         int result = popInt();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeReturn(result);
         }
         return result;
@@ -1482,7 +1482,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         int index = peekInt(0);
         Object array = peekObject(1);
         ArrayAccess.checkIndex(array, index);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeArrayLoad(array, index);
         }
         removeSlots(1);
@@ -1496,7 +1496,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         Object array = peekObject(2);
         ArrayAccess.checkIndex(array, index);
         int value = peekInt(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeArrayStore(array, index, value);
         }
         ArrayAccess.setInt(array, index, value);
@@ -1509,7 +1509,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         int index = peekInt(0);
         int disp = peekInt(1);
         Pointer ptr = peekWord(2).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(1249);
         }
         removeSlots(2);
@@ -1523,7 +1523,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         int index = peekInt(1);
         int disp = peekInt(2);
         Pointer ptr = peekWord(3).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(994);
         }
         removeSlots(4);
@@ -1535,7 +1535,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void pread_int() {
         Offset off = peekWord(0).asOffset();
         Pointer ptr = peekWord(1).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(1247);
         }
         removeSlots(1);
@@ -1548,7 +1548,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         Pointer ptr = peekWord(2).asPointer();
         Offset off = peekWord(1).asOffset();
         int value = peekInt(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(992);
         }
         removeSlots(3);
@@ -1560,7 +1560,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void pread_int_i() {
         int off = peekInt(0);
         Pointer ptr = peekWord(1).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(3551);
         }
         removeSlots(1);
@@ -1573,7 +1573,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         Pointer ptr = peekWord(2).asPointer();
         int off = peekInt(1);
         int value = peekInt(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(3040);
         }
         removeSlots(3);
@@ -1587,7 +1587,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         int expectedValue = peekInt(1);
         Offset off = peekWord(2).asOffset();
         Pointer ptr = peekWord(3).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(483);
         }
         removeSlots(3);
@@ -1601,7 +1601,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         int expectedValue = peekInt(1);
         int off = peekInt(2);
         Pointer ptr = peekWord(3).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(1507);
         }
         removeSlots(3);
@@ -1611,7 +1611,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(FCONST)
     public static void fconst(float constant) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConstLoad(constant);
         }
         pushFloat(constant);
@@ -1621,7 +1621,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(GETFIELD$float$resolved)
     public static void getfieldFloat(int offset) {
         Object object = peekObject(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetField(object, offset);
         }
         pokeFloat(0, TupleAccess.readFloat(object, offset));
@@ -1638,7 +1638,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @NEVER_INLINE
     public static float resolveAndGetFieldFloat(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetField(object, f.offset());
         }
         if (f.isVolatile()) {
@@ -1662,7 +1662,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static float resolveAndGetStaticFloat(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetStatic(f.holder().staticTuple(), f.offset());
         }
         if (f.isVolatile()) {
@@ -1678,7 +1678,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(GETSTATIC$float$init)
     public static void getstaticFloat(Object staticTuple, int offset) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetStatic(staticTuple, offset);
         }
         pushFloat(TupleAccess.readFloat(staticTuple, offset));
@@ -1689,7 +1689,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void putfieldFloat(int offset) {
         Object object = peekObject(1);
         float value = peekFloat(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutField(object, offset, value);
         }
         removeSlots(2);
@@ -1709,7 +1709,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @NEVER_INLINE
     public static void resolveAndPutFieldFloat(ResolutionGuard.InPool guard, Object object, float value) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutField(object, f.offset(), value);
         }
         if (f.isVolatile()) {
@@ -1725,7 +1725,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(PUTSTATIC$float$init)
     public static void putstaticFloat(Object staticTuple, int offset) {
         float value = popFloat();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutStatic(staticTuple, offset, value);
         }
         TupleAccess.writeFloat(staticTuple, offset, value);
@@ -1741,7 +1741,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @NEVER_INLINE
     public static void resolveAndPutStaticFloat(ResolutionGuard.InPool guard, float value) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutStatic(f.holder().staticTuple(), f.offset(), value);
         }
         Snippets.makeHolderInitialized(f);
@@ -1757,7 +1757,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(FLOAD)
     public static void fload(int dispToLocalSlot) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeLoad(dispToLocalSlot);
         }
         float value = getLocalFloat(dispToLocalSlot);
@@ -1768,7 +1768,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(FSTORE)
     public static void fstore(int dispToLocalSlot) {
         float value = popFloat();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeStore(dispToLocalSlot, value);
         }
         setLocalFloat(dispToLocalSlot, value);
@@ -1777,7 +1777,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(LDC$float)
     public static void fldc(float constant) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConstLoad(constant);
         }
         pushFloat(constant);
@@ -1787,7 +1787,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(I2F)
     public static void i2f() {
         int value = peekInt(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConversion(134, value);
         }
         pokeFloat(0, value);
@@ -1798,7 +1798,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void l2f() {
         long value = peekLong(0);
         removeSlots(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConversion(137, value);
         }
         pokeFloat(0, value);
@@ -1809,7 +1809,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void d2f() {
         double value = peekDouble(0);
         removeSlots(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConversion(144, value);
         }
         pokeFloat(0, (float) value);
@@ -1820,7 +1820,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void fadd() {
         float value2 = peekFloat(0);
         float value1 = peekFloat(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(98, value1, value2);
         }
         removeSlots(1);
@@ -1832,7 +1832,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void fsub() {
         float value2 = peekFloat(0);
         float value1 = peekFloat(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(102, value1, value2);
         }
         removeSlots(1);
@@ -1844,7 +1844,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void fmul() {
         float value2 = peekFloat(0);
         float value1 = peekFloat(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(106, value1, value2);
         }
         removeSlots(1);
@@ -1856,7 +1856,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void fdiv() {
         float value2 = peekFloat(0);
         float value1 = peekFloat(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(110, value1, value2);
         }
         removeSlots(1);
@@ -1868,7 +1868,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void frem() {
         float value2 = peekFloat(0);
         float value1 = peekFloat(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(114, value1, value2);
         }
         removeSlots(1);
@@ -1879,7 +1879,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(FNEG)
     public static void fneg(float zero) {
         float value = peekFloat(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(118, value, 0.0f);
         }
         pokeFloat(0, zero - value);
@@ -1891,7 +1891,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         float value2 = peekFloat(0);
         float value1 = peekFloat(1);
         int result = fcmpg(value1, value2);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(150, value1, value2);
         }
         removeSlots(1);
@@ -1904,7 +1904,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         float value2 = peekFloat(0);
         float value1 = peekFloat(1);
         int result = fcmpl(value1, value2);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(149, value1, value2);
         }
         removeSlots(1);
@@ -1915,7 +1915,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(FRETURN)
     public static float freturn() {
         float result = popFloat();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeReturn(result);
         }
         return result;
@@ -1924,12 +1924,12 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(FRETURN$unlockClass)
     public static float freturnUnlockClass(Class<?> object) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(object);
         }
         Monitor.noninlineExit(object);
         float result = popFloat();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeReturn(result);
         }
         return result;
@@ -1939,12 +1939,12 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(FRETURN$unlockReceiver)
     public static float freturnUnlockReceiver(int dispToObjectCopy) {
         Object object = getLocalObject(dispToObjectCopy);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(object);
         }
         Monitor.noninlineExit(object);
         float result = popFloat();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeReturn(result);
         }
         return result;
@@ -1956,7 +1956,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         int index = peekInt(0);
         Object array = peekObject(1);
         ArrayAccess.checkIndex(array, index);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeArrayLoad(array, index);
         }
         removeSlots(1);
@@ -1970,7 +1970,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         Object array = peekObject(2);
         ArrayAccess.checkIndex(array, index);
         float value = peekFloat(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeArrayStore(array, index, value);
         }
         ArrayAccess.setFloat(array, index, value);
@@ -1983,11 +1983,11 @@ public class VMAdviceBeforeAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
         Address entryPoint = VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         final float result = indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
         pushFloat(result);
@@ -1998,11 +1998,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokevirtualFloat(VirtualMethodActor methodActor, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         final float result = indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
         pushFloat(result);
@@ -2013,11 +2013,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokevirtualFloat(VirtualMethodActor methodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         final float result = indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
         pushFloat(result);
@@ -2029,11 +2029,11 @@ public class VMAdviceBeforeAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         final InterfaceMethodActor interfaceMethodActor = Snippets.resolveInterfaceMethod(guard);
         Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, interfaceMethodActor);
         }
         final float result = indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
         pushFloat(result);
@@ -2044,11 +2044,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokeinterfaceFloat(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, interfaceMethodActor);
         }
         final float result = indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
         pushFloat(result);
@@ -2059,11 +2059,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokeinterfaceFloat(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, interfaceMethodActor);
         }
         final float result = indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
         pushFloat(result);
@@ -2075,11 +2075,11 @@ public class VMAdviceBeforeAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         nullCheck(Reference.fromJava(receiver).toOrigin());
         VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(receiver, methodActor);
         }
         final float result = indirectCallFloat(VMAT1XRuntime.initializeSpecialMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
         pushFloat(result);
@@ -2090,11 +2090,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokespecialFloat(VirtualMethodActor methodActor, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
         nullCheck(Reference.fromJava(receiver).toOrigin());
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(receiver, methodActor);
         }
         final float result = directCallFloat();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
         pushFloat(result);
@@ -2104,11 +2104,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(INVOKESTATIC$float)
     public static void invokestaticFloat(ResolutionGuard.InPool guard) {
         StaticMethodActor methodActor = VMAT1XRuntime.resolveStaticMethod(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(null, methodActor);
         }
         final float result = indirectCallFloat(VMAT1XRuntime.initializeStaticMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(null, methodActor);
         }
         pushFloat(result);
@@ -2117,11 +2117,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKESTATIC$float$init)
     public static void invokestaticFloat(StaticMethodActor methodActor) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(null, methodActor);
         }
         final float result = directCallFloat();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(null, methodActor);
         }
         pushFloat(result);
@@ -2133,7 +2133,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         int index = peekInt(0);
         int disp = peekInt(1);
         Pointer ptr = peekWord(2).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(1505);
         }
         removeSlots(2);
@@ -2147,7 +2147,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         int index = peekInt(1);
         int disp = peekInt(2);
         Pointer ptr = peekWord(3).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(1250);
         }
         removeSlots(4);
@@ -2159,7 +2159,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void pread_float() {
         Offset off = peekWord(0).asOffset();
         Pointer ptr = peekWord(1).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(1503);
         }
         removeSlots(1);
@@ -2172,7 +2172,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         Pointer ptr = peekWord(2).asPointer();
         Offset off = peekWord(1).asOffset();
         float value = peekFloat(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(1248);
         }
         removeSlots(3);
@@ -2184,7 +2184,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void pread_float_i() {
         int off = peekInt(0);
         Pointer ptr = peekWord(1).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(3807);
         }
         removeSlots(1);
@@ -2197,7 +2197,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         Pointer ptr = peekWord(2).asPointer();
         int off = peekInt(1);
         float value = peekFloat(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(3296);
         }
         removeSlots(3);
@@ -2207,7 +2207,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(LCONST)
     public static void lconst(long constant) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConstLoad(constant);
         }
         pushLong(constant);
@@ -2217,7 +2217,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(GETFIELD$long$resolved)
     public static void getfieldLong(int offset) {
         Object object = peekObject(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetField(object, offset);
         }
         addSlots(1);
@@ -2236,7 +2236,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @NEVER_INLINE
     public static long resolveAndGetFieldLong(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetField(object, f.offset());
         }
         if (f.isVolatile()) {
@@ -2260,7 +2260,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static long resolveAndGetStaticLong(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetStatic(f.holder().staticTuple(), f.offset());
         }
         if (f.isVolatile()) {
@@ -2276,7 +2276,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(GETSTATIC$long$init)
     public static void getstaticLong(Object staticTuple, int offset) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetStatic(staticTuple, offset);
         }
         pushLong(TupleAccess.readLong(staticTuple, offset));
@@ -2287,7 +2287,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void putfieldLong(int offset) {
         Object object = peekObject(2);
         long value = peekLong(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutField(object, offset, value);
         }
         removeSlots(3);
@@ -2307,7 +2307,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @NEVER_INLINE
     public static void resolveAndPutFieldLong(ResolutionGuard.InPool guard, Object object, long value) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutField(object, f.offset(), value);
         }
         if (f.isVolatile()) {
@@ -2323,7 +2323,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(PUTSTATIC$long$init)
     public static void putstaticLong(Object staticTuple, int offset) {
         long value = popLong();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutStatic(staticTuple, offset, value);
         }
         TupleAccess.writeLong(staticTuple, offset, value);
@@ -2339,7 +2339,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @NEVER_INLINE
     public static void resolveAndPutStaticLong(ResolutionGuard.InPool guard, long value) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutStatic(f.holder().staticTuple(), f.offset(), value);
         }
         Snippets.makeHolderInitialized(f);
@@ -2355,7 +2355,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(LLOAD)
     public static void lload(int dispToLocalSlot) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeLoad(dispToLocalSlot);
         }
         long value = getLocalLong(dispToLocalSlot);
@@ -2366,7 +2366,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(LSTORE)
     public static void lstore(int dispToLocalSlot) {
         long value = popLong();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeStore(dispToLocalSlot, value);
         }
         setLocalLong(dispToLocalSlot, value);
@@ -2375,7 +2375,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(LDC$long)
     public static void lldc(long constant) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConstLoad(constant);
         }
         pushLong(constant);
@@ -2386,7 +2386,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void i2l() {
         int value = peekInt(0);
         addSlots(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConversion(133, value);
         }
         pokeLong(0, value);
@@ -2397,7 +2397,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void f2l() {
         float value = peekFloat(0);
         addSlots(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConversion(140, value);
         }
         pokeLong(0, T1XRuntime.f2l(value));
@@ -2407,7 +2407,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(D2L)
     public static void d2l() {
         double value = peekDouble(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConversion(143, value);
         }
         pokeLong(0, T1XRuntime.d2l(value));
@@ -2418,7 +2418,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void ladd() {
         long value2 = peekLong(0);
         long value1 = peekLong(2);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(97, value1, value2);
         }
         removeSlots(2);
@@ -2430,7 +2430,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void lsub() {
         long value2 = peekLong(0);
         long value1 = peekLong(2);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(101, value1, value2);
         }
         removeSlots(2);
@@ -2442,7 +2442,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void lmul() {
         long value2 = peekLong(0);
         long value1 = peekLong(2);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(105, value1, value2);
         }
         removeSlots(2);
@@ -2454,7 +2454,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void ldiv() {
         long value2 = peekLong(0);
         long value1 = peekLong(2);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(109, value1, value2);
         }
         removeSlots(2);
@@ -2466,7 +2466,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void lrem() {
         long value2 = peekLong(0);
         long value1 = peekLong(2);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(113, value1, value2);
         }
         removeSlots(2);
@@ -2477,7 +2477,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(LNEG)
     public static void lneg() {
         long value = peekLong(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(117, value, 0);
         }
         pokeLong(0, -value);
@@ -2488,7 +2488,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void lor() {
         long value2 = peekLong(0);
         long value1 = peekLong(2);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(129, value1, value2);
         }
         removeSlots(2);
@@ -2500,7 +2500,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void land() {
         long value2 = peekLong(0);
         long value1 = peekLong(2);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(127, value1, value2);
         }
         removeSlots(2);
@@ -2512,7 +2512,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void lxor() {
         long value2 = peekLong(0);
         long value1 = peekLong(2);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(131, value1, value2);
         }
         removeSlots(2);
@@ -2524,7 +2524,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void lshl() {
         int value2 = peekInt(0);
         long value1 = peekLong(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(121, value1, value2);
         }
         removeSlots(1);
@@ -2536,7 +2536,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void lshr() {
         int value2 = peekInt(0);
         long value1 = peekLong(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(123, value1, value2);
         }
         removeSlots(1);
@@ -2548,7 +2548,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void lushr() {
         int value2 = peekInt(0);
         long value1 = peekLong(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(125, value1, value2);
         }
         removeSlots(1);
@@ -2561,7 +2561,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         long value2 = peekLong(0);
         long value1 = peekLong(2);
         int result = lcmp(value1, value2);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(148, value1, value2);
         }
         removeSlots(3);
@@ -2572,7 +2572,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(LRETURN)
     public static long lreturn() {
         long result = popLong();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeReturn(result);
         }
         return result;
@@ -2581,12 +2581,12 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(LRETURN$unlockClass)
     public static long lreturnUnlockClass(Class<?> object) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(object);
         }
         Monitor.noninlineExit(object);
         long result = popLong();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeReturn(result);
         }
         return result;
@@ -2596,12 +2596,12 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(LRETURN$unlockReceiver)
     public static long lreturnUnlockReceiver(int dispToObjectCopy) {
         Object object = getLocalObject(dispToObjectCopy);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(object);
         }
         Monitor.noninlineExit(object);
         long result = popLong();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeReturn(result);
         }
         return result;
@@ -2613,7 +2613,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         int index = peekInt(0);
         Object array = peekObject(1);
         ArrayAccess.checkIndex(array, index);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeArrayLoad(array, index);
         }
         pokeLong(0, ArrayAccess.getLong(array, index));
@@ -2626,7 +2626,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         Object array = peekObject(3);
         ArrayAccess.checkIndex(array, index);
         long value = peekLong(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeArrayStore(array, index, value);
         }
         ArrayAccess.setLong(array, index, value);
@@ -2639,11 +2639,11 @@ public class VMAdviceBeforeAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
         Address entryPoint = VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         final long result = indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
         pushLong(result);
@@ -2654,11 +2654,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokevirtualLong(VirtualMethodActor methodActor, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         final long result = indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
         pushLong(result);
@@ -2669,11 +2669,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokevirtualLong(VirtualMethodActor methodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         final long result = indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
         pushLong(result);
@@ -2685,11 +2685,11 @@ public class VMAdviceBeforeAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         final InterfaceMethodActor interfaceMethodActor = Snippets.resolveInterfaceMethod(guard);
         Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, interfaceMethodActor);
         }
         final long result = indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
         pushLong(result);
@@ -2700,11 +2700,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokeinterfaceLong(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, interfaceMethodActor);
         }
         final long result = indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
         pushLong(result);
@@ -2715,11 +2715,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokeinterfaceLong(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, interfaceMethodActor);
         }
         final long result = indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
         pushLong(result);
@@ -2731,11 +2731,11 @@ public class VMAdviceBeforeAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         nullCheck(Reference.fromJava(receiver).toOrigin());
         VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(receiver, methodActor);
         }
         final long result = indirectCallLong(VMAT1XRuntime.initializeSpecialMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
         pushLong(result);
@@ -2746,11 +2746,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokespecialLong(VirtualMethodActor methodActor, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
         nullCheck(Reference.fromJava(receiver).toOrigin());
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(receiver, methodActor);
         }
         final long result = directCallLong();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
         pushLong(result);
@@ -2760,11 +2760,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(INVOKESTATIC$long)
     public static void invokestaticLong(ResolutionGuard.InPool guard) {
         StaticMethodActor methodActor = VMAT1XRuntime.resolveStaticMethod(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(null, methodActor);
         }
         final long result = indirectCallLong(VMAT1XRuntime.initializeStaticMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(null, methodActor);
         }
         pushLong(result);
@@ -2773,11 +2773,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKESTATIC$long$init)
     public static void invokestaticLong(StaticMethodActor methodActor) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(null, methodActor);
         }
         final long result = directCallLong();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(null, methodActor);
         }
         pushLong(result);
@@ -2789,7 +2789,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         int index = peekInt(0);
         int disp = peekInt(1);
         Pointer ptr = peekWord(2).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(1761);
         }
         removeSlots(1);
@@ -2803,7 +2803,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         int index = peekInt(2);
         int disp = peekInt(3);
         Pointer ptr = peekWord(4).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(1506);
         }
         removeSlots(5);
@@ -2815,7 +2815,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void pread_long() {
         Offset off = peekWord(0).asOffset();
         Pointer ptr = peekWord(1).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(1759);
         }
         pokeLong(0, ptr.readLong(off));
@@ -2827,7 +2827,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         Pointer ptr = peekWord(2).asPointer();
         Offset off = peekWord(1).asOffset();
         long value = peekLong(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(1504);
         }
         removeSlots(4);
@@ -2839,7 +2839,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void pread_long_i() {
         int off = peekInt(0);
         Pointer ptr = peekWord(1).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(4063);
         }
         pokeLong(0, ptr.readLong(off));
@@ -2851,7 +2851,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         Pointer ptr = peekWord(2).asPointer();
         int off = peekInt(1);
         long value = peekLong(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(3552);
         }
         removeSlots(4);
@@ -2861,7 +2861,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(DCONST)
     public static void dconst(double constant) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConstLoad(constant);
         }
         pushDouble(constant);
@@ -2871,7 +2871,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(GETFIELD$double$resolved)
     public static void getfieldDouble(int offset) {
         Object object = peekObject(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetField(object, offset);
         }
         addSlots(1);
@@ -2890,7 +2890,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @NEVER_INLINE
     public static double resolveAndGetFieldDouble(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetField(object, f.offset());
         }
         if (f.isVolatile()) {
@@ -2914,7 +2914,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static double resolveAndGetStaticDouble(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetStatic(f.holder().staticTuple(), f.offset());
         }
         if (f.isVolatile()) {
@@ -2930,7 +2930,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(GETSTATIC$double$init)
     public static void getstaticDouble(Object staticTuple, int offset) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetStatic(staticTuple, offset);
         }
         pushDouble(TupleAccess.readDouble(staticTuple, offset));
@@ -2941,7 +2941,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void putfieldDouble(int offset) {
         Object object = peekObject(2);
         double value = peekDouble(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutField(object, offset, value);
         }
         removeSlots(3);
@@ -2961,7 +2961,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @NEVER_INLINE
     public static void resolveAndPutFieldDouble(ResolutionGuard.InPool guard, Object object, double value) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutField(object, f.offset(), value);
         }
         if (f.isVolatile()) {
@@ -2977,7 +2977,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(PUTSTATIC$double$init)
     public static void putstaticDouble(Object staticTuple, int offset) {
         double value = popDouble();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutStatic(staticTuple, offset, value);
         }
         TupleAccess.writeDouble(staticTuple, offset, value);
@@ -2993,7 +2993,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @NEVER_INLINE
     public static void resolveAndPutStaticDouble(ResolutionGuard.InPool guard, double value) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutStatic(f.holder().staticTuple(), f.offset(), value);
         }
         Snippets.makeHolderInitialized(f);
@@ -3009,7 +3009,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(DLOAD)
     public static void dload(int dispToLocalSlot) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeLoad(dispToLocalSlot);
         }
         double value = getLocalDouble(dispToLocalSlot);
@@ -3020,7 +3020,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(DSTORE)
     public static void dstore(int dispToLocalSlot) {
         double value = popDouble();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeStore(dispToLocalSlot, value);
         }
         setLocalDouble(dispToLocalSlot, value);
@@ -3029,7 +3029,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(LDC$double)
     public static void dldc(double constant) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConstLoad(constant);
         }
         pushDouble(constant);
@@ -3040,7 +3040,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void i2d() {
         int value = peekInt(0);
         addSlots(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConversion(135, value);
         }
         pokeDouble(0, value);
@@ -3050,7 +3050,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(L2D)
     public static void l2d() {
         long value = peekLong(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConversion(138, value);
         }
         pokeDouble(0, value);
@@ -3061,7 +3061,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void f2d() {
         float value = peekFloat(0);
         addSlots(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConversion(141, value);
         }
         pokeDouble(0, value);
@@ -3072,7 +3072,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void dadd() {
         double value2 = peekDouble(0);
         double value1 = peekDouble(2);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(99, value1, value2);
         }
         removeSlots(2);
@@ -3084,7 +3084,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void dsub() {
         double value2 = peekDouble(0);
         double value1 = peekDouble(2);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(103, value1, value2);
         }
         removeSlots(2);
@@ -3096,7 +3096,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void dmul() {
         double value2 = peekDouble(0);
         double value1 = peekDouble(2);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(107, value1, value2);
         }
         removeSlots(2);
@@ -3108,7 +3108,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void ddiv() {
         double value2 = peekDouble(0);
         double value1 = peekDouble(2);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(111, value1, value2);
         }
         removeSlots(2);
@@ -3120,7 +3120,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void drem() {
         double value2 = peekDouble(0);
         double value1 = peekDouble(2);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(115, value1, value2);
         }
         removeSlots(2);
@@ -3131,7 +3131,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(DNEG)
     public static void dneg(double zero) {
         double value = peekDouble(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(119, value, 0.0);
         }
         pokeDouble(0, zero - value);
@@ -3143,7 +3143,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         double value2 = peekDouble(0);
         double value1 = peekDouble(2);
         int result = dcmpg(value1, value2);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(152, value1, value2);
         }
         removeSlots(3);
@@ -3156,7 +3156,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         double value2 = peekDouble(0);
         double value1 = peekDouble(2);
         int result = dcmpl(value1, value2);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(151, value1, value2);
         }
         removeSlots(3);
@@ -3167,7 +3167,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(DRETURN)
     public static double dreturn() {
         double result = popDouble();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeReturn(result);
         }
         return result;
@@ -3176,12 +3176,12 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(DRETURN$unlockClass)
     public static double dreturnUnlockClass(Class<?> object) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(object);
         }
         Monitor.noninlineExit(object);
         double result = popDouble();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeReturn(result);
         }
         return result;
@@ -3191,12 +3191,12 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(DRETURN$unlockReceiver)
     public static double dreturnUnlockReceiver(int dispToObjectCopy) {
         Object object = getLocalObject(dispToObjectCopy);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(object);
         }
         Monitor.noninlineExit(object);
         double result = popDouble();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeReturn(result);
         }
         return result;
@@ -3208,7 +3208,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         int index = peekInt(0);
         Object array = peekObject(1);
         ArrayAccess.checkIndex(array, index);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeArrayLoad(array, index);
         }
         pokeDouble(0, ArrayAccess.getDouble(array, index));
@@ -3221,7 +3221,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         Object array = peekObject(3);
         ArrayAccess.checkIndex(array, index);
         double value = peekDouble(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeArrayStore(array, index, value);
         }
         ArrayAccess.setDouble(array, index, value);
@@ -3234,11 +3234,11 @@ public class VMAdviceBeforeAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
         Address entryPoint = VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         final double result = indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
         pushDouble(result);
@@ -3249,11 +3249,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokevirtualDouble(VirtualMethodActor methodActor, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         final double result = indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
         pushDouble(result);
@@ -3264,11 +3264,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokevirtualDouble(VirtualMethodActor methodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         final double result = indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
         pushDouble(result);
@@ -3280,11 +3280,11 @@ public class VMAdviceBeforeAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         final InterfaceMethodActor interfaceMethodActor = Snippets.resolveInterfaceMethod(guard);
         Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, interfaceMethodActor);
         }
         final double result = indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
         pushDouble(result);
@@ -3295,11 +3295,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokeinterfaceDouble(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, interfaceMethodActor);
         }
         final double result = indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
         pushDouble(result);
@@ -3310,11 +3310,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokeinterfaceDouble(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, interfaceMethodActor);
         }
         final double result = indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
         pushDouble(result);
@@ -3326,11 +3326,11 @@ public class VMAdviceBeforeAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         nullCheck(Reference.fromJava(receiver).toOrigin());
         VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(receiver, methodActor);
         }
         final double result = indirectCallDouble(VMAT1XRuntime.initializeSpecialMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
         pushDouble(result);
@@ -3341,11 +3341,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokespecialDouble(VirtualMethodActor methodActor, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
         nullCheck(Reference.fromJava(receiver).toOrigin());
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(receiver, methodActor);
         }
         final double result = directCallDouble();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
         pushDouble(result);
@@ -3355,11 +3355,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(INVOKESTATIC$double)
     public static void invokestaticDouble(ResolutionGuard.InPool guard) {
         StaticMethodActor methodActor = VMAT1XRuntime.resolveStaticMethod(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(null, methodActor);
         }
         final double result = indirectCallDouble(VMAT1XRuntime.initializeStaticMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(null, methodActor);
         }
         pushDouble(result);
@@ -3368,11 +3368,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKESTATIC$double$init)
     public static void invokestaticDouble(StaticMethodActor methodActor) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(null, methodActor);
         }
         final double result = directCallDouble();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(null, methodActor);
         }
         pushDouble(result);
@@ -3384,7 +3384,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         int index = peekInt(0);
         int disp = peekInt(1);
         Pointer ptr = peekWord(2).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(2017);
         }
         removeSlots(1);
@@ -3398,7 +3398,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         int index = peekInt(2);
         int disp = peekInt(3);
         Pointer ptr = peekWord(4).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(1762);
         }
         removeSlots(5);
@@ -3410,7 +3410,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void pread_double() {
         Offset off = peekWord(0).asOffset();
         Pointer ptr = peekWord(1).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(2015);
         }
         pokeDouble(0, ptr.readDouble(off));
@@ -3422,7 +3422,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         Pointer ptr = peekWord(2).asPointer();
         Offset off = peekWord(1).asOffset();
         double value = peekDouble(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(1760);
         }
         removeSlots(4);
@@ -3434,7 +3434,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void pread_double_i() {
         int off = peekInt(0);
         Pointer ptr = peekWord(1).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(4319);
         }
         pokeDouble(0, ptr.readDouble(off));
@@ -3446,7 +3446,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         Pointer ptr = peekWord(2).asPointer();
         int off = peekInt(1);
         double value = peekDouble(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(3808);
         }
         removeSlots(4);
@@ -3456,7 +3456,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(ACONST_NULL)
     public static void aconst_null() {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConstLoad(null);
         }
         pushObject(null);
@@ -3466,7 +3466,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(GETFIELD$reference$resolved)
     public static void getfieldReference(int offset) {
         Object object = peekObject(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetField(object, offset);
         }
         pokeObject(0, TupleAccess.readObject(object, offset));
@@ -3483,7 +3483,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @NEVER_INLINE
     public static Object resolveAndGetFieldReference(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetField(object, f.offset());
         }
         if (f.isVolatile()) {
@@ -3507,7 +3507,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static Object resolveAndGetStaticReference(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetStatic(f.holder().staticTuple(), f.offset());
         }
         if (f.isVolatile()) {
@@ -3523,7 +3523,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(GETSTATIC$reference$init)
     public static void getstaticReference(Object staticTuple, int offset) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetStatic(staticTuple, offset);
         }
         pushObject(TupleAccess.readObject(staticTuple, offset));
@@ -3534,7 +3534,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void putfieldReference(int offset) {
         Object object = peekObject(1);
         Object value = peekObject(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutField(object, offset, value);
         }
         removeSlots(2);
@@ -3554,7 +3554,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @NEVER_INLINE
     public static void resolveAndPutFieldReference(ResolutionGuard.InPool guard, Object object, Object value) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutField(object, f.offset(), value);
         }
         if (f.isVolatile()) {
@@ -3570,7 +3570,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(PUTSTATIC$reference$init)
     public static void putstaticReference(Object staticTuple, int offset) {
         Object value = popObject();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutStatic(staticTuple, offset, value);
         }
         TupleAccess.noninlineWriteObject(staticTuple, offset, value);
@@ -3586,7 +3586,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @NEVER_INLINE
     public static void resolveAndPutStaticReference(ResolutionGuard.InPool guard, Object value) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutStatic(f.holder().staticTuple(), f.offset(), value);
         }
         Snippets.makeHolderInitialized(f);
@@ -3602,7 +3602,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(ALOAD)
     public static void aload(int dispToLocalSlot) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeLoad(dispToLocalSlot);
         }
         Object value = getLocalObject(dispToLocalSlot);
@@ -3613,7 +3613,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(ASTORE)
     public static void astore(int dispToLocalSlot) {
         Object value = popObject();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeStore(dispToLocalSlot, value);
         }
         setLocalObject(dispToLocalSlot, value);
@@ -3622,7 +3622,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(LDC$reference$resolved)
     public static void rldc(Object constant) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConstLoad(constant);
         }
         pushObject(constant);
@@ -3633,7 +3633,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void urldc(ResolutionGuard guard) {
         ClassActor classActor = Snippets.resolveClass(guard);
         Object constant = T1XRuntime.getClassMirror(classActor);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConstLoad(constant);
         }
         pushObject(constant);
@@ -3644,7 +3644,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void if_acmpeq() {
         Object value2 = peekObject(0);
         Object value1 = peekObject(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIf(165, value1, value2);
         }
         removeSlots(2);
@@ -3656,7 +3656,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void if_acmpne() {
         Object value2 = peekObject(0);
         Object value1 = peekObject(1);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIf(166, value1, value2);
         }
         removeSlots(2);
@@ -3667,7 +3667,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(IFNULL)
     public static void ifnull() {
         Object value = popObject();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIf(198, value, null);
         }
         Intrinsics.compareWords(toWord(value), Address.zero());
@@ -3677,7 +3677,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(IFNONNULL)
     public static void ifnonnull() {
         Object value = popObject();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIf(199, value, null);
         }
         Intrinsics.compareWords(toWord(value), Address.zero());
@@ -3687,7 +3687,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(ARETURN)
     public static Object areturn() {
         Object result = popObject();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeReturn(result);
         }
         return result;
@@ -3696,12 +3696,12 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(ARETURN$unlockClass)
     public static Object areturnUnlockClass(Class<?> object) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(object);
         }
         Monitor.noninlineExit(object);
         Object result = popObject();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeReturn(result);
         }
         return result;
@@ -3711,12 +3711,12 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(ARETURN$unlockReceiver)
     public static Object areturnUnlockReceiver(int dispToObjectCopy) {
         Object object = getLocalObject(dispToObjectCopy);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(object);
         }
         Monitor.noninlineExit(object);
         Object result = popObject();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeReturn(result);
         }
         return result;
@@ -3728,7 +3728,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         int index = peekInt(0);
         Object array = peekObject(1);
         ArrayAccess.checkIndex(array, index);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeArrayLoad(array, index);
         }
         removeSlots(1);
@@ -3742,7 +3742,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         Object array = peekObject(2);
         ArrayAccess.checkIndex(array, index);
         Object value = peekObject(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeArrayStore(array, index, value);
         }
         ArrayAccess.checkSetObject(array, value);
@@ -3756,11 +3756,11 @@ public class VMAdviceBeforeAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
         Address entryPoint = VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         final Object result = indirectCallObject(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
         pushObject(result);
@@ -3771,11 +3771,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokevirtualReference(VirtualMethodActor methodActor, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         final Object result = indirectCallObject(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
         pushObject(result);
@@ -3786,11 +3786,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokevirtualReference(VirtualMethodActor methodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         final Object result = indirectCallObject(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
         pushObject(result);
@@ -3802,11 +3802,11 @@ public class VMAdviceBeforeAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         final InterfaceMethodActor interfaceMethodActor = Snippets.resolveInterfaceMethod(guard);
         Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, interfaceMethodActor);
         }
         final Object result = indirectCallObject(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
         pushObject(result);
@@ -3817,11 +3817,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokeinterfaceReference(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, interfaceMethodActor);
         }
         final Object result = indirectCallObject(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
         pushObject(result);
@@ -3832,11 +3832,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokeinterfaceReference(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, interfaceMethodActor);
         }
         final Object result = indirectCallObject(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
         pushObject(result);
@@ -3848,11 +3848,11 @@ public class VMAdviceBeforeAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         nullCheck(Reference.fromJava(receiver).toOrigin());
         VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(receiver, methodActor);
         }
         final Object result = indirectCallObject(VMAT1XRuntime.initializeSpecialMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
         pushObject(result);
@@ -3863,11 +3863,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokespecialReference(VirtualMethodActor methodActor, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
         nullCheck(Reference.fromJava(receiver).toOrigin());
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(receiver, methodActor);
         }
         final Object result = directCallObject();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
         pushObject(result);
@@ -3877,11 +3877,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(INVOKESTATIC$reference)
     public static void invokestaticReference(ResolutionGuard.InPool guard) {
         StaticMethodActor methodActor = VMAT1XRuntime.resolveStaticMethod(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(null, methodActor);
         }
         final Object result = indirectCallObject(VMAT1XRuntime.initializeStaticMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(null, methodActor);
         }
         pushObject(result);
@@ -3890,11 +3890,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKESTATIC$reference$init)
     public static void invokestaticReference(StaticMethodActor methodActor) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(null, methodActor);
         }
         final Object result = directCallObject();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(null, methodActor);
         }
         pushObject(result);
@@ -3906,7 +3906,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         int index = peekInt(0);
         int disp = peekInt(1);
         Pointer ptr = peekWord(2).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(2529);
         }
         removeSlots(2);
@@ -3920,7 +3920,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         int index = peekInt(1);
         int disp = peekInt(2);
         Pointer ptr = peekWord(3).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(2274);
         }
         removeSlots(4);
@@ -3932,7 +3932,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void pread_reference() {
         Offset off = peekWord(0).asOffset();
         Pointer ptr = peekWord(1).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(2527);
         }
         removeSlots(1);
@@ -3945,7 +3945,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         Pointer ptr = peekWord(2).asPointer();
         Offset off = peekWord(1).asOffset();
         Reference value = peekReference(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(2272);
         }
         removeSlots(3);
@@ -3957,7 +3957,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void pread_reference_i() {
         int off = peekInt(0);
         Pointer ptr = peekWord(1).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(4831);
         }
         removeSlots(1);
@@ -3970,7 +3970,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         Pointer ptr = peekWord(2).asPointer();
         int off = peekInt(1);
         Reference value = peekReference(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(4320);
         }
         removeSlots(3);
@@ -3984,7 +3984,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         Reference expectedValue = peekReference(1);
         Offset off = peekWord(2).asOffset();
         Pointer ptr = peekWord(3).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(1251);
         }
         removeSlots(3);
@@ -3998,7 +3998,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         Reference expectedValue = peekReference(1);
         int off = peekInt(2);
         Pointer ptr = peekWord(3).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(2275);
         }
         removeSlots(3);
@@ -4008,7 +4008,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(WCONST_0)
     public static void wconst_0() {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConstLoad(0);
         }
         pushWord(Address.zero());
@@ -4018,7 +4018,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(GETFIELD$word$resolved)
     public static void getfieldWord(int offset) {
         Object object = peekObject(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetField(object, offset);
         }
         pokeWord(0, TupleAccess.readWord(object, offset));
@@ -4035,7 +4035,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @NEVER_INLINE
     public static Word resolveAndGetFieldWord(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetField(object, f.offset());
         }
         if (f.isVolatile()) {
@@ -4059,7 +4059,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static Word resolveAndGetStaticWord(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetStatic(f.holder().staticTuple(), f.offset());
         }
         if (f.isVolatile()) {
@@ -4075,7 +4075,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(GETSTATIC$word$init)
     public static void getstaticWord(Object staticTuple, int offset) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeGetStatic(staticTuple, offset);
         }
         pushWord(TupleAccess.readWord(staticTuple, offset));
@@ -4086,7 +4086,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void putfieldWord(int offset) {
         Object object = peekObject(1);
         Word value = peekWord(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutField(object, offset, value.asAddress().toLong());
         }
         removeSlots(2);
@@ -4106,7 +4106,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @NEVER_INLINE
     public static void resolveAndPutFieldWord(ResolutionGuard.InPool guard, Object object, Word value) {
         FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutField(object, f.offset(), value.asAddress().toLong());
         }
         if (f.isVolatile()) {
@@ -4122,7 +4122,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(PUTSTATIC$word$init)
     public static void putstaticWord(Object staticTuple, int offset) {
         Word value = popWord();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutStatic(staticTuple, offset, value.asAddress().toLong());
         }
         TupleAccess.writeWord(staticTuple, offset, value);
@@ -4138,7 +4138,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @NEVER_INLINE
     public static void resolveAndPutStaticWord(ResolutionGuard.InPool guard, Word value) {
         FieldActor f = Snippets.resolveStaticFieldForWriting(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforePutStatic(f.holder().staticTuple(), f.offset(), value.asAddress().toLong());
         }
         Snippets.makeHolderInitialized(f);
@@ -4154,7 +4154,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(WLOAD)
     public static void wload(int dispToLocalSlot) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeLoad(dispToLocalSlot);
         }
         Word value = getLocalWord(dispToLocalSlot);
@@ -4165,7 +4165,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(WSTORE)
     public static void wstore(int dispToLocalSlot) {
         Word value = popWord();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeStore(dispToLocalSlot, value.asAddress().toLong());
         }
         setLocalWord(dispToLocalSlot, value);
@@ -4175,7 +4175,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(WRETURN)
     public static Word wreturn() {
         Word result = popWord();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeReturn(result.asAddress().toLong());
         }
         return result;
@@ -4184,12 +4184,12 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(WRETURN$unlockClass)
     public static Word wreturnUnlockClass(Class<?> object) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(object);
         }
         Monitor.noninlineExit(object);
         Word result = popWord();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeReturn(result.asAddress().toLong());
         }
         return result;
@@ -4199,12 +4199,12 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(WRETURN$unlockReceiver)
     public static Word wreturnUnlockReceiver(int dispToObjectCopy) {
         Object object = getLocalObject(dispToObjectCopy);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(object);
         }
         Monitor.noninlineExit(object);
         Word result = popWord();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeReturn(result.asAddress().toLong());
         }
         return result;
@@ -4216,11 +4216,11 @@ public class VMAdviceBeforeAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
         Address entryPoint = VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         final Word result = indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
         pushWord(result);
@@ -4231,11 +4231,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokevirtualWord(VirtualMethodActor methodActor, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         final Word result = indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
         pushWord(result);
@@ -4246,11 +4246,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokevirtualWord(VirtualMethodActor methodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         final Word result = indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
         pushWord(result);
@@ -4262,11 +4262,11 @@ public class VMAdviceBeforeAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         final InterfaceMethodActor interfaceMethodActor = Snippets.resolveInterfaceMethod(guard);
         Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, interfaceMethodActor);
         }
         final Word result = indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
         pushWord(result);
@@ -4277,11 +4277,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokeinterfaceWord(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, interfaceMethodActor);
         }
         final Word result = indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
         pushWord(result);
@@ -4292,11 +4292,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokeinterfaceWord(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, interfaceMethodActor);
         }
         final Word result = indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
         pushWord(result);
@@ -4308,11 +4308,11 @@ public class VMAdviceBeforeAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         nullCheck(Reference.fromJava(receiver).toOrigin());
         VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(receiver, methodActor);
         }
         final Word result = indirectCallWord(VMAT1XRuntime.initializeSpecialMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
         pushWord(result);
@@ -4323,11 +4323,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokespecialWord(VirtualMethodActor methodActor, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
         nullCheck(Reference.fromJava(receiver).toOrigin());
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(receiver, methodActor);
         }
         final Word result = directCallWord();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
         pushWord(result);
@@ -4337,11 +4337,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(INVOKESTATIC$word)
     public static void invokestaticWord(ResolutionGuard.InPool guard) {
         StaticMethodActor methodActor = VMAT1XRuntime.resolveStaticMethod(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(null, methodActor);
         }
         final Word result = indirectCallWord(VMAT1XRuntime.initializeStaticMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(null, methodActor);
         }
         pushWord(result);
@@ -4350,11 +4350,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKESTATIC$word$init)
     public static void invokestaticWord(StaticMethodActor methodActor) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(null, methodActor);
         }
         final Word result = directCallWord();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(null, methodActor);
         }
         pushWord(result);
@@ -4366,7 +4366,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         int index = peekInt(0);
         int disp = peekInt(1);
         Pointer ptr = peekWord(2).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(2273);
         }
         removeSlots(2);
@@ -4380,7 +4380,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         int index = peekInt(1);
         int disp = peekInt(2);
         Pointer ptr = peekWord(3).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(2018);
         }
         removeSlots(4);
@@ -4392,7 +4392,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void pread_word() {
         Offset off = peekWord(0).asOffset();
         Pointer ptr = peekWord(1).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(2271);
         }
         removeSlots(1);
@@ -4405,7 +4405,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         Pointer ptr = peekWord(2).asPointer();
         Offset off = peekWord(1).asOffset();
         Word value = peekWord(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(2016);
         }
         removeSlots(3);
@@ -4417,7 +4417,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void pread_word_i() {
         int off = peekInt(0);
         Pointer ptr = peekWord(1).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(4575);
         }
         removeSlots(1);
@@ -4430,7 +4430,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         Pointer ptr = peekWord(2).asPointer();
         int off = peekInt(1);
         Word value = peekWord(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(4064);
         }
         removeSlots(3);
@@ -4444,7 +4444,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         Word expectedValue = peekWord(1);
         Offset off = peekWord(2).asOffset();
         Pointer ptr = peekWord(3).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(995);
         }
         removeSlots(3);
@@ -4458,7 +4458,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         Word expectedValue = peekWord(1);
         int off = peekInt(2);
         Pointer ptr = peekWord(3).asPointer();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeBytecode(2019);
         }
         removeSlots(3);
@@ -4468,7 +4468,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(RETURN)
     public static void vreturn() {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeReturn();
         }
     }
@@ -4476,11 +4476,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(RETURN$unlockClass)
     public static void vreturnUnlockClass(Class<?> object) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(object);
         }
         Monitor.noninlineExit(object);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeReturn();
         }
     }
@@ -4489,11 +4489,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(RETURN$unlockReceiver)
     public static void vreturnUnlockReceiver(int dispToObjectCopy) {
         Object object = getLocalObject(dispToObjectCopy);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(object);
         }
         Monitor.noninlineExit(object);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeReturn();
         }
     }
@@ -4504,11 +4504,11 @@ public class VMAdviceBeforeAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);
         Address entryPoint = VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
     }
@@ -4518,11 +4518,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokevirtualVoid(VirtualMethodActor methodActor, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
     }
@@ -4532,11 +4532,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokevirtualVoid(VirtualMethodActor methodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(receiver, methodActor);
         }
         indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(receiver, methodActor);
         }
     }
@@ -4547,11 +4547,11 @@ public class VMAdviceBeforeAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         final InterfaceMethodActor interfaceMethodActor = Snippets.resolveInterfaceMethod(guard);
         Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, interfaceMethodActor);
         }
         indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
     }
@@ -4561,11 +4561,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokeinterfaceVoid(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, interfaceMethodActor);
         }
         indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
     }
@@ -4575,11 +4575,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokeinterfaceVoid(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
         Object receiver = peekObject(receiverStackIndex);
         Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeInterface(receiver, interfaceMethodActor);
         }
         indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(receiver, interfaceMethodActor);
         }
     }
@@ -4590,11 +4590,11 @@ public class VMAdviceBeforeAfterTemplateSource {
         Object receiver = peekObject(receiverStackIndex);
         nullCheck(Reference.fromJava(receiver).toOrigin());
         VirtualMethodActor methodActor = VMAT1XRuntime.resolveSpecialMethod(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(receiver, methodActor);
         }
         indirectCallVoid(VMAT1XRuntime.initializeSpecialMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
     }
@@ -4604,11 +4604,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void invokespecialVoid(VirtualMethodActor methodActor, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
         nullCheck(Reference.fromJava(receiver).toOrigin());
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeSpecial(receiver, methodActor);
         }
         directCallVoid();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(receiver, methodActor);
         }
     }
@@ -4617,11 +4617,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(INVOKESTATIC$void)
     public static void invokestaticVoid(ResolutionGuard.InPool guard) {
         StaticMethodActor methodActor = VMAT1XRuntime.resolveStaticMethod(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(null, methodActor);
         }
         indirectCallVoid(VMAT1XRuntime.initializeStaticMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(null, methodActor);
         }
     }
@@ -4629,11 +4629,11 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(INVOKESTATIC$void$init)
     public static void invokestaticVoid(StaticMethodActor methodActor) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeStatic(null, methodActor);
         }
         directCallVoid();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(null, methodActor);
         }
     }
@@ -4643,7 +4643,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void wdiv() {
         Address value2 = peekWord(0).asAddress();
         Address value1 = peekWord(1).asAddress();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(217, value1.toLong(), value2.toLong());
         }
         removeSlots(1);
@@ -4655,7 +4655,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void wdivi() {
         int value2 = peekInt(0);
         Address value1 = peekWord(1).asAddress();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(218, value1.toLong(), value2);
         }
         removeSlots(1);
@@ -4667,7 +4667,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void wrem() {
         Address value2 = peekWord(0).asAddress();
         Address value1 = peekWord(1).asAddress();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(219, value1.toLong(), value2.toLong());
         }
         removeSlots(1);
@@ -4679,7 +4679,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void wremi() {
         int value2 = peekInt(0);
         Address value1 = peekWord(1).asAddress();
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeOperation(220, value1.toLong(), value2);
         }
         removeSlots(1);
@@ -4690,7 +4690,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(IINC)
     public static void iinc(int dispToLocalSlot, int increment) {
         int value = getLocalInt(dispToLocalSlot);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIInc(dispToLocalSlot, value, increment);
         }
         setLocalInt(dispToLocalSlot, value  + increment);
@@ -4700,7 +4700,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(MOV_F2I)
     public static void mov_f2i() {
         float value = peekFloat(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConversion(229, value);
         }
         pokeInt(0, Intrinsics.floatToInt(value));
@@ -4710,7 +4710,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(MOV_I2F)
     public static void mov_i2f() {
         int value = peekInt(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConversion(228, value);
         }
         pokeFloat(0, Intrinsics.intToFloat(value));
@@ -4720,7 +4720,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(MOV_D2L)
     public static void mov_d2l() {
         double value = peekDouble(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConversion(231, value);
         }
         pokeLong(0, Intrinsics.doubleToLong(value));
@@ -4730,7 +4730,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(MOV_L2D)
     public static void mov_l2d() {
         long value = peekLong(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeConversion(230, value);
         }
         pokeDouble(0, Intrinsics.longToDouble(value));
@@ -4739,7 +4739,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(BIPUSH)
     public static void bipush(byte value) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIPush(value);
         }
         pushInt(value);
@@ -4748,7 +4748,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(SIPUSH)
     public static void sipush(short value) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIPush(value);
         }
         pushInt(value);
@@ -4757,7 +4757,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(POP)
     public static void pop() {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeStackAdjust(87);
         }
         removeSlots(1);
@@ -4766,7 +4766,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(POP2)
     public static void pop2() {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeStackAdjust(88);
         }
         removeSlots(2);
@@ -4776,7 +4776,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(NEW)
     public static void new_(ResolutionGuard arg) {
         Object object = resolveClassForNewAndCreate(arg);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterNew(object);
         }
         pushObject(object);
@@ -4786,7 +4786,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(NEW$init)
     public static void new_(ClassActor arg) {
         Object object = createTupleOrHybrid(arg);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterNew(object);
         }
         pushObject(object);
@@ -4797,7 +4797,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void newarray(Kind<?> kind) {
         int length = peekInt(0);
         Object array = createPrimitiveArray(kind, length);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterNewArray(array, length);
         }
         pokeObject(0, array);
@@ -4809,7 +4809,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         ArrayClassActor<?> arrayClassActor = UnsafeCast.asArrayClassActor(Snippets.resolveArrayClass(guard));
         int length = peekInt(0);
         Object array = T1XRuntime.createReferenceArray(arrayClassActor, length);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterNewArray(array, length);
         }
         pokeObject(0, array);
@@ -4820,7 +4820,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void anewarray(ArrayClassActor<?> arrayClassActor) {
         int length = peekInt(0);
         Object array = T1XRuntime.createReferenceArray(arrayClassActor, length);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterNewArray(array, length);
         }
         pokeObject(0, array);
@@ -4842,7 +4842,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         }
 
         Object array = Snippets.createMultiReferenceArray(arrayClassActor, lengths);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterMultiNewArray(array, lengths);
         }
         pushObject(array);
@@ -4863,7 +4863,7 @@ public class VMAdviceBeforeAfterTemplateSource {
         }
 
         Object array = Snippets.createMultiReferenceArray(arrayClassActor, lengths);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterMultiNewArray(array, lengths);
         }
         pushObject(array);
@@ -4880,7 +4880,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(CHECKCAST$resolved)
     public static void checkcast(ClassActor classActor) {
         Object object = peekObject(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeCheckCast(object, classActor);
         }
         Snippets.checkCast(classActor, object);
@@ -4890,7 +4890,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @NEVER_INLINE
     private static void resolveAndCheckcast(ResolutionGuard guard, final Object object) {
         ClassActor classActor = Snippets.resolveClass(guard);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeCheckCast(object, classActor);
         }
         Snippets.checkCast(classActor, object);
@@ -4901,7 +4901,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void arraylength() {
         Object array = peekObject(0);
         int length = ArrayAccess.readArrayLength(array);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeArrayLength(array, length);
         }
         pokeInt(0, length);
@@ -4911,7 +4911,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(ATHROW)
     public static void athrow() {
         Object object = peekObject(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeThrow(object);
         }
         Throw.raise(object);
@@ -4921,7 +4921,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(MONITORENTER)
     public static void monitorenter() {
         Object object = peekObject(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeMonitorEnter(object);
         }
         T1XRuntime.monitorenter(object);
@@ -4932,7 +4932,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(MONITOREXIT)
     public static void monitorexit() {
         Object object = peekObject(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(object);
         }
         T1XRuntime.monitorexit(object);
@@ -4944,7 +4944,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void instanceof_(ResolutionGuard guard) {
         ClassActor classActor = Snippets.resolveClass(guard);
         Object object = peekObject(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInstanceOf(object, classActor);
         }
         pokeInt(0, UnsafeCast.asByte(Snippets.instanceOf(classActor, object)));
@@ -4954,7 +4954,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(INSTANCEOF$resolved)
     public static void instanceof_(ClassActor classActor) {
         Object object = peekObject(0);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInstanceOf(object, classActor);
         }
         pokeInt(0, UnsafeCast.asByte(Snippets.instanceOf(classActor, object)));
@@ -4972,7 +4972,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(DUP)
     public static void dup() {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeStackAdjust(89);
         }
         pushWord(peekWord(0));
@@ -4981,7 +4981,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(DUP_X1)
     public static void dup_x1() {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeStackAdjust(90);
         }
         Word value1 = peekWord(0);
@@ -4994,7 +4994,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(DUP_X2)
     public static void dup_x2() {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeStackAdjust(91);
         }
         Word value1 = peekWord(0);
@@ -5009,7 +5009,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(DUP2)
     public static void dup2() {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeStackAdjust(92);
         }
         Word value1 = peekWord(0);
@@ -5021,7 +5021,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(DUP2_X1)
     public static void dup2_x1() {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeStackAdjust(93);
         }
         Word value1 = peekWord(0);
@@ -5037,7 +5037,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(DUP2_X2)
     public static void dup2_x2() {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeStackAdjust(94);
         }
         Word value1 = peekWord(0);
@@ -5055,7 +5055,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(SWAP)
     public static void swap() {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeStackAdjust(95);
         }
         Word value0 = peekWord(0);
@@ -5068,7 +5068,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(LOCK_RECEIVER)
     public static void lockReceiver(int dispToRcvr, int dispToRcvrCopy) {
         Object object = getLocalObject(dispToRcvr);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeMonitorEnter(object);
         }
         T1XRuntime.monitorenter(object);
@@ -5079,7 +5079,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(UNLOCK_RECEIVER)
     public static void unlockReceiver(int dispToRcvrCopy) {
         Object object = getLocalObject(dispToRcvrCopy);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(object);
         }
         T1XRuntime.monitorexit(object);
@@ -5088,7 +5088,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(LOCK_CLASS)
     public static void lockClass(Class object) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeMonitorEnter(object);
         }
         T1XRuntime.monitorenter(object);
@@ -5097,7 +5097,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     // GENERATED -- EDIT AND RUN VMAdviceTemplateGenerator.main() TO MODIFY
     @T1X_TEMPLATE(UNLOCK_CLASS)
     public static void unlockClass(Class object) {
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(object);
         }
         T1XRuntime.monitorexit(object);
@@ -5107,7 +5107,7 @@ public class VMAdviceBeforeAfterTemplateSource {
     @T1X_TEMPLATE(TRACE_METHOD_ENTRY)
     public static void traceMethodEntry(MethodActor methodActor, int dispToLocalSlot) {
         Object receiver = dispToLocalSlot == 0 ? null : getLocalObject(dispToLocalSlot);
-        if (isAdvising()) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseAfterMethodEntry(receiver, methodActor);
         }
     }

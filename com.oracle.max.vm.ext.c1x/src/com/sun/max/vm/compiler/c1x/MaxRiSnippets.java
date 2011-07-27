@@ -22,11 +22,12 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
+import static com.sun.max.vm.MaxineVM.*;
+
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.lang.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;
 
@@ -42,9 +43,9 @@ public class MaxRiSnippets implements RiSnippets {
     public final RiMethod enterVMForC;
 
     public MaxRiSnippets(MaxRiRuntime runtime) {
-        link = MethodActor.fromJava(Classes.getDeclaredMethod(Snippets.class, "linkNativeMethod", ClassMethodActor.class));
-        enterNative = MethodActor.fromJava(Classes.getDeclaredMethod(Snippets.class, "nativeCallPrologue"));
-        enterNativeForC = MethodActor.fromJava(Classes.getDeclaredMethod(Snippets.class, "nativeCallPrologueForC"));
+        link = MethodActor.fromJava(Classes.getDeclaredMethod(NativeFunction.class, "link"));
+        enterNative = MethodActor.fromJava(Classes.getDeclaredMethod(Snippets.class, "nativeCallPrologue", NativeFunction.class));
+        enterNativeForC = MethodActor.fromJava(Classes.getDeclaredMethod(Snippets.class, "nativeCallPrologueForC", NativeFunction.class));
         enterVM = MethodActor.fromJava(Classes.getDeclaredMethod(Snippets.class, "nativeCallEpilogue"));
         enterVMForC = MethodActor.fromJava(Classes.getDeclaredMethod(Snippets.class, "nativeCallEpilogueForC"));
     }
@@ -52,7 +53,7 @@ public class MaxRiSnippets implements RiSnippets {
     @Override
     public RiSnippetCall enterNative(RiMethod nativeMethod) {
         ClassMethodActor methodActor = (ClassMethodActor) nativeMethod;
-        return new RiSnippetCall(Bytecodes.INVOKESTATIC, methodActor.isCFunction() ? enterNativeForC : enterNative);
+        return new RiSnippetCall(Bytecodes.INVOKESTATIC, methodActor.isCFunction() ? enterNativeForC : enterNative, CiConstant.forObject(methodActor.nativeFunction));
     }
 
     @Override
@@ -64,9 +65,16 @@ public class MaxRiSnippets implements RiSnippets {
     @Override
     public RiSnippetCall link(RiMethod nativeMethod) {
         ClassMethodActor methodActor = (ClassMethodActor) nativeMethod;
-        RiSnippetCall call = new RiSnippetCall(Bytecodes.INVOKESTATIC, link, CiConstant.forObject(methodActor));
-        if (!MaxineVM.isHosted() && methodActor.nativeFunction.isLinked()) {
-            call.result = CiConstant.forWord(methodActor.nativeFunction.link().asAddress().toLong());
+        NativeFunction nativeFunction = methodActor.nativeFunction;
+        RiSnippetCall call = new RiSnippetCall(Bytecodes.INVOKEVIRTUAL, link, CiConstant.forObject(nativeFunction));
+        if (!isHosted()) {
+            // Link at compile time
+            call.result = CiConstant.forWord(nativeFunction.link().toLong());
+        } else {
+            // Cannot link at boot image time. This means native method stubs built into the
+            // image will be slightly slower. We cannot simply link all such native methods
+            // during VM startup as not all libraries containing the native methods will
+            // have been opened (e.g. the JDK native libs).
         }
         return call;
     }

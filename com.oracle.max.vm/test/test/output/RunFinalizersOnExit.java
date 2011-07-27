@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,28 +20,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele.debug.darwin;
-
-import com.sun.max.platform.*;
-import com.sun.max.program.*;
-import com.sun.max.tele.*;
-import com.sun.max.vm.hosted.*;
+package test.output;
 
 /**
+ * A simple test for {@link Runtime#runFinalizersOnExit(boolean)}.
  */
-public final class DarwinTeleVM extends TeleVM {
+public class RunFinalizersOnExit {
 
     @Override
-    protected DarwinTeleProcess createTeleProcess(String[] commandLineArguments) throws BootImageException {
-        return new DarwinTeleProcess(this, Platform.platform(), programFile(), commandLineArguments);
+    protected void finalize() throws Throwable {
+        super.finalize();
+        System.out.println("Called RunFinalizersOnExit.finalize()");
     }
 
-    public DarwinTeleVM(BootImage bootImage, Classpath sourcepath, String[] commandLineArguments) throws BootImageException {
-        super(bootImage, sourcepath, commandLineArguments);
-    }
-
-    @Override
-    protected DarwinTeleProcess attachToTeleProcess() throws BootImageException {
-        return new DarwinTeleProcess(this, Platform.platform(), programFile(), targetLocation().id);
+    @SuppressWarnings("all")
+    public static void main(String[] args) throws InterruptedException {
+        Runtime.runFinalizersOnExit(true);
+        new RunFinalizersOnExit();
+        System.out.println("Done.");
     }
 }

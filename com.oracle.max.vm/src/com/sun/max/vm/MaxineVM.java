@@ -44,6 +44,7 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -418,7 +419,7 @@ public final class MaxineVM {
      * @return 0 indicating initialization succeeded, non-0 if not
      */
     @VM_ENTRY_POINT
-    public static int run(Pointer etla, Pointer bootHeapRegionStart, Word nativeOpenDynamicLibrary, Word dlsym, Word dlerror, Pointer jniEnv, Pointer jmmInterface, int argc, Pointer argv) {
+    public static int run(Pointer etla, Pointer bootHeapRegionStart, Word dlopen, Word dlsym, Word dlerror, Pointer jniEnv, Pointer jmmInterface, int argc, Pointer argv) {
         Safepoint.setLatchRegister(etla);
 
         // This one field was not marked by the data prototype for relocation
@@ -427,7 +428,7 @@ public final class MaxineVM {
         Heap.bootHeapRegion.setStart(bootHeapRegionStart);
 
         // The dynamic linker must be initialized before linking critical native methods
-        DynamicLinker.initialize(nativeOpenDynamicLibrary, dlsym, dlerror);
+        DynamicLinker.initialize(dlopen, dlsym, dlerror);
 
         // Link the critical native methods:
         CriticalNativeMethod.linkAll();
@@ -554,14 +555,28 @@ public final class MaxineVM {
     }
 
     /**
-     * Application-requested exit.
-     * @param exitCode code to exit the VM process with.
-     * @param halt  true if this is a halt, not an exit.
+     * Low level VM exit. This method does not run any shutdown hooks or finalizers.
+     * This is where {@link Runtime#exit(int)} and {@link Runtime#halt(int)} bottom out.
+     *
+     * @param code exit code for the VM process
      */
-    public static void exit(int exitCode, boolean halt) {
+    public static void exit(int code) {
+
+        VMOptions.beforeExit();
+
+        // This prevents further thread creation
+        VmThreadMap.ACTIVE.setVMTerminating();
+        SignalDispatcher.terminate();
+
         // TODO: need to revisit this. Likely, we would want to bring all
         // threads to a safepoint before running the terminating phase.
         vmConfig().initializeSchemes(MaxineVM.Phase.TERMINATING);
-        native_exit(exitCode);
+        VmOperationThread.terminate();
+
+        // Drop back to PRIMORDIAL
+        MaxineVM vm = vm();
+        vm.phase = MaxineVM.Phase.PRIMORDIAL;
+
+        native_exit(code);
     }
 }

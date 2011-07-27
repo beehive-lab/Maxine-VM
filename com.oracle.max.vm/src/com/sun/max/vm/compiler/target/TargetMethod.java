@@ -577,7 +577,6 @@ public abstract class TargetMethod extends MemoryRegion {
         int numberOfSafepoints = ciTargetMethod.safepoints.size();
         int totalStopPositions = ciTargetMethod.directCalls.size() + numberOfIndirectCalls + numberOfSafepoints + adapterCount;
 
-
         int index = 0;
         int[] stopPositions = new int[totalStopPositions];
         Object[] directCallees = new Object[ciTargetMethod.directCalls.size() + adapterCount];
@@ -618,6 +617,10 @@ public abstract class TargetMethod extends MemoryRegion {
             debugInfos[index] = site.debugInfo;
             if (site.symbol != null) {
                 stopPositions[index] |= StopPositions.NATIVE_FUNCTION_CALL;
+
+                ClassMethodActor caller = (ClassMethodActor) site.debugInfo.codePos.method;
+                assert caller.isNative();
+                caller.nativeFunction.setCallSite(this, site.pcOffset);
             }
             index++;
         }
@@ -834,35 +837,6 @@ public abstract class TargetMethod extends MemoryRegion {
     public int[] bciToPosMap() {
         return null;
     }
-
-    /**
-     * Gets the position of the next call (direct or indirect) in this target method after a given position.
-     *
-     * @param pos the position from which to start searching
-     * @param nativeFunctionCall if {@code true}, then the search is refined to only consider
-     *            {@linkplain #isNativeFunctionCall(int) native function calls}.
-     *
-     * @return -1 if the search fails
-     */
-    public int findNextCall(int pos, boolean nativeFunctionCall) {
-        if (stopPositions == null || pos < 0 || pos > code.length) {
-            return -1;
-        }
-
-        int closestCallPos = Integer.MAX_VALUE;
-        final int numberOfCalls = numberOfDirectCalls() + numberOfIndirectCalls();
-        for (int stopIndex = 0; stopIndex < numberOfCalls; stopIndex++) {
-            final int callPosition = stopPosition(stopIndex);
-            if (callPosition > pos && callPosition < closestCallPos && (!nativeFunctionCall || StopPositions.isNativeFunctionCall(stopPositions, stopIndex))) {
-                closestCallPos = callPosition;
-            }
-        }
-        if (closestCallPos != Integer.MAX_VALUE) {
-            return closestCallPos;
-        }
-        return -1;
-    }
-
 
     /**
      * Gets the index of a stop position within this target method derived from a given instruction pointer. If the

@@ -405,7 +405,7 @@ function run_build() {
         projects_to_build="$(jmax projects)"
         build_native=true
     elif [[ "$projects_to_build" == *com.oracle.max.vm.native* ]]; then
-        $projects_to_build=${projects_to_build/com.oracle.max.vm.native/}
+        projects_to_build=${projects_to_build/com.oracle.max.vm.native/}
         build_native=true
     fi
 
