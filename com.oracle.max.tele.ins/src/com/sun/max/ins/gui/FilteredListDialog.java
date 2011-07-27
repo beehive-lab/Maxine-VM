@@ -38,7 +38,7 @@ import com.sun.max.ins.util.*;
  * An abstract class for a dialog that presents the user a list that can
  * be refined with a text field which is used as a pattern to filter the list.
  */
-public abstract class FilteredListDialog<Type> extends InspectorDialog {
+public abstract class FilteredListDialog<T> extends InspectorDialog {
 
     protected final boolean multiSelection;
     protected final JTextField textField = new JTextField();
@@ -46,12 +46,12 @@ public abstract class FilteredListDialog<Type> extends InspectorDialog {
     protected final DefaultListModel listModel = new DefaultListModel();
     protected final JList list = new JList(EMPTY_LIST_MODEL);
 
-    private List<Type> selectedObjects;
+    private List<T> selectedObjects;
 
     /**
      * The value representing that no object was selected.
      */
-    protected abstract Type noSelectedObject();
+    protected abstract T noSelectedObject();
 
     /**
      * Gets the object selected by the user.
@@ -59,11 +59,11 @@ public abstract class FilteredListDialog<Type> extends InspectorDialog {
      * @return the object selected by the user or the value returned by {@link #noSelectedObject()} if the dialog was canceled without a selection being made; if
      * multi-selection enabled, returns the first selection.
      */
-    public Type selectedObject() {
+    public T selectedObject() {
         return (selectedObjects != null && selectedObjects.size() > 0) ? Utils.first(selectedObjects) :  noSelectedObject();
     }
 
-    public List<Type> selectedObjects() {
+    public List<T> selectedObjects() {
         return selectedObjects;
     }
 
@@ -74,7 +74,7 @@ public abstract class FilteredListDialog<Type> extends InspectorDialog {
      * @param listItem
      *                the item currently selected when the user pressed the "Select" button that closed the dialog
      */
-    protected abstract Type convertSelectedItem(Object listItem);
+    protected abstract T convertSelectedItem(Object listItem);
 
     private final class SelectAction extends InspectorAction {
         private SelectAction() {
@@ -84,7 +84,7 @@ public abstract class FilteredListDialog<Type> extends InspectorDialog {
         @Override
         protected void procedure() {
             final int[] selectedIndices = list.getSelectedIndices();
-            selectedObjects = new LinkedList<Type>();
+            selectedObjects = new LinkedList<T>();
             for (int i = 0; i < selectedIndices.length; i++) {
                 selectedObjects.add(convertSelectedItem(listModel.get(selectedIndices[i])));
             }
