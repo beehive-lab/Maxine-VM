@@ -86,6 +86,7 @@ public class Package extends BootImagePackage {
     public void loading() {
         if (!customised) {
             HostedBootClassLoader.omitClass(JavaTypeDescriptor.getDescriptorForJavaString(File.class.getName() + "$LazyInitialization"));
+            HostedBootClassLoader.omitClass(JavaTypeDescriptor.getDescriptorForJavaString(File.class.getName() + "$TempDirectory"));
             HostedBootClassLoader.omitClass(JavaTypeDescriptor.getDescriptorForJavaString(java.util.Calendar.class.getName() + "$CalendarAccessControlContext"));
             final boolean restrictCorePackages = System.getProperty("max.allow.all.core.packages") == null;
             if (restrictCorePackages) {

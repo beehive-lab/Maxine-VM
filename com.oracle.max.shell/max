@@ -163,7 +163,7 @@ if [ -z "${JAVA_HOME}" ]; then
     elif [ -d /usr/jdk/latest ]; then
        export JAVA_HOME=/usr/jdk/latest
     else
-       echo "JAVA_HOME is not defined. It must point to a JDK 6 installation directory"
+       echo "JAVA_HOME is not defined. It must point to a JDK 6 or JDK 7 installation directory"
        exit 1;
     fi
 fi
@@ -192,15 +192,17 @@ fi
 test -n "${jvm}" || jvm="${JAVA_HOME}/bin/java"
 jvm_exe="$jvm $jvm_args"
 
-# Ensure that a JDK 6 is being used
+# Ensure that a JDK 6 or JDK 7 is being used
 # The definition f quote is for purely cosmetic reasons to avoid emacs thinking
 # the rest of the file is a string and messing up the syntax highlighting
 quote='"'
 quote='"'
 java_version="`$jvm -version 2>&1 | head -1 | cut -d $quote -f2`"
 if [[ "$java_version" != 1.6* ]]; then
-    echo "JAVA_HOME does not denote a JDK 6 installation: $java_version"
-    exit 255
+	if [[ "$java_version" != 1.7* ]]; then
+    	echo "JAVA_HOME does not denote a JDK 6 or JDK 7 installation: $java_version"
+    	exit 255
+    fi
 fi
 
 # The Maxine VM runs with assertions enabled by default
