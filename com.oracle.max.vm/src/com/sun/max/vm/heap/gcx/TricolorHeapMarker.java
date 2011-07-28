@@ -54,7 +54,7 @@ import com.sun.max.vm.runtime.*;
  * The following choices are considered:
  * - each bit corresponds to a single word of the heap; Every object is thus guaranteed two-bit; the mark bitmap consumes 16 Kb
  * per Mb of heap.
- * - each bit corresponds to two Words of the heap; Every object larger that 3 words occupies 2 chunks. With this design,
+ * - each bit corresponds to two words of the heap; Every object larger that 3 words occupies 2 chunks. With this design,
  * the smallest objects can only be allocated 1 bit. Since such objects are generally rare they can be treated
  * specially: e.g., padded to be associated with two bits, or segregated to be allocated in an area covered by a one bit
  * bitmap. Padding is simpler as it allows a unique bitmaps. Maxine's current 8-byte alignment raises another problem
@@ -67,8 +67,9 @@ import com.sun.max.vm.runtime.*;
  * / collector, which is responsible for aligning object and dealing with small object. For simplicity, we begin here
  * with the first alternative (1 bit per word).
  *
- * Finally, note that in both cases, the first bit of a color may be either an odd or an even bit, and a color may span
- * two bitmaps words. This complicates color search/update operation. A heap allocator may arrange for guaranteeing that
+ * Finally, note that when a bit of the color map covers X bytes and objects are X byte-aligned (for X = 8 or 16),
+ * the first bit of a color may be either an odd or an even bit, and a color may span
+ * two bitmap words. This complicates color search/update operation. A heap allocator may arrange for guaranteeing that
  * an object marks never span a bitmap word by padding a dead object before (Dead objects are special instance of Object
  * whose size is strictly 2 words, regardless of other rules for dealing with tiny objects).
  *

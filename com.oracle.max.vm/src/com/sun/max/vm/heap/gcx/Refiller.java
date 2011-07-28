@@ -25,7 +25,7 @@ package com.sun.max.vm.heap.gcx;
 import com.sun.max.unsafe.*;
 
 /**
- * Basic refiller for bump pointer allocators, that allocate a refill regardless of the space left in the allocator.
+ * Basic refiller for bump pointer allocators.
  */
 public abstract class Refiller {
 
@@ -45,5 +45,10 @@ public abstract class Refiller {
      * @param end
      */
     abstract void makeParsable(Pointer start, Pointer end);
+
+    /**
+     * Prepare for GC.
+     */
+    abstract void doBeforeGC();
 
 }

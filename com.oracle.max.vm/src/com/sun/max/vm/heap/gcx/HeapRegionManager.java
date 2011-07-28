@@ -170,6 +170,10 @@ public final class HeapRegionManager implements HeapAccountOwner {
                 HeapSchemeAdaptor.fillWithDeadObject(start, end);
                 rt.regionInfo(start).toIterable();
             }
+
+            @Override
+            void doBeforeGC() {
+            }
         });
     }
 
@@ -329,7 +333,6 @@ public final class HeapRegionManager implements HeapAccountOwner {
         HeapRegionConstants.validate();
         checkOutgoingReferences();
         FatalError.check(HeapRegionConstants.log2RegionSizeInBytes >= heapMarker.log2BitmapWord, "Region size too small for heap marker");
-
     }
 }
 
