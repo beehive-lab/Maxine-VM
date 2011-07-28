@@ -156,7 +156,7 @@ public interface HeapScheme extends VMScheme {
     boolean isPinned(Object object);
 
     /**
-     * Returns whether an address is anywhere in the heap.
+     * Returns whether an address is anywhere in the range of addresses managed by the heap scheme.
      */
     boolean contains(Address address);
 
