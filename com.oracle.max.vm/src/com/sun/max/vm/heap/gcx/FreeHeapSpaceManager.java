@@ -119,6 +119,10 @@ public final class FreeHeapSpaceManager extends Sweeper implements ResizableSpac
         void makeParsable(Pointer start, Pointer end) {
             HeapSchemeAdaptor.fillWithDeadObject(start, end);
         }
+
+        @Override
+        void doBeforeGC() {
+        }
     }
 
     /**

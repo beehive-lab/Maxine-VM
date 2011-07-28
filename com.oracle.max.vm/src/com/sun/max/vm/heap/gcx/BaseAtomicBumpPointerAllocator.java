@@ -155,6 +155,7 @@ public class BaseAtomicBumpPointerAllocator<T extends Refiller> {
         if (cell.lessThan(hardLimit)) {
             refillManager.makeParsable(cell.asPointer(), hardLimit);
         }
+        refillManager.doBeforeGC();
     }
 
     /**
