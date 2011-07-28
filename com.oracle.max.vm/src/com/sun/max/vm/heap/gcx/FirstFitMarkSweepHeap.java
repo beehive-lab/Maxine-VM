@@ -341,14 +341,16 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                 }
             }
             if (nextFreeChunkInRegion.isZero()) {
-                if (MaxineVM.isDebug() && !freeSpace.isZero()) {
+                if (!freeSpace.isZero()) {
+                    final boolean lockDisabledSafepoints = Log.lock();
                     Log.print("Region #");
                     Log.print(currentTLABAllocatingRegion);
                     Log.print(" has ");
                     Log.print(freeSpace.toInt());
                     Log.println(" free space but not free chunk!");
+                    Log.unlock(lockDisabledSafepoints);
+                    FatalError.unexpected("must not have any free space");
                 }
-                FatalError.check(freeSpace.isZero(), "must not have any free space");
                 if (!firstChunk.isZero()) {
                     // Return what we have for now as changeAllocatingRegion can cause a GC.
                     return firstChunk;
@@ -446,8 +448,14 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                 FatalError.check(regionStart(end).lessEqual(start), "space left must be in the same regions");
             }
             HeapSchemeAdaptor.fillWithDeadObject(start, end);
-            theRegionTable().regionInfo(start).toIterable();
-            currentTLABAllocatingRegion = INVALID_REGION_ID;
+        }
+
+        @Override
+        void doBeforeGC() {
+            if (currentTLABAllocatingRegion != INVALID_REGION_ID) {
+                theRegionTable().regionInfo(currentTLABAllocatingRegion).toIterable();
+                currentTLABAllocatingRegion = INVALID_REGION_ID;
+            }
             nextFreeChunkInRegion = Address.zero();
             freeSpace = Size.zero();
         }
@@ -457,19 +465,24 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         }
     }
 
+    private HeapRegionList tlabAllocationRegionList() {
+        return tlabAllocationRegions.isEmpty() ? allocationRegions : tlabAllocationRegions;
+    }
+
     HeapRegionInfo changeAllocatingRegion() {
         synchronized (heapLock()) {
             int gcCount = 0;
-            // No more free chunk in this region.
-            fromRegionID(currentTLABAllocatingRegion).toFullState();
+            if (currentTLABAllocatingRegion != INVALID_REGION_ID) {
+                // No more free chunk in this region.
+                fromRegionID(currentTLABAllocatingRegion).toFullState();
+            }
             do {
-                HeapRegionList regionList = tlabAllocationRegions.isEmpty() ? allocationRegions : tlabAllocationRegions;
-
-                currentTLABAllocatingRegion = regionList.removeHead();
+                currentTLABAllocatingRegion = tlabAllocationRegionList().removeHead();
                 if (currentTLABAllocatingRegion != INVALID_REGION_ID) {
                     final HeapRegionInfo regionInfo = fromRegionID(currentTLABAllocatingRegion);
                     final int numFreeBytes = regionInfo.isEmpty() ?  regionSizeInBytes : regionInfo.freeBytesInChunks();
                     if (MaxineVM.isDebug() && DebugMSE) {
+                        final boolean lockDisabledSafepoints = Log.lock();
                         Log.print("changeAllocatingRegion: ");
                         Log.print(currentTLABAllocatingRegion);
                         Log.print(" ( ");
@@ -477,6 +490,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                         Log.print(" => ");
                         Log.print(allocationRegionsFreeSpace.minus(numFreeBytes).toInt());
                         Log.println(")");
+                        Log.unlock(lockDisabledSafepoints);
                     }
                     allocationRegionsFreeSpace = allocationRegionsFreeSpace.minus(numFreeBytes);
                     regionInfo.toAllocatingState();
@@ -485,8 +499,6 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
 
                 if (MaxineVM.isDebug() && Heap.traceGC()) {
                     gcCount++;
-                    final boolean lockDisabledSafepoints = Log.lock();
-                    Log.unlock(lockDisabledSafepoints);
                     if (gcCount > 5) {
                         FatalError.unexpected("Suspiscious repeating GC calls detected");
                     }
@@ -525,11 +537,14 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                 }
                 if (spaceLeft.greaterEqual(minReclaimableSpace)) {
                     if (traceOverflowRefill) {
+                        final boolean lockDisabledSafepoints = Log.lock();
+                        Log.unlock(lockDisabledSafepoints);
                         Log.print("overflow allocator putback region #");
                         Log.print(currentOverflowAllocatingRegion);
                         Log.print(" in TLAB allocation list with ");
                         Log.print(spaceLeft.toInt());
                         Log.println(" bytes");
+                        Log.unlock(lockDisabledSafepoints);
                     }
                     overflowRefillFreeSpace = overflowRefillFreeSpace.plus(spaceLeft);
                     HeapFreeChunk.format(startOfSpaceLeft, spaceLeft);
@@ -539,8 +554,10 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                     tlabAllocationRegions.append(currentOverflowAllocatingRegion);
                 } else {
                     if (traceOverflowRefill) {
+                        final boolean lockDisabledSafepoints = Log.lock();
                         Log.print("overflow allocator full region #");
                         Log.println(currentOverflowAllocatingRegion);
+                        Log.unlock(lockDisabledSafepoints);
                     }
                    // Just make the space left parsable.
                     if (!spaceLeft.isZero()) {
@@ -580,8 +597,6 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
 
                 if (MaxineVM.isDebug() && Heap.traceGC()) {
                     gcCount++;
-                    final boolean lockDisabledSafepoints = Log.lock();
-                    Log.unlock(lockDisabledSafepoints);
                     if (gcCount > 5) {
                         FatalError.unexpected("Suspiscious repeating GC calls detected");
                     }
@@ -603,7 +618,10 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         @Override
         void makeParsable(Pointer start, Pointer end) {
             HeapSchemeAdaptor.fillWithDeadObject(start, end);
-            currentOverflowAllocatingRegion = INVALID_REGION_ID;
+        }
+
+        @Override
+        void doBeforeGC() {
         }
     }
 
@@ -729,9 +747,13 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
     }
 
     @Override
-    public void makeParsable() {
+    public void doBeforeGC() {
         overflowAllocator.makeParsable();
         tlabAllocator.makeParsable();
+    }
+
+    @Override
+    public void doAfterGC() {
     }
 
     public void mark(TricolorHeapMarker heapMarker) {
@@ -757,6 +779,8 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         if (MaxineVM.isDebug()) {
             allRegions.checkIsAddressOrdered();
         }
+        currentOverflowAllocatingRegion = INVALID_REGION_ID;
+        currentTLABAllocatingRegion = INVALID_REGION_ID;
         tlabAllocationRegions.clear();
         allocationRegions.clear();
         allocationRegionsFreeSpace = Size.zero();

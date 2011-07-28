@@ -238,7 +238,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
     }
 
     public boolean contains(Address address) {
-        return theHeap.contains(address);
+        return  theHeapRegionManager().contains(address);
     }
 
     public boolean isGcThread(Thread thread) {
@@ -286,6 +286,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
             // Before filling the current TLAB chunk, save link to next pointer.
             final Pointer nextChunk = tlabTop.getWord().asPointer();
             fillTLABWithDeadObject(tlabMark, tlabTop);
+            // FIXME: we shouldn't have to do the following. Heap walker should be able to walk over HeapFreeChunk.
             HeapFreeChunk.makeParsable(nextChunk);
         }
     }
@@ -357,6 +358,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
             HeapScheme.Inspect.notifyGCStarted();
 
             vmConfig().monitorScheme().beforeGarbageCollection();
+            theHeap.doBeforeGC();
 
             collectionCount++;
             if (MaxineVM.isDebug() && Heap.traceGCPhases()) {
@@ -366,7 +368,6 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
 
             theHeapRegionManager().checkOutgoingReferences();
 
-            theHeap.makeParsable();
             theHeap.mark(heapMarker);
             startTimer(reclaimTimer);
             theHeap.sweep(heapMarker);
@@ -387,6 +388,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
                 Log.print("End mark-sweep #");
                 Log.println(collectionCount);
             }
+            theHeap.doAfterGC();
             HeapScheme.Inspect.notifyGCCompleted();
             stopTimer(totalPauseTime);
 
