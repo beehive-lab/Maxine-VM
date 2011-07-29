@@ -78,7 +78,7 @@ public class C1XTest {
         "Compile class initializer (<clinit>) methods");
     private static final Option<Boolean> failFastOption = options.newBooleanOption("fail-fast", false,
         "Stop compilation upon the first bailout.");
-    private static final Option<Boolean> compileTargetMethod = options.newBooleanOption("compile-target-method", false,
+    private static final Option<Boolean> compileTargetMethod = options.newBooleanOption("compile-target-method", true,
         "Use the C1X compiler to compile all the way to a TargetMethod instance.");
     private static final Option<Integer> timingOption = options.newIntegerOption("timing", 0,
         "Perform the specified number of timing runs.");
