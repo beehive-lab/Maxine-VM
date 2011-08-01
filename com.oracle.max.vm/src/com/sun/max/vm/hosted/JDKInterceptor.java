@@ -35,6 +35,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jdk.JDK.ClassRef;
+import com.sun.max.vm.jdk.JDK.LazyClassRef;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
@@ -108,7 +109,7 @@ public final class JDKInterceptor {
     // Checkstyle: stop
     private static final Object[] interceptedFieldArray = {
         JDK.java_lang_ApplicationShutdownHooks,
-            new ValueField("hooks", ReferenceValue.from(new IdentityHashMap<Thread, Thread>())),
+            new ValueField("hooks", ReferenceValue.from(new IdentityHashMap<Thread, Thread>()), true),
         JDK.java_lang_Class,
             "cachedConstructor",
             "newInstanceCallerCache",
@@ -129,13 +130,13 @@ public final class JDKInterceptor {
             "classRedefinedCount",
             "lastRedefinedCount",
         JDK.java_lang_ClassLoader,
-            "bootstrapClassPath",
+            new ZeroField("bootstrapClassPath", false, false),
             "scl",
             "sclSet",
             "usr_paths",
             "sys_paths",
-            new ValueField("loadedLibraryNames", ReferenceValue.from(new Vector())),
-            new ValueField("systemNativeLibraries", ReferenceValue.from(systemNativeLibraries)),
+            new ValueField("loadedLibraryNames", ReferenceValue.from(new Vector()), true),
+            new ValueField("systemNativeLibraries", ReferenceValue.from(systemNativeLibraries), true),
         JDK.java_util_EnumMap,
             "entrySet",
         JDK.java_lang_reflect_Field,
@@ -157,24 +158,24 @@ public final class JDKInterceptor {
         JDK.java_lang_Shutdown,
             new NewShutdownHookList("hooks"),
         JDK.java_lang_System,
-            "security",
-            new ValueField("props", ReferenceValue.from(initialSystemProperties)),
+            new ZeroField("security", false, false),
+            new ValueField("props", ReferenceValue.from(initialSystemProperties), true),
         JDK.java_lang_ref_Reference,
             "discovered",
             "pending",
         JDK.java_lang_ref_Finalizer,
             "unfinalized",
-            new ValueField("queue", ReferenceValue.from(new ReferenceQueue())),
+            new ValueField("queue", ReferenceValue.from(new ReferenceQueue()), true),
         JDK.java_lang_Throwable,
-            "backtrace",
+            new ZeroField("backtrace", false, false),
         JDK.java_lang_Thread,
             "parkBlocker",
             "blocker",
             "threadLocals",
             "inheritableThreadLocals",
         JDK.java_lang_ProcessEnvironment,
-            new ZeroField("theEnvironment", true),
-            new ZeroField("theUnmodifiableEnvironment", true),
+            new ZeroField("theEnvironment", true, true),
+            new ZeroField("theUnmodifiableEnvironment", true, true),
         JDK.java_lang_Terminator,
             "handler",
         JDK.sun_misc_VM,
@@ -184,10 +185,10 @@ public final class JDKInterceptor {
         JDK.sun_reflect_ConstantPool,
             "constantPoolOop",
         JDK.sun_reflect_Reflection,
-            new ValueField("fieldFilterMap", ReferenceValue.from(new HashMap<Class, String[]>())),
-            new ValueField("methodFilterMap", ReferenceValue.from(new HashMap<Class, String[]>())),
+            new ValueField("fieldFilterMap", ReferenceValue.from(new HashMap<Class, String[]>()), false),
+            new ValueField("methodFilterMap", ReferenceValue.from(new HashMap<Class, String[]>()), false),
         JDK.sun_util_calendar_ZoneInfo,
-            new ZeroField("aliasTable", true),
+            new ZeroField("aliasTable", true, true),
         JDK.java_util_Random,
             new FieldOffsetRecomputation("seedOffset", "seed"),
         JDK.java_util_concurrent_ConcurrentSkipListSet,
@@ -232,13 +233,10 @@ public final class JDKInterceptor {
             new FieldOffsetRecomputation("valueOffset", "value"),
         JDK.java_util_concurrent_atomic_AtomicIntegerArray,
             new ArrayBaseOffsetRecomputation("base", int[].class),
-            new ArrayIndexScaleRecomputation("scale", int[].class),
         JDK.java_util_concurrent_atomic_AtomicLongArray,
             new ArrayBaseOffsetRecomputation("base", long[].class),
-            new ArrayIndexScaleRecomputation("scale", long[].class),
         JDK.java_util_concurrent_atomic_AtomicReferenceArray,
             new ArrayBaseOffsetRecomputation("base", Object[].class),
-            new ArrayIndexScaleRecomputation("scale", Object[].class),
         JDK.java_util_concurrent_atomic_AtomicReferenceFieldUpdater$AtomicReferenceFieldUpdaterImpl,
             new AtomicFieldUpdaterOffsetRecomputation("offset"),
         JDK.java_util_concurrent_atomic_AtomicIntegerFieldUpdater$AtomicIntegerFieldUpdaterImpl,
@@ -264,8 +262,24 @@ public final class JDKInterceptor {
             new FieldOffsetRecomputation("nextOffset", JDK.java_util_concurrent_locks_AbstractQueuedLongSynchronizer$Node, "next"),
         JDK.java_util_concurrent_locks_LockSupport,
             new FieldOffsetRecomputation("parkBlockerOffset", JDK.java_lang_Thread, "parkBlocker"),
+    };
 
-    // Definitions that were added in JDK 7
+    private static final Object[] interceptedFieldArrayJDK6 = {
+        JDK.java_util_concurrent_atomic_AtomicIntegerArray,
+            new ArrayIndexScaleRecomputation("scale", int[].class),
+        JDK.java_util_concurrent_atomic_AtomicLongArray,
+            new ArrayIndexScaleRecomputation("scale", long[].class),
+        JDK.java_util_concurrent_atomic_AtomicReferenceArray,
+            new ArrayIndexScaleRecomputation("scale", Object[].class),
+    };
+
+    private static final Object[] interceptedFieldArrayJDK7 = {
+        JDK.java_util_concurrent_atomic_AtomicIntegerArray,
+            new ArrayIndexScaleShiftRecomputation("shift", int[].class),
+        JDK.java_util_concurrent_atomic_AtomicLongArray,
+            new ArrayIndexScaleShiftRecomputation("shift", long[].class),
+        JDK.java_util_concurrent_atomic_AtomicReferenceArray,
+            new ArrayIndexScaleShiftRecomputation("shift", Object[].class),
         JDK.sun_misc_Unsafe,
             new ArrayBaseOffsetRecomputation("ARRAY_BOOLEAN_BASE_OFFSET", boolean[].class),
             new ArrayBaseOffsetRecomputation("ARRAY_BYTE_BASE_OFFSET", byte[].class),
@@ -287,7 +301,7 @@ public final class JDKInterceptor {
             new ArrayIndexScaleRecomputation("ARRAY_OBJECT_INDEX_SCALE", Object[].class),
         JDK.java_math_BigInteger,
             new FieldOffsetRecomputation("signumOffset", "signum"),
-            new FieldOffsetRecomputation("pairOffset", "pair"),
+            new FieldOffsetRecomputation("magOffset", "mag"),
         JDK.java_util_concurrent_ConcurrentHashMap,
             new ArrayBaseOffsetRecomputation("TBASE", Object[].class),
             new ArrayIndexScaleShiftRecomputation("TSHIFT", Object[].class),
@@ -328,7 +342,7 @@ public final class JDKInterceptor {
     };
     // Checkstyle: resume
 
-    private static final Map<String, Map<String, InterceptedField>> interceptedFieldMap = buildInterceptedFieldMap(interceptedFieldArray);
+    private static final Map<String, Map<String, InterceptedField>> interceptedFieldMap = buildInterceptedFieldMap();
 
     /**
      * Checks whether the specified field should be omitted.
@@ -366,23 +380,31 @@ public final class JDKInterceptor {
         return f != null && f.mutabilityOverride;
     }
 
-
+    private static Map<String, Map<String, InterceptedField>> buildInterceptedFieldMap() {
+        Map<String, Map<String, InterceptedField>> map = new HashMap<String, Map<String, InterceptedField>>();
+        fillInterceptedFieldMap(map, interceptedFieldArray);
+        if (JDK.JDK_VERSION == JDK.JDK_6) {
+            fillInterceptedFieldMap(map, interceptedFieldArrayJDK6);
+        }
+        if (JDK.JDK_VERSION == JDK.JDK_7) {
+            fillInterceptedFieldMap(map, interceptedFieldArrayJDK7);
+        }
+        return map;
+    }
     /**
      * Builds a map that stores the intercepted fields for each class.
      * @param specification an array of objects consisting of a ClassRef followed by a non-empty sequence of either
      * String objects or InterceptedField objects.
-     * @return a map from java classes to their intercepted fields
      */
-    private static Map<String, Map<String, InterceptedField>> buildInterceptedFieldMap(Object[] specification) {
-        final Map<String, Map<String, InterceptedField>> map = new HashMap<String, Map<String, InterceptedField>>();
+    private static void fillInterceptedFieldMap(Map<String, Map<String, InterceptedField>> map, Object[] specification) {
         int i = 0;
         for (; i < specification.length; i++) {
             final Object object = specification[i];
             if (object instanceof ClassRef) {
                 // we found a classref, add it and its intercepted fields to the map
-                ClassRef classRef = (ClassRef) object;
+                ClassRef holder = (ClassRef) object;
                 final Map<String, InterceptedField> fieldMap = new HashMap<String, InterceptedField>();
-                map.put(classRef.className(), fieldMap);
+                map.put(holder.className(), fieldMap);
 
                 // add all the subsequent field entries to the map
                 for (++i; i < specification.length; i++) {
@@ -392,20 +414,20 @@ public final class JDKInterceptor {
                         i--;
                         break;
                     } else if (field instanceof String) {
-                        interceptedField = new ZeroField((String) field, false);
+                        interceptedField = new ZeroField((String) field, false, true);
                     } else {
                         interceptedField = (InterceptedField) field;
                     }
                     if (interceptedField.classRef == null) {
-                        interceptedField.classRef = classRef;
+                        interceptedField.classRef = holder;
                     }
+                    interceptedField.verify(holder);
                     fieldMap.put(interceptedField.getName(), interceptedField);
                 }
             } else {
                 ProgramError.unexpected("format of intercepted field array is wrong");
             }
         }
-        return map;
     }
 
     /**
@@ -420,7 +442,9 @@ public final class JDKInterceptor {
             interceptedFieldMap.put(className, fieldMap);
         }
         Trace.line(2, "registering "  +  className + "." + fieldName + " for reset to default value");
-        fieldMap.put(fieldName, new ZeroField(fieldName, true));
+        ZeroField zeroField = new ZeroField(fieldName, true, true);
+        zeroField.verify(new LazyClassRef(className));
+        fieldMap.put(fieldName, zeroField);
     }
 
     private static Properties buildInitialSystemProperties() {
@@ -441,14 +465,16 @@ public final class JDKInterceptor {
      */
     public abstract static class InterceptedField {
         private final String name;
-        public ClassRef classRef;
+        protected ClassRef classRef;
+        private final boolean verifyFieldExists;
 
         public FieldActor fieldActor;
         private final boolean mutabilityOverride;
 
-        InterceptedField(String name, boolean makeNonFinal) {
+        InterceptedField(String name, boolean makeNonFinal, boolean verifyFieldExists) {
             this.mutabilityOverride = makeNonFinal;
             this.name = name;
+            this.verifyFieldExists = verifyFieldExists;
         }
 
         public String getName() {
@@ -471,6 +497,22 @@ public final class JDKInterceptor {
         boolean isMutable() {
             return !fieldActor.isConstant() || mutabilityOverride;
         }
+
+        protected void verify(ClassRef holder) {
+            if (verifyFieldExists) {
+                ensureFieldExists(holder, name);
+            }
+        }
+
+        protected static void ensureFieldExists(ClassRef holder, String fieldName) {
+            try {
+                holder.javaClass().getDeclaredField(fieldName);
+            } catch (NoSuchFieldException ex) {
+                // Some fields are hidden from reflection. In order to avoid false positives, these fields
+                // have to set the flag verifyFieldExists to false.
+                ProgramError.unexpected("Class " + holder.className() + " does not declare field " + fieldName);
+            }
+        }
     }
 
     /**
@@ -479,8 +521,8 @@ public final class JDKInterceptor {
      */
     private static class ValueField extends InterceptedField {
         private final Value value;
-        ValueField(String name, Value value) {
-            super(name, false);
+        ValueField(String name, Value value, boolean verifyFieldExists) {
+            super(name, false, verifyFieldExists);
             this.value = value;
         }
         @Override
@@ -494,8 +536,8 @@ public final class JDKInterceptor {
      * corresponding to the field's kind.
      */
     public static class ZeroField extends InterceptedField {
-        ZeroField(String name, boolean mutabilityOverride) {
-            super(name, mutabilityOverride);
+        ZeroField(String name, boolean mutabilityOverride, boolean verifyFieldExists) {
+            super(name, mutabilityOverride, verifyFieldExists);
         }
         @Override
         public Value getValue(Object object, FieldActor field) {
@@ -505,7 +547,7 @@ public final class JDKInterceptor {
 
     private static class AtomicFieldUpdaterOffsetRecomputation extends InterceptedField {
         AtomicFieldUpdaterOffsetRecomputation(String name) {
-            super(name, false);
+            super(name, false, true);
         }
         @Override
         public Value getValue(Object object, FieldActor fieldActor) {
@@ -545,7 +587,7 @@ public final class JDKInterceptor {
     private static class ExpiringCacheField extends InterceptedField {
         private final Map<Object, Object> newValues = new IdentityHashMap<Object, Object>();
         ExpiringCacheField(String name) {
-            super(name, false);
+            super(name, false, true);
         }
         @Override
         public Value getValue(Object object, FieldActor fieldActor) {
@@ -568,7 +610,7 @@ public final class JDKInterceptor {
             this(offsetFieldName, null, fieldName);
         }
         FieldOffsetRecomputation(String offsetFieldName, ClassRef classRef, String fieldName) {
-            super(offsetFieldName, false);
+            super(offsetFieldName, false, true);
             this.fieldName = fieldName;
             this.classRef = classRef;
         }
@@ -583,6 +625,12 @@ public final class JDKInterceptor {
                 throw ProgramError.unexpected(e);
             }
         }
+
+        @Override
+        protected void verify(ClassRef holder) {
+            super.verify(holder);
+            ensureFieldExists(classRef, fieldName);
+        }
     }
 
     /**
@@ -593,7 +641,7 @@ public final class JDKInterceptor {
     private static class ArrayBaseOffsetRecomputation extends InterceptedField {
         private final Class arrayClass;
         ArrayBaseOffsetRecomputation(String arrayBaseOffsetFieldName, Class arrayClass) {
-            super(arrayBaseOffsetFieldName, false);
+            super(arrayBaseOffsetFieldName, false, true);
             this.arrayClass = arrayClass;
         }
         @Override
@@ -610,7 +658,7 @@ public final class JDKInterceptor {
     private static class ArrayIndexScaleRecomputation extends InterceptedField {
         private final Class arrayClass;
         ArrayIndexScaleRecomputation(String arrayIndexScaleFieldName, Class arrayClass) {
-            super(arrayIndexScaleFieldName, false);
+            super(arrayIndexScaleFieldName, false, true);
             this.arrayClass = arrayClass;
         }
         @Override
@@ -646,7 +694,7 @@ public final class JDKInterceptor {
     private static class NewShutdownHookList extends InterceptedField {
         private Object result;
         NewShutdownHookList(String fieldName) {
-            super(fieldName, true);
+            super(fieldName, true, true);
         }
 
         @Override
