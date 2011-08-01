@@ -321,7 +321,6 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
 
         if (StackReferenceMapPreparer.VerifyRefMaps || TraceDeopt || DeoptimizeALot != 0) {
             StackReferenceMapPreparer.verifyReferenceMapsForThisThread();
-            System.gc();
         }
 
         TargetMethod tm = info.tm;
@@ -344,6 +343,7 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
         FrameAccess fa = new FrameAccess(csl, csa, sp, fp, info.callerSP, info.callerFP);
         CiDebugInfo debugInfo = tm.debugInfoAt(stopIndex, fa);
         CiFrame topFrame = debugInfo.frame();
+        FatalError.check(topFrame != null, "No frame info found at deopt site");
 
         if (TraceDeopt) {
             logFrames(topFrame, "values");
@@ -536,6 +536,10 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
             if (c.kind.isObject()) {
                 Object obj = c.asObject();
                 sp.writeWord(0, Reference.fromJava(obj).toOrigin());
+            } else if (c.kind.isLong()) {
+                sp.writeLong(0, c.asLong());
+            } else if (c.kind.isDouble()) {
+                sp.writeDouble(0, c.asDouble());
             } else {
                 sp.writeWord(0, Address.fromLong(c.asLong()));
             }
@@ -779,6 +783,27 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
             slots.add(slot);
             if (slotNames != null) {
                 slotNames.add(name);
+            }
+        }
+
+        /**
+         * Swap the top n slots with the n slots immediately below them.
+         */
+        public void swapTopSlots(int n) {
+            assert slots.size() >= 2 * n;
+            int top = slots.size() - 1;
+            if (n == 1) {
+                CiConstant tmp = slots.get(top);
+                slots.set(top, slots.get(top - 1));
+                slots.set(top - 1, tmp);
+            } else {
+                assert n == 2;
+                CiConstant tmp = slots.get(top);
+                CiConstant tmp2 = slots.get(top - 1);
+                slots.set(top, slots.get(top - 2));
+                slots.set(top - 1, slots.get(top - 3));
+                slots.set(top - 2, tmp);
+                slots.set(top - 3, tmp2);
             }
         }
 

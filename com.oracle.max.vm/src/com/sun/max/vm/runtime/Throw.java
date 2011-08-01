@@ -94,7 +94,7 @@ public final class Throw {
     /**
      * Unwinds the current thread's stack to the frame containing an exception handler (there is guaranteed to be one).
      *
-     * This method disables safepoints so that GC request (or any other VM operation) cannot interrupt
+     * This method disables safepoints so that a GC request (or any other VM operation) cannot interrupt
      * the unwinding process. Why? A {@linkplain VmThread#unwindingStackFrameWalker(Throwable) shared}
      * stack walker object is used for unwinding and stack reference map preparation.
      * Safepoints are re-enabled when the exception object is {@linkplain VmThread#loadExceptionForHandler() loaded}

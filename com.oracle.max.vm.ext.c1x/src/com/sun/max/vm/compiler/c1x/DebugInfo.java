@@ -484,6 +484,12 @@ public final class DebugInfo {
             if (value.kind.isObject()) {
                 Reference ref = fa.csa.readReference(offset);
                 value = CiConstant.forObject(ref.toJava());
+            } else if (value.kind.isLong()) {
+                long l = fa.csa.readLong(offset);
+                value = CiConstant.forLong(l);
+            } else if (value.kind.isDouble()) {
+                double d = fa.csa.readDouble(offset);
+                value = CiConstant.forDouble(d);
             } else {
                 Word w = fa.csa.readWord(offset);
                 value = CiConstant.forWord(w.asAddress().toLong());
@@ -494,6 +500,12 @@ public final class DebugInfo {
             if (value.kind.isObject()) {
                 Reference ref = base.readReference(ss.index() * Word.size());
                 value = CiConstant.forObject(ref.toJava());
+            } else if (value.kind.isLong()) {
+                long l = base.readLong(ss.index() * Word.size());
+                value = CiConstant.forLong(l);
+            } else if (value.kind.isDouble()) {
+                double d = base.readDouble(ss.index() * Word.size());
+                value = CiConstant.forDouble(d);
             } else {
                 Word w = base.readWord(ss.index() * Word.size());
                 value = CiConstant.forWord(w.asAddress().toLong());

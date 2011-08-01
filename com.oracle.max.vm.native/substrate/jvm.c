@@ -287,6 +287,12 @@ JVM_ActiveProcessorCount(void) {
     }
     // Otherwise return number of online cpus
     return online_cpus;
+#elif os_LINUX || os_DARWIN
+    // Linux doesn't yet have a (official) notion of processor sets,
+    // so just return the number of online processors.
+    int online_cpus = sysconf(_SC_NPROCESSORS_ONLN);
+    c_ASSERT(online_cpus > 0);
+    return online_cpus;
 #else
     UNIMPLEMENTED();
     return 0;

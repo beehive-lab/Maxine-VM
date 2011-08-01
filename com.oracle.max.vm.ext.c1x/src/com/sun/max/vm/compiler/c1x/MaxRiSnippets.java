@@ -69,7 +69,11 @@ public class MaxRiSnippets implements RiSnippets {
         RiSnippetCall call = new RiSnippetCall(Bytecodes.INVOKEVIRTUAL, link, CiConstant.forObject(nativeFunction));
         if (!isHosted()) {
             // Link at compile time
-            call.result = CiConstant.forWord(nativeFunction.link().toLong());
+            try {
+                call.result = CiConstant.forWord(nativeFunction.link().toLong());
+            } catch (UnsatisfiedLinkError e) {
+                // Simply retry linking when the code runs
+            }
         } else {
             // Cannot link at boot image time. This means native method stubs built into the
             // image will be slightly slower. We cannot simply link all such native methods

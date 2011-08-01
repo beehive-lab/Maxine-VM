@@ -675,8 +675,6 @@ public class Stubs {
      * Generates a stub to deoptimize an method upon returning to it.
      *
      * @param kind the return value kind
-     * @param fromCompilerStub specifies if the requested deopt stub is for use when patching a return from a
-     *            {@linkplain Stub.Type#CompilerStub compiler stub}. Compiler stubs return values via the stack.
      */
     @HOSTED_ONLY
     private Stub genDeoptStub(CiKind kind) {

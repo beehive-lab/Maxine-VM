@@ -103,14 +103,15 @@ public final class AMD64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitInfopoint(CiValue dst, LIRDebugInfo info, int opcode) {
-        tasm.recordSafepoint(codePos(), info);
         if (opcode == HERE) {
+            tasm.recordSafepoint(codePos(), info);
             masm.codeBuffer.putMark();
             masm.leaq(dst.asRegister(), new CiAddress(CiKind.Word, InstructionRelative.asValue(), 0));
         } else if (opcode == UNCOMMON_TRAP) {
             directCall(CiRuntimeCall.Deoptimize, info);
         } else {
             assert opcode == INFO;
+            tasm.recordSafepoint(codePos(), info);
         }
     }
 

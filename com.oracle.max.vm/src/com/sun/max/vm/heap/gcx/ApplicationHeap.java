@@ -32,7 +32,8 @@ public interface ApplicationHeap {
     Pointer allocateTLAB(Size size);
     boolean contains(Address address);
     boolean canSatisfyAllocation(Size size);
-    void makeParsable();
+    void doBeforeGC();
+    void doAfterGC();
     Size totalSpace();
     Size freeSpace();
     Size usedSpace();
