@@ -22,7 +22,7 @@
  */
 package com.sun.max.config.jdk;
 
-import java.io.File;
+import java.io.*;
 
 import com.sun.max.config.*;
 import com.sun.max.vm.*;
@@ -88,6 +88,11 @@ public class Package extends BootImagePackage {
             HostedBootClassLoader.omitClass(JavaTypeDescriptor.getDescriptorForJavaString(File.class.getName() + "$LazyInitialization"));
             HostedBootClassLoader.omitClass(JavaTypeDescriptor.getDescriptorForJavaString(File.class.getName() + "$TempDirectory"));
             HostedBootClassLoader.omitClass(JavaTypeDescriptor.getDescriptorForJavaString(java.util.Calendar.class.getName() + "$CalendarAccessControlContext"));
+
+            // This class uses Unsafe.objectFieldOffset() and stores the offsets in arrays.  We currently have no way in JDKInterceptor
+            // to rewrite these offsets to the correct Maxine layout specific values, so make sure this class is not part of the boot image.
+            HostedBootClassLoader.omitClass(JavaTypeDescriptor.getDescriptorForJavaString(ObjectStreamClass.class.getName() + "$FieldReflector"));
+
             final boolean restrictCorePackages = System.getProperty("max.allow.all.core.packages") == null;
             if (restrictCorePackages) {
                 // Don't want the static Map fields initialised
