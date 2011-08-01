@@ -264,6 +264,67 @@ public final class JDKInterceptor {
             new FieldOffsetRecomputation("nextOffset", JDK.java_util_concurrent_locks_AbstractQueuedLongSynchronizer$Node, "next"),
         JDK.java_util_concurrent_locks_LockSupport,
             new FieldOffsetRecomputation("parkBlockerOffset", JDK.java_lang_Thread, "parkBlocker"),
+
+    // Definitions that were added in JDK 7
+        JDK.sun_misc_Unsafe,
+            new ArrayBaseOffsetRecomputation("ARRAY_BOOLEAN_BASE_OFFSET", JDK.sun_misc_Unsafe, boolean[].class),
+            new ArrayBaseOffsetRecomputation("ARRAY_BYTE_BASE_OFFSET", JDK.sun_misc_Unsafe, byte[].class),
+            new ArrayBaseOffsetRecomputation("ARRAY_SHORT_BASE_OFFSET", JDK.sun_misc_Unsafe, short[].class),
+            new ArrayBaseOffsetRecomputation("ARRAY_CHAR_BASE_OFFSET", JDK.sun_misc_Unsafe, char[].class),
+            new ArrayBaseOffsetRecomputation("ARRAY_INT_BASE_OFFSET", JDK.sun_misc_Unsafe, int[].class),
+            new ArrayBaseOffsetRecomputation("ARRAY_LONG_BASE_OFFSET", JDK.sun_misc_Unsafe, long[].class),
+            new ArrayBaseOffsetRecomputation("ARRAY_FLOAT_BASE_OFFSET", JDK.sun_misc_Unsafe, float[].class),
+            new ArrayBaseOffsetRecomputation("ARRAY_DOUBLE_BASE_OFFSET", JDK.sun_misc_Unsafe, double[].class),
+            new ArrayBaseOffsetRecomputation("ARRAY_OBJECT_BASE_OFFSET", JDK.sun_misc_Unsafe, Object[].class),
+            new ArrayIndexScaleRecomputation("ARRAY_BOOLEAN_INDEX_SCALE", JDK.sun_misc_Unsafe, boolean[].class),
+            new ArrayIndexScaleRecomputation("ARRAY_BYTE_INDEX_SCALE", JDK.sun_misc_Unsafe, byte[].class),
+            new ArrayIndexScaleRecomputation("ARRAY_SHORT_INDEX_SCALE", JDK.sun_misc_Unsafe, short[].class),
+            new ArrayIndexScaleRecomputation("ARRAY_CHAR_INDEX_SCALE", JDK.sun_misc_Unsafe, char[].class),
+            new ArrayIndexScaleRecomputation("ARRAY_INT_INDEX_SCALE", JDK.sun_misc_Unsafe, int[].class),
+            new ArrayIndexScaleRecomputation("ARRAY_LONG_INDEX_SCALE", JDK.sun_misc_Unsafe, long[].class),
+            new ArrayIndexScaleRecomputation("ARRAY_FLOAT_INDEX_SCALE", JDK.sun_misc_Unsafe, float[].class),
+            new ArrayIndexScaleRecomputation("ARRAY_DOUBLE_INDEX_SCALE", JDK.sun_misc_Unsafe, double[].class),
+            new ArrayIndexScaleRecomputation("ARRAY_OBJECT_INDEX_SCALE", JDK.sun_misc_Unsafe, Object[].class),
+        JDK.java_math_BigInteger,
+            new FieldOffsetRecomputation("signumOffset", JDK.java_math_BigInteger, "signum"),
+            new FieldOffsetRecomputation("pairOffset", JDK.java_math_BigInteger, "pair"),
+        JDK.java_util_concurrent_ConcurrentHashMap,
+            new ArrayBaseOffsetRecomputation("TBASE", JDK.java_util_concurrent_ConcurrentHashMap, Object[].class),
+            new ArrayIndexScaleShiftRecomputation("TSHIFT", JDK.java_util_concurrent_ConcurrentHashMap, Object[].class),
+            new ArrayBaseOffsetRecomputation("SBASE", JDK.java_util_concurrent_ConcurrentHashMap, Object[].class),
+            new ArrayIndexScaleShiftRecomputation("SSHIFT", JDK.java_util_concurrent_ConcurrentHashMap, Object[].class),
+        JDK.java_util_concurrent_ConcurrentHashMap$HashEntry,
+            new FieldOffsetRecomputation("nextOffset", JDK.java_util_concurrent_ConcurrentHashMap$HashEntry, "next"),
+        JDK.java_util_concurrent_ForkJoinPool,
+            new ArrayBaseOffsetRecomputation("ABASE", JDK.java_util_concurrent_ForkJoinPool, Object[].class),
+            new ArrayIndexScaleShiftRecomputation("ASHIFT", JDK.java_util_concurrent_ForkJoinPool, Object[].class),
+            new FieldOffsetRecomputation("ctlOffset", JDK.java_util_concurrent_ForkJoinPool, "ctl"),
+            new FieldOffsetRecomputation("stealCountOffset", JDK.java_util_concurrent_ForkJoinPool, "stealCount"),
+            new FieldOffsetRecomputation("blockedCountOffset", JDK.java_util_concurrent_ForkJoinPool, "blockedCount"),
+            new FieldOffsetRecomputation("quiescerCountOffset", JDK.java_util_concurrent_ForkJoinPool, "quiescerCount"),
+            new FieldOffsetRecomputation("scanGuardOffset", JDK.java_util_concurrent_ForkJoinPool, "scanGuard"),
+            new FieldOffsetRecomputation("nextWorkerNumberOffset", JDK.java_util_concurrent_ForkJoinPool, "nextWorkerNumber"),
+        JDK.java_util_concurrent_ForkJoinWorkerThread,
+            new ArrayBaseOffsetRecomputation("ABASE", JDK.java_util_concurrent_ForkJoinWorkerThread, Object[].class),
+            new ArrayIndexScaleShiftRecomputation("ASHIFT", JDK.java_util_concurrent_ForkJoinWorkerThread, Object[].class),
+        JDK.java_util_concurrent_ForkJoinTask,
+            new FieldOffsetRecomputation("statusOffset", JDK.java_util_concurrent_ForkJoinTask, "status"),
+        JDK.java_util_concurrent_SynchronousQueue$TransferStack,
+            new FieldOffsetRecomputation("headOffset", JDK.java_util_concurrent_SynchronousQueue$TransferStack, "head"),
+        JDK.java_util_concurrent_SynchronousQueue$TransferStack$SNode,
+            new FieldOffsetRecomputation("matchOffset", JDK.java_util_concurrent_SynchronousQueue$TransferStack$SNode, "match"),
+            new FieldOffsetRecomputation("nextOffset", JDK.java_util_concurrent_SynchronousQueue$TransferStack$SNode, "next"),
+        JDK.java_util_concurrent_SynchronousQueue$TransferQueue,
+            new FieldOffsetRecomputation("headOffset", JDK.java_util_concurrent_SynchronousQueue$TransferQueue, "head"),
+            new FieldOffsetRecomputation("tailOffset", JDK.java_util_concurrent_SynchronousQueue$TransferQueue, "tail"),
+            new FieldOffsetRecomputation("cleanMeOffset", JDK.java_util_concurrent_SynchronousQueue$TransferQueue, "cleanMe"),
+        JDK.java_util_concurrent_SynchronousQueue$TransferQueue$QNode,
+            new FieldOffsetRecomputation("itemOffset", JDK.java_util_concurrent_SynchronousQueue$TransferQueue$QNode, "item"),
+            new FieldOffsetRecomputation("nextOffset", JDK.java_util_concurrent_SynchronousQueue$TransferQueue$QNode, "next"),
+        JDK.java_util_concurrent_atomic_AtomicStampedReference,
+            new FieldOffsetRecomputation("pairOffset", JDK.java_util_concurrent_atomic_AtomicStampedReference, "pair"),
+        JDK.java_util_concurrent_atomic_AtomicMarkableReference,
+            new FieldOffsetRecomputation("pairOffset", JDK.java_util_concurrent_atomic_AtomicMarkableReference, "pair"),
     };
     // Checkstyle: resume
 
@@ -280,20 +341,23 @@ public final class JDKInterceptor {
     }
 
     public static InterceptedField getInterceptedField(FieldActor fieldActor) {
-        final String className = fieldActor.holder().name.toString();
-        final Map<String, InterceptedField> map = interceptedFieldMap.get(className);
-        if (map != null) {
-            return map.get(fieldActor.name.toString());
-        }
-        return null;
+        return getInterceptedField(fieldActor.holder().name.toString(), fieldActor.name.toString());
     }
 
     public static InterceptedField getInterceptedField(Field field) {
-        final String className = field.getDeclaringClass().getName();
+        return getInterceptedField(field.getDeclaringClass().getName(), field.getName());
+    }
+
+    private static InterceptedField getInterceptedField(String className, String fieldName) {
         final Map<String, InterceptedField> map = interceptedFieldMap.get(className);
         if (map != null) {
-            return map.get(field.getName());
+            return map.get(fieldName);
         }
+
+        if (UnsafeUsageChecker.isClassUsingUnsafe(className)) {
+            ProgramError.unexpected("class is using Unsafe operations to get field or array offsets, but no field interceptor present: " + className);
+        }
+
         return null;
     }
 
@@ -316,9 +380,9 @@ public final class JDKInterceptor {
             final Object object = specification[i];
             if (object instanceof ClassRef) {
                 // we found a classref, add it and its intercepted fields to the map
-                final Class javaClass = ((ClassRef) object).javaClass();
+                final String className = ((ClassRef) object).className();
                 final Map<String, InterceptedField> fieldMap = new HashMap<String, InterceptedField>();
-                map.put(javaClass.getName(), fieldMap);
+                map.put(className, fieldMap);
 
                 // add all the subsequent field entries to the map
                 for (++i; i < specification.length; i++) {
@@ -556,6 +620,26 @@ public final class JDKInterceptor {
         }
     }
 
+    /**
+     * An intercepted field whose boot image value is the scale factor for addressing elements in an array,
+     * converted to be useful in a shift operation using the log2.
+     * This facility is required to fix up field values obtained via {@link Unsafe#arrayIndexScale(Class)}.
+     */
+    private static class ArrayIndexScaleShiftRecomputation extends ArrayIndexScaleRecomputation {
+        ArrayIndexScaleShiftRecomputation(String arrayIndexScaleFieldName, ClassRef classRef, Class arrayClass) {
+            super(arrayIndexScaleFieldName, classRef, arrayClass);
+        }
+        @Override
+        public Value getValue(Object object, FieldActor fieldActor) {
+            int scale = super.getValue(object, fieldActor).asInt();
+
+            // The following code is taken from the static initializer of ConcurrentHashMap in JDK 7
+            if ((scale & (scale - 1)) != 0) {
+                throw new Error("data type scale not a power of two");
+            }
+            return IntValue.from(31 - Integer.numberOfLeadingZeros(scale));
+        }
+    }
     /**
      * At some point the JDK changed java.lang.Shutdown:hooks from type ArrayList to a Runnable[].
      * Detect which is the case and reallocate as necessary.
