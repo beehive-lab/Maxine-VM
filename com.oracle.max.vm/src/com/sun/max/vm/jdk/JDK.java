@@ -24,6 +24,7 @@ package com.sun.max.vm.jdk;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
+import com.sun.max.program.*;
 import com.sun.max.vm.actor.holder.*;
 
 /**
@@ -212,6 +213,34 @@ public class JDK {
         @Override
         public final Class javaClass() {
             return Classes.forName(className);
+        }
+    }
+
+    /**
+     * Version number of the JDK.
+     */
+    public static final int JDK_VERSION;
+
+    /**
+     * Value for {@linkplain JDK_VERSION} for JDK 6.
+     */
+    public static final int JDK_6 = 6;
+
+    /**
+     * Value for {@linkplain JDK_VERSION} for JDK 7.
+     */
+    public static final int JDK_7 = 7;
+
+    static {
+        String version = System.getProperty("java.specification.version");
+
+        if ("1.6".equals(version)) {
+            JDK_VERSION = JDK_6;
+        } else if ("1.7".equals(version)) {
+            JDK_VERSION = JDK_7;
+        } else {
+            JDK_VERSION = -1;
+            ProgramError.unexpected("Unknown java version number: " + version);
         }
     }
 }

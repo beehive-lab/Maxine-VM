@@ -53,6 +53,7 @@ public class UnsafeUsageChecker {
      * Classes that have a call to one of the checked methods, but were inspected to not store any offsets in fields.
      */
     private static final Set<String> whitelist = new HashSet<String>(Arrays.asList(new String[] {
+        JDK.sun_misc_Unsafe.className(),
         JDK.java_util_concurrent_SynchronousQueue.className(),
     }));
 
