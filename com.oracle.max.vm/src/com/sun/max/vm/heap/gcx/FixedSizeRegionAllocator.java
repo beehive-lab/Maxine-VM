@@ -396,7 +396,11 @@ public class FixedSizeRegionAllocator {
 
     private boolean isValidCommittedRange(int firstRegionId, int numRegions) {
         final int end = firstRegionId + numRegions;
-        return firstRegionId >= residentRegions && end <= committed.numBits() && committed.numClearBitsAt(firstRegionId, end) == numRegions;
+        return firstRegionId >= residentRegions && end <= committed.numBits() && committed.numClearBitsAt(firstRegionId, end) == 0;
+    }
+
+    boolean isValidCommittedRegion(int regionId) {
+        return regionId >= residentRegions && regionId <= committed.numBits() && committed.isSet(regionId);
     }
 
     synchronized boolean free(int firstRegionId, int numRegions) {

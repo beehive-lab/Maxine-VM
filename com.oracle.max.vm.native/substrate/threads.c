@@ -209,26 +209,6 @@ void *thread_self() {
     return (void *) thread_current();
 }
 
-static int thread_join(Thread thread) {
-    int error;
-#if (os_DARWIN || os_LINUX)
-    int status;
-    error = pthread_join(thread, (void **) &status);
-#elif os_SOLARIS
-    void *status;
-    error = thr_join(thread, NULL, &status);
-#elif os_MAXVE
-    error = maxve_thread_join(thread);
-#else
-    c_UNIMPLEMENTED();
-#endif
-
-    if (error != 0) {
-        log_println("Joining thread %p with thread %p failed (%s %d)", thread_current(), thread, strerror(error), error);
-    }
-    return error;
-}
-
 /**
  * The start routine called by the native threading library once the new thread starts.
  *
@@ -461,29 +441,6 @@ void nativeSetGlobalThreadLock(Mutex mutex) {
  */
 Address nativeThreadCreate(jint id, Size stackSize, jint priority) {
     return (Address) thread_create(id, stackSize, priority);
-}
-
-/*
- * Join a thread.
- * @C_FUNCTION - called from Java
- */
-jboolean nonJniNativeJoin(Address thread) {
-#if log_THREADS
-    log_println("BEGIN nativeJoin: %p", thread);
-#endif
-    if (thread == 0L) {
-        return false;
-    }
-    jboolean result = thread_join((Thread) thread) == 0;
-#if log_THREADS
-    log_println("END nativeJoin: %p", thread);
-#endif
-    return result;
-}
-
-JNIEXPORT jboolean JNICALL
-Java_com_sun_max_vm_thread_VmThread_nativeJoin(JNIEnv *env, jclass c, Address thread) {
-	return nonJniNativeJoin(thread);
 }
 
 JNIEXPORT void JNICALL

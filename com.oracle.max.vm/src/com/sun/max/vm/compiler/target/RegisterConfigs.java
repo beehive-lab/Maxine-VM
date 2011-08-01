@@ -137,6 +137,16 @@ public class RegisterConfigs {
                     xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7
                 };
 
+                // A call to the runtime may change the state of the safepoint latch
+                // and so a compiler stub must leave the latch register alone
+                CiRegister[] allRegistersExceptLatch = {
+                    rax,  rcx,  rdx,   rbx,   rsp,   rbp,   rsi,   rdi,
+                    r8,   r9,   r10,   r11,   r12,   r13, /*r14,*/ r15,
+                    xmm0, xmm1, xmm2,  xmm3,  xmm4,  xmm5,  xmm6,  xmm7,
+                    xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15
+                };
+
+
                 HashMap<Integer, CiRegister> roleMap = new HashMap<Integer, CiRegister>();
                 roleMap.put(CPU_STACK_POINTER.ordinal(), rsp);
                 roleMap.put(CPU_FRAME_POINTER.ordinal(), rbp);
@@ -175,7 +185,7 @@ public class RegisterConfigs {
 
                 setNonZero(standard.getAttributesMap(), r14, rsp);
 
-                CiRegisterConfig compilerStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, allRegisters));
+                CiRegisterConfig compilerStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, allRegistersExceptLatch));
                 CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, allRegisters));
                 CiRegisterConfig trapStub = new CiRegisterConfig(standard, AMD64TrapFrameAccess.CSL);
                 CiRegisterConfig trampoline = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8,

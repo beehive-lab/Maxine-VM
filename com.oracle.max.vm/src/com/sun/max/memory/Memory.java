@@ -124,7 +124,7 @@ public final class Memory {
     public static void clearWords(Pointer start, int length) {
         FatalError.check(start.isWordAligned(), "Can only zero word-aligned region");
         for (int i = 0; i < length; i++) {
-            start.asPointer().setWord(i, Address.zero());
+            start.setWord(i, Address.zero());
         }
     }
 

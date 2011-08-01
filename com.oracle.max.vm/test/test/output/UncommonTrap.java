@@ -28,20 +28,28 @@ import com.sun.cri.bytecode.Bytecodes.Infopoints;
 
 /**
  * Simple test for uncommon trap support.
- * On Maxine, the -XX:+TraceDeopt flag will force a GC during deopt which should
- * force the saved object registers to be updated.
  */
 public class UncommonTrap {
-    public static void main(String[] args) {
-        System.out.println("result1: " + Arrays.toString(values(false)));
-        for (int i = 0; i < 100000; i++) {
-            values(true);
+
+    private static boolean Z = true;
+    private static byte B = 3;
+    private static char C = '5';
+    private static short S = 7;
+    private static int I = 9;
+    private static float F = Float.MAX_VALUE;
+    private static long L = 13L;
+    private static double D = Double.MIN_NORMAL;
+
+    public static void main(String[] args) throws InterruptedException {
+        System.out.println("result1: " + Arrays.toString(values(L, D, Z, B, C, S, I, F, false)));
+        for (int i = 0; i < 10000000; i++) {
+            values(L, D, Z, B, C, S, I, F, true);
         }
         // By now 'values()' should have been recompiled.
-        System.out.println("result2: " + Arrays.toString(values(false)));
+        System.out.println("result2: " + Arrays.toString(values(L, D, Z, B, C, S, I, F, false)));
     }
 
-    private static Object[] values(boolean warmup) {
+    private static Object[] values(long l, double d, boolean z, byte b, char c, short s, int i, float f, boolean warmup) {
         if (warmup) {
             return null;
         }
@@ -55,8 +63,14 @@ public class UncommonTrap {
         Object o8 = new String("obj8");
         Object o9 = new String("obj9");
 
+        printParams(l, d, z, b, c, s, i, f);
         Infopoints.uncommonTrap();
+        printParams(l, d, z, b, c, s, i, f);
 
         return new Object[] {o1, o2, o3, o4, o5, o6, o7, o8, o9};
+    }
+
+    private static void printParams(long l, double d, boolean z, byte b, char c, short s, int i, float f) {
+        System.out.println("z=" + z + ", b=" + b + ",c=" + c + ", s=" + s + ", i=" + i + ", f=" + f + ", l=" + l + ", d=" + d);
     }
 }
