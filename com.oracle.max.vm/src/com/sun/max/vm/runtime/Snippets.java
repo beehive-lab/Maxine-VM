@@ -69,7 +69,7 @@ public class Snippets {
     public static Object createTupleOrHybrid(ClassActor classActor) {
         if (MaxineVM.isHosted()) {
             try {
-                return Objects.allocateInstance(classActor.toJava());
+                return ObjectUtils.allocateInstance(classActor.toJava());
             } catch (InstantiationException instantiationException) {
                 throw ProgramError.unexpected(instantiationException);
             }

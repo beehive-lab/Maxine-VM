@@ -164,7 +164,7 @@ if [ -z "${JAVA_HOME}" ]; then
     elif [ -d /usr/jdk/latest ]; then
        export JAVA_HOME=/usr/jdk/latest
     else
-       echo "JAVA_HOME is not defined. It must point to a JDK 6 installation directory"
+       echo "JAVA_HOME is not defined. It must point to a JDK 6 or JDK 7 installation directory"
        exit 1;
     fi
 fi
@@ -193,15 +193,17 @@ fi
 test -n "${jvm}" || jvm="${JAVA_HOME}/bin/java"
 jvm_exe="$jvm $jvm_args"
 
-# Ensure that a JDK 6 is being used
+# Ensure that a JDK 6 or JDK 7 is being used
 # The definition f quote is for purely cosmetic reasons to avoid emacs thinking
 # the rest of the file is a string and messing up the syntax highlighting
 quote='"'
 quote='"'
 java_version="`$jvm -version 2>&1 | head -1 | cut -d $quote -f2`"
 if [[ "$java_version" != 1.6* ]]; then
-    echo "JAVA_HOME does not denote a JDK 6 installation: $java_version"
-    exit 255
+	if [[ "$java_version" != 1.7* ]]; then
+    	echo "JAVA_HOME does not denote a JDK 6 or JDK 7 installation: $java_version"
+    	exit 255
+    fi
 fi
 
 # The Maxine VM runs with assertions enabled by default
@@ -443,11 +445,11 @@ function run_build() {
             javac_input=/tmp/javacfiles.txt.$$
             find . -name *.java | grep -v 'package-info.java' >$javac_input
 	        echo "Compiling Java sources in ${source_dir}..."
-                run ${javac} -source 1.6 -g -J-Xmx1g -classpath $(jmax classpath $project) -d ${project_dest} @$javac_input 2>&1 | \
+                run ${javac} -g -J-Xmx1g -classpath $(jmax classpath $project) -d ${project_dest} @$javac_input 2>&1 | \
                    awk ' BEGIN                    { s=0; c=-1}
-                         /is Sun proprietary API/ { s++; c=2; }
+                         /proprietary API/        { s++; c=2; }
                                                   { if (c-- >= 0) next; print; }
-                         END                      { if (s > 0) print "Suppressed " s " warnings about use of Sun implementation classes." }'
+                         END                      { if (s > 0) print "Suppressed " s " warnings about use of proprietary implementation classes." }'
 
             result=${PIPESTATUS[0]}
             if [ $result -eq 0 ]; then
@@ -733,7 +735,7 @@ function run_javadoc() {
     done
 
     echo "Running javadoc over Java sources..."
-    run ${javadoc} -quiet -source 1.6 -J-Xmx1g \
+    run ${javadoc} -quiet -J-Xmx1g \
         -classpath $(jmax classpath) \
         -sourcepath $source_path \
         -d $javadoc_output_dir \

@@ -62,12 +62,13 @@ final class JDK_java_lang_reflect_Constructor {
      * Gets the declared annotations of this constructor.
      * @return a map from this class to its declared annotations.
      */
+    @SuppressWarnings({ "cast", "unchecked"})
     @SUBSTITUTE
     private synchronized Map<Class, Annotation> declaredAnnotations() {
         final MethodActor methodActor = thisMethodActor();
         // in java.lang.reflect.Method.declaredAnnotations, the result is cached. Not sure how to do that using substitution.
-        return AnnotationParser.parseAnnotations(methodActor.runtimeVisibleAnnotationsBytes(), new ConstantPoolAdapter(methodActor.holder().constantPool()), methodActor.holder().toJava());
 
+        // JDK 7 uses the method signature Map<Class<? extends Annotation>, Annotation>. In order to be compatible with both JDK 6 and JDK 7, use the casts below
+        return (Map<Class, Annotation>) ((Object) AnnotationParser.parseAnnotations(methodActor.runtimeVisibleAnnotationsBytes(), new ConstantPoolAdapter(methodActor.holder().constantPool()), methodActor.holder().toJava()));
     }
-
 }
