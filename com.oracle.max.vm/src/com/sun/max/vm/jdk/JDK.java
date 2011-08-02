@@ -125,6 +125,7 @@ public class JDK {
     public static final ClassRef sun_misc_Version                    = new ClassRef(sun.misc.Version.class);
     public static final ClassRef sun_misc_SharedSecrets              = new ClassRef(sun.misc.SharedSecrets.class);
     public static final ClassRef sun_misc_Unsafe                     = new ClassRef(sun.misc.Unsafe.class);
+    public static final ClassRef sun_misc_PerfCounter                = new LazyClassRef("sun.misc.PerfCounter");
     public static final ClassRef sun_util_calendar_ZoneInfo              = new ClassRef(sun.util.calendar.ZoneInfo.class);
 
     public static final ClassRef sun_reflect_annotation_AnnotationParser    = new ClassRef(sun.reflect.annotation.AnnotationParser.class);
