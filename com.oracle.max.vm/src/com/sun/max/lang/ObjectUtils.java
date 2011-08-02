@@ -32,9 +32,9 @@ import com.sun.max.program.*;
 /**
  * Basic generic utilities for objects.
  */
-public final class Objects {
+public final class ObjectUtils {
 
-    private Objects() {
+    private ObjectUtils() {
     }
 
     /**

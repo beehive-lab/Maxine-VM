@@ -31,7 +31,9 @@ import java.util.regex.*;
  * core Maxine directory as well as from the directories specified by
  * the "extra_projects_dirs" environment variable.
  */
+// Checkstyle: off
 public class jmax {
+// Checkstyle: on
 
     /**
      * Handles commands sent by the max script.
@@ -196,7 +198,7 @@ public class jmax {
 
         HashMap<String, String> projectNames = new HashMap<String, String>();
         HashMap<String, String> libNames = new HashMap<String, String>();
-        for (Enumeration<?> e = props.propertyNames(); e.hasMoreElements(); ) {
+        for (Enumeration<?> e = props.propertyNames(); e.hasMoreElements();) {
             String propName = (String) e.nextElement();
             HashMap<String, String> names;
             int nameStart;
@@ -479,7 +481,9 @@ public class jmax {
         if (list.isEmpty()) {
             return new String[0];
         }
+        // Checkstyle: off
         return list.split("\\s*[ ,]\\s*");
+        // Checkstyle: on
     }
 
     static byte[] readFile(File file) {
@@ -809,7 +813,9 @@ public class jmax {
         }
     }
 
+    // Checkstyle: off
     static class org_eclipse_jdt_ui_prefs {
+    // Checkstyle: on
         static final String[] lines = {
             "cleanup.add_default_serial_version_id=false",
             "cleanup.add_generated_serial_version_id=false",
@@ -935,7 +941,9 @@ public class jmax {
         };
     }
 
+    // Checkstyle: off
     static class org_eclipse_jdt_core_prefs {
+    // Checkstyle: on
         static final String[] lines = {
             "eclipse.preferences.version=1",
             "org.eclipse.jdt.core.builder.cleanOutputFolder=clean",
@@ -1307,7 +1315,7 @@ public class jmax {
             "org.eclipse.jdt.core.formatter.tabulation.size=4",
             "org.eclipse.jdt.core.formatter.use_tabs_only_for_leading_indentations=false",
             "org.eclipse.jdt.core.formatter.wrap_before_binary_operator=false",
-            "org.eclipse.jdt.core.incompatibleJDKLevel=error",
+            "org.eclipse.jdt.core.incompatibleJDKLevel=ignore",
             "org.eclipse.jdt.core.incompleteClasspath=error"
         };
     }

@@ -51,6 +51,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.ClassfileWriter.MaxineFlags;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.instrument.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.type.ClassRegistry.Property;
@@ -844,6 +845,10 @@ public final class ClassfileReader {
                 }
 
                 if (MaxineVM.isHosted()) {
+                    // This must be called before clinit methods are filtered, since we especially want to find
+                    // usages of the Unsafe class in static initializers that are not re-executed at run time.
+                    UnsafeUsageChecker.methodLoadedHook(classDescriptor, name, codeAttribute);
+
                     if (isClinit) {
                         // Class initializer's for all boot image classes are run while bootstrapping and do not need to be in the boot image.
                         // The "max.loader.preserveClinitMethods" system property can be used to override this default behaviour.
