@@ -97,7 +97,7 @@ final class TeleSemiSpaceHeapScheme extends AbstractTeleVMHolder implements Tele
 
             public String terseInfo() {
                 // Provide text to be displayed in display cell
-                return "*";
+                return "";
             }
 
             public String shortDescription() {
