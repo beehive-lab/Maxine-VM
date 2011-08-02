@@ -25,6 +25,7 @@ package com.sun.max.vm.hosted;
 import java.io.*;
 import java.lang.ref.*;
 import java.lang.reflect.*;
+import java.nio.*;
 import java.util.*;
 
 import sun.misc.*;
@@ -339,6 +340,8 @@ public final class JDKInterceptor {
             new FieldOffsetRecomputation("pairOffset", "pair"),
         JDK.java_util_concurrent_atomic_AtomicMarkableReference,
             new FieldOffsetRecomputation("pairOffset", "pair"),
+        JDK.sun_misc_PerfCounter,
+            new ValueField("lb", ReferenceValue.from(LongBuffer.allocate(1)), true),
     };
     // Checkstyle: resume
 
