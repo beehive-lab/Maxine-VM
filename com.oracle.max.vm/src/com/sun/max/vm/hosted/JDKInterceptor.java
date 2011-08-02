@@ -403,8 +403,11 @@ public final class JDKInterceptor {
             if (object instanceof ClassRef) {
                 // we found a classref, add it and its intercepted fields to the map
                 ClassRef holder = (ClassRef) object;
-                final Map<String, InterceptedField> fieldMap = new HashMap<String, InterceptedField>();
-                map.put(holder.className(), fieldMap);
+                Map<String, InterceptedField> fieldMap = map.get(holder.className());
+                if (fieldMap == null) {
+                    fieldMap = new HashMap<String, InterceptedField>();
+                    map.put(holder.className(), fieldMap);
+                }
 
                 // add all the subsequent field entries to the map
                 for (++i; i < specification.length; i++) {
