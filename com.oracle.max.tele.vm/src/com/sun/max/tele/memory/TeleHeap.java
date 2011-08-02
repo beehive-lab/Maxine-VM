@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele;
+package com.sun.max.tele.memory;
 
 import java.io.*;
 import java.math.*;
@@ -29,7 +29,7 @@ import java.util.*;
 
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.memory.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.object.TeleObjectFactory.ClassCount;
@@ -44,20 +44,20 @@ import com.sun.max.vm.tele.*;
 
 /**
  * Singleton cache of information about the heap in the VM.
- *<br>
+ * <p>
  * Initialization between this class and {@link TeleClassRegistry} are mutually
  * dependent.  The cycle is broken by creating this class in a partially initialized
  * state that only considers the boot heap region; this class is only made fully functional
  * with a call to {@link #initialize()}, which requires that {@link TeleClassRegistry} be
  * fully initialized.
- * <br>
+ * <p>
  *
  * Interesting heap state includes the list of memory regions allocated.
- * <br>
+ * <p>
  * This class also provides access to a special root table in the VM, active
  * only when being inspected.  The root table allows inspection references
  * to track object locations when they are relocated by GC.
- * <br>
+ * <p>
  * This class needs to be specialized by a helper class that
  * implements the interface {@link TeleHeapScheme}, typically
  * a class that contains knowledge of the heap implementation
@@ -68,7 +68,7 @@ import com.sun.max.vm.tele.*;
  * @see HeapScheme
  * @see TeleHeapScheme
  */
-public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache, MaxHeap, TeleHeapScheme {
+public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache, MaxHeap {
      /**
      *
      */
@@ -111,28 +111,28 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
     /**
      * Returns the singleton manager of cached information about the heap in the VM,
      * specialized for the particular implementation of {@link HeapScheme} in the VM.
-     * <br>
+     * <p>
      * This manager is not fully functional until after a call to {@link #initialize()}.
      * However, {@link #initialize(long)} must be called only
      * after the {@link TeleClassRegistry} is fully initialized; otherwise, a circular
      * dependency will cause breakage.
      */
-    public static TeleHeap make(TeleVM teleVM) {
+    public static TeleHeap make(TeleVM vm) {
         // TODO (mlvdv) Replace this hard-wired GC-specific dispatch with something more sensible.
         if (teleHeap ==  null) {
-            final String heapSchemeName = teleVM.heapScheme().name();
+            final String heapSchemeName = vm.heapScheme().name();
             TeleHeapScheme teleHeapScheme = null;
             if (heapSchemeName.equals("SemiSpaceHeapScheme")) {
-                teleHeapScheme = new TeleSemiSpaceHeapScheme(teleVM);
+                teleHeapScheme = new TeleSemiSpaceHeapScheme(vm);
             } else if (heapSchemeName.equals("MSHeapScheme")) {
-                teleHeapScheme = new TeleMSHeapScheme(teleVM);
+                teleHeapScheme = new TeleMSHeapScheme(vm);
             } else if (heapSchemeName.equals("MSEHeapScheme")) {
-                teleHeapScheme = new TeleMSEHeapScheme(teleVM);
+                teleHeapScheme = new TeleMSEHeapScheme(vm);
             } else {
-                teleHeapScheme = new TeleUnknownHeapScheme(teleVM);
+                teleHeapScheme = new TeleUnknownHeapScheme(vm);
                 TeleWarning.message("Unable to locate implementation of TeleHeapScheme for HeapScheme=" + heapSchemeName + ", using default");
             }
-            teleHeap = new TeleHeap(teleVM, teleHeapScheme);
+            teleHeap = new TeleHeap(vm, teleHeapScheme);
             Trace.line(1, "[TeleHeap] Scheme=" + heapSchemeName + " using TeleHeapScheme=" + teleHeapScheme.getClass().getSimpleName());
         }
         return teleHeap;
@@ -275,7 +275,7 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
     }
 
     /** {@inheritDoc}
-     * <br>
+     * <p>
      * Updating the cache of information about <strong>heap regions</strong> is delicate because the descriptions
      * of those regions must be read, even though those descriptions are themselves heap objects.
      * Standard inspection machinery might fail to read those objects while the heap description
@@ -533,14 +533,14 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
     /**
      * Finds an object in the VM that has been located at a particular place in memory, but which
      * may have been relocated.
-     * <br>
+     * <p>
      * Must be called in thread holding the VM lock
      *
      * @param origin an object origin in the VM
      * @return the object originally at the origin, possibly relocated
      */
     public TeleObject getForwardedObject(Pointer origin) {
-        final Reference forwardedObjectReference = vm().originToReference(getForwardedOrigin(origin));
+        final Reference forwardedObjectReference = vm().originToReference(teleHeapScheme.getForwardedOrigin(origin));
         return teleObjectFactory.make(forwardedObjectReference);
     }
 
@@ -587,10 +587,6 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
         return gcCompletedCount != gcStartedCount;
     }
 
-    public Class heapSchemeClass() {
-        return teleHeapScheme.heapSchemeClass();
-    }
-
     public List<MaxCodeLocation> inspectableMethods() {
         if (inspectableMethods == null) {
             final List<MaxCodeLocation> locations = new ArrayList<MaxCodeLocation>();
@@ -603,28 +599,21 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
         return inspectableMethods;
     }
 
+    /**
+     * @param address a location in VM process memory
+     * @return whatever information is known about the status of the location
+     * with respect to memory management, non-null.
+     */
+    public MaxMemoryManagementInfo getMemoryManagementInfo(Address address) {
+        return teleHeapScheme.getMemoryManagementInfo(address);
+    }
+
     public int gcForwardingPointerOffset() {
         return teleHeapScheme.gcForwardingPointerOffset();
     }
 
-    public boolean isInLiveMemory(Address address) {
-        return teleHeapScheme.isInLiveMemory(address);
-    }
-
     public  boolean isObjectForwarded(Pointer origin) {
         return teleHeapScheme.isObjectForwarded(origin);
-    }
-
-    public boolean isForwardingPointer(Pointer pointer) {
-        return teleHeapScheme.isForwardingPointer(pointer);
-    }
-
-    public Pointer getTrueLocationFromPointer(Pointer pointer) {
-        return teleHeapScheme.getTrueLocationFromPointer(pointer);
-    }
-
-    public Pointer getForwardedOrigin(Pointer origin) {
-        return teleHeapScheme.getForwardedOrigin(origin);
     }
 
     public void printSessionStats(PrintStream printStream, int indent, boolean verbose) {

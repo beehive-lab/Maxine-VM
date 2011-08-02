@@ -31,6 +31,7 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.field.*;
+import com.sun.max.tele.memory.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;

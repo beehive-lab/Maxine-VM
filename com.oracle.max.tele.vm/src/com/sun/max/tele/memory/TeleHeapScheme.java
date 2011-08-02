@@ -20,14 +20,25 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele;
+package com.sun.max.tele.memory;
 
+import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 
 /**
  * Implementation details about a specific implementation of {@link HeapScheme} in the VM.
  */
 public interface TeleHeapScheme extends TeleScheme {
+
+    /**
+     * Gets whatever is known about a particular location in VM memory with respect
+     * to the current state of memory management.
+     *
+     * @param address a location in VM memory
+     * @return non-null information about the location with respect to memory management in the VM,
+     *
+     */
+    MaxMemoryManagementInfo getMemoryManagementInfo(Address address);
 
     /**
      * Location, relative to object origin, of the word used by GC to store a forwarding pointer,
@@ -37,14 +48,6 @@ public interface TeleHeapScheme extends TeleScheme {
      * -1 if no forwarding done or if unknown.
      */
     int gcForwardingPointerOffset();
-
-    /**
-     * Checks whether a location is in a live area of the VM's heap.
-     *
-     * @param address a memory location in the VM
-     * @return whether the location is defined to be "live" by the implementation.
-     */
-    boolean isInLiveMemory(Address address);
 
     /**
      * Determines whether an object formerly at a particular location

@@ -25,11 +25,13 @@ package com.sun.max.ins.memory;
 import com.sun.max.ins.debug.*;
 
 /**
- * Defines the columns that can be displayed describing a region of memory word values in the VM.
+ * Definition for the columns that can be displayed describing
+ * a region of memory word values in the VM.
  */
 public enum MemoryColumnKind implements ColumnKind {
     TAG("Tag", "Additional information", true, -1),
     ADDRESS("Addr.", "Memory address", true, -1),
+    MMTAG("GC", "Memory management information", false, -1),
     WORD("Word", "Offset relative to origin (words)", false, 10),
     OFFSET("Offset", "Offset relative to origin (bytes)", true, 10),
     VALUE("Value", "Value as a word", true, 20),

@@ -194,6 +194,7 @@ public final class MemoryWordsTable extends InspectorTable {
             super(MemoryColumnKind.values().length, instanceViewPreferences);
             addColumn(MemoryColumnKind.TAG, new MemoryTagTableCellRenderer(inspection(), table, tableModel), null);
             addColumn(MemoryColumnKind.ADDRESS, new AddressRenderer(inspection()), null);
+            addColumn(MemoryColumnKind.MMTAG, new MMTagRenderer(inspection()), null);
             addColumn(MemoryColumnKind.WORD, new WordOffsetRenderer(inspection()), null);
             addColumn(MemoryColumnKind.OFFSET, new MemoryOffsetLocationTableCellRenderer(inspection(), table, tableModel), null);
             addColumn(MemoryColumnKind.VALUE, new ValueRenderer(inspection()), null);
@@ -346,6 +347,63 @@ public final class MemoryWordsTable extends InspectorTable {
                     label.refresh(force);
                 }
             }
+        }
+    }
+
+
+    /**
+     * A table cell renderer for tables in which each row is associated with a memory region,
+     * and which displays memory management information concerning the (starting) location
+     * of the row's region in VM memory.
+     */
+    private final class MMTagRenderer extends InspectorTableCellRenderer {
+
+        // This kind of label has no interaction state, so we only need one, which we set up on demand.
+        private final InspectorLabel label;
+        private final InspectorLabel[] labels = new InspectorLabel[1];
+
+        /**
+         * A renderer that displays GC-related information about the first address of
+         * a memory region in the VM corresponding to a row in a table.
+         *
+         * @param inspection
+         */
+        public MMTagRenderer(Inspection inspection) {
+            super(inspection);
+            this.label = new PlainLabel(inspection, "");
+            this.label.setOpaque(true);
+            this.labels[0] = this.label;
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
+            String labelText = "";
+            String toolTipText = tableModel.getRowDescription(row);
+            final MaxMemoryRegion memoryRegionForRow = tableModel.getMemoryRegion(row);
+            MaxMemoryManagementInfo memoryManagementInfo = vm().getMemoryManagementInfo(memoryRegionForRow.start());
+            if (memoryManagementInfo.status().isKnown()) {
+                // Only display something if we know something; blank otherwise.
+                labelText = memoryManagementInfo.terseInfo();
+                String shortDescription = memoryManagementInfo.shortDescription();
+                if (shortDescription != null) {
+                    toolTipText += "<br>" + shortDescription;
+                }
+            }
+            label.setText(labelText);
+            label.setWrappedToolTipText(toolTipText);
+            if (isBoundaryRow(row)) {
+                label.setBorder(style().defaultPaneTopBorder());
+            } else {
+                label.setBorder(null);
+            }
+            label.setBackground(cellBackgroundColor(isSelected));
+            label.setForeground(cellForegroundColor(row, column));
+            label.setFont(style().defaultFont());
+            return label;
+        }
+
+        @Override
+        protected InspectorLabel[] getLabels() {
+            return labels;
         }
     }
 

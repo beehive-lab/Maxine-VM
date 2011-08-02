@@ -39,12 +39,12 @@ import com.sun.max.vm.value.*;
 
 /**
  * Access to an instance of the VM.
- * <br>
+ * <p>
  * This interface is a work in progress, created originally by splitting what had
  * been very intertwined code into two layers.  The eventual goal is for all VM types
  * to be expressed behind interfaces such as these, a transformation that is only
  * partially complete.
- * <br>
+ * <p>
  * This could in the future be merged with the JDWP interface.
  */
 public interface MaxVM extends MaxEntity<MaxVM> {
@@ -98,7 +98,7 @@ public interface MaxVM extends MaxEntity<MaxVM> {
 
     /**
      * Gets the manager for locating and managing code related information in the VM.
-     * <br>
+     * <p>
      * Thread-safe
      *
      * @return the singleton manager for information about code in the VM.
@@ -107,7 +107,7 @@ public interface MaxVM extends MaxEntity<MaxVM> {
 
     /**
      * Gets the manager for creating and managing VM breakpoints.
-     * <br>
+     * <p>
      * Thread-safe
      *
      * @return the singleton manager for creating and managing VM breakpoints
@@ -117,7 +117,7 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     /**
      * Gets the manager for creating and managing VM watchpoints; null
      * if watchpoints are not supported on this platform.
-     * <br>
+     * <p>
      * Thread-safe
      *
      * @return the singleton manager for creating and managing VM watchpoints, or
@@ -127,7 +127,7 @@ public interface MaxVM extends MaxEntity<MaxVM> {
 
     /**
      * Gets the manager for locating and managing thread-related information in the VM.
-     * <br>
+     * <p>
      * Thread-safe
      *
      * @return the singleton manager for information about threads in the VM.
@@ -136,7 +136,7 @@ public interface MaxVM extends MaxEntity<MaxVM> {
 
     /**
      * An immutable summary of the VM state as of the most recent state transition.
-     * <br>
+     * <p>
      * Thread-safe.
      *
      * @return VM state summary
@@ -145,7 +145,7 @@ public interface MaxVM extends MaxEntity<MaxVM> {
 
     /**
      * Adds a VM state listener.
-     * <br>
+     * <p>
      * Thread-safe.
      *
      * @param listener will be notified of changes to {@link #state()}.
@@ -154,7 +154,7 @@ public interface MaxVM extends MaxEntity<MaxVM> {
 
     /**
      * Removes a VM state listener.
-     * <br>
+     * <p>
      * Thread-safe.
      */
     void removeVMStateListener(MaxVMStateListener listener);
@@ -226,6 +226,15 @@ public interface MaxVM extends MaxEntity<MaxVM> {
      * @return the allocated {@link MaxMemoryRegion} containing the address, null if not in any known region.
      */
     MaxMemoryRegion findMemoryRegion(Address address);
+
+    /**
+     * Gets whatever information is known about the current state of memory management at a particular location in VM
+     * memory. Always returns a non-null description, even if nothing is known.
+     *
+     * @param address a location in VM memory
+     * @return information about the location with respect to memory management in the VM
+     */
+    MaxMemoryManagementInfo getMemoryManagementInfo(Address address);
 
     /**
      * Determines if the heap and code sections in the boot image have been relocated.
@@ -481,7 +490,7 @@ public interface MaxVM extends MaxEntity<MaxVM> {
 
     /**
      * Gets the logger used to record detected invalid references.
-     * <br>
+     * <p>
      * Thread-safe
      *
      * @return the singleton invalid reference logger for this VM.
