@@ -183,7 +183,7 @@ public final class JDKInterceptor {
             "finalRefCount",
             "peakFinalRefCount",
         JDK.sun_reflect_ConstantPool,
-            "constantPoolOop",
+            new ZeroField("constantPoolOop", false, false),
         JDK.sun_reflect_Reflection,
             new ValueField("fieldFilterMap", ReferenceValue.from(new HashMap<Class, String[]>()), false),
             new ValueField("methodFilterMap", ReferenceValue.from(new HashMap<Class, String[]>()), false),
