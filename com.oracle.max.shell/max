@@ -74,6 +74,7 @@ cp_suffix=
 cp_prefix=
 remote=0
 trace_level=1
+inspector_trace_level=0
 cp_sep=":"
 while [ "${1:0:1}" = "-" ]; do
     case $1 in
@@ -1223,9 +1224,9 @@ function run_inspect() {
         run sudo -E -p \
 "Debugging is a privileged operation on Mac OS X.
 Please enter your 'sudo' password:" \
-        ${jvm_exe} $system_props -cp $(jmax classpath)${inspector_cp} com.sun.max.ins.MaxineInspector -trace=$trace_level ${inspector_args} -a="$vm_args"
+        ${jvm_exe} $system_props -cp $(jmax classpath)${inspector_cp} com.sun.max.ins.MaxineInspector -trace=$inspector_trace_level ${inspector_args} -a="$vm_args"
     else
-        run ${jvm_exe} $system_props -cp $(jmax classpath)${inspector_cp} com.sun.max.ins.MaxineInspector -trace=$trace_level ${inspector_args} -a="$vm_args"
+        run ${jvm_exe} $system_props -cp $(jmax classpath)${inspector_cp} com.sun.max.ins.MaxineInspector -trace=$inspector_trace_level ${inspector_args} -a="$vm_args"
     fi
 }
 
