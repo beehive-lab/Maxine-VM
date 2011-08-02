@@ -134,6 +134,10 @@ public abstract class InlineDataDescriptor implements Comparable<InlineDataDescr
      * data} which will come later in the sort order.
      */
     public int compareTo(InlineDataDescriptor other) {
+        if (this == other) {
+            return 0;
+        }
+
         final int thisStart = startPosition();
         final int otherStart = other.startPosition();
         if (thisStart < otherStart) {
