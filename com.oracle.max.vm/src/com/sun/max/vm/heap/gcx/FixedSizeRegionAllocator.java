@@ -268,7 +268,7 @@ public class FixedSizeRegionAllocator {
         numFreeRegions = numRegions;
 
         backingStorage.setStart(start);
-        backingStorage.setSize(Size.fromInt(numRegions << log2RegionSizeInBytes));
+        backingStorage.setSize(Size.fromInt(numRegions).shiftedLeft(log2RegionSizeInBytes));
 
         allocated.initialize(new long[numWordsPerBitSet]);
         committed.initialize(new long[numWordsPerBitSet]);
@@ -302,7 +302,7 @@ public class FixedSizeRegionAllocator {
 
     private Address validRegionStart(int regionId) {
         assert isValidRegionId(regionId);
-        return backingStorage.start().plus(regionId << log2RegionSizeInBytes);
+        return backingStorage.start().plus(Offset.fromInt(regionId).asAddress().shiftedLeft(log2RegionSizeInBytes));
     }
 
     Address regionStart(int regionId) {

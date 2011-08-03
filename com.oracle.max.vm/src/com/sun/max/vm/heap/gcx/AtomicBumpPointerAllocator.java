@@ -76,7 +76,7 @@ public class AtomicBumpPointerAllocator<T extends RefillManager> extends BaseAto
                     // We need to atomically change top as we may be racing with
                     // concurrent allocator for the left over. The refillLock above
                     // only protect against concurrent refiller.
-                    Pointer start = setTopToLimit();
+                    Pointer start = atomicSetTopToLimit();
                     if (cell.equals(start)) {
                         return cell;
                     }
@@ -89,7 +89,7 @@ public class AtomicBumpPointerAllocator<T extends RefillManager> extends BaseAto
                     return refillManager.allocateOverflow(size).asPointer();
                 }
                 // Refill. First, fill up the allocator to bring everyone to refill synchronization.
-                Pointer startOfSpaceLeft = setTopToLimit();
+                Pointer startOfSpaceLeft = atomicSetTopToLimit();
 
                 Address chunk = refillManager.allocateRefill(startOfSpaceLeft, hardLimit.minus(startOfSpaceLeft).asSize());
                 if (!chunk.isZero()) {
