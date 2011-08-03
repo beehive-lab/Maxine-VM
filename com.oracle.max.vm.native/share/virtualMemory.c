@@ -192,6 +192,7 @@ void virtualMemory_unprotectPages(Address address, int count) {
 }
 
 static unsigned int pageSize = 0;
+static Size physicalMemory = 0;
 
 unsigned int virtualMemory_getPageSize(void) {
 #if os_MAXVE
@@ -202,6 +203,27 @@ unsigned int virtualMemory_getPageSize(void) {
     }
     return pageSize;
 #endif
+}
+
+Size virtualMemory_getPhysicalMemory(void) {
+    if (physicalMemory == 0) {
+#if os_MAXVE
+        // TODO
+        return 0;
+#elif os_SOLARIS  || os_LINUX
+        Size numPhysicalPages = (Size) sysconf(_SC_PHYS_PAGES);
+        physicalMemory = numPhysicalPages * virtualMemory_getPageSize();
+#elif os_DARWIN
+        int query[2];
+        query[0] = CTL_HW;
+        query[1] = HW_MEMSIZE;
+        size_t len = sizeof(physicalMemory);
+        int ok = sysctl(query, 2, &physicalMemory, &len, NULL, 0);
+        c_ASSERT(ok == 0);
+#endif
+        c_ASSERT(physicalMemory >= 0 && physicalMemory % virtualMemory_getPageSize() == 0);
+    }
+    return physicalMemory;
 }
 
 /*

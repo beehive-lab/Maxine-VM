@@ -734,7 +734,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements ResizableSpac
     }
 
     public void makeParsable() {
-        smallObjectAllocator.makeParsable();
+        smallObjectAllocator.doBeforeGC();
         for (FreeSpaceList fsp : freeChunkBins) {
             fsp.makeParsable();
         }

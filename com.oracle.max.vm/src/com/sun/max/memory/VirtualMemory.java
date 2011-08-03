@@ -173,6 +173,18 @@ public final class VirtualMemory {
         return !uncommitted.isZero();
     }
 
+    /**
+     * Return the amount of physical memory (in bytes) of the underlying platform.
+     * @return amount of physical memory in bytes
+     */
+    @INLINE
+    public static Size getPhysicalMemory() {
+        return virtualMemory_getPhysicalMemory();
+    }
+
+    @C_FUNCTION
+    private static native Size virtualMemory_getPhysicalMemory();
+
     /* Page protection methods */
 
     /**
@@ -204,9 +216,6 @@ public final class VirtualMemory {
 
     @C_FUNCTION
     private static native void virtualMemory_unprotectPages(Address address, int count);
-
-    @C_FUNCTION
-    public static native Address virtualMemory_pageAlign(Address address);
 
     /* File mapping methods */
 
@@ -259,5 +268,4 @@ public final class VirtualMemory {
     private static native long virtualMemory_mapFile(long size, int fd, long fileOffset);
 
     private static native long virtualMemory_mapFileIn31BitSpace(int size, int fd, long fileOffset);
-
 }
