@@ -504,7 +504,7 @@ public class Snippets {
     public static void nativeCallPrologue(NativeFunction nf) {
         Pointer etla = ETLA.load(currentTLA());
         Pointer previousAnchor = LAST_JAVA_FRAME_ANCHOR.load(etla);
-        Pointer ip = nf.nativeCallAddress().asPointer();
+        Pointer ip = nf.nativeCallStopAddress().asPointer();
         Pointer anchor = JavaFrameAnchor.create(getCpuStackPointer(), getCpuFramePointer(), ip, previousAnchor);
         nativeCallPrologue0(etla, anchor);
     }
@@ -610,10 +610,10 @@ public class Snippets {
      *            use memory barriers properly.
      */
     @INLINE
-    public static void nativeCallPrologueForC(NativeFunction f) {
+    public static void nativeCallPrologueForC(NativeFunction nf) {
         Pointer etla = ETLA.load(currentTLA());
         Pointer previousAnchor = LAST_JAVA_FRAME_ANCHOR.load(etla);
-        Pointer ip = f.nativeCallAddress().asPointer();
+        Pointer ip = nf.nativeCallStopAddress().asPointer();
         Pointer anchor = JavaFrameAnchor.create(getCpuStackPointer(), getCpuFramePointer(), ip, previousAnchor);
         LAST_JAVA_FRAME_ANCHOR.store(etla, anchor);
     }

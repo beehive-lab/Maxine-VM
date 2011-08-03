@@ -369,7 +369,11 @@ public class AMD64CompilerStubEmitter {
         // Call to the runtime
         int before = asm.codeBuffer.position();
         asm.call();
-        tasm.recordDirectCall(before, call, null);
+        int after = asm.codeBuffer.position();
+        if (C1XOptions.EmitNopAfterCall) {
+            asm.nop();
+        }
+        tasm.recordDirectCall(before, after - before, call, null);
 
         if (call.resultKind != CiKind.Void) {
             CiRegister returnRegister = comp.registerConfig.getReturnRegister(call.resultKind);

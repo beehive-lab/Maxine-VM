@@ -33,7 +33,7 @@ import java.util.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiTargetMethod.*;
+import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.atomic.*;
@@ -357,7 +357,7 @@ public final class T1XTargetMethod extends TargetMethod {
 
     @Override
     public int forEachCodePos(CodePosClosure cpc, Pointer ip, boolean ipIsReturnAddress) {
-        if (ipIsReturnAddress && platform().isa.offsetToReturnPC == 0) {
+        if (!StopPositionForCallIsReturnPos && ipIsReturnAddress && platform().isa.offsetToReturnPC == 0) {
             ip = ip.minus(1);
         }
         int bci = bciFor(ip.asPointer());
@@ -613,7 +613,11 @@ public final class T1XTargetMethod extends TargetMethod {
             }
         }
 
-        int stopIndex = findClosestStopIndex(current.ip());
+        int stopIndex = findStopIndex(current.ip());
+        if (stopIndex < 0) {
+            // this is very bad.
+            throw FatalError.unexpected("could not find stop index");
+        }
         int refMapSize = refMapSize();
 
         if (!csa.isZero()) {
@@ -851,7 +855,8 @@ public final class T1XTargetMethod extends TargetMethod {
             assert index != -1 : "can't find stop position before " + this + "+" + succPos;
 
             if (isAMD64()) {
-                int call = stopPosition(index);
+                int stopPos = stopPosition(index);
+                int call = TargetMethod.StopPositionForCallIsReturnPos ? directCallPosForStopPos(stopPos) : stopPos;
                 int callSize = AMD64TargetMethodUtil.callInstructionSize(code, call);
                 assert callSize > 0 : "no call instruction at pos " + call;
                 ip = codeStart().plus(call + callSize);

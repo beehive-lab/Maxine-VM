@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.t1x;
 
+import static com.sun.max.vm.compiler.target.TargetMethod.*;
 import static com.sun.max.vm.t1x.T1XTemplate.T1XStop.Flag.*;
 
 import java.util.*;
@@ -317,7 +318,8 @@ public class T1XTemplate {
                 int stopIndex = 0;
                 if (adapter != null) {
                     directCallees[stopIndex] = adapter;
-                    stopPositions[stopIndex] = adapter.callOffsetInPrologue();
+                    int stopPos = stopPosForDirectCallPos(adapter.callOffsetInPrologue());
+                    stopPositions[stopIndex] = stopPos;
                     stopIndex++;
                 }
 
