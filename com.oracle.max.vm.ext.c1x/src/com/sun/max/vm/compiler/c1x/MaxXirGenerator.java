@@ -885,37 +885,6 @@ public class MaxXirGenerator implements RiXirGenerator {
     }
 
     @HOSTED_ONLY
-    private XirPair buildJniCall() {
-        XirTemplate linked;
-        XirTemplate unlinked;
-        {
-            // resolved invokevirtual
-            asm.restart();
-            XirParameter receiver = asm.createInputParameter("receiver", CiKind.Object);
-            XirParameter vtableOffset = asm.createConstantInputParameter("vtableOffset", CiKind.Int);
-            XirOperand hub = asm.createTemp("hub", CiKind.Object);
-            XirOperand addr = asm.createTemp("addr", CiKind.Word);
-            asm.pload(CiKind.Object, hub, receiver, asm.i(hubOffset()), true);
-            asm.pload(CiKind.Word, addr, hub, vtableOffset, false);
-            linked = finishTemplate(asm, addr, "invokevirtual");
-        }
-        {
-            // unresolved invokevirtual template
-            asm.restart();
-            XirParameter receiver = asm.createInputParameter("receiver", CiKind.Object); // receiver object
-            XirParameter guard = asm.createConstantInputParameter("guard", CiKind.Object);
-            XirOperand vtableOffset = asm.createTemp("vtableOffset", CiKind.Int);
-            callRuntimeThroughStub(asm, "resolveVirtualMethod", vtableOffset, guard);
-            XirOperand hub = asm.createTemp("hub", CiKind.Object);
-            XirOperand addr = asm.createTemp("addr", CiKind.Word);
-            asm.pload(CiKind.Object, hub, receiver, asm.i(hubOffset()), true);
-            asm.pload(CiKind.Word, addr, hub, vtableOffset, false);
-            unlinked = finishTemplate(asm, addr, "invokevirtual-unresolved");
-        }
-        return new XirPair(linked, unlinked);
-    }
-
-    @HOSTED_ONLY
     private XirTemplate buildTLABAllocateArrayIn(CiKind kind, XirOperand result, XirOperand hub) {
         XirParameter length = asm.createInputParameter("length", CiKind.Int);
         XirOperand arraySize = asm.createTemp("arraySize", CiKind.Int);
