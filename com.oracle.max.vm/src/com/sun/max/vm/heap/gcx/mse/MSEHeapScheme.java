@@ -176,8 +176,10 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
             final Address heapMarkerDataStart = heapBounds.end().roundedUpBy(pageSize);
             // Address to the first reserved byte unused by the heap scheme.
             final Address unusedReservedSpaceStart = heapMarkerDataStart.plus(heapMarkerDatasize).roundedUpBy(pageSize);
-            FatalError.check(unusedReservedSpaceStart.greaterThan(Heap.startOfReservedVirtualSpace()),
-                "Not enough reserved space to initialize heap scheme");
+
+            if (!unusedReservedSpaceStart.greaterThan(Heap.startOfReservedVirtualSpace())) {
+                MaxineVM.reportPristineMemoryFailure("heap marker data", "reserve", heapMarkerDatasize);
+            }
 
             theHeap.initialize(initSize, applicationHeapMaxSize);
             // FIXME (ld) We should uncommit what hasn't been committed yet!

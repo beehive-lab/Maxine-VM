@@ -751,8 +751,8 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
 
     @Override
     public void doBeforeGC() {
-        overflowAllocator.makeParsable();
-        tlabAllocator.makeParsable();
+        overflowAllocator.doBeforeGC();
+        tlabAllocator.doBeforeGC();
     }
 
     @Override
