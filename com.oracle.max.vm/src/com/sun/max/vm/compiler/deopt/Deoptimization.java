@@ -29,6 +29,7 @@ import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.compiler.CompilationScheme.CompilationFlag.*;
 import static com.sun.max.vm.compiler.deps.DependenciesManager.*;
 import static com.sun.max.vm.compiler.target.Stub.Type.*;
+import static com.sun.max.vm.compiler.target.TargetMethod.*;
 import static com.sun.max.vm.stack.VMFrameLayout.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
@@ -297,8 +298,17 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
 
         TargetMethod tm = info.tm;
         if (tm != null && methods.contains(tm)) {
-            Pointer csa = tfa.getCalleeSaveArea(trapFrame);
-            deoptimize(info, vm().registerConfigs.trapStub.getCalleeSaveLayout(), csa, null);
+            // Patches the return address in the trap frame to trigger deoptimization
+            // of the top frame when the trap stub returns.
+            Stub stub = vm().stubs.deoptStub(CiKind.Void, true);
+            Pointer to = stub.codeStart().asPointer();
+            Pointer save = sp.plus(DEOPT_RETURN_ADDRESS_OFFSET);
+            Pointer patch = tfa.getPCPointer(trapFrame);
+            Address from = patch.readWord(0).asAddress();
+            assert to != from;
+            logPatchReturnAddress(tm, vm().stubs.trapStub().name(), stub, to, save, patch, from);
+            patch.writeWord(0, to);
+            save.writeWord(0, from);
         }
     }
 
@@ -329,7 +339,7 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
         Pointer ip = info.ip;
         Throwable pendingException = VmThread.current().pendingException();
 
-        int stopIndex = tm.findClosestStopIndex(ip);
+        int stopIndex = tm.findStopIndex(ip);
         assert stopIndex >= 0 : "no stop index for " + tm + "+" + tm.posFor(ip);
 
         if (TraceDeopt) {
@@ -343,7 +353,7 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
         FrameAccess fa = new FrameAccess(csl, csa, sp, fp, info.callerSP, info.callerFP);
         CiDebugInfo debugInfo = tm.debugInfoAt(stopIndex, fa);
         CiFrame topFrame = debugInfo.frame();
-        FatalError.check(topFrame != null, "No frame info found at deopt site");
+        FatalError.check(topFrame != null, "No frame info found at deopt site: " + tm.posFor(ip));
 
         if (TraceDeopt) {
             logFrames(topFrame, "values");
@@ -546,10 +556,6 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
             sp = sp.minus(STACK_SLOT_SIZE);
         }
 
-        if (StackReferenceMapPreparer.VerifyRefMaps || TraceDeopt || DeoptimizeALot != 0) {
-            StackReferenceMapPreparer.verifyReferenceMaps(VmThread.current(), info.ip, info.sp, info.fp);
-        }
-
         // Re-enable safepoints
         Safepoint.enable();
 
@@ -558,6 +564,10 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
         if (info.returnValue == null) {
             Stubs.unwind(info.ip, info.sp, info.fp);
         } else {
+            if (StackReferenceMapPreparer.VerifyRefMaps || TraceDeopt || DeoptimizeALot != 0) {
+                StackReferenceMapPreparer.verifyReferenceMaps(VmThread.current(), info.ip, info.sp, info.fp);
+            }
+
             switch (info.returnValue.kind.stackKind()) {
                 case Int:     Stubs.unwindInt(info.ip, info.sp, info.fp, info.returnValue.asInt());
                 case Float:   Stubs.unwindFloat(info.ip, info.sp, info.fp, info.returnValue.asFloat());
@@ -857,7 +867,7 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
     public static void deoptimizeOnReturn(Pointer ip, Pointer sp, Pointer fp, CiConstant returnValue, Pointer csa) {
         Safepoint.disable();
 
-        if (platform().isa.offsetToReturnPC == 0) {
+        if (!StopPositionForCallIsReturnPos && platform().isa.offsetToReturnPC == 0) {
             // Make sure IP is within a call instruction so the stop for the call is found, not the
             // stop for a safepoint that may be immediately succeeding the call
             ip = ip.minus(1);
@@ -911,9 +921,9 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
     }
 
     @NEVER_INLINE // makes inspecting easier
-    static void logPatchReturnAddress(TargetMethod tm, ClassMethodActor calleeMethod, Stub stub, Address to, Pointer save, Pointer patch, Address from) {
+    static void logPatchReturnAddress(TargetMethod tm, Object callee, Stub stub, Address to, Pointer save, Pointer patch, Address from) {
         if (TraceDeopt) {
-            Log.println("DEOPT: patched return address @ " + patch.to0xHexString() + " of call to " + calleeMethod +
+            Log.println("DEOPT: patched return address @ " + patch.to0xHexString() + " of call to " + callee +
                             ": " + from.to0xHexString() + '[' + tm + '+' + from.minus(tm.codeStart()).toInt() + ']' +
                             " -> " + to.to0xHexString() + '[' + stub + "], saved old value @ " + save.to0xHexString());
         }

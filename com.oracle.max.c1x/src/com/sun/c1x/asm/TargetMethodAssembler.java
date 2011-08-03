@@ -161,14 +161,14 @@ public class TargetMethodAssembler {
         }
     }
 
-    public void recordDirectCall(int posBefore, Object target, LIRDebugInfo info) {
+    public void recordDirectCall(int posBefore, int size, Object target, LIRDebugInfo info) {
         CiDebugInfo debugInfo = info != null ? info.debugInfo() : null;
-        targetMethod.recordCall(posBefore, target, debugInfo, true);
+        targetMethod.recordCall(posBefore, size, target, debugInfo, true);
     }
 
-    public void recordIndirectCall(int posBefore, Object target, LIRDebugInfo info) {
+    public void recordIndirectCall(int posBefore, int size, Object target, LIRDebugInfo info) {
         CiDebugInfo debugInfo = info != null ? info.debugInfo() : null;
-        targetMethod.recordCall(posBefore, target, debugInfo, false);
+        targetMethod.recordCall(posBefore, size, target, debugInfo, false);
     }
 
     public void recordSafepoint(int pos, LIRDebugInfo info) {
