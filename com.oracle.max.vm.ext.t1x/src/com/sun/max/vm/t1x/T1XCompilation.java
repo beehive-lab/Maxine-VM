@@ -27,6 +27,7 @@ import static com.sun.cri.ci.CiRegister.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
+import static com.sun.max.vm.compiler.target.TargetMethod.*;
 import static com.sun.max.vm.t1x.T1XTemplateTag.*;
 
 import java.util.*;
@@ -1049,7 +1050,11 @@ public class T1XCompilation {
             AMD64Assembler asm = (AMD64Assembler) this.asm;
             // Align bytecode call site for MT safe patching
             final int alignment = 7;
-            final int callSitePosition = buf.position() + template.bytecodeCall.pos;
+            int templateCallStopPos = template.bytecodeCall.pos;
+            if (StopPositionForCallIsReturnPos) {
+                templateCallStopPos = directCallPosForStopPos(templateCallStopPos);
+            }
+            final int callSitePosition = buf.position() + templateCallStopPos;
             final int roundDownMask = ~alignment;
             final int directCallInstructionLength = 5; // [0xE8] disp32
             final int endOfCallSite = callSitePosition + (directCallInstructionLength - 1);
@@ -1739,6 +1744,9 @@ public class T1XCompilation {
                     byte[] safepointCode = vm().safepoint.code;
                     buf.emitBytes(safepointCode, 0, safepointCode.length);
                     stops.addSafepoint(stream.currentBCI(), pos);
+                    break;
+                } else if (opcode == Bytecodes.HERE) {
+                    emit(HERE);
                     break;
                 } else {
                     throw new CiBailout("Unsupported opcode" + errorSuffix());

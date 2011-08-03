@@ -453,6 +453,7 @@ public enum T1XTemplateTag {
     PROFILE_NONSTATIC_METHOD_ENTRY(-1),
     PROFILE_BACKWARD_BRANCH(-1),
     TRACE_METHOD_ENTRY(-1),
+    HERE(-1),
     NULL_CHECK(-1),
 
     READREG$fp_cpu,

@@ -22,52 +22,51 @@
  */
 package test.output;
 
-import java.util.*;
+import static com.sun.cri.bytecode.Bytecodes.Infopoints.*;
 
-import com.sun.cri.bytecode.Bytecodes.Infopoints;
+import com.sun.max.annotate.*;
 
-/**
- * Simple test for uncommon trap support.
- */
-public class UncommonTrap {
+public class UncommonTrap_01 {
 
     private static boolean Z = true;
     private static byte B = 3;
     private static char C = '5';
     private static short S = 7;
     private static int I = 9;
-    private static float F = Float.MAX_VALUE;
+    private static float F = 500f;
     private static long L = 13L;
     private static double D = Double.MIN_NORMAL;
 
     public static void main(String[] args) throws InterruptedException {
-        System.out.println("result1: " + Arrays.toString(values(L, D, Z, B, C, S, I, F, false)));
         for (int i = 0; i < 10000000; i++) {
-            values(L, D, Z, B, C, S, I, F, true);
+            me(F, D, L, Z, B, C, S, I, true);
         }
-        // By now 'values()' should have been recompiled.
-        System.out.println("result2: " + Arrays.toString(values(L, D, Z, B, C, S, I, F, false)));
+        // By now 'me()' should have been recompiled.
+        me(F, D, L, Z, B, C, S, I, false);
     }
 
-    private static Object[] values(long l, double d, boolean z, byte b, char c, short s, int i, float f, boolean warmup) {
+    @NEVER_INLINE
+    private static void me(float f, double d, long l, boolean z, byte b, char c, short s, int i, boolean warmup) {
         if (warmup) {
-            return null;
+            return;
         }
-        Object o1 = new String("obj1");
-        Object o2 = new String("obj2");
-        Object o3 = new String("obj3");
-        Object o4 = new String("obj4");
-        Object o5 = new String("obj5");
-        Object o6 = new String("obj6");
-        Object o7 = new String("obj7");
-        Object o8 = new String("obj8");
-        Object o9 = new String("obj9");
 
         printParams(l, d, z, b, c, s, i, f);
-        Infopoints.uncommonTrap();
-        printParams(l, d, z, b, c, s, i, f);
 
-        return new Object[] {o1, o2, o3, o4, o5, o6, o7, o8, o9};
+        // An optimizing compiler should allocate the variables used in the
+        // following loop in registers. The uncommon trap is therefore an
+        // attempt to test correct deoptimization of register located values.
+        for (int x = 0; x < 100001; x++) {
+            d = -d;
+            f = -f;
+            i = -i;
+            s = (short) -s;
+            if (x > 50000) {
+                uncommonTrap();
+            }
+        }
+
+        printParams(l, d, z, b, c, s, i, f);
     }
 
     private static void printParams(long l, double d, boolean z, byte b, char c, short s, int i, float f) {

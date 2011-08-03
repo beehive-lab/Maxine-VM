@@ -2204,21 +2204,31 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         int before = masm.codeBuffer.position();
         masm.call();
         int after = masm.codeBuffer.position();
-        tasm.recordDirectCall(before, target, info);
+        if (C1XOptions.EmitNopAfterCall) {
+            masm.nop();
+        }
+        tasm.recordDirectCall(before, after - before, target, info);
         tasm.recordExceptionHandlers(after, info);
     }
 
     public void directJmp(Object target) {
         int before = masm.codeBuffer.position();
         masm.jmp(0, true);
-        tasm.recordDirectCall(before, target, null);
+        int after = masm.codeBuffer.position();
+        if (C1XOptions.EmitNopAfterCall) {
+            masm.nop();
+        }
+        tasm.recordDirectCall(before, after - before, target, null);
     }
 
     public void indirectCall(CiRegister dst, Object target, LIRDebugInfo info) {
         int before = masm.codeBuffer.position();
         masm.call(dst);
         int after = masm.codeBuffer.position();
-        tasm.recordIndirectCall(before, target, info);
+        if (C1XOptions.EmitNopAfterCall) {
+            masm.nop();
+        }
+        tasm.recordIndirectCall(before, after - before, target, info);
         tasm.recordExceptionHandlers(after, info);
     }
 
