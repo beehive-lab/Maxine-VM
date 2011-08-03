@@ -73,6 +73,7 @@ public final class JDKInterceptor {
         "file.encoding.pkg",
         "file.separator",
         "path.separator",
+        "os.version",
     };
 
     public static final Properties initialSystemProperties = buildInitialSystemProperties();
