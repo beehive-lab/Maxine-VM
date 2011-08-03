@@ -419,7 +419,7 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
             }
         }
 
-        int stopIndex = findClosestStopIndex(current.ip());
+        int stopIndex = findStopIndex(current.ip());
         if (stopIndex < 0) {
             // this is very bad.
             throw FatalError.unexpected("could not find stop index");
@@ -488,7 +488,7 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
 
         // figure out what method the caller is trying to call
         if (trampoline.is(StaticTrampoline)) {
-            int stopIndex = targetMethod.findClosestStopIndex(current.ip().minus(1));
+            int stopIndex = targetMethod.findStopIndex(current.ip());
             calledMethod = (ClassMethodActor) targetMethod.directCallees()[stopIndex];
         } else {
             // this is a virtual or interface call; figure out the receiver method based on the
@@ -639,13 +639,13 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
 
     @Override
     public int forEachCodePos(CodePosClosure cpc, Pointer ip, boolean ipIsReturnAddress) {
-        if (ipIsReturnAddress && platform().isa.offsetToReturnPC == 0) {
+        if (!StopPositionForCallIsReturnPos && ipIsReturnAddress && platform().isa.offsetToReturnPC == 0) {
             // Make sure IP is within a call instruction so the stop for the call is found, not the
             // stop for a safepoint that may be immediately succeeding the call
             ip = ip.minus(1);
         }
 
-        int index = findClosestStopIndex(ip);
+        int index = findStopIndex(ip);
         if (index < 0) {
             return 0;
         }

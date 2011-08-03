@@ -29,6 +29,7 @@ import static com.sun.max.vm.t1x.T1XTemplateTag.*;
 
 
 import com.sun.cri.bytecode.*;
+import com.sun.cri.bytecode.Bytecodes.Infopoints;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -62,6 +63,11 @@ public class T1XTemplateSource {
     public static native int dcmpg(double l, double r);
     @INTRINSIC(Bytecodes.DCMPL)
     public static native int dcmpl(double l, double r);
+
+    @T1X_TEMPLATE(HERE)
+    public static Pointer here() {
+        return Pointer.fromLong(Infopoints.here());
+    }
 
     @T1X_TEMPLATE(COUNT_BYTECODE)
     public static void countBytecode(int opcode, long[] array) {

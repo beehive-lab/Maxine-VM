@@ -473,7 +473,6 @@ public class Stubs {
             int callPosition = asm.codeBuffer.position();
             ClassMethodActor callee = Trap.handleTrap.classMethodActor;
             asm.call();
-
             asm.restore(csl, frameToCSA);
 
             // now pop the flags register off the stack before returning

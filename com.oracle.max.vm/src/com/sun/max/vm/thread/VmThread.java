@@ -329,6 +329,7 @@ public class VmThread {
      */
     public void storeExceptionForHandler(Throwable e, TargetMethod handler, int pos) {
         if (exception != null) {
+            e.printStackTrace(Log.out);
             FatalError.unexpected("Previous exception never loaded", exception);
         }
         if (Throw.TraceExceptions > 0) {

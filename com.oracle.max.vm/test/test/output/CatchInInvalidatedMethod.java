@@ -31,13 +31,13 @@ public class CatchInInvalidatedMethod {
 
         // Make 'compute' hot so that it is recompiled with the optimizing compiler.
         // The optimizing compiler will (hopefully) inline Value.get() as
-        // of Negation has yet been loaded.
+        // Negation has yet been loaded.
         for (int i = 0; i < 20000; i++) {
             v.i = compute(v, true);
         }
         System.out.println("v: " + v);
 
-        // This time call compute such that it will execute
+        // This time call compute such that it will execute triggerDeoptAndRaiseException()
         v.i = compute(v, false);
 
         System.out.println("v: " + v);

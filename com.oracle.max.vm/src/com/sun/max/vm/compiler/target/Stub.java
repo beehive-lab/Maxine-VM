@@ -105,7 +105,7 @@ public class Stub extends TargetMethod {
         return type;
     }
 
-    public Stub(Type type, String stubName, int frameSize, byte[] code, int callPosition, ClassMethodActor callee, int registerRestoreEpilogueOffset) {
+    public Stub(Type type, String stubName, int frameSize, byte[] code, int directCallPos, ClassMethodActor callee, int registerRestoreEpilogueOffset) {
         super(stubName, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         this.type = type;
         this.setFrameSize(frameSize);
@@ -115,9 +115,10 @@ public class Stub extends TargetMethod {
         targetBundleLayout.update(ArrayField.code, code.length);
         Code.allocate(targetBundleLayout, this);
         setData(null, null, code);
-        if (callPosition != -1) {
+        if (directCallPos != -1) {
+            int directCallStopPos = stopPosForDirectCallPos(directCallPos);
             assert callee != null;
-            setStopPositions(new int[] {callPosition}, new Object[] {callee}, 0, 0);
+            setStopPositions(new int[] {directCallStopPos}, new Object[] {callee}, 0, 0);
         }
         if (!isHosted()) {
             linkDirectCalls();
