@@ -389,19 +389,21 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                 Address chunk = nextFreeChunkInRegion.asPointer();
                 do {
                     Size chunkSize = HeapFreeChunk.getFreechunkSize(chunk);
-                    if (chunkSize.greaterThan(spaceNeeded)) {
+                    if (chunkSize.greaterEqual(spaceNeeded)) {
                         if (spaceNeeded.lessThan(minChunkSize)) {
                             // Adjust last chunk size. Can't be smaller than min chunk size (TLAB invariant)
+                            allocatedSize = allocatedSize.plus(minChunkSize.minus(spaceNeeded));
                             spaceNeeded = minChunkSize;
                         }
                         Address next = HeapFreeChunk.getFreeChunkNext(chunk);
                         // Split if leftover larger that min tlab size.
-                        if (chunkSize.minus(spaceNeeded).greaterEqual(minChunkSize)) {
+                        Size chunkLeftover = chunkSize.minus(spaceNeeded);
+                        if (chunkLeftover.greaterEqual(minChunkSize)) {
                             lastChunk = HeapFreeChunk.splitRight(chunk, spaceNeeded, next);
                         } else {
                             lastChunk = next;
                             // Adjust allocated size, to keep accounting correct.
-                            allocatedSize = allocatedSize.plus(chunkSize.minus(spaceNeeded));
+                            allocatedSize = allocatedSize.plus(chunkLeftover);
                         }
                         HeapFreeChunk.setFreeChunkNext(chunk, Address.zero());
                         break;
@@ -410,6 +412,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                     chunk = HeapFreeChunk.getFreeChunkNext(chunk);
                 } while(!chunk.isZero());
                 result = nextFreeChunkInRegion;
+                FatalError.check(!lastChunk.isZero() || freeSpace.equals(allocatedSize), "must not have free space if no chunk left");
                 nextFreeChunkInRegion = lastChunk;
                 freeSpace = freeSpace.minus(allocatedSize);
             }
@@ -748,8 +751,8 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
 
     @Override
     public void doBeforeGC() {
-        overflowAllocator.makeParsable();
-        tlabAllocator.makeParsable();
+        overflowAllocator.doBeforeGC();
+        tlabAllocator.doBeforeGC();
     }
 
     @Override

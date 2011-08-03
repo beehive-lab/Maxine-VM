@@ -132,7 +132,7 @@ public class BaseAtomicBumpPointerAllocator<T extends Refiller> {
      */
     @INLINE
     @NO_SAFEPOINTS("filling linear space allocator must not be subjected to safepoints")
-    protected final Pointer setTopToLimit() {
+    protected final Pointer atomicSetTopToLimit() {
         Pointer thisAddress = Reference.fromJava(this).toOrigin();
         Address cell;
         Address hardLimit = hardLimit();
@@ -146,14 +146,23 @@ public class BaseAtomicBumpPointerAllocator<T extends Refiller> {
         return cell.asPointer();
     }
 
+    protected final Pointer setTopToLimit() {
+        Pointer cell = top.asPointer();
+        top =  hardLimit().asPointer();
+        return cell;
+    }
+
     /**
      * Atomically fill up the allocator with a dead object  to make it parsable.
      */
-    protected final void makeParsable() {
-        Pointer cell = setTopToLimit();
-        Pointer hardLimit = hardLimit().asPointer();
-        if (cell.lessThan(hardLimit)) {
-            refillManager.makeParsable(cell.asPointer(), hardLimit);
+    protected final void doBeforeGC() {
+        Pointer cell = top.asPointer();
+        if (!cell.isZero()) {
+            Pointer hardLimit = hardLimit().asPointer();
+            top = hardLimit;
+            if (cell.lessThan(hardLimit)) {
+                refillManager.makeParsable(cell, hardLimit);
+            }
         }
         refillManager.doBeforeGC();
     }
@@ -189,7 +198,7 @@ public class BaseAtomicBumpPointerAllocator<T extends Refiller> {
                     // We need to atomically change top as we may be racing with
                     // concurrent allocator for the left over. The refillLock above
                     // only protect against concurrent refiller.
-                    Pointer start = setTopToLimit();
+                    Pointer start = atomicSetTopToLimit();
                     if (cell.equals(start)) {
                         return cell;
                     }
@@ -198,7 +207,7 @@ public class BaseAtomicBumpPointerAllocator<T extends Refiller> {
                     cell = start;
                 }
                 // Refill. First, fill up the allocator to bring everyone to refill synchronization.
-                Pointer startOfSpaceLeft = setTopToLimit();
+                Pointer startOfSpaceLeft = atomicSetTopToLimit();
 
                 Address chunk = refillManager.allocateRefill(startOfSpaceLeft, hardLimit.minus(startOfSpaceLeft).asSize());
                 if (MaxineVM.isDebug()) {
