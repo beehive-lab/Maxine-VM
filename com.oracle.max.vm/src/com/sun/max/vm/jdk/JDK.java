@@ -24,6 +24,7 @@ package com.sun.max.vm.jdk;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
+import com.sun.max.program.*;
 import com.sun.max.vm.actor.holder.*;
 
 /**
@@ -61,19 +62,19 @@ public class JDK {
     public static final ClassRef java_io_UnixFileSystem              = new ClassRef("java.io.UnixFileSystem");
     public static final ClassRef java_io_ExpiringCache               = new ClassRef("java.io.ExpiringCache");
 
-    public static final ClassRef java_nio_DirectByteBuffer           = new ClassRef("java.nio.DirectByteBuffer");
-    public static final ClassRef java_nio_DirectCharBufferS          = new ClassRef("java.nio.DirectCharBufferS");
-    public static final ClassRef java_nio_DirectCharBufferU          = new ClassRef("java.nio.DirectCharBufferU");
-    public static final ClassRef java_nio_DirectDoubleBufferS        = new ClassRef("java.nio.DirectDoubleBufferS");
-    public static final ClassRef java_nio_DirectDoubleBufferU        = new ClassRef("java.nio.DirectDoubleBufferU");
-    public static final ClassRef java_nio_DirectFloatBufferS         = new ClassRef("java.nio.DirectFloatBufferS");
-    public static final ClassRef java_nio_DirectFloatBufferU         = new ClassRef("java.nio.DirectFloatBufferU");
-    public static final ClassRef java_nio_DirectIntBufferS           = new ClassRef("java.nio.DirectIntBufferS");
-    public static final ClassRef java_nio_DirectIntBufferU           = new ClassRef("java.nio.DirectIntBufferU");
-    public static final ClassRef java_nio_DirectLongBufferS          = new ClassRef("java.nio.DirectLongBufferS");
-    public static final ClassRef java_nio_DirectLongBufferU          = new ClassRef("java.nio.DirectLongBufferU");
-    public static final ClassRef java_nio_DirectShortBufferS         = new ClassRef("java.nio.DirectShortBufferS");
-    public static final ClassRef java_nio_DirectShortBufferU         = new ClassRef("java.nio.DirectShortBufferU");
+    public static final ClassRef java_nio_DirectByteBuffer           = new LazyClassRef("java.nio.DirectByteBuffer");
+    public static final ClassRef java_nio_DirectCharBufferS          = new LazyClassRef("java.nio.DirectCharBufferS");
+    public static final ClassRef java_nio_DirectCharBufferU          = new LazyClassRef("java.nio.DirectCharBufferU");
+    public static final ClassRef java_nio_DirectDoubleBufferS        = new LazyClassRef("java.nio.DirectDoubleBufferS");
+    public static final ClassRef java_nio_DirectDoubleBufferU        = new LazyClassRef("java.nio.DirectDoubleBufferU");
+    public static final ClassRef java_nio_DirectFloatBufferS         = new LazyClassRef("java.nio.DirectFloatBufferS");
+    public static final ClassRef java_nio_DirectFloatBufferU         = new LazyClassRef("java.nio.DirectFloatBufferU");
+    public static final ClassRef java_nio_DirectIntBufferS           = new LazyClassRef("java.nio.DirectIntBufferS");
+    public static final ClassRef java_nio_DirectIntBufferU           = new LazyClassRef("java.nio.DirectIntBufferU");
+    public static final ClassRef java_nio_DirectLongBufferS          = new LazyClassRef("java.nio.DirectLongBufferS");
+    public static final ClassRef java_nio_DirectLongBufferU          = new LazyClassRef("java.nio.DirectLongBufferU");
+    public static final ClassRef java_nio_DirectShortBufferS         = new LazyClassRef("java.nio.DirectShortBufferS");
+    public static final ClassRef java_nio_DirectShortBufferU         = new LazyClassRef("java.nio.DirectShortBufferU");
 
     public static final ClassRef java_nio_charset_CharsetEncoder     = new ClassRef(java.nio.charset.CharsetEncoder.class);
 
@@ -85,30 +86,46 @@ public class JDK {
     public static final ClassRef java_util_EnumMap                   = new ClassRef(java.util.EnumMap.class);
     public static final ClassRef java_util_Random                    = new ClassRef(java.util.Random.class);
 
-    public static final ClassRef java_util_concurrent_ConcurrentSkipListSet = new ClassRef(java.util.concurrent.ConcurrentSkipListSet.class);
-    public static final ClassRef java_util_concurrent_CopyOnWriteArrayList = new ClassRef(java.util.concurrent.CopyOnWriteArrayList.class);
+    public static final ClassRef java_math_BigInteger                = new LazyClassRef(java.math.BigInteger.class);
 
-    public static final ClassRef java_util_concurrent_atomic_AtomicBoolean = new ClassRef(java.util.concurrent.atomic.AtomicBoolean.class);
-    public static final ClassRef java_util_concurrent_atomic_AtomicInteger = new ClassRef(java.util.concurrent.atomic.AtomicInteger.class);
-    public static final ClassRef java_util_concurrent_atomic_AtomicLong = new ClassRef(java.util.concurrent.atomic.AtomicLong.class);
-    public static final ClassRef java_util_concurrent_atomic_AtomicReference = new ClassRef(java.util.concurrent.atomic.AtomicReference.class);
-    public static final ClassRef java_util_concurrent_atomic_AtomicIntegerArray = new ClassRef(java.util.concurrent.atomic.AtomicIntegerArray.class);
-    public static final ClassRef java_util_concurrent_atomic_AtomicLongArray = new ClassRef(java.util.concurrent.atomic.AtomicLongArray.class);
-    public static final ClassRef java_util_concurrent_atomic_AtomicReferenceArray = new ClassRef(java.util.concurrent.atomic.AtomicReferenceArray.class);
-    public static final ClassRef java_util_concurrent_atomic_AtomicReferenceFieldUpdater$AtomicReferenceFieldUpdaterImpl = new ClassRef(java.util.concurrent.atomic.AtomicReferenceFieldUpdater.class, "AtomicReferenceFieldUpdaterImpl");
-    public static final ClassRef java_util_concurrent_atomic_AtomicIntegerFieldUpdater$AtomicIntegerFieldUpdaterImpl = new ClassRef(java.util.concurrent.atomic.AtomicIntegerFieldUpdater.class, "AtomicIntegerFieldUpdaterImpl");
-    public static final ClassRef java_util_concurrent_atomic_AtomicLongFieldUpdater$CASUpdater = new ClassRef(java.util.concurrent.atomic.AtomicLongFieldUpdater.class, "CASUpdater");
-    public static final ClassRef java_util_concurrent_atomic_AtomicLongFieldUpdater$LockedUpdater = new ClassRef(java.util.concurrent.atomic.AtomicLongFieldUpdater.class, "LockedUpdater");
+    public static final ClassRef java_util_concurrent_ConcurrentSkipListSet = new LazyClassRef(java.util.concurrent.ConcurrentSkipListSet.class);
+    public static final ClassRef java_util_concurrent_CopyOnWriteArrayList = new LazyClassRef(java.util.concurrent.CopyOnWriteArrayList.class);
+    public static final ClassRef java_util_concurrent_ConcurrentHashMap = new LazyClassRef(java.util.concurrent.ConcurrentHashMap.class);
+    public static final ClassRef java_util_concurrent_ConcurrentHashMap$HashEntry = new LazyClassRef(java.util.concurrent.ConcurrentHashMap.class, "HashEntry");
+    public static final ClassRef java_util_concurrent_SynchronousQueue = new LazyClassRef(java.util.concurrent.SynchronousQueue.class);
+    public static final ClassRef java_util_concurrent_SynchronousQueue$TransferStack = new LazyClassRef(java.util.concurrent.SynchronousQueue.class, "TransferStack");
+    public static final ClassRef java_util_concurrent_SynchronousQueue$TransferStack$SNode = new LazyClassRef(java.util.concurrent.SynchronousQueue.class, "TransferStack$SNode");
+    public static final ClassRef java_util_concurrent_SynchronousQueue$TransferQueue = new LazyClassRef(java.util.concurrent.SynchronousQueue.class, "TransferQueue");
+    public static final ClassRef java_util_concurrent_SynchronousQueue$TransferQueue$QNode = new LazyClassRef(java.util.concurrent.SynchronousQueue.class, "TransferQueue$QNode");
+    public static final ClassRef java_util_concurrent_ForkJoinPool      = new LazyClassRef("java.util.concurrent.ForkJoinPool");
+    public static final ClassRef java_util_concurrent_ForkJoinWorkerThread = new LazyClassRef("java.util.concurrent.ForkJoinWorkerThread");
+    public static final ClassRef java_util_concurrent_ForkJoinTask      = new LazyClassRef("java.util.concurrent.ForkJoinTask");
 
-    public static final ClassRef java_util_concurrent_locks_AbstractQueuedSynchronizer = new ClassRef(java.util.concurrent.locks.AbstractQueuedSynchronizer.class);
-    public static final ClassRef java_util_concurrent_locks_AbstractQueuedSynchronizer$Node = new ClassRef(java.util.concurrent.locks.AbstractQueuedSynchronizer.class, "Node");
-    public static final ClassRef java_util_concurrent_locks_AbstractQueuedLongSynchronizer = new ClassRef(java.util.concurrent.locks.AbstractQueuedLongSynchronizer.class);
-    public static final ClassRef java_util_concurrent_locks_AbstractQueuedLongSynchronizer$Node = new ClassRef(java.util.concurrent.locks.AbstractQueuedLongSynchronizer.class, "Node");
-    public static final ClassRef java_util_concurrent_locks_LockSupport = new ClassRef(java.util.concurrent.locks.LockSupport.class);
+    public static final ClassRef java_util_concurrent_atomic_AtomicBoolean = new LazyClassRef(java.util.concurrent.atomic.AtomicBoolean.class);
+    public static final ClassRef java_util_concurrent_atomic_AtomicInteger = new LazyClassRef(java.util.concurrent.atomic.AtomicInteger.class);
+    public static final ClassRef java_util_concurrent_atomic_AtomicLong = new LazyClassRef(java.util.concurrent.atomic.AtomicLong.class);
+    public static final ClassRef java_util_concurrent_atomic_AtomicReference = new LazyClassRef(java.util.concurrent.atomic.AtomicReference.class);
+    public static final ClassRef java_util_concurrent_atomic_AtomicIntegerArray = new LazyClassRef(java.util.concurrent.atomic.AtomicIntegerArray.class);
+    public static final ClassRef java_util_concurrent_atomic_AtomicLongArray = new LazyClassRef(java.util.concurrent.atomic.AtomicLongArray.class);
+    public static final ClassRef java_util_concurrent_atomic_AtomicReferenceArray = new LazyClassRef(java.util.concurrent.atomic.AtomicReferenceArray.class);
+    public static final ClassRef java_util_concurrent_atomic_AtomicReferenceFieldUpdater$AtomicReferenceFieldUpdaterImpl = new LazyClassRef(java.util.concurrent.atomic.AtomicReferenceFieldUpdater.class, "AtomicReferenceFieldUpdaterImpl");
+    public static final ClassRef java_util_concurrent_atomic_AtomicIntegerFieldUpdater$AtomicIntegerFieldUpdaterImpl = new LazyClassRef(java.util.concurrent.atomic.AtomicIntegerFieldUpdater.class, "AtomicIntegerFieldUpdaterImpl");
+    public static final ClassRef java_util_concurrent_atomic_AtomicLongFieldUpdater$CASUpdater = new LazyClassRef(java.util.concurrent.atomic.AtomicLongFieldUpdater.class, "CASUpdater");
+    public static final ClassRef java_util_concurrent_atomic_AtomicLongFieldUpdater$LockedUpdater = new LazyClassRef(java.util.concurrent.atomic.AtomicLongFieldUpdater.class, "LockedUpdater");
+    public static final ClassRef java_util_concurrent_atomic_AtomicStampedReference = new LazyClassRef(java.util.concurrent.atomic.AtomicStampedReference.class);
+    public static final ClassRef java_util_concurrent_atomic_AtomicMarkableReference = new LazyClassRef(java.util.concurrent.atomic.AtomicMarkableReference.class);
+
+    public static final ClassRef java_util_concurrent_locks_AbstractQueuedSynchronizer = new LazyClassRef(java.util.concurrent.locks.AbstractQueuedSynchronizer.class);
+    public static final ClassRef java_util_concurrent_locks_AbstractQueuedSynchronizer$Node = new LazyClassRef(java.util.concurrent.locks.AbstractQueuedSynchronizer.class, "Node");
+    public static final ClassRef java_util_concurrent_locks_AbstractQueuedLongSynchronizer = new LazyClassRef(java.util.concurrent.locks.AbstractQueuedLongSynchronizer.class);
+    public static final ClassRef java_util_concurrent_locks_AbstractQueuedLongSynchronizer$Node = new LazyClassRef(java.util.concurrent.locks.AbstractQueuedLongSynchronizer.class, "Node");
+    public static final ClassRef java_util_concurrent_locks_LockSupport = new LazyClassRef(java.util.concurrent.locks.LockSupport.class);
 
     public static final ClassRef sun_misc_VM                         = new ClassRef(sun.misc.VM.class);
     public static final ClassRef sun_misc_Version                    = new ClassRef(sun.misc.Version.class);
     public static final ClassRef sun_misc_SharedSecrets              = new ClassRef(sun.misc.SharedSecrets.class);
+    public static final ClassRef sun_misc_Unsafe                     = new ClassRef(sun.misc.Unsafe.class);
+    public static final ClassRef sun_misc_PerfCounter                = new LazyClassRef("sun.misc.PerfCounter");
     public static final ClassRef sun_util_calendar_ZoneInfo              = new ClassRef(sun.util.calendar.ZoneInfo.class);
 
     public static final ClassRef sun_reflect_annotation_AnnotationParser    = new ClassRef(sun.reflect.annotation.AnnotationParser.class);
@@ -136,6 +153,10 @@ public class JDK {
 
         public ClassRef(String name) {
             javaClass = Classes.forName(name);
+        }
+
+        public String className() {
+            return javaClass.getName();
         }
 
         public Class javaClass() {
@@ -180,9 +201,47 @@ public class JDK {
             className = javaClass.getName();
         }
 
+        public LazyClassRef(Class javaClass, String inner) {
+            super((Class) null);
+            className = javaClass.getName() + "$" + inner;
+        }
+
+        @Override
+        public String className() {
+            return className;
+        }
+
         @Override
         public final Class javaClass() {
             return Classes.forName(className);
+        }
+    }
+
+    /**
+     * Version number of the JDK.
+     */
+    public static final int JDK_VERSION;
+
+    /**
+     * Value for {@linkplain JDK_VERSION} for JDK 6.
+     */
+    public static final int JDK_6 = 6;
+
+    /**
+     * Value for {@linkplain JDK_VERSION} for JDK 7.
+     */
+    public static final int JDK_7 = 7;
+
+    static {
+        String version = System.getProperty("java.specification.version");
+
+        if ("1.6".equals(version)) {
+            JDK_VERSION = JDK_6;
+        } else if ("1.7".equals(version)) {
+            JDK_VERSION = JDK_7;
+        } else {
+            JDK_VERSION = -1;
+            ProgramError.unexpected("Unknown java version number: " + version);
         }
     }
 }

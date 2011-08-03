@@ -34,6 +34,7 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleNativeThread.Params;
+import com.sun.max.tele.memory.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.hosted.*;

@@ -48,8 +48,10 @@ public final class MemoryTagTableCellRenderer extends InspectorTableCellRenderer
     private final InspectorLabel[] labels = new InspectorLabel[1];
 
     /**
-     * A renderer that displays the type, if any, which is expected to apply to the contents of
-     * a memory region in the VM corresponding to a row in a table.
+     * A renderer that displays session information about
+     * a memory region in the VM corresponding to a row in a table, including registers for the
+     * currently selected thread that point into the region, watchpoints set in the region, and
+     * triggered watchpoint events for some part of the region.
      *
      * @param inspection
      * @param inspectorTable the table holding the cell to be rendered

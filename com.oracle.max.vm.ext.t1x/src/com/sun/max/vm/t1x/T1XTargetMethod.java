@@ -872,9 +872,15 @@ public final class T1XTargetMethod extends TargetMethod {
 
         // add operand stack slots
         for (int i = frame.numStack - 1; i >= 0; i--) {
-            info.addSlot((CiConstant) frame.getStackValue(i), "ostack");
+            CiConstant value = (CiConstant) frame.getStackValue(i);
+            info.addSlot(value, "ostack");
             for (int pad = 0; pad < STACK_SLOTS_PER_JVMS_SLOT - 1; pad++) {
                 info.addSlot(CiConstant.ZERO, "ostack (pad)");
+            }
+            if (value.kind.isDoubleWord()) {
+                // Must match the frame layout for longs and doubles specified by
+                // T1XCompilation.assignLocalDisplacementTemplateArgument()
+                info.swapTopSlots(STACK_SLOTS_PER_JVMS_SLOT);
             }
         }
 
@@ -890,13 +896,21 @@ public final class T1XTargetMethod extends TargetMethod {
 
         // add (non-parameter) local slots
         for (int i = numLocals - 1; i >= paramLocals; i--) {
+            CiConstant value;
             if (i == synchronizedReceiver) {
-                info.addSlot((CiConstant) frame.getLockValue(0), "locked rcvr");
+                value = (CiConstant) frame.getLockValue(0);
+                info.addSlot(value, "locked rcvr");
             } else {
-                info.addSlot((CiConstant) frame.getLocalValue(i), "local");
+                value = (CiConstant) frame.getLocalValue(i);
+                info.addSlot(value, "local");
             }
             for (int pad = 0; pad < STACK_SLOTS_PER_JVMS_SLOT - 1; pad++) {
                 info.addSlot(CiConstant.ZERO, "local (pad)");
+            }
+            if (value.kind.isDoubleWord()) {
+                // Must match the frame layout for longs and doubles specified by
+                // T1XCompilation.assignLocalDisplacementTemplateArgument()
+                info.swapTopSlots(STACK_SLOTS_PER_JVMS_SLOT);
             }
         }
 
@@ -927,9 +941,15 @@ public final class T1XTargetMethod extends TargetMethod {
 
         // add parameter slots
         for (int i = paramLocals - 1; i >= 0; i--) {
-            info.addSlot((CiConstant) frame.getLocalValue(i), "param");
+            CiConstant value = (CiConstant) frame.getLocalValue(i);
+            info.addSlot(value, "param");
             for (int pad = 0; pad < JVMSFrameLayout.STACK_SLOTS_PER_JVMS_SLOT - 1; pad++) {
                 info.addSlot(CiConstant.ZERO, "param (pad)");
+            }
+            if (value.kind.isDoubleWord()) {
+                // Must match the frame layout for longs and doubles specified by
+                // T1XCompilation.assignLocalDisplacementTemplateArgument()
+                info.swapTopSlots(STACK_SLOTS_PER_JVMS_SLOT);
             }
         }
 

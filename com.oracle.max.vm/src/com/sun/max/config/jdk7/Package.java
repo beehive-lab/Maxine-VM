@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,11 +20,21 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package test.output;
+package com.sun.max.config.jdk7;
 
-public class HelloWorld {
-    public static void main(String[] args) {
-        // DO NOT HACK ME!
-        System.out.println("Hello World!");
+import com.sun.max.config.*;
+import com.sun.max.vm.jdk.*;
+
+/**
+ * Redirection for additional JDK 7 packages and classes.
+ */
+public class Package extends BootImagePackage {
+    private static final String[] packages = {
+        "sun.misc.PerfCounter",
+        "sun.misc.PerfCounter$CoreCounters",
+    };
+
+    public Package() {
+        super(JDK.JDK_VERSION == JDK.JDK_7 ? packages : new String[0]);
     }
 }

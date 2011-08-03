@@ -1077,7 +1077,7 @@ public final class TeleInterpreter {
             case NEW: {
                 int cpIndex = readU2();
                 ClassActor classActor = machine.resolveClassReference(cpIndex);
-                push(ReferenceValue.from(Objects.allocateInstance(classActor.toJava())));
+                push(ReferenceValue.from(ObjectUtils.allocateInstance(classActor.toJava())));
                 break;
             }
             case NEWARRAY: {

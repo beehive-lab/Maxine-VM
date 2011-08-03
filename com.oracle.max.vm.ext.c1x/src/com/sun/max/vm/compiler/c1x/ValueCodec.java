@@ -192,8 +192,28 @@ public class ValueCodec {
      */
     static final LinearIDMap<CiConstant> nonObjectConstantsByID = new LinearIDMap<CiConstant>(20);
 
+    /**
+     * Reserved non-object constant index denoting {@link CiValue#IllegalValue}.
+     */
+    final static int NONOBJECT_CONSTANT_INDEX_ILLEGAL_VALUE = 0;
+
+    /**
+     * Reserved non-object constant index denoting that the following value is an encoded {@code long} stack slot or register.
+     */
+    final static int NONOBJECT_CONSTANT_INDEX_LONG_STACKSLOT_OR_REGISTER = 1;
+
+    /**
+     * Reserved non-object constant index denoting that the following value is an encoded {@code double} stack slot or register.
+     */
+    final static int NONOBJECT_CONSTANT_INDEX_DOUBLE_STACKSLOT_OR_REGISTER = 2;
+
     static {
-        nonObjectConstants.put(null, 0);
+        // Reserve index 0 for CiValue.IllegalValue
+        nonObjectConstants.put(CiConstant.forObject(new Object()), NONOBJECT_CONSTANT_INDEX_ILLEGAL_VALUE);
+        // Reserve index 1 to denote the previous register or stack slot is a long
+        nonObjectConstants.put(CiConstant.forObject(new Object()), NONOBJECT_CONSTANT_INDEX_LONG_STACKSLOT_OR_REGISTER);
+        // Reserve index 2 to denote the previous register or stack slot is a double
+        nonObjectConstants.put(CiConstant.forObject(new Object()), NONOBJECT_CONSTANT_INDEX_DOUBLE_STACKSLOT_OR_REGISTER);
 
         for (Field field : CiConstant.class.getFields()) {
             if (field.getType() == CiConstant.class) {
@@ -229,13 +249,16 @@ public class ValueCodec {
      */
     static void writeValue(EncodingStream out, CiValue value) {
         int pos = out.pos;
+
         if (value.isIllegal()) {
-            out.write(TYPE.set(0, TYPE_NONOBJECT_CONSTANT));
+            out.write(TYPE.set(NONOBJECT_CONSTANT_INDEX_ILLEGAL_VALUE, TYPE_NONOBJECT_CONSTANT));
         } else if (value.isRegister()) {
+            writeLongOrDoublePrefix(out, value);
             int b = TYPE.set(0, TYPE_REGISTER);
             b = REGISTER.set(b, value.asRegister().number);
             out.write(b);
         } else if (value.isStackSlot()) {
+            writeLongOrDoublePrefix(out, value);
             CiStackSlot slot = (CiStackSlot) value;
             int index = slot.index();
             if (slot.inCallerFrame()) {
@@ -322,6 +345,17 @@ public class ValueCodec {
     }
 
     /**
+     * Writes the prefix denoting that a following register or stack slot value in the stream is of kind long or double.
+     */
+    private static void writeLongOrDoublePrefix(EncodingStream out, CiValue value) {
+        if (value.kind.isLong()) {
+            out.write(TYPE.set(NONOBJECT_CONSTANT_INDEX_LONG_STACKSLOT_OR_REGISTER, TYPE_NONOBJECT_CONSTANT));
+        } else if (value.kind.isDouble()) {
+            out.write(TYPE.set(NONOBJECT_CONSTANT_INDEX_DOUBLE_STACKSLOT_OR_REGISTER, TYPE_NONOBJECT_CONSTANT));
+        }
+    }
+
+    /**
      * Decodes a {@link CiValue} from a data input stream.
      */
     static CiValue readValue(DecodingStream in, CiBitMap regRefMap, CiBitMap frameRefMap) {
@@ -364,8 +398,28 @@ public class ValueCodec {
         } else {
             assert type == TYPE_NONOBJECT_CONSTANT;
             int index = NONOBJECT_CONSTANT.get(b);
-            if (index == 0) {
+            if (index == NONOBJECT_CONSTANT_INDEX_ILLEGAL_VALUE) {
                 return CiValue.IllegalValue;
+            } else if (index == NONOBJECT_CONSTANT_INDEX_LONG_STACKSLOT_OR_REGISTER) {
+                CiValue value = readValue(in, regRefMap, frameRefMap);
+                if (value.isStackSlot()) {
+                    CiStackSlot slot = (CiStackSlot) value;
+                    return CiStackSlot.get(CiKind.Long, slot.index(), slot.inCallerFrame());
+                } else {
+                    assert value.isRegister();
+                    CiRegisterValue reg = (CiRegisterValue) value;
+                    return reg.reg.asValue(CiKind.Long);
+                }
+            } else if (index == NONOBJECT_CONSTANT_INDEX_DOUBLE_STACKSLOT_OR_REGISTER) {
+                CiValue value = readValue(in, regRefMap, frameRefMap);
+                if (value.isStackSlot()) {
+                    CiStackSlot slot = (CiStackSlot) value;
+                    return CiStackSlot.get(CiKind.Double, slot.index(), slot.inCallerFrame());
+                } else {
+                    assert value.isRegister();
+                    CiRegisterValue reg = (CiRegisterValue) value;
+                    return reg.reg.asValue(CiKind.Double);
+                }
             } else if (index <= NONOBJECT_CONSTANT_SHARED_INDEX_MAX) {
                 return nonObjectConstantsByID.get(index);
             }

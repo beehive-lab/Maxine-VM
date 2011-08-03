@@ -66,6 +66,10 @@ public final class JDK_java_lang_Throwable {
     @ALIAS(declaringClass = Throwable.class)
     Object backtrace;
 
+    // Introduced in JDK 7 as the default value of stackTrace (instead of null in JDK 6
+    @ALIAS(declaringClass = Throwable.class, optional = true)
+    private static StackTraceElement[] UNASSIGNED_STACK;
+
     /**
      * Fills in the stack trace for this exception. This implementation eagerly creates a
      * stack trace and fills in all the {@link java.lang.StackTraceElement stack trace elements}.
@@ -199,7 +203,7 @@ public final class JDK_java_lang_Throwable {
     @SUBSTITUTE
     private synchronized StackTraceElement[] getOurStackTrace() {
         // Initialize stack trace if this is the first call to this method
-        if (stackTrace == null) {
+        if (stackTrace == null || stackTrace == UNASSIGNED_STACK) {
             if (backtrace == null) {
                 stackTrace = new StackTraceElement[0];
             } else {

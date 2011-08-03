@@ -20,10 +20,11 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele;
+package com.sun.max.tele.memory;
 
 import java.util.*;
 
+import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -33,9 +34,9 @@ import com.sun.max.unsafe.*;
  * Assume that any address in a region known to be a heap region is live, and that
  * anything else is not.
  */
-public final class TeleUnknownHeapScheme extends AbstractTeleVMHolder implements TeleHeapScheme{
+final class TeleUnknownHeapScheme extends AbstractTeleVMHolder implements TeleHeapScheme {
 
-    protected TeleUnknownHeapScheme(TeleVM vm) {
+    TeleUnknownHeapScheme(TeleVM vm) {
         super(vm);
     }
 
@@ -47,21 +48,35 @@ public final class TeleUnknownHeapScheme extends AbstractTeleVMHolder implements
         return Collections.emptyList();
     }
 
+    public MaxMemoryManagementInfo getMemoryManagementInfo(final Address address) {
+        return new MaxMemoryManagementInfo() {
+
+            public MaxMemoryStatus status() {
+                for (MaxHeapRegion heapRegion : heap().heapRegions()) {
+                    if (heapRegion.memoryRegion().contains(address)) {
+                        return MaxMemoryStatus.LIVE;
+                    }
+                }
+                return MaxMemoryStatus.UNKNOWN;
+            }
+
+            public String terseInfo() {
+                return null;
+            }
+
+            public String shortDescription() {
+                return vm().heapScheme().name();
+            }
+
+            public Address address() {
+                return address;
+            }
+        };
+    }
+
     public int gcForwardingPointerOffset() {
         // Don't know anything about how this GC works.
         return -1;
-    }
-
-    public boolean isInLiveMemory(Address address) {
-        if (heap().isInGC()) {
-            return true;
-        }
-        for (MaxHeapRegion heapRegion : heap().heapRegions()) {
-            if (heapRegion.memoryRegion().contains(address)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     public boolean isForwardingPointer(Pointer pointer) {

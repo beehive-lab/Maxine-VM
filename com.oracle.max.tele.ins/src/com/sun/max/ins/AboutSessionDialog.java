@@ -139,7 +139,7 @@ public final class AboutSessionDialog extends InspectorDialog {
         codeCache.printSessionStats(stream, indent, verbose);
 
         stream.println();
-        stream.print("SESSION OPTIONS: \n");
+        stream.print("SESSION STARTUP OPTIONS: \n");
         inspection().options().printValues(stream, indent, verbose);
 
         textArea.setText(byteArrayOutputStream.toString());

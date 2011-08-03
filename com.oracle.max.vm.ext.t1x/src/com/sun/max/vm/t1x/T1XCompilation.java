@@ -1498,8 +1498,8 @@ public class T1XCompilation {
     }
 
     protected void assignLocalDisplacementTemplateArgument(int parameterIndex, int localIndex, Kind kind) {
-        // Long locals (ones that use two slots in the locals area) take two slots,
-        // as required by the JVM spec. The value of the long local is stored in
+        // Long and double locals use two slots in the locals area,
+        // as required by the JVM spec. The value of the long or double local is stored in
         // the second slot so that it can be loaded/stored without further adjustments
         // to the stack/base pointer offsets.
         int slotIndex = !kind.isCategory1 ? (localIndex + 1) : localIndex;

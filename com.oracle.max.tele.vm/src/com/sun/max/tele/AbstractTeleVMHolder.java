@@ -23,6 +23,7 @@
 package com.sun.max.tele;
 
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
 
 /**

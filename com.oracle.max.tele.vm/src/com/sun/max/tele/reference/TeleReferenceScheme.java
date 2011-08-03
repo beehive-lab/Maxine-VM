@@ -34,13 +34,13 @@ import com.sun.max.vm.reference.Reference;
 
 /**
  * A variation of VM references for use by the Inspector to refer to an object location in the VM.
- * <br>
+ * <p>
  * A  <strong>raw reference</strong> is an {@link Address} in VM memory where the object is currently
  * located.  However, the location may be subject to change by GC, so the raw reference may change over time.
- * <br>
+ * <p>
  * Each ordinary reference is represented as a unique index into a root table, a mirror of such a table, in the VM.  The
  * table holds the current raw reference (address), and it is updated by the GC at the end of each collection.
- * <br>
+ * <p>
  * References are intended to be canonical, i.e. refer to only one object.  However, in the course of inspection
  * duplicates may appear.  These are resolved at the conclusion of each GC.
  */
@@ -245,7 +245,7 @@ public abstract class TeleReferenceScheme extends AbstractVMScheme implements Te
             makeCanonical(nonCollectableTeleReference);
             return nonCollectableTeleReference;
         }
-        if (!vm().heap().isInLiveMemory(address)) {
+        if (!vm().heap().getMemoryManagementInfo(address).status().isLive()) {
             // Points to an object that is in a collectible heap, but
             // which is known not to be live; create what amounts to a wrapped
             // address that is unsafe with respect to GC.

@@ -79,7 +79,7 @@ import com.sun.max.vm.value.*;
  * Implementation of remote access to an instance of the Maxine VM.
  * Access from the Inspector or other clients of this implementation
  * gain access through the {@link MaxVM} interface.
- * <br>
+ * <p>
  * <strong>Concurrency policy:</strong> VM access is protected
  * by a reentrant lock that must be honored by all client-visible
  * methods that are not thread-safe.  Consequences of failure to
@@ -774,10 +774,10 @@ public abstract class TeleVM implements MaxVM {
     /**
      * Updates information about the state of the VM that is read
      * and cached at the end of each VM execution cycle.
-     * <br>
+     * <p>
      * This must be called in a context where thread-safe read access to the VM can
      * be achieved.
-     * <br>
+     * <p>
      * Some lazy initialization is done, in order to avoid cycles during startup.
      * @param epoch the number of times the process has run so far
      * @throws TeleError if unable to acquire the VM lock
@@ -971,6 +971,9 @@ public abstract class TeleVM implements MaxVM {
         return null;
     }
 
+    public final MaxMemoryManagementInfo getMemoryManagementInfo(Address address) {
+        return heap.getMemoryManagementInfo(address);
+    }
 
     /**
      * Acquires a lock on the VM process and related cached state; blocks until lock
@@ -1004,7 +1007,7 @@ public abstract class TeleVM implements MaxVM {
 
     /**
      * Determines whether the calling thread holds the VM lock.
-     * <br>
+     * <p>
      * <strong>Note: this device is mainly used at present to
      * support the re-engineering effort to add reliable thread safety.
      * It may be set to be always {@code true} in released versions
@@ -1046,7 +1049,7 @@ public abstract class TeleVM implements MaxVM {
 
     /**
      * Sets or clears some bits of the {@link Inspectable#flags} field in the VM process.
-     * <br>
+     * <p>
      * Must be called in a thread holding the VM lock.
      *
      * @param flags specifies which bits to set or clear
@@ -1298,9 +1301,9 @@ public abstract class TeleVM implements MaxVM {
      * Low level predicate for identifying the special case of a {@link StaticTuple} in the VM,
      * using only the most primitive operations, since it is needed for building all the higher-level
      * services in the Inspector.
-     * <br>
+     * <p>
      * Note that this predicate is not precise; it may very rarely return a false positive.
-     * <br>
+     * <p>
      * The predicate depends on the following chain in the VM heap layout:
      * <ol>
      *  <li>The hub of a {@link StaticTuple} points at a {@link StaticHub}</li>
@@ -1413,7 +1416,7 @@ public abstract class TeleVM implements MaxVM {
      * Returns a local copy of the contents of a {@link String} object in the VM's heap,
      * using low level mechanisms and performing no checking that the location
      * or object are valid.
-     * <br>
+     * <p>
      * The intention is to provide a fast, low-level mechanism for reading strings that
      * can be used outside of the AWT event thread without danger of deadlock,
      * for example on the canonical reference machinery.
@@ -1447,7 +1450,7 @@ public abstract class TeleVM implements MaxVM {
      * Returns a local copy of the contents of the inspectable list of dynamic
      * heap regions in the VM, using low level mechanisms and performing no checking that
      * the location or objects are valid.
-     * <br>
+     * <p>
      * The intention is to provide a way to read this data without needing any of the
      * usual type-based mechanisms for reading data, all of which rely on a populated
      * {@link TeleClassRegistry}.  This is needed when attaching to a process or reading

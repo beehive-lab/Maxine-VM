@@ -22,6 +22,8 @@
  */
 package com.sun.max.ins;
 
+import java.awt.*;
+
 import javax.swing.*;
 
 import com.sun.max.ins.util.*;
@@ -125,6 +127,13 @@ public final class MaxineInspector {
         }
         JFrame.setDefaultLookAndFeelDecorated(true);
         JDialog.setDefaultLookAndFeelDecorated(true);
+
+        // Workaround for a bug on Linux that results in a deadlock when starting up the inspector
+        // (deadlock occurs with nearly always when executing the inspector with JDK 7)
+        // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=7065980
+        for (GraphicsDevice gd : GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) {
+            gd.getDefaultConfiguration();
+        }
     }
 
 
