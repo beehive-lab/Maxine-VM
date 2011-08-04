@@ -221,7 +221,7 @@ Size virtualMemory_getPhysicalMemory(void) {
         int ok = sysctl(query, 2, &physicalMemory, &len, NULL, 0);
         c_ASSERT(ok == 0);
 #endif
-        c_ASSERT(physicalMemory >= 0 && physicalMemory % virtualMemory_getPageSize() == 0);
+        c_ASSERT(physicalMemory > 0 && physicalMemory % virtualMemory_getPageSize() == 0);
     }
     return physicalMemory;
 }
