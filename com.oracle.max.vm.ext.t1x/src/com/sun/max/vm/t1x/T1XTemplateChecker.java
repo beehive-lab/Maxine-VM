@@ -27,60 +27,94 @@ import java.util.*;
 import com.sun.c1x.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
+import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.bytecode.refmaps.*;
 import com.sun.max.vm.runtime.*;
 
 /**
- * Tests the IR for a T1X template to ensure it does not write to a Java stack or
- * local slot before a <i>stop</i> instruction (i.e. any instruction to which a GC
- * map is attached).
+ * Tests the IR for a T1X template to ensure it does not violate certain invariants.
+ * The invariants checked are:
+ * <ul>
+ * <li>A template must not write to a Java stack or local slot before a <i>stop</i> instruction
+ *  (i.e. any instruction to which a GC map is attached).
  * <p>
- * This invariant simplifies root scanning of a frame compiled by T1X.
+ * This simplifies root scanning of a frame compiled by T1X.
  * A GC reference map derived for the bytecode state at the start of a
  * template will be valid for all stops in the template.
+ * </li>
+ * <li>A template that includes a {@linkplain Bytecodes#TEMPLATE_CALL template call}
+ * must not have a stop instruction anywhere in the control flow after the template call.
+ * <p>
+ * This is required due to the way the ref maps for the stops in the template are
+ * lazily completed by the {@link ReferenceMapInterpreter}. The parameters to the template call
+ * are dead after the call. However, the ReferenceMapInterpreter doesn't know which stops
+ * come after a template call and which come before.
+ * </li>
+ * </ul>
  */
 @HOSTED_ONLY
 public class T1XTemplateChecker extends C1XCompilerExtension {
 
     IR ir;
     boolean changed;
-    IdentityHashMap<BlockBegin, BlockBegin> map = new IdentityHashMap<BlockBegin, BlockBegin>();
+    IdentityHashMap<BlockBegin, BlockBegin> sfmMap = new IdentityHashMap<BlockBegin, BlockBegin>();
+    IdentityHashMap<BlockBegin, BlockBegin> stcMap = new IdentityHashMap<BlockBegin, BlockBegin>();
 
     boolean seenFrameModification(BlockBegin block) {
-        return map.containsKey(block);
+        return sfmMap.containsKey(block);
+    }
+
+    boolean seenTemplateCall(BlockBegin block) {
+        return stcMap.containsKey(block);
     }
 
     void setSeenFrameModification(BlockBegin block) {
-        map.put(block, block);
+        sfmMap.put(block, block);
+    }
+
+    void setSeenTemplateCall(BlockBegin block) {
+        stcMap.put(block, block);
     }
 
     class Helper extends DefaultValueVisitor implements BlockClosure {
 
         BlockBegin block;
         boolean seenFrameModification;
+        boolean seenTemplateCall;
 
         @Override
         public void apply(BlockBegin block) {
             this.block = block;
             seenFrameModification = seenFrameModification(block);
+            seenTemplateCall = seenTemplateCall(block);
             Instruction i = block;
             while ((i = i.next()) != null) {
                 if (i.stateBefore() != null) {
                     if (seenFrameModification) {
                         FatalError.unexpected("Java bytecode frame updated before a safepoint or call:\n" + i.stateBefore().toCodePos());
                     }
+                    if (seenTemplateCall) {
+                        //
+                        FatalError.unexpected("Safepoint or call after a template call:\n" + i.stateBefore().toCodePos());
+                    }
                 }
 
                 i.accept(this);
             }
 
-            if (seenFrameModification) {
+            if (seenFrameModification || seenTemplateCall) {
                 for (BlockBegin succ : block.end().successors()) {
                     boolean succSeenFrameModification = seenFrameModification(succ);
-                    if (!succSeenFrameModification) {
+                    boolean succSeenTemplateCall = seenTemplateCall(succ);
+                    if (seenFrameModification && !succSeenFrameModification) {
                         setSeenFrameModification(succ);
+                        changed = true;
+                    }
+                    if (seenTemplateCall && !succSeenTemplateCall) {
+                        setSeenTemplateCall(succ);
                         changed = true;
                     }
                 }
@@ -99,6 +133,12 @@ public class T1XTemplateChecker extends C1XCompilerExtension {
                     seenFrameModification = true;
                 }
             }
+        }
+
+        @Override
+        public void visitTemplateCall(TemplateCall i) {
+            setSeenTemplateCall(block);
+            seenTemplateCall = true;
         }
     }
 
