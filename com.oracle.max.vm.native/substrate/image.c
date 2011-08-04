@@ -306,19 +306,15 @@ static void mapHeapAndCode(int fd) {
 #endif
 #if MEMORY_IMAGE
     theHeap = (Address) &maxvm_image_start + heapOffsetInImage;
-#elif os_LINUX
-    theHeap = virtualMemory_mapFileIn31BitSpace(heapAndCodeSize, fd, heapOffsetInImage);
-    if (theHeap == ALLOC_FAILED) {
-        log_exit(4, "could not map boot image");
-    }
-#elif os_SOLARIS || os_DARWIN
+#elif os_SOLARIS || os_DARWIN || os_LINUX
     Address reservedVirtualSpace = (Address) 0;
     size_t virtualSpaceSize = 1024L * theHeader->reservedVirtualSpaceSize;
     c_ASSERT(virtualMemory_pageAlign((Size) virtualSpaceSize) == (Size) virtualSpaceSize);
     if (virtualSpaceSize != 0) {
         // VM configuration asks for reserving an address space of size reservedVirtualSpaceSize.
-        // The following will create a mapping in virtual space of the requested size.The address returned might subsequently be used to memory map the
-        // boot heap region, automatically splitting this mapping in two.
+        // The following will create a mapping in virtual space of the requested size.
+        // The address returned might subsequently be used to memory map various regions, including the
+        // boot heap region, automatically splitting this mapping.
         // In any case,  the VM (mostly the heap scheme) is responsible for reserved space.
         reservedVirtualSpace = virtualMemory_allocatePrivateAnon((Address) 0, virtualSpaceSize, JNI_FALSE, JNI_FALSE, HEAP_VM);
         if (reservedVirtualSpace == ALLOC_FAILED) {

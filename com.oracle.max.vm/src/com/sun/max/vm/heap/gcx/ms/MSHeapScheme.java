@@ -125,25 +125,6 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
     }
 
-    @HOSTED_ONLY
-    @Override
-    public CodeManager createCodeManager() {
-        switch (Platform.platform().os) {
-            case LINUX: {
-                return new LowAddressCodeManager();
-            }
-            case MAXVE:
-            case DARWIN:
-            case SOLARIS: {
-                return new FixedAddressCodeManager();
-            }
-            default: {
-                FatalError.unimplemented();
-                return null;
-            }
-        }
-    }
-
     /**
      * Allocate memory for both the heap and the GC's data structures (mark bitmaps, marking stacks, etc.).
      */
@@ -201,11 +182,6 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         // 2^30 Kb = 1 TB of reserved virtual space.
         // This will be truncated as soon as we taxed what we need at initialization time.
         return Size.G.toInt();
-    }
-
-    @Override
-    public BootRegionMappingConstraint bootRegionMappingConstraint() {
-        return BootRegionMappingConstraint.AT_START;
     }
 
     public boolean collectGarbage(Size requestedFreeSpace) {

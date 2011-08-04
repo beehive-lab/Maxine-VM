@@ -156,7 +156,7 @@ Address virtualMemory_deallocate(Address start, Size size, int type) {
 }
 
 boolean virtualMemory_allocateAtFixedAddress(Address address, Size size, int type) {
-#if os_SOLARIS || os_DARWIN
+#if os_SOLARIS || os_DARWIN  || os_LINUX
     return check_mmap_result(mmap((void *) address, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, (off_t) 0)) != ALLOC_FAILED;
 #elif os_MAXVE
     return (Address) maxve_virtualMemory_allocateAtFixedAddress((unsigned long)address, size, type) != ALLOC_FAILED;

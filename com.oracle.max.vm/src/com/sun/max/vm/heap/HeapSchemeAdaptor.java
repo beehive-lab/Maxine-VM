@@ -170,14 +170,22 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
     @HOSTED_ONLY
     public CodeManager createCodeManager() {
         switch (Platform.platform().os) {
-            case LINUX: {
-                return new LowAddressCodeManager();
-            }
+            case LINUX:
+            case MAXVE:
             case DARWIN:
             case SOLARIS: {
-                return new VariableAddressCodeManager();
-            }
-            case MAXVE: {
+                // If you change this for any platform above, you may also want to revisit reservedVirtualSpaceSize,
+                // bootRegionMappingConstraint and the native implementation of mapHeapAndCode.
+                //
+                // The default policy implemented by the HeapSchemeAdaptor is to reserve 1 G of virtual space
+                // (as specified by reservedVirtualSpaceSize) and to memory map the boot region at the start of
+                // that reserved space (as specified by bootRegionMappingConstraint).
+                // The FixedAddressCodeManager then initialize itself by allocating the requested size at the end of
+                // the boot region. This guarantees that all relative displacements in code are 32-bit displacement.
+
+                // TODO: need to release the unused portion of the reserved address space. This must be done by the
+                // HeapScheme implementation that may have change the reserved amount to satisfy other constraints,
+                // and knows what's effectively used.
                 return new FixedAddressCodeManager();
             }
             default: {
@@ -186,7 +194,6 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
             }
         }
     }
-
     public boolean decreaseMemory(Size amount) {
         HeapScheme.Inspect.notifyDecreaseMemoryRequested(amount);
         return false;
@@ -257,10 +264,13 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
     }
 
     public int reservedVirtualSpaceSize() {
-        return 0;
+        // Reserve 1 G of virtual space. This will be used to map the boot heap region and the dynamically allocated code region.
+        // See comment in createCodeManager
+        return Size.M.toInt();
     }
 
     public BootRegionMappingConstraint bootRegionMappingConstraint() {
-        return BootRegionMappingConstraint.ANYWHERE;
+        // If you modify this, make sure that MS and MSE heap scheme overrides to return AT_START!
+        return BootRegionMappingConstraint.AT_START;
     }
 }
