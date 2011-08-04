@@ -28,9 +28,14 @@ import com.sun.max.unsafe.*;
 
 /**
  * Test getting platform's physical memory characteristics.
+ * Doesn't run on other VM as it relies on a C_FUNCTION.
  */
 public class PhysMemTest {
     public static void main(String[] args) {
+        if (!System.getProperty("java.vm.name").startsWith("Maxine")) {
+            System.out.println("Should run with a Maxine VM");
+            System.exit(0);
+        }
         long physicalMemorySize = VirtualMemory.getPhysicalMemorySize().toLong();
         int pageSize = Platform.platform().pageSize;
         int kPerPage = pageSize / Size.K.toInt();
