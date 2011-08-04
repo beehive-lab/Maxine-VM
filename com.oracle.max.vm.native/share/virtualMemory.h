@@ -45,7 +45,7 @@ extern Address virtualMemory_allocatePrivateAnon(Address address, Size size, jbo
 extern Address virtualMemory_deallocate(Address start, Size size, int type);
 
 extern unsigned int virtualMemory_getPageSize(void);
-extern Size virtualMemory_getPhysicalMemory(void);
+extern Size virtualMemory_getPhysicalMemorySize(void);
 
 extern Address virtualMemory_pageAlign(Address address);
 
