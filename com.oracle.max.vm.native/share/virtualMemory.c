@@ -35,6 +35,11 @@
 #include "jni.h"
 #include "unistd.h"
 
+#if os_DARWIN
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#endif
+
 /* There is a problem binding these identifiers in RedHat's include files, so we fake them: */
 #if os_LINUX
 #   ifndef MAP_ANONYMOUS
