@@ -129,7 +129,7 @@ public final class AMD64TargetMethodUtil {
         if (!isPatchableCallSite(callSite)) {
             // Every call site that is fixed up here might also be patched later.  To avoid failed patching,
             // check for alignment of call site also here.
-            // TODO(cwi): This is a check that I would like to have, however, T1X does not ensure proper alignment yet when it stiches together templates that contain calls.
+            // TODO(cwi): This is a check that I would like to have, however, T1X does not ensure proper alignment yet when it stitches together templates that contain calls.
             // FatalError.unexpected(" invalid patchable call site:  " + targetMethod + "+" + offset + " " + callSite.toHexString());
         }
 

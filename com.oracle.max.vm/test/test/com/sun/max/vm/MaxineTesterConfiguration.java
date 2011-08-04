@@ -108,6 +108,7 @@ public class MaxineTesterConfiguration {
         output(test.output.WeakReferenceTest03_01.class,               RAND_ALL);
         output(test.output.WeakReferenceTest04.class,                  RAND_ALL);
         output(test.output.GCTest8.class,                              RAND_ALL);
+        output(test.output.PhysMemTest.class,                              RAND_ALL);
 
 
 //        jtt(jtt.jasm.Invokevirtual_private01.class, RAND_ALL); // may fail due to incorrect invokevirtual / invokespecial optimization
