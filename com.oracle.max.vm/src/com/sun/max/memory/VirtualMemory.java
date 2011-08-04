@@ -178,12 +178,12 @@ public final class VirtualMemory {
      * @return amount of physical memory in bytes
      */
     @INLINE
-    public static Size getPhysicalMemory() {
-        return virtualMemory_getPhysicalMemory();
+    public static Size getPhysicalMemorySize() {
+        return virtualMemory_getPhysicalMemorySize();
     }
 
     @C_FUNCTION
-    private static native Size virtualMemory_getPhysicalMemory();
+    private static native Size virtualMemory_getPhysicalMemorySize();
 
     /* Page protection methods */
 

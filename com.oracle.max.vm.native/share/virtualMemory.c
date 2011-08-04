@@ -205,7 +205,7 @@ unsigned int virtualMemory_getPageSize(void) {
 #endif
 }
 
-Size virtualMemory_getPhysicalMemory(void) {
+Size virtualMemory_getPhysicalMemorySize(void) {
     if (physicalMemory == 0) {
 #if os_MAXVE
         // TODO
