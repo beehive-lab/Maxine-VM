@@ -56,7 +56,7 @@ public final class Heap {
 
     /**
      * This field is set to a non-zero value by the native code iff the
-     * heap scheme returns a non-zero value for {@linkplain HeapScheme#reservedVirtualSpaceSize()}.
+     * heap scheme returns a non-zero value for {@linkplain HeapScheme#reservedVirtualSpaceKB()}.
      */
     private static Address reservedVirtualSpace = Address.zero();
 
