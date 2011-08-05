@@ -26,14 +26,21 @@ import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.heap.*;
 
 /**
- * A code manager that reserves and allocates virtual memory at a fixed address.
+ * A code manager that reserves and allocates virtual memory immediately after the boot region.
+ * Specifically, the code manager allocates a single contiguous range of virtual memory, sized to {@link CodeManager#runtimeCodeRegionSize}, on the
+ * first virtual memory page next to the boot heap region highest address.
+ * It relies on cooperation with the HeapScheme to reserve up to 1 G of space next to the boot heap region.
+ * This guarantees that (1) virtual memory can be allocated at that address, and (2) all code allocated from the code manager will be within a 32-bit displacement from
+ * any code in the boot code region.
+ *
+ * See {@link HeapSchemeAdaptor#createCodeManager()}
  */
-public class FixedAddressCodeManager extends CodeManager {
-
+public class NearBootRegionCodeManager extends CodeManager {
     /**
-     * Initialize this code manager.
+     * Initialize this code manager. This comprises allocating virtual memory the code manager will allocate code from.
      */
     @Override
     void initialize() {

@@ -40,11 +40,10 @@ import com.sun.max.vm.type.*;
 public interface HeapScheme extends VMScheme {
 
     /**
-     * Indicates the boot image loader where the boot region should be mapped in the virtual address space: anywhere (i.e., doesn't matter),
+     * Indicates the boot image loader where the boot region should be mapped in the virtual address space: anywhere (i.e., anywhere inside),
      * at the beginning of the reserved virtual space, or at the end.
      * @see HeapScheme#bootRegionMappingConstraint()
-     * @see HeapScheme#reservedVirtualSpaceSize()
-     *
+     * @see HeapScheme#reservedVirtualSpaceKB()
      */
     public enum BootRegionMappingConstraint  {
         ANYWHERE,
@@ -70,16 +69,17 @@ public interface HeapScheme extends VMScheme {
     boolean isGcThread(Thread thread);
 
     /**
-     * Return the amount of virtual space (in KB) that must be reserved by the boot image loader to map
-     * the boot image. The boot image is mapped at the beginning of this reserved space.
+     * Return the amount of virtual space (in KB) that must be reserved by the boot image loader at boot-image load time.
+     * The boot loader may map the boot region in this reserved virtual space at a location specified by {@link #bootRegionMappingConstraint()}.
      *
-     * Help with heap scheme that requires the heap to be contiguous with, or at a specific location (above or below) with respect to the boot region.
-     * By default, assume the heap scheme doesn't require any space contiguous to the boot image and returns 0, which indicates to the boot image
+     * This helps with heap schemes that require the heap to be contiguous, or at a specific location (above or below) with respect to the boot region.
+     * By default, this method assumes the heap scheme doesn't require any space contiguous to the boot image and returns 0, which indicates to the boot image
      * loader that it only needs to reserve what's needed for the boot image.
+     * This mechanism may also be used to guarantee that code region aren't farther than a given distance from the boot code region (see {@link NearBootRegionCodeManager}).
      *
-     * @return a size in KB
+     * @return a number of KB
      */
-    int reservedVirtualSpaceSize();
+    int reservedVirtualSpaceKB();
 
     BootRegionMappingConstraint bootRegionMappingConstraint();
 

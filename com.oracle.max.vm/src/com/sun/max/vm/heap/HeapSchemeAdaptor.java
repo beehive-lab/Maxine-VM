@@ -165,6 +165,9 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
             MIN_OBJECT_SIZE = OBJECT_HUB.tupleSize;
             BYTE_ARRAY_HEADER_SIZE = Layout.byteArrayLayout().getArraySize(Kind.BYTE, 0);
         }
+        if (phase == MaxineVM.Phase.PRISTINE) {
+            releaseUnusedReservedVirtualSpace();
+        }
     }
 
     @HOSTED_ONLY
@@ -182,11 +185,7 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
                 // that reserved space (as specified by bootRegionMappingConstraint).
                 // The FixedAddressCodeManager then initialize itself by allocating the requested size at the end of
                 // the boot region. This guarantees that all relative displacements in code are 32-bit displacement.
-
-                // TODO: need to release the unused portion of the reserved address space. This must be done by the
-                // HeapScheme implementation that may have change the reserved amount to satisfy other constraints,
-                // and knows what's effectively used.
-                return new FixedAddressCodeManager();
+                return new NearBootRegionCodeManager();
             }
             default: {
                 FatalError.unimplemented();
@@ -263,7 +262,7 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         };
     }
 
-    public int reservedVirtualSpaceSize() {
+    public int reservedVirtualSpaceKB() {
         // Reserve 1 G of virtual space. This will be used to map the boot heap region and the dynamically allocated code region.
         // See comment in createCodeManager
         return Size.M.toInt();
@@ -272,5 +271,33 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
     public BootRegionMappingConstraint bootRegionMappingConstraint() {
         // If you modify this, make sure that MS and MSE heap scheme overrides to return AT_START!
         return BootRegionMappingConstraint.AT_START;
+    }
+
+
+    /**
+     * Release whatever reserved virtual space was left after CodeManager initialization. This is called during {@link MaxineVM.Phase#PRISTINE} initialization phase.
+     * This is must be overridden by HeapScheme implementations that either override {@link #createCodeManager()} or {@link #bootRegionMappingConstraint()},
+     * or make use of the extra space reserved by default.
+     */
+    protected void releaseUnusedReservedVirtualSpace() {
+        Size reservedVirtualSpaceSize = Size.K.times(VMConfiguration.vmConfig().heapScheme().reservedVirtualSpaceKB());
+        if (reservedVirtualSpaceSize.isZero()) {
+            return;
+        }
+        FatalError.check(bootRegionMappingConstraint() == BootRegionMappingConstraint.AT_START,
+                        "Overridding HeapSchemeAdaptor.bootRegionMappingConstraint() mandates to override HeapSchemeAdaptor.releaseUnusedReservedVirtualSpace");
+        FatalError.check(NearBootRegionCodeManager.class == Code.getCodeManager().getClass(),
+                        "Overridding HeapSchemeAdaptor.createCodeManager mandates to override HeapSchemeAdaptor.releaseUnusedReservedVirtualSpace");
+
+        Address startOfReservedVirtualSpaceSize = Heap.bootHeapRegion.start();
+        Address endOfReservedVirtualSpaceSize = startOfReservedVirtualSpaceSize.plus(reservedVirtualSpaceSize);
+        MemoryRegion runtimeCodeRegion = Code.getCodeManager().getRuntimeCodeRegion();
+        FatalError.check(startOfReservedVirtualSpaceSize.lessThan(runtimeCodeRegion.start()) && runtimeCodeRegion.end().lessEqual(endOfReservedVirtualSpaceSize),
+                        "Runtime code region should be in virtual space reserved by boot loader");
+        Address startOfUnusedVirtualSpace = runtimeCodeRegion.end().alignUp(Platform.platform().pageSize);
+        Size unusedVirtualSpaceSize = endOfReservedVirtualSpaceSize.minus(startOfUnusedVirtualSpace).asSize();
+        if (!unusedVirtualSpaceSize.isZero()) {
+            VirtualMemory.deallocate(startOfUnusedVirtualSpace, unusedVirtualSpaceSize, VirtualMemory.Type.DATA);
+        }
     }
 }
