@@ -96,7 +96,7 @@ public class T1XTemplateChecker extends C1XCompilerExtension {
                     if (seenFrameModification) {
                         FatalError.unexpected("Java bytecode frame updated before a safepoint or call:\n" + i.stateBefore().toCodePos());
                     }
-                    if (seenTemplateCall) {
+                    if (seenTemplateCall && !T1XOptions.AllowSafepointAfterTemplateCall) {
                         //
                         FatalError.unexpected("Safepoint or call after a template call:\n" + i.stateBefore().toCodePos());
                     }
