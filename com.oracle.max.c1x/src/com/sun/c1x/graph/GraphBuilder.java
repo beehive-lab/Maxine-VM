@@ -534,11 +534,7 @@ public final class GraphBuilder {
         FrameState stateBefore = curState.immutableCopy(bci());
         Value index = ipop();
         Value array = apop();
-        Value length = null;
-        if (cseArrayLength(array)) {
-            length = append(new ArrayLength(array, stateBefore));
-        }
-        Value v = append(new LoadIndexed(array, index, length, kind, stateBefore));
+        Value v = append(new LoadIndexed(array, index, kind, stateBefore));
         push(kind.stackKind(), v);
     }
 
@@ -547,11 +543,7 @@ public final class GraphBuilder {
         Value value = pop(kind.stackKind());
         Value index = ipop();
         Value array = apop();
-        Value length = null;
-        if (cseArrayLength(array)) {
-            length = append(new ArrayLength(array, stateBefore));
-        }
-        StoreIndexed result = new StoreIndexed(array, index, length, kind, value, stateBefore);
+        StoreIndexed result = new StoreIndexed(array, index, kind, value, stateBefore);
         append(result);
         if (memoryMap != null) {
             memoryMap.storeValue(value);
@@ -1359,31 +1351,6 @@ public final class GraphBuilder {
         boolean isSafepoint = isBackwards && !scopeData.noSafepoints();
         FrameState stateBefore = isSafepoint ? curState.immutableCopy(bci()) : null;
         append(new LookupSwitch(ipop(), list, keys, stateBefore, isSafepoint));
-    }
-
-    /**
-     * Determines whether the length of an array should be extracted out as a separate instruction
-     * before an array indexing instruction. This exposes it to CSE.
-     * @param array
-     * @return
-     */
-    private boolean cseArrayLength(Value array) {
-        // checks whether an array length access should be generated for CSE
-        if (C1XOptions.OptCSEArrayLength) {
-            // always access the length for CSE
-            return true;
-        } else if (array.isConstant()) {
-            // the array itself is a constant
-            return true;
-        } else if (array instanceof LoadField && ((LoadField) array).constantValue() != null) {
-            // the length is derived from a constant array
-            return true;
-        } else if (array instanceof NewArray) {
-            // the array is derived from an allocation
-            final Value length = ((NewArray) array).length();
-            return length != null && length.isConstant();
-        }
-        return false;
     }
 
     private Value appendConstant(CiConstant type) {

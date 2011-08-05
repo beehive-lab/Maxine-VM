@@ -550,7 +550,7 @@ public class Canonicalizer extends DefaultValueVisitor {
             if (v instanceof Convert) {
                 Value nv = eliminateNarrowing(i.elementKind(), (Convert) v);
                 if (nv != null && inCurrentBlock(v)) {
-                    setCanonical(new StoreIndexed(array, i.index(), i.length(), i.elementKind(), nv, i.stateBefore()));
+                    setCanonical(new StoreIndexed(array, i.index(), i.elementKind(), nv, i.stateBefore()));
                 }
             }
         }
@@ -571,22 +571,6 @@ public class Canonicalizer extends DefaultValueVisitor {
                         }
                     }
                 }
-            }
-        }
-        if (i.index().isConstant() && i.length() != null && i.length().isConstant()) {
-            int index = i.index().asConstant().asInt();
-            if (index >= 0 && index < i.length().asConstant().asInt()) {
-                i.eliminateBoundsCheck();
-            }
-        }
-    }
-
-    @Override
-    public void visitLoadIndexed(LoadIndexed i) {
-        if (i.index().isConstant() && i.length() != null && i.length().isConstant()) {
-            int index = i.index().asConstant().asInt();
-            if (index >= 0 && index < i.length().asConstant().asInt()) {
-                i.eliminateBoundsCheck();
             }
         }
     }

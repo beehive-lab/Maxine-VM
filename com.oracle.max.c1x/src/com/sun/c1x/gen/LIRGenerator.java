@@ -336,10 +336,9 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitStoreIndexed(StoreIndexed x) {
         XirArgument array = toXirArgument(x.array());
-        XirArgument length = x.length() == null ? null : toXirArgument(x.length());
         XirArgument index = toXirArgument(x.index());
         XirArgument value = toXirArgument(x.value());
-        XirSnippet snippet = xir.genArrayStore(site(x), array, index, length, value, x.elementKind(), null);
+        XirSnippet snippet = xir.genArrayStore(site(x), array, index, value, x.elementKind(), null);
         emitXir(snippet, x, maybeStateFor(x), null, true);
     }
 
@@ -841,8 +840,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     public void visitLoadIndexed(LoadIndexed x) {
         XirArgument array = toXirArgument(x.array());
         XirArgument index = toXirArgument(x.index());
-        XirArgument length = toXirArgument(x.length());
-        XirSnippet snippet = xir.genArrayLoad(site(x), array, index, length, x.elementKind(), null);
+        XirSnippet snippet = xir.genArrayLoad(site(x), array, index, x.elementKind(), null);
         emitXir(snippet, x, maybeStateFor(x), null, true);
     }
 

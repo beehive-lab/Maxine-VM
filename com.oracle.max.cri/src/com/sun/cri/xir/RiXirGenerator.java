@@ -83,9 +83,9 @@ public interface RiXirGenerator {
 
     XirSnippet genInstanceOf(XirSite site, XirArgument receiver, XirArgument hub, RiType type);
 
-    XirSnippet genArrayLoad(XirSite site, XirArgument array, XirArgument index, XirArgument length, CiKind elementKind, RiType elementType);
+    XirSnippet genArrayLoad(XirSite site, XirArgument array, XirArgument index, CiKind elementKind, RiType elementType);
 
-    XirSnippet genArrayStore(XirSite site, XirArgument array, XirArgument index, XirArgument length, XirArgument value, CiKind elementKind, RiType elementType);
+    XirSnippet genArrayStore(XirSite site, XirArgument array, XirArgument index, XirArgument value, CiKind elementKind, RiType elementType);
 
     XirSnippet genArrayLength(XirSite site, XirArgument array);
 

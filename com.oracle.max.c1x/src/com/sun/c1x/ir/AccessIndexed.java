@@ -34,7 +34,6 @@ import com.sun.cri.ci.*;
 public abstract class AccessIndexed extends AccessArray {
 
     private Value index;
-    private Value length;
     private final CiKind elementType;
 
     /**
@@ -46,10 +45,9 @@ public abstract class AccessIndexed extends AccessArray {
      * @param elementType the type of the elements of the array
      * @param stateBefore the state before executing this instruction
      */
-    AccessIndexed(CiKind kind, Value array, Value index, Value length, CiKind elementType, FrameState stateBefore) {
+    AccessIndexed(CiKind kind, Value array, Value index, CiKind elementType, FrameState stateBefore) {
         super(kind, array, stateBefore);
         this.index = index;
-        this.length = length;
         this.elementType = elementType;
     }
 
@@ -59,14 +57,6 @@ public abstract class AccessIndexed extends AccessArray {
      */
     public Value index() {
         return index;
-    }
-
-    /**
-     * Gets the instruction that produces the length of the array.
-     * @return the length
-     */
-    public Value length() {
-        return length;
     }
 
     /**
@@ -102,8 +92,5 @@ public abstract class AccessIndexed extends AccessArray {
     public void inputValuesDo(ValueClosure closure) {
         super.inputValuesDo(closure);
         index = closure.apply(index);
-        if (length != null) {
-            length = closure.apply(length);
-        }
     }
 }
