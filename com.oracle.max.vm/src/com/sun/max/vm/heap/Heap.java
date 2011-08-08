@@ -563,21 +563,6 @@ public final class Heap {
         Monitor.exit(HEAP_LOCK);
     }
 
-    @INLINE
-    public static boolean pin(Object object) {
-        return heapScheme().pin(object);
-    }
-
-    @INLINE
-    public static void unpin(Object object) {
-        heapScheme().unpin(object);
-    }
-
-    @INLINE
-    public static boolean isPinned(Object object) {
-        return heapScheme().isPinned(object);
-    }
-
     /**
      * Determines if the  heap scheme is initialized to the point where
      * {@link #collectGarbage(Size)} can safely be called.
