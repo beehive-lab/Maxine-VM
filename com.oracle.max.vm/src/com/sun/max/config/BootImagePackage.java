@@ -450,12 +450,11 @@ public class BootImagePackage implements Comparable<BootImagePackage>, Cloneable
     public synchronized <S extends VMScheme> Class<? extends S> loadSchemeImplementation(Class<S> schemeType) {
         final Class<? extends S> schemeImplementation = schemeTypeToImplementation(schemeType);
         if (schemeImplementation == null) {
-            ProgramError.unexpected("could not find subclass of " + schemeType + " in " + this);
+            throw ProgramError.unexpected("could not find subclass of " + schemeType + " in " + this);
         } else {
             final Class<?> loadedImplementation = Classes.load(schemeType.getClassLoader(), schemeImplementation.getName());
             return loadedImplementation.asSubclass(schemeType);
         }
-        return null;
     }
 
     /**

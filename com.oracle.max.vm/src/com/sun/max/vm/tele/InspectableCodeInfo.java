@@ -94,7 +94,7 @@ public final class InspectableCodeInfo {
      */
     private static void refreshBreakpointClassDescriptors() {
         if (breakpointClassDescriptorsCharCount < 0 || breakpointClassDescriptorsCharCount >= BREAKPOINT_DESCRIPTORS_ARRAY_LENGTH) {
-            ProgramError.unexpected("InspectableCodeInfo: bad char count from inspector=" + breakpointClassDescriptorsCharCount);
+            throw ProgramError.unexpected("InspectableCodeInfo: bad char count from inspector=" + breakpointClassDescriptorsCharCount);
         } else if (breakpointClassDescriptorsCharCount == 0) {
             breakpointClassDescriptors = new String[0];
         } else {

@@ -175,7 +175,7 @@ public final class NativeInterfaces {
                 jniFunctionNames.add(functionName);
             }
         } catch (IOException ioException) {
-            ProgramError.unexpected("Error reading native header file " + nativeHeaderFile.getPath(), ioException);
+            throw ProgramError.unexpected("Error reading native header file " + nativeHeaderFile.getPath(), ioException);
         }
     }
 

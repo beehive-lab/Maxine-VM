@@ -291,9 +291,6 @@ public final class JniHandles {
         }
         if (tag == Tag.LOCAL) {
             JniHandles jniHandles = VmThread.current().jniHandles();
-            if (jniHandles == null) {
-                throw new IllegalArgumentException("invalid JNI handle: " + jniHandle.to0xHexString());
-            }
             return jniHandles.get(jniHandleToIndex(jniHandle));
         }
         if (tag == Tag.GLOBAL) {

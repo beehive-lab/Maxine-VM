@@ -195,9 +195,8 @@ public enum ValueComparator {
             case NE:
                 return NOT_EQUAL;
             default:
-                ProgramError.unknownCase();
+                throw ProgramError.unknownCase();
         }
-        return null;
     }
 
     public String symbol() {

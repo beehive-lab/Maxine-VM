@@ -976,20 +976,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         return toSpace.contains(address);
     }
 
-    @INLINE(override = true)
-    public boolean pin(Object object) {
-        return false;
-    }
-
-    @INLINE(override = true)
-    public void unpin(Object object) {
-    }
-
-    @INLINE(override = true)
-    public boolean isPinned(Object object) {
-        return false;
-    }
-
     /**
      * Verifies invariants for memory spaces (i.e. heap, code caches, thread stacks) that contain
      * objects and/or object references.

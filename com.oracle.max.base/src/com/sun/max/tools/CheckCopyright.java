@@ -216,7 +216,7 @@ public class CheckCopyright {
             }
             System.exit(error ? 1 : 0);
         } catch (Exception ex) {
-            ProgramError.unexpected("processing failed", ex);
+            throw ProgramError.unexpected("processing failed", ex);
         }
     }
 
@@ -468,7 +468,7 @@ public class CheckCopyright {
                     }
                 }
                 if (failOnError && !(CONTINUE_ON_ERROR.getValue() || cannotFollowNonExistentFile(errorResult))) {
-                    ProgramError.unexpected("terminating");
+                    throw ProgramError.unexpected("terminating");
                 }
             }
         } finally {

@@ -61,13 +61,13 @@ public class InvokedMethodRecorder extends BytecodeAdapter {
                 final MethodActor methodActor = methodRefConstant.resolve(constantPool, index);
                 sequence.add(methodActor);
             } catch (HostOnlyMethodError prototypeOnlyMethodError) {
-                ProgramError.unexpected(classMethodActor.format("%H.%n(%p) calls prototype-only method " + methodRefConstant.valueString(constantPool)));
+                throw ProgramError.unexpected(classMethodActor.format("%H.%n(%p) calls prototype-only method " + methodRefConstant.valueString(constantPool)));
             }
         } else {
             final TypeDescriptor holder = methodRefConstant.holder(constantPool);
             final String holderName = holder.toJavaString();
             if (holderName.startsWith(maxPackagePrefix)) {
-                ProgramError.unexpected(classMethodActor.format("%H.%n(%p) calls unresolved Maxine method " + methodRefConstant.valueString(constantPool)));
+                throw ProgramError.unexpected(classMethodActor.format("%H.%n(%p) calls unresolved Maxine method " + methodRefConstant.valueString(constantPool)));
             }
         }
     }

@@ -107,7 +107,7 @@ public class HostedGeneralLayout extends AbstractLayout  implements GeneralLayou
     }
 
     public void writeHubReference(Accessor accessor, Reference hub) {
-        ProgramError.unexpected();
+        throw ProgramError.unexpected();
     }
 
     public Word readMisc(Accessor accessor) {
@@ -115,7 +115,7 @@ public class HostedGeneralLayout extends AbstractLayout  implements GeneralLayou
     }
 
     public final void writeMisc(Accessor accessor, Word value) {
-        ProgramError.unexpected();
+        throw ProgramError.unexpected();
     }
 
     public final Word compareAndSwapMisc(Accessor accessor, Word expectedValue, Word newValue) {
@@ -135,7 +135,7 @@ public class HostedGeneralLayout extends AbstractLayout  implements GeneralLayou
     }
 
     public void writeForwardRef(Accessor accessor, Reference forwardRef) {
-        ProgramError.unexpected();
+        throw ProgramError.unexpected();
     }
 
     public Reference compareAndSwapForwardRef(Accessor accessor, Reference suspectedRef, Reference forwardRef) {
@@ -143,7 +143,7 @@ public class HostedGeneralLayout extends AbstractLayout  implements GeneralLayou
     }
 
     public void visitObjectCell(Object object, ObjectCellVisitor visitor) {
-        ProgramError.unexpected();
+        throw ProgramError.unexpected();
     }
 
     public Offset getOffsetFromOrigin(HeaderField headerField) {

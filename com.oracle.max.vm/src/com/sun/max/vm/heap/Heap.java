@@ -33,6 +33,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
@@ -554,19 +555,12 @@ public final class Heap {
         return heapScheme().maxObjectInspectionAge();
     }
 
-    @INLINE
-    public static boolean pin(Object object) {
-        return heapScheme().pin(object);
+    public static void lock() {
+        Monitor.enter(HEAP_LOCK);
     }
 
-    @INLINE
-    public static void unpin(Object object) {
-        heapScheme().unpin(object);
-    }
-
-    @INLINE
-    public static boolean isPinned(Object object) {
-        return heapScheme().isPinned(object);
+    public static void unlock() {
+        Monitor.exit(HEAP_LOCK);
     }
 
     /**

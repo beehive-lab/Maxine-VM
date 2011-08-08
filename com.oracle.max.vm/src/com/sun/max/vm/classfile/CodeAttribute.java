@@ -91,7 +91,7 @@ public final class CodeAttribute {
                 localVariableTable.encode(dataOutputStream);
             }
         } catch (IOException e) {
-            ProgramError.unexpected(e);
+            throw ProgramError.unexpected(e);
         }
 
         this.exceptionHandlerTableOffset = exceptionHandlerTableOff;

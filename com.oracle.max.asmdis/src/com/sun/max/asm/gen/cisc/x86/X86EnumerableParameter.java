@@ -71,7 +71,7 @@ public class X86EnumerableParameter<EnumerableArgument_Type extends Enum<Enumera
                 setVariableName("st_i");
                 break;
             default:
-                ProgramError.unexpected();
+                throw ProgramError.unexpected();
         }
     }
 

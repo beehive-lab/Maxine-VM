@@ -34,11 +34,11 @@ import com.sun.max.program.*;
  * mnemonic or assembler method name. The field has a default value if it is not specified.
  * An example of an optional field is the {@link com.sun.max.asm.gen.risc.sparc.SPARCFields#_p_option
  * predict bit} for the SPARC Branch on Equal with Prediction instruction:
- * 
+ *
  *     bge        // predict that branch will be taken (default)
  *     bge,pt     // predict that branch will be taken
  *     bge,pn     // predict that branch will not be taken
- * 
+ *
  * The definition of this field therefore has three {@link Option options}.
  */
 public class OptionField extends RiscField {
@@ -82,7 +82,7 @@ public class OptionField extends RiscField {
 
     /**
      * Creates a copy of this field that can take an additional value.
-     * 
+     *
      * @param name   addition to the assembler method's name used to specify the option value
      * @param value  the option value
      * @param externalName addition to the external assembler syntax used to specify the option value
@@ -93,7 +93,7 @@ public class OptionField extends RiscField {
         final Option newOption = new Option(name, value, externalName, result);
         for (Option option : options) {
             if (option.equals(newOption)) {
-                ProgramError.unexpected("duplicate option: " + option);
+                throw ProgramError.unexpected("duplicate option: " + option);
             }
         }
         result.options.add(newOption);
@@ -106,7 +106,7 @@ public class OptionField extends RiscField {
 
     /**
      * Creates a copy of this field that can take an additional value.
-     * 
+     *
      * @param name   addition to the assembler method's name used to specify the option value
      * @param value  the option value
      * @return the extended field
@@ -117,7 +117,7 @@ public class OptionField extends RiscField {
 
     /**
      * Creates a copy of this field that can take an additional value.
-     * 
+     *
      * @param value  the option value
      * @return the extended field
      */
@@ -127,7 +127,7 @@ public class OptionField extends RiscField {
 
     /**
      * Creates a copy of this field that can take an additional value.
-     * 
+     *
      * @param name       addition to the assembler method's name used to specify the option value
      * @param argument   the option value represented as a symbol
      * @return the extended field

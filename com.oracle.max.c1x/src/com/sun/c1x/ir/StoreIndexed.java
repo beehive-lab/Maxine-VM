@@ -47,8 +47,8 @@ public final class StoreIndexed extends AccessIndexed {
      * @param value the value to store into the array
      * @param stateBefore the state before executing this instruction
      */
-    public StoreIndexed(Value array, Value index, Value length, CiKind elementType, Value value, FrameState stateBefore) {
-        super(CiKind.Void, array, index, length, elementType, stateBefore);
+    public StoreIndexed(Value array, Value index, CiKind elementType, Value value, FrameState stateBefore) {
+        super(CiKind.Void, array, index, elementType, stateBefore);
         this.value = value;
         setFlag(Flag.LiveStore);
         if (elementType != CiKind.Object) {

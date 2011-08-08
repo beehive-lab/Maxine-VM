@@ -80,7 +80,7 @@ public class LinearAllocatorHeapRegion extends LinearAllocationMemoryRegion {
         Address end = cell.plus(size);
         if (end.greaterThan(end())) {
             if (MaxineVM.isHosted()) {
-                ProgramError.unexpected("out of space in linear allocator region");
+                throw ProgramError.unexpected("out of space in linear allocator region");
             }
             return Pointer.zero();
         }

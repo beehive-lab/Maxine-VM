@@ -54,7 +54,7 @@ public class SingleThread extends Thread {
             try {
                 return function.call();
             } catch (Exception exception) {
-                ProgramError.unexpected(exception);
+                throw ProgramError.unexpected(exception);
             }
         }
         synchronized (executorService) {
@@ -85,7 +85,7 @@ public class SingleThread extends Thread {
                     if (cause instanceof Exception) {
                         throw (Exception) cause;
                     }
-                    ProgramError.unexpected(cause);
+                    throw ProgramError.unexpected(cause);
                 } catch (InterruptedException exception) {
                     // continue
                 }
@@ -105,7 +105,7 @@ public class SingleThread extends Thread {
                     return;
                 } catch (ExecutionException e) {
                     final Throwable cause = e.getCause();
-                    ProgramError.unexpected(cause);
+                    throw ProgramError.unexpected(cause);
 
                 } catch (InterruptedException exception) {
                     // continue

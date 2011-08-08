@@ -74,7 +74,7 @@ public abstract class Template implements Cloneable, Comparable<Template> {
      */
     protected void setLabelParameterIndex() {
         if (labelParameterIndex != -1) {
-            ProgramError.unexpected("a template can have at most one label parameter");
+            throw ProgramError.unexpected("a template can have at most one label parameter");
         }
         labelParameterIndex = parameters().size();
     }

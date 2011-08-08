@@ -75,7 +75,7 @@ public class HostedArrayLayout extends HostedGeneralLayout implements ArrayLayou
     }
 
     public void writeLength(Accessor accessor, int length) {
-        ProgramError.unexpected();
+        throw ProgramError.unexpected();
     }
 
     @INLINE
@@ -131,11 +131,11 @@ public class HostedArrayLayout extends HostedGeneralLayout implements ArrayLayou
 
     public void writeValue(Kind kind, ObjectMirror mirror, int offset, Value value) {
         assert kind == value.kind();
-        ProgramError.unexpected();
+        throw ProgramError.unexpected();
     }
 
     public void copyElements(Accessor src, int srcIndex, Object dst, int dstIndex, int length) {
-        ProgramError.unexpected();
+        throw ProgramError.unexpected();
     }
 
     @INLINE public final boolean   getBoolean(Accessor accessor, int index) { return accessor.getBoolean(0, index); }

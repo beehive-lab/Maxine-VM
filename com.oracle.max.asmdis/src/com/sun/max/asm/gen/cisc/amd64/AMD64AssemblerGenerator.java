@@ -185,7 +185,7 @@ public class AMD64AssemblerGenerator extends X86AssemblerGenerator<AMD64Template
                         printModVariant(writer, template, AMD64IndirectRegister64.RBP_INDIRECT, AMD64IndirectRegister64.R13_INDIRECT);
                         break;
                     default:
-                        ProgramError.unexpected();
+                        throw ProgramError.unexpected();
                 }
                 break;
             }
@@ -200,7 +200,7 @@ public class AMD64AssemblerGenerator extends X86AssemblerGenerator<AMD64Template
                                 printModVariant(writer, template, AMD64BaseRegister64.RBP_BASE, AMD64BaseRegister64.R13_BASE);
                                 break;
                             default:
-                                ProgramError.unexpected();
+                                throw ProgramError.unexpected();
                         }
                         break;
                     default:
@@ -231,7 +231,7 @@ public class AMD64AssemblerGenerator extends X86AssemblerGenerator<AMD64Template
                         printSibVariant(writer, template, AMD64IndirectRegister64.RSP_INDIRECT, AMD64IndirectRegister64.R12_INDIRECT);
                         break;
                     default:
-                        ProgramError.unexpected();
+                        throw ProgramError.unexpected();
                 }
                 break;
             }

@@ -168,7 +168,7 @@ public class BootImage {
                 try {
                     endianness.writeInt(outputStream, field.getInt(this));
                 } catch (IllegalAccessException illegalAccessException) {
-                    ProgramError.unexpected();
+                    throw ProgramError.unexpected();
                 }
             }
         }
@@ -408,7 +408,7 @@ public class BootImage {
                 try {
                     endianness().writeInt(outputStream, field.getInt(this));
                 } catch (IllegalAccessException illegalAccessException) {
-                    ProgramError.unexpected();
+                    throw ProgramError.unexpected();
                 }
             }
         }

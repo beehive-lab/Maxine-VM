@@ -65,7 +65,7 @@ public interface StaticFieldName {
                         }
                         sequence.add(value);
                     } catch (IllegalAccessException illegalAccessException) {
-                        ProgramError.unexpected("could not name value of field: " + field);
+                        throw ProgramError.unexpected("could not name value of field: " + field);
                     }
                 }
             }

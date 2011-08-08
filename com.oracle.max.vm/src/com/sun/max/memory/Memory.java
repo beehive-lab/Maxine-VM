@@ -102,7 +102,7 @@ public final class Memory {
         }
         final int errorCode = isHosted() ? BoxedMemory.deallocate(block) : memory_deallocate(block);
         if (errorCode != 0) {
-            ProgramError.unexpected("Memory.deallocate() failed with OS error code: " + errorCode);
+            throw ProgramError.unexpected("Memory.deallocate() failed with OS error code: " + errorCode);
         }
     }
 

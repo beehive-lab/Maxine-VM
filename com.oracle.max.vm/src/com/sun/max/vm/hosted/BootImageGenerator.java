@@ -235,7 +235,7 @@ public final class BootImageGenerator {
                 writeMethodTree(graphPrototype.compiledPrototype, new File(vmDirectory, IMAGE_METHOD_TREE_FILE_NAME));
             }
         } catch (IOException ioException) {
-            ProgramError.unexpected("could not write file ", ioException);
+            throw ProgramError.unexpected("could not write file ", ioException);
         } finally {
             final long timeInMilliseconds = System.currentTimeMillis() - start;
             if (statsOption.getValue()) {
@@ -265,7 +265,7 @@ public final class BootImageGenerator {
                 bootImage.write(outputStream);
                 Trace.end(1, "end boot image file: " + file + " (" + Longs.toUnitsString(file.length(), false) + ")");
             } catch (IOException ioException) {
-                ProgramError.unexpected("could not write file: " + file, ioException);
+                throw ProgramError.unexpected("could not write file: " + file, ioException);
             } finally {
                 try {
                     outputStream.close();
@@ -276,7 +276,7 @@ public final class BootImageGenerator {
         } catch (FileNotFoundException fileNotFoundException) {
             throw ProgramError.unexpected("could not open file: " + file);
         } catch (BootImageException bootImageException) {
-            ProgramError.unexpected("could not construct proper boot image", bootImageException);
+            throw ProgramError.unexpected("could not construct proper boot image", bootImageException);
         }
     }
 

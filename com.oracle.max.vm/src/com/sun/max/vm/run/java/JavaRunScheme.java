@@ -47,6 +47,7 @@ import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.instrument.*;
+import com.sun.max.vm.jni.*;
 import com.sun.max.vm.run.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
@@ -136,10 +137,10 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                    // Library not present yet - try again next time:
                     methods.add(method);
                 } else {
-                    ProgramError.unexpected(invocationTargetException.getTargetException());
+                    throw ProgramError.unexpected(invocationTargetException.getTargetException());
                 }
             } catch (Throwable throwable) {
-                ProgramError.unexpected(throwable);
+                throw ProgramError.unexpected(throwable);
             }
         }
         initIDMethods = methods.toArray(new StaticMethodActor[methods.size()]);
@@ -184,6 +185,11 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                     }
                 }
 
+                break;
+            }
+
+            case TERMINATING: {
+                JniFunctions.printJniFunctionTimers();
                 break;
             }
             default: {

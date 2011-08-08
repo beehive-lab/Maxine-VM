@@ -174,20 +174,20 @@ public class TestEngine {
                 try {
                     final TestHarness harness = reg.getInstance(hname, false);
                     if (harness == null) {
-                        ProgramError.unexpected("invalid harness: " + hname);
+                        throw ProgramError.unexpected("invalid harness: " + hname);
                     } else {
                         harness.parseTests(this, file, props);
                     }
                 } catch (Throwable t) {
-                    ProgramError.unexpected("unexpected exception while parsing " + file, t);
+                    throw ProgramError.unexpected("unexpected exception while parsing " + file, t);
                 }
             } else {
                 skipFile(file);
             }
         } catch (FileNotFoundException e) {
-            ProgramError.unexpected("file " + file + " not found.");
+            throw ProgramError.unexpected("file " + file + " not found.");
         } catch (IOException e) {
-            ProgramError.unexpected(e);
+            throw ProgramError.unexpected(e);
         }
     }
 

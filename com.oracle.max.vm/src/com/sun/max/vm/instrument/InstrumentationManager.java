@@ -68,7 +68,7 @@ public class InstrumentationManager {
                 transformMethod.setAccessible(true);
                 instrumentation = (Instrumentation) cons.newInstance(0, true, true);
             } catch (Exception ex) {
-                ProgramError.unexpected("failed to instantatiate sun.instrument.InstrumentationImpl: " + ex);
+                throw ProgramError.unexpected("failed to instantatiate sun.instrument.InstrumentationImpl: " + ex);
             }
         }
         return instrumentation;
@@ -86,8 +86,7 @@ public class InstrumentationManager {
             final byte[] result = (byte[]) transformMethod.invoke(instrumentation, loader, classname, classBeingRedefined, protectionDomain, classfileBuffer, isRetransformer);
             return result;
         } catch (Exception ex) {
-            ProgramError.unexpected("failed to invoke sun.instrument.InstrumentationImpl.transform:" + ex);
-            return null;
+            throw ProgramError.unexpected("failed to invoke sun.instrument.InstrumentationImpl.transform:" + ex);
         }
     }
 

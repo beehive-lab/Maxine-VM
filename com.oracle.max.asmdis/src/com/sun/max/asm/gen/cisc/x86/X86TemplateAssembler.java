@@ -193,7 +193,7 @@ public class X86TemplateAssembler {
                                     break;
                             }
                         } catch (IOException ioException) {
-                            ProgramError.unexpected();
+                            throw ProgramError.unexpected();
                         }
                     }
                     break;

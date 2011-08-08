@@ -113,17 +113,6 @@ public class HostedHeapScheme extends HeapSchemeAdaptor implements HeapScheme {
         throw ProgramError.unexpected();
     }
 
-    public boolean pin(Object object) {
-        return false;
-    }
-
-    public void unpin(Object object) {
-    }
-
-    public boolean isPinned(Object object) {
-        return false;
-    }
-
     public Pointer gcAllocate(MemoryRegion region, Size size) {
         return Pointer.zero();
     }

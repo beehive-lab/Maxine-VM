@@ -76,7 +76,7 @@ public abstract class X86Parameter extends X86Operand implements Parameter {
                 excludedExternalTestArguments = testArgumentExclusion.arguments();
                 break;
             default:
-                ProgramError.unexpected();
+                throw ProgramError.unexpected();
         }
     }
 

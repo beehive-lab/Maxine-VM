@@ -134,6 +134,10 @@ public class IR {
             new BlockMerger(this);
             verifyAndPrint("After block merging");
         }
+        if (C1XOptions.OptDiamondElimination) {
+            new DiamondEliminator(this);
+            verifyAndPrint("After Diamond elimination");
+        }
 
         if (compilation.compiler.extensions != null) {
             for (C1XCompilerExtension ext : compilation.compiler.extensions) {

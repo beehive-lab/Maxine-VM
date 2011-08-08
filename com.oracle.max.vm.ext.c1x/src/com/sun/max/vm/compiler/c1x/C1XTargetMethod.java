@@ -579,7 +579,7 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
             } else {
                 Stubs.unwind(catchAddress, sp, fp);
             }
-            ProgramError.unexpected("Should not reach here, unwind must jump to the exception handler!");
+            throw ProgramError.unexpected("Should not reach here, unwind must jump to the exception handler!");
         }
     }
 

@@ -99,7 +99,7 @@ public class PackageLoader {
                 initializeAll(outerClass);
             }
         } catch (Throwable throwable) {
-            ProgramError.unexpected(throwable);
+            throw ProgramError.unexpected(throwable);
         }
     }
 }

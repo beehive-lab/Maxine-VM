@@ -50,7 +50,7 @@ public interface StaticFieldLiteral {
                         staticFieldLiteral.setLiteral(field.getName());
                         staticFieldLiteral.setLiteralClass(staticFieldLiteralClass);
                     } catch (IllegalAccessException illegalAccessException) {
-                        ProgramError.unexpected("could not name literal of field: " + field);
+                        throw ProgramError.unexpected("could not name literal of field: " + field);
                     }
                 }
             }

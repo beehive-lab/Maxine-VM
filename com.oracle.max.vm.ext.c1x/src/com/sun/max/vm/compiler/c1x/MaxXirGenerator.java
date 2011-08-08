@@ -565,7 +565,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     }
 
     @Override
-    public XirSnippet genArrayLoad(XirSite site, XirArgument array, XirArgument index, XirArgument length, CiKind elementKind, RiType elementType) {
+    public XirSnippet genArrayLoad(XirSite site, XirArgument array, XirArgument index, CiKind elementKind, RiType elementType) {
         XirTemplate template;
         if (site.requiresBoundsCheck()) {
             template = arrayLoadTemplates[elementKind.ordinal()];
@@ -576,7 +576,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     }
 
     @Override
-    public XirSnippet genArrayStore(XirSite site, XirArgument array, XirArgument index, XirArgument length, XirArgument value, CiKind elementKind, RiType elementType) {
+    public XirSnippet genArrayStore(XirSite site, XirArgument array, XirArgument index, XirArgument value, CiKind elementKind, RiType elementType) {
         XirTemplate template;
         if (elementKind.isObject()) {
             if (site.requiresBoundsCheck() && site.requiresArrayStoreCheck()) {

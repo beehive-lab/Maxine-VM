@@ -54,7 +54,7 @@ public interface RiscInstructionDescriptionVisitor {
             } else if (specification instanceof InstructionConstraint) {
                 visitor.visitConstraint((InstructionConstraint) specification);
             } else {
-                ProgramError.unexpected("unknown instructionDescription specification: " + specification);
+                throw ProgramError.unexpected("unknown instructionDescription specification: " + specification);
             }
         }
 

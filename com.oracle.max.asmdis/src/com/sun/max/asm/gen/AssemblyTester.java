@@ -427,7 +427,7 @@ public abstract class AssemblyTester<Template_Type extends Template> {
             stdout.close();
             stdin.close();
             if (exitValue != 0) {
-                ProgramError.unexpected("execution of command failed: " + command + " [exit code = " + exitValue + "]");
+                throw ProgramError.unexpected("execution of command failed: " + command + " [exit code = " + exitValue + "]");
             }
         } finally {
             process.destroy();
@@ -575,7 +575,7 @@ public abstract class AssemblyTester<Template_Type extends Template> {
                     ++matchNumber;
                 }
             }
-            ProgramError.unexpected("mismatch between internal assembler and disassembler");
+            throw ProgramError.unexpected("mismatch between internal assembler and disassembler");
         }
         disassemblyStream.close();
     }
@@ -595,7 +595,7 @@ public abstract class AssemblyTester<Template_Type extends Template> {
             temporaryFiles.add(binaryFile);
             externalInputStream = new PushbackInputStream(new BufferedInputStream(new FileInputStream(binaryFile)));
             if (!findStart(externalInputStream)) {
-                ProgramError.unexpected("could not find start sequence in: " + binaryFile.getAbsolutePath());
+                throw ProgramError.unexpected("could not find start sequence in: " + binaryFile.getAbsolutePath());
             }
         } else {
             binaryFile = null;
@@ -703,7 +703,7 @@ public abstract class AssemblyTester<Template_Type extends Template> {
             try {
                 Runtime.getRuntime().exec(assemblerCommand());
             } catch (IOException ioException) {
-                ProgramError.unexpected("Could not execute external assembler command '" + assemblerCommand() + "'", ioException);
+                throw ProgramError.unexpected("Could not execute external assembler command '" + assemblerCommand() + "'", ioException);
             }
         }
 
@@ -762,7 +762,7 @@ public abstract class AssemblyTester<Template_Type extends Template> {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } catch (ExecutionException executionException) {
-                ProgramError.unexpected(executionException.getCause());
+                throw ProgramError.unexpected(executionException.getCause());
             }
             ++completedTests;
         }
@@ -774,7 +774,7 @@ public abstract class AssemblyTester<Template_Type extends Template> {
             for (Template_Type template : errors) {
                 System.err.println("    " + template);
             }
-            ProgramError.unexpected(errors.size() + " templates failed testing: see previous stack dumps in test output");
+            throw ProgramError.unexpected(errors.size() + " templates failed testing: see previous stack dumps in test output");
         }
     }
 
@@ -810,7 +810,7 @@ public abstract class AssemblyTester<Template_Type extends Template> {
             for (Template_Type template : errors) {
                 System.err.println("    " + template);
             }
-            ProgramError.unexpected(errors.size() + " templates failed testing: see previous stack dumps in test output");
+            throw ProgramError.unexpected(errors.size() + " templates failed testing: see previous stack dumps in test output");
         }
     }
 }

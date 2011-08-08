@@ -108,8 +108,8 @@ public final class C1XOptions {
     public static boolean OptCanonicalize;
     public static boolean OptLocalValueNumbering;
     public static boolean OptLocalLoadElimination;
-    public static boolean OptCSEArrayLength;
     public static boolean OptGlobalValueNumbering;
+    public static boolean OptDiamondElimination;
     public static boolean OptCEElimination;
     public static boolean OptBlockMerging;
     public static boolean OptBlockSkipping;
@@ -186,7 +186,6 @@ public final class C1XOptions {
         OptBlockMerging                 = ll;
 
         // Level 3 optimizations
-        OptCSEArrayLength               = lll;
         OptIntrinsify                   = lll;
         OptInlineExcept                 = lll;
         OptInlineSynchronized           = lll;
@@ -197,6 +196,7 @@ public final class C1XOptions {
         OptDeadCodeElimination1         = lll;
         OptDeadCodeElimination2         = lll;
         OptGlobalValueNumbering         = lll;
+        OptDiamondElimination           = lll;
         OptCEElimination                = lll;
         OptBlockSkipping                = lll;
     }

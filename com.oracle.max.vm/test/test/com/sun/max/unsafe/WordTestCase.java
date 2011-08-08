@@ -117,8 +117,7 @@ public abstract class WordTestCase extends MaxTestCase {
                 addressMax = Address.fromLong(LOW_32_BITS_MASK);
                 break;
             default:
-                ProgramError.unknownCase();
-                break;
+                throw ProgramError.unknownCase();
         }
 
         size0 = address0.asSize();
@@ -162,8 +161,7 @@ public abstract class WordTestCase extends MaxTestCase {
                 offsetHigh = Offset.fromLong(((int) high) & LOW_32_BITS_MASK);
                 break;
             default:
-                ProgramError.unknownCase();
-                break;
+                throw ProgramError.unknownCase();
         }
     }
 
