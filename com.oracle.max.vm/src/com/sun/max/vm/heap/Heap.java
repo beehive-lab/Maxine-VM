@@ -33,6 +33,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
@@ -552,6 +553,14 @@ public final class Heap {
     // Note: Called via reflection from jvm.c
     public static long maxObjectInspectionAge() {
         return heapScheme().maxObjectInspectionAge();
+    }
+
+    public static void lock() {
+        Monitor.enter(HEAP_LOCK);
+    }
+
+    public static void unlock() {
+        Monitor.exit(HEAP_LOCK);
     }
 
     @INLINE

@@ -44,6 +44,10 @@ import com.sun.max.io.*;
  */
 @HOSTED_ONLY
 public class JniFunctionsGenerator {
+    /**
+     * Flag that controls if timing / counting code is inserted into the generated JNI functions.
+     */
+    private static final boolean TIME_JNI_FUNCTIONS = false;
 
     private static final String JNI_FUNCTION_ANNOTATION = "@VM_ENTRY_POINT";
     static final int BEFORE_FIRST_JNI_FUNCTION = -1;
@@ -166,6 +170,8 @@ public class JniFunctionsGenerator {
                 lr.check(state == BEFORE_JNI_FUNCTION || state == BEFORE_FIRST_JNI_FUNCTION, "Illegal state (" + state + ") when parsing @JNI_FUNCTION");
                 if (state == BEFORE_FIRST_JNI_FUNCTION) {
                     out.println();
+                    out.println("    private static final boolean INSTRUMENTED = " + TIME_JNI_FUNCTIONS + ";");
+                    out.println();
                 }
                 state = BEFORE_PROLOGUE;
                 out.println(line);
@@ -233,28 +239,39 @@ public class JniFunctionsGenerator {
             errReturnValue = "as" + decl.returnType + "(0)";
         }
 
-        out.println("        Pointer anchor = prologue(env, \"" + decl.name + "\");");
-        out.println("        try {");
-        out.print(body);
-        out.println("        } catch (Throwable t) {");
-        out.println("            VmThread.fromJniEnv(env).setJniException(t);");
-        out.println("            return " + errReturnValue + ";");
-        out.println("        } finally {");
-        out.println("            epilogue(anchor, \"" + decl.name + "\");");
-        out.println("        }");
-        out.println("    }");
+        generateFunction(out, decl, body, "return " + errReturnValue + ";");
     }
 
     private static void generateVoidFunction(PrintWriter out, JniFunctionDeclaration decl, String body) {
+        generateFunction(out, decl, body, null);
+    }
+
+    private static void generateFunction(PrintWriter out, JniFunctionDeclaration decl, String body, String returnStatement) {
+        boolean insertTimers = TIME_JNI_FUNCTIONS && decl.name != null;
+
         out.println("        Pointer anchor = prologue(env, \"" + decl.name + "\");");
+        if (insertTimers) {
+            out.println("        long startTime = System.nanoTime();");
+        }
         out.println("        try {");
         out.print(body);
         out.println("        } catch (Throwable t) {");
         out.println("            VmThread.fromJniEnv(env).setJniException(t);");
+        if (returnStatement != null) {
+            out.println("            " + returnStatement);
+        }
         out.println("        } finally {");
+        if (insertTimers) {
+            out.println("            TIMER_" + decl.name + " += System.nanoTime() - startTime;");
+            out.println("            COUNTER_" + decl.name + "++;");
+        }
         out.println("            epilogue(anchor, \"" + decl.name + "\");");
         out.println("        }");
         out.println("    }");
+        if (insertTimers) {
+            out.println("    public static long COUNTER_" + decl.name + ";");
+            out.println("    public static long TIMER_" + decl.name + ";");
+        }
     }
 
     /**
@@ -263,12 +280,16 @@ public class JniFunctionsGenerator {
      * code of the JVM process will be non-zero.
      */
     public static void main(String[] args) throws Exception {
+        boolean updated = false;
         if (generate(false, JniFunctionsSource.class, JniFunctions.class)) {
             System.out.println("Source for " + JniFunctions.class + " was updated");
-            System.exit(1);
+            updated = true;
         }
         if (generate(false, JmmFunctionsSource.class, JmmFunctions.class)) {
             System.out.println("Source for " + JmmFunctions.class + " was updated");
+            updated = true;
+        }
+        if (updated) {
             System.exit(1);
         }
     }
