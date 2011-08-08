@@ -125,30 +125,11 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
     }
 
-    @HOSTED_ONLY
-    @Override
-    public CodeManager createCodeManager() {
-        switch (Platform.platform().os) {
-            case LINUX: {
-                return new LowAddressCodeManager();
-            }
-            case MAXVE:
-            case DARWIN:
-            case SOLARIS: {
-                return new FixedAddressCodeManager();
-            }
-            default: {
-                FatalError.unimplemented();
-                return null;
-            }
-        }
-    }
-
     /**
      * Allocate memory for both the heap and the GC's data structures (mark bitmaps, marking stacks, etc.).
      */
     private void allocateHeapAndGCStorage() {
-        final Size reservedSpace = Size.K.times(reservedVirtualSpaceSize());
+        final Size reservedSpace = Size.K.times(reservedVirtualSpaceKB());
         final Size initSize = Heap.initialSize();
         final Size maxSize = Heap.maxSize();
         final int pageSize = Platform.platform().pageSize;
@@ -157,11 +138,10 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         FatalError.check(Heap.bootHeapRegion.start() == Heap.startOfReservedVirtualSpace(),
                         "Boot heap region must be mapped at start of reserved virtual space");
 
-        final Address endOfBootCodeRegion = Code.bootCodeRegion().end().alignUp(pageSize);
         final Address endOfCodeRegion = Code.getCodeManager().getRuntimeCodeRegion().end();
         final Address endOfReservedSpace = Heap.bootHeapRegion.start().plus(reservedSpace);
 
-        final Address  heapLowerBound = endOfCodeRegion.greaterEqual(endOfBootCodeRegion) ? endOfCodeRegion : endOfBootCodeRegion;
+        final Address  heapLowerBound = endOfCodeRegion;
         final Size heapMarkerDatasize = heapMarker.memoryRequirement(maxSize);
 
 
@@ -197,15 +177,10 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     }
 
     @Override
-    public int reservedVirtualSpaceSize() {
+    public int reservedVirtualSpaceKB() {
         // 2^30 Kb = 1 TB of reserved virtual space.
         // This will be truncated as soon as we taxed what we need at initialization time.
         return Size.G.toInt();
-    }
-
-    @Override
-    public BootRegionMappingConstraint bootRegionMappingConstraint() {
-        return BootRegionMappingConstraint.AT_START;
     }
 
     public boolean collectGarbage(Size requestedFreeSpace) {
@@ -529,5 +504,9 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         return false;
     }
 
+    @Override
+    protected void releaseUnusedReservedVirtualSpace() {
+        // Do nothing. This heap scheme has its own way of doing this.
+    }
 }
 

@@ -33,6 +33,7 @@ import com.sun.max.vm.Log;
 import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.VMOptions;
 import com.sun.max.vm.actor.member.ClassMethodActor;
+import com.sun.max.vm.t1x.*;
 
 /**
  * Defines all the options that can be used to control the VMA system.
@@ -250,6 +251,7 @@ public class VMAOptions {
             if (handlerClassName == null) {
                 handlerClassName = DEFAULT_HANDLER_CLASS;
             }
+            T1XOptions.AllowSafepointAfterTemplateCall = true;
         }
         // We execute the setup code below when isImageBuilding if and only if VMA was set in that phase.
         if ((isImageBuilding(phase) && VMA) || phase == MaxineVM.Phase.RUNNING) {
