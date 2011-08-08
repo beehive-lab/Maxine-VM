@@ -278,7 +278,7 @@ public final class ConstantPool implements RiConstantPool {
                     break;
                 }
                 default: {
-                    ProgramError.unexpected();
+                    throw ProgramError.unexpected();
                 }
             }
             i++;

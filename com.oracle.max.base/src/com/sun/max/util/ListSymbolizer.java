@@ -38,7 +38,7 @@ final class ListSymbolizer<S extends Symbol> implements Symbolizer<S> {
             // This test ensures that values passed for symbolic parameters of methods in the
             // generated assemblers are guaranteed to be legal (assuming client code does not
             // inject its own classes into the package where the symbol classes are defined).
-            ProgramError.unexpected("type of assembler symbol can have values constructed outside of defining package: " + symbolType);
+            throw ProgramError.unexpected("type of assembler symbol can have values constructed outside of defining package: " + symbolType);
         }
         this.symbolType = symbolType;
         this.symbols = symbols;

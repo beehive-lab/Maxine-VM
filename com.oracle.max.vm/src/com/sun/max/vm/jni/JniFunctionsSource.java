@@ -428,7 +428,7 @@ public final class JniFunctionsSource {
                     break;
                 }
                 default: {
-                    ProgramError.unexpected();
+                    throw ProgramError.unexpected();
                 }
             }
             a = a.plus(jvalueSize);

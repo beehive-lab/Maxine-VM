@@ -125,9 +125,9 @@ public abstract class Assembly<Template_Type extends Template> {
         try {
             assemblerMethod.invoke(assembler, objects);
         } catch (IllegalArgumentException illegalArgumentException) {
-            ProgramError.unexpected("argument type mismatch", illegalArgumentException);
+            throw ProgramError.unexpected("argument type mismatch", illegalArgumentException);
         } catch (IllegalAccessException illegalAccessException) {
-            ProgramError.unexpected("illegal access to assembler method unexpected", illegalAccessException);
+            throw ProgramError.unexpected("illegal access to assembler method unexpected", illegalAccessException);
         } catch (InvocationTargetException invocationTargetException) {
             final Throwable target = invocationTargetException.getTargetException();
             if (target instanceof AssemblyException) {
@@ -136,7 +136,7 @@ public abstract class Assembly<Template_Type extends Template> {
             if (target instanceof IllegalArgumentException) {
                 throw (AssemblyException) new AssemblyException(target.getMessage()).initCause(target);
             }
-            ProgramError.unexpected(invocationTargetException);
+            throw ProgramError.unexpected(invocationTargetException);
         }
     }
 }

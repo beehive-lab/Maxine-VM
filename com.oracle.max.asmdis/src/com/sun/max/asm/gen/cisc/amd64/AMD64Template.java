@@ -55,7 +55,7 @@ public class AMD64Template extends X86Template {
                         addEnumerableParameter(designation, ParameterPlace.SIB_BASE_REXB, AMD64BaseRegister64.ENUMERATOR);
                         break;
                     default:
-                        ProgramError.unexpected();
+                        throw ProgramError.unexpected();
                 }
                 break;
             }
@@ -75,7 +75,7 @@ public class AMD64Template extends X86Template {
                         break;
                     }
                     default: {
-                        ProgramError.unexpected("no special SIB base for mod != 0");
+                        throw ProgramError.unexpected("no special SIB base for mod != 0");
                     }
                 }
                 break;
@@ -122,7 +122,7 @@ public class AMD64Template extends X86Template {
                                 addEnumerableParameter(designation, ParameterPlace.MOD_RM_REXB, AMD64IndirectRegister64.ENUMERATOR);
                                 break;
                             default:
-                                ProgramError.unexpected();
+                                throw ProgramError.unexpected();
                         }
                         break;
                     case SWORD:
@@ -168,7 +168,7 @@ public class AMD64Template extends X86Template {
                                 addEnumerableParameter(designation, ParameterPlace.MOD_RM_REXB, AMD64IndirectRegister64.ENUMERATOR);
                                 break;
                             default:
-                                ProgramError.unexpected();
+                                throw ProgramError.unexpected();
                         }
                         break;
                     case SIB:
@@ -189,7 +189,7 @@ public class AMD64Template extends X86Template {
                         addParameter(new X86DisplacementParameter(designation, WordWidth.BITS_32));
                         break;
                     default:
-                        ProgramError.unexpected();
+                        throw ProgramError.unexpected();
                 }
                 switch (context().rmCase()) {
                     case NORMAL:
@@ -202,7 +202,7 @@ public class AMD64Template extends X86Template {
                                 addEnumerableParameter(designation, ParameterPlace.MOD_RM_REXB, AMD64IndirectRegister64.ENUMERATOR);
                                 break;
                             default:
-                                ProgramError.unexpected();
+                                throw ProgramError.unexpected();
                         }
                         break;
                     case SIB:
@@ -264,7 +264,7 @@ public class AMD64Template extends X86Template {
                         organize_E(designation, ParameterPlace.MOD_RM_REXB, AMD64GeneralRegister64.ENUMERATOR, testArgumentExclusion);
                         break;
                     default:
-                        ProgramError.unexpected();
+                        throw ProgramError.unexpected();
                 }
                 break;
             }
@@ -572,7 +572,7 @@ public class AMD64Template extends X86Template {
                 break;
             }
             default:
-                ProgramError.unexpected("undefined operand code: " + operandCode);
+                throw ProgramError.unexpected("undefined operand code: " + operandCode);
         }
     }
 
@@ -588,7 +588,7 @@ public class AMD64Template extends X86Template {
                 addImplicitOperand(new X86ImplicitOperand(designation, externalPresence, AMD64GeneralRegister64.ENUMERATOR.get(registerOperandCode.id())));
                 break;
             default:
-                ProgramError.unexpected();
+                throw ProgramError.unexpected();
         }
     }
 

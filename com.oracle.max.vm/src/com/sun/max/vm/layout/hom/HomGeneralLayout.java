@@ -156,8 +156,7 @@ public class HomGeneralLayout extends AbstractLayout implements GeneralLayout {
             case HYBRID:
                 return Layout.hybridLayout().specificSize(accessor);
         }
-        ProgramError.unknownCase();
-        return Size.zero();
+        throw ProgramError.unknownCase();
     }
 
     @INLINE

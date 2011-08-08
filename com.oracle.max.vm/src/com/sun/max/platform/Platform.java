@@ -416,7 +416,7 @@ public final class Platform {
                 PrintStream out = new PrintStream(baos);
                 out.println("Invalid platform specification: " + platformSpec);
                 printPlatformSpecificationHelp(out);
-                ProgramError.unexpected(baos.toString());
+                throw ProgramError.unexpected(baos.toString());
             }
             return platform;
         }

@@ -483,7 +483,7 @@ public class GraphPrototype extends Prototype {
 
             if (object instanceof Proxy || object instanceof OmittedClassError) {
                 printPath(object, System.err);
-                ProgramError.unexpected("There should not be any instances of " + Proxy.class + " in the boot image");
+                throw ProgramError.unexpected("There should not be any instances of " + Proxy.class + " in the boot image");
             }
         }
     }
@@ -500,7 +500,7 @@ public class GraphPrototype extends Prototype {
                 explore(object);
             } catch (Throwable e) {
                 printPath(object, System.err);
-                ProgramError.unexpected("Problem while gathering instance of " + object.getClass(), e);
+                throw ProgramError.unexpected("Problem while gathering instance of " + object.getClass(), e);
             }
 
             if (++n % 100000 == 0) {

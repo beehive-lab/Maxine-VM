@@ -121,7 +121,7 @@ public abstract class RiscAssemblerGenerator<Template_Type extends RiscTemplate>
     /**
      * Gets the expression in terms of the parameters and opcode of a synthetic instruction that replaces a parameter of
      * the raw instruction from which the synthetic operand was derived.
-     * 
+     *
      * @param syntheticTemplate
      *                the synthetic instruction
      * @param rawTemplate
@@ -150,7 +150,7 @@ public abstract class RiscAssemblerGenerator<Template_Type extends RiscTemplate>
             } else if (value instanceof ImmediateArgument) {
                 expression = Long.toString(((ImmediateArgument) value).asLong());
             } else {
-                ProgramError.unexpected("unknown type of disassembled value: " + value.getClass().getName());
+                throw ProgramError.unexpected("unknown type of disassembled value: " + value.getClass().getName());
             }
         }
         if ((syntheticTemplate.opcodeMask() & rawOperandMask) != rawOperandMask) {

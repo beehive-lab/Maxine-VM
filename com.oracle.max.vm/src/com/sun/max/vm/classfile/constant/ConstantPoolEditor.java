@@ -246,7 +246,7 @@ public final class ConstantPoolEditor {
                         break;
                     }
                     default: {
-                        ProgramError.unexpected("unknown tag: " + tag);
+                        throw ProgramError.unexpected("unknown tag: " + tag);
                     }
                 }
             }

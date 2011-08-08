@@ -81,6 +81,6 @@ public class HostedTupleLayout extends HostedGeneralLayout implements TupleLayou
 
     public void writeValue(Kind kind, ObjectMirror mirror, int offset, Value value) {
         assert kind == value.kind();
-        ProgramError.unexpected();
+        throw ProgramError.unexpected();
     }
 }

@@ -212,7 +212,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
                     break;
                 }
                 case VOID: {
-                    ProgramError.unexpected();
+                    throw ProgramError.unexpected();
                 }
             }
             nativeFunctionDescriptor.append(nativeParameterDescriptor);

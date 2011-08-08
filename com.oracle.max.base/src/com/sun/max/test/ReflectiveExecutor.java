@@ -39,7 +39,7 @@ public class ReflectiveExecutor implements Executor {
                 return;
             }
         }
-        ProgramError.unexpected("could not find static test() method");
+        throw ProgramError.unexpected("could not find static test() method");
     }
 
     public Object execute(JavaExecHarness.JavaTestCase c, Object[] vals) throws InvocationTargetException {

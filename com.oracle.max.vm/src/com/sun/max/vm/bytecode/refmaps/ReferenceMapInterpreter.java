@@ -1424,7 +1424,7 @@ public abstract class ReferenceMapInterpreter {
                             break;
                         }
                         default: {
-                            ProgramError.unexpected();
+                            throw ProgramError.unexpected();
                         }
                     }
                     break;

@@ -273,7 +273,7 @@ public class VerifierTest extends VmTestCase {
                     }
                     break;
                 default:
-                    ProgramError.unexpected();
+                    throw ProgramError.unexpected();
             }
 
             classVerifier.verify();

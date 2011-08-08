@@ -54,7 +54,7 @@ public class IA32Template extends X86Template {
                         break;
                     }
                     case MOD_3: {
-                        ProgramError.unexpected("no SIB for mod == 3");
+                        throw ProgramError.unexpected("no SIB for mod == 3");
                     }
                 }
                 break;
@@ -67,7 +67,7 @@ public class IA32Template extends X86Template {
                         break;
                     }
                     default: {
-                        ProgramError.unexpected("no special SIB base for mod != 0");
+                        throw ProgramError.unexpected("no special SIB base for mod != 0");
                     }
                 }
                 break;
@@ -99,7 +99,7 @@ public class IA32Template extends X86Template {
                                 addEnumerableParameter(designation, ParameterPlace.MOD_RM, IA32IndirectRegister32.ENUMERATOR);
                                 break;
                             default:
-                                ProgramError.unexpected();
+                                throw ProgramError.unexpected();
                         }
                         break;
                     case SWORD:
@@ -146,7 +146,7 @@ public class IA32Template extends X86Template {
                                 addEnumerableParameter(designation, ParameterPlace.MOD_RM, IA32IndirectRegister32.ENUMERATOR);
                                 break;
                             default:
-                                ProgramError.unexpected();
+                                throw ProgramError.unexpected();
                         }
                         break;
                     case SIB:
@@ -172,7 +172,7 @@ public class IA32Template extends X86Template {
                         addParameter(new X86DisplacementParameter(designation, WordWidth.BITS_32));
                         break;
                     default:
-                        ProgramError.unexpected();
+                        throw ProgramError.unexpected();
                 }
                 switch (context().rmCase()) {
                     case NORMAL:
@@ -184,7 +184,7 @@ public class IA32Template extends X86Template {
                                 addEnumerableParameter(designation, ParameterPlace.MOD_RM, IA32IndirectRegister32.ENUMERATOR);
                                 break;
                             default:
-                                ProgramError.unexpected();
+                                throw ProgramError.unexpected();
                         }
                         break;
                     case SIB:
@@ -195,7 +195,7 @@ public class IA32Template extends X86Template {
                                 addSib(designation);
                                 break;
                             default:
-                                ProgramError.unexpected();
+                                throw ProgramError.unexpected();
                         }
                         break;
                     default:
@@ -224,7 +224,7 @@ public class IA32Template extends X86Template {
                         addParameter(new X86AddressParameter(designation, WordWidth.BITS_32));
                         break;
                     default:
-                        ProgramError.unexpected();
+                        throw ProgramError.unexpected();
                 }
                 break;
             case Cd: {
@@ -252,7 +252,7 @@ public class IA32Template extends X86Template {
                         organize_E(designation, ParameterPlace.MOD_RM, IA32GeneralRegister32.ENUMERATOR, testArgumentExclusion);
                         break;
                     default:
-                        ProgramError.unexpected();
+                        throw ProgramError.unexpected();
                 }
                 break;
             }
@@ -283,7 +283,7 @@ public class IA32Template extends X86Template {
                                         testArgumentExclusion);
                         break;
                     default:
-                        ProgramError.unexpected();
+                        throw ProgramError.unexpected();
                 }
                 break;
             }
@@ -340,7 +340,7 @@ public class IA32Template extends X86Template {
                         addParameter(new X86OffsetParameter(designation, WordWidth.BITS_32));
                         break;
                     default:
-                        ProgramError.unexpected();
+                        throw ProgramError.unexpected();
                 }
                 break;
             }
@@ -382,7 +382,7 @@ public class IA32Template extends X86Template {
                                                testArgumentExclusion);
                         break;
                     default:
-                        ProgramError.unexpected();
+                        throw ProgramError.unexpected();
                 }
                 break;
             case Ob:
@@ -397,7 +397,7 @@ public class IA32Template extends X86Template {
                         addParameter(new X86AddressParameter(designation, WordWidth.BITS_32));
                         break;
                     default:
-                        ProgramError.unexpected();
+                        throw ProgramError.unexpected();
                 }
                 break;
             }
@@ -440,7 +440,7 @@ public class IA32Template extends X86Template {
                                                testArgumentExclusion);
                         break;
                     default:
-                        ProgramError.unexpected();
+                        throw ProgramError.unexpected();
                 }
                 break;
             case Sw: {
@@ -491,7 +491,7 @@ public class IA32Template extends X86Template {
                 break;
             }
             default:
-                ProgramError.unexpected("undefined operand code: " + operandCode);
+                throw ProgramError.unexpected("undefined operand code: " + operandCode);
         }
     }
 
@@ -504,7 +504,7 @@ public class IA32Template extends X86Template {
                 addImplicitOperand(new X86ImplicitOperand(designation, externalPresence, IA32GeneralRegister32.ENUMERATOR.get(registerOperandCode.id())));
                 break;
             default:
-                ProgramError.unexpected();
+                throw ProgramError.unexpected();
         }
     }
 }

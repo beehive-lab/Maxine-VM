@@ -90,7 +90,7 @@ public enum KindEnum {
                 }
             }
         } catch (IOException e) {
-            ProgramError.unexpected("Error reading native header file " + file, e);
+            throw ProgramError.unexpected("Error reading native header file " + file, e);
         }
     }
 }

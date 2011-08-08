@@ -94,7 +94,7 @@ public class ClassfileWriter {
             new ClassfileWriter(classInfo, constantPoolEditor, byteArrayOutputStream);
         } catch (IOException ioException) {
             // Should never reach here
-            ProgramError.unexpected(ioException);
+            throw ProgramError.unexpected(ioException);
         }
         return byteArrayOutputStream.toByteArray();
     }

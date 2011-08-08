@@ -74,7 +74,7 @@ public class RiscTemplate extends Template implements RiscInstructionDescription
             opcode |= field.bitRange().assembleUnsignedInt(value);
             opcodeMask |= field.bitRange().instructionMask();
         } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
-            ProgramError.unexpected("operand for constant field " + field.name() + " does not fit: " + value);
+            throw ProgramError.unexpected("operand for constant field " + field.name() + " does not fit: " + value);
         }
     }
 
@@ -94,7 +94,7 @@ public class RiscTemplate extends Template implements RiscInstructionDescription
         } else if (field instanceof ReservedField) {
             organizeConstant(field, 0);
         } else {
-            ProgramError.unexpected("unknown or unallowed type of field: " + field);
+            throw ProgramError.unexpected("unknown or unallowed type of field: " + field);
         }
     }
 
@@ -148,7 +148,7 @@ public class RiscTemplate extends Template implements RiscInstructionDescription
             opcode |= option.field().bitRange().assembleUnsignedInt(option.value());
             opcodeMask |= option.field().bitRange().instructionMask();
         } catch (IndexOutOfBoundsException e) {
-            ProgramError.unexpected("Option: " + option.name() + " does not fit in field " + option.field().name());
+            throw ProgramError.unexpected("Option: " + option.name() + " does not fit in field " + option.field().name());
         }
 
         options.add(option);

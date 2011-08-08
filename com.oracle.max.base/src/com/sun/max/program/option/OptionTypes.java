@@ -240,13 +240,12 @@ public class OptionTypes {
                         return Utils.cast(klass, Class.forName("com.sun.max." + string).newInstance());
                     }
                 } catch (InstantiationException e) {
-                    ProgramError.unexpected("Could not instantiate class " + string, e);
+                    throw ProgramError.unexpected("Could not instantiate class " + string, e);
                 } catch (IllegalAccessException e) {
-                    ProgramError.unexpected("Could not access class " + string, e);
+                    throw ProgramError.unexpected("Could not access class " + string, e);
                 } catch (ClassNotFoundException e) {
-                    ProgramError.unexpected("Could not find class " + string, e);
+                    throw ProgramError.unexpected("Could not find class " + string, e);
                 }
-                return null;
             }
         };
     }

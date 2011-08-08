@@ -180,7 +180,7 @@ public final class Label implements Argument {
                 case FIXED_64:
                     return address64 == label.address64;
                 default:
-                    ProgramError.unexpected();
+                    throw ProgramError.unexpected();
             }
         }
         return false;

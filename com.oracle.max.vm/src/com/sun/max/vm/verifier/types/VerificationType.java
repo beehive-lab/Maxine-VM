@@ -138,7 +138,7 @@ public abstract class VerificationType {
                             primitiveTypes.add(type);
                         }
                     } catch (IllegalAccessException illegalAccessException) {
-                        ProgramError.unexpected("could not get value of field: " + field);
+                        throw ProgramError.unexpected("could not get value of field: " + field);
                     }
                 }
             }

@@ -73,8 +73,7 @@ public class ArrayValueHistory<E> {
         if (generations.size() > 0) {
             return generations.getFirst();
         }
-        ProgramError.unexpected("empty history");
-        return null;
+        throw ProgramError.unexpected("empty history");
     }
 
     /**
@@ -90,8 +89,7 @@ public class ArrayValueHistory<E> {
             }
             index++;
         }
-        ProgramError.unexpected("exceeded history");
-        return null;
+        throw ProgramError.unexpected("exceeded history");
     }
 
     /**

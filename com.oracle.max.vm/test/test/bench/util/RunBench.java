@@ -206,7 +206,7 @@ public class RunBench {
                 report = false;
             }
         } catch (NumberFormatException ex) {
-            ProgramError.unexpected("test.bench.loopcount " + lps + " did not parse");
+            throw ProgramError.unexpected("test.bench.loopcount " + lps + " did not parse");
         }
         trace = System.getProperty(TRACE_PROPERTY) != null;
         fileNameBase = System.getProperty(FILE_PROPERTY);

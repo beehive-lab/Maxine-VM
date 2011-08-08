@@ -198,7 +198,7 @@ public final class JDK_java_lang_System {
                 break;
             }
             default: {
-                ProgramError.unknownCase();
+                throw ProgramError.unknownCase();
             }
         }
     }
@@ -276,7 +276,7 @@ public final class JDK_java_lang_System {
                 break;
             }
             default: {
-                ProgramError.unknownCase();
+                throw ProgramError.unknownCase();
             }
         }
     }
@@ -703,8 +703,7 @@ public final class JDK_java_lang_System {
                 initBasicUnixProperties(properties);
                 break;
             default:
-                ProgramError.unknownCase();
-                break;
+                throw ProgramError.unknownCase();
         }
 
         // 5. set up user-specific information
@@ -834,7 +833,7 @@ public final class JDK_java_lang_System {
         } else if (os == OS.MAXVE) {
             setIfAbsent(properties, "java.ext.dirs", asClasspath(asFilesystemPath(javaHome, "lib/ext")));
         } else {
-            ProgramError.unknownCase(os.toString());
+            throw ProgramError.unknownCase(os.toString());
         }
     }
 
