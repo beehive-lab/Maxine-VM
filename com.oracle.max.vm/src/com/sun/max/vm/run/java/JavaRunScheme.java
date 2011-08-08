@@ -47,6 +47,7 @@ import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.instrument.*;
+import com.sun.max.vm.jni.*;
 import com.sun.max.vm.run.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
@@ -184,6 +185,11 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                     }
                 }
 
+                break;
+            }
+
+            case TERMINATING: {
+                JniFunctions.printJniFunctionTimers();
                 break;
             }
             default: {

@@ -29,6 +29,7 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.lang.reflect.*;
 import java.nio.*;
+import java.util.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.max.*;
@@ -39,7 +40,7 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
@@ -72,8 +73,10 @@ import com.sun.max.vm.value.*;
  */
 public final class JniFunctions {
 
+    public static boolean OptimizeJNICritical = true;
     public static boolean CheckJNI;
     static {
+        VMOptions.addFieldOption("-XX:", "OptimizeJNICritical", JniFunctions.class, "Use GC blocking to optimize JNI 'critical' functions.", MaxineVM.Phase.PRISTINE);
         VMOptions.register(new VMOption("-Xcheck:jni", "Perform additional checks for JNI functions.") {
             @Override
             public boolean parseValue(Pointer optionValue) {
@@ -120,7 +123,9 @@ public final class JniFunctions {
         Safepoint.setLatchRegister(env.minus(JNI_ENV.offset));
         Pointer etla = ETLA.load(currentTLA());
         Pointer anchor = reenterJavaFromNative(etla);
-        traceEntry(name, anchor);
+        if (ClassMethodActor.TraceJNI) {
+            traceEntry(name, anchor);
+        }
         return anchor;
     }
 
@@ -133,7 +138,9 @@ public final class JniFunctions {
      */
     @INLINE
     public static void epilogue(Pointer anchor, String name) {
-        traceExit(name);
+        if (ClassMethodActor.TraceJNI) {
+            traceExit(name);
+        }
 
         // returning from a JNI upcall is similar to a entering a native method returning; reuse the native call prologue sequence
         Pointer etla = ETLA.load(currentTLA());
@@ -148,7 +155,7 @@ public final class JniFunctions {
      *            that called out to native code or the native anchor of a thread that attached to the VM.
      */
     private static void traceEntry(String name, Pointer anchor) {
-        if (name != null && ClassMethodActor.TraceJNI) {
+        if (name != null) {
             boolean lockDisabledSafepoints = Log.lock();
             Log.print("[Thread \"");
             Log.print(VmThread.current().getName());
@@ -175,7 +182,7 @@ public final class JniFunctions {
      * @param name the name of the JNI function being exited
      */
     private static void traceExit(String name) {
-        if (name != null && ClassMethodActor.TraceJNI) {
+        if (name != null) {
             boolean lockDisabledSafepoints = Log.lock();
             Log.print("[Thread \"");
             Log.print(VmThread.current().getName());
@@ -183,6 +190,51 @@ public final class JniFunctions {
             Log.print(name);
             Log.println("]");
             Log.unlock(lockDisabledSafepoints);
+        }
+    }
+
+
+    private static class Triple implements Comparable<Triple> {
+        public long counter;
+        public long timer;
+        public String methodName;
+        @Override
+        public int compareTo(Triple o) {
+            long diff = o.timer - this.timer;
+            return diff < 0 ? -1 : diff > 0 ? 1 : 0;
+        }
+    }
+
+    /**
+     * Print counters and timers for all of the JNI and JMM entrypoints.
+     * To generate the necessary instrumentation code, set {@linkplain JniFunctionsGenerator#TIME_JNI_FUNCTIONS}
+     * to true and run "max jnigen".
+     */
+    public static void printJniFunctionTimers() {
+        if (INSTRUMENTED) {
+            List<Triple> counters = new ArrayList<Triple>();
+            try {
+                for (Class clazz : new Class[] {JniFunctions.class, JmmFunctions.class}) {
+                    Field[] fields = clazz.getDeclaredFields();
+                    for (Field field : fields) {
+                        if (Modifier.isStatic(field.getModifiers()) && field.getName().startsWith("COUNTER_")) {
+                            Triple triple = new Triple();
+                            triple.methodName = field.getName().substring("COUNTER_".length());
+                            triple.counter = field.getLong(null);
+                            triple.timer = clazz.getDeclaredField("TIMER_" + triple.methodName).getLong(null);
+                            counters.add(triple);
+                        }
+                    }
+                }
+            } catch (Throwable ex) {
+                throw ProgramError.unexpected(ex);
+            }
+            Collections.sort(counters);
+            Log.println("JNI Function counters and timers:");
+            Log.println("_______count_______ms__us__ns___method________");
+            for (Triple triple : counters) {
+                Log.println(String.format("%,12d %,16d   %s", triple.counter, triple.timer, triple.methodName));
+            }
         }
     }
 
@@ -194,6 +246,8 @@ public final class JniFunctions {
      */
 
 // START GENERATED CODE
+
+    private static final boolean INSTRUMENTED = false;
 
     @VM_ENTRY_POINT
     private static native void reserved0();
@@ -3204,32 +3258,27 @@ public final class JniFunctions {
         Pointer anchor = prologue(env, "GetPrimitiveArrayCritical");
         try {
             final Object arrayObject = array.unhand();
-            if (Heap.pin(arrayObject)) {
+            if (JniFunctions.OptimizeJNICritical) {
+                Heap.lock();
                 setCopyPointer(isCopy, false);
                 return Reference.fromJava(arrayObject).toOrigin().plus(Layout.byteArrayLayout().getElementOffsetFromOrigin(0));
             }
+    
             if (arrayObject instanceof boolean[]) {
                 return getBooleanArrayElements(array, isCopy);
-            }
-            if (arrayObject instanceof byte[]) {
+            } else if (arrayObject instanceof byte[]) {
                 return getByteArrayElements(array, isCopy);
-            }
-            if (arrayObject instanceof char[]) {
+            } else if (arrayObject instanceof char[]) {
                 return getCharArrayElements(array, isCopy);
-            }
-            if (arrayObject instanceof short[]) {
+            } else if (arrayObject instanceof short[]) {
                 return getShortArrayElements(array, isCopy);
-            }
-            if (arrayObject instanceof int[]) {
+            } else if (arrayObject instanceof int[]) {
                 return getIntArrayElements(array, isCopy);
-            }
-            if (arrayObject instanceof long[]) {
+            } else if (arrayObject instanceof long[]) {
                 return getLongArrayElements(array, isCopy);
-            }
-            if (arrayObject instanceof float[]) {
+            } else if (arrayObject instanceof float[]) {
                 return getFloatArrayElements(array, isCopy);
-            }
-            if (arrayObject instanceof double[]) {
+            } else if (arrayObject instanceof double[]) {
                 return getDoubleArrayElements(array, isCopy);
             }
             return Pointer.zero();
@@ -3243,37 +3292,31 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void ReleasePrimitiveArrayCritical(Pointer env, JniHandle array, Pointer elements, int mode) {
-        // Source: JniFunctionsSource.java:1709
+        // Source: JniFunctionsSource.java:1704
         Pointer anchor = prologue(env, "ReleasePrimitiveArrayCritical");
         try {
+            if (JniFunctions.OptimizeJNICritical) {
+                Heap.unlock();
+                return;
+            }
+    
             final Object arrayObject = array.unhand();
-            if (Heap.isPinned(arrayObject)) {
-                Heap.unpin(arrayObject);
-            } else {
-                if (arrayObject instanceof boolean[]) {
-                    releaseBooleanArrayElements(array, elements, mode);
-                }
-                if (arrayObject instanceof byte[]) {
-                    releaseByteArrayElements(array, elements, mode);
-                }
-                if (arrayObject instanceof char[]) {
-                    releaseCharArrayElements(array, elements, mode);
-                }
-                if (arrayObject instanceof short[]) {
-                    releaseShortArrayElements(array, elements, mode);
-                }
-                if (arrayObject instanceof int[]) {
-                    releaseIntArrayElements(array, elements, mode);
-                }
-                if (arrayObject instanceof long[]) {
-                    releaseLongArrayElements(array, elements, mode);
-                }
-                if (arrayObject instanceof float[]) {
-                    releaseFloatArrayElements(array, elements, mode);
-                }
-                if (arrayObject instanceof double[]) {
-                    releaseDoubleArrayElements(array, elements, mode);
-                }
+            if (arrayObject instanceof boolean[]) {
+                releaseBooleanArrayElements(array, elements, mode);
+            } else if (arrayObject instanceof byte[]) {
+                releaseByteArrayElements(array, elements, mode);
+            } else if (arrayObject instanceof char[]) {
+                releaseCharArrayElements(array, elements, mode);
+            } else if (arrayObject instanceof short[]) {
+                releaseShortArrayElements(array, elements, mode);
+            } else if (arrayObject instanceof int[]) {
+                releaseIntArrayElements(array, elements, mode);
+            } else if (arrayObject instanceof long[]) {
+                releaseLongArrayElements(array, elements, mode);
+            } else if (arrayObject instanceof float[]) {
+                releaseFloatArrayElements(array, elements, mode);
+            } else if (arrayObject instanceof double[]) {
+                releaseDoubleArrayElements(array, elements, mode);
             }
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
@@ -3284,9 +3327,10 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static Pointer GetStringCritical(Pointer env, JniHandle string, Pointer isCopy) {
-        // Source: JniFunctionsSource.java:1742
+        // Source: JniFunctionsSource.java:1731
         Pointer anchor = prologue(env, "GetStringCritical");
         try {
+            // TODO(cwi): Implement optimized version for OptimizeJNICritical if a benchmark uses it frequently
             setCopyPointer(isCopy, true);
             final char[] a = ((String) string.unhand()).toCharArray();
             final Pointer pointer = Memory.mustAllocate(a.length * Kind.CHAR.width.numberOfBytes);
@@ -3304,7 +3348,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void ReleaseStringCritical(Pointer env, JniHandle string, final Pointer chars) {
-        // Source: JniFunctionsSource.java:1753
+        // Source: JniFunctionsSource.java:1743
         Pointer anchor = prologue(env, "ReleaseStringCritical");
         try {
             Memory.deallocate(chars);
@@ -3317,7 +3361,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle NewWeakGlobalRef(Pointer env, JniHandle handle) {
-        // Source: JniFunctionsSource.java:1758
+        // Source: JniFunctionsSource.java:1748
         Pointer anchor = prologue(env, "NewWeakGlobalRef");
         try {
             return JniHandles.createWeakGlobalHandle(handle.unhand());
@@ -3331,7 +3375,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void DeleteWeakGlobalRef(Pointer env, JniHandle handle) {
-        // Source: JniFunctionsSource.java:1763
+        // Source: JniFunctionsSource.java:1753
         Pointer anchor = prologue(env, "DeleteWeakGlobalRef");
         try {
             JniHandles.destroyWeakGlobalHandle(handle);
@@ -3344,7 +3388,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static boolean ExceptionCheck(Pointer env) {
-        // Source: JniFunctionsSource.java:1768
+        // Source: JniFunctionsSource.java:1758
         Pointer anchor = prologue(env, "ExceptionCheck");
         try {
             return VmThread.fromJniEnv(env).jniException() != null;
@@ -3360,7 +3404,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle NewDirectByteBuffer(Pointer env, Pointer address, long capacity) throws Exception {
-        // Source: JniFunctionsSource.java:1775
+        // Source: JniFunctionsSource.java:1765
         Pointer anchor = prologue(env, "NewDirectByteBuffer");
         try {
             ByteBuffer buffer = ObjectAccess.createDirectByteBuffer(address.toLong(), (int) capacity);
@@ -3375,7 +3419,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static Pointer GetDirectBufferAddress(Pointer env, JniHandle buffer) throws Exception {
-        // Source: JniFunctionsSource.java:1781
+        // Source: JniFunctionsSource.java:1771
         Pointer anchor = prologue(env, "GetDirectBufferAddress");
         try {
             Object buf = buffer.unhand();
@@ -3394,7 +3438,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static long GetDirectBufferCapacity(Pointer env, JniHandle buffer) {
-        // Source: JniFunctionsSource.java:1791
+        // Source: JniFunctionsSource.java:1781
         Pointer anchor = prologue(env, "GetDirectBufferCapacity");
         try {
             Object buf = buffer.unhand();
@@ -3412,7 +3456,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static int GetObjectRefType(Pointer env, JniHandle obj) {
-        // Source: JniFunctionsSource.java:1800
+        // Source: JniFunctionsSource.java:1790
         Pointer anchor = prologue(env, "GetObjectRefType");
         try {
             final int tag = JniHandles.tag(obj);
@@ -3434,7 +3478,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static int GetNumberOfArguments(Pointer env, MethodID methodID) throws Exception {
-        // Source: JniFunctionsSource.java:1813
+        // Source: JniFunctionsSource.java:1803
         Pointer anchor = prologue(env, "GetNumberOfArguments");
         try {
             final MethodActor methodActor = MethodID.toMethodActor(methodID);
@@ -3452,7 +3496,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void GetKindsOfArguments(Pointer env, MethodID methodID, Pointer kinds) throws Exception {
-        // Source: JniFunctionsSource.java:1822
+        // Source: JniFunctionsSource.java:1812
         Pointer anchor = prologue(env, "GetKindsOfArguments");
         try {
             final MethodActor methodActor = MethodID.toMethodActor(methodID);

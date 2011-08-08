@@ -128,6 +128,8 @@ public final class JmmFunctions {
 
 // START GENERATED CODE
 
+    private static final boolean INSTRUMENTED = false;
+
     @VM_ENTRY_POINT
     private static native void reserved1();
         // Source: JmmFunctionsSource.java:53

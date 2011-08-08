@@ -1674,32 +1674,27 @@ public final class JniFunctionsSource {
     @VM_ENTRY_POINT
     private static Pointer GetPrimitiveArrayCritical(Pointer env, JniHandle array, Pointer isCopy) {
         final Object arrayObject = array.unhand();
-        if (Heap.pin(arrayObject)) {
+        if (JniFunctions.OptimizeJNICritical) {
+            Heap.lock();
             setCopyPointer(isCopy, false);
             return Reference.fromJava(arrayObject).toOrigin().plus(Layout.byteArrayLayout().getElementOffsetFromOrigin(0));
         }
+
         if (arrayObject instanceof boolean[]) {
             return getBooleanArrayElements(array, isCopy);
-        }
-        if (arrayObject instanceof byte[]) {
+        } else if (arrayObject instanceof byte[]) {
             return getByteArrayElements(array, isCopy);
-        }
-        if (arrayObject instanceof char[]) {
+        } else if (arrayObject instanceof char[]) {
             return getCharArrayElements(array, isCopy);
-        }
-        if (arrayObject instanceof short[]) {
+        } else if (arrayObject instanceof short[]) {
             return getShortArrayElements(array, isCopy);
-        }
-        if (arrayObject instanceof int[]) {
+        } else if (arrayObject instanceof int[]) {
             return getIntArrayElements(array, isCopy);
-        }
-        if (arrayObject instanceof long[]) {
+        } else if (arrayObject instanceof long[]) {
             return getLongArrayElements(array, isCopy);
-        }
-        if (arrayObject instanceof float[]) {
+        } else if (arrayObject instanceof float[]) {
             return getFloatArrayElements(array, isCopy);
-        }
-        if (arrayObject instanceof double[]) {
+        } else if (arrayObject instanceof double[]) {
             return getDoubleArrayElements(array, isCopy);
         }
         return Pointer.zero();
@@ -1707,39 +1702,34 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static void ReleasePrimitiveArrayCritical(Pointer env, JniHandle array, Pointer elements, int mode) {
+        if (JniFunctions.OptimizeJNICritical) {
+            Heap.unlock();
+            return;
+        }
+
         final Object arrayObject = array.unhand();
-        if (Heap.isPinned(arrayObject)) {
-            Heap.unpin(arrayObject);
-        } else {
-            if (arrayObject instanceof boolean[]) {
-                releaseBooleanArrayElements(array, elements, mode);
-            }
-            if (arrayObject instanceof byte[]) {
-                releaseByteArrayElements(array, elements, mode);
-            }
-            if (arrayObject instanceof char[]) {
-                releaseCharArrayElements(array, elements, mode);
-            }
-            if (arrayObject instanceof short[]) {
-                releaseShortArrayElements(array, elements, mode);
-            }
-            if (arrayObject instanceof int[]) {
-                releaseIntArrayElements(array, elements, mode);
-            }
-            if (arrayObject instanceof long[]) {
-                releaseLongArrayElements(array, elements, mode);
-            }
-            if (arrayObject instanceof float[]) {
-                releaseFloatArrayElements(array, elements, mode);
-            }
-            if (arrayObject instanceof double[]) {
-                releaseDoubleArrayElements(array, elements, mode);
-            }
+        if (arrayObject instanceof boolean[]) {
+            releaseBooleanArrayElements(array, elements, mode);
+        } else if (arrayObject instanceof byte[]) {
+            releaseByteArrayElements(array, elements, mode);
+        } else if (arrayObject instanceof char[]) {
+            releaseCharArrayElements(array, elements, mode);
+        } else if (arrayObject instanceof short[]) {
+            releaseShortArrayElements(array, elements, mode);
+        } else if (arrayObject instanceof int[]) {
+            releaseIntArrayElements(array, elements, mode);
+        } else if (arrayObject instanceof long[]) {
+            releaseLongArrayElements(array, elements, mode);
+        } else if (arrayObject instanceof float[]) {
+            releaseFloatArrayElements(array, elements, mode);
+        } else if (arrayObject instanceof double[]) {
+            releaseDoubleArrayElements(array, elements, mode);
         }
     }
 
     @VM_ENTRY_POINT
     private static Pointer GetStringCritical(Pointer env, JniHandle string, Pointer isCopy) {
+        // TODO(cwi): Implement optimized version for OptimizeJNICritical if a benchmark uses it frequently
         setCopyPointer(isCopy, true);
         final char[] a = ((String) string.unhand()).toCharArray();
         final Pointer pointer = Memory.mustAllocate(a.length * Kind.CHAR.width.numberOfBytes);
