@@ -115,47 +115,6 @@ public interface HeapScheme extends VMScheme {
     Object clone(Object object);
 
     /**
-     * Prevent the GC from moving the given object.
-     *
-     * Allocating very small amounts in the same thread before unpinning is strongly discouraged but not strictly
-     * forbidden.
-     *
-     * Pinning and then allocating may cause somewhat premature OutOfMemoryException. However, the implementation is
-     * supposed to not let pinning succeed in the first place if there is any plausible danger of that happening.
-     *
-     * Pinning and then allocating large amounts is prone to cause premature OutOfMemoryException.
-     *
-     * Example:
-     *
-     * ATTENTION: The period of time an object can remained pinned must be "very short". Pinning may block other threads
-     * that wait for GC to happen. Indefinite pinning will create deadlock!
-     *
-     * Calling this method on an already pinned object has undefined consequences.
-     *
-     * Note to GC implementors: you really don't need to implement pinning. It's an entirely optional/experimental
-     * feature. However, if present, there are parts of the JVM that will automatically take advantage of it.
-     *
-     * If pinning is not supported, make pin() and isPinned() always return false and declare @INLINE for both.
-     * Then all pinning client code will automatically be eliminated.
-     *
-     * @return whether pinning succeeded - callers are supposed to have an alternative plan when it fails
-     */
-    boolean pin(Object object);
-
-    /**
-     * Allow the given object to be moved by the GC. Always quickly balance each call to the above with a call to this
-     * method.
-     *
-     * Calling this method on an already unpinned object has undefined consequences.
-     */
-    void unpin(Object object);
-
-    /**
-     * @return whether the object is currently pinned
-     */
-    boolean isPinned(Object object);
-
-    /**
      * Returns whether an address is anywhere in the range of addresses managed by the heap scheme.
      */
     boolean contains(Address address);

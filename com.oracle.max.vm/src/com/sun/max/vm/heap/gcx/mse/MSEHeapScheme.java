@@ -247,26 +247,12 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
         return thread instanceof VmOperationThread;
     }
 
-    @INLINE(override = true)
-    public boolean isPinned(Object object) {
-        return false;
-    }
-
-    @INLINE(override = true)
-    public boolean pin(Object object) {
-        return false; // no supported
-    }
-
     public Size reportFreeSpace() {
         return theHeap.freeSpace();
     }
 
     public Size reportUsedSpace() {
         return theHeap.usedSpace();
-    }
-
-    @INLINE(override = true)
-    public void unpin(Object object) {
     }
 
     @INLINE(override = true)
