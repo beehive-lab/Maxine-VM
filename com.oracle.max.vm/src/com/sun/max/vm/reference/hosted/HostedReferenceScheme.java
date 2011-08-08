@@ -128,7 +128,7 @@ public final class HostedReferenceScheme extends AbstractVMScheme implements Ref
             try {
                 WithoutAccessCheck.setStaticField(javaClass, fieldActor.name.toString(), wordOrBoxedJavaValue);
             } catch (Throwable throwable) {
-                ProgramError.unexpected("could not write field: " + fieldActor, throwable);
+                throw ProgramError.unexpected("could not write field: " + fieldActor, throwable);
             }
         } else {
             final HostedObjectMirror mirror = new HostedObjectMirror(object);
@@ -150,7 +150,7 @@ public final class HostedReferenceScheme extends AbstractVMScheme implements Ref
             try {
                 return Utils.cast(castType, WithoutAccessCheck.getStaticField(staticTuple.classActor().toJava(), fieldActor.name.toString()));
             } catch (Throwable throwable) {
-                ProgramError.unexpected("could not read field: " + fieldActor, throwable);
+                throw ProgramError.unexpected("could not read field: " + fieldActor, throwable);
             }
         }
 

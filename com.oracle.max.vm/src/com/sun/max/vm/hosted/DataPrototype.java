@@ -177,7 +177,7 @@ public final class DataPrototype extends Prototype {
         if (assignCell(object, cell)) {
             heapObjects.add(object);
         } else {
-            ProgramError.unexpected("null found in list of heap objects");
+            throw ProgramError.unexpected("null found in list of heap objects");
         }
     }
 
@@ -861,7 +861,7 @@ public final class DataPrototype extends Prototype {
                 numberOfBytes += completionService.take().get();
                 Trace.line(1, "createData - objects: " + n + ", bytes: " + numberOfBytes);
             } catch (Throwable throwable) {
-                ProgramError.unexpected(throwable);
+                throw ProgramError.unexpected(throwable);
             }
         }
         executor.shutdown();

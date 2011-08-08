@@ -98,8 +98,7 @@ public class DataModel {
             case BITS_8:
                 return toBytes((byte) value.asOffset().toLong());
         }
-        ProgramError.unknownCase();
-        return null;
+        throw ProgramError.unknownCase();
     }
 
     public void write(OutputStream stream, Value value) throws IOException {

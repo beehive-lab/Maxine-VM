@@ -78,7 +78,7 @@ public abstract class SPARCAssemblyTester extends RiscAssemblyTester<RiscTemplat
     protected byte[] readExternalInstruction(PushbackInputStream externalInputStream, RiscTemplate template, byte[] internalBytes) throws IOException {
         final byte[] result = super.readExternalInstruction(externalInputStream, template, internalBytes);
         if (!readNop(externalInputStream)) { // read potential DCTI slot place holder contents - see above
-            ProgramError.unexpected("nop missing after external instruction");
+            throw ProgramError.unexpected("nop missing after external instruction");
         }
         return result;
     }

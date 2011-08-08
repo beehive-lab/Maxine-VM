@@ -277,7 +277,7 @@ public abstract class X86AssemblerGenerator<Template_Type extends X86Template> e
                 } else if (parameter instanceof X86EnumerableParameter) {
                     printAppendedEnumerableParameter(writer, (X86EnumerableParameter) parameter);
                 } else {
-                    ProgramError.unexpected("appended parameter of unexpected type: " + parameter);
+                    throw ProgramError.unexpected("appended parameter of unexpected type: " + parameter);
                 }
             }
         }

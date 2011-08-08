@@ -268,7 +268,7 @@ public abstract class X86Template extends Template implements X86InstructionDesc
                 break;
             }
             default: {
-                ProgramError.unexpected("don't know what to do with addressing method code: " + addressingMethodCode);
+                throw ProgramError.unexpected("don't know what to do with addressing method code: " + addressingMethodCode);
             }
         }
     }

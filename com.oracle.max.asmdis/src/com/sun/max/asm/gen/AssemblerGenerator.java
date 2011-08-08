@@ -151,7 +151,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
                     assemberInterface = Class.forName(assemblerInterfaceName);
                     ProgramError.check(assemberInterface.isInterface(), "The class " + assemblerInterfaceName + " is not an interface");
                 } catch (ClassNotFoundException e) {
-                    ProgramError.unexpected("The assembler interface class " + assemblerInterfaceName + " must be on the class path");
+                    throw ProgramError.unexpected("The assembler interface class " + assemblerInterfaceName + " must be on the class path");
                 }
                 final Set<MethodKey> assemblerInterfaceMethods = new HashSet<MethodKey>();
                 for (Method assemblerInterfaceMethod : assemberInterface.getDeclaredMethods()) {

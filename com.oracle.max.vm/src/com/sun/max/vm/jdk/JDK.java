@@ -241,7 +241,7 @@ public class JDK {
             JDK_VERSION = JDK_7;
         } else {
             JDK_VERSION = -1;
-            ProgramError.unexpected("Unknown java version number: " + version);
+            throw ProgramError.unexpected("Unknown java version number: " + version);
         }
     }
 }

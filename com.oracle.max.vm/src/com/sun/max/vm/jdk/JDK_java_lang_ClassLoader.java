@@ -220,7 +220,7 @@ public final class JDK_java_lang_ClassLoader {
         try {
             AssertionStatusDirectivesClass = Class.forName(ASSERTION_STATUS_DIRECTIVES_CLASS_NAME);
         } catch (ClassNotFoundException ex) {
-            ProgramError.unexpected("can't load " + ASSERTION_STATUS_DIRECTIVES_CLASS_NAME);
+            throw ProgramError.unexpected("can't load " + ASSERTION_STATUS_DIRECTIVES_CLASS_NAME);
         }
     }
 

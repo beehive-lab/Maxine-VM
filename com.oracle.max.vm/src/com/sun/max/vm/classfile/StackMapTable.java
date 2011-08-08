@@ -158,7 +158,7 @@ public class StackMapTable {
             }
         } catch (IOException e) {
             // This will never occur
-            ProgramError.unexpected(e);
+            throw ProgramError.unexpected(e);
         }
         attributeData = byteArrayOutputStream.toByteArray();
     }

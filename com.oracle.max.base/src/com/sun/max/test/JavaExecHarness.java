@@ -170,7 +170,7 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
                 engine.skipFile(file);
             }
         } catch (Exception e1) {
-            ProgramError.unexpected(e1);
+            throw ProgramError.unexpected(e1);
         }
     }
 
@@ -431,7 +431,7 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
         final char r = i.current();
         i.next();
         if (r != c) {
-            ProgramError.unexpected("parse error at " + i.getIndex() + ", expected character '" + c + "'");
+            throw ProgramError.unexpected("parse error at " + i.getIndex() + ", expected character '" + c + "'");
         }
     }
 

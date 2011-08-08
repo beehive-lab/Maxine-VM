@@ -424,7 +424,7 @@ public final class VMOptions {
             assert !option.consumesNext();
             startingPhaseOptions = addOption(startingPhaseOptions, option, allOptions);
         } else {
-            ProgramError.unexpected("VM options for the " + phase + " phase not (yet) supported");
+            throw ProgramError.unexpected("VM options for the " + phase + " phase not (yet) supported");
         }
 
         allOptions.add(option);

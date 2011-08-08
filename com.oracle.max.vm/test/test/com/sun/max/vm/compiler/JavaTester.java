@@ -208,7 +208,7 @@ public final class JavaTester {
             stdout.close();
             stdin.close();
             if (exitValue != 0) {
-                ProgramError.unexpected("execution of command failed: " + command + " [exit code = " + exitValue + "]");
+                throw ProgramError.unexpected("execution of command failed: " + command + " [exit code = " + exitValue + "]");
             }
         } finally {
             process.destroy();

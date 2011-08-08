@@ -1321,7 +1321,7 @@ public abstract class ClassActor extends Actor implements RiType {
             this.javaClass = javaClass;
         } else {
             if (this.javaClass != javaClass) {
-                ProgramError.unexpected("setMirror called with different value, old=" + this.javaClass + ", new=" + javaClass);
+                throw ProgramError.unexpected("setMirror called with different value, old=" + this.javaClass + ", new=" + javaClass);
             }
         }
     }

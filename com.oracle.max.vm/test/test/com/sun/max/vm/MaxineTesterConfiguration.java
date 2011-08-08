@@ -420,7 +420,7 @@ public class MaxineTesterConfiguration {
     public static String[] getImageConfigArgs(String imageConfig) {
         final String[] args = imageParams.get(imageConfig);
         if (args == null) {
-            ProgramError.unexpected("unknown image config: " + imageConfig);
+            throw ProgramError.unexpected("unknown image config: " + imageConfig);
         }
         return args;
     }
@@ -428,7 +428,7 @@ public class MaxineTesterConfiguration {
     public static String[] getMaxvmConfigArgs(String maxvmConfig) {
         final String[] args = maxvmParams.get(maxvmConfig);
         if (args == null) {
-            ProgramError.unexpected("unknown maxvm config: " + maxvmConfig);
+            throw ProgramError.unexpected("unknown maxvm config: " + maxvmConfig);
         }
         return args;
     }
@@ -478,7 +478,7 @@ public class MaxineTesterConfiguration {
 
     public static String[] getVMOptions(String maxvmConfig) {
         if (!maxvmParams.containsKey(maxvmConfig)) {
-            ProgramError.unexpected("Unknown Maxine VM option configuration: " + maxvmConfig);
+            throw ProgramError.unexpected("Unknown Maxine VM option configuration: " + maxvmConfig);
         }
         return maxvmParams.get(maxvmConfig);
     }

@@ -51,8 +51,7 @@ public class SizeTest extends WordTestCase {
                 assertEquals(s, "#4294967295");
                 break;
             default:
-                ProgramError.unknownCase();
-                break;
+                throw ProgramError.unknownCase();
         }
     }
 
@@ -72,8 +71,7 @@ public class SizeTest extends WordTestCase {
                 assertTrue(result == ((int) high + low));
                 break;
             default:
-                ProgramError.unknownCase();
-                break;
+                throw ProgramError.unknownCase();
         }
     }
 
@@ -98,8 +96,7 @@ public class SizeTest extends WordTestCase {
                 assertTrue(result == ((int) high + low));
                 break;
             default:
-                ProgramError.unknownCase();
-                break;
+                throw ProgramError.unknownCase();
         }
         assertTrue(sizeLow.plus(offsetHigh).equals(Address.fromLong(result)));
 
@@ -116,8 +113,7 @@ public class SizeTest extends WordTestCase {
                 assertTrue(result == differenceLowBits);
                 break;
             default:
-                ProgramError.unknownCase();
-                break;
+                throw ProgramError.unknownCase();
         }
     }
 
@@ -142,8 +138,7 @@ public class SizeTest extends WordTestCase {
                 assertTrue(result == ((int) high + low));
                 break;
             default:
-                ProgramError.unknownCase();
-                break;
+                throw ProgramError.unknownCase();
         }
         assertTrue(sizeLow.plus((int) high).equals(Address.fromInt(low + (int) high)));
     }
@@ -167,8 +162,7 @@ public class SizeTest extends WordTestCase {
                 assertTrue(addressLow.minus(offsetMedium).toLong() == v);
                 break;
             default:
-                ProgramError.unknownCase();
-                break;
+                throw ProgramError.unknownCase();
         }
     }
 

@@ -69,7 +69,7 @@ public final class ProgramError extends Error {
      */
     public static void check(boolean condition) {
         if (!condition) {
-            unexpected(null, null);
+            throw unexpected(null, null);
         }
     }
 
@@ -81,7 +81,7 @@ public final class ProgramError extends Error {
      */
     public static void check(boolean condition, String message) {
         if (!condition) {
-            unexpected(message, null);
+            throw unexpected(message, null);
         }
     }
 
@@ -94,7 +94,7 @@ public final class ProgramError extends Error {
      */
     public static void check(boolean condition, String message, Object object) {
         if (!condition) {
-            unexpected(message + object.toString(), null);
+            throw unexpected(message + object.toString(), null);
         }
     }
 

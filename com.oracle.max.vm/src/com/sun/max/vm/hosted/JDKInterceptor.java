@@ -373,7 +373,7 @@ public final class JDKInterceptor {
         }
 
         if (UnsafeUsageChecker.isClassUsingUnsafe(className)) {
-            ProgramError.unexpected("class is using Unsafe operations to get field or array offsets, but no field interceptor present: " + className);
+            throw ProgramError.unexpected("class is using Unsafe operations to get field or array offsets, but no field interceptor present: " + className);
         }
 
         return null;
@@ -432,7 +432,7 @@ public final class JDKInterceptor {
                     fieldMap.put(interceptedField.getName(), interceptedField);
                 }
             } else {
-                ProgramError.unexpected("format of intercepted field array is wrong");
+                throw ProgramError.unexpected("format of intercepted field array is wrong");
             }
         }
     }
@@ -517,7 +517,7 @@ public final class JDKInterceptor {
             } catch (NoSuchFieldException ex) {
                 // Some fields are hidden from reflection. In order to avoid false positives, these fields
                 // have to set the flag verifyFieldExists to false.
-                ProgramError.unexpected("Class " + holder.className() + " does not declare field " + fieldName);
+                throw ProgramError.unexpected("Class " + holder.className() + " does not declare field " + fieldName);
             }
         }
     }

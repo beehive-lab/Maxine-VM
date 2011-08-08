@@ -75,7 +75,7 @@ public abstract class AssemblerTestCase extends MaxTestCase {
                 tester.createExternalSource(startSerialOption.getValue(), endSerialOption.getValue(), indentWriter);
                 indentWriter.close();
             } catch (IOException e) {
-                ProgramError.unexpected("Could not open " + sourceFile + " for writing", e);
+                throw ProgramError.unexpected("Could not open " + sourceFile + " for writing", e);
             }
         } else {
             tester.run(startSerialOption.getValue(), endSerialOption.getValue(), !serialized.getValue());

@@ -115,7 +115,7 @@ public class JTGenerator {
                 System.out.println(jtRunsFile + " recompiled.");
             }
         } catch (IOException e) {
-            ProgramError.unexpected(e);
+            throw ProgramError.unexpected(e);
         }
         return filesUpdated;
     }

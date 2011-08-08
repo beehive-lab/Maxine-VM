@@ -54,13 +54,13 @@ public final class RiscInstructionDescription extends InstructionDescription {
             bits += field.bitRange().encodedWidth();
             final int fieldMask = field.bitRange().instructionMask();
             if ((fieldMask & mask) != 0) {
-                ProgramError.unexpected("RISC instruction field defines bits also defined by another field: " + field.name() + "[" + field.bitRange() + "]");
+                throw ProgramError.unexpected("RISC instruction field defines bits also defined by another field: " + field.name() + "[" + field.bitRange() + "]");
             }
             mask |= fieldMask;
         }
 
         if (bits != 32) {
-            ProgramError.unexpected("RISC instruction description describes " + bits + " instruction field bits: " + specifications);
+            throw ProgramError.unexpected("RISC instruction description describes " + bits + " instruction field bits: " + specifications);
         }
     }
 

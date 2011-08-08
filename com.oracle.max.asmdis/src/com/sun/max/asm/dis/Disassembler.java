@@ -130,7 +130,7 @@ public abstract class Disassembler {
         try {
             disassembler.scanAndPrint(stream, out, disassemblyPrinter);
         } catch (IOException ioException) {
-            ProgramError.unexpected();
+            throw ProgramError.unexpected();
         } catch (AssemblyException assemblyException) {
             System.err.println(assemblyException);
         }

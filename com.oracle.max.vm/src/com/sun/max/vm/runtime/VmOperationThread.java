@@ -100,7 +100,7 @@ public class VmOperationThread extends Thread implements UncaughtExceptionHandle
                 // Block until the VM operation thread is waiting for requests:
                 QUEUE_LOCK.wait();
             } catch (InterruptedException interruptedException) {
-                ProgramError.unexpected(interruptedException);
+                throw ProgramError.unexpected(interruptedException);
             }
         }
     }

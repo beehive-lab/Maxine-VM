@@ -80,8 +80,7 @@ public class PointerTest extends WordTestCase {
                 assertEquals(s, "^ffffffff");
                 break;
             default:
-                ProgramError.unknownCase();
-                break;
+                throw ProgramError.unknownCase();
         }
     }
 
@@ -101,8 +100,7 @@ public class PointerTest extends WordTestCase {
                 assertTrue(result == ((int) high + low));
                 break;
             default:
-                ProgramError.unknownCase();
-                break;
+                throw ProgramError.unknownCase();
         }
     }
 
@@ -127,8 +125,7 @@ public class PointerTest extends WordTestCase {
                 assertTrue(result == ((int) high + low));
                 break;
             default:
-                ProgramError.unknownCase();
-                break;
+                throw ProgramError.unknownCase();
         }
         assertTrue(pointerLow.plus(offsetHigh).equals(Address.fromLong(result)));
 
@@ -145,8 +142,7 @@ public class PointerTest extends WordTestCase {
                 assertTrue(result == differenceLowBits);
                 break;
             default:
-                ProgramError.unknownCase();
-                break;
+                throw ProgramError.unknownCase();
         }
     }
 
@@ -171,8 +167,7 @@ public class PointerTest extends WordTestCase {
                 assertTrue(result == ((int) high + low));
                 break;
             default:
-                ProgramError.unknownCase();
-                break;
+                throw ProgramError.unknownCase();
         }
         assertTrue(pointerLow.plus((int) high).equals(Address.fromInt(low + (int) high)));
     }
@@ -199,8 +194,7 @@ public class PointerTest extends WordTestCase {
                 break;
             }
             default: {
-                ProgramError.unknownCase();
-                break;
+                throw ProgramError.unknownCase();
             }
         }
     }
@@ -358,8 +352,7 @@ public class PointerTest extends WordTestCase {
                     assertTrue(pointer.readShort(-9) == 576);
                     break;
                 default:
-                    ProgramError.unknownCase();
-                    break;
+                    throw ProgramError.unknownCase();
             }
         }
     }
@@ -400,8 +393,7 @@ public class PointerTest extends WordTestCase {
                     assertTrue(pointer.readInt(-5) == 12345678);
                     break;
                 default:
-                    ProgramError.unknownCase();
-                    break;
+                    throw ProgramError.unknownCase();
             }
         }
     }
@@ -438,8 +430,7 @@ public class PointerTest extends WordTestCase {
                     assertTrue(pointer.readLong(-40) == 1234567812345678L);
                     break;
                 default:
-                    ProgramError.unknownCase();
-                    break;
+                    throw ProgramError.unknownCase();
             }
         }
     }
@@ -529,8 +520,7 @@ public class PointerTest extends WordTestCase {
                     pointer.writeWord(offset4, offsetHigh);
                     break;
                 default:
-                    ProgramError.unknownCase();
-                    break;
+                    throw ProgramError.unknownCase();
             }
             switch (wordWidth()) {
                 case BITS_64:
@@ -540,8 +530,7 @@ public class PointerTest extends WordTestCase {
                     pointer.writeWord(offset8, sizeMax);
                     break;
                 default:
-                    ProgramError.unknownCase();
-                    break;
+                    throw ProgramError.unknownCase();
             }
             assertTrue(pointer.readWord(0).asAddress().equals(addressLow));
             switch (wordWidth()) {
@@ -552,8 +541,7 @@ public class PointerTest extends WordTestCase {
                     assertTrue(pointer.readWord(4).asOffset().equals(offsetHigh));
                     break;
                 default:
-                    ProgramError.unknownCase();
-                    break;
+                    throw ProgramError.unknownCase();
             }
             switch (wordWidth()) {
                 case BITS_64:
@@ -563,8 +551,7 @@ public class PointerTest extends WordTestCase {
                     assertTrue(pointer.readWord(offset8).asSize().equals(sizeMax));
                     break;
                 default:
-                    ProgramError.unknownCase();
-                    break;
+                    throw ProgramError.unknownCase();
             }
         }
     }

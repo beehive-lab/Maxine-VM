@@ -51,8 +51,7 @@ public class AddressTest extends WordTestCase {
                 assertEquals(s, "@ffffffff");
                 break;
             default:
-                ProgramError.unknownCase();
-                break;
+                throw ProgramError.unknownCase();
         }
     }
 
@@ -72,8 +71,7 @@ public class AddressTest extends WordTestCase {
                 assertTrue(addressMax32.compareTo(addressMax) == 0);
                 break;
             default:
-                ProgramError.unknownCase();
-                break;
+                throw ProgramError.unknownCase();
         }
     }
 
@@ -96,8 +94,7 @@ public class AddressTest extends WordTestCase {
                 assertTrue(addressMax32.compareTo(addressHigh) > 0);
                 break;
             default:
-                ProgramError.unknownCase();
-                break;
+                throw ProgramError.unknownCase();
         }
     }
 
@@ -113,8 +110,7 @@ public class AddressTest extends WordTestCase {
                 assertTrue(addressHigh.equals((int) high));
                 break;
             default:
-                ProgramError.unknownCase();
-                break;
+                throw ProgramError.unknownCase();
         }
 
         assertFalse(addressLow.equals(-1));
@@ -139,8 +135,7 @@ public class AddressTest extends WordTestCase {
                 assertTrue(result == ((int) high + low));
                 break;
             default:
-                ProgramError.unknownCase();
-                break;
+                throw ProgramError.unknownCase();
         }
     }
 
@@ -164,8 +159,7 @@ public class AddressTest extends WordTestCase {
                 assertTrue(result == ((int) high + low));
                 break;
             default:
-                ProgramError.unknownCase();
-                break;
+                throw ProgramError.unknownCase();
         }
         assertTrue(addressLow.plus(offsetHigh).equals(Address.fromLong(result)));
 
@@ -182,8 +176,7 @@ public class AddressTest extends WordTestCase {
                 assertTrue(result == differenceLowBits);
                 break;
             default:
-                ProgramError.unknownCase();
-                break;
+                throw ProgramError.unknownCase();
         }
     }
 
@@ -208,8 +201,7 @@ public class AddressTest extends WordTestCase {
                 assertTrue(result == ((int) high + low));
                 break;
             default:
-                ProgramError.unknownCase();
-                break;
+                throw ProgramError.unknownCase();
         }
         assertTrue(addressLow.plus((int) high).equals(Address.fromInt(low + (int) high)));
     }
@@ -235,8 +227,7 @@ public class AddressTest extends WordTestCase {
                 break;
             }
             default: {
-                ProgramError.unknownCase();
-                break;
+                throw ProgramError.unknownCase();
             }
         }
     }
@@ -392,8 +383,7 @@ public class AddressTest extends WordTestCase {
                 assertTrue(addressLow.times(addressLow).toLong() < (long) low * (long) low);
                 break;
             default:
-                ProgramError.unknownCase();
-                break;
+                throw ProgramError.unknownCase();
         }
     }
 

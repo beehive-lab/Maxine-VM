@@ -1019,8 +1019,7 @@ public abstract class BytecodeAggregatingVisitor extends BytecodeVisitor {
                 constantReference(classConstant.resolve(constantPool(), index).toJava());
                 break;
             default:
-                ProgramError.unexpected();
-                break;
+                throw ProgramError.unexpected();
         }
     }
 
@@ -1037,8 +1036,7 @@ public abstract class BytecodeAggregatingVisitor extends BytecodeVisitor {
                 constantDouble(doubleConstant.value());
                 break;
             default:
-                ProgramError.unexpected();
-                break;
+                throw ProgramError.unexpected();
         }
     }
 

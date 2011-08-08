@@ -51,8 +51,7 @@ public class OffsetTest extends WordTestCase {
                 assertEquals(s, "&ffffffff");
                 break;
             default:
-                ProgramError.unknownCase();
-                break;
+                throw ProgramError.unknownCase();
         }
     }
 
@@ -111,8 +110,7 @@ public class OffsetTest extends WordTestCase {
                 break;
             }
             default: {
-                ProgramError.unknownCase();
-                break;
+                throw ProgramError.unknownCase();
             }
         }
     }
@@ -135,8 +133,7 @@ public class OffsetTest extends WordTestCase {
                 break;
             }
             default: {
-                ProgramError.unknownCase();
-                break;
+                throw ProgramError.unknownCase();
             }
         }
     }
@@ -165,8 +162,7 @@ public class OffsetTest extends WordTestCase {
                 break;
             }
             default: {
-                ProgramError.unknownCase();
-                break;
+                throw ProgramError.unknownCase();
             }
         }
     }

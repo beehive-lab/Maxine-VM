@@ -333,7 +333,7 @@ public abstract class DataAccessAdapter implements DataAccess {
                 writeLong(address, value.asOffset().toLong());
                 break;
             default:
-                ProgramError.unexpected();
+                throw ProgramError.unexpected();
         }
     }
 

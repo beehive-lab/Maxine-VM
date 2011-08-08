@@ -338,7 +338,7 @@ public final class Files {
 
     public static void unzip(File zip, File destDir) {
         if (!destDir.exists() && !destDir.mkdirs()) {
-            ProgramError.unexpected("Could not make directory " + destDir);
+            throw ProgramError.unexpected("Could not make directory " + destDir);
         }
         Enumeration entries;
         ZipFile zipFile;
@@ -360,7 +360,7 @@ public final class Files {
                     }
                 }
                 if (!parentDir.exists() && !parentDir.mkdirs()) {
-                    ProgramError.unexpected("Could not make directory " + parentDir);
+                    throw ProgramError.unexpected("Could not make directory " + parentDir);
                 }
                 if (!entry.isDirectory()) {
                     final File destFile = new File(destDir, entry.getName());
@@ -372,7 +372,7 @@ public final class Files {
             }
             zipFile.close();
         } catch (IOException ioe) {
-            ProgramError.unexpected("Error extracting " + zip.getAbsolutePath() + " to " + destDir, ioe);
+            throw ProgramError.unexpected("Error extracting " + zip.getAbsolutePath() + " to " + destDir, ioe);
         }
     }
 

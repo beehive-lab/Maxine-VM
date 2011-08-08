@@ -357,7 +357,7 @@ public class MaxineTester {
 
     private static void makeDirectory(File directory) {
         if (!directory.exists() && !directory.mkdirs()) {
-            ProgramError.unexpected("Could not make directory " + directory);
+            throw ProgramError.unexpected("Could not make directory " + directory);
         }
         ProgramError.check(directory.isDirectory(), "Path is not a directory: " + directory);
         copyInputFiles(directory);
@@ -842,7 +842,7 @@ public class MaxineTester {
             Files.copy(defaultBinaryFile, binaryFile);
             binaryFile.setExecutable(true);
         } catch (IOException e) {
-            ProgramError.unexpected(e);
+            throw ProgramError.unexpected(e);
         }
     }
 

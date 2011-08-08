@@ -266,7 +266,7 @@ public class CompiledPrototype extends Prototype {
         for (String classNameAndMethod : imageMethods) {
             final int ix = classNameAndMethod.lastIndexOf('.');
             if (ix < 0) {
-                ProgramError.unexpected(classNameAndMethod + " not correct format");
+                throw ProgramError.unexpected(classNameAndMethod + " not correct format");
             }
             final String className = classNameAndMethod.substring(0, ix);
             final String methodName = classNameAndMethod.substring(ix + 1);
@@ -602,7 +602,7 @@ public class CompiledPrototype extends Prototype {
                     e.printStackTrace();
                 } catch (ExecutionException executionException) {
                     compilationService.shutdownNow();
-                    ProgramError.unexpected(executionException.getCause());
+                    throw ProgramError.unexpected(executionException.getCause());
                 }
                 ++totalCompilations;
                 if (totalCompilations % 200 == 0) {
@@ -652,7 +652,7 @@ public class CompiledPrototype extends Prototype {
             }
         }
         error.printStackTrace(System.err);
-        return ProgramError.unexpected("Error occurred while compiling " + classMethodActor, error);
+        throw ProgramError.unexpected("Error occurred while compiling " + classMethodActor, error);
     }
 
     private void forAllClassMethodActors(ClassActor classActor, Procedure<ClassMethodActor> procedure) {

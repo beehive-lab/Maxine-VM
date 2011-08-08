@@ -111,7 +111,7 @@ public @interface METHOD_SUBSTITUTIONS {
                                 Trace.line(1, "Substitutee for " + substituteMethod + " not found - skipping");
                                 continue;
                             }
-                            ProgramError.unexpected("could not find unconditional substitutee constructor in " + substitutee + " substituted by " + substituteMethod);
+                            throw ProgramError.unexpected("could not find unconditional substitutee constructor in " + substitutee + " substituted by " + substituteMethod);
                         }
                         try {
                             originalMethodActor = (ClassMethodActor) MethodActor.fromJavaConstructor(constructor);

@@ -857,7 +857,7 @@ public final class JniFunctions {
                     break;
                 }
                 default: {
-                    ProgramError.unexpected();
+                    throw ProgramError.unexpected();
                 }
             }
             a = a.plus(jvalueSize);

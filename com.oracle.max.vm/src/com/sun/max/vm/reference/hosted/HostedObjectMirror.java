@@ -68,8 +68,7 @@ public class HostedObjectMirror implements ObjectMirror {
                 case WORD:
                     return new WordValue(hybrid.getWord(index));
                 default:
-                    ProgramError.unknownCase();
-                    return null;
+                    throw ProgramError.unknownCase();
             }
         }
         final Object javaValue = Array.get(object, index);
@@ -116,8 +115,7 @@ public class HostedObjectMirror implements ObjectMirror {
                     hybrid.setWord(index, value.asWord());
                     break;
                 default:
-                    ProgramError.unknownCase();
-                    break;
+                    throw ProgramError.unknownCase();
             }
         } else {
             final ArrayClassActor arrayClassActor = (ArrayClassActor) classActor;
