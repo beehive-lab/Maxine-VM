@@ -200,7 +200,7 @@ public class TransientVMAdviceHandlerTypes {
         private static final int ADVICE_MODE_SHIFT = 8;
         private static final int VALUE_SHIFT = 16;
 
-        public Object thread; // a class that denotes a thread
+        public volatile Object thread; // a class that denotes a thread
         public long time;
         private long codeAndValue;
 
@@ -208,7 +208,7 @@ public class TransientVMAdviceHandlerTypes {
             codeAndValue = rt.ordinal() | (adviceMode << AdviceRecord.ADVICE_MODE_SHIFT);
         }
 
-        public void setValue(int value) {
+        public void setPackedValue(int value) {
             codeAndValue |= value << AdviceRecord.VALUE_SHIFT;
         }
 
