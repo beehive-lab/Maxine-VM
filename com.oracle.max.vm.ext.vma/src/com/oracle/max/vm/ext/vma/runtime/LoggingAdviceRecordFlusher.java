@@ -23,7 +23,6 @@
 package com.oracle.max.vm.ext.vma.runtime;
 
 import com.oracle.max.vm.ext.vma.log.VMAdviceHandlerLog.TimeStampGenerator;
-import com.oracle.max.vm.ext.vma.run.java.*;
 import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
@@ -35,7 +34,7 @@ import com.sun.max.vm.thread.*;
  * that the events are batched into per-thread groups. The (latency) overhead on the generating thread is reduced,
  * although it will block when the buffer needs flushing.
  */
-public class LoggingAdviceRecordFlusher extends Thread implements AdviceRecordFlusher {
+public class LoggingAdviceRecordFlusher extends AdviceRecordFlusherAdapter {
 
     private static class EventThreadNameGenerator extends LoggingVMAdviceHandler.ThreadNameGenerator {
         private VmThread vmThread;
@@ -67,34 +66,23 @@ public class LoggingAdviceRecordFlusher extends Thread implements AdviceRecordFl
         }
     }
 
-    /**
-     * Used to communicate with the logging thread. Single-threaded flushing, <code>buffer != null</code> signifies in
-     * use.
-     */
-    private static class LogBuffer {
-        RecordBuffer buffer;
-        boolean done; // true when flush is complete
-    }
-
     private LoggingVMAdviceHandler logHandler;
     private EventThreadNameGenerator tng;
     private RecordTimeStampGenerator tsg;
-    private LogBuffer logBuffer;
 
     public LoggingAdviceRecordFlusher() {
+        super("LoggingAdviceRecordFlusher");
         logHandler = new LoggingVMAdviceHandler();
         this.tng = new EventThreadNameGenerator();
         logHandler.setThreadNameGenerator(tng);
         this.tsg = new RecordTimeStampGenerator();
-        setName("LoggingJavaEventFlusher");
-        setDaemon(true);
-        logBuffer = new LogBuffer();
-        start();
     }
 
+    @Override
     public void initialise(ObjectStateHandler state) {
         logHandler.initialise(state);
         logHandler.getLog().setTimeStampGenerator(tsg);
+        super.initialise(state);
     }
 
     public void finalise() {
@@ -102,62 +90,8 @@ public class LoggingAdviceRecordFlusher extends Thread implements AdviceRecordFl
         logHandler.finalise();
     }
 
-    public void flushBuffer(RecordBuffer buffer) {
-        if (buffer.index == 0) {
-            return;
-        }
-        synchronized (logBuffer) {
-            // wait for any existing flush to complete
-            while (logBuffer.buffer != null) {
-                try {
-                    logBuffer.wait();
-                } catch (InterruptedException ex) {
-                }
-            }
-            // grab the buffer and wake up logger (may also wake up other callers of this method)
-            assert buffer.index > 0;
-            logBuffer.buffer = buffer;
-            logBuffer.done = false;
-            logBuffer.notifyAll();
-        }
-        synchronized (buffer) {
-            // wait for flush to complete
-            while (buffer.index > 0) {
-                try {
-                    buffer.wait();
-                } catch (InterruptedException ex) {
-                }
-            }
-        }
-    }
-
     @Override
-    public void run() {
-        VMAJavaRunScheme.disableAdvising();
-        while (true) {
-            RecordBuffer buffer;
-            synchronized (logBuffer) {
-                while (logBuffer.buffer == null) {
-                    try {
-                        logBuffer.wait();
-                    } catch (InterruptedException ex) {
-                    }
-                }
-                buffer = logBuffer.buffer;
-                logRecords(buffer);
-                // free up the log buffer, notify any waiters
-                logBuffer.buffer = null;
-                logBuffer.notifyAll();
-            }
-            synchronized (buffer) {
-                // signify completion
-                buffer.index = 0;
-                buffer.notify(); // only one possible waiter
-            }
-        }
-    }
-
-    private void logRecords(RecordBuffer buffer) {
+    protected void processRecords(RecordBuffer buffer) {
         assert buffer.index > 0;
         tng.setThread(buffer.vmThread);
         for (int i = 0; i < buffer.index; i++) {
@@ -536,8 +470,6 @@ public class LoggingAdviceRecordFlusher extends Thread implements AdviceRecordFl
                     break;
 
             }
-            // it would be better to cache this with the thread
-            thisRecord.thread = null;
         }
     }
 }

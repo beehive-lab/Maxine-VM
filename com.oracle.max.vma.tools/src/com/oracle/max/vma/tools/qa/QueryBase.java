@@ -117,11 +117,10 @@ public abstract class QueryBase {
         clId = null;
         thread = null;
         absTime = false;
-        int removed = 0;
         // Checkstyle: stop modified control variable check
         for (int i = 0; i < args.length; i++) {
-            removed++;
             final String arg = args[i];
+            // assume remove
             args[i] = null;
             if (arg.equals("-v")) {
                 verbose = true;
@@ -136,23 +135,32 @@ public abstract class QueryBase {
             } else if (arg.equals("-abs")) {
                 absTime = true;
             } else {
-                removed--;
+                // reinstate
                 args[i] = arg;
             }
         }
         // Checkstyle: resume modified control variable check
+        return removeProcessedArgs(args);
+    }
+
+    protected String[] removeProcessedArgs(String[] args) {
+        String[] result = args;
+        int removed = 0;
+        for (String arg : args) {
+            if (arg == null) {
+                removed++;
+            }
+        }
         if (removed > 0) {
-            String[] result = new String[args.length - removed];
+            result = new String[args.length - removed];
             int i = 0;
             for (String arg : args) {
                 if (arg != null) {
                     result[i++] = arg;
                 }
             }
-            return result;
-        } else {
-            return args;
         }
+        return result;
     }
 
     public static double ms(long t) {

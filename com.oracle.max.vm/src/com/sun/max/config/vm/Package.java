@@ -55,6 +55,7 @@ public class Package extends BootImagePackage {
             "com.sun.max.vm.monitor.**",
             "com.sun.max.vm.object.*",
             "com.sun.max.vm.profile.*",
+            "com.sun.max.vm.profilers.sampling.*",
             "com.sun.max.vm.reference.**",
             "com.sun.max.vm.reflection.*",
             "com.sun.max.vm.run.**",

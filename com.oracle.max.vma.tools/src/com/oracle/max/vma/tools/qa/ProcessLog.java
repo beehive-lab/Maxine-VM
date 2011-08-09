@@ -409,7 +409,7 @@ public class ProcessLog {
             clMap.put(cr.getName(), cr);
         }
 
-        TraceRun result = new TraceRun(dataFile, adviceRecordList, objects, classLoaders,
+        TraceRun result = new TraceRun(dataFile, adviceRecordList, objects, threadMap, classLoaders,
                         missingConstructors, objectCount, arrayCount,
                         missingConstructorCount, allocationEpochs, startTime, lastTime);
 
@@ -674,7 +674,7 @@ public class ProcessLog {
                     missingConstructors.put(objectRecord.getId(), objectRecord);
                     missingConstructorCount++;
                 } else if (key == Key.ADVISE_AFTER_NEW_ARRAY) {
-                    objectAdviceRecord.setValue(Integer.parseInt(arg4)); // array length
+                    objectAdviceRecord.setPackedValue(Integer.parseInt(arg4)); // array length
                     objectRecord.setEndCreationRecord(objectAdviceRecord);
                 }
                 if (classRecord.isArray()) {
@@ -693,19 +693,19 @@ public class ProcessLog {
 
             case ADVISE_BEFORE_LOAD: {
                 adviceRecord = createAdviceRecordAndSetTimeAndThread(Load, AdviceMode.BEFORE);
-                adviceRecord.setValue(Integer.parseInt(arg3));
+                adviceRecord.setPackedValue(Integer.parseInt(arg3));
                 break;
             }
 
             case ADVISE_BEFORE_STORE: {
                 adviceRecord = createAdviceRecordAndSetTimeThreadValue("Store", AdviceMode.BEFORE, arg4, arg5);
-                adviceRecord.setValue(Integer.parseInt(arg3));
+                adviceRecord.setPackedValue(Integer.parseInt(arg3));
                 break;
             }
 
             case ADVISE_BEFORE_IPUSH: {
                 adviceRecord = createAdviceRecordAndSetTimeAndThread(IPush, AdviceMode.BEFORE);
-                adviceRecord.setValue(Integer.parseInt(arg3));
+                adviceRecord.setPackedValue(Integer.parseInt(arg3));
                 break;
             }
 
@@ -714,7 +714,7 @@ public class ProcessLog {
                 int arrayIndex = (int) expectNumber(recordParts[ARRAY_INDEX_INDEX]);
                 ObjectAdviceRecord objectAdviceRecord = (ObjectAdviceRecord) createAdviceRecordAndSetTimeAndThread(keyToRecordType(key), AdviceMode.BEFORE);
                 objectAdviceRecord.value = objectRecord;
-                objectAdviceRecord.setValue(arrayIndex);
+                objectAdviceRecord.setPackedValue(arrayIndex);
                 objectRecord.addTraceElement(objectAdviceRecord);
                 adviceRecord = objectAdviceRecord;
                 break;
@@ -725,7 +725,7 @@ public class ProcessLog {
                 int arrayIndex = (int) expectNumber(recordParts[ARRAY_INDEX_INDEX]);
                 ObjectAdviceRecord objectAdviceRecord = (ObjectAdviceRecord) createAdviceRecordAndSetTimeThreadValue("ArrayStore", AdviceMode.BEFORE, recordParts[ARRAY_INDEX_INDEX + 1], recordParts[ARRAY_INDEX_INDEX + 2]);
                 objectAdviceRecord.value = objectRecord;
-                objectAdviceRecord.setValue(arrayIndex);
+                objectAdviceRecord.setPackedValue(arrayIndex);
                 objectRecord.addTraceElement(objectAdviceRecord);
                 adviceRecord = objectAdviceRecord;
                 break;
@@ -734,7 +734,7 @@ public class ProcessLog {
             case ADVISE_BEFORE_ARRAY_LENGTH: {
                 ObjectAdviceRecord objectAdviceRecord = (ObjectAdviceRecord) createAdviceRecordAndSetTimeAndThread(ArrayLength, AdviceMode.BEFORE);
                 objectAdviceRecord.value = objectRecord;
-                objectAdviceRecord.setValue(Integer.parseInt(arg4));
+                objectAdviceRecord.setPackedValue(Integer.parseInt(arg4));
                 objectRecord.addTraceElement(objectAdviceRecord);
                 adviceRecord = objectAdviceRecord;
                 break;
@@ -795,12 +795,12 @@ public class ProcessLog {
                     objectObjectAdviceRecord.value2 = getTraceRecord(arg6);
                     adviceRecord = objectObjectAdviceRecord;
                 }
-                adviceRecord.setValue(Integer.parseInt(arg3));
+                adviceRecord.setPackedValue(Integer.parseInt(arg3));
                 break;
             }
             case ADVISE_BEFORE_IINC: {
                 LongLongAdviceRecord longLongAdviceRecord = (LongLongAdviceRecord) createAdviceRecordAndSetTimeAndThread(IInc, AdviceMode.BEFORE);
-                longLongAdviceRecord.setValue(Integer.parseInt(arg3));
+                longLongAdviceRecord.setPackedValue(Integer.parseInt(arg3));
                 longLongAdviceRecord.value = Long.parseLong(arg4);
                 longLongAdviceRecord.value2 = Long.parseLong(arg5);
                 adviceRecord = longLongAdviceRecord;
@@ -809,7 +809,7 @@ public class ProcessLog {
 
             case ADVISE_BEFORE_OPERATION: {
                 adviceRecord = createAdviceRecordAndSetTimeThreadValue("Operation", AdviceMode.BEFORE, arg4, arg5);
-                adviceRecord.setValue(Integer.parseInt(arg3));
+                adviceRecord.setPackedValue(Integer.parseInt(arg3));
                 switch (arg4.charAt(0)) {
                     case LONG_VALUE:
                         ((LongLongAdviceRecord) adviceRecord).value2 = Long.parseLong(arg6);
@@ -838,7 +838,7 @@ public class ProcessLog {
 
             case ADVISE_BEFORE_CONVERSION: {
                 adviceRecord = createAdviceRecordAndSetTimeThreadValue("Conversion", AdviceMode.BEFORE, arg4, arg5);
-                adviceRecord.setValue(Integer.parseInt(arg3));
+                adviceRecord.setPackedValue(Integer.parseInt(arg3));
                 break;
             }
 
@@ -912,7 +912,7 @@ public class ProcessLog {
             case ADVISE_BEFORE_BYTECODE:
             case ADVISE_BEFORE_STACK_ADJUST: {
                 adviceRecord = createAdviceRecordAndSetTimeAndThread(keyToRecordType(key), AdviceMode.BEFORE);
-                adviceRecord.setValue(Integer.parseInt(arg3));
+                adviceRecord.setPackedValue(Integer.parseInt(arg3));
                 break;
             }
 

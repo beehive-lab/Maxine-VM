@@ -22,39 +22,39 @@
  */
 package com.oracle.max.vm.ext.vma.runtime;
 
-import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.*;
-import com.sun.max.vm.thread.*;
+import static com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.RecordType.*;
+import static com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.*;
 
 /**
- * The interface through which {@link TransientVMAdviceHandler} flushes the per-thread event buffer.
+ * Counts the number of records of the given types and outputs a summary at the end.
+ * Can be used to quantify the basic overhead and to estimate log sizes.
  */
+public class CountingAdviceRecordFlusher extends AdviceRecordFlusherAdapter {
 
-public interface AdviceRecordFlusher {
+    private static long[] counts = new long[RECORD_TYPE_VALUES.length];
 
-    /**
-     * Thread-specific buffer of events.
-     */
-    public static class RecordBuffer {
-        VmThread vmThread;
-        AdviceRecord[] records;
-        /**
-         * Valid records are {@code x >= 0 && x < index}.
-         */
-        int index;
+    public CountingAdviceRecordFlusher() {
+        super("CountingAdviceRecordFlusher");
+    }
 
-        public RecordBuffer(AdviceRecord[] records) {
-            this.records = records;
-            this.vmThread = VmThread.current();
+    @Override
+    public void initialise(ObjectStateHandler state) {
+        super.initialise(state);
+    }
+
+    @Override
+    public void finalise() {
+        // output the data
+        for (RecordType rt : RECORD_TYPE_VALUES) {
+            System.out.printf("%s: %d%n", rt.name(), counts[rt.ordinal()]);
         }
     }
 
-    /**
-     * Flush the buffer.
-     * @param buffer
-     */
-    void flushBuffer(RecordBuffer buffer);
-
-    void initialise(ObjectStateHandler state);
-    void finalise();
+    @Override
+    protected void processRecords(RecordBuffer buffer) {
+        for (int i = 0; i < buffer.index; i++) {
+            counts[buffer.records[i].getRecordType().ordinal()]++;
+        }
+    }
 
 }

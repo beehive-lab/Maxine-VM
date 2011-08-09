@@ -59,6 +59,8 @@ public class TraceRun {
      */
     public final Map<String, ObjectRecord> objects;
 
+    public final Map<String, ThreadRecord> threads;
+
     /**
      * The class loaders map. The key is the id of the class loader instance
      *  and the value is a map from class names
@@ -94,12 +96,13 @@ public class TraceRun {
         long checkObjCount;
     }
 
-    public TraceRun(String name, ArrayList<AdviceRecord> adviceRecordList, Map<String, ObjectRecord>  objects, Map<String, SortedMap<String, ClassRecord>> classLoaders,
+    public TraceRun(String name, ArrayList<AdviceRecord> adviceRecordList, Map<String, ObjectRecord> objects, Map<String, ThreadRecord> threads, Map<String, SortedMap<String, ClassRecord>> classLoaders,
             Map<String, ObjectRecord> missingConstructors, long objectCount, long arrayCount,
             int missingConstructorCount, ArrayList<AllocationEpoch> allocationEpochs, long startTime, long lastTime) {
         this.name = name;
         this.adviceRecordList = adviceRecordList;
         this.objects = objects;
+        this.threads = threads;
         this.classLoaders = classLoaders;
         this.missingConstructors = missingConstructors;
         this.objectCount = objectCount;
