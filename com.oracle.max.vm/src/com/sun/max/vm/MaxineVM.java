@@ -29,6 +29,7 @@ import static com.sun.max.vm.VMOptions.*;
 
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.concurrent.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.config.*;
@@ -75,10 +76,10 @@ public final class MaxineVM {
      * The set of packages denoting classes for which {@link #isBootImageClass(String)} will return true.
      */
     @HOSTED_ONLY
-    private static final Map<String, BootImagePackage> BOOT_IMAGE_CODE_BASE_PACKAGES = new HashMap<String, BootImagePackage>();
+    private static final Map<String, BootImagePackage> BOOT_IMAGE_CODE_BASE_PACKAGES = new ConcurrentHashMap<String, BootImagePackage>();
 
     @HOSTED_ONLY
-    private static final Map<Class, Boolean> HOSTED_CLASSES = new HashMap<Class, Boolean>();
+    private static final Map<Class, Boolean> HOSTED_CLASSES = new ConcurrentHashMap<Class, Boolean>();
 
     @HOSTED_ONLY
     private static final Set<String> KEEP_CLINIT_CLASSES = new HashSet<String>();
