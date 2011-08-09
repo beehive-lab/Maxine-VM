@@ -28,7 +28,6 @@ import static com.oracle.max.vm.ext.vma.options.VMAOptions.AdviceModeOption.*;
 import java.util.regex.Pattern;
 
 import com.oracle.max.vm.ext.vma.*;
-import com.sun.max.program.*;
 import com.sun.max.vm.Log;
 import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.VMOptions;
@@ -80,8 +79,11 @@ public class VMAOptions {
 
     private static final BM[] MONITOR_BM = new BM[] {new BM(MONITORENTER, B), new BM(MONITOREXIT, B)};
 
-    private static final BM[] METHOD_ENTRY_EXIT_BM = new BM[] {
+    private static final BM[] METHOD_ENTRY_BM = new BM[] {
         new BM(MENTRY, A),
+    };
+
+    private static final BM[] METHOD_EXIT_BM = new BM[] {
         new BM(IRETURN, B), new BM(LRETURN, B), new BM(FRETURN, B),
         new BM(DRETURN, B), new BM(ARETURN, B), new BM(RETURN, B)
     };
@@ -97,6 +99,7 @@ public class VMAOptions {
     };
 
     private static final BM[] INVOKE_BM = compose(BEFOREINVOKE_BM, AFTERINVOKE_BM);
+    private static final BM[] METHOD_ENTRY_EXIT_BM = compose(METHOD_ENTRY_BM, METHOD_EXIT_BM);
 
     enum StdConfig {
         LIFETIME("lifetime", LIFETIME_BM),
@@ -106,6 +109,8 @@ public class VMAOptions {
         BEFOREINVOKE("beforeinvoke", BEFOREINVOKE_BM),
         AFTERINVOKE("afterinvoke", AFTERINVOKE_BM),
         INVOKE("invoke", INVOKE_BM),
+        ENTRY("entry", METHOD_ENTRY_BM),
+        EXIT("exit", METHOD_EXIT_BM),
         ENTRYEXIT("entryexit", METHOD_ENTRY_EXIT_BM);
 
         private String name;
@@ -274,7 +279,7 @@ public class VMAOptions {
                         }
                     }
                     if (stdConfig == null) {
-                        ProgramError.unexpected(vmaConfig + " is not a standard VMA configuration");
+                        error(vmaConfig + " is not a standard VMA configuration");
                     }
                     for (BM ab : stdConfig.bytecodesToApply) {
                         for (AdviceMode am : AdviceMode.values()) {
@@ -307,13 +312,20 @@ public class VMAOptions {
                 }
             }
             if (VMATrace) {
+                boolean logState = Log.lock();
                 Log.println("VMA: bytecode advice settings");
                 for (VMABytecodes b : VMABytecodes.values()) {
                     boolean[] state = bytecodeApply[b.ordinal()];
                     if (state[0] || state[1]) {
-                        Log.println("  " + b.name() + ":" + (state[0] ? "BEFORE" : "") + "/" + (state[1] ? "AFTER" : ""));
+                        Log.print("  ");
+                        Log.print(b.name());
+                        Log.print(":");
+                        Log.print(state[0] ? "BEFORE" : "");
+                        Log.print("/");
+                        Log.println(state[1] ? "AFTER" : "");
                     }
                 }
+                Log.unlock(logState);
             }
             advising = VMA;
         }
@@ -355,7 +367,13 @@ public class VMAOptions {
             }
         }
         if (VMATrace) {
-            Log.println("VMA: " + className + "." + cma.name() + " instrumented: " + include);
+            boolean state = Log.lock();
+            Log.print("VMA: ");
+            Log.print(className);
+            Log.print(cma.name());
+            Log.print(" instrumented: ");
+            Log.println(include);
+            Log.unlock(state);
         }
         return include;
     }
@@ -368,6 +386,11 @@ public class VMAOptions {
      */
     public static boolean[] getVMATemplateOptions(int opcode) {
         return bytecodeApply[opcode];
+    }
+
+    private static void error(String msg) {
+        Log.println(msg);
+        MaxineVM.native_exit(-1);
     }
 
 }
