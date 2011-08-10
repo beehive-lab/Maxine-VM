@@ -240,15 +240,15 @@ public interface CompilationScheme extends VMScheme {
             TargetMethod newMethod = TargetState.currentTargetMethod(classMethodActor.targetState, true);
 
             if (oldMethod == newMethod || newMethod == null) {
-                // There is no newer compiled version available yet that we could just patch to, so recompile
-                logCounterOverflow(mpo, "");
-                synchronized (mpo) {
+                if (!TargetState.compilationPending(classMethodActor.targetState)) {
+                    // There is no newer compiled version available yet that we could just patch to, so recompile
+                    logCounterOverflow(mpo, "");
                     newMethod = vmConfig().compilationScheme().synchronousCompile(classMethodActor, OPTIMIZE.mask);
                 }
             }
 
 
-            if (oldMethod == newMethod) {
+            if (oldMethod == newMethod || newMethod == null) {
                 // No compiled method available yet, maybe compilation is pending.
                 // We don't want to see another counter overflow in the near future.
                 mpo.entryCount = 10000;

@@ -33,6 +33,10 @@ import com.sun.max.vm.actor.member.*;
 public class TargetState {
     private static final TargetMethod[] NOT_COMPILED = {};
 
+    public static boolean compilationPending(Object targetState) {
+        return targetState instanceof Compilation;
+    }
+
     public static int targetMethodCount(Object targetState) {
         if (targetState == null || targetState instanceof Throwable) {
             // not compiled yet
