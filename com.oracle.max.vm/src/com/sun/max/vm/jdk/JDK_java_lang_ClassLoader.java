@@ -167,6 +167,17 @@ public final class JDK_java_lang_ClassLoader {
         Snippets.makeClassInitialized(ClassActor.fromJava(javaClass));
     }
 
+    @FOLD
+    private static boolean findBootstrapClassHasCheckedException() {
+        TypeDescriptor[] checkedExceptions = ClassRegistry.ClassLoader_findBootstrapClass.checkedExceptions();
+        if (checkedExceptions.length != 0) {
+            assert checkedExceptions.length == 1;
+            assert checkedExceptions[0] == JavaTypeDescriptor.CLASS_NOT_FOUND_EXCEPTION;
+            return true;
+        }
+        return false;
+    }
+
     /**
      * Finds a class necessary for bootstrapping (typically a JDK or internal VM class).
      * @see java.lang.ClassLoader#findBootstrapClass(String)
@@ -177,14 +188,9 @@ public final class JDK_java_lang_ClassLoader {
     @SUBSTITUTE
     private Class findBootstrapClass(String name) throws ClassNotFoundException {
         Class<?> c = BootClassLoader.BOOT_CLASS_LOADER.findBootstrapClass(name);
-        if (c == null) {
+        if (findBootstrapClassHasCheckedException() && c == null) {
             // Earlier versions of ClassLoader.findBootstrapClass() throw CNFE instead of returning null
-            TypeDescriptor[] checkedExceptions = ClassRegistry.ClassLoader_findBootstrapClass.checkedExceptions();
-            if (checkedExceptions.length != 0) {
-                assert checkedExceptions.length == 1;
-                assert checkedExceptions[0] == JavaTypeDescriptor.CLASS_NOT_FOUND_EXCEPTION;
-                throw new ClassNotFoundException(name);
-            }
+            throw new ClassNotFoundException(name);
         }
         return c;
     }
