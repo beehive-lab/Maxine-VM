@@ -43,13 +43,13 @@ import com.sun.max.unsafe.*;
  * The basic data structure is a map from {@link StackInfo} to a list of {@link ThreadSample}
  * instances which hold the sample count for each thread.
  *
- * A singleton global instance of {@link StackInfo} is used to gather the stack for a thread,
+ * A singleton global instance, {@link #workingStackInfo}, of {@link StackInfo} is used to gather the stack for a thread,
  * and an exact-length copy is entered into the map when a new stack is discovered.
  *
  * The {@link #terminate} method outputs the data at VM shutdown, but it can also be dumped
- * periodically. Data is output using the {@link Log} class. The default output just dumps the
- * stack traces and thread info in an arbitrary order. Output sorted by thread and by sample count
- * is possible with the {@code sort} option but has more allocation overhead at the time of output.
+ * periodically. Data is output using the {@link Log} class. By default output is sorted by thread and by sample count
+ * This has more allocation overhead at the time of output and so is the default only if data is output at
+ * VM termination. In unsorted mode the stack traces and samples counts are output in an arbitrary order.
  */
 public final class SamplingProfiler extends Thread {
     private static final int DEFAULT_FREQUENCY = 10;
@@ -119,9 +119,24 @@ public final class SamplingProfiler extends Thread {
     private static boolean sortedOutput;
 
     /**
+     * {@code true} if and only if we are tracking (system) VM threads.
+     */
+    private static boolean trackSystemThreads;
+
+    /**
      * A debugging aid; logs the time at which the sampling thread woke up.
      */
     private static boolean logSampleTimes;
+
+    /**
+     * For each unique stack trace, we record the list of threads with that trace and their sample count.
+     */
+    private static Map<StackInfo, List<ThreadSample>> stackInfoMap = new HashMap<StackInfo, List<ThreadSample>>();
+
+    private SamplingProfiler() {
+        super(VmThread.systemThreadGroup, "SamplingProfiler");
+        setDaemon(true);
+    }
 
     /**
      * Create the profiler with the options given by {@code optionValue}.
@@ -147,6 +162,8 @@ public final class SamplingProfiler extends Thread {
                         dumpPeriod = getOption(option);
                     } else if (option.startsWith("debug")) {
                         logSampleTimes = true;
+                    } else if (option.startsWith("systhreads")) {
+                        trackSystemThreads = true;
                     } else if (option.startsWith("sort")) {
                         sortOption = getOption(option);
                     } else {
@@ -163,7 +180,7 @@ public final class SamplingProfiler extends Thread {
     }
 
     private static void usage() {
-        System.err.println("usage: -Xprof:frequency=f,stackdepth=d,dump=t,sort=s");
+        System.err.println("usage: -Xprof:frequency=f,stackdepth=d,dump=t,sort=s,systhreads");
         MaxineVM.native_exit(-1);
     }
 
@@ -179,7 +196,7 @@ public final class SamplingProfiler extends Thread {
      * Create a sample-based profiler with given measurement frequency, stack depth and dump period.
      * @param frequency base period for measurements in millisecs, 0 implies {@value DEFAULT_FREQUENCY}
      * @param depth stack depth to record, 0 implies {@value DEFAULT_DEPTH}
-     * @param dumpPeriod time in seconds between dumps to log, 0 implies never (default)
+     * @param dumpPeriod time in seconds between dumps to log, 0 implies only at termination (default)
      */
     private static void create(int frequency, int depth, int dumpPeriod) {
         sampleFrequency = frequency == 0 ? DEFAULT_FREQUENCY : frequency;
@@ -191,8 +208,6 @@ public final class SamplingProfiler extends Thread {
         dumpInterval = dumpPeriod * 1000000000L;
         workingStackInfo = new StackInfo(maxStackDepth);
         final Thread profileThread = new SamplingProfiler();
-        profileThread.setName("SamplingProfiler");
-        profileThread.setDaemon(true);
         isProfiling = true;
         profileThread.start();
     }
@@ -231,18 +246,20 @@ public final class SamplingProfiler extends Thread {
      */
     private static final class StackTraceGatherer extends VmOperation {
         StackTraceGatherer() {
-            super("SampleProfiler", null, Mode.Safepoint);
+            super("SamplingProfiler", null, Mode.Safepoint);
         }
 
         @Override
         protected boolean operateOnThread(VmThread thread) {
-            return thread != theProfiler;
+            final boolean ignore = thread == theProfiler ||
+                (isSystemThread(thread) && !trackSystemThreads);
+            return !ignore;
         }
 
         @Override
         public void doThread(VmThread vmThread, Pointer ip, Pointer sp, Pointer fp) {
-            SamplerStackTraceVisitor stv = new SamplerStackTraceVisitor();
-            final VmStackFrameWalker stackFrameWalker = vmThread.stackDumpStackFrameWalker();
+            SamplingStackTraceVisitor stv = new SamplingStackTraceVisitor();
+            final VmStackFrameWalker stackFrameWalker = vmThread.samplingProfilerStackFrameWalker();
             workingStackInfo.reset();
             workingStackDepth = 0;
             stv.walk(stackFrameWalker, ip, sp, fp);
@@ -260,14 +277,20 @@ public final class SamplingProfiler extends Thread {
         }
     }
 
+    private static boolean isSystemThread(VmThread vmThread) {
+        // Should be able to determine this via VmThread.systemThreadGroup ...
+        return vmThread == VmThread.referenceHandlerThread || vmThread == VmThread.finalizerThread ||
+               vmThread == VmThread.signalDispatcherThread;
+    }
+
     private static final StackTraceGatherer stackTraceGatherer = new StackTraceGatherer();
 
     /**
      * Allocation free stack frame analyzer that builds up the {@StackInfo} in {@link SampleProfiler#workingStackInfo}.
      */
-    private static class SamplerStackTraceVisitor extends StackTraceVisitor {
+    private static class SamplingStackTraceVisitor extends StackTraceVisitor {
 
-        SamplerStackTraceVisitor() {
+        SamplingStackTraceVisitor() {
             super(null, maxStackDepth);
         }
         @Override
@@ -280,6 +303,7 @@ public final class SamplingProfiler extends Thread {
 
         @Override
         public void clear() {
+            workingStackInfo.reset();
             workingStackDepth = 0;
         }
 
@@ -288,11 +312,6 @@ public final class SamplingProfiler extends Thread {
             return null;
         }
     }
-
-    /**
-     * For each unique stack trace, we record the list of threads with that trace and their sample count.
-     */
-    private static Map<StackInfo, List<ThreadSample>> stackInfoMap = new HashMap<StackInfo, List<ThreadSample>>();
 
     private static ThreadSample getThreadSample(List<ThreadSample> threadSampleList, VmThread vmThread) {
         for (ThreadSample  threadSample : threadSampleList) {
@@ -475,9 +494,17 @@ public final class SamplingProfiler extends Thread {
         for (Map.Entry<VmThread, CountedStackInfo[]> entry : sortedInfo.entrySet()) {
             ThreadSample.print(entry.getKey());
             Log.println();
+            long totalSamples = 0;
+            for (CountedStackInfo countedStackInfo : entry.getValue()) {
+                totalSamples += countedStackInfo.count;
+            }
             for (CountedStackInfo countedStackInfo : entry.getValue()) {
                 Log.print("Sample count ");
-                Log.println(countedStackInfo.count);
+                Log.print(countedStackInfo.count);
+                double percentage = ((double) countedStackInfo.count) * 100.0f / totalSamples;
+                Log.print(" (");
+                Log.print(percentage);
+                Log.println("%)");
                 for (StackElement se : countedStackInfo.stack) {
                     se.print();
                 }
