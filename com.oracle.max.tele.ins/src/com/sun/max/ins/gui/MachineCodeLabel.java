@@ -63,7 +63,7 @@ public class MachineCodeLabel extends InspectorLabel {
 
     @Override
     public void setWrappedText(String text) {
-        super.setWrappedText("<html><b>" + text + "</b>");
+        super.setWrappedText("<b>" + text + "</b>");
     }
 
     public final void redisplay() {
