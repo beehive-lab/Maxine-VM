@@ -397,6 +397,13 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
     }
 
     /**
+     * @return the text string assigned to the label with all HTML tags removed.
+     */
+    public final String getTextDeHtmlify() {
+        return getText().replaceAll("\\<.*?\\>", "");
+    }
+
+    /**
      * Enables support for this label to act as a <strong>source</strong> for drag
      * and drop operations (copy only, not move).
      * <br>

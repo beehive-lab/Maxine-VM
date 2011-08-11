@@ -478,8 +478,8 @@ public final class StackView extends AbstractView<StackView> {
             final ListCellRenderer cellRenderer = stackFrameList.getCellRenderer();
             for (int index = 0; index < stackFrameListModel.getSize(); index++) {
                 final Object elementAt = stackFrameListModel.getElementAt(index);
-                final JLabel jLabel = (JLabel) cellRenderer.getListCellRendererComponent(stackFrameList, elementAt, index, false, false);
-                result.append(jLabel.getText()).append("\n");
+                final InspectorLabel label = (InspectorLabel) cellRenderer.getListCellRendererComponent(stackFrameList, elementAt, index, false, false);
+                result.append(label.getTextDeHtmlify()).append("\n");
             }
             gui().postToClipboard(result.toString());
         }
