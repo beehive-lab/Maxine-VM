@@ -32,7 +32,7 @@ public abstract class VMAdviceHandler extends RuntimeAdvice {
     protected ObjectStateHandler state;
 
     /**
-     * Initialise the tracker with given {@link ObjectStateHandler} instance.
+     * Initialise the handler with given {@link ObjectStateHandler} instance.
      * @param state
      */
     public void initialise(ObjectStateHandler state) {
@@ -40,7 +40,7 @@ public abstract class VMAdviceHandler extends RuntimeAdvice {
     }
 
     /**
-     * Close down the tracker.
+     * Close down the handler.
      */
     public abstract void finalise();
 
