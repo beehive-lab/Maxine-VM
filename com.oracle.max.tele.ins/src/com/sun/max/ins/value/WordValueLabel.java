@@ -514,11 +514,13 @@ public class WordValueLabel extends ValueLabel {
                 try {
                     final String labelText = inspection().nameDisplay().referenceLabelText(teleObject);
                     if (labelText != null) {
+                        // The syntax of object reference names contains "<" and ">"; make them safe for HTML tool tips.
                         setWrappedText(htmlify(labelText));
+                        final String toolTipText = inspection().nameDisplay().referenceToolTipText(teleObject);
                         // The syntax of object reference names contains "<" and ">"; make them safe for HTML tool tips.
                         final StringBuilder toolTipSB = new StringBuilder();
                         toolTipSB.append(value.toWord().toPadded0xHexString('0'));
-                        toolTipSB.append("<br>Reference to ").append(htmlify(labelText));
+                        toolTipSB.append("<br>Reference to ").append(htmlify(toolTipText));
                         toolTipSB.append("<br>In ");
                         final MaxMemoryRegion memoryRegion = vm().findMemoryRegion(value().toWord().asAddress());
                         if (memoryRegion == null) {
