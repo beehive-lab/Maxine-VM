@@ -36,13 +36,14 @@ import com.sun.max.vm.thread.*;
  * An implementation of {@link VMAdviceHandler} that stores the advice data as (Java) objects in a per-thread
  * buffer, and delegates to a separate handler to process the data when the buffer is full.
  *
- * This implementation does no allocation in the user heap. New threads are allocated a record buffer from the immortal
+ * This implementation does no allocation in the user heap. New threads are allocated a record buffer from the boot
  * heap. When advice is handled, an advice record of the required type is taken from a preallocated list (created at
  * image build time) and added to that thread's buffer. If the list is empty, the buffer is flushed
- * and the records reclaimed.
+ * and the records reclaimed. The {@link AdviceRecord#thread} field is filled in when the record is allocated
+ * to a thread. This field also determines whether the record is in use. It must be cleared by the flusher.
  *
- * Buffer flushing is currently single-threaded through the {@link #LogBuffer} class. Any thread that needs to flush its
- * buffer will block until the logger thread is done.
+ * Buffer flushing is handled by an instance of {@link AdviceRecordFlusher}. Any thread that needs to flush its
+ * buffer will block until the flusher is done.
  */
 
 public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
@@ -190,7 +191,7 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
     private ObjectAdviceRecord storeRecord(RecordType rt, int adviceMode, Object obj, int arg) {
         ObjectAdviceRecord record = (ObjectAdviceRecord) getCheckFlush(rt, adviceMode);
         if (record != null) {
-            record.setValue(arg);
+            record.setPackedValue(arg);
             record.value = obj;
         }
         return record;
@@ -199,15 +200,31 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
     private AdviceRecord storeRecord(RecordType rt, int adviceMode, int arg) {
         AdviceRecord record = getCheckFlush(rt, adviceMode);
         if (record != null) {
-            record.setValue(arg);
+            record.setPackedValue(arg);
         }
         return record;
     }
 
     private AdviceRecord storeRecord(RecordType rt, int adviceMode, long arg) {
-        AdviceRecord record = getCheckFlush(rt, adviceMode);
+        LongAdviceRecord record = (LongAdviceRecord) getCheckFlush(rt, adviceMode);
         if (record != null) {
-            record.setValue((int) arg);
+            record.value = arg;
+        }
+        return record;
+    }
+
+    private AdviceRecord storeRecord(RecordType rt, int adviceMode, float arg) {
+        FloatAdviceRecord record = (FloatAdviceRecord) getCheckFlush(rt, adviceMode);
+        if (record != null) {
+            record.value = arg;
+        }
+        return record;
+    }
+
+    private AdviceRecord storeRecord(RecordType rt, int adviceMode, double arg) {
+        DoubleAdviceRecord record = (DoubleAdviceRecord) getCheckFlush(rt, adviceMode);
+        if (record != null) {
+            record.value = arg;
         }
         return record;
     }

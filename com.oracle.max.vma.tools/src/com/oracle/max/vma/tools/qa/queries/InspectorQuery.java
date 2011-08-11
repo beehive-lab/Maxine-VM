@@ -20,41 +20,37 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.runtime;
+package com.oracle.max.vma.tools.qa.queries;
 
-import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.*;
-import com.sun.max.vm.thread.*;
+import java.io.*;
+import java.util.*;
+
+import com.oracle.max.vma.tools.qa.*;
+import com.sun.max.tele.channel.agent.*;
 
 /**
- * The interface through which {@link TransientVMAdviceHandler} flushes the per-thread event buffer.
+ * Run the {@link InspectorAgent}.
  */
+public class InspectorQuery extends QueryBase {
 
-public interface AdviceRecordFlusher {
+    private static TraceRun traceRun;
 
-    /**
-     * Thread-specific buffer of events.
-     */
-    public static class RecordBuffer {
-        VmThread vmThread;
-        AdviceRecord[] records;
-        /**
-         * Valid records are {@code x >= 0 && x < index}.
-         */
-        int index;
-
-        public RecordBuffer(AdviceRecord[] records) {
-            this.records = records;
-            this.vmThread = VmThread.current();
+    @Override
+    public Object execute(ArrayList<TraceRun> traceRuns, int traceFocus, PrintStream ps, String[] args) {
+        traceRun = traceRuns.get(0);
+        try {
+            String[] xArgs = new String[args.length + 1];
+            System.arraycopy(args, 0, xArgs, 0, args.length);
+            xArgs[args.length] = "-os.sub=VMA";
+            InspectorAgent.main(xArgs);
+        } catch (Exception ex) {
+            System.err.println("Inspector agent threw: " + ex);
         }
+        return null;
     }
 
-    /**
-     * Flush the buffer.
-     * @param buffer
-     */
-    void flushBuffer(RecordBuffer buffer);
-
-    void initialise(ObjectStateHandler state);
-    void finalise();
+    public static TraceRun getTraceRun() {
+        return traceRun;
+    }
 
 }
