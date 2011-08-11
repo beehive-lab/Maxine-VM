@@ -127,11 +127,27 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
     }
 
     /**
-     * @return surrogate for the static tuple of the {@link ClassActor} in the VM.
+     * @return surrogate for the {@link StaticTuple} of the {@link ClassActor} in the VM.
      */
     public TeleStaticTuple getTeleStaticTuple() {
         final Reference staticTupleReference = vm().teleFields().ClassActor_staticTuple.readReference(reference());
         return (TeleStaticTuple) heap().makeTeleObject(staticTupleReference);
+    }
+
+    /**
+     * @return surrogate for the {@link DynamicHub} of the {@link ClassActor} in the VM.
+     */
+    public TeleDynamicHub getTeleDynamicHub() {
+        final Reference dynamicHubReference = vm().teleFields().ClassActor_dynamicHub.readReference(reference());
+        return (TeleDynamicHub) heap().makeTeleObject(dynamicHubReference);
+    }
+
+    /**
+     * @return surrogate for the {@link StaticHub} of the {@link ClassActor} in the VM.
+     */
+    public TeleStaticHub getTeleStaticHub() {
+        final Reference staticHubReference = vm().teleFields().ClassActor_staticHub.readReference(reference());
+        return (TeleStaticHub) heap().makeTeleObject(staticHubReference);
     }
 
     /**

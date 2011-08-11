@@ -1187,6 +1187,7 @@ public abstract class ClassActor extends Actor implements RiType {
     }
 
     @CONSTANT
+    @INSPECTED
     private DynamicHub dynamicHub;
 
     /**
@@ -1198,6 +1199,7 @@ public abstract class ClassActor extends Actor implements RiType {
     }
 
     @CONSTANT
+    @INSPECTED
     private StaticHub staticHub;
 
     /**

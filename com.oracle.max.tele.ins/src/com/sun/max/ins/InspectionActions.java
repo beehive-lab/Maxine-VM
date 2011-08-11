@@ -1117,6 +1117,114 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
+     * Action:  view the {@link StaticTuple} object for an interactively named class loaded in the VM,
+     * specified by class name.
+     */
+    final class ViewStaticTupleByNameAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "View StaticTuple by class name...";
+
+        ViewStaticTupleByNameAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+        }
+
+        @Override
+        protected void procedure() {
+            final TeleClassActor teleClassActor = ClassActorSearchDialog.show(inspection(), "View StaticTuple for class ...", "View");
+            if (teleClassActor != null) {
+                TeleStaticTuple staticTuple = teleClassActor.getTeleStaticTuple();
+                if (staticTuple == null) {
+                    gui().errorMessage("StaticTuple for class not available");
+                } else {
+                    focus().setHeapObject(staticTuple);
+                }
+            }
+        }
+    }
+
+    private final InspectorAction viewStaticTupleByNameAction = new ViewStaticTupleByNameAction(null);
+
+    /**
+     * @return Singleton interactive Action that views the {@link StaticTuple} object for a class loaded in the VM,
+     * specified by class name.
+     */
+    public final InspectorAction viewStaticTupleByName() {
+        return viewStaticTupleByNameAction;
+    }
+
+    /**
+     * Action:  view the {@link DynamicHub} object for an interactively named class loaded in the VM,
+     * specified by class name.
+     */
+    final class ViewDynamicHubByNameAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "View DynamicHub by class name...";
+
+        ViewDynamicHubByNameAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+        }
+
+        @Override
+        protected void procedure() {
+            final TeleClassActor teleClassActor = ClassActorSearchDialog.show(inspection(), "View DynamicHub for class ...", "View");
+            if (teleClassActor != null) {
+                final TeleDynamicHub dynamicHub = teleClassActor.getTeleDynamicHub();
+                if (dynamicHub == null) {
+                    gui().errorMessage("DynamicHub for class not available");
+                } else {
+                    focus().setHeapObject(dynamicHub);
+                }
+            }
+        }
+    }
+
+    private final InspectorAction viewDynamicHubByNameAction = new ViewDynamicHubByNameAction(null);
+
+    /**
+     * @return Singleton interactive Action that views a {@link DynamicHub} object for a class loaded in the VM,
+     * specified by class name.
+     */
+    public final InspectorAction viewDynamicHubByName() {
+        return viewDynamicHubByNameAction;
+    }
+
+    /**
+     * Action:  view the {@link StaticHub} object for an interactively named class loaded in the VM,
+     * specified by class name.
+     */
+    final class ViewStaticHubByNameAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "View StaticHub by class name...";
+
+        ViewStaticHubByNameAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+        }
+
+        @Override
+        protected void procedure() {
+            final TeleClassActor teleClassActor = ClassActorSearchDialog.show(inspection(), "View StaticHub for class ...", "View");
+            if (teleClassActor != null) {
+                final TeleStaticHub staticicHub = teleClassActor.getTeleStaticHub();
+                if (staticicHub == null) {
+                    gui().errorMessage("StaticHub for class not available");
+                } else {
+                    focus().setHeapObject(staticicHub);
+                }
+            }
+        }
+    }
+
+    private final InspectorAction viewStaticHubByNameAction = new ViewStaticHubByNameAction(null);
+
+    /**
+     * @return Singleton interactive Action that views the {@link StaticHub} object for a class loaded in the VM,
+     * specified by class name.
+     */
+    public final InspectorAction viewStaticHubByName() {
+        return viewStaticHubByNameAction;
+    }
+
+    /**
      * Action: view a {@link MethodActor} object in the VM, specified by name.
      */
     final class ViewMethodActorByNameAction extends InspectorAction {
@@ -4206,6 +4314,15 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 classActorMenu.add(viewClassActorByDecimalId());
                 classActorMenu.add(viewBootClassRegistry());
                 menu.add(classActorMenu);
+
+                final JMenu classStaticsMenu = new JMenu("View class statics");
+                classStaticsMenu.add(viewStaticTupleByName());
+                menu.add(classStaticsMenu);
+
+                final JMenu classHubsMenu = new JMenu("View class hubs");
+                classHubsMenu.add(viewDynamicHubByName());
+                classHubsMenu.add(viewStaticHubByName());
+                menu.add(classHubsMenu);
 
                 menu.add(views().objects().viewMenu());
             }
