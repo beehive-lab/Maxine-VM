@@ -65,7 +65,7 @@ public class JavaNameLabel extends InspectorLabel {
     public void redisplay() {
         setFont(style().javaNameFont());
         setText(name);
-        setWrappedToolTipText(toolTipText);
+        setWrappedToolTipHtmlText(toolTipText);
     }
 
 }

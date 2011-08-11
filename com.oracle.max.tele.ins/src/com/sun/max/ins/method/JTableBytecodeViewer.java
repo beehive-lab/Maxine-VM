@@ -502,7 +502,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             } else {
                 setBorder(null);
             }
-            setWrappedToolTipText(toolTipSB.toString());
+            setWrappedToolTipHtmlText(toolTipSB.toString());
             setBackgroundForRow(this, row);
             return this;
         }
@@ -630,10 +630,10 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             final int lineNumber = method.sourceLineNumber(codePos.bci);
             if (sourceFileName != null && lineNumber >= 0) {
                 setText(String.valueOf(lineNumber));
-                setWrappedToolTipText("Source location =<br>" + sourceFileName + ":" + lineNumber);
+                setWrappedToolTipHtmlText("Source location =<br>" + sourceFileName + ":" + lineNumber);
             } else {
                 setText("");
-                setWrappedToolTipText("Source line not available");
+                setWrappedToolTipHtmlText("Source line not available");
             }
             setBackgroundForRow(this, row);
             lastCodePos = codePos;

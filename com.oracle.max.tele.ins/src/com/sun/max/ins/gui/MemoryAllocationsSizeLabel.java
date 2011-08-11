@@ -51,7 +51,7 @@ public final class MemoryAllocationsSizeLabel extends AbstractMemoryRegionLabel 
         final long nBytes = memoryRegion.nBytes();
         final String hexSize = longTo0xHex(nBytes);
         setText(hexSize);
-        setWrappedToolTipText(hexSize + "(" + nBytes + ")");
+        setWrappedToolTipHtmlText(hexSize + "(" + nBytes + ")");
     }
 }
 

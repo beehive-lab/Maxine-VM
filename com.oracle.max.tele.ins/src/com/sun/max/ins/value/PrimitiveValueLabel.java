@@ -65,13 +65,13 @@ public class PrimitiveValueLabel extends ValueLabel {
         assert value() != null;
         if (kind == Kind.CHAR) {
             setText("'" + value().toString() + "'");
-            setWrappedToolTipText("Int: " + Integer.toString(value().toInt()) + ", " + intTo0xHex(value().toInt()));
+            setWrappedToolTipHtmlText("Int: " + Integer.toString(value().toInt()) + ", " + intTo0xHex(value().toInt()));
         } else if (kind == Kind.INT) {
             setText(value().toString());
-            setWrappedToolTipText(intTo0xHex(value().toInt()));
+            setWrappedToolTipHtmlText(intTo0xHex(value().toInt()));
         } else {
             setText(value().toString());
-            setWrappedToolTipText(value().toString());
+            setWrappedToolTipHtmlText(value().toString());
         }
     }
 

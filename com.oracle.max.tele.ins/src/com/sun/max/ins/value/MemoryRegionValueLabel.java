@@ -150,7 +150,7 @@ public class MemoryRegionValueLabel extends ValueLabel {
             }
         }
         setText(regionName);
-        setWrappedToolTipText(toolTipText);
+        setWrappedToolTipHtmlText(toolTipText);
     }
 
     public void redisplay() {

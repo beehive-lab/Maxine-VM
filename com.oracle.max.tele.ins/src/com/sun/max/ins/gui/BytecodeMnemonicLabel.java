@@ -52,7 +52,7 @@ public class BytecodeMnemonicLabel extends InspectorLabel {
         try {
             final String opName = Bytecodes.nameOf(opcode);
             setText(opName);
-            setWrappedToolTipText("Opcode = " + intTo0xHex(opcode) + " (JVM)");
+            setWrappedToolTipHtmlText("Opcode = " + intTo0xHex(opcode) + " (JVM)");
         } catch (IllegalArgumentException e) {
             setText(null);
             setToolTipText(null);
