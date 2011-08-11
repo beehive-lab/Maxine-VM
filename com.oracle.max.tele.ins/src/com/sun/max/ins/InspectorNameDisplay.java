@@ -561,15 +561,58 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
      */
     private static interface ReferenceRenderer {
 
+
         /**
          * @return a short string suitable for a text label display of the object reference.
          */
         String referenceLabelText(TeleObject teleObject);
 
         /**
+         * @return a short string suitable for a text label display of the object reference,
+         * with a limited number of characters.
+         */
+        String referenceLabelText(TeleObject teleObject, int maxLength);
+
+        /**
          * @return a longer string suitable for a tooltip display over the object reference.
          */
         String referenceToolTipText(TeleObject teleObject);
+
+        /**
+         * @return a longer string suitable for a tooltip display over the object reference,
+         * with a limited number of characters.
+         */
+        String referenceToolTipText(TeleObject teleObject, int maxLength);
+    }
+
+    private static abstract class AbstractReferenceRenderer implements ReferenceRenderer {
+
+        /**
+         * {@inheritDoc}
+         * <p>
+         * Default implementation of character limits for renderers.
+         */
+        public String referenceLabelText(TeleObject teleObject, int maxLength) {
+            final String text = referenceLabelText(teleObject);
+            if (text.length() < maxLength) {
+                return text;
+            }
+            return text.substring(0, maxLength - 4) + "...";
+        }
+
+        /**
+         * {@inheritDoc}
+         * <p>
+         * Default implementation of character limits for renderers.
+         */
+        public String referenceToolTipText(TeleObject teleObject, int maxLength) {
+            final String text = referenceToolTipText(teleObject);
+            if (text.length() < maxLength) {
+                return text;
+            }
+            return text.substring(0, maxLength - 1);
+        }
+
     }
 
     /**
@@ -582,9 +625,23 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     private final Map<Class, ReferenceRenderer> referenceRenderers = new HashMap<Class, ReferenceRenderer>();
 
     /**
-     * @return a short textual presentation of a reference to a heap object in the VM, if possible, null if not.
+     * Creates a short textual presentation of a reference to a heap object in the VM, if possible, null if not.
+     *
+     * @param teleObject surrogate for a heap object in the VM
+     * @return a textual presentation of a reference to a heap object
      */
     public String referenceLabelText(TeleObject teleObject) {
+        return referenceLabelText(teleObject, Integer.MAX_VALUE);
+    }
+
+    /**
+     * Creates a short textual presentation of a reference to a heap object in the VM, if possible, null if not.
+     *
+     * @param teleObject surrogate for a heap object in the VM
+     * @param maxLength maximum number of characters that should be produced, thought not guaranteed
+     * @return a textual presentation of a reference to a heap object
+     */
+    public String referenceLabelText(TeleObject teleObject, int maxLength) {
         if (teleObject != null) {
             Class teleObjectClass = teleObject.getClass();
             while (teleObjectClass != null) {
@@ -593,7 +650,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
                     try {
                         vm().acquireLegacyVMAccess();
                         try {
-                            return objectReferenceRenderer.referenceLabelText(teleObject);
+                            return objectReferenceRenderer.referenceLabelText(teleObject, maxLength);
                         } finally {
                             vm().releaseLegacyVMAccess();
                         }
@@ -672,7 +729,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     /**
      * Textual renderer for references to arrays.
      */
-    private class ArrayReferenceRenderer implements ReferenceRenderer{
+    private class ArrayReferenceRenderer extends AbstractReferenceRenderer {
         public String referenceLabelText(TeleObject teleObject) {
             final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject;
             final ClassActor classActorForType = teleArrayObject.classActorForObjectType();
@@ -693,7 +750,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     /**
      * Textual renderer for references to static and dynamic hubs.
      */
-    private class HubReferenceRenderer implements ReferenceRenderer{
+    private class HubReferenceRenderer extends AbstractReferenceRenderer {
 
         public String referenceLabelText(TeleObject teleObject) {
             final TeleHub teleHub = (TeleHub) teleObject;
@@ -716,7 +773,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     /**
      * Textual renderer for references to ordinary objects, represented as tuples, for which there is no more specific renderer registered.
      */
-    private class TupleObjectReferenceRenderer implements ReferenceRenderer{
+    private class TupleObjectReferenceRenderer extends AbstractReferenceRenderer {
         public String referenceLabelText(TeleObject teleObject) {
             final TeleTupleObject teleTupleObject = (TeleTupleObject) teleObject;
             final ClassActor classActorForType = teleTupleObject.classActorForObjectType();
@@ -736,7 +793,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         }
     }
 
-    private class StaticTupleReferenceRenderer implements ReferenceRenderer{
+    private class StaticTupleReferenceRenderer extends AbstractReferenceRenderer {
 
         public String referenceLabelText(TeleObject teleObject) {
             final TeleStaticTuple teleStaticTuple = (TeleStaticTuple) teleObject;
@@ -751,7 +808,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         }
     }
 
-    private class MethodActorReferenceRenderer implements ReferenceRenderer{
+    private class MethodActorReferenceRenderer extends AbstractReferenceRenderer {
 
         public String referenceLabelText(TeleObject teleObject) {
             final TeleMethodActor teleMethodActor = (TeleMethodActor) teleObject;
@@ -766,7 +823,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         }
     }
 
-    private class FieldActorReferenceRenderer implements ReferenceRenderer{
+    private class FieldActorReferenceRenderer extends AbstractReferenceRenderer {
 
         public String referenceLabelText(TeleObject teleObject) {
             final TeleFieldActor teleFieldActor = (TeleFieldActor) teleObject;
@@ -781,7 +838,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         }
     }
 
-    private class ClassActorReferenceRenderer implements ReferenceRenderer{
+    private class ClassActorReferenceRenderer extends AbstractReferenceRenderer {
 
         public String referenceLabelText(TeleObject teleObject) {
             final TeleClassActor teleClassActor = (TeleClassActor) teleObject;
@@ -796,18 +853,34 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         }
     }
 
-    private class StringReferenceRenderer implements ReferenceRenderer{
+    private class StringReferenceRenderer extends AbstractReferenceRenderer {
+
 
         public String referenceLabelText(TeleObject teleObject) {
             final TeleString teleString = (TeleString) teleObject;
-            final String s = teleString.getString();
-            if (s == null) {
-                return "unknown";
+            final String string = teleString.getString();
+            final String stringText = string == null ? unavailableDataShortText() : "\"" + string + "\"";
+            return objectReference(null, teleObject, null, stringText);
+        }
+
+        @Override
+        public String referenceLabelText(TeleObject teleObject, int maxLength) {
+            final String defaultLabelText = referenceLabelText(teleObject);
+            final int trimLength = defaultLabelText.length() - maxLength;
+            if (trimLength <= 0) {
+                return defaultLabelText;
             }
-            if (s.length() > style().maxStringInlineDisplayLength()) {
-                return objectReference(null, teleObject, null, "\"" + s.substring(0, style().maxStringInlineDisplayLength()) + "\"...");
+            // The default's too long, try again with some trimming
+            final TeleString teleString = (TeleString) teleObject;
+            final String stringText = teleString.getString();
+            if (stringText != null) {
+                if (trimLength <= stringText.length() - 3) {
+                    // We can trim the string's text sufficiently and still leave room for the elipsis
+                    return objectReference(null, teleObject, null, "\"" + stringText.substring(0, stringText.length() - trimLength) + "...\"");
+                }
             }
-            return objectReference(null, teleObject, null, "\"" + s + "\"");
+            // Give up showing string contents; just show the standard object reference text
+            return objectReference(null, teleObject, null, "");
         }
 
         public String referenceToolTipText(TeleObject teleObject) {
@@ -818,14 +891,33 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         }
     }
 
-    private class Utf8ConstantReferenceRenderer implements ReferenceRenderer{
+    private class Utf8ConstantReferenceRenderer extends AbstractReferenceRenderer {
+
         public String referenceLabelText(TeleObject teleObject) {
             final TeleUtf8Constant teleUtf8Constant = (TeleUtf8Constant) teleObject;
-            final String s = teleUtf8Constant.utf8Constant().string;
-            if (s.length() > style().maxStringInlineDisplayLength()) {
-                return objectReference(null, teleObject, null, "\"" + s.substring(0, style().maxStringInlineDisplayLength()) + "\"...");
+            final String string = teleUtf8Constant.utf8Constant().string;
+            final String stringText = string == null ? unavailableDataShortText() : "\"" + string + "\"";
+            return objectReference(null, teleObject, null, stringText);
+        }
+
+        @Override
+        public String referenceLabelText(TeleObject teleObject, int maxLength) {
+            final String defaultLabelText = referenceLabelText(teleObject);
+            final int trimLength = defaultLabelText.length() - maxLength;
+            if (trimLength <= 0) {
+                return defaultLabelText;
             }
-            return objectReference(null, teleObject, null, "\"" + s + "\"");
+            // The default's too long, try again with some trimming
+            final TeleUtf8Constant teleUtf8Constant = (TeleUtf8Constant) teleObject;
+            final String stringText = teleUtf8Constant.utf8Constant().string;
+            if (stringText != null) {
+                if (trimLength <= stringText.length() - 3) {
+                    // We can trim the string's text sufficiently and still leave room for the elipsis
+                    return objectReference(null, teleObject, null, "\"" + stringText.substring(0, stringText.length() - trimLength) + "...\"");
+                }
+            }
+            // Give up showing string contents; just show the standard object reference text
+            return objectReference(null, teleObject, null, "");
         }
 
         public String referenceToolTipText(TeleObject teleObject) {
@@ -836,15 +928,33 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         }
     }
 
-    private class StringConstantReferenceRenderer implements ReferenceRenderer{
+    private class StringConstantReferenceRenderer extends AbstractReferenceRenderer {
 
         public String referenceLabelText(TeleObject teleObject) {
             final TeleStringConstant teleStringConstant = (TeleStringConstant) teleObject;
-            final String s = teleStringConstant.getString();
-            if (s.length() > style().maxStringInlineDisplayLength()) {
-                return objectReference(null, teleObject, null, "\"" + s.substring(0, style().maxStringInlineDisplayLength()) + "\"...");
+            final String string = teleStringConstant.getString();
+            final String stringText = string == null ? unavailableDataShortText() : "\"" + string + "\"";
+            return objectReference(null, teleObject, null, stringText);
+        }
+
+        @Override
+        public String referenceLabelText(TeleObject teleObject, int maxLength) {
+            final String defaultLabelText = referenceLabelText(teleObject);
+            final int trimLength = defaultLabelText.length() - maxLength;
+            if (trimLength <= 0) {
+                return defaultLabelText;
             }
-            return objectReference(null, teleObject, null, "\"" + s + "\"");
+            // The default's too long, try again with some trimming
+            final TeleStringConstant teleStringConstant = (TeleStringConstant) teleObject;
+            final String stringText = teleStringConstant.getString();
+            if (stringText != null) {
+                if (trimLength <= stringText.length() - 3) {
+                    // We can trim the string's text sufficiently and still leave room for the elipsis
+                    return objectReference(null, teleObject, null, "\"" + stringText.substring(0, stringText.length() - trimLength) + "...\"");
+                }
+            }
+            // Give up showing string contents; just show the standard object reference text
+            return objectReference(null, teleObject, null, "");
         }
 
         public String referenceToolTipText(TeleObject teleObject) {
@@ -855,7 +965,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         }
     }
 
-    private class ClassReferenceRenderer implements ReferenceRenderer{
+    private class ClassReferenceRenderer extends AbstractReferenceRenderer {
 
         public String referenceLabelText(TeleObject teleObject) {
             final TeleClass teleClass = (TeleClass) teleObject;
@@ -870,7 +980,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         }
     }
 
-    private class ConstructorReferenceRenderer implements ReferenceRenderer{
+    private class ConstructorReferenceRenderer extends AbstractReferenceRenderer {
 
         public String referenceLabelText(TeleObject teleObject) {
             final TeleConstructor teleConstructor = (TeleConstructor) teleObject;
@@ -891,7 +1001,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         }
     }
 
-    private class FieldReferenceRenderer implements ReferenceRenderer{
+    private class FieldReferenceRenderer extends AbstractReferenceRenderer {
 
         public String referenceLabelText(TeleObject teleObject) {
             final TeleField teleField = (TeleField) teleObject;
@@ -912,7 +1022,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         }
     }
 
-    private class MethodReferenceRenderer implements ReferenceRenderer{
+    private class MethodReferenceRenderer extends AbstractReferenceRenderer {
 
         public String referenceLabelText(TeleObject teleObject) {
             final TeleMethod teleMethod = (TeleMethod) teleObject;
@@ -933,7 +1043,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         }
     }
 
-    private class EnumReferenceRenderer implements ReferenceRenderer{
+    private class EnumReferenceRenderer extends AbstractReferenceRenderer {
 
         public String referenceLabelText(TeleObject teleObject) {
             final TeleEnum teleEnum = (TeleEnum) teleObject;
@@ -951,7 +1061,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         }
     }
 
-    private class ConstantPoolReferenceRenderer implements ReferenceRenderer{
+    private class ConstantPoolReferenceRenderer extends AbstractReferenceRenderer {
 
         public String referenceLabelText(TeleObject teleObject) {
             final TeleConstantPool teleConstantPool = (TeleConstantPool) teleObject;
@@ -966,7 +1076,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         }
     }
 
-    private class ClassConstantResolvedReferenceRenderer implements ReferenceRenderer{
+    private class ClassConstantResolvedReferenceRenderer extends AbstractReferenceRenderer {
 
         public String referenceLabelText(TeleObject teleObject) {
             final TeleClassConstant.Resolved teleClassConstantResolved = (TeleClassConstant.Resolved) teleObject;
@@ -981,7 +1091,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         }
     }
 
-    private class FieldRefConstantResolvedReferenceRenderer implements ReferenceRenderer{
+    private class FieldRefConstantResolvedReferenceRenderer extends AbstractReferenceRenderer {
 
         public String referenceLabelText(TeleObject teleObject) {
             final TeleFieldRefConstant.Resolved teleFieldRefConstantResolved = (TeleFieldRefConstant.Resolved) teleObject;
@@ -996,7 +1106,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         }
     }
 
-    private class ClassMethodRefConstantResolvedReferenceRenderer implements ReferenceRenderer{
+    private class ClassMethodRefConstantResolvedReferenceRenderer extends AbstractReferenceRenderer {
 
         public String referenceLabelText(TeleObject teleObject) {
             final TeleClassMethodRefConstant.Resolved teleClassMethodRefConstantResolved = (TeleClassMethodRefConstant.Resolved) teleObject;
@@ -1011,7 +1121,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         }
     }
 
-    private class InterfaceMethodRefConstantResolvedReferenceRenderer implements ReferenceRenderer{
+    private class InterfaceMethodRefConstantResolvedReferenceRenderer extends AbstractReferenceRenderer {
         public String referenceLabelText(TeleObject teleObject) {
             final TeleInterfaceMethodRefConstant.Resolved teleInterfaceMethodRefConstantResolved = (TeleInterfaceMethodRefConstant.Resolved) teleObject;
             final MethodActor methodActor = teleInterfaceMethodRefConstantResolved.getTeleInterfaceMethodActor().methodActor();
@@ -1025,7 +1135,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         }
     }
 
-    private class PoolConstantReferenceRenderer implements ReferenceRenderer{
+    private class PoolConstantReferenceRenderer extends AbstractReferenceRenderer {
         public String referenceLabelText(TeleObject teleObject) {
             final TelePoolConstant telePoolConstant = (TelePoolConstant) teleObject;
             final ClassActor classActorForType = telePoolConstant.classActorForObjectType();
@@ -1039,7 +1149,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         }
     }
 
-    private class VmThreadReferenceRenderer implements ReferenceRenderer{
+    private class VmThreadReferenceRenderer extends AbstractReferenceRenderer {
         public String referenceLabelText(TeleObject teleObject) {
             final TeleVmThread teleVmThread = (TeleVmThread) teleObject;
             return objectReference(null, teleObject, "VmThread", longName(teleVmThread.maxThread()));
