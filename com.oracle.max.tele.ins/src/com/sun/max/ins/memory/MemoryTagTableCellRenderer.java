@@ -123,7 +123,7 @@ public final class MemoryTagTableCellRenderer extends InspectorTableCellRenderer
             }
         }
         label.setText(labelText);
-        label.setWrappedToolTipText(toolTipText);
+        label.setWrappedToolTipHtmlText(toolTipText);
         label.setBackground(inspectorTable.cellBackgroundColor(isSelected));
         label.setForeground(inspectorTable.cellForegroundColor(row, column));
         label.setFont(style().defaultFont());

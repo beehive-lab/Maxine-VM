@@ -66,7 +66,7 @@ public final class ActorFlagsValueLabel extends ValueLabel {
             }
             toolTipText = sb.toString();
         }
-        setWrappedToolTipText(toolTipText);
+        setWrappedToolTipHtmlText(toolTipText);
     }
 
     public void redisplay() {

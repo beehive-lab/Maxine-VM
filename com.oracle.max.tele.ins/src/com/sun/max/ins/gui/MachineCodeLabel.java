@@ -52,18 +52,18 @@ public class MachineCodeLabel extends InspectorLabel {
      * @param toolTipText tool tip text for the label
      */
     public void setValue(String text, String toolTipText) {
-        setText("<html><b>" + text + "</b>");
-        setToolTipText(toolTipText);
+        setWrappedHtmlText("<b>" + htmlify(text) + "</b>");
+        setWrappedToolTipHtmlText(htmlify(toolTipText));
     }
 
     @Override
     public void setText(String text) {
-        super.setText("<html><b>" + text + "</b>");
+        super.setWrappedHtmlText("<b>" + htmlify(text) + "</b>");
     }
 
     @Override
     public void setWrappedText(String text) {
-        super.setWrappedText("<b>" + text + "</b>");
+        super.setWrappedHtmlText("<b>" + htmlify(text) + "</b>");
     }
 
     public final void redisplay() {

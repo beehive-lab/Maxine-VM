@@ -110,7 +110,7 @@ abstract class CompiledStackFramePanel extends InspectorPanel {
                 public void refresh(boolean force) {
                     final int frameSize = CompiledStackFramePanel.this.stackFrame.layout().frameSize();
                     setValue(frameSize);
-                    setWrappedToolTipText(intToDecimalAndHex(frameSize));
+                    setWrappedToolTipHtmlText(intToDecimalAndHex(frameSize));
                 }
             };
             sizeLabel.setToolTipPrefix("Stack frame size = ");
@@ -123,7 +123,7 @@ abstract class CompiledStackFramePanel extends InspectorPanel {
                 public void refresh(boolean force) {
                     final Pointer fpValue = CompiledStackFramePanel.this.stackFrame.fp();
                     setValue(fpValue);
-                    setWrappedToolTipText(fpValue.to0xHexString());
+                    setWrappedToolTipHtmlText(fpValue.to0xHexString());
                 }
             };
             fpValueLabel.setToolTipPrefix("Frame pointer for stack frame<br>address= ");
@@ -135,7 +135,7 @@ abstract class CompiledStackFramePanel extends InspectorPanel {
                 public void refresh(boolean force) {
                     final Pointer spValue = CompiledStackFramePanel.this.stackFrame.sp();
                     setValue(spValue);
-                    setWrappedToolTipText(spValue.to0xHexString());
+                    setWrappedToolTipHtmlText(spValue.to0xHexString());
                 }
             };
             spValueLabel.setToolTipPrefix("Stack pointer for stack frame<br>address= ");

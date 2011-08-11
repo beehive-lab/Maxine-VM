@@ -65,7 +65,7 @@ public class FieldActorNameLabel extends InspectorLabel {
         } else {
             final String fieldName = fieldActor.name.toString();
             setText(fieldName);
-            setWrappedToolTipText("Type=" + fieldActor.descriptor().toJavaString(true));
+            setWrappedToolTipHtmlText("Type=" + fieldActor.descriptor().toJavaString(true));
         }
     }
 

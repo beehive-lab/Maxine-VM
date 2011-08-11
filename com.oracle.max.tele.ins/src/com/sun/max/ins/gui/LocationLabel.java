@@ -129,7 +129,7 @@ public abstract class LocationLabel extends InspectorLabel {
         protected final void updateText() {
             final Address address = origin.plus(value);
             setText(address.toHexString());
-            setWrappedToolTipText(address.to0xHexString() + "<br>" + intToPlusMinusDecimalAndHex(value) + " bytes from origin");
+            setWrappedToolTipHtmlText(address.to0xHexString() + "<br>" + intToPlusMinusDecimalAndHex(value) + " bytes from origin");
         }
     }
 
@@ -156,7 +156,7 @@ public abstract class LocationLabel extends InspectorLabel {
         protected final void updateText() {
             final Address address = origin.plus(value);
             setText(address.toHexString());
-            setWrappedToolTipText(address.to0xHexString() + " (position " + intToDecimalAndHex(value) + " bytes from start)");
+            setWrappedToolTipHtmlText(address.to0xHexString() + " (position " + intToDecimalAndHex(value) + " bytes from start)");
         }
     }
 
@@ -187,9 +187,9 @@ public abstract class LocationLabel extends InspectorLabel {
         protected final void updateText() {
             setText(Integer.toString(value));
             if (origin != null) {
-                setWrappedToolTipText(origin.plus(value).to0xHexString() + "<br>Position " + intToDecimalAndHex(value) + " bytes from start");
+                setWrappedToolTipHtmlText(origin.plus(value).to0xHexString() + "<br>Position " + intToDecimalAndHex(value) + " bytes from start");
             } else {
-                setWrappedToolTipText("Position " + intToDecimalAndHex(value));
+                setWrappedToolTipHtmlText("Position " + intToDecimalAndHex(value));
             }
         }
     }
@@ -228,7 +228,7 @@ public abstract class LocationLabel extends InspectorLabel {
                 toolTip += "<br>index=" + Integer.toString(value / indexScalingFactor);
             }
             toolTip += "<br>" + intToPlusMinusDecimalAndHex(value) + " bytes from origin";
-            setWrappedToolTipText(toolTip);
+            setWrappedToolTipHtmlText(toolTip);
             setText(intToPlusMinusDecimal(value));
 
         }
@@ -270,7 +270,7 @@ public abstract class LocationLabel extends InspectorLabel {
         @Override
         protected void updateText() {
             final int wordOffset = value / vm().platform().nBytesInWord();
-            setWrappedToolTipText(origin.plus(value).to0xHexString() + "<br>offset= " + intToPlusMinusDecimalAndHex(wordOffset) + " words from origin)");
+            setWrappedToolTipHtmlText(origin.plus(value).to0xHexString() + "<br>offset= " + intToPlusMinusDecimalAndHex(wordOffset) + " words from origin)");
             setText(intToPlusMinusDecimal(wordOffset));
         }
     }
@@ -324,9 +324,9 @@ public abstract class LocationLabel extends InspectorLabel {
         protected void updateText() {
             setText(prefix  + "[" + index + "]");
             if (origin != null) {
-                setWrappedToolTipText(origin.plus(value).to0xHexString() + "<br>" + intToPlusMinusDecimalAndHex(value) + " bytes from origin");
+                setWrappedToolTipHtmlText(origin.plus(value).to0xHexString() + "<br>" + intToPlusMinusDecimalAndHex(value) + " bytes from origin");
             } else {
-                setWrappedToolTipText(intToPlusMinusDecimalAndHex(value) + " bytes from origin");
+                setWrappedToolTipHtmlText(intToPlusMinusDecimalAndHex(value) + " bytes from origin");
             }
         }
     }
@@ -360,7 +360,7 @@ public abstract class LocationLabel extends InspectorLabel {
         protected final void updateText() {
             setText(labelText);
             if (labelText != null && !labelText.equals("")) {
-                setWrappedToolTipText(origin.plus(value).to0xHexString() + " (position " + intToDecimalAndHex(value) + " bytes from start)");
+                setWrappedToolTipHtmlText(origin.plus(value).to0xHexString() + " (position " + intToDecimalAndHex(value) + " bytes from start)");
             } else {
                 setToolTipText(null);
             }
