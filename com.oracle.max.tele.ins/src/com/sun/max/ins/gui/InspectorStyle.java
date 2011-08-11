@@ -118,8 +118,6 @@ public interface InspectorStyle {
     Font charDataFont();
 
     // Display of string values
-    /** Maximum number of string characters to display when displaying a "hint" as to string contents. */
-    int maxStringInlineDisplayLength();
     /** Maximum number of elements from a char array to display when viewing as text. */
     int maxStringFromCharArrayDisplayLength();
 
