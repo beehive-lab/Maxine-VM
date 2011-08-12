@@ -373,9 +373,12 @@ public class ConvertLog {
 
     /**
      * Converts to the format expect by the AJTrace analyser tool for viewing call graph hierarchies.
+     * This is based on {@code METHOD_ENTRY} and {@code RETURN} advice. The commented out code
+     * also interprets {@code INVOKE} before/after, but does not properly handle the case where both are present.
      */
     private static class AJcommand extends Command {
 
+        /*
         private static EnumSet<Key> INVOKE_BEFORE_SET = EnumSet.of(
                         Key.ADVISE_BEFORE_INVOKE_INTERFACE, Key.ADVISE_BEFORE_INVOKE_VIRTUAL,
                         Key.ADVISE_BEFORE_INVOKE_SPECIAL, Key.ADVISE_BEFORE_INVOKE_STATIC);
@@ -384,13 +387,16 @@ public class ConvertLog {
         private static EnumSet<Key> INVOKE_AFTER_SET = EnumSet.of(
                         Key.ADVISE_AFTER_INVOKE_INTERFACE, Key.ADVISE_AFTER_INVOKE_VIRTUAL,
                         Key.ADVISE_AFTER_INVOKE_SPECIAL, Key.ADVISE_AFTER_INVOKE_STATIC);
+        */
 
         private long startTime;
-        private int callDepth = 1;
+        private Map<String, Integer> callDepth = new HashMap<String, Integer>();
         private int fullMethodIndex;
         private Map<String, String> classShortForms = new HashMap<String, String>();
         private Map<String, String> methodShortForms = new HashMap<String, String>();
         private Map<String, String> classMethodDefs = new HashMap<String, String>();
+        private String[] entryMid = new String[1024];
+        private int entryMidIndex;
 
         @Override
         void visitLine(String line) {
@@ -408,28 +414,36 @@ public class ConvertLog {
                 sb.append(lineParts[2]);
                 sb.append(' ');
                 sb.append(lineParts[1]);
+                callDepth.put(lineParts[2], 1);
             } else if (command == Key.METHOD_DEFINITION) {
                 methodShortForms.put(lineParts[3], lineParts[2]);
                 return;
-            } else if (INVOKE_BEFORE_SET.contains(command)) {
+            } else if (/*INVOKE_BEFORE_SET.contains(command) || */command == Key.ADVISE_AFTER_METHOD_ENTRY) {
+                String thread = lineParts[2];
                 String mid = checkMethodDef();
-                sb.append(callDepth);
+                sb.append(callDepth.get(thread));
                 sb.append(" E");
                 sb.append(lineAbsTime - startTime);
                 sb.append(" T");
-                sb.append(lineParts[2]);
+                sb.append(thread);
                 sb.append(" M");
                 sb.append(mid);
-                callDepth++;
-            } else if (INVOKE_AFTER_SET.contains(command)) {
-                String mid = checkMethodDef();
-                callDepth--;
-                sb.append(callDepth);
+                int tcd = callDepth.get(thread);
+                callDepth.put(lineParts[2], tcd + 1);
+                if (command == Key.ADVISE_AFTER_METHOD_ENTRY) {
+                    entryMid[entryMidIndex++] = mid;
+                }
+            } else if (/*INVOKE_AFTER_SET.contains(command) || */command == Key.ADVISE_BEFORE_RETURN) {
+                String thread = lineParts[2];
+                int tcd = callDepth.get(thread) - 1;
+                callDepth.put(lineParts[2], tcd);
+                sb.append(callDepth.get(thread));
                 sb.append(" R");
                 sb.append(lineAbsTime - startTime);
                 sb.append(" T");
-                sb.append(lineParts[2]);
+                sb.append(thread);
                 sb.append(" M");
+                String mid = command == Key.ADVISE_BEFORE_RETURN ? entryMid[--entryMidIndex] : checkMethodDef();
                 sb.append(mid);
             } else {
                 return;

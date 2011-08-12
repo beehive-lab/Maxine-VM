@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,41 +20,37 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.runtime;
+package test;
 
-import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.*;
-import com.sun.max.vm.thread.*;
 
-/**
- * The interface through which {@link TransientVMAdviceHandler} flushes the per-thread event buffer.
- */
+public class Returns {
 
-public interface AdviceRecordFlusher {
-
-    /**
-     * Thread-specific buffer of events.
-     */
-    public static class RecordBuffer {
-        VmThread vmThread;
-        AdviceRecord[] records;
-        /**
-         * Valid records are {@code x >= 0 && x < index}.
-         */
-        int index;
-
-        public RecordBuffer(AdviceRecord[] records) {
-            this.records = records;
-            this.vmThread = VmThread.current();
-        }
+    static void returnVoid() {
+        return;
     }
 
-    /**
-     * Flush the buffer.
-     * @param buffer
-     */
-    void flushBuffer(RecordBuffer buffer);
+    static int returnInt() {
+        return 1;
+    }
 
-    void initialise(ObjectStateHandler state);
-    void finalise();
+    static long returnLong() {
+        return 1L;
+    }
+
+    static float returnFloat() {
+        return 1.0F;
+    }
+
+    static double returnDouble() {
+        return 1.0;
+    }
+
+    public static void main(String[] args) {
+        returnVoid();
+        returnInt();
+        returnLong();
+        returnFloat();
+        returnDouble();
+    }
 
 }
