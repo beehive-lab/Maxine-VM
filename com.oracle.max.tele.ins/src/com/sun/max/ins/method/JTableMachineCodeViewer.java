@@ -791,9 +791,6 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object ignore, boolean isSelected, boolean hasFocus, int row, int column) {
-            if (row == 44) {
-                System.out.println("Line 44");
-            }
             InspectorLabel renderer = inspectorLabels[row];
             if (renderer == null) {
                 final TargetCodeInstruction machineCodeInstruction = tableModel.rowToInstruction(row);
