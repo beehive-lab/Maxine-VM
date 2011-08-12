@@ -54,6 +54,7 @@ public interface InspectorStyle {
 
     // Default text
     Font defaultFont();
+    Font defaultBoldFont();
     int defaultTextFontSize();
     Color defaultErrorTextColor();
     Color defaultErrorTextBackgroundColor();

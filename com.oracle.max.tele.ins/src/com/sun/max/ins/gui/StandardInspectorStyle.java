@@ -38,7 +38,6 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     private final int defaultRowHeight;
     private final String name;
 
-    private Font defaultBoldFont;
     private Font defaultMonospacedFont;
 
     private int defaultTitleFontSize;
@@ -67,13 +66,6 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
         return name();
     }
 
-    private Font defaultBoldFont() {
-        if (defaultBoldFont == null) {
-            defaultBoldFont = new Font("SansSerif", Font.BOLD, defaultTextFontSize());
-        }
-        return defaultBoldFont;
-    }
-
     private Font defaultMonospacedFont() {
         if (defaultMonospacedFont == null) {
             defaultMonospacedFont = new Font("Monospaced", Font.PLAIN, defaultTextFontSize());
@@ -88,12 +80,20 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
 
     // Default text
     private Font defaultFont;
+    private Font defaultBoldFont;
 
     public Font defaultFont() {
         if (defaultFont == null) {
             defaultFont = new Font("SansSerif", Font.PLAIN, defaultTextFontSize());
         }
         return defaultFont;
+    }
+
+    public Font defaultBoldFont() {
+        if (defaultBoldFont == null) {
+            defaultBoldFont = new Font("SansSerif", Font.BOLD, defaultTextFontSize());
+        }
+        return defaultBoldFont;
     }
 
     public int defaultTextFontSize() {

@@ -158,7 +158,6 @@ public final class StackView extends AbstractView<StackView> {
             }
             setText(Integer.toString(modelIndex) + ":  " + methodName);
             setWrappedToolTipHtmlText(toolTip);
-            setFont(style().defaultFont());
             setBackground(isSelected ? stackFrameList.getSelectionBackground() : stackFrameList.getBackground());
             return this;
         }
