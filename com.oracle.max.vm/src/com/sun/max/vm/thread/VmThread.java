@@ -256,6 +256,9 @@ public class VmThread {
 
     private final VmStackFrameWalker stackDumpStackFrameWalker = new VmStackFrameWalker(Pointer.zero());
 
+    @CONSTANT_WHEN_NOT_ZERO
+    private VmStackFrameWalker samplingProfilerStackFrameWalker;
+
     private final StackReferenceMapPreparer stackReferenceMapPreparer = new StackReferenceMapPreparer(true, true);
 
     private final StackReferenceMapPreparer stackReferenceMapVerifier = new StackReferenceMapPreparer(true, false);
@@ -982,6 +985,16 @@ public class VmThread {
     public VmStackFrameWalker stackDumpStackFrameWalker() {
         FatalError.check(stackDumpStackFrameWalker != null, "Thread-local stack frame walker cannot be null for a running thread");
         return stackDumpStackFrameWalker;
+    }
+
+    /**
+     * Gets a dynamically allocated, thread local object that can be used by the sample profiler without incurring any allocation.
+     */
+    public VmStackFrameWalker samplingProfilerStackFrameWalker() {
+        if (samplingProfilerStackFrameWalker == null) {
+            samplingProfilerStackFrameWalker = new VmStackFrameWalker(ETLA.load(VmThread.currentTLA()));
+        }
+        return samplingProfilerStackFrameWalker;
     }
 
     /**
