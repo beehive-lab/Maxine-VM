@@ -195,6 +195,8 @@ public class WordValueLabel extends ValueLabel {
 
     private DisplayMode displayMode;
 
+    private Font wordDataFont;
+
     /**
      * Creates a display label for a word of machine data, initially set to null.
      * <br>
@@ -236,6 +238,7 @@ public class WordValueLabel extends ValueLabel {
         super(inspection, null);
         this.parent = parent;
         this.valueMode = valueMode;
+        this.wordDataFont = inspection.style().defaultWordDataFont();
         initializeValue();
         if (value() == null) {
             setValue(new WordValue(word));
@@ -441,7 +444,7 @@ public class WordValueLabel extends ValueLabel {
                         || valueMode == ValueMode.FLOATING_POINT) ? value.toWord().toPaddedHexString('0') : value.toWord().toHexString();
         switch (displayMode) {
             case WORD: {
-                setFont(style().wordDataFont());
+                setFont(wordDataFont);
                 setWrappedText(hexString);
                 if (value.isZero()) {
                     setForeground(style().wordNullDataColor());
@@ -453,7 +456,7 @@ public class WordValueLabel extends ValueLabel {
                 break;
             }
             case UNCHECKED_WORD: {
-                setFont(style().wordDataFont());
+                setFont(wordDataFont);
                 setWrappedText(hexString);
                 if (value.isZero()) {
                     setForeground(style().wordNullDataColor());
@@ -483,7 +486,7 @@ public class WordValueLabel extends ValueLabel {
                 break;
             }
             case OBJECT_REFERENCE: {
-                setFont(style().wordDataFont());
+                setFont(wordDataFont);
                 setForeground(style().wordValidObjectReferenceDataColor());
                 setWrappedText(hexString);
                 try {
@@ -543,7 +546,7 @@ public class WordValueLabel extends ValueLabel {
                 break;
             }
             case STACK_LOCATION: {
-                setFont(style().wordDataFont());
+                setFont(wordDataFont);
                 setForeground(style().wordStackLocationDataColor());
                 setWrappedText(hexString);
                 final String threadName = inspection().nameDisplay().longName(thread);
@@ -564,7 +567,7 @@ public class WordValueLabel extends ValueLabel {
                 break;
             }
             case THREAD_LOCALS_BLOCK_LOCATION: {
-                setFont(style().wordDataFont());
+                setFont(wordDataFont);
                 setForeground(style().wordThreadLocalsBlockLocationDataColor());
                 setWrappedText(hexString);
                 final String threadName = inspection().nameDisplay().longName(thread);
@@ -584,7 +587,7 @@ public class WordValueLabel extends ValueLabel {
                 break;
             }
             case UNCHECKED_REFERENCE: {
-                setFont(style().wordDataFont());
+                setFont(wordDataFont);
                 setForeground(style().wordUncheckedReferenceDataColor());
                 setWrappedText(hexString);
                 if (valueMode == ValueMode.LITERAL_REFERENCE) {
@@ -595,7 +598,7 @@ public class WordValueLabel extends ValueLabel {
                 break;
             }
             case INVALID_OBJECT_REFERENCE: {
-                setFont(style().wordDataFont());
+                setFont(wordDataFont);
                 setForeground(style().wordInvalidObjectReferenceDataColor());
                 setWrappedText(hexString);
                 if (valueMode == ValueMode.LITERAL_REFERENCE) {
@@ -604,7 +607,7 @@ public class WordValueLabel extends ValueLabel {
                 break;
             }
             case CALL_ENTRY_POINT: {
-                setFont(style().wordDataFont());
+                setFont(wordDataFont);
                 setForeground(style().wordCallEntryPointColor());
                 setWrappedText(hexString);
                 setWrappedToolTipHtmlText(value.toWord().to0xHexString() +
@@ -622,7 +625,7 @@ public class WordValueLabel extends ValueLabel {
                 break;
             }
             case CLASS_ACTOR_ID: {
-                setFont(style().wordDataFont());
+                setFont(wordDataFont);
                 setForeground(null);
                 setWrappedText(Long.toString(value.asWord().asAddress().toLong()));
                 if (teleClassActor != null) {
@@ -638,7 +641,7 @@ public class WordValueLabel extends ValueLabel {
                 break;
             }
             case CALL_RETURN_POINT: {
-                setFont(style().wordDataFont());
+                setFont(wordDataFont);
                 setForeground(style().wordCallReturnPointColor());
                 setWrappedText(hexString);
                 if (compiledCode != null) {
@@ -664,7 +667,7 @@ public class WordValueLabel extends ValueLabel {
                 break;
             }
             case UNCHECKED_CALL_POINT: {
-                setFont(style().wordDataFont());
+                setFont(wordDataFont);
                 setForeground(style().wordUncheckedCallPointColor());
                 setWrappedText(hexString);
                 setWrappedToolTipHtmlText("Unchecked call entry/return point");
@@ -703,7 +706,7 @@ public class WordValueLabel extends ValueLabel {
                 break;
             }
             case UNAVAILABLE: {
-                setFont(style().wordDataFont());
+                setFont(wordDataFont);
                 setForeground(null);
                 setWrappedText(inspection().nameDisplay().unavailableDataShortText());
                 setWrappedToolTipHtmlText(inspection().nameDisplay().unavailableDataLongText());
@@ -713,6 +716,17 @@ public class WordValueLabel extends ValueLabel {
         if (parent != null) {
             parent.repaint();
         }
+    }
+
+    /**
+     * Sets the default font for displaying word data in this label, overriding
+     * the default specified by the style mechanism.
+     *
+     * @param font a font do use in this label as the default font for word data
+     * @see InspectorStyle#defaultWordDataFont()
+     */
+    public void setWordDataFont(Font font) {
+        this.wordDataFont = font;
     }
 
     private InspectorAction getCycleDisplayTextAction() {

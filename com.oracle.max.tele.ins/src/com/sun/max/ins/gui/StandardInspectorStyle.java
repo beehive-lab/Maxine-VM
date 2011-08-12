@@ -136,7 +136,7 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     private Color wordSelectedColor = InspectorStyle.Blue;
 
     @Override
-    public Font wordDataFont() {
+    public Font defaultWordDataFont() {
         return hexDataFont();
     }
 
