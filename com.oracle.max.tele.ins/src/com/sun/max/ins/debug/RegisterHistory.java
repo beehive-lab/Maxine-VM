@@ -22,8 +22,8 @@
  */
 package com.sun.max.ins.debug;
 
+import com.sun.max.ins.*;
 import com.sun.max.tele.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.value.*;
 
@@ -31,16 +31,28 @@ import com.sun.max.vm.value.*;
  * Wrapper for the description of a machine register in the VM that
  * adds a history of the values.
  */
-public final class RegisterHistory {
+public final class RegisterHistory extends AbstractInspectionHolder {
 
     private final MaxRegister register;
     private final ArrayValueHistory<Value> valueHistory;
+    private MaxVMState lastRefreshedVMState = null;
 
-    public RegisterHistory(MaxRegister register) {
+    /**
+     * Creates a history of values for a VM register.
+     *
+     * @param inspection
+     * @param nGenerations the number of history generations to record
+     * @param register the VM register whose values are to be recorded
+     */
+    public RegisterHistory(Inspection inspection, int nGenerations, MaxRegister register) {
+        super(inspection);
         this.register = register;
-        this.valueHistory = new ArrayValueHistory<Value>(6);
+        this.valueHistory = new ArrayValueHistory<Value>(nGenerations);
     }
 
+    /**
+     * @return the name of the register
+     */
     public String name() {
         return register.name();
     }
@@ -49,7 +61,7 @@ public final class RegisterHistory {
      * @return the current value of the register, as cached by most recent {@link #refresh()}.
      */
     public Value value() {
-        return valueHistory.get();
+        return valueHistory.value(0);
     }
 
     /**
@@ -57,15 +69,23 @@ public final class RegisterHistory {
      * 0 if different from immediate predecessor; -1 if no different value ever recorded
      */
     public int age() {
-        return valueHistory.getAge();
+        return valueHistory.currentValueAge();
     }
 
     /**
-     * Read and cache the current value of the register; increment generation count.
+     * Read and cache the current value of the register; increments generation count
+     * if the VM state has advanced since the previous refresh.
      */
     public void refresh() {
-        final Address address = register.value();
-        valueHistory.add(new WordValue(address));
+        final MaxVMState newVMState = inspection().vm().state();
+        final WordValue wordValue = new WordValue(register.value());
+        if (newVMState.newerThan(lastRefreshedVMState)) {
+            valueHistory.addNew(wordValue);
+            this.lastRefreshedVMState = newVMState;
+        } else {
+            valueHistory.updateCurrent(wordValue);
+        }
+
     }
 
 }

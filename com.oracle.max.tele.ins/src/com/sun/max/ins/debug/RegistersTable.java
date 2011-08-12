@@ -22,8 +22,6 @@
  */
 package com.sun.max.ins.debug;
 
-
-
 import java.awt.*;
 
 import javax.swing.*;
@@ -72,6 +70,8 @@ public final class RegistersTable extends InspectorTable {
      */
     private final class RegistersTableModel extends InspectorTableModel {
 
+        private static final int HISTORY_GENERATIONS = 6;
+
         private final MaxThread thread;
 
         private int nRegisters = 0;
@@ -91,19 +91,19 @@ public final class RegistersTable extends InspectorTable {
             registerDescriptions = new String[nRegisters];
             int row = 0;
             for (MaxRegister register : registers.integerRegisters()) {
-                registerHistories[row] = new RegisterHistory(register);
+                registerHistories[row] = new RegisterHistory(inspection, HISTORY_GENERATIONS, register);
                 displayModes[row] = WordValueLabel.ValueMode.INTEGER_REGISTER;
                 registerDescriptions[row] = "Integer register (" + isaName + ") \"" + register.name() + "\"";
                 row++;
             }
             for (MaxRegister register : registers.floatingPointRegisters()) {
-                registerHistories[row] = new RegisterHistory(register);
+                registerHistories[row] = new RegisterHistory(inspection, HISTORY_GENERATIONS, register);
                 displayModes[row] = WordValueLabel.ValueMode.FLOATING_POINT;
                 registerDescriptions[row] = "Float register (" + isaName + ") \"" + register.name() + "\"";
                 row++;
             }
             for (MaxRegister register : registers.stateRegisters()) {
-                registerHistories[row] = new RegisterHistory(register);
+                registerHistories[row] = new RegisterHistory(inspection, HISTORY_GENERATIONS, register);
                 if (register.isFlagsRegister()) {
                     displayModes[row] = WordValueLabel.ValueMode.FLAGS_REGISTER;
                     registerDescriptions[row] = "Flags register (" + isaName + ") \"" + register.name() + "\"";
@@ -141,7 +141,7 @@ public final class RegistersTable extends InspectorTable {
 
         @Override
         public void refresh() {
-            // Reads from VM and increments the history generation.
+            // Updates the register history from the VM
             for (RegisterHistory registerHistory : registerHistories) {
                 registerHistory.refresh();
             }
