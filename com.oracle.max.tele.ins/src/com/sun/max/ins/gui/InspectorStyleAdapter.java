@@ -88,7 +88,7 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
     }
 
     // Special styles for interpreted machine word values
-    public Font wordDataFont() {
+    public Font defaultWordDataFont() {
         return hexDataFont();
     }
 

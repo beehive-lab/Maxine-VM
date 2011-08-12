@@ -661,6 +661,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
             };
             wordValueLabel.setTextPrefix(literalLoadText.substring(0, literalLoadText.indexOf("[")).trim());
             wordValueLabel.setToolTipSuffix(" from RIP " + literalLoadText.substring(literalLoadText.indexOf("["), literalLoadText.length()));
+            wordValueLabel.setWordDataFont(inspection.style().defaultBoldFont());
             wordValueLabel.updateText();
             return wordValueLabel;
         }
@@ -676,6 +677,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
             };
             wordValueLabel.setTextSuffix(literalLoadText.substring(literalLoadText.indexOf(",")));
             wordValueLabel.setToolTipSuffix(" from " + literalLoadText.substring(0, literalLoadText.indexOf(",")));
+            wordValueLabel.setWordDataFont(inspection.style().defaultBoldFont());
             wordValueLabel.updateText();
             return wordValueLabel;
         }
@@ -796,8 +798,10 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
                 final TargetCodeInstruction machineCodeInstruction = tableModel.rowToInstruction(row);
                 final String text = machineCodeInstruction.operands;
                 if (machineCodeInstruction.targetAddress != null && !machineCode().contains(machineCodeInstruction.targetAddress)) {
-                    renderer = new WordValueLabel(inspection, WordValueLabel.ValueMode.CALL_ENTRY_POINT, machineCodeInstruction.targetAddress, table);
-                    renderer.setToolTipPrefix(tableModel.getRowDescription(row) + ": operand = ");
+                    final WordValueLabel wordValueLabel = new WordValueLabel(inspection, WordValueLabel.ValueMode.CALL_ENTRY_POINT, machineCodeInstruction.targetAddress, table);
+                    wordValueLabel.setToolTipPrefix(tableModel.getRowDescription(row) + ": operand = ");
+                    wordValueLabel.setWordDataFont(inspection.style().defaultBoldFont());
+                    renderer = wordValueLabel;
                     inspectorLabels[row] = renderer;
                 } else if (machineCodeInstruction.literalSourceAddress != null) {
                     final Address literalAddress = machineCodeInstruction.literalSourceAddress.asAddress();

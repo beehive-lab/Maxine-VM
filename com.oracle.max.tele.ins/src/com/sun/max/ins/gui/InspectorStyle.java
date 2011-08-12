@@ -71,7 +71,7 @@ public interface InspectorStyle {
    // Special styles for interpreted machine word  values
 
     /** font for displaying word data as hex. */
-    Font wordDataFont();
+    Font defaultWordDataFont();
 
     /** special foreground color for displaying the null word. */
     Color wordNullDataColor();
