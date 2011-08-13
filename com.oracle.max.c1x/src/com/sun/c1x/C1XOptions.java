@@ -152,7 +152,7 @@ public final class C1XOptions {
     public static int     SequentialSwitchLimit         = 4;
     public static int     RangeTestsSwitchDensity       = 5;
 
-    public static boolean DetailedAsserts               = true;
+    public static boolean DetailedAsserts               = false;
 
     // Runtime settings
     public static int     ReadPrefetchInstr             = 0;
@@ -165,6 +165,9 @@ public final class C1XOptions {
 
     static {
         setOptimizationLevel(1);
+
+        // turn detailed assertions on when the general assertions are on (misusing the assert keyword for this)
+        assert (DetailedAsserts = true) == true;
     }
 
     public static void setOptimizationLevel(int level) {

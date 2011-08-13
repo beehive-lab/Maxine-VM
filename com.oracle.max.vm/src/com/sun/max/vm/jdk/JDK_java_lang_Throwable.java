@@ -30,6 +30,7 @@ import java.util.*;
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;
@@ -42,6 +43,11 @@ import com.sun.max.vm.thread.*;
  */
 @METHOD_SUBSTITUTIONS(Throwable.class)
 public final class JDK_java_lang_Throwable {
+
+    public static boolean StackTraceInThrowable = true;
+    static {
+        VMOptions.addFieldOption("-XX:", "StackTraceInThrowable", "Collect backtrace in throwable when exception happens.");
+    }
 
     private static final ObjectThreadLocal<Throwable> TRACE_UNDER_CONSTRUCTION = new ObjectThreadLocal<Throwable>("TRACE_UNDER_CONSTRUCTION",
                     "Exception whose back or stack trace is currently being constructed");
@@ -80,7 +86,7 @@ public final class JDK_java_lang_Throwable {
     @SUBSTITUTE
     public synchronized Throwable fillInStackTrace() {
         final Throwable throwable = thisThrowable();
-        if (throwable instanceof OutOfMemoryError) {
+        if (!StackTraceInThrowable || throwable instanceof OutOfMemoryError) {
             // Don't record stack traces in situations where memory may be exhausted
             return throwable;
         }
@@ -113,14 +119,18 @@ public final class JDK_java_lang_Throwable {
      */
     static class Backtrace extends StackTraceVisitor {
 
-        static final int INITIAL_LENGTH = 32;
+        static final int INITIAL_LENGTH = 200;
 
         int count;
-        int[] lineNos = new int[INITIAL_LENGTH];
-        ClassMethodActor[] methods = new ClassMethodActor[INITIAL_LENGTH];
+        int[] lineNos;
+        ClassMethodActor[] methods;
 
         public Backtrace(ClassActor exceptionClass, int maxDepth) {
             super(exceptionClass, maxDepth);
+
+            int len = Math.min(maxDepth, INITIAL_LENGTH);
+            lineNos = new int[len];
+            methods = new ClassMethodActor[len];
         }
 
         @Override
