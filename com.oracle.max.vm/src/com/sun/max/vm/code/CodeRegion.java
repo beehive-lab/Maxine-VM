@@ -45,6 +45,7 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
     public CodeRegion(String description) {
         super(description);
         targetMethods = new TargetMethod[DEFAULT_CAPACITY];
+        findIndex = new int[DEFAULT_CAPACITY];
     }
 
     /**
@@ -59,6 +60,7 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
     public CodeRegion(Address start, Size size, String description) {
         super(start, size, description);
         targetMethods = new TargetMethod[DEFAULT_CAPACITY];
+        findIndex = new int[DEFAULT_CAPACITY];
     }
 
     /**
@@ -78,6 +80,19 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
      */
     @INSPECTED
     private TargetMethod[] targetMethods;
+
+
+    public static final int FIND_INDEX_ALIGN_SHIFT = 9;
+    public static final int FIND_INDEX_ALIGN = 1 << FIND_INDEX_ALIGN_SHIFT;
+
+    /**
+     * Index into {@link #targetMethods} that allows a constant-time implementation of {@link #find()}.
+     * The code region is divided in pages of size {@link #FIND_INDEX_ALIGN}, and this array stores the index
+     * of the method in the {@link #targetMethods} that covers the beginning of the page.
+     * Since {@link #targetMethods} is sorted, a linear search with this starting point quickly finds the method
+     * for an arbitrary address.
+     */
+    private int[] findIndex;
 
     /**
      * Length of valid data in {@link #targetMethods}.
@@ -117,6 +132,17 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
         System.arraycopy(targetMethods, insertionPoint, targetMethods, insertionPoint + 1, length - insertionPoint);
         targetMethods[insertionPoint] = targetMethod;
         length++;
+
+        assert start().alignUp(FIND_INDEX_ALIGN).equals(start());
+        int startIdx = targetMethod.start().plus(FIND_INDEX_ALIGN - 1).minus(start()).unsignedShiftedRight(FIND_INDEX_ALIGN_SHIFT).toInt();
+        int endIdx = targetMethod.end().minus(1).minus(start()).unsignedShiftedRight(FIND_INDEX_ALIGN_SHIFT).toInt();
+        if (endIdx >= findIndex.length) {
+            findIndex = Arrays.copyOf(findIndex, (endIdx * 3) / 2 + 1);
+        }
+        for (int i = startIdx; i <= endIdx; i++) {
+            assert findIndex[i] == 0;
+            findIndex[i] = insertionPoint;
+        }
     }
 
     /**
@@ -126,20 +152,20 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
      * @return a reference to the target method containing the specified address, if it exists; {@code null} otherwise
      */
     public TargetMethod find(Address address) {
-        int left = 0;
-        int right = length;
-        while (right > left) {
-            final int middle = left + ((right - left) >> 1);
-            final TargetMethod method = targetMethods[middle];
-            if (method.start().greaterThan(address)) {
-                right = middle;
-            } else if (method.start().plus(method.size()).greaterThan(address)) {
-                return method;
-            } else {
-                left = middle + 1;
-            }
+        int pageIndex = address.minus(start()).unsignedShiftedRight(FIND_INDEX_ALIGN_SHIFT).toInt();
+        if (pageIndex < 0 || pageIndex >= findIndex.length) {
+            return null;
         }
-        return null;
+
+        int methodIdx = findIndex[pageIndex];
+        while (true) {
+            TargetMethod method = targetMethods[methodIdx];
+            assert method.start().lessEqual(address);
+            if (method.end().greaterThan(address)) {
+                return method;
+            }
+            methodIdx++;
+        }
     }
 
     /**
