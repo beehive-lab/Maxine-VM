@@ -389,7 +389,7 @@ public final class MemoryWordsTable extends InspectorTable {
                 }
             }
             label.setText(labelText);
-            label.setWrappedToolTipText(toolTipText);
+            label.setWrappedToolTipHtmlText(toolTipText);
             if (isBoundaryRow(row)) {
                 label.setBorder(style().defaultPaneTopBorder());
             } else {

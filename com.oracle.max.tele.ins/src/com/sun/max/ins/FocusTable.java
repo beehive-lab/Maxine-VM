@@ -214,7 +214,7 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
             final FocusRowKind focusRowKind = FocusRowKind.values()[row];
             setText(focusRowKind.label());
             setToolTipPrefix(tableModel.getRowDescription(row));
-            setWrappedToolTipText("<br>" + focusRowKind.toolTipText());
+            setWrappedToolTipHtmlText("<br>" + focusRowKind.toolTipText());
             return this;
         }
     }
@@ -240,11 +240,11 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
                                 final MaxThread thread = focus().thread();
                                 if (thread == null) {
                                     setValue(null);
-                                    setWrappedToolTipText(htmlify("<none>"));
+                                    setWrappedToolTipHtmlText(htmlify("<none>"));
                                 } else {
                                     final String longName = inspection.nameDisplay().longNameWithState(thread);
                                     setValue(longName);
-                                    setWrappedToolTipText(longName);
+                                    setWrappedToolTipHtmlText(longName);
                                 }
                             }
                         };
@@ -256,12 +256,12 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
                                 final MaxStackFrame stackFrame = focus().stackFrame();
                                 if (stackFrame == null) {
                                     setValue(null);
-                                    setWrappedToolTipText(htmlify("<none>"));
+                                    setWrappedToolTipHtmlText(htmlify("<none>"));
                                 } else {
                                     final MaxCompilation compiledCode = stackFrame.compiledCode();
                                     final String name = compiledCode == null ? "nativeMethod: " + stackFrame.codeLocation().address().to0xHexString() : compiledCode.entityName();
                                     setValue(name);
-                                    setWrappedToolTipText(htmlify(name));
+                                    setWrappedToolTipHtmlText(htmlify(name));
                                 }
                             }
                         };
@@ -273,11 +273,11 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
                                 final MaxCodeLocation codeLocation = focus().codeLocation();
                                 if (codeLocation == null) {
                                     setValue(null);
-                                    setWrappedToolTipText(htmlify("<none>"));
+                                    setWrappedToolTipHtmlText(htmlify("<none>"));
                                 } else {
                                     final String longName = inspection().nameDisplay().longName(codeLocation);
                                     setValue(longName);
-                                    setWrappedToolTipText(htmlify(longName));
+                                    setWrappedToolTipHtmlText(htmlify(longName));
                                 }
                             }
                         };
@@ -289,11 +289,11 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
                                 final MaxBreakpoint breakpoint = focus().breakpoint();
                                 if (breakpoint == null) {
                                     setValue(null);
-                                    setWrappedToolTipText(htmlify("<none>"));
+                                    setWrappedToolTipHtmlText(htmlify("<none>"));
                                 } else {
                                     final String longName = inspection().nameDisplay().longName(breakpoint.codeLocation());
                                     setValue(longName);
-                                    setWrappedToolTipText(htmlify(longName));
+                                    setWrappedToolTipHtmlText(htmlify(longName));
                                 }
                             }
                         };
@@ -305,11 +305,11 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
                                 final MaxWatchpoint watchpoint = focus().watchpoint();
                                 if (watchpoint == null) {
                                     setValue(null);
-                                    setWrappedToolTipText(htmlify("<none>"));
+                                    setWrappedToolTipHtmlText(htmlify("<none>"));
                                 } else {
                                     final String longName = watchpoint.toString();
                                     setValue(longName);
-                                    setWrappedToolTipText(htmlify(longName));
+                                    setWrappedToolTipHtmlText(htmlify(longName));
                                 }
                             }
                         };

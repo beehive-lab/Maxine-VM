@@ -301,7 +301,7 @@ public class CompiledStackFrameTable extends InspectorTable {
             final String sourceVariableName = tableModel.getSourceVariableName(row);
             final int offset = tableModel.getSPOffset(row, false);
             final String toolTipText = String.format("SP %+d%s%s", offset, otherInfo, sourceVariableName == null ? "" : " [" + sourceVariableName + "]");
-            setWrappedToolTipText(tableModel.getRowDescription(row) + "<br>" + toolTipText);
+            setWrappedToolTipHtmlText(tableModel.getRowDescription(row) + "<br>" + toolTipText);
             setForeground(cellForegroundColor(row, col));
             setBackground(cellBackgroundColor(isSelected));
 

@@ -518,7 +518,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
             } else {
                 setBorder(null);
             }
-            setWrappedToolTipText(toolTipSB.toString());
+            setWrappedToolTipHtmlText(toolTipSB.toString());
             setBackgroundForRow(this, row);
             return this;
         }
@@ -610,7 +610,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
             final String label = (String) value;
             final Integer position = (Integer) tableModel.getValueAt(row, MachineCodeColumnKind.POSITION.ordinal());
             setLocation(label, position);
-            setWrappedToolTipText(tableModel.getRowDescription(row));
+            setWrappedToolTipHtmlText(tableModel.getRowDescription(row));
             setFont(style().defaultFont());
             setBackgroundForRow(this, row);
             //setForeground(getRowTextColor(row));
@@ -641,7 +641,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
             setBackgroundForRow(this, row);
             setForeground(cellForegroundColor(row, column));
             setText(mnemonic);
-            setWrappedToolTipText(tableModel.getRowDescription(row) + "<br>ISA = " + isa.name());
+            setWrappedToolTipHtmlText(tableModel.getRowDescription(row) + "<br>ISA = " + isa.name());
             setBorderForRow(this, row);
             return this;
         }
@@ -661,6 +661,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
             };
             wordValueLabel.setTextPrefix(literalLoadText.substring(0, literalLoadText.indexOf("[")).trim());
             wordValueLabel.setToolTipSuffix(" from RIP " + literalLoadText.substring(literalLoadText.indexOf("["), literalLoadText.length()));
+            wordValueLabel.setWordDataFont(inspection.style().defaultBoldFont());
             wordValueLabel.updateText();
             return wordValueLabel;
         }
@@ -676,6 +677,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
             };
             wordValueLabel.setTextSuffix(literalLoadText.substring(literalLoadText.indexOf(",")));
             wordValueLabel.setToolTipSuffix(" from " + literalLoadText.substring(0, literalLoadText.indexOf(",")));
+            wordValueLabel.setWordDataFont(inspection.style().defaultBoldFont());
             wordValueLabel.updateText();
             return wordValueLabel;
         }
@@ -748,7 +750,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
             final CiCodePos codePos = debugInfo == null ? null : debugInfo.codePos;
             setText("");
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
-            setWrappedToolTipText("Source location not available");
+            setWrappedToolTipHtmlText("Source location not available");
             setBackgroundForRow(this, row);
             if (codePos != null) {
                 final StackTraceElement stackTraceElement = codePos.method.toStackTraceElement(codePos.bci);
@@ -759,7 +761,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
                     stackTrace.append("<tr><td>--&gt;&nbsp;</td><td>").append(toolTipText(parentSTE)).append("</td></tr>");
                     top = parentSTE;
                 }
-                setWrappedToolTipText("Source location = " + stackTrace.append("</table>").toString());
+                setWrappedToolTipHtmlText("Source location = " + stackTrace.append("</table>").toString());
                 setText(String.valueOf(top.getLineNumber()));
             }
             lastCodePos = codePos;
@@ -796,8 +798,10 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
                 final TargetCodeInstruction machineCodeInstruction = tableModel.rowToInstruction(row);
                 final String text = machineCodeInstruction.operands;
                 if (machineCodeInstruction.targetAddress != null && !machineCode().contains(machineCodeInstruction.targetAddress)) {
-                    renderer = new WordValueLabel(inspection, WordValueLabel.ValueMode.CALL_ENTRY_POINT, machineCodeInstruction.targetAddress, table);
-                    renderer.setToolTipPrefix(tableModel.getRowDescription(row) + ": operand = ");
+                    final WordValueLabel wordValueLabel = new WordValueLabel(inspection, WordValueLabel.ValueMode.CALL_ENTRY_POINT, machineCodeInstruction.targetAddress, table);
+                    wordValueLabel.setToolTipPrefix(tableModel.getRowDescription(row) + ": operand = ");
+                    wordValueLabel.setWordDataFont(inspection.style().defaultBoldFont());
+                    renderer = wordValueLabel;
                     inspectorLabels[row] = renderer;
                 } else if (machineCodeInstruction.literalSourceAddress != null) {
                     final Address literalAddress = machineCodeInstruction.literalSourceAddress.asAddress();
@@ -811,19 +815,19 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
                         renderer = new TextLabel(inspection, CiUtil.format("%h.%n()", callee, false));
                         renderer.setToolTipPrefix(tableModel.getRowDescription(row) + ":");
                         renderer.setToolTipSuffix("<br>" + CiUtil.format("%r %H.%n(%p)", callee, false));
-                        renderer.setWrappedToolTipText("<br>operands = " + text);
+                        renderer.setWrappedToolTipHtmlText("<br>operands = " + text);
                         renderer.setForeground(cellForegroundColor(row, column));
                     } else {
                         if (instructionMap.isNativeCall(row)) {
                             renderer = new TextLabel(inspection, "<native function>");
                             renderer.setToolTipPrefix(tableModel.getRowDescription(row) + ":");
-                            renderer.setWrappedToolTipText("<br>operands = " + text);
+                            renderer.setWrappedToolTipHtmlText("<br>operands = " + text);
                             renderer.setForeground(cellForegroundColor(row, column));
                         } else {
                             renderer = machineCodeLabel;
                             renderer.setToolTipPrefix(tableModel.getRowDescription(row) + ":");
                             renderer.setText(text);
-                            renderer.setWrappedToolTipText("<br>operands = " + text);
+                            renderer.setWrappedToolTipHtmlText("<br>operands = " + text);
                             renderer.setForeground(cellForegroundColor(row, column));
                         }
                     }

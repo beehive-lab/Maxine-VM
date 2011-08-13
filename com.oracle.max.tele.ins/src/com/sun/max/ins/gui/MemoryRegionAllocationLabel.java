@@ -130,17 +130,17 @@ public final class MemoryRegionAllocationLabel extends AbstractMemoryRegionLabel
         final long size = usage.getCommitted();
         if (size == 0) {
             setText(inspection().nameDisplay().unavailableDataShortText());
-            setWrappedToolTipText(htmlify(inspection().nameDisplay().unavailableDataLongText()));
+            setWrappedToolTipHtmlText(htmlify(inspection().nameDisplay().unavailableDataLongText()));
         } else {
             final long used = usage.getUsed();
             switch(displayMode) {
                 case ALLOCATED:
                     setText(longTo0xHex(used));
-                    setWrappedToolTipText(Long.toString(100 * used / size) + "% (" + used + "/" + size + ")");
+                    setWrappedToolTipHtmlText(Long.toString(100 * used / size) + "% (" + used + "/" + size + ")");
                     break;
                 case PERCENT:
                     setText(Long.toString(100 * used / size) + "%");
-                    setWrappedToolTipText(longTo0xHex(used) + "/" + longTo0xHex(size) + " bytes (" + used + "/" + size + ")");
+                    setWrappedToolTipHtmlText(longTo0xHex(used) + "/" + longTo0xHex(size) + " bytes (" + used + "/" + size + ")");
                     break;
             }
         }

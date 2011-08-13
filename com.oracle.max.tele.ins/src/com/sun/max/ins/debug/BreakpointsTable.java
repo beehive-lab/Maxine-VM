@@ -360,7 +360,7 @@ public final class BreakpointsTable extends InspectorTable {
             setIcon((breakpointData.triggerThread() == null) ? null : style().debugIPTagIcon());
             setText(breakpointData.kindTag());
             setToolTipPrefix(htmlify(tableModel.getRowDescription(row)));
-            setWrappedToolTipText("<br>" + "Enabled=" + (breakpointData.isEnabled() ? "true" : "false"));
+            setWrappedToolTipHtmlText("<br>" + "Enabled=" + (breakpointData.isEnabled() ? "true" : "false"));
             setForeground(cellForegroundColor(row, column));
             setBackground(cellBackgroundColor(isSelected));
             return this;
@@ -396,7 +396,7 @@ public final class BreakpointsTable extends InspectorTable {
             final BreakpointData breakpointData = tableModel.get(row);
             setToolTipPrefix(htmlify(tableModel.getRowDescription(row)));
             setText(Integer.toString(breakpointData.location()));
-            setWrappedToolTipText("<br>" + htmlify(breakpointData.locationDescription()));
+            setWrappedToolTipHtmlText("<br>" + htmlify(breakpointData.locationDescription()));
             setForeground(cellForegroundColor(row, column));
             setBackground(cellBackgroundColor(isSelected));
             return this;
@@ -443,10 +443,10 @@ public final class BreakpointsTable extends InspectorTable {
             setToolTipPrefix(htmlify(tableModel.getRowDescription(row)));
             if (breakpointData.triggerThread() != null) {
                 setText(breakpointData.triggerThreadName());
-                setWrappedToolTipText("<br>Thread \"" + breakpointData.triggerThreadName() + "\" stopped at this breakpoint");
+                setWrappedToolTipHtmlText("<br>Thread \"" + breakpointData.triggerThreadName() + "\" stopped at this breakpoint");
             } else {
                 setText("");
-                setWrappedToolTipText("<br>No Thread stopped at this breakpoint");
+                setWrappedToolTipHtmlText("<br>No Thread stopped at this breakpoint");
             }
             setForeground(cellForegroundColor(row, column));
             setBackground(cellBackgroundColor(isSelected));

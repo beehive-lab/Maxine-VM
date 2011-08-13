@@ -156,9 +156,8 @@ public final class StackView extends AbstractView<StackView> {
                 setToolTipPrefix("call return in frame " + modelIndex + " points at:<br>");
                 setForeground(style().wordCallReturnPointColor());
             }
-            setWrappedText(Integer.toString(modelIndex) + ":  " + htmlify(methodName));
-            setWrappedToolTipText(toolTip);
-            setFont(style().defaultFont());
+            setText(Integer.toString(modelIndex) + ":  " + methodName);
+            setWrappedToolTipHtmlText(toolTip);
             setBackground(isSelected ? stackFrameList.getSelectionBackground() : stackFrameList.getBackground());
             return this;
         }

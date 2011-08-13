@@ -54,6 +54,7 @@ public interface InspectorStyle {
 
     // Default text
     Font defaultFont();
+    Font defaultBoldFont();
     int defaultTextFontSize();
     Color defaultErrorTextColor();
     Color defaultErrorTextBackgroundColor();
@@ -70,7 +71,7 @@ public interface InspectorStyle {
    // Special styles for interpreted machine word  values
 
     /** font for displaying word data as hex. */
-    Font wordDataFont();
+    Font defaultWordDataFont();
 
     /** special foreground color for displaying the null word. */
     Color wordNullDataColor();
@@ -118,8 +119,6 @@ public interface InspectorStyle {
     Font charDataFont();
 
     // Display of string values
-    /** Maximum number of string characters to display when displaying a "hint" as to string contents. */
-    int maxStringInlineDisplayLength();
     /** Maximum number of elements from a char array to display when viewing as text. */
     int maxStringFromCharArrayDisplayLength();
 

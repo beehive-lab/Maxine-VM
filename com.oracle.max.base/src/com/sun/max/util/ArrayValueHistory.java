@@ -30,7 +30,7 @@ import com.sun.max.program.*;
  * An array-based recording of the history of a value, with
  * time expressed as the number of generations back from the current generation (0).
  */
-public class ArrayValueHistory<E> {
+public final class ArrayValueHistory<E> {
 
     private final ArrayDeque<E> generations;
     private final int limit;
@@ -49,7 +49,7 @@ public class ArrayValueHistory<E> {
      * Adds a new value, which becomes the current generation.
      * The generation of all previously recorded values increases by 1.
      */
-    public void add(E newValue) {
+    public void addNew(E newValue) {
         if (generations.size() > 0) {
             if (newValue.equals(generations.getFirst())) {
                 if (age >= 0) {
@@ -66,21 +66,30 @@ public class ArrayValueHistory<E> {
     }
 
     /**
-     * @return the "current" value (at generation 0).
-     * Error if no values have been recorded.
+     * Replaces the current value in the history, without changing
+     * the age of anything.
+     *
+     * @param newValue value which becomes current
+     * @throws ProgramError if no values have been recorded.
      */
-    public E get() {
+    public void updateCurrent(E newValue) {
         if (generations.size() > 0) {
-            return generations.getFirst();
+            generations.pop();
+            addNew(newValue);
+        } else {
+            throw ProgramError.unexpected("attempt to update empty history");
         }
-        throw ProgramError.unexpected("empty history");
     }
 
     /**
+     * Gets the historical value at some generation, 0 is current.
+     *
      * @return The value at a specified generation.
-     * Error if generation does not exist.
      */
-    public E get(int generation) {
+    public E value(int generation) {
+        if (generation == 0 && generations.size() > 0) {
+            return generations.getFirst();
+        }
         final Iterator<E> iterator = generations.iterator();
         int index = 0;
         while (iterator.hasNext()) {
@@ -97,7 +106,7 @@ public class ArrayValueHistory<E> {
      * 0 if different from immediate predecessor; -1 if no different value ever recorded
      * Comparison uses {@linkplain Object#equals(Object) equals}.
      */
-    public int getAge() {
+    public int currentValueAge() {
         return age;
     }
 
@@ -111,7 +120,7 @@ public class ArrayValueHistory<E> {
     /**
      * @return the number of generations recorded; initially 0.
      */
-    public int getSize() {
+    public int size() {
         return generations.size();
     }
 
@@ -119,7 +128,7 @@ public class ArrayValueHistory<E> {
      * @return iteration of the values recorded in the history, starting with the current
      * generation and proceeding backward in time.
      */
-    public Iterator<E> values() {
+    public Iterator<E> generations() {
         return generations.iterator();
     }
 

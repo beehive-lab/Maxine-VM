@@ -88,7 +88,7 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
     }
 
     // Special styles for interpreted machine word values
-    public Font wordDataFont() {
+    public Font defaultWordDataFont() {
         return hexDataFont();
     }
 
@@ -142,10 +142,6 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
         return defaultFont();
     }
 
-    // Display of string values
-    public int maxStringInlineDisplayLength() {
-        return 100;
-    }
     public int maxStringFromCharArrayDisplayLength() {
         return 200;
     }
@@ -175,7 +171,7 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
         return null;
     }
     public int maxBytecodeOperandDisplayLength() {
-        return maxStringInlineDisplayLength();
+        return 100;
     }
     public Color bytecodeMethodEntryColor() {
         return null;

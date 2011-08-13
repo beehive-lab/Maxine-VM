@@ -331,6 +331,20 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
     }
 
     /**
+     * Sets the label's text to the specified string, wrapped
+     * by an optional prefix and an optional suffix.
+     *
+     * @param text the text to be wrapped and set as the label's text.
+     * @see #setTextPrefix(String)
+     * @see #setTextSuffix(String)
+     * @see #setText(String)
+     */
+    public void setWrappedText(String text) {
+        //System.out.println(" pre=" + textPrefix + " txt=" + text + " suf=" + textSuffix);
+        super.setText(textPrefix + text + textSuffix);
+    }
+
+    /**
      * Sets the label's text to the specified string, but starting
      * with an {@code <html>} tag, and wrapped
      * by an optional prefix and an optional suffix.
@@ -343,9 +357,10 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
      * @see #setTextSuffix(String)
      * @see #setText(String)
      */
-    public void setWrappedText(String text) {
-        //]System.out.println("<html>" + textPrefix + text + textSuffix);
+    public void setWrappedHtmlText(String text) {
+        //System.out.println("<html>" + " pre=" + textPrefix + " txt=" + text + " suf=" + textSuffix);
         super.setText("<html>" + textPrefix + text + textSuffix);
+        //super.setText(textPrefix + text + textSuffix);
     }
 
     /**
@@ -354,7 +369,7 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
      * value change) that causes the tool tip text to be regenerated.
      *
      * @param toolTipPrefix prefix for every tooltip display.
-     * @see #setWrappedToolTipText(String)
+     * @see #setWrappedToolTipHtmlText(String)
      */
     public final void setToolTipPrefix(String toolTipPrefix) {
         if (toolTipPrefix != null && !toolTipPrefix.equals("")) {
@@ -370,7 +385,7 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
      * space inserted between.
      *
      * @param toolTipSuffix suffix for every tooltip display.
-     * @see #setWrappedToolTipText(String)
+     * @see #setWrappedToolTipHtmlText(String)
      */
     public final void setToolTipSuffix(String toolTipSuffix) {
         if (toolTipSuffix != null && !toolTipSuffix.equals("")) {
@@ -391,7 +406,7 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
      * @see #setToolTipSuffix(String)
      * @see #setToolTipText(String)
      */
-    public final void setWrappedToolTipText(String toolTipText) {
+    public final void setWrappedToolTipHtmlText(String toolTipText) {
         //System.out.println("<html>" + toolTipPrefix + toolTipText + toolTipSuffix);
         super.setToolTipText("<html>" + toolTipPrefix + toolTipText + toolTipSuffix);
     }
