@@ -268,7 +268,8 @@ public final class SamplingProfiler extends Thread {
             if (threadSampleList == null) {
                 threadSampleList = new ArrayList<ThreadSample>();
                 final StackInfo copy = workingStackInfo.copy(workingStackDepth);
-                assert stackInfoMap.put(copy, threadSampleList) == null;
+                List<ThreadSample> existing = stackInfoMap.put(copy, threadSampleList);
+                assert existing == null;
             }
             // Check if this thread has had this stack trace before, allocating a new ThreadSample instance if not
             final ThreadSample threadSample = getThreadSample(threadSampleList, vmThread);
