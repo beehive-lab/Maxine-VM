@@ -27,7 +27,6 @@ import static com.sun.cri.ci.CiRegister.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
-import static com.sun.max.vm.compiler.target.TargetMethod.*;
 import static com.sun.max.vm.t1x.T1XTemplateTag.*;
 
 import java.util.*;
@@ -511,7 +510,7 @@ public class T1XCompilation {
      * @param template the compiled code to emit
      */
     protected void emitAndRecordStops(T1XTemplate template) {
-        if (template.numberOfStops != 0) {
+        if (template.stops.length != 0) {
             int bci = stream.currentBCI();
             stops.add(template, buf.position(), bci == stream.endBCI() ? -1 : bci, null);
         }
@@ -1050,17 +1049,14 @@ public class T1XCompilation {
             AMD64Assembler asm = (AMD64Assembler) this.asm;
             // Align bytecode call site for MT safe patching
             final int alignment = 7;
-            int templateCallStopPos = template.bytecodeCall.pos;
-            if (StopPositionForCallIsReturnPos) {
-                templateCallStopPos = directCallPosForStopPos(templateCallStopPos);
-            }
-            final int callSitePosition = buf.position() + templateCallStopPos;
+            int templateCallPos = template.templateCall.causePos();
+            final int callPos = buf.position() + templateCallPos;
             final int roundDownMask = ~alignment;
             final int directCallInstructionLength = 5; // [0xE8] disp32
-            final int endOfCallSite = callSitePosition + (directCallInstructionLength - 1);
-            if ((callSitePosition & roundDownMask) != (endOfCallSite & roundDownMask)) {
+            final int endOfCallSite = callPos + (directCallInstructionLength - 1);
+            if ((callPos & roundDownMask) != (endOfCallSite & roundDownMask)) {
                 // Emit nops to align up to next 8-byte boundary
-                asm.nop(8 - (callSitePosition & alignment));
+                asm.nop(8 - (callPos & alignment));
             }
         } else {
             unimplISA();

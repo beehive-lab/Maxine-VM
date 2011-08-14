@@ -115,7 +115,7 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
 
         initCodeBuffer(ciTargetMethod, install);
         initFrameLayout(ciTargetMethod);
-        CiDebugInfo[] debugInfos = initStopPositions(ciTargetMethod);
+        CiDebugInfo[] debugInfos = initStops(ciTargetMethod);
         initExceptionTable(ciTargetMethod);
 
         debugInfo = new DebugInfo(debugInfos, this);
@@ -175,11 +175,6 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
 
     public DebugInfo debugInfo() {
         return debugInfo;
-    }
-
-    @Override
-    protected ClassMethodActor toMethodActor(CiRuntimeCall rtCall) {
-        return C1XRuntimeCalls.getClassMethodActor(rtCall);
     }
 
     private void initExceptionTable(CiTargetMethod ciTargetMethod) {
@@ -344,25 +339,21 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
 
         // iterate over direct calls
         for (CiTargetMethod.Call site : bootstrappingCiTargetMethod.directCalls) {
-            if (site.runtimeCall != null) {
-                directCalls.add(getClassMethodActor(site.runtimeCall, site.method));
-            } else if (site.method != null) {
-                MethodActor methodActor = (MethodActor) site.method;
-                directCalls.add(methodActor);
+            MethodActor callee = CallTarget.asMethodActor(site.target);
+            if (callee != null) {
+                directCalls.add(callee);
             }
             gatherInlinedMethods(site, inlinedMethods);
         }
 
         // iterate over all the calls and append them to the appropriate lists
         for (CiTargetMethod.Call site : bootstrappingCiTargetMethod.indirectCalls) {
-            if (site.method != null) {
-                if (site.method.isResolved()) {
-                    MethodActor methodActor = (MethodActor) site.method;
-                    if (site.method.holder().isInterface()) {
-                        interfaceCalls.add(methodActor);
-                    } else {
-                        virtualCalls.add(methodActor);
-                    }
+            MethodActor callee = CallTarget.asMethodActor(site.target);
+            if (callee != null) {
+                if (callee.holder().isInterface()) {
+                    interfaceCalls.add(callee);
+                } else {
+                    virtualCalls.add(callee);
                 }
             }
             gatherInlinedMethods(site, inlinedMethods);
@@ -478,7 +469,7 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
     public static void prepareTrampolineRefMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer) {
         RiRegisterConfig registerConfig = vm().registerConfigs.trampoline;
         TargetMethod trampoline = callee.targetMethod();
-        ClassMethodActor calledMethod;
+        ClassMethodActor calledMethod = null;
         TargetMethod targetMethod = current.targetMethod();
 
         CiCalleeSaveLayout csl = callee.csl();
@@ -488,8 +479,20 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
 
         // figure out what method the caller is trying to call
         if (trampoline.is(StaticTrampoline)) {
-            int stopIndex = targetMethod.findStopIndex(current.ip());
-            calledMethod = (ClassMethodActor) targetMethod.directCallees()[stopIndex];
+            int dcIndex = 0;
+            Stops stops = targetMethod.stops();
+            int stopPos = targetMethod.posFor(current.ip());
+            for (int stopIndex = stops.nextDirectCall(0); stopIndex >= 0; stopIndex = stops.nextDirectCall(stopIndex + 1)) {
+                if (stops.posAt(stopIndex) == stopPos) {
+                    calledMethod = (ClassMethodActor) targetMethod.directCallees()[dcIndex];
+                    break;
+                }
+                dcIndex++;
+            }
+            if (calledMethod == null) {
+                // this is very bad.
+                throw FatalError.unexpected("could not find stop index");
+            }
         } else {
             // this is a virtual or interface call; figure out the receiver method based on the
             // virtual or interface index
@@ -639,12 +642,6 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
 
     @Override
     public int forEachCodePos(CodePosClosure cpc, Pointer ip, boolean ipIsReturnAddress) {
-        if (!StopPositionForCallIsReturnPos && ipIsReturnAddress && platform().isa.offsetToReturnPC == 0) {
-            // Make sure IP is within a call instruction so the stop for the call is found, not the
-            // stop for a safepoint that may be immediately succeeding the call
-            ip = ip.minus(1);
-        }
-
         int index = findStopIndex(ip);
         if (index < 0) {
             return 0;

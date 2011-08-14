@@ -413,7 +413,7 @@ public abstract class ReferenceMapInterpreter {
      * @param bciIter the BCIs at which {@code visitor} should notified of the references
      *            in the abstract interpretation state
      */
-    public void interpretReferenceSlots(ReferenceMapInterpreterContext context, ReferenceSlotVisitor visitor, BCIIterator bciIter) {
+    public final void interpretReferenceSlots(ReferenceMapInterpreterContext context, ReferenceSlotVisitor visitor, BCIIterator bciIter) {
         boolean trace = traceRefMapInterpretation(context.classMethodActor());
         if (trace) {
             Log.print("Interpreting ref slots for ");

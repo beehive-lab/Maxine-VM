@@ -214,4 +214,9 @@ public interface RiRuntime {
      * @return {@code null} if the conversion is not possible.
      */
     Class<?> asJavaClass(CiConstant c);
+
+    /**
+     * Performs any runtime-specific conversion on the object used to describe the target of a call.
+     */
+    Object asCallTarget(Object target);
 }

@@ -22,8 +22,7 @@
  */
 package com.sun.max.vm.t1x;
 
-import static com.sun.max.vm.compiler.target.TargetMethod.*;
-import static com.sun.max.vm.t1x.T1XTemplate.T1XStop.Flag.*;
+import static com.sun.max.vm.compiler.target.Stops.*;
 
 import java.util.*;
 
@@ -33,6 +32,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.target.Stops.Attr;
 
 /**
  * A T1X template is a piece of machine code (and its associated metadata) that
@@ -42,28 +42,37 @@ import com.sun.max.vm.compiler.target.*;
 public class T1XTemplate {
 
     public static class T1XStop {
-        public enum Flag {
-            BackwardBranch,
-            Safepoint,
-            DirectCall,
-            IndirectCall,
-            InTemplate;
-
-            public final int mask = 1 << ordinal();
-        }
-
         public static final int NO_BSM_INDEX = Integer.MIN_VALUE;
 
         public T1XStop() {
         }
 
-        public T1XStop(int flags, int pos, int bci) {
-            this.flags = flags;
-            this.pos = pos;
+        public T1XStop(int stop, int bci) {
+            this.stop = stop;
             this.bci = bci;
         }
-        int flags;
-        int pos;
+
+        int stop;
+
+        public int pos() {
+            return stop & POS_MASK;
+        }
+
+        public int causePos() {
+            return Stops.causePos(stop);
+        }
+
+        public int attrs() {
+            return stop & ATTRS_MASK;
+        }
+
+        public boolean isSet(Attr a) {
+            return a.isSet(stop);
+        }
+
+        public boolean isCall() {
+            return isSet(DIRECT_CALL) || isSet(INDIRECT_CALL);
+        }
 
         /**
          * Bytecode index of stop. This is {@code -1} for a template.
@@ -73,29 +82,18 @@ public class T1XTemplate {
         CiBitMap frameRefMap;
         CiBitMap regRefMap;
 
-        /**
-         * Index of this stop in the bytecode stops map.
-         */
-        int bsmIndex;
-
-        int bsmIndex() {
-            return bsmIndex < 0 ? -bsmIndex : bsmIndex;
-        }
-
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
-            for (Flag f : Flag.values()) {
-                if ((flags & f.mask) != 0) {
-                    sb.append(f).append(' ');
+            for (Attr f : Stops.ALL_ATTRS) {
+                if (f.isSet(stop)) {
+                    sb.append(f.name).append(' ');
                 }
             }
             sb.append("@ ").
-                append(pos).
+                append(Stops.POS_MASK & stop).
                 append(" [bci: ").
-                append(bci).
-                append(", bsmIndex: ").
-                append(bsmIndex == NO_BSM_INDEX ? "<none>" : String.valueOf(bsmIndex()));
+                append(bci);
             if (frameRefMap != null) {
                 sb.append(", frameRefMap:").append(frameRefMap);
             }
@@ -111,11 +109,8 @@ public class T1XTemplate {
     public final ClassMethodActor method;
     public final T1XTemplateTag tag;
     public final byte[] code;
-    public final T1XStop bytecodeCall;
-    public final T1XStop[] directCalls;
-    public final T1XStop[] indirectCalls;
-    public final T1XStop[] safepoints;
-    public final int numberOfStops;
+    public final T1XStop templateCall;
+    public final T1XStop[] stops;
 
     @Override
     public String toString() {
@@ -165,18 +160,14 @@ public class T1XTemplate {
     }
 
     public static class StopsBuilder {
-        StopArray directCalls;
-        StopArray indirectCalls;
-        StopArray safepoints;
+        StopArray stopsArray;
+        Stops stops;
+        int directCalls;
+        int bcisWithStops;
+        int lastBci;
 
-        T1XStop last;
-
-        private int bciWithStopCount;
-
-        public int[] stopPositions;
         public Object[] directCallees;
         public byte[] refMaps;
-        public CiBitMap isDirectCallToRuntime;
         public BytecodeStopsIterator bytecodeStopsIterator;
 
         public StopsBuilder() {
@@ -184,237 +175,147 @@ public class T1XTemplate {
         }
 
         void reset(boolean hard) {
-            last = null;
-            bciWithStopCount = 0;
+            directCalls = 0;
+            bcisWithStops = 0;
+            lastBci = -1;
             if (hard) {
-                directCalls = new StopArray();
-                indirectCalls = new StopArray();
-                safepoints = new StopArray();
+                stopsArray = new StopArray();
             } else {
-                directCalls.clear();
-                indirectCalls.clear();
-                safepoints.clear();
+                stopsArray.clear();
             }
         }
 
         void reserveInBSM(T1XStop stop) {
             if (stop.bci >= 0) {
-                if (last != null) {
-                    if (last.bci == stop.bci) {
-                        stop.bsmIndex = last.bsmIndex() + 1;
-                    } else {
-                        stop.bsmIndex = -(last.bsmIndex() + 2);
-                    }
-                } else {
-                    stop.bsmIndex = -1;
+                if (lastBci != stop.bci) {
+                    lastBci = stop.bci;
+                    bcisWithStops++;
                 }
-                last = stop;
-            } else {
-                stop.bsmIndex = T1XStop.NO_BSM_INDEX;
             }
-        }
-
-        int insertInBSM(int[] bsm, T1XStop stop) {
-            if (stop.bsmIndex < 0 && stop.bsmIndex != T1XStop.NO_BSM_INDEX) {
-                stop.bsmIndex = -stop.bsmIndex;
-                bsm[stop.bsmIndex - 1] = stop.bci | BytecodeStopsIterator.BCP_BIT;
-            }
-            return stop.bsmIndex;
         }
 
         public void addSafepoint(int bci, int pos) {
-            T1XStop dst = safepoints.makeNext();
+            T1XStop dst = stopsArray.makeNext();
             dst.bci = bci;
-            dst.pos = pos;
+            dst.stop = Stops.make(pos, pos, SAFEPOINT);
             dst.callee = null;
-            dst.flags = Safepoint.mask;
 
             // No GC maps needed: the template slots are dead for the remainder of the template
             dst.regRefMap = null;
             dst.frameRefMap = null;
             reserveInBSM(dst);
-            bciWithStopCount++;
         }
 
         public void add(T1XTemplate template, int pos, int bci, ClassMethodActor directBytecodeCallee) {
-            for (T1XStop src : template.directCalls) {
-                T1XStop dst = directCalls.makeNext();
+            for (T1XStop src : template.stops) {
+                T1XStop dst = stopsArray.makeNext();
                 dst.bci = bci;
-                dst.pos = pos + src.pos;
-                if (src == template.bytecodeCall) {
-                    assert directBytecodeCallee != null : "bytecode call in template must bound to a direct bytecode callee";
-                    dst.callee = directBytecodeCallee;
-                    dst.flags = DirectCall.mask;
-
+                dst.stop = make(pos + src.pos(), pos + src.causePos(), src.attrs());
+                if (src.isSet(DIRECT_CALL)) {
                     // The decision as to whether ref-maps are used is made when the template is created
                     dst.frameRefMap = src.frameRefMap;
-                    dst.regRefMap = null;
+                    dst.regRefMap = src.regRefMap;
+                    if (src == template.templateCall) {
+                        assert directBytecodeCallee != null : "bytecode call in template must bound to a direct bytecode callee";
+                        dst.callee = directBytecodeCallee;
 
-                    // Make sure the direct bytecode callee is bound at most once
-                    directBytecodeCallee = null;
+                        // Make sure the direct bytecode callee is bound at most once
+                        directBytecodeCallee = null;
+                    } else {
+                        dst.callee = src.callee;
+                    }
+                    directCalls++;
                 } else {
-                    dst.flags = src.flags;
-                    dst.callee = src.callee;
+                    assert src.isSet(SAFEPOINT) || src.isSet(INDIRECT_CALL);
+                    dst.callee = null;
                     dst.frameRefMap = src.frameRefMap;
-                    dst.regRefMap = null;
+                    dst.regRefMap = src.regRefMap;
                 }
                 reserveInBSM(dst);
-            }
-            for (T1XStop src : template.indirectCalls) {
-                T1XStop dst = indirectCalls.makeNext();
-                dst.bci = bci;
-                dst.pos = pos + src.pos;
-                dst.flags = src.flags;
-                dst.callee = null;
-                dst.frameRefMap = src.frameRefMap;
-                dst.regRefMap = null;
-                reserveInBSM(dst);
-            }
-            for (T1XStop src : template.safepoints) {
-                T1XStop dst = safepoints.makeNext();
-                dst.bci = bci;
-                dst.pos = pos + src.pos;
-                dst.flags = src.flags;
-                dst.callee = null;
-                dst.frameRefMap = src.frameRefMap;
-                dst.regRefMap = src.regRefMap;
-                reserveInBSM(dst);
-            }
-            if (bci >= 0) {
-                bciWithStopCount++;
             }
         }
 
         public void pack(int frameRefMapSize, int regRefMapSize, int firstTemplateSlot, Adapter adapter) {
             final int adapterCount = adapter == null ? 0 : 1;
-            final int numberOfDirectCalls = directCalls.size + adapterCount;
-            final int numberOfIndirectCalls = indirectCalls.size;
-            final int numberOfSafepoints = safepoints.size;
-            final int numberOfStopPositions = numberOfDirectCalls + numberOfIndirectCalls + numberOfSafepoints;
-            final int numberOfCalls = numberOfDirectCalls + numberOfIndirectCalls;
-            assert numberOfStopPositions == numberOfCalls + numberOfSafepoints;
+            if (adapter != null) {
+                directCalls++;
+            }
+            final int stopsCount = stopsArray.size + adapterCount;
 
-            stopPositions = null;
+            stops = null;
             directCallees = null;
-            isDirectCallToRuntime = null;
             refMaps = null;
             bytecodeStopsIterator = null;
 
-            if (numberOfStopPositions > 0) {
-                assert frameRefMapSize > 0 || numberOfSafepoints > 0;
+            if (stopsCount > 0) {
+                assert frameRefMapSize > 0;
                 int refMapSize = frameRefMapSize + regRefMapSize;
-                refMaps = new byte[numberOfStopPositions * refMapSize];
-                stopPositions = new int[numberOfStopPositions];
+                refMaps = new byte[stopsCount * refMapSize];
+                int[] stops = new int[stopsCount];
                 // An empty method with no method profile only has an adapter and no stops
-                int[] bsm = new int[last == null ? 0 : last.bsmIndex() + 1];
-                last = null;
-                if (numberOfDirectCalls > 0) {
-                    isDirectCallToRuntime = new CiBitMap(numberOfDirectCalls);
-                    directCallees = new Object[numberOfDirectCalls];
+                int[] bsm = new int[bcisWithStops * 2];
+                int firstStopIndexWithBCI = -1;
+                int bsmIndex = -1;
+                if (directCalls > 0) {
+                    directCallees = new Object[directCalls];
                 }
 
                 final ByteArrayBitMap bitMap = new ByteArrayBitMap(refMaps, 0, 0);
 
                 int stopIndex = 0;
+                int dcIndex = 0;
                 if (adapter != null) {
-                    directCallees[stopIndex] = adapter;
-                    int stopPos = stopPosForDirectCallPos(adapter.callOffsetInPrologue());
-                    stopPositions[stopIndex] = stopPos;
+                    directCallees[dcIndex++] = adapter;
+                    int callPos = adapter.callOffsetInPrologue();
+                    int stopPos = stopPosForCall(callPos, adapter.callSizeInPrologue());
+                    stops[stopIndex] = Stops.make(stopPos, callPos, DIRECT_CALL);
                     stopIndex++;
                 }
 
-                for (int i = 0; i < directCalls.size; ++i, ++stopIndex) {
-                    T1XStop stop = directCalls.get(i);
-                    assert stop.regRefMap == null;
-                    directCallees[stopIndex] = stop.callee;
-
-                    int bsmIndex = insertInBSM(bsm, stop);
-
-                    if ((stop.flags & InTemplate.mask) != 0) {
-                        isDirectCallToRuntime.set(stopIndex);
-                        if (bsmIndex >= 0) {
-                            bsm[bsmIndex] = stopIndex | BytecodeStopsIterator.DIRECT_RUNTIME_CALL_BIT;
+                for (int i = 0; i < stopsArray.size; i++) {
+                    T1XStop t1xStop = stopsArray.get(i);
+                    stops[stopIndex] = t1xStop.stop;
+                    if (t1xStop.bci >= 0) {
+                        if (bsmIndex == -1) {
+                            bsmIndex = 0;
+                            firstStopIndexWithBCI = stopIndex;
+                            bsm[bsmIndex] = t1xStop.bci;
+                        } else if (bsm[bsmIndex] != t1xStop.bci) {
+                            int prev = bsm[bsmIndex];
+                            assert prev < t1xStop.bci;
+                            bsmIndex += 2;
+                            assert bsmIndex + 1 < bsm.length;
+                            bsm[bsmIndex] = t1xStop.bci;
                         }
-
-                        if (stop.frameRefMap != null) {
-                            bitMap.setOffset(stopIndex * refMapSize);
-                            bitMap.setSize(frameRefMapSize);
-                            for (int bit = stop.frameRefMap.nextSetBit(0); bit >= 0; bit = stop.frameRefMap.nextSetBit(bit + 1)) {
-                                bitMap.set(bit + firstTemplateSlot);
-                            }
-                        }
-
-                    } else {
-                        if (stop.frameRefMap != null) {
-                            bitMap.setOffset(stopIndex * refMapSize);
-                            bitMap.setSize(frameRefMapSize);
-                            for (int bit = stop.frameRefMap.nextSetBit(0); bit >= 0; bit = stop.frameRefMap.nextSetBit(bit + 1)) {
-                                bitMap.set(bit + firstTemplateSlot);
-                            }
-                        }
-                        assert bsmIndex >= 0;
-                        bsm[bsmIndex] = stopIndex;
+                        bsm[bsmIndex + 1]++;
                     }
-                    stopPositions[stopIndex] = stop.pos;
+
+                    if (t1xStop.isSet(DIRECT_CALL)) {
+                        directCallees[dcIndex++] = t1xStop.callee;
+                    }
+
+                    if (t1xStop.frameRefMap != null) {
+                        bitMap.setOffset(stopIndex * refMapSize);
+                        bitMap.setSize(frameRefMapSize);
+                        for (int bit = t1xStop.frameRefMap.nextSetBit(0); bit >= 0; bit = t1xStop.frameRefMap.nextSetBit(bit + 1)) {
+                            bitMap.set(bit + firstTemplateSlot);
+                        }
+                    }
+                    if (t1xStop.regRefMap != null) {
+                        bitMap.setOffset((stopIndex * refMapSize) + frameRefMapSize);
+                        bitMap.setSize(regRefMapSize);
+                        for (int bit = t1xStop.regRefMap.nextSetBit(0); bit >= 0; bit = t1xStop.regRefMap.nextSetBit(bit + 1)) {
+                            bitMap.set(bit);
+                        }
+                    }
+                    stopIndex++;
                 }
 
-                for (int i = 0; i < numberOfIndirectCalls; ++i, ++stopIndex) {
-                    T1XStop stop = indirectCalls.get(i);
-                    assert stop.regRefMap == null;
-
-                    int bsmIndex = insertInBSM(bsm, stop);
-
-                    if ((stop.flags & InTemplate.mask) != 0) {
-                        if (stop.frameRefMap != null) {
-                            bitMap.setOffset(stopIndex * refMapSize);
-                            bitMap.setSize(frameRefMapSize);
-                            for (int bit = stop.frameRefMap.nextSetBit(0); bit >= 0; bit = stop.frameRefMap.nextSetBit(bit + 1)) {
-                                bitMap.set(bit + firstTemplateSlot);
-                            }
-                        }
-
-                    } else {
-                        assert stop.frameRefMap == null;
-                    }
-
-                    if (bsmIndex >= 0) {
-                        bsm[bsmIndex] = stopIndex;
-                    }
-                    stopPositions[stopIndex] = stop.pos;
-                }
-
-                for (int i = 0; i < numberOfSafepoints; ++i, ++stopIndex) {
-                    T1XStop stop = safepoints.get(i);
-
-                    int bsmIndex = insertInBSM(bsm, stop);
-
-                    if ((stop.flags & InTemplate.mask) != 0) {
-                        if (stop.frameRefMap != null) {
-                            bitMap.setOffset(stopIndex * refMapSize);
-                            bitMap.setSize(frameRefMapSize);
-                            for (int bit = stop.frameRefMap.nextSetBit(0); bit >= 0; bit = stop.frameRefMap.nextSetBit(bit + 1)) {
-                                bitMap.set(bit + firstTemplateSlot);
-                            }
-                        }
-                        if (stop.regRefMap != null) {
-                            bitMap.setOffset((stopIndex * refMapSize) + frameRefMapSize);
-                            bitMap.setSize(regRefMapSize);
-                            for (int bit = stop.regRefMap.nextSetBit(0); bit >= 0; bit = stop.regRefMap.nextSetBit(bit + 1)) {
-                                bitMap.set(bit);
-                            }
-                        }
-
-                    } else {
-                        assert stop.frameRefMap == null;
-                        assert stop.regRefMap == null;
-                    }
-
-                    if (bsmIndex >= 0) {
-                        bsm[bsmIndex] = stopIndex;
-                    }
-                    stopPositions[stopIndex] = stop.pos;
-                }
-                bytecodeStopsIterator = new BytecodeStopsIterator(bsm);
+                this.stops = new Stops(stops);
+                bytecodeStopsIterator = new BytecodeStopsIterator(bsm, firstStopIndexWithBCI);
+            } else {
+                stops = Stops.NO_STOPS;
+                directCallees = TargetMethod.NO_DIRECT_CALLEES;
             }
         }
     }
@@ -425,65 +326,42 @@ public class T1XTemplate {
     }
 
     @HOSTED_ONLY
-    public T1XTemplate(C1XTargetMethod source, T1XTemplateTag tag, ClassMethodActor method, boolean useTemplateCallRefMaps) {
+    public T1XTemplate(C1XTargetMethod source, T1XTemplateTag tag, ClassMethodActor method) {
         this.method = method;
         this.code = source.code();
         this.tag = tag;
-        numberOfStops = source.numberOfStopPositions();
-        if (source.numberOfStopPositions() == 0) {
-            directCalls = NO_STOPS;
-            indirectCalls = NO_STOPS;
-            safepoints = NO_STOPS;
-            bytecodeCall = null;
+        int nStops = source.stops().length();
+
+        if (nStops == 0) {
+            stops = NO_STOPS;
+            templateCall = null;
         } else {
-            final int numberOfDirectCalls = source.numberOfDirectCalls();
-            final int numberOfIndirectCalls = source.numberOfIndirectCalls();
-            final int numberOfSafepoints = source.numberOfSafepoints();
+            stops = new T1XStop[nStops];
+            T1XStop templateCall = null;
 
-            directCalls = new T1XStop[numberOfDirectCalls];
-            indirectCalls = new T1XStop[numberOfIndirectCalls];
-            safepoints = new T1XStop[numberOfSafepoints];
-            T1XStop bytecodeCall = null;
+            Stops sourceStops = source.stops();
 
-            for (int i = 0; i < numberOfDirectCalls; i++) {
-                int stopIndex = i;
-                if (source.directCallees()[i] == null) {
-                    assert bytecodeCall == null : "template can have at most one TEMPLATE_CALL";
-                    T1XStop stop = new T1XStop(DirectCall.mask, source.stopPosition(stopIndex), -1);
-                    stop.callee = null;
-                    if (useTemplateCallRefMaps) {
-                        stop.frameRefMap = nullIfEmpty(source.debugInfo().frameRefMapAt(stopIndex));
+            int dcIndex = 0;
+            for (int stopIndex = 0; stopIndex < sourceStops.length(); stopIndex++) {
+                int stop = sourceStops.stopAt(stopIndex);
+                T1XStop t1xStop = new T1XStop(stop, -1);
+                t1xStop.callee = null;
+                t1xStop.frameRefMap = nullIfEmpty(source.debugInfo().frameRefMapAt(stopIndex));
+                t1xStop.regRefMap = nullIfEmpty(source.debugInfo().regRefMapAt(stopIndex));
+                if (sourceStops.isSetAt(DIRECT_CALL, stopIndex)) {
+                    if (sourceStops.isSetAt(TEMPLATE_CALL, stopIndex)) {
+                        assert templateCall == null : "template can have at most one TEMPLATE_CALL";
+                        templateCall = t1xStop;
                     } else {
-                      // No GC maps needed: the template slots are dead for the remainder of the template
-                        stop.frameRefMap = null;
+                        t1xStop.callee = (ClassMethodActor) source.directCallees()[dcIndex];
+                        assert t1xStop.callee != null;
                     }
-                    stop.regRefMap = null;
-                    bytecodeCall = stop;
-                    directCalls[i] = stop;
-                } else {
-                    T1XStop stop = new T1XStop(DirectCall.mask | InTemplate.mask, source.stopPosition(stopIndex), -1);
-                    stop.callee = (ClassMethodActor) source.directCallees()[i];
-                    stop.frameRefMap = nullIfEmpty(source.debugInfo().frameRefMapAt(stopIndex));
-                    //stop.regRefMap = nullIfEmpty(source.debugInfo().regRefMapAt(stopIndex));
-                    directCalls[i] = stop;
+                    dcIndex++;
                 }
-            }
-            for (int i = 0; i < numberOfIndirectCalls; i++) {
-                int stopIndex = numberOfDirectCalls + i;
-                T1XStop stop = new T1XStop(IndirectCall.mask | InTemplate.mask, source.stopPosition(stopIndex), -1);
-                stop.frameRefMap = nullIfEmpty(source.debugInfo().frameRefMapAt(stopIndex));
-                //stop.regRefMap = nullIfEmpty(source.debugInfo().regRefMapAt(stopIndex));
-                indirectCalls[i] = stop;
-            }
-            for (int i = 0; i < numberOfSafepoints; i++) {
-                int stopIndex = numberOfDirectCalls + numberOfIndirectCalls + i;
-                T1XStop stop = new T1XStop(Safepoint.mask | InTemplate.mask, source.stopPosition(stopIndex), -1);
-                stop.frameRefMap = nullIfEmpty(source.debugInfo().frameRefMapAt(stopIndex));
-                stop.regRefMap = nullIfEmpty(source.debugInfo().regRefMapAt(stopIndex));
-                safepoints[i] = stop;
+                stops[stopIndex] = t1xStop;
             }
 
-            this.bytecodeCall = bytecodeCall;
+            this.templateCall = templateCall;
         }
     }
 }

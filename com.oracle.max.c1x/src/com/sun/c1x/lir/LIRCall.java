@@ -36,8 +36,7 @@ import com.sun.cri.xir.CiXirAssembler.XirMark;
 public class LIRCall extends LIRInstruction {
 
     /**
-     * The target of the call. This will be a {@link CiRuntimeCall}, {@link RiMethod} or {@link CiValue}
-     * object denoting a call to the runtime, a Java method or a native function respectively.
+     * The target of the call.
      */
     public final Object target;
 
@@ -91,14 +90,6 @@ public class LIRCall extends LIRInstruction {
      */
     public CiValue receiver() {
         return operand(0);
-    }
-
-    public RiMethod method() {
-        return (RiMethod) target;
-    }
-
-    public CiRuntimeCall runtimeCall() {
-        return (CiRuntimeCall) target;
     }
 
     public CiValue targetAddress() {

@@ -38,6 +38,7 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.bytecode.refmaps.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.collect.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.stack.*;
 
 public class T1XReferenceMapEditor implements ReferenceMapInterpreterContext, ReferenceSlotVisitor {
@@ -70,7 +71,7 @@ public class T1XReferenceMapEditor implements ReferenceMapInterpreterContext, Re
     }
 
     public T1XReferenceMapEditor(T1XTargetMethod t1xMethod, int numberOfBlocks, boolean[] blockBCIs, BytecodeStopsIterator bytecodeStopsIterator, JVMSFrameLayout frame) {
-        assert t1xMethod.numberOfStopPositions() != 0;
+        assert t1xMethod.stops().length() != 0;
         this.t1xMethod = t1xMethod;
         this.exceptionHandlerMap = ExceptionHandler.createHandlerMap(t1xMethod.codeAttribute);
         this.frame = frame;
@@ -108,7 +109,8 @@ public class T1XReferenceMapEditor implements ReferenceMapInterpreterContext, Re
 
     public void visitReferenceOnOperandStack(int operandStackIndex, boolean parametersPopped) {
         for (int stopIndex = bytecodeStopsIterator.nextStopIndex(true); stopIndex != -1; stopIndex = bytecodeStopsIterator.nextStopIndex(false)) {
-            if (parametersPopped != bytecodeStopsIterator.isDirectRuntimeCall()) {
+            boolean templateCall = t1xMethod.stops().isSetAt(Stops.TEMPLATE_CALL, stopIndex);
+            if (parametersPopped == templateCall) {
                 final int offset = stopIndex * t1xMethod.refMapSize();
                 final int fpRelativeIndex = frame.operandStackReferenceMapIndex(operandStackIndex);
                 ByteArrayBitMap.set(t1xMethod.referenceMaps(), offset, t1xMethod.frameRefMapSize, fpRelativeIndex);
@@ -162,26 +164,28 @@ public class T1XReferenceMapEditor implements ReferenceMapInterpreterContext, Re
             final boolean lockDisabledSafepoints = Log.lock();
             bytecodeStopsIterator.reset();
             final CodeAttribute codeAttribute = codeAttribute();
-            for (int bcp = bytecodeStopsIterator.bci(); bcp != -1; bcp = bytecodeStopsIterator.next()) {
+            for (int bci = bytecodeStopsIterator.bci(); bci != -1; bci = bytecodeStopsIterator.next()) {
                 for (int stopIndex = bytecodeStopsIterator.nextStopIndex(true); stopIndex != -1; stopIndex = bytecodeStopsIterator.nextStopIndex(false)) {
                     final int offset = stopIndex * t1xMethod.refMapSize();
-                    Log.print(bcp);
+                    Log.print(bci);
                     Log.print(":");
-                    int opc = codeAttribute.code()[bcp] & 0xff;
+                    int opc = codeAttribute.code()[bci] & 0xff;
                     final String opcode = Bytecodes.baseNameOf(opc);
                     Log.print(opcode);
-                    int chars = Ints.sizeOfBase10String(bcp) + 1 + opcode.length();
+                    int chars = Ints.sizeOfBase10String(bci) + 1 + opcode.length();
                     while (chars++ < 20) {
                         Log.print(' ');
                     }
                     Log.print(" stop[");
                     Log.print(stopIndex);
                     Log.print("]@");
-                    Log.print(t1xMethod.stopPosition(stopIndex));
-                    if (bytecodeStopsIterator.isDirectRuntimeCall()) {
+                    Log.print(t1xMethod.stops().posAt(stopIndex));
+
+                    boolean templateCall = t1xMethod.stops().isSetAt(Stops.TEMPLATE_CALL, stopIndex);
+                    if (templateCall) {
                         Log.print('*');
                     }
-                    if (interpreter.isFrameInitialized(blockIndexFor(bcp))) {
+                    if (interpreter.isFrameInitialized(blockIndexFor(bci))) {
                         Log.print(", locals={");
                         byte[] refMaps = t1xMethod.referenceMaps();
                         for (int localVariableIndex = 0; localVariableIndex < codeAttribute.maxLocals; ++localVariableIndex) {

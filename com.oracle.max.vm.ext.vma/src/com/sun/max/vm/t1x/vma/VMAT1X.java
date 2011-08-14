@@ -72,8 +72,8 @@ public class VMAT1X extends T1X {
         if (isHosted() && phase == Phase.COMPILING) {
             setTemplateSource(VMAdviceBeforeAfterTemplateSource.class);
             super.initialize(phase);
-            beforeTemplates = createTemplates(VMAdviceBeforeTemplateSource.class, altT1X, true, null, true);
-            afterTemplates = createTemplates(VMAdviceAfterTemplateSource.class, altT1X, true, null, true);
+            beforeTemplates = createTemplates(VMAdviceBeforeTemplateSource.class, altT1X, true, null);
+            afterTemplates = createTemplates(VMAdviceAfterTemplateSource.class, altT1X, true, null);
         } else {
             super.initialize(phase);
         }
@@ -85,8 +85,8 @@ public class VMAT1X extends T1X {
      */
     @Override
     @HOSTED_ONLY
-    public T1XTemplate[] createTemplates(Class<?> templateSourceClass, T1X altT1X, boolean checkComplete, T1XTemplate[] templates, boolean useTemplateCallRefMaps) {
-        return super.createTemplates(templateSourceClass, altT1X, checkComplete, templates, true);
+    public T1XTemplate[] createTemplates(Class<?> templateSourceClass, T1X altT1X, boolean checkComplete, T1XTemplate[] templates) {
+        return super.createTemplates(templateSourceClass, altT1X, checkComplete, templates);
     }
 
     @Override

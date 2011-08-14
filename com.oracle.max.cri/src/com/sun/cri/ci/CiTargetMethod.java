@@ -80,29 +80,26 @@ public class CiTargetMethod implements Serializable {
     }
 
     /**
-     * Represents a call in the code and includes a stack reference map and optionally a register reference map. The
-     * call can either be a runtime call, a compiler stub call, a native call or a call to a normal method.
+     * Represents a call in the code and includes a stack reference map and optionally a register reference map.
      */
     public static final class Call extends Site {
+        /**
+         * The target of the call.
+         */
+        public final Object target;
+
         /**
          * The size of the call instruction.
          */
         public final int size;
 
-        public final CiRuntimeCall runtimeCall;
-        public final RiMethod method;
-        public final String symbol;
-        public final Object stubID;
         public final CiDebugInfo debugInfo;
 
-        Call(int pcOffset, int size, CiRuntimeCall runtimeCall, RiMethod method, String symbol, Object stubID, CiDebugInfo debugInfo) {
+        Call(Object target, int pcOffset, int size, CiDebugInfo debugInfo) {
             super(pcOffset);
             this.size = size;
-            this.runtimeCall = runtimeCall;
-            this.method = method;
-            this.symbol = symbol;
-            this.stubID = stubID;
             this.debugInfo = debugInfo;
+            this.target = target;
         }
 
         @Override
@@ -113,22 +110,7 @@ public class CiTargetMethod implements Serializable {
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
-            if (runtimeCall != null) {
-                sb.append("Runtime call to ");
-                sb.append(runtimeCall.name());
-            } else if (symbol != null) {
-                sb.append("Native call to ");
-                sb.append(symbol);
-            } else if (stubID != null) {
-                sb.append("Compiler stub call to ");
-                sb.append(stubID);
-            } else if (method != null) {
-                sb.append("Method call to ");
-                sb.append(method.toString());
-            } else {
-                sb.append("Template call");
-            }
-
+            sb.append(target);
             sb.append(" at pos ");
             sb.append(pcOffset);
 
@@ -414,22 +396,16 @@ public class CiTargetMethod implements Serializable {
     }
 
     /**
-     * Records a direct method call to the specified method in the code.
+     * Records a call to a target.
      *
      * @param codePos the position in the code array
      * @param size the size of the call instruction
-     * @param target the {@linkplain RiMethod method}, {@linkplain CiRuntimeCall runtime call}, {@linkplain String native function} or stub being called
+     * @param target the {@link RiRuntime#asCallTarget(Object) target} being called
      * @param debugInfo the debug info for the call site
      * @param direct true if this is a direct call, false otherwise
      */
     public void recordCall(int codePos, int size, Object target, CiDebugInfo debugInfo, boolean direct) {
-        CiRuntimeCall rt = target instanceof CiRuntimeCall ? (CiRuntimeCall) target : null;
-        RiMethod meth = target instanceof RiMethod ? (RiMethod) target : null;
-        String symbol = target instanceof String ? (String) target : null;
-        // make sure that only one is non-null
-        Object stubID = (rt == null && meth == null && symbol == null) ? target : null;
-
-        final Call callSite = new Call(codePos, size, rt, meth, symbol, stubID, debugInfo);
+        final Call callSite = new Call(target, codePos, size, debugInfo);
         if (direct) {
             directCalls.add(callSite);
         } else {

@@ -24,6 +24,7 @@ package com.sun.max.vm.compiler.target;
 
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.compiler.target.Stops.*;
 
 import java.util.*;
 
@@ -104,7 +105,7 @@ public class Stub extends TargetMethod {
         return type;
     }
 
-    public Stub(Type type, String stubName, int frameSize, byte[] code, int directCallPos, ClassMethodActor callee, int registerRestoreEpilogueOffset) {
+    public Stub(Type type, String stubName, int frameSize, byte[] code, int callPos, int callSize, ClassMethodActor callee, int registerRestoreEpilogueOffset) {
         super(stubName, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         this.type = type;
         this.setFrameSize(frameSize);
@@ -113,10 +114,10 @@ public class Stub extends TargetMethod {
         final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(0, 0, code.length);
         Code.allocate(targetBundleLayout, this);
         setData(null, null, code);
-        if (directCallPos != -1) {
-            int directCallStopPos = stopPosForDirectCallPos(directCallPos);
+        if (callPos != -1) {
+            int stopPos = Stops.stopPosForCall(callPos, callSize);
             assert callee != null;
-            setStopPositions(new int[] {directCallStopPos}, new Object[] {callee}, 0, 0);
+            setStops(new Stops(Stops.make(stopPos, callPos, DIRECT_CALL)), new Object[] {callee});
         }
         if (!isHosted()) {
             linkDirectCalls();
@@ -129,7 +130,7 @@ public class Stub extends TargetMethod {
 
         initCodeBuffer(tm, true);
         initFrameLayout(tm);
-        CiDebugInfo[] debugInfos = initStopPositions(tm);
+        CiDebugInfo[] debugInfos = initStops(tm);
         for (CiDebugInfo info : debugInfos) {
             assert info == null;
         }
