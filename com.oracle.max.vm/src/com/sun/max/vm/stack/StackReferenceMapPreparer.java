@@ -573,7 +573,7 @@ public final class StackReferenceMapPreparer {
             Log.print(" of ");
             Log.printMethod(targetMethod, false);
             Log.print(" +");
-            Log.println(targetMethod.stopPosition(stopIndex));
+            Log.println(targetMethod.stops().posAt(stopIndex));
             Log.print("    Stop index: ");
             Log.println(stopIndex);
             if (!refmapFramePointer.isZero()) {

@@ -201,13 +201,13 @@ public class MaxRiRuntime implements RiRuntime {
         RefMapFormatter slotFormatter = new RefMapFormatter(target().arch, target().spillSlotSize, fp, refMapToFPOffset);
         for (Call site : targetMethod.directCalls) {
             if (site.debugInfo() != null) {
-                hcf.addComment(site.pcOffset, CiUtil.append(new StringBuilder(100), site.debugInfo, slotFormatter).toString());
+                hcf.addComment(Stops.stopPosForCall(site), CiUtil.append(new StringBuilder(100), site.debugInfo, slotFormatter).toString());
             }
             hcf.addOperandComment(site.pcOffset, calleeString(site));
         }
         for (Call site : targetMethod.indirectCalls) {
             if (site.debugInfo() != null) {
-                hcf.addComment(site.pcOffset, CiUtil.append(new StringBuilder(100), site.debugInfo, slotFormatter).toString());
+                hcf.addComment(Stops.stopPosForCall(site), CiUtil.append(new StringBuilder(100), site.debugInfo, slotFormatter).toString());
             }
             hcf.addOperandComment(site.pcOffset, calleeString(site));
         }
@@ -225,14 +225,10 @@ public class MaxRiRuntime implements RiRuntime {
     }
 
     private static String calleeString(Call call) {
-        if (call.runtimeCall != null) {
-            return "{" + call.runtimeCall.name() + "}";
-        } else if (call.symbol != null) {
-            return "{" + call.symbol + "}";
-        } else if (call.stubID != null) {
-            return "{" + call.stubID + "}";
-        } else if (call.method != null) {
-            return "{" + call.method + "}";
+        Object target = call.target;
+        CallTarget.assertSupportedTarget(target);
+        if (target != null) {
+            return "{" + target + "}";
         } else {
             return "{<template_call>}";
         }
@@ -369,6 +365,17 @@ public class MaxRiRuntime implements RiRuntime {
             return (Class) o;
         }
         return null;
+    }
+
+    @Override
+    public Object asCallTarget(Object target) {
+        if (target instanceof CiRuntimeCall) {
+            target = C1XRuntimeCalls.getClassMethodActor((CiRuntimeCall) target);
+        } else if (target == null) {
+            target = CallTarget.TEMPLATE_CALL;
+        }
+        CallTarget.assertSupportedTarget(target);
+        return target;
     }
 
     public boolean isExceptionType(RiType type) {

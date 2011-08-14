@@ -324,7 +324,7 @@ public final class DebugInfo {
     public int forEachCodePos(CodePosClosure cpc, int index) {
         int count = 0;
         final DecodingStream in = new DecodingStream(data);
-        int fpt = (tm.totalRefMapSize()) * tm.stopPositions().length;
+        int fpt = (tm.totalRefMapSize()) * tm.stops().length();
         int frameIndex = index;
         while (true) {
             in.pos = framePos(fpt, frameIndex);
@@ -371,7 +371,7 @@ public final class DebugInfo {
      */
     public CiDebugInfo infoAt(int index, FrameAccess fa, boolean stackSlotAsAddress) {
         final DecodingStream in = new DecodingStream(data);
-        int fpt = (tm.totalRefMapSize()) * tm.stopPositions().length;
+        int fpt = (tm.totalRefMapSize()) * tm.stops().length();
         CiBitMap regRefMap = regRefMapAt(index);
         CiBitMap frameRefMap = frameRefMapAt(index);
         CiFrame frame = decodeFrame(in, fpt, index, fa, regRefMap, frameRefMap, stackSlotAsAddress);
@@ -526,12 +526,12 @@ public final class DebugInfo {
             return "";
         }
         StringBuilder sb = new StringBuilder(1024);
-        for (int i = 0; i < tm.stopPositions().length; i++) {
+        for (int i = 0; i < tm.stops().length(); i++) {
             CiDebugInfo info = infoAt(i, null, true);
             if (sb.length() != 0) {
                 sb.append(NEW_LINE);
             }
-            sb.append("==== stop " + i + " [" + tm + "+" + tm.stopPosition(i) + "] ====").append(NEW_LINE).append(info);
+            sb.append("==== stop " + i + " [" + tm + "+" + tm.stops().posAt(i) + "] ====").append(NEW_LINE).append(info);
         }
         return sb.toString();
     }

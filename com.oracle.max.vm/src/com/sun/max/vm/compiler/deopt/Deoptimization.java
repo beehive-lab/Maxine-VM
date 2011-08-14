@@ -22,14 +22,12 @@
  */
 package com.sun.max.vm.compiler.deopt;
 
-import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.compiler.CompilationScheme.CompilationFlag.*;
 import static com.sun.max.vm.compiler.deps.DependenciesManager.*;
 import static com.sun.max.vm.compiler.target.Stub.Type.*;
-import static com.sun.max.vm.compiler.target.TargetMethod.*;
 import static com.sun.max.vm.stack.VMFrameLayout.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
@@ -201,15 +199,19 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
 
     @Override
     public boolean doTargetMethod(TargetMethod tm) {
-        for (int i = 0; i < tm.numberOfDirectCalls(); i++) {
-            Object directCallee = tm.directCallees()[i];
+        Stops stops = tm.stops();
+        int dcIndex = 0;
+        Object[] directCallees = tm.directCallees();
+        for (int i = stops.nextDirectCall(0); i >= 0; i = stops.nextDirectCall(i + 1)) {
+            Object directCallee = directCallees[dcIndex];
             if (directCallee != null && isInvalidated(directCallee)) {
-                if (tm.resetDirectCall(i)) {
+                if (tm.resetDirectCall(i, dcIndex)) {
                     if (TraceDeopt) {
                         Log.println("DEOPT:   reset direct call " + i + " in " + tm + " to " + directCallee);
                     }
                 }
             }
+            dcIndex++;
         }
         return true;
     }
@@ -343,7 +345,7 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
         assert stopIndex >= 0 : "no stop index for " + tm + "+" + tm.posFor(ip);
 
         if (TraceDeopt) {
-            Log.println("DEOPT: " + tm + ", stopIndex=" + stopIndex + ", pos=" + tm.stopPosition(stopIndex));
+            Log.println("DEOPT: " + tm + ", stopIndex=" + stopIndex + ", pos=" + tm.stops().posAt(stopIndex));
         }
 
         if (TraceDeopt) {
@@ -866,12 +868,6 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
      */
     public static void deoptimizeOnReturn(Pointer ip, Pointer sp, Pointer fp, CiConstant returnValue, Pointer csa) {
         Safepoint.disable();
-
-        if (!StopPositionForCallIsReturnPos && platform().isa.offsetToReturnPC == 0) {
-            // Make sure IP is within a call instruction so the stop for the call is found, not the
-            // stop for a safepoint that may be immediately succeeding the call
-            ip = ip.minus(1);
-        }
 
         Info info = new Info(VmThread.current(), ip, sp, fp, null);
 

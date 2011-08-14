@@ -90,13 +90,18 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
          */
         public static class Baseline2OptAdapter extends Adapter {
 
-            Baseline2OptAdapter(AdapterGenerator generator, String description, int frameSize, byte[] code, int callPosition) {
-                super(generator, description, frameSize, code, callPosition);
+            Baseline2OptAdapter(AdapterGenerator generator, String description, int frameSize, byte[] code, int callPos, int callSize) {
+                super(generator, description, frameSize, code, callPos, callSize);
             }
 
             @Override
             public int callOffsetInPrologue() {
                 return 0;
+            }
+
+            @Override
+            public int callSizeInPrologue() {
+                return 8;
             }
 
             /**
@@ -191,8 +196,8 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
 
             final long refMap;
 
-            public Baseline2OptAdapterWithRefMap(AdapterGenerator generator, String description, long refMap, int frameSize, byte[] code, int callPosition) {
-                super(generator, description, frameSize, code, callPosition);
+            public Baseline2OptAdapterWithRefMap(AdapterGenerator generator, String description, long refMap, int frameSize, byte[] code, int callPos, int callSize) {
+                super(generator, description, frameSize, code, callPos, callSize);
                 this.refMap = refMap;
             }
 
@@ -221,8 +226,8 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
 
             final byte[] refMap;
 
-            public Baseline2OptAdapterWithBigRefMap(AdapterGenerator generator, String description, byte[] refMap, int frameSize, byte[] code, int callPosition) {
-                super(generator, description, frameSize, code, callPosition);
+            public Baseline2OptAdapterWithBigRefMap(AdapterGenerator generator, String description, byte[] refMap, int frameSize, byte[] code, int callPos, int callSize) {
+                super(generator, description, frameSize, code, callPos, callSize);
                 this.refMap = refMap;
             }
 
@@ -423,8 +428,9 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             }
 
             // Args are now copied to the OPT locations; call the OPT main body
-            int callPosition = asm.codeBuffer.position();
+            int callPos = asm.codeBuffer.position();
             asm.call(rax);
+            int callSize = asm.codeBuffer.position() - callPos;
 
             // Restore RSP and RBP. Given that RBP is never modified by OPT methods and baseline methods always
             // restore it, RBP is guaranteed to be pointing to the slot holding the caller's RBP
@@ -443,11 +449,11 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             if (refMap != null) {
                 if (refMap.size() <= 64) {
                     long longRefMap = refMap.toLong();
-                    return new Baseline2OptAdapterWithRefMap(this, description, longRefMap, adapterFrameSize, code, callPosition);
+                    return new Baseline2OptAdapterWithRefMap(this, description, longRefMap, adapterFrameSize, code, callPos, callSize);
                 }
-                return new Baseline2OptAdapterWithBigRefMap(this, description, refMap.toByteArray(), adapterFrameSize, code, callPosition);
+                return new Baseline2OptAdapterWithBigRefMap(this, description, refMap.toByteArray(), adapterFrameSize, code, callPos, callSize);
             }
-            return new Baseline2OptAdapter(this, description, adapterFrameSize, code, callPosition);
+            return new Baseline2OptAdapter(this, description, adapterFrameSize, code, callPos, callSize);
         }
 
         // Checkstyle: stop
@@ -487,12 +493,17 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
          */
         static final class Opt2BaselineAdapter extends Adapter {
 
-            Opt2BaselineAdapter(AdapterGenerator generator, String description, int frameSize, byte[] code, int callPosition) {
-                super(generator, description, frameSize, code, callPosition);
+            Opt2BaselineAdapter(AdapterGenerator generator, String description, int frameSize, byte[] code, int callPos, int callSize) {
+                super(generator, description, frameSize, code, callPos, callSize);
             }
 
             @Override
             public int callOffsetInPrologue() {
+                return 8;
+            }
+
+            @Override
+            public int callSizeInPrologue() {
                 return 8;
             }
 
@@ -712,8 +723,9 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             }
 
             // Args are now copied to the baseline locations; call the baseline main body
-            int callPosition = asm.codeBuffer.position();
+            int callPos = asm.codeBuffer.position();
             asm.call(rax);
+            int callSize = asm.codeBuffer.position() - callPos;
 
             // The baseline method will have popped the args off the stack so now
             // RSP is pointing to the slot holding the address of the baseline main body.
@@ -726,7 +738,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             final byte[] code = asm.codeBuffer.close(true);
 
             String description = Type.OPT2BASELINE + "-Adapter" + sig;
-            return new Opt2BaselineAdapter(this, description, adapterFrameSize, code, callPosition);
+            return new Opt2BaselineAdapter(this, description, adapterFrameSize, code, callPos, callSize);
         }
 
         // Checkstyle: stop

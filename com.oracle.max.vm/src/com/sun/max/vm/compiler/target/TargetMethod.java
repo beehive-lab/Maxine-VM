@@ -24,6 +24,7 @@ package com.sun.max.vm.compiler.target;
 
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.compiler.target.Stops.*;
 
 import java.io.*;
 import java.util.*;
@@ -32,7 +33,6 @@ import com.oracle.max.asm.target.amd64.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
 import com.sun.cri.ci.CiTargetMethod.DataPatch;
-import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
@@ -47,7 +47,6 @@ import com.sun.max.vm.compiler.deopt.Deoptimization.Continuation;
 import com.sun.max.vm.compiler.deopt.Deoptimization.Info;
 import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.ArrayField;
-import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.profile.*;
@@ -56,36 +55,11 @@ import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 
 /**
- * A collection of objects that represent the compiled target code
- * and its auxiliary data structures for a Java method.
+ * Represents machine code produced and managed by the VM. The machine code
+ * is either produced by a compiler or manually assembled. Examples of the
+ * latter are {@linkplain Stub stubs} and {@linkplain Adapter adapters}.
  */
 public abstract class TargetMethod extends MemoryRegion {
-
-    public static final boolean StopPositionForCallIsReturnPos = true;
-
-    public static int stopPosForDirectCallPos(int callPos) {
-        if (platform().isa == ISA.AMD64) {
-            if (StopPositionForCallIsReturnPos) {
-                return callPos + AMD64TargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE;
-            } else {
-                return callPos;
-            }
-        } else {
-            throw FatalError.unimplemented();
-        }
-    }
-
-    public static int directCallPosForStopPos(int directCallStopPos) {
-        if (platform().isa == ISA.AMD64) {
-            if (StopPositionForCallIsReturnPos) {
-                return directCallStopPos - AMD64TargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE;
-            } else {
-                return directCallStopPos;
-            }
-        } else {
-            throw FatalError.unimplemented();
-        }
-    }
 
     /**
      * Implemented by a client wanting to do something to a target method.
@@ -108,22 +82,12 @@ public abstract class TargetMethod extends MemoryRegion {
     @INSPECTED
     public final ClassMethodActor classMethodActor;
 
-    /**
-     * The stop positions are encoded in the lower 31 bits of each element.
-     *
-     * @see #stopPositions()
-     * @see StopPositions
-     */
-    protected int[] stopPositions;
+    protected Stops stops = Stops.NO_STOPS;
 
     /**
      * @see #directCallees()
      */
     protected Object[] directCallees;
-
-    private int numberOfIndirectCalls;
-
-    private int numberOfSafepoints;
 
     protected byte[] scalarLiterals;
 
@@ -137,7 +101,7 @@ public abstract class TargetMethod extends MemoryRegion {
     protected Pointer codeStart = Pointer.zero();
 
     /**
-     * If non-null, then this method is has been invalidated.
+     * If non-null, then this method has been invalidated.
      *
      * @see #invalidated()
      */
@@ -345,18 +309,10 @@ public abstract class TargetMethod extends MemoryRegion {
      * Gets the call entry point to be used for a direct call from this target method. By default, the
      * {@linkplain #callEntryPoint call entry point} of this target method will be used.
      *
-     * @param directCallIndex an index into the {@linkplain #directCallees() direct callees} of this target method
+     * @param stopIndex the index of the call in {@link #stops() stops}
      */
-    protected CallEntryPoint callEntryPointForDirectCall(int directCallIndex) {
+    protected CallEntryPoint callEntryPointForDirectCall(int stopIndex) {
         return callEntryPoint;
-    }
-
-    public final int numberOfIndirectCalls() {
-        return numberOfIndirectCalls;
-    }
-
-    public final int numberOfSafepoints() {
-        return numberOfSafepoints;
     }
 
     /**
@@ -426,6 +382,8 @@ public abstract class TargetMethod extends MemoryRegion {
     @INSPECTED
     public final CallEntryPoint callEntryPoint;
 
+    public static final Object[] NO_DIRECT_CALLEES = {};
+
     /**
      * Assigns the arrays co-located in a {@linkplain CodeRegion code region} containing the machine code and related data.
      *
@@ -441,23 +399,10 @@ public abstract class TargetMethod extends MemoryRegion {
         this.codeStart = codeStart;
     }
 
-    protected final void setStopPositions(int[] stopPositions, Object[] directCallees, int numberOfIndirectCalls, int numberOfSafepoints) {
-        if (StopPositionForCallIsReturnPos) {
-            assert assertStopPositionsAreUnique(stopPositions);
-        }
-        this.stopPositions = stopPositions;
+    protected final void setStops(Stops stops, Object[] directCallees) {
+        this.stops = stops;
         this.directCallees = directCallees;
-        this.numberOfIndirectCalls = numberOfIndirectCalls;
-        this.numberOfSafepoints = numberOfSafepoints;
-    }
-
-    private boolean assertStopPositionsAreUnique(int[] stopPositions) {
-        int[] copy = stopPositions.clone();
-        Arrays.sort(copy);
-        for (int i = 1; i < copy.length; i++) {
-            assert copy[i - 1] != copy[i] : "stop positions are not unique: " + copy[i];
-        }
-        return true;
+        assert stops.numberOfDirectCalls() == directCallees.length : stops.numberOfDirectCalls() + " !=  " + directCallees.length;
     }
 
     protected final void setFrameSize(int frameSize) {
@@ -597,13 +542,10 @@ public abstract class TargetMethod extends MemoryRegion {
         this.setRegisterRestoreEpilogueOffset(ciTargetMethod.registerRestoreEpilogueOffset());
     }
 
-    protected ClassMethodActor toMethodActor(CiRuntimeCall rtCall) {
-        throw new UnsupportedOperationException();
-    }
-
-    protected CiDebugInfo[] initStopPositions(CiTargetMethod ciTargetMethod) {
+    protected CiDebugInfo[] initStops(CiTargetMethod ciTargetMethod) {
         Adapter adapter = null;
         int adapterCount = 0;
+
         AdapterGenerator generator = AdapterGenerator.forCallee(this);
         if (generator != null) {
             adapter = generator.make(classMethodActor);
@@ -614,72 +556,62 @@ public abstract class TargetMethod extends MemoryRegion {
 
         int numberOfIndirectCalls = ciTargetMethod.indirectCalls.size();
         int numberOfSafepoints = ciTargetMethod.safepoints.size();
-        int totalStopPositions = ciTargetMethod.directCalls.size() + numberOfIndirectCalls + numberOfSafepoints + adapterCount;
+        int total = ciTargetMethod.directCalls.size() + numberOfIndirectCalls + numberOfSafepoints + adapterCount;
 
         int index = 0;
-        int[] stopPositions = new int[totalStopPositions];
+        int[] stops = new int[total];
         Object[] directCallees = new Object[ciTargetMethod.directCalls.size() + adapterCount];
 
-        CiDebugInfo[] debugInfos = new CiDebugInfo[totalStopPositions];
+        CiDebugInfo[] debugInfos = new CiDebugInfo[total];
 
         if (adapter != null) {
             directCallees[index] = adapter;
-            int stopPos = stopPosForDirectCallPos(adapter.callOffsetInPrologue());
-            stopPositions[index] = stopPos;
+            int callPos = adapter.callOffsetInPrologue();
+            int stopPos = stopPosForCall(callPos, adapter.callSizeInPrologue());
+            stops[index] = Stops.make(stopPos, callPos, Stops.DIRECT_CALL);
             index++;
         }
 
         for (CiTargetMethod.Call site : ciTargetMethod.directCalls) {
-            int pos = site.pcOffset;
-            if (StopPositionForCallIsReturnPos) {
-                pos += site.size;
-            }
-            stopPositions[index] = pos;
-            debugInfos[index] = site.debugInfo;
-
-            RiMethod method = site.method;
-            if (method != null) {
-                final ClassMethodActor cma = (ClassMethodActor) method;
-                assert cma != null : "unresolved direct call!";
-                directCallees[index] = cma;
-            } else if (site.runtimeCall != null) {
-                final ClassMethodActor cma = toMethodActor(site.runtimeCall);
-                assert cma != null : "unresolved runtime call!";
-                directCallees[index] = cma;
-            } else if (site.stubID != null) {
-                TargetMethod globalStubMethod = (TargetMethod) site.stubID;
-                directCallees[index] = globalStubMethod;
+            int causePos = site.pcOffset;
+            int stopPos = Stops.stopPosForCall(site);
+            Object directCallee = CallTarget.directCallee(site.target);
+            directCallees[index] = directCallee;
+            if (CallTarget.isTemplateCall(site.target)) {
+                stops[index] = Stops.make(stopPos, causePos, DIRECT_CALL, TEMPLATE_CALL);
             } else {
-                // template call
-                directCallees[index] = null;
+                stops[index] = Stops.make(stopPos, causePos, DIRECT_CALL);
             }
+            debugInfos[index] = site.debugInfo;
             index++;
         }
 
         for (CiTargetMethod.Call site : ciTargetMethod.indirectCalls) {
-            int pos = site.pcOffset;
-            if (StopPositionForCallIsReturnPos) {
-                pos += site.size;
-            }
-            stopPositions[index] = pos;
-            debugInfos[index] = site.debugInfo;
-            if (site.symbol != null) {
-                stopPositions[index] |= StopPositions.NATIVE_FUNCTION_CALL;
-
+            int causePos = site.pcOffset;
+            int stopPos = Stops.stopPosForCall(site);
+            if (CallTarget.isTemplateCall(site.target)) {
+                stops[index] = Stops.make(stopPos, causePos, INDIRECT_CALL, TEMPLATE_CALL);
+            } else if (CallTarget.isSymbol(site.target)) {
+                stops[index] = Stops.make(stopPos, causePos, INDIRECT_CALL, NATIVE_CALL);
                 ClassMethodActor caller = (ClassMethodActor) site.debugInfo.codePos.method;
                 assert caller.isNative();
-                caller.nativeFunction.setCallSite(this, pos);
+                caller.nativeFunction.setCallSite(this, stopPos);
+            } else {
+                stops[index] = Stops.make(stopPos, causePos, INDIRECT_CALL);
             }
+            debugInfos[index] = site.debugInfo;
             index++;
         }
 
         for (CiTargetMethod.Safepoint site : ciTargetMethod.safepoints) {
-            stopPositions[index] = site.pcOffset;
+            int stopPos = site.pcOffset;
+            int causePos = stopPos;
+            stops[index] = Stops.make(stopPos, causePos, SAFEPOINT);
             debugInfos[index] = site.debugInfo;
             index++;
         }
 
-        setStopPositions(stopPositions, directCallees, numberOfIndirectCalls, numberOfSafepoints);
+        setStops(new Stops(stops), directCallees);
         return debugInfos;
     }
 
@@ -711,10 +643,14 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     public final ClassMethodActor callSiteToCallee(Address callSite) {
-        int stopPos = stopPosForDirectCallPos(callSite.minus(codeStart).toInt());
-        for (int i = 0; i < numberOfStopPositions(); i++) {
-            if (stopPosition(i) == stopPos && directCallees[i] instanceof ClassMethodActor) {
-                return (ClassMethodActor) directCallees[i];
+        int callPos = callSite.minus(codeStart).toInt();
+        int dcIndex = 0;
+        for (int i = 0; i < stops.length(); i++) {
+            if (stops.isSetAt(DIRECT_CALL, i)) {
+                if (stops.causePosAt(i) == callPos && directCallees[dcIndex] instanceof ClassMethodActor) {
+                    return (ClassMethodActor) directCallees[dcIndex];
+                }
+                dcIndex++;
             }
         }
         throw FatalError.unexpected("could not find callee for call site: " + callSite.toHexString());
@@ -727,15 +663,18 @@ public abstract class TargetMethod extends MemoryRegion {
     /**
      * Resets a direct call site, make it point to the static trampoline again.
      *
-     * @param dc the index of the direct call
+     * @param stopIndex the index of the call in {@link #stops() stops}
+     * @param dcIndex the index of the call in {@link #directCallees()}
+     *
      * @return {@code true} if the call site was not already pointing to the static trampoline
      */
-    public final boolean resetDirectCall(int dc) {
-        assert !(directCallees[dc] instanceof Adapter);
-        final int offset = getCallEntryOffset(directCallees[dc], dc);
-        final int pos = directCallPosForStopPos(stopPosition(dc));
+    public final boolean resetDirectCall(int stopIndex, int dcIndex) {
+        Object callee = directCallees[dcIndex];
+        assert !(callee instanceof Adapter);
+        final int offset = getCallEntryOffset(callee, stopIndex);
+        final int callPos = stops.causePosAt(stopIndex);
         Pointer trampoline = vm().stubs.staticTrampoline().codeStart.plus(offset);
-        return !patchCallSite(pos, trampoline).equals(trampoline);
+        return !patchCallSite(callPos, trampoline).equals(trampoline);
     }
 
     /**
@@ -749,11 +688,11 @@ public abstract class TargetMethod extends MemoryRegion {
      */
     public final boolean linkDirectCalls() {
         boolean linkedAll = true;
-        final Object[] directCallees = directCallees();
         if (directCallees != null) {
-            for (int i = 0; i < directCallees.length; i++) {
-                final int offset = getCallEntryOffset(directCallees[i], i);
-                Object currentDirectCallee = directCallees[i];
+            int dcIndex = 0;
+            for (int stopIndex = stops.nextDirectCall(0); stopIndex >= 0; stopIndex = stops.nextDirectCall(stopIndex + 1)) {
+                Object currentDirectCallee = directCallees[dcIndex];
+                final int offset = getCallEntryOffset(currentDirectCallee, stopIndex);
                 if (currentDirectCallee == null) {
                     // template call
                     assert classMethodActor.isTemplate();
@@ -765,25 +704,20 @@ public abstract class TargetMethod extends MemoryRegion {
                             // leave call site unpatched
                         } else {
                             linkedAll = false;
-                            int stopPos = stopPosition(i);
-                            if (TargetMethod.StopPositionForCallIsReturnPos) {
-                                stopPos = directCallPosForStopPos(stopPos);
-                            }
-                            final Address callSite = codeStart.plus(stopPos);
+                            final int callPos = stops.causePosAt(stopIndex);
+                            final Address callSite = codeStart.plus(callPos);
                             if (!isPatchableCallSite(callSite)) {
                                 FatalError.unexpected(classMethodActor + ": call site calling static trampoline must be patchable: 0x" + callSite.toHexString() +
-                                                " [0x" + codeStart.toHexString() + "+" + stopPos + "]");
+                                                " [0x" + codeStart.toHexString() + "+" + callPos + "]");
                             }
-                            fixupCallSite(stopPos, vm().stubs.staticTrampoline().codeStart.plus(offset));
+                            fixupCallSite(callPos, vm().stubs.staticTrampoline().codeStart.plus(offset));
                         }
                     } else {
-                        int stopPos = stopPosition(i);
-                        if (TargetMethod.StopPositionForCallIsReturnPos) {
-                            stopPos = directCallPosForStopPos(stopPos);
-                        }
-                        fixupCallSite(stopPos, callee.codeStart().plus(offset));
+                        int callPos = stops.causePosAt(stopIndex);
+                        fixupCallSite(callPos, callee.codeStart().plus(offset));
                     }
                 }
+                dcIndex++;
             }
         }
 
@@ -800,11 +734,11 @@ public abstract class TargetMethod extends MemoryRegion {
         return result;
     }
 
-    private int getCallEntryOffset(Object callee, int index) {
+    private int getCallEntryOffset(Object callee, int stopIndex) {
         if (callee instanceof Adapter) {
             return 0;
         }
-        final CallEntryPoint callEntryPoint = callEntryPointForDirectCall(index);
+        final CallEntryPoint callEntryPoint = callEntryPointForDirectCall(stopIndex);
         return callEntryPoint.offsetInCallee();
     }
 
@@ -827,40 +761,10 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
-     * Gets the array recording the positions of the stops in this target method.
-     * <p>
-     * This array is composed of three contiguous segments. The first segment contains the positions of the direct call
-     * stops and the indexes in this segment match the entries of the {@link #directCallees} array). The second segment
-     * and third segments contain the positions of the register indirect call and safepoint stops.
-     * <p>
-     *
-     * <pre>
-     *   +-----------------------------+-------------------------------+----------------------------+
-     *   |          direct calls       |           indirect calls      |          safepoints        |
-     *   +-----------------------------+-------------------------------+----------------------------+
-     *    <-- numberOfDirectCalls() --> <-- numberOfIndirectCalls() --> <-- numberOfSafepoints() -->
-     *
-     * </pre>
-     * The methods and constants defined in {@link StopPositions} should be used to decode the entries of this array.
-     *
-     * @see StopPositions
+     * @see Stops
      */
-    public final int[] stopPositions() {
-        return stopPositions;
-    }
-
-    public final int numberOfStopPositions() {
-        return stopPositions == null ? 0 : stopPositions.length;
-    }
-
-    /**
-     * Gets the position of a given stop in this target method.
-     *
-     * @param stopIndex an index into the {@link #stopPositions()} array
-     * @return
-     */
-    public final int stopPosition(int stopIndex) {
-        return StopPositions.get(stopPositions, stopIndex);
+    public final Stops stops() {
+        return stops;
     }
 
     /**
@@ -894,94 +798,15 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     public int findStopIndex(Pointer ip) {
-        if (!StopPositionForCallIsReturnPos) {
-            return findClosestStopIndex(ip);
-        }
-
         final int pos = posFor(ip);
-        if (stopPositions == null || pos < 0 || pos > code.length) {
+        if (stops == null || pos < 0 || pos > code.length) {
             return -1;
         }
         return findStopIndex(pos);
     }
 
     public int findStopIndex(int pos) {
-        for (int i = 0; i != stopPositions.length; i++) {
-            if (stopPosition(i) == pos) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    /**
-     * Gets the index of a stop position within this target method derived from a given instruction pointer. If the
-     * instruction pointer is equal to a safepoint position, then the index in {@link #stopPositions()} of that
-     * safepoint is returned. Otherwise, the index of the highest stop position that is less than or equal to the
-     * (possibly adjusted) target code position
-     * denoted by the instruction pointer is returned.  That is, if {@code ip} does not exactly match a
-     * stop position 'p' for a direct or indirect call, then the index of the highest stop position less than
-     * 'p' is returned.
-     *
-     * @return -1 if no stop index can be found for {@code ip}
-     * @see #stopPositions()
-     */
-    public int findClosestStopIndex(Pointer ip) {
-        final int pos = posFor(ip);
-        if (stopPositions == null || pos < 0 || pos > code.length) {
-            return -1;
-        }
-
-        // Direct calls come first, followed by indirect calls and safepoints in the stopPositions array.
-
-        // Check for matching safepoints first
-        int numberOfCalls = numberOfDirectCalls() + numberOfIndirectCalls();
-        for (int i = numberOfCalls; i < numberOfStopPositions(); i++) {
-            if (stopPosition(i) == pos) {
-                return i;
-            }
-        }
-
-        // Check for native calls
-        for (int i = 0; i < numberOfCalls; i++) {
-            if (stopPosition(i) == pos && StopPositions.isNativeFunctionCall(stopPositions, i)) {
-                return i;
-            }
-        }
-
-        // Since this is not a safepoint, it must be a call.
-        final int adjustedPos;
-        if (platform().isa.offsetToReturnPC == 0) {
-            // pos is the instruction after the call (which might be another call).
-            // We need to the find the call at which we actually stopped.
-            adjustedPos = pos - 1;
-        } else {
-            adjustedPos = pos;
-        }
-
-        int stopIndexWithClosestPos = -1;
-        for (int i = numberOfDirectCalls() - 1; i >= 0; --i) {
-            final int directCallPosition = stopPosition(i);
-            if (directCallPosition <= adjustedPos) {
-                if (directCallPosition == adjustedPos) {
-                    return i; // perfect match; no further searching needed
-                }
-                stopIndexWithClosestPos = i;
-                break;
-            }
-        }
-
-        // It is not enough that we find the first matching position, since there might be a direct as well
-        // as an indirect call before the instruction pointer so we find the closest one.
-        for (int i = numberOfCalls - 1; i >= numberOfDirectCalls(); i--) {
-            final int indirectCallPosition = stopPosition(i);
-            if (indirectCallPosition <= adjustedPos && (stopIndexWithClosestPos < 0 || indirectCallPosition > stopPosition(stopIndexWithClosestPos))) {
-                stopIndexWithClosestPos = i;
-                break;
-            }
-        }
-
-        return stopIndexWithClosestPos;
+        return stops.indexOf(pos);
     }
 
     @Override
@@ -1021,11 +846,11 @@ public abstract class TargetMethod extends MemoryRegion {
      */
     public final void traceDirectCallees(IndentWriter writer) {
         if (directCallees != null) {
-            assert stopPositions != null && directCallees.length <= numberOfStopPositions();
+            assert stops != null && directCallees.length <= stops.length();
             writer.println("Direct Calls: ");
             writer.indent();
             for (int i = 0; i < directCallees.length; i++) {
-                writer.println(stopPosition(i) + " -> " + directCallees[i]);
+                writer.println(stops.posAt(i) + " -> " + directCallees[i]);
             }
             writer.outdent();
         }
