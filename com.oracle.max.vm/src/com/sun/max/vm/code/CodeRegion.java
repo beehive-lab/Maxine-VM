@@ -146,7 +146,7 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
     }
 
     /**
-     * Looks up the target method containing a particular address (using binary search).
+     * Looks up the target method containing a particular address, using the index.
      *
      * @param address the address to lookup in this region
      * @return a reference to the target method containing the specified address, if it exists; {@code null} otherwise
