@@ -50,32 +50,34 @@ public final class ArrayValueHistory<E> {
      * The generation of all previously recorded values increases by 1.
      */
     public void addNew(E newValue) {
-        if (generations.size() > 0) {
-            if (newValue.equals(generations.getFirst())) {
-                if (age >= 0) {
-                    age++;
-                }
-            } else {
-                age = 0;
-            }
-        }
+//        if (generations.size() > 0) {
+//            if (newValue.equals(generations.getFirst())) {
+//                if (age >= 0) {
+//                    age++;
+//                }
+//            } else {
+//                age = 0;
+//            }
+//        }
         generations.addFirst(newValue);
         if (generations.size() > limit) {
             generations.removeLast();
         }
+        this.age = currentAge();
     }
 
     /**
-     * Replaces the current value in the history, without changing
-     * the age of anything.
+     * Replaces the current value in the history.
      *
      * @param newValue value which becomes current
      * @throws ProgramError if no values have been recorded.
      */
     public void updateCurrent(E newValue) {
         if (generations.size() > 0) {
-            generations.pop();
-            addNew(newValue);
+            if (!newValue.equals(generations.getFirst())) {
+                generations.pop();
+                addNew(newValue);
+            }
         } else {
             throw ProgramError.unexpected("attempt to update empty history");
         }
@@ -85,6 +87,7 @@ public final class ArrayValueHistory<E> {
      * Gets the historical value at some generation, 0 is current.
      *
      * @return The value at a specified generation.
+     * @throws ProgramError if the index is out of range of the current history
      */
     public E value(int generation) {
         if (generation == 0 && generations.size() > 0) {
@@ -130,6 +133,25 @@ public final class ArrayValueHistory<E> {
      */
     public Iterator<E> generations() {
         return generations.iterator();
+    }
+
+    /**
+     * Computes the age of the current generation, defined to be the number of
+     * preceding values that are equal, or -1 if no different value exists.
+     */
+    private int currentAge() {
+        assert generations.size() > 0;
+        final Iterator<E> iterator = generations.iterator();
+        E currentValue = iterator.next();
+        int duplicates = 0;
+        while (iterator.hasNext()) {
+            if (iterator.next().equals(currentValue)) {
+                duplicates++;
+            } else {
+                return duplicates;
+            }
+        }
+        return -1;
     }
 
 }
