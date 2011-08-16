@@ -65,8 +65,11 @@ public final class RegistersTable extends InspectorTable {
     /**
      * A table data model built around the list of registers in the VM.
      * Displays all three kinds of registers in a single table in the following order:
-     * <ol><li>Integer registers</li><li>State registers</li><li>Floating point registers</li></ol>
-     *
+     * <ol>
+     * <li>Integer registers</li>
+     * <li>State registers</li>
+     * <li>Floating point registers</li>
+     * </ol>
      */
     private final class RegistersTableModel extends InspectorTableModel {
 
@@ -204,7 +207,9 @@ public final class RegistersTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            final RegisterHistory registerHistory = (RegisterHistory) tableModel.getValueAt(row, 0);
             final WordValueLabel label = labels[row];
+            label.setToolTipPrefix(tableModel.getRowDescription(row) + "<br>age=" + registerHistory.age() + " value = ");
             label.setBackground(cellBackgroundColor(isSelected));
             return label;
         }
