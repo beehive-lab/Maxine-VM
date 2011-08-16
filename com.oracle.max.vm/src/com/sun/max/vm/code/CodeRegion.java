@@ -160,6 +160,9 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
         int methodIdx = findIndex[pageIndex];
         while (true) {
             TargetMethod method = targetMethods[methodIdx];
+            if (method == null) {
+                return null;
+            }
             assert method.start().lessEqual(address);
             if (method.end().greaterThan(address)) {
                 return method;
