@@ -259,9 +259,9 @@ public class MaxineTesterConfiguration {
         imageConfig("jtt-mst1xt1x", opt_c1x, baseline_t1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-caller-baseline", "-test-callee-baseline");
         imageConfig("jtt-msc1xc1x", opt_c1x, baseline_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests");
 
-        maxvmConfig("std");
-        maxvmConfig("baseline", "-Xbaseline");
-        maxvmConfig("opt", "-Xopt");
+        maxvmConfig("std", "-Xms2g", "-Xmx2g");
+        maxvmConfig("baseline", "-Xms2g", "-Xmx2g", "-Xbaseline");
+        maxvmConfig("opt", "-Xms2g", "-Xmx2g", "-Xopt");
         maxvmConfig("mx256m", "-Xmx256m");
         maxvmConfig("mx512m", "-Xmx512m");
 

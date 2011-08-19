@@ -34,23 +34,45 @@ import com.sun.max.vm.thread.*;
  * The {@link Bytecodes#MONITORENTER} and {@link Bytecodes#MONITOREXIT} instructions are implemented via a per-monitor
  * mutex. {@linkplain Object#wait() Wait} and {@linkplain Object#notify() notify} are implemented via a per-monitor
  * waiting list and a per-thread {@linkplain VmThread#waitingCondition() condition variable} on which a thread suspends
- * itself. A per-thread condition variable is necessary in order to implement single thread notification.
+ * itself. A per-thread condition variable is necessary in order to implement single thread notification. <br>
+ * <br>
+ * Note: This implementation does not conform completely with the Java language specification of wait(). The specification
+ * (see the JavaDoc of {@link Object#wait(long)} states the following protocol for continuing execution after a timeout,
+ * interruption, or notify: <br>
+ * "The thread T is then removed from the wait set for this object and re-enabled for thread scheduling. It then
+ * competes in the usual manner with other threads for the right to synchronize on the object" <br>
+ * In the case of wait timeouts and interruptions, this class reverses the order: First, all the synchronizations are
+ * restored (which can take a while because another thread might own the lock), and then T is removed from the wait set.
+ * This is due to the underlying use of pthreads (on Linux) and the use of convenient functions such as
+ * pthread_cond_timedwait(). This function does not return until the lock is re-acquired, so there is no place where we
+ * can modify our waitingThreads list. <br>
+ * Calls to notify() and notifyAll() fulfill the specification: Here, the waitingThreads list is changed by the thread
+ * that issues the notify, i.e., the notified thread is removed from the list. The remaining part of wait() only has to
+ * re-acquire the monitor. <br>
+ * <br>
+ * Example of a situation that does not fulfill the specification: Two threads are waiting for a lock. Thread A uses a
+ * wait with a timeout of 1 second, thread B a wait without a timeout. Thread C is holding the lock for 5 seconds (i.e.
+ * the wait of A expires in between) and then issues a notify(). According to the specification, the notify cannot hit
+ * thread A because thread A was removed from the wait set when its timeout expired. So the notify wakes up thread B and
+ * all threads can continue. With this implementation, the notify can hit thread A since it could not re-acquire the
+ * lock between the timeout and the notify (remember that thread C holds the lock). So the notify does not wake up
+ * thread B, and it sleeps forever - thread B remains blocked forever.
  */
 public class StandardJavaMonitor extends AbstractJavaMonitor {
 
     protected final Mutex mutex;
 
     /**
-     * The list of threads waiting on this monitor as a result of a call to
-     * {@link #monitorWait(long)}. A thread is responsible
-     * for adding/removing itself to/from this list on either side of the call
-     * to {@link ConditionVariable#threadWait(Mutex, long)}. A
-     * {@linkplain #monitorNotify(boolean) notifying}
-     * thread traverses the list but does not modify it. This means a monitor
-     * will stay protected in the short window between a notifying thread
-     * releasing it and one of the waiting threads reacquiring it upon wake up.
+     * The list of threads waiting on this monitor as a result of a call to {@link #monitorWait(long)}. A thread is
+     * responsible for adding/removing itself to/from this list on either side of the call to
+     * {@link ConditionVariable#threadWait(Mutex, long)}. A {@linkplain #monitorNotify(boolean) notifying} thread also
+     * modifies this list, i.e., the waiting thread only has to remove itself from the list when no notify occurred. In
+     * order to have keep the monitor protected in the short window between a notifying thread releasing it and one of
+     * the waiting threads re-acquiring it upon wake up, the field {@link #notifiedThreads} is > 0 in this timeframe.
      */
     private VmThread waitingThreads;
+
+    private int notifiedThreads;
 
     public StandardJavaMonitor() {
         mutex = MutexFactory.create();
@@ -90,10 +112,11 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
         }
         if (--recursionCount == 0) {
             ownerThread = null;
-            if (waitingThreads == null) {
+            if (waitingThreads == null && notifiedThreads == 0) {
                 setBindingProtection(BindingProtection.UNPROTECTED);
             } else {
                 // If there are waiting threads that have not yet been woken
+                // (or threads that have been notified but not yet resumed)
                 // then this monitor must stay protected.
             }
             traceEndMonitorExit(currentThread);
@@ -135,27 +158,11 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
         ownerThread.setState(Thread.State.RUNNABLE);
         this.recursionCount = recursionCount;
 
-        FatalError.check(waitingThreads != null && ownerThread.isOnWaitersList(), "Thread woken from wait not in waiting threads list");
-
-        // Remove the thread from the waitingThreads list
-        if (ownerThread == waitingThreads) {
-            // Common case: owner is at the head of the list
-            waitingThreads = ownerThread.nextWaitingThread;
-            ownerThread.unlinkFromWaitersList();
+        if (ownerThread.isOnWaitersList()) {
+            removeFromWaitingList(ownerThread);
         } else {
-            // Must now search the list and remove ownerThread
-            VmThread previous = waitingThreads;
-            VmThread waiter = previous.nextWaitingThread;
-            while (waiter != ownerThread) {
-                if (waiter == null) {
-                    FatalError.unexpected("Thread woken from wait not in waiting threads list");
-                }
-                previous = waiter;
-                waiter = waiter.nextWaitingThread;
-            }
-            // ownerThread
-            previous.nextWaitingThread = ownerThread.nextWaitingThread;
-            ownerThread.unlinkFromWaitersList();
+            assert notifiedThreads > 0;
+            notifiedThreads--;
         }
 
         traceEndMonitorWait(currentThread, interrupted, timedOut);
@@ -175,20 +182,44 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
             raiseIllegalMonitorStateException(ownerThread);
         }
         if (all) {
-            VmThread waiter = waitingThreads;
-            while (waiter != null) {
-                waiter.setState(Thread.State.BLOCKED);
-                waiter.waitingCondition().threadNotify(false);
-                waiter = waiter.nextWaitingThread;
+            while (waitingThreads != null) {
+                notifyAndRemove(waitingThreads);
             }
         } else {
-            final VmThread waiter = waitingThreads;
-            if (waiter != null) {
-                waiter.setState(Thread.State.BLOCKED);
-                waiter.waitingCondition().threadNotify(false);
+            if (waitingThreads != null) {
+                notifyAndRemove(waitingThreads);
             }
         }
         traceEndMonitorNotify(currentThread);
+    }
+
+    private void notifyAndRemove(VmThread waiter) {
+        removeFromWaitingList(waiter);
+        notifiedThreads++;
+        waiter.setState(Thread.State.BLOCKED);
+        waiter.waitingCondition().threadNotify(false);
+    }
+
+    private void removeFromWaitingList(VmThread toRemove) {
+        // Remove the thread from the waitingThreads list
+        if (toRemove == waitingThreads) {
+            // Common case: remove the head of the list
+            waitingThreads = toRemove.nextWaitingThread;
+            toRemove.unlinkFromWaitersList();
+        } else {
+            // Must now search the list and remove thread
+            VmThread previous = waitingThreads;
+            VmThread waiter = previous.nextWaitingThread;
+            while (waiter != toRemove) {
+                if (waiter == null) {
+                    throw FatalError.unexpected("Thread woken from wait not in waiting threads list");
+                }
+                previous = waiter;
+                waiter = waiter.nextWaitingThread;
+            }
+            previous.nextWaitingThread = toRemove.nextWaitingThread;
+            toRemove.unlinkFromWaitersList();
+        }
     }
 
     @Override
