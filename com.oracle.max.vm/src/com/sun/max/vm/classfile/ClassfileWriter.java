@@ -28,6 +28,7 @@ import static com.sun.max.vm.classfile.constant.PoolConstantFactory.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.max.*;
@@ -486,14 +487,14 @@ public class ClassfileWriter {
      * underlying JVM.
      */
     @HOSTED_ONLY
-    public static final HashMap<MethodActor, byte[]> classfileCodeMap = new HashMap<MethodActor, byte[]>();
+    public static final Map<MethodActor, byte[]> classfileCodeMap = new ConcurrentHashMap<MethodActor, byte[]>();
 
     /**
      * Exists for the same reasons as {@link #classfileCodeMap}. The reason {@link #classfileCodeMap} is required
      * in addition to this map is that {@linkplain BytecodeIntrinsifier intrinsification} occurs 'in situ'.
      */
     @HOSTED_ONLY
-    public static final HashMap<MethodActor, CodeAttribute> classfileCodeAttributeMap = new HashMap<MethodActor, CodeAttribute>();
+    public static final Map<MethodActor, CodeAttribute> classfileCodeAttributeMap = new ConcurrentHashMap<MethodActor, CodeAttribute>();
 
     /**
      * Represents the class file info for methods.
