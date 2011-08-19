@@ -76,7 +76,7 @@ public class JDK {
     public static final ClassRef java_nio_DirectShortBufferS         = new LazyClassRef("java.nio.DirectShortBufferS");
     public static final ClassRef java_nio_DirectShortBufferU         = new LazyClassRef("java.nio.DirectShortBufferU");
 
-    public static final ClassRef java_nio_charset_CharsetEncoder     = new ClassRef(java.nio.charset.CharsetEncoder.class);
+    public static final ClassRef java_nio_charset_CharsetEncoder     = new LazyClassRef(java.nio.charset.CharsetEncoder.class);
 
     public static final ClassRef java_lang_reflect_Constructor       = new ClassRef(java.lang.reflect.Constructor.class);
     public static final ClassRef java_lang_reflect_Field             = new ClassRef(java.lang.reflect.Field.class);
@@ -126,7 +126,7 @@ public class JDK {
     public static final ClassRef sun_misc_SharedSecrets              = new ClassRef(sun.misc.SharedSecrets.class);
     public static final ClassRef sun_misc_Unsafe                     = new ClassRef(sun.misc.Unsafe.class);
     public static final ClassRef sun_misc_PerfCounter                = new LazyClassRef("sun.misc.PerfCounter");
-    public static final ClassRef sun_util_calendar_ZoneInfo              = new ClassRef(sun.util.calendar.ZoneInfo.class);
+    public static final ClassRef sun_util_calendar_ZoneInfo              = new LazyClassRef(sun.util.calendar.ZoneInfo.class);
 
     public static final ClassRef sun_reflect_annotation_AnnotationParser    = new ClassRef(sun.reflect.annotation.AnnotationParser.class);
     public static final ClassRef sun_reflect_Reflection                     = new ClassRef(sun.reflect.Reflection.class);
