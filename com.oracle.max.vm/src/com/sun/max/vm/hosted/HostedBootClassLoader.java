@@ -58,18 +58,19 @@ public final class HostedBootClassLoader extends ClassLoader {
      * @param javaClass the class to be omitted
      */
     public static void omitClass(Class javaClass) {
-        omitClass(JavaTypeDescriptor.forJavaClass(javaClass));
+        omitClass(javaClass.getName());
     }
 
     /**
      * Adds a class that must not be loaded into the VM class registry. Calling {@link #loadClass(String, boolean)} for
      * this class will return null.
      *
-     * @param typeDescriptor the type descriptor for the class to be omitted
+     * @param className the name of the class to be omitted
      */
-    public static void omitClass(TypeDescriptor typeDescriptor) {
-        final String className = typeDescriptor.toJavaString();
-        ProgramError.check(ClassRegistry.BOOT_CLASS_REGISTRY.get(typeDescriptor) == null, "Cannot omit a class already in VM class registry: " + className);
+    public static void omitClass(String className) {
+        if (ClassRegistry.BOOT_CLASS_REGISTRY.get(JavaTypeDescriptor.getDescriptorForJavaString(className)) != null) {
+            throw ProgramError.unexpected("Cannot omit a class already in VM class registry: " + className);
+        }
         omittedClasses.add(className);
     }
 
