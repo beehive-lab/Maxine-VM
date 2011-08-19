@@ -160,7 +160,6 @@ public class C1X implements RuntimeCompiler {
     public void initialize(Phase phase) {
         if (isHosted() && !optionsRegistered) {
             C1XOptions.setOptimizationLevel(optLevelOption.getValue());
-            C1XOptions.UseConstDirectCall = true; // Default
             C1XOptions.OptIntrinsify = false; // TODO (ds): remove once intrinisification works for Maxine
             C1XOptions.StackShadowPages = VmThread.STACK_SHADOW_PAGES;
             VMOptions.addFieldOptions("-C1X:", C1XOptions.class, getHelpMap());
