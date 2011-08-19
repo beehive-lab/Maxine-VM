@@ -102,7 +102,7 @@ extern boolean thread_read_registers(thread_t thread,
  *
  * @param task the task whose threads are being iterated over
  * @param thread the thread being visited as part of the iteration
- * @return true if the iteration should proceed, false if it shop stop
+ * @return true if the iteration should proceed, false if it should stop
  */
 typedef boolean (*thread_visitor)(thread_t thread, void *arg);
 

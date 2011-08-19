@@ -94,6 +94,8 @@ public class Stubs {
      */
     private final Stub[] deoptStubsForCompilerStubs = new Stub[CiKind.VALUES.length];
 
+    private Stub deoptStubForSafepoint;
+
     private CriticalMethod resolveVirtualCall;
     private CriticalMethod resolveInterfaceCall;
     private CiValue[] resolveVirtualCallArgs;
@@ -133,6 +135,10 @@ public class Stubs {
         return deoptStubs[returnValueKind.stackKind().ordinal()];
     }
 
+    public Stub deoptStubForSafepoint() {
+        return deoptStubForSafepoint;
+    }
+
     /**
      * Performs all stub-related runtime initialization.
      */
@@ -161,9 +167,10 @@ public class Stubs {
                                 CiUtil.signatureToKinds(unroll.classMethodActor.signature(), null), target(), false).locations;
                 unroll.classMethodActor.targetState = genUnroll(unrollArgs);
 
+                deoptStubForSafepoint = genDeoptStubWithCSA(null, registerConfigs.trapStub, false);
                 for (CiKind kind : CiKind.VALUES) {
                     deoptStubs[kind.ordinal()] = genDeoptStub(kind);
-                    deoptStubsForCompilerStubs[kind.ordinal()] = genDeoptStubFromCompilerStub(kind);
+                    deoptStubsForCompilerStubs[kind.ordinal()] = genDeoptStubWithCSA(kind, registerConfigs.compilerStub, true);
 
                     String name = "unwind";
                     if (!kind.isVoid()) {
@@ -304,9 +311,10 @@ public class Stubs {
             asm.movq(args[2].asRegister(), new CiAddress(CiKind.Word, AMD64.rsp.asValue(), frameSize));
 
             asm.alignCall();
-            int callPosition = asm.codeBuffer.position();
+            int callPos = asm.codeBuffer.position();
             ClassMethodActor callee = isInterface ? resolveInterfaceCall.classMethodActor : resolveVirtualCall.classMethodActor;
             asm.call();
+            int callSize = asm.codeBuffer.position() - callPos;
 
             // Put the entry point of the resolved method on the stack just below the
             // return address of the trampoline itself. By adjusting RSP to point at
@@ -327,7 +335,7 @@ public class Stubs {
 
             byte[] code = asm.codeBuffer.close(true);
             final Type type = isInterface ? InterfaceTrampoline : VirtualTrampoline;
-            return new Stub(type, stubName, frameSize, code, callPosition, callee, registerRestoreEpilogueOffset);
+            return new Stub(type, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
         }
         throw FatalError.unimplemented();
     }
@@ -381,9 +389,10 @@ public class Stubs {
             asm.movq(locations[0].asRegister(), callSite);
 
             asm.alignCall();
-            int callPosition = asm.codeBuffer.position();
+            int callPos = asm.codeBuffer.position();
             ClassMethodActor callee = patchStaticTrampoline.classMethodActor;
             asm.call();
+            int callSize = asm.codeBuffer.position() - callPos;
 
             // restore all parameter registers before returning
             int registerRestoreEpilogueOffset = asm.codeBuffer.position();
@@ -402,7 +411,7 @@ public class Stubs {
             String stubName = "strampoline";
             byte[] code = asm.codeBuffer.close(true);
 
-            return new Stub(StaticTrampoline, stubName, frameSize, code, callPosition, callee, registerRestoreEpilogueOffset);
+            return new Stub(StaticTrampoline, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
         }
         throw FatalError.unimplemented();
     }
@@ -432,7 +441,7 @@ public class Stubs {
             CiRegisterConfig registerConfig = registerConfigs.trapStub;
             AMD64MacroAssembler asm = new AMD64MacroAssembler(target(), registerConfig);
             CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
-            CiRegister latch = AMD64Safepoint.LATCH_REGISTER;
+            CiRegister latch = AMD64SafepointPoll.LATCH_REGISTER;
             CiRegister scratch = registerConfig.getScratchRegister();
             int frameSize = platform().target.alignFrameSize(csl.size);
             int frameToCSA = csl.frameOffsetToCSA;
@@ -470,9 +479,10 @@ public class Stubs {
             asm.movq(args[2].asRegister(), new CiAddress(CiKind.Word, latch.asValue(), TRAP_FAULT_ADDRESS.offset));
 
             asm.alignCall();
-            int callPosition = asm.codeBuffer.position();
+            int callPos = asm.codeBuffer.position();
             ClassMethodActor callee = Trap.handleTrap.classMethodActor;
             asm.call();
+            int callSize = asm.codeBuffer.position() - callPos;
             asm.restore(csl, frameToCSA);
 
             // now pop the flags register off the stack before returning
@@ -482,7 +492,7 @@ public class Stubs {
 
             byte[] code = asm.codeBuffer.close(true);
 
-            return new Stub(TrapStub, "trapStub", frameSize, code, callPosition, callee, -1);
+            return new Stub(TrapStub, "trapStub", frameSize, code, callPos, callSize, callee, -1);
         }
         throw FatalError.unimplemented();
     }
@@ -583,7 +593,7 @@ public class Stubs {
             asm.ret(0);
 
             byte[] code = asm.codeBuffer.close(true);
-            return new Stub(UnwindStub, name, frameSize, code, -1, null, -1);
+            return new Stub(UnwindStub, name, frameSize, code, -1, -1, null, -1);
         }
         throw FatalError.unimplemented();
     }
@@ -615,15 +625,16 @@ public class Stubs {
 
             CriticalMethod unroll = new CriticalMethod(Deoptimization.class, "unroll", null);
             asm.alignCall();
-            int callPosition = asm.codeBuffer.position();
+            int callPos = asm.codeBuffer.position();
             ClassMethodActor callee = unroll.classMethodActor;
             asm.call();
+            int callSize = asm.codeBuffer.position() - callPos;
 
             // Should never reach here
             asm.hlt();
 
             byte[] code = asm.codeBuffer.close(true);
-            return new Stub(UnrollStub, "unrollStub", frameSize, code, callPosition, callee, -1);
+            return new Stub(UnrollStub, "unrollStub", frameSize, code, callPos, callSize, callee, -1);
         }
         throw FatalError.unimplemented();
     }
@@ -681,7 +692,7 @@ public class Stubs {
             /*
              * The deopt stub initially executes in the frame of the method that was returned to and is about to be
              * deoptimized. It then allocates a temporary frame of 2 slots to transfer control to the deopt
-             * routine via "returning" to it. As execution enters the deopt routine, the stack looks like
+             * routine by "returning" to it. As execution enters the deopt routine, the stack looks like
              * the about-to-be-deoptimized frame called the deopt routine directly.
              *
              * [ mov  rcx, rax ]                               // if non-void return value, copy it into arg3 (omitted for void/float/double values)
@@ -761,7 +772,7 @@ public class Stubs {
 
             String stubName = runtimeRoutineName + "Stub";
             byte[] code = asm.codeBuffer.close(true);
-            final Stub stub = new Stub(DeoptStub, stubName, frameSize, code, -1, null, -1);
+            final Stub stub = new Stub(DeoptStub, stubName, frameSize, code, -1, 0, null, -1);
 
             AMD64DeoptStubPatch patch = new AMD64DeoptStubPatch(patchPos, runtimeRoutine, stub);
             runtimeInits = Arrays.copyOf(runtimeInits, runtimeInits.length + 1);
@@ -772,8 +783,15 @@ public class Stubs {
         throw FatalError.unimplemented();
     }
 
+    /**
+     * Generates a stub to deoptimize an method upon returning to it. This stub creates a new frame for saving the registers
+     * specified by the {@link CiCalleeSaveLayout} of a given register configuration.
+     *
+     * @param kind the return value kind or {@code null} if generating the stub used when returning from a safepoint trap
+     * @param returnValueOnStack specifies if the return value is on the stack (ignored if {@code kind == null})
+     */
     @HOSTED_ONLY
-    private Stub genDeoptStubFromCompilerStub(CiKind kind) {
+    private Stub genDeoptStubWithCSA(CiKind kind, CiRegisterConfig registerConfig, boolean returnValueOnStack) {
         if (platform().isa == ISA.AMD64) {
             /*
              * The deopt stub initially executes in the frame of the method that was returned to (i.e. the method about to be
@@ -794,13 +812,17 @@ public class Stubs {
              *   call <deopt routine>                          // call deoptimization routine
              *   int3                                          // should not reach here
              */
-            CiRegisterConfig registerConfig = registerConfigs.compilerStub;
             CiCalleeSaveLayout csl = registerConfig.csl;
             AMD64MacroAssembler asm = new AMD64MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(csl.size);
             int cfo = frameSize + 8; // Caller frame offset
 
-            String runtimeRoutineName = "deoptimize" + kind.name();
+            String runtimeRoutineName;
+            if (kind == null) {
+                runtimeRoutineName = "deoptimizeAtSafepoint";
+            } else {
+                runtimeRoutineName = "deoptimize" + kind.name();
+            }
             final CriticalMethod runtimeRoutine;
             try {
                 runtimeRoutine = new CriticalMethod(Deoptimization.class, runtimeRoutineName, null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
@@ -817,7 +839,7 @@ public class Stubs {
 
             CiKind[] params = CiUtil.signatureToKinds(runtimeRoutine.classMethodActor.signature(), null);
             CiValue[] args;
-            if (!kind.isVoid()) {
+            if (kind != null && !kind.isVoid()) {
                 args = registerConfig.getCallingConvention(JavaCall, params, target(), false).locations;
                 // Copy return value into arg 4
                 CiRegister arg4 = args[4].asRegister();
@@ -854,15 +876,17 @@ public class Stubs {
 
             // Call runtime routine
             asm.alignCall();
-            int callPosition = asm.codeBuffer.position();
+            int callPos = asm.codeBuffer.position();
             asm.call();
+            int callSize = asm.codeBuffer.position() - callPos;
 
             // should never reach here
             asm.int3();
 
-            String stubName = runtimeRoutineName + "StubFromCompilerStub";
+            String stubName = runtimeRoutineName + "StubWithCSA";
             byte[] code = asm.codeBuffer.close(true);
-            return new Stub(DeoptStubFromCompilerStub, stubName, frameSize, code, callPosition, runtimeRoutine.classMethodActor, -1);
+            Type stubType = kind == null ? DeoptStubFromSafepoint : DeoptStubFromCompilerStub;
+            return new Stub(stubType, stubName, frameSize, code, callPos, callSize, runtimeRoutine.classMethodActor, -1);
         }
         throw FatalError.unimplemented();
     }
@@ -912,9 +936,10 @@ public class Stubs {
             asm.movq(arg3, AMD64.rbp);
 
             asm.alignCall();
-            int callPosition = asm.codeBuffer.position();
+            int callPos = asm.codeBuffer.position();
             ClassMethodActor callee = uncommonTrap.classMethodActor;
             asm.call();
+            int callSize = asm.codeBuffer.position() - callPos;
 
             // Should never reach here
             int registerRestoreEpilogueOffset = asm.codeBuffer.position();
@@ -922,7 +947,7 @@ public class Stubs {
 
             String stubName = name + "Stub";
             byte[] code = asm.codeBuffer.close(true);
-            return new Stub(UncommonTrapStub, stubName, frameSize, code, callPosition, callee, registerRestoreEpilogueOffset);
+            return new Stub(UncommonTrapStub, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
         }
         throw FatalError.unimplemented();
     }

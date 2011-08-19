@@ -24,12 +24,10 @@ package com.sun.max.vm.runtime;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
 
-import java.util.*;
-
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.type.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * Direct access to certain CPU registers of the current thread, directed by ABI-managed register roles.
@@ -40,137 +38,45 @@ public final class VMRegister {
     }
 
     /**
-     * Constant corresponding to the ordinal of {@link Role#CPU_STACK_POINTER}.
+     * The register that is customarily used as "the stack pointer" on the target CPU.
+     * Typically this register is not flexibly allocatable for other uses.
+     * AMD64: RSP
      */
     public static final int CPU_SP = 0;
 
     /**
-     * Constant corresponding to the ordinal of {@link Role#CPU_FRAME_POINTER}.
+     * The register that is customarily used as "frame pointer" on the target CPU.
+     * AMD64: RBP
      */
     public static final int CPU_FP = 1;
 
     /**
-     * Constant corresponding to the ordinal of {@link Role#ABI_STACK_POINTER}.
+     * The register that the current target ABI actually uses as stack pointer,
+     * i.e. for code sequences that call, push, pop etc.
+     * Typically this is the same as {@link #CPU_SP}.
      */
     public static final int ABI_SP = 2;
 
     /**
-     * Constant corresponding to the ordinal of {@link Role#ABI_FRAME_POINTER}.
+     * The register that the current target ABI actually uses as frame pointer,
+     * i.e. for code sequences that access local variables, spill slots, stack parameters, etc.
+     * This may or may not be the same as {@link #CPU_FP}.
+     * For the baseline compiler it is, but the optimizing compiler uses {@link #CPU_SP} instead.
      */
     public static final int ABI_FP = 3;
 
     /**
-     * Constant corresponding to the ordinal of {@link Role#SAFEPOINT_LATCH}.
+     * The register denoting the currently active {@link VmThreadLocal thread locals}.
+     * AMD64: R14
      */
     public static final int LATCH = 7;
 
     /**
-     * Constant corresponding to the ordinal of {@link Role#LINK_ADDRESS}.
+     * The register holding the address to which a call returns (e.g. {@code %i7 on SPARC}).
+     * AMD64: <none>
+     * SPARC: %i7
      */
     public static final int LINK = 9;
-
-    public enum Role {
-        /**
-         * The register that is customarily used as "the stack pointer" on the target CPU.
-         * Typically this register is not flexibly allocatable for other uses.
-         * AMD64: RSP
-         */
-        CPU_STACK_POINTER(CPU_SP) {
-            @Override
-            public Kind kind() {
-                return Kind.WORD;
-            }
-        },
-        /**
-         * The register that is customarily used as "frame pointer" on the target CPU.
-         * AMD64: RBP
-         */
-        CPU_FRAME_POINTER(CPU_FP) {
-            @Override
-            public Kind kind() {
-                return Kind.WORD;
-            }
-        },
-        /**
-         * The register that the current target ABI actually uses as stack pointer,
-         * i.e. for code sequences that call, push, pop etc.
-         * Typically this is the same as CPU_STACK_POINTER.
-         */
-        ABI_STACK_POINTER(ABI_SP) {
-            @Override
-            public Kind kind() {
-                return Kind.WORD;
-            }
-        },
-        /**
-         * The register that the current target ABI actually uses as frame pointer,
-         * i.e. for code sequences that access local variables, spill slots, stack parameters, etc.
-         * This may or may not be the same as CPU_FRAME_POINTER.
-         * For the baseline compiler it is, but the optimizing compiler uses CPU_STACK_POINTER instead.
-         */
-        ABI_FRAME_POINTER(ABI_FP) {
-            @Override
-            public Kind kind() {
-                return Kind.WORD;
-            }
-        },
-
-        /**
-         * The register that callees use to return a value.
-         */
-        ABI_RETURN,
-
-        /**
-         * The register where the caller sees the returned value.
-         * On most architecture, this is the same as the ABI_RETURN register.
-         * On architecture with register windows, this may be a different register
-         * (e.g., on SPARC, wherein ABI_RETURN would be assign %i0, whereas ABI_RESULT would
-         * be assigned %o0).
-         */
-        ABI_RESULT,
-
-        ABI_SCRATCH,
-        SAFEPOINT_LATCH(LATCH) {
-            @Override
-            public Kind kind() {
-                return Kind.WORD;
-            }
-        },
-        /**
-         * The register used as the base pointer from which literal offset are computed.
-         * Not all platform defines one.
-         */
-        LITERAL_BASE_POINTER {
-            @Override
-            public Kind kind() {
-                return Kind.WORD;
-            }
-
-        },
-        /**
-         * The register holding the address to which a call returns (e.g. {@code %i7 on SPARC}).
-         * Not all platform defines one.
-        */
-        LINK_ADDRESS(LINK) {
-            @Override
-            public Kind kind() {
-                return Kind.WORD;
-            }
-        };
-
-        Role(int expectedOrdinal) {
-            assert expectedOrdinal == ordinal();
-        }
-
-        Role() {
-        }
-
-        public static final List<Role> VALUES = Arrays.asList(values());
-
-        public Kind kind() {
-            return null;
-        }
-    }
 
     @INLINE
     @INTRINSIC(READREG | (CPU_SP << 8))

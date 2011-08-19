@@ -111,7 +111,7 @@ public final class ImmortalHeap {
      * @param adjustForDebugTag
      * @return pointer to allocated object
      */
-    @NO_SAFEPOINTS("object allocation and initialization must be atomic")
+    @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
     public static Pointer allocate(Size size, boolean adjustForDebugTag) {
         Pointer oldAllocationMark;
         Pointer cell;

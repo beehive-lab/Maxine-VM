@@ -106,21 +106,21 @@ public final class Memory {
         }
     }
 
-    @NO_SAFEPOINTS("speed")
+    @NO_SAFEPOINT_POLLS("speed")
     public static void setBytes(Pointer pointer, Size numberOfBytes, byte value) {
         for (Offset i = Offset.zero(); i.lessThan(numberOfBytes.asOffset()); i = i.plus(1)) {
             pointer.writeByte(i, value);
         }
     }
 
-    @NO_SAFEPOINTS("speed")
+    @NO_SAFEPOINT_POLLS("speed")
     public static void setWords(Pointer pointer, int numberOfWords, Word value) {
         for (int i = 0; i < (numberOfWords * Word.size()); i += Word.size()) {
             pointer.writeWord(i, value);
         }
     }
 
-    @NO_SAFEPOINTS("speed")
+    @NO_SAFEPOINT_POLLS("speed")
     public static void clearWords(Pointer start, int length) {
         FatalError.check(start.isWordAligned(), "Can only zero word-aligned region");
         for (int i = 0; i < length; i++) {
@@ -128,19 +128,19 @@ public final class Memory {
         }
     }
 
-    @NO_SAFEPOINTS("speed")
+    @NO_SAFEPOINT_POLLS("speed")
     public static void setBytes(Pointer pointer, int numberOfBytes, byte value) {
         for (int i = 0; i < numberOfBytes; i++) {
             pointer.writeByte(i, value);
         }
     }
 
-    @NO_SAFEPOINTS("speed")
+    @NO_SAFEPOINT_POLLS("speed")
     public static void clearBytes(Pointer pointer, int numberOfBytes) {
         setBytes(pointer, numberOfBytes, (byte) 0);
     }
 
-    @NO_SAFEPOINTS("speed")
+    @NO_SAFEPOINT_POLLS("speed")
     public static boolean equals(Pointer pointer1, Pointer pointer2, Size numberOfBytes) {
         for (Offset i = Offset.zero(); i.lessThan(numberOfBytes.asOffset()); i = i.plus(1)) {
             if (pointer1.readByte(i) != pointer2.readByte(i)) {
@@ -150,7 +150,7 @@ public final class Memory {
         return true;
     }
 
-    @NO_SAFEPOINTS("speed")
+    @NO_SAFEPOINT_POLLS("speed")
     public static boolean equals(Pointer pointer1, byte[] bytes) {
         for (int i = 0; i < bytes.length; i++) {
             if (pointer1.readByte(i) != bytes[i]) {
@@ -160,65 +160,65 @@ public final class Memory {
         return true;
     }
 
-    @NO_SAFEPOINTS("speed")
+    @NO_SAFEPOINT_POLLS("speed")
     public static void copyBytes(Pointer fromPointer, Pointer toPointer, Size numberOfBytes) {
         for (Offset i = Offset.zero(); i.lessThan(numberOfBytes.asOffset()); i = i.plus(1)) {
             toPointer.writeByte(i, fromPointer.readByte(i));
         }
     }
 
-    @NO_SAFEPOINTS("speed")
+    @NO_SAFEPOINT_POLLS("speed")
     public static void readBytes(Pointer fromPointer, int numberOfBytes, byte[] toArray, int startIndex) {
         for (int i = 0; i < numberOfBytes; i++) {
             toArray[startIndex + i] = fromPointer.readByte(i);
         }
     }
 
-    @NO_SAFEPOINTS("speed")
+    @NO_SAFEPOINT_POLLS("speed")
     public static void readBytes(Pointer fromPointer, int numberOfBytes, byte[] toArray) {
         readBytes(fromPointer, numberOfBytes, toArray, 0);
     }
 
-    @NO_SAFEPOINTS("speed")
+    @NO_SAFEPOINT_POLLS("speed")
     public static void readBytes(Pointer fromPointer, byte[] toArray) {
         readBytes(fromPointer, toArray.length, toArray, 0);
     }
 
-    @NO_SAFEPOINTS("speed")
+    @NO_SAFEPOINT_POLLS("speed")
     public static void readWords(Pointer fromPointer, int numberOfWords, Word[] toArray, int startIndex) {
         for (int i = 0; i < numberOfWords; i++) {
             WordArray.set(toArray, startIndex + i, fromPointer.getWord(i));
         }
     }
 
-    @NO_SAFEPOINTS("speed")
+    @NO_SAFEPOINT_POLLS("speed")
     public static void readWords(Pointer fromPointer, int numberOfWords, Word[] toArray) {
         readWords(fromPointer, numberOfWords, toArray, 0);
     }
 
-    @NO_SAFEPOINTS("speed")
+    @NO_SAFEPOINT_POLLS("speed")
     public static void readWords(Pointer fromPointer, Word[] toArray) {
         readWords(fromPointer, toArray.length, toArray, 0);
     }
 
-    @NO_SAFEPOINTS("speed")
+    @NO_SAFEPOINT_POLLS("speed")
     public static void writeBytes(byte[] fromArray, int startIndex, int numberOfBytes, Pointer toPointer) {
         for (int i = 0; i < numberOfBytes; i++) {
             toPointer.writeByte(i, fromArray[startIndex + i]);
         }
     }
 
-    @NO_SAFEPOINTS("speed")
+    @NO_SAFEPOINT_POLLS("speed")
     public static void writeBytes(byte[] fromArray, int numberOfBytes, Pointer toPointer) {
         writeBytes(fromArray, 0, numberOfBytes, toPointer);
     }
 
-    @NO_SAFEPOINTS("speed")
+    @NO_SAFEPOINT_POLLS("speed")
     public static void writeBytes(byte[] fromArray, Pointer toPointer) {
         writeBytes(fromArray, fromArray.length, toPointer);
     }
 
-    @NO_SAFEPOINTS("speed")
+    @NO_SAFEPOINT_POLLS("speed")
     public static void zapRegion(MemoryRegion region) {
         FatalError.check(region.start().isWordAligned(), "Can only zap word-aligned region");
         FatalError.check(region.size().remainder(Word.size()) == 0, "Can only zap region of words");

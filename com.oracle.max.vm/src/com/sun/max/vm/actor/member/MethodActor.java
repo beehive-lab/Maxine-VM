@@ -152,8 +152,8 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
     }
 
     @INLINE
-    public final boolean noSafepoints() {
-        return noSafepoints(flags()) || isTemplate();
+    public final boolean noSafepointPolls() {
+        return noSafepointPolls(flags()) || isTemplate();
     }
 
     public boolean minimalDebugInfo() {

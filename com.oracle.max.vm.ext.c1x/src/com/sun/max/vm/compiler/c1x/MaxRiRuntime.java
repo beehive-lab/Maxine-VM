@@ -38,7 +38,7 @@ import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.Call;
 import com.sun.cri.ci.CiTargetMethod.DataPatch;
-import com.sun.cri.ci.CiTargetMethod.Site;
+import com.sun.cri.ci.CiTargetMethod.Safepoint;
 import com.sun.cri.ci.CiUtil.RefMapFormatter;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
@@ -199,23 +199,19 @@ public class MaxRiRuntime implements RiRuntime {
             throw FatalError.unimplemented();
         }
         RefMapFormatter slotFormatter = new RefMapFormatter(target().arch, target().spillSlotSize, fp, refMapToFPOffset);
-        for (Call site : targetMethod.directCalls) {
-            if (site.debugInfo() != null) {
-                hcf.addComment(site.pcOffset, CiUtil.append(new StringBuilder(100), site.debugInfo, slotFormatter).toString());
+        for (Safepoint safepoint : targetMethod.safepoints) {
+            if (safepoint instanceof Call) {
+                Call call = (Call) safepoint;
+                if (call.debugInfo != null) {
+                    hcf.addComment(Safepoints.safepointPosForCall(call.pcOffset, call.size), CiUtil.append(new StringBuilder(100), call.debugInfo, slotFormatter).toString());
+                }
+                addOperandComment(hcf, call.pcOffset, "{" + call.target + "}");
+            } else {
+                if (safepoint.debugInfo != null) {
+                    hcf.addComment(safepoint.pcOffset, CiUtil.append(new StringBuilder(100), safepoint.debugInfo, slotFormatter).toString());
+                }
+                addOperandComment(hcf, safepoint.pcOffset, "{safepoint}");
             }
-            hcf.addOperandComment(site.pcOffset, calleeString(site));
-        }
-        for (Call site : targetMethod.indirectCalls) {
-            if (site.debugInfo() != null) {
-                hcf.addComment(site.pcOffset, CiUtil.append(new StringBuilder(100), site.debugInfo, slotFormatter).toString());
-            }
-            hcf.addOperandComment(site.pcOffset, calleeString(site));
-        }
-        for (Site site : targetMethod.safepoints) {
-            if (site.debugInfo() != null) {
-                hcf.addComment(site.pcOffset, CiUtil.append(new StringBuilder(100), site.debugInfo(), slotFormatter).toString());
-            }
-            hcf.addOperandComment(site.pcOffset, "{safepoint}");
         }
         for (DataPatch site : targetMethod.dataReferences) {
             hcf.addOperandComment(site.pcOffset, "{" + site.constant + "}");
@@ -224,18 +220,9 @@ public class MaxRiRuntime implements RiRuntime {
         return hcf.toEmbeddedString();
     }
 
-    private static String calleeString(Call call) {
-        if (call.runtimeCall != null) {
-            return "{" + call.runtimeCall.name() + "}";
-        } else if (call.symbol != null) {
-            return "{" + call.symbol + "}";
-        } else if (call.stubID != null) {
-            return "{" + call.stubID + "}";
-        } else if (call.method != null) {
-            return "{" + call.method + "}";
-        } else {
-            return "{<template_call>}";
-        }
+    private static void addOperandComment(CiHexCodeFile hcf, int pos, String comment) {
+        String oldValue = hcf.addOperandComment(pos, comment);
+        assert oldValue == null : "multiple comments for operand of instruction at " + pos + ": " + comment + ", " + oldValue;
     }
 
     protected static class CachedInvocation {
@@ -369,6 +356,17 @@ public class MaxRiRuntime implements RiRuntime {
             return (Class) o;
         }
         return null;
+    }
+
+    @Override
+    public Object asCallTarget(Object target) {
+        if (target instanceof CiRuntimeCall) {
+            target = C1XRuntimeCalls.getClassMethodActor((CiRuntimeCall) target);
+        } else if (target == null) {
+            target = CallTarget.TEMPLATE_CALL;
+        }
+        CallTarget.assertSupportedTarget(target);
+        return target;
     }
 
     public boolean isExceptionType(RiType type) {

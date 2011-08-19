@@ -221,7 +221,7 @@ public final class Dependencies {
          *
          * @param c the class context of all subsequent dependencies or {@code null} if there are no more dependencies
          * @param prev the previous class context or {@code null} if {@code c} is the first class context
-         * @return {@code false} if this closure wants stop traversing the dependencies
+         * @return {@code false} if this closure wants to stop traversing the dependencies
          */
         public boolean nextClass(ClassActor c, ClassActor prev) {
             return true;

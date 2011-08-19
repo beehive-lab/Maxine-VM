@@ -95,7 +95,7 @@ public class CiUnresolvedMethod implements RiMethod {
         throw unresolved("isOverridden()");
     }
 
-    public boolean noSafepoints() {
+    public boolean noSafepointPolls() {
         throw unresolved("noSafepoints()");
     }
 

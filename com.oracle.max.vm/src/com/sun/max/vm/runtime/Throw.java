@@ -110,7 +110,7 @@ public final class Throw {
         final VmStackFrameWalker sfw = VmThread.current().unwindingStackFrameWalker(throwable);
 
         VmThread.current().checkYellowZoneForRaisingException();
-        Safepoint.disable();
+        SafepointPoll.disable();
         sfw.unwind(ip, sp, fp, throwable);
         FatalError.unexpected("could not find top-level exception handler");
     }

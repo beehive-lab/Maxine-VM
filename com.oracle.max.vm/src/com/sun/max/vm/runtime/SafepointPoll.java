@@ -43,7 +43,7 @@ import com.sun.max.vm.thread.*;
  * The platform specific details of the mechanism by which a thread can be
  * frozen via polling at prudently chosen execution points.
  */
-public abstract class Safepoint {
+public abstract class SafepointPoll {
 
     /**
      * The three states a thread can be in with respect to safepoints.
@@ -73,11 +73,11 @@ public abstract class Safepoint {
     }
 
     @HOSTED_ONLY
-    public static Safepoint create() {
+    public static SafepointPoll create() {
         try {
             final String isa = platform().isa.name();
-            final Class<?> safepointClass = Class.forName(getPackageName(Safepoint.class) + "." + isa.toLowerCase() + "." + isa + Safepoint.class.getSimpleName());
-            return (Safepoint) safepointClass.newInstance();
+            final Class<?> safepointClass = Class.forName(getPackageName(SafepointPoll.class) + "." + isa.toLowerCase() + "." + isa + SafepointPoll.class.getSimpleName());
+            return (SafepointPoll) safepointClass.newInstance();
         } catch (Exception exception) {
             exception.printStackTrace();
             throw ProgramError.unexpected("could not create safepoint: " + exception);
@@ -86,7 +86,7 @@ public abstract class Safepoint {
 
     public final byte[] code = createCode();
 
-    protected Safepoint() {
+    protected SafepointPoll() {
     }
 
     /**
@@ -163,8 +163,8 @@ public abstract class Safepoint {
     /**
      * Emits a safepoint at the call site.
      */
-    @INTRINSIC(SAFEPOINT)
-    public static native void safepoint();
+    @INTRINSIC(SAFEPOINT_POLL)
+    public static native void safepointPoll();
 
     @HOSTED_ONLY
     protected abstract byte[] createCode();

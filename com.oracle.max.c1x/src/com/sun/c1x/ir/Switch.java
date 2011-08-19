@@ -39,10 +39,10 @@ public abstract class Switch extends BlockEnd {
      * @param value the instruction that provides the value to be switched over
      * @param successors the list of successors of this switch
      * @param stateBefore the state before the switch
-     * @param isSafepoint {@code true} if this switch is a safepoint
+     * @param isSafepointPoll {@code true} if this switch is a safepoint
      */
-    public Switch(Value value, List<BlockBegin> successors, FrameState stateBefore, boolean isSafepoint) {
-        super(CiKind.Illegal, stateBefore, isSafepoint, successors);
+    public Switch(Value value, List<BlockBegin> successors, FrameState stateBefore, boolean isSafepointPoll) {
+        super(CiKind.Illegal, stateBefore, isSafepointPoll, successors);
         this.value = value;
     }
 

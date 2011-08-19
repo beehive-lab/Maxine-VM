@@ -1042,7 +1042,7 @@ public class Canonicalizer extends DefaultValueVisitor {
             // fold comparisons between constants and convert to Goto
             Boolean result = ifcond.foldCondition(l.asConstant(), r.asConstant(), runtime);
             if (result != null) {
-                setCanonical(new Goto(i.successor(result), i.stateAfter(), i.isSafepoint()));
+                setCanonical(new Goto(i.successor(result), i.stateAfter(), i.isSafepointPoll()));
                 return;
             }
         }
@@ -1059,10 +1059,10 @@ public class Canonicalizer extends DefaultValueVisitor {
             // this is a comparison of null against something that is not null
             if (ifcond == Condition.EQ) {
                 // new() == null is always false
-                setCanonical(new Goto(i.falseSuccessor(), i.stateAfter(), i.isSafepoint()));
+                setCanonical(new Goto(i.falseSuccessor(), i.stateAfter(), i.isSafepointPoll()));
             } else if (ifcond == Condition.NE) {
                 // new() != null is always true
-                setCanonical(new Goto(i.trueSuccessor(), i.stateAfter(), i.isSafepoint()));
+                setCanonical(new Goto(i.trueSuccessor(), i.stateAfter(), i.isSafepointPoll()));
             }
         }
     }
@@ -1085,7 +1085,7 @@ public class Canonicalizer extends DefaultValueVisitor {
         //       lssSucc or gtrSucc.
         if (lssSucc == eqlSucc && eqlSucc == gtrSucc) {
             // all successors identical => simplify to: Goto
-            setCanonical(new Goto(lssSucc, i.stateAfter(), i.isSafepoint()));
+            setCanonical(new Goto(lssSucc, i.stateAfter(), i.isSafepointPoll()));
         } else {
             // two successors differ and two successors are the same => simplify to: If (x cmp y)
             // determine new condition & successors
@@ -1108,7 +1108,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                 throw Util.shouldNotReachHere();
             }
             // TODO: the state after is incorrect here: should it be preserved from the original if?
-            If canon = new If(cmp.x(), cond, nanSucc == tsux, cmp.y(), tsux, fsux, cmp.stateBefore(), i.isSafepoint());
+            If canon = new If(cmp.x(), cond, nanSucc == tsux, cmp.y(), tsux, fsux, cmp.stateBefore(), i.isSafepointPoll());
             if (cmp.x() == cmp.y()) {
                 // re-canonicalize the new if
                 visitIf(canon);
@@ -1133,7 +1133,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                 throw Util.shouldNotReachHere();
         }
         // Checkstyle: on
-        setCanonical(new Goto(succ, i.stateAfter(), i.isSafepoint()));
+        setCanonical(new Goto(succ, i.stateAfter(), i.isSafepointPoll()));
     }
 
     @Override
@@ -1146,7 +1146,7 @@ public class Canonicalizer extends DefaultValueVisitor {
             if (val >= i.lowKey() && val <= i.highKey()) {
                 succ = i.successors().get(val - i.lowKey());
             }
-            setCanonical(new Goto(succ, i.stateAfter(), i.isSafepoint()));
+            setCanonical(new Goto(succ, i.stateAfter(), i.isSafepointPoll()));
             return;
         }
         int max = i.numberOfCases();
@@ -1156,13 +1156,13 @@ public class Canonicalizer extends DefaultValueVisitor {
                 // TODO: is it necessary to add the instruction explicitly?
                 addInstr((Instruction) v);
             }
-            setCanonical(new Goto(i.defaultSuccessor(), i.stateAfter(), i.isSafepoint()));
+            setCanonical(new Goto(i.defaultSuccessor(), i.stateAfter(), i.isSafepointPoll()));
             return;
         }
         if (max == 1) {
             // replace switch with If
             Constant key = intInstr(i.lowKey());
-            If newIf = new If(v, Condition.EQ, false, key, i.successors().get(0), i.defaultSuccessor(), null, i.isSafepoint());
+            If newIf = new If(v, Condition.EQ, false, key, i.successors().get(0), i.defaultSuccessor(), null, i.isSafepointPoll());
             newIf.setStateAfter(i.stateAfter());
             setCanonical(newIf);
         }
@@ -1181,7 +1181,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                     break;
                 }
             }
-            setCanonical(new Goto(succ, i.stateAfter(), i.isSafepoint()));
+            setCanonical(new Goto(succ, i.stateAfter(), i.isSafepointPoll()));
             return;
         }
         int max = i.numberOfCases();
@@ -1190,13 +1190,13 @@ public class Canonicalizer extends DefaultValueVisitor {
             if (v instanceof Instruction) {
                 addInstr((Instruction) v); // the value expression may produce side effects
             }
-            setCanonical(new Goto(i.defaultSuccessor(), i.stateAfter(), i.isSafepoint()));
+            setCanonical(new Goto(i.defaultSuccessor(), i.stateAfter(), i.isSafepointPoll()));
             return;
         }
         if (max == 1) {
             // replace switch with If
             Constant key = intInstr(i.keyAt(0));
-            If newIf = new If(v, Condition.EQ, false, key, i.successors().get(0), i.defaultSuccessor(), null, i.isSafepoint());
+            If newIf = new If(v, Condition.EQ, false, key, i.successors().get(0), i.defaultSuccessor(), null, i.isSafepointPoll());
             newIf.setStateAfter(i.stateAfter());
             setCanonical(newIf);
         }

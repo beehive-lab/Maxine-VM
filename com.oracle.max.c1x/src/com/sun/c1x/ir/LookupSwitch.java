@@ -43,10 +43,10 @@ public final class LookupSwitch extends Switch {
      * @param successors the list of successors
      * @param keys the list of keys, sorted
      * @param stateBefore the state before the switch
-     * @param isSafepoint {@code true} if this instruction is a safepoint
+     * @param isSafepointPoll {@code true} if this instruction is a safepoint
      */
-    public LookupSwitch(Value value, List<BlockBegin> successors, int[] keys, FrameState stateBefore, boolean isSafepoint) {
-        super(value, successors, stateBefore, isSafepoint);
+    public LookupSwitch(Value value, List<BlockBegin> successors, int[] keys, FrameState stateBefore, boolean isSafepointPoll) {
+        super(value, successors, stateBefore, isSafepointPoll);
         this.keys = keys;
     }
 
@@ -71,7 +71,7 @@ public final class LookupSwitch extends Switch {
     @Override
     public void print(LogStream out) {
         out.print("lookupswitch ");
-        if (isSafepoint()) {
+        if (isSafepointPoll()) {
             out.print("(safepoint) ");
         }
         out.println(value());

@@ -514,7 +514,7 @@ public final class DependenciesManager {
         }
         if (MaxineVM.isHosted()) {
             return;
-        } else {
+        } else if (!methods.isEmpty()) {
             new Deoptimization(methods).go();
         }
     }

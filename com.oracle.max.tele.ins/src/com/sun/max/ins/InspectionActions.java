@@ -759,9 +759,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     final class ViewSelectedThreadLocalsAreaMemoryAction extends InspectorAction {
 
-        private final Safepoint.State state;
+        private final SafepointPoll.State state;
 
-        public ViewSelectedThreadLocalsAreaMemoryAction(Safepoint.State state, String actionTitle) {
+        public ViewSelectedThreadLocalsAreaMemoryAction(SafepointPoll.State state, String actionTitle) {
             super(inspection(), actionTitle == null ? "View memory for selected thread's locals area=" + state.name() : actionTitle);
             this.state = state;
         }
@@ -803,7 +803,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * @return an action that will create a memory view
      * for one of the thread locals areas allocated by the currently selected thread
      */
-    public final InspectorAction viewSelectedThreadLocalsAreaMemory(Safepoint.State state, String actionTitle) {
+    public final InspectorAction viewSelectedThreadLocalsAreaMemory(SafepointPoll.State state, String actionTitle) {
         return new ViewSelectedThreadLocalsAreaMemoryAction(state, actionTitle);
     }
 
