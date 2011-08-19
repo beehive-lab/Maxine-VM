@@ -181,12 +181,6 @@ public interface RiMethod {
     StackTraceElement toStackTraceElement(int bci);
 
     /**
-     * Indicates whether this method has compiled code.
-     * @return {@code true} if this method has compiled code
-     */
-    boolean hasCompiledCode();
-
-    /**
      * Temporary work-around to support the @ACCESSOR Maxine annotation.
      * Non-Maxine VMs should just return {@code null}.
      */

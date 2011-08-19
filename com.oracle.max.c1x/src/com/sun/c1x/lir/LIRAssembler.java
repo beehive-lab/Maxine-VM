@@ -226,8 +226,6 @@ public abstract class LIRAssembler {
 
         switch (op.code) {
             case DirectCall:
-                // fall through
-            case ConstDirectCall:
                 if (op.marks != null) {
                     op.marks.put(XirMark.CALLSITE, tasm.recordMark(null, new Mark[0]));
                 }

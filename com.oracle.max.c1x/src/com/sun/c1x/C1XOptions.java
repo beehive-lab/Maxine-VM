@@ -139,7 +139,6 @@ public final class C1XOptions {
     public static boolean GenLIR                        = true;
     public static boolean GenCode                       = true;
 
-    public static boolean UseConstDirectCall            = false;
     public static boolean EmitNopAfterCall              = true;
 
     public static boolean GenSpecialDivChecks           = ____;
