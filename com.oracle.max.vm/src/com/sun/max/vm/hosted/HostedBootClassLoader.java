@@ -93,18 +93,21 @@ public final class HostedBootClassLoader extends ClassLoader {
     /**
      * Determines if a given type descriptor denotes a class that must not be loaded in VM class registry.
      * The set of omitted classes is determined by any preceding calls to {@link #omitClass(Class)} and {@link #omitPackage(String, boolean)}.
+     * All inner classes of omitted classes are also omitted.
      *
-     * @param typeDescriptor the descriptor of a type to test
+     * @param className the name of a type to test
      * @return {@code true} if {@code typeDescriptor} denotes a class that must not be loaded in VM class registry
      */
-    public static boolean isOmittedType(TypeDescriptor typeDescriptor) {
-        final String className = typeDescriptor.toJavaString();
-
+    public static boolean isOmittedType(String className) {
         if (omittedClasses.contains(className)) {
             return true;
         }
         if (omittedPackages.contains(Classes.getPackageName(className))) {
             return true;
+        }
+
+        if (Classes.getSimpleName(className).lastIndexOf('$') >= 0) {
+            return isOmittedType(className.substring(0, className.lastIndexOf('$')));
         }
         return false;
     }
@@ -182,6 +185,10 @@ public final class HostedBootClassLoader extends ClassLoader {
                 return ClassActorFactory.createArrayClassActor(componentClassActor);
             }
             final String name = typeDescriptor.toJavaString();
+
+            if (isOmittedType(name)) {
+                throw new OmittedClassError(name);
+            }
 
             synchronized (this) {
                 loadedPackages.add(Classes.getPackageName(name));
@@ -294,7 +301,7 @@ public final class HostedBootClassLoader extends ClassLoader {
             if (MaxineVM.isHostedOnly(javaType)) {
                 throw new HostOnlyClassError(javaType.getName());
             }
-            if (isOmittedType(JavaTypeDescriptor.forJavaClass(javaType))) {
+            if (isOmittedType(name)) {
                 throw new OmittedClassError(javaType.getName());
             }
             makeClassActor(JavaTypeDescriptor.forJavaClass(javaType));
