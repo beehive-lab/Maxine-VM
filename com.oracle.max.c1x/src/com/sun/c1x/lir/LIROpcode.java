@@ -96,7 +96,6 @@ public enum LIROpcode {
     EndOp3,
     NativeCall,
     DirectCall,
-    ConstDirectCall,
     IndirectCall,
     TemplateCall,
     InstanceOf,

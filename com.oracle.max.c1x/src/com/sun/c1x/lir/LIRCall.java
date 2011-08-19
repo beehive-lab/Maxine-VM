@@ -117,7 +117,7 @@ public class LIRCall extends LIRInstruction {
         String targetAddress = null;
         if (code == LIROpcode.RuntimeCall) {
             buf.append(target);
-        } else if (code != LIROpcode.DirectCall && code != LIROpcode.ConstDirectCall) {
+        } else if (code != LIROpcode.DirectCall) {
             if (targetAddressIndex >= 0) {
                 targetAddress = operandFmt.format(targetAddress());
                 buf.append(targetAddress);

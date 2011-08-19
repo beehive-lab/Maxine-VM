@@ -47,16 +47,9 @@ public final class LIRList {
     private List<LIRInstruction> operations;
     private final LIRGenerator generator;
 
-    private final LIROpcode runtimeCallOp;
-
-    private LIROpcode directCallOp(RiMethod method) {
-        return C1XOptions.UseConstDirectCall && method.hasCompiledCode() ? LIROpcode.ConstDirectCall : LIROpcode.DirectCall;
-    }
-
     public LIRList(LIRGenerator generator) {
         this.generator = generator;
         this.operations = new ArrayList<LIRInstruction>(8);
-        runtimeCallOp = C1XOptions.UseConstDirectCall ? LIROpcode.ConstDirectCall : LIROpcode.DirectCall;
     }
 
     private void append(LIRInstruction op) {
@@ -82,7 +75,7 @@ public final class LIRList {
     }
 
     public void callDirect(RiMethod method, CiValue result, List<CiValue> arguments, LIRDebugInfo info, Map<XirMark, Mark> marks, List<CiValue> pointerSlots) {
-        append(new LIRCall(directCallOp(method), method, result, arguments, info, marks, false, pointerSlots));
+        append(new LIRCall(LIROpcode.DirectCall, method, result, arguments, info, marks, false, pointerSlots));
     }
 
     public void callIndirect(RiMethod method, CiValue result, List<CiValue> arguments, LIRDebugInfo info, Map<XirMark, Mark> marks, List<CiValue> pointerSlots) {
@@ -304,7 +297,7 @@ public final class LIRList {
     }
 
     public void callRuntime(CiRuntimeCall rtCall, CiValue result, List<CiValue> arguments, LIRDebugInfo info) {
-        append(new LIRCall(runtimeCallOp, rtCall, result, arguments, info, null, false, null));
+        append(new LIRCall(LIROpcode.DirectCall, rtCall, result, arguments, info, null, false, null));
     }
 
     public void pause() {
