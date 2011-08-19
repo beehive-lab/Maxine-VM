@@ -265,7 +265,7 @@ public abstract class TypeDescriptor extends Descriptor {
                 return false;
             }
 
-            if (HostedBootClassLoader.isOmittedType(typeDescriptor)) {
+            if (HostedBootClassLoader.isOmittedType(className)) {
                 return false;
             }
 
