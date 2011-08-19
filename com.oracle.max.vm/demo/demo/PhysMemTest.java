@@ -20,22 +20,26 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.annotate;
+package demo;
 
-import java.lang.annotation.*;
+import com.sun.max.memory.*;
+import com.sun.max.platform.*;
+import com.sun.max.unsafe.*;
 
 /**
- * Suppresses the insertion of safepoints in the body of the annotated method.
- *
- * ATTENTION: callees of the method may still contain safepoints.
+ * Test getting platform's physical memory characteristics.
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface NO_SAFEPOINTS {
+public class PhysMemTest {
+    public static void main(String[] args) {
+        if (!System.getProperty("java.vm.name").startsWith("Maxine")) {
+            System.out.println("Should run with a Maxine VM");
+            System.exit(0);
+        }
+        long physicalMemorySize = VirtualMemory.getPhysicalMemorySize().toLong();
+        int pageSize = Platform.platform().pageSize;
+        int kPerPage = pageSize / Size.K.toInt();
+        long physicalMemoryM = physicalMemorySize / Size.M.toLong();
 
-    /**
-     * Documents the reason why the annotated code must have no safepoints.
-     */
-    String value();
-
+        System.out.println("Physical Memory = " + physicalMemorySize + " bytes, "  + physicalMemoryM + "M, " + (physicalMemorySize / pageSize) + " x " + kPerPage + "K pages");
+    }
 }

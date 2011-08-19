@@ -46,16 +46,12 @@ public class CiTargetMethod implements Serializable {
         public Site(int pos) {
             this.pcOffset = pos;
         }
-
-        public CiDebugInfo debugInfo() {
-            return null;
-        }
     }
 
     /**
-     * Represents a safepoint and stores the register and stack reference map.
+     * Represents a safepoint with associated debug info.
      */
-    public static final class Safepoint extends Site {
+    public static class Safepoint extends Site implements Comparable<Safepoint> {
         public final CiDebugInfo debugInfo;
 
         Safepoint(int pcOffset, CiDebugInfo debugInfo) {
@@ -64,25 +60,31 @@ public class CiTargetMethod implements Serializable {
         }
 
         @Override
-        public CiDebugInfo debugInfo() {
-            return debugInfo;
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append(pcOffset);
+            sb.append("[<safepoint>]");
+            appendRefMap(sb, "registerMap", debugInfo.registerRefMap);
+            appendRefMap(sb, "stackMap", debugInfo.frameRefMap);
+            appendDebugInfo(sb, debugInfo);
+            return sb.toString();
         }
 
         @Override
-        public String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("Safepoint at ");
-            sb.append(pcOffset);
-            appendRefMap(sb, "registerMap", debugInfo.registerRefMap);
-            appendRefMap(sb, "stackMap", debugInfo.frameRefMap);
-            return sb.toString();
+        public int compareTo(Safepoint o) {
+            if (pcOffset < o.pcOffset) {
+                return -1;
+            } else if (pcOffset > o.pcOffset) {
+                return 1;
+            }
+            return 0;
         }
     }
 
     /**
-     * Represents a call in the code and includes a stack reference map and optionally a register reference map.
+     * Represents a call in the code.
      */
-    public static final class Call extends Site {
+    public static final class Call extends Safepoint {
         /**
          * The target of the call.
          */
@@ -93,26 +95,27 @@ public class CiTargetMethod implements Serializable {
          */
         public final int size;
 
-        public final CiDebugInfo debugInfo;
+        /**
+         * Specifies if this call is direct or indirect. A direct call has an immediate operand encoding
+         * the absolute or relative (to the call itself) address of the target. An indirect call has a
+         * register or memory operand specifying the target address of the call.
+         */
+        public final boolean direct;
 
-        Call(Object target, int pcOffset, int size, CiDebugInfo debugInfo) {
-            super(pcOffset);
+        Call(Object target, int pcOffset, int size, boolean direct, CiDebugInfo debugInfo) {
+            super(pcOffset, debugInfo);
             this.size = size;
-            this.debugInfo = debugInfo;
             this.target = target;
-        }
-
-        @Override
-        public CiDebugInfo debugInfo() {
-            return debugInfo;
+            this.direct = direct;
         }
 
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
-            sb.append(target);
-            sb.append(" at pos ");
             sb.append(pcOffset);
+            sb.append('[');
+            sb.append(target);
+            sb.append(']');
 
             if (debugInfo != null) {
                 appendRefMap(sb, "stackMap", debugInfo.frameRefMap);
@@ -137,7 +140,7 @@ public class CiTargetMethod implements Serializable {
 
         @Override
         public String toString() {
-            return String.format("Data patch site at pos %d referring to data %s", pcOffset, constant);
+            return String.format("%d[<data patch referring to data %s>]", pcOffset, constant);
         }
     }
 
@@ -277,7 +280,7 @@ public class CiTargetMethod implements Serializable {
 
         @Override
         public String toString() {
-            return String.format("Exception edge from pos %d to %d with type %s", pcOffset, handlerPos, (exceptionType == null) ? "null" : exceptionType);
+            return String.format("%d[<exception edge to %d with type %s>]", pcOffset, handlerPos, (exceptionType == null) ? "null" : exceptionType);
         }
     }
 
@@ -294,40 +297,33 @@ public class CiTargetMethod implements Serializable {
         @Override
         public String toString() {
             if (id == null) {
-                return String.format("Mark at pos %d with %d references", pcOffset, references.length);
+                return String.format("%d[<mark with %d references>]", pcOffset, references.length);
             } else if (id instanceof Integer) {
-                return String.format("Mark at pos %d with %d references and id %s", pcOffset, references.length, Integer.toHexString((Integer) id));
+                return String.format("%d[<mark with %d references and id %s>]", pcOffset, references.length, Integer.toHexString((Integer) id));
             } else {
-                return String.format("Mark at pos %d with %d references and id %s", pcOffset, references.length, id.toString());
+                return String.format("%d[<mark with %d references and id %s>]", pcOffset, references.length, id.toString());
             }
         }
     }
 
     /**
-     * List of safepoints in the code.
+     * List of safepoints, sorted by {@link Site#pcOffset}.
      */
     public final List<Safepoint> safepoints = new ArrayList<Safepoint>();
 
     /**
-     * List of direct calls in the code.
-     */
-    public final List<Call> directCalls = new ArrayList<Call>();
-
-    /**
-     * List of indirect calls in the code.
-     */
-    public final List<Call> indirectCalls = new ArrayList<Call>();
-
-    /**
-     * List of data references in the code.
+     * List of data references.
      */
     public final List<DataPatch> dataReferences = new ArrayList<DataPatch>();
 
     /**
-     * List of exception handlers in the code.
+     * List of exception handlers.
      */
     public final List<ExceptionHandler> exceptionHandlers = new ArrayList<ExceptionHandler>();
 
+    /**
+     * List of marks.
+     */
     public final List<Mark> marks = new ArrayList<Mark>();
 
     private int frameSize = -1;
@@ -396,21 +392,17 @@ public class CiTargetMethod implements Serializable {
     }
 
     /**
-     * Records a call to a target.
+     * Records a call in the code array.
      *
-     * @param codePos the position in the code array
+     * @param codePos the position of the call in the code array
      * @param size the size of the call instruction
      * @param target the {@link RiRuntime#asCallTarget(Object) target} being called
-     * @param debugInfo the debug info for the call site
-     * @param direct true if this is a direct call, false otherwise
+     * @param debugInfo the debug info for the call
+     * @param direct specifies if this is a {@linkplain Call#direct direct} call
      */
     public void recordCall(int codePos, int size, Object target, CiDebugInfo debugInfo, boolean direct) {
-        final Call callSite = new Call(target, codePos, size, debugInfo);
-        if (direct) {
-            directCalls.add(callSite);
-        } else {
-            indirectCalls.add(callSite);
-        }
+        final Call call = new Call(target, codePos, size, direct, debugInfo);
+        addSafepoint(call);
     }
 
     /**
@@ -425,13 +417,22 @@ public class CiTargetMethod implements Serializable {
     }
 
     /**
-     * Records the reference maps at a safepoint location in the code array.
+     * Records a safepoint in the code array.
      *
-     * @param codePos the position in the code array
-     * @param debugInfo    the debug info for the safepoint site
+     * @param codePos the position of the safepoint in the code array
+     * @param debugInfo the debug info for the safepoint
      */
     public void recordSafepoint(int codePos, CiDebugInfo debugInfo) {
-        safepoints.add(new Safepoint(codePos, debugInfo));
+        addSafepoint(new Safepoint(codePos, debugInfo));
+    }
+
+    private void addSafepoint(Safepoint safepoint) {
+        // The safepoints list must always be sorted
+        if (!safepoints.isEmpty() && safepoints.get(safepoints.size() - 1).pcOffset >= safepoint.pcOffset) {
+            // This re-sorting should be very rare
+            Collections.sort(safepoints);
+        }
+        safepoints.add(safepoint);
     }
 
     /**

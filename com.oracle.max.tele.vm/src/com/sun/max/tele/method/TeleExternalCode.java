@@ -151,7 +151,7 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
             return machineCodeLocations.get(index);
         }
 
-        public boolean isStop(int index) throws IllegalArgumentException {
+        public boolean isSafepoint(int index) throws IllegalArgumentException {
             if (index < 0 || index >= instructions.size()) {
                 throw new IllegalArgumentException();
             }

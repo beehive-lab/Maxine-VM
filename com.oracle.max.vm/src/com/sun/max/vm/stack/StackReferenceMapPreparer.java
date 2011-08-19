@@ -533,13 +533,13 @@ public final class StackReferenceMapPreparer {
      * ending with the frame for {@link VmThread#run}.
      *
      * @param tla a pointer to the VM thread locals denoting the thread stack whose reference map is to be prepared
-     * @param trapState the trap state
+     * @param trapFrame the trap state
      */
-    public void prepareStackReferenceMapFromTrap(Pointer tla, Pointer trapState) {
+    public void prepareStackReferenceMapFromTrap(Pointer tla, Pointer trapFrame) {
         final TrapFrameAccess tfa = vm().trapFrameAccess;
-        final Pointer instructionPointer = tfa.getPC(trapState);
-        final Pointer stackPointer = tfa.getSP(trapState);
-        final Pointer framePointer = tfa.getFP(trapState);
+        final Pointer instructionPointer = tfa.getPC(trapFrame);
+        final Pointer stackPointer = tfa.getSP(trapFrame);
+        final Pointer framePointer = tfa.getFP(trapFrame);
         prepareStackReferenceMap(tla, instructionPointer, stackPointer, framePointer, false);
     }
 
@@ -565,7 +565,7 @@ public final class StackReferenceMapPreparer {
     }
 
 
-    public void tracePrepareReferenceMap(TargetMethod targetMethod, int stopIndex, Pointer refmapFramePointer, String label) {
+    public void tracePrepareReferenceMap(TargetMethod targetMethod, int safepointIndex, Pointer refmapFramePointer, String label) {
         if (traceStackRootScanning()) {
             Log.print(prepare ? "  Preparing" : "  Verifying");
             Log.print(" reference map for ");
@@ -573,9 +573,9 @@ public final class StackReferenceMapPreparer {
             Log.print(" of ");
             Log.printMethod(targetMethod, false);
             Log.print(" +");
-            Log.println(targetMethod.stops().posAt(stopIndex));
+            Log.println(targetMethod.safepoints().posAt(safepointIndex));
             Log.print("    Stop index: ");
-            Log.println(stopIndex);
+            Log.println(safepointIndex);
             if (!refmapFramePointer.isZero()) {
                 Log.print("    Frame pointer: ");
                 printSlot(referenceMapBitIndex(refmapFramePointer), Pointer.zero());

@@ -20,27 +20,36 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package test.output;
+package com.sun.max.vm.runtime.amd64;
 
-import com.sun.max.memory.*;
-import com.sun.max.platform.*;
-import com.sun.max.unsafe.*;
+import static com.sun.max.platform.Platform.*;
+
+import com.oracle.max.asm.target.amd64.*;
+import com.sun.cri.ci.*;
+import com.sun.max.annotate.*;
+import com.sun.max.vm.runtime.*;
 
 /**
- * Test getting platform's physical memory characteristics.
- * Doesn't run on other VM as it relies on a C_FUNCTION.
+ * The safepoint poll implementation for AMD64.
+ *
+ * @see AMD64TrapFrameAccess
  */
-public class PhysMemTest {
-    public static void main(String[] args) {
-        if (!System.getProperty("java.vm.name").startsWith("Maxine")) {
-            System.out.println("Should run with a Maxine VM");
-            System.exit(0);
-        }
-        long physicalMemorySize = VirtualMemory.getPhysicalMemorySize().toLong();
-        int pageSize = Platform.platform().pageSize;
-        int kPerPage = pageSize / Size.K.toInt();
-        long physicalMemoryM = physicalMemorySize / Size.M.toLong();
+public final class AMD64SafepointPoll extends SafepointPoll {
 
-        System.out.println("Physical Memory = " + physicalMemorySize + " bytes, "  + physicalMemoryM + "M, " + (physicalMemorySize / pageSize) + " x " + kPerPage + "K pages");
+    /**
+     * ATTENTION: must be callee-saved by all C ABIs in use.
+     */
+    public static final CiRegister LATCH_REGISTER = AMD64.r14;
+
+    @HOSTED_ONLY
+    public AMD64SafepointPoll() {
+    }
+
+    @HOSTED_ONLY
+    @Override
+    protected byte[] createCode() {
+        final AMD64Assembler asm = new AMD64Assembler(target(), null);
+        asm.movq(LATCH_REGISTER, new CiAddress(CiKind.Word, LATCH_REGISTER.asValue()));
+        return asm.codeBuffer.close(true);
     }
 }

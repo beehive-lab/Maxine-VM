@@ -335,7 +335,7 @@ public final class Watchpoints {
             return VmThreadLocal.values().get(threadLocalIndex).name;
         }
         private MaxThreadLocalVariable threadLocalVariable(MaxThread thread) {
-            return  thread.localsBlock().tlaFor(Safepoint.State.ENABLED).getThreadLocalVariable(threadLocalIndex);
+            return  thread.localsBlock().tlaFor(SafepointPoll.State.ENABLED).getThreadLocalVariable(threadLocalIndex);
         }
 
         ThreadLocalWatchpointItemListener(Inspection inspection, VmThreadLocal threadLocal) {

@@ -158,7 +158,7 @@ public class VMAT1XCompilation extends T1XCompilation {
             } else {
                 assignLocalDisplacementTemplateArgument(1, 0, Kind.REFERENCE);
             }
-            emitAndRecordStops(template);
+            emitAndRecordSafepoints(template);
         }
     }
 }

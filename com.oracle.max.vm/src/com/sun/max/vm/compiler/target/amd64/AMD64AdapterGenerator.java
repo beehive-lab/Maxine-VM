@@ -28,6 +28,7 @@ import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.compiler.deopt.Deoptimization.*;
+import static com.sun.max.vm.compiler.target.amd64.AMD64TargetMethodUtil.*;
 
 import java.io.*;
 
@@ -101,7 +102,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
 
             @Override
             public int callSizeInPrologue() {
-                return 8;
+                return RIP_CALL_INSTRUCTION_SIZE;
             }
 
             /**
@@ -504,7 +505,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
 
             @Override
             public int callSizeInPrologue() {
-                return 8;
+                return RIP_CALL_INSTRUCTION_SIZE;
             }
 
             /**
@@ -628,9 +629,8 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             }
         }
 
-        private static final int DIRECT_CALL_SIZE = 5;
-        private static final int PROLOGUE_SIZE = 13;
-        private static final int PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE = 8;
+        static final int PROLOGUE_SIZE = 13;
+        static final int PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE = 8;
 
         Opt2Baseline() {
             super(Adapter.Type.OPT2BASELINE);

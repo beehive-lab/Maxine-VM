@@ -692,16 +692,17 @@ public final class GraphBuilder {
     }
 
     void genGoto(int fromBCI, int toBCI) {
-        boolean isSafepoint = !scopeData.noSafepoints() && toBCI <= fromBCI;
-        append(new Goto(blockAt(toBCI), null, isSafepoint));
+        boolean isSafepointPoll = !scopeData.noSafepointPolls() && toBCI <= fromBCI;
+        FrameState stateBefore = curState.immutableCopy(bci());
+        append(new Goto(blockAt(toBCI), stateBefore, isSafepointPoll));
     }
 
     void ifNode(Value x, Condition cond, Value y, FrameState stateBefore) {
         BlockBegin tsucc = blockAt(stream().readBranchDest());
         BlockBegin fsucc = blockAt(stream().nextBCI());
         int bci = stream().currentBCI();
-        boolean isSafepoint = !scopeData.noSafepoints() && tsucc.bci() <= bci || fsucc.bci() <= bci;
-        append(new If(x, cond, false, y, tsucc, fsucc, isSafepoint ? stateBefore : null, isSafepoint));
+        boolean isSafepointPoll = !scopeData.noSafepointPolls() && tsucc.bci() <= bci || fsucc.bci() <= bci;
+        append(new If(x, cond, false, y, tsucc, fsucc, isSafepointPoll ? stateBefore : null, isSafepointPoll));
     }
 
     void genIfZero(Condition cond) {
@@ -727,7 +728,7 @@ public final class GraphBuilder {
 
     void genThrow(int bci) {
         FrameState stateBefore = curState.immutableCopy(bci());
-        Throw t = new Throw(apop(), stateBefore, !scopeData.noSafepoints());
+        Throw t = new Throw(apop(), stateBefore, !scopeData.noSafepointPolls());
         appendWithoutOptimization(t, bci);
     }
 
@@ -1249,7 +1250,7 @@ public final class GraphBuilder {
             append(new MonitorExit(rootMethodSynchronizedObject, lockAddress, lockNumber, stateBefore));
             curState.unlock();
         }
-        append(new Return(x, !scopeData.noSafepoints()));
+        append(new Return(x, !scopeData.noSafepointPolls()));
     }
 
     /**
@@ -1326,9 +1327,9 @@ public final class GraphBuilder {
         int offset = ts.defaultOffset();
         isBackwards |= offset < 0; // if the default successor is backwards
         list.add(blockAt(bci + offset));
-        boolean isSafepoint = isBackwards && !scopeData.noSafepoints();
-        FrameState stateBefore = isSafepoint ? curState.immutableCopy(bci()) : null;
-        append(new TableSwitch(ipop(), list, ts.lowKey(), stateBefore, isSafepoint));
+        boolean isSafepointPoll = isBackwards && !scopeData.noSafepointPolls();
+        FrameState stateBefore = isSafepointPoll ? curState.immutableCopy(bci()) : null;
+        append(new TableSwitch(ipop(), list, ts.lowKey(), stateBefore, isSafepointPoll));
     }
 
     void genLookupswitch() {
@@ -1348,9 +1349,9 @@ public final class GraphBuilder {
         int offset = ls.defaultOffset();
         isBackwards |= offset < 0; // if the default successor is backwards
         list.add(blockAt(bci + offset));
-        boolean isSafepoint = isBackwards && !scopeData.noSafepoints();
-        FrameState stateBefore = isSafepoint ? curState.immutableCopy(bci()) : null;
-        append(new LookupSwitch(ipop(), list, keys, stateBefore, isSafepoint));
+        boolean isSafepointPoll = isBackwards && !scopeData.noSafepointPolls();
+        FrameState stateBefore = isSafepointPoll ? curState.immutableCopy(bci()) : null;
+        append(new LookupSwitch(ipop(), list, keys, stateBefore, isSafepointPoll));
     }
 
     private Value appendConstant(CiConstant type) {
@@ -2657,7 +2658,7 @@ public final class GraphBuilder {
     private void genInfopoint(int opcode, boolean inclFrame) {
         // TODO: create slimmer frame state if inclFrame is false
         FrameState state = curState.immutableCopy(bci());
-        assert opcode != SAFEPOINT || !scopeData.noSafepoints() : "cannot place explicit safepoint in uninterruptible code scope";
+        assert opcode != SAFEPOINT_POLL || !scopeData.noSafepointPolls() : "cannot place safepoint poll in uninterruptible code scope";
         Value result = append(new Infopoint(opcode, state));
         if (!result.kind.isVoid()) {
             push(result.kind, result);

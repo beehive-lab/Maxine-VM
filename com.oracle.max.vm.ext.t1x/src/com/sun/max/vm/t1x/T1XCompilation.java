@@ -60,7 +60,7 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.amd64.*;
 import com.sun.max.vm.t1x.T1XCompilation.PatchInfo;
-import com.sun.max.vm.t1x.T1XTemplate.StopsBuilder;
+import com.sun.max.vm.t1x.T1XTemplate.SafepointsBuilder;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.verifier.*;
@@ -124,7 +124,7 @@ public class T1XCompilation {
     /**
      * Object used to aggregate all the stops for the compiled code.
      */
-    final StopsBuilder stops = new StopsBuilder();
+    final SafepointsBuilder safepointsBuilder = new SafepointsBuilder();
 
     /**
      * Locations in the code buffer that need to be patched.
@@ -346,7 +346,7 @@ public class T1XCompilation {
         }
         patchInfo.reset();
         adapter = null;
-        stops.reset(false);
+        safepointsBuilder.reset(false);
         methodProfileBuilder = null;
     }
 
@@ -361,7 +361,7 @@ public class T1XCompilation {
                 template = getTemplate(PROFILE_NONSTATIC_METHOD_ENTRY);
                 assignLocalDisplacementTemplateArgument(1, 0, Kind.REFERENCE);
             }
-            emitAndRecordStops(template);
+            emitAndRecordSafepoints(template);
         }
     }
 
@@ -369,7 +369,7 @@ public class T1XCompilation {
         if (T1XOptions.TraceMethods) {
             T1XTemplate template = getTemplate(TRACE_METHOD_ENTRY);
             assignReferenceLiteralTemplateArgument(0, method.toString());
-            emitAndRecordStops(template);
+            emitAndRecordSafepoints(template);
         }
     }
 
@@ -378,12 +378,12 @@ public class T1XCompilation {
             if (method.isStatic()) {
                 T1XTemplate template = getTemplate(LOCK_CLASS);
                 assignReferenceLiteralTemplateArgument(0, method.holder().javaClass());
-                emitAndRecordStops(template);
+                emitAndRecordSafepoints(template);
             } else {
                 T1XTemplate template = getTemplate(LOCK_RECEIVER);
                 assignLocalDisplacementTemplateArgument(0, 0, Kind.REFERENCE);
                 assignLocalDisplacementTemplateArgument(1, synchronizedReceiver, Kind.REFERENCE);
-                emitAndRecordStops(template);
+                emitAndRecordSafepoints(template);
             }
             syncMethodStartPos = buf.position();
         }
@@ -485,14 +485,14 @@ public class T1XCompilation {
             if (method.isStatic()) {
                 T1XTemplate template = getTemplate(UNLOCK_CLASS);
                 assignReferenceLiteralTemplateArgument(0, method.holder().javaClass());
-                emitAndRecordStops(template);
+                emitAndRecordSafepoints(template);
             } else {
                 T1XTemplate template = getTemplate(UNLOCK_RECEIVER);
                 assignLocalDisplacementTemplateArgument(0, synchronizedReceiver, Kind.REFERENCE);
-                emitAndRecordStops(template);
+                emitAndRecordSafepoints(template);
             }
             syncMethodEndPos = buf.position();
-            emitAndRecordStops(getTemplate(RETHROW_EXCEPTION));
+            emitAndRecordSafepoints(getTemplate(RETHROW_EXCEPTION));
         }
     }
 
@@ -504,15 +504,15 @@ public class T1XCompilation {
     }
 
     /**
-     * Copies the code from a given template into the code buffer and updates the set of stops for the method being
+     * Copies the code from a given template into the code buffer and updates the set of safepoints for the method being
      * translated with those derived from the template.
      *
      * @param template the compiled code to emit
      */
-    protected void emitAndRecordStops(T1XTemplate template) {
-        if (template.stops.length != 0) {
+    protected void emitAndRecordSafepoints(T1XTemplate template) {
+        if (template.safepoints.length != 0) {
             int bci = stream.currentBCI();
-            stops.add(template, buf.position(), bci == stream.endBCI() ? -1 : bci, null);
+            safepointsBuilder.add(template, buf.position(), bci == stream.endBCI() ? -1 : bci, null);
         }
         buf.emitBytes(template.code, 0, template.code.length);
     }
@@ -527,7 +527,7 @@ public class T1XCompilation {
             startBlock(bci);
             if (handlerBCIs != null) {
                 if (handlerBCIs[bci]) {
-                    emitAndRecordStops(getTemplate(LOAD_EXCEPTION));
+                    emitAndRecordSafepoints(getTemplate(LOAD_EXCEPTION));
                 }
 
             }
@@ -540,7 +540,7 @@ public class T1XCompilation {
             if (compiler.dynamicBytecodeCount != null) {
                 assignIntTemplateArgument(0, representativeOpcode & 0xff);
                 assignReferenceLiteralTemplateArgument(1, compiler.dynamicBytecodeCount);
-                emitAndRecordStops(getTemplate(COUNT_BYTECODE));
+                emitAndRecordSafepoints(getTemplate(COUNT_BYTECODE));
             }
         }
 
@@ -605,35 +605,35 @@ public class T1XCompilation {
     protected void emit(T1XTemplateTag tag) {
         T1XTemplate template = getTemplate(tag);
         beginBytecode(tag.opcode);
-        emitAndRecordStops(template);
+        emitAndRecordSafepoints(template);
     }
 
     protected void emitInt(T1XTemplateTag tag, int value) {
         T1XTemplate template = getTemplate(tag);
         beginBytecode(tag.opcode);
         assignIntTemplateArgument(0, value);
-        emitAndRecordStops(template);
+        emitAndRecordSafepoints(template);
     }
 
     protected void emitDouble(T1XTemplateTag tag, double value) {
         T1XTemplate template = getTemplate(tag);
         beginBytecode(tag.opcode);
         assignDoubleTemplateArgument(0, value);
-        emitAndRecordStops(template);
+        emitAndRecordSafepoints(template);
     }
 
     protected void emitFloat(T1XTemplateTag tag, float value) {
         T1XTemplate template = getTemplate(tag);
         beginBytecode(tag.opcode);
         assignFloatTemplateArgument(0, value);
-        emitAndRecordStops(template);
+        emitAndRecordSafepoints(template);
     }
 
     protected void emitLong(T1XTemplateTag tag, long value) {
         T1XTemplate template = getTemplate(tag);
         beginBytecode(tag.opcode);
         assignLongTemplateArgument(0, value);
-        emitAndRecordStops(template);
+        emitAndRecordSafepoints(template);
     }
 
     /**
@@ -648,7 +648,7 @@ public class T1XCompilation {
         T1XTemplate template = getTemplate(tag);
         beginBytecode(tag.opcode);
         assignLocalDisplacementTemplateArgument(0, localIndex, kind);
-        emitAndRecordStops(template);
+        emitAndRecordSafepoints(template);
     }
 
     /**
@@ -671,14 +671,14 @@ public class T1XCompilation {
                         T1XTemplate template = getTemplate(tag.initialized);
                         assignReferenceLiteralTemplateArgument(0, fieldActor.holder().staticTuple());
                         assignIntTemplateArgument(1, fieldActor.offset());
-                        emitAndRecordStops(template);
+                        emitAndRecordSafepoints(template);
                         emitPostVolatileFieldAccess(tag, fieldActor);
                         return;
                     }
                 } else {
                     T1XTemplate template = getTemplate(tag.resolved);
                     assignIntTemplateArgument(0, fieldActor.offset());
-                    emitAndRecordStops(template);
+                    emitAndRecordSafepoints(template);
                     emitPostVolatileFieldAccess(tag, fieldActor);
                     return;
                 }
@@ -691,7 +691,7 @@ public class T1XCompilation {
         T1XTemplate template = getTemplate(tag);
         assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index));
         // Emit the template unmodified now. It will be modified in the end once all labels to literals are fixed.
-        emitAndRecordStops(template);
+        emitAndRecordSafepoints(template);
     }
 
     void emitPreVolatileFieldAccess(T1XTemplateTag tag, FieldActor fieldActor) {
@@ -742,7 +742,7 @@ public class T1XCompilation {
             beginBytecode(tag.opcode);
             assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index));
         }
-        emitAndRecordStops(template);
+        emitAndRecordSafepoints(template);
     }
 
     protected void emitIinc(int index, int increment) {
@@ -750,7 +750,7 @@ public class T1XCompilation {
         final T1XTemplate template = getTemplate(IINC);
         assignLocalDisplacementTemplateArgument(0, index, Kind.INT);
         assignIntTemplateArgument(1, increment);
-        emitAndRecordStops(template);
+        emitAndRecordSafepoints(template);
     }
 
     @PLATFORM(cpu = "amd64")
@@ -764,20 +764,20 @@ public class T1XCompilation {
         if (method.holder() == ClassRegistry.OBJECT) {
             T1XTemplate template = getTemplate(RETURN$registerFinalizer);
             assignLocalDisplacementTemplateArgument(0, 0, Kind.REFERENCE);
-            emitAndRecordStops(template);
+            emitAndRecordSafepoints(template);
         } else if (method.isSynchronized()) {
             if (method.isStatic()) {
                 T1XTemplate template = getTemplate(tagUnlockClass);
                 assignReferenceLiteralTemplateArgument(0, method.holder().javaClass());
-                emitAndRecordStops(template);
+                emitAndRecordSafepoints(template);
             } else {
                 T1XTemplate template = getTemplate(tagUnlockReceiver);
                 assignLocalDisplacementTemplateArgument(0, synchronizedReceiver, Kind.REFERENCE);
-                emitAndRecordStops(template);
+                emitAndRecordSafepoints(template);
             }
         } else {
             T1XTemplate template = getTemplate(tag);
-            emitAndRecordStops(template);
+            emitAndRecordSafepoints(template);
         }
 
         if (isAMD64()) {
@@ -801,12 +801,12 @@ public class T1XCompilation {
             // Profiling of backward branches.
             assignReferenceLiteralTemplateArgument(0, methodProfileBuilder.methodProfileObject());
             T1XTemplate template = getTemplate(PROFILE_BACKWARD_BRANCH);
-            emitAndRecordStops(template);
+            emitAndRecordSafepoints(template);
         }
 
         if (ccObj != null) {
             T1XTemplate template = getTemplate(tag);
-            emitAndRecordStops(template);
+            emitAndRecordSafepoints(template);
         }
 
         int pos = buf.position();
@@ -832,7 +832,7 @@ public class T1XCompilation {
                 // the backward branch is not taken but that cost should not be noticeable.
                 byte[] safepointCode = vm().safepoint.code;
                 buf.emitBytes(safepointCode, 0, safepointCode.length);
-                stops.addSafepoint(bci, pos);
+                safepointsBuilder.addSafepoint(bci, pos);
 
                 // Compute relative offset.
                 final int target = bciToPos[targetBCI];
@@ -935,13 +935,13 @@ public class T1XCompilation {
 //                        assignIntTemplateArgument(1, receiverStackIndex(signature));
 //                        assignReferenceLiteralTemplateArgument(2, methodProfileBuilder.methodProfileObject());
 //                        assignIntTemplateArgument(3, methodProfileBuilder.addMethodProfile(index, MethodInstrumentation.DEFAULT_RECEIVER_METHOD_PROFILE_ENTRIES));
-//                        emitAndRecordStops(template);
+//                        emitAndRecordSafepoints(template);
                     } else {
                         // emit an unprofiled virtual dispatch
                         T1XTemplate template = getTemplate(tag.resolved);
                         beginBytecode(tag.opcode);
                         assignInvokeVirtualTemplateParameters(template, virtualMethodActor, receiverStackIndex(signature));
-                        emitAndRecordStops(template);
+                        emitAndRecordSafepoints(template);
                     }
                     return;
                 } catch (LinkageError e) {
@@ -955,7 +955,7 @@ public class T1XCompilation {
         beginBytecode(tag.opcode);
         assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index));
         assignIntTemplateArgument(1, receiverStackIndex(signature));
-        emitAndRecordStops(template);
+        emitAndRecordSafepoints(template);
     }
 
     protected void emitInvokeinterface(int index) {
@@ -974,12 +974,12 @@ public class T1XCompilation {
 //                        assignIntTemplateArgument(1, receiverStackIndex(signature));
 //                        assignReferenceLiteralTemplateArgument(2, methodProfileBuilder.methodProfileObject());
 //                        assignIntTemplateArgument(3, methodProfileBuilder.addMethodProfile(index, MethodInstrumentation.DEFAULT_RECEIVER_METHOD_PROFILE_ENTRIES));
-//                        emitAndRecordStops(template);
+//                        emitAndRecordSafepoints(template);
 //                    } else {
                     T1XTemplate template = getTemplate(tag.resolved);
                     beginBytecode(tag.opcode);
                     assignInvokeInterfaceTemplateParameters(template, interfaceMethodActor, receiverStackIndex(signature));
-                    emitAndRecordStops(template);
+                    emitAndRecordSafepoints(template);
 //                    }
                     return;
                 } catch (LinkageError e) {
@@ -993,7 +993,7 @@ public class T1XCompilation {
         beginBytecode(tag.opcode);
         assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index));
         assignIntTemplateArgument(1, receiverStackIndex(signature));
-        emitAndRecordStops(template);
+        emitAndRecordSafepoints(template);
     }
 
     protected void emitInvokespecial(int index) {
@@ -1017,7 +1017,7 @@ public class T1XCompilation {
         beginBytecode(tag.opcode);
         assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index));
         assignIntTemplateArgument(1, receiverStackIndex(signature));
-        emitAndRecordStops(template);
+        emitAndRecordSafepoints(template);
     }
 
     protected void emitInvokestatic(int index) {
@@ -1041,7 +1041,7 @@ public class T1XCompilation {
         T1XTemplate template = getTemplate(tag);
         beginBytecode(tag.opcode);
         assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index));
-        emitAndRecordStops(template);
+        emitAndRecordSafepoints(template);
     }
 
     private void recordDirectBytecodeCall(T1XTemplate template, ClassMethodActor callee) {
@@ -1061,7 +1061,7 @@ public class T1XCompilation {
         } else {
             unimplISA();
         }
-        stops.add(template, buf.position(), stream.currentBCI(), callee);
+        safepointsBuilder.add(template, buf.position(), stream.currentBCI(), callee);
         buf.emitBytes(template.code, 0, template.code.length);
     }
 
@@ -1076,12 +1076,12 @@ public class T1XCompilation {
                     beginBytecode(bytecode);
                     Object mirror = ((ClassActor) classConstant.value(cp, index).asObject()).javaClass();
                     assignReferenceLiteralTemplateArgument(0, mirror);
-                    emitAndRecordStops(template);
+                    emitAndRecordSafepoints(template);
                 } else {
                     T1XTemplate template = getTemplate(LDC$reference);
                     beginBytecode(bytecode);
                     assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index));
-                    emitAndRecordStops(template);
+                    emitAndRecordSafepoints(template);
                 }
                 break;
             }
@@ -1090,7 +1090,7 @@ public class T1XCompilation {
                 beginBytecode(bytecode);
                 IntegerConstant integerConstant = (IntegerConstant) constant;
                 assignIntTemplateArgument(0, integerConstant.value());
-                emitAndRecordStops(template);
+                emitAndRecordSafepoints(template);
                 break;
             }
             case LONG: {
@@ -1098,7 +1098,7 @@ public class T1XCompilation {
                 beginBytecode(bytecode);
                 LongConstant longConstant = (LongConstant) constant;
                 assignLongTemplateArgument(0, longConstant.value());
-                emitAndRecordStops(template);
+                emitAndRecordSafepoints(template);
                 break;
             }
             case FLOAT: {
@@ -1106,7 +1106,7 @@ public class T1XCompilation {
                 beginBytecode(bytecode);
                 FloatConstant floatConstant = (FloatConstant) constant;
                 assignFloatTemplateArgument(0, floatConstant.value());
-                emitAndRecordStops(template);
+                emitAndRecordSafepoints(template);
                 break;
             }
             case DOUBLE: {
@@ -1114,7 +1114,7 @@ public class T1XCompilation {
                 beginBytecode(bytecode);
                 DoubleConstant doubleConstant = (DoubleConstant) constant;
                 assignDoubleTemplateArgument(0, doubleConstant.value());
-                emitAndRecordStops(template);
+                emitAndRecordSafepoints(template);
                 break;
             }
             case STRING: {
@@ -1122,7 +1122,7 @@ public class T1XCompilation {
                 beginBytecode(bytecode);
                 StringConstant stringConstant = (StringConstant) constant;
                 assignReferenceLiteralTemplateArgument(0, stringConstant.value);
-                emitAndRecordStops(template);
+                emitAndRecordSafepoints(template);
                 break;
             }
             default: {
@@ -1143,7 +1143,7 @@ public class T1XCompilation {
             assignReferenceLiteralTemplateArgument(0, arrayClassActor);
             assignReferenceLiteralTemplateArgument(1, new int[numberOfDimensions]);
             // Emit the template
-            emitAndRecordStops(template);
+            emitAndRecordSafepoints(template);
             return; // we're done.
         }
         // Unresolved case
@@ -1151,7 +1151,7 @@ public class T1XCompilation {
         beginBytecode(Bytecodes.MULTIANEWARRAY);
         assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index));
         assignReferenceLiteralTemplateArgument(1, new int[numberOfDimensions]);
-        emitAndRecordStops(template);
+        emitAndRecordSafepoints(template);
     }
 
     protected void emitNew(int index) {
@@ -1162,14 +1162,14 @@ public class T1XCompilation {
                 T1XTemplate template = getTemplate(NEW$init);
                 beginBytecode(Bytecodes.NEW);
                 assignReferenceLiteralTemplateArgument(0, classActor);
-                emitAndRecordStops(template);
+                emitAndRecordSafepoints(template);
                 return;
             }
         }
         T1XTemplate template = getTemplate(NEW);
         beginBytecode(Bytecodes.NEW);
         assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index));
-        emitAndRecordStops(template);
+        emitAndRecordSafepoints(template);
     }
 
     protected void emitNewarray(int tag) {
@@ -1177,7 +1177,7 @@ public class T1XCompilation {
         beginBytecode(Bytecodes.NEWARRAY);
         Kind arrayElementKind = Kind.fromNewArrayTag(tag);
         assignReferenceLiteralTemplateArgument(0, arrayElementKind);
-        emitAndRecordStops(template);
+        emitAndRecordSafepoints(template);
     }
 
     protected void emitTableswitch() {
@@ -1264,7 +1264,7 @@ public class T1XCompilation {
             if (ls.numberOfCases() == 0) {
                 // Pop the key
                 T1XTemplate template = getTemplate(POP);
-                emitAndRecordStops(template);
+                emitAndRecordSafepoints(template);
 
                 int targetBCI = ls.defaultTarget();
                 startBlock(targetBCI);
@@ -1739,7 +1739,7 @@ public class T1XCompilation {
                     int pos = buf.position();
                     byte[] safepointCode = vm().safepoint.code;
                     buf.emitBytes(safepointCode, 0, safepointCode.length);
-                    stops.addSafepoint(stream.currentBCI(), pos);
+                    safepointsBuilder.addSafepoint(stream.currentBCI(), pos);
                     break;
                 } else if (opcode == Bytecodes.HERE) {
                     emit(HERE);

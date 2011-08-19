@@ -50,16 +50,16 @@ import com.sun.max.vm.stack.*;
  *
  * <p>
  * All thread locals are in a contiguous block of memory called a thread locals area (TLA) and there
- * are three TLAs per thread, one for each of the {@linkplain Safepoint safepoint} states:
+ * are three TLAs per thread, one for each of the {@linkplain SafepointPoll safepoint} states:
  * <dl>
  * <dt>Enabled</dt>
- * <dd>Safepoints for the thread are {@linkplain Safepoint#enable() enabled}. The base address of this TLA is
+ * <dd>Safepoints for the thread are {@linkplain SafepointPoll#enable() enabled}. The base address of this TLA is
  * obtained by reading the {@link #ETLA} variable from any TLA.</dd>
  * <dt>Disabled</dt>
- * <dd>Safepoints for the thread are {@linkplain Safepoint#disable() disabled}. The base address of this TLA is
+ * <dd>Safepoints for the thread are {@linkplain SafepointPoll#disable() disabled}. The base address of this TLA is
  * obtained by reading the {@link #DTLA} variable from any TLA.</dd>
  * <dt>Triggered</dt>
- * <dd>Safepoints for the thread are {@linkplain Safepoint#trigger(Pointer) triggered}. The base address of
+ * <dd>Safepoints for the thread are {@linkplain SafepointPoll#trigger(Pointer) triggered}. The base address of
  * this TLA is obtained by reading the {@link #TTLA} variable from any TLA.</dd>
  * </dl>
  *
@@ -128,21 +128,21 @@ public class VmThreadLocal {
 
     /**
      * The {@linkplain VmThread#currentTLA() current} thread local storage when safepoints for the thread are
-     * {@linkplain Safepoint#enable() enabled}.
+     * {@linkplain SafepointPoll#enable() enabled}.
      */
     public static final VmThreadLocal ETLA
         = new VmThreadLocal("ETLA", false, "points to TLA used when safepoints enabled");
 
     /**
      * The {@linkplain VmThread#currentTLA() current} thread local storage when safepoints for the thread are
-     * {@linkplain Safepoint#disable() disabled}.
+     * {@linkplain SafepointPoll#disable() disabled}.
      */
     public static final VmThreadLocal DTLA
         = new VmThreadLocal("DTLA", false, "points to TLA used when safepoints disabled");
 
     /**
      * The {@linkplain VmThread#currentTLA() current} thread local storage when safepoints for the thread are
-     * {@linkplain Safepoint#trigger(Pointer) triggered}.
+     * {@linkplain SafepointPoll#trigger(Pointer) triggered}.
      */
     public static final VmThreadLocal TTLA
         = new VmThreadLocal("TTLA", false, "points to TLA used when safepoints triggered");
@@ -160,7 +160,7 @@ public class VmThreadLocal {
     public static final VmThreadLocal BACKWARD_LINK = new VmThreadLocal("BACKWARD_LINK", false, "points to previous thread locals in list of all active");
 
     /**
-     * The {@link VmOperation} whose {@link VmOperation#doAtSafepoint(Pointer)} is invoked on a thread when it traps at a {@linkplain Safepoint safepoint}.
+     * The {@link VmOperation} whose {@link VmOperation#doAtSafepoint(Pointer)} is invoked on a thread when it traps at a {@linkplain SafepointPoll safepoint}.
      */
     public static final VmThreadLocal VM_OPERATION
         = new VmThreadLocal("VM_OPERATION", true, "Procedure to run when a safepoint is triggered", Nature.Single);
@@ -203,7 +203,7 @@ public class VmThreadLocal {
 
     /**
      * The state of this thread with respect to {@linkplain VmOperation freezing}.
-     * This will be one of the {@code THREAD_IN_...} constants defined in {@link Safepoint}.
+     * This will be one of the {@code THREAD_IN_...} constants defined in {@link SafepointPoll}.
      */
     public static final VmThreadLocal MUTATOR_STATE = new VmThreadLocal("MUTATOR_STATE", false, "Thread state wrt freezing", Nature.Single);
 
@@ -422,10 +422,10 @@ public class VmThreadLocal {
      * Prepares a reference map for the entire stack of a VM thread starting from a trap.
      *
      * @param tla a pointer to the VM thread locals denoting the thread stack whose reference map is to be prepared
-     * @param trapState a pointer to the trap state
+     * @param trapFrame a pointer to the trap frame
      */
-    public static void prepareStackReferenceMapFromTrap(Pointer tla, Pointer trapState) {
-        VmThread.current().stackReferenceMapPreparer().prepareStackReferenceMapFromTrap(tla, trapState);
+    public static void prepareStackReferenceMapFromTrap(Pointer tla, Pointer trapFrame) {
+        VmThread.current().stackReferenceMapPreparer().prepareStackReferenceMapFromTrap(tla, trapFrame);
     }
 
     /**

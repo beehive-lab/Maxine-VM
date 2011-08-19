@@ -52,7 +52,7 @@ public class BlockMerger implements BlockClosure {
             assert end.successors().size() == 1 : "end must have exactly one successor";
             assert !sux.isExceptionEntry() : "should not have Goto to exception entry";
 
-            if (!end.isSafepoint()) {
+            if (!end.isSafepointPoll()) {
                 if (sux.numberOfPreds() == 1) {
                     // the successor has only one predecessor, merge it into this block
                     mergeBlocks(block, sux, end);

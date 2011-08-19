@@ -932,7 +932,7 @@ public final class Log {
             return true;
         }
 
-        boolean wasDisabled = Safepoint.disable();
+        boolean wasDisabled = SafepointPoll.disable();
         Log.log_lock();
         if (lockDepth == 0) {
             FatalError.check(lockOwner == null, "log lock should have no owner with depth 0");
@@ -961,9 +961,9 @@ public final class Log {
             lockOwner = null;
         }
         Log.log_unlock();
-        ProgramError.check(Safepoint.isDisabled(), "Safepoints must not be re-enabled in code surrounded by Debug.lock() and Debug.unlock()");
+        ProgramError.check(SafepointPoll.isDisabled(), "Safepoints must not be re-enabled in code surrounded by Debug.lock() and Debug.unlock()");
         if (lockDisabledSafepoints) {
-            Safepoint.enable();
+            SafepointPoll.enable();
         }
     }
 

@@ -53,7 +53,7 @@ import com.sun.max.vm.thread.*;
  *     {@linkplain VmThreadLocal#TRAP_FAULT_ADDRESS address} and
  *     {@link VmThreadLocal#TRAP_INSTRUCTION_POINTER pc} into thread locals.</li>
  * <li>The native handler disables safepoints by modifying the register context of the
- *     trap in (almost) the same way as {@link Safepoint#disable()}.</li>
+ *     trap in (almost) the same way as {@link SafepointPoll#disable()}.</li>
  * <li>The native handler modifies the instruction pointer in the trap context to point to the
  *     entry point of the trap stub.</li>
  * <li>The native handler returns which effects a jump to the trap stub in the frame of
@@ -197,8 +197,7 @@ public abstract class Trap {
     private static void handleTrap(int trapNumber, Pointer trapFrame, Address faultAddress) {
         // From this point on until we return from the trap stub,
         // this variable is used to communicate to the VM operation thread
-        // whether a thread was stopped at a safepoint or
-        // in native code
+        // whether a thread was stopped at a safepoint or in native code
         TRAP_INSTRUCTION_POINTER.store3(Pointer.zero());
 
         if (trapNumber == ASYNC_INTERRUPT) {
@@ -316,7 +315,7 @@ public abstract class Trap {
      */
     private static void handleMemoryFault(Pointer instructionPointer, TargetMethod targetMethod, Pointer stackPointer, Pointer framePointer, Pointer trapFrame, Address faultAddress) {
         final Pointer dtla = currentTLA();
-        final Safepoint safepoint = vm().safepoint;
+        final SafepointPoll safepoint = vm().safepoint;
         final TrapFrameAccess tfa = vm().trapFrameAccess;
         final Pointer ttla = TTLA.load(dtla);
         final Pointer safepointLatch = tfa.getSafepointLatch(trapFrame);

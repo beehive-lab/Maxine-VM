@@ -26,7 +26,6 @@ import java.util.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
-import com.sun.max.vm.runtime.VMRegister.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -483,24 +482,6 @@ public enum T1XTemplateTag {
     public static final EnumMap<KindEnum, T1XTemplateTag> INVOKEINTERFACES = makeKindMap(Bytecodes.INVOKEINTERFACE);
     public static final EnumMap<KindEnum, T1XTemplateTag> INVOKESPECIALS = makeKindMap(Bytecodes.INVOKESPECIAL);
     public static final EnumMap<KindEnum, T1XTemplateTag> INVOKESTATICS = makeKindMap(Bytecodes.INVOKESTATIC);
-
-    public static final EnumMap<Role, T1XTemplateTag> WRITEREGS = new EnumMap<Role, T1XTemplateTag>(Role.class);
-    public static final EnumMap<Role, T1XTemplateTag> READREGS = new EnumMap<Role, T1XTemplateTag>(Role.class);
-
-    static {
-        WRITEREGS.put(Role.CPU_FRAME_POINTER, WRITEREG$fp_cpu);
-        WRITEREGS.put(Role.CPU_STACK_POINTER, WRITEREG$sp_cpu);
-        WRITEREGS.put(Role.ABI_FRAME_POINTER, WRITEREG$fp_abi);
-        WRITEREGS.put(Role.ABI_STACK_POINTER, WRITEREG$sp_abi);
-        WRITEREGS.put(Role.SAFEPOINT_LATCH, WRITEREG$latch);
-        WRITEREGS.put(Role.LINK_ADDRESS, WRITEREG$link);
-
-        READREGS.put(Role.CPU_FRAME_POINTER, READREG$fp_cpu);
-        READREGS.put(Role.CPU_STACK_POINTER, READREG$sp_cpu);
-        READREGS.put(Role.ABI_FRAME_POINTER, READREG$fp_abi);
-        READREGS.put(Role.ABI_STACK_POINTER, READREG$sp_abi);
-        READREGS.put(Role.SAFEPOINT_LATCH, READREG$latch);
-    }
 
     /**
      * Creates a map from kinds to the template specialized for each kind a given bytecode is parameterized by.

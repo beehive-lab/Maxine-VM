@@ -134,7 +134,7 @@ public final class FatalError extends Error {
             throw new FatalError(message, throwable);
         }
 
-        Safepoint.disable();
+        SafepointPoll.disable();
 
         Throw.TraceExceptions = 0;
         Throw.TraceExceptionsRaw = false;

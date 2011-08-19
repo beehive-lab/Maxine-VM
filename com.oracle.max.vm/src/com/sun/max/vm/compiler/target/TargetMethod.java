@@ -24,15 +24,18 @@ package com.sun.max.vm.compiler.target;
 
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.compiler.target.Stops.*;
+import static com.sun.max.vm.compiler.target.Safepoints.*;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.*;
 
 import com.oracle.max.asm.target.amd64.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiTargetMethod.Call;
 import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
 import com.sun.cri.ci.CiTargetMethod.DataPatch;
+import com.sun.cri.ci.CiTargetMethod.Safepoint;
 import com.sun.max.annotate.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
@@ -82,7 +85,7 @@ public abstract class TargetMethod extends MemoryRegion {
     @INSPECTED
     public final ClassMethodActor classMethodActor;
 
-    protected Stops stops = Stops.NO_STOPS;
+    protected Safepoints safepoints = Safepoints.NO_SAFEPOINTS;
 
     /**
      * @see #directCallees()
@@ -105,7 +108,7 @@ public abstract class TargetMethod extends MemoryRegion {
      *
      * @see #invalidated()
      */
-    volatile private InvalidationMarker invalidated;
+    private final AtomicReference<InvalidationMarker> invalidated = new AtomicReference<InvalidationMarker>();
 
     /**
      * The frame size (in bytes) of an activation of this target method. This does not
@@ -150,14 +153,15 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
-     * Marks this method as invalidated.
+     * Atomically marks this method as invalidated.
      *
+     * @return true if this was the first attempt to invalidate the method. If not, then the invalidation marker for
+     *         this method was not updated.
      * @see #invalidated()
      */
-    public void invalidate(InvalidationMarker marker) {
+    public boolean invalidate(InvalidationMarker marker) {
         assert marker != null;
-        assert this.invalidated == null : "cannot invalidate target method more than once: " + this;
-        this.invalidated = marker;
+        return invalidated.compareAndSet(null, marker);
     }
 
     /**
@@ -171,7 +175,7 @@ public abstract class TargetMethod extends MemoryRegion {
      * @return a non-null {@link InvalidationMarker} object iff this method has been invalidated
      */
     public InvalidationMarker invalidated() {
-        return invalidated;
+        return invalidated.get();
     }
 
     /**
@@ -276,16 +280,16 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
-     * Gets the debug info available for a given stop. If {@code fa != null}, then the {@linkplain CiFrame#values values} in the
+     * Gets the debug info available for a given safepoint. If {@code fa != null}, then the {@linkplain CiFrame#values values} in the
      * returned object are {@link CiConstant}s wrapping values from the thread's stack denoted by {@code fa}. Otherwise,
      * they are {@link CiStackSlot}, {@link CiRegister} and {@link CiConstant} values describing how to extract values
      * from a live frame.
      *
-     * @param stopIndex an index of a stop within this method
+     * @param safepointIndex an index of a safepoint within this method
      * @param fa access to a live frame (may be {@code null})
-     * @return the debug ino at the denoted stop of {@code null} if none available
+     * @return the debug ino at the denoted safepoint of {@code null} if none available
      */
-    public CiDebugInfo debugInfoAt(int stopIndex, FrameAccess fa) {
+    public CiDebugInfo debugInfoAt(int safepointIndex, FrameAccess fa) {
         return null;
     }
 
@@ -299,7 +303,8 @@ public abstract class TargetMethod extends MemoryRegion {
      * In case a callee is an actual method, it is represented by a {@link ClassMethodActor}.
      * In case it is a stub or the adapter, a {@link TargetMethod} is used.
      *
-     * @return entities referenced by direct call instructions, matched to the stop positions array above by array index
+     * @return entities referenced by direct call instructions
+     * @see Safepoints#nextDirectCall(int)
      */
     public final Object[] directCallees() {
         return directCallees;
@@ -309,9 +314,9 @@ public abstract class TargetMethod extends MemoryRegion {
      * Gets the call entry point to be used for a direct call from this target method. By default, the
      * {@linkplain #callEntryPoint call entry point} of this target method will be used.
      *
-     * @param stopIndex the index of the call in {@link #stops() stops}
+     * @param safepointIndex the index of the call in {@link #safepoints() stops}
      */
-    protected CallEntryPoint callEntryPointForDirectCall(int stopIndex) {
+    protected CallEntryPoint callEntryPointForDirectCall(int safepointIndex) {
         return callEntryPoint;
     }
 
@@ -399,10 +404,10 @@ public abstract class TargetMethod extends MemoryRegion {
         this.codeStart = codeStart;
     }
 
-    protected final void setStops(Stops stops, Object[] directCallees) {
-        this.stops = stops;
+    protected final void setSafepoints(Safepoints safepoints, Object[] directCallees) {
+        this.safepoints = safepoints;
         this.directCallees = directCallees;
-        assert stops.numberOfDirectCalls() == directCallees.length : stops.numberOfDirectCalls() + " !=  " + directCallees.length;
+        assert safepoints.numberOfDirectCalls() == directCallees.length : safepoints.numberOfDirectCalls() + " !=  " + directCallees.length;
     }
 
     protected final void setFrameSize(int frameSize) {
@@ -542,7 +547,7 @@ public abstract class TargetMethod extends MemoryRegion {
         this.setRegisterRestoreEpilogueOffset(ciTargetMethod.registerRestoreEpilogueOffset());
     }
 
-    protected CiDebugInfo[] initStops(CiTargetMethod ciTargetMethod) {
+    protected CiDebugInfo[] initSafepoints(CiTargetMethod ciTargetMethod) {
         Adapter adapter = null;
         int adapterCount = 0;
 
@@ -554,64 +559,78 @@ public abstract class TargetMethod extends MemoryRegion {
             }
         }
 
-        int numberOfIndirectCalls = ciTargetMethod.indirectCalls.size();
-        int numberOfSafepoints = ciTargetMethod.safepoints.size();
-        int total = ciTargetMethod.directCalls.size() + numberOfIndirectCalls + numberOfSafepoints + adapterCount;
+        int total = ciTargetMethod.safepoints.size() + adapterCount;
+        int directCalls = 0;
+        for (Safepoint safepoint : ciTargetMethod.safepoints) {
+            if (safepoint instanceof Call && ((Call) safepoint).direct) {
+                directCalls++;
+            }
+        }
 
         int index = 0;
-        int[] stops = new int[total];
-        Object[] directCallees = new Object[ciTargetMethod.directCalls.size() + adapterCount];
-
+        int[] safepoints = new int[total];
+        Object[] directCallees = new Object[directCalls + adapterCount];
         CiDebugInfo[] debugInfos = new CiDebugInfo[total];
 
+        int dcIndex = 0;
         if (adapter != null) {
             directCallees[index] = adapter;
             int callPos = adapter.callOffsetInPrologue();
-            int stopPos = stopPosForCall(callPos, adapter.callSizeInPrologue());
-            stops[index] = Stops.make(stopPos, callPos, Stops.DIRECT_CALL);
+            int safepointPos = safepointPosForCall(callPos, adapter.callSizeInPrologue());
+            safepoints[index] = Safepoints.make(safepointPos, callPos, DIRECT_CALL);
+            dcIndex++;
             index++;
         }
 
-        for (CiTargetMethod.Call site : ciTargetMethod.directCalls) {
-            int causePos = site.pcOffset;
-            int stopPos = Stops.stopPosForCall(site);
-            Object directCallee = CallTarget.directCallee(site.target);
-            directCallees[index] = directCallee;
-            if (CallTarget.isTemplateCall(site.target)) {
-                stops[index] = Stops.make(stopPos, causePos, DIRECT_CALL, TEMPLATE_CALL);
+
+//        ArrayList<Site> sites = ciTargetMethod.safepoints;
+//        sites.addAll(ciTargetMethod.directCalls);
+//        sites.addAll(ciTargetMethod.indirectCalls);
+//        sites.addAll(ciTargetMethod.safepoints);
+//        Collections.sort(sites, new Comparator<Site>() {
+//
+//            public int compare(Site s1, Site s2) {
+//                if (s1.pcOffset == s2.pcOffset && (s1 instanceof Mark ^ s2 instanceof Mark)) {
+//                    return s1 instanceof Mark ? -1 : 1;
+//                }
+//                return s1.pcOffset - s2.pcOffset;
+//            }
+//        });
+        for (Safepoint safepoint : ciTargetMethod.safepoints) {
+            int encodedSafepoint;
+            if (safepoint instanceof Call) {
+                Call call = (Call) safepoint;
+                int causePos = call.pcOffset;
+                int safepointPos = safepointPosForCall(call.pcOffset, call.size);
+                if (call.direct) {
+                    directCallees[dcIndex++] = CallTarget.directCallee(call.target);
+                    if (CallTarget.isTemplateCall(call.target)) {
+                        encodedSafepoint = Safepoints.make(safepointPos, causePos, DIRECT_CALL, TEMPLATE_CALL);
+                    } else {
+                        encodedSafepoint = Safepoints.make(safepointPos, causePos, DIRECT_CALL);
+                    }
+                } else {
+                    if (CallTarget.isTemplateCall(call.target)) {
+                        encodedSafepoint = Safepoints.make(safepointPos, causePos, INDIRECT_CALL, TEMPLATE_CALL);
+                    } else if (CallTarget.isSymbol(call.target)) {
+                        encodedSafepoint = Safepoints.make(safepointPos, causePos, INDIRECT_CALL, NATIVE_CALL);
+                        ClassMethodActor caller = (ClassMethodActor) call.debugInfo.codePos.method;
+                        assert caller.isNative();
+                        caller.nativeFunction.setCallSite(this, safepointPos);
+                    } else {
+                        encodedSafepoint = Safepoints.make(safepointPos, causePos, INDIRECT_CALL);
+                    }
+                }
             } else {
-                stops[index] = Stops.make(stopPos, causePos, DIRECT_CALL);
+                int safepointPos = safepoint.pcOffset;
+                encodedSafepoint = Safepoints.make(safepointPos);
             }
-            debugInfos[index] = site.debugInfo;
+            debugInfos[index] = safepoint.debugInfo;
+            safepoints[index] = encodedSafepoint;
             index++;
         }
 
-        for (CiTargetMethod.Call site : ciTargetMethod.indirectCalls) {
-            int causePos = site.pcOffset;
-            int stopPos = Stops.stopPosForCall(site);
-            if (CallTarget.isTemplateCall(site.target)) {
-                stops[index] = Stops.make(stopPos, causePos, INDIRECT_CALL, TEMPLATE_CALL);
-            } else if (CallTarget.isSymbol(site.target)) {
-                stops[index] = Stops.make(stopPos, causePos, INDIRECT_CALL, NATIVE_CALL);
-                ClassMethodActor caller = (ClassMethodActor) site.debugInfo.codePos.method;
-                assert caller.isNative();
-                caller.nativeFunction.setCallSite(this, stopPos);
-            } else {
-                stops[index] = Stops.make(stopPos, causePos, INDIRECT_CALL);
-            }
-            debugInfos[index] = site.debugInfo;
-            index++;
-        }
-
-        for (CiTargetMethod.Safepoint site : ciTargetMethod.safepoints) {
-            int stopPos = site.pcOffset;
-            int causePos = stopPos;
-            stops[index] = Stops.make(stopPos, causePos, SAFEPOINT);
-            debugInfos[index] = site.debugInfo;
-            index++;
-        }
-
-        setStops(new Stops(stops), directCallees);
+        setSafepoints(new Safepoints(safepoints), directCallees);
         return debugInfos;
     }
 
@@ -645,9 +664,9 @@ public abstract class TargetMethod extends MemoryRegion {
     public final ClassMethodActor callSiteToCallee(Address callSite) {
         int callPos = callSite.minus(codeStart).toInt();
         int dcIndex = 0;
-        for (int i = 0; i < stops.length(); i++) {
-            if (stops.isSetAt(DIRECT_CALL, i)) {
-                if (stops.causePosAt(i) == callPos && directCallees[dcIndex] instanceof ClassMethodActor) {
+        for (int i = 0; i < safepoints.size(); i++) {
+            if (safepoints.isSetAt(DIRECT_CALL, i)) {
+                if (safepoints.causePosAt(i) == callPos && directCallees[dcIndex] instanceof ClassMethodActor) {
                     return (ClassMethodActor) directCallees[dcIndex];
                 }
                 dcIndex++;
@@ -663,16 +682,16 @@ public abstract class TargetMethod extends MemoryRegion {
     /**
      * Resets a direct call site, make it point to the static trampoline again.
      *
-     * @param stopIndex the index of the call in {@link #stops() stops}
+     * @param safepointIndex the index of the call in {@link #safepoints() safepoints}
      * @param dcIndex the index of the call in {@link #directCallees()}
      *
      * @return {@code true} if the call site was not already pointing to the static trampoline
      */
-    public final boolean resetDirectCall(int stopIndex, int dcIndex) {
+    public final boolean resetDirectCall(int safepointIndex, int dcIndex) {
         Object callee = directCallees[dcIndex];
         assert !(callee instanceof Adapter);
-        final int offset = getCallEntryOffset(callee, stopIndex);
-        final int callPos = stops.causePosAt(stopIndex);
+        final int offset = getCallEntryOffset(callee, safepointIndex);
+        final int callPos = safepoints.causePosAt(safepointIndex);
         Pointer trampoline = vm().stubs.staticTrampoline().codeStart.plus(offset);
         return !patchCallSite(callPos, trampoline).equals(trampoline);
     }
@@ -690,9 +709,9 @@ public abstract class TargetMethod extends MemoryRegion {
         boolean linkedAll = true;
         if (directCallees != null) {
             int dcIndex = 0;
-            for (int stopIndex = stops.nextDirectCall(0); stopIndex >= 0; stopIndex = stops.nextDirectCall(stopIndex + 1)) {
+            for (int safepointIndex = safepoints.nextDirectCall(0); safepointIndex >= 0; safepointIndex = safepoints.nextDirectCall(safepointIndex + 1)) {
                 Object currentDirectCallee = directCallees[dcIndex];
-                final int offset = getCallEntryOffset(currentDirectCallee, stopIndex);
+                final int offset = getCallEntryOffset(currentDirectCallee, safepointIndex);
                 if (currentDirectCallee == null) {
                     // template call
                     assert classMethodActor.isTemplate();
@@ -704,7 +723,7 @@ public abstract class TargetMethod extends MemoryRegion {
                             // leave call site unpatched
                         } else {
                             linkedAll = false;
-                            final int callPos = stops.causePosAt(stopIndex);
+                            final int callPos = safepoints.causePosAt(safepointIndex);
                             final Address callSite = codeStart.plus(callPos);
                             if (!isPatchableCallSite(callSite)) {
                                 FatalError.unexpected(classMethodActor + ": call site calling static trampoline must be patchable: 0x" + callSite.toHexString() +
@@ -713,7 +732,7 @@ public abstract class TargetMethod extends MemoryRegion {
                             fixupCallSite(callPos, vm().stubs.staticTrampoline().codeStart.plus(offset));
                         }
                     } else {
-                        int callPos = stops.causePosAt(stopIndex);
+                        int callPos = safepoints.causePosAt(safepointIndex);
                         fixupCallSite(callPos, callee.codeStart().plus(offset));
                     }
                 }
@@ -734,11 +753,11 @@ public abstract class TargetMethod extends MemoryRegion {
         return result;
     }
 
-    private int getCallEntryOffset(Object callee, int stopIndex) {
+    private int getCallEntryOffset(Object callee, int safepointIndex) {
         if (callee instanceof Adapter) {
             return 0;
         }
-        final CallEntryPoint callEntryPoint = callEntryPointForDirectCall(stopIndex);
+        final CallEntryPoint callEntryPoint = callEntryPointForDirectCall(safepointIndex);
         return callEntryPoint.offsetInCallee();
     }
 
@@ -761,10 +780,10 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
-     * @see Stops
+     * @see Safepoints
      */
-    public final Stops stops() {
-        return stops;
+    public final Safepoints safepoints() {
+        return safepoints;
     }
 
     /**
@@ -797,16 +816,16 @@ public abstract class TargetMethod extends MemoryRegion {
         return null;
     }
 
-    public int findStopIndex(Pointer ip) {
+    public int findSafepointIndex(Pointer ip) {
         final int pos = posFor(ip);
-        if (stops == null || pos < 0 || pos > code.length) {
+        if (safepoints == null || pos < 0 || pos > code.length) {
             return -1;
         }
-        return findStopIndex(pos);
+        return findSafepointIndex(pos);
     }
 
-    public int findStopIndex(int pos) {
-        return stops.indexOf(pos);
+    public int findSafepointIndex(int pos) {
+        return safepoints.indexOf(pos);
     }
 
     @Override
@@ -846,11 +865,11 @@ public abstract class TargetMethod extends MemoryRegion {
      */
     public final void traceDirectCallees(IndentWriter writer) {
         if (directCallees != null) {
-            assert stops != null && directCallees.length <= stops.length();
+            assert safepoints != null && directCallees.length <= safepoints.size();
             writer.println("Direct Calls: ");
             writer.indent();
             for (int i = 0; i < directCallees.length; i++) {
-                writer.println(stops.posAt(i) + " -> " + directCallees[i]);
+                writer.println(safepoints.posAt(i) + " -> " + directCallees[i]);
             }
             writer.outdent();
         }

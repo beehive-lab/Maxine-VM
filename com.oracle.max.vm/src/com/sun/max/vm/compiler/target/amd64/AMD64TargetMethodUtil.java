@@ -215,7 +215,7 @@ public final class AMD64TargetMethodUtil {
         Pointer sp = current.sp();
         if (MaxineVM.isHosted()) {
             // Only during a stack walk in the context of the Inspector can execution
-            // be anywhere other than at a recorded stop (i.e. call or safepoint).
+            // be anywhere other than at a safepoint.
             if (atFirstOrLastInstruction(current) || (generator != null && generator.inPrologue(current.ip(), current.targetMethod()))) {
                 sp = sp.minus(current.targetMethod().frameSize());
             }
@@ -243,7 +243,7 @@ public final class AMD64TargetMethodUtil {
         Pointer ripPointer = sp.plus(targetMethod.frameSize());
         if (MaxineVM.isHosted()) {
             // Only during a stack walk in the context of the Inspector can execution
-            // be anywhere other than at a recorded stop (i.e. call or safepoint).
+            // be anywhere other than at a safepoint.
             AdapterGenerator generator = AdapterGenerator.forCallee(current.targetMethod());
             if (generator != null && generator.advanceIfInPrologue(current)) {
                 return;
@@ -281,12 +281,14 @@ public final class AMD64TargetMethodUtil {
      */
     public static Pointer rescuePatchedReturnAddress(StackFrameWalker sfw, Pointer callerIP, Pointer callerSP) {
         TargetMethod caller = sfw.targetMethodFor(callerIP);
-        if (caller != null && (caller.is(DeoptStub) || caller.is(DeoptStubFromCompilerStub))) {
+        if (caller != null && (caller.is(DeoptStub) || caller.is(DeoptStubFromCompilerStub) || caller.is(DeoptStubFromSafepoint))) {
             if (callerIP.equals(caller.codeStart())) {
+                // Since callerIP denotes the start of a deopt stub, then we're dealing with a patched return address
+                // and the real caller is found in the 'rescue' slot
                 Pointer originalReturnAddress = sfw.readWord(callerSP, DEOPT_RETURN_ADDRESS_OFFSET).asPointer();
                 callerIP = originalReturnAddress;
             } else {
-                // callerIP is a real return address to the frame of a deopt stub
+                // Since callerIP denotes an address within a deopt stub, then the caller really is the deopt stub
             }
         }
         return callerIP;

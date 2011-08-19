@@ -188,7 +188,7 @@ public class C1X implements RuntimeCompiler {
             }
 
             // The direct call made from C1X compiled code for the UNCOMMON_TRAP intrinisic
-            // must go via stub that saves the register state before calling the deopt routine.
+            // must go through a stub that saves the register state before calling the deopt routine.
             CriticalMethod uncommonTrap = new CriticalMethod(C1XRuntimeCalls.class, "uncommonTrap", null);
             uncommonTrap.classMethodActor.targetState = vm().stubs.genUncommonTrapStub();
 

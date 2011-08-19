@@ -810,7 +810,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
     private boolean inSafetyZone; // set after we have thrown OutOfMemoryError and are using the safety zone
 
-    @NO_SAFEPOINTS("heap up to allocation mark must be verifiable if debug tagging")
+    @NO_SAFEPOINT_POLLS("heap up to allocation mark must be verifiable if debug tagging")
     @Override
     protected void doBeforeTLABRefill(Pointer tlabAllocationMark, Pointer tlabEnd) {
         if (MaxineVM.isDebug()) {
@@ -824,7 +824,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
      * @param etla the thread whose TLAB will be refilled
      * @param tlabSize the size of the chunk of memory used to refill the TLAB
      */
-    @NO_SAFEPOINTS("heap up to allocation mark must be verifiable if debug tagging")
+    @NO_SAFEPOINT_POLLS("heap up to allocation mark must be verifiable if debug tagging")
     private void allocateAndRefillTLAB(Pointer etla, Size tlabSize) {
         Pointer tlab = retryAllocate(tlabSize, false);
         refillTLAB(etla, tlab, tlabSize);
@@ -852,7 +852,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
      */
     @Override
     @NEVER_INLINE
-    @NO_SAFEPOINTS("heap up to allocation mark must be verifiable if debug tagging")
+    @NO_SAFEPOINT_POLLS("heap up to allocation mark must be verifiable if debug tagging")
     protected Pointer handleTLABOverflow(Size size, Pointer etla, Pointer tlabMark, Pointer tlabEnd) {
         // Should we refill the TLAB ?
         final TLABRefillPolicy refillPolicy = TLABRefillPolicy.getForCurrentThread(etla);
@@ -903,7 +903,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
      * @return the allocated and zeroed chunk
      */
     @NEVER_INLINE
-    @NO_SAFEPOINTS("heap up to allocation mark must be verifiable if debug tagging")
+    @NO_SAFEPOINT_POLLS("heap up to allocation mark must be verifiable if debug tagging")
     private Pointer retryAllocate(Size size, boolean adjustForDebugTag) {
         Pointer oldAllocationMark;
         Pointer cell;

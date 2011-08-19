@@ -336,7 +336,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      * @param tlab
      * @param size
      */
-    @NO_SAFEPOINTS("heap up to allocation mark must be verifiable if debug tagging")
+    @NO_SAFEPOINT_POLLS("heap up to allocation mark must be verifiable if debug tagging")
     public void refillTLAB(Pointer etla, Pointer tlab, Size size) {
         final Pointer tlabTop = tlab.plus(size); // top of the new TLAB
         final Pointer allocationMark = TLAB_MARK.load(etla);
@@ -403,7 +403,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      * @throws OutOfMemoryError if the allocation request cannot be satisfied
      */
     @INLINE
-    @NO_SAFEPOINTS("object allocation and initialization must be atomic")
+    @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
     protected final Pointer tlabAllocate(Size size) {
         if (MaxineVM.isDebug() && !size.isWordAligned()) {
             FatalError.unexpected("size is not word aligned in heap allocation request");
@@ -427,7 +427,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
     protected abstract Pointer customAllocate(Pointer customAllocator, Size size, boolean adjustForDebugTag);
 
-    @NO_SAFEPOINTS("object allocation and initialization must be atomic")
+    @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
     @NEVER_INLINE
     private Pointer slowPathAllocate(Size size, final Pointer etla, final Pointer oldAllocationMark, final Pointer tlabEnd) {
         globalTlabStats.runtimeSlowPathAllocateCount++;
@@ -459,7 +459,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     }
 
     @INLINE
-    @NO_SAFEPOINTS("object allocation and initialization must be atomic")
+    @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
     public final Object createArray(DynamicHub dynamicHub, int length) {
         final Size size = Layout.getArraySize(dynamicHub.classActor.componentClassActor().kind, length);
         final Pointer cell = tlabAllocate(size);
@@ -468,14 +468,14 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     }
 
     @INLINE
-    @NO_SAFEPOINTS("object allocation and initialization must be atomic")
+    @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
     public final Object createTuple(Hub hub) {
         Pointer cell = tlabAllocate(hub.tupleSize);
 
         return Cell.plantTuple(cell, hub);
     }
 
-    @NO_SAFEPOINTS("object allocation and initialization must be atomic")
+    @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
     public final Object createHybrid(DynamicHub hub) {
         final Size size = hub.tupleSize;
         final Pointer cell = tlabAllocate(size);
@@ -483,14 +483,14 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         return Cell.plantHybrid(cell, size, hub);
     }
 
-    @NO_SAFEPOINTS("object allocation and initialization must be atomic")
+    @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
     public final Hybrid expandHybrid(Hybrid hybrid, int length) {
         final Size size = Layout.hybridLayout().getArraySize(length);
         final Pointer cell = tlabAllocate(size);
         return Cell.plantExpandedHybrid(cell, size, hybrid, length);
     }
 
-    @NO_SAFEPOINTS("object allocation and initialization must be atomic")
+    @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
     public final Object clone(Object object) {
         final Size size = Layout.size(Reference.fromJava(object));
         final Pointer cell = tlabAllocate(size);

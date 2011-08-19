@@ -54,7 +54,7 @@ public class ScopeData {
          * Code in scope cannot contain safepoints.
          * This attribute is inherited by nested scopes.
          */
-        NoSafepoints;
+        NoSafepointPolls;
 
         public final int mask = 1 << ordinal();
     }
@@ -146,13 +146,13 @@ public class ScopeData {
             if (parent.hasHandler()) {
                 flags |= HasHandler.mask;
             }
-            if (parent.noSafepoints() || scope.method.noSafepoints()) {
-                flags |= NoSafepoints.mask;
+            if (parent.noSafepointPolls() || scope.method.noSafepointPolls()) {
+                flags |= NoSafepointPolls.mask;
             }
         } else {
             maxInlineSize = C1XOptions.MaximumInlineSize;
-            if (scope.method.noSafepoints()) {
-                flags |= NoSafepoints.mask;
+            if (scope.method.noSafepointPolls()) {
+                flags |= NoSafepointPolls.mask;
             }
         }
         RiExceptionHandler[] handlers = scope.method.exceptionHandlers();
@@ -254,10 +254,10 @@ public class ScopeData {
     }
 
     /**
-     * Checks whether this scope can contain safepoints.
+     * Checks whether this scope can contain safepoint polls.
      */
-    public boolean noSafepoints() {
-        return (flags & Flag.NoSafepoints.mask) != 0;
+    public boolean noSafepointPolls() {
+        return (flags & Flag.NoSafepointPolls.mask) != 0;
     }
 
     /**

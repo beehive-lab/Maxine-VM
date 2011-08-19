@@ -504,7 +504,7 @@ public class Snippets {
     public static void nativeCallPrologue(NativeFunction nf) {
         Pointer etla = ETLA.load(currentTLA());
         Pointer previousAnchor = LAST_JAVA_FRAME_ANCHOR.load(etla);
-        Pointer ip = nf.nativeCallStopAddress().asPointer();
+        Pointer ip = nf.nativeCallSafepointAddress().asPointer();
         Pointer anchor = JavaFrameAnchor.create(getCpuStackPointer(), getCpuFramePointer(), ip, previousAnchor);
         nativeCallPrologue0(etla, anchor);
     }
@@ -562,7 +562,7 @@ public class Snippets {
      * This methods spins in a busy loop while the current thread is {@linkplain VmOperation frozen}.
      */
     @INLINE
-    @NO_SAFEPOINTS("Cannot take a trap while frozen")
+    @NO_SAFEPOINT_POLLS("Cannot take a trap while frozen")
     private static void spinWhileFrozen(Pointer etla) {
         if (UseCASBasedThreadFreezing) {
             while (true) {
@@ -613,7 +613,7 @@ public class Snippets {
     public static void nativeCallPrologueForC(NativeFunction nf) {
         Pointer etla = ETLA.load(currentTLA());
         Pointer previousAnchor = LAST_JAVA_FRAME_ANCHOR.load(etla);
-        Pointer ip = nf.nativeCallStopAddress().asPointer();
+        Pointer ip = nf.nativeCallSafepointAddress().asPointer();
         Pointer anchor = JavaFrameAnchor.create(getCpuStackPointer(), getCpuFramePointer(), ip, previousAnchor);
         LAST_JAVA_FRAME_ANCHOR.store(etla, anchor);
     }

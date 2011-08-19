@@ -23,7 +23,7 @@
 package com.sun.max.vm.compiler.target;
 
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
-import static com.sun.max.vm.compiler.target.Stops.*;
+import static com.sun.max.vm.compiler.target.Safepoints.*;
 
 import java.util.*;
 
@@ -114,7 +114,7 @@ public abstract class Adapter extends TargetMethod {
         final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(0, 0, code.length);
         Code.allocate(targetBundleLayout, this);
         setData(null, null, code);
-        setStops(new Stops(Stops.make(Stops.stopPosForCall(callPos, callSize), callPos, INDIRECT_CALL)), TargetMethod.NO_DIRECT_CALLEES);
+        setSafepoints(new Safepoints(Safepoints.make(Safepoints.safepointPosForCall(callPos, callSize), callPos, INDIRECT_CALL)), TargetMethod.NO_DIRECT_CALLEES);
     }
 
     /**
