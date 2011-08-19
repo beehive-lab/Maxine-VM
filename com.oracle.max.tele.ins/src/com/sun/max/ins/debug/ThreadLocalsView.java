@@ -52,8 +52,8 @@ public final class ThreadLocalsView extends AbstractView<ThreadLocalsView> imple
     private static final String SHORT_NAME = "Thread Locals";
     private static final String LONG_NAME = "Thread Locals View";
     private static final String GEOMETRY_SETTINGS_KEY = "threadlocalsViewGeometry";
-    private static final Safepoint.State DEFAULT_STATE_SELECTION = Safepoint.State.ENABLED;
-    private static final Map<MaxThread, Safepoint.State> stateSelections = new HashMap<MaxThread, Safepoint.State>();
+    private static final SafepointPoll.State DEFAULT_STATE_SELECTION = SafepointPoll.State.ENABLED;
+    private static final Map<MaxThread, SafepointPoll.State> stateSelections = new HashMap<MaxThread, SafepointPoll.State>();
 
     public static final class ThreadLocalsViewManager extends AbstractSingletonViewManager<ThreadLocalsView> {
 
@@ -96,7 +96,7 @@ public final class ThreadLocalsView extends AbstractView<ThreadLocalsView> imple
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(actions().viewSelectedThreadLocalsBlockMemory("View memory for thread's locals block"));
-        for (Safepoint.State state : Safepoint.State.CONSTANTS) {
+        for (SafepointPoll.State state : SafepointPoll.State.CONSTANTS) {
             memoryMenu.add(actions().viewSelectedThreadLocalsAreaMemory(state, "View memory for thread's " + state.name() + " area"));
         }
         memoryMenu.add(actions().viewSelectedThreadStackMemory("View memory for thread's stack"));
@@ -128,14 +128,14 @@ public final class ThreadLocalsView extends AbstractView<ThreadLocalsView> imple
     @Override
     protected void createViewContent() {
         thread = focus().thread();
-        Safepoint.State initialStateSelection = stateSelections.get(thread);
+        SafepointPoll.State initialStateSelection = stateSelections.get(thread);
         if (initialStateSelection == null) {
             initialStateSelection = DEFAULT_STATE_SELECTION;
         }
         ThreadLocalsAreaPanel initialPanelSelection = null;
         tabbedPane = new InspectorTabbedPane(inspection());
         if (thread != null) {
-            for (Safepoint.State state : Safepoint.State.CONSTANTS) {
+            for (SafepointPoll.State state : SafepointPoll.State.CONSTANTS) {
                 final MaxThreadLocalsArea tla = thread.localsBlock().tlaFor(state);
                 if (tla != null) {
                     final ThreadLocalsAreaPanel panel = new ThreadLocalsAreaPanel(inspection(), thread, tla, viewPreferences);
@@ -171,7 +171,7 @@ public final class ThreadLocalsView extends AbstractView<ThreadLocalsView> imple
     protected void refreshState(boolean force) {
         if (inspection().hasProcess()) {
             boolean panelsAddedOrRemoved = false;
-            for (Safepoint.State state : Safepoint.State.CONSTANTS) {
+            for (SafepointPoll.State state : SafepointPoll.State.CONSTANTS) {
                 ThreadLocalsAreaPanel panel = null;
                 for (Component component : tabbedPane.getComponents()) {
                     final ThreadLocalsAreaPanel tlaPanel = (ThreadLocalsAreaPanel) component;

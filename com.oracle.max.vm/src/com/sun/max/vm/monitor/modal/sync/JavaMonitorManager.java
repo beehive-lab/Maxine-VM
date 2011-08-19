@@ -385,7 +385,7 @@ public class JavaMonitorManager {
 
         // This is the only place where we need to synchronize monitor list access
         // between a mutator thread and a GC thread which is performing unbinding.
-        Safepoint.disable();
+        SafepointPoll.disable();
         for (int i = 0; i < bindableMonitors.length; i++) {
             newAllBindable[i] = bindableMonitors[i];
         }
@@ -398,7 +398,7 @@ public class JavaMonitorManager {
             addToAllBindable(monitor);
             monitor = newUnboundList;
         }
-        Safepoint.enable();
+        SafepointPoll.enable();
     }
 
     /**

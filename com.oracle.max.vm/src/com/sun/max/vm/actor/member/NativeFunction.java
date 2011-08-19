@@ -43,9 +43,9 @@ public class NativeFunction {
     private TargetMethod stub;
 
     /**
-     * The stop position associated with the native call.
+     * The safepoint position associated with the native call.
      */
-    private int nativeCallStopPos;
+    private int nativeCallSafepointPos;
 
     public Address address() {
         return address;
@@ -60,19 +60,19 @@ public class NativeFunction {
     }
 
     /**
-     * Gets the address of the stop position associated with the call to this native function from within its native stub.
+     * Gets the address of the safepoint position associated with the call to this native function from within its native stub.
      */
-    public Address nativeCallStopAddress() {
-        return stub.codeStart().plus(nativeCallStopPos);
+    public Address nativeCallSafepointAddress() {
+        return stub.codeStart().plus(nativeCallSafepointPos);
     }
 
     /**
-     * Sets the stop position associated with the call to this native function (from within its native stub).
+     * Sets the safepoint position associated with the call to this native function (from within its native stub).
      */
-    public void setCallSite(TargetMethod stub, int pos) {
+    public void setCallSite(TargetMethod stub, int safepointPos) {
         assert this.stub == null : "cannot have more than one stub per native method";
         this.stub = stub;
-        this.nativeCallStopPos = pos;
+        this.nativeCallSafepointPos = safepointPos;
     }
 
     /**

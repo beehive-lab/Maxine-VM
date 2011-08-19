@@ -271,7 +271,7 @@ public enum VMABytecodes {
     UNSAFE_CAST(Bytecodes.UNSAFE_CAST, "Bytecode"),
     WRETURN(Bytecodes.WRETURN, "Return"),
     INFOPOINT(Bytecodes.INFOPOINT, "Bytecode"),
-    SAFEPOINT(Bytecodes.SAFEPOINT, "Bytecode"),
+    SAFEPOINT_POLL(Bytecodes.SAFEPOINT_POLL, "Bytecode"),
     HERE(Bytecodes.HERE, "Bytecode"),
     INFO(Bytecodes.INFO, "Bytecode"),
     ALLOCA(Bytecodes.ALLOCA, "Bytecode"),

@@ -1701,7 +1701,7 @@ public abstract class ReferenceMapInterpreter {
                     switch (opcode) {
                         case INFO:
                         case UNCOMMON_TRAP:
-                        case SAFEPOINT: {
+                        case SAFEPOINT_POLL: {
                             break;
                         }
                         case HERE: {

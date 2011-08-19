@@ -683,11 +683,11 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
 
                 int index = -1;
                 if (stackFrame.targetMethod() != null) {
-                    index = stackFrame.targetMethod().findStopIndex(stackFrame.ip);
+                    index = stackFrame.targetMethod().findSafepointIndex(stackFrame.ip);
                 }
                 if (index != -1) {
                     final int stopIndex = index;
-                    CiFrame frames = compiledCode.teleTargetMethod().getDebugInfoAtStopIndex(stopIndex).frame();
+                    CiFrame frames = compiledCode.teleTargetMethod().getDebugInfoAtSafepointIndex(stopIndex).frame();
 
                     if (frames == null) {
                         LOGGER.info("WARNING: No Java frame descriptor found for Java stop " + stopIndex);

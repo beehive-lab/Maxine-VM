@@ -131,7 +131,7 @@ public class BaseAtomicBumpPointerAllocator<T extends Refiller> {
      * @return
      */
     @INLINE
-    @NO_SAFEPOINTS("filling linear space allocator must not be subjected to safepoints")
+    @NO_SAFEPOINT_POLLS("filling linear space allocator must not be subjected to safepoints")
     protected final Pointer atomicSetTopToLimit() {
         Pointer thisAddress = Reference.fromJava(this).toOrigin();
         Address cell;
@@ -240,7 +240,7 @@ public class BaseAtomicBumpPointerAllocator<T extends Refiller> {
      * @param size size requested in bytes.
      * @return pointer to uncleared allocated cell
      */
-    @NO_SAFEPOINTS("object allocation and initialization must be atomic")
+    @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
     public final Pointer allocate(Size size) {
         if (MaxineVM.isDebug()) {
             FatalError.check(size.isWordAligned(), "Size must be word aligned");

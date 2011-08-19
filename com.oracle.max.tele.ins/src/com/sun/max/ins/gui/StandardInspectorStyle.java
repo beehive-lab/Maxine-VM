@@ -216,9 +216,6 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
         return Color.ORANGE;
     }
 
-    // default display of any kind of code
-    private final Color codeStopBackgroundColor = paleGray;
-
     // Display of machine code
 
     // Display of bytecodes

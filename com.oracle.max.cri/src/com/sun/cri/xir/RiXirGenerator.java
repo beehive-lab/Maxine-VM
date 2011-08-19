@@ -43,7 +43,7 @@ public interface RiXirGenerator {
      */
     XirSnippet genEpilogue(XirSite site, RiMethod method);
 
-    XirSnippet genSafepoint(XirSite site);
+    XirSnippet genSafepointPoll(XirSite site);
 
     XirSnippet genExceptionObject(XirSite site);
 

@@ -24,10 +24,11 @@ package com.sun.max.vm.compiler.target;
 
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.compiler.target.Stops.*;
+import static com.sun.max.vm.compiler.target.Safepoints.*;
 
 import java.util.*;
 
+import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
@@ -84,18 +85,25 @@ public class Stub extends TargetMethod {
         DeoptStub,
 
         /**
-         * Transition when returning from a compiler stub call to a method being deoptimized.
-         * This stub saves all registers (as a compiler stub call has callee save sematics)
-         * and retrieves the return value from the stack.
+         * Transition when returning from a compiler stub to a method being deoptimized. This
+         * stub creates an intermediate frame to (re)save all the registers saved by a compiler stub.
          *
          * @see #CompilerStub
          */
         DeoptStubFromCompilerStub,
 
         /**
+         * Transition when returning from a trap stub to a method being deoptimized. This
+         * stub creates an intermediate frame to (re)save all the registers saved by the trap stub.
+         *
+         * @see Stubs#genTrapStub()
+         */
+        DeoptStubFromSafepoint,
+
+        /**
          * The trap stub.
          */
-        TrapStub;
+        TrapStub
     }
 
     public final Type type;
@@ -115,9 +123,9 @@ public class Stub extends TargetMethod {
         Code.allocate(targetBundleLayout, this);
         setData(null, null, code);
         if (callPos != -1) {
-            int stopPos = Stops.stopPosForCall(callPos, callSize);
+            int safepointPos = Safepoints.safepointPosForCall(callPos, callSize);
             assert callee != null;
-            setStops(new Stops(Stops.make(stopPos, callPos, DIRECT_CALL)), new Object[] {callee});
+            setSafepoints(new Safepoints(Safepoints.make(safepointPos, callPos, DIRECT_CALL)), new Object[] {callee});
         }
         if (!isHosted()) {
             linkDirectCalls();
@@ -130,7 +138,7 @@ public class Stub extends TargetMethod {
 
         initCodeBuffer(tm, true);
         initFrameLayout(tm);
-        CiDebugInfo[] debugInfos = initStops(tm);
+        CiDebugInfo[] debugInfos = initSafepoints(tm);
         for (CiDebugInfo info : debugInfos) {
             assert info == null;
         }
@@ -147,6 +155,7 @@ public class Stub extends TargetMethod {
             case StaticTrampoline:
             case InterfaceTrampoline:
                 return rc.trampoline.csl;
+            case DeoptStubFromSafepoint:
             case TrapStub:
                 return rc.trapStub.csl;
             case UncommonTrapStub:

@@ -56,7 +56,7 @@ public class ChunkListAllocator<T extends ChunkListRefillManager> extends Atomic
      * @param tlabSize
      * @return a pointer to a heap free chunk.
      */
-    @NO_SAFEPOINTS("non-blocking tlab allocation loop must not be subjected to safepoints")
+    @NO_SAFEPOINT_POLLS("non-blocking tlab allocation loop must not be subjected to safepoints")
     final Pointer allocateTLAB(Size tlabSize) {
         if (MaxineVM.isDebug()) {
             FatalError.check(tlabSize.isWordAligned(), "Size must be word aligned");

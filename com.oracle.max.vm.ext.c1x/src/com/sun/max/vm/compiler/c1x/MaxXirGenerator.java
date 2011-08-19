@@ -27,13 +27,13 @@ import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.compiler.CompilationScheme.Static.*;
 import static com.sun.max.vm.layout.Layout.*;
+import static com.sun.max.vm.runtime.amd64.AMD64SafepointPoll.*;
 import static java.lang.reflect.Modifier.*;
 
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.oracle.max.asm.target.amd64.*;
 import com.sun.c1x.*;
 import com.sun.cri.ci.CiAddress.Scale;
 import com.sun.cri.ci.*;
@@ -328,7 +328,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     }
 
     @Override
-    public XirSnippet genSafepoint(XirSite site) {
+    public XirSnippet genSafepointPoll(XirSite site) {
         return new XirSnippet(safepointTemplate);
     }
 
@@ -667,7 +667,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     @HOSTED_ONLY
     private XirTemplate buildSafepoint() {
         asm.restart(CiKind.Void);
-        XirOperand latch = asm.createRegisterTemp("latch", CiKind.Word, AMD64.r14);
+        XirOperand latch = asm.createRegisterTemp("latch", CiKind.Word, LATCH_REGISTER);
         asm.safepoint();
         asm.pload(CiKind.Word, latch, latch, false);
         return finishTemplate(asm, "safepoint");
@@ -894,7 +894,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         XirLabel ok = asm.createInlineLabel("ok");
         XirLabel reportNegativeIndexError = asm.createOutOfLineLabel("indexError");
 
-        XirOperand tla = asm.createRegisterTemp("TLA", CiKind.Word, AMD64.r14);
+        XirOperand tla = asm.createRegisterTemp("TLA", CiKind.Word, LATCH_REGISTER);
         XirOperand etla = asm.createTemp("ETLA", CiKind.Word);
         XirOperand tlabEnd = asm.createTemp("tlabEnd", CiKind.Word);
         XirOperand newMark = asm.createTemp("newMark", CiKind.Word);
@@ -952,7 +952,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         XirLabel slowPath = asm.createOutOfLineLabel("slowPath");
         XirLabel reportNegativeIndexError = asm.createOutOfLineLabel("indexError");
 
-        XirOperand tla = asm.createRegisterTemp("TLA", CiKind.Word, AMD64.r14);
+        XirOperand tla = asm.createRegisterTemp("TLA", CiKind.Word, LATCH_REGISTER);
         XirOperand etla = asm.createTemp("ETLA", CiKind.Word);
         XirOperand tlabEnd = asm.createTemp("tlabEnd", CiKind.Word);
         XirOperand newMark = asm.createTemp("newMark", CiKind.Word);
@@ -1101,7 +1101,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         XirOperand cell = asm.createTemp("cell",  CiKind.Word);
         XirLabel done = asm.createInlineLabel("done");
         XirLabel ok = asm.createInlineLabel("slowPath");
-        XirOperand tla = asm.createRegisterTemp("TLA", CiKind.Word, AMD64.r14);
+        XirOperand tla = asm.createRegisterTemp("TLA", CiKind.Word, LATCH_REGISTER);
         XirOperand etla = asm.createTemp("ETLA", CiKind.Word);
         XirOperand tlabEnd = asm.createTemp("tlabEnd", CiKind.Word);
         XirOperand newMark = asm.createTemp("newMark", CiKind.Word);
@@ -1133,7 +1133,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         XirOperand cell = asm.createTemp("cell",  CiKind.Word);
         XirLabel done = asm.createInlineLabel("done");
         XirLabel slowPath = asm.createOutOfLineLabel("slowPath");
-        XirOperand tla = asm.createRegisterTemp("TLA", CiKind.Word, AMD64.r14);
+        XirOperand tla = asm.createRegisterTemp("TLA", CiKind.Word, LATCH_REGISTER);
         XirOperand etla = asm.createTemp("ETLA", CiKind.Word);
         XirOperand tlabEnd = asm.createTemp("tlabEnd", CiKind.Word);
         XirOperand newMark = asm.createTemp("newMark", CiKind.Word);
@@ -1505,7 +1505,9 @@ public class MaxXirGenerator implements RiXirGenerator {
     private XirTemplate buildExceptionObject() {
         XirOperand result = asm.restart(CiKind.Object);
         // Emit a safepoint
+        XirOperand latch = asm.createRegisterTemp("latch", CiKind.Word, LATCH_REGISTER);
         asm.safepoint();
+        asm.pload(CiKind.Word, latch, latch, false);
 
         callRuntimeThroughStub(asm, "loadException", result);
         return finishTemplate(asm, "load-exception");

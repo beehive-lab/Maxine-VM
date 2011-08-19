@@ -24,7 +24,7 @@ package com.sun.max.vm.t1x;
 
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.compiler.target.Stops.*;
+import static com.sun.max.vm.compiler.target.Safepoints.*;
 import static com.sun.max.vm.stack.VMFrameLayout.*;
 import static com.sun.max.vm.t1x.T1XOptions.*;
 
@@ -218,7 +218,7 @@ public class T1X implements RuntimeCompiler {
         CiUtil.addAnnotations(hcf, c.codeAnnotations);
         addOpcodeComments(hcf, t1xMethod);
         addExceptionHandlersComment(t1xMethod, hcf);
-        addStopPositionComments(t1xMethod, hcf);
+        addSafepointPositionComments(t1xMethod, hcf);
 
         String label = CiUtil.format("T1X %f %R %H.%n(%P)", c.method, false);
 
@@ -240,37 +240,36 @@ public class T1X implements RuntimeCompiler {
         }
     }
 
-    private static void addStopPositionComments(T1XTargetMethod t1xMethod, CiHexCodeFile hcf) {
-        if (t1xMethod.stops().length() != 0) {
-            Stops stops = t1xMethod.stops();
+    private static void addSafepointPositionComments(T1XTargetMethod t1xMethod, CiHexCodeFile hcf) {
+        if (t1xMethod.safepoints().size() != 0) {
+            Safepoints safepoints = t1xMethod.safepoints();
             Object[] directCallees = t1xMethod.directCallees();
 
             JVMSFrameLayout frame = t1xMethod.frame;
             RefMapFormatter slotFormatter = new RefMapFormatter(target().arch, target().spillSlotSize, frame.framePointerReg(), frame.frameReferenceMapOffset());
             int dcIndex = 0;
-            for (int stopIndex = 0; stopIndex < stops.length(); ++stopIndex) {
-                int pos = stops.posAt(stopIndex);
-                int causePos = stops.causePosAt(stopIndex);
+            for (int safepointIndex = 0; safepointIndex < safepoints.size(); ++safepointIndex) {
+                int pos = safepoints.posAt(safepointIndex);
+                int causePos = safepoints.causePosAt(safepointIndex);
 
-                CiDebugInfo info = t1xMethod.debugInfoAt(stopIndex, null);
+                CiDebugInfo info = t1xMethod.debugInfoAt(safepointIndex, null);
                 hcf.addComment(pos, CiUtil.append(new StringBuilder(100), info, slotFormatter).toString());
 
-                if (stops.isSetAt(DIRECT_CALL, stopIndex)) {
+                String operandComment = "safepoint";
+                if (safepoints.isSetAt(DIRECT_CALL, safepointIndex)) {
                     Object callee = directCallees[dcIndex];
-                    hcf.addOperandComment(causePos, String.valueOf(callee));
+                    operandComment = String.valueOf(callee);
                     dcIndex++;
-                } else if (stops.isSetAt(INDIRECT_CALL, stopIndex)) {
+                } else {
                     CiCodePos codePos = info.codePos;
                     if (codePos != null) {
                         RiMethod callee = t1xMethod.codeAttribute.calleeAt(codePos.bci);
                         if (callee != null) {
-                            hcf.addOperandComment(causePos, String.valueOf(callee));
+                            operandComment = String.valueOf(callee);
                         }
                     }
-                } else {
-                    assert stops.isSetAt(SAFEPOINT, stopIndex);
-                    hcf.addOperandComment(causePos, "safepoint");
                 }
+                hcf.addOperandComment(causePos, operandComment);
             }
         }
     }

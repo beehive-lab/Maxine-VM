@@ -431,7 +431,9 @@ public abstract class LIRGenerator extends ValueVisitor {
             // need to free up storage used for OSR entry point
             CiValue osrBuffer = currentBlock.next().operand();
             callRuntime(CiRuntimeCall.OSRMigrationEnd, null, osrBuffer);
-            emitXir(xir.genSafepoint(site(x)), x, stateFor(x, x.stateAfter()), null, false);
+            emitXir(xir.genSafepointPoll(site(x)), x, stateFor(x, x.stateAfter()), null, false);
+        } else if (x.isSafepointPoll()) {
+            emitXir(xir.genSafepointPoll(site(x)), x, stateFor(x, x.stateAfter()), null, false);
         }
 
         // emit phi-instruction moves after safepoint since this simplifies
@@ -760,8 +762,8 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitInfopoint(Infopoint x) {
         LIRDebugInfo info = stateFor(x);
-        if (x.opcode == SAFEPOINT) {
-            emitXir(xir.genSafepoint(site(x)), x, info, null, false);
+        if (x.opcode == SAFEPOINT_POLL) {
+            emitXir(xir.genSafepointPoll(site(x)), x, info, null, false);
             return;
         }
         assert x.opcode == HERE || x.opcode == INFO || x.opcode == UNCOMMON_TRAP;
@@ -874,8 +876,8 @@ public abstract class LIRGenerator extends ValueVisitor {
         CiValue tag = load(x.value());
         setNoResult(x);
 
-        if (x.isSafepoint()) {
-            emitXir(xir.genSafepoint(site(x)), x, stateFor(x, x.stateAfter()), null, false);
+        if (x.isSafepointPoll()) {
+            emitXir(xir.genSafepointPoll(site(x)), x, stateFor(x, x.stateAfter()), null, false);
         }
 
         // move values into phi locations
@@ -1174,8 +1176,8 @@ public abstract class LIRGenerator extends ValueVisitor {
         CiValue tag = value.result();
         setNoResult(x);
 
-        if (x.isSafepoint()) {
-            emitXir(xir.genSafepoint(site(x)), x, stateFor(x, x.stateAfter()), null, false);
+        if (x.isSafepointPoll()) {
+            emitXir(xir.genSafepointPoll(site(x)), x, stateFor(x, x.stateAfter()), null, false);
         }
 
         // move values into phi locations

@@ -22,7 +22,7 @@
  */
 package com.sun.max.vm.t1x;
 
-import static com.sun.max.vm.compiler.target.Stops.*;
+import static com.sun.max.vm.compiler.target.Safepoints.*;
 
 import java.util.*;
 
@@ -32,7 +32,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.compiler.target.Stops.Attr;
+import com.sun.max.vm.compiler.target.Safepoints.Attr;
 
 /**
  * A T1X template is a piece of machine code (and its associated metadata) that
@@ -41,33 +41,33 @@ import com.sun.max.vm.compiler.target.Stops.Attr;
  */
 public class T1XTemplate {
 
-    public static class T1XStop {
+    public static class T1XSafepoint {
         public static final int NO_BSM_INDEX = Integer.MIN_VALUE;
 
-        public T1XStop() {
+        public T1XSafepoint() {
         }
 
-        public T1XStop(int stop, int bci) {
-            this.stop = stop;
+        public T1XSafepoint(int safepoint, int bci) {
+            this.safepoint = safepoint;
             this.bci = bci;
         }
 
-        int stop;
+        int safepoint;
 
         public int pos() {
-            return stop & POS_MASK;
+            return Safepoints.pos(safepoint);
         }
 
         public int causePos() {
-            return Stops.causePos(stop);
+            return Safepoints.causePos(safepoint);
         }
 
         public int attrs() {
-            return stop & ATTRS_MASK;
+            return safepoint & ATTRS_MASK;
         }
 
         public boolean isSet(Attr a) {
-            return a.isSet(stop);
+            return a.isSet(safepoint);
         }
 
         public boolean isCall() {
@@ -75,7 +75,7 @@ public class T1XTemplate {
         }
 
         /**
-         * Bytecode index of stop. This is {@code -1} for a template.
+         * Bytecode index of safepoint. This is {@code -1} for a template.
          */
         int bci;
         ClassMethodActor callee;
@@ -85,13 +85,13 @@ public class T1XTemplate {
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
-            for (Attr f : Stops.ALL_ATTRS) {
-                if (f.isSet(stop)) {
+            for (Attr f : Safepoints.ALL_ATTRS) {
+                if (f.isSet(safepoint)) {
                     sb.append(f.name).append(' ');
                 }
             }
             sb.append("@ ").
-                append(Stops.POS_MASK & stop).
+                append(pos()).
                 append(" [bci: ").
                 append(bci);
             if (frameRefMap != null) {
@@ -104,26 +104,26 @@ public class T1XTemplate {
         }
     }
 
-    private static final T1XStop[] NO_STOPS = {};
+    private static final T1XSafepoint[] NO_SAFEPOINTS = {};
 
     public final ClassMethodActor method;
     public final T1XTemplateTag tag;
     public final byte[] code;
-    public final T1XStop templateCall;
-    public final T1XStop[] stops;
+    public final T1XSafepoint templateCall;
+    public final T1XSafepoint[] safepoints;
 
     @Override
     public String toString() {
         return String.valueOf(tag) + " [" + method + "]";
     }
 
-    static final class StopArray {
-        T1XStop[] data = new T1XStop[10];
+    static final class SafepointArray {
+        T1XSafepoint[] data = new T1XSafepoint[10];
         int size;
 
-        public void add(T1XStop stop) {
+        public void add(T1XSafepoint safepoint) {
             ensureCapacity(data.length + 1);
-            data[size++] = stop;
+            data[size++] = safepoint;
         }
 
         void ensureCapacity(int minCapacity) {
@@ -136,17 +136,17 @@ public class T1XTemplate {
             }
         }
 
-        public T1XStop make(int index) {
+        public T1XSafepoint make(int index) {
             ensureCapacity(index + 1);
-            T1XStop stop = data[index];
-            if (stop == null) {
-                stop = new T1XStop();
-                data[index] = stop;
+            T1XSafepoint safepoint = data[index];
+            if (safepoint == null) {
+                safepoint = new T1XSafepoint();
+                data[index] = safepoint;
             }
-            return stop;
+            return safepoint;
         }
 
-        public T1XStop makeNext() {
+        public T1XSafepoint makeNext() {
             return make(size++);
         }
 
@@ -154,50 +154,50 @@ public class T1XTemplate {
             size = 0;
         }
 
-        public T1XStop get(int i) {
+        public T1XSafepoint get(int i) {
             return data[i];
         }
     }
 
-    public static class StopsBuilder {
-        StopArray stopsArray;
-        Stops stops;
+    public static class SafepointsBuilder {
+        SafepointArray safepointsArray;
+        Safepoints safepoints;
         int directCalls;
-        int bcisWithStops;
+        int bcisWithSafepoints;
         int lastBci;
 
         public Object[] directCallees;
         public byte[] refMaps;
-        public BytecodeStopsIterator bytecodeStopsIterator;
+        public BytecodeSafepointsIterator bytecodeSafepointsIterator;
 
-        public StopsBuilder() {
+        public SafepointsBuilder() {
             reset(true);
         }
 
         void reset(boolean hard) {
             directCalls = 0;
-            bcisWithStops = 0;
+            bcisWithSafepoints = 0;
             lastBci = -1;
             if (hard) {
-                stopsArray = new StopArray();
+                safepointsArray = new SafepointArray();
             } else {
-                stopsArray.clear();
+                safepointsArray.clear();
             }
         }
 
-        void reserveInBSM(T1XStop stop) {
-            if (stop.bci >= 0) {
-                if (lastBci != stop.bci) {
-                    lastBci = stop.bci;
-                    bcisWithStops++;
+        void reserveInBSM(T1XSafepoint safepoint) {
+            if (safepoint.bci >= 0) {
+                if (lastBci != safepoint.bci) {
+                    lastBci = safepoint.bci;
+                    bcisWithSafepoints++;
                 }
             }
         }
 
         public void addSafepoint(int bci, int pos) {
-            T1XStop dst = stopsArray.makeNext();
+            T1XSafepoint dst = safepointsArray.makeNext();
             dst.bci = bci;
-            dst.stop = Stops.make(pos, pos, SAFEPOINT);
+            dst.safepoint = Safepoints.make(pos);
             dst.callee = null;
 
             // No GC maps needed: the template slots are dead for the remainder of the template
@@ -207,10 +207,10 @@ public class T1XTemplate {
         }
 
         public void add(T1XTemplate template, int pos, int bci, ClassMethodActor directBytecodeCallee) {
-            for (T1XStop src : template.stops) {
-                T1XStop dst = stopsArray.makeNext();
+            for (T1XSafepoint src : template.safepoints) {
+                T1XSafepoint dst = safepointsArray.makeNext();
                 dst.bci = bci;
-                dst.stop = make(pos + src.pos(), pos + src.causePos(), src.attrs());
+                dst.safepoint = make(pos + src.pos(), pos + src.causePos(), src.attrs());
                 if (src.isSet(DIRECT_CALL)) {
                     // The decision as to whether ref-maps are used is made when the template is created
                     dst.frameRefMap = src.frameRefMap;
@@ -226,7 +226,7 @@ public class T1XTemplate {
                     }
                     directCalls++;
                 } else {
-                    assert src.isSet(SAFEPOINT) || src.isSet(INDIRECT_CALL);
+                    assert !src.isSet(DIRECT_CALL);
                     dst.callee = null;
                     dst.frameRefMap = src.frameRefMap;
                     dst.regRefMap = src.regRefMap;
@@ -240,21 +240,21 @@ public class T1XTemplate {
             if (adapter != null) {
                 directCalls++;
             }
-            final int stopsCount = stopsArray.size + adapterCount;
+            final int safepointsCount = safepointsArray.size + adapterCount;
 
-            stops = null;
+            safepoints = null;
             directCallees = null;
             refMaps = null;
-            bytecodeStopsIterator = null;
+            bytecodeSafepointsIterator = null;
 
-            if (stopsCount > 0) {
+            if (safepointsCount > 0) {
                 assert frameRefMapSize > 0;
                 int refMapSize = frameRefMapSize + regRefMapSize;
-                refMaps = new byte[stopsCount * refMapSize];
-                int[] stops = new int[stopsCount];
-                // An empty method with no method profile only has an adapter and no stops
-                int[] bsm = new int[bcisWithStops * 2];
-                int firstStopIndexWithBCI = -1;
+                refMaps = new byte[safepointsCount * refMapSize];
+                int[] safepoints = new int[safepointsCount];
+                // An empty method with no method profile only has an adapter and no safepoints
+                int[] bsm = new int[bcisWithSafepoints * 2];
+                int firstSafepointIndexWithBCI = -1;
                 int bsmIndex = -1;
                 if (directCalls > 0) {
                     directCallees = new Object[directCalls];
@@ -262,59 +262,59 @@ public class T1XTemplate {
 
                 final ByteArrayBitMap bitMap = new ByteArrayBitMap(refMaps, 0, 0);
 
-                int stopIndex = 0;
+                int safepointIndex = 0;
                 int dcIndex = 0;
                 if (adapter != null) {
                     directCallees[dcIndex++] = adapter;
                     int callPos = adapter.callOffsetInPrologue();
-                    int stopPos = stopPosForCall(callPos, adapter.callSizeInPrologue());
-                    stops[stopIndex] = Stops.make(stopPos, callPos, DIRECT_CALL);
-                    stopIndex++;
+                    int safepointPos = safepointPosForCall(callPos, adapter.callSizeInPrologue());
+                    safepoints[safepointIndex] = Safepoints.make(safepointPos, callPos, DIRECT_CALL);
+                    safepointIndex++;
                 }
 
-                for (int i = 0; i < stopsArray.size; i++) {
-                    T1XStop t1xStop = stopsArray.get(i);
-                    stops[stopIndex] = t1xStop.stop;
-                    if (t1xStop.bci >= 0) {
+                for (int i = 0; i < safepointsArray.size; i++) {
+                    T1XSafepoint t1xSafepoint = safepointsArray.get(i);
+                    safepoints[safepointIndex] = t1xSafepoint.safepoint;
+                    if (t1xSafepoint.bci >= 0) {
                         if (bsmIndex == -1) {
                             bsmIndex = 0;
-                            firstStopIndexWithBCI = stopIndex;
-                            bsm[bsmIndex] = t1xStop.bci;
-                        } else if (bsm[bsmIndex] != t1xStop.bci) {
+                            firstSafepointIndexWithBCI = safepointIndex;
+                            bsm[bsmIndex] = t1xSafepoint.bci;
+                        } else if (bsm[bsmIndex] != t1xSafepoint.bci) {
                             int prev = bsm[bsmIndex];
-                            assert prev < t1xStop.bci;
+                            assert prev < t1xSafepoint.bci;
                             bsmIndex += 2;
                             assert bsmIndex + 1 < bsm.length;
-                            bsm[bsmIndex] = t1xStop.bci;
+                            bsm[bsmIndex] = t1xSafepoint.bci;
                         }
                         bsm[bsmIndex + 1]++;
                     }
 
-                    if (t1xStop.isSet(DIRECT_CALL)) {
-                        directCallees[dcIndex++] = t1xStop.callee;
+                    if (t1xSafepoint.isSet(DIRECT_CALL)) {
+                        directCallees[dcIndex++] = t1xSafepoint.callee;
                     }
 
-                    if (t1xStop.frameRefMap != null) {
-                        bitMap.setOffset(stopIndex * refMapSize);
+                    if (t1xSafepoint.frameRefMap != null) {
+                        bitMap.setOffset(safepointIndex * refMapSize);
                         bitMap.setSize(frameRefMapSize);
-                        for (int bit = t1xStop.frameRefMap.nextSetBit(0); bit >= 0; bit = t1xStop.frameRefMap.nextSetBit(bit + 1)) {
+                        for (int bit = t1xSafepoint.frameRefMap.nextSetBit(0); bit >= 0; bit = t1xSafepoint.frameRefMap.nextSetBit(bit + 1)) {
                             bitMap.set(bit + firstTemplateSlot);
                         }
                     }
-                    if (t1xStop.regRefMap != null) {
-                        bitMap.setOffset((stopIndex * refMapSize) + frameRefMapSize);
+                    if (t1xSafepoint.regRefMap != null) {
+                        bitMap.setOffset((safepointIndex * refMapSize) + frameRefMapSize);
                         bitMap.setSize(regRefMapSize);
-                        for (int bit = t1xStop.regRefMap.nextSetBit(0); bit >= 0; bit = t1xStop.regRefMap.nextSetBit(bit + 1)) {
+                        for (int bit = t1xSafepoint.regRefMap.nextSetBit(0); bit >= 0; bit = t1xSafepoint.regRefMap.nextSetBit(bit + 1)) {
                             bitMap.set(bit);
                         }
                     }
-                    stopIndex++;
+                    safepointIndex++;
                 }
 
-                this.stops = new Stops(stops);
-                bytecodeStopsIterator = new BytecodeStopsIterator(bsm, firstStopIndexWithBCI);
+                this.safepoints = new Safepoints(safepoints);
+                bytecodeSafepointsIterator = new BytecodeSafepointsIterator(bsm, firstSafepointIndexWithBCI);
             } else {
-                stops = Stops.NO_STOPS;
+                safepoints = Safepoints.NO_SAFEPOINTS;
                 directCallees = TargetMethod.NO_DIRECT_CALLEES;
             }
         }
@@ -330,35 +330,35 @@ public class T1XTemplate {
         this.method = method;
         this.code = source.code();
         this.tag = tag;
-        int nStops = source.stops().length();
+        int nSafepoints = source.safepoints().size();
 
-        if (nStops == 0) {
-            stops = NO_STOPS;
+        if (nSafepoints == 0) {
+            safepoints = NO_SAFEPOINTS;
             templateCall = null;
         } else {
-            stops = new T1XStop[nStops];
-            T1XStop templateCall = null;
+            safepoints = new T1XSafepoint[nSafepoints];
+            T1XSafepoint templateCall = null;
 
-            Stops sourceStops = source.stops();
+            Safepoints sourceSafepoints = source.safepoints();
 
             int dcIndex = 0;
-            for (int stopIndex = 0; stopIndex < sourceStops.length(); stopIndex++) {
-                int stop = sourceStops.stopAt(stopIndex);
-                T1XStop t1xStop = new T1XStop(stop, -1);
-                t1xStop.callee = null;
-                t1xStop.frameRefMap = nullIfEmpty(source.debugInfo().frameRefMapAt(stopIndex));
-                t1xStop.regRefMap = nullIfEmpty(source.debugInfo().regRefMapAt(stopIndex));
-                if (sourceStops.isSetAt(DIRECT_CALL, stopIndex)) {
-                    if (sourceStops.isSetAt(TEMPLATE_CALL, stopIndex)) {
+            for (int safepointIndex = 0; safepointIndex < sourceSafepoints.size(); safepointIndex++) {
+                int safepoint = sourceSafepoints.safepointAt(safepointIndex);
+                T1XSafepoint t1xSafepoint = new T1XSafepoint(safepoint, -1);
+                t1xSafepoint.callee = null;
+                t1xSafepoint.frameRefMap = nullIfEmpty(source.debugInfo().frameRefMapAt(safepointIndex));
+                t1xSafepoint.regRefMap = nullIfEmpty(source.debugInfo().regRefMapAt(safepointIndex));
+                if (sourceSafepoints.isSetAt(DIRECT_CALL, safepointIndex)) {
+                    if (sourceSafepoints.isSetAt(TEMPLATE_CALL, safepointIndex)) {
                         assert templateCall == null : "template can have at most one TEMPLATE_CALL";
-                        templateCall = t1xStop;
+                        templateCall = t1xSafepoint;
                     } else {
-                        t1xStop.callee = (ClassMethodActor) source.directCallees()[dcIndex];
-                        assert t1xStop.callee != null;
+                        t1xSafepoint.callee = (ClassMethodActor) source.directCallees()[dcIndex];
+                        assert t1xSafepoint.callee != null;
                     }
                     dcIndex++;
                 }
-                stops[stopIndex] = t1xStop;
+                safepoints[safepointIndex] = t1xSafepoint;
             }
 
             this.templateCall = templateCall;

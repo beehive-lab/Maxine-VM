@@ -45,7 +45,7 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 
 /**
- * The debug info for the stops in a {@link C1XTargetMethod}.
+ * The debug info for the safepoints in a {@link C1XTargetMethod}.
  */
 public final class DebugInfo {
 
@@ -75,7 +75,7 @@ public final class DebugInfo {
      * </pre>
      * </li>
      * <li>Frame position table (FPT). This is a table mapping frame indexes to the position of the frame encoded (in the following section)
-     * for the stop. The prefix of the table is the stop indexes. Following that are indexes of the caller frames. If {@code data.length <= 0xFFFF}
+     * for the safepoint. The prefix of the table is the safepoint indexes. Following that are indexes of the caller frames. If {@code data.length <= 0xFFFF}
      * then each entry in this table is an unsigned short otherwise each entry is an integer. The size of this
      * table is stored in {@link #fptSize}.</li>
      * <li>Encoded frames.
@@ -123,7 +123,7 @@ public final class DebugInfo {
     /**
      * Encodes an array of debug infos.
      *
-     * @param debugInfos an array of debug infos correlated with each stop index
+     * @param debugInfos an array of debug infos correlated with each safepoint index
      * @param tm the target method associated with the debug infos
      */
     public DebugInfo(CiDebugInfo[] debugInfos, C1XTargetMethod tm) {
@@ -284,35 +284,35 @@ public final class DebugInfo {
     }
 
     /**
-     * Gets the index in {@code #data} at which the register reference map for stop {@code index} starts.
+     * Gets the index in {@code #data} at which the register reference map for safepoint {@code index} starts.
      */
     public int regRefMapStart(int index) {
         return index * tm.totalRefMapSize() + tm.frameRefMapSize();
     }
 
     /**
-     * Gets the index in {@code #data} at which the frame reference map for stop {@code index} starts.
+     * Gets the index in {@code #data} at which the frame reference map for safepoint {@code index} starts.
      */
     public int frameRefMapStart(int index) {
         return index * tm.totalRefMapSize();
     }
 
     /**
-     * Gets the frame reference map for a given stop index.
+     * Gets the frame reference map for a given safepoint index.
      */
     public CiBitMap frameRefMapAt(int index) {
         return new CiBitMap(data, index * tm.totalRefMapSize(), tm.frameRefMapSize());
     }
 
     /**
-     * Gets the register reference map for a given stop index.
+     * Gets the register reference map for a given safepoint index.
      */
     public CiBitMap regRefMapAt(int index) {
         return new CiBitMap(data, index * tm.totalRefMapSize() + tm.frameRefMapSize(), regRefMapSize());
     }
 
     /**
-     * Iterates over the code positions encoded for a given stop index.
+     * Iterates over the code positions encoded for a given stsafepointop index.
      *
      * @param cpc a closure called for each bytecode location in the inlining chain rooted
      *        at {@code index} (inner most callee first)
@@ -324,7 +324,7 @@ public final class DebugInfo {
     public int forEachCodePos(CodePosClosure cpc, int index) {
         int count = 0;
         final DecodingStream in = new DecodingStream(data);
-        int fpt = (tm.totalRefMapSize()) * tm.stops().length();
+        int fpt = (tm.totalRefMapSize()) * tm.safepoints().size();
         int frameIndex = index;
         while (true) {
             in.pos = framePos(fpt, frameIndex);
@@ -362,16 +362,16 @@ public final class DebugInfo {
     }
 
     /**
-     * Decodes the debug info at a given stop index.
+     * Decodes the debug info at a given safepoint index.
      *
-     * @param index a stop index
+     * @param index a safepoint index
      * @param fa access to a live frame (may be {@code null})
      * @param stackSlotAsAddress translate stack slots to stack addresses
      * @return the frame(s) at {@code index}
      */
     public CiDebugInfo infoAt(int index, FrameAccess fa, boolean stackSlotAsAddress) {
         final DecodingStream in = new DecodingStream(data);
-        int fpt = (tm.totalRefMapSize()) * tm.stops().length();
+        int fpt = (tm.totalRefMapSize()) * tm.safepoints().size();
         CiBitMap regRefMap = regRefMapAt(index);
         CiBitMap frameRefMap = frameRefMapAt(index);
         CiFrame frame = decodeFrame(in, fpt, index, fa, regRefMap, frameRefMap, stackSlotAsAddress);
@@ -480,6 +480,7 @@ public final class DebugInfo {
         if (value.isRegister()) {
             CiRegister reg = value.asRegister();
             CiCalleeSaveLayout csl = fa.csl;
+            assert csl != null : "cannot recover value for " + reg;
             int offset = csl.offsetOf(reg);
             if (value.kind.isObject()) {
                 Reference ref = fa.csa.readReference(offset);
@@ -526,12 +527,12 @@ public final class DebugInfo {
             return "";
         }
         StringBuilder sb = new StringBuilder(1024);
-        for (int i = 0; i < tm.stops().length(); i++) {
+        for (int i = 0; i < tm.safepoints().size(); i++) {
             CiDebugInfo info = infoAt(i, null, true);
             if (sb.length() != 0) {
                 sb.append(NEW_LINE);
             }
-            sb.append("==== stop " + i + " [" + tm + "+" + tm.stops().posAt(i) + "] ====").append(NEW_LINE).append(info);
+            sb.append("==== safepoint " + i + " [" + tm + "+" + tm.safepoints().posAt(i) + "] ====").append(NEW_LINE).append(info);
         }
         return sb.toString();
     }
