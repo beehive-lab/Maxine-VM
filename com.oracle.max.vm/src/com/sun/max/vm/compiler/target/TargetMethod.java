@@ -78,6 +78,20 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
+     * Call back for use with {@link #forEachCodePos(CodePosClosure, com.sun.max.unsafe.Pointer, boolean)}.
+     */
+    public static interface CodePosClosure {
+        /**
+         * Processes a given bytecode position.
+         *
+         * @param method the method actor on which this functionality is to be evaluated.
+         * @param bci the index in the method's bytecode.
+         * @return true if the caller should continue to the next code position (if any), false if it should terminate now
+         */
+        boolean doCodePos(ClassMethodActor method, int bci);
+    }
+
+    /**
      * The (bytecode) method from which this target method was compiled.
      * This will be {@code null} iff this target method is a {@link Stub} or
      * and {@link Adapter}.
