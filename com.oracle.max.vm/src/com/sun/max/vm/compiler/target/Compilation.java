@@ -91,6 +91,7 @@ public class Compilation {
                        RuntimeCompiler compiler,
                        ClassMethodActor classMethodActor,
                        Compilations prevCompilations, Thread compilingThread, int flags) {
+        assert prevCompilations != null;
         this.parent = COMPILATION.get();
         this.compilationScheme = compilationScheme;
         this.compiler = compiler;

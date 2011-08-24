@@ -199,7 +199,7 @@ public final class T1XTargetMethod extends TargetMethod {
             }
         }
 
-        if (safepointsBuilder != null) {
+        if (safepointsBuilder.safepoints.size() != 0) {
             final T1XReferenceMapEditor referenceMapEditor = new T1XReferenceMapEditor(this, comp.numberOfBlocks, comp.blockBCIs, safepointsBuilder.bytecodeSafepointsIterator, frame);
             this.refMapEditor.set(referenceMapEditor);
             final ReferenceMapInterpreter interpreter = ReferenceMapInterpreter.from(referenceMapEditor.blockFrames());
