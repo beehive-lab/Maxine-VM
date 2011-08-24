@@ -310,7 +310,7 @@ public class Compilation {
             Log.printCurrentThread(false);
             Log.print(": ");
             Log.print(compiler.getClass().getSimpleName());
-            Log.print(prevCompilations == null ? ": Compiling " : ": Recompiling ");
+            Log.print(prevCompilations == Compilations.EMPTY ? ": Compiling " : ": Recompiling ");
             Log.println(methodString);
             Log.unlock(lockDisabledSafepoints);
         }
@@ -323,7 +323,7 @@ public class Compilation {
             Log.printCurrentThread(false);
             Log.print(": ");
             Log.print(compiler.getClass().getSimpleName());
-            Log.print(prevCompilations == null ? ": Compiled " : ": Recompiled ");
+            Log.print(prevCompilations == Compilations.EMPTY ? ": Compiled " : ": Recompiled ");
             Log.print(methodString);
             Log.print(" @ ");
             Log.print(targetMethod.codeStart());
