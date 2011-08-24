@@ -243,7 +243,7 @@ public class T1XTemplate {
             final int safepointsCount = safepointsArray.size + adapterCount;
 
             safepoints = null;
-            directCallees = null;
+            directCallees = TargetMethod.NO_DIRECT_CALLEES;
             refMaps = null;
             bytecodeSafepointsIterator = null;
 
@@ -315,7 +315,6 @@ public class T1XTemplate {
                 bytecodeSafepointsIterator = new BytecodeSafepointsIterator(bsm, firstSafepointIndexWithBCI);
             } else {
                 safepoints = Safepoints.NO_SAFEPOINTS;
-                directCallees = TargetMethod.NO_DIRECT_CALLEES;
             }
         }
     }

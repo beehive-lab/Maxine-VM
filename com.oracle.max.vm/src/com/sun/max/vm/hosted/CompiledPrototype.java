@@ -702,7 +702,7 @@ public class CompiledPrototype extends Prototype {
                     assert methodActors.containsKey(methodActor);
                     assert methodActor.compiledState instanceof Compilations;
                     assert ((Compilations) methodActor.compiledState).optimized == targetMethod;
-                    methodActor.compiledState = null;
+                    methodActor.compiledState = Compilations.EMPTY;
                     worklist.add(methodActor);
                 }
                 invalidatedTargetMethods.clear();

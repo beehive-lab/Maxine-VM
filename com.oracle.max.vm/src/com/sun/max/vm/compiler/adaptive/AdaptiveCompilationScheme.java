@@ -280,7 +280,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 }
                 return compilation.get();
             } catch (Throwable t) {
-                classMethodActor.compiledState = null;
+                classMethodActor.compiledState = Compilations.EMPTY;
                 String errorMessage = "Compilation of " + classMethodActor + " by " + compilation.compiler + " failed";
                 if (VMOptions.verboseOption.verboseCompilation) {
                     boolean lockDisabledSafepoints = Log.lock();
