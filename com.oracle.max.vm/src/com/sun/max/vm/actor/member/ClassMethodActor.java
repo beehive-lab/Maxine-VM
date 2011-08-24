@@ -57,8 +57,12 @@ public abstract class ClassMethodActor extends MethodActor {
     @INSPECTED
     private CodeAttribute codeAttribute;
 
+    /**
+     * This is a {@link Compilation} instance if a compilation is pending
+     * otherwise it is a {@link Compilations} instance.
+     */
     @INSPECTED
-    public volatile Object targetState;
+    public volatile Object compiledState = Compilations.EMPTY;
 
     /**
      * This is the method whose code is actually compiled/executed. In most cases, it will be
@@ -381,19 +385,11 @@ public abstract class ClassMethodActor extends MethodActor {
     }
 
     /**
-     * Gets the latest version of compiled code for this method that can be executed.
+     * Gets the most optimized version of compiled code for this method that can be executed.
      * Note that this will never return an invalidated target method.
      */
     public TargetMethod currentTargetMethod() {
-        return TargetState.currentTargetMethod(targetState, true);
-    }
-
-    public TargetMethod[] targetMethodHistory() {
-        return TargetState.targetMethodHistory(targetState);
-    }
-
-    public int targetMethodCount() {
-        return TargetState.targetMethodCount(targetState);
+        return Compilations.currentTargetMethod(compiledState, Compilations.Attr.NONE);
     }
 
     /**
@@ -412,7 +408,7 @@ public abstract class ClassMethodActor extends MethodActor {
             }
             return false;
         }
-        return targetMethodCount() > 0;
+        return currentTargetMethod() != null;
     }
 
     private static BytecodeTransformation transformationClient;

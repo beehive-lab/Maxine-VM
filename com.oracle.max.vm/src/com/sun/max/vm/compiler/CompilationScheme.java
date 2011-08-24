@@ -27,7 +27,7 @@ import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
-import static com.sun.max.vm.compiler.CompilationScheme.CompilationFlag.*;
+import static com.sun.max.vm.compiler.target.Compilations.Attr.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -62,7 +62,7 @@ public interface CompilationScheme extends VMScheme {
      * compilation threads.
      *
      * @param classMethodActor the method for which to make the target method
-     * @param flags a mask of {@link CompilationFlag} values
+     * @param flags a mask of {@link Compilations.Attr} values
      * @return the currently compiled version of a target method, if it exists; a new compiled version of the specified
      *         method according to the internal policies if it is not already compiled; null if the compilation policy
      *         denies compilation of the specified method
@@ -83,30 +83,6 @@ public interface CompilationScheme extends VMScheme {
     String description();
 
     /**
-     * Various flags for modifying a compilation request.
-     */
-    public enum CompilationFlag {
-        /**
-         * The compilation request is for a target method that can be a
-         * {@link TargetMethod#isDeoptimizationTarget() deoptimization target}.
-         */
-        DEOPTIMIZING,
-
-        /**
-         * The compilation request is for an optimized target method.
-         */
-        OPTIMIZE;
-
-        public static final int NONE = 0;
-
-        public boolean isSet(int flags) {
-            return (flags & mask) != 0;
-        }
-
-        public final int mask = 1 << ordinal();
-    }
-
-    /**
      * This class provides a facade for the {@code CompilationScheme} interface, simplifying usage. It provides a number
      * of utilities to, for example, compile a method, get a method's current entrypoint, reset its method state, etc.
      *
@@ -119,19 +95,17 @@ public interface CompilationScheme extends VMScheme {
          * Gets compiled code for a given method.
          *
          * @param classMethodActor the method to compile
-         * @param flags a mask of {@link CompilationFlag} values
+         * @param flags a mask of {@link Compilations.Attr} values
          * @return the compiled method
          */
         public static TargetMethod compile(ClassMethodActor classMethodActor, int flags) {
-            TargetMethod currentTargetMethod = TargetState.currentTargetMethod(classMethodActor.targetState, true);
+            TargetMethod currentTargetMethod = Compilations.currentTargetMethod(classMethodActor.compiledState, flags);
             if (currentTargetMethod != null) {
-                // fast path: method is already compiled
-                if (!DEOPTIMIZING.isSet(flags) || currentTargetMethod.isDeoptimizationTarget()) {
-                    return currentTargetMethod;
-                }
+                // fast path: a suitable compiled version of method is available
+                return currentTargetMethod;
             }
 
-            // slow path: method has not been compiled, or been compiled more than once
+            // slow path: a suitable compiled version of method is *not* available
             return vmConfig().compilationScheme().synchronousCompile(classMethodActor, flags);
         }
 
@@ -146,15 +120,15 @@ public interface CompilationScheme extends VMScheme {
         }
 
         /**
-         * Reset the method state, destroying any previous information about the compilation of the method. This method
+         * Reset the compiled state for a given method. This method
          * should only be used in very specific circumstances to force recompilation of a method and is NOT FOR GENERAL
          * USE.
          *
          * @param classMethodActor the method for which to reset the method state
          */
         @HOSTED_ONLY
-        public static void resetMethodState(ClassMethodActor classMethodActor) {
-            classMethodActor.targetState = null;
+        public static void resetCompiledState(ClassMethodActor classMethodActor) {
+            classMethodActor.compiledState = Compilations.EMPTY;
         }
 
         /**
@@ -237,10 +211,10 @@ public interface CompilationScheme extends VMScheme {
 
             ClassMethodActor classMethodActor = mpo.method.classMethodActor;
             TargetMethod oldMethod = mpo.method;
-            TargetMethod newMethod = TargetState.currentTargetMethod(classMethodActor.targetState, true);
+            TargetMethod newMethod = Compilations.currentTargetMethod(classMethodActor.compiledState, Compilations.Attr.NONE);
 
             if (oldMethod == newMethod || newMethod == null) {
-                if (!TargetState.compilationPending(classMethodActor.targetState)) {
+                if (!(classMethodActor.compiledState instanceof Compilation)) {
                     // There is no newer compiled version available yet that we could just patch to, so recompile
                     logCounterOverflow(mpo, "");
                     newMethod = vmConfig().compilationScheme().synchronousCompile(classMethodActor, OPTIMIZE.mask);

@@ -32,7 +32,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.CompilationScheme.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.object.*;
@@ -203,7 +202,7 @@ public class C1XRuntimeCalls {
         if (MaxineVM.isHosted()) {
             new CriticalMethod(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         } else {
-            vmConfig().compilationScheme().synchronousCompile(classMethodActor, CompilationFlag.NONE);
+            vmConfig().compilationScheme().synchronousCompile(classMethodActor, Compilations.Attr.NONE);
         }
     }
 }

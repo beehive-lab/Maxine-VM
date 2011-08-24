@@ -818,7 +818,7 @@ public final class T1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public boolean isDeoptimizationTarget() {
+    public boolean isInterpreterCompatible() {
         return true;
     }
 

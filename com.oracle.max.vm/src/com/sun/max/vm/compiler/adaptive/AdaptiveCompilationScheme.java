@@ -24,8 +24,8 @@ package com.sun.max.vm.compiler.adaptive;
 
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.VMOptions.*;
-import static com.sun.max.vm.compiler.CompilationScheme.CompilationFlag.*;
 import static com.sun.max.vm.compiler.RuntimeCompiler.*;
+import static com.sun.max.vm.compiler.target.Compilations.Attr.*;
 
 import java.util.*;
 
@@ -155,7 +155,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
         } else {
             baselineCompiler = optimizingCompiler;
         }
-        if (!baselineCompiler.canProduceDeoptimizedCode()) {
+        if (!baselineCompiler.supportsInterpreterCompatibility()) {
             optimizingCompiler.deoptimizationNotSupported();
         }
     }
@@ -242,6 +242,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      * Performs a compilation of the specified method, waiting for the compilation to finish.
      *
      * @param classMethodActor the method to compile
+     * @param flags a mask of {@link Compilations.Attr} values
      * @return the target method that results from compiling the specified method
      */
     public TargetMethod synchronousCompile(ClassMethodActor classMethodActor, int flags) {
@@ -249,47 +250,37 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
         while (true) {
             Compilation compilation;
             boolean doCompile = true;
-            boolean supersede = true;
             synchronized (classMethodActor) {
                 assert !(classMethodActor.isNative() && classMethodActor.isVmEntryPoint()) : "cannot compile JNI functions that are native";
-                Object targetState = classMethodActor.targetState;
-                if (targetState == null) {
-                    // this is the first compilation.
-                    RuntimeCompiler compiler = retryCompiler == null ? selectCompiler(classMethodActor, flags) : retryCompiler;
-                    compilation = new Compilation(this, compiler, classMethodActor, targetState, Thread.currentThread());
-                    classMethodActor.targetState = compilation;
-                } else if (targetState instanceof Compilation) {
-                    compilation = (Compilation) targetState;
+                Object compiledState = classMethodActor.compiledState;
+                compilation = compiledState instanceof Compilation ? (Compilation) compiledState : null;
+                if (compilation != null && (flags == 0 || flags == compilation.flags)) {
+                    // Only wait for a pending compilation if it compatible with the current request.
+                    // That is the current request does not specify a special type of method (flags == 0)
+                    // or it specifies the same type of method as the pending compilation (flags == compilation.flags)
                     if (retryCompiler != null) {
                         assert compilation.compilingThread == Thread.currentThread();
+                        assert flags == NONE : "cannot retry if specific compilation mode is specified";
                         compilation.compiler = retryCompiler;
                     } else {
                         // the method is currently being compiled, just wait for the result
                         doCompile = false;
                     }
-                } else if (DEOPTIMIZING.isSet(flags)) {
-                    compilation = new Compilation(this, baselineCompiler, classMethodActor, targetState, Thread.currentThread());
-                    classMethodActor.targetState = compilation;
-                    boolean invalidated = targetState instanceof TargetMethod && ((TargetMethod) targetState).invalidated() != null;
-                    if (!invalidated) {
-                        // If deoptimizing due to uncommon trap, the (still valid) optimized method should remain
-                        // the default for linking call sites.
-                        supersede = false;
-                    }
                 } else {
+                    Compilations prevCompilations = compilation != null ? compilation.prevCompilations :  (Compilations) compiledState;
                     RuntimeCompiler compiler = retryCompiler == null ? selectCompiler(classMethodActor, flags) : retryCompiler;
-                    compilation = new Compilation(this, compiler, classMethodActor, targetState, Thread.currentThread());
-                    classMethodActor.targetState = compilation;
+                    compilation = new Compilation(this, compiler, classMethodActor, prevCompilations, Thread.currentThread(), flags);
+                    classMethodActor.compiledState = compilation;
                 }
             }
 
             try {
                 if (doCompile) {
-                    return compilation.compile(supersede);
+                    return compilation.compile();
                 }
                 return compilation.get();
             } catch (Throwable t) {
-                classMethodActor.targetState = null;
+                classMethodActor.compiledState = null;
                 String errorMessage = "Compilation of " + classMethodActor + " by " + compilation.compiler + " failed";
                 if (VMOptions.verboseOption.verboseCompilation) {
                     boolean lockDisabledSafepoints = Log.lock();
@@ -334,13 +325,13 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      * Select the appropriate compiler based on the current state of the method.
      *
      * @param classMethodActor the class method actor to compile
-     * @param flags a mask of {@link CompilationFlag} values
+     * @param flags a mask of {@link Compilations.Attr} values
      * @return the compiler that should be used to perform the next compilation of the method
      */
-    RuntimeCompiler selectCompiler(ClassMethodActor classMethodActor, int flags) {
+    public RuntimeCompiler selectCompiler(ClassMethodActor classMethodActor, int flags) {
 
         if (Actor.isUnsafe(classMethodActor.flags() | classMethodActor.compilee().flags())) {
-            assert !DEOPTIMIZING.isSet(flags) : "cannot produce deoptimized version of " + classMethodActor;
+            assert !INTERPRETER_COMPATIBLE.isSet(flags) : "cannot produce interpreter compatible version of " + classMethodActor;
             return optimizingCompiler;
         }
 
@@ -354,9 +345,9 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 compiler = optimizingCompiler;
             }
         } else {
-            if (DEOPTIMIZING.isSet(flags)) {
+            if (INTERPRETER_COMPATIBLE.isSet(flags)) {
                 compiler = baselineCompiler;
-                assert baselineCompiler.canProduceDeoptimizedCode() : "deoptimization is not supported by the baseline compiler " + baselineCompiler;
+                assert baselineCompiler.supportsInterpreterCompatibility() : "interpreter compatibility is not supported by the baseline compiler " + baselineCompiler;
             } else if (mode == Mode.OPTIMIZED || OPTIMIZE.isSet(flags)) {
                 compiler = optimizingCompiler;
             } else {
@@ -370,7 +361,6 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
     /**
      * This class implements a daemon thread that performs compilations in the background. Depending on the compiler
      * configuration, multiple compilation threads may be working in parallel.
-     *
      */
     protected class CompilationThread extends Thread {
 
@@ -421,7 +411,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
             if (GCOnRecompilation) {
                 System.gc();
             }
-            compilation.compile(true);
+            compilation.compile();
             compilation = null;
         }
     }

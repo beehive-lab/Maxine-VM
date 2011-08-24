@@ -68,7 +68,7 @@ class DeoptimizeALot extends Thread {
                 return tm != null &&
                     tm.classMethodActor != null &&
                     !Code.bootCodeRegion().contains(tm.codeStart()) &&
-                    !tm.isDeoptimizationTarget() &&
+                    !tm.isInterpreterCompatible() &&
                     !tm.classMethodActor.isUnsafe() &&
                     tm.invalidated() == null &&
                     !methods.contains(tm);

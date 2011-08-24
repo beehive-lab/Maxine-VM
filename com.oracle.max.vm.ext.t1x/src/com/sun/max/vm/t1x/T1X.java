@@ -136,7 +136,7 @@ public class T1X implements RuntimeCompiler {
     public void deoptimizationNotSupported() {
     }
 
-    public boolean canProduceDeoptimizedCode() {
+    public boolean supportsInterpreterCompatibility() {
         return true;
     }
 
