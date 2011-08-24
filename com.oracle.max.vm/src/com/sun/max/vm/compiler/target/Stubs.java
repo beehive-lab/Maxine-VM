@@ -46,7 +46,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.CompilationScheme.CompilationFlag;
 import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.deopt.Deoptimization.Info;
 import com.sun.max.vm.compiler.target.Stub.Type;
@@ -165,7 +164,7 @@ public class Stubs {
                 CriticalMethod unroll = new CriticalMethod(Stubs.class, "unroll", null);
                 CiValue[] unrollArgs = registerConfigs.standard.getCallingConvention(JavaCall,
                                 CiUtil.signatureToKinds(unroll.classMethodActor.signature(), null), target(), false).locations;
-                unroll.classMethodActor.targetState = genUnroll(unrollArgs);
+                unroll.classMethodActor.compiledState = new Compilations(null, genUnroll(unrollArgs));
 
                 deoptStubForSafepoint = genDeoptStubWithCSA(null, registerConfigs.trapStub, false);
                 for (CiKind kind : CiKind.VALUES) {
@@ -180,7 +179,7 @@ public class Stubs {
                         CriticalMethod unwind = new CriticalMethod(Stubs.class, name, null);
                         CiValue[] unwindArgs = registerConfigs.standard.getCallingConvention(JavaCall,
                                         CiUtil.signatureToKinds(unwind.classMethodActor.signature(), null), target(), false).locations;
-                        unwind.classMethodActor.targetState = genUnwind(unwindArgs);
+                        unwind.classMethodActor.compiledState = new Compilations(null, genUnwind(unwindArgs));
                     } catch (NoSuchMethodError e) {
                         // No unwind method for this kind
                     }
@@ -252,7 +251,7 @@ public class Stubs {
         if (selectedCallee.isAbstract()) {
             throw new AbstractMethodError();
         }
-        final Address vtableEntryPoint = compile(selectedCallee, CompilationFlag.NONE).getEntryPoint(VTABLE_ENTRY_POINT).asAddress();
+        final Address vtableEntryPoint = compile(selectedCallee, Compilations.Attr.NONE).getEntryPoint(VTABLE_ENTRY_POINT).asAddress();
         hub.setWord(vTableIndex, vtableEntryPoint);
         return adjustEntryPointForCaller(vtableEntryPoint, pcInCaller);
     }
@@ -271,7 +270,7 @@ public class Stubs {
         if (selectedCallee.isAbstract()) {
             throw new AbstractMethodError();
         }
-        final Address itableEntryPoint = compile(selectedCallee, CompilationFlag.NONE).getEntryPoint(VTABLE_ENTRY_POINT).asAddress();
+        final Address itableEntryPoint = compile(selectedCallee, Compilations.Attr.NONE).getEntryPoint(VTABLE_ENTRY_POINT).asAddress();
         hub.setWord(hub.iTableStartIndex + iIndex, itableEntryPoint);
         return adjustEntryPointForCaller(itableEntryPoint, pcInCaller);
     }
@@ -347,7 +346,7 @@ public class Stubs {
         final ClassMethodActor callee = caller.callSiteToCallee(callSite);
 
         // Use the caller's entry point to get the correct entry point.
-        final Address calleeEntryPoint = compile(callee, CompilationFlag.NONE).getEntryPoint(caller.callEntryPoint).asAddress();
+        final Address calleeEntryPoint = compile(callee, Compilations.Attr.NONE).getEntryPoint(caller.callEntryPoint).asAddress();
         AMD64TargetMethodUtil.mtSafePatchCallDisplacement(caller, callSite, calleeEntryPoint);
     }
 

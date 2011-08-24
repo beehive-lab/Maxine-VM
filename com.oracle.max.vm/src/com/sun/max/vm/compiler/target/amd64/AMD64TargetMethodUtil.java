@@ -91,20 +91,20 @@ public final class AMD64TargetMethodUtil {
      * Gets the target of a 32-bit relative CALL instruction.
      *
      * @param targetMethod the method containing the CALL instruction
-     * @param callOffset the offset within the code of {@code targetMethod} of the CALL
+     * @param callPos the offset within the code of {@code targetMethod} of the CALL
      * @return the absolute target address of the CALL
      */
-    public static Address readCall32Target(TargetMethod targetMethod, int callOffset) {
-        final Pointer callSite = targetMethod.codeStart().plus(callOffset);
+    public static Address readCall32Target(TargetMethod targetMethod, int callPos) {
+        final Pointer callSite = targetMethod.codeStart().plus(callPos);
         int disp32;
         if (MaxineVM.isHosted()) {
             final byte[] code = targetMethod.code();
             assert code[0] == (byte) RIP_CALL;
             disp32 =
-                (code[callOffset + 4] & 0xff) << 24 |
-                (code[callOffset + 3] & 0xff) << 16 |
-                (code[callOffset + 2] & 0xff) << 8 |
-                (code[callOffset + 1] & 0xff) << 0;
+                (code[callPos + 4] & 0xff) << 24 |
+                (code[callPos + 3] & 0xff) << 16 |
+                (code[callPos + 2] & 0xff) << 8 |
+                (code[callPos + 1] & 0xff) << 0;
         } else {
             assert callSite.readByte(0) == (byte) RIP_CALL;
             disp32 =

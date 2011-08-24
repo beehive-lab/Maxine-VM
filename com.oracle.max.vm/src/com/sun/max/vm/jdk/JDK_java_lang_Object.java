@@ -45,7 +45,7 @@ final class JDK_java_lang_Object {
     }
 
     /**
-     * Gets the class (exact dynamic type) of this class.
+     * Gets the class of this object.
      * @see java.lang.Object#getClass()
      * @return the class of this object
      */

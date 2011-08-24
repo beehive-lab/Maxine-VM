@@ -818,7 +818,9 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
-     * Gets a mapping from bytecode positions to target code positions. A non-zero value
+     * Gets a mapping from bytecode positions to target code positions. The bytecode positions are in terms of
+     * the bytecode for this target method's {@link #classMethodActor}.
+     * A non-zero value
      * {@code val} at index {@code i} in the array encodes that there is a bytecode instruction whose opcode is at index
      * {@code i} in the bytecode array and whose target code position is {@code val}. Unless {@code i} is equal to the
      * length of the bytecode array in which case {@code val} denotes the target code position one byte past the
@@ -1035,14 +1037,23 @@ public abstract class TargetMethod extends MemoryRegion {
     public abstract Pointer returnAddressPointer(Cursor frame);
 
     /**
-     * Specifies if this target method can be used to reconstruct deoptimized frames.
+     * Determines if this target method has execution semantics compatible with interpretation.
+     * This will be the case if all the following hold:
+     * <ul>
+     * <li> It has a {@linkplain #bciToPosMap() map} from every bytecode instruction
+     *      in {@link #classMethodActor} to the target code position(s) implementing the instruction.</li>
+     * <li> It can be used during deoptimization to create
+     *      {@linkplain #createDeoptimizedFrame(Info, CiFrame, Continuation) deoptimized frames}.</li>
+     * </ul>
+     *
      */
-    public boolean isDeoptimizationTarget() {
+    public boolean isInterpreterCompatible() {
         return false;
     }
 
     /**
-     * Creates a deoptimized frame for this method.
+     * Creates a deoptimized frame for this method. This can only be called if {@link #isInterpreterCompatible()}
+     * returns {@code true} for this object.
      *
      * @param info details of current deoptimization
      * @param frame debug info from which the slots of the deoptimized are initialized

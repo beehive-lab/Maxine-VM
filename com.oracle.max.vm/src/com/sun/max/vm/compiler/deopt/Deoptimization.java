@@ -25,8 +25,8 @@ package com.sun.max.vm.compiler.deopt;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
-import static com.sun.max.vm.compiler.CompilationScheme.CompilationFlag.*;
 import static com.sun.max.vm.compiler.deps.DependenciesManager.*;
+import static com.sun.max.vm.compiler.target.Compilations.Attr.*;
 import static com.sun.max.vm.compiler.target.Stub.Type.*;
 import static com.sun.max.vm.stack.VMFrameLayout.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
@@ -44,6 +44,7 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetMethod.FrameAccess;
 import com.sun.max.vm.compiler.target.TargetMethod.FrameInfo;
+import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -204,15 +205,7 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
         }
     }
 
-    private static boolean isInvalidated(Object directCallee) {
-        TargetMethod tm;
-        if (directCallee instanceof TargetMethod) {
-            tm = (TargetMethod) directCallee;
-        } else {
-            tm = TargetState.currentTargetMethod(((ClassMethodActor) directCallee).targetState, false);
-        }
-        return tm != null && tm.invalidated() != null;
-    }
+    int directCallProcessed;
 
     @Override
     public boolean doTargetMethod(TargetMethod tm) {
@@ -221,27 +214,37 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
         Object[] directCallees = tm.directCallees();
         for (int i = safepoints.nextDirectCall(0); i >= 0; i = safepoints.nextDirectCall(i + 1)) {
             Object directCallee = directCallees[dcIndex];
-            if (directCallee != null && isInvalidated(directCallee)) {
-                if (tm.resetDirectCall(i, dcIndex)) {
-                    if (TraceDeopt) {
-                        Log.println("DEOPT:   reset direct call " + i + " in " + tm + " to " + directCallee);
+            if (directCallee instanceof ClassMethodActor) {
+                int callPos = safepoints.causePosAt(i);
+                final Address target = AMD64TargetMethodUtil.readCall32Target(tm, callPos);
+                final TargetMethod callee = Code.codePointerToTargetMethod(target);
+                if (callee.invalidated() != null) {
+                    if (tm.resetDirectCall(i, dcIndex)) {
+                        if (TraceDeopt) {
+                            Log.println("DEOPT:   reset direct call " + dcIndex + " in " + tm + " to " + directCallee);
+                        }
                     }
                 }
             }
             dcIndex++;
         }
+        directCallProcessed += dcIndex;
         return true;
     }
 
     @Override
     protected void doIt() {
-
         // Process code cache
         if (TraceDeopt) {
             Log.println("DEOPT: processing code cache");
         }
+
+        directCallProcessed = 0;
         Code.bootCodeRegion().doAllTargetMethods(this);
         Code.getCodeManager().getRuntimeCodeRegion().doAllTargetMethods(this);
+        if (TraceDeopt) {
+            Log.println("DEOPT: processed code cache [direct calls processed: " + directCallProcessed + "]");
+        }
 
         doAllThreads();
     }
@@ -775,7 +778,9 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
         Info info = new Info(VmThread.current(), ip, sp, fp);
 
         if (TraceDeopt) {
+            s();
             Log.println("DEOPT: Deoptimizing " + info.tm);
+            s();
             Throw.stackDump("DEOPT: Raw stack frames:");
             new Throwable("DEOPT: Bytecode stack frames:").printStackTrace(Log.out);
         }
@@ -791,6 +796,7 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
         assert safepointIndex >= 0 : "no safepoint index for " + tm + "+" + tm.posFor(ip);
 
         if (TraceDeopt) {
+            s();
             Log.println("DEOPT: " + tm + ", safepointIndex=" + safepointIndex + ", pos=" + tm.safepoints().posAt(safepointIndex));
         }
 
@@ -812,7 +818,8 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
         Continuation cont = topCont;
         for (CiFrame frame = topFrame; frame != null; frame = frame.caller()) {
             ClassMethodActor method = (ClassMethodActor) frame.method;
-            TargetMethod compiledMethod = vmConfig().compilationScheme().synchronousCompile(method, DEOPTIMIZING.mask);
+            TargetMethod compiledMethod = vmConfig().compilationScheme().synchronousCompile(method, INTERPRETER_COMPATIBLE.mask);
+            FatalError.check(compiledMethod.isInterpreterCompatible(), compiledMethod + " should be a deopt target");
             if (cont == topCont) {
                 topCont.tm = compiledMethod;
             }
@@ -920,9 +927,14 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
         }
     }
 
+    static void s() {
+        Log.printCurrentThread(false);
+    }
+
     @NEVER_INLINE // makes inspecting easier
     static void logPatchReturnAddress(TargetMethod tm, Object callee, Stub stub, Address to, Pointer save, Pointer patch, Address from) {
         if (TraceDeopt) {
+            s();
             Log.println("DEOPT: patched return address @ " + patch.to0xHexString() + " of call to " + callee +
                             ": " + from.to0xHexString() + '[' + tm + '+' + from.minus(tm.codeStart()).toInt() + ']' +
                             " -> " + to.to0xHexString() + '[' + stub + "], saved old value @ " + save.to0xHexString());
@@ -931,8 +943,10 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
 
     @NEVER_INLINE // makes inspecting easier
     static void logFrames(CiFrame topFrame, String label) {
+        s();
         Log.println("DEOPT: --- " + label + " start ---");
         Log.println(topFrame);
+        s();
         Log.println("DEOPT: --- " + label + " end ---");
     }
 }
