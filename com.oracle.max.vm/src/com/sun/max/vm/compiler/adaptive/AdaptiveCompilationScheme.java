@@ -292,7 +292,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 }
                 if (!FailOverCompilation || retryCompiler != null || (optimizingCompiler == baselineCompiler)) {
                     // This is the final failure: no other compilers available or failover is disabled
-                    throw FatalError.unexpected(errorMessage + " (final attempt)", t);
+                    throw (InternalError) new InternalError(errorMessage + " (final attempt)").initCause(t);
                 }
                 if (compilation.compiler == optimizingCompiler) {
                     retryCompiler = baselineCompiler;
@@ -307,15 +307,6 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 }
             }
         }
-    }
-
-    /**
-     * Checks whether there is currently a compilation being performed.
-     *
-     * @return {@code true} if there is currently a compilation pending or being performed; {@code false} otherwise
-     */
-    public boolean isCompiling() {
-        throw FatalError.unimplemented();
     }
 
     @HOSTED_ONLY
