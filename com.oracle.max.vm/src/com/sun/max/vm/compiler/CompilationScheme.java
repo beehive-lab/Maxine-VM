@@ -53,30 +53,17 @@ import com.sun.max.vm.thread.*;
 public interface CompilationScheme extends VMScheme {
 
     /**
-     * This method makes a target method for the specified method actor. If the method is already compiled, it will
-     * return the current target method for the specified method. If the method is not compiled, it will perform
-     * compilation according to this compilation scheme's internal policies and return the new target method. Note that
-     * this method may return {@code null} if the internal compilation policy rejects compilation of the method (e.g. while
-     * bootstrapping or at runtime if there is an interpreter installed). This method is <i>synchronous</i> in the
-     * sense that it will wait for compilation to complete if this compilation scheme uses multiple background
-     * compilation threads.
+     * Produces a target method for the specified method actor. If another thread is currently
+     * compiling {@code cma}, then the result of that compilation is returned. Otherwise,
+     * a new compilation is scheduled and its result is returned. Either way, this methods
+     * waits for the result of a compilation to return it.
      *
-     * @param classMethodActor the method for which to make the target method
+     * @param cma the method for which to make the target method
      * @param flags a mask of {@link Compilations.Attr} values
-     * @return the currently compiled version of a target method, if it exists; a new compiled version of the specified
-     *         method according to the internal policies if it is not already compiled; null if the compilation policy
-     *         denies compilation of the specified method
+     * @return a newly compiled version of a {@code cma}
+     * @throws InteralError if an uncaught exception is thrown during compilation
      */
-    TargetMethod synchronousCompile(ClassMethodActor classMethodActor, int flags);
-
-    /**
-     * This method queries whether this compilation scheme is currently performing a compilation or has queued
-     * compilations. This is necessary, for example, during bootstrapping to ensure that all compilations have
-     * finished before proceeding to the next step in creating the image.
-     *
-     * @return true if there are any methods that are scheduled to be compiled that have not been completed yet
-     */
-    boolean isCompiling();
+    TargetMethod synchronousCompile(ClassMethodActor cma, int flags);
 
     boolean needsAdapters();
 
@@ -217,7 +204,16 @@ public interface CompilationScheme extends VMScheme {
                 if (!(classMethodActor.compiledState instanceof Compilation)) {
                     // There is no newer compiled version available yet that we could just patch to, so recompile
                     logCounterOverflow(mpo, "");
-                    newMethod = vmConfig().compilationScheme().synchronousCompile(classMethodActor, OPTIMIZE.mask);
+                    try {
+                        newMethod = vmConfig().compilationScheme().synchronousCompile(classMethodActor, OPTIMIZE.mask);
+                    } catch (InternalError e) {
+                        if (VMOptions.verboseOption.verboseCompilation) {
+                            e.printStackTrace(Log.out);
+                        }
+                        // Optimization failed - stay with the baseline method. By not resetting the counter,
+                        // the next counter overflow (due to integer wrapping) will be a while away.
+                        return;
+                    }
                 }
             }
 
