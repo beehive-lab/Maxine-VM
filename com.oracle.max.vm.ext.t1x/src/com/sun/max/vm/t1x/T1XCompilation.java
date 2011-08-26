@@ -802,6 +802,21 @@ public class T1XCompilation {
             assignReferenceLiteralTemplateArgument(0, methodProfileBuilder.methodProfileObject());
             T1XTemplate template = getTemplate(PROFILE_BACKWARD_BRANCH);
             emitAndRecordSafepoints(template);
+
+            // Ideally, we'd like to emit a safepoint at the target of a backward branch.
+            // However, that would require at least one extra pass to determine where
+            // the backward branches are. Instead, we simply emit a safepoint at the source of
+            // a backward branch. This means the cost of the safepoint is taken even if
+            // the backward branch is not taken but that cost should not be noticeable.
+            //
+            // Note also that the safepoint must be placed before the template code
+            // as the template code may adjust the frame in which case the ref map
+            // derived by the ReferenceMapInterpreter would no longer be correct
+            // at the safepoint.
+            int pos = buf.position();
+            byte[] safepointCode = vm().safepoint.code;
+            buf.emitBytes(safepointCode, 0, safepointCode.length);
+            safepointsBuilder.addSafepoint(bci, pos);
         }
 
         if (ccObj != null) {
@@ -815,6 +830,7 @@ public class T1XCompilation {
             PatchInfoAMD64 patchInfo = (PatchInfoAMD64) this.patchInfo;
             ConditionFlag cc = (ConditionFlag) ccObj;
             if (bci < targetBCI) {
+                // Forward branch
                 if (cc != null) {
                     patchInfo.addJCC(cc, pos, targetBCI);
                     asm.jcc(cc, 0, true);
@@ -825,14 +841,7 @@ public class T1XCompilation {
                 }
                 assert bciToPos[targetBCI] == 0;
             } else {
-                // Ideally, we'd like to emit a safepoint at the target of a backward branch.
-                // However, that would require at least one extra pass to determine where
-                // the backward branches are. Instead, we simply emit a safepoint at the source of
-                // a backward branch. This means the cost of the safepoint is taken even if
-                // the backward branch is not taken but that cost should not be noticeable.
-                byte[] safepointCode = vm().safepoint.code;
-                buf.emitBytes(safepointCode, 0, safepointCode.length);
-                safepointsBuilder.addSafepoint(bci, pos);
+                // Backward branch
 
                 // Compute relative offset.
                 final int target = bciToPos[targetBCI];
