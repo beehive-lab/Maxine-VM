@@ -56,11 +56,6 @@ public class T1XReferenceMapEditor implements ReferenceMapInterpreterContext, Re
      */
     private final char[] blockBCIs;
 
-    /**
-     * Shared non-null global object denoting absence of a valid editor instance.
-     */
-    public static final T1XReferenceMapEditor SENTINEL = new T1XReferenceMapEditor();
-
     private T1XReferenceMapEditor() {
         t1xMethod = null;
         frame = null;
@@ -144,14 +139,11 @@ public class T1XReferenceMapEditor implements ReferenceMapInterpreterContext, Re
         return blockBCIs.length;
     }
 
-    public JVMSFrameLayout stackFrameLayout() {
-        return frame;
-    }
-
     public void fillInMaps() {
         if (traceStackRootScanning()) {
             final boolean lockDisabledSafepoints = Log.lock();
-            Log.print("Finalizing T1X reference maps for ");
+            Log.printCurrentThread(false);
+            Log.print(": Finalizing T1X reference maps for ");
             Log.printMethod(classMethodActor(), true);
             Log.unlock(lockDisabledSafepoints);
         }
@@ -271,9 +263,6 @@ public class T1XReferenceMapEditor implements ReferenceMapInterpreterContext, Re
 
     @Override
     public String toString() {
-        if (this == SENTINEL) {
-            return "SENTINEL";
-        }
         return getClass().getSimpleName() + "[" + classMethodActor() + "]";
     }
 }

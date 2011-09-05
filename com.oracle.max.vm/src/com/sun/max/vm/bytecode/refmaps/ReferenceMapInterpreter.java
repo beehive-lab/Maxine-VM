@@ -1312,7 +1312,6 @@ public abstract class ReferenceMapInterpreter {
                     break;
                 }
 
-                case TEMPLATE_CALL:
                 case INVOKESPECIAL:
                 case INVOKEVIRTUAL:
                 case INVOKEINTERFACE:
@@ -1327,7 +1326,7 @@ public abstract class ReferenceMapInterpreter {
                         final TypeDescriptor parameter = methodSignature.parameterDescriptorAt(i);
                         pop(parameter.toKind());
                     }
-                    if (opcode != Bytecodes.INVOKESTATIC && opcode != TEMPLATE_CALL) {
+                    if (opcode != Bytecodes.INVOKESTATIC) {
                         popCategory1(); // receiver
                     }
 
@@ -1665,12 +1664,6 @@ public abstract class ReferenceMapInterpreter {
                 case LSB:
                 case MSB:
                     skip2();
-                    break;
-                case ICMP:
-                case WCMP:
-                    skip2();
-                    popCategory1();
-                    popCategory1();
                     break;
                 case UWCMP:
                 case UCMP:

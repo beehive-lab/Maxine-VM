@@ -37,7 +37,6 @@ import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
 import com.sun.cri.ci.CiTargetMethod.DataPatch;
 import com.sun.cri.ci.CiTargetMethod.Safepoint;
 import com.sun.max.annotate.*;
-import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
@@ -49,7 +48,6 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.deopt.Deoptimization.Continuation;
 import com.sun.max.vm.compiler.deopt.Deoptimization.Info;
 import com.sun.max.vm.compiler.deopt.*;
-import com.sun.max.vm.compiler.target.TargetBundleLayout.ArrayField;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.profile.*;
@@ -298,10 +296,15 @@ public abstract class TargetMethod extends MemoryRegion {
      * returned object are {@link CiConstant}s wrapping values from the thread's stack denoted by {@code fa}. Otherwise,
      * they are {@link CiStackSlot}, {@link CiRegister} and {@link CiConstant} values describing how to extract values
      * from a live frame.
+     * <p>
+     * Note that the returned object is only suitable for deoptimization if an
+     * optimizing compiler produced this target method. Otherwise, the frame info
+     * in the returned object may include slots that are not actually live as
+     * the given safepoint.
      *
      * @param safepointIndex an index of a safepoint within this method
      * @param fa access to a live frame (may be {@code null})
-     * @return the debug ino at the denoted safepoint of {@code null} if none available
+     * @return the debug info at the denoted safepoint of {@code null} if none available
      */
     public CiDebugInfo debugInfoAt(int safepointIndex, FrameAccess fa) {
         return null;
@@ -775,11 +778,6 @@ public abstract class TargetMethod extends MemoryRegion {
         return callEntryPoint.offsetInCallee();
     }
 
-    @HOSTED_ONLY
-    protected boolean isDirectCalleeInPrologue(int directCalleeIndex) {
-        return false;
-    }
-
     public final boolean isCalleeSaved() {
         return registerRestoreEpilogueOffset >= 0;
     }
@@ -854,78 +852,6 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
-     * Traces the metadata of the compiled code represented by this object. In particular, the
-     * {@linkplain #traceExceptionHandlers(IndentWriter) exception handlers}, the
-     * {@linkplain #traceDirectCallees(IndentWriter) direct callees}, the #{@linkplain #traceScalarBytes(IndentWriter, TargetBundle) scalar data},
-     * the {@linkplain #traceReferenceLiterals(IndentWriter, TargetBundle) reference literals} and the address of the
-     * array containing the {@linkplain #code() compiled code}.
-     *
-     * @param writer where the trace is written
-     */
-    public void traceBundle(IndentWriter writer) {
-        final TargetBundleLayout targetBundleLayout = TargetBundleLayout.from(this);
-        writer.println("Layout:");
-        writer.println(Strings.indent(targetBundleLayout.toString(), writer.indentation()));
-        traceExceptionHandlers(writer);
-        traceDirectCallees(writer);
-        traceScalarBytes(writer, targetBundleLayout);
-        traceReferenceLiterals(writer, targetBundleLayout);
-        traceDebugInfo(writer);
-        writer.println("Code cell: " + targetBundleLayout.cell(start(), ArrayField.code).toString());
-    }
-
-    /**
-     * Traces the {@linkplain #directCallees() direct callees} of the compiled code represented by this object.
-     *
-     * @param writer where the trace is written
-     */
-    public final void traceDirectCallees(IndentWriter writer) {
-        if (directCallees != null) {
-            assert safepoints != null && directCallees.length <= safepoints.size();
-            writer.println("Direct Calls: ");
-            writer.indent();
-            for (int i = 0; i < directCallees.length; i++) {
-                writer.println(safepoints.posAt(i) + " -> " + directCallees[i]);
-            }
-            writer.outdent();
-        }
-    }
-
-    /**
-     * Traces the {@linkplain #scalarLiterals() scalar data} addressed by the compiled code represented by this object.
-     *
-     * @param writer where the trace is written
-     */
-    public final void traceScalarBytes(IndentWriter writer, final TargetBundleLayout targetBundleLayout) {
-        if (scalarLiterals != null) {
-            writer.println("Scalars:");
-            writer.indent();
-            for (int i = 0; i < scalarLiterals.length; i++) {
-                final Pointer pointer = targetBundleLayout.cell(start(), ArrayField.scalarLiterals).plus(ArrayField.scalarLiterals.arrayLayout.getElementOffsetInCell(i));
-                writer.println("[" + pointer.toString() + "] 0x" + Integer.toHexString(scalarLiterals[i] & 0xFF) + "  " + scalarLiterals[i]);
-            }
-            writer.outdent();
-        }
-    }
-
-    /**
-     * Traces the {@linkplain #referenceLiterals() reference literals} addressed by the compiled code represented by this object.
-     *
-     * @param writer where the trace is written
-     */
-    public final void traceReferenceLiterals(IndentWriter writer, final TargetBundleLayout targetBundleLayout) {
-        if (referenceLiterals != null) {
-            writer.println("References: ");
-            writer.indent();
-            for (int i = 0; i < referenceLiterals.length; i++) {
-                final Pointer pointer = targetBundleLayout.cell(start(), ArrayField.referenceLiterals).plus(ArrayField.referenceLiterals.arrayLayout.getElementOffsetInCell(i));
-                writer.println("[" + pointer.toString() + "] " + referenceLiterals[i]);
-            }
-            writer.outdent();
-        }
-    }
-
-    /**
      * Analyzes the target method that this compiler produced to build a call graph. This method gathers the
      * methods called directly or indirectly by this target method as well as the methods it inlined.
      *
@@ -966,17 +892,6 @@ public abstract class TargetMethod extends MemoryRegion {
      * @return true if mt-safe patching is possible on the specified call site.
      */
     public abstract boolean isPatchableCallSite(Address callSite);
-
-    /**
-     * Traces the debug info for the compiled code represented by this object.
-     * @param writer where the trace is written
-     */
-    public abstract void traceDebugInfo(IndentWriter writer);
-
-    /**
-     * @param writer where the trace is written
-     */
-    public abstract void traceExceptionHandlers(IndentWriter writer);
 
     /**
      * Prepares the reference map for the current frame (and potentially for registers stored in a callee frame).

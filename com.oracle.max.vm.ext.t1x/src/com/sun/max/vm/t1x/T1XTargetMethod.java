@@ -24,11 +24,11 @@ package com.sun.max.vm.t1x;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.compiler.target.Safepoints.TEMPLATE_CALL;
+import static com.sun.max.vm.compiler.target.Safepoints.*;
 import static com.sun.max.vm.compiler.target.Stub.Type.*;
 import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
-import static com.sun.max.vm.t1x.T1XCompilation.*;
+import static com.sun.max.vm.t1x.T1X.*;
 
 import java.util.*;
 
@@ -38,7 +38,6 @@ import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.atomic.*;
-import com.sun.max.io.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -74,11 +73,17 @@ public final class T1XTargetMethod extends TargetMethod {
     static final int SYNC_METHOD_CATCH_TYPE_CPI = -1;
 
     /**
-     * The number of slots to be reserved in each T1X frame for template spill slots.
      * This is the max number of slots used by any template and is computed when the templates are
      * {@linkplain T1X#createTemplates(Class, T1X, boolean, com.sun.max.vm.t1x.T1X.Templates, boolean) created}.
      */
     static int templateSlots;
+
+    /**
+     * Gets the number of slots to be reserved in each T1X frame for template spill slots.
+     */
+    public static int templateSlots() {
+        return templateSlots;
+    }
 
     /**
      * The frame and register reference maps for this target method.
@@ -113,6 +118,19 @@ public final class T1XTargetMethod extends TargetMethod {
 
     public final int frameRefMapSize;
 
+    /**
+     * This field represents 1 of 3 ref map finalization states after the constructor of {@link T1XTargetMethod}
+     * has completed. These values and the states they represent are:
+     * <ol>
+     * <li>A {@link T1XReferenceMapEditor} instance. This represents a target method whose ref maps have not yet been finalized.</li>
+     * <li>A {@link VmThread} instance. This represents a target method whose ref maps are being finalized (by the denoted thread).</li>
+     * <li>A {@code null} value. This represents a target method whose ref maps are finalized.</li>
+     * </ol>
+     *
+     * Only the transition from state 1 to state 2 is atomic.
+     *
+     * @see #finalizeReferenceMaps()
+     */
     @INSPECTED(deepCopied = false)
     private final AtomicReference refMapEditor = new AtomicReference();
 
@@ -310,21 +328,11 @@ public final class T1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public void traceDebugInfo(IndentWriter writer) {
-    }
-
-    @Override
     protected CallEntryPoint callEntryPointForDirectCall(int safepointIndex) {
         if (!safepoints.isSetAt(TEMPLATE_CALL, safepointIndex)) {
             return CallEntryPoint.OPTIMIZED_ENTRY_POINT;
         }
         return CallEntryPoint.BASELINE_ENTRY_POINT;
-    }
-
-    @HOSTED_ONLY
-    @Override
-    protected boolean isDirectCalleeInPrologue(int directCalleeIndex) {
-        return safepoints.posAt(directCalleeIndex) < posForBci(0);
     }
 
     public int posForBci(int bci) {
@@ -422,16 +430,39 @@ public final class T1XTargetMethod extends TargetMethod {
      * annotation on this method.
      */
     public void finalizeReferenceMaps() {
-        final T1XReferenceMapEditor referenceMapEditor = (T1XReferenceMapEditor) this.refMapEditor.get();
-        if (referenceMapEditor != null) {
-            final Object result = this.refMapEditor.compareAndSwap(referenceMapEditor, T1XReferenceMapEditor.SENTINEL);
-            if (result == T1XReferenceMapEditor.SENTINEL) {
-                while (this.refMapEditor.get() != null) {
-                    Intrinsics.pause();
-                }
-            } else if (result != null) {
+        Object object = this.refMapEditor.get();
+        if (object != null) {
+            T1XReferenceMapEditor referenceMapEditor = null;
+            Object result = object;
+            if (object instanceof T1XReferenceMapEditor) {
+                referenceMapEditor = (T1XReferenceMapEditor) object;
+                result = this.refMapEditor.compareAndSwap(referenceMapEditor, VmThread.current());
+            }
+            if (result == referenceMapEditor) {
+                // We must disable safepoint polls in the current thread to prevent any recursive
+                // attempt to finalize the ref maps. Such a recursive call will spin infinitely
+                // in the pause loop below.
+                // One case where such recursion is possible is if a GC is requested while
+                // this thread is preparing ref maps during ref map verification (i.e. -XX:+VerifyRefMaps).
+                boolean mustReenableSafepoints = !MaxineVM.isHosted() && !SafepointPoll.disable();
+
                 referenceMapEditor.fillInMaps();
                 this.refMapEditor.set(null);
+
+                if (mustReenableSafepoints) {
+                    SafepointPoll.enable();
+                }
+            } else if (result != null) {
+                FatalError.check(result instanceof VmThread, "expected VmThread instance");
+                if (VmThread.current() == result) {
+                    Log.print("Recursive attempt to finalize ref maps of ");
+                    Log.printMethod(this, true);
+                    FatalError.unexpected("Recursive attempt to finalize ref maps of a T1X target method", false, null, Pointer.zero());
+                }
+                // Spin while waiting for the other thread to complete finalization
+                while (refMapEditor.get() != null) {
+                    Intrinsics.pause();
+                }
             }
         }
     }
@@ -444,7 +475,7 @@ public final class T1XTargetMethod extends TargetMethod {
     @Override
     public Address throwAddressToCatchAddress(boolean isTopFrame, Address ip, Class<? extends Throwable> throwableClass) {
         if (handlers.length != 0) {
-            if (T1XCompilation.isAMD64() && !isTopFrame) {
+            if (isAMD64() && !isTopFrame) {
                 // This puts the ip within a catch range encompassing the call instruction
                 ip = ip.minus(1);
             }
@@ -479,28 +510,6 @@ public final class T1XTargetMethod extends TargetMethod {
     void checkHandler(int excPos, int excBCI, int handlerBCI, int handlerPos) {
         if (handlerPos <= 0 || handlerPos >= code.length) {
             FatalError.unexpected("Bad handler for exception at pos " + excPos + " (bci: " + excBCI + ") in " + this + ": handler pos " + handlerPos + " (bci: " + handlerBCI + ")");
-        }
-    }
-
-    @Override
-    public void traceExceptionHandlers(IndentWriter writer) {
-        if (handlers.length != 0) {
-            writer.println("Exception handlers:");
-            writer.indent();
-            for (CiExceptionHandler e : handlers) {
-                if (e.catchTypeCPI != SYNC_METHOD_CATCH_TYPE_CPI) {
-                    writer.println((e.catchType == null ? "<any>" : e.catchType()) + " @ [" +
-                                posForBci(e.startBCI()) + " .. " +
-                                posForBci(e.endBCI()) + ") -> " +
-                                posForBci(e.handlerBCI()));
-                } else {
-                    writer.println("<any> @ [" +
-                                    e.startBCI() + " .. " +
-                                    e.endBCI() + ") -> " +
-                                    e.handlerBCI());
-                }
-            }
-            writer.outdent();
         }
     }
 

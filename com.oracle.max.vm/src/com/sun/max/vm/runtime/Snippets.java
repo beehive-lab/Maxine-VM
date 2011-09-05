@@ -23,7 +23,6 @@
 package com.sun.max.vm.runtime;
 
 import static com.sun.cri.bytecode.Bytecodes.MemoryBarriers.*;
-import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.compiler.CompilationScheme.Static.*;
 import static com.sun.max.vm.runtime.VMRegister.*;
 import static com.sun.max.vm.runtime.VmOperation.*;
@@ -442,15 +441,14 @@ public class Snippets {
     }
 
     /**
-     * Produces an address corresponding to the entry point for the code of a given method
-     * as compiled by the {@linkplain CallEntryPoint#OPTIMIZED_ENTRY_POINT optimizing compiler}.
+     * Produces an address corresponding to a given entry point for the code of a given method.
      *
      * If the compiled code does not yet exist for the method, it is compiled with the
      * default compiler.
      */
     @INLINE
-    public static Address makeEntrypoint(ClassMethodActor classMethodActor) {
-        return compile(classMethodActor, Compilations.Attr.NONE).getEntryPoint(OPTIMIZED_ENTRY_POINT).asAddress();
+    public static Address makeEntrypoint(ClassMethodActor classMethodActor, CallEntryPoint cep) {
+        return compile(classMethodActor, Compilations.Attr.NONE).getEntryPoint(cep).asAddress();
     }
 
     /**

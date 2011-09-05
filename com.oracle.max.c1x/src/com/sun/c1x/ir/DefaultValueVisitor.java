@@ -53,7 +53,6 @@ public class DefaultValueVisitor extends ValueVisitor {
     @Override public void visitConvert(Convert i) { visit(i); }
     @Override public void visitExceptionObject(ExceptionObject i) { visit(i); }
     @Override public void visitGoto(Goto i) { visit(i); }
-    @Override public void visitIncrementRegister(IncrementRegister i) { visit(i); }
     @Override public void visitIf(If i) { visit(i); }
     @Override public void visitIfOp(IfOp i) { visit(i); }
     @Override public void visitInfopoint(Infopoint i) { visit(i); }
@@ -93,7 +92,6 @@ public class DefaultValueVisitor extends ValueVisitor {
     @Override public void visitStorePointer(StorePointer i) { visit(i); }
     @Override public void visitStoreRegister(StoreRegister i) { visit(i); }
     @Override public void visitTableSwitch(TableSwitch i) { visit(i); }
-    @Override public void visitTemplateCall(TemplateCall i) { visit(i); }
     @Override public void visitTypeEqualityCheck(TypeEqualityCheck i) { visit(i); }
     @Override public void visitThrow(Throw i) { visit(i); }
     @Override public void visitUnsafeCast(UnsafeCast i) { visit(i); }

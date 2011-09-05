@@ -28,7 +28,6 @@ import static com.sun.max.vm.compiler.target.Safepoints.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.io.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
@@ -153,14 +152,6 @@ public abstract class Adapter extends TargetMethod {
             throw FatalError.unexpected("Exception occurred in frame adapter");
         }
         return Address.zero();
-    }
-
-    @Override
-    public void traceDebugInfo(IndentWriter writer) {
-    }
-
-    @Override
-    public void traceExceptionHandlers(IndentWriter writer) {
     }
 
     @Override

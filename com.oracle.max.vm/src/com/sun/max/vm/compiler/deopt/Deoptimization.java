@@ -218,6 +218,7 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
                 int callPos = safepoints.causePosAt(i);
                 final Address target = AMD64TargetMethodUtil.readCall32Target(tm, callPos);
                 final TargetMethod callee = Code.codePointerToTargetMethod(target);
+                FatalError.check(callee != null, "Could not resolve " + target.to0xHexString() + " at " + tm + "+" + callPos);
                 if (callee.invalidated() != null) {
                     if (tm.resetDirectCall(i, dcIndex)) {
                         if (TraceDeopt) {

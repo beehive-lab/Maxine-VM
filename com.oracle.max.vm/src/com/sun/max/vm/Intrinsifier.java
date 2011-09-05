@@ -105,14 +105,12 @@ public class Intrinsifier extends IntrinsifierClient {
             case READREG            :
             case WRITEREG           :
             case PAUSE              :
-            case ADD_SP             :
             case FLUSHW             :
             case ALLOCA             :
+            case UCMP               :
+            case UWCMP              :
             case STACKHANDLE        :
             case JNICALL            :
-            case TEMPLATE_CALL      :
-            case ICMP               :
-            case WCMP               : return true;
             case INFOPOINT: {
                 if ((intrinsic & UNCOMMON_TRAP) == UNCOMMON_TRAP) {
                     // An uncommon trap is OK to baseline-compile
@@ -141,7 +139,7 @@ public class Intrinsifier extends IntrinsifierClient {
             try {
                 MethodActor method = constant.resolve(cp, cpi);
                 int intrinsic = method.intrinsic();
-                if (intrinsic == UNSAFE_CAST || intrinsic == TEMPLATE_CALL || intrinsic == STACKHANDLE) {
+                if (intrinsic == UNSAFE_CAST || intrinsic == STACKHANDLE) {
                     bi.intrinsify(intrinsic, cpi);
                 } else if (intrinsic != 0) {
                     int opcode = intrinsic & 0xff;

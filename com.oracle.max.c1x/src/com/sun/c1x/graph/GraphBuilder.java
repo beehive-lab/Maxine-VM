@@ -2438,7 +2438,6 @@ public final class GraphBuilder {
 
             case READREG        : genLoadRegister(s.readCPI()); break;
             case WRITEREG       : genStoreRegister(s.readCPI()); break;
-            case INCREG         : genIncRegister(s.readCPI()); break;
 
             case PREAD          : genLoadPointer(PREAD      | (s.readCPI() << 8)); break;
             case PGET           : genLoadPointer(PGET       | (s.readCPI() << 8)); break;
@@ -2467,10 +2466,6 @@ public final class GraphBuilder {
             case LSB            : // fall through
             case MSB            : genSignificantBit(opcode);break;
             case READBIT        : genReadBit(s.readCPI()); break;
-
-            case TEMPLATE_CALL  : genTemplateCall(constantPool().lookupMethod(s.readCPI(), (byte)Bytecodes.TEMPLATE_CALL)); break;
-            case ICMP           : genCompareOp(CiKind.Int, opcode, CiKind.Void); break;
-            case WCMP           : genCompareOp(CiKind.Word, opcode, CiKind.Void); break;
 
             case BREAKPOINT:
                 throw new CiBailout("concurrent setting of breakpoint");
@@ -2636,25 +2631,6 @@ public final class GraphBuilder {
         }
     }
 
-    void genTemplateCall(RiMethod method) {
-        RiSignature sig = method.signature();
-        Value[] args = curState.popArguments(sig.argumentSlots(false));
-        assert args.length <= 2;
-        CiKind returnKind = sig.returnKind();
-        Value address = null;
-        Value receiver = null;
-        if (args.length == 1) {
-            address = args[0];
-            assert address.kind.isWord();
-        } else if (args.length == 2) {
-            address = args[0];
-            assert address.kind.isWord();
-            receiver = args[1];
-            assert receiver.kind.isObject();
-        }
-        pushReturn(returnKind, append(new TemplateCall(returnKind, address, receiver)));
-    }
-
     private void genInfopoint(int opcode, boolean inclFrame) {
         // TODO: create slimmer frame state if inclFrame is false
         FrameState state = curState.immutableCopy(bci());
@@ -2685,15 +2661,6 @@ public final class GraphBuilder {
         }
         Value value = pop(CiKind.Word);
         append(new StoreRegister(CiKind.Word, register, value));
-    }
-
-    private void genIncRegister(int registerId) {
-        CiRegister register = compilation.registerConfig.getRegisterForRole(registerId);
-        if (register == null) {
-            throw new CiBailout("Unsupported INCREG operand " + registerId);
-        }
-        Value value = pop(CiKind.Int);
-        append(new IncrementRegister(register, value));
     }
 
     /**

@@ -22,15 +22,12 @@
  */
 package com.sun.max.vm.t1x.vma;
 
-import static com.sun.max.vm.t1x.T1XTemplateTag.*;
-
 import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.options.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.t1x.*;
 import com.sun.max.vm.t1x.T1XTemplateGenerator.AdviceType;
-import com.sun.max.vm.type.*;
 
 /**
  * Overrides some {@link T1XCompilation} methods to provide finer compile time control over advising.
@@ -43,7 +40,7 @@ import com.sun.max.vm.type.*;
  * appropriate advice generated, and select between those at runtime.
  *
  */
-public class VMAT1XCompilation extends T1XCompilation {
+public abstract class VMAT1XCompilation extends T1XCompilation {
 
     private static final int BEFORE_INDEX = AdviceType.BEFORE.ordinal();
     private static final int AFTER_INDEX = AdviceType.AFTER.ordinal();
@@ -99,66 +96,61 @@ public class VMAT1XCompilation extends T1XCompilation {
         }
     }
 
-    @Override
-    protected T1XTemplate getTemplate(T1XTemplateTag tag) {
-        return templates[tag.ordinal()];
-    }
-
     /*
      * If and, only if, we are advising the relevant invoke bytecode, we override the default parameter assignment
      * to always pass the MethodActor.
      */
 
-    @Override
-    protected void assignInvokeVirtualTemplateParameters(T1XTemplate template, VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
-        if (templates == defaultTemplates) {
-            super.assignInvokeVirtualTemplateParameters(template, virtualMethodActor, receiverStackIndex);
-        } else {
-            assignTemplateParameters(template, virtualMethodActor, receiverStackIndex);
-        }
-    }
+//    @Override
+//    protected void assignInvokeVirtualTemplateParameters(T1XTemplate template, VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
+//        if (templates == defaultTemplates) {
+//            super.assignInvokeVirtualTemplateParameters(template, virtualMethodActor, receiverStackIndex);
+//        } else {
+//            assignTemplateParameters(template, virtualMethodActor, receiverStackIndex);
+//        }
+//    }
+//
+//    @Override
+//    protected void assignInvokeInterfaceTemplateParameters(T1XTemplate template, InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
+//        if (templates == defaultTemplates) {
+//            super.assignInvokeInterfaceTemplateParameters(template, interfaceMethodActor, receiverStackIndex);
+//        } else {
+//            assignTemplateParameters(template, interfaceMethodActor, receiverStackIndex);
+//        }
+//    }
+//
+//    @Override
+//    protected void assignInvokeSpecialTemplateParameters(T1XTemplate template, VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
+//        if (templates == defaultTemplates) {
+//            super.assignInvokeSpecialTemplateParameters(template, virtualMethodActor, receiverStackIndex);
+//        } else {
+//            assignTemplateParameters(template, virtualMethodActor, receiverStackIndex);
+//        }
+//    }
+//
+//    @Override
+//    protected void assignInvokeStaticTemplateParameters(T1XTemplate template, StaticMethodActor staticMethodActor) {
+//        if (templates == defaultTemplates) {
+//            super.assignInvokeStaticTemplateParameters(template, staticMethodActor);
+//        } else {
+//            assignTemplateParameters(template, staticMethodActor);
+//        }
+//    }
 
-    @Override
-    protected void assignInvokeInterfaceTemplateParameters(T1XTemplate template, InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
-        if (templates == defaultTemplates) {
-            super.assignInvokeInterfaceTemplateParameters(template, interfaceMethodActor, receiverStackIndex);
-        } else {
-            assignTemplateParameters(template, interfaceMethodActor, receiverStackIndex);
-        }
-    }
-
-    @Override
-    protected void assignInvokeSpecialTemplateParameters(T1XTemplate template, VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
-        if (templates == defaultTemplates) {
-            super.assignInvokeSpecialTemplateParameters(template, virtualMethodActor, receiverStackIndex);
-        } else {
-            assignTemplateParameters(template, virtualMethodActor, receiverStackIndex);
-        }
-    }
-
-    @Override
-    protected void assignInvokeStaticTemplateParameters(T1XTemplate template, StaticMethodActor staticMethodActor) {
-        if (templates == defaultTemplates) {
-            super.assignInvokeStaticTemplateParameters(template, staticMethodActor);
-        } else {
-            assignTemplateParameters(template, staticMethodActor);
-        }
-    }
-
-    @Override
-    protected void emitMethodTraceEntry() {
-        // We turn this into advice if we are advising
-        if (templates == defaultTemplates) {
-            super.emitMethodTraceEntry();
-        } else {
-            T1XTemplate template = getTemplate(TRACE_METHOD_ENTRY);
-            assignReferenceLiteralTemplateArgument(0, method);
-            if (method.isStatic()) {
-                assignIntTemplateArgument(1, 0);
-            } else {
-                assignLocalDisplacementTemplateArgument(1, 0, Kind.REFERENCE);
-            }
-            emitAndRecordSafepoints(template);
-        }
-    }
+//    @Override
+//    protected void emitMethodTraceEntry() {
+//        // We turn this into advice if we are advising
+//        if (templates == defaultTemplates) {
+//            super.emitMethodTraceEntry();
+//        } else {
+//            T1XTemplate template = getTemplate(TRACE_METHOD_ENTRY);
+//            assignReferenceLiteralTemplateArgument(0, method);
+//            if (method.isStatic()) {
+//                assignIntTemplateArgument(1, 0);
+//            } else {
+//                assignLocalDisplacementTemplateArgument(1, 0, Kind.REFERENCE);
+//            }
+//            emitAndRecordSafepoints(template);
+//        }
+//    }
 }

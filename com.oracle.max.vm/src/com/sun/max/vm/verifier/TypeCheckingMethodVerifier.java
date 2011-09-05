@@ -1866,8 +1866,6 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                 case WDIVI:                  performArithmetic(WORD, INTEGER, WORD); break;
                 case WREM:                   performArithmetic(WORD); break;
                 case WREMI:                  performArithmetic(WORD, INTEGER, INTEGER); break;
-                case ICMP:                   frame.pop(INTEGER); frame.pop(INTEGER); break;
-                case WCMP:                   frame.pop(WORD); frame.pop(WORD); break;
 
                 case PCMPSWP:
                 case PGET:
@@ -1967,13 +1965,6 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                     jnicall(operand);
                     break;
                 }
-                case TEMPLATE_CALL: {
-                    final MethodRefConstant methodConstant = constantPool().methodAt(operand);
-                    final SignatureDescriptor methodSignature = methodConstant.signature(constantPool());
-                    popMethodParameters(methodSignature);
-                    pushMethodResult(methodSignature);
-                    break;
-                }
                 case JNIOP: {
                     if (!classMethodActor().isNative()) {
                         verifyError("Cannot use " + Bytecodes.nameOf(JNIOP) + " instruction in non-native method " + classMethodActor());
@@ -2009,7 +2000,6 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                 case ALLOCA             : frame.pop(INTEGER); frame.push(WORD); break;
                 case STACKHANDLE        : performStackHandle(); break;
 
-                case INCREG             : frame.pop(INTEGER); break;
                 case READREG            : frame.push(WORD); break;
                 case WRITEREG           : frame.pop(WORD); break;
 

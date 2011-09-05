@@ -51,7 +51,7 @@ import com.sun.max.vm.runtime.*;
  *
  * The width of the 'position' field supports a code array of up to 32Mb.
  */
-public class Safepoints {
+public final class Safepoints {
 
     /**
      * Attributes of a safepoint.

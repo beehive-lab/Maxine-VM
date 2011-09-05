@@ -533,14 +533,14 @@ public final class MaxineVM {
     public Phase phase = Phase.BOOTSTRAPPING;
     public final RegisterConfigs registerConfigs;
     public final Stubs stubs;
-    public final SafepointPoll safepoint;
+    public final SafepointPoll safepointPoll;
     public final TrapFrameAccess trapFrameAccess;
 
     public MaxineVM(VMConfiguration configuration) {
         this.config = configuration;
         this.registerConfigs = RegisterConfigs.create();
         this.stubs = new Stubs(registerConfigs);
-        this.safepoint = SafepointPoll.create();
+        this.safepointPoll = SafepointPoll.create();
         this.trapFrameAccess = TrapFrameAccess.create();
     }
 

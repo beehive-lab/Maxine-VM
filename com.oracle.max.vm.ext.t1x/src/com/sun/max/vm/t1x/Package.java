@@ -31,12 +31,8 @@ import com.sun.max.vm.compiler.adaptive.*;
  */
 
 public class Package extends BootImagePackage {
-    public Package() {
-        super();
-    }
-
-    private boolean isT1X(String className) {
-        return className != null && className.startsWith(this.name());
+    public static boolean isT1X(String className) {
+        return com.sun.max.vm.t1x.T1X.class.getName().equals(className);
     }
 
     @Override

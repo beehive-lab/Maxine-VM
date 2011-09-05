@@ -20,15 +20,31 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.t1x.vma;
+package com.sun.max.vm.t1x;
 
+import java.util.*;
 
 /**
- * Template source for before advice (where available).
+ * Records locations in the code buffer that need to be subsequently patched.
  */
-public class VMAdviceBeforeTemplateSource {
+public class PatchInfo {
+    /**
+     * Encoded patch data. The encoding format is defined in the platform specific subclasses.
+     */
+    public int[] data = new int[10];
 
-// BEGIN GENERATED CODE
-// END GENERATED CODE
+    /**
+     * The length of valid data in {@code data} (which may be less that {@code data.length}).
+     */
+    public int size;
 
+    public void ensureCapacity(int minCapacity) {
+        if (minCapacity > data.length) {
+            int newCapacity = (size * 3) / 2 + 1;
+            if (newCapacity < minCapacity) {
+                newCapacity = minCapacity;
+            }
+            data = Arrays.copyOf(data, newCapacity);
+        }
+    }
 }
