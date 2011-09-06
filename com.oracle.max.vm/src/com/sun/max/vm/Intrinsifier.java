@@ -25,7 +25,7 @@ package com.sun.max.vm;
 import static com.sun.cri.bytecode.Bytecodes.*;
 
 import com.sun.cri.bytecode.*;
-import com.sun.cri.bytecode.BytecodeIntrinsifier.*;
+import com.sun.cri.bytecode.BytecodeIntrinsifier.IntrinsifierClient;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
@@ -151,9 +151,15 @@ public class Intrinsifier extends IntrinsifierClient {
                     int operand = (intrinsic >> 8) & 0xffff;
                     bi.intrinsify(opcode, operand);
                 } else {
-                    if (!unsafe) {
-                        // The semantics of @INLINE and @FOLD are not implemented by the baseline compiler.
-                        unsafe = (method.flags() & (Actor.FOLD | Actor.INLINE)) != 0;
+                    if (!unsafe && (method.flags() & (Actor.FOLD | Actor.INLINE)) != 0) {
+                        if (method instanceof ClassMethodActor && ((ClassMethodActor) method).compilee() != method) {
+                            // A call to a substituted JDK method should not make the callee to be unsafe
+                            // as it would then be forced to be compiled with the optimizing compiler and,
+                            // more importantly, make it ineligible for deoptimization.
+                        } else {
+                            // The semantics of @INLINE and @FOLD are not implemented by the baseline compiler.
+                            unsafe = true;
+                        }
                     }
                     if (holderIsWord && !isStatic) {
                         // Cannot dispatch dynamically on Word types

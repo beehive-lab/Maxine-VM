@@ -182,8 +182,8 @@ public class CEEliminator implements BlockClosure {
         }
 
         // append Goto to successor
-        FrameState stateBefore = curIf.isSafepoint() ? curIf.stateAfter() : null;
-        Goto newGoto = new Goto(sux, stateBefore, curIf.isSafepoint() || tGoto.isSafepoint() || fGoto.isSafepoint());
+        FrameState stateBefore = curIf.isSafepointPoll() ? curIf.stateAfter() : null;
+        Goto newGoto = new Goto(sux, stateBefore, curIf.isSafepointPoll() || tGoto.isSafepointPoll() || fGoto.isSafepointPoll());
 
         // prepare state for Goto
         FrameState tempGotoState = curIf.stateAfter();

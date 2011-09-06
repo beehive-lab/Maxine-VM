@@ -85,7 +85,6 @@ public final class RegisterHistory extends AbstractInspectionHolder {
         } else {
             valueHistory.updateCurrent(wordValue);
         }
-
     }
 
 }

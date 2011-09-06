@@ -52,7 +52,7 @@ public abstract class Value {
         DirectCompare,
         IsLoaded,           // field or method is resolved and class is loaded and initialized
         IsStatic,           // field or method access is static
-        IsSafepoint,        // branch is backward (safepoint)
+        IsSafepointPoll,    // branch is backward (safepoint)
         IsStrictFP,
         PreservesState,     // intrinsic preserves state
         UnorderedIsTrue,

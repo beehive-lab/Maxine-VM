@@ -2207,7 +2207,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         if (C1XOptions.EmitNopAfterCall) {
             masm.nop();
         }
-        tasm.recordDirectCall(before, after - before, target, info);
+        tasm.recordDirectCall(before, after - before, asCallTarget(target), info);
         tasm.recordExceptionHandlers(after, info);
     }
 
@@ -2218,7 +2218,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         if (C1XOptions.EmitNopAfterCall) {
             masm.nop();
         }
-        tasm.recordDirectCall(before, after - before, target, null);
+        tasm.recordDirectCall(before, after - before, asCallTarget(target), null);
     }
 
     public void indirectCall(CiRegister dst, Object target, LIRDebugInfo info) {
@@ -2228,7 +2228,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         if (C1XOptions.EmitNopAfterCall) {
             masm.nop();
         }
-        tasm.recordIndirectCall(before, after - before, target, info);
+        tasm.recordIndirectCall(before, after - before, asCallTarget(target), info);
         tasm.recordExceptionHandlers(after, info);
     }
 

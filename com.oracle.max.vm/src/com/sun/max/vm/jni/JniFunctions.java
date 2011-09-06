@@ -120,7 +120,7 @@ public final class JniFunctions {
 
     @INLINE
     public static Pointer prologue(Pointer env, String name) {
-        Safepoint.setLatchRegister(env.minus(JNI_ENV.offset));
+        SafepointPoll.setLatchRegister(env.minus(JNI_ENV.offset));
         Pointer etla = ETLA.load(currentTLA());
         Pointer anchor = reenterJavaFromNative(etla);
         if (ClassMethodActor.TraceJNI) {

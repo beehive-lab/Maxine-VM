@@ -440,7 +440,7 @@ public class Bytecodes {
      *         }
      * </pre>
      *
-     * @see #SAFEPOINT
+     * @see #SAFEPOINT_POLL
      * @see #HERE
      * @see #INFO
      *
@@ -462,7 +462,7 @@ public class Bytecodes {
      *     ... => ...
      * </pre>
      */
-    public static final int SAFEPOINT         = INFOPOINT  | 1 << 16;
+    public static final int SAFEPOINT_POLL = INFOPOINT  | 1 << 16;
 
     /**
      * Record debug info at the current code location
@@ -479,7 +479,7 @@ public class Bytecodes {
      *     ... => ..., value
      * </pre>
      */
-    public static final int HERE              = INFOPOINT  | 2 << 16;
+    public static final int HERE = INFOPOINT  | 2 << 16;
 
     /**
      * Record debug info at the current code location.
@@ -495,7 +495,7 @@ public class Bytecodes {
      *     ... => ...
      * </pre>
      */
-    public static final int INFO          = INFOPOINT  | 3 << 16;
+    public static final int INFO = INFOPOINT  | 3 << 16;
 
     /**
      * Record debug info at the current code location and deoptimize if it is executed.
@@ -510,7 +510,7 @@ public class Bytecodes {
      *     ... => ...
      * </pre>
      */
-    public static final int UNCOMMON_TRAP          = INFOPOINT  | 4 << 16;
+    public static final int UNCOMMON_TRAP = INFOPOINT  | 4 << 16;
 
     /**
      * Allocates a requested block of memory within the current activation frame.
@@ -805,12 +805,12 @@ public class Bytecodes {
     public static class Infopoints {
         public static final int WITH_FRAME = 1 << 8;
 
-        @INTRINSIC(SAFEPOINT | WITH_FRAME)
-        public static void safepoint() {
+        @INTRINSIC(SAFEPOINT_POLL | WITH_FRAME)
+        public static void safepointPoll() {
         }
 
-        @INTRINSIC(SAFEPOINT)
-        public static void safepointWithoutFrame() {
+        @INTRINSIC(SAFEPOINT_POLL)
+        public static void safepointPollWithoutFrame() {
         }
 
         @INTRINSIC(HERE)
@@ -1336,7 +1336,7 @@ public class Bytecodes {
         def(JNIOP_LINK          , "jniop_link"        );
         def(JNIOP_N2J           , "jniop_n2j"         );
 
-        def(SAFEPOINT           , "safepoint"         );
+        def(SAFEPOINT_POLL      , "safepoint_poll"    );
         def(HERE                , "here"              );
         def(INFO                , "info"              );
 

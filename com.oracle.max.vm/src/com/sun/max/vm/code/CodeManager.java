@@ -101,13 +101,13 @@ public abstract class CodeManager {
             byte[] buf = new byte[byteArraySize];
 
             // 'buf' must not move until it has been reformatted
-            mustReenableSafepoints = !Safepoint.disable();
+            mustReenableSafepoints = !SafepointPoll.disable();
 
             start = Layout.originToCell(Reference.fromJava(buf).toOrigin());
         } else {
             if (!isHosted()) {
                 // The allocation and initialization of objects in a code region must be atomic with respect to garbage collection.
-                mustReenableSafepoints = !Safepoint.disable();
+                mustReenableSafepoints = !SafepointPoll.disable();
                 Heap.disableAllocationForCurrentThread();
                 currentCodeRegion = runtimeCodeRegion;
             } else {
@@ -119,7 +119,7 @@ public abstract class CodeManager {
         traceChunkAllocation(allocationTraceDescription, allocationSize, start, inHeap);
         if (start.isZero()) {
             if (mustReenableSafepoints) {
-                Safepoint.enable();
+                SafepointPoll.enable();
             }
             Heap.enableAllocationForCurrentThread();
             Log.println("PermGen: try larger value for -XX:ReservedCodeCacheSize=<n>)");
@@ -160,7 +160,7 @@ public abstract class CodeManager {
         if (!MaxineVM.isHosted()) {
             // It is now safe again to perform operations that may block and/or trigger a garbage collection
             if (mustReenableSafepoints) {
-                Safepoint.enable();
+                SafepointPoll.enable();
             }
             if (!inHeap) {
                 Heap.enableAllocationForCurrentThread();

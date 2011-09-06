@@ -49,7 +49,7 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
         super();
         this.teleVM = teleVM;
         this.teleNativeThread = teleNativeThread;
-        this.teleEnabledVmThreadLocalValues = teleNativeThread.localsBlock().tlaFor(Safepoint.State.ENABLED);
+        this.teleEnabledVmThreadLocalValues = teleNativeThread.localsBlock().tlaFor(SafepointPoll.State.ENABLED);
         final TeleRegisterSet registers = teleNativeThread.registers();
         this.cpuInstructionPointer = registers.instructionPointer();
         this.cpuStackPointer = registers.stackPointer();

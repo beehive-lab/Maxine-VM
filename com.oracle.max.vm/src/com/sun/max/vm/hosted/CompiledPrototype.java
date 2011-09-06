@@ -43,7 +43,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.CompilationScheme.CompilationFlag;
 import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.hosted.CompiledPrototype.Link.Relationship;
@@ -407,14 +406,6 @@ public class CompiledPrototype extends Prototype {
         return relationship == Relationship.VIRTUAL_CALL || relationship == Relationship.INTERFACE_CALL;
     }
 
-    void add(TargetMethod invalidatedTargetMethod) {
-        final ClassMethodActor methodActor = invalidatedTargetMethod.classMethodActor;
-        assert methodActors.containsKey(methodActor);
-        assert methodActor.targetState == invalidatedTargetMethod;
-        methodActor.targetState = null;
-        worklist.add(methodActor);
-    }
-
     boolean add(MethodActor child, Object parent, Relationship relationship) {
         if (child == null) {
             return false;
@@ -454,7 +445,7 @@ public class CompiledPrototype extends Prototype {
         Link existing = methodActors.put(child, new Link(child, parent, relationship));
         assert existing == null : existing;
 
-        if (child instanceof ClassMethodActor && ((ClassMethodActor) child).targetMethodCount() != 0) {
+        if (child instanceof ClassMethodActor && ((ClassMethodActor) child).currentTargetMethod() != null) {
             assert parent == null && relationship == null : "Methods with hand-crafted pre-existing machine code must be entry points";
             return false;
         }
@@ -598,7 +589,7 @@ public class CompiledPrototype extends Prototype {
                 processInvalidatedTargetMethods();
                 final MethodActor methodActor = worklist.removeFirst();
                 if (needsCompilation(methodActor)) {
-                    TargetMethod targetMethod = compilationScheme.synchronousCompile((ClassMethodActor) methodActor, CompilationFlag.NONE);
+                    TargetMethod targetMethod = compilationScheme.synchronousCompile((ClassMethodActor) methodActor, Compilations.Attr.NONE);
                     processNewTargetMethod(targetMethod);
                     ++totalCompilations;
                     if (totalCompilations % 200 == 0) {
@@ -621,7 +612,7 @@ public class CompiledPrototype extends Prototype {
                         compilationCompletionService.submit(new Callable<TargetMethod>() {
                             public TargetMethod call() throws Exception {
                                 try {
-                                    TargetMethod result = compilationScheme.synchronousCompile((ClassMethodActor) methodActor, CompilationFlag.NONE);
+                                    TargetMethod result = compilationScheme.synchronousCompile((ClassMethodActor) methodActor, Compilations.Attr.NONE);
                                     assert result != null;
                                     return result;
                                 } catch (Throwable error) {
@@ -756,8 +747,9 @@ public class CompiledPrototype extends Prototype {
                 for (TargetMethod targetMethod : invalidatedTargetMethods) {
                     final ClassMethodActor methodActor = targetMethod.classMethodActor;
                     assert methodActors.containsKey(methodActor);
-                    assert methodActor.targetState == targetMethod;
-                    methodActor.targetState = null;
+                    assert methodActor.compiledState instanceof Compilations;
+                    assert ((Compilations) methodActor.compiledState).optimized == targetMethod;
+                    methodActor.compiledState = Compilations.EMPTY;
                     worklist.add(methodActor);
                 }
                 invalidatedTargetMethods.clear();

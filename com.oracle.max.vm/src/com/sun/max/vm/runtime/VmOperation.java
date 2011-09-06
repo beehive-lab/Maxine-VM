@@ -88,7 +88,7 @@ import com.sun.max.vm.thread.*;
  * <p>
  * Freezing a thread requires making it enter native code. For threads already in native code, this is trivial (i.e.
  * there's nothing to do except to transition them to the frozen state). For threads executing in Java code,
- * {@linkplain Safepoint safepoints} are employed.
+ * {@linkplain SafepointPoll safepoints} are employed.
  * Safepoints are small polling code sequences injected by the compiler at prudently chosen execution points.
  * The effect of executing a triggered safepoint is for the thread to trap. The trap handler will then call
  * a specified {@linkplain AtSafepoint} procedure. This procedure synchronizes
@@ -239,14 +239,14 @@ public class VmOperation {
 
     /**
      * Called by the {@linkplain Trap trap} handler on a thread that hit a safepoint.
-     * This is always called with safepoints {@linkplain Safepoint#disable() disabled}
+     * This is always called with safepoints {@linkplain SafepointPoll#disable() disabled}
      * for the current thread.
      *
-     * @param trapState the register and other thread state at the safepoint
+     * @param trapFrame a pointer to the trap frame
      */
-    final void doAtSafepoint(Pointer trapState) {
+    final void doAtSafepoint(Pointer trapFrame) {
         // note that this procedure always runs with safepoints disabled
-        final Pointer tla = Safepoint.getLatchRegister();
+        final Pointer tla = SafepointPoll.getLatchRegister();
         if (!VmThreadLocal.inJava(tla)) {
             FatalError.unexpected("Freezing thread trapped while in native code");
         }
@@ -259,7 +259,7 @@ public class VmOperation {
         // within doAtSafepointBeforeBlocking().
         Snippets.disableNativeCallsForCurrentThread();
 
-        doAtSafepointBeforeBlocking(trapState);
+        doAtSafepointBeforeBlocking(trapFrame);
 
         // Now re-enable the ability to call native code
         Snippets.enableNativeCallsForCurrentThread();
@@ -268,7 +268,7 @@ public class VmOperation {
             // block on the thread lock which is held by VM operation thread
         }
 
-        doAtSafepointAfterBlocking(trapState);
+        doAtSafepointAfterBlocking(trapFrame);
 
         if (TraceVmOperations) {
             boolean lockDisabledSafepoints = Log.lock();
@@ -281,17 +281,17 @@ public class VmOperation {
     /**
      * Called on the current thread (which just hit a safepoint) before it is frozen.
      *
-     * @param trapState the register and other thread state at the safepoint
+     * @param trapFrame a pointer to the trap frame
      */
-    protected void doAtSafepointBeforeBlocking(Pointer trapState) {
+    protected void doAtSafepointBeforeBlocking(Pointer trapFrame) {
     }
 
     /**
      * Called on a mutator thread after it is thawed before it returns to the trap handler.
      *
-     * @param trapState the register and other thread state at the safepoint
+     * @param trapFrame a pointer to the trap frame
      */
-    protected void doAtSafepointAfterBlocking(Pointer trapState) {
+    protected void doAtSafepointAfterBlocking(Pointer trapFrame) {
     }
 
     /**

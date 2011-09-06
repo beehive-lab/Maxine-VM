@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,24 +20,36 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.jdk;
+package com.sun.max.vm.runtime.amd64;
 
-import java.sql.*;
+import static com.sun.max.platform.Platform.*;
 
+import com.oracle.max.asm.target.amd64.*;
+import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
-import com.sun.max.vm.jni.JVMFunctions;
+import com.sun.max.vm.runtime.*;
 
 /**
- * Substitutions for @see java.sql.DriverManager.
+ * The safepoint poll implementation for AMD64.
  *
+ * @see AMD64TrapFrameAccess
  */
-@METHOD_SUBSTITUTIONS(DriverManager.class)
-final class JDK_java_sql_DriverManager {
+public final class AMD64SafepointPoll extends SafepointPoll {
 
-    @SUBSTITUTE
-    private static ClassLoader getCallerClassLoader() {
-        final Class<?> caller = JVMFunctions.GetCallerClass(3);
-        return caller == null ? null : caller.getClassLoader();
+    /**
+     * ATTENTION: must be callee-saved by all C ABIs in use.
+     */
+    public static final CiRegister LATCH_REGISTER = AMD64.r14;
+
+    @HOSTED_ONLY
+    public AMD64SafepointPoll() {
+    }
+
+    @HOSTED_ONLY
+    @Override
+    protected byte[] createCode() {
+        final AMD64Assembler asm = new AMD64Assembler(target(), null);
+        asm.movq(LATCH_REGISTER, new CiAddress(CiKind.Word, LATCH_REGISTER.asValue()));
+        return asm.codeBuffer.close(true);
     }
 }
-

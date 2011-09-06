@@ -22,8 +22,7 @@
  */
 package com.sun.max.vm.t1x;
 
-import static com.sun.max.vm.compiler.target.TargetMethod.*;
-import static com.sun.max.vm.t1x.T1XTemplate.T1XStop.Flag.*;
+import static com.sun.max.vm.compiler.target.Safepoints.*;
 
 import java.util.*;
 
@@ -33,6 +32,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.target.Safepoints.Attr;
 
 /**
  * A T1X template is a piece of machine code (and its associated metadata) that
@@ -41,61 +41,59 @@ import com.sun.max.vm.compiler.target.*;
  */
 public class T1XTemplate {
 
-    public static class T1XStop {
-        public enum Flag {
-            BackwardBranch,
-            Safepoint,
-            DirectCall,
-            IndirectCall,
-            InTemplate;
-
-            public final int mask = 1 << ordinal();
-        }
-
+    public static class T1XSafepoint {
         public static final int NO_BSM_INDEX = Integer.MIN_VALUE;
 
-        public T1XStop() {
+        public T1XSafepoint() {
         }
 
-        public T1XStop(int flags, int pos, int bci) {
-            this.flags = flags;
-            this.pos = pos;
+        public T1XSafepoint(int safepoint, int bci) {
+            this.safepoint = safepoint;
             this.bci = bci;
         }
-        int flags;
-        int pos;
+
+        int safepoint;
+
+        public int pos() {
+            return Safepoints.pos(safepoint);
+        }
+
+        public int causePos() {
+            return Safepoints.causePos(safepoint);
+        }
+
+        public int attrs() {
+            return safepoint & ATTRS_MASK;
+        }
+
+        public boolean isSet(Attr a) {
+            return a.isSet(safepoint);
+        }
+
+        public boolean isCall() {
+            return isSet(DIRECT_CALL) || isSet(INDIRECT_CALL);
+        }
 
         /**
-         * Bytecode index of stop. This is {@code -1} for a template.
+         * Bytecode index of safepoint. This is {@code -1} for a template.
          */
         int bci;
         ClassMethodActor callee;
         CiBitMap frameRefMap;
         CiBitMap regRefMap;
 
-        /**
-         * Index of this stop in the bytecode stops map.
-         */
-        int bsmIndex;
-
-        int bsmIndex() {
-            return bsmIndex < 0 ? -bsmIndex : bsmIndex;
-        }
-
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
-            for (Flag f : Flag.values()) {
-                if ((flags & f.mask) != 0) {
-                    sb.append(f).append(' ');
+            for (Attr f : Safepoints.ALL_ATTRS) {
+                if (f.isSet(safepoint)) {
+                    sb.append(f.name).append(' ');
                 }
             }
             sb.append("@ ").
-                append(pos).
+                append(pos()).
                 append(" [bci: ").
-                append(bci).
-                append(", bsmIndex: ").
-                append(bsmIndex == NO_BSM_INDEX ? "<none>" : String.valueOf(bsmIndex()));
+                append(bci);
             if (frameRefMap != null) {
                 sb.append(", frameRefMap:").append(frameRefMap);
             }
@@ -106,29 +104,26 @@ public class T1XTemplate {
         }
     }
 
-    private static final T1XStop[] NO_STOPS = {};
+    private static final T1XSafepoint[] NO_SAFEPOINTS = {};
 
     public final ClassMethodActor method;
     public final T1XTemplateTag tag;
     public final byte[] code;
-    public final T1XStop bytecodeCall;
-    public final T1XStop[] directCalls;
-    public final T1XStop[] indirectCalls;
-    public final T1XStop[] safepoints;
-    public final int numberOfStops;
+    public final T1XSafepoint templateCall;
+    public final T1XSafepoint[] safepoints;
 
     @Override
     public String toString() {
         return String.valueOf(tag) + " [" + method + "]";
     }
 
-    static final class StopArray {
-        T1XStop[] data = new T1XStop[10];
+    static final class SafepointArray {
+        T1XSafepoint[] data = new T1XSafepoint[10];
         int size;
 
-        public void add(T1XStop stop) {
+        public void add(T1XSafepoint safepoint) {
             ensureCapacity(data.length + 1);
-            data[size++] = stop;
+            data[size++] = safepoint;
         }
 
         void ensureCapacity(int minCapacity) {
@@ -141,17 +136,17 @@ public class T1XTemplate {
             }
         }
 
-        public T1XStop make(int index) {
+        public T1XSafepoint make(int index) {
             ensureCapacity(index + 1);
-            T1XStop stop = data[index];
-            if (stop == null) {
-                stop = new T1XStop();
-                data[index] = stop;
+            T1XSafepoint safepoint = data[index];
+            if (safepoint == null) {
+                safepoint = new T1XSafepoint();
+                data[index] = safepoint;
             }
-            return stop;
+            return safepoint;
         }
 
-        public T1XStop makeNext() {
+        public T1XSafepoint makeNext() {
             return make(size++);
         }
 
@@ -159,262 +154,167 @@ public class T1XTemplate {
             size = 0;
         }
 
-        public T1XStop get(int i) {
+        public T1XSafepoint get(int i) {
             return data[i];
         }
     }
 
-    public static class StopsBuilder {
-        StopArray directCalls;
-        StopArray indirectCalls;
-        StopArray safepoints;
+    public static class SafepointsBuilder {
+        SafepointArray safepointsArray;
+        Safepoints safepoints;
+        int directCalls;
+        int bcisWithSafepoints;
+        int lastBci;
 
-        T1XStop last;
-
-        private int bciWithStopCount;
-
-        public int[] stopPositions;
         public Object[] directCallees;
         public byte[] refMaps;
-        public CiBitMap isDirectCallToRuntime;
-        public BytecodeStopsIterator bytecodeStopsIterator;
+        public BytecodeSafepointsIterator bytecodeSafepointsIterator;
 
-        public StopsBuilder() {
+        public SafepointsBuilder() {
             reset(true);
         }
 
         void reset(boolean hard) {
-            last = null;
-            bciWithStopCount = 0;
+            directCalls = 0;
+            bcisWithSafepoints = 0;
+            lastBci = -1;
             if (hard) {
-                directCalls = new StopArray();
-                indirectCalls = new StopArray();
-                safepoints = new StopArray();
+                safepointsArray = new SafepointArray();
             } else {
-                directCalls.clear();
-                indirectCalls.clear();
-                safepoints.clear();
+                safepointsArray.clear();
             }
         }
 
-        void reserveInBSM(T1XStop stop) {
-            if (stop.bci >= 0) {
-                if (last != null) {
-                    if (last.bci == stop.bci) {
-                        stop.bsmIndex = last.bsmIndex() + 1;
-                    } else {
-                        stop.bsmIndex = -(last.bsmIndex() + 2);
-                    }
-                } else {
-                    stop.bsmIndex = -1;
+        void reserveInBSM(T1XSafepoint safepoint) {
+            if (safepoint.bci >= 0) {
+                if (lastBci != safepoint.bci) {
+                    lastBci = safepoint.bci;
+                    bcisWithSafepoints++;
                 }
-                last = stop;
-            } else {
-                stop.bsmIndex = T1XStop.NO_BSM_INDEX;
             }
-        }
-
-        int insertInBSM(int[] bsm, T1XStop stop) {
-            if (stop.bsmIndex < 0 && stop.bsmIndex != T1XStop.NO_BSM_INDEX) {
-                stop.bsmIndex = -stop.bsmIndex;
-                bsm[stop.bsmIndex - 1] = stop.bci | BytecodeStopsIterator.BCP_BIT;
-            }
-            return stop.bsmIndex;
         }
 
         public void addSafepoint(int bci, int pos) {
-            T1XStop dst = safepoints.makeNext();
+            T1XSafepoint dst = safepointsArray.makeNext();
             dst.bci = bci;
-            dst.pos = pos;
+            dst.safepoint = Safepoints.make(pos);
             dst.callee = null;
-            dst.flags = Safepoint.mask;
 
             // No GC maps needed: the template slots are dead for the remainder of the template
             dst.regRefMap = null;
             dst.frameRefMap = null;
             reserveInBSM(dst);
-            bciWithStopCount++;
         }
 
         public void add(T1XTemplate template, int pos, int bci, ClassMethodActor directBytecodeCallee) {
-            for (T1XStop src : template.directCalls) {
-                T1XStop dst = directCalls.makeNext();
+            for (T1XSafepoint src : template.safepoints) {
+                T1XSafepoint dst = safepointsArray.makeNext();
                 dst.bci = bci;
-                dst.pos = pos + src.pos;
-                if (src == template.bytecodeCall) {
-                    assert directBytecodeCallee != null : "bytecode call in template must bound to a direct bytecode callee";
-                    dst.callee = directBytecodeCallee;
-                    dst.flags = DirectCall.mask;
-
+                dst.safepoint = make(pos + src.pos(), pos + src.causePos(), src.attrs());
+                if (src.isSet(DIRECT_CALL)) {
                     // The decision as to whether ref-maps are used is made when the template is created
                     dst.frameRefMap = src.frameRefMap;
-                    dst.regRefMap = null;
+                    dst.regRefMap = src.regRefMap;
+                    if (src == template.templateCall) {
+                        assert directBytecodeCallee != null : "bytecode call in template must bound to a direct bytecode callee";
+                        dst.callee = directBytecodeCallee;
 
-                    // Make sure the direct bytecode callee is bound at most once
-                    directBytecodeCallee = null;
+                        // Make sure the direct bytecode callee is bound at most once
+                        directBytecodeCallee = null;
+                    } else {
+                        dst.callee = src.callee;
+                    }
+                    directCalls++;
                 } else {
-                    dst.flags = src.flags;
-                    dst.callee = src.callee;
+                    assert !src.isSet(DIRECT_CALL);
+                    dst.callee = null;
                     dst.frameRefMap = src.frameRefMap;
-                    dst.regRefMap = null;
+                    dst.regRefMap = src.regRefMap;
                 }
                 reserveInBSM(dst);
-            }
-            for (T1XStop src : template.indirectCalls) {
-                T1XStop dst = indirectCalls.makeNext();
-                dst.bci = bci;
-                dst.pos = pos + src.pos;
-                dst.flags = src.flags;
-                dst.callee = null;
-                dst.frameRefMap = src.frameRefMap;
-                dst.regRefMap = null;
-                reserveInBSM(dst);
-            }
-            for (T1XStop src : template.safepoints) {
-                T1XStop dst = safepoints.makeNext();
-                dst.bci = bci;
-                dst.pos = pos + src.pos;
-                dst.flags = src.flags;
-                dst.callee = null;
-                dst.frameRefMap = src.frameRefMap;
-                dst.regRefMap = src.regRefMap;
-                reserveInBSM(dst);
-            }
-            if (bci >= 0) {
-                bciWithStopCount++;
             }
         }
 
         public void pack(int frameRefMapSize, int regRefMapSize, int firstTemplateSlot, Adapter adapter) {
             final int adapterCount = adapter == null ? 0 : 1;
-            final int numberOfDirectCalls = directCalls.size + adapterCount;
-            final int numberOfIndirectCalls = indirectCalls.size;
-            final int numberOfSafepoints = safepoints.size;
-            final int numberOfStopPositions = numberOfDirectCalls + numberOfIndirectCalls + numberOfSafepoints;
-            final int numberOfCalls = numberOfDirectCalls + numberOfIndirectCalls;
-            assert numberOfStopPositions == numberOfCalls + numberOfSafepoints;
+            if (adapter != null) {
+                directCalls++;
+            }
+            final int safepointsCount = safepointsArray.size + adapterCount;
 
-            stopPositions = null;
-            directCallees = null;
-            isDirectCallToRuntime = null;
+            safepoints = null;
+            directCallees = TargetMethod.NO_DIRECT_CALLEES;
             refMaps = null;
-            bytecodeStopsIterator = null;
+            bytecodeSafepointsIterator = null;
 
-            if (numberOfStopPositions > 0) {
-                assert frameRefMapSize > 0 || numberOfSafepoints > 0;
+            if (safepointsCount > 0) {
+                assert frameRefMapSize > 0;
                 int refMapSize = frameRefMapSize + regRefMapSize;
-                refMaps = new byte[numberOfStopPositions * refMapSize];
-                stopPositions = new int[numberOfStopPositions];
-                // An empty method with no method profile only has an adapter and no stops
-                int[] bsm = new int[last == null ? 0 : last.bsmIndex() + 1];
-                last = null;
-                if (numberOfDirectCalls > 0) {
-                    isDirectCallToRuntime = new CiBitMap(numberOfDirectCalls);
-                    directCallees = new Object[numberOfDirectCalls];
+                refMaps = new byte[safepointsCount * refMapSize];
+                int[] safepoints = new int[safepointsCount];
+                // An empty method with no method profile only has an adapter and no safepoints
+                int[] bsm = new int[bcisWithSafepoints * 2];
+                int firstSafepointIndexWithBCI = -1;
+                int bsmIndex = -1;
+                if (directCalls > 0) {
+                    directCallees = new Object[directCalls];
                 }
 
                 final ByteArrayBitMap bitMap = new ByteArrayBitMap(refMaps, 0, 0);
 
-                int stopIndex = 0;
+                int safepointIndex = 0;
+                int dcIndex = 0;
                 if (adapter != null) {
-                    directCallees[stopIndex] = adapter;
-                    int stopPos = stopPosForDirectCallPos(adapter.callOffsetInPrologue());
-                    stopPositions[stopIndex] = stopPos;
-                    stopIndex++;
+                    directCallees[dcIndex++] = adapter;
+                    int callPos = adapter.callOffsetInPrologue();
+                    int safepointPos = safepointPosForCall(callPos, adapter.callSizeInPrologue());
+                    safepoints[safepointIndex] = Safepoints.make(safepointPos, callPos, DIRECT_CALL);
+                    safepointIndex++;
                 }
 
-                for (int i = 0; i < directCalls.size; ++i, ++stopIndex) {
-                    T1XStop stop = directCalls.get(i);
-                    assert stop.regRefMap == null;
-                    directCallees[stopIndex] = stop.callee;
-
-                    int bsmIndex = insertInBSM(bsm, stop);
-
-                    if ((stop.flags & InTemplate.mask) != 0) {
-                        isDirectCallToRuntime.set(stopIndex);
-                        if (bsmIndex >= 0) {
-                            bsm[bsmIndex] = stopIndex | BytecodeStopsIterator.DIRECT_RUNTIME_CALL_BIT;
+                for (int i = 0; i < safepointsArray.size; i++) {
+                    T1XSafepoint t1xSafepoint = safepointsArray.get(i);
+                    safepoints[safepointIndex] = t1xSafepoint.safepoint;
+                    if (t1xSafepoint.bci >= 0) {
+                        if (bsmIndex == -1) {
+                            bsmIndex = 0;
+                            firstSafepointIndexWithBCI = safepointIndex;
+                            bsm[bsmIndex] = t1xSafepoint.bci;
+                        } else if (bsm[bsmIndex] != t1xSafepoint.bci) {
+                            int prev = bsm[bsmIndex];
+                            assert prev < t1xSafepoint.bci;
+                            bsmIndex += 2;
+                            assert bsmIndex + 1 < bsm.length;
+                            bsm[bsmIndex] = t1xSafepoint.bci;
                         }
-
-                        if (stop.frameRefMap != null) {
-                            bitMap.setOffset(stopIndex * refMapSize);
-                            bitMap.setSize(frameRefMapSize);
-                            for (int bit = stop.frameRefMap.nextSetBit(0); bit >= 0; bit = stop.frameRefMap.nextSetBit(bit + 1)) {
-                                bitMap.set(bit + firstTemplateSlot);
-                            }
-                        }
-
-                    } else {
-                        if (stop.frameRefMap != null) {
-                            bitMap.setOffset(stopIndex * refMapSize);
-                            bitMap.setSize(frameRefMapSize);
-                            for (int bit = stop.frameRefMap.nextSetBit(0); bit >= 0; bit = stop.frameRefMap.nextSetBit(bit + 1)) {
-                                bitMap.set(bit + firstTemplateSlot);
-                            }
-                        }
-                        assert bsmIndex >= 0;
-                        bsm[bsmIndex] = stopIndex;
+                        bsm[bsmIndex + 1]++;
                     }
-                    stopPositions[stopIndex] = stop.pos;
+
+                    if (t1xSafepoint.isSet(DIRECT_CALL)) {
+                        directCallees[dcIndex++] = t1xSafepoint.callee;
+                    }
+
+                    if (t1xSafepoint.frameRefMap != null) {
+                        bitMap.setOffset(safepointIndex * refMapSize);
+                        bitMap.setSize(frameRefMapSize);
+                        for (int bit = t1xSafepoint.frameRefMap.nextSetBit(0); bit >= 0; bit = t1xSafepoint.frameRefMap.nextSetBit(bit + 1)) {
+                            bitMap.set(bit + firstTemplateSlot);
+                        }
+                    }
+                    if (t1xSafepoint.regRefMap != null) {
+                        bitMap.setOffset((safepointIndex * refMapSize) + frameRefMapSize);
+                        bitMap.setSize(regRefMapSize);
+                        for (int bit = t1xSafepoint.regRefMap.nextSetBit(0); bit >= 0; bit = t1xSafepoint.regRefMap.nextSetBit(bit + 1)) {
+                            bitMap.set(bit);
+                        }
+                    }
+                    safepointIndex++;
                 }
 
-                for (int i = 0; i < numberOfIndirectCalls; ++i, ++stopIndex) {
-                    T1XStop stop = indirectCalls.get(i);
-                    assert stop.regRefMap == null;
-
-                    int bsmIndex = insertInBSM(bsm, stop);
-
-                    if ((stop.flags & InTemplate.mask) != 0) {
-                        if (stop.frameRefMap != null) {
-                            bitMap.setOffset(stopIndex * refMapSize);
-                            bitMap.setSize(frameRefMapSize);
-                            for (int bit = stop.frameRefMap.nextSetBit(0); bit >= 0; bit = stop.frameRefMap.nextSetBit(bit + 1)) {
-                                bitMap.set(bit + firstTemplateSlot);
-                            }
-                        }
-
-                    } else {
-                        assert stop.frameRefMap == null;
-                    }
-
-                    if (bsmIndex >= 0) {
-                        bsm[bsmIndex] = stopIndex;
-                    }
-                    stopPositions[stopIndex] = stop.pos;
-                }
-
-                for (int i = 0; i < numberOfSafepoints; ++i, ++stopIndex) {
-                    T1XStop stop = safepoints.get(i);
-
-                    int bsmIndex = insertInBSM(bsm, stop);
-
-                    if ((stop.flags & InTemplate.mask) != 0) {
-                        if (stop.frameRefMap != null) {
-                            bitMap.setOffset(stopIndex * refMapSize);
-                            bitMap.setSize(frameRefMapSize);
-                            for (int bit = stop.frameRefMap.nextSetBit(0); bit >= 0; bit = stop.frameRefMap.nextSetBit(bit + 1)) {
-                                bitMap.set(bit + firstTemplateSlot);
-                            }
-                        }
-                        if (stop.regRefMap != null) {
-                            bitMap.setOffset((stopIndex * refMapSize) + frameRefMapSize);
-                            bitMap.setSize(regRefMapSize);
-                            for (int bit = stop.regRefMap.nextSetBit(0); bit >= 0; bit = stop.regRefMap.nextSetBit(bit + 1)) {
-                                bitMap.set(bit);
-                            }
-                        }
-
-                    } else {
-                        assert stop.frameRefMap == null;
-                        assert stop.regRefMap == null;
-                    }
-
-                    if (bsmIndex >= 0) {
-                        bsm[bsmIndex] = stopIndex;
-                    }
-                    stopPositions[stopIndex] = stop.pos;
-                }
-                bytecodeStopsIterator = new BytecodeStopsIterator(bsm);
+                this.safepoints = new Safepoints(safepoints);
+                bytecodeSafepointsIterator = new BytecodeSafepointsIterator(bsm, firstSafepointIndexWithBCI);
+            } else {
+                safepoints = Safepoints.NO_SAFEPOINTS;
             }
         }
     }
@@ -425,65 +325,42 @@ public class T1XTemplate {
     }
 
     @HOSTED_ONLY
-    public T1XTemplate(C1XTargetMethod source, T1XTemplateTag tag, ClassMethodActor method, boolean useTemplateCallRefMaps) {
+    public T1XTemplate(C1XTargetMethod source, T1XTemplateTag tag, ClassMethodActor method) {
         this.method = method;
         this.code = source.code();
         this.tag = tag;
-        numberOfStops = source.numberOfStopPositions();
-        if (source.numberOfStopPositions() == 0) {
-            directCalls = NO_STOPS;
-            indirectCalls = NO_STOPS;
-            safepoints = NO_STOPS;
-            bytecodeCall = null;
+        int nSafepoints = source.safepoints().size();
+
+        if (nSafepoints == 0) {
+            safepoints = NO_SAFEPOINTS;
+            templateCall = null;
         } else {
-            final int numberOfDirectCalls = source.numberOfDirectCalls();
-            final int numberOfIndirectCalls = source.numberOfIndirectCalls();
-            final int numberOfSafepoints = source.numberOfSafepoints();
+            safepoints = new T1XSafepoint[nSafepoints];
+            T1XSafepoint templateCall = null;
 
-            directCalls = new T1XStop[numberOfDirectCalls];
-            indirectCalls = new T1XStop[numberOfIndirectCalls];
-            safepoints = new T1XStop[numberOfSafepoints];
-            T1XStop bytecodeCall = null;
+            Safepoints sourceSafepoints = source.safepoints();
 
-            for (int i = 0; i < numberOfDirectCalls; i++) {
-                int stopIndex = i;
-                if (source.directCallees()[i] == null) {
-                    assert bytecodeCall == null : "template can have at most one TEMPLATE_CALL";
-                    T1XStop stop = new T1XStop(DirectCall.mask, source.stopPosition(stopIndex), -1);
-                    stop.callee = null;
-                    if (useTemplateCallRefMaps) {
-                        stop.frameRefMap = nullIfEmpty(source.debugInfo().frameRefMapAt(stopIndex));
+            int dcIndex = 0;
+            for (int safepointIndex = 0; safepointIndex < sourceSafepoints.size(); safepointIndex++) {
+                int safepoint = sourceSafepoints.safepointAt(safepointIndex);
+                T1XSafepoint t1xSafepoint = new T1XSafepoint(safepoint, -1);
+                t1xSafepoint.callee = null;
+                t1xSafepoint.frameRefMap = nullIfEmpty(source.debugInfo().frameRefMapAt(safepointIndex));
+                t1xSafepoint.regRefMap = nullIfEmpty(source.debugInfo().regRefMapAt(safepointIndex));
+                if (sourceSafepoints.isSetAt(DIRECT_CALL, safepointIndex)) {
+                    if (sourceSafepoints.isSetAt(TEMPLATE_CALL, safepointIndex)) {
+                        assert templateCall == null : "template can have at most one TEMPLATE_CALL";
+                        templateCall = t1xSafepoint;
                     } else {
-                      // No GC maps needed: the template slots are dead for the remainder of the template
-                        stop.frameRefMap = null;
+                        t1xSafepoint.callee = (ClassMethodActor) source.directCallees()[dcIndex];
+                        assert t1xSafepoint.callee != null;
                     }
-                    stop.regRefMap = null;
-                    bytecodeCall = stop;
-                    directCalls[i] = stop;
-                } else {
-                    T1XStop stop = new T1XStop(DirectCall.mask | InTemplate.mask, source.stopPosition(stopIndex), -1);
-                    stop.callee = (ClassMethodActor) source.directCallees()[i];
-                    stop.frameRefMap = nullIfEmpty(source.debugInfo().frameRefMapAt(stopIndex));
-                    //stop.regRefMap = nullIfEmpty(source.debugInfo().regRefMapAt(stopIndex));
-                    directCalls[i] = stop;
+                    dcIndex++;
                 }
-            }
-            for (int i = 0; i < numberOfIndirectCalls; i++) {
-                int stopIndex = numberOfDirectCalls + i;
-                T1XStop stop = new T1XStop(IndirectCall.mask | InTemplate.mask, source.stopPosition(stopIndex), -1);
-                stop.frameRefMap = nullIfEmpty(source.debugInfo().frameRefMapAt(stopIndex));
-                //stop.regRefMap = nullIfEmpty(source.debugInfo().regRefMapAt(stopIndex));
-                indirectCalls[i] = stop;
-            }
-            for (int i = 0; i < numberOfSafepoints; i++) {
-                int stopIndex = numberOfDirectCalls + numberOfIndirectCalls + i;
-                T1XStop stop = new T1XStop(Safepoint.mask | InTemplate.mask, source.stopPosition(stopIndex), -1);
-                stop.frameRefMap = nullIfEmpty(source.debugInfo().frameRefMapAt(stopIndex));
-                stop.regRefMap = nullIfEmpty(source.debugInfo().regRefMapAt(stopIndex));
-                safepoints[i] = stop;
+                safepoints[safepointIndex] = t1xSafepoint;
             }
 
-            this.bytecodeCall = bytecodeCall;
+            this.templateCall = templateCall;
         }
     }
 }

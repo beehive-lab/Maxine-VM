@@ -139,11 +139,11 @@ public interface RiMethod {
     boolean isOverridden();
 
     /**
-     * Checks whether the compiler can insert safepoints in this method.
+     * Checks whether the compiler can insert safepoint polls in this method.
      * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return {@code true} if the method cannot have safepoints inserted
+     * @return {@code true} if the method cannot have safepoint polls inserted
      */
-    boolean noSafepoints();
+    boolean noSafepointPolls();
 
     /**
      * Determines if only minimal debug info is to be generated for a

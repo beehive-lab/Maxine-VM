@@ -108,10 +108,10 @@ public interface MaxMachineCode<MachineCode_Type extends MaxMachineCode> extends
         MachineCodeLocation instructionLocation(int index);
 
         /**
-         * @return whether the instruction is a stop
+         * @return whether the instruction is a safepoint
          * @throws IllegalArgumentException unless {@code 0 <= index < length()}
          */
-        boolean isStop(int index) throws IllegalArgumentException;
+        boolean isSafepoint(int index) throws IllegalArgumentException;
 
         /**
          * @return whether the instruction is a call

@@ -38,19 +38,19 @@ import com.sun.max.vm.runtime.*;
  * Tests the IR for a T1X template to ensure it does not violate certain invariants.
  * The invariants checked are:
  * <ul>
- * <li>A template must not write to a Java stack or local slot before a <i>stop</i> instruction
+ * <li>A template must not write to a Java stack or local slot before a <i>safepoint</i> instruction
  *  (i.e. any instruction to which a GC map is attached).
  * <p>
  * This simplifies root scanning of a frame compiled by T1X.
  * A GC reference map derived for the bytecode state at the start of a
- * template will be valid for all stops in the template.
+ * template will be valid for all safepoints in the template.
  * </li>
  * <li>A template that includes a {@linkplain Bytecodes#TEMPLATE_CALL template call}
- * must not have a stop instruction anywhere in the control flow after the template call.
+ * must not have a safepoint anywhere in the control flow after the template call.
  * <p>
- * This is required due to the way the ref maps for the stops in the template are
+ * This is required due to the way the ref maps for the safepoints in the template are
  * lazily completed by the {@link ReferenceMapInterpreter}. The parameters to the template call
- * are dead after the call. However, the ReferenceMapInterpreter doesn't know which stops
+ * are dead after the call. However, the ReferenceMapInterpreter doesn't know which safepoints
  * come after a template call and which come before.
  * </li>
  * </ul>

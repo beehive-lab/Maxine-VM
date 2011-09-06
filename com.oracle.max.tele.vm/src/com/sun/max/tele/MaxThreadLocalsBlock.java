@@ -42,7 +42,7 @@ public interface MaxThreadLocalsBlock extends MaxEntity<MaxThreadLocalsBlock> {
     /**
      * Gets the VM thread locals area corresponding to a given safepoint state.
      */
-    MaxThreadLocalsArea tlaFor(Safepoint.State state);
+    MaxThreadLocalsArea tlaFor(SafepointPoll.State state);
 
     /**
      * Gets the thread locals area in this thread, if any, that includes

@@ -33,7 +33,7 @@ import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.runtime.Safepoint.*;
+import com.sun.max.vm.runtime.SafepointPoll.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -106,7 +106,7 @@ public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements
     /**
      * The thread locals areas for each state; null if no actual thread locals allocated.
      */
-    private final Map<Safepoint.State, TeleThreadLocalsArea> areas;
+    private final Map<SafepointPoll.State, TeleThreadLocalsArea> areas;
     private final int offsetToTTLA;
 
     /**
@@ -136,7 +136,7 @@ public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements
         this.teleNativeThread = teleNativeThread;
         this.entityName = regionName;
         this.threadLocalsBlockMemoryRegion = new ThreadLocalsBlockMemoryRegion(teleNativeThread.vm(), this, regionName, start, nBytes);
-        this.areas = new EnumMap<Safepoint.State, TeleThreadLocalsArea>(Safepoint.State.class);
+        this.areas = new EnumMap<SafepointPoll.State, TeleThreadLocalsArea>(SafepointPoll.State.class);
         this.offsetToTTLA = Platform.platform().pageSize - Word.size();
         this.entityDescription = "The set of local variables for thread " + teleNativeThread.entityName() + " in the " + teleNativeThread.vm().entityName();
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
@@ -184,7 +184,7 @@ public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements
                         teleThreadLocalsArea.updateCache(epoch);
                     }
                 }
-                final TeleThreadLocalsArea enabledThreadLocalsArea = areas.get(Safepoint.State.ENABLED);
+                final TeleThreadLocalsArea enabledThreadLocalsArea = areas.get(SafepointPoll.State.ENABLED);
                 if (enabledThreadLocalsArea != null) {
                     final Word threadLocalValue = enabledThreadLocalsArea.getWord(VmThreadLocal.VM_THREAD);
                     if (!threadLocalValue.isZero()) {
@@ -236,7 +236,7 @@ public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements
 
     public MaxThreadLocalsArea findTLA(Address address) {
         if (threadLocalsBlockMemoryRegion != null) {
-            for (Safepoint.State state : Safepoint.State.CONSTANTS) {
+            for (SafepointPoll.State state : SafepointPoll.State.CONSTANTS) {
                 final TeleThreadLocalsArea tla = tlaFor(state);
                 if (tla.memoryRegion().contains(address)) {
                     return tla;
@@ -264,7 +264,7 @@ public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements
      */
     void updateAfterGather(TeleFixedMemoryRegion threadLocalsRegion, int tlaSize) {
         if (threadLocalsRegion != null) {
-            for (Safepoint.State safepointState : Safepoint.State.CONSTANTS) {
+            for (SafepointPoll.State safepointState : SafepointPoll.State.CONSTANTS) {
                 final Pointer tlaStartPointer = getThreadLocalsAreaStart(threadLocalsRegion, tlaSize, safepointState);
                 // Only create a new TeleThreadLocalsArea if the start address has changed which
                 // should only happen once going from 0 to a non-zero value.
@@ -297,7 +297,7 @@ public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements
      * @return the address of the thread locals areas in {@code threadLocalsRegion} corresponding to {@code state}
      * @see VmThreadLocal
      */
-    private Pointer getThreadLocalsAreaStart(TeleFixedMemoryRegion threadLocalsRegion, int tlaSize, Safepoint.State safepointState) {
+    private Pointer getThreadLocalsAreaStart(TeleFixedMemoryRegion threadLocalsRegion, int tlaSize, SafepointPoll.State safepointState) {
         if (threadLocalsRegion != null) {
             return threadLocalsRegion.start().plus(offsetToTTLA).plus(tlaSize * safepointState.ordinal()).asPointer();
         }

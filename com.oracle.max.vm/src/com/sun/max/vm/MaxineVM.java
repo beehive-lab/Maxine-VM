@@ -421,7 +421,7 @@ public final class MaxineVM {
      */
     @VM_ENTRY_POINT
     public static int run(Pointer etla, Pointer bootHeapRegionStart, Word dlopen, Word dlsym, Word dlerror, Pointer jniEnv, Pointer jmmInterface, int argc, Pointer argv) {
-        Safepoint.setLatchRegister(etla);
+        SafepointPoll.setLatchRegister(etla);
 
         // This one field was not marked by the data prototype for relocation
         // to avoid confusion between "offset zero" and "null".
@@ -533,14 +533,14 @@ public final class MaxineVM {
     public Phase phase = Phase.BOOTSTRAPPING;
     public final RegisterConfigs registerConfigs;
     public final Stubs stubs;
-    public final Safepoint safepoint;
+    public final SafepointPoll safepoint;
     public final TrapFrameAccess trapFrameAccess;
 
     public MaxineVM(VMConfiguration configuration) {
         this.config = configuration;
         this.registerConfigs = RegisterConfigs.create();
         this.stubs = new Stubs(registerConfigs);
-        this.safepoint = Safepoint.create();
+        this.safepoint = SafepointPoll.create();
         this.trapFrameAccess = TrapFrameAccess.create();
     }
 

@@ -37,7 +37,7 @@ public final class Infopoint extends Instruction {
     public final FrameState state;
 
     /**
-     * {@link Bytecodes#HERE}, {@link Bytecodes#INFO} or {@link Bytecodes#SAFEPOINT}.
+     * {@link Bytecodes#HERE}, {@link Bytecodes#INFO} or {@link Bytecodes#SAFEPOINT_POLL}.
      */
     public final int opcode;
 
@@ -47,12 +47,12 @@ public final class Infopoint extends Instruction {
      */
     public Infopoint(int opcode, FrameState state) {
         super(opcode == HERE ? CiKind.Long : CiKind.Void);
-        assert opcode == HERE || opcode == INFO || opcode == SAFEPOINT || opcode == UNCOMMON_TRAP : Bytecodes.nameOf(opcode);
+        assert opcode == HERE || opcode == INFO || opcode == SAFEPOINT_POLL || opcode == UNCOMMON_TRAP : Bytecodes.nameOf(opcode);
         this.opcode = opcode;
         this.state = state;
         setFlag(Flag.LiveSideEffect); // ensure this instruction is not eliminated
-        if (opcode == SAFEPOINT) {
-            setFlag(Value.Flag.IsSafepoint);
+        if (opcode == SAFEPOINT_POLL) {
+            setFlag(Value.Flag.IsSafepointPoll);
         }
     }
 

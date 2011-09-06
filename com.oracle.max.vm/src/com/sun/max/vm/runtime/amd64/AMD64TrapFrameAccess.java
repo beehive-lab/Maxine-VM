@@ -24,7 +24,7 @@ package com.sun.max.vm.runtime.amd64;
 
 import static com.oracle.max.asm.target.amd64.AMD64.*;
 import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.runtime.amd64.AMD64Safepoint.*;
+import static com.sun.max.vm.runtime.amd64.AMD64SafepointPoll.*;
 
 import com.sun.cri.ci.*;
 import com.sun.max.unsafe.*;
