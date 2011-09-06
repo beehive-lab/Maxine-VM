@@ -58,6 +58,9 @@ import com.sun.max.vm.type.*;
  */
 public class CompiledPrototype extends Prototype {
 
+    public static final boolean NewCompilationStrategy = false;
+    public static final boolean ResolveEverything = true;
+
     class ClassInfo {
         public ClassInfo(ClassActor classActor) {
             this.classActor = classActor;
@@ -76,6 +79,7 @@ public class CompiledPrototype extends Prototype {
     private final HashMap<MethodActor, Set<ClassActor>> anonymousClasses = new HashMap<MethodActor, Set<ClassActor>>();
 
     private final HashMap<MethodActor, Link> methodActors = new HashMap<MethodActor, Link>();
+    private final HashSet<MethodActor> methodActorsWithInlining = new HashSet<MethodActor>();
     private final HashMap<String, Link> stubs = new HashMap<String, Link>();
     private final LinkedList<MethodActor> worklist = new LinkedList<MethodActor>();
 
@@ -164,8 +168,7 @@ public class CompiledPrototype extends Prototype {
     private ClassInfo getInfo(ClassActor classActor) {
         ClassInfo info = classActorInfo.get(classActor);
         if (info == null) {
-            info = new ClassInfo(classActor);
-            classActorInfo.put(classActor, info);
+            info = processNewClass(classActor);
         }
         return info;
     }
@@ -183,25 +186,51 @@ public class CompiledPrototype extends Prototype {
         return anonymousClasses.get(actor);
     }
 
-    private void gatherNewClasses() {
+    private void gatherNewClasses(GraphPrototype graphPrototype) {
         Trace.begin(1, "gatherNewClasses");
-        final LinkedList<ClassActor> newClasses = new LinkedList<ClassActor>();
-        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY.bootImageClasses()) {
-            if (lookupInfo(classActor) == null) {
-                final Method enclosingMethod = classActor.toJava().getEnclosingMethod();
-                if (enclosingMethod != null) {
-                    // if this is an anonymous class, add it to the anonymous classes set of the enclosing method
-                    gatherNewAnonymousClass(newClasses, classActor, enclosingMethod);
-                } else {
-                    traceNewClass(classActor);
-                    newClasses.add(classActor);
+        final Collection<ClassActor> newClasses = new HashSet<ClassActor>();
+
+        if (NewCompilationStrategy) {
+            for (Object obj : graphPrototype.objects()) {
+                ClassActor classActor = ClassActor.fromJava(obj.getClass());
+
+                if (classActor == null) {
+                    assert obj.getClass() == StaticTuple.class : "hosted-only class that can be ignored";
+                    continue;
+                }
+                if (!classActor.isInstanceClass()) {
+                    continue;
+                }
+                if (lookupInfo(classActor) == null) {
+                    final Method enclosingMethod = classActor.toJava().getEnclosingMethod();
+                    if (enclosingMethod != null) {
+                        // if this is an anonymous class, add it to the anonymous classes set of the enclosing method
+                        gatherNewAnonymousClass(newClasses, classActor, enclosingMethod);
+                    } else {
+                        traceNewClass(classActor);
+                        newClasses.add(classActor);
+                    }
+                }
+            }
+
+        } else {
+            for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY.bootImageClasses()) {
+                if (lookupInfo(classActor) == null) {
+                    final Method enclosingMethod = classActor.toJava().getEnclosingMethod();
+                    if (enclosingMethod != null) {
+                        // if this is an anonymous class, add it to the anonymous classes set of the enclosing method
+                        gatherNewAnonymousClass(newClasses, classActor, enclosingMethod);
+                    } else {
+                        traceNewClass(classActor);
+                        newClasses.add(classActor);
+                    }
                 }
             }
         }
         Trace.end(1, "gatherNewClasses");
         Trace.begin(1, "processNewClasses " + newClasses.size());
         for (ClassActor classActor : newClasses) {
-            processNewClass(classActor);
+            getInfo(classActor);
         }
         Trace.end(1, "processNewClasses");
     }
@@ -212,12 +241,12 @@ public class CompiledPrototype extends Prototype {
         }
     }
 
-    private void gatherNewAnonymousClass(final LinkedList<ClassActor> newClasses, ClassActor classActor, final Method enclosingMethod) {
+    private void gatherNewAnonymousClass(final Collection<ClassActor> newClasses, ClassActor classActor, final Method enclosingMethod) {
         if (!MaxineVM.isHostedOnly(enclosingMethod)) {
             final MethodActor methodActor = MethodActor.fromJava(enclosingMethod);
             if (methodActor != null) {
                 getAnonymousClasses(methodActor).add(classActor);
-                if (methodActors.containsKey(methodActor)) {
+                if (methodActorsWithInlining.contains(methodActor)) {
                     traceNewClass(classActor);
                     newClasses.add(classActor);
                 }
@@ -225,8 +254,11 @@ public class CompiledPrototype extends Prototype {
         }
     }
 
-    private void processNewClass(ClassActor classActor) {
-        getInfo(classActor); // build the class info for this class
+    private ClassInfo processNewClass(ClassActor classActor) {
+        assert lookupInfo(classActor) == null;
+        ClassInfo info = new ClassInfo(classActor);
+        classActorInfo.put(classActor, info);
+
         ClassActor superClassActor = classActor.superClassActor;
         while (superClassActor != null) {
             // for each super class of this class, add this class's implementation of its methods used so far
@@ -247,7 +279,7 @@ public class CompiledPrototype extends Prototype {
                 }
             }
         }
-
+        return info;
     }
 
     private <M extends MethodActor> void addMethods(Object parent, Iterable<M> children, Relationship relationship) {
@@ -291,6 +323,26 @@ public class CompiledPrototype extends Prototype {
 
     private void processNewTargetMethod(TargetMethod targetMethod) {
         traceNewTargetMethod(targetMethod);
+
+        if (NewCompilationStrategy) {
+            if (targetMethod.referenceLiterals() != null) {
+                for (Object literal : targetMethod.referenceLiterals()) {
+                    ClassActor classActor;
+                    if (literal instanceof StaticTuple) {
+                        classActor = ((StaticTuple) literal).classActor();
+                    } else if (literal instanceof DynamicHub) {
+                        classActor = ((DynamicHub) literal).classActor;
+                    } else {
+                        classActor = ClassActor.fromJava(literal.getClass());
+                    }
+                    if (!classActor.isInstanceClass()) {
+                        continue;
+                    }
+                    getInfo(classActor);
+                }
+            }
+        }
+
         final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
         // add the methods referenced in the target method's literals
         if (targetMethod.referenceLiterals() != null) {
@@ -316,10 +368,11 @@ public class CompiledPrototype extends Prototype {
         }
         for (MethodActor m : inlinedMethods) {
             if (m != null) {
+                methodActorsWithInlining.add(m);
                 final Set<ClassActor> anonymousClasses = lookupAnonymousClasses(m);
                 if (anonymousClasses != null) {
                     for (ClassActor classActor : anonymousClasses) {
-                        processNewClass(classActor);
+                        getInfo(classActor);
                     }
                 }
             }
@@ -374,10 +427,6 @@ public class CompiledPrototype extends Prototype {
             // if this is an indirect call that has not been seen before, add all possibly reaching implementations
             // --even if this actual method implementation may not be compiled.
             final ClassInfo info = getInfo(child.holder());
-            if (child.holder().toJava() == VMScheme.class && child.name().equals("initialize")) {
-                System.console();
-
-            }
             if (!info.indirectCalls.contains(child)) {
                 info.indirectCalls.add(child);
                 if (relationship == Relationship.VIRTUAL_CALL) {
@@ -510,12 +559,6 @@ public class CompiledPrototype extends Prototype {
         registerImageInvocationStub(MethodActor.fromJava(getDeclaredMethod(JDK.java_lang_Shutdown.javaClass(), "shutdown")));
 
         for (MethodActor methodActor : imageInvocationStubMethodActors) {
-//            if (methodActor.holder().toJava().isEnum() && methodActor.name.equals("values")) {
-//                // add a method stub for the "values" method of the enum
-//                final ClassActor classActor = ClassActor.fromJava(methodActor.holder().toJava());
-//                final ClassMethodActor valuesMethod = classActor.findLocalClassMethodActor(SymbolTable.makeSymbol("values"), SignatureDescriptor.fromJava(Enum[].class));
-//                addStaticAndVirtualMethods(JDK_sun_reflect_ReflectionFactory.createPrePopulatedMethodStub(valuesMethod));
-//            }
             addMethods(null, ClassActor.fromJava(methodActor.makeInvocationStub().getClass()).localVirtualMethodActors(), entryPoint);
         }
         for (MethodActor methodActor : imageConstructorStubMethodActors) {
@@ -623,6 +666,12 @@ public class CompiledPrototype extends Prototype {
 
     private ProgramError reportCompilationError(final MethodActor classMethodActor, Throwable error) throws ProgramError {
         System.err.println("Error occurred while compiling " + classMethodActor + ": " + error);
+        printParentChain(classMethodActor);
+        error.printStackTrace(System.err);
+        throw ProgramError.unexpected("Error occurred while compiling " + classMethodActor, error);
+    }
+
+    private void printParentChain(final MethodActor classMethodActor) {
         System.err.println("Parent chain:");
         System.err.println("    " + classMethodActor.format("%H.%n(%p)"));
         MethodActor child = classMethodActor;
@@ -651,8 +700,6 @@ public class CompiledPrototype extends Prototype {
                 System.err.println("    which " + link.relationship.asChild + " " + child.format("%H.%n(%p)"));
             }
         }
-        error.printStackTrace(System.err);
-        throw ProgramError.unexpected("Error occurred while compiling " + classMethodActor, error);
     }
 
     private void forAllClassMethodActors(ClassActor classActor, Procedure<ClassMethodActor> procedure) {
@@ -734,35 +781,38 @@ public class CompiledPrototype extends Prototype {
         }
     }
 
-    public void checkRequiredImageMethods() {
-        Trace.begin(1, "checking methods that must be compiled");
-        final TreeSet<String> missing = new TreeSet<String>();
-        for (ClassActor classActor : BOOT_CLASS_REGISTRY.bootImageClasses()) {
-            forAllClassMethodActors(classActor, new Procedure<ClassMethodActor>() {
-                public void run(ClassMethodActor classMethodActor) {
-                    if (classMethodActor.mustCompileInImage && classMethodActor.targetMethodCount() == 0) {
-                        missing.add(classMethodActor.toString());
-                    }
-                }
-            });
-        }
-
-        if (!missing.isEmpty()) {
-            String msg =  "These methods must be compiled in the boot image: ";
-            for (String m : missing) {
-                msg += String.format("%n    %s", m);
-            }
-            FatalError.unexpected(msg);
-        }
-        Trace.end(1, "checking methods that must be compiled");
-    }
-
     private boolean needsCompilation(MethodActor methodActor) {
         if (methodActor instanceof ClassMethodActor &&
             !methodActor.isAbstract() &&
             !methodActor.isIntrinsic()) {
+
+            String holderName = methodActor.holder().typeDescriptor.toJavaString();
+            if (matches(holderName, compilationBlacklist) && !matches(holderName, compilationWhitelist)) {
+                return false;
+            }
+
             ClassMethodActor cma = (ClassMethodActor) methodActor;
             return cma.currentTargetMethod() == null;
+        }
+        return false;
+    }
+
+    private static final List<String> compilationBlacklist = new ArrayList<String>();
+    private static final List<String> compilationWhitelist = new ArrayList<String>();
+
+    public static void addCompilationBlacklist(String classPrefix) {
+        compilationBlacklist.add(classPrefix);
+    }
+
+    public static void addCompilationWhitelist(String classPrefix) {
+        compilationWhitelist.add(classPrefix);
+    }
+
+    private static boolean matches(String match, List<String> list) {
+        for (String element : list) {
+            if (match.startsWith(element)) {
+                return true;
+            }
         }
         return false;
     }
@@ -776,12 +826,12 @@ public class CompiledPrototype extends Prototype {
         addEntrypoints0();
     }
 
-    public boolean compile() {
+    public boolean compile(GraphPrototype graphPrototype) {
         boolean compiledAny = false;
         boolean compiledSome = false;
         do {
             // 3. add all new class implementations
-            gatherNewClasses();
+            gatherNewClasses(graphPrototype);
             // 4. compile all new methods
             compiledSome = compileWorklist();
             compiledAny |= compiledSome;
@@ -794,18 +844,7 @@ public class CompiledPrototype extends Prototype {
         Trace.begin(1, "linkNonVirtualCalls");
         for (TargetMethod targetMethod : Code.bootCodeRegion().copyOfTargetMethods()) {
             if (!(targetMethod instanceof Adapter)) {
-                if (!targetMethod.linkDirectCalls()) {
-                    final Object[] directCallees = targetMethod.directCallees();
-                    if (directCallees != null) {
-                        for (int i = 0; i < directCallees.length; i++) {
-                            Object currentDirectCallee = directCallees[i];
-                            final TargetMethod callee = targetMethod.getTargetMethod(currentDirectCallee);
-                            if (callee == null) {
-                                ProgramWarning.message("did not link direct callee " + currentDirectCallee + " in method: " + targetMethod);
-                            }
-                        }
-                    }
-                }
+                targetMethod.linkDirectCalls();
             }
         }
         Trace.end(1, "linkNonVirtualCalls");
