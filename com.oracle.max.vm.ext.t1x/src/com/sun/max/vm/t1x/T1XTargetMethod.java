@@ -354,7 +354,7 @@ public final class T1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public int forEachCodePos(CodePosClosure cpc, Pointer ip, boolean ipIsReturnAddress) {
+    public int forEachCodePos(CodePosClosure cpc, Pointer ip) {
         int bci = bciFor(ip.asPointer());
         if (bci >= 0) {
             cpc.doCodePos(classMethodActor, bci);
@@ -810,7 +810,7 @@ public final class T1XTargetMethod extends TargetMethod {
             // Rescue a return address that has been patched for deoptimization
             callerIP = AMD64TargetMethodUtil.rescuePatchedReturnAddress(sfw, callerIP, callerSP);
 
-            sfw.advance(callerIP, callerSP, callerFP, true);
+            sfw.advance(callerIP, callerSP, callerFP);
         } else {
             unimplISA();
         }

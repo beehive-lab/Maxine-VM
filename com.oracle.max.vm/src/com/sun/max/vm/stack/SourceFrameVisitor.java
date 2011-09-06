@@ -85,7 +85,7 @@ public class SourceFrameVisitor extends RawStackFrameVisitor implements TargetMe
         frameId = current.sp.toLong() << 16;
         trapped = callee.targetMethod != null && callee.targetMethod.is(TrapStub);
         stopped = false;
-        int count = targetMethod.forEachCodePos(this, current.ip, current.ipIsReturnAddress);
+        int count = targetMethod.forEachCodePos(this, current.ip);
         if (count == 0 && !stopped) {
             return visitSourceFrame(targetMethod.classMethodActor, -1, trapped, frameId);
         }
