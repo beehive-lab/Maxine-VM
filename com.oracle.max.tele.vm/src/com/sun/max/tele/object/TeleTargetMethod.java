@@ -85,24 +85,11 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
     private static final int TRACE_VALUE = 2;
     private static final List<TargetCodeInstruction> EMPTY_TARGET_INSTRUCTIONS =  Collections.emptyList();
     private static final MachineCodeLocation[] EMPTY_MACHINE_CODE_LOCATIONS = {};
-    private static final CodeStopKind[] EMPTY_CODE_STOP_KINDS = {};
+    private static final Integer[] EMPTY_SAFEPOINTS = {};
     private static final CiDebugInfo[] EMPTY_DEBUG_INFO_MAP = {};
     private static final int[] EMPTY_INT_ARRAY = {};
     private static final RiMethod[] EMPTY_METHOD_ARRAY = {};
     private static final List<Integer> EMPTY_INTEGER_LIST = Collections.emptyList();
-
-    /**
-     * Reason that a particular instruction is identified as a "Stop".
-     *
-     * @see TargetMethod
-     * @see StopPositions
-     */
-    private enum CodeStopKind {
-        DIRECT_CALL,   // Non-native direct call
-        NATIVE_CALL,   // Native direct call
-        INDIRECT_CALL, // Indirect call
-        SAFE;          // Safepoint
-    }
 
     /**
      * Adapter for bytecode scanning that only knows the constant pool
@@ -244,9 +231,9 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
         private final MachineCodeLocation[] indexToLocation;
 
         /**
-         * Map:  target instruction index -> the kind of stop at the instruction, null if not a stop.
+         * Map:  target instruction index -> the safepoint at the instruction, null if not a safepoint.
          */
-        private final CodeStopKind[] indexToCodeStopKind;
+        private final Integer[] indexToSafepoint;
 
         /**
          * Map: target instruction index -> debug info, if available; else null.
@@ -260,7 +247,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
         private final int[] indexToOpcode;
 
         /**
-         * Map: target instruction index -> constant pool index of {@Link MethodRefConstant} if this is a call instruction; else -1.
+         * Map: target instruction index -> constant pool index of {@Link MethodRefConstant} if this is a call instruction; else null.
          */
         private final RiMethod[] indexToCallee;
 
@@ -297,7 +284,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
                 this.instructionCount = 0;
                 this.bciToPosMap = null;
                 this.indexToLocation = EMPTY_MACHINE_CODE_LOCATIONS;
-                this.indexToCodeStopKind = EMPTY_CODE_STOP_KINDS;
+                this.indexToSafepoint = EMPTY_SAFEPOINTS;
                 this.indexToDebugInfoMap = EMPTY_DEBUG_INFO_MAP;
                 this.indexToOpcode = EMPTY_INT_ARRAY;
                 this.indexToCallee = EMPTY_METHOD_ARRAY;
@@ -348,35 +335,15 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
                     }
                 }
 
-                // Stop position locations in compiled code (by byte offset from the start):
-                // calls and safepoints, null if not available
+                // Safepoint position locations in compiled code (by byte offset from the start): null if not available
 
-                int[] targetStopPositions = targetMethod.stopPositions();
-                final StopPositions stopPositions =
-                    (targetStopPositions == null) ? null : new StopPositions(targetStopPositions);
-
-                // Build map:  target instruction position (bytes offset from start) -> the kind of stop, null if not a stop.
-                CodeStopKind[] posToStopKindMap = null;
-                if (stopPositions != null) {
-                    posToStopKindMap = new CodeStopKind[targetCodeLength];
-
-                    final int directCallCount = targetMethod.numberOfDirectCalls();
-                    final int indirectCallCount = targetMethod.numberOfIndirectCalls();
-                    final int safepointCount = targetMethod.numberOfSafepoints();
-                    assert directCallCount + indirectCallCount + safepointCount == stopPositions.length();
-
-                    for (int stopIndex = 0; stopIndex < directCallCount; stopIndex++) {
-                        if (stopPositions.isNativeFunctionCall(stopIndex)) {
-                            posToStopKindMap[stopPositions.get(stopIndex)] = CodeStopKind.NATIVE_CALL;
-                        } else {
-                            posToStopKindMap[stopPositions.get(stopIndex)] = CodeStopKind.DIRECT_CALL;
-                        }
-                    }
-                    for (int stopIndex = directCallCount; stopIndex < directCallCount + indirectCallCount; stopIndex++) {
-                        posToStopKindMap[stopPositions.get(stopIndex)] = CodeStopKind.INDIRECT_CALL;
-                    }
-                    for (int stopIndex = directCallCount + indirectCallCount; stopIndex < stopPositions.length(); stopIndex++) {
-                        posToStopKindMap[stopPositions.get(stopIndex)] = CodeStopKind.SAFE;
+                final Safepoints safepoints = targetMethod.safepoints();
+                // Build map:  target instruction position (bytes offset from start) -> the safepoint, 0 if not a safepoint.
+                int[] posToSafepointMap = null;
+                if (safepoints != null && safepoints.size() > 0) {
+                    posToSafepointMap = new int[targetCodeLength];
+                    for (int safepointIndex = 0; safepointIndex < safepoints.size(); safepointIndex++) {
+                        posToSafepointMap[safepoints.posAt(safepointIndex)] = safepoints.safepointAt(safepointIndex);
                     }
                 }
 
@@ -385,9 +352,9 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
 
                  // Build map:  target instruction position (bytes offset from start) -> debug infos (as much as can be determined).
                 final CiDebugInfo[] posToDebugInfoMap = new CiDebugInfo[targetCodeLength];
-                if (stopPositions != null) {
-                    for (int stopIndex = 0; stopIndex < stopPositions.length(); ++stopIndex) {
-                        posToDebugInfoMap[stopPositions.get(stopIndex)] = getDebugInfoAtStopIndex(stopIndex);
+                if (safepoints != null && safepoints.size() > 0) {
+                    for (int safepointIndex = 0; safepointIndex < safepoints.size(); ++safepointIndex) {
+                        posToDebugInfoMap[safepoints.posAt(safepointIndex)] = getDebugInfoAtSafepointIndex(safepointIndex);
                     }
                 }
                 if (bciToPosMap != null) {
@@ -413,7 +380,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
 
                 // Now build maps based on target instruction index
                 indexToLocation = new MachineCodeLocation[instructionCount];
-                indexToCodeStopKind = new CodeStopKind[instructionCount];
+                indexToSafepoint = new Integer[instructionCount];
                 indexToDebugInfoMap = new CiDebugInfo[instructionCount];
                 indexToOpcode = new int[instructionCount];
                 Arrays.fill(indexToOpcode, -1);
@@ -443,16 +410,17 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
 
                     indexToDebugInfoMap[instructionIndex] = posToDebugInfoMap[pos];
 
-                    if (posToStopKindMap != null) {
-                        final CodeStopKind codeStopKind = posToStopKindMap[pos];
-                        if (codeStopKind != null) {
-                            // We're at a stop
-                            indexToCodeStopKind[instructionIndex] = codeStopKind;
+                    if (posToSafepointMap != null) {
+                        final int safepoint = posToSafepointMap[pos];
+                        if (safepoint != 0) {
+                            // We're at a safepoint
+                            indexToSafepoint[instructionIndex] = safepoint;
                             CiDebugInfo info = indexToDebugInfoMap[instructionIndex];
                             final CiCodePos codePos = info == null ? null : info.codePos;
                             if (codePos != null && codePos.bci >= 0) {
                                 ClassMethodActor method = (ClassMethodActor) codePos.method;
-                                indexToCallee[instructionIndex] = method.codeAttribute().calleeAt(codePos.bci);
+                                RiMethod callee = method.codeAttribute().calleeAt(codePos.bci);
+                                indexToCallee[instructionIndex - 1] = callee;
                             }
                         }
                     }
@@ -516,27 +484,33 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
             return indexToLocation[index];
         }
 
-        public boolean isStop(int index) throws IllegalArgumentException {
+        public boolean isSafepoint(int index) throws IllegalArgumentException {
             if (index < 0 || index >= instructionCount) {
                 throw new IllegalArgumentException();
             }
-            return indexToCodeStopKind[index] != null;
+            return indexToSafepoint[index] != null;
         }
 
         public boolean isCall(int index) throws IllegalArgumentException {
             if (index < 0 || index >= instructionCount) {
                 throw new IllegalArgumentException();
             }
-            final CodeStopKind stopKind = indexToCodeStopKind[index];
-            return stopKind != null && stopKind != CodeStopKind.SAFE;
+            if (index + 1 >= instructionCount) {
+                return false;
+            }
+            final Integer safepoint = indexToSafepoint[index + 1];
+            return safepoint != null && Safepoints.isCall(safepoint);
         }
 
         public boolean isNativeCall(int index) throws IllegalArgumentException {
             if (index < 0 || index >= instructionCount) {
                 throw new IllegalArgumentException();
             }
-            final CodeStopKind stopKind = indexToCodeStopKind[index];
-            return stopKind == CodeStopKind.NATIVE_CALL;
+            if (index + 1 >= instructionCount) {
+                return false;
+            }
+            final Integer safepoint = indexToSafepoint[index + 1];
+            return safepoint != null && Safepoints.NATIVE_CALL.isSet(safepoint);
         }
 
         public boolean isBytecodeBoundary(int index) throws IllegalArgumentException {
@@ -584,17 +558,17 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
         }
 
         /**
-         * Gets the debug info available for a given stop index.
+         * Gets the debug info available for a given safepoint.
          *
-         * @param stopIndex a stop index
-         * @return the debug info available for {@code stopIndex} or null if there is none
+         * @param safepointIndex a safepoint index
+         * @return the debug info available for {@code safepointIndex} or null if there is none
          * @see TargetMethod#debugInfoAt(int, FrameAccess)
          */
-        private CiDebugInfo getDebugInfoAtStopIndex(final int stopIndex) {
+        private CiDebugInfo getDebugInfoAtSafepointIndex(final int safepointIndex) {
             return TeleClassRegistry.usingTeleClassIDs(new Function<CiDebugInfo>() {
                 @Override
                 public CiDebugInfo call() throws Exception {
-                    return targetMethod.debugInfoAt(stopIndex, null);
+                    return targetMethod.debugInfoAt(safepointIndex, null);
                 }
             });
         }
@@ -847,14 +821,14 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
     }
 
     /**
-     * Gets the debug info available for a given stop index.
+     * Gets the debug info available for a given safepoint index.
      *
-     * @param stopIndex a stop index
-     * @return the debug info available for {@code stopIndex} or null if there is none
+     * @param safepointIndex a safepoint index
+     * @return the debug info available for {@code safepointIndex} or null if there is none
      * @see TargetMethod#debugInfoAt(int, FrameAccess)
      */
-    public CiDebugInfo getDebugInfoAtStopIndex(final int stopIndex) {
-        return targetMethodCache().getDebugInfoAtStopIndex(stopIndex);
+    public CiDebugInfo getDebugInfoAtSafepointIndex(final int safepointIndex) {
+        return targetMethodCache().getDebugInfoAtSafepointIndex(safepointIndex);
     }
 
     /**

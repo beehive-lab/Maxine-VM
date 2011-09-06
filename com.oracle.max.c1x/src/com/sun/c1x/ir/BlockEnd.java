@@ -42,20 +42,20 @@ public abstract class BlockEnd extends Instruction {
      * Constructs a new block end with the specified value type.
      * @param kind the type of the value produced by this instruction
      * @param stateAfter the frame state at the end of this block
-     * @param isSafepoint {@code true} if this instruction is a safepoint instruction
+     * @param isSafepointPoll {@code true} if this instruction is a safepoint poll instruction
      * @param successors the list of successor blocks. If {@code null}, a new one will be created.
      */
-    public BlockEnd(CiKind kind, FrameState stateAfter, boolean isSafepoint, List<BlockBegin> successors) {
+    public BlockEnd(CiKind kind, FrameState stateAfter, boolean isSafepointPoll, List<BlockBegin> successors) {
         super(kind);
         this.successors = successors == null ? new ArrayList<BlockBegin>(2) : successors;
         setStateAfter(stateAfter);
-        if (isSafepoint) {
-            setFlag(Value.Flag.IsSafepoint);
+        if (isSafepointPoll) {
+            setFlag(Value.Flag.IsSafepointPoll);
         }
     }
 
-    public BlockEnd(CiKind kind, FrameState stateAfter, boolean isSafepoint) {
-        this(kind, stateAfter, isSafepoint, null);
+    public BlockEnd(CiKind kind, FrameState stateAfter, boolean isSafepointPoll) {
+        this(kind, stateAfter, isSafepointPoll, null);
     }
 
     /**
@@ -71,11 +71,11 @@ public abstract class BlockEnd extends Instruction {
     }
 
     /**
-     * Checks whether this instruction is a safepoint.
-     * @return {@code true} if this instruction is a safepoint
+     * Checks whether this instruction is a safepoint poll.
+     * @return {@code true} if this instruction is a safepoint poll
      */
-    public boolean isSafepoint() {
-        return checkFlag(Value.Flag.IsSafepoint);
+    public boolean isSafepointPoll() {
+        return checkFlag(Value.Flag.IsSafepointPoll);
     }
 
     /**

@@ -77,13 +77,13 @@ public class TeleThreadLocalVariable extends AbstractTeleVMHolder implements Max
 
     private final VmThreadLocal vmThreadLocal;
     private final TeleNativeThread teleNativeThread;
-    private final Safepoint.State safepointState;
+    private final SafepointPoll.State safepointState;
     private final ThreadLocalVariableMemoryRegion threadLocalVariableMemoryRegion;
     private final String entityDescription;
     private volatile Value value;
 
 
-    public TeleThreadLocalVariable(VmThreadLocal vmThreadLocal, TeleNativeThread teleNativeThread, Safepoint.State safepointState, Address start, int nBytes) {
+    public TeleThreadLocalVariable(VmThreadLocal vmThreadLocal, TeleNativeThread teleNativeThread, SafepointPoll.State safepointState, Address start, int nBytes) {
         super(teleNativeThread.vm());
         this.vmThreadLocal = vmThreadLocal;
         this.teleNativeThread = teleNativeThread;
@@ -119,7 +119,7 @@ public class TeleThreadLocalVariable extends AbstractTeleVMHolder implements Max
         return teleNativeThread;
     }
 
-    public Safepoint.State safepointState() {
+    public SafepointPoll.State safepointState() {
         return safepointState;
     }
 

@@ -25,7 +25,7 @@ package com.sun.max.vm.compiler.target;
 import static com.oracle.max.asm.target.amd64.AMD64.*;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.runtime.VMRegister.Role.*;
+import static com.sun.max.vm.runtime.VMRegister.*;
 
 import java.util.*;
 
@@ -148,14 +148,11 @@ public class RegisterConfigs {
 
 
                 HashMap<Integer, CiRegister> roleMap = new HashMap<Integer, CiRegister>();
-                roleMap.put(CPU_STACK_POINTER.ordinal(), rsp);
-                roleMap.put(CPU_FRAME_POINTER.ordinal(), rbp);
-                roleMap.put(ABI_STACK_POINTER.ordinal(), rsp);
-                roleMap.put(ABI_FRAME_POINTER.ordinal(), rsp);
-                roleMap.put(ABI_RETURN.ordinal(), rax);
-                roleMap.put(ABI_RESULT.ordinal(), rax);
-                roleMap.put(ABI_SCRATCH.ordinal(), r11);
-                roleMap.put(SAFEPOINT_LATCH.ordinal(), r14);
+                roleMap.put(CPU_SP, rsp);
+                roleMap.put(CPU_FP, rbp);
+                roleMap.put(ABI_SP, rsp);
+                roleMap.put(ABI_FP, rsp);
+                roleMap.put(LATCH, r14);
 
                 /**
                  * The register configuration for a normal Java method.
@@ -198,7 +195,7 @@ public class RegisterConfigs {
                 CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveLayout(Integer.MAX_VALUE, -1, 8, rbx, rbp, r12, r13, r14, r15));
                 n2j.stackArg0Offsets[JavaCallee.ordinal()] = nativeStackArg0Offset;
 
-                roleMap.put(ABI_FRAME_POINTER.ordinal(), rbp);
+                roleMap.put(ABI_FP, rbp);
                 CiRegisterConfig template = new CiRegisterConfig(
                                 rbp,                 // frame
                                 rax,                 // integral return value

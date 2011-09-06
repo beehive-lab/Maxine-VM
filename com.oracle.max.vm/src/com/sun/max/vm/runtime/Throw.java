@@ -23,6 +23,7 @@
 package com.sun.max.vm.runtime;
 
 import static com.sun.cri.bytecode.Bytecodes.Infopoints.*;
+import static com.sun.max.vm.jdk.JDK_java_lang_Throwable.*;
 import static com.sun.max.vm.object.ArrayAccess.*;
 import static com.sun.max.vm.runtime.VMRegister.*;
 
@@ -31,12 +32,15 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.type.*;
 
 /**
  */
@@ -47,6 +51,7 @@ public final class Throw {
 
     public static int TraceExceptions;
     public static boolean TraceExceptionsRaw;
+    public static boolean FatalVMAssertions = true;
     private static int TraceExceptionsMaxFrames = 200;
     private static int TraceExceptionsRawMaxFrames = 200;
     private static String TraceExceptionsFilter;
@@ -62,6 +67,8 @@ public final class Throw {
             "The max frames to dump for -XX:+TraceExceptionsRaw.", Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "ScanStackOnFatalError", Throw.class,
             "Perform a raw stack scan when a fatal VM occurs.", Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "FatalVMAssertions", Throw.class,
+            "Convert assertions thrown in the VM code to fatal errors.", Phase.PRISTINE);
     }
 
     static class StackFrameDumper extends RawStackFrameVisitor {
@@ -106,13 +113,39 @@ public final class Throw {
      * @param ip the instruction pointer to be used when determining the point at which exception was raised
      */
     public static void raise(Throwable throwable, Pointer sp, Pointer fp, Pointer ip) {
+        convertAssertionToFatalError(throwable);
+
         FatalError.check(throwable != null, "Trying to raise an exception with a null Throwable object");
         final VmStackFrameWalker sfw = VmThread.current().unwindingStackFrameWalker(throwable);
 
         VmThread.current().checkYellowZoneForRaisingException();
-        Safepoint.disable();
+        SafepointPoll.disable();
         sfw.unwind(ip, sp, fp, throwable);
         FatalError.unexpected("could not find top-level exception handler");
+    }
+
+    /**
+     * Converts an {@link AssertionError} to a {@link FatalError} if {@value #FatalVMAssertions} is {@code true}
+     * and {@code throwable} is an AssertionError.
+     */
+    private static void convertAssertionToFatalError(Throwable throwable) {
+        if (FatalVMAssertions && StackTraceInThrowable && throwable instanceof AssertionError) {
+            Backtrace bt = JDK_java_lang_Throwable.getBacktrace(throwable);
+            if (bt != null) {
+                for (int i = 0; i < bt.count; i++) {
+                    ClassMethodActor cma = bt.methods[i];
+                    if (cma.isInitializer() && AssertionError.class.isAssignableFrom(cma.holder().toJava())) {
+                        // still in exception constructor chain
+                    } else {
+                        // this is the method causing the assertion error
+                        if (cma.holder().classLoader == BootClassLoader.BOOT_CLASS_LOADER) {
+                            FatalError.unexpected("Assertion thrown in the VM", throwable);
+                        }
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     /**

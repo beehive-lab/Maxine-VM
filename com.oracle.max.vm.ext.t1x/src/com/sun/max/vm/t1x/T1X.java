@@ -24,6 +24,7 @@ package com.sun.max.vm.t1x;
 
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.compiler.target.Safepoints.*;
 import static com.sun.max.vm.stack.VMFrameLayout.*;
 import static com.sun.max.vm.t1x.T1XOptions.*;
 
@@ -34,8 +35,8 @@ import java.util.*;
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.cri.bytecode.*;
-import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiCallingConvention.Type;
+import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiUtil.RefMapFormatter;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
@@ -135,7 +136,7 @@ public class T1X implements RuntimeCompiler {
     public void deoptimizationNotSupported() {
     }
 
-    public boolean canProduceDeoptimizedCode() {
+    public boolean supportsInterpreterCompatibility() {
         return true;
     }
 
@@ -217,7 +218,7 @@ public class T1X implements RuntimeCompiler {
         CiUtil.addAnnotations(hcf, c.codeAnnotations);
         addOpcodeComments(hcf, t1xMethod);
         addExceptionHandlersComment(t1xMethod, hcf);
-        addStopPositionComments(t1xMethod, hcf);
+        addSafepointPositionComments(t1xMethod, hcf);
 
         String label = CiUtil.format("T1X %f %R %H.%n(%P)", c.method, false);
 
@@ -239,33 +240,36 @@ public class T1X implements RuntimeCompiler {
         }
     }
 
-    private static void addStopPositionComments(final T1XTargetMethod t1xMethod, CiHexCodeFile hcf) {
-        if (t1xMethod.stopPositions() != null) {
-            StopPositions stopPositions = new StopPositions(t1xMethod.stopPositions());
+    private static void addSafepointPositionComments(T1XTargetMethod t1xMethod, CiHexCodeFile hcf) {
+        if (t1xMethod.safepoints().size() != 0) {
+            Safepoints safepoints = t1xMethod.safepoints();
             Object[] directCallees = t1xMethod.directCallees();
 
             JVMSFrameLayout frame = t1xMethod.frame;
             RefMapFormatter slotFormatter = new RefMapFormatter(target().arch, target().spillSlotSize, frame.framePointerReg(), frame.frameReferenceMapOffset());
-            for (int stopIndex = 0; stopIndex < stopPositions.length(); ++stopIndex) {
-                int pos = stopPositions.get(stopIndex);
+            int dcIndex = 0;
+            for (int safepointIndex = 0; safepointIndex < safepoints.size(); ++safepointIndex) {
+                int pos = safepoints.posAt(safepointIndex);
+                int causePos = safepoints.causePosAt(safepointIndex);
 
-                CiDebugInfo info = t1xMethod.debugInfoAt(stopIndex, null);
+                CiDebugInfo info = t1xMethod.debugInfoAt(safepointIndex, null);
                 hcf.addComment(pos, CiUtil.append(new StringBuilder(100), info, slotFormatter).toString());
 
-                if (stopIndex < t1xMethod.numberOfDirectCalls()) {
-                    Object callee = directCallees[stopIndex];
-                    hcf.addOperandComment(pos, String.valueOf(callee));
-                } else if (stopIndex < t1xMethod.numberOfDirectCalls() + t1xMethod.numberOfIndirectCalls()) {
+                String operandComment = "safepoint";
+                if (safepoints.isSetAt(DIRECT_CALL, safepointIndex)) {
+                    Object callee = directCallees[dcIndex];
+                    operandComment = String.valueOf(callee);
+                    dcIndex++;
+                } else {
                     CiCodePos codePos = info.codePos;
                     if (codePos != null) {
                         RiMethod callee = t1xMethod.codeAttribute.calleeAt(codePos.bci);
                         if (callee != null) {
-                            hcf.addOperandComment(pos, String.valueOf(callee));
+                            operandComment = String.valueOf(callee);
                         }
                     }
-                } else {
-                    hcf.addOperandComment(pos, "safepoint");
                 }
+                hcf.addOperandComment(causePos, operandComment);
             }
         }
     }
@@ -327,7 +331,7 @@ public class T1X implements RuntimeCompiler {
 
     public void initialize(Phase phase) {
         if (isHosted() && phase == Phase.COMPILING) {
-            createTemplates(templateSource, altT1X, true, templates, false);
+            createTemplates(templateSource, altT1X, true, templates);
         }
         if (phase == Phase.STARTING) {
             if (T1XOptions.PrintBytecodeHistogram) {
@@ -366,11 +370,10 @@ public class T1X implements RuntimeCompiler {
      * @param checkComplete if {@code true} check the array for completeness.
      * @param templates an existing instance that will be incrementally updated.
      *        Value may be null, in which case a new array will be created.
-     * @param useTemplateCallRefMaps if true fold in any ref-maps associated with a template call
      * @return the templates array, either as passed in or created.
      */
     @HOSTED_ONLY
-    public T1XTemplate[] createTemplates(Class<?> templateSourceClass, T1X altT1X, boolean checkComplete, T1XTemplate[] templates, boolean useTemplateCallRefMaps) {
+    public T1XTemplate[] createTemplates(Class<?> templateSourceClass, T1X altT1X, boolean checkComplete, T1XTemplate[] templates) {
         Trace.begin(1, "creating T1X templates from " + templateSourceClass.getName());
         if (templates == null) {
             templates = new T1XTemplate[T1XTemplateTag.values().length];
@@ -423,7 +426,7 @@ public class T1X implements RuntimeCompiler {
                     if (template != null) {
                         FatalError.unexpected("Template tag " + tag + " is already bound to " + template.method + ", cannot rebind to " + templateSource);
                     }
-                    templates[tag.ordinal()] = new T1XTemplate(templateCode, tag, templateSource, useTemplateCallRefMaps);
+                    templates[tag.ordinal()] = new T1XTemplate(templateCode, tag, templateSource);
                 }
             }
         }

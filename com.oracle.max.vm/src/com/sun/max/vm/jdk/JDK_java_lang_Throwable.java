@@ -117,13 +117,13 @@ public final class JDK_java_lang_Throwable {
      * A back trace is a lighter weight representation of a stack trace than
      * an array of {@link StackTraceElement}s.
      */
-    static class Backtrace extends StackTraceVisitor {
+    public static class Backtrace extends StackTraceVisitor {
 
         static final int INITIAL_LENGTH = 200;
 
-        int count;
-        int[] lineNos;
-        ClassMethodActor[] methods;
+        public int count;
+        public int[] lineNos;
+        public ClassMethodActor[] methods;
 
         public Backtrace(ClassActor exceptionClass, int maxDepth) {
             super(exceptionClass, maxDepth);
@@ -208,6 +208,20 @@ public final class JDK_java_lang_Throwable {
             return new StackTraceElement[0];
         }
         return backtrace.getTrace();
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static native JDK_java_lang_Throwable asJLT(Throwable t);
+
+    /**
+     * Gets the backtrace from an exception object. This is only non-null between the call to
+     * {@link #fillInStackTrace()} and the first call to {@link #getOurStackTrace()}.
+     *
+     * @return the {@link Backtrace} object fro {@code t} if available, {@code null} otherwise
+     */
+    public static Backtrace getBacktrace(Throwable t) {
+        final JDK_java_lang_Throwable jlt = asJLT(t);
+        return (Backtrace) jlt.backtrace;
     }
 
     @SUBSTITUTE

@@ -43,7 +43,7 @@ public final class ImmortalHeap_allocation {
         immortalMemoryRegion.mark.set(value);
     }
 
-    @NO_SAFEPOINTS("immortal heap allocation and reset must be atomic")
+    @NO_SAFEPOINT_POLLS("immortal heap allocation and reset must be atomic")
     public static boolean test(int size) {
         ImmortalMemoryRegion immortalMemoryRegion = ImmortalHeap.getImmortalHeap();
         Pointer oldMark = immortalMemoryRegion.mark();

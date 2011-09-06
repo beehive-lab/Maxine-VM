@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package test.output;
+package demo;
 
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
@@ -28,7 +28,6 @@ import com.sun.max.unsafe.*;
 
 /**
  * Test getting platform's physical memory characteristics.
- * Doesn't run on other VM as it relies on a C_FUNCTION.
  */
 public class PhysMemTest {
     public static void main(String[] args) {

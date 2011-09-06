@@ -22,8 +22,9 @@
  */
 package com.sun.max.vm.t1x;
 
+import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.compiler.target.Safepoints.TEMPLATE_CALL;
 import static com.sun.max.vm.compiler.target.Stub.Type.*;
 import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
@@ -61,7 +62,7 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.stack.amd64.*;
-import com.sun.max.vm.t1x.T1XTemplate.StopsBuilder;
+import com.sun.max.vm.t1x.T1XTemplate.SafepointsBuilder;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
@@ -127,13 +128,6 @@ public final class T1XTargetMethod extends TargetMethod {
     public final CodeAttribute codeAttribute;
 
     /**
-     * A bit map denoting which {@linkplain #directCallees() direct calls} in this target method correspond to calls
-     * into the runtime derived from the constituent templates. These calls are linked using {@link CallEntryPoint#OPTIMIZED_ENTRY_POINT}.
-     * All other direct calls are linked using {@link CallEntryPoint#BASELINE_ENTRY_POINT}.
-     */
-    public final CiBitMap isDirectCallToRuntime;
-
-    /**
      * An array that encodes a mapping from BCIs to target code positions. A non-zero value
      * {@code val} at index {@code i} in the array encodes that there is a bytecode instruction whose opcode is at index
      * {@code i} in the bytecode array and whose target code position is {@code val}. Unless {@code i} is equal to the
@@ -169,13 +163,12 @@ public final class T1XTargetMethod extends TargetMethod {
             annotations = comp.codeAnnotations.toArray(new CodeAnnotation[comp.codeAnnotations.size()]);
         }
 
-        StopsBuilder stops = comp.stops;
+        SafepointsBuilder safepointsBuilder = comp.safepointsBuilder;
         int firstTemplateSlot = frame.numberOfNonParameterSlots() + frame.numberOfOperandStackSlots();
         int firstTemplateSlotIndexInFrameReferenceMap = firstTemplateSlot * JVMSFrameLayout.STACK_SLOTS_PER_JVMS_SLOT;
-        stops.pack(frameRefMapSize, regRefMapSize(), firstTemplateSlotIndexInFrameReferenceMap, comp.adapter);
-        setStopPositions(stops.stopPositions, stops.directCallees, stops.indirectCalls.size, stops.safepoints.size);
-        refMaps = stops.refMaps;
-        isDirectCallToRuntime = stops.isDirectCallToRuntime;
+        safepointsBuilder.pack(frameRefMapSize, regRefMapSize(), firstTemplateSlotIndexInFrameReferenceMap, comp.adapter);
+        setSafepoints(safepointsBuilder.safepoints, safepointsBuilder.directCallees);
+        refMaps = safepointsBuilder.refMaps;
         handlers = initHandlers(comp);
 
         if (comp.methodProfileBuilder != null) {
@@ -206,14 +199,11 @@ public final class T1XTargetMethod extends TargetMethod {
             }
         }
 
-        if (stopPositions != null) {
-            final T1XReferenceMapEditor referenceMapEditor = new T1XReferenceMapEditor(this, comp.numberOfBlocks, comp.blockBCIs, stops.bytecodeStopsIterator, frame);
+        if (safepointsBuilder.safepoints.size() != 0) {
+            final T1XReferenceMapEditor referenceMapEditor = new T1XReferenceMapEditor(this, comp.numberOfBlocks, comp.blockBCIs, safepointsBuilder.bytecodeSafepointsIterator, frame);
             this.refMapEditor.set(referenceMapEditor);
             final ReferenceMapInterpreter interpreter = ReferenceMapInterpreter.from(referenceMapEditor.blockFrames());
             if (interpreter.performsAllocation() || T1XOptions.EagerRefMaps || T1XOptions.PrintCFGToFile) {
-                if (isHosted() && T1XOptions.EagerRefMaps) {
-                    StackReferenceMapPreparer.TraceSRS = true;
-                }
                 finalizeReferenceMaps();
             }
         }
@@ -265,10 +255,10 @@ public final class T1XTargetMethod extends TargetMethod {
 
             // Update the reference maps to cover the local variable holding the copy of the receiver
             if (comp.synchronizedReceiver != -1) {
-                for (int stopIndex = 0; stopIndex < stopPositions.length; stopIndex++) {
-                    int pos = StopPositions.get(stopPositions, stopIndex);
+                for (int safepointIndex = 0; safepointIndex < safepoints.size(); safepointIndex++) {
+                    int pos = safepoints.posAt(safepointIndex);
                     if (pos >= comp.syncMethodStartPos && pos < comp.syncMethodEndPos) {
-                        final int offset = stopIndex * refMapSize();
+                        final int offset = safepointIndex * refMapSize();
                         final int refMapBit = frame.localVariableReferenceMapIndex(comp.synchronizedReceiver);
                         ByteArrayBitMap.set(refMaps, offset, frameRefMapSize, refMapBit);
                     }
@@ -324,17 +314,17 @@ public final class T1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    protected CallEntryPoint callEntryPointForDirectCall(int directCallIndex) {
-        if (isDirectCallToRuntime != null && isDirectCallToRuntime.get(directCallIndex)) {
+    protected CallEntryPoint callEntryPointForDirectCall(int safepointIndex) {
+        if (!safepoints.isSetAt(TEMPLATE_CALL, safepointIndex)) {
             return CallEntryPoint.OPTIMIZED_ENTRY_POINT;
         }
-        return super.callEntryPointForDirectCall(directCallIndex);
+        return CallEntryPoint.BASELINE_ENTRY_POINT;
     }
 
     @HOSTED_ONLY
     @Override
     protected boolean isDirectCalleeInPrologue(int directCalleeIndex) {
-        return stopPosition(directCalleeIndex) < posForBci(0);
+        return safepoints.posAt(directCalleeIndex) < posForBci(0);
     }
 
     public int posForBci(int bci) {
@@ -347,19 +337,16 @@ public final class T1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public CiDebugInfo debugInfoAt(int stopIndex, FrameAccess fa) {
-        CiBitMap frameRefMap = new CiBitMap(referenceMaps(), stopIndex * refMapSize(), frameRefMapSize);
-        CiBitMap regRefMap = new CiBitMap(referenceMaps(), (stopIndex * refMapSize()) + frameRefMapSize, regRefMapSize());
-        int bci = bciForPos(stopPosition(stopIndex));
+    public CiDebugInfo debugInfoAt(int safepointIndex, FrameAccess fa) {
+        CiBitMap frameRefMap = new CiBitMap(referenceMaps(), safepointIndex * refMapSize(), frameRefMapSize);
+        CiBitMap regRefMap = new CiBitMap(referenceMaps(), (safepointIndex * refMapSize()) + frameRefMapSize, regRefMapSize());
+        int bci = bciForPos(safepoints.posAt(safepointIndex));
         CiFrame debugFrame = frame.asFrame(classMethodActor, bci, frameRefMap);
         return new CiDebugInfo(debugFrame, regRefMap, frameRefMap);
     }
 
     @Override
-    public int forEachCodePos(CodePosClosure cpc, Pointer ip, boolean ipIsReturnAddress) {
-        if (!StopPositionForCallIsReturnPos && ipIsReturnAddress && platform().isa.offsetToReturnPC == 0) {
-            ip = ip.minus(1);
-        }
+    public int forEachCodePos(CodePosClosure cpc, Pointer ip) {
         int bci = bciFor(ip.asPointer());
         if (bci >= 0) {
             cpc.doCodePos(classMethodActor, bci);
@@ -613,10 +600,10 @@ public final class T1XTargetMethod extends TargetMethod {
             }
         }
 
-        int stopIndex = findStopIndex(current.ip());
-        if (stopIndex < 0) {
+        int safepointIndex = findSafepointIndex(current.ip());
+        if (safepointIndex < 0) {
             // this is very bad.
-            throw FatalError.unexpected("could not find stop index");
+            throw FatalError.unexpected("could not find safepoint index");
         }
         int refMapSize = refMapSize();
 
@@ -625,8 +612,8 @@ public final class T1XTargetMethod extends TargetMethod {
             // the callee contains register state from this frame;
             // use register reference maps in this method to fill in the map for the callee
             Pointer slotPointer = csa;
-            int byteIndex = (stopIndex * refMapSize) + frameRefMapSize;
-            preparer.tracePrepareReferenceMap(this, stopIndex, slotPointer, "C1X registers frame");
+            int byteIndex = (safepointIndex * refMapSize) + frameRefMapSize;
+            preparer.tracePrepareReferenceMap(this, safepointIndex, slotPointer, "T1X registers frame");
             // Need to translate from register numbers (as stored in the reg ref maps) to frame slots.
             for (int i = 0; i < regRefMapSize(); i++) {
                 int b = refMaps[byteIndex] & 0xff;
@@ -649,8 +636,8 @@ public final class T1XTargetMethod extends TargetMethod {
 
         // prepare the map for this stack frame
         Pointer slotPointer = current.fp().plus(frameRefMapOffset);
-        preparer.tracePrepareReferenceMap(this, stopIndex, slotPointer, "T1X frame");
-        int byteIndex = stopIndex * refMapSize;
+        preparer.tracePrepareReferenceMap(this, safepointIndex, slotPointer, "T1X frame");
+        int byteIndex = safepointIndex * refMapSize;
         for (int i = 0; i < frameRefMapSize; i++) {
             preparer.setReferenceMapBits(current, slotPointer, refMaps[byteIndex] & 0xff, 8);
             slotPointer = slotPointer.plusWords(8);
@@ -814,7 +801,7 @@ public final class T1XTargetMethod extends TargetMethod {
             // Rescue a return address that has been patched for deoptimization
             callerIP = AMD64TargetMethodUtil.rescuePatchedReturnAddress(sfw, callerIP, callerSP);
 
-            sfw.advance(callerIP, callerSP, callerFP, true);
+            sfw.advance(callerIP, callerSP, callerFP);
         } else {
             unimplISA();
         }
@@ -831,13 +818,12 @@ public final class T1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public boolean isDeoptimizationTarget() {
+    public boolean isInterpreterCompatible() {
         return true;
     }
 
     @Override
     public Continuation createDeoptimizedFrame(Info info, CiFrame frame, Continuation cont) {
-        int pos;
         Pointer ip;
         int bci = frame.bci;
         ClassMethodActor method = classMethodActor;
@@ -845,27 +831,38 @@ public final class T1XTargetMethod extends TargetMethod {
         RiMethod callee = method.codeAttribute().calleeAt(bci);
         CiKind returnKind = callee == null ? null : callee.signature().returnKind();
         if (returnKind != null) {
-            // Find instruction *following* the call by searching backwards from the code
-            // position of the bytecode instruction after the invoke
-            final int invokeSize = 3;
+            // Find the instruction *following* the template call by searching backwards
+            // from the template emitted for the instruction after the invoke
+            byte[] bytecode = method.code();
+            int opcode = bytecode[bci] & 0xFF;
+            assert opcode == INVOKEINTERFACE || opcode == INVOKESPECIAL || opcode == INVOKESTATIC || opcode == INVOKEVIRTUAL;
+            int curPos = bciToPos[bci];
+            final int invokeSize = Bytecodes.lengthOf(opcode);
             int succBCI = bci + invokeSize;
             int succPos = bciToPos[succBCI];
-            Pointer succIP = codeStart().plus(succPos);
-            int index = findClosestStopIndex(succIP.minus(1));
-            assert index != -1 : "can't find stop position before " + this + "+" + succPos;
+            assert succPos > curPos;
 
-            if (isAMD64()) {
-                int stopPos = stopPosition(index);
-                int call = TargetMethod.StopPositionForCallIsReturnPos ? directCallPosForStopPos(stopPos) : stopPos;
-                int callSize = AMD64TargetMethodUtil.callInstructionSize(code, call);
-                assert callSize > 0 : "no call instruction at pos " + call;
-                ip = codeStart().plus(call + callSize);
-            } else {
-                throw unimplISA();
+            int templateCallReturnPos = -1;
+            for (int safepointIndex = 0; safepointIndex < safepoints.size(); ++safepointIndex) {
+                int safepointPos = safepoints.posAt(safepointIndex);
+                if (curPos <= safepointPos && safepointPos < succPos) {
+                    if (safepoints.isSetAt(TEMPLATE_CALL, safepointIndex)) {
+                        if (isAMD64()) {
+                            //On x86 the safepoint position of a call *is* the return position
+                            templateCallReturnPos = safepointPos;
+                        } else {
+                            throw unimplISA();
+                        }
+                        break;
+                    }
+                }
             }
+
+            FatalError.check(templateCallReturnPos != -1, "could not find template call at " + curPos + " in " + this);
+            ip = codeStart().plus(templateCallReturnPos);
         } else {
             // Must be a safepoint
-            pos = bciToPos[bci];
+            int pos = bciToPos[bci];
             ip = codeStart().plus(pos);
         }
 

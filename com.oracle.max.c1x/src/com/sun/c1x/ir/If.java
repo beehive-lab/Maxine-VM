@@ -45,12 +45,12 @@ public final class If extends BlockEnd {
      * @param y the instruction that produces the second input to this instruction
      * @param trueSucc the block representing the true successor
      * @param falseSucc the block representing the false successor
-     * @param stateAfter the state before the branch but after the input values have been popped
-     * @param isSafepoint {@code true} if this branch should be considered a safepoint
+     * @param stateBefore the state before the input values have been popped
+     * @param isSafepointPoll {@code true} if this branch should be considered a safepoint
      */
     public If(Value x, Condition cond, boolean unorderedIsTrue, Value y,
-              BlockBegin trueSucc, BlockBegin falseSucc, FrameState stateAfter, boolean isSafepoint) {
-        super(CiKind.Illegal, stateAfter, isSafepoint);
+              BlockBegin trueSucc, BlockBegin falseSucc, FrameState stateBefore, boolean isSafepointPoll) {
+        super(CiKind.Illegal, stateBefore, isSafepointPoll);
         this.x = x;
         this.y = y;
         condition = cond;
@@ -172,7 +172,7 @@ public final class If extends BlockEnd {
             print(successors().get(0).blockID).
             print(" else B").
             print(successors().get(1).blockID);
-        if (isSafepoint()) {
+        if (isSafepointPoll()) {
             out.print(" (safepoint)");
         }
     }

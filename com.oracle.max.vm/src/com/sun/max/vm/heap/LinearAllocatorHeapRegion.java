@@ -60,7 +60,7 @@ public class LinearAllocatorHeapRegion extends LinearAllocationMemoryRegion {
      *
      * If the garbage collector expects to be able to scan this memory region as a sequence of
      * well-formed, contiguous objects between {@link #start()} and {@link #mark()}, then
-     * this caller(s) of this method must ensure that safepoints are {@linkplain Safepoint#disable() disabled}
+     * this caller(s) of this method must ensure that safepoints are {@linkplain SafepointPoll#disable() disabled}
      * until the space allocated by this call has been initialized with the appropriate object header(s).
      *
      * Thread safety considerations: The caller(s) are responsible for ensuring that calls to this

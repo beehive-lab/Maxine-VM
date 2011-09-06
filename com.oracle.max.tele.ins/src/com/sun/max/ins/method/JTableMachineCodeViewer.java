@@ -69,7 +69,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
     private final OperandsRenderer operandsRenderer;
     private final SourceLineRenderer sourceLineRenderer;
     private final Color defaultBackgroundColor;
-    private final Color stopBackgroundColor;
+    private final Color safepointBackgroundColor;
 
     public JTableMachineCodeViewer(Inspection inspection, MethodView parent, MaxMachineCode machineCode) {
         super(inspection, parent, machineCode);
@@ -92,7 +92,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
         final MachineCodeTableColumnModel tableColumnModel = new MachineCodeTableColumnModel(instanceViewPreferences);
         this.table = new MachineCodeTable(inspection, tableModel, tableColumnModel);
         defaultBackgroundColor = this.table.getBackground();
-        stopBackgroundColor = style().darken2(defaultBackgroundColor);
+        safepointBackgroundColor = style().darken2(defaultBackgroundColor);
         createView();
     }
 
@@ -462,9 +462,9 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
         if (isSearchMatchRow(row)) {
             component.setOpaque(true);
             component.setBackground(style().searchMatchedBackground());
-        } else if (instructionMap().isStop(row)) {
+        } else if (instructionMap().isSafepoint(row)) {
             component.setOpaque(true);
-            component.setBackground(stopBackgroundColor);
+            component.setBackground(safepointBackgroundColor);
         } else {
             component.setOpaque(false);
             //component.setBackground(getBackground());

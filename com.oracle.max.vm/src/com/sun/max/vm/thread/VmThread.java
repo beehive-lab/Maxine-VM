@@ -356,8 +356,8 @@ public class VmThread {
      * </ol>
      */
     public Throwable loadExceptionForHandler() {
-        Safepoint.enable();
-        Safepoint.safepoint();
+        SafepointPoll.enable();
+        SafepointPoll.safepointPoll();
         Throwable e = exception;
         exception = null;
         FatalError.check(e != null, "Exception object lost during unwinding");
@@ -442,11 +442,11 @@ public class VmThread {
     /**
      * Gets the current {@linkplain VmThreadLocal TLA}.
      *
-     * @return the value of the safepoint {@linkplain Safepoint#latchRegister() latch} register.
+     * @return the value of the safepoint {@linkplain SafepointPoll#latchRegister() latch} register.
      */
     @INLINE
     public static Pointer currentTLA() {
-        return Safepoint.getLatchRegister();
+        return SafepointPoll.getLatchRegister();
     }
 
     /**
@@ -545,7 +545,7 @@ public class VmThread {
                     Pointer yellowZone) {
 
         // Disable safepoints:
-        Safepoint.setLatchRegister(DTLA.load(etla));
+        SafepointPoll.setLatchRegister(DTLA.load(etla));
 
         JNI_ENV.store3(etla, NativeInterfaces.jniEnv());
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,19 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.compiler.target;
+package com.sun.max.annotate;
 
-import com.sun.max.vm.actor.member.*;
+import java.lang.annotation.*;
 
 /**
- * Call back for use with {@link TargetMethod#forEachCodePos(CodePosClosure, com.sun.max.unsafe.Pointer, boolean)}.
+ * Suppresses the insertion of safepoint polls in the body of the annotated method.
+ *
+ * ATTENTION: callees of the method may still contain safepoint polls.
  */
-public interface CodePosClosure {
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface NO_SAFEPOINT_POLLS {
+
     /**
-     *
-     * @param method
-     * @param bci
-     * @return true if the caller should continue to the next code position (if any), false if it should terminate now
+     * Documents the reason why the annotated code must have no safepoint polls.
      */
-    boolean doCodePos(ClassMethodActor method, int bci);
+    String value();
+
 }

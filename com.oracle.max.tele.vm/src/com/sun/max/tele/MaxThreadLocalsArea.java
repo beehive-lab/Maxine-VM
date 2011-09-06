@@ -52,7 +52,7 @@ public interface MaxThreadLocalsArea extends MaxEntity<MaxThreadLocalsArea> {
      *
      * @return the state
      */
-    Safepoint.State safepointState();
+    SafepointPoll.State safepointState();
 
     /**
      * Gets the number of thread local variables in this thread locals area in the VM.

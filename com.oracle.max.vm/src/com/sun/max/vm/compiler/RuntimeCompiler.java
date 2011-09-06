@@ -30,8 +30,8 @@ import com.sun.max.annotate.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.CompilationScheme.CompilationFlag;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.target.Compilations.Attr;
 
 /**
  * The interface implemented by a compiler that translates {@link ClassMethodActor}s into {@link TargetMethod}s.
@@ -81,9 +81,9 @@ public interface RuntimeCompiler {
 
     /**
      * Determines if this compiler can support a {@linkplain CompilationScheme#synchronousCompile(ClassMethodActor, int) compilation request}
-     * with the {@link CompilationFlag#DEOPTIMIZING} flag set.
+     * with the {@link Attr#INTERPRETER_COMPATIBLE} flag set.
      */
-    boolean canProduceDeoptimizedCode();
+    boolean supportsInterpreterCompatibility();
 
     /**
      * Informs this compiler that the VM does not support deoptimization.

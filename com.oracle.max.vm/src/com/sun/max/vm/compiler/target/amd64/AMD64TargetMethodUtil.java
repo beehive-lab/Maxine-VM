@@ -91,20 +91,20 @@ public final class AMD64TargetMethodUtil {
      * Gets the target of a 32-bit relative CALL instruction.
      *
      * @param targetMethod the method containing the CALL instruction
-     * @param callOffset the offset within the code of {@code targetMethod} of the CALL
+     * @param callPos the offset within the code of {@code targetMethod} of the CALL
      * @return the absolute target address of the CALL
      */
-    public static Address readCall32Target(TargetMethod targetMethod, int callOffset) {
-        final Pointer callSite = targetMethod.codeStart().plus(callOffset);
+    public static Address readCall32Target(TargetMethod targetMethod, int callPos) {
+        final Pointer callSite = targetMethod.codeStart().plus(callPos);
         int disp32;
         if (MaxineVM.isHosted()) {
             final byte[] code = targetMethod.code();
             assert code[0] == (byte) RIP_CALL;
             disp32 =
-                (code[callOffset + 4] & 0xff) << 24 |
-                (code[callOffset + 3] & 0xff) << 16 |
-                (code[callOffset + 2] & 0xff) << 8 |
-                (code[callOffset + 1] & 0xff) << 0;
+                (code[callPos + 4] & 0xff) << 24 |
+                (code[callPos + 3] & 0xff) << 16 |
+                (code[callPos + 2] & 0xff) << 8 |
+                (code[callPos + 1] & 0xff) << 0;
         } else {
             assert callSite.readByte(0) == (byte) RIP_CALL;
             disp32 =
@@ -215,7 +215,7 @@ public final class AMD64TargetMethodUtil {
         Pointer sp = current.sp();
         if (MaxineVM.isHosted()) {
             // Only during a stack walk in the context of the Inspector can execution
-            // be anywhere other than at a recorded stop (i.e. call or safepoint).
+            // be anywhere other than at a safepoint.
             if (atFirstOrLastInstruction(current) || (generator != null && generator.inPrologue(current.ip(), current.targetMethod()))) {
                 sp = sp.minus(current.targetMethod().frameSize());
             }
@@ -243,7 +243,7 @@ public final class AMD64TargetMethodUtil {
         Pointer ripPointer = sp.plus(targetMethod.frameSize());
         if (MaxineVM.isHosted()) {
             // Only during a stack walk in the context of the Inspector can execution
-            // be anywhere other than at a recorded stop (i.e. call or safepoint).
+            // be anywhere other than at a safepoint.
             AdapterGenerator generator = AdapterGenerator.forCallee(current.targetMethod());
             if (generator != null && generator.advanceIfInPrologue(current)) {
                 return;
@@ -269,7 +269,7 @@ public final class AMD64TargetMethodUtil {
         callerIP = rescuePatchedReturnAddress(sfw, callerIP, callerSP);
 
         current.setCalleeSaveArea(csl, csa);
-        sfw.advance(callerIP, callerSP, callerFP, !targetMethod.is(TrapStub));
+        sfw.advance(callerIP, callerSP, callerFP);
     }
 
     /**
@@ -281,12 +281,14 @@ public final class AMD64TargetMethodUtil {
      */
     public static Pointer rescuePatchedReturnAddress(StackFrameWalker sfw, Pointer callerIP, Pointer callerSP) {
         TargetMethod caller = sfw.targetMethodFor(callerIP);
-        if (caller != null && (caller.is(DeoptStub) || caller.is(DeoptStubFromCompilerStub))) {
+        if (caller != null && (caller.is(DeoptStub) || caller.is(DeoptStubFromCompilerStub) || caller.is(DeoptStubFromSafepoint))) {
             if (callerIP.equals(caller.codeStart())) {
+                // Since callerIP denotes the start of a deopt stub, then we're dealing with a patched return address
+                // and the real caller is found in the 'rescue' slot
                 Pointer originalReturnAddress = sfw.readWord(callerSP, DEOPT_RETURN_ADDRESS_OFFSET).asPointer();
                 callerIP = originalReturnAddress;
             } else {
-                // callerIP is a real return address to the frame of a deopt stub
+                // Since callerIP denotes an address within a deopt stub, then the caller really is the deopt stub
             }
         }
         return callerIP;

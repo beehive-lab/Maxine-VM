@@ -76,8 +76,6 @@ public class TargetMethodAssembler {
             C1XMetrics.TargetMethods++;
             C1XMetrics.CodeBytesEmitted += targetMethod.targetCodeSize();
             C1XMetrics.SafepointsEmitted += targetMethod.safepoints.size();
-            C1XMetrics.DirectCallSitesEmitted += targetMethod.directCalls.size();
-            C1XMetrics.IndirectCallSitesEmitted += targetMethod.indirectCalls.size();
             C1XMetrics.DataPatches += targetMethod.dataReferences.size();
             C1XMetrics.ExceptionHandlersEmitted += targetMethod.exceptionHandlers.size();
         }
@@ -101,22 +99,6 @@ public class TargetMethodAssembler {
 
             Util.printSection("Safepoints", Util.SUB_SECTION_CHARACTER);
             for (CiTargetMethod.Safepoint x : targetMethod.safepoints) {
-                TTY.println(x.toString());
-                if (noDis && x.debugInfo != null) {
-                    TTY.println(CiUtil.indent(x.debugInfo.toString(), "  "));
-                }
-            }
-
-            Util.printSection("Direct Call Sites", Util.SUB_SECTION_CHARACTER);
-            for (CiTargetMethod.Call x : targetMethod.directCalls) {
-                TTY.println(x.toString());
-                if (noDis && x.debugInfo != null) {
-                    TTY.println(CiUtil.indent(x.debugInfo.toString(), "  "));
-                }
-            }
-
-            Util.printSection("Indirect Call Sites", Util.SUB_SECTION_CHARACTER);
-            for (CiTargetMethod.Call x : targetMethod.indirectCalls) {
                 TTY.println(x.toString());
                 if (noDis && x.debugInfo != null) {
                     TTY.println(CiUtil.indent(x.debugInfo.toString(), "  "));
