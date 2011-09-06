@@ -76,9 +76,10 @@ import com.sun.max.vm.thread.*;
  * for a garbage collection.
  * </li>
  * <li>
- * Find all references to invalidated target methods (i.e. at call sites) and revert them to trampolines
- * (such code patching is why we must be at a safepoint). That is, we are not guaranteed to be
- * patching call sites that have their offset aligned appropriately for an atomic update.
+ * Find all references to invalidated target methods (i.e. at call sites) and revert them to trampolines.
+ * This code patching is why we must be at a safepoint. This process involves a complete traversal
+ * of the safepoints in every method in the code cache. This may be too slow. Maybe we should patch
+ * the entry points of invalidated methods to revert lazily.
  * </li>
  * <li>Resume from safepoint.</li>
  */
@@ -779,9 +780,7 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
         Info info = new Info(VmThread.current(), ip, sp, fp);
 
         if (TraceDeopt) {
-            s();
             Log.println("DEOPT: Deoptimizing " + info.tm);
-            s();
             Throw.stackDump("DEOPT: Raw stack frames:");
             new Throwable("DEOPT: Bytecode stack frames:").printStackTrace(Log.out);
         }
@@ -797,7 +796,6 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
         assert safepointIndex >= 0 : "no safepoint index for " + tm + "+" + tm.posFor(ip);
 
         if (TraceDeopt) {
-            s();
             Log.println("DEOPT: " + tm + ", safepointIndex=" + safepointIndex + ", pos=" + tm.safepoints().posAt(safepointIndex));
         }
 
@@ -928,14 +926,9 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
         }
     }
 
-    static void s() {
-        Log.printCurrentThread(false);
-    }
-
     @NEVER_INLINE // makes inspecting easier
     static void logPatchReturnAddress(TargetMethod tm, Object callee, Stub stub, Address to, Pointer save, Pointer patch, Address from) {
         if (TraceDeopt) {
-            s();
             Log.println("DEOPT: patched return address @ " + patch.to0xHexString() + " of call to " + callee +
                             ": " + from.to0xHexString() + '[' + tm + '+' + from.minus(tm.codeStart()).toInt() + ']' +
                             " -> " + to.to0xHexString() + '[' + stub + "], saved old value @ " + save.to0xHexString());
@@ -944,10 +937,8 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
 
     @NEVER_INLINE // makes inspecting easier
     static void logFrames(CiFrame topFrame, String label) {
-        s();
         Log.println("DEOPT: --- " + label + " start ---");
         Log.println(topFrame);
-        s();
         Log.println("DEOPT: --- " + label + " end ---");
     }
 }

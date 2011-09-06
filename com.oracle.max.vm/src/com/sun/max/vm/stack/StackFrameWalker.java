@@ -68,7 +68,6 @@ public abstract class StackFrameWalker {
         CiCalleeSaveLayout csl;
         Pointer csa;
         boolean isTopFrame = false;
-        boolean ipIsReturnAddress;
 
         private Cursor() {
         }
@@ -80,28 +79,26 @@ public abstract class StackFrameWalker {
          * @param ip the new instruction pointer
          * @param sp the new stack pointer
          * @param fp the new frame pointer
-         * @param ipIsReturnAddress
          */
-        Cursor advance(Pointer ip, Pointer sp, Pointer fp, boolean ipIsReturnAddress) {
-            return setFields(null, ip, sp, fp, false, ipIsReturnAddress);
+        Cursor advance(Pointer ip, Pointer sp, Pointer fp) {
+            return setFields(null, ip, sp, fp, false);
         }
 
         void reset() {
-            setFields(null, Pointer.zero(), Pointer.zero(), Pointer.zero(), false, false);
+            setFields(null, Pointer.zero(), Pointer.zero(), Pointer.zero(), false);
         }
 
         private void copyFrom(Cursor other) {
-            setFields(other.targetMethod, other.ip, other.sp, other.fp, other.isTopFrame, other.ipIsReturnAddress);
+            setFields(other.targetMethod, other.ip, other.sp, other.fp, other.isTopFrame);
             setCalleeSaveArea(other.csl, other.csa);
         }
 
-        private Cursor setFields(TargetMethod targetMethod, Pointer ip, Pointer sp, Pointer fp, boolean isTopFrame, boolean ipIsReturnAddress) {
+        private Cursor setFields(TargetMethod targetMethod, Pointer ip, Pointer sp, Pointer fp, boolean isTopFrame) {
             this.targetMethod = targetMethod;
             this.ip = ip;
             this.sp = sp;
             this.fp = fp;
             this.isTopFrame = isTopFrame;
-            this.ipIsReturnAddress = ipIsReturnAddress;
             this.csl = null;
             this.csa = Pointer.zero();
             return this;
@@ -109,7 +106,7 @@ public abstract class StackFrameWalker {
 
         /**
          * Sets the callee save details for this frame cursor. This must be called
-         * while this cursor denotes the "current" frame just before {@link StackFrameWalker#advance(Word, Word, Word, boolean)
+         * while this cursor denotes the "current" frame just before {@link StackFrameWalker#advance(Word, Word, Word)
          * is called (after which this cursor will be the "callee" frame).
          *
          * @param csl the layout of the callee save area in the frame denoted by this cursor
@@ -166,22 +163,6 @@ public abstract class StackFrameWalker {
          */
         public boolean isTopFrame() {
             return isTopFrame;
-        }
-
-        /**
-         * Determines if {@link #ip()} denotes an instruction address that may
-         * not be precisely correlated with a position for which debug info is available.
-         * This is the case if the address is the return address read from a callee
-         * frame except for the case where the callee is the {@linkplain Stubs#trapStub() trap stub}
-         * or a native/C function. In the case of the former, the address is that
-         * of the instruction causing the trap. In the case of the latter,
-         * the address is that of the call to the native/C function.
-         *
-         * @return {@code true} if {@link #ip()} is the return address derived from
-         * a {@linkplain Stubs#trapStub() non-trap-stub}, non-native-function callee
-         */
-        public boolean ipIsReturnAddress() {
-            return ipIsReturnAddress;
         }
 
         /**
@@ -483,7 +464,7 @@ public abstract class StackFrameWalker {
             final Word lastJavaCallerFramePointer = readWord(anchor, JavaFrameAnchor.FP.offset);
             advance(checkNativeFunctionCall(lastJavaCallerInstructionPointer.asPointer(), true),
                     lastJavaCallerStackPointer,
-                    lastJavaCallerFramePointer, false);
+                    lastJavaCallerFramePointer);
             return true;
         }
         return false;
@@ -503,7 +484,7 @@ public abstract class StackFrameWalker {
         if (ip.isZero()) {
             ip = nativeFunctionCall;
         }
-        advance(ip, readWord(anchor, JavaFrameAnchor.SP.offset), readWord(anchor, JavaFrameAnchor.FP.offset), false);
+        advance(ip, readWord(anchor, JavaFrameAnchor.SP.offset), readWord(anchor, JavaFrameAnchor.FP.offset));
     }
 
     /**
@@ -700,9 +681,9 @@ public abstract class StackFrameWalker {
      * @param sp the stack pointer of the new current frame
      * @param fp the frame pointer of the new current frame
      */
-    public final void advance(Word ip, Word sp, Word fp, boolean ipIsReturnAddress) {
+    public final void advance(Word ip, Word sp, Word fp) {
         callee.copyFrom(current);
-        current.advance(ip.asPointer(), sp.asPointer(), fp.asPointer(), ipIsReturnAddress);
+        current.advance(ip.asPointer(), sp.asPointer(), fp.asPointer());
     }
 
     public abstract Word readWord(Address address, int offset);
