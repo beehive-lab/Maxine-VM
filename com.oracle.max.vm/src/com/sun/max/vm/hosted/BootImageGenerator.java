@@ -23,6 +23,7 @@
 package com.sun.max.vm.hosted;
 
 import java.io.*;
+import java.util.*;
 
 import com.sun.max.*;
 import com.sun.max.ide.*;
@@ -34,9 +35,12 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.deps.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -360,6 +364,99 @@ public final class BootImageGenerator {
      * @param out the output stream to which to write the statistics
      */
     private static void writeMiscStatistics(PrintStream out) {
+        Log.println();
+        Log.println("==== All Loaded Classes ====");
+        TreeSet<String> names = new TreeSet<String>();
+        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY.bootImageClasses()) {
+            if (classActor.isInstanceClass() && !classActor.isReflectionStub()) {
+                names.add(classActor.toString());
+            }
+        }
+        for (String name : names) {
+            Log.println(name);
+        }
+        int numClasses = names.size();
+        Log.println();
+
+        Log.println();
+        Log.println("==== All Compiled Method ====");
+        names.clear();
+        for (TargetMethod m : Code.bootCodeRegion().copyOfTargetMethods()) {
+            if (m.stubType() == null) {
+                String name = m.toString();
+                names.add(name);
+            }
+        }
+        for (String name : names) {
+            Log.println(name);
+        }
+        int numMethods = names.size();
+
+        Log.println();
+        Log.println("==== Unresolved Calls and Fields in Target Methods ====");
+        TreeMap<String, TreeSet<String>> elements = new TreeMap<String, TreeSet<String>>();
+        for (TargetMethod targetMethod : Code.bootCodeRegion().copyOfTargetMethods()) {
+            if (targetMethod.referenceLiterals() != null) {
+                for (Object o : targetMethod.referenceLiterals()) {
+                    if (o instanceof ResolutionGuard) {
+                        String method = targetMethod.classMethodActor().toString();
+                        String element = o.toString();
+                        if (!elements.containsKey(method)) {
+                            elements.put(method, new TreeSet<String>());
+                        }
+                        elements.get(method).add(element);
+                    }
+                }
+            }
+        }
+        int numUnresolved = 0;
+        for (Map.Entry<String, TreeSet<String>> entry : elements.entrySet()) {
+            Log.println(entry.getKey());
+            numUnresolved += entry.getValue().size();
+            for (String value : entry.getValue()) {
+                Log.println("    " + value);
+            }
+        }
+        Log.println();
+
+        Log.println();
+        Log.println("==== Unlinked Direct Calls in Target Methods ====");
+        elements.clear();
+        for (TargetMethod targetMethod : Code.bootCodeRegion().copyOfTargetMethods()) {
+            if (!(targetMethod instanceof Adapter)) {
+                final Object[] directCallees = targetMethod.directCallees();
+                if (directCallees != null) {
+                    for (Object directCallee : directCallees) {
+                        TargetMethod callee = targetMethod.getTargetMethod(directCallee);
+                        if (directCallee != null && callee == null) {
+                            String method = targetMethod.classMethodActor().toString();
+                            String element = directCallee.toString();
+                            if (!elements.containsKey(method)) {
+                                elements.put(method, new TreeSet<String>());
+                            }
+                            elements.get(method).add(element);
+                        }
+                    }
+                }
+            }
+        }
+        int numUnlinked = 0;
+        for (Map.Entry<String, TreeSet<String>> entry : elements.entrySet()) {
+            Log.println(entry.getKey());
+            numUnlinked += entry.getValue().size();
+            for (String value : entry.getValue()) {
+                Log.println("    " + value);
+            }
+        }
+        Log.println();
+
+        Log.println();
+        Log.println("# Classes:    " + numClasses);
+        Log.println("# Compiled:   " + numMethods);
+        Log.println("# Unresolved: " + numUnresolved);
+        Log.println("# Unlinked:   " + numUnlinked);
+        Log.println();
+
         Trace.line(1, "# utf8 constants: " + SymbolTable.length());
         Trace.line(1, "# type descriptors: " + TypeDescriptor.numberOfDescriptors());
         Trace.line(1, "# signature descriptors: " + SignatureDescriptor.totalNumberOfDescriptors());
