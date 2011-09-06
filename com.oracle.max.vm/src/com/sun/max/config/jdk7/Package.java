@@ -23,6 +23,7 @@
 package com.sun.max.config.jdk7;
 
 import com.sun.max.config.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jdk.*;
 
 /**
@@ -37,6 +38,6 @@ public class Package extends BootImagePackage {
     };
 
     public Package() {
-        super(JDK.JDK_VERSION == JDK.JDK_7 ? packages : new String[0]);
+        super(JDK.JDK_VERSION == JDK.JDK_7 && !CompiledPrototype.ResolveEverything ? packages : new String[0]);
     }
 }
