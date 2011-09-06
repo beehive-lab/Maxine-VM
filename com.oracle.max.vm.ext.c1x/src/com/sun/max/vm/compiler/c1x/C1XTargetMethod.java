@@ -597,7 +597,7 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
     }
 
     @Override
-    public int forEachCodePos(CodePosClosure cpc, Pointer ip, boolean ipIsReturnAddress) {
+    public int forEachCodePos(CodePosClosure cpc, Pointer ip) {
         int index = findSafepointIndex(ip);
         if (index < 0) {
             return 0;

@@ -75,7 +75,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             StackFrameWalker sfw = current.stackFrameWalker();
             final Pointer callerIP = sfw.readWord(current.sp(), 0).asPointer();
             Pointer callerSP = current.sp().plus(Word.size()); // skip RIP
-            sfw.advance(callerIP, callerSP, current.fp(), true);
+            sfw.advance(callerIP, callerSP, current.fp());
             return true;
         }
         return false;
@@ -173,7 +173,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
                 Pointer callerIP = sfw.readWord(ripPointer, 0).asPointer();
                 Pointer callerSP = ripPointer.plus(Word.size()); // Skip RIP word
                 Pointer callerFP = rbpSaved ? sfw.readWord(ripPointer, -Word.size() * 2).asPointer() : current.fp();
-                sfw.advance(callerIP, callerSP, callerFP, true);
+                sfw.advance(callerIP, callerSP, callerFP);
             }
 
             @Override
@@ -566,7 +566,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
                 // Rescue a return address that has been patched for deoptimization
                 callerIP = AMD64TargetMethodUtil.rescuePatchedReturnAddress(sfw, callerIP, callerSP);
 
-                sfw.advance(callerIP, callerSP, callerFP, true);
+                sfw.advance(callerIP, callerSP, callerFP);
             }
 
             @Override

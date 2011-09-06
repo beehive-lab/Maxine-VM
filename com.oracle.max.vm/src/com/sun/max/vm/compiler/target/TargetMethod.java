@@ -78,7 +78,7 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
-     * Call back for use with {@link #forEachCodePos(CodePosClosure, com.sun.max.unsafe.Pointer, boolean)}.
+     * Call back for use with {@link #forEachCodePos(CodePosClosure, com.sun.max.unsafe.Pointer)}.
      */
     public static interface CodePosClosure {
         /**
@@ -193,59 +193,15 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
-     * Gets the bytecode locations for the inlining chain rooted at a given instruction pointer. The first bytecode
-     * location in the returned sequence is the one at the closest position less or equal to the position denoted by
-     * {@code ip}.
-     *
-     * @param targetMethod the target method to process
-     * @param ip a pointer to an instruction within this method
-     * @param ipIsReturnAddress
-     * @return the bytecode locations for the inlining chain rooted at {@code ip}. This will be null if
-     *         no bytecode location can be determined for {@code ip}.
-     */
-    public static CiCodePos getCodePos(TargetMethod targetMethod, Pointer ip, boolean ipIsReturnAddress) {
-        class Caller {
-            final ClassMethodActor method;
-            final int bci;
-            final Caller next;
-            Caller(ClassMethodActor method, int bci, Caller next) {
-                this.method = method;
-                this.bci = bci;
-                this.next = next;
-            }
-            CiCodePos toCiCodePos(CiCodePos caller) {
-                CiCodePos pos = new CiCodePos(caller, method, bci);
-                if (next != null) {
-                    return next.toCiCodePos(pos);
-                }
-                return pos;
-            }
-        }
-        final Caller[] head = {null};
-        CodePosClosure cpc = new CodePosClosure() {
-            public boolean doCodePos(ClassMethodActor method, int bci) {
-                head[0] = new Caller(method, bci, head[0]);
-                return true;
-            }
-        };
-        targetMethod.forEachCodePos(cpc, ip, ipIsReturnAddress);
-        if (head[0] == null) {
-            return null;
-        }
-        return head[0].toCiCodePos(null);
-    }
-
-    /**
      * Iterates over the bytecode locations for the inlining chain rooted at a given instruction pointer.
      *
      * @param cpc a closure called for each bytecode location in the inlining chain rooted at {@code ip} (inner most
      *            callee first)
      * @param ip a pointer to an instruction within this method
-     * @param ipIsReturnAddress
      * @return the number of bytecode locations iterated over (i.e. the number of times
      *         {@link CodePosClosure#doCodePos(ClassMethodActor, int)} was called
      */
-    public int forEachCodePos(CodePosClosure cpc, Pointer ip, boolean ipIsReturnAddress) {
+    public int forEachCodePos(CodePosClosure cpc, Pointer ip) {
         return 0;
     }
 

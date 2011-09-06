@@ -269,7 +269,7 @@ public final class AMD64TargetMethodUtil {
         callerIP = rescuePatchedReturnAddress(sfw, callerIP, callerSP);
 
         current.setCalleeSaveArea(csl, csa);
-        sfw.advance(callerIP, callerSP, callerFP, !targetMethod.is(TrapStub));
+        sfw.advance(callerIP, callerSP, callerFP);
     }
 
     /**
