@@ -238,17 +238,13 @@ public final class BootImageGenerator {
                 writeObjectTree(dataPrototype, graphPrototype, new File(vmDirectory, IMAGE_OBJECT_TREE_FILE_NAME));
                 writeMethodTree(graphPrototype.compiledPrototype, new File(vmDirectory, IMAGE_METHOD_TREE_FILE_NAME));
             }
+            if (statsOption.getValue()) {
+                writeMiscStatistics(Trace.stream());
+            }
         } catch (IOException ioException) {
             throw ProgramError.unexpected("could not write file ", ioException);
         } finally {
             final long timeInMilliseconds = System.currentTimeMillis() - start;
-            if (statsOption.getValue()) {
-                try {
-                    writeMiscStatistics(Trace.stream());
-                } catch (Throwable throwable) {
-                    throwable.printStackTrace();
-                }
-            }
             Trace.line(1, "Total time: " + (timeInMilliseconds / 1000.0f) + " seconds");
             System.out.flush();
         }
