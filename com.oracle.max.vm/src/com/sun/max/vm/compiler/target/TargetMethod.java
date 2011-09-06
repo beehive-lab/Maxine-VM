@@ -104,7 +104,7 @@ public abstract class TargetMethod extends MemoryRegion {
     /**
      * @see #directCallees()
      */
-    protected Object[] directCallees;
+    protected Object[] directCallees = NO_DIRECT_CALLEES;
 
     protected byte[] scalarLiterals;
 
@@ -261,10 +261,6 @@ public abstract class TargetMethod extends MemoryRegion {
      */
     public CiDebugInfo debugInfoAt(int safepointIndex, FrameAccess fa) {
         return null;
-    }
-
-    public final int numberOfDirectCalls() {
-        return (directCallees == null) ? 0 : directCallees.length;
     }
 
     /**
@@ -677,7 +673,7 @@ public abstract class TargetMethod extends MemoryRegion {
      */
     public final boolean linkDirectCalls() {
         boolean linkedAll = true;
-        if (directCallees != null) {
+        if (directCallees.length != 0) {
             int dcIndex = 0;
             for (int safepointIndex = safepoints.nextDirectCall(0); safepointIndex >= 0; safepointIndex = safepoints.nextDirectCall(safepointIndex + 1)) {
                 Object currentDirectCallee = directCallees[dcIndex];

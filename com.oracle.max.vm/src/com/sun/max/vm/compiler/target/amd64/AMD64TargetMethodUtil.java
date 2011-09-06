@@ -106,7 +106,7 @@ public final class AMD64TargetMethodUtil {
                 (code[callPos + 2] & 0xff) << 8 |
                 (code[callPos + 1] & 0xff) << 0;
         } else {
-            assert callSite.readByte(0) == (byte) RIP_CALL;
+            assert callSite.readByte(0) == (byte) RIP_CALL : callSite.to0xHexString();
             disp32 =
                 (callSite.readByte(4) & 0xff) << 24 |
                 (callSite.readByte(3) & 0xff) << 16 |
