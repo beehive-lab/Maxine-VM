@@ -245,8 +245,10 @@ public final class AMD64LIRAssembler extends LIRAssembler {
             case Float   : masm.movl(frameMap.toStackAddress(slot), floatToRawIntBits(c.asFloat())); break;
             case Object  : movoop(frameMap.toStackAddress(slot), c); break;
             case Word    :
-            case Long    : masm.mov64(frameMap.toStackAddress(slot), c.asLong()); break;
-            case Double  : masm.mov64(frameMap.toStackAddress(slot), doubleToRawLongBits(c.asDouble())); break;
+            case Long    : masm.movq(rscratch1, c.asLong());
+                           masm.movq(frameMap.toStackAddress(slot), rscratch1); break;
+            case Double  : masm.movq(rscratch1, doubleToRawLongBits(c.asDouble()));
+                           masm.movq(frameMap.toStackAddress(slot), rscratch1); break;
             default      : throw Util.shouldNotReachHere("Unknown constant kind for const2stack: " + c.kind);
         }
         // Checkstyle: on
@@ -2221,9 +2223,9 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         tasm.recordDirectCall(before, after - before, asCallTarget(target), null);
     }
 
-    public void indirectCall(CiRegister dst, Object target, LIRDebugInfo info) {
+    public void indirectCall(CiRegister src, Object target, LIRDebugInfo info) {
         int before = masm.codeBuffer.position();
-        masm.call(dst);
+        masm.call(src);
         int after = masm.codeBuffer.position();
         if (C1XOptions.EmitNopAfterCall) {
             masm.nop();

@@ -31,16 +31,8 @@ import com.sun.cri.ri.*;
  */
 public class AMD64MacroAssembler extends AMD64Assembler {
 
-    protected final CiRegister rscratch1;
-
     public AMD64MacroAssembler(CiTarget target, RiRegisterConfig registerConfig) {
         super(target, registerConfig);
-        this.rscratch1 = registerConfig.getScratchRegister();
-    }
-
-    public void mov64(CiAddress dst, long src) {
-        movq(rscratch1, src);
-        movq(dst, rscratch1);
     }
 
     public void pushptr(CiAddress src) {
@@ -301,6 +293,11 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         } else {
             movlpd(dst, src);
         }
+    }
+
+    public void movdbl(CiAddress dst, CiRegister src) {
+        assert src.isFpu();
+        movsd(dst, src);
     }
 
     public void xchgptr(CiRegister src1, CiRegister src2) {

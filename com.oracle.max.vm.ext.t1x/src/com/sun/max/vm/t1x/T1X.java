@@ -32,7 +32,6 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.CiCallingConvention.Type;
@@ -54,6 +53,7 @@ import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
+import com.sun.max.vm.type.*;
 import com.sun.max.vm.verifier.*;
 
 /**
@@ -66,16 +66,6 @@ public class T1X implements RuntimeCompiler {
     }
 
     public final T1XTemplate[] templates = new T1XTemplate[T1XTemplateTag.values().length];
-
-    /**
-     * Support for {@link T1XOptions#PrintBytecodeHistogram}.
-     */
-    long[] dynamicBytecodeCount;
-
-    /**
-     * Support for {@link T1XOptions#PrintBytecodeHistogram}.
-     */
-    long[] staticBytecodeCount;
 
     /**
      * Class defining the template definitions, default is {@link T1XTemplateSource}.
@@ -93,9 +83,7 @@ public class T1X implements RuntimeCompiler {
      */
     protected final T1XCompilationFactory t1XCompilationFactory;
 
-    // TODO(mjj) These are not implemented by standard T1X but should they be?
-    private static final EnumSet UNIMPLEMENTED_TEMPLATES = EnumSet.of(T1XTemplateTag.GOTO, T1XTemplateTag.GOTO_W,
-                    T1XTemplateTag.NULL_CHECK, T1XTemplateTag.WRITEREG$link);
+    private static final EnumSet UNIMPLEMENTED_TEMPLATES = EnumSet.noneOf(T1XTemplateTag.class);
 
     @HOSTED_ONLY
     public T1X() {
@@ -333,21 +321,7 @@ public class T1X implements RuntimeCompiler {
         if (isHosted() && phase == Phase.COMPILING) {
             createTemplates(templateSource, altT1X, true, templates);
         }
-        if (phase == Phase.STARTING) {
-            if (T1XOptions.PrintBytecodeHistogram) {
-                dynamicBytecodeCount = new long[256];
-                staticBytecodeCount = new long[256];
-            }
-        } else if (phase == Phase.TERMINATING) {
-            if (T1XOptions.PrintBytecodeHistogram) {
-                Log.println("Bytecode Histogram: Mnemonic <tab> Dynamic Count <tab> Static Count");
-                for (int i = 0; i < 256; i++) {
-                    String name = Bytecodes.nameOf(i);
-                    if (!name.startsWith("<illegal")) {
-                        Log.println(name + "\t" + dynamicBytecodeCount[i] + "\t" + staticBytecodeCount[i]);
-                    }
-                }
-            }
+        if (phase == Phase.TERMINATING) {
 
             if (T1XOptions.PrintMetrics) {
                 T1XMetrics.print();
@@ -386,11 +360,7 @@ public class T1X implements RuntimeCompiler {
             bootCompiler = new C1X();
             bootCompiler.initialize(Phase.COMPILING);
         }
-        C1XCompiler comp = bootCompiler.compiler();
-        List<C1XCompilerExtension> oldExtensions = comp.extensions;
-        comp.extensions = Arrays.asList(new C1XCompilerExtension[] {new T1XTemplateChecker()});
 
-        ClassActor.fromJava(T1XFrameOps.class);
         ClassActor.fromJava(T1XRuntime.class);
         ClassVerifier verifier = new TypeCheckingVerifier(ClassActor.fromJava(T1XTemplateSource.class));
 
@@ -406,6 +376,12 @@ public class T1X implements RuntimeCompiler {
 
                     FatalError.check(templateSource.isTemplate(), "Method with " + T1X_TEMPLATE.class.getSimpleName() + " annotation should be a template: " + templateSource);
                     FatalError.check(!hasStackParameters(templateSource), "Template must not have *any* stack parameters: " + templateSource);
+
+                    FatalError.check(templateSource.resultKind().stackKind == templateSource.resultKind(), "Template return type must be a stack kind: " + templateSource);
+                    for (int i = 0; i < templateSource.getParameterKinds().length; i++) {
+                        Kind k = templateSource.getParameterKinds()[i];
+                        FatalError.check(k.stackKind == k, "Template parameter " + i + " is not a stack kind: " + templateSource);
+                    }
 
                     final C1XTargetMethod templateCode = (C1XTargetMethod) bootCompiler.compile(templateSource, true, null);
                     if (!(templateCode.referenceLiterals() == null)) {
@@ -443,8 +419,22 @@ public class T1X implements RuntimeCompiler {
             }
         }
         Trace.end(1, "creating T1X templates from " + templateSourceClass.getName() + " [templates code size: " + codeSize + "]", startTime);
-        comp.extensions = oldExtensions;
         return templates;
+    }
+
+    static {
+        try {
+            if (T1XTemplateGenerator.generate(true, T1XTemplateSource.class)) {
+                String thisFile = T1XTemplateSource.class.getSimpleName();
+                System.out.printf("%nThe generated content in %s " +
+                    " is out of sync. Edit %s instead to make the desired changes and then run 'max t1xgen', " +
+                    "recompile %s (or refresh it in your IDE) and restart the bootstrapping process.%n%n",
+                    thisFile, T1XTemplateGenerator.class.getSimpleName(), thisFile);
+                System.exit(1);
+            }
+        } catch (Exception e) {
+            FatalError.unexpected("Error while generating source for " + T1XTemplateSource.class, e);
+        }
     }
 
     @HOSTED_ONLY
@@ -461,5 +451,21 @@ public class T1X implements RuntimeCompiler {
     @Override
     public String toString() {
         return getClass().getSimpleName();
+    }
+
+    /**
+     * Determines if the target ISA is AMD64.
+     */
+    @FOLD
+    public static boolean isAMD64() {
+        return platform().isa == ISA.AMD64;
+    }
+
+    /**
+     * Called to denote some functionality is not yet implemented for the target ISA.
+     */
+    @NEVER_INLINE
+    public static FatalError unimplISA() {
+        throw FatalError.unexpected("Unimplemented platform: " + platform().isa);
     }
 }

@@ -30,7 +30,6 @@ import java.util.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
-import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
@@ -46,7 +45,7 @@ import com.sun.max.vm.stack.StackFrameWalker.Cursor;
  * direct call to another method, so the callee is passed into the constructor directly.
  * Stack walking of stub frames is done with the same code as for optimized compiler frames.
  */
-public class Stub extends TargetMethod {
+public final class Stub extends TargetMethod {
 
     public enum Type {
         /**
@@ -236,14 +235,6 @@ public class Stub extends TargetMethod {
             throw FatalError.unexpected("Exception occurred in stub frame");
         }
         return Address.zero();
-    }
-
-    @Override
-    public void traceDebugInfo(IndentWriter writer) {
-    }
-
-    @Override
-    public void traceExceptionHandlers(IndentWriter writer) {
     }
 
     @Override

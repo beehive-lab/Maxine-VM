@@ -24,6 +24,7 @@ package com.oracle.max.vma.tools.gen.vma;
 
 import static com.sun.max.vm.t1x.T1XTemplateGenerator.*;
 
+import java.io.*;
 import java.lang.reflect.*;
 import java.util.regex.*;
 
@@ -38,6 +39,8 @@ import com.sun.cri.bytecode.*;
  *
  */
 public class VMABytecodesGenerator {
+
+    static PrintStream out = System.out;
 
     public static void main(String[] args) {
         boolean first = true;

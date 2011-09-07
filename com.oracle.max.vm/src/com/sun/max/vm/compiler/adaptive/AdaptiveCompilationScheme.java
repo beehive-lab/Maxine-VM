@@ -255,8 +255,8 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 Object compiledState = classMethodActor.compiledState;
                 compilation = compiledState instanceof Compilation ? (Compilation) compiledState : null;
                 if (compilation != null && (flags == 0 || flags == compilation.flags)) {
-                    // Only wait for a pending compilation if it compatible with the current request.
-                    // That is the current request does not specify a special type of method (flags == 0)
+                    // Only wait for a pending compilation if it is compatible with the current request.
+                    // That is, the current request does not specify a special type of method (flags == 0)
                     // or it specifies the same type of method as the pending compilation (flags == compilation.flags)
                     if (retryCompiler != null) {
                         assert compilation.compilingThread == Thread.currentThread();
@@ -290,7 +290,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                     t.printStackTrace(Log.out);
                     Log.unlock(lockDisabledSafepoints);
                 }
-                if (!FailOverCompilation || retryCompiler != null || (optimizingCompiler == baselineCompiler)) {
+                if (!FailOverCompilation || retryCompiler != null || (optimizingCompiler == baselineCompiler) || isHosted()) {
                     // This is the final failure: no other compilers available or failover is disabled
                     throw (InternalError) new InternalError(errorMessage + " (final attempt)").initCause(t);
                 }

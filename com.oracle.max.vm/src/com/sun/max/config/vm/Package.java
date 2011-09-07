@@ -68,7 +68,7 @@ public class Package extends BootImagePackage {
             "com.sun.max.vm.value.*",
             "com.sun.max.vm.verifier.**",
             "com.oracle.max.asm.**",
-            "com.sun.max.vm.t1x.*"
+            "com.sun.max.vm.t1x.**"
                         );
     }
 }

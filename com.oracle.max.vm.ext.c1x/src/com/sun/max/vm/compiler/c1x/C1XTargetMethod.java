@@ -33,10 +33,13 @@ import java.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiCallingConvention.Type;
 import com.sun.cri.ci.CiRegister.RegisterFlag;
-import com.sun.cri.ci.CiTargetMethod.*;
+import com.sun.cri.ci.CiTargetMethod.Call;
+import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
+import com.sun.cri.ci.CiTargetMethod.ExceptionHandler;
+import com.sun.cri.ci.CiTargetMethod.Mark;
+import com.sun.cri.ci.CiTargetMethod.Safepoint;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
-import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -324,23 +327,6 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
 
         assert runtimeCall != null : "A call can either be a call to a method or a runtime call";
         return C1XRuntimeCalls.getClassMethodActor(runtimeCall);
-    }
-
-    @Override
-    public void traceDebugInfo(IndentWriter writer) {
-    }
-
-    @Override
-    public void traceExceptionHandlers(IndentWriter writer) {
-        if (getExceptionHandlerCount() != 0) {
-            writer.println("Exception handlers:");
-            writer.indent();
-            for (int i = 0; i < getExceptionHandlerCount(); i++) {
-                ClassActor catchType = getCatchTypeAt(i);
-                writer.println((catchType == null ? "<any>" : catchType) + " @ " + getExceptionPosAt(i) + " -> " + getCatchPosAt(i));
-            }
-            writer.outdent();
-        }
     }
 
     /**

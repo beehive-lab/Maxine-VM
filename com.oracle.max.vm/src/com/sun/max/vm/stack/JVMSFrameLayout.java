@@ -117,8 +117,8 @@ public abstract class JVMSFrameLayout extends VMFrameLayout {
         return kind.isCategory1 ? JVMS_SLOT_SIZE : 2 * JVMS_SLOT_SIZE;
     }
 
-    public static int offsetInStackSlot(Kind kind) {
-        if (kind.width.equals(WordWidth.BITS_64)) {
+    public static int offsetInStackSlot(CiKind kind) {
+        if (kind.isDoubleWord()) {
             return CATEGORY2_OFFSET_WITHIN_WORD;
         }
         return CATEGORY1_OFFSET_WITHIN_WORD;

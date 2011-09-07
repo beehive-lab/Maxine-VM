@@ -51,6 +51,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.adaptive.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.value.*;
@@ -137,6 +138,13 @@ public class MaxRiRuntime implements RiRuntime {
             // is used by
             return true;
         }
+
+        if (isHosted() && AdaptiveCompilationScheme.compileWithBaseline.contains(classMethodActor.holder().javaClass())) {
+            // Ensure that methods intended to be compiled by the baseline compiler for the
+            // purpose of a JTT test are not inlined.
+            return true;
+        }
+
         return classMethodActor.codeAttribute() == null || classMethodActor.isNeverInline();
     }
 
