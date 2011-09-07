@@ -86,7 +86,6 @@ public class Package extends BootImagePackage {
         MaxineVM.registerKeepClassInit("java.io.File");
         MaxineVM.registerKeepClassInit("sun.misc.Perf");
         MaxineVM.registerKeepClassInit("sun.misc.Launcher");
-        MaxineVM.registerKeepClassInit("sun.misc.Launcher$BootClassPathHolder");
     }
 
     /**
@@ -122,6 +121,8 @@ public class Package extends BootImagePackage {
         HostedBootClassLoader.omitClass("sun.nio.ch.FileChannelImpl");
         HostedBootClassLoader.omitClass("sun.nio.ch.Util");
         HostedBootClassLoader.omitClass("sun.jkernel.Bundle");
+        // Java 7 only class that indirectly caches references to JarFiles
+        HostedBootClassLoader.omitClass(sun.misc.Launcher.class.getName() + "$BootClassPathHolder");
 
         // Methods that are called using JNI during startup; we want the invocation stub in the boot image to avoid compilation at run time
         CompiledPrototype.registerImageInvocationStub(MethodActor.fromJava(Classes.getDeclaredMethod(java.lang.System.class, "getProperty", String.class)));
