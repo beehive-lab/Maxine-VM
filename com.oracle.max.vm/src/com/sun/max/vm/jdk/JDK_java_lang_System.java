@@ -640,9 +640,6 @@ public final class JDK_java_lang_System {
     @ALIAS(declaringClass = Launcher.class, name = "<clinit>")
     private static native void Launcher_clinit();
 
-    @ALIAS(declaringClassName = "sun.misc.Launcher$BootClassPathHolder", name = "<clinit>", optional = true)
-    private static native void Launcher_BootClassPathHolder_clinit();
-
     // Checkstyle: resume method name check
 
     /**
@@ -795,9 +792,6 @@ public final class JDK_java_lang_System {
 
         // 13. reinitialize the Java launcher so that it reflects the actual application classpath
         Launcher_clinit();
-        if (JDK.JDK_VERSION >= JDK.JDK_7) {
-            Launcher_BootClassPathHolder_clinit();
-        }
 
         return properties;
     }

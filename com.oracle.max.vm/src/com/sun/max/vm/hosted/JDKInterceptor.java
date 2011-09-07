@@ -184,6 +184,9 @@ public final class JDKInterceptor {
             "booted",
             "finalRefCount",
             "peakFinalRefCount",
+        JDK.sun_net_www_protocol_jar_JarFileFactory,
+            new ValueField("fileCache", ReferenceValue.from(new HashMap()), true),
+            new ValueField("urlCache", ReferenceValue.from(new HashMap()), true),
         JDK.sun_reflect_ConstantPool,
             new ZeroField("constantPoolOop", false, false),
         JDK.sun_reflect_Reflection,
@@ -273,6 +276,8 @@ public final class JDKInterceptor {
     };
 
     private static final Object[] interceptedFieldArrayJDK6 = {
+        JDK.sun_misc_Launcher,
+            "bootstrapClassPath",
         JDK.java_util_concurrent_atomic_AtomicIntegerArray,
             new ArrayIndexScaleRecomputation("scale", int[].class),
         JDK.java_util_concurrent_atomic_AtomicLongArray,
