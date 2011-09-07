@@ -197,16 +197,10 @@ public class Stubs {
         if (interfaceTrampolines.size() <= iIndex) {
             for (int i = interfaceTrampolines.size(); i <= iIndex; i++) {
                 String stubName = "itrampoline<" + i + ">";
-                if (verboseOption.verboseCompilation) {
-                    VmThread thread = VmThread.current();
-                    Log.println(thread.getName() + "[id=" + thread.id() + "]: Creating stub " + stubName);
-                }
+                traceBeforeStubCreation(stubName);
                 Stub stub = genDynamicTrampoline(i, true, stubName);
                 interfaceTrampolines.add(stub);
-                if (verboseOption.verboseCompilation) {
-                    VmThread thread = VmThread.current();
-                    Log.println(thread.getName() + "[id=" + thread.id() + "]: Created stub " + stub.regionName());
-                }
+                traceAfterStubCreation(stubName);
             }
         }
         return VTABLE_ENTRY_POINT.in(interfaceTrampolines.get(iIndex));
@@ -216,19 +210,37 @@ public class Stubs {
         if (virtualTrampolines.size() <= vTableIndex) {
             for (int i = virtualTrampolines.size(); i <= vTableIndex; i++) {
                 String stubName = "vtrampoline<" + i + ">";
-                if (verboseOption.verboseCompilation) {
-                    VmThread thread = VmThread.current();
-                    Log.println(thread.getName() + "[id=" + thread.id() + "]: Creating stub " + stubName);
-                }
+                traceBeforeStubCreation(stubName);
                 Stub stub = genDynamicTrampoline(i, false, stubName);
                 virtualTrampolines.add(stub);
-                if (verboseOption.verboseCompilation) {
-                    VmThread thread = VmThread.current();
-                    Log.println(thread.getName() + "[id=" + thread.id() + "]: Created stub " + stub.regionName());
-                }
+                traceAfterStubCreation(stubName);
             }
         }
         return VTABLE_ENTRY_POINT.in(virtualTrampolines.get(vTableIndex));
+    }
+
+    protected void traceBeforeStubCreation(String stubName) {
+        if (verboseOption.verboseCompilation) {
+            if (isHosted()) {
+                Thread thread = Thread.currentThread();
+                Log.println(thread.getName() + "[id=" + thread.getId() + "]: Creating stub " + stubName);
+            } else {
+                VmThread thread = VmThread.current();
+                Log.println(thread.getName() + "[id=" + thread.id() + "]: Creating stub " + stubName);
+            }
+        }
+    }
+
+    protected void traceAfterStubCreation(String stubName) {
+        if (verboseOption.verboseCompilation) {
+            if (isHosted()) {
+                Thread thread = Thread.currentThread();
+                Log.println(thread.getName() + "[id=" + thread.getId() + "]: Created stub " + stubName);
+            } else {
+                VmThread thread = VmThread.current();
+                Log.println(thread.getName() + "[id=" + thread.id() + "]: Created stub " + stubName);
+            }
+        }
     }
 
     private static Address adjustEntryPointForCaller(Address virtualDispatchEntryPoint, Pointer pcInCaller) {

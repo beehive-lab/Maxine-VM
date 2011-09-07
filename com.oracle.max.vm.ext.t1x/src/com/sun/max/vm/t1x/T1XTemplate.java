@@ -22,17 +22,25 @@
  */
 package com.sun.max.vm.t1x;
 
+import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.compiler.target.Safepoints.*;
 
+import java.lang.annotation.*;
 import java.util.*;
 
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiCallingConvention.*;
+import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.classfile.LocalVariableTable.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.Safepoints.Attr;
+import com.sun.max.vm.type.*;
 
 /**
  * A T1X template is a piece of machine code (and its associated metadata) that
@@ -106,11 +114,31 @@ public class T1XTemplate {
 
     private static final T1XSafepoint[] NO_SAFEPOINTS = {};
 
+    /**
+     * The source bytecode of this template.
+     */
     public final ClassMethodActor method;
+
+    /**
+     * The template tag.
+     */
     public final T1XTemplateTag tag;
+
+    /**
+     * This template's machine code.
+     */
     public final byte[] code;
-    public final T1XSafepoint templateCall;
+
+    /**
+     * The safepoints in this template.
+     */
     public final T1XSafepoint[] safepoints;
+
+    /**
+     * Describes the signature of a {@linkplain T1X_TEMPLATE template}
+     * in terms of register mapping for the parameters and stack usage.
+     */
+    public final Sig sig;
 
     @Override
     public String toString() {
@@ -164,7 +192,8 @@ public class T1XTemplate {
         Safepoints safepoints;
         int directCalls;
         int bcisWithSafepoints;
-        int lastBci;
+        int lastBCI;
+        int lastNonTemplateSafepointBCI;
 
         public Object[] directCallees;
         public byte[] refMaps;
@@ -177,7 +206,8 @@ public class T1XTemplate {
         void reset(boolean hard) {
             directCalls = 0;
             bcisWithSafepoints = 0;
-            lastBci = -1;
+            lastBCI = -1;
+            lastNonTemplateSafepointBCI = -1;
             if (hard) {
                 safepointsArray = new SafepointArray();
             } else {
@@ -187,26 +217,41 @@ public class T1XTemplate {
 
         void reserveInBSM(T1XSafepoint safepoint) {
             if (safepoint.bci >= 0) {
-                if (lastBci != safepoint.bci) {
-                    lastBci = safepoint.bci;
+                if (lastBCI != safepoint.bci) {
+                    lastBCI = safepoint.bci;
                     bcisWithSafepoints++;
                 }
             }
         }
 
-        public void addSafepoint(int bci, int pos) {
+        /**
+         * Adds a safepoint for non-template code. Such a safepoint must come
+         * after all template code safepoints. This way we know that the
+         * template slots are dead and so can be ignored in the gc maps.
+         *
+         * @param bci
+         * @param safepoint
+         * @param directCallee
+         */
+        public void addSafepoint(int bci, int safepoint, ClassMethodActor directCallee) {
             T1XSafepoint dst = safepointsArray.makeNext();
             dst.bci = bci;
-            dst.safepoint = Safepoints.make(pos);
-            dst.callee = null;
+            dst.safepoint = safepoint;
+            dst.callee = directCallee;
+            if (directCallee != null) {
+                directCalls++;
+            }
 
             // No GC maps needed: the template slots are dead for the remainder of the template
             dst.regRefMap = null;
             dst.frameRefMap = null;
             reserveInBSM(dst);
+            lastNonTemplateSafepointBCI = bci;
         }
 
-        public void add(T1XTemplate template, int pos, int bci, ClassMethodActor directBytecodeCallee) {
+        public void add(T1XTemplate template, int pos, int bci) {
+            assert bci == -1 || bci != lastNonTemplateSafepointBCI : "safepoints in template code must always precede non-template safepoints for any specific BCI";
+
             for (T1XSafepoint src : template.safepoints) {
                 T1XSafepoint dst = safepointsArray.makeNext();
                 dst.bci = bci;
@@ -215,15 +260,7 @@ public class T1XTemplate {
                     // The decision as to whether ref-maps are used is made when the template is created
                     dst.frameRefMap = src.frameRefMap;
                     dst.regRefMap = src.regRefMap;
-                    if (src == template.templateCall) {
-                        assert directBytecodeCallee != null : "bytecode call in template must bound to a direct bytecode callee";
-                        dst.callee = directBytecodeCallee;
-
-                        // Make sure the direct bytecode callee is bound at most once
-                        directBytecodeCallee = null;
-                    } else {
-                        dst.callee = src.callee;
-                    }
+                    dst.callee = src.callee;
                     directCalls++;
                 } else {
                     assert !src.isSet(DIRECT_CALL);
@@ -319,6 +356,107 @@ public class T1XTemplate {
         }
     }
 
+    /**
+     * Describes an argument or return value of a {@linkplain T1X_TEMPLATE template} method.
+     */
+    public static class Arg {
+        /**
+         * The kind of this arg.
+         */
+        public final CiKind kind;
+
+        public final String name;
+
+        /**
+         * The register in which this arg is passed.
+         */
+        public final CiRegister reg;
+
+        /**
+         * The operand stack index of the slot(s) holding this arg's value.
+         * This will be -1 if this arg does not get its value from the operand stack.
+         * @see Slot
+         */
+        public final int slot;
+
+        public Arg(CiKind kind, CiRegister reg, String name, int slot) {
+            this.kind = kind;
+            this.name = name;
+            this.reg = reg;
+            this.slot = slot;
+        }
+
+        /**
+         * Determines if this arg gets its value from the operand stack.
+         */
+        public boolean isStack() {
+            return slot >= 0;
+        }
+
+        /**
+         * Gets the number of stack slots holding this arg's value.
+         * This will be 0 if this arg does not get its value from the stack.
+         */
+        public int stackSlots() {
+            if (slot < 0) {
+                return 0;
+            } else {
+                return kind.jvmSlots;
+            }
+        }
+
+        @Override
+        public String toString() {
+            return name + ':' + kind + "[reg=" + reg + ", slot=" + slot + "]";
+        }
+    }
+
+    /**
+     * Describes the signature of a {@linkplain T1X_TEMPLATE template}
+     * in terms of register mapping for the parameters and stack usage.
+     */
+    public static class Sig {
+        /**
+         * The parameters of the template method.
+         */
+        public final Arg[] in;
+
+        /**
+         * The return value of the template method.
+         */
+        public final Arg out;
+
+        /**
+         * The net adjustment in terms of slots to the operand stack based on
+         * the stack-based parameters and stack-based result of the template.
+         */
+        public final int stackDelta;
+
+        /**
+         * The number of {@link #in parameters} whose value comes from the operand stack.
+         */
+        public final int stackArgs;
+
+        @HOSTED_ONLY
+        public Sig(Arg[] in, Arg out) {
+            this.in = in;
+            this.out = out;
+
+            int stackDelta = out.stackSlots();
+            int stackArgs = 0;
+            for (Arg a : in) {
+                if (a.isStack()) {
+                    stackDelta -= a.stackSlots();
+                    stackArgs++;
+                } else {
+                    assert a.stackSlots() == 0;
+                }
+            }
+            this.stackDelta = stackDelta;
+            this.stackArgs = stackArgs;
+        }
+    }
+
     @HOSTED_ONLY
     private static CiBitMap nullIfEmpty(CiBitMap bm) {
         return bm.cardinality() == 0 ? null : bm;
@@ -333,10 +471,8 @@ public class T1XTemplate {
 
         if (nSafepoints == 0) {
             safepoints = NO_SAFEPOINTS;
-            templateCall = null;
         } else {
             safepoints = new T1XSafepoint[nSafepoints];
-            T1XSafepoint templateCall = null;
 
             Safepoints sourceSafepoints = source.safepoints();
 
@@ -348,19 +484,73 @@ public class T1XTemplate {
                 t1xSafepoint.frameRefMap = nullIfEmpty(source.debugInfo().frameRefMapAt(safepointIndex));
                 t1xSafepoint.regRefMap = nullIfEmpty(source.debugInfo().regRefMapAt(safepointIndex));
                 if (sourceSafepoints.isSetAt(DIRECT_CALL, safepointIndex)) {
-                    if (sourceSafepoints.isSetAt(TEMPLATE_CALL, safepointIndex)) {
-                        assert templateCall == null : "template can have at most one TEMPLATE_CALL";
-                        templateCall = t1xSafepoint;
-                    } else {
-                        t1xSafepoint.callee = (ClassMethodActor) source.directCallees()[dcIndex];
-                        assert t1xSafepoint.callee != null;
-                    }
+                    t1xSafepoint.callee = (ClassMethodActor) source.directCallees()[dcIndex];
+                    assert t1xSafepoint.callee != null;
                     dcIndex++;
                 }
                 safepoints[safepointIndex] = t1xSafepoint;
             }
-
-            this.templateCall = templateCall;
         }
+
+        sig = initSig(method);
+    }
+
+    @HOSTED_ONLY
+    public Sig initSig(ClassMethodActor method) {
+        CiRegisterConfig regConfig = vm().registerConfigs.standard;
+        Map<Integer, Integer> slots = extractSlots(method);
+
+        RiSignature sig = method.signature();
+        CiKind[] kinds = CiUtil.signatureToKinds(sig, null);
+        Arg[] in = new Arg[kinds.length];
+        CiCallingConvention cc = regConfig.getCallingConvention(Type.RuntimeCall, kinds, target(), false);
+        int localVarIndex = 0;
+        for (int i = 0; i < kinds.length; i++) {
+            CiKind kind = kinds[i];
+            Integer slotObj = slots.get(i);
+            int slot = slotObj == null ? -1 : slotObj;
+            assert cc.locations[i].isRegister() : "templates with non-reg args are not supported: " + method;
+            CiRegister reg = cc.locations[i].asRegister();
+            in[i] = new Arg(kind, reg, localVarName(method, localVarIndex, kind), slot);
+            localVarIndex += kind.jvmSlots;
+        }
+        CiKind outKind = sig.returnKind();
+        int outSlot = outKind.isVoid() ? -1 : 0;
+        Slot slot = method.toJava().getAnnotation(Slot.class);
+        if (slot != null) {
+            outSlot = slot.value();
+        }
+        Arg out = new Arg(outKind, regConfig.getReturnRegister(outKind), null, outSlot);
+        Sig s = new Sig(in, out);
+        return s;
+    }
+
+    @HOSTED_ONLY
+    private static Map<Integer, Integer> extractSlots(ClassMethodActor template) {
+        SignatureDescriptor sig = template.descriptor();
+        Annotation[][] annotations = template.toJava().getParameterAnnotations();
+        Map<Integer, Integer> slots = new HashMap<Integer, Integer>(annotations.length);
+        for (int i = 0; i < annotations.length; i++) {
+            Slot s = null;
+            for (Annotation a : annotations[i]) {
+                if (a.annotationType() == Slot.class) {
+                    s = (Slot) a;
+                }
+            }
+            if (s != null) {
+                assert !slots.containsValue(s.value()) : "operand stack index of " + sig.argumentKindAt(i) + " parameter " + i + " of " + template + " conflicts with another parameter";
+                slots.put(i, s.value());
+            }
+        }
+        return slots;
+    }
+
+    @HOSTED_ONLY
+    private static String localVarName(ClassMethodActor template, int localVarIndex, CiKind kind) {
+        CodeAttribute codeAttribute = template.codeAttribute();
+        LocalVariableTable lvt = codeAttribute.localVariableTable();
+        Entry e = lvt.findLocalVariable(localVarIndex, 0);
+        assert e.descriptor(codeAttribute.cp).toKind().ciKind == kind;
+        return e.name(codeAttribute.cp).string;
     }
 }

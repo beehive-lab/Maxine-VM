@@ -874,7 +874,6 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
         final IndentWriter writer = new IndentWriter(new OutputStreamWriter(printStream));
         writer.println("code for: " + classMethodActor().format("%H.%n(%p)"));
         writer.println("compilation: " + compilationIndex());
-        targetMethod().traceBundle(writer);
         writer.flush();
         final Platform platform = platform();
         final TargetMethodCache tmCache = targetMethodCache();

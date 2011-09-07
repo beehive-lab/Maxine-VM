@@ -280,47 +280,29 @@ public class Bytecodes {
      */
     public static final int JNIOP                = 204;
 
-    /**
-     * Template call.
-     *
-     * <pre>
-     * Format: { u1 opcode;  // CALL
-     *           u2 sig;     // Constant pool index of a CONSTANT_Utf8_info representing the signature of the call.
-     *                          The parameters part of the signature must be "()", "(word)" or "(word, object)".
-     *         }
-     *
-     * Operand Stack:
-     *     ..., [arg1, [arg2 ... ]] => [return value, ]...,
-     * </pre>
-     */
-    public static final int TEMPLATE_CALL        = 205;
+    public static final int WLOAD                = 205;
+    public static final int WLOAD_0              = 206;
+    public static final int WLOAD_1              = 207;
+    public static final int WLOAD_2              = 208;
+    public static final int WLOAD_3              = 209;
 
-    public static final int WLOAD                = 206;
-    public static final int WLOAD_0              = 207;
-    public static final int WLOAD_1              = 208;
-    public static final int WLOAD_2              = 209;
-    public static final int WLOAD_3              = 210;
+    public static final int WSTORE               = 210;
+    public static final int WSTORE_0             = 211;
+    public static final int WSTORE_1             = 212;
+    public static final int WSTORE_2             = 213;
+    public static final int WSTORE_3             = 214;
 
-    public static final int WSTORE               = 211;
-    public static final int WSTORE_0             = 212;
-    public static final int WSTORE_1             = 213;
-    public static final int WSTORE_2             = 214;
-    public static final int WSTORE_3             = 215;
+    public static final int WCONST_0             = 215;
+    public static final int WDIV                 = 216;
+    public static final int WDIVI                = 217; // Divisor is an int
+    public static final int WREM                 = 218;
+    public static final int WREMI                = 219; // Divisor is an int
 
-    public static final int WCONST_0             = 216;
-    public static final int WDIV                 = 217;
-    public static final int WDIVI                = 218; // Divisor is an int
-    public static final int WREM                 = 219;
-    public static final int WREMI                = 220; // Divisor is an int
+    public static final int PREAD                = 220;
+    public static final int PWRITE               = 221;
 
-    public static final int ICMP                 = 221; // Signed int compare, sets condition flags (for template JIT)
-    public static final int WCMP                 = 222; // Word compare, sets condition flags (for template JIT)
-
-    public static final int PREAD                = 223;
-    public static final int PWRITE               = 224;
-
-    public static final int PGET                 = 225;
-    public static final int PSET                 = 226;
+    public static final int PGET                 = 222;
+    public static final int PSET                 = 223;
 
     /**
      * Atomic update of a value in memory.
@@ -344,12 +326,12 @@ public class Bytecodes {
      * return either expectedValue or the actual value
      * </pre>
      */
-    public static final int PCMPSWP               = 227;
+    public static final int PCMPSWP               = 224;
 
-    public static final int MOV_I2F              = 228;
-    public static final int MOV_F2I              = 229;
-    public static final int MOV_L2D              = 230;
-    public static final int MOV_D2L              = 231;
+    public static final int MOV_I2F              = 225;
+    public static final int MOV_F2I              = 226;
+    public static final int MOV_L2D              = 227;
+    public static final int MOV_D2L              = 228;
 
     /**
      * Unsigned integer comparison.
@@ -365,7 +347,7 @@ public class Bytecodes {
      *
      * @see UnsignedComparisons
      */
-    public static final int UCMP                 = 232;
+    public static final int UCMP                 = 229;
 
     /**
      * Unsigned word comparison.
@@ -381,7 +363,7 @@ public class Bytecodes {
      *
      * @see UnsignedComparisons
      */
-    public static final int UWCMP                = 233;
+    public static final int UWCMP                = 230;
 
     /**
      * Reads the value of a register playing a runtime-defined role.
@@ -395,7 +377,7 @@ public class Bytecodes {
      *     ... => ..., value
      * </pre>
      */
-    public static final int READREG              = 234;
+    public static final int READREG              = 231;
 
     /**
      * Writes the value of a register playing a runtime-defined role.
@@ -409,9 +391,7 @@ public class Bytecodes {
      *     ..., value => ...
      * </pre>
      */
-    public static final int WRITEREG             = 235;
-
-    public static final int INCREG               = 236;
+    public static final int WRITEREG             = 232;
 
     /**
      * Unsafe cast of top value on stack.
@@ -426,9 +406,9 @@ public class Bytecodes {
      *     ..., value => ..., value
      * </pre>
      */
-    public static final int UNSAFE_CAST          = 237;
+    public static final int UNSAFE_CAST          = 233;
 
-    public static final int WRETURN              = 238;
+    public static final int WRETURN              = 234;
 
     /**
      * Record debug info at the current code location.
@@ -445,7 +425,7 @@ public class Bytecodes {
      * @see #INFO
      *
      */
-    public static final int INFOPOINT        = 239;
+    public static final int INFOPOINT        = 235;
 
     /**
      * Record debug info at the current code location
@@ -533,7 +513,7 @@ public class Bytecodes {
      * The value on the top of the stack is the size in bytes to allocate.
      * The result is the address of the allocated block. <b>N.B.</b> The contents of the block are uninitialized.
      */
-    public static final int ALLOCA               = 240;
+    public static final int ALLOCA               = 236;
 
     /**
      * Inserts a memory barrier.
@@ -549,7 +529,7 @@ public class Bytecodes {
      *
      * @see MemoryBarriers
      */
-    public static final int MEMBAR               = 241;
+    public static final int MEMBAR               = 237;
 
     /**
      * Create a handle for a given value on the native stack frame.
@@ -575,12 +555,11 @@ public class Bytecodes {
      *     ..., value => ..., address
      * </pre>
      */
-    public static final int STACKHANDLE          = 242;
+    public static final int STACKHANDLE          = 238;
 
-    public static final int PAUSE                = 243;
-    public static final int BREAKPOINT_TRAP      = 244;
-    public static final int ADD_SP               = 245;
-    public static final int FLUSHW               = 246;
+    public static final int PAUSE                = 239;
+    public static final int BREAKPOINT_TRAP      = 240;
+    public static final int FLUSHW               = 242;
 
     /**
      * Produces the index of the least significant bit within {@code value} or {@code -1} if {@code value == 0}.
@@ -594,7 +573,7 @@ public class Bytecodes {
      *     ..., value => ..., index
      * </pre>
      */
-    public static final int LSB                  = 247;
+    public static final int LSB                  = 243;
 
     /**
      * Produces the index of the most significant bit within {@code value} or {@code -1} if {@code value == 0}.
@@ -608,7 +587,7 @@ public class Bytecodes {
      *     ..., value => ..., index
      * </pre>
      */
-    public static final int MSB                  = 248;
+    public static final int MSB                  = 244;
 
     /**
      * Reads/tests the value of a bit specified by a register playing a runtime-defined role, a byte offset,
@@ -623,7 +602,7 @@ public class Bytecodes {
      *     ..., offset, bitno => ..., 1 if bit is set, 0 otherwise
      * </pre>
      */
-    public static final int READBIT              = 249;
+    public static final int READBIT              = 245;
 
     // End extended bytecodes
 
@@ -1034,7 +1013,10 @@ public class Bytecodes {
          * Denotes an instruction that stores an operand.
          */
         static final int STORE       = 0x00000800;
-
+        /**
+         * Denotes the 4 INVOKE* instructions.
+         */
+        static final int INVOKE       = 0x00001000;
     }
 
     // Performs a sanity check that none of the flags overlap.
@@ -1261,10 +1243,10 @@ public class Bytecodes {
         def(PUTSTATIC           , "putstatic"       , "bjj"  , TRAP | FIELD_WRITE);
         def(GETFIELD            , "getfield"        , "bjj"  , TRAP | FIELD_READ);
         def(PUTFIELD            , "putfield"        , "bjj"  , TRAP | FIELD_WRITE);
-        def(INVOKEVIRTUAL       , "invokevirtual"   , "bjj"  , TRAP);
-        def(INVOKESPECIAL       , "invokespecial"   , "bjj"  , TRAP);
-        def(INVOKESTATIC        , "invokestatic"    , "bjj"  , TRAP);
-        def(INVOKEINTERFACE     , "invokeinterface" , "bjja_", TRAP);
+        def(INVOKEVIRTUAL       , "invokevirtual"   , "bjj"  , TRAP | INVOKE);
+        def(INVOKESPECIAL       , "invokespecial"   , "bjj"  , TRAP | INVOKE);
+        def(INVOKESTATIC        , "invokestatic"    , "bjj"  , TRAP | INVOKE);
+        def(INVOKEINTERFACE     , "invokeinterface" , "bjja_", TRAP | INVOKE);
         def(XXXUNUSEDXXX        , "xxxunusedxxx"    , ""     );
         def(NEW                 , "new"             , "bii"  , TRAP);
         def(NEWARRAY            , "newarray"        , "bc"   , TRAP);
@@ -1299,8 +1281,6 @@ public class Bytecodes {
         def(WDIVI               , "wdivi"           , "bii"  , EXTENSION | TRAP);
         def(WREM                , "wrem"            , "bii"  , EXTENSION | TRAP);
         def(WREMI               , "wremi"           , "bii"  , EXTENSION | TRAP);
-        def(ICMP                , "icmp"            , "bii"  , EXTENSION);
-        def(WCMP                , "wcmp"            , "bii"  , EXTENSION);
         def(PREAD               , "pread"           , "bii"  , EXTENSION | TRAP);
         def(PWRITE              , "pwrite"          , "bii"  , EXTENSION | TRAP);
         def(PGET                , "pget"            , "bii"  , EXTENSION | TRAP);
@@ -1314,10 +1294,8 @@ public class Bytecodes {
         def(UWCMP               , "uwcmp"           , "bii"  , EXTENSION);
         def(JNICALL             , "jnicall"         , "bii"  , EXTENSION | TRAP);
         def(JNIOP               , "jniop"           , "bii"  , EXTENSION);
-        def(TEMPLATE_CALL       , "template_call"   , "bii"  , EXTENSION | TRAP);
         def(READREG             , "readreg"         , "bii"  , EXTENSION);
         def(WRITEREG            , "writereg"        , "bii"  , EXTENSION);
-        def(INCREG              , "increg"          , "bii"  , EXTENSION);
         def(UNSAFE_CAST         , "unsafe_cast"     , "bii"  , EXTENSION);
         def(WRETURN             , "wreturn"         , "b"    , EXTENSION | TRAP | STOP);
         def(ALLOCA              , "alloca"          , "bii"  , EXTENSION);
@@ -1325,7 +1303,6 @@ public class Bytecodes {
         def(STACKHANDLE         , "stackhandle"     , "bii"  , EXTENSION);
         def(PAUSE               , "pause"           , "bii"  , EXTENSION);
         def(BREAKPOINT_TRAP     , "breakpoint_trap" , "bii"  , EXTENSION);
-        def(ADD_SP              , "add_sp"          , "bii"  , EXTENSION);
         def(INFOPOINT           , "infopoint"       , "bii"  , EXTENSION | TRAP);
         def(FLUSHW              , "flushw"          , "bii"  , EXTENSION);
         def(LSB                 , "lsb"             , "bii"  , EXTENSION);
@@ -1548,6 +1525,17 @@ public class Bytecodes {
      */
     public static boolean isStop(int opcode) {
         return (flags[opcode & 0xff] & STOP) != 0;
+    }
+
+    /**
+     * Determines if a given opcode denotes an instruction that stores a value to a local variable
+     * after popping it from the operand stack.
+     *
+     * @param opcode an opcode to test
+     * @return {@code true} iff {@code opcode} stores a value to a local variable, {@code false} otherwise
+     */
+    public static boolean isInvoke(int opcode) {
+        return (flags[opcode & 0xff] & INVOKE) != 0;
     }
 
     /**
@@ -1925,9 +1913,12 @@ public class Bytecodes {
      * @param args {@code args[0]} is the path to this source file
      */
     public static void main(String[] args) throws Exception {
+        Method findWorkspaceDirectory = Class.forName("com.sun.max.ide.JavaProject").getDeclaredMethod("findWorkspaceDirectory");
+        File base = new File((File) findWorkspaceDirectory.invoke(null), "com.oracle.max.cri/src");
+        File file = new File(base, Bytecodes.class.getName().replace('.', File.separatorChar) + ".java").getAbsoluteFile();
+
         Pattern opcodeDecl = Pattern.compile("(\\s*public static final int )(\\w+)(\\s*=\\s*)(\\d+)(;.*)");
 
-        File file = new File(args[0]);
         BufferedReader br = new BufferedReader(new FileReader(file));
         CharArrayWriter buffer = new CharArrayWriter((int) file.length());
         PrintWriter out = new PrintWriter(buffer);

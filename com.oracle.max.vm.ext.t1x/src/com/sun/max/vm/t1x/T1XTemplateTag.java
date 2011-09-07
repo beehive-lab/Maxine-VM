@@ -25,8 +25,8 @@ package com.sun.max.vm.t1x;
 import java.util.*;
 
 import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
-import com.sun.max.vm.type.*;
 
 /**
  * The set of templates used by T1X.
@@ -40,33 +40,33 @@ import com.sun.max.vm.type.*;
  * or {@linkplain #initialized initialization} check.
  */
 public enum T1XTemplateTag {
-    NOP,
-    WCONST_0,
-    ACONST_NULL,
-    ICONST_M1,
-    ICONST_0,
-    ICONST_1,
-    ICONST_2,
-    ICONST_3,
-    ICONST_4,
-    ICONST_5,
-    LCONST(Bytecodes.LCONST_0),
-    FCONST(Bytecodes.FCONST_0),
-    DCONST(Bytecodes.DCONST_0),
-    BIPUSH,
-    SIPUSH,
-    LDC$int,
-    LDC$long,
-    LDC$float,
-    LDC$double,
+//    NOP,
+//    WCONST_0,
+//    ACONST_NULL,
+//    ICONST_M1,
+//    ICONST_0,
+//    ICONST_1,
+//    ICONST_2,
+//    ICONST_3,
+//    ICONST_4,
+//    ICONST_5,
+//    LCONST(Bytecodes.LCONST_0),
+//    FCONST(Bytecodes.FCONST_0),
+//    DCONST(Bytecodes.DCONST_0),
+//    BIPUSH,
+//    SIPUSH,
+//    LDC$int,
+//    LDC$long,
+//    LDC$float,
+//    LDC$double,
     LDC$reference,
-    LDC$reference$resolved,
-    ILOAD,
-    LLOAD,
-    FLOAD,
-    DLOAD,
-    ALOAD,
-    WLOAD,
+//    LDC$reference$resolved,
+//    ILOAD,
+//    LLOAD,
+//    FLOAD,
+//    DLOAD,
+//    ALOAD,
+//    WLOAD,
     IALOAD,
     LALOAD,
     FALOAD,
@@ -75,12 +75,12 @@ public enum T1XTemplateTag {
     BALOAD,
     CALOAD,
     SALOAD,
-    ISTORE,
-    LSTORE,
-    FSTORE,
-    DSTORE,
-    ASTORE,
-    WSTORE,
+//    ISTORE,
+//    LSTORE,
+//    FSTORE,
+//    DSTORE,
+//    ASTORE,
+//    WSTORE,
     IASTORE,
     LASTORE,
     FASTORE,
@@ -89,15 +89,15 @@ public enum T1XTemplateTag {
     BASTORE,
     CASTORE,
     SASTORE,
-    POP,
-    POP2,
-    DUP,
-    DUP_X1,
-    DUP_X2,
-    DUP2,
-    DUP2_X1,
-    DUP2_X2,
-    SWAP,
+//    POP,
+//    POP2,
+//    DUP,
+//    DUP_X1,
+//    DUP_X2,
+//    DUP2,
+//    DUP2_X1,
+//    DUP2_X2,
+//    SWAP,
     IADD,
     LADD,
     FADD,
@@ -138,7 +138,7 @@ public enum T1XTemplateTag {
     LOR,
     IXOR,
     LXOR,
-    IINC,
+//    IINC,
     I2L,
     I2F,
     I2D,
@@ -159,22 +159,22 @@ public enum T1XTemplateTag {
     FCMPG,
     DCMPL,
     DCMPG,
-    IFEQ,
-    IFNE,
-    IFLT,
-    IFGE,
-    IFGT,
-    IFLE,
-    IF_ICMPEQ,
-    IF_ICMPNE,
-    IF_ICMPLT,
-    IF_ICMPGE,
-    IF_ICMPGT,
-    IF_ICMPLE,
-    IF_ACMPEQ,
-    IF_ACMPNE,
-    GOTO,
-    GOTO_W,
+//    IFEQ,
+//    IFNE,
+//    IFLT,
+//    IFGE,
+//    IFGT,
+//    IFLE,
+//    IF_ICMPEQ,
+//    IF_ICMPNE,
+//    IF_ICMPLT,
+//    IF_ICMPGE,
+//    IF_ICMPGT,
+//    IF_ICMPLE,
+//    IF_ACMPEQ,
+//    IF_ACMPNE,
+//    GOTO,
+//    GOTO_W,
     IRETURN,
     LRETURN,
     FRETURN,
@@ -182,18 +182,12 @@ public enum T1XTemplateTag {
     ARETURN,
     RETURN,
 
-    IRETURN$unlockClass,
-    IRETURN$unlockReceiver,
-    LRETURN$unlockClass,
-    LRETURN$unlockReceiver,
-    FRETURN$unlockClass,
-    FRETURN$unlockReceiver,
-    DRETURN$unlockClass,
-    DRETURN$unlockReceiver,
-    ARETURN$unlockClass,
-    ARETURN$unlockReceiver,
-    RETURN$unlockClass,
-    RETURN$unlockReceiver,
+    IRETURN$unlock,
+    LRETURN$unlock,
+    FRETURN$unlock,
+    DRETURN$unlock,
+    ARETURN$unlock,
+    RETURN$unlock,
 
     RETURN$registerFinalizer,
 
@@ -307,12 +301,12 @@ public enum T1XTemplateTag {
     INVOKESPECIAL$double,
     INVOKESPECIAL$reference,
     INVOKESPECIAL$word,
-    INVOKESPECIAL$void$resolved,
-    INVOKESPECIAL$float$resolved,
-    INVOKESPECIAL$long$resolved,
-    INVOKESPECIAL$double$resolved,
-    INVOKESPECIAL$reference$resolved,
-    INVOKESPECIAL$word$resolved,
+//    INVOKESPECIAL$void$resolved,
+//    INVOKESPECIAL$float$resolved,
+//    INVOKESPECIAL$long$resolved,
+//    INVOKESPECIAL$double$resolved,
+//    INVOKESPECIAL$reference$resolved,
+//    INVOKESPECIAL$word$resolved,
 
     INVOKESTATIC$void,
     INVOKESTATIC$float,
@@ -320,12 +314,12 @@ public enum T1XTemplateTag {
     INVOKESTATIC$double,
     INVOKESTATIC$reference,
     INVOKESTATIC$word,
-    INVOKESTATIC$void$init,
-    INVOKESTATIC$float$init,
-    INVOKESTATIC$long$init,
-    INVOKESTATIC$double$init,
-    INVOKESTATIC$reference$init,
-    INVOKESTATIC$word$init,
+//    INVOKESTATIC$void$init,
+//    INVOKESTATIC$float$init,
+//    INVOKESTATIC$long$init,
+//    INVOKESTATIC$double$init,
+//    INVOKESTATIC$reference$init,
+//    INVOKESTATIC$word$init,
 
     INVOKEINTERFACE$void,
     INVOKEINTERFACE$float,
@@ -361,8 +355,8 @@ public enum T1XTemplateTag {
     MONITOREXIT,
     MULTIANEWARRAY,
     MULTIANEWARRAY$resolved,
-    IFNULL,
-    IFNONNULL,
+//    IFNULL,
+//    IFNONNULL,
 
     PREAD_BYTE,
     PREAD_CHAR,
@@ -435,17 +429,11 @@ public enum T1XTemplateTag {
     MOV_D2L,
 
     WRETURN,
-    WRETURN$unlockClass,
-    WRETURN$unlockReceiver,
+    WRETURN$unlock,
     PAUSE,
     LSB,
     MSB,
 
-    COUNT_BYTECODE(-1),
-    LOCK_RECEIVER(-1),
-    UNLOCK_RECEIVER(-1),
-    LOCK_CLASS(-1),
-    UNLOCK_CLASS(-1),
     LOAD_EXCEPTION(-1),
     RETHROW_EXCEPTION(-1),
     PROFILE_STATIC_METHOD_ENTRY(-1),
@@ -453,35 +441,24 @@ public enum T1XTemplateTag {
     PROFILE_BACKWARD_BRANCH(-1),
     TRACE_METHOD_ENTRY(-1),
     HERE(-1),
-    NULL_CHECK(-1),
-
-    READREG$fp_cpu,
-    READREG$sp_cpu,
-    READREG$fp_abi,
-    READREG$sp_abi,
-    READREG$latch,
-
-    WRITEREG$fp_cpu,
-    WRITEREG$sp_cpu,
-    WRITEREG$fp_abi,
-    WRITEREG$sp_abi,
-    WRITEREG$latch,
-    WRITEREG$link,
+    CREATE_MULTIANEWARRAY_DIMENSIONS(-1),
+    LOCK(-1),
+    UNLOCK(-1),
 
     MEMBAR_LOAD_LOAD,
     MEMBAR_LOAD_STORE,
     MEMBAR_STORE_LOAD,
     MEMBAR_STORE_STORE;
 
-    public static final EnumMap<KindEnum, T1XTemplateTag> PUTSTATICS = makeKindMap(Bytecodes.PUTSTATIC);
-    public static final EnumMap<KindEnum, T1XTemplateTag> GETSTATICS = makeKindMap(Bytecodes.GETSTATIC);
-    public static final EnumMap<KindEnum, T1XTemplateTag> PUTFIELDS = makeKindMap(Bytecodes.PUTFIELD);
-    public static final EnumMap<KindEnum, T1XTemplateTag> GETFIELDS = makeKindMap(Bytecodes.GETFIELD);
+    public static final EnumMap<CiKind, T1XTemplateTag> PUTSTATICS = makeKindMap(Bytecodes.PUTSTATIC);
+    public static final EnumMap<CiKind, T1XTemplateTag> GETSTATICS = makeKindMap(Bytecodes.GETSTATIC);
+    public static final EnumMap<CiKind, T1XTemplateTag> PUTFIELDS = makeKindMap(Bytecodes.PUTFIELD);
+    public static final EnumMap<CiKind, T1XTemplateTag> GETFIELDS = makeKindMap(Bytecodes.GETFIELD);
 
-    public static final EnumMap<KindEnum, T1XTemplateTag> INVOKEVIRTUALS = makeKindMap(Bytecodes.INVOKEVIRTUAL);
-    public static final EnumMap<KindEnum, T1XTemplateTag> INVOKEINTERFACES = makeKindMap(Bytecodes.INVOKEINTERFACE);
-    public static final EnumMap<KindEnum, T1XTemplateTag> INVOKESPECIALS = makeKindMap(Bytecodes.INVOKESPECIAL);
-    public static final EnumMap<KindEnum, T1XTemplateTag> INVOKESTATICS = makeKindMap(Bytecodes.INVOKESTATIC);
+    public static final EnumMap<CiKind, T1XTemplateTag> INVOKEVIRTUALS = makeKindMap(Bytecodes.INVOKEVIRTUAL);
+    public static final EnumMap<CiKind, T1XTemplateTag> INVOKEINTERFACES = makeKindMap(Bytecodes.INVOKEINTERFACE);
+    public static final EnumMap<CiKind, T1XTemplateTag> INVOKESPECIALS = makeKindMap(Bytecodes.INVOKESPECIAL);
+    public static final EnumMap<CiKind, T1XTemplateTag> INVOKESTATICS = makeKindMap(Bytecodes.INVOKESTATIC);
 
     /**
      * Creates a map from kinds to the template specialized for each kind a given bytecode is parameterized by.
@@ -489,13 +466,14 @@ public enum T1XTemplateTag {
      * @param bytecode a bytecode instruction that is specialized for a number of kinds
      */
     @HOSTED_ONLY
-    private static EnumMap<KindEnum, T1XTemplateTag> makeKindMap(int bytecode) {
-        EnumMap<KindEnum, T1XTemplateTag> map = new EnumMap<KindEnum, T1XTemplateTag>(KindEnum.class);
+    private static EnumMap<CiKind, T1XTemplateTag> makeKindMap(int bytecode) {
+        EnumMap<CiKind, T1XTemplateTag> map = new EnumMap<CiKind, T1XTemplateTag>(CiKind.class);
         for (T1XTemplateTag bt : values()) {
             String name = Bytecodes.nameOf(bytecode).toUpperCase();
             if (bt.name().startsWith(name)) {
-                for (KindEnum kind : KindEnum.VALUES) {
-                    if (bt.name().equals(name + "$" + kind.name().toLowerCase())) {
+                for (CiKind kind : CiKind.VALUES) {
+                    String k = kind.isObject() ? "reference" : kind.name().toLowerCase();
+                    if (bt.name().equals(name + "$" + k)) {
                         map.put(kind, bt);
                     }
                 }
@@ -536,11 +514,13 @@ public enum T1XTemplateTag {
     private T1XTemplateTag() {
         String name = name();
         int dollar = name.indexOf('$');
+        String opcodeName;
         if (dollar == -1) {
-            opcode = Bytecodes.valueOf(name);
+            opcodeName = name;
         } else {
-            opcode = Bytecodes.valueOf(name.substring(0, dollar));
+            opcodeName = name.substring(0, dollar);
         }
+        opcode = Bytecodes.valueOf(opcodeName);
     }
 
     static {

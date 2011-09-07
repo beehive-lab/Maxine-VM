@@ -22,10 +22,13 @@
  */
 package com.sun.max.vm.t1x.vma;
 
+import static com.sun.max.vm.compiler.CallEntryPoint.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.t1x.*;
 
 /**
  * A companion class to {@link T1XRuntime} that contains additional methods and variants needed by the VMA templates.
@@ -38,11 +41,11 @@ public class VMAT1XRuntime {
 
     public static Address initializeStaticMethod(StaticMethodActor staticMethod) {
         Snippets.makeHolderInitialized(staticMethod);
-        return Snippets.makeEntrypoint(staticMethod);
+        return Snippets.makeEntrypoint(staticMethod, BASELINE_ENTRY_POINT);
     }
 
     public static Address initializeSpecialMethod(VirtualMethodActor virtualMethod) {
-        return Snippets.makeEntrypoint(virtualMethod);
+        return Snippets.makeEntrypoint(virtualMethod, BASELINE_ENTRY_POINT);
     }
 
     public static StaticMethodActor resolveStaticMethod(ResolutionGuard.InPool guard) {

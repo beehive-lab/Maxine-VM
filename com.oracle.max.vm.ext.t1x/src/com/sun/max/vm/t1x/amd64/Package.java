@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,41 +20,24 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.c1x.ir;
+package com.sun.max.vm.t1x.amd64;
 
-import com.sun.c1x.debug.*;
-import com.sun.cri.ci.*;
+import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.t1x.Package.*;
 
-/**
- */
-public final class IncrementRegister extends Instruction {
+import com.sun.max.config.*;
+import com.sun.max.lang.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.adaptive.*;
 
-    public final CiRegister register;
-    private Value delta;
-
-    public IncrementRegister(CiRegister register, Value delta) {
-        super(CiKind.Void);
-        this.register = register;
-        this.delta = delta;
-        setFlag(Flag.LiveStore);
-    }
-
+public class Package extends BootImagePackage {
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitIncrementRegister(this);
-    }
-
-    public Value delta() {
-        return delta;
-    }
-
-    @Override
-    public void inputValuesDo(ValueClosure closure) {
-        delta = closure.apply(delta);
-    }
-
-    @Override
-    public void print(LogStream out) {
-        out.print(register.toString()).print(" += ").print(delta);
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
+        if (platform().isa == ISA.AMD64) {
+            if (vmConfiguration.compilationPackage.getClass().equals(com.sun.max.vm.compiler.adaptive.Package.class)) {
+                return isT1X(AdaptiveCompilationScheme.optName()) || isT1X(AdaptiveCompilationScheme.baselineName());
+            }
+        }
+        return false;
     }
 }

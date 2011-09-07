@@ -23,8 +23,6 @@
 package com.oracle.max.vma.tools.gen.vma.log.debug;
 
 import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
-import static com.sun.max.vm.t1x.T1XTemplateGenerator.*;
-
 import java.lang.reflect.*;
 import java.util.*;
 

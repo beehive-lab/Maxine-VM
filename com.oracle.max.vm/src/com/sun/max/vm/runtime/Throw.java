@@ -128,7 +128,7 @@ public final class Throw {
      * Converts an {@link AssertionError} to a {@link FatalError} if {@value #FatalVMAssertions} is {@code true}
      * and {@code throwable} is an AssertionError.
      */
-    private static void convertAssertionToFatalError(Throwable throwable) {
+    public static void convertAssertionToFatalError(Throwable throwable) {
         if (FatalVMAssertions && StackTraceInThrowable && throwable instanceof AssertionError) {
             Backtrace bt = JDK_java_lang_Throwable.getBacktrace(throwable);
             if (bt != null) {
@@ -171,6 +171,7 @@ public final class Throw {
             throwable = new NullPointerException();
         }
 
+        convertAssertionToFatalError(throwable);
         traceThrow(throwable);
         raise(throwable, getCpuStackPointer(), getCpuFramePointer(), Pointer.fromLong(here()));
     }

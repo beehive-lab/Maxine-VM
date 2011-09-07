@@ -83,36 +83,16 @@ public final class VMRegister {
     public static native Pointer getCpuStackPointer();
 
     @INLINE
-    @INTRINSIC(WRITEREG | (CPU_SP << 8))
-    public static native void setCpuStackPointer(Word value);
-
-    @INLINE
     @INTRINSIC(READREG | (CPU_FP << 8))
     public static native Pointer getCpuFramePointer();
-
-    @INLINE
-    @INTRINSIC(WRITEREG | (CPU_FP << 8))
-    public static native void setCpuFramePointer(Word value);
-
-    @INLINE
-    @INTRINSIC(INCREG | (ABI_SP << 8))
-    public static native void adjustAbiStackPointer(int delta);
 
     @INLINE
     @INTRINSIC(READREG | (ABI_SP << 8))
     public static native Pointer getAbiStackPointer();
 
     @INLINE
-    @INTRINSIC(WRITEREG | (ABI_SP << 8))
-    public static native void setAbiStackPointer(Word value);
-
-    @INLINE
     @INTRINSIC(READREG | (ABI_FP << 8))
     public static native Pointer getAbiFramePointer();
-
-    @INLINE
-    @INTRINSIC(WRITEREG | (ABI_FP << 8))
-    public static native void setAbiFramePointer(Word value);
 
     @INLINE
     @INTRINSIC(READREG | (LATCH << 8))

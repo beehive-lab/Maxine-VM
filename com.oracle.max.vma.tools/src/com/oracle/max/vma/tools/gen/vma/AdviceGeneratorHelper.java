@@ -22,8 +22,7 @@
  */
 package com.oracle.max.vma.tools.gen.vma;
 
-import static com.sun.max.vm.t1x.T1XTemplateGenerator.*;
-
+import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -52,13 +51,15 @@ public class AdviceGeneratorHelper {
     }
 
     public static T1XTemplateGenerator t1xTemplateGen;
+    public static PrintStream out = System.out;
 
     public static void generateAutoComment() {
         t1xTemplateGen.generateAutoComment();
     }
 
     public static void createGenerator(Class<?> klass) {
-        t1xTemplateGen = new T1XTemplateGenerator(klass);
+        t1xTemplateGen = new T1XTemplateGenerator(klass, out);
+
     }
 
     /**

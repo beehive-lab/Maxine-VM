@@ -315,7 +315,7 @@ public abstract class Trap {
      */
     private static void handleMemoryFault(Pointer instructionPointer, TargetMethod targetMethod, Pointer stackPointer, Pointer framePointer, Pointer trapFrame, Address faultAddress) {
         final Pointer dtla = currentTLA();
-        final SafepointPoll safepoint = vm().safepoint;
+        final SafepointPoll safepoint = vm().safepointPoll;
         final TrapFrameAccess tfa = vm().trapFrameAccess;
         final Pointer ttla = TTLA.load(dtla);
         final Pointer safepointLatch = tfa.getSafepointLatch(trapFrame);

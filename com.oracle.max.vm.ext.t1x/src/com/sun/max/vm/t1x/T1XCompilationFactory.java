@@ -22,11 +22,17 @@
  */
 package com.sun.max.vm.t1x;
 
+import com.sun.max.vm.t1x.amd64.*;
+
 /**
  * Controls the exact subclass of {@link T1XCompilation} that is created.
  */
 public class T1XCompilationFactory {
     public T1XCompilation newT1XCompilation(T1X t1x) {
-        return new T1XCompilation(t1x);
+        if (T1X.isAMD64()) {
+            return new AMD64T1XCompilation(t1x);
+        } else {
+            throw T1X.unimplISA();
+        }
     }
 }

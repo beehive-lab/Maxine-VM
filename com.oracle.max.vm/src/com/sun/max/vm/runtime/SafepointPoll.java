@@ -41,7 +41,7 @@ import com.sun.max.vm.thread.*;
 
 /**
  * The platform specific details of the mechanism by which a thread can be
- * frozen via polling at prudently chosen execution points.
+ * paused via polling at prudently chosen execution points.
  */
 public abstract class SafepointPoll {
 

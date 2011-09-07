@@ -1011,18 +1011,28 @@ public class AMD64Assembler extends AbstractAssembler {
         emitOperandHelper(src, dst);
     }
 
-    // New cpus require to use movsd and movss to avoid partial register stall
-    // when loading from memory. But for old Opteron use movlpd instead of movsd.
-    // The selection is done in Macromovdbl() and movflt().
+    /**
+     * New CPUs require use of movsd and movss to avoid partial register stall
+     * when loading from memory. But for old Opteron use movlpd instead of movsd.
+     * The selection is done in {@link AMD64MacroAssembler#movdbl(CiRegister, CiAddress)}
+     * and {@link AMD64MacroAssembler#movflt(CiRegister, CiRegister)}.
+     */
     public final void movlpd(CiRegister dst, CiAddress src) {
         assert dst.isFpu();
-
         emitByte(0x66);
         prefix(src, dst);
         emitByte(0x0F);
         emitByte(0x12);
         emitOperandHelper(dst, src);
+    }
 
+    public final void movlpd(CiAddress dst, CiRegister src) {
+        assert src.isFpu();
+        emitByte(0x66);
+        prefix(dst, src);
+        emitByte(0x0F);
+        emitByte(0x13);
+        emitOperandHelper(src, dst);
     }
 
     public final void movq(CiRegister dst, CiAddress src) {
@@ -2858,8 +2868,8 @@ public class AMD64Assembler extends AbstractAssembler {
         emitInt(0);
     }
 
-    public final void call(CiRegister dst) {
-        int encode = prefixAndEncode(dst.encoding);
+    public final void call(CiRegister src) {
+        int encode = prefixAndEncode(src.encoding);
         emitByte(0xFF);
         emitByte(0xD0 | encode);
     }

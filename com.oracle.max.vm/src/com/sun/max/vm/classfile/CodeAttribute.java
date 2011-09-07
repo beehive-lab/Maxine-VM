@@ -22,10 +22,9 @@
  */
 package com.sun.max.vm.classfile;
 
-import static com.sun.cri.bytecode.Bytecodes.*;
-
 import java.io.*;
 
+import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
@@ -230,7 +229,7 @@ public final class CodeAttribute {
             return null;
         }
         int opcode = code[bci] & 0xFF;
-        if (opcode == INVOKEINTERFACE || opcode == INVOKESPECIAL || opcode == INVOKESTATIC || opcode == INVOKEVIRTUAL) {
+        if (Bytecodes.isInvoke(opcode)) {
             int cpi = com.sun.cri.bytecode.Bytes.beU2(code, bci + 1);
             MethodRefConstant callee = cp.methodAt(cpi);
             if (callee.isResolved()) {

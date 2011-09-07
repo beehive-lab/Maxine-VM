@@ -642,29 +642,6 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     @Override
-    public void visitTemplateCall(TemplateCall x) {
-        CiValue resultOperand = resultOperandFor(x.kind);
-        LIRDebugInfo info = stateFor(x, x.stateBefore());
-        List<CiValue> argList;
-        if (x.receiver() != null) {
-            CiCallingConvention cc = compilation.frameMap().getCallingConvention(new CiKind[] {CiKind.Object}, JavaCall);
-            argList = visitInvokeArguments(cc, new Value[] {x.receiver()}, null);
-        } else {
-            argList = new ArrayList<CiValue>();
-        }
-
-        if (x.address() != null) {
-            CiValue callAddress = load(x.address());
-            argList.add(callAddress);
-        }
-        lir.templateCall(resultOperand, argList, info);
-        if (resultOperand.isLegal()) {
-            CiValue result = createResultVariable(x);
-            lir.move(resultOperand, result);
-        }
-    }
-
-    @Override
     public void visitLoadRegister(LoadRegister x) {
         x.setOperand(x.register.asValue(x.kind));
     }
@@ -1118,21 +1095,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
 
         return operands[resultOperand.index];
-    }
-
-    @Override
-    public void visitIncrementRegister(IncrementRegister x) {
-        CiValue reg = x.register.asValue(CiKind.Word);
-        if (x.delta().isConstant()) {
-            int delta = x.delta().asConstant().asInt();
-            if (delta < 0) {
-                lir.sub(reg, CiConstant.forInt(-delta), reg);
-            } else {
-                lir.add(reg, CiConstant.forInt(delta), reg);
-            }
-        } else {
-            lir.add(reg, makeOperand(x.delta()), reg);
-        }
     }
 
     @Override

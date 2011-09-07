@@ -22,29 +22,18 @@
  */
 package com.sun.max.vm.t1x;
 
-import static com.oracle.max.asm.target.amd64.AMD64.*;
-import static com.sun.cri.ci.CiRegister.*;
-import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.classfile.ErrorContext.*;
+import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 import static com.sun.max.vm.t1x.T1XTemplateTag.*;
 
 import java.util.*;
 
 import com.oracle.max.asm.*;
-import com.oracle.max.asm.target.amd64.*;
-import com.oracle.max.asm.target.amd64.AMD64Assembler.ConditionFlag;
 import com.sun.cri.bytecode.*;
-import com.sun.cri.bytecode.Bytecodes.MemoryBarriers;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiAddress.Scale;
-import com.sun.cri.ci.CiCallingConvention.Type;
-import com.sun.cri.ci.CiRegister.RegisterFlag;
 import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
-import com.sun.cri.ci.CiTargetMethod.JumpTable;
-import com.sun.cri.ci.CiTargetMethod.LookupTable;
+import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -54,14 +43,12 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.debug.*;
-import com.sun.max.vm.layout.*;
 import com.sun.max.vm.profile.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.amd64.*;
-import com.sun.max.vm.t1x.T1XCompilation.PatchInfo;
+import com.sun.max.vm.t1x.T1XTemplate.Arg;
 import com.sun.max.vm.t1x.T1XTemplate.SafepointsBuilder;
-import com.sun.max.vm.thread.*;
+import com.sun.max.vm.t1x.T1XTemplate.Sig;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.verifier.*;
 
@@ -71,31 +58,94 @@ import com.sun.max.vm.verifier.*;
  * This class is designed such that a single instance can be re-used for
  * separate compilations.
  */
-public class T1XCompilation {
+public abstract class T1XCompilation {
 
     // Static info
 
-    static final AdapterGenerator adapterGenerator = AdapterGenerator.forCallee(null, CallEntryPoint.BASELINE_ENTRY_POINT);
-    static final CiRegister[] cpuRegParams = vm().registerConfigs.standard.getCallingConventionRegisters(Type.JavaCall, RegisterFlag.CPU);
-    static final CiRegister[] fpuRegParams = vm().registerConfigs.standard.getCallingConventionRegisters(Type.JavaCall, RegisterFlag.FPU);
-    static final CiRegister scratch = vm().registerConfigs.standard.getScratchRegister();
-    static final Object EQ;
-    static final Object NE;
-    static final Object GE;
-    static final Object GT;
-    static final Object LE;
-    static final Object LT;
+    protected static final AdapterGenerator adapterGenerator = AdapterGenerator.forCallee(null, CallEntryPoint.BASELINE_ENTRY_POINT);
+
+    protected static final CiRegister scratch = vm().registerConfigs.standard.getScratchRegister();
+    protected static final CiRegister scratch2 = vm().registerConfigs.standard.getReturnRegister(CiKind.Word);
+
+    protected static final CiRegister sp = vm().registerConfigs.bytecodeTemplate.getRegisterForRole(VMRegister.ABI_SP);
+    protected static final CiRegister fp = vm().registerConfigs.bytecodeTemplate.getRegisterForRole(VMRegister.ABI_FP);
+
+    protected static final CiValue SP = sp.asValue();
+    protected static final CiValue FP = fp.asValue();
+
+    private static final int WORDS_PER_SLOT = JVMS_SLOT_SIZE / Word.size();
+    protected static final int HALFWORD_OFFSET_IN_WORD = JVMSFrameLayout.offsetWithinWord(Kind.INT);
+
+    protected static final CiAddress[] SP_WORD_ADDRESSES_CACHE = new CiAddress[4];
+    protected static final CiAddress[] SP_INT_ADDRESSES_CACHE = new CiAddress[4];
+
+    protected static final int FP_SLOTS_CACHE_START_OFFSET = -(20 * JVMS_SLOT_SIZE);
+    protected static final int FP_SLOTS_CACHE_END_OFFSET = 40 * JVMS_SLOT_SIZE;
+    protected static final CiAddress[] FP_SLOTS_CACHE = new CiAddress[(FP_SLOTS_CACHE_END_OFFSET - FP_SLOTS_CACHE_START_OFFSET) / JVMS_SLOT_SIZE];
+
     static {
-        if (isAMD64()) {
-            EQ = ConditionFlag.equal;
-            NE = ConditionFlag.notEqual;
-            GE = ConditionFlag.greaterEqual;
-            GT = ConditionFlag.greater;
-            LE = ConditionFlag.lessEqual;
-            LT = ConditionFlag.less;
-        } else {
-            throw unimplISA();
+        for (int i = 0; i < SP_WORD_ADDRESSES_CACHE.length; i++) {
+            SP_WORD_ADDRESSES_CACHE[i] = new CiAddress(CiKind.Word, SP, i * JVMS_SLOT_SIZE);
         }
+        for (int i = 0; i < SP_INT_ADDRESSES_CACHE.length; i++) {
+            SP_INT_ADDRESSES_CACHE[i] = new CiAddress(CiKind.Word, SP, (i * JVMS_SLOT_SIZE) + HALFWORD_OFFSET_IN_WORD);
+        }
+        int offset = FP_SLOTS_CACHE_START_OFFSET;
+        for (int i = 0; i < FP_SLOTS_CACHE.length; i++) {
+            FP_SLOTS_CACHE[i] = new CiAddress(CiKind.Word, FP, offset);
+            offset += JVMS_SLOT_SIZE;
+        }
+    }
+
+    /**
+     * Gets the effective address of a word-sized operand stack slot.
+     *
+     * @param index an operand stack index where 0 is the top slot, 1 is the slot below it etc
+     * @return the effective address of the operand stack slot at index {@code index} from the top stack slot. This
+     *         value can be used for a word-sized access to the operand stack.
+     */
+    protected static CiAddress spWord(int index) {
+        assert index >= 0;
+        if (index < SP_WORD_ADDRESSES_CACHE.length) {
+            return SP_WORD_ADDRESSES_CACHE[index];
+        }
+        return new CiAddress(CiKind.Word, SP, index * JVMS_SLOT_SIZE);
+    }
+
+    /**
+     * Gets the effective address of an int-sized operand stack slot.
+     *
+     * @param index an operand stack index where 0 is the top slot, 1 is the slot below it etc
+     * @return the effective address of the operand stack slot at index {@code index} from the top stack slot. This
+     *         value can be used for a int-sized access to the operand stack.
+     */
+    protected static CiAddress spInt(int index) {
+        assert index >= 0;
+        if (index < SP_INT_ADDRESSES_CACHE.length) {
+            return SP_INT_ADDRESSES_CACHE[index];
+        }
+        return new CiAddress(CiKind.Word, SP, (index * JVMS_SLOT_SIZE) + HALFWORD_OFFSET_IN_WORD);
+    }
+
+    /**
+     * Gets the effective address of a long-sized operand stack slot.
+     *
+     * @param index an operand stack index where 0 is the top slot, 1 is the slot below it etc
+     * @return the effective address of the operand stack slot at index {@code index} from the top stack slot. This
+     *         value can be used for a long-sized access to the operand stack.
+     */
+    protected static CiAddress spLong(int index) {
+        assert Word.size() == 8 : "32-bit not yet supported";
+        return spWord(index);
+    }
+
+    protected static CiAddress localSlot(int offset) {
+        assert offset % JVMS_SLOT_SIZE == 0;
+        int cacheIndex = (offset - FP_SLOTS_CACHE_START_OFFSET) / JVMS_SLOT_SIZE;
+        if (cacheIndex >= 0 && cacheIndex < FP_SLOTS_CACHE.length) {
+            return FP_SLOTS_CACHE[cacheIndex];
+        }
+        return new CiAddress(CiKind.Word, FP, offset);
     }
 
     /**
@@ -107,14 +157,9 @@ public class T1XCompilation {
     // Fields holding info/data structures reused across all compilations
 
     /**
-     * The machine code assembler.
-     */
-    final AbstractAssembler asm;
-
-    /**
      * The buffer to which the assembler writes its output.
      */
-    final Buffer buf;
+    protected Buffer buf;
 
     /**
      * The compiler context.
@@ -127,11 +172,6 @@ public class T1XCompilation {
     final SafepointsBuilder safepointsBuilder = new SafepointsBuilder();
 
     /**
-     * Locations in the code buffer that need to be patched.
-     */
-    final PatchInfo patchInfo;
-
-    /**
      * The set of reference literals.
      */
     final ArrayList<Object> referenceLiterals;
@@ -139,7 +179,7 @@ public class T1XCompilation {
     /**
      * Code annotations for disassembly jump tables (lazily initialized).
      */
-    ArrayList<CodeAnnotation> codeAnnotations;
+    protected ArrayList<CodeAnnotation> codeAnnotations;
 
     // Fields holding per-compilation info
 
@@ -158,17 +198,17 @@ public class T1XCompilation {
     /**
      * Access to the bytecode being compiled.
      */
-    BytecodeStream stream;
+    protected BytecodeStream stream;
 
     /**
      * Frame info for the method being compiled.
      */
-    JVMSFrameLayout frame;
+    protected JVMSFrameLayout frame;
 
     /**
      * The local variable index for a copy of the receiver object locked by a non-static synchronized method.
      */
-    int synchronizedReceiver = -1;
+    protected int synchronizedReceiver = -1;
 
     /**
      * The first code position in the range covered by the exception handler synthesized for a synchronized method.
@@ -213,6 +253,16 @@ public class T1XCompilation {
     protected MethodProfile.Builder methodProfileBuilder;
 
     /**
+     * The template currently being emitted.
+     */
+    protected T1XTemplate template;
+
+    /**
+     * Bit map of which arguments for the current template have been initialized.
+     */
+    private int initializedArgs;
+
+    /**
      * Map of BCIs to target code positions. Entries in the table corresponding to the start of a bytecode instruction
      * hold the position in the code buffer where the first byte of the template was emitted. This map
      * includes an entry for the BCI one byte past the end of the bytecode array. This is useful
@@ -220,40 +270,15 @@ public class T1XCompilation {
      * {@code bciToPos[bciToPos.length - 1]} is the target code position at which the epilogue starts
      * (0 denotes absence of an epilogue).
      */
-    int[] bciToPos;
+    protected int[] bciToPos;
 
     Adapter adapter;
-
-    /**
-     * Determines if the target ISA is AMD64.
-     */
-    @FOLD
-    static boolean isAMD64() {
-        return platform().isa == ISA.AMD64;
-    }
-
-    /**
-     * Called to denote some functionality is not yet implemented for the target ISA.
-     */
-    @NEVER_INLINE
-    static FatalError unimplISA() {
-        throw FatalError.unexpected("Unimplemented platform: " + platform().isa);
-    }
 
     /**
      * Creates a compilation object.
      */
     public T1XCompilation(T1X compiler) {
         this.compiler = compiler;
-        AbstractAssembler asm = null;
-        if (isAMD64()) {
-            asm = new AMD64Assembler(target(), null);
-            patchInfo = new PatchInfoAMD64();
-        } else {
-            throw unimplISA();
-        }
-        this.asm = asm;
-        this.buf = asm.codeBuffer;
         this.referenceLiterals = new ArrayList<Object>();
     }
 
@@ -307,24 +332,15 @@ public class T1XCompilation {
         }
     }
 
-    void initFrame(ClassMethodActor method, CodeAttribute codeAttribute) {
-        if (isAMD64()) {
-            int maxLocals = codeAttribute.maxLocals;
-            int maxStack = codeAttribute.maxStack;
-            int maxParams = method.numberOfParameterSlots();
-            if (method.isSynchronized() && !method.isStatic()) {
-                synchronizedReceiver = maxLocals++;
-            }
-            frame = new AMD64JVMSFrameLayout(maxLocals, maxStack, maxParams, T1XTargetMethod.templateSlots);
-        } else {
-            unimplISA();
-        }
-    }
+    /**
+     * Initializes {@link #frame} and {@link #synchronizedReceiver}.
+     */
+    protected abstract void initFrame(ClassMethodActor method, CodeAttribute codeAttribute);
 
     /**
      * Cleans up all the per-compilation fields.
      */
-    void cleanup() {
+    protected void cleanup() {
         method = null;
         codeAttribute = null;
         frame = null;
@@ -344,49 +360,12 @@ public class T1XCompilation {
         if (codeAnnotations != null) {
             codeAnnotations.clear();
         }
-        patchInfo.reset();
         adapter = null;
         safepointsBuilder.reset(false);
         methodProfileBuilder = null;
-    }
 
-    void emitProfileMethodEntry() {
-        if (methodProfileBuilder != null) {
-            methodProfileBuilder.addEntryCounter(MethodInstrumentation.initialEntryCount);
-            assignReferenceLiteralTemplateArgument(0, methodProfileBuilder.methodProfileObject());
-            T1XTemplate template;
-            if (method.isStatic()) {
-                template = getTemplate(PROFILE_STATIC_METHOD_ENTRY);
-            } else {
-                template = getTemplate(PROFILE_NONSTATIC_METHOD_ENTRY);
-                assignLocalDisplacementTemplateArgument(1, 0, Kind.REFERENCE);
-            }
-            emitAndRecordSafepoints(template);
-        }
-    }
-
-    protected void emitMethodTraceEntry() {
-        if (T1XOptions.TraceMethods) {
-            T1XTemplate template = getTemplate(TRACE_METHOD_ENTRY);
-            assignReferenceLiteralTemplateArgument(0, method.toString());
-            emitAndRecordSafepoints(template);
-        }
-    }
-
-    void emitSynchronizedMethodAcquire() {
-        if (method.isSynchronized()) {
-            if (method.isStatic()) {
-                T1XTemplate template = getTemplate(LOCK_CLASS);
-                assignReferenceLiteralTemplateArgument(0, method.holder().javaClass());
-                emitAndRecordSafepoints(template);
-            } else {
-                T1XTemplate template = getTemplate(LOCK_RECEIVER);
-                assignLocalDisplacementTemplateArgument(0, 0, Kind.REFERENCE);
-                assignLocalDisplacementTemplateArgument(1, synchronizedReceiver, Kind.REFERENCE);
-                emitAndRecordSafepoints(template);
-            }
-            syncMethodStartPos = buf.position();
-        }
+        template = null;
+        initializedArgs = 0;
     }
 
     /**
@@ -439,7 +418,9 @@ public class T1XCompilation {
 
         startTimer(T1XTimer.FIXUP);
         try {
+            int endPos = buf.position();
             fixup();
+            buf.setPosition(endPos);
         } finally {
             stopTimer(T1XTimer.FIXUP);
         }
@@ -453,13 +434,13 @@ public class T1XCompilation {
     }
 
     void compile2(ClassMethodActor method) throws InternalError {
-        emitPrologue();
+        adapter = emitPrologue();
 
-        emitProfileMethodEntry();
+        do_profileMethodEntry();
 
-        emitMethodTraceEntry();
+        do_methodTraceEntry();
 
-        emitSynchronizedMethodAcquire();
+        do_synchronizedMethodAcquire();
 
         int bci = 0;
         int endBCI = stream.endBCI();
@@ -472,49 +453,18 @@ public class T1XCompilation {
 
         int epiloguePos = buf.position();
 
-        emitSynchronizedMethodHandler(method, endBCI);
+        do_synchronizedMethodHandler(method, endBCI);
 
         if (epiloguePos != buf.position()) {
             bciToPos[endBCI] = epiloguePos;
         }
     }
 
-    void emitSynchronizedMethodHandler(ClassMethodActor method, int endBCI) {
-        if (method.isSynchronized()) {
-            syncMethodHandlerPos = buf.position();
-            if (method.isStatic()) {
-                T1XTemplate template = getTemplate(UNLOCK_CLASS);
-                assignReferenceLiteralTemplateArgument(0, method.holder().javaClass());
-                emitAndRecordSafepoints(template);
-            } else {
-                T1XTemplate template = getTemplate(UNLOCK_RECEIVER);
-                assignLocalDisplacementTemplateArgument(0, synchronizedReceiver, Kind.REFERENCE);
-                emitAndRecordSafepoints(template);
-            }
-            syncMethodEndPos = buf.position();
-            emitAndRecordSafepoints(getTemplate(RETHROW_EXCEPTION));
-        }
-    }
-
-    private void startBlock(int bci) {
+    protected void startBlock(int bci) {
         if (!blockBCIs[bci]) {
             numberOfBlocks++;
             blockBCIs[bci] = true;
         }
-    }
-
-    /**
-     * Copies the code from a given template into the code buffer and updates the set of safepoints for the method being
-     * translated with those derived from the template.
-     *
-     * @param template the compiled code to emit
-     */
-    protected void emitAndRecordSafepoints(T1XTemplate template) {
-        if (template.safepoints.length != 0) {
-            int bci = stream.currentBCI();
-            safepointsBuilder.add(template, buf.position(), bci == stream.endBCI() ? -1 : bci, null);
-        }
-        buf.emitBytes(template.code, 0, template.code.length);
     }
 
     private void beginBytecode(int representativeOpcode) {
@@ -527,20 +477,9 @@ public class T1XCompilation {
             startBlock(bci);
             if (handlerBCIs != null) {
                 if (handlerBCIs[bci]) {
-                    emitAndRecordSafepoints(getTemplate(LOAD_EXCEPTION));
+                    emit(LOAD_EXCEPTION);
                 }
 
-            }
-        }
-
-        if (T1XOptions.PrintBytecodeHistogram) {
-            if (compiler.staticBytecodeCount != null) {
-                compiler.staticBytecodeCount[representativeOpcode & 0xff]++;
-            }
-            if (compiler.dynamicBytecodeCount != null) {
-                assignIntTemplateArgument(0, representativeOpcode & 0xff);
-                assignReferenceLiteralTemplateArgument(1, compiler.dynamicBytecodeCount);
-                emitAndRecordSafepoints(getTemplate(COUNT_BYTECODE));
             }
         }
 
@@ -548,44 +487,145 @@ public class T1XCompilation {
     }
 
     /**
-     * Returns the template to use for {@code tag}.
-     * By default, returns the template in the associated {@link #compiler compiler}
-     * templates array, but may be overridden by a subclass to make the behavior
-     * more context sensitive.
-     * @param tag
-     * @return
+     * Starts the process of emitting a template.
+     * This includes emitting code to copy any arguments from the stack to the
+     * relevant parameter locations.
+     * <p>
+     * A call to this method must be matched with a call to {@link #finish()} or {@link #finish(ClassMethodActor, boolean)}
+     * once the code for initializing the non-stack-based template parameters has been emitted.
+     *
+     * @param tag denotes the template to emit
      */
-    protected T1XTemplate getTemplate(T1XTemplateTag tag) {
-        assert tag != null;
-        assert compiler.templates[tag.ordinal()] != null;
-        return compiler.templates[tag.ordinal()];
-    }
-
-    private Adapter emitPrologue() {
-        if (adapterGenerator != null) {
-            adapter = adapterGenerator.adapt(method, asm);
-        }
-        if (isAMD64()) {
-            AMD64Assembler asm = (AMD64Assembler) this.asm;
-
-            int frameSize = frame.frameSize();
-            asm.enter(frameSize - Word.size(), 0);
-            asm.subq(rbp, framePointerAdjustment());
-            if (Trap.STACK_BANGING) {
-                int pageSize = platform().pageSize;
-                int framePages = frameSize / pageSize;
-                // emit multiple stack bangs for methods with frames larger than a page
-                for (int i = 0; i <= framePages; i++) {
-                    int offset = (i + VmThread.STACK_SHADOW_PAGES) * pageSize;
-                    // Deduct 'frameSize' to handle frames larger than (C1XOptions.StackShadowPages * pageSize)
-                    offset = offset - frameSize;
-                    asm.movq(new CiAddress(CiKind.Word, RSP, -offset), rax);
+    protected void start(T1XTemplateTag tag) {
+        assert template == null;
+        this.template = compiler.templates[tag.ordinal()];
+        initializedArgs = 0;
+        Sig sig = template.sig;
+        if (sig.stackArgs != 0) {
+            for (int i = 0; i < sig.in.length; i++) {
+                Arg a = sig.in[i];
+                if (a.isStack()) {
+                    initializedArgs |= 1 << i;
+                    switch (a.kind) {
+                        case Int:
+                            peekInt(a.reg, a.slot);
+                            break;
+                        case Word:
+                            peekWord(a.reg, a.slot);
+                            break;
+                        case Float:
+                            peekFloat(a.reg, a.slot);
+                            break;
+                        case Long:
+                            peekLong(a.reg, a.slot);
+                            break;
+                        case Double:
+                            peekDouble(a.reg, a.slot);
+                            break;
+                        case Object:
+                            peekObject(a.reg, a.slot);
+                            break;
+                        default:
+                            assert false;
+                    }
                 }
             }
-            return adapter;
-        } else {
-            throw unimplISA();
         }
+    }
+
+    /**
+     * Completes the process of emitting the current template.
+     */
+    protected void finish() {
+        assert template != null;
+        assert assertArgsAreInitialized();
+
+        emitAndRecordSafepoints(template);
+
+        // Adjust the stack to model the net effect of the template including
+        // the slot for the value pushed (if any) by the template.
+        Sig sig = template.sig;
+        if (sig.stackDelta < 0) {
+            decStack(-sig.stackDelta);
+        } else if (sig.stackDelta > 0) {
+            incStack(sig.stackDelta);
+        }
+
+        // The stack parameters to an invoke are popped by the callee so they should not also be
+        // popped as part of the stack adjustment above.
+        assert sig.stackArgs == 0 || !Bytecodes.isInvoke(template.tag.opcode) : template + ": invoke templates should not use @" + Slot.class.getSimpleName() + " annotation";
+
+        // Push the result of the template (if any)
+        if (sig.out.isStack()) {
+            Arg out = sig.out;
+            switch (out.kind) {
+                case Int:
+                    pokeInt(out.reg, out.slot);
+                    break;
+                case Word:
+                    pokeWord(out.reg, out.slot);
+                    break;
+                case Float:
+                    pokeFloat(out.reg, out.slot);
+                    break;
+                case Long:
+                    pokeLong(out.reg, out.slot);
+                    break;
+                case Double:
+                    pokeDouble(out.reg, out.slot);
+                    break;
+                case Object:
+                    pokeObject(out.reg, out.slot);
+                    break;
+                default:
+                    assert false : out.kind;
+            }
+        }
+        template = null;
+        initializedArgs = 0;
+    }
+
+    /**
+     * Asserts that a given argument of the current template has not yet been initialized
+     * and then records the fact that it is now initialized.
+     */
+    private boolean assertInitializeArg(Arg a, int n) {
+        int argBit = 1 << n;
+        if ((initializedArgs & argBit) != 0) {
+            throw new AssertionError(template + ": parameter " + n + " (\"" + a.name + "\") is already initialized");
+        }
+        initializedArgs |= argBit;
+        return true;
+    }
+
+    /**
+     * Asserts that all the arguments of the current template have been initialized.
+     */
+    private boolean assertArgsAreInitialized() {
+        int allArgs = (1 << template.sig.in.length) - 1;
+        int initArgs = initializedArgs;
+        if (initArgs != allArgs) {
+            StringBuilder sb = new StringBuilder(template + ": uninitialized arguments: ");
+            String sep = "";
+            for (int i = 0; i < 32 && allArgs != 0; i++) {
+                if ((initArgs & 1) == 0) {
+                    sb.append(sep).append(template.sig.in[i].name);
+                    sep = ", ";
+                }
+                allArgs >>= 1;
+                initArgs >>= 1;
+            }
+            throw new InternalError(sb.toString());
+        }
+        return true;
+    }
+
+    /**
+     * Emits a template including the setup of stack-based parameters and pushing of the result (if any).
+     */
+    protected void emit(T1XTemplateTag tag) {
+        start(tag);
+        finish();
     }
 
     @Override
@@ -599,842 +639,85 @@ public class T1XCompilation {
     }
 
     /**
-     * Emit template for bytecode instruction with no operands. These bytecode have no dependencies, so emitting the
-     * template just consists of copying the target instruction into the code buffer.
-     */
-    protected void emit(T1XTemplateTag tag) {
-        T1XTemplate template = getTemplate(tag);
-        beginBytecode(tag.opcode);
-        emitAndRecordSafepoints(template);
-    }
-
-    protected void emitInt(T1XTemplateTag tag, int value) {
-        T1XTemplate template = getTemplate(tag);
-        beginBytecode(tag.opcode);
-        assignIntTemplateArgument(0, value);
-        emitAndRecordSafepoints(template);
-    }
-
-    protected void emitDouble(T1XTemplateTag tag, double value) {
-        T1XTemplate template = getTemplate(tag);
-        beginBytecode(tag.opcode);
-        assignDoubleTemplateArgument(0, value);
-        emitAndRecordSafepoints(template);
-    }
-
-    protected void emitFloat(T1XTemplateTag tag, float value) {
-        T1XTemplate template = getTemplate(tag);
-        beginBytecode(tag.opcode);
-        assignFloatTemplateArgument(0, value);
-        emitAndRecordSafepoints(template);
-    }
-
-    protected void emitLong(T1XTemplateTag tag, long value) {
-        T1XTemplate template = getTemplate(tag);
-        beginBytecode(tag.opcode);
-        assignLongTemplateArgument(0, value);
-        emitAndRecordSafepoints(template);
-    }
-
-    /**
-     * Emits a template for a bytecode operating on a local variable (operand is an index to a local variable). The
-     * template is customized so that the emitted code uses a specific local variable index.
+     * Copies the code from a given template into the code buffer and updates the set of safepoints for the method being
+     * translated with those derived from the template.
      *
-     * @param opcode One of iload, istore, dload, dstore, fload, fstore, lload, lstore
-     * @param localIndex the local variable index to customize the template with.
-     * @param kind the kind of the value in the local
+     * @param template the compiled code to emit
      */
-    protected void emitVarAccess(T1XTemplateTag tag, int localIndex, Kind kind) {
-        T1XTemplate template = getTemplate(tag);
-        beginBytecode(tag.opcode);
-        assignLocalDisplacementTemplateArgument(0, localIndex, kind);
-        emitAndRecordSafepoints(template);
+    protected void emitAndRecordSafepoints(T1XTemplate template) {
+        if (template.safepoints.length != 0) {
+            int bci = stream.currentBCI();
+            safepointsBuilder.add(template, buf.position(), bci == stream.endBCI() ? -1 : bci);
+        }
+        buf.emitBytes(template.code, 0, template.code.length);
     }
+
+    protected abstract Adapter emitPrologue();
+
+    protected abstract void emitEpilogue();
+
+    protected int localSlotOffset(int localIndex, CiKind kind) {
+        // Long and double locals use two slots in the locals area,
+        // as required by the JVM spec. The value of the long or double local is stored in
+        // the second slot.
+        int slotIndex = localIndex + kind.jvmSlots - 1;
+        int slotOffset = frame.localVariableOffset(slotIndex) + JVMSFrameLayout.offsetInStackSlot(kind);
+        return slotOffset;
+    }
+
+
+    protected abstract void loadInt(CiRegister dst, int index);
+    protected abstract void loadLong(CiRegister dst, int index);
+    protected abstract void loadWord(CiRegister dst, int index);
+    protected abstract void loadObject(CiRegister dst, int index);
+
+    protected abstract void storeInt(CiRegister src, int index);
+    protected abstract void storeLong(CiRegister src, int index);
+    protected abstract void storeWord(CiRegister src, int index);
+    protected abstract void storeObject(CiRegister src, int index);
 
     /**
-     * Emit template for a bytecode operating on a (static or dynamic) field.
-     * @param index Index to the field ref constant.
-     * @param template one of getfield, putfield, getstatic, putstatic
-     */
-    protected void emitFieldAccess(EnumMap<KindEnum, T1XTemplateTag> tags, int index) {
-        FieldRefConstant fieldRefConstant = cp.fieldAt(index);
-        Kind fieldKind = fieldRefConstant.type(cp).toKind();
-        T1XTemplateTag tag = tags.get(fieldKind.asEnum);
-        beginBytecode(tag.opcode);
-
-        if (fieldRefConstant.isResolvableWithoutClassLoading(cp)) {
-            try {
-                FieldActor fieldActor = fieldRefConstant.resolve(cp, index);
-                emitPreVolatileFieldAccess(tag, fieldActor);
-                if (fieldActor.isStatic()) {
-                    if (fieldActor.holder().isInitialized()) {
-                        T1XTemplate template = getTemplate(tag.initialized);
-                        assignReferenceLiteralTemplateArgument(0, fieldActor.holder().staticTuple());
-                        assignIntTemplateArgument(1, fieldActor.offset());
-                        emitAndRecordSafepoints(template);
-                        emitPostVolatileFieldAccess(tag, fieldActor);
-                        return;
-                    }
-                } else {
-                    T1XTemplate template = getTemplate(tag.resolved);
-                    assignIntTemplateArgument(0, fieldActor.offset());
-                    emitAndRecordSafepoints(template);
-                    emitPostVolatileFieldAccess(tag, fieldActor);
-                    return;
-                }
-            } catch (LinkageError e) {
-                // This should not happen since the field ref constant is resolvable without class loading (i.e., it
-                // has already been resolved). If it were to happen, the safe thing to do is to fall off to the
-                // "no assumption" case, where a template for an unresolved class is taken instead. So do nothing here.
-            }
-        }
-        T1XTemplate template = getTemplate(tag);
-        assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index));
-        // Emit the template unmodified now. It will be modified in the end once all labels to literals are fixed.
-        emitAndRecordSafepoints(template);
-    }
-
-    void emitPreVolatileFieldAccess(T1XTemplateTag tag, FieldActor fieldActor) {
-        if (fieldActor.isVolatile()) {
-            boolean isWrite = tag.opcode == Bytecodes.PUTFIELD || tag.opcode == Bytecodes.PUTSTATIC;
-            if (isAMD64()) {
-                AMD64Assembler asm = (AMD64Assembler) this.asm;
-                asm.membar(isWrite ? MemoryBarriers.JMM_PRE_VOLATILE_WRITE : MemoryBarriers.JMM_PRE_VOLATILE_READ);
-            } else {
-                unimplISA();
-            }
-        }
-    }
-
-    void emitPostVolatileFieldAccess(T1XTemplateTag tag, FieldActor fieldActor) {
-        if (fieldActor.isVolatile()) {
-            boolean isWrite = tag.opcode == Bytecodes.PUTFIELD || tag.opcode == Bytecodes.PUTSTATIC;
-            if (isAMD64()) {
-                AMD64Assembler asm = (AMD64Assembler) this.asm;
-                asm.membar(isWrite ? MemoryBarriers.JMM_POST_VOLATILE_WRITE : MemoryBarriers.JMM_POST_VOLATILE_READ);
-            } else {
-                unimplISA();
-            }
-        }
-    }
-
-    /**
-     * Emits code for an instruction that references a {@link ClassConstant}.
+     * Emits code for a branch.
      *
-     * @param template the instruction template
-     * @param index a constant pool index
-     * @return
+     * @param opcode
+     * @param targetBCI
+     * @param bci
      */
-    protected void emitTemplateWithClassConstant(T1XTemplateTag tag, int index) {
-        ClassConstant classConstant = cp.classAt(index);
-        boolean isArray = tag == ANEWARRAY;
-        T1XTemplate template;
-        if (classConstant.isResolvableWithoutClassLoading(cp)) {
-            template = getTemplate(tag.resolved);
-            beginBytecode(tag.opcode);
-            ClassActor resolvedClassActor = classConstant.resolve(cp, index);
-            if (isArray) {
-                resolvedClassActor = ArrayClassActor.forComponentClassActor(resolvedClassActor);
-            }
-            assignReferenceLiteralTemplateArgument(0, resolvedClassActor);
-        } else {
-            template = getTemplate(tag);
-            beginBytecode(tag.opcode);
-            assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index));
-        }
-        emitAndRecordSafepoints(template);
-    }
-
-    protected void emitIinc(int index, int increment) {
-        beginBytecode(IINC.opcode);
-        final T1XTemplate template = getTemplate(IINC);
-        assignLocalDisplacementTemplateArgument(0, index, Kind.INT);
-        assignIntTemplateArgument(1, increment);
-        emitAndRecordSafepoints(template);
-    }
-
-    @PLATFORM(cpu = "amd64")
-    private int framePointerAdjustment() {
-        final int enterSize = frame.frameSize() - Word.size();
-        return enterSize - frame.sizeOfNonParameterLocals();
-    }
-
-    protected void emitReturn(T1XTemplateTag tag, T1XTemplateTag tagUnlockClass, T1XTemplateTag tagUnlockReceiver) {
-        beginBytecode(tag.opcode);
-        if (method.holder() == ClassRegistry.OBJECT) {
-            T1XTemplate template = getTemplate(RETURN$registerFinalizer);
-            assignLocalDisplacementTemplateArgument(0, 0, Kind.REFERENCE);
-            emitAndRecordSafepoints(template);
-        } else if (method.isSynchronized()) {
-            if (method.isStatic()) {
-                T1XTemplate template = getTemplate(tagUnlockClass);
-                assignReferenceLiteralTemplateArgument(0, method.holder().javaClass());
-                emitAndRecordSafepoints(template);
-            } else {
-                T1XTemplate template = getTemplate(tagUnlockReceiver);
-                assignLocalDisplacementTemplateArgument(0, synchronizedReceiver, Kind.REFERENCE);
-                emitAndRecordSafepoints(template);
-            }
-        } else {
-            T1XTemplate template = getTemplate(tag);
-            emitAndRecordSafepoints(template);
-        }
-
-        if (isAMD64()) {
-            AMD64Assembler asm = (AMD64Assembler) this.asm;
-            asm.addq(rbp, framePointerAdjustment());
-            asm.leave();
-            // when returning, retract from the caller stack by the space used for the arguments.
-            final short stackAmountInBytes = (short) frame.sizeOfParameters();
-            asm.ret(stackAmountInBytes);
-        } else {
-            unimplISA();
-        }
-    }
-
-    protected void emitBranch(Object ccObj, T1XTemplateTag tag, int targetBCI) {
-        int bci = stream.currentBCI();
-        startBlock(targetBCI);
-        beginBytecode(tag.opcode);
-
-        if (bci >= targetBCI && methodProfileBuilder != null) {
-            // Profiling of backward branches.
-            assignReferenceLiteralTemplateArgument(0, methodProfileBuilder.methodProfileObject());
-            T1XTemplate template = getTemplate(PROFILE_BACKWARD_BRANCH);
-            emitAndRecordSafepoints(template);
-
-            // Ideally, we'd like to emit a safepoint at the target of a backward branch.
-            // However, that would require at least one extra pass to determine where
-            // the backward branches are. Instead, we simply emit a safepoint at the source of
-            // a backward branch. This means the cost of the safepoint is taken even if
-            // the backward branch is not taken but that cost should not be noticeable.
-            //
-            // Note also that the safepoint must be placed before the template code
-            // as the template code may adjust the frame in which case the ref map
-            // derived by the ReferenceMapInterpreter would no longer be correct
-            // at the safepoint.
-            int pos = buf.position();
-            byte[] safepointCode = vm().safepoint.code;
-            buf.emitBytes(safepointCode, 0, safepointCode.length);
-            safepointsBuilder.addSafepoint(bci, pos);
-        }
-
-        if (ccObj != null) {
-            T1XTemplate template = getTemplate(tag);
-            emitAndRecordSafepoints(template);
-        }
-
-        int pos = buf.position();
-        if (isAMD64()) {
-            AMD64Assembler asm = (AMD64Assembler) this.asm;
-            PatchInfoAMD64 patchInfo = (PatchInfoAMD64) this.patchInfo;
-            ConditionFlag cc = (ConditionFlag) ccObj;
-            if (bci < targetBCI) {
-                // Forward branch
-                if (cc != null) {
-                    patchInfo.addJCC(cc, pos, targetBCI);
-                    asm.jcc(cc, 0, true);
-                } else {
-                    // Unconditional jump
-                    patchInfo.addJMP(pos, targetBCI);
-                    asm.jmp(0, true);
-                }
-                assert bciToPos[targetBCI] == 0;
-            } else {
-                // Backward branch
-
-                // Compute relative offset.
-                final int target = bciToPos[targetBCI];
-                if (cc == null) {
-                    asm.jmp(target, false);
-                } else {
-                    asm.jcc(cc, target, false);
-                }
-            }
-        } else {
-            unimplISA();
-        }
-    }
+    protected abstract void branch(int opcode, int targetBCI, int bci);
 
     /**
      * Gets the kind used to select an INVOKE... bytecode template.
      */
-    private Kind invokeKind(SignatureDescriptor signature) {
-        Kind resultKind = signature.resultKind();
-        if (resultKind.isWord || resultKind.stackKind == Kind.INT) {
-            return Kind.WORD;
-        }
-        return resultKind;
-    }
+    protected abstract CiKind invokeKind(RiSignature signature);
 
-    protected static int receiverStackIndex(SignatureDescriptor signatureDescriptor) {
+    /**
+     * Gets the index of the {@link Slot slot} containing the receiver for
+     * a non-static call.
+     *
+     * @param signature the signature of the call
+     */
+    protected static int receiverStackIndex(SignatureDescriptor signature) {
         int index = 0;
-        for (int i = 0; i < signatureDescriptor.numberOfParameters(); i++) {
-            Kind kind = signatureDescriptor.parameterDescriptorAt(i).toKind();
+        for (int i = 0; i < signature.numberOfParameters(); i++) {
+            Kind kind = signature.parameterDescriptorAt(i).toKind();
             index += kind.stackSlots;
         }
         return index;
     }
 
-    public void assignTemplateParameters(T1XTemplate template, Object ... args) {
-        SignatureDescriptor signatureDescriptor = template.method.descriptor();
-        for (int i = 0; i < signatureDescriptor.numberOfParameters(); i++) {
-            Kind kind = signatureDescriptor.parameterDescriptorAt(i).toKind();
-            switch (kind.asEnum) {
-                case INT:
-                    assignIntTemplateArgument(i, (Integer) args[i]);
-                    break;
-                case REFERENCE:
-                    assignReferenceLiteralTemplateArgument(i, args[i]);
-                    break;
-
-                default:
-                    assert false : "assignTemplateParameters for unexpected kind: " + kind;
-            }
-        }
-    }
-
-    /*
-     * The following methods mainly exist to be overridden by the VMA extension.
-     * They permit flexibility in the form of the templates for the INVOKE bytecodes
-     * without hard-wiring in additional forms. In particular, they allow access to the
-     * associated {@link MethodActor} in all situations.
-     *
-     * The default implementations do not always require the actor.
+    /**
+     * Fixes up the code locations that need to be patched.
      */
-
-    protected void assignInvokeVirtualTemplateParameters(T1XTemplate template, VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
-        assignTemplateParameters(template, virtualMethodActor.vTableIndex(), receiverStackIndex);
-    }
-
-    protected void assignInvokeInterfaceTemplateParameters(T1XTemplate template, InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
-        assignTemplateParameters(template, interfaceMethodActor, receiverStackIndex);
-    }
-
-    protected void assignInvokeSpecialTemplateParameters(T1XTemplate template, VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
-        assignTemplateParameters(template, receiverStackIndex);
-    }
-
-    protected void assignInvokeStaticTemplateParameters(T1XTemplate template, StaticMethodActor staticMethodActor) {
-    }
-
-    protected void emitInvokevirtual(int index) {
-        ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
-        SignatureDescriptor signature = classMethodRef.signature(cp);
-        Kind kind = invokeKind(signature);
-        T1XTemplateTag tag = INVOKEVIRTUALS.get(kind.asEnum);
-        try {
-            if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
-                try {
-                    VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(cp, index);
-                    if (virtualMethodActor.isPrivate() || virtualMethodActor.isFinal()) {
-                        // this is an invokevirtual to a private or final method, treat it like invokespecial
-                        tag = INVOKESPECIALS.get(kind.asEnum).resolved;
-                        T1XTemplate template = getTemplate(tag);
-                        beginBytecode(tag.opcode);
-                        assignInvokeSpecialTemplateParameters(template, virtualMethodActor, receiverStackIndex(signature));
-                        recordDirectBytecodeCall(template, virtualMethodActor);
-                        return;
-//                    } else if (shouldProfileMethodCall(virtualMethodActor)) {
-//                        // emit a profiled call
-//                        T1XTemplate template = getTemplate(tag.instrumented);
-//                        beginBytecode(tag.opcode);
-//                        int vtableIndex = virtualMethodActor.vTableIndex();
-//                        assignIntTemplateArgument(0, vtableIndex);
-//                        assignIntTemplateArgument(1, receiverStackIndex(signature));
-//                        assignReferenceLiteralTemplateArgument(2, methodProfileBuilder.methodProfileObject());
-//                        assignIntTemplateArgument(3, methodProfileBuilder.addMethodProfile(index, MethodInstrumentation.DEFAULT_RECEIVER_METHOD_PROFILE_ENTRIES));
-//                        emitAndRecordSafepoints(template);
-                    } else {
-                        // emit an unprofiled virtual dispatch
-                        T1XTemplate template = getTemplate(tag.resolved);
-                        beginBytecode(tag.opcode);
-                        assignInvokeVirtualTemplateParameters(template, virtualMethodActor, receiverStackIndex(signature));
-                        emitAndRecordSafepoints(template);
-                    }
-                    return;
-                } catch (LinkageError e) {
-                    // fall through
-                }
-            }
-        } catch (LinkageError error) {
-            // Fall back on unresolved template that will cause the error to be rethrown at runtime.
-        }
-        T1XTemplate template = getTemplate(tag);
-        beginBytecode(tag.opcode);
-        assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index));
-        assignIntTemplateArgument(1, receiverStackIndex(signature));
-        emitAndRecordSafepoints(template);
-    }
-
-    protected void emitInvokeinterface(int index) {
-        InterfaceMethodRefConstant interfaceMethodRef = cp.interfaceMethodAt(index);
-        SignatureDescriptor signature = interfaceMethodRef.signature(cp);
-        Kind kind = invokeKind(signature);
-        T1XTemplateTag tag = INVOKEINTERFACES.get(kind.asEnum);
-        try {
-            if (interfaceMethodRef.isResolvableWithoutClassLoading(cp)) {
-                try {
-                    InterfaceMethodActor interfaceMethodActor = (InterfaceMethodActor) interfaceMethodRef.resolve(cp, index);
-//                    if (shouldProfileMethodCall(interfaceMethodActor)) {
-//                        T1XTemplate template = getTemplate(template.instrumented);
-//                        beginBytecode(template.opcode);
-//                        assignReferenceLiteralTemplateArgument(0, interfaceMethodActor);
-//                        assignIntTemplateArgument(1, receiverStackIndex(signature));
-//                        assignReferenceLiteralTemplateArgument(2, methodProfileBuilder.methodProfileObject());
-//                        assignIntTemplateArgument(3, methodProfileBuilder.addMethodProfile(index, MethodInstrumentation.DEFAULT_RECEIVER_METHOD_PROFILE_ENTRIES));
-//                        emitAndRecordSafepoints(template);
-//                    } else {
-                    T1XTemplate template = getTemplate(tag.resolved);
-                    beginBytecode(tag.opcode);
-                    assignInvokeInterfaceTemplateParameters(template, interfaceMethodActor, receiverStackIndex(signature));
-                    emitAndRecordSafepoints(template);
-//                    }
-                    return;
-                } catch (LinkageError e) {
-                    // fall through
-                }
-            }
-        } catch (LinkageError error) {
-            // Fall back on unresolved template that will cause the error to be rethrown at runtime.
-        }
-        T1XTemplate template = getTemplate(tag);
-        beginBytecode(tag.opcode);
-        assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index));
-        assignIntTemplateArgument(1, receiverStackIndex(signature));
-        emitAndRecordSafepoints(template);
-    }
-
-    protected void emitInvokespecial(int index) {
-        ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
-        Kind kind = invokeKind(classMethodRef.signature(cp));
-        SignatureDescriptor signature = classMethodRef.signature(cp);
-        T1XTemplateTag tag = INVOKESPECIALS.get(kind.asEnum);
-        try {
-            if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
-                VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(cp, index);
-                T1XTemplate template = getTemplate(tag.resolved);
-                beginBytecode(tag.opcode);
-                assignInvokeSpecialTemplateParameters(template, virtualMethodActor, receiverStackIndex(signature));
-                recordDirectBytecodeCall(template, virtualMethodActor);
-                return;
-            }
-        } catch (LinkageError error) {
-            // Fall back on unresolved template that will cause the error to be rethrown at runtime.
-        }
-        T1XTemplate template = getTemplate(tag);
-        beginBytecode(tag.opcode);
-        assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index));
-        assignIntTemplateArgument(1, receiverStackIndex(signature));
-        emitAndRecordSafepoints(template);
-    }
-
-    protected void emitInvokestatic(int index) {
-        ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
-        Kind kind = invokeKind(classMethodRef.signature(cp));
-        T1XTemplateTag tag = INVOKESTATICS.get(kind.asEnum);
-        try {
-            if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
-                StaticMethodActor staticMethodActor = classMethodRef.resolveStatic(cp, index);
-                if (staticMethodActor.holder().isInitialized()) {
-                    T1XTemplate template = getTemplate(tag.initialized);
-                    beginBytecode(tag.opcode);
-                    assignTemplateParameters(template, staticMethodActor);
-                    recordDirectBytecodeCall(template, staticMethodActor);
-                    return;
-                }
-            }
-        } catch (LinkageError error) {
-            // Fall back on unresolved template that will cause the error to be rethrown at runtime.
-        }
-        T1XTemplate template = getTemplate(tag);
-        beginBytecode(tag.opcode);
-        assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index));
-        emitAndRecordSafepoints(template);
-    }
-
-    private void recordDirectBytecodeCall(T1XTemplate template, ClassMethodActor callee) {
-        if (isAMD64()) {
-            AMD64Assembler asm = (AMD64Assembler) this.asm;
-            // Align bytecode call site for MT safe patching
-            final int alignment = 7;
-            int templateCallPos = template.templateCall.causePos();
-            final int callPos = buf.position() + templateCallPos;
-            final int roundDownMask = ~alignment;
-            final int directCallInstructionLength = 5; // [0xE8] disp32
-            final int endOfCallSite = callPos + (directCallInstructionLength - 1);
-            if ((callPos & roundDownMask) != (endOfCallSite & roundDownMask)) {
-                // Emit nops to align up to next 8-byte boundary
-                asm.nop(8 - (callPos & alignment));
-            }
-        } else {
-            unimplISA();
-        }
-        safepointsBuilder.add(template, buf.position(), stream.currentBCI(), callee);
-        buf.emitBytes(template.code, 0, template.code.length);
-    }
-
-    protected void emitConstant(int index) {
-        PoolConstant constant = cp.at(index);
-        int bytecode = Bytecodes.LDC;
-        switch (constant.tag()) {
-            case CLASS: {
-                ClassConstant classConstant = (ClassConstant) constant;
-                if (classConstant.isResolvableWithoutClassLoading(cp)) {
-                    T1XTemplate template = getTemplate(LDC$reference$resolved);
-                    beginBytecode(bytecode);
-                    Object mirror = ((ClassActor) classConstant.value(cp, index).asObject()).javaClass();
-                    assignReferenceLiteralTemplateArgument(0, mirror);
-                    emitAndRecordSafepoints(template);
-                } else {
-                    T1XTemplate template = getTemplate(LDC$reference);
-                    beginBytecode(bytecode);
-                    assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index));
-                    emitAndRecordSafepoints(template);
-                }
-                break;
-            }
-            case INTEGER: {
-                T1XTemplate template = getTemplate(LDC$int);
-                beginBytecode(bytecode);
-                IntegerConstant integerConstant = (IntegerConstant) constant;
-                assignIntTemplateArgument(0, integerConstant.value());
-                emitAndRecordSafepoints(template);
-                break;
-            }
-            case LONG: {
-                T1XTemplate template = getTemplate(LDC$long);
-                beginBytecode(bytecode);
-                LongConstant longConstant = (LongConstant) constant;
-                assignLongTemplateArgument(0, longConstant.value());
-                emitAndRecordSafepoints(template);
-                break;
-            }
-            case FLOAT: {
-                T1XTemplate template = getTemplate(LDC$float);
-                beginBytecode(bytecode);
-                FloatConstant floatConstant = (FloatConstant) constant;
-                assignFloatTemplateArgument(0, floatConstant.value());
-                emitAndRecordSafepoints(template);
-                break;
-            }
-            case DOUBLE: {
-                T1XTemplate template = getTemplate(LDC$double);
-                beginBytecode(bytecode);
-                DoubleConstant doubleConstant = (DoubleConstant) constant;
-                assignDoubleTemplateArgument(0, doubleConstant.value());
-                emitAndRecordSafepoints(template);
-                break;
-            }
-            case STRING: {
-                T1XTemplate template = getTemplate(LDC$reference$resolved);
-                beginBytecode(bytecode);
-                StringConstant stringConstant = (StringConstant) constant;
-                assignReferenceLiteralTemplateArgument(0, stringConstant.value);
-                emitAndRecordSafepoints(template);
-                break;
-            }
-            default: {
-                assert false : "ldc for unexpected constant tag: " + constant.tag();
-                break;
-            }
-        }
-    }
-
-    protected void emitMultianewarray(int index, int numberOfDimensions) {
-        ClassConstant classRef = cp.classAt(index);
-        if (classRef.isResolvableWithoutClassLoading(cp)) {
-            T1XTemplate template = getTemplate(MULTIANEWARRAY$resolved);
-            beginBytecode(Bytecodes.MULTIANEWARRAY);
-            ClassActor arrayClassActor = classRef.resolve(cp, index);
-            assert arrayClassActor.isArrayClass();
-            assert arrayClassActor.numberOfDimensions() >= numberOfDimensions : "dimensionality of array class constant smaller that dimension operand";
-            assignReferenceLiteralTemplateArgument(0, arrayClassActor);
-            assignReferenceLiteralTemplateArgument(1, new int[numberOfDimensions]);
-            // Emit the template
-            emitAndRecordSafepoints(template);
-            return; // we're done.
-        }
-        // Unresolved case
-        T1XTemplate template = getTemplate(MULTIANEWARRAY);
-        beginBytecode(Bytecodes.MULTIANEWARRAY);
-        assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index));
-        assignReferenceLiteralTemplateArgument(1, new int[numberOfDimensions]);
-        emitAndRecordSafepoints(template);
-    }
-
-    protected void emitNew(int index) {
-        ClassConstant classRef = cp.classAt(index);
-        if (classRef.isResolvableWithoutClassLoading(cp)) {
-            ClassActor classActor = classRef.resolve(cp, index);
-            if (classActor.isInitialized()) {
-                T1XTemplate template = getTemplate(NEW$init);
-                beginBytecode(Bytecodes.NEW);
-                assignReferenceLiteralTemplateArgument(0, classActor);
-                emitAndRecordSafepoints(template);
-                return;
-            }
-        }
-        T1XTemplate template = getTemplate(NEW);
-        beginBytecode(Bytecodes.NEW);
-        assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index));
-        emitAndRecordSafepoints(template);
-    }
-
-    protected void emitNewarray(int tag) {
-        T1XTemplate template = getTemplate(NEWARRAY);
-        beginBytecode(Bytecodes.NEWARRAY);
-        Kind arrayElementKind = Kind.fromNewArrayTag(tag);
-        assignReferenceLiteralTemplateArgument(0, arrayElementKind);
-        emitAndRecordSafepoints(template);
-    }
-
-    protected void emitTableswitch() {
-        int bci = stream.currentBCI();
-        BytecodeTableSwitch ts = new BytecodeTableSwitch(stream, bci);
-        int lowMatch = ts.lowKey();
-        int highMatch = ts.highKey();
-        if (lowMatch > highMatch) {
-            throw verifyError("Low must be less than or equal to high in TABLESWITCH");
-        }
-        beginBytecode(Bytecodes.TABLESWITCH);
-
-        if (isAMD64()) {
-            AMD64Assembler asm = (AMD64Assembler) this.asm;
-            PatchInfoAMD64 patchInfo = (PatchInfoAMD64) this.patchInfo;
-
-            // Pop index from stack into rax
-            asm.movl(rax, new CiAddress(CiKind.Int, rsp.asValue()));
-            asm.addq(rsp, JVMSFrameLayout.JVMS_SLOT_SIZE);
-
-            // Compare index against jump table bounds
-            if (lowMatch != 0) {
-                // subtract the low value from the switch index
-                asm.subl(rax, lowMatch);
-                asm.cmpl(rax, highMatch - lowMatch);
-            } else {
-                asm.cmpl(rax, highMatch);
-            }
-
-            // Jump to default target if index is not within the jump table
-            startBlock(ts.defaultTarget());
-            int pos = buf.position();
-            patchInfo.addJCC(ConditionFlag.above, pos, ts.defaultTarget());
-            asm.jcc(ConditionFlag.above, 0, true);
-
-            // Set r15 to address of jump table
-            int leaPos = buf.position();
-            buf.putMark();
-            asm.leaq(r15, new CiAddress(CiKind.Word, InstructionRelative.asValue(), 0));
-
-            // Load jump table entry into r15 and jump to it
-            asm.movslq(rax, new CiAddress(CiKind.Int, r15.asValue(), rax.asValue(), Scale.Times4, 0));
-            asm.addq(r15, rax);
-            asm.jmp(r15);
-
-            // Inserting padding so that jump table address is 4-byte aligned
-            if ((buf.position() & 0x3) != 0) {
-                asm.nop(4 - (buf.position() & 0x3));
-            }
-
-            // Patch LEA instruction above now that we know the position of the jump table
-            int jumpTablePos = buf.position();
-            buf.setPosition(leaPos);
-            buf.putMark();
-            asm.leaq(r15, new CiAddress(CiKind.Word, InstructionRelative.asValue(), jumpTablePos - leaPos));
-            buf.setPosition(jumpTablePos);
-
-            // Emit jump table entries
-            for (int i = 0; i < ts.numberOfCases(); i++) {
-                int targetBCI = ts.targetAt(i);
-                startBlock(targetBCI);
-                pos = buf.position();
-                patchInfo.addJumpTableEntry(pos, jumpTablePos, targetBCI);
-                buf.emitInt(0);
-            }
-
-            if (codeAnnotations == null) {
-                codeAnnotations = new ArrayList<CiTargetMethod.CodeAnnotation>();
-            }
-            codeAnnotations.add(new JumpTable(jumpTablePos, ts.lowKey(), ts.highKey(), 4));
-
-        } else {
-            unimplISA();
-        }
-    }
-
-    protected void emitLookupswitch() {
-        int bci = stream.currentBCI();
-        BytecodeLookupSwitch ls = new BytecodeLookupSwitch(stream, bci);
-        beginBytecode(Bytecodes.LOOKUPSWITCH);
-        if (isAMD64()) {
-            AMD64Assembler asm = (AMD64Assembler) this.asm;
-            PatchInfoAMD64 patchInfo = (PatchInfoAMD64) this.patchInfo;
-            if (ls.numberOfCases() == 0) {
-                // Pop the key
-                T1XTemplate template = getTemplate(POP);
-                emitAndRecordSafepoints(template);
-
-                int targetBCI = ls.defaultTarget();
-                startBlock(targetBCI);
-                if (stream.nextBCI() == targetBCI) {
-                    // Skip completely if default target is next instruction
-                } else if (targetBCI <= bci) {
-                    int target = bciToPos[targetBCI];
-                    assert target != 0;
-                    asm.jmp(target, false);
-                } else {
-                    patchInfo.addJMP(buf.position(), targetBCI);
-                    asm.jmp(0, true);
-                }
-            } else {
-                // Pop key from stack into rax
-                asm.movl(rax, new CiAddress(CiKind.Int, rsp.asValue()));
-                asm.addq(rsp, JVMSFrameLayout.JVMS_SLOT_SIZE);
-
-                // Set rbx to address of lookup table
-                int leaPos = buf.position();
-                buf.putMark();
-                asm.leaq(rbx, new CiAddress(CiKind.Word, InstructionRelative.asValue(), 0));
-
-                // Initialize rcx to index of last entry
-                asm.movl(rcx, (ls.numberOfCases() - 1) * 2);
-
-                int loopPos = buf.position();
-
-                // Compare the value against the key
-                asm.cmpl(rax, new CiAddress(CiKind.Int, rbx.asValue(), rcx.asValue(), Scale.Times4, 0));
-
-                // If equal, exit loop
-                int matchTestPos = buf.position();
-                final int placeholderForShortJumpDisp = matchTestPos + 2;
-                asm.jcc(ConditionFlag.equal, placeholderForShortJumpDisp, false);
-                assert buf.position() - matchTestPos == 2;
-
-                // Decrement loop var (r15) and jump to top of loop if it did not go below zero (i.e. carry flag was not set)
-                asm.subl(rcx, 2);
-                asm.jcc(ConditionFlag.carryClear, loopPos, false);
-
-                // Jump to default target
-                startBlock(ls.defaultTarget());
-                patchInfo.addJMP(buf.position(), ls.defaultTarget());
-                asm.jmp(0, true);
-
-                // Patch the first conditional branch instruction above now that we know where's it's going
-                int matchPos = buf.position();
-                buf.setPosition(matchTestPos);
-                asm.jcc(ConditionFlag.equal, matchPos, false);
-                buf.setPosition(matchPos);
-
-                // Load jump table entry into r15 and jump to it
-                asm.movslq(rcx, new CiAddress(CiKind.Int, rbx.asValue(), rcx.asValue(), Scale.Times4, 4));
-                asm.addq(rbx, rcx);
-                asm.jmp(rbx);
-
-                // Inserting padding so that lookup table address is 4-byte aligned
-                while ((buf.position() & 0x3) != 0) {
-                    asm.nop();
-                }
-
-                // Patch the LEA instruction above now that we know the position of the lookup table
-                int lookupTablePos = buf.position();
-                buf.setPosition(leaPos);
-                buf.putMark();
-                asm.leaq(rbx, new CiAddress(CiKind.Word, InstructionRelative.asValue(), lookupTablePos - leaPos));
-                buf.setPosition(lookupTablePos);
-
-                // Emit lookup table entries
-                for (int i = 0; i < ls.numberOfCases(); i++) {
-                    int key = ls.keyAt(i);
-                    int targetBCI = ls.targetAt(i);
-                    startBlock(targetBCI);
-                    patchInfo.addLookupTableEntry(buf.position(), key, lookupTablePos, targetBCI);
-                    buf.emitInt(key);
-                    buf.emitInt(0);
-                }
-                if (codeAnnotations == null) {
-                    codeAnnotations = new ArrayList<CiTargetMethod.CodeAnnotation>();
-                }
-                codeAnnotations.add(new LookupTable(lookupTablePos, ls.numberOfCases(), 4, 4));
-            }
-        } else {
-            unimplISA();
-        }
-    }
-
-    private void fixup() {
-        if (patchInfo.size == 0) {
-            return;
-        }
-
-        int endPos = buf.position();
-        if (isAMD64()) {
-            PatchInfoAMD64 patchInfo = (PatchInfoAMD64) this.patchInfo;
-            AMD64Assembler asm = (AMD64Assembler) this.asm;
-            int i = 0;
-            while (i < patchInfo.size) {
-                int tag = patchInfo.at(i++);
-                if (tag == PatchInfoAMD64.JCC) {
-                    ConditionFlag cc = ConditionFlag.values[patchInfo.at(i++)];
-                    int pos = patchInfo.at(i++);
-                    int targetBCI = patchInfo.at(i++);
-                    int target = bciToPos[targetBCI];
-                    assert target != 0;
-                    buf.setPosition(pos);
-                    asm.jcc(cc, target, true);
-                } else if (tag == PatchInfoAMD64.JMP) {
-                    int pos = patchInfo.at(i++);
-                    int targetBCI = patchInfo.at(i++);
-                    int target = bciToPos[targetBCI];
-                    assert target != 0;
-                    buf.setPosition(pos);
-                    asm.jmp(target, true);
-                } else if (tag == PatchInfoAMD64.JUMP_TABLE_ENTRY) {
-                    int pos = patchInfo.at(i++);
-                    int jumpTablePos = patchInfo.at(i++);
-                    int targetBCI = patchInfo.at(i++);
-                    int target = bciToPos[targetBCI];
-                    assert target != 0;
-                    int disp = target - jumpTablePos;
-                    buf.setPosition(pos);
-                    buf.emitInt(disp);
-                } else if (tag == PatchInfoAMD64.LOOKUP_TABLE_ENTRY) {
-                    int pos = patchInfo.at(i++);
-                    int key = patchInfo.at(i++);
-                    int lookupTablePos = patchInfo.at(i++);
-                    int targetBCI = patchInfo.at(i++);
-                    int target = bciToPos[targetBCI];
-                    assert target != 0;
-                    int disp = target - lookupTablePos;
-                    buf.setPosition(pos);
-                    buf.emitInt(key);
-                    buf.emitInt(disp);
-                } else {
-                    throw FatalError.unexpected(String.valueOf(tag));
-                }
-            }
-
-        } else {
-            unimplISA();
-        }
-        buf.setPosition(endPos);
-    }
+    protected abstract void fixup();
 
     /**
-     * Compute the offset to a literal reference being created. The current position in the code buffer must be
+     * Computes the offset to a literal reference being created. The current position in the code buffer must be
      * that of the instruction loading the literal.
      *
-     * @param numReferenceLiterals number of created reference literals (including the one being created).
-     * @return an offset, in byte, to the base used to load literal.
+     * @param numReferenceLiterals number of created reference literals (including the one being created)
+     * @return an offset, in bytes, to the base used to load the literal
      */
-    private int computeReferenceLiteralOffset(int numReferenceLiterals) {
-        if (isAMD64()) {
-            // Remember: in the target bundle, the reference literal cell is directly adjacent to the code cell.
-            return numReferenceLiterals * Word.size() + Layout.byteArrayLayout().getElementOffsetInCell(buf.position()).toInt();
-        } else {
-            throw unimplISA();
-        }
-    }
+    protected abstract int computeReferenceLiteralOffset(int numReferenceLiterals);
 
     /**
      * Return the relative offset of the literal to the current code buffer position. (negative number since literals
@@ -1443,7 +726,7 @@ public class T1XCompilation {
      * @param literal the object
      * @return the offset of the literal relative to the current code position
      */
-    private int createReferenceLiteral(Object literal) {
+    protected int createReferenceLiteral(Object literal) {
         int literalOffset = computeReferenceLiteralOffset(1 + referenceLiterals.size());
         referenceLiterals.add(literal);
         if (DebugHeap.isTagging()) {
@@ -1453,305 +736,528 @@ public class T1XCompilation {
         return -literalOffset;
     }
 
-    protected void assignReferenceLiteralTemplateArgument(int parameterIndex, Object argument) {
-        if (isAMD64()) {
-            AMD64Assembler asm = (AMD64Assembler) this.asm;
-            final CiRegister dst = cpuRegParams[parameterIndex];
-            buf.putMark();
-            CiAddress src = new CiAddress(CiKind.Word, InstructionRelative.asValue(), createReferenceLiteral(argument));
-            asm.movq(dst, src);
-        } else {
-            unimplISA();
-        }
+    /**
+     * Emits code to assign the value in {@code src} to {@code dst}.
+     */
+    protected abstract void assignObjectReg(CiRegister dst, CiRegister src);
+
+    /**
+     * Emits code to assign the value in {@code src} to {@code dst}.
+     */
+    protected abstract void assignWordReg(CiRegister dst, CiRegister src);
+
+    /**
+     * Emits code to assign {@code value} to {@code dst}.
+     */
+    protected abstract void assignInt(CiRegister dst, int value);
+
+    /**
+     * Emits code to assign {@code value} to {@code dst}.
+     */
+    protected abstract void assignLong(CiRegister dst, long value);
+
+    /**
+     * Emits code to assign {@code value} to {@code dst}.
+     */
+    protected abstract void assignObject(CiRegister dst, Object value);
+
+    /**
+     * Emits code to assign {@code value} to {@code dst}.
+     */
+    protected abstract void assignFloat(CiRegister dst, float value);
+
+    /**
+     * Emits code to assign {@code value} to {@code dst}.
+     */
+    protected abstract void assignDouble(CiRegister dst, double value);
+
+    /**
+     * Emits code to decrement the operand stack pointer by {@code n} slots.
+     */
+    protected abstract void decStack(int n);
+
+    /**
+     * Emits code to increment the operand stack pointer by {@code n} slots.
+     */
+    protected abstract void incStack(int n);
+
+    /**
+     * Emits code to adjust the value in {@code reg} by {@code delta}.
+     */
+    protected abstract void adjustReg(CiRegister reg, int delta);
+
+    /**
+     * Emits code to copy the value in the {@code i}'th {@linkplain Slot slot} to register {@code dst}.
+     */
+    protected abstract void peekObject(CiRegister dst, int i);
+
+    /**
+     * Emits code to copy the value in register {@code src} to the {@code i}'th {@linkplain Slot slot}.
+     */
+    protected abstract void pokeObject(CiRegister src, int i);
+
+    /**
+     * Emits code to copy the value in the {@code i}'th {@linkplain Slot slot} to register {@code dst}.
+     */
+    protected abstract void peekWord(CiRegister dst, int i);
+
+    /**
+     * Emits code to copy the value in register {@code src} to the {@code i}'th {@linkplain Slot slot}.
+     */
+    protected abstract void pokeWord(CiRegister src, int i);
+
+    /**
+     * Emits code to copy the value in the {@code i}'th {@linkplain Slot slot} to register {@code dst}.
+     */
+    protected abstract void peekInt(CiRegister dst, int i);
+
+    /**
+     * Emits code to copy the value in register {@code src} to the {@code i}'th {@linkplain Slot slot}.
+     */
+    protected abstract void pokeInt(CiRegister src, int i);
+
+    /**
+     * Emits code to copy the value in the {@code i}'th {@linkplain Slot slot} to register {@code dst}.
+     */
+    protected abstract void peekLong(CiRegister dst, int i);
+
+    /**
+     * Emits code to copy the value in register {@code src} to the {@code i}'th {@linkplain Slot slot}.
+     */
+    protected abstract void pokeLong(CiRegister src, int i);
+
+    /**
+     * Emits code to copy the value in the {@code i}'th {@linkplain Slot slot} to register {@code dst}.
+     */
+    protected abstract void peekDouble(CiRegister dst, int i);
+
+    /**
+     * Emits code to copy the value in register {@code src} to the {@code i}'th {@linkplain Slot slot}.
+     */
+    protected abstract void pokeDouble(CiRegister src, int i);
+
+    /**
+     * Emits code to copy the value in the {@code i}'th {@linkplain Slot slot} to register {@code dst}.
+     */
+    protected abstract void peekFloat(CiRegister dst, int i);
+
+    /**
+     * Emits code to copy the value in register {@code src} to the {@code i}'th {@linkplain Slot slot}.
+     */
+    protected abstract void pokeFloat(CiRegister src, int i);
+
+    /**
+     * Emits code to trap if the value in register {@code src} is 0.
+     */
+    protected abstract void nullCheck(CiRegister src);
+
+    /**
+     * Emits a direct call instruction whose immediate operand (denoting the absolute or relative offset to the target) will be patched later.
+     *
+     * @return the {@linkplain Safepoints safepoint} for the call
+     */
+    protected abstract int callDirect();
+
+    /**
+     * Emits an indirect call instruction.
+     *
+     * @param target the register holding the address of the call target
+     * @param receiverStackIndex the index of the receiver which must be copied from the stack to the receiver register
+     *            used by the optimizing compiler. This is required so that dynamic trampolines can find the receiver in
+     *            the expected register. If {@code receiverStackIndex == -1}, then the copy is not emitted as
+     *            {@code target} is guaranteed to not be the address of a trampoline.
+     * @return the {@linkplain Safepoints safepoint} for the call
+     */
+    protected abstract int callIndirect(CiRegister target, int receiverStackIndex);
+
+    /**
+     * Gets the register for a given parameter of the current template.
+     * When assertions are enabled, this method also checks the index, name and kind
+     * of the parameter and ensures it is not being initialized more than once.
+     *
+     * @param n the index of the parameter
+     * @param name the expected name of the parameter
+     * @param kind the expected kind of the parameter
+     * @return the register for parameter {@code n} of the current template.
+     */
+    @INLINE
+    protected final CiRegister reg(int n, String name, CiKind kind) {
+        assert n >= 0 && n < template.sig.in.length : template + ": parameter " + n + " is out of bounds";
+        Arg a = template.sig.in[n];
+        assert assertInitializeArg(a, n);
+        assert a.kind == kind : template + ": expected " + a.kind + " value for parameter " + n + " (\"" + a.name + "\"), not " + kind;
+        assert a.name.equals(name) : template + ": expected name of parameter " + n + " to be \"" + a.name + "\", not \"" + name + "\"";
+        return a.reg;
     }
 
-    protected void assignIntTemplateArgument(int parameterIndex, int argument) {
-        if (isAMD64()) {
-            AMD64Assembler asm = (AMD64Assembler) this.asm;
-            final CiRegister dst = cpuRegParams[parameterIndex];
-            asm.movl(dst, argument);
-        } else {
-            unimplISA();
-        }
+    /**
+     * Emits code to copy the value in {@code src} to parameter {@code n} of the current template.
+     *
+     * @param name the expected name of the parameter
+     */
+    final void assignObjectReg(int n, String name, CiRegister src) {
+        assignObjectReg(reg(n, name, CiKind.Object), src);
     }
 
-    private void assignFloatTemplateArgument(int parameterIndex, float argument) {
-        if (isAMD64()) {
-            AMD64Assembler asm = (AMD64Assembler) this.asm;
-            final CiRegister dst = fpuRegParams[parameterIndex];
-            asm.movl(scratch, Intrinsics.floatToInt(argument));
-            asm.movdl(dst, scratch);
-        } else {
-            unimplISA();
-        }
+    /**
+     * Emits code to copy the value in {@code src} to parameter {@code n} of the current template.
+     *
+     * @param name the expected name of the parameter
+     */
+    final void assignWordReg(int n, String name, CiRegister src) {
+        assignWordReg(reg(n, name, CiKind.Word), src);
     }
 
-    private void assignLongTemplateArgument(int parameterIndex, long argument) {
-        if (isAMD64()) {
-            AMD64Assembler asm = (AMD64Assembler) this.asm;
-            final CiRegister dst = cpuRegParams[parameterIndex];
-            asm.movq(dst, argument);
-        } else {
-            unimplISA();
-        }
+    /**
+     * Emits code to assign {@code value} to parameter {@code n} of the current template.
+     *
+     * @param name the expected name of the parameter
+     */
+    final void assignObject(int n, String name, Object value) {
+        assignObject(reg(n, name, CiKind.Object), value);
     }
 
-    private void assignDoubleTemplateArgument(int parameterIndex, double argument) {
-        if (isAMD64()) {
-            AMD64Assembler asm = (AMD64Assembler) this.asm;
-            final CiRegister dst = fpuRegParams[parameterIndex];
-            asm.movq(scratch, Intrinsics.doubleToLong(argument));
-            asm.movdq(dst, scratch);
-        } else {
-            unimplISA();
-        }
+    /**
+     * Emits code to assign {@code value} to parameter {@code n} of the current template.
+     *
+     * @param name the expected name of the parameter
+     */
+    final void assignInt(int n, String name, int value) {
+        assignInt(reg(n, name, CiKind.Int), value);
     }
 
-    protected void assignLocalDisplacementTemplateArgument(int parameterIndex, int localIndex, Kind kind) {
-        // Long and double locals use two slots in the locals area,
-        // as required by the JVM spec. The value of the long or double local is stored in
-        // the second slot so that it can be loaded/stored without further adjustments
-        // to the stack/base pointer offsets.
-        int slotIndex = !kind.isCategory1 ? (localIndex + 1) : localIndex;
-        int slotOffset = frame.localVariableOffset(slotIndex) + JVMSFrameLayout.offsetInStackSlot(kind);
-        assignIntTemplateArgument(parameterIndex, slotOffset);
+    /**
+     * Emits code to assign {@code value} to parameter {@code n} of the current template.
+     *
+     * @param name the expected name of the parameter
+     */
+    final void assignFloat(int n, String name, float value) {
+        assignFloat(reg(n, name, CiKind.Float), value);
+    }
+
+    /**
+     * Emits code to assign {@code value} to parameter {@code n} of the current template.
+     *
+     * @param name the expected name of the parameter
+     */
+    final void assignLong(int n, String name, long value) {
+        assignLong(reg(n, name, CiKind.Long), value);
+    }
+
+    /**
+     * Emits code to assign {@code value} to parameter {@code n} of the current template.
+     *
+     * @param name the expected name of the parameter
+     */
+    final void assignDouble(int n, String name, double value) {
+        assignDouble(reg(n, name, CiKind.Double), value);
+    }
+
+    /**
+     * Emits code to copy the value from index {@code i} of the local variables array
+     * to parameter {@code n} of the current template.
+     *
+     * @param name the expected name of the parameter
+     */
+    final void loadInt(int n, String name, int i) {
+        loadInt(reg(n, name, CiKind.Int), i);
+    }
+
+    /**
+     * Emits code to copy the value from index {@code i} of the local variables array
+     * to parameter {@code n} of the current template.
+     *
+     * @param name the expected name of the parameter
+     */
+    final void loadObject(int n, String name, int i) {
+        loadObject(reg(n, name, CiKind.Object), i);
+    }
+
+    /**
+     * Emits code to copy the value in the {@code i}'th {@linkplain Slot slot} of the operand stack
+     * to parameter {@code n} of the current template.
+     *
+     * @param name the expected name of the parameter
+     */
+    final void peekObject(int n, String name, int i) {
+        peekObject(reg(n, name, CiKind.Object), i);
+    }
+
+    /**
+     * Emits code to copy the value in the {@code i}'th {@linkplain Slot slot} of the operand stack
+     * to parameter {@code n} of the current template.
+     *
+     * @param name the expected name of the parameter
+     */
+    final void peekInt(int n, String name, int i) {
+        peekInt(reg(n, name, CiKind.Int), i);
+    }
+
+    /**
+     * Emits code to copy the value in the {@code i}'th {@linkplain Slot slot} of the operand stack
+     * to parameter {@code n} of the current template.
+     *
+     * @param name the expected name of the parameter
+     */
+    final void peekFloat(int n, String name, int i) {
+        peekFloat(reg(n, name, CiKind.Float), i);
+    }
+
+    /**
+     * Emits code to copy the value in the {@code i}'th {@linkplain Slot slot} of the operand stack
+     * to parameter {@code n} of the current template.
+     *
+     * @param name the expected name of the parameter
+     */
+    final void peekDouble(int n, String name, int i) {
+        peekDouble(reg(n, name, CiKind.Double), i);
+    }
+
+    /**
+     * Emits code to copy the value in the {@code i}'th {@linkplain Slot slot} of the operand stack
+     * to parameter {@code n} of the current template.
+     *
+     * @param name the expected name of the parameter
+     */
+    final void peekLong(int n, String name, int i) {
+        peekLong(reg(n, name, CiKind.Long), i);
+    }
+
+    private String errorSuffix() {
+        int opcode = stream.currentBC();
+        String name = Bytecodes.nameOf(opcode);
+        return " [bci=" + stream.currentBCI() + ", opcode=" + opcode + "(" + name + ")]";
     }
 
     protected void processBytecode(int opcode) throws InternalError {
+        beginBytecode(opcode);
         switch (opcode) {
             // Checkstyle: stop
 
             case Bytecodes.NOP                : bciToPos[stream.currentBCI()] = buf.position(); break;
-            case Bytecodes.AALOAD             : emit(AALOAD); break;
-            case Bytecodes.AASTORE            : emit(AASTORE); break;
-            case Bytecodes.ACONST_NULL        : emit(ACONST_NULL); break;
-            case Bytecodes.ARRAYLENGTH        : emit(ARRAYLENGTH); break;
-            case Bytecodes.ATHROW             : emit(ATHROW); break;
-            case Bytecodes.BALOAD             : emit(BALOAD); break;
-            case Bytecodes.BASTORE            : emit(BASTORE); break;
-            case Bytecodes.CALOAD             : emit(CALOAD); break;
-            case Bytecodes.CASTORE            : emit(CASTORE); break;
-            case Bytecodes.D2F                : emit(D2F); break;
-            case Bytecodes.D2I                : emit(D2I); break;
-            case Bytecodes.D2L                : emit(D2L); break;
-            case Bytecodes.DADD               : emit(DADD); break;
-            case Bytecodes.DALOAD             : emit(DALOAD); break;
-            case Bytecodes.DASTORE            : emit(DASTORE); break;
-            case Bytecodes.DCMPG              : emit(DCMPG); break;
-            case Bytecodes.DCMPL              : emit(DCMPL); break;
-            case Bytecodes.DDIV               : emit(DDIV); break;
-            case Bytecodes.DMUL               : emit(DMUL); break;
-            case Bytecodes.DREM               : emit(DREM); break;
-            case Bytecodes.DSUB               : emit(DSUB); break;
-            case Bytecodes.DUP                : emit(DUP); break;
-            case Bytecodes.DUP2               : emit(DUP2); break;
-            case Bytecodes.DUP2_X1            : emit(DUP2_X1); break;
-            case Bytecodes.DUP2_X2            : emit(DUP2_X2); break;
-            case Bytecodes.DUP_X1             : emit(DUP_X1); break;
-            case Bytecodes.DUP_X2             : emit(DUP_X2); break;
-            case Bytecodes.F2D                : emit(F2D); break;
-            case Bytecodes.F2I                : emit(F2I); break;
-            case Bytecodes.F2L                : emit(F2L); break;
-            case Bytecodes.FADD               : emit(FADD); break;
-            case Bytecodes.FALOAD             : emit(FALOAD); break;
-            case Bytecodes.FASTORE            : emit(FASTORE); break;
-            case Bytecodes.FCMPG              : emit(FCMPG); break;
-            case Bytecodes.FCMPL              : emit(FCMPL); break;
-            case Bytecodes.FDIV               : emit(FDIV); break;
-            case Bytecodes.FMUL               : emit(FMUL); break;
-            case Bytecodes.FREM               : emit(FREM); break;
-            case Bytecodes.FSUB               : emit(FSUB); break;
-            case Bytecodes.I2B                : emit(I2B); break;
-            case Bytecodes.I2C                : emit(I2C); break;
-            case Bytecodes.I2D                : emit(I2D); break;
-            case Bytecodes.I2F                : emit(I2F); break;
-            case Bytecodes.I2L                : emit(I2L); break;
-            case Bytecodes.I2S                : emit(I2S); break;
-            case Bytecodes.IADD               : emit(IADD); break;
-            case Bytecodes.IALOAD             : emit(IALOAD); break;
-            case Bytecodes.IAND               : emit(IAND); break;
-            case Bytecodes.IASTORE            : emit(IASTORE); break;
-            case Bytecodes.ICONST_0           : emit(ICONST_0); break;
-            case Bytecodes.ICONST_1           : emit(ICONST_1); break;
-            case Bytecodes.ICONST_2           : emit(ICONST_2); break;
-            case Bytecodes.ICONST_3           : emit(ICONST_3); break;
-            case Bytecodes.ICONST_4           : emit(ICONST_4); break;
-            case Bytecodes.ICONST_5           : emit(ICONST_5); break;
-            case Bytecodes.ICONST_M1          : emit(ICONST_M1); break;
-            case Bytecodes.IDIV               : emit(IDIV); break;
-            case Bytecodes.IMUL               : emit(IMUL); break;
-            case Bytecodes.INEG               : emit(INEG); break;
-            case Bytecodes.IOR                : emit(IOR); break;
-            case Bytecodes.IREM               : emit(IREM); break;
-            case Bytecodes.ISHL               : emit(ISHL); break;
-            case Bytecodes.ISHR               : emit(ISHR); break;
-            case Bytecodes.ISUB               : emit(ISUB); break;
-            case Bytecodes.IUSHR              : emit(IUSHR); break;
-            case Bytecodes.IXOR               : emit(IXOR); break;
-            case Bytecodes.L2D                : emit(L2D); break;
-            case Bytecodes.L2F                : emit(L2F); break;
-            case Bytecodes.L2I                : emit(L2I); break;
-            case Bytecodes.LADD               : emit(LADD); break;
-            case Bytecodes.LALOAD             : emit(LALOAD); break;
-            case Bytecodes.LAND               : emit(LAND); break;
-            case Bytecodes.LASTORE            : emit(LASTORE); break;
-            case Bytecodes.LCMP               : emit(LCMP); break;
-            case Bytecodes.LDIV               : emit(LDIV); break;
-            case Bytecodes.LMUL               : emit(LMUL); break;
-            case Bytecodes.LNEG               : emit(LNEG); break;
-            case Bytecodes.LOR                : emit(LOR); break;
-            case Bytecodes.LREM               : emit(LREM); break;
-            case Bytecodes.LSHL               : emit(LSHL); break;
-            case Bytecodes.LSHR               : emit(LSHR); break;
-            case Bytecodes.LSUB               : emit(LSUB); break;
-            case Bytecodes.LUSHR              : emit(LUSHR); break;
-            case Bytecodes.LXOR               : emit(LXOR); break;
-            case Bytecodes.MONITORENTER       : emit(MONITORENTER); break;
-            case Bytecodes.MONITOREXIT        : emit(MONITOREXIT); break;
-            case Bytecodes.POP                : emit(POP); break;
-            case Bytecodes.POP2               : emit(POP2); break;
-            case Bytecodes.SALOAD             : emit(SALOAD); break;
-            case Bytecodes.SASTORE            : emit(SASTORE); break;
-            case Bytecodes.SWAP               : emit(SWAP); break;
-            case Bytecodes.LCONST_0           : emitLong(LCONST, 0L); break;
-            case Bytecodes.LCONST_1           : emitLong(LCONST, 1L); break;
-            case Bytecodes.DCONST_0           : emitDouble(DCONST, 0D); break;
-            case Bytecodes.DCONST_1           : emitDouble(DCONST, 1D); break;
-            case Bytecodes.DNEG               : emitDouble(DNEG, 0D); break;
-            case Bytecodes.FCONST_0           : emitFloat(FCONST, 0F); break;
-            case Bytecodes.FCONST_1           : emitFloat(FCONST, 1F); break;
-            case Bytecodes.FCONST_2           : emitFloat(FCONST, 2F); break;
-            case Bytecodes.FNEG               : emitFloat(FNEG, 0F); break;
-            case Bytecodes.ARETURN            : emitReturn(ARETURN, ARETURN$unlockClass, ARETURN$unlockReceiver); break;
-            case Bytecodes.DRETURN            : emitReturn(DRETURN, DRETURN$unlockClass, DRETURN$unlockReceiver); break;
-            case Bytecodes.FRETURN            : emitReturn(FRETURN, FRETURN$unlockClass, FRETURN$unlockReceiver); break;
-            case Bytecodes.IRETURN            : emitReturn(IRETURN, IRETURN$unlockClass, IRETURN$unlockReceiver); break;
-            case Bytecodes.LRETURN            : emitReturn(LRETURN, LRETURN$unlockClass, LRETURN$unlockReceiver); break;
-            case Bytecodes.RETURN             : emitReturn(RETURN, RETURN$unlockClass, RETURN$unlockReceiver); break;
-            case Bytecodes.ALOAD              : emitVarAccess(ALOAD, stream.readLocalIndex(), Kind.REFERENCE); break;
-            case Bytecodes.ALOAD_0            : emitVarAccess(ALOAD, 0, Kind.REFERENCE); break;
-            case Bytecodes.ALOAD_1            : emitVarAccess(ALOAD, 1, Kind.REFERENCE); break;
-            case Bytecodes.ALOAD_2            : emitVarAccess(ALOAD, 2, Kind.REFERENCE); break;
-            case Bytecodes.ALOAD_3            : emitVarAccess(ALOAD, 3, Kind.REFERENCE); break;
-            case Bytecodes.ASTORE             : emitVarAccess(ASTORE, stream.readLocalIndex(), Kind.REFERENCE); break;
-            case Bytecodes.ASTORE_0           : emitVarAccess(ASTORE, 0, Kind.REFERENCE); break;
-            case Bytecodes.ASTORE_1           : emitVarAccess(ASTORE, 1, Kind.REFERENCE); break;
-            case Bytecodes.ASTORE_2           : emitVarAccess(ASTORE, 2, Kind.REFERENCE); break;
-            case Bytecodes.ASTORE_3           : emitVarAccess(ASTORE, 3, Kind.REFERENCE); break;
-            case Bytecodes.DLOAD              : emitVarAccess(DLOAD, stream.readLocalIndex(), Kind.DOUBLE); break;
-            case Bytecodes.DLOAD_0            : emitVarAccess(DLOAD, 0, Kind.DOUBLE); break;
-            case Bytecodes.DLOAD_1            : emitVarAccess(DLOAD, 1, Kind.DOUBLE); break;
-            case Bytecodes.DLOAD_2            : emitVarAccess(DLOAD, 2, Kind.DOUBLE); break;
-            case Bytecodes.DLOAD_3            : emitVarAccess(DLOAD, 3, Kind.DOUBLE); break;
-            case Bytecodes.DSTORE             : emitVarAccess(DSTORE, stream.readLocalIndex(), Kind.DOUBLE); break;
-            case Bytecodes.DSTORE_0           : emitVarAccess(DSTORE, 0, Kind.DOUBLE); break;
-            case Bytecodes.DSTORE_1           : emitVarAccess(DSTORE, 1, Kind.DOUBLE); break;
-            case Bytecodes.DSTORE_2           : emitVarAccess(DSTORE, 2, Kind.DOUBLE); break;
-            case Bytecodes.DSTORE_3           : emitVarAccess(DSTORE, 3, Kind.DOUBLE); break;
-            case Bytecodes.FLOAD              : emitVarAccess(FLOAD, stream.readLocalIndex(), Kind.FLOAT); break;
-            case Bytecodes.FLOAD_0            : emitVarAccess(FLOAD, 0, Kind.FLOAT); break;
-            case Bytecodes.FLOAD_1            : emitVarAccess(FLOAD, 1, Kind.FLOAT); break;
-            case Bytecodes.FLOAD_2            : emitVarAccess(FLOAD, 2, Kind.FLOAT); break;
-            case Bytecodes.FLOAD_3            : emitVarAccess(FLOAD, 3, Kind.FLOAT); break;
-            case Bytecodes.FSTORE             : emitVarAccess(FSTORE, stream.readLocalIndex(), Kind.FLOAT); break;
-            case Bytecodes.FSTORE_0           : emitVarAccess(FSTORE, 0, Kind.FLOAT); break;
-            case Bytecodes.FSTORE_1           : emitVarAccess(FSTORE, 1, Kind.FLOAT); break;
-            case Bytecodes.FSTORE_2           : emitVarAccess(FSTORE, 2, Kind.FLOAT); break;
-            case Bytecodes.FSTORE_3           : emitVarAccess(FSTORE, 3, Kind.FLOAT); break;
-            case Bytecodes.ILOAD              : emitVarAccess(ILOAD, stream.readLocalIndex(), Kind.INT); break;
-            case Bytecodes.ILOAD_0            : emitVarAccess(ILOAD, 0, Kind.INT); break;
-            case Bytecodes.ILOAD_1            : emitVarAccess(ILOAD, 1, Kind.INT); break;
-            case Bytecodes.ILOAD_2            : emitVarAccess(ILOAD, 2, Kind.INT); break;
-            case Bytecodes.ILOAD_3            : emitVarAccess(ILOAD, 3, Kind.INT); break;
-            case Bytecodes.ISTORE             : emitVarAccess(ISTORE, stream.readLocalIndex(), Kind.INT); break;
-            case Bytecodes.ISTORE_0           : emitVarAccess(ISTORE, 0, Kind.INT); break;
-            case Bytecodes.ISTORE_1           : emitVarAccess(ISTORE, 1, Kind.INT); break;
-            case Bytecodes.ISTORE_2           : emitVarAccess(ISTORE, 2, Kind.INT); break;
-            case Bytecodes.ISTORE_3           : emitVarAccess(ISTORE, 3, Kind.INT); break;
-            case Bytecodes.LSTORE             : emitVarAccess(LSTORE, stream.readLocalIndex(), Kind.LONG); break;
-            case Bytecodes.LLOAD              : emitVarAccess(LLOAD, stream.readLocalIndex(), Kind.LONG); break;
-            case Bytecodes.LLOAD_0            : emitVarAccess(LLOAD, 0, Kind.LONG); break;
-            case Bytecodes.LLOAD_1            : emitVarAccess(LLOAD, 1, Kind.LONG); break;
-            case Bytecodes.LLOAD_2            : emitVarAccess(LLOAD, 2, Kind.LONG); break;
-            case Bytecodes.LLOAD_3            : emitVarAccess(LLOAD, 3, Kind.LONG); break;
-            case Bytecodes.LSTORE_0           : emitVarAccess(LSTORE, 0, Kind.LONG); break;
-            case Bytecodes.LSTORE_1           : emitVarAccess(LSTORE, 1, Kind.LONG); break;
-            case Bytecodes.LSTORE_2           : emitVarAccess(LSTORE, 2, Kind.LONG); break;
-            case Bytecodes.LSTORE_3           : emitVarAccess(LSTORE, 3, Kind.LONG); break;
-            case Bytecodes.IFEQ               : emitBranch(EQ, IFEQ, stream.readBranchDest()); break;
-            case Bytecodes.IFNE               : emitBranch(NE, IFNE, stream.readBranchDest()); break;
-            case Bytecodes.IFLE               : emitBranch(LE, IFLE, stream.readBranchDest()); break;
-            case Bytecodes.IFLT               : emitBranch(LT, IFLT, stream.readBranchDest()); break;
-            case Bytecodes.IFGE               : emitBranch(GE, IFGE, stream.readBranchDest()); break;
-            case Bytecodes.IFGT               : emitBranch(GT, IFGT, stream.readBranchDest()); break;
-            case Bytecodes.IF_ICMPEQ          : emitBranch(EQ, IF_ICMPEQ, stream.readBranchDest()); break;
-            case Bytecodes.IF_ICMPNE          : emitBranch(NE, IF_ICMPNE, stream.readBranchDest()); break;
-            case Bytecodes.IF_ICMPGE          : emitBranch(GE, IF_ICMPGE, stream.readBranchDest()); break;
-            case Bytecodes.IF_ICMPGT          : emitBranch(GT, IF_ICMPGT, stream.readBranchDest()); break;
-            case Bytecodes.IF_ICMPLE          : emitBranch(LE, IF_ICMPLE, stream.readBranchDest()); break;
-            case Bytecodes.IF_ICMPLT          : emitBranch(LT, IF_ICMPLT, stream.readBranchDest()); break;
-            case Bytecodes.IF_ACMPEQ          : emitBranch(EQ, IF_ACMPEQ, stream.readBranchDest()); break;
-            case Bytecodes.IF_ACMPNE          : emitBranch(NE, IF_ACMPNE, stream.readBranchDest()); break;
-            case Bytecodes.IFNULL             : emitBranch(EQ, IFNULL,    stream.readBranchDest()); break;
-            case Bytecodes.IFNONNULL          : emitBranch(NE, IFNONNULL, stream.readBranchDest()); break;
-            case Bytecodes.GOTO               : emitBranch(null, GOTO, stream.readBranchDest()); break;
-            case Bytecodes.GOTO_W             : emitBranch(null, GOTO_W, stream.readFarBranchDest()); break;
-            case Bytecodes.GETFIELD           : emitFieldAccess(GETFIELDS, stream.readCPI()); break;
-            case Bytecodes.GETSTATIC          : emitFieldAccess(GETSTATICS, stream.readCPI()); break;
-            case Bytecodes.PUTFIELD           : emitFieldAccess(PUTFIELDS, stream.readCPI()); break;
-            case Bytecodes.PUTSTATIC          : emitFieldAccess(PUTSTATICS, stream.readCPI()); break;
-            case Bytecodes.ANEWARRAY          : emitTemplateWithClassConstant(ANEWARRAY, stream.readCPI()); break;
-            case Bytecodes.CHECKCAST          : emitTemplateWithClassConstant(CHECKCAST, stream.readCPI()); break;
-            case Bytecodes.INSTANCEOF         : emitTemplateWithClassConstant(INSTANCEOF, stream.readCPI()); break;
-            case Bytecodes.BIPUSH             : emitInt(BIPUSH, stream.readByte()); break;
-            case Bytecodes.SIPUSH             : emitInt(SIPUSH, stream.readShort()); break;
-            case Bytecodes.NEW                : emitNew(stream.readCPI()); break;
-            case Bytecodes.INVOKESPECIAL      : emitInvokespecial(stream.readCPI()); break;
-            case Bytecodes.INVOKESTATIC       : emitInvokestatic(stream.readCPI()); break;
-            case Bytecodes.INVOKEVIRTUAL      : emitInvokevirtual(stream.readCPI()); break;
-            case Bytecodes.INVOKEINTERFACE    : emitInvokeinterface(stream.readCPI()); break;
-            case Bytecodes.NEWARRAY           : emitNewarray(stream.readLocalIndex()); break;
-            case Bytecodes.LDC                : emitConstant(stream.readCPI()); break;
-            case Bytecodes.LDC_W              : emitConstant(stream.readCPI()); break;
-            case Bytecodes.LDC2_W             : emitConstant(stream.readCPI()); break;
-            case Bytecodes.TABLESWITCH        : emitTableswitch(); break;
-            case Bytecodes.LOOKUPSWITCH       : emitLookupswitch(); break;
-            case Bytecodes.IINC               : emitIinc(stream.readLocalIndex(), stream.readIncrement()); break;
-            case Bytecodes.MULTIANEWARRAY     : emitMultianewarray(stream.readCPI(), stream.readUByte(stream.currentBCI() + 3)); break;
+            case Bytecodes.AALOAD             : do_aaload(); break;
+            case Bytecodes.AASTORE            : do_aastore(); break;
+            case Bytecodes.ACONST_NULL        : do_oconst(null); break;
+            case Bytecodes.ARRAYLENGTH        : do_arraylength(); break;
+            case Bytecodes.ATHROW             : do_athrow(); break;
+            case Bytecodes.BALOAD             : do_baload(); break;
+            case Bytecodes.BASTORE            : do_bastore(); break;
+            case Bytecodes.CALOAD             : do_caload(); break;
+            case Bytecodes.CASTORE            : do_castore(); break;
+            case Bytecodes.D2F                : do_d2f(); break;
+            case Bytecodes.D2I                : do_d2i(); break;
+            case Bytecodes.D2L                : do_d2l(); break;
+            case Bytecodes.DADD               : do_dadd(); break;
+            case Bytecodes.DALOAD             : do_daload(); break;
+            case Bytecodes.DASTORE            : do_dastore(); break;
+            case Bytecodes.DCMPG              : do_dcmpg(); break;
+            case Bytecodes.DCMPL              : do_dcmpl(); break;
+            case Bytecodes.DDIV               : do_ddiv(); break;
+            case Bytecodes.DMUL               : do_dmul(); break;
+            case Bytecodes.DREM               : do_drem(); break;
+            case Bytecodes.DSUB               : do_dsub(); break;
+            case Bytecodes.DUP                : do_dup(); break;
+            case Bytecodes.DUP2               : do_dup2(); break;
+            case Bytecodes.DUP2_X1            : do_dup2_x1(); break;
+            case Bytecodes.DUP2_X2            : do_dup2_x2(); break;
+            case Bytecodes.DUP_X1             : do_dup_x1(); break;
+            case Bytecodes.DUP_X2             : do_dup_x2(); break;
+            case Bytecodes.F2D                : do_f2d(); break;
+            case Bytecodes.F2I                : do_f2i(); break;
+            case Bytecodes.F2L                : do_f2l(); break;
+            case Bytecodes.FADD               : do_fadd(); break;
+            case Bytecodes.FALOAD             : do_faload(); break;
+            case Bytecodes.FASTORE            : do_fastore(); break;
+            case Bytecodes.FCMPG              : do_fcmpg(); break;
+            case Bytecodes.FCMPL              : do_fcmpl(); break;
+            case Bytecodes.FDIV               : do_fdiv(); break;
+            case Bytecodes.FMUL               : do_fmul(); break;
+            case Bytecodes.FREM               : do_frem(); break;
+            case Bytecodes.FSUB               : do_fsub(); break;
+            case Bytecodes.I2B                : do_i2b(); break;
+            case Bytecodes.I2C                : do_i2c(); break;
+            case Bytecodes.I2D                : do_i2d(); break;
+            case Bytecodes.I2F                : do_i2f(); break;
+            case Bytecodes.I2L                : do_i2l(); break;
+            case Bytecodes.I2S                : do_i2s(); break;
+            case Bytecodes.IADD               : do_iadd(); break;
+            case Bytecodes.IALOAD             : do_iaload(); break;
+            case Bytecodes.IAND               : do_iand(); break;
+            case Bytecodes.IASTORE            : do_iastore(); break;
+            case Bytecodes.ICONST_0           : do_iconst(0); break;
+            case Bytecodes.ICONST_1           : do_iconst(1); break;
+            case Bytecodes.ICONST_2           : do_iconst(2); break;
+            case Bytecodes.ICONST_3           : do_iconst(3); break;
+            case Bytecodes.ICONST_4           : do_iconst(4); break;
+            case Bytecodes.ICONST_5           : do_iconst(5); break;
+            case Bytecodes.ICONST_M1          : do_iconst(-1); break;
+            case Bytecodes.IDIV               : do_idiv(); break;
+            case Bytecodes.IMUL               : do_imul(); break;
+            case Bytecodes.INEG               : do_ineg(); break;
+            case Bytecodes.IOR                : do_ior(); break;
+            case Bytecodes.IREM               : do_irem(); break;
+            case Bytecodes.ISHL               : do_ishl(); break;
+            case Bytecodes.ISHR               : do_ishr(); break;
+            case Bytecodes.ISUB               : do_isub(); break;
+            case Bytecodes.IUSHR              : do_iushr(); break;
+            case Bytecodes.IXOR               : do_ixor(); break;
+            case Bytecodes.L2D                : do_l2d(); break;
+            case Bytecodes.L2F                : do_l2f(); break;
+            case Bytecodes.L2I                : do_l2i(); break;
+            case Bytecodes.LADD               : do_ladd(); break;
+            case Bytecodes.LALOAD             : do_laload(); break;
+            case Bytecodes.LAND               : do_land(); break;
+            case Bytecodes.LASTORE            : do_lastore(); break;
+            case Bytecodes.LCMP               : do_lcmp(); break;
+            case Bytecodes.LDIV               : do_ldiv(); break;
+            case Bytecodes.LMUL               : do_lmul(); break;
+            case Bytecodes.LNEG               : do_lneg(); break;
+            case Bytecodes.LOR                : do_lor(); break;
+            case Bytecodes.LREM               : do_lrem(); break;
+            case Bytecodes.LSHL               : do_lshl(); break;
+            case Bytecodes.LSHR               : do_lshr(); break;
+            case Bytecodes.LSUB               : do_lsub(); break;
+            case Bytecodes.LUSHR              : do_lushr(); break;
+            case Bytecodes.LXOR               : do_lxor(); break;
+            case Bytecodes.MONITORENTER       : do_monitorenter(); break;
+            case Bytecodes.MONITOREXIT        : do_monitorexit(); break;
+            case Bytecodes.POP                : do_pop(); break;
+            case Bytecodes.POP2               : do_pop2(); break;
+            case Bytecodes.SALOAD             : do_saload(); break;
+            case Bytecodes.SASTORE            : do_sastore(); break;
+            case Bytecodes.SWAP               : do_swap(); break;
+            case Bytecodes.LCONST_0           : do_lconst(0L); break;
+            case Bytecodes.LCONST_1           : do_lconst(1L); break;
+            case Bytecodes.DCONST_0           : do_dconst(0D); break;
+            case Bytecodes.DCONST_1           : do_dconst(1D); break;
+            case Bytecodes.DNEG               : do_dneg(); break;
+            case Bytecodes.FCONST_0           : do_fconst(0F); break;
+            case Bytecodes.FCONST_1           : do_fconst(1F); break;
+            case Bytecodes.FCONST_2           : do_fconst(2F); break;
+            case Bytecodes.FNEG               : do_fneg(); break;
+            case Bytecodes.ARETURN            : do_return(ARETURN, ARETURN$unlock); break;
+            case Bytecodes.DRETURN            : do_return(DRETURN, DRETURN$unlock); break;
+            case Bytecodes.FRETURN            : do_return(FRETURN, FRETURN$unlock); break;
+            case Bytecodes.IRETURN            : do_return(IRETURN, IRETURN$unlock); break;
+            case Bytecodes.LRETURN            : do_return(LRETURN, LRETURN$unlock); break;
+            case Bytecodes.RETURN             : do_return(RETURN, RETURN$unlock); break;
+            case Bytecodes.ALOAD              : do_load(stream.readLocalIndex(), CiKind.Object); break;
+            case Bytecodes.ALOAD_0            : do_load(0, CiKind.Object); break;
+            case Bytecodes.ALOAD_1            : do_load(1, CiKind.Object); break;
+            case Bytecodes.ALOAD_2            : do_load(2, CiKind.Object); break;
+            case Bytecodes.ALOAD_3            : do_load(3, CiKind.Object); break;
+            case Bytecodes.ASTORE             : do_store(stream.readLocalIndex(), CiKind.Object); break;
+            case Bytecodes.ASTORE_0           : do_store(0, CiKind.Object); break;
+            case Bytecodes.ASTORE_1           : do_store(1, CiKind.Object); break;
+            case Bytecodes.ASTORE_2           : do_store(2, CiKind.Object); break;
+            case Bytecodes.ASTORE_3           : do_store(3, CiKind.Object); break;
+            case Bytecodes.DLOAD              : do_load(stream.readLocalIndex(), CiKind.Double); break;
+            case Bytecodes.DLOAD_0            : do_load(0, CiKind.Double); break;
+            case Bytecodes.DLOAD_1            : do_load(1, CiKind.Double); break;
+            case Bytecodes.DLOAD_2            : do_load(2, CiKind.Double); break;
+            case Bytecodes.DLOAD_3            : do_load(3, CiKind.Double); break;
+            case Bytecodes.DSTORE             : do_store(stream.readLocalIndex(), CiKind.Double); break;
+            case Bytecodes.DSTORE_0           : do_store(0, CiKind.Double); break;
+            case Bytecodes.DSTORE_1           : do_store(1, CiKind.Double); break;
+            case Bytecodes.DSTORE_2           : do_store(2, CiKind.Double); break;
+            case Bytecodes.DSTORE_3           : do_store(3, CiKind.Double); break;
+            case Bytecodes.FLOAD              : do_load(stream.readLocalIndex(), CiKind.Float); break;
+            case Bytecodes.FLOAD_0            : do_load(0, CiKind.Float); break;
+            case Bytecodes.FLOAD_1            : do_load(1, CiKind.Float); break;
+            case Bytecodes.FLOAD_2            : do_load(2, CiKind.Float); break;
+            case Bytecodes.FLOAD_3            : do_load(3, CiKind.Float); break;
+            case Bytecodes.FSTORE             : do_store(stream.readLocalIndex(), CiKind.Float); break;
+            case Bytecodes.FSTORE_0           : do_store(0, CiKind.Float); break;
+            case Bytecodes.FSTORE_1           : do_store(1, CiKind.Float); break;
+            case Bytecodes.FSTORE_2           : do_store(2, CiKind.Float); break;
+            case Bytecodes.FSTORE_3           : do_store(3, CiKind.Float); break;
+            case Bytecodes.ILOAD              : do_load(stream.readLocalIndex(), CiKind.Int); break;
+            case Bytecodes.ILOAD_0            : do_load(0, CiKind.Int); break;
+            case Bytecodes.ILOAD_1            : do_load(1, CiKind.Int); break;
+            case Bytecodes.ILOAD_2            : do_load(2, CiKind.Int); break;
+            case Bytecodes.ILOAD_3            : do_load(3, CiKind.Int); break;
+            case Bytecodes.ISTORE             : do_store(stream.readLocalIndex(), CiKind.Int); break;
+            case Bytecodes.ISTORE_0           : do_store(0, CiKind.Int); break;
+            case Bytecodes.ISTORE_1           : do_store(1, CiKind.Int); break;
+            case Bytecodes.ISTORE_2           : do_store(2, CiKind.Int); break;
+            case Bytecodes.ISTORE_3           : do_store(3, CiKind.Int); break;
+            case Bytecodes.LLOAD              : do_load(stream.readLocalIndex(), CiKind.Long); break;
+            case Bytecodes.LLOAD_0            : do_load(0, CiKind.Long); break;
+            case Bytecodes.LLOAD_1            : do_load(1, CiKind.Long); break;
+            case Bytecodes.LLOAD_2            : do_load(2, CiKind.Long); break;
+            case Bytecodes.LLOAD_3            : do_load(3, CiKind.Long); break;
+            case Bytecodes.LSTORE             : do_store(stream.readLocalIndex(), CiKind.Long); break;
+            case Bytecodes.LSTORE_0           : do_store(0, CiKind.Long); break;
+            case Bytecodes.LSTORE_1           : do_store(1, CiKind.Long); break;
+            case Bytecodes.LSTORE_2           : do_store(2, CiKind.Long); break;
+            case Bytecodes.LSTORE_3           : do_store(3, CiKind.Long); break;
+            case Bytecodes.IFEQ               : do_branch(Bytecodes.IFEQ, stream.readBranchDest()); break;
+            case Bytecodes.IFNE               : do_branch(Bytecodes.IFNE, stream.readBranchDest()); break;
+            case Bytecodes.IFLE               : do_branch(Bytecodes.IFLE, stream.readBranchDest()); break;
+            case Bytecodes.IFLT               : do_branch(Bytecodes.IFLT, stream.readBranchDest()); break;
+            case Bytecodes.IFGE               : do_branch(Bytecodes.IFGE, stream.readBranchDest()); break;
+            case Bytecodes.IFGT               : do_branch(Bytecodes.IFGT, stream.readBranchDest()); break;
+            case Bytecodes.IF_ICMPEQ          : do_branch(Bytecodes.IF_ICMPEQ, stream.readBranchDest()); break;
+            case Bytecodes.IF_ICMPNE          : do_branch(Bytecodes.IF_ICMPNE, stream.readBranchDest()); break;
+            case Bytecodes.IF_ICMPGE          : do_branch(Bytecodes.IF_ICMPGE, stream.readBranchDest()); break;
+            case Bytecodes.IF_ICMPGT          : do_branch(Bytecodes.IF_ICMPGT, stream.readBranchDest()); break;
+            case Bytecodes.IF_ICMPLE          : do_branch(Bytecodes.IF_ICMPLE, stream.readBranchDest()); break;
+            case Bytecodes.IF_ICMPLT          : do_branch(Bytecodes.IF_ICMPLT, stream.readBranchDest()); break;
+            case Bytecodes.IF_ACMPEQ          : do_branch(Bytecodes.IF_ACMPEQ, stream.readBranchDest()); break;
+            case Bytecodes.IF_ACMPNE          : do_branch(Bytecodes.IF_ACMPNE, stream.readBranchDest()); break;
+            case Bytecodes.IFNULL             : do_branch(Bytecodes.IFNULL, stream.readBranchDest()); break;
+            case Bytecodes.IFNONNULL          : do_branch(Bytecodes.IFNONNULL, stream.readBranchDest()); break;
+            case Bytecodes.GOTO               : do_branch(Bytecodes.GOTO, stream.readBranchDest()); break;
+            case Bytecodes.GOTO_W             : do_branch(Bytecodes.GOTO_W, stream.readFarBranchDest()); break;
+            case Bytecodes.GETFIELD           : do_fieldAccess(GETFIELDS, stream.readCPI()); break;
+            case Bytecodes.GETSTATIC          : do_fieldAccess(GETSTATICS, stream.readCPI()); break;
+            case Bytecodes.PUTFIELD           : do_fieldAccess(PUTFIELDS, stream.readCPI()); break;
+            case Bytecodes.PUTSTATIC          : do_fieldAccess(PUTSTATICS, stream.readCPI()); break;
+            case Bytecodes.ANEWARRAY          : do_anewarray(stream.readCPI()); break;
+            case Bytecodes.CHECKCAST          : do_checkcast(stream.readCPI()); break;
+            case Bytecodes.INSTANCEOF         : do_instanceof(stream.readCPI()); break;
+            case Bytecodes.BIPUSH             : do_iconst(stream.readByte()); break;
+            case Bytecodes.SIPUSH             : do_iconst(stream.readShort()); break;
+            case Bytecodes.NEW                : do_new(stream.readCPI()); break;
+            case Bytecodes.INVOKESPECIAL      : do_invokespecial(stream.readCPI()); break;
+            case Bytecodes.INVOKESTATIC       : do_invokestatic(stream.readCPI()); break;
+            case Bytecodes.INVOKEVIRTUAL      : do_invokevirtual(stream.readCPI()); break;
+            case Bytecodes.INVOKEINTERFACE    : do_invokeinterface(stream.readCPI()); break;
+            case Bytecodes.NEWARRAY           : do_newarray(stream.readLocalIndex()); break;
+            case Bytecodes.LDC                : do_ldc(stream.readCPI()); break;
+            case Bytecodes.LDC_W              : do_ldc(stream.readCPI()); break;
+            case Bytecodes.LDC2_W             : do_ldc(stream.readCPI()); break;
+            case Bytecodes.TABLESWITCH        : do_tableswitch(); break;
+            case Bytecodes.LOOKUPSWITCH       : do_lookupswitch(); break;
+            case Bytecodes.IINC               : do_iinc(stream.readLocalIndex(), stream.readIncrement()); break;
+            case Bytecodes.MULTIANEWARRAY     : do_multianewarray(stream.readCPI(), stream.readUByte(stream.currentBCI() + 3)); break;
 
 
             case Bytecodes.UNSAFE_CAST        : break;
-            case Bytecodes.WLOAD              : emitVarAccess(WLOAD, stream.readLocalIndex(), Kind.WORD); break;
-            case Bytecodes.WLOAD_0            : emitVarAccess(WLOAD, 0, Kind.WORD); break;
-            case Bytecodes.WLOAD_1            : emitVarAccess(WLOAD, 1, Kind.WORD); break;
-            case Bytecodes.WLOAD_2            : emitVarAccess(WLOAD, 2, Kind.WORD); break;
-            case Bytecodes.WLOAD_3            : emitVarAccess(WLOAD, 3, Kind.WORD); break;
-            case Bytecodes.WSTORE             : emitVarAccess(WSTORE, stream.readLocalIndex(), Kind.WORD); break;
-            case Bytecodes.WSTORE_0           : emitVarAccess(WSTORE, 0, Kind.WORD); break;
-            case Bytecodes.WSTORE_1           : emitVarAccess(WSTORE, 1, Kind.WORD); break;
-            case Bytecodes.WSTORE_2           : emitVarAccess(WSTORE, 2, Kind.WORD); break;
-            case Bytecodes.WSTORE_3           : emitVarAccess(WSTORE, 3, Kind.WORD); break;
+            case Bytecodes.WLOAD              : do_load(stream.readLocalIndex(), CiKind.Word); break;
+            case Bytecodes.WLOAD_0            : do_load(0, CiKind.Word); break;
+            case Bytecodes.WLOAD_1            : do_load(1, CiKind.Word); break;
+            case Bytecodes.WLOAD_2            : do_load(2, CiKind.Word); break;
+            case Bytecodes.WLOAD_3            : do_load(3, CiKind.Word); break;
+            case Bytecodes.WSTORE             : do_store(stream.readLocalIndex(), CiKind.Word); break;
+            case Bytecodes.WSTORE_0           : do_store(0, CiKind.Word); break;
+            case Bytecodes.WSTORE_1           : do_store(1, CiKind.Word); break;
+            case Bytecodes.WSTORE_2           : do_store(2, CiKind.Word); break;
+            case Bytecodes.WSTORE_3           : do_store(3, CiKind.Word); break;
 
-            case Bytecodes.WCONST_0           : emit(WCONST_0); break;
-            case Bytecodes.WDIV               : emit(WDIV); break;
-            case Bytecodes.WDIVI              : emit(WDIVI); break;
-            case Bytecodes.WREM               : emit(WREM); break;
-            case Bytecodes.WREMI              : emit(WREMI); break;
+            case Bytecodes.WCONST_0           : if (Word.size() == 8) do_lconst(0); else do_iconst(0); break;
+            case Bytecodes.WDIV               : do_wdiv(); break;
+            case Bytecodes.WDIVI              : do_wdivi(); break;
+            case Bytecodes.WREM               : do_wrem(); break;
+            case Bytecodes.WREMI              : do_wremi(); break;
 
             case Bytecodes.INFOPOINT: {
                 opcode = opcode | (stream.readUByte(stream.currentBCI() + 1) << 16);
                 if (opcode == Bytecodes.UNCOMMON_TRAP) {
-                    // Use a safepoint so that this position is not overlapping
-                    // with the subsequent instruction. In all other senses,
-                    // an uncommon trap is essentially a nop in baseline code.
-                    beginBytecode(Bytecodes.UNCOMMON_TRAP);
-                    int pos = buf.position();
-                    byte[] safepointCode = vm().safepoint.code;
-                    buf.emitBytes(safepointCode, 0, safepointCode.length);
-                    safepointsBuilder.addSafepoint(stream.currentBCI(), pos);
+                    do_uncommonTrap();
                     break;
                 } else if (opcode == Bytecodes.HERE) {
-                    emit(HERE);
+                    do_here();
                     break;
                 } else {
                     throw new CiBailout("Unsupported opcode" + errorSuffix());
@@ -1766,90 +1272,90 @@ public class T1XCompilation {
             case Bytecodes.PWRITE: {
                 opcode = opcode | (stream.readCPI() << 8);
                 switch (opcode) {
-                    case Bytecodes.PREAD_BYTE         : emit(PREAD_BYTE); break;
-                    case Bytecodes.PREAD_CHAR         : emit(PREAD_CHAR); break;
-                    case Bytecodes.PREAD_SHORT        : emit(PREAD_SHORT); break;
-                    case Bytecodes.PREAD_INT          : emit(PREAD_INT); break;
-                    case Bytecodes.PREAD_LONG         : emit(PREAD_LONG); break;
-                    case Bytecodes.PREAD_FLOAT        : emit(PREAD_FLOAT); break;
-                    case Bytecodes.PREAD_DOUBLE       : emit(PREAD_DOUBLE); break;
-                    case Bytecodes.PREAD_WORD         : emit(PREAD_WORD); break;
-                    case Bytecodes.PREAD_REFERENCE    : emit(PREAD_REFERENCE); break;
+                    case Bytecodes.PREAD_BYTE         : do_pread_byte(); break;
+                    case Bytecodes.PREAD_CHAR         : do_pread_char(); break;
+                    case Bytecodes.PREAD_SHORT        : do_pread_short(); break;
+                    case Bytecodes.PREAD_INT          : do_pread_int(); break;
+                    case Bytecodes.PREAD_LONG         : do_pread_long(); break;
+                    case Bytecodes.PREAD_FLOAT        : do_pread_float(); break;
+                    case Bytecodes.PREAD_DOUBLE       : do_pread_double(); break;
+                    case Bytecodes.PREAD_WORD         : do_pread_word(); break;
+                    case Bytecodes.PREAD_REFERENCE    : do_pread_reference(); break;
 
-                    case Bytecodes.PREAD_BYTE_I       : emit(PREAD_BYTE_I); break;
-                    case Bytecodes.PREAD_CHAR_I       : emit(PREAD_CHAR_I); break;
-                    case Bytecodes.PREAD_SHORT_I      : emit(PREAD_SHORT_I); break;
-                    case Bytecodes.PREAD_INT_I        : emit(PREAD_INT_I); break;
-                    case Bytecodes.PREAD_LONG_I       : emit(PREAD_LONG_I); break;
-                    case Bytecodes.PREAD_FLOAT_I      : emit(PREAD_FLOAT_I); break;
-                    case Bytecodes.PREAD_DOUBLE_I     : emit(PREAD_DOUBLE_I); break;
-                    case Bytecodes.PREAD_WORD_I       : emit(PREAD_WORD_I); break;
-                    case Bytecodes.PREAD_REFERENCE_I  : emit(PREAD_REFERENCE_I); break;
+                    case Bytecodes.PREAD_BYTE_I       : do_pread_byte_i(); break;
+                    case Bytecodes.PREAD_CHAR_I       : do_pread_char_i(); break;
+                    case Bytecodes.PREAD_SHORT_I      : do_pread_short_i(); break;
+                    case Bytecodes.PREAD_INT_I        : do_pread_int_i(); break;
+                    case Bytecodes.PREAD_LONG_I       : do_pread_long_i(); break;
+                    case Bytecodes.PREAD_FLOAT_I      : do_pread_float_i(); break;
+                    case Bytecodes.PREAD_DOUBLE_I     : do_pread_double_i(); break;
+                    case Bytecodes.PREAD_WORD_I       : do_pread_word_i(); break;
+                    case Bytecodes.PREAD_REFERENCE_I  : do_pread_reference_i(); break;
 
-                    case Bytecodes.PWRITE_BYTE        : emit(PWRITE_BYTE); break;
-                    case Bytecodes.PWRITE_SHORT       : emit(PWRITE_SHORT); break;
-                    case Bytecodes.PWRITE_INT         : emit(PWRITE_INT); break;
-                    case Bytecodes.PWRITE_LONG        : emit(PWRITE_LONG); break;
-                    case Bytecodes.PWRITE_FLOAT       : emit(PWRITE_FLOAT); break;
-                    case Bytecodes.PWRITE_DOUBLE      : emit(PWRITE_DOUBLE); break;
-                    case Bytecodes.PWRITE_WORD        : emit(PWRITE_WORD); break;
-                    case Bytecodes.PWRITE_REFERENCE   : emit(PWRITE_REFERENCE); break;
+                    case Bytecodes.PWRITE_BYTE        : do_pwrite_byte(); break;
+                    case Bytecodes.PWRITE_SHORT       : do_pwrite_short(); break;
+                    case Bytecodes.PWRITE_INT         : do_pwrite_int(); break;
+                    case Bytecodes.PWRITE_LONG        : do_pwrite_long(); break;
+                    case Bytecodes.PWRITE_FLOAT       : do_pwrite_float(); break;
+                    case Bytecodes.PWRITE_DOUBLE      : do_pwrite_double(); break;
+                    case Bytecodes.PWRITE_WORD        : do_pwrite_word(); break;
+                    case Bytecodes.PWRITE_REFERENCE   : do_pwrite_reference(); break;
 
-                    case Bytecodes.PWRITE_BYTE_I      : emit(PWRITE_BYTE_I); break;
-                    case Bytecodes.PWRITE_SHORT_I     : emit(PWRITE_SHORT_I); break;
-                    case Bytecodes.PWRITE_INT_I       : emit(PWRITE_INT_I); break;
-                    case Bytecodes.PWRITE_LONG_I      : emit(PWRITE_LONG_I); break;
-                    case Bytecodes.PWRITE_FLOAT_I     : emit(PWRITE_FLOAT_I); break;
-                    case Bytecodes.PWRITE_DOUBLE_I    : emit(PWRITE_DOUBLE_I); break;
-                    case Bytecodes.PWRITE_WORD_I      : emit(PWRITE_WORD_I); break;
-                    case Bytecodes.PWRITE_REFERENCE_I : emit(PWRITE_REFERENCE_I); break;
+                    case Bytecodes.PWRITE_BYTE_I      : do_pwrite_byte_i(); break;
+                    case Bytecodes.PWRITE_SHORT_I     : do_pwrite_short_i(); break;
+                    case Bytecodes.PWRITE_INT_I       : do_pwrite_int_i(); break;
+                    case Bytecodes.PWRITE_LONG_I      : do_pwrite_long_i(); break;
+                    case Bytecodes.PWRITE_FLOAT_I     : do_pwrite_float_i(); break;
+                    case Bytecodes.PWRITE_DOUBLE_I    : do_pwrite_double_i(); break;
+                    case Bytecodes.PWRITE_WORD_I      : do_pwrite_word_i(); break;
+                    case Bytecodes.PWRITE_REFERENCE_I : do_pwrite_reference_i(); break;
 
-                    case Bytecodes.PGET_BYTE          : emit(PGET_BYTE); break;
-                    case Bytecodes.PGET_CHAR          : emit(PGET_CHAR); break;
-                    case Bytecodes.PGET_SHORT         : emit(PGET_SHORT); break;
-                    case Bytecodes.PGET_INT           : emit(PGET_INT); break;
-                    case Bytecodes.PGET_LONG          : emit(PGET_LONG); break;
-                    case Bytecodes.PGET_FLOAT         : emit(PGET_FLOAT); break;
-                    case Bytecodes.PGET_DOUBLE        : emit(PGET_DOUBLE); break;
-                    case Bytecodes.PGET_WORD          : emit(PGET_WORD); break;
-                    case Bytecodes.PGET_REFERENCE     : emit(PGET_REFERENCE); break;
+                    case Bytecodes.PGET_BYTE          : do_pget_byte(); break;
+                    case Bytecodes.PGET_CHAR          : do_pget_char(); break;
+                    case Bytecodes.PGET_SHORT         : do_pget_short(); break;
+                    case Bytecodes.PGET_INT           : do_pget_int(); break;
+                    case Bytecodes.PGET_LONG          : do_pget_long(); break;
+                    case Bytecodes.PGET_FLOAT         : do_pget_float(); break;
+                    case Bytecodes.PGET_DOUBLE        : do_pget_double(); break;
+                    case Bytecodes.PGET_WORD          : do_pget_word(); break;
+                    case Bytecodes.PGET_REFERENCE     : do_pget_reference(); break;
 
-                    case Bytecodes.PSET_BYTE          : emit(PSET_BYTE); break;
-                    case Bytecodes.PSET_SHORT         : emit(PSET_SHORT); break;
-                    case Bytecodes.PSET_INT           : emit(PSET_INT); break;
-                    case Bytecodes.PSET_LONG          : emit(PSET_LONG); break;
-                    case Bytecodes.PSET_FLOAT         : emit(PSET_FLOAT); break;
-                    case Bytecodes.PSET_DOUBLE        : emit(PSET_DOUBLE); break;
-                    case Bytecodes.PSET_WORD          : emit(PSET_WORD); break;
-                    case Bytecodes.PSET_REFERENCE     : emit(PSET_REFERENCE); break;
+                    case Bytecodes.PSET_BYTE          : do_pset_byte(); break;
+                    case Bytecodes.PSET_SHORT         : do_pset_short(); break;
+                    case Bytecodes.PSET_INT           : do_pset_int(); break;
+                    case Bytecodes.PSET_LONG          : do_pset_long(); break;
+                    case Bytecodes.PSET_FLOAT         : do_pset_float(); break;
+                    case Bytecodes.PSET_DOUBLE        : do_pset_double(); break;
+                    case Bytecodes.PSET_WORD          : do_pset_word(); break;
+                    case Bytecodes.PSET_REFERENCE     : do_pset_reference(); break;
 
-                    case Bytecodes.PCMPSWP_INT        : emit(PCMPSWP_INT); break;
-                    case Bytecodes.PCMPSWP_WORD       : emit(PCMPSWP_WORD); break;
-                    case Bytecodes.PCMPSWP_REFERENCE  : emit(PCMPSWP_REFERENCE); break;
-                    case Bytecodes.PCMPSWP_INT_I      : emit(PCMPSWP_INT_I); break;
-                    case Bytecodes.PCMPSWP_WORD_I     : emit(PCMPSWP_WORD_I); break;
-                    case Bytecodes.PCMPSWP_REFERENCE_I: emit(PCMPSWP_REFERENCE_I); break;
+                    case Bytecodes.PCMPSWP_INT        : do_pcmpswp_int(); break;
+                    case Bytecodes.PCMPSWP_WORD       : do_pcmpswp_word(); break;
+                    case Bytecodes.PCMPSWP_REFERENCE  : do_pcmpswp_reference(); break;
+                    case Bytecodes.PCMPSWP_INT_I      : do_pcmpswp_int_i(); break;
+                    case Bytecodes.PCMPSWP_WORD_I     : do_pcmpswp_word_i(); break;
+                    case Bytecodes.PCMPSWP_REFERENCE_I: do_pcmpswp_reference_i(); break;
 
-                    case Bytecodes.MEMBAR_LOAD_LOAD   : emit(MEMBAR_LOAD_LOAD); break;
-                    case Bytecodes.MEMBAR_LOAD_STORE  : emit(MEMBAR_LOAD_STORE); break;
-                    case Bytecodes.MEMBAR_STORE_LOAD  : emit(MEMBAR_STORE_LOAD); break;
-                    case Bytecodes.MEMBAR_STORE_STORE : emit(MEMBAR_STORE_STORE); break;
+                    case Bytecodes.MEMBAR_LOAD_LOAD   : do_membar_load_load(); break;
+                    case Bytecodes.MEMBAR_LOAD_STORE  : do_membar_load_store(); break;
+                    case Bytecodes.MEMBAR_STORE_LOAD  : do_membar_store_load(); break;
+                    case Bytecodes.MEMBAR_STORE_STORE : do_membar_store_store(); break;
 
                     default                           : throw new CiBailout("Unsupported opcode" + errorSuffix());
                 }
                 break;
             }
 
-            case Bytecodes.MOV_I2F            : emit(MOV_I2F); break;
-            case Bytecodes.MOV_F2I            : emit(MOV_F2I); break;
-            case Bytecodes.MOV_L2D            : emit(MOV_L2D); break;
-            case Bytecodes.MOV_D2L            : emit(MOV_D2L); break;
+            case Bytecodes.MOV_I2F            : do_mov_i2f(); break;
+            case Bytecodes.MOV_F2I            : do_mov_f2i(); break;
+            case Bytecodes.MOV_L2D            : do_mov_l2d(); break;
+            case Bytecodes.MOV_D2L            : do_mov_d2l(); break;
 
 
-            case Bytecodes.WRETURN            : emitReturn(WRETURN, WRETURN$unlockClass, WRETURN$unlockReceiver); break;
-            case Bytecodes.PAUSE              : emit(PAUSE); break;
-            case Bytecodes.LSB                : emit(LSB); break;
-            case Bytecodes.MSB                : emit(MSB); break;
+            case Bytecodes.WRETURN            : do_return(WRETURN, WRETURN$unlock); break;
+            case Bytecodes.PAUSE              : do_pause(); break;
+            case Bytecodes.LSB                : do_lsb(); break;
+            case Bytecodes.MSB                : do_msb(); break;
 
             case Bytecodes.RET                :
             case Bytecodes.JSR_W              :
@@ -1857,116 +1363,1288 @@ public class T1XCompilation {
 
             case Bytecodes.READREG            :
             case Bytecodes.WRITEREG           :
-            case Bytecodes.ADD_SP             :
             case Bytecodes.FLUSHW             :
             case Bytecodes.ALLOCA             :
             case Bytecodes.STACKHANDLE        :
             case Bytecodes.JNICALL            :
-            case Bytecodes.TEMPLATE_CALL      :
-            case Bytecodes.ICMP               :
-            case Bytecodes.WCMP               :
             default                           : throw new CiBailout("Unsupported opcode" + errorSuffix());
             // Checkstyle: resume
         }
     }
 
-    private String errorSuffix() {
-        int opcode = stream.currentBC();
-        String name = Bytecodes.nameOf(opcode);
-        return " [bci=" + stream.currentBCI() + ", opcode=" + opcode + "(" + name + ")]";
+    protected void do_uncommonTrap() {
+        // Use a safepoint so that this position is not overlapping
+        // with the subsequent instruction. In all other senses,
+        // an uncommon trap is essentially a nop in baseline code.
+        int pos = buf.position();
+        byte[] safepointCode = vm().safepointPoll.code;
+        buf.emitBytes(safepointCode, 0, safepointCode.length);
+        safepointsBuilder.addSafepoint(stream.currentBCI(), Safepoints.make(pos), null);
+    }
+
+    protected void do_here() {
+        emit(HERE);
+    }
+
+    void do_profileMethodEntry() {
+        if (methodProfileBuilder != null) {
+            methodProfileBuilder.addEntryCounter(MethodInstrumentation.initialEntryCount);
+            if (method.isStatic()) {
+                start(PROFILE_STATIC_METHOD_ENTRY);
+                assignObject(0, "mpo", methodProfileBuilder.methodProfileObject());
+                finish();
+            } else {
+                start(PROFILE_NONSTATIC_METHOD_ENTRY);
+                assignObject(0, "mpo", methodProfileBuilder.methodProfileObject());
+                loadObject(1, "rcvr", 0);
+                finish();
+            }
+        }
+    }
+
+    protected void do_methodTraceEntry() {
+        if (T1XOptions.TraceMethods) {
+            start(TRACE_METHOD_ENTRY);
+            assignObject(0, "method", method.toString());
+            finish();
+        }
+    }
+
+    void do_synchronizedMethodAcquire() {
+        if (method.isSynchronized()) {
+            start(LOCK);
+            if (method.isStatic()) {
+                assignObject(0, "object", method.holder().javaClass());
+            } else {
+                loadObject(0, "object", 0);
+                storeObject(template.sig.in[0].reg, synchronizedReceiver);
+            }
+            finish();
+            syncMethodStartPos = buf.position();
+        }
+    }
+
+    void do_synchronizedMethodHandler(ClassMethodActor method, int endBCI) {
+        if (method.isSynchronized()) {
+            syncMethodHandlerPos = buf.position();
+            start(UNLOCK);
+            if (method.isStatic()) {
+                assignObject(0, "object", method.holder().javaClass());
+            } else {
+                loadObject(0, "object", synchronizedReceiver);
+            }
+            finish();
+
+            syncMethodEndPos = buf.position();
+            emit(RETHROW_EXCEPTION);
+        }
+    }
+
+    protected void do_oconst(Object value) {
+        assignObject(scratch, value);
+        incStack(1);
+        pokeObject(scratch, 0);
+    }
+
+    protected void do_iconst(int value) {
+        assignInt(scratch, value);
+        incStack(1);
+        pokeInt(scratch, 0);
+    }
+
+    protected void do_dconst(double value) {
+        assignLong(scratch, Intrinsics.doubleToLong(value));
+        incStack(2);
+        pokeLong(scratch, 0);
+    }
+
+    protected void do_fconst(float value) {
+        assignInt(scratch, Intrinsics.floatToInt(value));
+        incStack(1);
+        pokeInt(scratch, 0);
+    }
+
+    protected void do_lconst(long value) {
+        assignLong(scratch, value);
+        incStack(2);
+        pokeLong(scratch, 0);
+    }
+
+    protected void do_load(int index, CiKind kind) {
+        switch(kind) {
+            case Int:
+            case Float:
+                loadInt(scratch, index);
+                incStack(1);
+                pokeInt(scratch, 0);
+                break;
+            case Word:
+            case Object:
+                loadWord(scratch, index);
+                incStack(1);
+                pokeWord(scratch, 0);
+                break;
+            case Long:
+            case Double:
+                loadLong(scratch, index);
+                incStack(2);
+                pokeLong(scratch, 0);
+                break;
+            default:
+                throw new InternalError("Unexpected kind: " + kind);
+        }
+    }
+
+    protected void do_store(int index, CiKind kind) {
+        switch(kind) {
+            case Int:
+            case Float:
+                peekInt(scratch, 0);
+                decStack(1);
+                storeInt(scratch, index);
+                break;
+            case Word:
+            case Object:
+                peekWord(scratch, 0);
+                decStack(1);
+                storeWord(scratch, index);
+                break;
+            case Long:
+            case Double:
+                peekLong(scratch, 0);
+                decStack(2);
+                storeLong(scratch, index);
+                break;
+            default:
+                throw new InternalError("Unexpected kind: " + kind);
+        }
     }
 
     /**
-     * Records locations in the code buffer that need to be subsequently patched.
+     * Emit template for a bytecode operating on a (static or dynamic) field.
+     * @param index Index to the field ref constant.
+     * @param template one of getfield, putfield, getstatic, putstatic
      */
-    static class PatchInfo {
-        /**
-         * Encoded patch data. The encoding format is defined in the platform specific subclasses.
-         */
-        int[] data = new int[10];
-
-        /**
-         * The length of valid data in {@code data} (which may be less that {@code data.length}).
-         */
-        int size;
-
-        void ensureCapacity(int minCapacity) {
-            if (minCapacity > data.length) {
-                int newCapacity = (size * 3) / 2 + 1;
-                if (newCapacity < minCapacity) {
-                    newCapacity = minCapacity;
+    protected void do_fieldAccess(EnumMap<CiKind, T1XTemplateTag> tags, int index) {
+        FieldRefConstant fieldRefConstant = cp.fieldAt(index);
+        CiKind fieldKind = fieldRefConstant.type(cp).toKind().ciKind;
+        T1XTemplateTag tag = tags.get(fieldKind);
+        if (fieldRefConstant.isResolvableWithoutClassLoading(cp)) {
+            try {
+                FieldActor fieldActor = fieldRefConstant.resolve(cp, index);
+                do_preVolatileFieldAccess(tag, fieldActor);
+                if (fieldActor.isStatic()) {
+                    if (fieldActor.holder().isInitialized()) {
+                        start(tag.initialized);
+                        assignObject(0, "staticTuple", fieldActor.holder().staticTuple());
+                        assignInt(1, "offset", fieldActor.offset());
+                        finish();
+                        do_postVolatileFieldAccess(tag, fieldActor);
+                        return;
+                    }
+                } else {
+                    start(tag.resolved);
+                    assignInt(1, "offset", fieldActor.offset());
+                    finish();
+                    do_postVolatileFieldAccess(tag, fieldActor);
+                    return;
                 }
-                data = Arrays.copyOf(data, newCapacity);
+            } catch (LinkageError e) {
+                // This should not happen since the field ref constant is resolvable without class loading (i.e., it
+                // has already been resolved). If it were to happen, the safe thing to do is to fall off to the
+                // unresolved case.
+            }
+        }
+        start(tag);
+        assignObject(0, "guard", cp.makeResolutionGuard(index));
+        finish();
+    }
+
+    protected void do_preVolatileFieldAccess(T1XTemplateTag tag, FieldActor fieldActor) {
+    }
+
+    protected void do_postVolatileFieldAccess(T1XTemplateTag tag, FieldActor fieldActor) {
+    }
+
+    protected void do_anewarray(int index) {
+        T1XTemplateTag tag;
+        ClassConstant classConstant = cp.classAt(index);
+        Object arrayType;
+        if (classConstant.isResolvableWithoutClassLoading(cp)) {
+            tag = ANEWARRAY$resolved;
+            ClassActor resolvedClassActor = classConstant.resolve(cp, index);
+            arrayType = ArrayClassActor.forComponentClassActor(resolvedClassActor);
+        } else {
+            tag = ANEWARRAY;
+            arrayType = cp.makeResolutionGuard(index);
+        }
+        start(tag);
+        assignObject(0, "arrayType", arrayType);
+        finish();
+    }
+
+    protected void do_iinc(int index, int increment) {
+        loadInt(scratch, index);
+        adjustReg(scratch, increment);
+        storeInt(scratch, index);
+    }
+
+    protected void do_return(T1XTemplateTag tag, T1XTemplateTag tagUnlock) {
+        if (method.holder() == ClassRegistry.OBJECT) {
+            start(RETURN$registerFinalizer);
+            loadObject(0, "object", 0);
+            finish();
+        } else if (method.isSynchronized()) {
+            start(tagUnlock);
+            if (method.isStatic()) {
+                assignObject(0, "object", method.holder().javaClass());
+            } else {
+                loadObject(0, "object", synchronizedReceiver);
+            }
+            finish();
+        } else {
+            emit(tag);
+        }
+
+        emitEpilogue();
+    }
+
+    protected void do_branch(int opcode, int targetBCI) {
+        int bci = stream.currentBCI();
+        startBlock(targetBCI);
+
+        if (bci >= targetBCI && methodProfileBuilder != null) {
+            // Profiling of backward branches.
+            // Ideally, we'd like to emit a safepoint at the target of a backward branch.
+            // However, that would require at least one extra pass to determine where
+            // the backward branches are. Instead, we simply emit a safepoint at the source of
+            // a backward branch. This means the cost of the safepoint is taken even if
+            // the backward branch is not taken but that cost should not be noticeable.
+            start(PROFILE_BACKWARD_BRANCH);
+            assignObject(0, "mpo", methodProfileBuilder.methodProfileObject());
+            finish();
+
+            // Note also that the safepoint must be placed before conditional
+            // test instruction(s) to avoid affecting the condition flags
+            // with the safepoint poll instruction(s).
+            int pos = buf.position();
+            byte[] safepointCode = vm().safepointPoll.code;
+            buf.emitBytes(safepointCode, 0, safepointCode.length);
+            safepointsBuilder.addSafepoint(bci, Safepoints.make(pos), null);
+        }
+
+        branch(opcode, targetBCI, bci);
+    }
+
+    protected void finishCall(CiKind returnKind, int safepoint, ClassMethodActor directCallee) {
+        safepointsBuilder.addSafepoint(stream.currentBCI(), safepoint, directCallee);
+
+        if (!returnKind.isVoid()) {
+            incStack(returnKind.jvmSlots);
+            CiRegister reg = vm().registerConfigs.standard.getReturnRegister(returnKind);
+            switch (returnKind) {
+                case Float:
+                    pokeFloat(reg, 0);
+                    break;
+                case Long:
+                    pokeLong(reg, 0);
+                    break;
+                case Double:
+                    pokeDouble(reg, 0);
+                    break;
+                case Word:
+                    pokeWord(reg, 0);
+                    break;
+                case Object:
+                    pokeObject(reg, 0);
+                    break;
+                default:
+                    throw new InternalError("Unexpected return kind: " + returnKind);
             }
         }
 
-        int at(int i) {
-            return data[i];
+    }
+
+    protected void do_invokevirtual(int index) {
+        ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
+        SignatureDescriptor signature = classMethodRef.signature(cp);
+        CiKind kind = invokeKind(signature);
+        T1XTemplateTag tag = INVOKEVIRTUALS.get(kind);
+        int receiverStackIndex = receiverStackIndex(signature);
+        try {
+            if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
+                try {
+                    VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(cp, index);
+                    if (virtualMethodActor.isPrivate() || virtualMethodActor.isFinal()) {
+                        // this is an invokevirtual to a private or final method, treat it like invokespecial
+                        peekObject(scratch, receiverStackIndex);
+                        nullCheck(scratch);
+
+                        int safepoint = callDirect();
+                        finishCall(kind, safepoint, virtualMethodActor);
+                        return;
+                    } else {
+                        // emit an unprofiled virtual dispatch
+                        start(tag.resolved);
+                        CiRegister target = template.sig.out.reg;
+                        assignInt(0, "vTableIndex", virtualMethodActor.vTableIndex());
+                        peekObject(1, "receiver", receiverStackIndex);
+                        finish();
+
+                        int safepoint = callIndirect(target, receiverStackIndex);
+                        finishCall(kind, safepoint, null);
+                    }
+                    return;
+                } catch (LinkageError e) {
+                    // fall through
+                }
+            }
+        } catch (LinkageError error) {
+            // Fall back on unresolved template that will cause the error to be rethrown at runtime.
         }
+        start(tag);
+        CiRegister target = template.sig.out.reg;
+        assignObject(0, "guard", cp.makeResolutionGuard(index));
+        peekObject(1, "receiver", receiverStackIndex);
+        finish();
 
-        void reset() {
-            size = 0;
+        int safepoint = callIndirect(target, receiverStackIndex);
+        finishCall(kind, safepoint, null);
+    }
+
+    protected void do_invokeinterface(int index) {
+        InterfaceMethodRefConstant interfaceMethodRef = cp.interfaceMethodAt(index);
+        SignatureDescriptor signature = interfaceMethodRef.signature(cp);
+        CiKind kind = invokeKind(signature);
+        T1XTemplateTag tag = INVOKEINTERFACES.get(kind);
+        int receiverStackIndex = receiverStackIndex(signature);
+        try {
+            if (interfaceMethodRef.isResolvableWithoutClassLoading(cp)) {
+                try {
+                    MethodActor interfaceMethod = interfaceMethodRef.resolve(cp, index);
+                    start(tag.resolved);
+                    CiRegister target = template.sig.out.reg;
+                    assignObject(0, "interfaceMethodActor", interfaceMethod);
+                    peekObject(1, "receiver", receiverStackIndex);
+                    finish();
+
+                    int safepoint = callIndirect(target, receiverStackIndex);
+                    finishCall(kind, safepoint, null);
+                    return;
+                } catch (LinkageError e) {
+                    // fall through
+                }
+            }
+        } catch (LinkageError error) {
+            // Fall back on unresolved template that will cause the error to be rethrown at runtime.
+        }
+        start(tag);
+        CiRegister target = template.sig.out.reg;
+        assignObject(0, "guard", cp.makeResolutionGuard(index));
+        peekObject(1, "receiver", receiverStackIndex);
+        finish();
+
+        int safepoint = callIndirect(target, receiverStackIndex);
+        finishCall(kind, safepoint, null);
+    }
+
+    protected void do_invokespecial(int index) {
+        ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
+        CiKind kind = invokeKind(classMethodRef.signature(cp));
+        SignatureDescriptor signature = classMethodRef.signature(cp);
+        T1XTemplateTag tag = INVOKESPECIALS.get(kind);
+        int receiverStackIndex = receiverStackIndex(signature);
+        try {
+            if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
+                VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(cp, index);
+                peekObject(scratch, receiverStackIndex);
+                nullCheck(scratch);
+
+                int safepoint = callDirect();
+                finishCall(kind, safepoint, virtualMethodActor);
+                return;
+            }
+        } catch (LinkageError error) {
+            // Fall back on unresolved template that will cause the error to be rethrown at runtime.
+        }
+        start(tag);
+        CiRegister target = template.sig.out.reg;
+        assignObject(0, "guard", cp.makeResolutionGuard(index));
+        peekObject(1, "receiver", receiverStackIndex);
+        finish();
+
+        int safepoint = callIndirect(target, receiverStackIndex);
+        finishCall(kind, safepoint, null);
+    }
+
+    protected void do_invokestatic(int index) {
+        ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
+        CiKind kind = invokeKind(classMethodRef.signature(cp));
+        T1XTemplateTag tag = INVOKESTATICS.get(kind);
+        try {
+            if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
+                StaticMethodActor staticMethodActor = classMethodRef.resolveStatic(cp, index);
+                if (staticMethodActor.holder().isInitialized()) {
+                    assert tag.initialized == null : "did not expect a template for an initialized invokestatic";
+
+                    int safepoint = callDirect();
+                    finishCall(kind, safepoint, staticMethodActor);
+                    return;
+                }
+            }
+        } catch (LinkageError error) {
+            // Fall back on unresolved template that will cause the error to be rethrown at runtime.
+        }
+        start(tag);
+        CiRegister target = template.sig.out.reg;
+        assignObject(0, "guard", cp.makeResolutionGuard(index));
+        finish();
+
+        int safepoint = callIndirect(target, -1);
+        finishCall(kind, safepoint, null);
+    }
+
+    protected void do_instanceof(int cpi) {
+        ClassConstant classConstant = cp.classAt(cpi);
+        if (classConstant.isResolvableWithoutClassLoading(cp)) {
+            start(INSTANCEOF$resolved);
+            ClassActor resolvedClassActor = classConstant.resolve(cp, cpi);
+            assignObject(0, "classActor", resolvedClassActor);
+            finish();
+        } else {
+            start(INSTANCEOF);
+            assignObject(0, "guard", cp.makeResolutionGuard(cpi));
+            finish();
         }
     }
-}
 
-@PLATFORM(cpu = "amd64")
-class PatchInfoAMD64 extends PatchInfo {
-
-    /**
-     * Denotes a conditonal jump patch.
-     * Encoding: {@code cc, pos, targetBCI}.
-     */
-    static final int JCC = 0;
-
-    /**
-     * Denotes an unconditonal jump patch.
-     * Encoding: {@code pos, targetBCI}.
-     */
-    static final int JMP = 1;
-
-    /**
-     * Denotes a signed int jump table entry.
-     * Encoding: {@code pos, jumpTablePos, targetBCI}.
-     */
-    static final int JUMP_TABLE_ENTRY = 2;
-
-    /**
-     * Denotes a signed int jump table entry.
-     * Encoding: {@code pos, key, lookupTablePos, targetBCI}.
-     */
-    static final int LOOKUP_TABLE_ENTRY = 3;
-
-    void addJCC(ConditionFlag cc, int pos, int targetBCI) {
-        ensureCapacity(size + 4);
-        data[size++] = JCC;
-        data[size++] = cc.ordinal();
-        data[size++] = pos;
-        data[size++] = targetBCI;
-
+    protected void do_checkcast(int cpi) {
+        ClassConstant classConstant = cp.classAt(cpi);
+        if (classConstant.isResolvableWithoutClassLoading(cp)) {
+            start(CHECKCAST$resolved);
+            assignObject(0, "classActor", classConstant.resolve(cp, cpi));
+            finish();
+        } else {
+            start(CHECKCAST);
+            assignObject(0, "guard", cp.makeResolutionGuard(cpi));
+            finish();
+        }
     }
 
-    void addJMP(int pos, int targetBCI) {
-        ensureCapacity(size + 3);
-        data[size++] = JMP;
-        data[size++] = pos;
-        data[size++] = targetBCI;
+    protected void do_multianewarray(int index, int numberOfDimensions) {
+        CiRegister lengths;
+        {
+            start(CREATE_MULTIANEWARRAY_DIMENSIONS);
+            assignWordReg(0, "sp", sp);
+            assignInt(1, "n", numberOfDimensions);
+            lengths = template.sig.out.reg;
+            finish();
+            decStack(numberOfDimensions);
+        }
+        ClassConstant classRef = cp.classAt(index);
+        if (classRef.isResolvableWithoutClassLoading(cp)) {
+            start(MULTIANEWARRAY$resolved);
+            ClassActor arrayClassActor = classRef.resolve(cp, index);
+            assert arrayClassActor.isArrayClass();
+            assert arrayClassActor.numberOfDimensions() >= numberOfDimensions : "dimensionality of array class constant smaller that dimension operand";
+            assignObject(0, "arrayClassActor", arrayClassActor);
+            assignObjectReg(1, "lengths", lengths);
+            finish();
+        } else {
+            // Unresolved case
+            start(MULTIANEWARRAY);
+            assignObject(0, "guard", cp.makeResolutionGuard(index));
+            assignObjectReg(1, "lengths", lengths);
+            finish();
+        }
     }
 
-    void addJumpTableEntry(int pos, int jumpTablePos, int targetBCI) {
-        ensureCapacity(size + 4);
-        data[size++] = JUMP_TABLE_ENTRY;
-        data[size++] = pos;
-        data[size++] = jumpTablePos;
-        data[size++] = targetBCI;
+    protected void do_pop() {
+        decStack(1);
     }
 
-    void addLookupTableEntry(int pos, int key, int lookupTablePos, int targetBCI) {
-        ensureCapacity(size + 5);
-        data[size++] = LOOKUP_TABLE_ENTRY;
-        data[size++] = pos;
-        data[size++] = key;
-        data[size++] = lookupTablePos;
-        data[size++] = targetBCI;
+    protected void do_pop2() {
+        decStack(2);
+    }
+
+    protected void do_dup() {
+        incStack(1);
+        peekWord(scratch, 1);
+        pokeWord(scratch, 0);
+    }
+
+    protected void do_dup_x1() {
+        incStack(1);
+        // value1
+        peekWord(scratch, 1);
+        pokeWord(scratch, 0);
+
+        // value2
+        peekWord(scratch, 2);
+        pokeWord(scratch, 1);
+
+        // value1
+        peekWord(scratch, 0);
+        pokeWord(scratch, 2);
+    }
+
+    protected void do_dup_x2() {
+        incStack(1);
+        // value1
+        peekWord(scratch, 1);
+        pokeWord(scratch, 0);
+
+        // value2
+        peekWord(scratch, 2);
+        pokeWord(scratch, 1);
+
+        // value3
+        peekWord(scratch, 3);
+        pokeWord(scratch, 2);
+
+        // value1
+        peekWord(scratch, 0);
+        pokeWord(scratch, 3);
+    }
+
+    protected void do_dup2() {
+        incStack(2);
+        peekWord(scratch, 3);
+        pokeWord(scratch, 1);
+        peekWord(scratch, 2);
+        pokeWord(scratch, 0);
+    }
+
+    protected void do_dup2_x1() {
+        incStack(2);
+        // value1
+        peekWord(scratch, 2);
+        pokeWord(scratch, 0);
+
+        // value2
+        peekWord(scratch, 3);
+        pokeWord(scratch, 1);
+
+        // value3
+        peekWord(scratch, 4);
+        pokeWord(scratch, 2);
+
+        // value1
+        peekWord(scratch, 0);
+        pokeWord(scratch, 3);
+
+        // value2
+        peekWord(scratch, 1);
+        pokeWord(scratch, 4);
+    }
+
+    protected void do_dup2_x2() {
+        incStack(2);
+        // value1
+        peekWord(scratch, 2);
+        pokeWord(scratch, 0);
+
+        // value2
+        peekWord(scratch, 3);
+        pokeWord(scratch, 1);
+
+        // value3
+        peekWord(scratch, 4);
+        pokeWord(scratch, 2);
+
+        // value4
+        peekWord(scratch, 5);
+        pokeWord(scratch, 3);
+
+        // value1
+        peekWord(scratch, 0);
+        pokeWord(scratch, 4);
+
+        // value2
+        peekWord(scratch, 1);
+        pokeWord(scratch, 5);
+    }
+
+    protected void do_swap() {
+        peekWord(scratch, 0);
+        peekWord(scratch2, 1);
+        pokeWord(scratch, 1);
+        pokeWord(scratch2, 0);
+    }
+
+    protected void do_ineg() {
+        start(INEG);
+        assignInt(1, "zero", 0);
+        finish();
+    }
+
+    protected void do_lneg() {
+        start(LNEG);
+        assignLong(1, "zero", 0L);
+        finish();
+    }
+
+    protected void do_dneg() {
+        start(DNEG);
+        assignDouble(1, "zero", 0d);
+        finish();
+    }
+
+    protected void do_fneg() {
+        start(FNEG);
+        assignFloat(1, "zero", 0f);
+        finish();
+    }
+
+    protected void do_ldc(int index) {
+        PoolConstant constant = cp.at(index);
+        switch (constant.tag()) {
+            case CLASS: {
+                ClassConstant classConstant = (ClassConstant) constant;
+                if (classConstant.isResolvableWithoutClassLoading(cp)) {
+                    Object mirror = ((ClassActor) classConstant.value(cp, index).asObject()).javaClass();
+                    incStack(1);
+                    assignObject(scratch, mirror);
+                    pokeObject(scratch, 0);
+                } else {
+                    start(LDC$reference);
+                    assignObject(0, "guard", cp.makeResolutionGuard(index));
+                    finish();
+                }
+                break;
+            }
+            case INTEGER: {
+                IntegerConstant integerConstant = (IntegerConstant) constant;
+                do_iconst(integerConstant.value());
+                break;
+            }
+            case LONG: {
+                LongConstant longConstant = (LongConstant) constant;
+                do_lconst(longConstant.value());
+                break;
+            }
+            case FLOAT: {
+                FloatConstant floatConstant = (FloatConstant) constant;
+                do_fconst(floatConstant.value());
+                break;
+            }
+            case DOUBLE: {
+                DoubleConstant doubleConstant = (DoubleConstant) constant;
+                do_dconst(doubleConstant.value());
+                break;
+            }
+            case STRING: {
+                StringConstant stringConstant = (StringConstant) constant;
+                do_oconst(stringConstant.value);
+                break;
+            }
+            default: {
+                assert false : "ldc for unexpected constant tag: " + constant.tag();
+                break;
+            }
+        }
+    }
+
+    protected void do_new(int index) {
+        ClassConstant classRef = cp.classAt(index);
+        if (classRef.isResolvableWithoutClassLoading(cp)) {
+            ClassActor classActor = classRef.resolve(cp, index);
+            if (classActor.isInitialized()) {
+                start(NEW$init);
+                assignObject(0, "classActor", classActor);
+                finish();
+                return;
+            }
+        }
+        start(NEW);
+        assignObject(0, "guard", cp.makeResolutionGuard(index));
+        finish();
+    }
+
+    protected void do_newarray(int tag) {
+        start(NEWARRAY);
+        Kind arrayElementKind = Kind.fromNewArrayTag(tag);
+        assignObject(0, "kind", arrayElementKind);
+        finish();
+    }
+
+    protected abstract void do_tableswitch();
+
+    protected abstract void do_lookupswitch();
+
+    protected void do_ddiv() {
+        emit(DDIV);
+    }
+
+    protected void do_dcmpl() {
+        emit(DCMPL);
+    }
+
+    protected void do_dcmpg() {
+        emit(DCMPG);
+    }
+
+    protected void do_dastore() {
+        emit(DASTORE);
+    }
+
+    protected void do_daload() {
+        emit(DALOAD);
+    }
+
+    protected void do_dadd() {
+        emit(DADD);
+    }
+
+    protected void do_d2l() {
+        emit(D2L);
+    }
+
+    protected void do_d2i() {
+        emit(D2I);
+    }
+
+    protected void do_d2f() {
+        emit(D2F);
+    }
+
+    protected void do_castore() {
+        emit(CASTORE);
+    }
+
+    protected void do_caload() {
+        emit(CALOAD);
+    }
+
+    protected void do_bastore() {
+        emit(BASTORE);
+    }
+
+    protected void do_baload() {
+        emit(BALOAD);
+    }
+
+    protected void do_athrow() {
+        emit(ATHROW);
+    }
+
+    protected void do_arraylength() {
+        emit(ARRAYLENGTH);
+    }
+
+    protected void do_aastore() {
+        emit(AASTORE);
+    }
+
+    protected void do_aaload() {
+        emit(AALOAD);
+    }
+
+    protected void do_dmul() {
+        emit(DMUL);
+    }
+
+    protected void do_drem() {
+        emit(DREM);
+    }
+
+    protected void do_dsub() {
+        emit(DSUB);
+    }
+
+    protected void do_f2d() {
+        emit(F2D);
+    }
+
+    protected void do_f2i() {
+        emit(F2I);
+    }
+
+    protected void do_f2l() {
+        emit(F2L);
+    }
+
+    protected void do_fadd() {
+        emit(FADD);
+    }
+
+    protected void do_faload() {
+        emit(FALOAD);
+    }
+
+    protected void do_fastore() {
+        emit(FASTORE);
+    }
+
+    protected void do_fcmpg() {
+        emit(FCMPG);
+    }
+
+    protected void do_fcmpl() {
+        emit(FCMPL);
+    }
+
+    protected void do_fdiv() {
+        emit(FDIV);
+    }
+
+    protected void do_fmul() {
+        emit(FMUL);
+    }
+
+    protected void do_frem() {
+        emit(FREM);
+    }
+
+    protected void do_fsub() {
+        emit(FSUB);
+    }
+
+    protected void do_i2b() {
+        emit(I2B);
+    }
+
+    protected void do_i2c() {
+        emit(I2C);
+    }
+
+    protected void do_i2d() {
+        emit(I2D);
+    }
+
+    protected void do_i2f() {
+        emit(I2F);
+    }
+
+    protected void do_i2l() {
+        emit(I2L);
+    }
+
+    protected void do_i2s() {
+        emit(I2S);
+    }
+
+    protected void do_iadd() {
+        emit(IADD);
+    }
+
+    protected void do_iaload() {
+        emit(IALOAD);
+    }
+
+    protected void do_iand() {
+        emit(IAND);
+    }
+
+    protected void do_iastore() {
+        emit(IASTORE);
+    }
+
+    protected void do_idiv() {
+        emit(IDIV);
+    }
+
+    protected void do_imul() {
+        emit(IMUL);
+    }
+
+    protected void do_ior() {
+        emit(IOR);
+    }
+
+    protected void do_irem() {
+        emit(IREM);
+    }
+
+    protected void do_ishl() {
+        emit(ISHL);
+    }
+
+    protected void do_ishr() {
+        emit(ISHR);
+    }
+
+    protected void do_isub() {
+        emit(ISUB);
+    }
+
+    protected void do_iushr() {
+        emit(IUSHR);
+    }
+
+    protected void do_ixor() {
+        emit(IXOR);
+    }
+
+    protected void do_l2d() {
+        emit(L2D);
+    }
+
+    protected void do_l2f() {
+        emit(L2F);
+    }
+
+    protected void do_l2i() {
+        emit(L2I);
+    }
+
+    protected void do_ladd() {
+        emit(LADD);
+    }
+
+    protected void do_laload() {
+        emit(LALOAD);
+    }
+
+    protected void do_land() {
+        emit(LAND);
+    }
+
+    protected void do_lastore() {
+        emit(LASTORE);
+    }
+
+    protected void do_lcmp() {
+        emit(LCMP);
+    }
+
+    protected void do_ldiv() {
+        emit(LDIV);
+    }
+
+    protected void do_lmul() {
+        emit(LMUL);
+    }
+
+    protected void do_lor() {
+        emit(LOR);
+    }
+
+    protected void do_lrem() {
+        emit(LREM);
+    }
+
+    protected void do_lshl() {
+        emit(LSHL);
+    }
+
+    protected void do_lshr() {
+        emit(LSHR);
+    }
+
+    protected void do_lsub() {
+        emit(LSUB);
+    }
+
+    protected void do_lushr() {
+        emit(LUSHR);
+    }
+
+    protected void do_lxor() {
+        emit(LXOR);
+    }
+
+    protected void do_monitorenter() {
+        emit(MONITORENTER);
+    }
+
+    protected void do_monitorexit() {
+        emit(MONITOREXIT);
+    }
+
+    protected void do_saload() {
+        emit(SALOAD);
+    }
+
+    protected void do_sastore() {
+        emit(SASTORE);
+    }
+
+    protected void do_wdiv() {
+        emit(WDIV);
+    }
+
+    protected void do_wdivi() {
+        emit(WDIVI);
+    }
+
+    protected void do_wrem() {
+        emit(WREM);
+    }
+
+    protected void do_wremi() {
+        emit(WREMI);
+    }
+
+    protected void do_pread_byte() {
+        emit(PREAD_BYTE);
+    }
+
+    protected void do_pread_char() {
+        emit(PREAD_CHAR);
+    }
+
+    protected void do_pread_short() {
+        emit(PREAD_SHORT);
+    }
+
+    protected void do_pread_int() {
+        emit(PREAD_INT);
+    }
+
+    protected void do_pread_long() {
+        emit(PREAD_LONG);
+    }
+
+    protected void do_pread_float() {
+        emit(PREAD_FLOAT);
+    }
+
+    protected void do_pread_double() {
+        emit(PREAD_DOUBLE);
+    }
+
+    protected void do_pread_word() {
+        emit(PREAD_WORD);
+    }
+
+    protected void do_pread_reference() {
+        emit(PREAD_REFERENCE);
+    }
+
+    protected void do_pread_byte_i() {
+        emit(PREAD_BYTE_I);
+    }
+
+    protected void do_pread_char_i() {
+        emit(PREAD_CHAR_I);
+    }
+
+    protected void do_pread_short_i() {
+        emit(PREAD_SHORT_I);
+    }
+
+    protected void do_pread_int_i() {
+        emit(PREAD_INT_I);
+    }
+
+    protected void do_pread_long_i() {
+        emit(PREAD_LONG_I);
+    }
+
+    protected void do_pread_float_i() {
+        emit(PREAD_FLOAT_I);
+    }
+
+    protected void do_pread_double_i() {
+        emit(PREAD_DOUBLE_I);
+    }
+
+    protected void do_pread_word_i() {
+        emit(PREAD_WORD_I);
+    }
+
+    protected void do_pread_reference_i() {
+        emit(PREAD_REFERENCE_I);
+    }
+
+    protected void do_pwrite_byte() {
+        emit(PWRITE_BYTE);
+    }
+
+    protected void do_pwrite_short() {
+        emit(PWRITE_SHORT);
+    }
+
+    protected void do_pwrite_int() {
+        emit(PWRITE_INT);
+    }
+
+    protected void do_pwrite_long() {
+        emit(PWRITE_LONG);
+    }
+
+    protected void do_pwrite_float() {
+        emit(PWRITE_FLOAT);
+    }
+
+    protected void do_pwrite_double() {
+        emit(PWRITE_DOUBLE);
+    }
+
+    protected void do_pwrite_word() {
+        emit(PWRITE_WORD);
+    }
+
+    protected void do_pwrite_reference() {
+        emit(PWRITE_REFERENCE);
+    }
+
+    protected void do_pwrite_byte_i() {
+        emit(PWRITE_BYTE_I);
+    }
+
+    protected void do_pwrite_short_i() {
+        emit(PWRITE_SHORT_I);
+    }
+
+    protected void do_pwrite_int_i() {
+        emit(PWRITE_INT_I);
+    }
+
+    protected void do_pwrite_long_i() {
+        emit(PWRITE_LONG_I);
+    }
+
+    protected void do_pwrite_float_i() {
+        emit(PWRITE_FLOAT_I);
+    }
+
+    protected void do_pwrite_double_i() {
+        emit(PWRITE_DOUBLE_I);
+    }
+
+    protected void do_pwrite_word_i() {
+        emit(PWRITE_WORD_I);
+    }
+
+    protected void do_pwrite_reference_i() {
+        emit(PWRITE_REFERENCE_I);
+    }
+
+    protected void do_pget_byte() {
+        emit(PGET_BYTE);
+    }
+
+    protected void do_pget_char() {
+        emit(PGET_CHAR);
+    }
+
+    protected void do_pget_short() {
+        emit(PGET_SHORT);
+    }
+
+    protected void do_pget_int() {
+        emit(PGET_INT);
+    }
+
+    protected void do_pget_long() {
+        emit(PGET_LONG);
+    }
+
+    protected void do_pget_float() {
+        emit(PGET_FLOAT);
+    }
+
+    protected void do_pget_double() {
+        emit(PGET_DOUBLE);
+    }
+
+    protected void do_pget_word() {
+        emit(PGET_WORD);
+    }
+
+    protected void do_pget_reference() {
+        emit(PGET_REFERENCE);
+    }
+
+    protected void do_pset_byte() {
+        emit(PSET_BYTE);
+    }
+
+    protected void do_pset_short() {
+        emit(PSET_SHORT);
+    }
+
+    protected void do_pset_int() {
+        emit(PSET_INT);
+    }
+
+    protected void do_pset_long() {
+        emit(PSET_LONG);
+    }
+
+    protected void do_pset_float() {
+        emit(PSET_FLOAT);
+    }
+
+    protected void do_pset_double() {
+        emit(PSET_DOUBLE);
+    }
+
+    protected void do_pset_word() {
+        emit(PSET_WORD);
+    }
+
+    protected void do_pset_reference() {
+        emit(PSET_REFERENCE);
+    }
+
+    protected void do_pcmpswp_int() {
+        emit(PCMPSWP_INT);
+    }
+
+    protected void do_pcmpswp_word() {
+        emit(PCMPSWP_WORD);
+    }
+
+    protected void do_pcmpswp_reference() {
+        emit(PCMPSWP_REFERENCE);
+    }
+
+    protected void do_pcmpswp_int_i() {
+        emit(PCMPSWP_INT_I);
+    }
+
+    protected void do_pcmpswp_word_i() {
+        emit(PCMPSWP_WORD_I);
+    }
+
+    protected void do_pcmpswp_reference_i() {
+        emit(PCMPSWP_REFERENCE_I);
+    }
+
+    protected void do_membar_load_load() {
+        emit(MEMBAR_LOAD_LOAD);
+    }
+
+    protected void do_membar_load_store() {
+        emit(MEMBAR_LOAD_STORE);
+    }
+
+    protected void do_membar_store_load() {
+        emit(MEMBAR_STORE_LOAD);
+    }
+
+    protected void do_membar_store_store() {
+        emit(MEMBAR_STORE_STORE);
+    }
+
+    protected void do_mov_i2f() {
+        emit(MOV_I2F);
+    }
+
+    protected void do_mov_f2i() {
+        emit(MOV_F2I);
+    }
+
+    protected void do_mov_l2d() {
+        emit(MOV_L2D);
+    }
+
+    protected void do_mov_d2l() {
+        emit(MOV_D2L);
+    }
+
+    protected void do_pause() {
+        emit(PAUSE);
+    }
+
+    protected void do_lsb() {
+        emit(LSB);
+    }
+
+    protected void do_msb() {
+        emit(MSB);
     }
 }

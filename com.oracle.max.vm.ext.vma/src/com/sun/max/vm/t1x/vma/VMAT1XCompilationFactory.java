@@ -29,7 +29,8 @@ import com.sun.max.vm.t1x.T1XCompilationFactory;
 public class VMAT1XCompilationFactory extends T1XCompilationFactory {
     @Override
     public T1XCompilation newT1XCompilation(T1X t1x) {
-        return new VMAT1XCompilation(t1x);
+        //return new VMAT1XCompilation(t1x);
+        return null;
     }
 
 }
