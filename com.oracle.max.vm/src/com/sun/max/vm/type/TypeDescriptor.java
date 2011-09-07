@@ -273,10 +273,7 @@ public abstract class TypeDescriptor extends Descriptor {
                 return true;
             }
 
-            if (CompiledPrototype.ResolveEverything) {
-                return true;
-            }
-            return false;
+            return true;
         }
         return ClassRegistry.get(classLoader, typeDescriptor, true) != null;
     }
