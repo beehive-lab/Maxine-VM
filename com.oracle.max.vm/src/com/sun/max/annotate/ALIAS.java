@@ -155,7 +155,17 @@ public @interface ALIAS {
             if (alias != null) {
                 FieldActor aliasedField = aliasedFields.get(field);
                 if (aliasedField == null) {
-                    Class holder = declaringClass(alias);
+                    Class holder;
+                    try {
+                        holder = declaringClass(alias);
+                    } catch (NoClassDefFoundError ex) {
+                        if (alias.optional()) {
+                            aliasedFields.put(field, field);
+                            return;
+                        }
+                        throw FatalError.unexpected("Could not find holder for alias " + field + " in " + alias.declaringClassName());
+                    }
+
                     String name = alias.name();
                     if (name.isEmpty()) {
                         name = field.name();
@@ -204,7 +214,17 @@ public @interface ALIAS {
             if (alias != null) {
                 MethodActor aliasedMethod = aliasedMethods.get(method);
                 if (aliasedMethod == null) {
-                    Class holder = declaringClass(alias);
+                    Class holder;
+                    try {
+                        holder = declaringClass(alias);
+                    } catch (NoClassDefFoundError ex) {
+                        if (alias.optional()) {
+                            aliasedMethods.put(method, method);
+                            return;
+                        }
+                        throw FatalError.unexpected("Could not find holder for alias " + method + " in " + alias.declaringClassName());
+                    }
+
                     String name = alias.name();
                     if (name.isEmpty()) {
                         name = method.name();
