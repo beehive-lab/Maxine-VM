@@ -115,6 +115,13 @@ public class Package extends BootImagePackage {
         HostedBootClassLoader.omitClass(sun.security.jca.Providers.class);
         // Some other classes would also directly reference NativePRNG, so exclude them too.
         HostedBootClassLoader.omitClass("java.nio.file.TempFileHelper");
+        // The static initializer loads the native network library
+        HostedBootClassLoader.omitClass("java.net.InetAddress");
+        // The static initializer loads and initializes native libraries
+        HostedBootClassLoader.omitClass("sun.nio.ch.FileDispatcherImpl");
+        HostedBootClassLoader.omitClass("sun.nio.ch.FileChannelImpl");
+        HostedBootClassLoader.omitClass("sun.nio.ch.Util");
+        HostedBootClassLoader.omitClass("sun.jkernel.Bundle");
 
         // Methods that are called using JNI during startup; we want the invocation stub in the boot image to avoid compilation at run time
         CompiledPrototype.registerImageInvocationStub(MethodActor.fromJava(Classes.getDeclaredMethod(java.lang.System.class, "getProperty", String.class)));
@@ -135,12 +142,17 @@ public class Package extends BootImagePackage {
         CompiledPrototype.addCompilationBlacklist("sun.reflect.annotation");
         CompiledPrototype.addCompilationBlacklist("sun.reflect.generics");
         CompiledPrototype.addCompilationBlacklist("java.util.jar.JarVerifier");
+        CompiledPrototype.addCompilationBlacklist("java.net");
+        CompiledPrototype.addCompilationBlacklist("sun.nio.ch");
 
         // Exceptions from the above blacklisted packages
         CompiledPrototype.addCompilationWhitelist("sun.security.util.Debug");
+        CompiledPrototype.addCompilationWhitelist("sun.security.provider.PolicyFile");
         CompiledPrototype.addCompilationWhitelist("sun.reflect.annotation.AnnotationParser");
         CompiledPrototype.addCompilationWhitelist("sun.reflect.Reflection");
         CompiledPrototype.addCompilationWhitelist("sun.reflect.ReflectionFactory");
         CompiledPrototype.addCompilationWhitelist("sun.security.action.GetPropertyAction");
+        CompiledPrototype.addCompilationWhitelist("java.net.URL");
+        CompiledPrototype.addCompilationWhitelist("java.net.Parts");
     }
 }
