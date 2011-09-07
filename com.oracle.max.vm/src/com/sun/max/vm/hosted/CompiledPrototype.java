@@ -57,9 +57,6 @@ import com.sun.max.vm.type.*;
  */
 public class CompiledPrototype extends Prototype {
 
-    public static final boolean NewCompilationStrategy = false;
-    public static final boolean ResolveEverything = true;
-
     class ClassInfo {
         public ClassInfo(ClassActor classActor) {
             this.classActor = classActor;
@@ -185,44 +182,18 @@ public class CompiledPrototype extends Prototype {
         return anonymousClasses.get(actor);
     }
 
-    private void gatherNewClasses(GraphPrototype graphPrototype) {
+    private void gatherNewClasses() {
         Trace.begin(1, "gatherNewClasses");
-        final Collection<ClassActor> newClasses = new HashSet<ClassActor>();
-
-        if (NewCompilationStrategy) {
-            for (Object obj : graphPrototype.objects()) {
-                ClassActor classActor = ClassActor.fromJava(obj.getClass());
-
-                if (classActor == null) {
-                    assert obj.getClass() == StaticTuple.class : "hosted-only class that can be ignored";
-                    continue;
-                }
-                if (!classActor.isInstanceClass()) {
-                    continue;
-                }
-                if (lookupInfo(classActor) == null) {
-                    final Method enclosingMethod = classActor.toJava().getEnclosingMethod();
-                    if (enclosingMethod != null) {
-                        // if this is an anonymous class, add it to the anonymous classes set of the enclosing method
-                        gatherNewAnonymousClass(newClasses, classActor, enclosingMethod);
-                    } else {
-                        traceNewClass(classActor);
-                        newClasses.add(classActor);
-                    }
-                }
-            }
-
-        } else {
-            for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY.bootImageClasses()) {
-                if (lookupInfo(classActor) == null) {
-                    final Method enclosingMethod = classActor.toJava().getEnclosingMethod();
-                    if (enclosingMethod != null) {
-                        // if this is an anonymous class, add it to the anonymous classes set of the enclosing method
-                        gatherNewAnonymousClass(newClasses, classActor, enclosingMethod);
-                    } else {
-                        traceNewClass(classActor);
-                        newClasses.add(classActor);
-                    }
+        final LinkedList<ClassActor> newClasses = new LinkedList<ClassActor>();
+        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY.bootImageClasses()) {
+            if (lookupInfo(classActor) == null) {
+                final Method enclosingMethod = classActor.toJava().getEnclosingMethod();
+                if (enclosingMethod != null) {
+                    // if this is an anonymous class, add it to the anonymous classes set of the enclosing method
+                    gatherNewAnonymousClass(newClasses, classActor, enclosingMethod);
+                } else {
+                    traceNewClass(classActor);
+                    newClasses.add(classActor);
                 }
             }
         }
@@ -240,7 +211,7 @@ public class CompiledPrototype extends Prototype {
         }
     }
 
-    private void gatherNewAnonymousClass(final Collection<ClassActor> newClasses, ClassActor classActor, final Method enclosingMethod) {
+    private void gatherNewAnonymousClass(final LinkedList<ClassActor> newClasses, ClassActor classActor, final Method enclosingMethod) {
         if (!MaxineVM.isHostedOnly(enclosingMethod)) {
             final MethodActor methodActor = MethodActor.fromJava(enclosingMethod);
             if (methodActor != null) {
@@ -322,26 +293,6 @@ public class CompiledPrototype extends Prototype {
 
     private void processNewTargetMethod(TargetMethod targetMethod) {
         traceNewTargetMethod(targetMethod);
-
-        if (NewCompilationStrategy) {
-            if (targetMethod.referenceLiterals() != null) {
-                for (Object literal : targetMethod.referenceLiterals()) {
-                    ClassActor classActor;
-                    if (literal instanceof StaticTuple) {
-                        classActor = ((StaticTuple) literal).classActor();
-                    } else if (literal instanceof DynamicHub) {
-                        classActor = ((DynamicHub) literal).classActor;
-                    } else {
-                        classActor = ClassActor.fromJava(literal.getClass());
-                    }
-                    if (!classActor.isInstanceClass()) {
-                        continue;
-                    }
-                    getInfo(classActor);
-                }
-            }
-        }
-
         final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
         // add the methods referenced in the target method's literals
         if (targetMethod.referenceLiterals() != null) {
@@ -818,12 +769,12 @@ public class CompiledPrototype extends Prototype {
         addEntrypoints0();
     }
 
-    public boolean compile(GraphPrototype graphPrototype) {
+    public boolean compile() {
         boolean compiledAny = false;
         boolean compiledSome = false;
         do {
             // 3. add all new class implementations
-            gatherNewClasses(graphPrototype);
+            gatherNewClasses();
             // 4. compile all new methods
             compiledSome = compileWorklist();
             compiledAny |= compiledSome;

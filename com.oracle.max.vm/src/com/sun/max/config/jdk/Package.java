@@ -32,47 +32,17 @@ import com.sun.max.vm.hosted.*;
  * Redirection for the standard set of JDK packages to include in the image.
  */
 public class Package extends BootImagePackage {
-    private static final String[] packagesNew = {
-        "java.lang.*",
-        "java.lang.reflect.*",
-        "java.lang.ref.*",
-    };
-
-
     private static final String[] packages = {
         "java.lang.*",
         "java.lang.reflect.*",
         "java.lang.ref.*",
-        "java.io.*",
-        "java.nio.*",
-        "java.nio.charset.*",
-        "java.security.ProtectionDomain",
-        "java.security.DomainCombiner",
-        "java.security.PrivilegedAction",
-        "java.util.*",
-        "java.util.zip.*",
-        "java.util.jar.*",
-        "java.util.regex.*",
-        "java.util.concurrent.atomic.*",
-        "java.util.concurrent.locks.*",
-        "java.text.DateFormatSymbols",
-        "java.text.DecimalFormat",
-        "java.text.DecimalFormatSymbols",
-        "java.text.NumberFormat",
-        "sun.misc.Version",
-        "sun.misc.SharedSecrets",
-        "sun.misc.VM",
-        "sun.misc.Cleaner",
-        "sun.reflect.Reflection",
-        "sun.nio.cs.*",
-        "sun.security.action.GetPropertyAction"
     };
 
     private static boolean loadingDone;
     private static boolean initDone;
 
     public Package() {
-        super(CompiledPrototype.ResolveEverything ? packagesNew : packages);
+        super(packages);
 
         // we shouldn't be called more than once but are (Word class search)
         if (initDone) {

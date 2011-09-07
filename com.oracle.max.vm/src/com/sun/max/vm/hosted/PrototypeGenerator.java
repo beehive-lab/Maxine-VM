@@ -63,7 +63,7 @@ public final class PrototypeGenerator {
     public GraphPrototype createGraphPrototype() {
         // This initial graph prototype ensures that ClassActors are created for
         // all objects hanging off static fields.
-        GraphPrototype graphPrototype;
+        GraphPrototype graphPrototype = new GraphPrototype(null);
 
         int numberOfClassActors = 0;
         int numberOfCompilationThreads = threadsOption.getValue();
@@ -73,9 +73,10 @@ public final class PrototypeGenerator {
             for (MethodActor methodActor : vmConfig().runScheme().gatherNativeInitializationMethods()) {
                 compiledPrototype.add(methodActor, null, null);
             }
-            graphPrototype = new GraphPrototype(compiledPrototype);
             numberOfClassActors = currentNumberOfClasses();
-            compiledPrototype.compile(graphPrototype);
+            if (compiledPrototype.compile()) {
+                graphPrototype = new GraphPrototype(compiledPrototype);
+            }
             compiledPrototype.compileFoldableMethods();
         } while (currentNumberOfClasses() != numberOfClassActors);
 
