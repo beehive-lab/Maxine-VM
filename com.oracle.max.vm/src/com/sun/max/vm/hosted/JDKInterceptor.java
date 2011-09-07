@@ -267,6 +267,9 @@ public final class JDKInterceptor {
             new FieldOffsetRecomputation("nextOffset", JDK.java_util_concurrent_locks_AbstractQueuedLongSynchronizer$Node, "next"),
         JDK.java_util_concurrent_locks_LockSupport,
             new FieldOffsetRecomputation("parkBlockerOffset", JDK.java_lang_Thread, "parkBlocker"),
+        JDK.java_math_BigInteger,
+            new FieldOffsetRecomputation("signumOffset", "signum"),
+            new FieldOffsetRecomputation("magOffset", "mag"),
     };
 
     private static final Object[] interceptedFieldArrayJDK6 = {
@@ -304,9 +307,6 @@ public final class JDKInterceptor {
             new ArrayIndexScaleRecomputation("ARRAY_FLOAT_INDEX_SCALE", float[].class),
             new ArrayIndexScaleRecomputation("ARRAY_DOUBLE_INDEX_SCALE", double[].class),
             new ArrayIndexScaleRecomputation("ARRAY_OBJECT_INDEX_SCALE", Object[].class),
-        JDK.java_math_BigInteger,
-            new FieldOffsetRecomputation("signumOffset", "signum"),
-            new FieldOffsetRecomputation("magOffset", "mag"),
         JDK.java_util_concurrent_ConcurrentHashMap,
             new ArrayBaseOffsetRecomputation("TBASE", Object[].class),
             new ArrayIndexScaleShiftRecomputation("TSHIFT", Object[].class),
