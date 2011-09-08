@@ -48,6 +48,7 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.HeapScheme.PIN_SUPPORT_FLAG;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.*;
@@ -251,25 +252,25 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static native void reserved0();
-        // Source: JniFunctionsSource.java:71
+        // Source: JniFunctionsSource.java:72
 
     @VM_ENTRY_POINT
     private static native void reserved1();
-        // Source: JniFunctionsSource.java:74
+        // Source: JniFunctionsSource.java:75
 
     @VM_ENTRY_POINT
     private static native void reserved2();
-        // Source: JniFunctionsSource.java:77
+        // Source: JniFunctionsSource.java:78
 
     @VM_ENTRY_POINT
     private static native void reserved3();
-        // Source: JniFunctionsSource.java:80
+        // Source: JniFunctionsSource.java:81
 
     // Checkstyle: stop method name check
 
     @VM_ENTRY_POINT
     private static native int GetVersion(Pointer env);
-        // Source: JniFunctionsSource.java:85
+        // Source: JniFunctionsSource.java:86
 
     private static String dottify(String slashifiedName) {
         return slashifiedName.replace('/', '.');
@@ -288,7 +289,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle DefineClass(Pointer env, Pointer slashifiedName, JniHandle classLoader, Pointer buffer, int length) throws ClassFormatError {
-        // Source: JniFunctionsSource.java:103
+        // Source: JniFunctionsSource.java:104
         Pointer anchor = prologue(env, "DefineClass");
         try {
             final byte[] bytes = new byte[length];
@@ -323,7 +324,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle FindClass(Pointer env, Pointer name) throws ClassNotFoundException {
-        // Source: JniFunctionsSource.java:129
+        // Source: JniFunctionsSource.java:130
         Pointer anchor = prologue(env, "FindClass");
         try {
             String className;
@@ -349,7 +350,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static MethodID FromReflectedMethod(Pointer env, JniHandle reflectedMethod) {
-        // Source: JniFunctionsSource.java:146
+        // Source: JniFunctionsSource.java:147
         Pointer anchor = prologue(env, "FromReflectedMethod");
         try {
             final MethodActor methodActor = MethodActor.fromJava((Method) reflectedMethod.unhand());
@@ -364,7 +365,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static FieldID FromReflectedField(Pointer env, JniHandle field) {
-        // Source: JniFunctionsSource.java:152
+        // Source: JniFunctionsSource.java:153
         Pointer anchor = prologue(env, "FromReflectedField");
         try {
             final FieldActor fieldActor = FieldActor.fromJava((Field) field.unhand());
@@ -387,7 +388,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle ToReflectedMethod(Pointer env, JniHandle javaClass, MethodID methodID, boolean isStatic) throws NoSuchMethodException {
-        // Source: JniFunctionsSource.java:166
+        // Source: JniFunctionsSource.java:167
         Pointer anchor = prologue(env, "ToReflectedMethod");
         try {
             return JniHandles.createLocalHandle(ToReflectedMethod(methodID, isStatic));
@@ -401,7 +402,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle GetSuperclass(Pointer env, JniHandle subType) {
-        // Source: JniFunctionsSource.java:171
+        // Source: JniFunctionsSource.java:172
         Pointer anchor = prologue(env, "GetSuperclass");
         try {
             return JniHandles.createLocalHandle(((Class) subType.unhand()).getSuperclass());
@@ -415,7 +416,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static boolean IsAssignableFrom(Pointer env, JniHandle subType, JniHandle superType) {
-        // Source: JniFunctionsSource.java:176
+        // Source: JniFunctionsSource.java:177
         Pointer anchor = prologue(env, "IsAssignableFrom");
         try {
             return ClassActor.fromJava((Class) superType.unhand()).isAssignableFrom(ClassActor.fromJava((Class) subType.unhand()));
@@ -429,7 +430,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle ToReflectedField(Pointer env, JniHandle javaClass, FieldID fieldID, boolean isStatic) {
-        // Source: JniFunctionsSource.java:181
+        // Source: JniFunctionsSource.java:182
         Pointer anchor = prologue(env, "ToReflectedField");
         try {
             final FieldActor fieldActor = FieldID.toFieldActor(fieldID);
@@ -447,7 +448,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static int Throw(Pointer env, JniHandle throwable) {
-        // Source: JniFunctionsSource.java:190
+        // Source: JniFunctionsSource.java:191
         Pointer anchor = prologue(env, "Throw");
         try {
             VmThread.fromJniEnv(env).setJniException((Throwable) throwable.unhand());
@@ -462,7 +463,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static int ThrowNew(Pointer env, JniHandle throwableClass, Pointer message) throws Throwable {
-        // Source: JniFunctionsSource.java:196
+        // Source: JniFunctionsSource.java:197
         Pointer anchor = prologue(env, "ThrowNew");
         try {
             final Class<Class<? extends Throwable>> type = null;
@@ -488,7 +489,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle ExceptionOccurred(Pointer env) {
-        // Source: JniFunctionsSource.java:213
+        // Source: JniFunctionsSource.java:214
         Pointer anchor = prologue(env, "ExceptionOccurred");
         try {
             return JniHandles.createLocalHandle(VmThread.fromJniEnv(env).jniException());
@@ -502,7 +503,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void ExceptionDescribe(Pointer env) {
-        // Source: JniFunctionsSource.java:218
+        // Source: JniFunctionsSource.java:219
         Pointer anchor = prologue(env, "ExceptionDescribe");
         try {
             final Throwable exception = VmThread.fromJniEnv(env).jniException();
@@ -518,7 +519,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void ExceptionClear(Pointer env) {
-        // Source: JniFunctionsSource.java:226
+        // Source: JniFunctionsSource.java:227
         Pointer anchor = prologue(env, "ExceptionClear");
         try {
             VmThread.fromJniEnv(env).setJniException(null);
@@ -531,7 +532,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void FatalError(Pointer env, Pointer message) {
-        // Source: JniFunctionsSource.java:231
+        // Source: JniFunctionsSource.java:232
         Pointer anchor = prologue(env, "FatalError");
         try {
             try {
@@ -553,7 +554,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static int PushLocalFrame(Pointer env, int capacity) {
-        // Source: JniFunctionsSource.java:245
+        // Source: JniFunctionsSource.java:246
         Pointer anchor = prologue(env, "PushLocalFrame");
         try {
             JniHandles.pushLocalFrame(capacity);
@@ -568,7 +569,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle PopLocalFrame(Pointer env, JniHandle res) {
-        // Source: JniFunctionsSource.java:251
+        // Source: JniFunctionsSource.java:252
         Pointer anchor = prologue(env, "PopLocalFrame");
         try {
             return JniHandles.popLocalFrame(res);
@@ -582,7 +583,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle NewGlobalRef(Pointer env, JniHandle handle) {
-        // Source: JniFunctionsSource.java:256
+        // Source: JniFunctionsSource.java:257
         Pointer anchor = prologue(env, "NewGlobalRef");
         try {
             return JniHandles.createGlobalHandle(handle.unhand());
@@ -596,7 +597,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void DeleteGlobalRef(Pointer env, JniHandle handle) {
-        // Source: JniFunctionsSource.java:261
+        // Source: JniFunctionsSource.java:262
         Pointer anchor = prologue(env, "DeleteGlobalRef");
         try {
             JniHandles.destroyGlobalHandle(handle);
@@ -609,7 +610,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void DeleteLocalRef(Pointer env, JniHandle handle) {
-        // Source: JniFunctionsSource.java:266
+        // Source: JniFunctionsSource.java:267
         Pointer anchor = prologue(env, "DeleteLocalRef");
         try {
             JniHandles.destroyLocalHandle(handle);
@@ -622,7 +623,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static boolean IsSameObject(Pointer env, JniHandle object1, JniHandle object2) {
-        // Source: JniFunctionsSource.java:271
+        // Source: JniFunctionsSource.java:272
         Pointer anchor = prologue(env, "IsSameObject");
         try {
             return object1.unhand() == object2.unhand();
@@ -636,7 +637,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle NewLocalRef(Pointer env, JniHandle object) {
-        // Source: JniFunctionsSource.java:276
+        // Source: JniFunctionsSource.java:277
         Pointer anchor = prologue(env, "NewLocalRef");
         try {
             return JniHandles.createLocalHandle(object.unhand());
@@ -650,7 +651,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static int EnsureLocalCapacity(Pointer env, int capacity) {
-        // Source: JniFunctionsSource.java:281
+        // Source: JniFunctionsSource.java:282
         Pointer anchor = prologue(env, "EnsureLocalCapacity");
         try {
             // If this call fails, it will be with an OutOfMemoryError which will be
@@ -675,7 +676,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle AllocObject(Pointer env, JniHandle javaClass) throws InstantiationException {
-        // Source: JniFunctionsSource.java:297
+        // Source: JniFunctionsSource.java:298
         Pointer anchor = prologue(env, "AllocObject");
         try {
             return JniHandles.createLocalHandle(allocObject((Class) javaClass.unhand()));
@@ -689,15 +690,15 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static native JniHandle NewObject(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
-        // Source: JniFunctionsSource.java:302
+        // Source: JniFunctionsSource.java:303
 
     @VM_ENTRY_POINT
     private static native JniHandle NewObjectV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
-        // Source: JniFunctionsSource.java:305
+        // Source: JniFunctionsSource.java:306
 
     @VM_ENTRY_POINT
     private static JniHandle NewObjectA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        // Source: JniFunctionsSource.java:308
+        // Source: JniFunctionsSource.java:309
         Pointer anchor = prologue(env, "NewObjectA");
         try {
     
@@ -731,7 +732,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle GetObjectClass(Pointer env, JniHandle object) {
-        // Source: JniFunctionsSource.java:333
+        // Source: JniFunctionsSource.java:334
         Pointer anchor = prologue(env, "GetObjectClass");
         try {
             final Class javaClass = object.unhand().getClass();
@@ -746,7 +747,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static boolean IsInstanceOf(Pointer env, JniHandle object, JniHandle javaType) {
-        // Source: JniFunctionsSource.java:339
+        // Source: JniFunctionsSource.java:340
         Pointer anchor = prologue(env, "IsInstanceOf");
         try {
             return ((Class) javaType.unhand()).isInstance(object.unhand());
@@ -760,7 +761,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static MethodID GetMethodID(Pointer env, JniHandle javaType, Pointer nameCString, Pointer descriptorCString) {
-        // Source: JniFunctionsSource.java:344
+        // Source: JniFunctionsSource.java:345
         Pointer anchor = prologue(env, "GetMethodID");
         try {
             final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
@@ -792,11 +793,11 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static native JniHandle CallObjectMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
-        // Source: JniFunctionsSource.java:367
+        // Source: JniFunctionsSource.java:368
 
     @VM_ENTRY_POINT
     private static native JniHandle CallObjectMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer vaList);
-        // Source: JniFunctionsSource.java:370
+        // Source: JniFunctionsSource.java:371
 
     /**
      * Copies arguments from the native jvalue array at {@code arguments} into {@code argumentValues}. The number of
@@ -905,7 +906,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle CallObjectMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
-        // Source: JniFunctionsSource.java:478
+        // Source: JniFunctionsSource.java:479
         Pointer anchor = prologue(env, "CallObjectMethodA");
         try {
             return JniHandles.createLocalHandle(CallValueMethodA(env, object, methodID, arguments, Kind.REFERENCE).asObject());
@@ -919,15 +920,15 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static native boolean CallBooleanMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
-        // Source: JniFunctionsSource.java:483
+        // Source: JniFunctionsSource.java:484
 
     @VM_ENTRY_POINT
     private static native boolean CallBooleanMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer vaList);
-        // Source: JniFunctionsSource.java:486
+        // Source: JniFunctionsSource.java:487
 
     @VM_ENTRY_POINT
     private static boolean CallBooleanMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
-        // Source: JniFunctionsSource.java:489
+        // Source: JniFunctionsSource.java:490
         Pointer anchor = prologue(env, "CallBooleanMethodA");
         try {
             return CallValueMethodA(env, object, methodID, arguments, Kind.BOOLEAN).asBoolean();
@@ -941,15 +942,15 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static native byte CallByteMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
-        // Source: JniFunctionsSource.java:494
+        // Source: JniFunctionsSource.java:495
 
     @VM_ENTRY_POINT
     private static native byte CallByteMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments);
-        // Source: JniFunctionsSource.java:497
+        // Source: JniFunctionsSource.java:498
 
     @VM_ENTRY_POINT
     private static byte CallByteMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
-        // Source: JniFunctionsSource.java:500
+        // Source: JniFunctionsSource.java:501
         Pointer anchor = prologue(env, "CallByteMethodA");
         try {
             return CallValueMethodA(env, object, methodID, arguments, Kind.BYTE).asByte();
@@ -963,15 +964,15 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static native char CallCharMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
-        // Source: JniFunctionsSource.java:505
+        // Source: JniFunctionsSource.java:506
 
     @VM_ENTRY_POINT
     private static native char CallCharMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments);
-        // Source: JniFunctionsSource.java:508
+        // Source: JniFunctionsSource.java:509
 
     @VM_ENTRY_POINT
     private static char CallCharMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
-        // Source: JniFunctionsSource.java:511
+        // Source: JniFunctionsSource.java:512
         Pointer anchor = prologue(env, "CallCharMethodA");
         try {
             return CallValueMethodA(env, object, methodID, arguments, Kind.CHAR).asChar();
@@ -985,15 +986,15 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static native short CallShortMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
-        // Source: JniFunctionsSource.java:516
+        // Source: JniFunctionsSource.java:517
 
     @VM_ENTRY_POINT
     private static native short CallShortMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments);
-        // Source: JniFunctionsSource.java:519
+        // Source: JniFunctionsSource.java:520
 
     @VM_ENTRY_POINT
     private static short CallShortMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
-        // Source: JniFunctionsSource.java:522
+        // Source: JniFunctionsSource.java:523
         Pointer anchor = prologue(env, "CallShortMethodA");
         try {
             return CallValueMethodA(env, object, methodID, arguments, Kind.SHORT).asShort();
@@ -1007,15 +1008,15 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static native int CallIntMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
-        // Source: JniFunctionsSource.java:527
+        // Source: JniFunctionsSource.java:528
 
     @VM_ENTRY_POINT
     private static native int CallIntMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments);
-        // Source: JniFunctionsSource.java:530
+        // Source: JniFunctionsSource.java:531
 
     @VM_ENTRY_POINT
     private static int CallIntMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
-        // Source: JniFunctionsSource.java:533
+        // Source: JniFunctionsSource.java:534
         Pointer anchor = prologue(env, "CallIntMethodA");
         try {
             return CallValueMethodA(env, object, methodID, arguments, Kind.INT).asInt();
@@ -1029,15 +1030,15 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static native long CallLongMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
-        // Source: JniFunctionsSource.java:538
+        // Source: JniFunctionsSource.java:539
 
     @VM_ENTRY_POINT
     private static native long CallLongMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments);
-        // Source: JniFunctionsSource.java:541
+        // Source: JniFunctionsSource.java:542
 
     @VM_ENTRY_POINT
     private static long CallLongMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
-        // Source: JniFunctionsSource.java:544
+        // Source: JniFunctionsSource.java:545
         Pointer anchor = prologue(env, "CallLongMethodA");
         try {
             return CallValueMethodA(env, object, methodID, arguments, Kind.LONG).asLong();
@@ -1051,15 +1052,15 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static native float CallFloatMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
-        // Source: JniFunctionsSource.java:549
+        // Source: JniFunctionsSource.java:550
 
     @VM_ENTRY_POINT
     private static native float CallFloatMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments);
-        // Source: JniFunctionsSource.java:552
+        // Source: JniFunctionsSource.java:553
 
     @VM_ENTRY_POINT
     private static float CallFloatMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
-        // Source: JniFunctionsSource.java:555
+        // Source: JniFunctionsSource.java:556
         Pointer anchor = prologue(env, "CallFloatMethodA");
         try {
             return CallValueMethodA(env, object, methodID, arguments, Kind.FLOAT).asFloat();
@@ -1073,15 +1074,15 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static native double CallDoubleMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
-        // Source: JniFunctionsSource.java:560
+        // Source: JniFunctionsSource.java:561
 
     @VM_ENTRY_POINT
     private static native double CallDoubleMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments);
-        // Source: JniFunctionsSource.java:563
+        // Source: JniFunctionsSource.java:564
 
     @VM_ENTRY_POINT
     private static double CallDoubleMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
-        // Source: JniFunctionsSource.java:566
+        // Source: JniFunctionsSource.java:567
         Pointer anchor = prologue(env, "CallDoubleMethodA");
         try {
             return CallValueMethodA(env, object, methodID, arguments, Kind.DOUBLE).asDouble();
@@ -1119,15 +1120,15 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static native void CallVoidMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
-        // Source: JniFunctionsSource.java:595
+        // Source: JniFunctionsSource.java:596
 
     @VM_ENTRY_POINT
     private static native void CallVoidMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments);
-        // Source: JniFunctionsSource.java:598
+        // Source: JniFunctionsSource.java:599
 
     @VM_ENTRY_POINT
     private static void CallVoidMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
-        // Source: JniFunctionsSource.java:601
+        // Source: JniFunctionsSource.java:602
         Pointer anchor = prologue(env, "CallVoidMethodA");
         try {
             CallValueMethodA(env, object, methodID, arguments, Kind.VOID);
@@ -1140,15 +1141,15 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static native JniHandle CallNonvirtualObjectMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
-        // Source: JniFunctionsSource.java:606
+        // Source: JniFunctionsSource.java:607
 
     @VM_ENTRY_POINT
     private static native JniHandle CallNonvirtualObjectMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
-        // Source: JniFunctionsSource.java:609
+        // Source: JniFunctionsSource.java:610
 
     @VM_ENTRY_POINT
     private static JniHandle CallNonvirtualObjectMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        // Source: JniFunctionsSource.java:612
+        // Source: JniFunctionsSource.java:613
         Pointer anchor = prologue(env, "CallNonvirtualObjectMethodA");
         try {
             return JniHandles.createLocalHandle(CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments, Kind.REFERENCE).asObject());
@@ -1162,15 +1163,15 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static native boolean CallNonvirtualBooleanMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
-        // Source: JniFunctionsSource.java:617
+        // Source: JniFunctionsSource.java:618
 
     @VM_ENTRY_POINT
     private static native boolean CallNonvirtualBooleanMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
-        // Source: JniFunctionsSource.java:620
+        // Source: JniFunctionsSource.java:621
 
     @VM_ENTRY_POINT
     private static boolean CallNonvirtualBooleanMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        // Source: JniFunctionsSource.java:623
+        // Source: JniFunctionsSource.java:624
         Pointer anchor = prologue(env, "CallNonvirtualBooleanMethodA");
         try {
             return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments, Kind.BOOLEAN).asBoolean();
@@ -1184,15 +1185,15 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static native byte CallNonvirtualByteMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
-        // Source: JniFunctionsSource.java:628
+        // Source: JniFunctionsSource.java:629
 
     @VM_ENTRY_POINT
     private static native byte CallNonvirtualByteMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
-        // Source: JniFunctionsSource.java:631
+        // Source: JniFunctionsSource.java:632
 
     @VM_ENTRY_POINT
     private static byte CallNonvirtualByteMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        // Source: JniFunctionsSource.java:634
+        // Source: JniFunctionsSource.java:635
         Pointer anchor = prologue(env, "CallNonvirtualByteMethodA");
         try {
             return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments, Kind.BYTE).asByte();
@@ -1206,15 +1207,15 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static native char CallNonvirtualCharMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
-        // Source: JniFunctionsSource.java:639
+        // Source: JniFunctionsSource.java:640
 
     @VM_ENTRY_POINT
     private static native char CallNonvirtualCharMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
-        // Source: JniFunctionsSource.java:642
+        // Source: JniFunctionsSource.java:643
 
     @VM_ENTRY_POINT
     private static char CallNonvirtualCharMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        // Source: JniFunctionsSource.java:645
+        // Source: JniFunctionsSource.java:646
         Pointer anchor = prologue(env, "CallNonvirtualCharMethodA");
         try {
             return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments, Kind.CHAR).asChar();
@@ -1228,15 +1229,15 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static native short CallNonvirtualShortMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
-        // Source: JniFunctionsSource.java:650
+        // Source: JniFunctionsSource.java:651
 
     @VM_ENTRY_POINT
     private static native short CallNonvirtualShortMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
-        // Source: JniFunctionsSource.java:653
+        // Source: JniFunctionsSource.java:654
 
     @VM_ENTRY_POINT
     private static short CallNonvirtualShortMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        // Source: JniFunctionsSource.java:656
+        // Source: JniFunctionsSource.java:657
         Pointer anchor = prologue(env, "CallNonvirtualShortMethodA");
         try {
             return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments, Kind.SHORT).asShort();
@@ -1250,15 +1251,15 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static native int CallNonvirtualIntMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
-        // Source: JniFunctionsSource.java:661
+        // Source: JniFunctionsSource.java:662
 
     @VM_ENTRY_POINT
     private static native int CallNonvirtualIntMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
-        // Source: JniFunctionsSource.java:664
+        // Source: JniFunctionsSource.java:665
 
     @VM_ENTRY_POINT
     private static int CallNonvirtualIntMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        // Source: JniFunctionsSource.java:667
+        // Source: JniFunctionsSource.java:668
         Pointer anchor = prologue(env, "CallNonvirtualIntMethodA");
         try {
             return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments, Kind.INT).asInt();
@@ -1272,15 +1273,15 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static native long CallNonvirtualLongMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
-        // Source: JniFunctionsSource.java:672
+        // Source: JniFunctionsSource.java:673
 
     @VM_ENTRY_POINT
     private static native long CallNonvirtualLongMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
-        // Source: JniFunctionsSource.java:675
+        // Source: JniFunctionsSource.java:676
 
     @VM_ENTRY_POINT
     private static long CallNonvirtualLongMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        // Source: JniFunctionsSource.java:678
+        // Source: JniFunctionsSource.java:679
         Pointer anchor = prologue(env, "CallNonvirtualLongMethodA");
         try {
             return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments, Kind.LONG).asLong();
@@ -1294,15 +1295,15 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static native float CallNonvirtualFloatMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
-        // Source: JniFunctionsSource.java:683
+        // Source: JniFunctionsSource.java:684
 
     @VM_ENTRY_POINT
     private static native float CallNonvirtualFloatMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
-        // Source: JniFunctionsSource.java:686
+        // Source: JniFunctionsSource.java:687
 
     @VM_ENTRY_POINT
     private static float CallNonvirtualFloatMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        // Source: JniFunctionsSource.java:689
+        // Source: JniFunctionsSource.java:690
         Pointer anchor = prologue(env, "CallNonvirtualFloatMethodA");
         try {
             return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments, Kind.FLOAT).asFloat();
@@ -1316,15 +1317,15 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static native double CallNonvirtualDoubleMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
-        // Source: JniFunctionsSource.java:694
+        // Source: JniFunctionsSource.java:695
 
     @VM_ENTRY_POINT
     private static native double CallNonvirtualDoubleMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
-        // Source: JniFunctionsSource.java:697
+        // Source: JniFunctionsSource.java:698
 
     @VM_ENTRY_POINT
     private static double CallNonvirtualDoubleMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        // Source: JniFunctionsSource.java:700
+        // Source: JniFunctionsSource.java:701
         Pointer anchor = prologue(env, "CallNonvirtualDoubleMethodA");
         try {
             return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments, Kind.DOUBLE).asDouble();
@@ -1338,15 +1339,15 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static native void CallNonvirtualVoidMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
-        // Source: JniFunctionsSource.java:705
+        // Source: JniFunctionsSource.java:706
 
     @VM_ENTRY_POINT
     private static native void CallNonvirtualVoidMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
-        // Source: JniFunctionsSource.java:708
+        // Source: JniFunctionsSource.java:709
 
     @VM_ENTRY_POINT
     private static void CallNonvirtualVoidMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        // Source: JniFunctionsSource.java:711
+        // Source: JniFunctionsSource.java:712
         Pointer anchor = prologue(env, "CallNonvirtualVoidMethodA");
         try {
             CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments, Kind.VOID);
@@ -1359,7 +1360,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static FieldID GetFieldID(Pointer env, JniHandle javaType, Pointer nameCString, Pointer descriptorCString) {
-        // Source: JniFunctionsSource.java:716
+        // Source: JniFunctionsSource.java:717
         Pointer anchor = prologue(env, "GetFieldID");
         try {
             final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
@@ -1392,7 +1393,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle GetObjectField(Pointer env, JniHandle object, FieldID fieldID) {
-        // Source: JniFunctionsSource.java:740
+        // Source: JniFunctionsSource.java:741
         Pointer anchor = prologue(env, "GetObjectField");
         try {
             return JniHandles.createLocalHandle(FieldID.toFieldActor(fieldID).getObject(object.unhand()));
@@ -1406,7 +1407,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static boolean GetBooleanField(Pointer env, JniHandle object, FieldID fieldID) {
-        // Source: JniFunctionsSource.java:745
+        // Source: JniFunctionsSource.java:746
         Pointer anchor = prologue(env, "GetBooleanField");
         try {
             return FieldID.toFieldActor(fieldID).getBoolean(object.unhand());
@@ -1420,7 +1421,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static byte GetByteField(Pointer env, JniHandle object, FieldID fieldID) {
-        // Source: JniFunctionsSource.java:750
+        // Source: JniFunctionsSource.java:751
         Pointer anchor = prologue(env, "GetByteField");
         try {
             return FieldID.toFieldActor(fieldID).getByte(object.unhand());
@@ -1434,7 +1435,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static char GetCharField(Pointer env, JniHandle object, FieldID fieldID) {
-        // Source: JniFunctionsSource.java:755
+        // Source: JniFunctionsSource.java:756
         Pointer anchor = prologue(env, "GetCharField");
         try {
             return FieldID.toFieldActor(fieldID).getChar(object.unhand());
@@ -1448,7 +1449,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static short GetShortField(Pointer env, JniHandle object, FieldID fieldID) {
-        // Source: JniFunctionsSource.java:760
+        // Source: JniFunctionsSource.java:761
         Pointer anchor = prologue(env, "GetShortField");
         try {
             return FieldID.toFieldActor(fieldID).getShort(object.unhand());
@@ -1462,7 +1463,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static int GetIntField(Pointer env, JniHandle object, FieldID fieldID) {
-        // Source: JniFunctionsSource.java:765
+        // Source: JniFunctionsSource.java:766
         Pointer anchor = prologue(env, "GetIntField");
         try {
             return FieldID.toFieldActor(fieldID).getInt(object.unhand());
@@ -1476,7 +1477,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static long GetLongField(Pointer env, JniHandle object, FieldID fieldID) {
-        // Source: JniFunctionsSource.java:770
+        // Source: JniFunctionsSource.java:771
         Pointer anchor = prologue(env, "GetLongField");
         try {
             return FieldID.toFieldActor(fieldID).getLong(object.unhand());
@@ -1490,7 +1491,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static float GetFloatField(Pointer env, JniHandle object, FieldID fieldID) {
-        // Source: JniFunctionsSource.java:775
+        // Source: JniFunctionsSource.java:776
         Pointer anchor = prologue(env, "GetFloatField");
         try {
             return FieldID.toFieldActor(fieldID).getFloat(object.unhand());
@@ -1504,7 +1505,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static double GetDoubleField(Pointer env, JniHandle object, FieldID fieldID) {
-        // Source: JniFunctionsSource.java:780
+        // Source: JniFunctionsSource.java:781
         Pointer anchor = prologue(env, "GetDoubleField");
         try {
             return FieldID.toFieldActor(fieldID).getDouble(object.unhand());
@@ -1518,7 +1519,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void SetObjectField(Pointer env, JniHandle object, FieldID fieldID, JniHandle value) {
-        // Source: JniFunctionsSource.java:785
+        // Source: JniFunctionsSource.java:786
         Pointer anchor = prologue(env, "SetObjectField");
         try {
             FieldID.toFieldActor(fieldID).setObject(object.unhand(), value.unhand());
@@ -1531,7 +1532,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void SetBooleanField(Pointer env, JniHandle object, FieldID fieldID, boolean value) {
-        // Source: JniFunctionsSource.java:790
+        // Source: JniFunctionsSource.java:791
         Pointer anchor = prologue(env, "SetBooleanField");
         try {
             FieldID.toFieldActor(fieldID).setBoolean(object.unhand(), value);
@@ -1544,7 +1545,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void SetByteField(Pointer env, JniHandle object, FieldID fieldID, byte value) {
-        // Source: JniFunctionsSource.java:795
+        // Source: JniFunctionsSource.java:796
         Pointer anchor = prologue(env, "SetByteField");
         try {
             FieldID.toFieldActor(fieldID).setByte(object.unhand(), value);
@@ -1557,7 +1558,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void SetCharField(Pointer env, JniHandle object, FieldID fieldID, char value) {
-        // Source: JniFunctionsSource.java:800
+        // Source: JniFunctionsSource.java:801
         Pointer anchor = prologue(env, "SetCharField");
         try {
             FieldID.toFieldActor(fieldID).setChar(object.unhand(), value);
@@ -1570,7 +1571,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void SetShortField(Pointer env, JniHandle object, FieldID fieldID, short value) {
-        // Source: JniFunctionsSource.java:805
+        // Source: JniFunctionsSource.java:806
         Pointer anchor = prologue(env, "SetShortField");
         try {
             FieldID.toFieldActor(fieldID).setShort(object.unhand(), value);
@@ -1583,7 +1584,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void SetIntField(Pointer env, JniHandle object, FieldID fieldID, int value) {
-        // Source: JniFunctionsSource.java:810
+        // Source: JniFunctionsSource.java:811
         Pointer anchor = prologue(env, "SetIntField");
         try {
             FieldID.toFieldActor(fieldID).setInt(object.unhand(), value);
@@ -1596,7 +1597,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void SetLongField(Pointer env, JniHandle object, FieldID fieldID, long value) {
-        // Source: JniFunctionsSource.java:815
+        // Source: JniFunctionsSource.java:816
         Pointer anchor = prologue(env, "SetLongField");
         try {
             FieldID.toFieldActor(fieldID).setLong(object.unhand(), value);
@@ -1609,7 +1610,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void SetFloatField(Pointer env, JniHandle object, FieldID fieldID, float value) {
-        // Source: JniFunctionsSource.java:820
+        // Source: JniFunctionsSource.java:821
         Pointer anchor = prologue(env, "SetFloatField");
         try {
             FieldID.toFieldActor(fieldID).setFloat(object.unhand(), value);
@@ -1622,7 +1623,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void SetDoubleField(Pointer env, JniHandle object, FieldID fieldID, double value) {
-        // Source: JniFunctionsSource.java:825
+        // Source: JniFunctionsSource.java:826
         Pointer anchor = prologue(env, "SetDoubleField");
         try {
             FieldID.toFieldActor(fieldID).setDouble(object.unhand(), value);
@@ -1635,7 +1636,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static MethodID GetStaticMethodID(Pointer env, JniHandle javaType, Pointer nameCString, Pointer descriptorCString) {
-        // Source: JniFunctionsSource.java:830
+        // Source: JniFunctionsSource.java:831
         Pointer anchor = prologue(env, "GetStaticMethodID");
         try {
             final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
@@ -1691,15 +1692,15 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static native JniHandle CallStaticObjectMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
-        // Source: JniFunctionsSource.java:877
+        // Source: JniFunctionsSource.java:878
 
     @VM_ENTRY_POINT
     private static native JniHandle CallStaticObjectMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
-        // Source: JniFunctionsSource.java:880
+        // Source: JniFunctionsSource.java:881
 
     @VM_ENTRY_POINT
     private static JniHandle CallStaticObjectMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        // Source: JniFunctionsSource.java:883
+        // Source: JniFunctionsSource.java:884
         Pointer anchor = prologue(env, "CallStaticObjectMethodA");
         try {
             return JniHandles.createLocalHandle(CallStaticValueMethodA(env, javaClass, methodID, arguments, Kind.REFERENCE).asObject());
@@ -1713,15 +1714,15 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static native boolean CallStaticBooleanMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
-        // Source: JniFunctionsSource.java:888
+        // Source: JniFunctionsSource.java:889
 
     @VM_ENTRY_POINT
     private static native boolean CallStaticBooleanMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
-        // Source: JniFunctionsSource.java:891
+        // Source: JniFunctionsSource.java:892
 
     @VM_ENTRY_POINT
     private static boolean CallStaticBooleanMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        // Source: JniFunctionsSource.java:894
+        // Source: JniFunctionsSource.java:895
         Pointer anchor = prologue(env, "CallStaticBooleanMethodA");
         try {
             return CallStaticValueMethodA(env, javaClass, methodID, arguments, Kind.BOOLEAN).asBoolean();
@@ -1735,15 +1736,15 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static native byte CallStaticByteMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
-        // Source: JniFunctionsSource.java:899
+        // Source: JniFunctionsSource.java:900
 
     @VM_ENTRY_POINT
     private static native byte CallStaticByteMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
-        // Source: JniFunctionsSource.java:902
+        // Source: JniFunctionsSource.java:903
 
     @VM_ENTRY_POINT
     private static byte CallStaticByteMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        // Source: JniFunctionsSource.java:905
+        // Source: JniFunctionsSource.java:906
         Pointer anchor = prologue(env, "CallStaticByteMethodA");
         try {
             return CallStaticValueMethodA(env, javaClass, methodID, arguments, Kind.BYTE).asByte();
@@ -1757,15 +1758,15 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static native char CallStaticCharMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
-        // Source: JniFunctionsSource.java:910
+        // Source: JniFunctionsSource.java:911
 
     @VM_ENTRY_POINT
     private static native char CallStaticCharMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
-        // Source: JniFunctionsSource.java:913
+        // Source: JniFunctionsSource.java:914
 
     @VM_ENTRY_POINT
     private static char CallStaticCharMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        // Source: JniFunctionsSource.java:916
+        // Source: JniFunctionsSource.java:917
         Pointer anchor = prologue(env, "CallStaticCharMethodA");
         try {
             return CallStaticValueMethodA(env, javaClass, methodID, arguments, Kind.CHAR).asChar();
@@ -1779,15 +1780,15 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static native short CallStaticShortMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
-        // Source: JniFunctionsSource.java:921
+        // Source: JniFunctionsSource.java:922
 
     @VM_ENTRY_POINT
     private static native short CallStaticShortMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
-        // Source: JniFunctionsSource.java:924
+        // Source: JniFunctionsSource.java:925
 
     @VM_ENTRY_POINT
     private static short CallStaticShortMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        // Source: JniFunctionsSource.java:927
+        // Source: JniFunctionsSource.java:928
         Pointer anchor = prologue(env, "CallStaticShortMethodA");
         try {
             return CallStaticValueMethodA(env, javaClass, methodID, arguments, Kind.SHORT).asShort();
@@ -1801,15 +1802,15 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static native int CallStaticIntMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
-        // Source: JniFunctionsSource.java:932
+        // Source: JniFunctionsSource.java:933
 
     @VM_ENTRY_POINT
     private static native int CallStaticIntMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
-        // Source: JniFunctionsSource.java:935
+        // Source: JniFunctionsSource.java:936
 
     @VM_ENTRY_POINT
     private static int CallStaticIntMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        // Source: JniFunctionsSource.java:938
+        // Source: JniFunctionsSource.java:939
         Pointer anchor = prologue(env, "CallStaticIntMethodA");
         try {
             return CallStaticValueMethodA(env, javaClass, methodID, arguments, Kind.INT).asInt();
@@ -1823,15 +1824,15 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static native long CallStaticLongMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
-        // Source: JniFunctionsSource.java:943
+        // Source: JniFunctionsSource.java:944
 
     @VM_ENTRY_POINT
     private static native long CallStaticLongMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
-        // Source: JniFunctionsSource.java:946
+        // Source: JniFunctionsSource.java:947
 
     @VM_ENTRY_POINT
     private static long CallStaticLongMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        // Source: JniFunctionsSource.java:949
+        // Source: JniFunctionsSource.java:950
         Pointer anchor = prologue(env, "CallStaticLongMethodA");
         try {
             return CallStaticValueMethodA(env, javaClass, methodID, arguments, Kind.LONG).asLong();
@@ -1845,15 +1846,15 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static native float CallStaticFloatMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
-        // Source: JniFunctionsSource.java:954
+        // Source: JniFunctionsSource.java:955
 
     @VM_ENTRY_POINT
     private static native float CallStaticFloatMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
-        // Source: JniFunctionsSource.java:957
+        // Source: JniFunctionsSource.java:958
 
     @VM_ENTRY_POINT
     private static float CallStaticFloatMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        // Source: JniFunctionsSource.java:960
+        // Source: JniFunctionsSource.java:961
         Pointer anchor = prologue(env, "CallStaticFloatMethodA");
         try {
             return CallStaticValueMethodA(env, javaClass, methodID, arguments, Kind.FLOAT).asFloat();
@@ -1867,15 +1868,15 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static native double CallStaticDoubleMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
-        // Source: JniFunctionsSource.java:965
+        // Source: JniFunctionsSource.java:966
 
     @VM_ENTRY_POINT
     private static native double CallStaticDoubleMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
-        // Source: JniFunctionsSource.java:968
+        // Source: JniFunctionsSource.java:969
 
     @VM_ENTRY_POINT
     private static double CallStaticDoubleMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        // Source: JniFunctionsSource.java:971
+        // Source: JniFunctionsSource.java:972
         Pointer anchor = prologue(env, "CallStaticDoubleMethodA");
         try {
             return CallStaticValueMethodA(env, javaClass, methodID, arguments, Kind.DOUBLE).asDouble();
@@ -1889,15 +1890,15 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static native void CallStaticVoidMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
-        // Source: JniFunctionsSource.java:976
+        // Source: JniFunctionsSource.java:977
 
     @VM_ENTRY_POINT
     private static native void CallStaticVoidMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
-        // Source: JniFunctionsSource.java:979
+        // Source: JniFunctionsSource.java:980
 
     @VM_ENTRY_POINT
     private static void CallStaticVoidMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        // Source: JniFunctionsSource.java:982
+        // Source: JniFunctionsSource.java:983
         Pointer anchor = prologue(env, "CallStaticVoidMethodA");
         try {
             CallStaticValueMethodA(env, javaClass, methodID, arguments, Kind.VOID);
@@ -1910,7 +1911,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static FieldID GetStaticFieldID(Pointer env, JniHandle javaType, Pointer nameCString, Pointer descriptorCString) {
-        // Source: JniFunctionsSource.java:987
+        // Source: JniFunctionsSource.java:988
         Pointer anchor = prologue(env, "GetStaticFieldID");
         try {
             final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
@@ -1942,7 +1943,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle GetStaticObjectField(Pointer env, JniHandle javaType, FieldID fieldID) {
-        // Source: JniFunctionsSource.java:1010
+        // Source: JniFunctionsSource.java:1011
         Pointer anchor = prologue(env, "GetStaticObjectField");
         try {
             return JniHandles.createLocalHandle(FieldID.toFieldActor(fieldID).getObject(null));
@@ -1956,7 +1957,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static boolean GetStaticBooleanField(Pointer env, JniHandle javaType, FieldID fieldID) {
-        // Source: JniFunctionsSource.java:1015
+        // Source: JniFunctionsSource.java:1016
         Pointer anchor = prologue(env, "GetStaticBooleanField");
         try {
             return FieldID.toFieldActor(fieldID).getBoolean(null);
@@ -1970,7 +1971,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static byte GetStaticByteField(Pointer env, JniHandle javaType, FieldID fieldID) {
-        // Source: JniFunctionsSource.java:1020
+        // Source: JniFunctionsSource.java:1021
         Pointer anchor = prologue(env, "GetStaticByteField");
         try {
             return FieldID.toFieldActor(fieldID).getByte(null);
@@ -1984,7 +1985,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static char GetStaticCharField(Pointer env, JniHandle javaType, FieldID fieldID) {
-        // Source: JniFunctionsSource.java:1025
+        // Source: JniFunctionsSource.java:1026
         Pointer anchor = prologue(env, "GetStaticCharField");
         try {
             return FieldID.toFieldActor(fieldID).getChar(null);
@@ -1998,7 +1999,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static short GetStaticShortField(Pointer env, JniHandle javaType, FieldID fieldID) {
-        // Source: JniFunctionsSource.java:1030
+        // Source: JniFunctionsSource.java:1031
         Pointer anchor = prologue(env, "GetStaticShortField");
         try {
             return FieldID.toFieldActor(fieldID).getShort(null);
@@ -2012,7 +2013,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static int GetStaticIntField(Pointer env, JniHandle javaType, FieldID fieldID) {
-        // Source: JniFunctionsSource.java:1035
+        // Source: JniFunctionsSource.java:1036
         Pointer anchor = prologue(env, "GetStaticIntField");
         try {
             return FieldID.toFieldActor(fieldID).getInt(null);
@@ -2026,7 +2027,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static long GetStaticLongField(Pointer env, JniHandle javaType, FieldID fieldID) {
-        // Source: JniFunctionsSource.java:1040
+        // Source: JniFunctionsSource.java:1041
         Pointer anchor = prologue(env, "GetStaticLongField");
         try {
             return FieldID.toFieldActor(fieldID).getLong(null);
@@ -2040,7 +2041,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static float GetStaticFloatField(Pointer env, JniHandle javaType, FieldID fieldID) {
-        // Source: JniFunctionsSource.java:1045
+        // Source: JniFunctionsSource.java:1046
         Pointer anchor = prologue(env, "GetStaticFloatField");
         try {
             return FieldID.toFieldActor(fieldID).getFloat(null);
@@ -2054,7 +2055,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static double GetStaticDoubleField(Pointer env, JniHandle javaType, FieldID fieldID) {
-        // Source: JniFunctionsSource.java:1050
+        // Source: JniFunctionsSource.java:1051
         Pointer anchor = prologue(env, "GetStaticDoubleField");
         try {
             return FieldID.toFieldActor(fieldID).getDouble(null);
@@ -2068,7 +2069,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void SetStaticObjectField(Pointer env, JniHandle javaType, FieldID fieldID, JniHandle value) {
-        // Source: JniFunctionsSource.java:1055
+        // Source: JniFunctionsSource.java:1056
         Pointer anchor = prologue(env, "SetStaticObjectField");
         try {
             FieldID.toFieldActor(fieldID).setObject(null, value.unhand());
@@ -2081,7 +2082,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void SetStaticBooleanField(Pointer env, JniHandle javaType, FieldID fieldID, boolean value) {
-        // Source: JniFunctionsSource.java:1060
+        // Source: JniFunctionsSource.java:1061
         Pointer anchor = prologue(env, "SetStaticBooleanField");
         try {
             FieldID.toFieldActor(fieldID).setBoolean(null, value);
@@ -2094,7 +2095,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void SetStaticByteField(Pointer env, JniHandle javaType, FieldID fieldID, byte value) {
-        // Source: JniFunctionsSource.java:1065
+        // Source: JniFunctionsSource.java:1066
         Pointer anchor = prologue(env, "SetStaticByteField");
         try {
             FieldID.toFieldActor(fieldID).setByte(null, value);
@@ -2107,7 +2108,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void SetStaticCharField(Pointer env, JniHandle javaType, FieldID fieldID, char value) {
-        // Source: JniFunctionsSource.java:1070
+        // Source: JniFunctionsSource.java:1071
         Pointer anchor = prologue(env, "SetStaticCharField");
         try {
             FieldID.toFieldActor(fieldID).setChar(null, value);
@@ -2120,7 +2121,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void SetStaticShortField(Pointer env, JniHandle javaType, FieldID fieldID, short value) {
-        // Source: JniFunctionsSource.java:1075
+        // Source: JniFunctionsSource.java:1076
         Pointer anchor = prologue(env, "SetStaticShortField");
         try {
             FieldID.toFieldActor(fieldID).setShort(null, value);
@@ -2133,7 +2134,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void SetStaticIntField(Pointer env, JniHandle javaType, FieldID fieldID, int value) {
-        // Source: JniFunctionsSource.java:1080
+        // Source: JniFunctionsSource.java:1081
         Pointer anchor = prologue(env, "SetStaticIntField");
         try {
             FieldID.toFieldActor(fieldID).setInt(null, value);
@@ -2146,7 +2147,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void SetStaticLongField(Pointer env, JniHandle javaType, FieldID fieldID, long value) {
-        // Source: JniFunctionsSource.java:1085
+        // Source: JniFunctionsSource.java:1086
         Pointer anchor = prologue(env, "SetStaticLongField");
         try {
             FieldID.toFieldActor(fieldID).setLong(null, value);
@@ -2159,7 +2160,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void SetStaticFloatField(Pointer env, JniHandle javaType, FieldID fieldID, float value) {
-        // Source: JniFunctionsSource.java:1090
+        // Source: JniFunctionsSource.java:1091
         Pointer anchor = prologue(env, "SetStaticFloatField");
         try {
             FieldID.toFieldActor(fieldID).setFloat(null, value);
@@ -2172,7 +2173,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void SetStaticDoubleField(Pointer env, JniHandle javaType, FieldID fieldID, double value) {
-        // Source: JniFunctionsSource.java:1095
+        // Source: JniFunctionsSource.java:1096
         Pointer anchor = prologue(env, "SetStaticDoubleField");
         try {
             FieldID.toFieldActor(fieldID).setDouble(null, value);
@@ -2185,7 +2186,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle NewString(Pointer env, Pointer chars, int length) {
-        // Source: JniFunctionsSource.java:1100
+        // Source: JniFunctionsSource.java:1101
         Pointer anchor = prologue(env, "NewString");
         try {
             final char[] charArray = new char[length];
@@ -2203,7 +2204,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static int GetStringLength(Pointer env, JniHandle string) {
-        // Source: JniFunctionsSource.java:1109
+        // Source: JniFunctionsSource.java:1110
         Pointer anchor = prologue(env, "GetStringLength");
         try {
             return ((String) string.unhand()).length();
@@ -2217,7 +2218,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle GetStringChars(Pointer env, JniHandle string, Pointer isCopy) {
-        // Source: JniFunctionsSource.java:1114
+        // Source: JniFunctionsSource.java:1115
         Pointer anchor = prologue(env, "GetStringChars");
         try {
             setCopyPointer(isCopy, true);
@@ -2232,7 +2233,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void ReleaseStringChars(Pointer env, JniHandle string, Pointer chars) {
-        // Source: JniFunctionsSource.java:1120
+        // Source: JniFunctionsSource.java:1121
         Pointer anchor = prologue(env, "ReleaseStringChars");
         try {
             Memory.deallocate(chars);
@@ -2245,7 +2246,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle NewStringUTF(Pointer env, Pointer utf) {
-        // Source: JniFunctionsSource.java:1125
+        // Source: JniFunctionsSource.java:1126
         Pointer anchor = prologue(env, "NewStringUTF");
         try {
             try {
@@ -2263,7 +2264,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static int GetStringUTFLength(Pointer env, JniHandle string) {
-        // Source: JniFunctionsSource.java:1134
+        // Source: JniFunctionsSource.java:1135
         Pointer anchor = prologue(env, "GetStringUTFLength");
         try {
             return Utf8.utf8Length((String) string.unhand());
@@ -2277,7 +2278,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static Pointer GetStringUTFChars(Pointer env, JniHandle string, Pointer isCopy) {
-        // Source: JniFunctionsSource.java:1139
+        // Source: JniFunctionsSource.java:1140
         Pointer anchor = prologue(env, "GetStringUTFChars");
         try {
             setCopyPointer(isCopy, true);
@@ -2292,7 +2293,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void ReleaseStringUTFChars(Pointer env, JniHandle string, Pointer chars) {
-        // Source: JniFunctionsSource.java:1145
+        // Source: JniFunctionsSource.java:1146
         Pointer anchor = prologue(env, "ReleaseStringUTFChars");
         try {
             Memory.deallocate(chars);
@@ -2305,7 +2306,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static int GetArrayLength(Pointer env, JniHandle array) {
-        // Source: JniFunctionsSource.java:1150
+        // Source: JniFunctionsSource.java:1151
         Pointer anchor = prologue(env, "GetArrayLength");
         try {
             return Array.getLength(array.unhand());
@@ -2319,7 +2320,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle NewObjectArray(Pointer env, int length, JniHandle elementType, JniHandle initialElementValue) {
-        // Source: JniFunctionsSource.java:1155
+        // Source: JniFunctionsSource.java:1156
         Pointer anchor = prologue(env, "NewObjectArray");
         try {
             final Object array = Array.newInstance((Class) elementType.unhand(), length);
@@ -2338,7 +2339,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle GetObjectArrayElement(Pointer env, JniHandle array, int index) {
-        // Source: JniFunctionsSource.java:1165
+        // Source: JniFunctionsSource.java:1166
         Pointer anchor = prologue(env, "GetObjectArrayElement");
         try {
             return JniHandles.createLocalHandle(((Object[]) array.unhand())[index]);
@@ -2352,7 +2353,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void SetObjectArrayElement(Pointer env, JniHandle array, int index, JniHandle value) {
-        // Source: JniFunctionsSource.java:1170
+        // Source: JniFunctionsSource.java:1171
         Pointer anchor = prologue(env, "SetObjectArrayElement");
         try {
             ((Object[]) array.unhand())[index] = value.unhand();
@@ -2365,7 +2366,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle NewBooleanArray(Pointer env, int length) {
-        // Source: JniFunctionsSource.java:1175
+        // Source: JniFunctionsSource.java:1176
         Pointer anchor = prologue(env, "NewBooleanArray");
         try {
             return JniHandles.createLocalHandle(new boolean[length]);
@@ -2379,7 +2380,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle NewByteArray(Pointer env, int length) {
-        // Source: JniFunctionsSource.java:1180
+        // Source: JniFunctionsSource.java:1181
         Pointer anchor = prologue(env, "NewByteArray");
         try {
             return JniHandles.createLocalHandle(new byte[length]);
@@ -2393,7 +2394,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle NewCharArray(Pointer env, int length) {
-        // Source: JniFunctionsSource.java:1185
+        // Source: JniFunctionsSource.java:1186
         Pointer anchor = prologue(env, "NewCharArray");
         try {
             return JniHandles.createLocalHandle(new char[length]);
@@ -2407,7 +2408,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle NewShortArray(Pointer env, int length) {
-        // Source: JniFunctionsSource.java:1190
+        // Source: JniFunctionsSource.java:1191
         Pointer anchor = prologue(env, "NewShortArray");
         try {
             return JniHandles.createLocalHandle(new short[length]);
@@ -2421,7 +2422,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle NewIntArray(Pointer env, int length) {
-        // Source: JniFunctionsSource.java:1195
+        // Source: JniFunctionsSource.java:1196
         Pointer anchor = prologue(env, "NewIntArray");
         try {
             return JniHandles.createLocalHandle(new int[length]);
@@ -2435,7 +2436,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle NewLongArray(Pointer env, int length) {
-        // Source: JniFunctionsSource.java:1200
+        // Source: JniFunctionsSource.java:1201
         Pointer anchor = prologue(env, "NewLongArray");
         try {
             return JniHandles.createLocalHandle(new long[length]);
@@ -2449,7 +2450,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle NewFloatArray(Pointer env, int length) {
-        // Source: JniFunctionsSource.java:1205
+        // Source: JniFunctionsSource.java:1206
         Pointer anchor = prologue(env, "NewFloatArray");
         try {
             return JniHandles.createLocalHandle(new float[length]);
@@ -2463,7 +2464,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle NewDoubleArray(Pointer env, int length) {
-        // Source: JniFunctionsSource.java:1210
+        // Source: JniFunctionsSource.java:1211
         Pointer anchor = prologue(env, "NewDoubleArray");
         try {
             return JniHandles.createLocalHandle(new double[length]);
@@ -2477,7 +2478,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static Pointer GetBooleanArrayElements(Pointer env, JniHandle array, Pointer isCopy) {
-        // Source: JniFunctionsSource.java:1215
+        // Source: JniFunctionsSource.java:1216
         Pointer anchor = prologue(env, "GetBooleanArrayElements");
         try {
             return getBooleanArrayElements(array, isCopy);
@@ -2501,7 +2502,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static Pointer GetByteArrayElements(Pointer env, JniHandle array, Pointer isCopy) {
-        // Source: JniFunctionsSource.java:1230
+        // Source: JniFunctionsSource.java:1231
         Pointer anchor = prologue(env, "GetByteArrayElements");
         try {
             return getByteArrayElements(array, isCopy);
@@ -2525,7 +2526,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static Pointer GetCharArrayElements(Pointer env, JniHandle array, Pointer isCopy) {
-        // Source: JniFunctionsSource.java:1245
+        // Source: JniFunctionsSource.java:1246
         Pointer anchor = prologue(env, "GetCharArrayElements");
         try {
             return getCharArrayElements(array, isCopy);
@@ -2549,7 +2550,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static Pointer GetShortArrayElements(Pointer env, JniHandle array, Pointer isCopy) {
-        // Source: JniFunctionsSource.java:1260
+        // Source: JniFunctionsSource.java:1261
         Pointer anchor = prologue(env, "GetShortArrayElements");
         try {
             return getShortArrayElements(array, isCopy);
@@ -2573,7 +2574,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static Pointer GetIntArrayElements(Pointer env, JniHandle array, Pointer isCopy) {
-        // Source: JniFunctionsSource.java:1275
+        // Source: JniFunctionsSource.java:1276
         Pointer anchor = prologue(env, "GetIntArrayElements");
         try {
             return getIntArrayElements(array, isCopy);
@@ -2597,7 +2598,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static Pointer GetLongArrayElements(Pointer env, JniHandle array, Pointer isCopy) {
-        // Source: JniFunctionsSource.java:1290
+        // Source: JniFunctionsSource.java:1291
         Pointer anchor = prologue(env, "GetLongArrayElements");
         try {
             return getLongArrayElements(array, isCopy);
@@ -2621,7 +2622,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static Pointer GetFloatArrayElements(Pointer env, JniHandle array, Pointer isCopy) {
-        // Source: JniFunctionsSource.java:1305
+        // Source: JniFunctionsSource.java:1306
         Pointer anchor = prologue(env, "GetFloatArrayElements");
         try {
             return getFloatArrayElements(array, isCopy);
@@ -2645,7 +2646,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static Pointer GetDoubleArrayElements(Pointer env, JniHandle array, Pointer isCopy) {
-        // Source: JniFunctionsSource.java:1320
+        // Source: JniFunctionsSource.java:1321
         Pointer anchor = prologue(env, "GetDoubleArrayElements");
         try {
             return getDoubleArrayElements(array, isCopy);
@@ -2669,7 +2670,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void ReleaseBooleanArrayElements(Pointer env, JniHandle array, Pointer elements, int mode) {
-        // Source: JniFunctionsSource.java:1335
+        // Source: JniFunctionsSource.java:1336
         Pointer anchor = prologue(env, "ReleaseBooleanArrayElements");
         try {
             releaseBooleanArrayElements(array, elements, mode);
@@ -2692,7 +2693,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void ReleaseByteArrayElements(Pointer env, JniHandle array, Pointer elements, int mode) {
-        // Source: JniFunctionsSource.java:1350
+        // Source: JniFunctionsSource.java:1351
         Pointer anchor = prologue(env, "ReleaseByteArrayElements");
         try {
             releaseByteArrayElements(array, elements, mode);
@@ -2715,7 +2716,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void ReleaseCharArrayElements(Pointer env, JniHandle array, Pointer elements, int mode) {
-        // Source: JniFunctionsSource.java:1365
+        // Source: JniFunctionsSource.java:1366
         Pointer anchor = prologue(env, "ReleaseCharArrayElements");
         try {
             releaseCharArrayElements(array, elements, mode);
@@ -2738,7 +2739,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void ReleaseShortArrayElements(Pointer env, JniHandle array, Pointer elements, int mode) {
-        // Source: JniFunctionsSource.java:1380
+        // Source: JniFunctionsSource.java:1381
         Pointer anchor = prologue(env, "ReleaseShortArrayElements");
         try {
             releaseShortArrayElements(array, elements, mode);
@@ -2761,7 +2762,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void ReleaseIntArrayElements(Pointer env, JniHandle array, Pointer elements, int mode) {
-        // Source: JniFunctionsSource.java:1395
+        // Source: JniFunctionsSource.java:1396
         Pointer anchor = prologue(env, "ReleaseIntArrayElements");
         try {
             releaseIntArrayElements(array, elements, mode);
@@ -2784,7 +2785,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void ReleaseLongArrayElements(Pointer env, JniHandle array, Pointer elements, int mode) {
-        // Source: JniFunctionsSource.java:1410
+        // Source: JniFunctionsSource.java:1411
         Pointer anchor = prologue(env, "ReleaseLongArrayElements");
         try {
             releaseLongArrayElements(array, elements, mode);
@@ -2807,7 +2808,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void ReleaseFloatArrayElements(Pointer env, JniHandle array, Pointer elements, int mode) {
-        // Source: JniFunctionsSource.java:1425
+        // Source: JniFunctionsSource.java:1426
         Pointer anchor = prologue(env, "ReleaseFloatArrayElements");
         try {
             releaseFloatArrayElements(array, elements, mode);
@@ -2830,7 +2831,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void ReleaseDoubleArrayElements(Pointer env, JniHandle array, Pointer elements, int mode) {
-        // Source: JniFunctionsSource.java:1440
+        // Source: JniFunctionsSource.java:1441
         Pointer anchor = prologue(env, "ReleaseDoubleArrayElements");
         try {
             releaseDoubleArrayElements(array, elements, mode);
@@ -2853,7 +2854,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void GetBooleanArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
-        // Source: JniFunctionsSource.java:1455
+        // Source: JniFunctionsSource.java:1456
         Pointer anchor = prologue(env, "GetBooleanArrayRegion");
         try {
             final boolean[] a = (boolean[]) array.unhand();
@@ -2869,7 +2870,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void GetByteArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
-        // Source: JniFunctionsSource.java:1463
+        // Source: JniFunctionsSource.java:1464
         Pointer anchor = prologue(env, "GetByteArrayRegion");
         try {
             final byte[] a = (byte[]) array.unhand();
@@ -2885,7 +2886,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void GetCharArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
-        // Source: JniFunctionsSource.java:1471
+        // Source: JniFunctionsSource.java:1472
         Pointer anchor = prologue(env, "GetCharArrayRegion");
         try {
             final char[] a = (char[]) array.unhand();
@@ -2901,7 +2902,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void GetShortArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
-        // Source: JniFunctionsSource.java:1479
+        // Source: JniFunctionsSource.java:1480
         Pointer anchor = prologue(env, "GetShortArrayRegion");
         try {
             final short[] a = (short[]) array.unhand();
@@ -2917,7 +2918,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void GetIntArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
-        // Source: JniFunctionsSource.java:1487
+        // Source: JniFunctionsSource.java:1488
         Pointer anchor = prologue(env, "GetIntArrayRegion");
         try {
             final int[] a = (int[]) array.unhand();
@@ -2933,7 +2934,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void GetLongArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
-        // Source: JniFunctionsSource.java:1495
+        // Source: JniFunctionsSource.java:1496
         Pointer anchor = prologue(env, "GetLongArrayRegion");
         try {
             final long[] a = (long[]) array.unhand();
@@ -2949,7 +2950,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void GetFloatArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
-        // Source: JniFunctionsSource.java:1503
+        // Source: JniFunctionsSource.java:1504
         Pointer anchor = prologue(env, "GetFloatArrayRegion");
         try {
             final float[] a = (float[]) array.unhand();
@@ -2965,7 +2966,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void GetDoubleArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
-        // Source: JniFunctionsSource.java:1511
+        // Source: JniFunctionsSource.java:1512
         Pointer anchor = prologue(env, "GetDoubleArrayRegion");
         try {
             final double[] a = (double[]) array.unhand();
@@ -2981,7 +2982,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void SetBooleanArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
-        // Source: JniFunctionsSource.java:1519
+        // Source: JniFunctionsSource.java:1520
         Pointer anchor = prologue(env, "SetBooleanArrayRegion");
         try {
             final boolean[] a = (boolean[]) array.unhand();
@@ -2997,7 +2998,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void SetByteArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
-        // Source: JniFunctionsSource.java:1527
+        // Source: JniFunctionsSource.java:1528
         Pointer anchor = prologue(env, "SetByteArrayRegion");
         try {
             final byte[] a = (byte[]) array.unhand();
@@ -3013,7 +3014,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void SetCharArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
-        // Source: JniFunctionsSource.java:1535
+        // Source: JniFunctionsSource.java:1536
         Pointer anchor = prologue(env, "SetCharArrayRegion");
         try {
             final char[] a = (char[]) array.unhand();
@@ -3029,7 +3030,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void SetShortArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
-        // Source: JniFunctionsSource.java:1543
+        // Source: JniFunctionsSource.java:1544
         Pointer anchor = prologue(env, "SetShortArrayRegion");
         try {
             final short[] a = (short[]) array.unhand();
@@ -3045,7 +3046,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void SetIntArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
-        // Source: JniFunctionsSource.java:1551
+        // Source: JniFunctionsSource.java:1552
         Pointer anchor = prologue(env, "SetIntArrayRegion");
         try {
             final int[] a = (int[]) array.unhand();
@@ -3061,7 +3062,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void SetLongArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
-        // Source: JniFunctionsSource.java:1559
+        // Source: JniFunctionsSource.java:1560
         Pointer anchor = prologue(env, "SetLongArrayRegion");
         try {
             final long[] a = (long[]) array.unhand();
@@ -3077,7 +3078,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void SetFloatArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
-        // Source: JniFunctionsSource.java:1567
+        // Source: JniFunctionsSource.java:1568
         Pointer anchor = prologue(env, "SetFloatArrayRegion");
         try {
             final float[] a = (float[]) array.unhand();
@@ -3093,7 +3094,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void SetDoubleArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
-        // Source: JniFunctionsSource.java:1575
+        // Source: JniFunctionsSource.java:1576
         Pointer anchor = prologue(env, "SetDoubleArrayRegion");
         try {
             final double[] a = (double[]) array.unhand();
@@ -3117,7 +3118,7 @@ public final class JniFunctions {
      */
     @VM_ENTRY_POINT
     private static int RegisterNatives(Pointer env, JniHandle javaType, Pointer methods, int numberOfMethods) {
-        // Source: JniFunctionsSource.java:1591
+        // Source: JniFunctionsSource.java:1592
         Pointer anchor = prologue(env, "RegisterNatives");
         try {
             Pointer a = methods;
@@ -3164,7 +3165,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static int UnregisterNatives(Pointer env, JniHandle javaType) {
-        // Source: JniFunctionsSource.java:1629
+        // Source: JniFunctionsSource.java:1630
         Pointer anchor = prologue(env, "UnregisterNatives");
         try {
             ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
@@ -3188,7 +3189,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static int MonitorEnter(Pointer env, JniHandle object) {
-        // Source: JniFunctionsSource.java:1644
+        // Source: JniFunctionsSource.java:1645
         Pointer anchor = prologue(env, "MonitorEnter");
         try {
             Monitor.enter(object.unhand());
@@ -3203,7 +3204,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static int MonitorExit(Pointer env, JniHandle object) {
-        // Source: JniFunctionsSource.java:1650
+        // Source: JniFunctionsSource.java:1651
         Pointer anchor = prologue(env, "MonitorExit");
         try {
             Monitor.exit(object.unhand());
@@ -3218,11 +3219,11 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static native int GetJavaVM(Pointer env, Pointer vmPointerPointer);
-        // Source: JniFunctionsSource.java:1656
+        // Source: JniFunctionsSource.java:1657
 
     @VM_ENTRY_POINT
     private static void GetStringRegion(Pointer env, JniHandle string, int start, int length, Pointer buffer) {
-        // Source: JniFunctionsSource.java:1659
+        // Source: JniFunctionsSource.java:1660
         Pointer anchor = prologue(env, "GetStringRegion");
         try {
             final String s = (String) string.unhand();
@@ -3238,7 +3239,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void GetStringUTFRegion(Pointer env, JniHandle string, int start, int length, Pointer buffer) {
-        // Source: JniFunctionsSource.java:1667
+        // Source: JniFunctionsSource.java:1668
         Pointer anchor = prologue(env, "GetStringUTFRegion");
         try {
             final String s = ((String) string.unhand()).substring(start, start + length);
@@ -3252,14 +3253,41 @@ public final class JniFunctions {
         }
     }
 
+    @INLINE
+    private static boolean useDirectPointer(Object object) {
+        HeapScheme heapScheme = VMConfiguration.vmConfig().heapScheme();
+        if (heapScheme.supportsPinning(PIN_SUPPORT_FLAG.CAN_NEST)) {
+            heapScheme.pin(object);
+            return true;
+        }
+        if (JniFunctions.OptimizeJNICritical) {
+            Heap.lock();
+            return true;
+        }
+        return false;
+    }
+
+    @INLINE
+    private static boolean releasedDirectPointer(Object object) {
+        HeapScheme heapScheme = VMConfiguration.vmConfig().heapScheme();
+        if (heapScheme.supportsPinning(PIN_SUPPORT_FLAG.CAN_NEST)) {
+            heapScheme.unpin(object);
+            return true;
+        }
+        if (JniFunctions.OptimizeJNICritical) {
+            Heap.unlock();
+            return true;
+      }
+        return false;
+    }
+
     @VM_ENTRY_POINT
     private static Pointer GetPrimitiveArrayCritical(Pointer env, JniHandle array, Pointer isCopy) {
-        // Source: JniFunctionsSource.java:1675
+        // Source: JniFunctionsSource.java:1704
         Pointer anchor = prologue(env, "GetPrimitiveArrayCritical");
         try {
             final Object arrayObject = array.unhand();
-            if (JniFunctions.OptimizeJNICritical) {
-                Heap.lock();
+            if (useDirectPointer(arrayObject)) {
                 setCopyPointer(isCopy, false);
                 return Reference.fromJava(arrayObject).toOrigin().plus(Layout.byteArrayLayout().getElementOffsetFromOrigin(0));
             }
@@ -3292,15 +3320,13 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void ReleasePrimitiveArrayCritical(Pointer env, JniHandle array, Pointer elements, int mode) {
-        // Source: JniFunctionsSource.java:1704
+        // Source: JniFunctionsSource.java:1732
         Pointer anchor = prologue(env, "ReleasePrimitiveArrayCritical");
         try {
-            if (JniFunctions.OptimizeJNICritical) {
-                Heap.unlock();
+            final Object arrayObject = array.unhand();
+            if (releasedDirectPointer(arrayObject)) {
                 return;
             }
-    
-            final Object arrayObject = array.unhand();
             if (arrayObject instanceof boolean[]) {
                 releaseBooleanArrayElements(array, elements, mode);
             } else if (arrayObject instanceof byte[]) {
@@ -3327,7 +3353,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static Pointer GetStringCritical(Pointer env, JniHandle string, Pointer isCopy) {
-        // Source: JniFunctionsSource.java:1731
+        // Source: JniFunctionsSource.java:1757
         Pointer anchor = prologue(env, "GetStringCritical");
         try {
             // TODO(cwi): Implement optimized version for OptimizeJNICritical if a benchmark uses it frequently
@@ -3348,7 +3374,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void ReleaseStringCritical(Pointer env, JniHandle string, final Pointer chars) {
-        // Source: JniFunctionsSource.java:1743
+        // Source: JniFunctionsSource.java:1769
         Pointer anchor = prologue(env, "ReleaseStringCritical");
         try {
             Memory.deallocate(chars);
@@ -3361,7 +3387,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle NewWeakGlobalRef(Pointer env, JniHandle handle) {
-        // Source: JniFunctionsSource.java:1748
+        // Source: JniFunctionsSource.java:1774
         Pointer anchor = prologue(env, "NewWeakGlobalRef");
         try {
             return JniHandles.createWeakGlobalHandle(handle.unhand());
@@ -3375,7 +3401,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void DeleteWeakGlobalRef(Pointer env, JniHandle handle) {
-        // Source: JniFunctionsSource.java:1753
+        // Source: JniFunctionsSource.java:1779
         Pointer anchor = prologue(env, "DeleteWeakGlobalRef");
         try {
             JniHandles.destroyWeakGlobalHandle(handle);
@@ -3388,7 +3414,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static boolean ExceptionCheck(Pointer env) {
-        // Source: JniFunctionsSource.java:1758
+        // Source: JniFunctionsSource.java:1784
         Pointer anchor = prologue(env, "ExceptionCheck");
         try {
             return VmThread.fromJniEnv(env).jniException() != null;
@@ -3404,7 +3430,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle NewDirectByteBuffer(Pointer env, Pointer address, long capacity) throws Exception {
-        // Source: JniFunctionsSource.java:1765
+        // Source: JniFunctionsSource.java:1791
         Pointer anchor = prologue(env, "NewDirectByteBuffer");
         try {
             ByteBuffer buffer = ObjectAccess.createDirectByteBuffer(address.toLong(), (int) capacity);
@@ -3419,7 +3445,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static Pointer GetDirectBufferAddress(Pointer env, JniHandle buffer) throws Exception {
-        // Source: JniFunctionsSource.java:1771
+        // Source: JniFunctionsSource.java:1797
         Pointer anchor = prologue(env, "GetDirectBufferAddress");
         try {
             Object buf = buffer.unhand();
@@ -3438,7 +3464,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static long GetDirectBufferCapacity(Pointer env, JniHandle buffer) {
-        // Source: JniFunctionsSource.java:1781
+        // Source: JniFunctionsSource.java:1807
         Pointer anchor = prologue(env, "GetDirectBufferCapacity");
         try {
             Object buf = buffer.unhand();
@@ -3456,7 +3482,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static int GetObjectRefType(Pointer env, JniHandle obj) {
-        // Source: JniFunctionsSource.java:1790
+        // Source: JniFunctionsSource.java:1816
         Pointer anchor = prologue(env, "GetObjectRefType");
         try {
             final int tag = JniHandles.tag(obj);
@@ -3478,7 +3504,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static int GetNumberOfArguments(Pointer env, MethodID methodID) throws Exception {
-        // Source: JniFunctionsSource.java:1803
+        // Source: JniFunctionsSource.java:1829
         Pointer anchor = prologue(env, "GetNumberOfArguments");
         try {
             final MethodActor methodActor = MethodID.toMethodActor(methodID);
@@ -3496,7 +3522,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void GetKindsOfArguments(Pointer env, MethodID methodID, Pointer kinds) throws Exception {
-        // Source: JniFunctionsSource.java:1812
+        // Source: JniFunctionsSource.java:1838
         Pointer anchor = prologue(env, "GetKindsOfArguments");
         try {
             final MethodActor methodActor = MethodID.toMethodActor(methodID);

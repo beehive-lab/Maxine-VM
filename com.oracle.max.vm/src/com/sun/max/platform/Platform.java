@@ -144,6 +144,8 @@ public final class Platform {
                 // value to fprintf on the stack. However, gcc doesn't fix the alignment itself so we simply
                 // adopt the global convention on Linux of 16-byte alignment for stacks. If this is a performance issue,
                 // this can later be refined to only be for JNI stubs that pass a float or double to native code.
+
+                // Solaris has the same issues.
                 stackAlignment = 16;
             } else if (os == OS.MAXVE) {
                 stackAlignment = 8;

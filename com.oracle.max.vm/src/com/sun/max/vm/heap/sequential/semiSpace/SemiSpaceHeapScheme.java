@@ -180,6 +180,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
     public SemiSpaceHeapScheme() {
         super();
+        pinningSupportFlags = PIN_SUPPORT_FLAG.makePinSupportFlags(true, false, true);
     }
 
     @Override
@@ -1144,6 +1145,44 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
     @INLINE(override = true)
     public void writeBarrier(Reference from, Reference to) {
         // do nothing.
+    }
+
+    /**
+     *  System-wide counter of pinned objects.
+     *  Used to decide whether some pinning block GCs
+     */
+    private int pinnedCounter = 0;
+    private boolean pinnedObjectsBlockGC = false;
+
+    private void blockIfPinnedObjects() {
+        while (pinnedCounter > 0) {
+            pinnedObjectsBlockGC = true;
+            try {
+                Heap.HEAP_LOCK.wait();
+            } catch (InterruptedException e) {
+            }
+        }
+        pinnedObjectsBlockGC = false;
+    }
+
+    public boolean pin(Object object) {
+        synchronized (Heap.HEAP_LOCK) {
+            pinnedCounter++;
+            return true;
+        }
+    }
+
+    public void unpin(Object object) {
+        synchronized (Heap.HEAP_LOCK) {
+            if (pinnedCounter == 1) {
+                pinnedCounter = 0;
+                if (pinnedObjectsBlockGC) {
+                    Heap.HEAP_LOCK.notifyAll();
+                }
+            } else if (pinnedCounter > 1) {
+                pinnedCounter--;
+            }
+        }
     }
 
     /**
