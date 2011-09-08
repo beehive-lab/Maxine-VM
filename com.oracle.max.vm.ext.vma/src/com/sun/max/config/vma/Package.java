@@ -23,6 +23,7 @@
 package com.sun.max.config.vma;
 
 import com.sun.max.config.BootImagePackage;
+import com.sun.max.vm.*;
 
 /**
  * Includes the Virtual Machine Advising extension in the boot image.
@@ -36,4 +37,8 @@ public class Package extends BootImagePackage {
         );
     }
 
+    @Override
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
+        return vmConfig.runPackage.getClass() == com.oracle.max.vm.ext.vma.run.java.Package.class;
+    }
 }
