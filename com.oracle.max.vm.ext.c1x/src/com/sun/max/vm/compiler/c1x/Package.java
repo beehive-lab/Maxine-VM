@@ -42,7 +42,6 @@ public class Package extends BootImagePackage{
             if (C1XOptions.PrintCFGToFile) {
                 objectMap.put(CFGPrinter.cfgFileStream(), JavaPrototype.NULL);
             }
-            objectMap.put(ValueCodec.objectConstants, new IdentityHashMap<Object, Integer>());
         }
     }
 }

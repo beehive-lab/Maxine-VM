@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.compiler.c1x;
+package com.oracle.max.vm.ext.maxri;
 
 import static com.sun.max.vm.MaxineVM.*;
 
@@ -34,7 +34,7 @@ import com.sun.max.vm.runtime.*;
 /**
  * Maxine implementation of {@link RiSnippets}.
  */
-public class MaxRiSnippets implements RiSnippets {
+public class MaxSnippets implements RiSnippets {
 
     public final RiMethod link;
     public final RiMethod enterNative;
@@ -42,7 +42,7 @@ public class MaxRiSnippets implements RiSnippets {
     public final RiMethod enterVM;
     public final RiMethod enterVMForC;
 
-    public MaxRiSnippets(MaxRiRuntime runtime) {
+    public MaxSnippets(MaxRuntime runtime) {
         link = MethodActor.fromJava(Classes.getDeclaredMethod(NativeFunction.class, "link"));
         enterNative = MethodActor.fromJava(Classes.getDeclaredMethod(Snippets.class, "nativeCallPrologue", NativeFunction.class));
         enterNativeForC = MethodActor.fromJava(Classes.getDeclaredMethod(Snippets.class, "nativeCallPrologueForC", NativeFunction.class));

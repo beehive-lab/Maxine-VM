@@ -29,6 +29,7 @@ import static com.sun.max.vm.compiler.target.Safepoints.*;
 import java.lang.annotation.*;
 import java.util.*;
 
+import com.oracle.max.vm.ext.maxri.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiCallingConvention.*;
 import com.sun.cri.ri.*;
@@ -37,7 +38,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.LocalVariableTable.*;
 import com.sun.max.vm.collect.*;
-import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.Safepoints.Attr;
 import com.sun.max.vm.type.*;
@@ -463,7 +463,7 @@ public class T1XTemplate {
     }
 
     @HOSTED_ONLY
-    public T1XTemplate(C1XTargetMethod source, T1XTemplateTag tag, ClassMethodActor method) {
+    public T1XTemplate(MaxTargetMethod source, T1XTemplateTag tag, ClassMethodActor method) {
         this.method = method;
         this.code = source.code();
         this.tag = tag;

@@ -32,6 +32,7 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.oracle.max.vm.ext.maxri.*;
 import com.sun.c1x.debug.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.CiCallingConvention.Type;
@@ -383,7 +384,7 @@ public class T1X implements RuntimeCompiler {
                         FatalError.check(k.stackKind == k, "Template parameter " + i + " is not a stack kind: " + templateSource);
                     }
 
-                    final C1XTargetMethod templateCode = (C1XTargetMethod) bootCompiler.compile(templateSource, true, null);
+                    final MaxTargetMethod templateCode = (MaxTargetMethod) bootCompiler.compile(templateSource, true, null);
                     if (!(templateCode.referenceLiterals() == null)) {
                         final StringBuilder sb = new StringBuilder("Template must not have *any* reference literals: " + templateCode);
                         for (int i = 0; i < templateCode.referenceLiterals().length; i++) {

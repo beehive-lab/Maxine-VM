@@ -20,13 +20,13 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.config.c1x;
+package com.sun.max.config.maxri;
 
 import com.sun.max.config.*;
 
 public class Package extends BootImagePackage {
 
     public Package() {
-        super("com.sun.c1x.**");
+        super("com.sun.cri.**", "com.oracle.max.vm.ext.maxri.**");
     }
 }
