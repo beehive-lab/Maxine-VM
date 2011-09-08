@@ -511,6 +511,9 @@ public final class JavaPrototype extends Prototype {
         if (object instanceof FileDescriptor) {
             throw FatalError.unexpected("Instance of " + object.getClass().getName() + " will have host file descriptor in the image");
         }
+        if (object instanceof java.util.zip.ZipFile) {
+            throw FatalError.unexpected("Instance of " + object.getClass().getName() + " will have host native zip file pointer");
+        }
         return object;
     }
 

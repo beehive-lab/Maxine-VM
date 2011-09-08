@@ -637,6 +637,9 @@ public final class JDK_java_lang_System {
     @ALIAS(declaringClass = Perf.class, name = "<clinit>")
     private static native void Perf_clinit();
 
+    @ALIAS(declaringClass = Launcher.class, name = "<clinit>")
+    private static native void Launcher_clinit();
+
     // Checkstyle: resume method name check
 
     /**
@@ -786,6 +789,9 @@ public final class JDK_java_lang_System {
                 Log.println(entry.getValue());
             }
         }
+
+        // 13. reinitialize the Java launcher so that it reflects the actual application classpath
+        Launcher_clinit();
 
         return properties;
     }

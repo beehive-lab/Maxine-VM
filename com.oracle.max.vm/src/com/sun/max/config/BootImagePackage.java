@@ -317,12 +317,13 @@ public class BootImagePackage implements Comparable<BootImagePackage>, Cloneable
      * @param pkgMap the global map of all packages discovered so far
      */
     private static void add(BootImagePackage pkg, Map<String, BootImagePackage> pkgMap) {
-        BootImagePackage oldPkg = pkgMap.put(pkg.name(), pkg);
+        BootImagePackage oldPkg = pkgMap.get(pkg.name());
         if (oldPkg == pkg) {
             // if this identical then we must have added it to the list previously
         } else {
             if (oldPkg == null) {
                 // new
+                pkgMap.put(pkg.name(), pkg);
             } else {
                 // merge into oldPkg
                 oldPkg.others.putAll(pkg.others);
