@@ -800,7 +800,7 @@ final class LinearScanWalker extends IntervalWalker {
             int pos = interval.from();
             if (isOdd(pos)) {
                 // the current instruction is a call that blocks all registers
-                if (pos < allocator.maxOpId() && allocator.hasCall(pos + 1) && interval.to() > pos + 1) {
+                if (pos < allocator.maxOpId() && allocator.hasCall(pos + 1) && interval.to() > pos + 1 && interval.nextUsage(RegisterPriority.ShouldHaveRegister, pos) > pos + 1) {
                     if (C1XOptions.TraceLinearScanLevel >= 4) {
                         TTY.println("      free register cannot be available because all registers blocked by following call");
                     }
