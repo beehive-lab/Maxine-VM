@@ -336,6 +336,7 @@ public class VmThreadLocal {
      * Gets the complete set of declared VM thread locals.
      */
     public static List<VmThreadLocal> values() {
+        assert valuesNeedingInitialization != null : "Need to call completeInitialization() first";
         return VALUES;
     }
 
@@ -396,6 +397,7 @@ public class VmThreadLocal {
      * This value is guaranteed to be word-aligned
      */
     public static Size tlaSize() {
+        assert valuesNeedingInitialization != null : "Need to call completeInitialization() first";
         return Size.fromInt(VALUES.size() * Word.size());
     }
 
@@ -563,6 +565,8 @@ public class VmThreadLocal {
      */
     @HOSTED_ONLY
     public VmThreadLocal(String name, boolean isReference, String description, Nature nature) {
+        assert valuesNeedingInitialization == null : "Cannot add new thread local after completeInitialization was called";
+
         this.isReference = isReference;
         this.name = name;
         this.nature = nature;
