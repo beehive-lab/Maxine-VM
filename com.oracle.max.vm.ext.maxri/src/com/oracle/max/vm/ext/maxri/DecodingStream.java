@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.compiler.c1x;
+package com.oracle.max.vm.ext.maxri;
 
 import java.io.*;
 

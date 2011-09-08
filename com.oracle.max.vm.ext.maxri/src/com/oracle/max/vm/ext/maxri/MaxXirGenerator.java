@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.compiler.c1x;
+package com.oracle.max.vm.ext.maxri;
 
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
@@ -34,7 +34,6 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.sun.c1x.*;
 import com.sun.cri.ci.CiAddress.Scale;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -182,7 +181,10 @@ public class MaxXirGenerator implements RiXirGenerator {
         return vmConfig().heapScheme().objectAlignment() - 1;
     }
 
-    public MaxXirGenerator() {
+    public final boolean printXirTemplates;
+
+    public MaxXirGenerator(boolean printXirTemplates) {
+        this.printXirTemplates = printXirTemplates;
     }
 
     private static final Class<? extends RuntimeCalls> runtimeCalls = RuntimeCalls.class;
@@ -377,7 +379,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     @Override
     public XirSnippet genInvokeStatic(XirSite site, RiMethod method) {
         if (method.isResolved()) {
-            assert C1XOptions.ResolveClassBeforeStaticInvoke : "need to add class initialization barrier for INVOKESTATIC";
+            //assert C1XOptions.ResolveClassBeforeStaticInvoke : "need to add class initialization barrier for INVOKESTATIC";
             return new XirSnippet(invokeStaticTemplates.resolved, XirArgument.forWord(0));
         }
 
@@ -1515,7 +1517,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     @HOSTED_ONLY
     public XirTemplate finishTemplate(CiXirAssembler asm, XirOperand result, String name) {
         final XirTemplate template = asm.finishTemplate(result, name);
-        if (C1XOptions.PrintXirTemplates) {
+        if (printXirTemplates) {
             template.print(Log.out);
         }
         return template;
@@ -1523,7 +1525,7 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     public XirTemplate finishTemplate(CiXirAssembler asm, String name) {
         final XirTemplate template = asm.finishTemplate(name);
-        if (C1XOptions.PrintXirTemplates) {
+        if (printXirTemplates) {
             template.print(Log.out);
         }
         return template;
@@ -1583,7 +1585,7 @@ public class MaxXirGenerator implements RiXirGenerator {
                 stubAsm.callRuntime(methodActor, resultVariable, rtArgs);
                 stub = stubAsm.finishStub("stub-" + method);
 
-                if (C1XOptions.PrintXirTemplates) {
+                if (printXirTemplates) {
                     stub.print(Log.out);
                 }
                 final XirTemplate existing = runtimeCallStubs.put(method, stub);

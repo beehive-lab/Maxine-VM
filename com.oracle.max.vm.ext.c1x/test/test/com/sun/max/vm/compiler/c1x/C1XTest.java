@@ -31,6 +31,7 @@ import java.util.*;
 import test.com.sun.max.vm.*;
 
 import com.oracle.max.asm.*;
+import com.oracle.max.vm.ext.maxri.*;
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.cri.ci.*;
@@ -361,7 +362,7 @@ public class C1XTest {
         return thrown;
     }
 
-    private static Throwable compile(C1XCompiler compiler, MaxRiRuntime runtime, RiXirGenerator xirGenerator, MethodActor method, boolean printBailout, boolean timing) {
+    private static Throwable compile(C1XCompiler compiler, MaxRuntime runtime, RiXirGenerator xirGenerator, MethodActor method, boolean printBailout, boolean timing) {
         final long startNs = System.nanoTime();
         CiResult result = compiler.compileMethod(method, -1, xirGenerator, null);
         if (timing && result.bailout() == null) {

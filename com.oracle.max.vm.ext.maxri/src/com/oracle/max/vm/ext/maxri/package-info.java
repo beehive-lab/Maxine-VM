@@ -43,7 +43,7 @@
  * <li>{@link com.sun.max.vm.compiler.c1x.C1X#c1xTarget}: an instance of {@link com.sun.cri.ci.CiTarget}
  * that represents the target machine architecture.</li>
  * <li>{@link com.sun.max.vm.compiler.c1x.C1X#c1xXirGenerator}: an instance of
- * {@link com.sun.max.vm.compiler.c1x.MaxXirGenerator} that extends {@link com.sun.cri.xir.RiXirGenerator} class.</li>
+ * {@link com.oracle.max.vm.ext.maxri.MaxXirGenerator} that extends {@link com.sun.cri.xir.RiXirGenerator} class.</li>
  * <li>{@link com.sun.max.vm.compiler.c1x.C1X#c1xCompiler} : an instance of
  * {@link com.sun.c1x.C1XCompiler} , which is created with arguments
  * {@link com.sun.max.vm.compiler.c1x.C1X#c1xRuntime} ,
@@ -64,4 +64,4 @@
  * {@link com.sun.max.vm.compiler.target.TargetMethod} class and returned as the result of
  * {@link com.sun.max.vm.compiler.c1x.C1X#compile}.
  */
-package com.sun.max.vm.compiler.c1x;
+package com.oracle.max.vm.ext.maxri;

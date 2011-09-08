@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.compiler.c1x;
+package com.oracle.max.vm.ext.maxri;
 
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
@@ -31,7 +31,6 @@ import java.util.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.c1x.Package.C1XObjectMapContributor;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -171,7 +170,7 @@ public class ValueCodec {
      * This pool is re-initialized lazily at runtime to account for {@link System#identityHashCode(Object)}
      * giving different values at boot image time.
      *
-     * @see C1XObjectMapContributor
+     * @see MaxRiObjectMapContributor
      */
     static final IdentityHashMap<Object, Integer> objectConstants = new IdentityHashMap<Object, Integer>();
 

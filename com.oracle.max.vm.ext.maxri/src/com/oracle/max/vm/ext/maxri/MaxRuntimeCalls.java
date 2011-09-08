@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.compiler.c1x;
+package com.oracle.max.vm.ext.maxri;
 
 import static com.sun.max.vm.VMConfiguration.*;
 
@@ -42,7 +42,7 @@ import com.sun.max.vm.stack.*;
  * This class contains the implementation of runtime calls that are called by
  * code emitted by the C1X compiler.
  */
-public class C1XRuntimeCalls {
+public class MaxRuntimeCalls {
 
     // a local flag to enable calls to verify the reference map for each runtime call
     private static final boolean ENABLE_REFMAP_VERIFICATION = true;
@@ -62,7 +62,7 @@ public class C1XRuntimeCalls {
     private static ClassMethodActor[] runtimeCallMethods = new ClassMethodActor[CiRuntimeCall.values().length];
 
     static {
-        for (Method method : C1XRuntimeCalls.class.getMethods()) {
+        for (Method method : MaxRuntimeCalls.class.getMethods()) {
             C1X_RUNTIME_ENTRYPOINT entry = method.getAnnotation(C1X_RUNTIME_ENTRYPOINT.class);
             if (entry != null) {
                 registerMethod(method, entry.runtimeCall());

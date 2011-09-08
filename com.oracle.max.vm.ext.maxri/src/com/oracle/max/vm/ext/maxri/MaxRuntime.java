@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.compiler.c1x;
+package com.oracle.max.vm.ext.maxri;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.platform.Platform.*;
@@ -33,8 +33,6 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import com.oracle.max.asm.target.amd64.*;
-import com.sun.c1x.*;
-import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.Call;
 import com.sun.cri.ci.CiTargetMethod.DataPatch;
@@ -61,17 +59,17 @@ import com.sun.max.vm.value.*;
  * This includes access to runtime features such as class and method representations,
  * constant pools, as well as some compiler tuning.
  */
-public class MaxRiRuntime implements RiRuntime {
+public class MaxRuntime implements RiRuntime {
 
     private RiSnippets snippets;
 
-    private static MaxRiRuntime instance = new MaxRiRuntime();
+    private static MaxRuntime instance = new MaxRuntime();
 
-    public static MaxRiRuntime getInstance() {
+    public static MaxRuntime getInstance() {
         return instance;
     }
 
-    private MaxRiRuntime() {
+    private MaxRuntime() {
     }
 
     /**
@@ -83,14 +81,8 @@ public class MaxRiRuntime implements RiRuntime {
         return asClassMethodActor(method, "getConstantPool()").compilee().codeAttribute().cp;
     }
 
-    /**
-     * Gets the OSR frame for a particular method at a particular bytecode index.
-     * @param method the compiler interface method
-     * @param bci the bytecode index
-     * @return the OSR frame
-     */
     public RiOsrFrame getOsrFrame(RiMethod method, int bci) {
-        throw FatalError.unimplemented();
+        throw new InternalError("unimplemented");
     }
 
     /**
@@ -167,7 +159,7 @@ public class MaxRiRuntime implements RiRuntime {
 
     public int basicObjectLockOffsetInBytes() {
         // Must not be called if the size of the lock object is 0.
-        throw Util.shouldNotReachHere();
+        throw new InternalError("should not reach here");
     }
 
     public int sizeOfBasicObjectLock() {
@@ -248,9 +240,13 @@ public class MaxRiRuntime implements RiRuntime {
      */
     private final ConcurrentHashMap<MethodActor, CachedInvocation> cache = new ConcurrentHashMap<MethodActor, CachedInvocation>();
 
+    protected final boolean canonicalizeFoldableMethods() {
+        return true;
+    }
+
     @Override
     public CiConstant invoke(RiMethod method, CiMethodInvokeArguments args) {
-        if (C1XOptions.CanonicalizeFoldableMethods && method.isResolved()) {
+        if (canonicalizeFoldableMethods() && method.isResolved()) {
             MethodActor methodActor = (MethodActor) method;
             if (Actor.isDeclaredFoldable(methodActor.flags())) {
                 Value[] values;
@@ -295,7 +291,7 @@ public class MaxRiRuntime implements RiRuntime {
                     // attempt to invoke the method
                     CiConstant result = methodActor.invoke(values).asCiConstant();
                     // set the result of this instruction to be the result of invocation
-                    C1XMetrics.MethodsFolded++;
+                    notifyMethodFolded();
 
                     if (!isHosted()) {
                         cache.put(methodActor, new CachedInvocation(values, result));
@@ -314,6 +310,9 @@ public class MaxRiRuntime implements RiRuntime {
             }
         }
         return null;
+    }
+
+    protected void notifyMethodFolded() {
     }
 
     public CiConstant foldWordOperation(int opcode, CiMethodInvokeArguments args) {
@@ -336,12 +335,12 @@ public class MaxRiRuntime implements RiRuntime {
         return new Stub(CompilerStub, name, ciTargetMethod);
     }
 
-    public RiType getRiType(Class<?> javaClass) {
+    public RiType getType(Class<?> javaClass) {
         return ClassActor.fromJava(javaClass);
     }
 
     public RiType asRiType(CiKind kind) {
-        return getRiType(kind.toJavaClass());
+        return getType(kind.toJavaClass());
     }
 
     public RiType getTypeOf(CiConstant constant) {
@@ -369,7 +368,7 @@ public class MaxRiRuntime implements RiRuntime {
     @Override
     public Object asCallTarget(Object target) {
         if (target instanceof CiRuntimeCall) {
-            target = C1XRuntimeCalls.getClassMethodActor((CiRuntimeCall) target);
+            target = MaxRuntimeCalls.getClassMethodActor((CiRuntimeCall) target);
         } else if (target == null) {
             target = CallTarget.TEMPLATE_CALL;
         }
@@ -378,12 +377,12 @@ public class MaxRiRuntime implements RiRuntime {
     }
 
     public boolean isExceptionType(RiType type) {
-        return type.isSubtypeOf(getRiType(Throwable.class));
+        return type.isSubtypeOf(getType(Throwable.class));
     }
 
     public RiSnippets getSnippets() {
         if (snippets == null) {
-            snippets = new MaxRiSnippets(this);
+            snippets = new MaxSnippets(this);
         }
         return snippets;
     }

@@ -20,13 +20,13 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.compiler.c1x;
+package com.oracle.max.vm.ext.maxri;
 
+import static com.oracle.max.vm.ext.maxri.MaxTargetMethod.*;
+import static com.oracle.max.vm.ext.maxri.ValueCodec.*;
 import static com.sun.cri.ci.CiUtil.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.compiler.c1x.C1XTargetMethod.*;
-import static com.sun.max.vm.compiler.c1x.ValueCodec.*;
 
 import java.io.*;
 import java.util.*;
@@ -44,7 +44,7 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 
 /**
- * The debug info for the safepoints in a {@link C1XTargetMethod}.
+ * The debug info for the safepoints in a {@link MaxTargetMethod}.
  */
 public final class DebugInfo {
 
@@ -117,7 +117,7 @@ public final class DebugInfo {
     /**
      * The target method associated with this debug info.
      */
-    final C1XTargetMethod tm;
+    final MaxTargetMethod tm;
 
     /**
      * Encodes an array of debug infos.
@@ -125,7 +125,7 @@ public final class DebugInfo {
      * @param debugInfos an array of debug infos correlated with each safepoint index
      * @param tm the target method associated with the debug infos
      */
-    public DebugInfo(CiDebugInfo[] debugInfos, C1XTargetMethod tm) {
+    public DebugInfo(CiDebugInfo[] debugInfos, MaxTargetMethod tm) {
         this.tm = tm;
         final HashMap<CiFrame, int[]> framesMap = new HashMap<CiFrame, int[]>();
         final EncodingStream out = new EncodingStream(1024);

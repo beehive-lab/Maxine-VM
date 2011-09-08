@@ -29,6 +29,8 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.oracle.max.asm.*;
+import com.oracle.max.vm.ext.maxri.*;
+import com.oracle.max.vm.ext.maxri.MaxXirGenerator.*;
 import com.sun.c1x.*;
 import com.sun.c1x.graph.*;
 import com.sun.cri.ci.*;
@@ -42,7 +44,6 @@ import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.c1x.MaxXirGenerator.RuntimeCalls;
 import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.deps.*;
 import com.sun.max.vm.compiler.target.*;
@@ -58,7 +59,7 @@ public class C1X implements RuntimeCompiler {
     /**
      * The Maxine specific implementation of the {@linkplain RiRuntime runtime interface} needed by C1X.
      */
-    public final MaxRiRuntime runtime = MaxRiRuntime.getInstance();
+    public final MaxRuntime runtime = MaxRuntime.getInstance();
 
     /**
      * The {@linkplain CiTarget target} environment derived from a Maxine {@linkplain Platform platform} description.
@@ -144,7 +145,7 @@ public class C1X implements RuntimeCompiler {
 
     @HOSTED_ONLY
     public C1X() {
-        this(new MaxXirGenerator(), platform().target);
+        this(new MaxXirGenerator(C1XOptions.PrintXirTemplates), platform().target);
     }
 
     @HOSTED_ONLY
@@ -188,7 +189,7 @@ public class C1X implements RuntimeCompiler {
 
             // The direct call made from C1X compiled code for the UNCOMMON_TRAP intrinisic
             // must go through a stub that saves the register state before calling the deopt routine.
-            CriticalMethod uncommonTrap = new CriticalMethod(C1XRuntimeCalls.class, "uncommonTrap", null);
+            CriticalMethod uncommonTrap = new CriticalMethod(MaxRuntimeCalls.class, "uncommonTrap", null);
             uncommonTrap.classMethodActor.compiledState = new Compilations(null, vm().stubs.genUncommonTrapStub());
 
         }
@@ -222,7 +223,7 @@ public class C1X implements RuntimeCompiler {
                 if (C1XOptions.PrintTimers) {
                     C1XTimers.INSTALL.start();
                 }
-                C1XTargetMethod c1xTargetMethod = new C1XTargetMethod(method, compiledMethod, install);
+                MaxTargetMethod c1xTargetMethod = new MaxTargetMethod(method, compiledMethod, install);
                 if (C1XOptions.PrintTimers) {
                     C1XTimers.INSTALL.stop();
                 }
