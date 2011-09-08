@@ -392,25 +392,6 @@ public abstract class ClassMethodActor extends MethodActor {
         return Compilations.currentTargetMethod(compiledState, Compilations.Attr.NONE);
     }
 
-    /**
-     * Records if this object returned {@code true} for a call to {@link #hasCompiledCode()} during
-     * boot image building.
-     */
-    @HOSTED_ONLY
-    public boolean mustCompileInImage;
-
-    @Override
-    public boolean hasCompiledCode() {
-        if (MaxineVM.isHosted()) {
-            if (!isAbstract() && !isIntrinsic()) {
-                mustCompileInImage = true;
-                return true;
-            }
-            return false;
-        }
-        return currentTargetMethod() != null;
-    }
-
     private static BytecodeTransformation transformationClient;
 
     /**

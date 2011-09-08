@@ -119,7 +119,8 @@ public class JVMFunctions {
 
     @NEVER_INLINE
     public static Class GetCallerClass(int depth) {
-        return Reflection.getCallerClass(depth + 1);
+        // Additionally ignore this method, as well as the Reflection method we call.
+        return Reflection.getCallerClass(depth + 2);
     }
 
     public static String GetSystemPackage(String name) {

@@ -23,9 +23,11 @@
 package com.sun.max.vm.hosted;
 
 import java.io.*;
+import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.lang.*;
+import com.sun.max.program.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
@@ -112,7 +114,7 @@ public class GraphStats {
     private int computeObjectStats() {
         int total = 0;
         for (Object o : graphPrototype.objects) {
-            final ClassInfo classInfo = graphPrototype.classInfos.get(o.getClass());
+            final ClassInfo classInfo = graphPrototype.classInfoFor(o.getClass());
             final ClassStats classStats = getClassStats(classInfo);
             classStats.objectCount++;
             final int size = sizeOf(o);
@@ -210,12 +212,29 @@ public class GraphStats {
         return total;
     }
 
+    /**
+     * The method {@link ClassMethodActor#codeAttribute()} performs bytecode rewriting when it is called the first time.
+     * Since we don't want any side effects here, we access the private field via reflection.
+     */
+    private static CodeAttribute getCodeAttribute(ClassMethodActor classMethodActor) {
+        try {
+            if (codeAttributeField == null) {
+                codeAttributeField = ClassMethodActor.class.getDeclaredField("codeAttribute");
+                codeAttributeField.setAccessible(true);
+            }
+            return (CodeAttribute) codeAttributeField.get(classMethodActor);
+        } catch (Exception ex) {
+            throw ProgramError.unexpected(ex);
+        }
+    }
+    private static Field codeAttributeField;
+
     private MethodStats computeMethodStats(MethodActor methodActor) {
         final MethodStats methodStats = getMethodStats(methodActor);
         methodStats.actorSize = sizeOf(methodActor);
         if (methodActor instanceof ClassMethodActor) {
             final ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
-            methodStats.bytecodeSize = computeCodeAttributeSize(classMethodActor.codeAttribute());
+            methodStats.bytecodeSize = computeCodeAttributeSize(getCodeAttribute(classMethodActor));
             final TargetMethod targetMethod = CompilationScheme.Static.getCurrentTargetMethod(classMethodActor);
             if (targetMethod != null) {
                 methodStats.targetMethodSize = computeTargetMethodSize(targetMethod);

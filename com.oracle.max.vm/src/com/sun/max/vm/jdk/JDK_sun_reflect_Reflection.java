@@ -33,6 +33,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.jni.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.type.*;
 
@@ -61,12 +62,21 @@ final class JDK_sun_reflect_Reflection {
         }
         @Override
         public boolean visitSourceFrame(ClassMethodActor method, int bci, boolean trapped, long frameId) {
-            // according to sun.reflect.Reflection, getCallerClass() should ignore java.lang.reflect.Method.invoke
-            if (method.equals(ClassRegistry.Method_invoke)) {
+            ClassMethodActor original = method.original();
+
+            // according to sun.reflect.Reflection.getCallerClass(), "Frames associated with
+            // java.lang.reflect.Method.invoke() and its implementation are
+            // completely ignored and do not count toward the number of "real"
+            // frames skipped."
+            if (original.holder().isReflectionStub()  // ignore invocation stubs
+                || (original.holder().toJava() == MethodActor.class && original.name().startsWith("invoke")) // ignore invocation methods in method actor
+                || (original.holder().toJava() == JniFunctions.class && original.name().startsWith("Call"))  // ignore invocation methods of JNI implementation
+                || original.equals(ClassRegistry.Method_invoke)  // ignore java.lang.reflect.Method.invoke
+                ) {
                 return true;
             }
             if (realFramesToSkip == 0) {
-                this.method = method.original();
+                this.method = original;
                 this.frameId = frameId;
                 return false;
             }

@@ -23,20 +23,19 @@
 package com.sun.c1x.debug;
 
 import java.io.*;
-import java.text.*;
 import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.alloc.*;
-import com.sun.c1x.alloc.Interval.*;
+import com.sun.c1x.alloc.Interval.UsePosList;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.lir.LIRInstruction.*;
+import com.sun.c1x.lir.LIRInstruction.OperandFormatter;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiAddress.*;
+import com.sun.cri.ci.CiAddress.Scale;
 import com.sun.cri.ri.*;
 
 /**
@@ -52,8 +51,6 @@ public class CFGPrinter {
 
     private static OutputStream cfgFileStream;
 
-    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmm");
-
     /**
      * Gets the output stream  on the file "compilations-`date`" in the current working directory.
      * This stream is first opened if necessary.
@@ -62,7 +59,7 @@ public class CFGPrinter {
      */
     public static synchronized OutputStream cfgFileStream() {
         if (cfgFileStream == null) {
-            File cfgFile = new File("compilations-" + dateFormat.format(new Date()) + ".cfg");
+            File cfgFile = new File("compilations-" + System.currentTimeMillis() + ".cfg");
             try {
                 cfgFileStream = new FileOutputStream(cfgFile);
             } catch (FileNotFoundException e) {
