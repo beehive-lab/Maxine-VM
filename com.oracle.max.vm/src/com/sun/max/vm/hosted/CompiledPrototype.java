@@ -540,7 +540,12 @@ public class CompiledPrototype extends Prototype {
                 processInvalidatedTargetMethods();
                 final MethodActor methodActor = worklist.removeFirst();
                 if (needsCompilation(methodActor)) {
-                    TargetMethod targetMethod = compilationScheme.synchronousCompile((ClassMethodActor) methodActor, Compilations.Attr.NONE);
+                    TargetMethod targetMethod;
+                    try {
+                        targetMethod = compilationScheme.synchronousCompile((ClassMethodActor) methodActor, Compilations.Attr.NONE);
+                    } catch (Throwable error) {
+                        throw reportCompilationError(methodActor, error);
+                    }
                     processNewTargetMethod(targetMethod);
                     ++totalCompilations;
                     if (totalCompilations % 200 == 0) {
