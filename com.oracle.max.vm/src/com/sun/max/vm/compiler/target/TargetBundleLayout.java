@@ -248,27 +248,6 @@ public final class TargetBundleLayout {
         return bundleSize;
     }
 
-    /**
-     * Updates the reserved cell details in this target bundle for a given field.
-     *
-     * @param field the field to update
-     * @param length the updated length of the field
-     */
-    public void update(ArrayField field, int length) {
-        final LinearAllocatorHeapRegion region = new LinearAllocatorHeapRegion(Address.zero(), Size.fromLong(Long.MAX_VALUE), "TargetBundle");
-        for (ArrayField f : VALUES) {
-            if (f == field) {
-                f.update(length, this, region);
-            } else {
-                if (!cellSize(f).isZero()) {
-                    f.update(length(f), this, region);
-                }
-            }
-        }
-        bundleSize = region.getAllocationMark().asSize();
-        assert bundleSize.isWordAligned();
-    }
-
     private void initialize(ArrayField field, int length, LinearAllocatorHeapRegion region) {
         field.update(length, this, region);
     }

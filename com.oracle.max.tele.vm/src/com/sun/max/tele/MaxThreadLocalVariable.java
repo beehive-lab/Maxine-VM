@@ -46,7 +46,7 @@ public interface MaxThreadLocalVariable extends MaxEntity<MaxThreadLocalVariable
      *
      * @return the state
      */
-    Safepoint.State safepointState();
+    SafepointPoll.State safepointState();
 
     /**
      * Gets the name of this thread local variable.

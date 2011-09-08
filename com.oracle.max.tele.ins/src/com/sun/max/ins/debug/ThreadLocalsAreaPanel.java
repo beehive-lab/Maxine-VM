@@ -75,7 +75,7 @@ public final class ThreadLocalsAreaPanel extends InspectorPanel {
     /**
      * @return the state with which the values displayed in the panel are associated.
      */
-    public Safepoint.State getSafepointState() {
+    public SafepointPoll.State getSafepointState() {
         return tla.safepointState();
     }
 

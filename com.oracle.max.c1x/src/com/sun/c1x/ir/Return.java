@@ -36,10 +36,10 @@ public final class Return extends BlockEnd {
      * Constructs a new Return instruction.
      * @param result the instruction producing the result for this return; {@code null} if this
      * is a void return
-     * @param isSafepoint {@code true} if this instruction is a safepoint instruction
+     * @param isSafepointPoll {@code true} if this instruction is a safepoint instruction
      */
-    public Return(Value result, boolean isSafepoint) {
-        super(result == null ? CiKind.Void : result.kind, null, isSafepoint);
+    public Return(Value result, boolean isSafepointPoll) {
+        super(result == null ? CiKind.Void : result.kind, null, isSafepointPoll);
         this.result = result;
     }
 

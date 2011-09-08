@@ -91,7 +91,7 @@ public class CiHexCodeFile {
     public static final Pattern OPERAND_COMMENT = COMMENT;
     public static final Pattern JUMP_TABLE = Pattern.compile("(\\d+)\\s+(\\d+)\\s+(-{0,1}\\d+)\\s+(-{0,1}\\d+)\\s*");
     public static final Pattern LOOKUP_TABLE = Pattern.compile("(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s*");
-    public static final Pattern HEX_CODE = Pattern.compile("(\\p{XDigit}+)\\s+(\\p{XDigit}+)");
+    public static final Pattern HEX_CODE = Pattern.compile("(\\p{XDigit}+)(?:\\s+(\\p{XDigit}*))?");
     public static final Pattern PLATFORM = Pattern.compile("(\\S+)\\s+(\\S+)", Pattern.DOTALL);
 
     /**
@@ -390,11 +390,15 @@ public class CiHexCodeFile {
                 String hexAddress = m.group(1);
                 startAddress = Long.valueOf(hexAddress, 16);
                 String hexCode = m.group(2);
-                check((hexCode.length() % 2) == 0, body, "Hex code length must be even");
-                code = new byte[hexCode.length() / 2];
-                for (int i = 0; i < code.length; i++) {
-                    String hexByte = hexCode.substring(i * 2, (i + 1) * 2);
-                    code[i] = (byte) Integer.parseInt(hexByte, 16);
+                if (hexCode == null) {
+                    code = new byte[0];
+                } else {
+                    check((hexCode.length() % 2) == 0, body, "Hex code length must be even");
+                    code = new byte[hexCode.length() / 2];
+                    for (int i = 0; i < code.length; i++) {
+                        String hexByte = hexCode.substring(i * 2, (i + 1) * 2);
+                        code[i] = (byte) Integer.parseInt(hexByte, 16);
+                    }
                 }
                 makeHCF();
             } else if (header.equals("Comment")) {

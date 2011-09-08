@@ -38,6 +38,7 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.bytecode.refmaps.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.collect.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.stack.*;
 
 public class T1XReferenceMapEditor implements ReferenceMapInterpreterContext, ReferenceSlotVisitor {
@@ -45,7 +46,7 @@ public class T1XReferenceMapEditor implements ReferenceMapInterpreterContext, Re
     private final JVMSFrameLayout frame;
     private final Object blockFrames;
     private final ExceptionHandler[] exceptionHandlerMap;
-    private final BytecodeStopsIterator bytecodeStopsIterator;
+    private final BytecodeSafepointsIterator bytecodeSafepointsIterator;
 
     /**
      * The sorted list of basic block starting BCIs.
@@ -55,22 +56,17 @@ public class T1XReferenceMapEditor implements ReferenceMapInterpreterContext, Re
      */
     private final char[] blockBCIs;
 
-    /**
-     * Shared non-null global object denoting absence of a valid editor instance.
-     */
-    public static final T1XReferenceMapEditor SENTINEL = new T1XReferenceMapEditor();
-
     private T1XReferenceMapEditor() {
         t1xMethod = null;
         frame = null;
         blockFrames = null;
         exceptionHandlerMap = null;
-        bytecodeStopsIterator = null;
+        bytecodeSafepointsIterator = null;
         blockBCIs = null;
     }
 
-    public T1XReferenceMapEditor(T1XTargetMethod t1xMethod, int numberOfBlocks, boolean[] blockBCIs, BytecodeStopsIterator bytecodeStopsIterator, JVMSFrameLayout frame) {
-        assert t1xMethod.numberOfStopPositions() != 0;
+    public T1XReferenceMapEditor(T1XTargetMethod t1xMethod, int numberOfBlocks, boolean[] blockBCIs, BytecodeSafepointsIterator bytecodeSafepointIterator, JVMSFrameLayout frame) {
+        assert t1xMethod.safepoints().size() != 0;
         this.t1xMethod = t1xMethod;
         this.exceptionHandlerMap = ExceptionHandler.createHandlerMap(t1xMethod.codeAttribute);
         this.frame = frame;
@@ -83,7 +79,7 @@ public class T1XReferenceMapEditor implements ReferenceMapInterpreterContext, Re
         }
         assert blockIndex == numberOfBlocks;
         this.blockFrames = ReferenceMapInterpreter.createFrames(this);
-        this.bytecodeStopsIterator = bytecodeStopsIterator;
+        this.bytecodeSafepointsIterator = bytecodeSafepointIterator;
     }
 
     public int blockIndexFor(int bci) {
@@ -99,17 +95,18 @@ public class T1XReferenceMapEditor implements ReferenceMapInterpreterContext, Re
     }
 
     public void visitReferenceInLocalVariable(int localVariableIndex) {
-        for (int stopIndex = bytecodeStopsIterator.nextStopIndex(true); stopIndex != -1; stopIndex = bytecodeStopsIterator.nextStopIndex(false)) {
-            final int offset = stopIndex * t1xMethod.refMapSize();
+        for (int safepointIndex = bytecodeSafepointsIterator.nextSafepointIndex(true); safepointIndex != -1; safepointIndex = bytecodeSafepointsIterator.nextSafepointIndex(false)) {
+            final int offset = safepointIndex * t1xMethod.refMapSize();
             final int fpRelativeIndex = frame.localVariableReferenceMapIndex(localVariableIndex);
             ByteArrayBitMap.set(t1xMethod.referenceMaps(), offset, t1xMethod.frameRefMapSize, fpRelativeIndex);
         }
     }
 
     public void visitReferenceOnOperandStack(int operandStackIndex, boolean parametersPopped) {
-        for (int stopIndex = bytecodeStopsIterator.nextStopIndex(true); stopIndex != -1; stopIndex = bytecodeStopsIterator.nextStopIndex(false)) {
-            if (parametersPopped != bytecodeStopsIterator.isDirectRuntimeCall()) {
-                final int offset = stopIndex * t1xMethod.refMapSize();
+        for (int safepointIndex = bytecodeSafepointsIterator.nextSafepointIndex(true); safepointIndex != -1; safepointIndex = bytecodeSafepointsIterator.nextSafepointIndex(false)) {
+            boolean templateCall = t1xMethod.safepoints().isSetAt(Safepoints.TEMPLATE_CALL, safepointIndex);
+            if (parametersPopped == templateCall) {
+                final int offset = safepointIndex * t1xMethod.refMapSize();
                 final int fpRelativeIndex = frame.operandStackReferenceMapIndex(operandStackIndex);
                 ByteArrayBitMap.set(t1xMethod.referenceMaps(), offset, t1xMethod.frameRefMapSize, fpRelativeIndex);
             }
@@ -142,46 +139,45 @@ public class T1XReferenceMapEditor implements ReferenceMapInterpreterContext, Re
         return blockBCIs.length;
     }
 
-    public JVMSFrameLayout stackFrameLayout() {
-        return frame;
-    }
-
     public void fillInMaps() {
         if (traceStackRootScanning()) {
             final boolean lockDisabledSafepoints = Log.lock();
-            Log.print("Finalizing T1X reference maps for ");
+            Log.printCurrentThread(false);
+            Log.print(": Finalizing T1X reference maps for ");
             Log.printMethod(classMethodActor(), true);
             Log.unlock(lockDisabledSafepoints);
         }
 
         final ReferenceMapInterpreter interpreter = ReferenceMapInterpreter.from(blockFrames);
         interpreter.finalizeFrames(this);
-        interpreter.interpretReferenceSlots(this, this, bytecodeStopsIterator);
+        interpreter.interpretReferenceSlots(this, this, bytecodeSafepointsIterator);
 
         if (traceStackRootScanning()) {
             final boolean lockDisabledSafepoints = Log.lock();
-            bytecodeStopsIterator.reset();
+            bytecodeSafepointsIterator.reset();
             final CodeAttribute codeAttribute = codeAttribute();
-            for (int bcp = bytecodeStopsIterator.bci(); bcp != -1; bcp = bytecodeStopsIterator.next()) {
-                for (int stopIndex = bytecodeStopsIterator.nextStopIndex(true); stopIndex != -1; stopIndex = bytecodeStopsIterator.nextStopIndex(false)) {
-                    final int offset = stopIndex * t1xMethod.refMapSize();
-                    Log.print(bcp);
+            for (int bci = bytecodeSafepointsIterator.bci(); bci != -1; bci = bytecodeSafepointsIterator.next()) {
+                for (int safepointIndex = bytecodeSafepointsIterator.nextSafepointIndex(true); safepointIndex != -1; safepointIndex = bytecodeSafepointsIterator.nextSafepointIndex(false)) {
+                    final int offset = safepointIndex * t1xMethod.refMapSize();
+                    Log.print(bci);
                     Log.print(":");
-                    int opc = codeAttribute.code()[bcp] & 0xff;
+                    int opc = codeAttribute.code()[bci] & 0xff;
                     final String opcode = Bytecodes.baseNameOf(opc);
                     Log.print(opcode);
-                    int chars = Ints.sizeOfBase10String(bcp) + 1 + opcode.length();
+                    int chars = Ints.sizeOfBase10String(bci) + 1 + opcode.length();
                     while (chars++ < 20) {
                         Log.print(' ');
                     }
-                    Log.print(" stop[");
-                    Log.print(stopIndex);
+                    Log.print(" safepoint[");
+                    Log.print(safepointIndex);
                     Log.print("]@");
-                    Log.print(t1xMethod.stopPosition(stopIndex));
-                    if (bytecodeStopsIterator.isDirectRuntimeCall()) {
+                    Log.print(t1xMethod.safepoints().posAt(safepointIndex));
+
+                    boolean templateCall = t1xMethod.safepoints().isSetAt(Safepoints.TEMPLATE_CALL, safepointIndex);
+                    if (templateCall) {
                         Log.print('*');
                     }
-                    if (interpreter.isFrameInitialized(blockIndexFor(bcp))) {
+                    if (interpreter.isFrameInitialized(blockIndexFor(bci))) {
                         Log.print(", locals={");
                         byte[] refMaps = t1xMethod.referenceMaps();
                         for (int localVariableIndex = 0; localVariableIndex < codeAttribute.maxLocals; ++localVariableIndex) {
@@ -267,9 +263,6 @@ public class T1XReferenceMapEditor implements ReferenceMapInterpreterContext, Re
 
     @Override
     public String toString() {
-        if (this == SENTINEL) {
-            return "SENTINEL";
-        }
         return getClass().getSimpleName() + "[" + classMethodActor() + "]";
     }
 }

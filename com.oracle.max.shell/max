@@ -567,6 +567,27 @@ function run_jnigen() {
 }
 
 #=======================================
+# 't1xgen' command
+#=======================================
+
+t1xgen_help="(re)generate content in T1XTemplateSource.java
+
+    Run T1XTemplateGenerator.java to generate the auto-generated templates in T1XTemplateSource.java.
+
+    The exit code is non-zero if the auto-generated part of T1XTemplateSource.java was modified."
+
+function run_t1xgen() {
+    if [ $# -ne 0 ]; then
+        run_help t1xgen
+        exit 1
+    fi
+
+    run ${jvm_exe} -cp $(jmax classpath com.oracle.max.vm.ext.t1x) com.sun.max.vm.t1x.T1XTemplateGenerator
+    result=$?
+    exit $result
+}
+
+#=======================================
 # 'copycheck' command
 #=======================================
 

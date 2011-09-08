@@ -43,6 +43,7 @@ public class QueryAnalysis {
         ArrayList<String> dataFiles = new ArrayList<String>();
         ArrayList<String> queryClassDirs = new ArrayList<String>();
         String commandFile = null;
+        String initialQuery = null;
 
         // Add the default query directory
         final String classpath = System.getProperty("java.class.path");
@@ -68,6 +69,9 @@ public class QueryAnalysis {
             } else if (arg.equals("-i")) {
                 i++;
                 commandFile = args[i];
+            } else if (arg.equals("-e")) {
+                i++;
+                initialQuery = args[i];
             } else if (arg.equals("-q")) {
                 i++;
                 while ((i < args.length) && !args[i].startsWith("-")) {
@@ -103,9 +107,12 @@ public class QueryAnalysis {
                 }
 
                 if (commandFile != null) {
-                    interact(new FileInputStream(commandFile), traceRuns);
+                    interact(new FileReader(commandFile), traceRuns);
                 }
-                interact(System.in, traceRuns);
+                if (initialQuery != null) {
+                    interact(new StringReader("e " + initialQuery), traceRuns);
+                }
+                interact(new InputStreamReader(System.in), traceRuns);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -117,8 +124,8 @@ public class QueryAnalysis {
         System.exit(1);
     }
 
-    private static void interact(InputStream in, ArrayList<TraceRun> traceRuns) throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+    private static void interact(Reader in, ArrayList<TraceRun> traceRuns) throws IOException {
+        BufferedReader reader = new BufferedReader(in);
         PrintStream ps = System.out;
         int traceFocus = 0;
         while (true) {
@@ -142,9 +149,9 @@ public class QueryAnalysis {
                         break;
 
                     case 'i': {
-                        FileInputStream iin = null;
+                        FileReader iin = null;
                         try {
-                            iin = new FileInputStream(lineParts[1]);
+                            iin = new FileReader(lineParts[1]);
                             interact(iin, traceRuns);
                         } catch (Exception ex) {
                             System.err.println(ex);

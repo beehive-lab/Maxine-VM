@@ -22,8 +22,6 @@
  */
 package com.sun.max.ins.debug;
 
-
-
 import java.awt.*;
 
 import javax.swing.*;
@@ -67,10 +65,15 @@ public final class RegistersTable extends InspectorTable {
     /**
      * A table data model built around the list of registers in the VM.
      * Displays all three kinds of registers in a single table in the following order:
-     * <ol><li>Integer registers</li><li>State registers</li><li>Floating point registers</li></ol>
-     *
+     * <ol>
+     * <li>Integer registers</li>
+     * <li>State registers</li>
+     * <li>Floating point registers</li>
+     * </ol>
      */
     private final class RegistersTableModel extends InspectorTableModel {
+
+        private static final int HISTORY_GENERATIONS = 6;
 
         private final MaxThread thread;
 
@@ -91,19 +94,19 @@ public final class RegistersTable extends InspectorTable {
             registerDescriptions = new String[nRegisters];
             int row = 0;
             for (MaxRegister register : registers.integerRegisters()) {
-                registerHistories[row] = new RegisterHistory(register);
+                registerHistories[row] = new RegisterHistory(inspection, HISTORY_GENERATIONS, register);
                 displayModes[row] = WordValueLabel.ValueMode.INTEGER_REGISTER;
                 registerDescriptions[row] = "Integer register (" + isaName + ") \"" + register.name() + "\"";
                 row++;
             }
             for (MaxRegister register : registers.floatingPointRegisters()) {
-                registerHistories[row] = new RegisterHistory(register);
+                registerHistories[row] = new RegisterHistory(inspection, HISTORY_GENERATIONS, register);
                 displayModes[row] = WordValueLabel.ValueMode.FLOATING_POINT;
                 registerDescriptions[row] = "Float register (" + isaName + ") \"" + register.name() + "\"";
                 row++;
             }
             for (MaxRegister register : registers.stateRegisters()) {
-                registerHistories[row] = new RegisterHistory(register);
+                registerHistories[row] = new RegisterHistory(inspection, HISTORY_GENERATIONS, register);
                 if (register.isFlagsRegister()) {
                     displayModes[row] = WordValueLabel.ValueMode.FLAGS_REGISTER;
                     registerDescriptions[row] = "Flags register (" + isaName + ") \"" + register.name() + "\"";
@@ -141,7 +144,7 @@ public final class RegistersTable extends InspectorTable {
 
         @Override
         public void refresh() {
-            // Reads from VM and increments the history generation.
+            // Updates the register history from the VM
             for (RegisterHistory registerHistory : registerHistories) {
                 registerHistory.refresh();
             }
@@ -204,7 +207,9 @@ public final class RegistersTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            final RegisterHistory registerHistory = (RegisterHistory) tableModel.getValueAt(row, 0);
             final WordValueLabel label = labels[row];
+            label.setToolTipPrefix(tableModel.getRowDescription(row) + "<br>age=" + registerHistory.age() + " value = ");
             label.setBackground(cellBackgroundColor(isSelected));
             return label;
         }

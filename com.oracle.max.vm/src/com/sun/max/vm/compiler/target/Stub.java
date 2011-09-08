@@ -24,17 +24,17 @@ package com.sun.max.vm.compiler.target;
 
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.compiler.target.Safepoints.*;
 
 import java.util.*;
 
+import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
-import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.TargetBundleLayout.ArrayField;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -45,7 +45,7 @@ import com.sun.max.vm.stack.StackFrameWalker.Cursor;
  * direct call to another method, so the callee is passed into the constructor directly.
  * Stack walking of stub frames is done with the same code as for optimized compiler frames.
  */
-public class Stub extends TargetMethod {
+public final class Stub extends TargetMethod {
 
     public enum Type {
         /**
@@ -84,18 +84,25 @@ public class Stub extends TargetMethod {
         DeoptStub,
 
         /**
-         * Transition when returning from a compiler stub call to a method being deoptimized.
-         * This stub saves all registers (as a compiler stub call has callee save sematics)
-         * and retrieves the return value from the stack.
+         * Transition when returning from a compiler stub to a method being deoptimized. This
+         * stub creates an intermediate frame to (re)save all the registers saved by a compiler stub.
          *
          * @see #CompilerStub
          */
         DeoptStubFromCompilerStub,
 
         /**
+         * Transition when returning from a trap stub to a method being deoptimized. This
+         * stub creates an intermediate frame to (re)save all the registers saved by the trap stub.
+         *
+         * @see Stubs#genTrapStub()
+         */
+        DeoptStubFromSafepoint,
+
+        /**
          * The trap stub.
          */
-        TrapStub;
+        TrapStub
     }
 
     public final Type type;
@@ -105,20 +112,19 @@ public class Stub extends TargetMethod {
         return type;
     }
 
-    public Stub(Type type, String stubName, int frameSize, byte[] code, int directCallPos, ClassMethodActor callee, int registerRestoreEpilogueOffset) {
+    public Stub(Type type, String stubName, int frameSize, byte[] code, int callPos, int callSize, ClassMethodActor callee, int registerRestoreEpilogueOffset) {
         super(stubName, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         this.type = type;
         this.setFrameSize(frameSize);
         this.setRegisterRestoreEpilogueOffset(registerRestoreEpilogueOffset);
 
-        final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(0, 0, 0);
-        targetBundleLayout.update(ArrayField.code, code.length);
+        final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(0, 0, code.length);
         Code.allocate(targetBundleLayout, this);
         setData(null, null, code);
-        if (directCallPos != -1) {
-            int directCallStopPos = stopPosForDirectCallPos(directCallPos);
+        if (callPos != -1) {
+            int safepointPos = Safepoints.safepointPosForCall(callPos, callSize);
             assert callee != null;
-            setStopPositions(new int[] {directCallStopPos}, new Object[] {callee}, 0, 0);
+            setSafepoints(new Safepoints(Safepoints.make(safepointPos, callPos, DIRECT_CALL)), new Object[] {callee});
         }
         if (!isHosted()) {
             linkDirectCalls();
@@ -131,7 +137,7 @@ public class Stub extends TargetMethod {
 
         initCodeBuffer(tm, true);
         initFrameLayout(tm);
-        CiDebugInfo[] debugInfos = initStopPositions(tm);
+        CiDebugInfo[] debugInfos = initSafepoints(tm);
         for (CiDebugInfo info : debugInfos) {
             assert info == null;
         }
@@ -148,6 +154,7 @@ public class Stub extends TargetMethod {
             case StaticTrampoline:
             case InterfaceTrampoline:
                 return rc.trampoline.csl;
+            case DeoptStubFromSafepoint:
             case TrapStub:
                 return rc.trapStub.csl;
             case UncommonTrapStub:
@@ -228,14 +235,6 @@ public class Stub extends TargetMethod {
             throw FatalError.unexpected("Exception occurred in stub frame");
         }
         return Address.zero();
-    }
-
-    @Override
-    public void traceDebugInfo(IndentWriter writer) {
-    }
-
-    @Override
-    public void traceExceptionHandlers(IndentWriter writer) {
     }
 
     @Override

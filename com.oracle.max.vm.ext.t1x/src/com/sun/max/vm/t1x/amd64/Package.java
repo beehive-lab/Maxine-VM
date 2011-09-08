@@ -20,24 +20,24 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.jdk;
+package com.sun.max.vm.t1x.amd64;
 
-import java.sql.*;
+import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.t1x.Package.*;
 
-import com.sun.max.annotate.*;
-import com.sun.max.vm.jni.JVMFunctions;
+import com.sun.max.config.*;
+import com.sun.max.lang.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.adaptive.*;
 
-/**
- * Substitutions for @see java.sql.DriverManager.
- *
- */
-@METHOD_SUBSTITUTIONS(DriverManager.class)
-final class JDK_java_sql_DriverManager {
-
-    @SUBSTITUTE
-    private static ClassLoader getCallerClassLoader() {
-        final Class<?> caller = JVMFunctions.GetCallerClass(3);
-        return caller == null ? null : caller.getClassLoader();
+public class Package extends BootImagePackage {
+    @Override
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
+        if (platform().isa == ISA.AMD64) {
+            if (vmConfiguration.compilationPackage.getClass().equals(com.sun.max.vm.compiler.adaptive.Package.class)) {
+                return isT1X(AdaptiveCompilationScheme.optName()) || isT1X(AdaptiveCompilationScheme.baselineName());
+            }
+        }
+        return false;
     }
 }
-

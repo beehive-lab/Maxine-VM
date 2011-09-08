@@ -25,7 +25,7 @@ package com.sun.max.vm;
 import static com.sun.cri.bytecode.Bytecodes.*;
 
 import com.sun.cri.bytecode.*;
-import com.sun.cri.bytecode.BytecodeIntrinsifier.*;
+import com.sun.cri.bytecode.BytecodeIntrinsifier.IntrinsifierClient;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
@@ -105,14 +105,12 @@ public class Intrinsifier extends IntrinsifierClient {
             case READREG            :
             case WRITEREG           :
             case PAUSE              :
-            case ADD_SP             :
             case FLUSHW             :
             case ALLOCA             :
+            case UCMP               :
+            case UWCMP              :
             case STACKHANDLE        :
             case JNICALL            :
-            case TEMPLATE_CALL      :
-            case ICMP               :
-            case WCMP               : return true;
             case INFOPOINT: {
                 if ((intrinsic & UNCOMMON_TRAP) == UNCOMMON_TRAP) {
                     // An uncommon trap is OK to baseline-compile
@@ -141,7 +139,7 @@ public class Intrinsifier extends IntrinsifierClient {
             try {
                 MethodActor method = constant.resolve(cp, cpi);
                 int intrinsic = method.intrinsic();
-                if (intrinsic == UNSAFE_CAST || intrinsic == TEMPLATE_CALL || intrinsic == STACKHANDLE) {
+                if (intrinsic == UNSAFE_CAST || intrinsic == STACKHANDLE) {
                     bi.intrinsify(intrinsic, cpi);
                 } else if (intrinsic != 0) {
                     int opcode = intrinsic & 0xff;
@@ -151,9 +149,15 @@ public class Intrinsifier extends IntrinsifierClient {
                     int operand = (intrinsic >> 8) & 0xffff;
                     bi.intrinsify(opcode, operand);
                 } else {
-                    if (!unsafe) {
-                        // The semantics of @INLINE and @FOLD are not implemented by the baseline compiler.
-                        unsafe = (method.flags() & (Actor.FOLD | Actor.INLINE)) != 0;
+                    if (!unsafe && (method.flags() & (Actor.FOLD | Actor.INLINE)) != 0) {
+                        if (method instanceof ClassMethodActor && ((ClassMethodActor) method).compilee() != method) {
+                            // A call to a substituted JDK method should not make the callee to be unsafe
+                            // as it would then be forced to be compiled with the optimizing compiler and,
+                            // more importantly, make it ineligible for deoptimization.
+                        } else {
+                            // The semantics of @INLINE and @FOLD are not implemented by the baseline compiler.
+                            unsafe = true;
+                        }
                     }
                     if (holderIsWord && !isStatic) {
                         // Cannot dispatch dynamically on Word types

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,41 +20,26 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.c1x.ir;
+package demo;
 
-import com.sun.c1x.debug.*;
-import com.sun.cri.ci.*;
+import com.sun.max.memory.*;
+import com.sun.max.platform.*;
+import com.sun.max.unsafe.*;
 
 /**
+ * Test getting platform's physical memory characteristics.
  */
-public final class IncrementRegister extends Instruction {
+public class PhysMemTest {
+    public static void main(String[] args) {
+        if (!System.getProperty("java.vm.name").startsWith("Maxine")) {
+            System.out.println("Should run with a Maxine VM");
+            System.exit(0);
+        }
+        long physicalMemorySize = VirtualMemory.getPhysicalMemorySize().toLong();
+        int pageSize = Platform.platform().pageSize;
+        int kPerPage = pageSize / Size.K.toInt();
+        long physicalMemoryM = physicalMemorySize / Size.M.toLong();
 
-    public final CiRegister register;
-    private Value delta;
-
-    public IncrementRegister(CiRegister register, Value delta) {
-        super(CiKind.Void);
-        this.register = register;
-        this.delta = delta;
-        setFlag(Flag.LiveStore);
-    }
-
-    @Override
-    public void accept(ValueVisitor v) {
-        v.visitIncrementRegister(this);
-    }
-
-    public Value delta() {
-        return delta;
-    }
-
-    @Override
-    public void inputValuesDo(ValueClosure closure) {
-        delta = closure.apply(delta);
-    }
-
-    @Override
-    public void print(LogStream out) {
-        out.print(register.toString()).print(" += ").print(delta);
+        System.out.println("Physical Memory = " + physicalMemorySize + " bytes, "  + physicalMemoryM + "M, " + (physicalMemorySize / pageSize) + " x " + kPerPage + "K pages");
     }
 }

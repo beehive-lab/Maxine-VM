@@ -136,63 +136,6 @@ public class Intrinsics {
     @INTRINSIC(STACKHANDLE)
     public static native Pointer stackHandle(Reference ref);
 
-    @INTRINSIC(TEMPLATE_CALL)
-    public static native void call();
-
-    @INTRINSIC(TEMPLATE_CALL)
-    public static native float callFloat();
-
-    @INTRINSIC(TEMPLATE_CALL)
-    public static native long callLong();
-
-    @INTRINSIC(TEMPLATE_CALL)
-    public static native double callDouble();
-
-    @INTRINSIC(TEMPLATE_CALL)
-    public static native Word callWord();
-
-    @INTRINSIC(TEMPLATE_CALL)
-    public static native void call(Word address);
-
-    @INTRINSIC(TEMPLATE_CALL)
-    public static native float callFloat(Word address);
-
-    @INTRINSIC(TEMPLATE_CALL)
-    public static native long callLong(Word address);
-
-    @INTRINSIC(TEMPLATE_CALL)
-    public static native double callDouble(Word address);
-
-    @INTRINSIC(TEMPLATE_CALL)
-    public static native Word callWord(Word address);
-
-    @INTRINSIC(TEMPLATE_CALL)
-    public static native void call(Word address, Object receiver);
-
-    @INTRINSIC(TEMPLATE_CALL)
-    public static native float callFloat(Word address, Object receiver);
-
-    @INTRINSIC(TEMPLATE_CALL)
-    public static native long callLong(Word address, Object receiver);
-
-    @INTRINSIC(TEMPLATE_CALL)
-    public static native double callDouble(Word address, Object receiver);
-
-    @INTRINSIC(TEMPLATE_CALL)
-    public static native Word callWord(Word address, Object receiver);
-
-    /**
-     * A compare instruction modifying condition flags, without returning a value in a register or memory location.
-     */
-    @INTRINSIC(ICMP)
-    public static native void compareInts(int value1, int value2);
-
-    /**
-     * A compare instruction modifying condition flags, without returning a value in a register or memory location.
-     */
-    @INTRINSIC(WCMP)
-    public static native void compareWords(Word value1, Word value2);
-
     @INTRINSIC(READBIT | VMRegister.LATCH << 8)
     public static native boolean readLatchBit(int offset, int bit);
 

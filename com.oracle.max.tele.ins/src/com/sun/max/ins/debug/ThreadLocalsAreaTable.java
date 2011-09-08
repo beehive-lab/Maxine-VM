@@ -236,7 +236,7 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxThreadLocalVariable threadLocalVariable = (MaxThreadLocalVariable) value;
             setValue(threadLocalVariable.variableName());
-            setWrappedToolTipText(tableModel.getRowDescription(row) + "<br>" +
+            setWrappedToolTipHtmlText(tableModel.getRowDescription(row) + "<br>" +
                             "Description = \"" + threadLocalVariable.variableDocumentation() + "\"<br>" +
                             "Declared in " + threadLocalVariable.declaration());
             if (threadLocalVariable.isReference()) {

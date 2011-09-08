@@ -29,6 +29,7 @@ import java.io.*;
 import java.util.*;
 
 import com.oracle.max.vm.ext.vma.*;
+import com.oracle.max.vm.ext.vma.run.java.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
@@ -74,7 +75,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         public void startMethodGeneration() {
         }
 
-        public void generate(T1XTemplateTag tag, AdviceType at, String... args) {
+        public void generate(T1XTemplateTag tag, AdviceType at, Object... args) {
             tagAdviceCapabilities[tag.ordinal()][at.ordinal()] = true;
         }
     }
@@ -186,7 +187,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
             return tagAdviceCapabilities[tag.ordinal()][at.ordinal()] && generating[at.ordinal()];
         }
 
-        public void generate(T1XTemplateTag tag, AdviceType at, String... args) {
+        public void generate(T1XTemplateTag tag, AdviceType at, Object... args) {
             byteArrayOut.setTag(tag);
             if (!generateTag(tag, at)) {
                 // If both capabilities are present, then don't discard, even if we aren't generating the advice type
@@ -200,7 +201,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
             adviceType = at;
             methodName = tag.opcode >= 0 ? codeMap.get(tag.opcode).methodName : "???";
 
-            final String k = args.length > 0 ? args[0] : null;
+            final String k = args.length > 0 ? (String) args[0] : null;
             switch (tag) {
                 case GETFIELD$byte:
                 case GETFIELD$boolean:
@@ -338,51 +339,51 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                     generateArrayStore(k);
                     break;
 
-                case ICONST_0:
-                case ICONST_1:
-                case ICONST_2:
-                case ICONST_3:
-                case ICONST_4:
-                case ICONST_5:
-                case ICONST_M1:
-                case WCONST_0:
-                case ACONST_NULL:
-                    assert adviceType == AdviceType.BEFORE;
-                    generateLoadConst(tag, k, args[1]);
-                    break;
-
-                case FCONST:
-                case DCONST:
-                case LCONST:
-                    assert adviceType == AdviceType.BEFORE;
-                    generateLoadConst(tag, k, null);
-                    break;
-
-                case ILOAD:
-                case LLOAD:
-                case FLOAD:
-                case DLOAD:
-                case ALOAD:
-                case WLOAD:
-                    assert adviceType == AdviceType.BEFORE;
-                    generateLoad(k);
-                    break;
-
-                case ISTORE:
-                case LSTORE:
-                case FSTORE:
-                case DSTORE:
-                case ASTORE:
-                case WSTORE:
-                    assert adviceType == AdviceType.BEFORE;
-                    generateStore(k);
-                    break;
-
-                case BIPUSH:
-                case SIPUSH:
-                    assert adviceType == AdviceType.BEFORE;
-                    generateIPush(k);
-                    break;
+//                case ICONST_0:
+//                case ICONST_1:
+//                case ICONST_2:
+//                case ICONST_3:
+//                case ICONST_4:
+//                case ICONST_5:
+//                case ICONST_M1:
+//                case WCONST_0:
+//                case ACONST_NULL:
+//                    assert adviceType == AdviceType.BEFORE;
+//                    generateLoadConst(tag, k, (String) args[1]);
+//                    break;
+//
+//                case FCONST:
+//                case DCONST:
+//                case LCONST:
+//                    assert adviceType == AdviceType.BEFORE;
+//                    generateLoadConst(tag, k, null);
+//                    break;
+//
+//                case ILOAD:
+//                case LLOAD:
+//                case FLOAD:
+//                case DLOAD:
+//                case ALOAD:
+//                case WLOAD:
+//                    assert adviceType == AdviceType.BEFORE;
+//                    generateLoad(k);
+//                    break;
+//
+//                case ISTORE:
+//                case LSTORE:
+//                case FSTORE:
+//                case DSTORE:
+//                case ASTORE:
+//                case WSTORE:
+//                    assert adviceType == AdviceType.BEFORE;
+//                    generateStore(k);
+//                    break;
+//
+//                case BIPUSH:
+//                case SIPUSH:
+//                    assert adviceType == AdviceType.BEFORE;
+//                    generateIPush(k);
+//                    break;
 
                 case IADD:
                 case LADD:
@@ -404,10 +405,10 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                 case LREM:
                 case FREM:
                 case DREM:
-                case INEG:
-                case LNEG:
-                case FNEG:
-                case DNEG:
+//                case INEG:
+//                case LNEG:
+//                case FNEG:
+//                case DNEG:
                 case ISHL:
                 case LSHL:
                 case ISHR:
@@ -437,10 +438,10 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                     generateWOperation(tag);
                     break;
 
-                case IINC:
-                    assert adviceType == AdviceType.BEFORE;
-                    generateIInc();
-                    break;
+//                case IINC:
+//                    assert adviceType == AdviceType.BEFORE;
+//                    generateIInc();
+//                    break;
 
                 case I2L:
                 case I2F:
@@ -465,25 +466,25 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                     generateConversion(tag, k);
                     break;
 
-                case IFEQ:
-                case IFNE:
-                case IFLT:
-                case IFGE:
-                case IFGT:
-                case IFLE:
-                case IFNULL:
-                case IFNONNULL:
-                case IF_ICMPEQ:
-                case IF_ICMPNE:
-                case IF_ICMPLT:
-                case IF_ICMPGE:
-                case IF_ICMPGT:
-                case IF_ICMPLE:
-                case IF_ACMPEQ:
-                case IF_ACMPNE:
-                    assert adviceType == AdviceType.BEFORE;
-                    generateIf(tag);
-                    break;
+//                case IFEQ:
+//                case IFNE:
+//                case IFLT:
+//                case IFGE:
+//                case IFGT:
+//                case IFLE:
+//                case IFNULL:
+//                case IFNONNULL:
+//                case IF_ICMPEQ:
+//                case IF_ICMPNE:
+//                case IF_ICMPLT:
+//                case IF_ICMPGE:
+//                case IF_ICMPGT:
+//                case IF_ICMPLE:
+//                case IF_ACMPEQ:
+//                case IF_ACMPNE:
+//                    assert adviceType == AdviceType.BEFORE;
+//                    generateIf(tag);
+//                    break;
 
                 case CHECKCAST:
                 case CHECKCAST$resolved:
@@ -544,14 +545,14 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                 case INVOKESPECIAL$reference:
                     generateInvokeSpecial(false);
                     break;
-                case INVOKESPECIAL$void$resolved:
-                case INVOKESPECIAL$float$resolved:
-                case INVOKESPECIAL$long$resolved:
-                case INVOKESPECIAL$double$resolved:
-                case INVOKESPECIAL$word$resolved:
-                case INVOKESPECIAL$reference$resolved:
-                    generateInvokeSpecial(true);
-                    break;
+//                case INVOKESPECIAL$void$resolved:
+//                case INVOKESPECIAL$float$resolved:
+//                case INVOKESPECIAL$long$resolved:
+//                case INVOKESPECIAL$double$resolved:
+//                case INVOKESPECIAL$word$resolved:
+//                case INVOKESPECIAL$reference$resolved:
+//                    generateInvokeSpecial(true);
+//                    break;
 
                 case INVOKESTATIC$void:
                 case INVOKESTATIC$float:
@@ -561,14 +562,14 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                 case INVOKESTATIC$reference:
                     generateInvokeStatic(false);
                     break;
-                case INVOKESTATIC$void$init:
-                case INVOKESTATIC$float$init:
-                case INVOKESTATIC$long$init:
-                case INVOKESTATIC$double$init:
-                case INVOKESTATIC$word$init:
-                case INVOKESTATIC$reference$init:
-                    generateInvokeStatic(true);
-                    break;
+//                case INVOKESTATIC$void$init:
+//                case INVOKESTATIC$float$init:
+//                case INVOKESTATIC$long$init:
+//                case INVOKESTATIC$double$init:
+//                case INVOKESTATIC$word$init:
+//                case INVOKESTATIC$reference$init:
+//                    generateInvokeStatic(true);
+//                    break;
 
                 case INVOKEINTERFACE$void:
                 case INVOKEINTERFACE$float:
@@ -607,25 +608,25 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                     generateMonitor(tag);
                     break;
 
-                case POP:
-                case POP2:
-                case DUP:
-                case DUP_X1:
-                case DUP_X2:
-                case DUP2:
-                case DUP2_X1:
-                case DUP2_X2:
-                case SWAP:
-                    generateStackAdjust(tag);
-                    break;
-
-
-                case LDC$int:
-                case LDC$long:
-                case LDC$float:
-                case LDC$double:
+//                case POP:
+//                case POP2:
+//                case DUP:
+//                case DUP_X1:
+//                case DUP_X2:
+//                case DUP2:
+//                case DUP2_X1:
+//                case DUP2_X2:
+//                case SWAP:
+//                    generateStackAdjust(tag);
+//                    break;
+//
+//
+//                case LDC$int:
+//                case LDC$long:
+//                case LDC$float:
+//                case LDC$double:
                 case LDC$reference:
-                case LDC$reference$resolved:
+//                case LDC$reference$resolved:
                     generateLDC(tag, k);
                     break;
 
@@ -637,33 +638,14 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                 case WRETURN:
                 case RETURN:
 
-                case IRETURN$unlockClass:
-                case IRETURN$unlockReceiver:
-                case LRETURN$unlockClass:
-                case LRETURN$unlockReceiver:
-                case FRETURN$unlockClass:
-                case FRETURN$unlockReceiver:
-                case DRETURN$unlockClass:
-                case DRETURN$unlockReceiver:
-                case ARETURN$unlockClass:
-                case ARETURN$unlockReceiver:
-                case WRETURN$unlockClass:
-                case WRETURN$unlockReceiver:
-                case RETURN$unlockClass:
-                case RETURN$unlockReceiver:
+                case IRETURN$unlock:
+                case LRETURN$unlock:
+                case FRETURN$unlock:
+                case DRETURN$unlock:
+                case ARETURN$unlock:
+                case WRETURN$unlock:
+                case RETURN$unlock:
                     generateReturn(tag, k);
-                    break;
-
-                case LOCK_RECEIVER:
-                case LOCK_CLASS:
-                    methodName = "MonitorEnter";
-                    generateMonitor(tag);
-                    break;
-
-                case UNLOCK_CLASS:
-                case UNLOCK_RECEIVER:
-                    methodName = "MonitorExit";
-                    generateMonitor(tag);
                     break;
 
                 // No special treatment for the following codes
@@ -747,89 +729,89 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
     }
 
     private static void startGuardAdvice() {
-        out.printf("        if (%s) {%n", bitGuard ? ALT_ISADVISING : INLINE_ISADVISING);
+        ps.printf("        if (%s) {%n", bitGuard ? ALT_ISADVISING : INLINE_ISADVISING);
     }
 
     private static void endGuardAdvice() {
-        out.printf("        }%n");
+        ps.printf("        }%n");
     }
 
     private static void generatePutField(String k, boolean resolved) {
         String offset = resolved ? "offset" : "f.offset()";
         startGuardAdvice();
-        out.printf(METHOD_PREFIX + "(object, %s, %s);%n", adviceType.methodNameComponent, methodName, offset, putValue(k, ""));
+        ps.printf(METHOD_PREFIX + "(object, %s, %s);%n", adviceType.methodNameComponent, methodName, offset, putValue(k, ""));
         endGuardAdvice();
     }
 
     private static void generateGetField(String k, boolean resolved) {
         String offset = resolved ? "offset" : "f.offset()";
         startGuardAdvice();
-        out.printf(METHOD_PREFIX + "(object, %s);%n", adviceType.methodNameComponent, methodName, offset);
+        ps.printf(METHOD_PREFIX + "(object, %s);%n", adviceType.methodNameComponent, methodName, offset);
         endGuardAdvice();
     }
 
     private static void generatePutStatic(String k, boolean init) {
         String args = init ? "staticTuple, offset" : "f.holder().staticTuple(), f.offset()";
         startGuardAdvice();
-        out.printf(METHOD_PREFIX + "(%s, %s);%n", adviceType.methodNameComponent, methodName, args, putValue(k, ""));
+        ps.printf(METHOD_PREFIX + "(%s, %s);%n", adviceType.methodNameComponent, methodName, args, putValue(k, ""));
         endGuardAdvice();
     }
 
     private static void generateGetStatic(String k, boolean init) {
         String args = init ? "staticTuple, offset" : "f.holder().staticTuple(), f.offset()";
         startGuardAdvice();
-        out.printf(METHOD_PREFIX + "(%s);%n", adviceType.methodNameComponent, methodName, args);
+        ps.printf(METHOD_PREFIX + "(%s);%n", adviceType.methodNameComponent, methodName, args);
         endGuardAdvice();
     }
 
     private static void generateArrayLoad(String k) {
         startGuardAdvice();
-        out.printf(METHOD_PREFIX + "(array, index);%n", adviceType.methodNameComponent, methodName);
+        ps.printf(METHOD_PREFIX + "(array, index);%n", adviceType.methodNameComponent, methodName);
         endGuardAdvice();
     }
 
     private static void generateArrayStore(String k) {
         startGuardAdvice();
-        out.printf(METHOD_PREFIX + "(array, index, %s);%n", adviceType.methodNameComponent, methodName, putValue(k, ""));
+        ps.printf(METHOD_PREFIX + "(array, index, %s);%n", adviceType.methodNameComponent, methodName, putValue(k, ""));
         endGuardAdvice();
     }
 
     private static void generateLoadConst(T1XTemplateTag tag, String k, String v) {
         String value = k.equals("int") || k.equals("Reference") ? v : (k.equals("Word") ? "0" : "constant");
         startGuardAdvice();
-        out.printf(METHOD_PREFIX + "(%s);%n", adviceType.methodNameComponent, methodName, value);
+        ps.printf(METHOD_PREFIX + "(%s);%n", adviceType.methodNameComponent, methodName, value);
         endGuardAdvice();
     }
 
     private static void generateLDC(T1XTemplateTag tag, String k) {
         startGuardAdvice();
-        out.printf(METHOD_PREFIX + "(constant);%n", adviceType.methodNameComponent, methodName);
+        ps.printf(METHOD_PREFIX + "(constant);%n", adviceType.methodNameComponent, methodName);
         endGuardAdvice();
     }
 
     private static void generateLoad(String k) {
         startGuardAdvice();
-        out.printf(METHOD_PREFIX + "(dispToLocalSlot);%n", adviceType.methodNameComponent, methodName);
+        ps.printf(METHOD_PREFIX + "(dispToLocalSlot);%n", adviceType.methodNameComponent, methodName);
         endGuardAdvice();
     }
 
     private static void generateStore(String k) {
         startGuardAdvice();
-        out.printf(METHOD_PREFIX + "(dispToLocalSlot, %s);%n", adviceType.methodNameComponent, methodName, putValue(k));
+        ps.printf(METHOD_PREFIX + "(dispToLocalSlot, %s);%n", adviceType.methodNameComponent, methodName, putValue(k));
         endGuardAdvice();
     }
 
     private static void generateIPush(String k) {
         startGuardAdvice();
-        out.printf(METHOD_PREFIX + "(value);%n", adviceType.methodNameComponent, methodName);
+        ps.printf(METHOD_PREFIX + "(value);%n", adviceType.methodNameComponent, methodName);
         endGuardAdvice();
     }
 
     private static void generateOperation(T1XTemplateTag tag, String k) {
-        String value1 = NEG_TEMPLATE_TAGS.contains(tag) ? "value" : "value1";
-        String value2 = NEG_TEMPLATE_TAGS.contains(tag) ? getDefault(k) : "value2";
+        String value1 = "value1";
+        String value2 = "value2";
         startGuardAdvice();
-        out.printf(METHOD_PREFIX + "(%d, %s, %s);%n", adviceType.methodNameComponent, methodName, tag.opcode, value1, value2);
+        ps.printf(METHOD_PREFIX + "(%d, %s, %s);%n", adviceType.methodNameComponent, methodName, tag.opcode, value1, value2);
         endGuardAdvice();
     }
 
@@ -837,121 +819,121 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         String value1 = "value1.toLong()";
         String value2 = tag == T1XTemplateTag.WDIVI || tag == T1XTemplateTag.WREMI ? "value2" : "value2.toLong()";
         startGuardAdvice();
-        out.printf(METHOD_PREFIX + "(%d, %s, %s);%n", adviceType.methodNameComponent, methodName, tag.opcode, value1, value2);
+        ps.printf(METHOD_PREFIX + "(%d, %s, %s);%n", adviceType.methodNameComponent, methodName, tag.opcode, value1, value2);
         endGuardAdvice();
     }
 
     private static void generateConversion(T1XTemplateTag tag, String k) {
         startGuardAdvice();
-        out.printf(METHOD_PREFIX + "(%d, value);%n", adviceType.methodNameComponent, methodName, tag.opcode);
+        ps.printf(METHOD_PREFIX + "(%d, value);%n", adviceType.methodNameComponent, methodName, tag.opcode);
         endGuardAdvice();
     }
 
     private static void generateNew() {
         startGuardAdvice();
-        out.printf(METHOD_PREFIX + "(object);%n", adviceType.methodNameComponent, methodName);
+        ps.printf(METHOD_PREFIX + "(object);%n", adviceType.methodNameComponent, methodName);
         endGuardAdvice();
     }
 
     private static void generateNewUniArray() {
         startGuardAdvice();
-        out.printf(METHOD_PREFIX + "(array, length);%n", adviceType.methodNameComponent, methodName);
+        ps.printf(METHOD_PREFIX + "(array, length);%n", adviceType.methodNameComponent, methodName);
         endGuardAdvice();
     }
 
     private static void generateNewMultiArray() {
         startGuardAdvice();
-        out.printf(METHOD_PREFIX + "(array, lengths);%n", adviceType.methodNameComponent, methodName);
+        ps.printf(METHOD_PREFIX + "(array, lengths);%n", adviceType.methodNameComponent, methodName);
         endGuardAdvice();
     }
 
     private static void generateInvokeVirtual(boolean resolved) {
         startGuardAdvice();
-        out.printf(METHOD_PREFIX + "(receiver, methodActor);%n", adviceType.methodNameComponent, methodName);
+        ps.printf(METHOD_PREFIX + "(receiver, methodActor);%n", adviceType.methodNameComponent, methodName);
         endGuardAdvice();
     }
 
     private static void generateInvokeInterface(boolean resolved) {
         startGuardAdvice();
-        out.printf(METHOD_PREFIX + "(receiver, interfaceMethodActor);%n", adviceType.methodNameComponent, methodName);
+        ps.printf(METHOD_PREFIX + "(receiver, interfaceMethodActor);%n", adviceType.methodNameComponent, methodName);
         endGuardAdvice();
     }
 
     private static void generateInvokeSpecial(boolean resolved) {
         startGuardAdvice();
-        out.printf(METHOD_PREFIX + "(receiver, methodActor);%n", adviceType.methodNameComponent, methodName);
+        ps.printf(METHOD_PREFIX + "(receiver, methodActor);%n", adviceType.methodNameComponent, methodName);
         endGuardAdvice();
     }
 
     private static void generateInvokeStatic(boolean resolved) {
         startGuardAdvice();
-        out.printf(METHOD_PREFIX + "(null, methodActor);%n", adviceType.methodNameComponent, methodName);
+        ps.printf(METHOD_PREFIX + "(null, methodActor);%n", adviceType.methodNameComponent, methodName);
         endGuardAdvice();
     }
 
     private static void generateTraceMethodEntry() {
         startGuardAdvice();
-        out.printf(METHOD_PREFIX + "(receiver, methodActor);%n", adviceType.methodNameComponent, "MethodEntry");
+        ps.printf(METHOD_PREFIX + "(receiver, methodActor);%n", adviceType.methodNameComponent, "MethodEntry");
         endGuardAdvice();
 
     }
 
-    private static void generateIf(T1XTemplateTag tag) {
-        boolean isNull = tag == T1XTemplateTag.IFNULL || tag == T1XTemplateTag.IFNONNULL;
-        String value1 = isNull || IF_TEMPLATE_TAGS.contains(tag) ? "value" : "value1";
-        String value2 = isNull ? "null" : (IF_TEMPLATE_TAGS.contains(tag) ? "0" : "value2");
-        startGuardAdvice();
-        out.printf(METHOD_PREFIX + "(%d, %s, %s);%n", adviceType.methodNameComponent, methodName, tag.opcode, value1, value2);
-        endGuardAdvice();
-    }
+//    private static void generateIf(T1XTemplateTag tag) {
+//        boolean isNull = tag == T1XTemplateTag.IFNULL || tag == T1XTemplateTag.IFNONNULL;
+//        String value1 = isNull || IF_TEMPLATE_TAGS.contains(tag) ? "value" : "value1";
+//        String value2 = isNull ? "null" : (IF_TEMPLATE_TAGS.contains(tag) ? "0" : "value2");
+//        startGuardAdvice();
+//        ps.printf(METHOD_PREFIX + "(%d, %s, %s);%n", adviceType.methodNameComponent, methodName, tag.opcode, value1, value2);
+//        endGuardAdvice();
+//    }
 
     private static void generateTypeCheck(T1XTemplateTag tag) {
         String name = CHECKCAST_TEMPLATE_TAGS.contains(tag) ? "CheckCast" : "InstanceOf";
         startGuardAdvice();
-        out.printf(METHOD_PREFIX + "(object, classActor);%n", adviceType.methodNameComponent, methodName, name);
+        ps.printf(METHOD_PREFIX + "(object, classActor);%n", adviceType.methodNameComponent, methodName, name);
         endGuardAdvice();
     }
 
     private static void generateThrow() {
         startGuardAdvice();
-        out.printf(METHOD_PREFIX + "(object);%n", adviceType.methodNameComponent, methodName);
+        ps.printf(METHOD_PREFIX + "(object);%n", adviceType.methodNameComponent, methodName);
         endGuardAdvice();
     }
 
     private static void generateArrayLength() {
         startGuardAdvice();
-        out.printf(METHOD_PREFIX + "(array, length);%n", adviceType.methodNameComponent, methodName);
+        ps.printf(METHOD_PREFIX + "(array, length);%n", adviceType.methodNameComponent, methodName);
         endGuardAdvice();
     }
 
     private static void generateMonitor(T1XTemplateTag tag) {
         startGuardAdvice();
-        out.printf(METHOD_PREFIX + "(object);%n", adviceType.methodNameComponent, methodName);
+        ps.printf(METHOD_PREFIX + "(object);%n", adviceType.methodNameComponent, methodName);
         endGuardAdvice();
     }
 
     private static void generateReturn(T1XTemplateTag tag, String k) {
         String arg = codeMap.get(tag.opcode) == VMABytecodes.RETURN ? "" : putArg("result", k, "");
         startGuardAdvice();
-        out.printf(METHOD_PREFIX + "(%s);%n", adviceType.methodNameComponent, methodName, arg);
+        ps.printf(METHOD_PREFIX + "(%s);%n", adviceType.methodNameComponent, methodName, arg);
         endGuardAdvice();
     }
 
     private static void generateIInc() {
         startGuardAdvice();
-        out.printf(METHOD_PREFIX + "(dispToLocalSlot, value, increment);%n", adviceType.methodNameComponent, methodName);
+        ps.printf(METHOD_PREFIX + "(dispToLocalSlot, value, increment);%n", adviceType.methodNameComponent, methodName);
         endGuardAdvice();
     }
 
     private static void generateStackAdjust(T1XTemplateTag tag) {
         startGuardAdvice();
-        out.printf(METHOD_PREFIX + "(%d);%n", adviceType.methodNameComponent, methodName, tag.opcode);
+        ps.printf(METHOD_PREFIX + "(%d);%n", adviceType.methodNameComponent, methodName, tag.opcode);
         endGuardAdvice();
     }
 
     private static void generateDefault(T1XTemplateTag tag) {
         startGuardAdvice();
-        out.printf(METHOD_PREFIX + "(%d);%n", adviceType.methodNameComponent, methodName, tag.opcode);
+        ps.printf(METHOD_PREFIX + "(%d);%n", adviceType.methodNameComponent, methodName, tag.opcode);
         endGuardAdvice();
     }
 
@@ -987,8 +969,10 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
     }
 
     VMAdviceTemplateGenerator() {
-        super(VMAdviceTemplateGenerator.class);
+        super(VMAdviceTemplateGenerator.class, ps);
     }
+
+    static PrintStream ps = System.out;
 
     public static void main(String[] args) {
         generateAll = true;
@@ -1004,7 +988,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
             }
         }
         byteArrayOut = new ThisByteArrayOutputStream();
-        out = new PrintStream(byteArrayOut);
+        ps = new PrintStream(byteArrayOut);
 
         t1xTemplateGen = new VMAdviceTemplateGenerator();
         // discover what the advice capabilities are for each tag
@@ -1021,52 +1005,52 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
      * @param variant one of "virtual" or "interface"
      * @param tag one of "", "resolved" or "instrumented"
      */
-    @Override
-    public void generateInvokeVITemplate(String k, String variant, String tag) {
-        boolean isVoid = k.equals("void");
-        String param1 = tag.equals("") ? "ResolutionGuard.InPool guard" :
-            (variant.equals("interface") ? "InterfaceMethodActor interfaceMethodActor" : "VirtualMethodActor methodActor");
-        param1 += ", int receiverStackIndex";
-        if (tag.equals("instrumented")) {
-            param1 += ", MethodProfile mpo, int mpoIndex";
-        }
-        t1xTemplateGen.generateAutoComment();
-        t1xTemplateGen.generateTemplateTag("INVOKE%s$%s%s", variant.toUpperCase(), lType(k), prefixDollar(tag));
-        out.printf("    public static void invoke%s%s(%s) {%n", variant, uType(k), param1);
-        out.printf("        Object receiver = peekObject(receiverStackIndex);%n");
-        if (variant.equals("interface")) {
-            if (tag.equals("")) {
-                out.printf("        final InterfaceMethodActor interfaceMethodActor = Snippets.resolveInterfaceMethod(guard);%n");
-                out.printf("        Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);%n");
-            } else if (tag.equals("resolved")) {
-                out.printf("        Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);%n");
-            } else if (tag.equals("instrumented")) {
-                out.printf("        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);%n");
-            }
-        } else {
-            // virtual
-            if (tag.equals("")) {
-                out.printf("        VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);%n");
-                out.printf("        Address entryPoint = VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor);%n");
-            } else if (tag.equals("resolved")) {
-                out.printf("        Address entryPoint = ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress();%n");
-            } else if (tag.equals("instrumented")) {
-                out.printf("        Address entryPoint = selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex);%n");
-            }
-        }
-        generateBeforeAdvice(k, variant, tag);
-        out.printf("        ");
-        if (!isVoid) {
-            out.printf("final %s result = ", oType(k));
-        }
-        out.printf("indirectCall%s(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);%n", uoType(k));
-        generateAfterAdvice(k, variant, tag);
-        if (!isVoid) {
-            out.printf("        push%s(result);%n", uoType(k));
-        }
-        out.printf("    }%n");
-        newLine();
-    }
+//    @Override
+//    public void generateInvokeVITemplate(CiKind k, String variant, String tag) {
+//        boolean isVoid = k.equals("void");
+//        String param1 = tag.equals("") ? "ResolutionGuard.InPool guard" :
+//            (variant.equals("interface") ? "InterfaceMethodActor interfaceMethodActor" : "VirtualMethodActor methodActor");
+//        param1 += ", int receiverStackIndex";
+//        if (tag.equals("instrumented")) {
+//            param1 += ", MethodProfile mpo, int mpoIndex";
+//        }
+//        t1xTemplateGen.generateAutoComment();
+//        t1xTemplateGen.generateTemplateTag("INVOKE%s$%s%s", variant.toUpperCase(), l(k), prefixDollar(tag));
+//        ps.printf("    public static void invoke%s%s(%s) {%n", variant, u(k), param1);
+//        ps.printf("        Object receiver = peekObject(receiverStackIndex);%n");
+//        if (variant.equals("interface")) {
+//            if (tag.equals("")) {
+//                ps.printf("        final InterfaceMethodActor interfaceMethodActor = Snippets.resolveInterfaceMethod(guard);%n");
+//                ps.printf("        Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);%n");
+//            } else if (tag.equals("resolved")) {
+//                ps.printf("        Address entryPoint = VMAT1XRuntime.selectInterfaceMethod(receiver, interfaceMethodActor);%n");
+//            } else if (tag.equals("instrumented")) {
+//                ps.printf("        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);%n");
+//            }
+//        } else {
+//            // virtual
+//            if (tag.equals("")) {
+//                ps.printf("        VirtualMethodActor methodActor = Snippets.resolveVirtualMethod(guard);%n");
+//                ps.printf("        Address entryPoint = VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor);%n");
+//            } else if (tag.equals("resolved")) {
+//                ps.printf("        Address entryPoint = ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress();%n");
+//            } else if (tag.equals("instrumented")) {
+//                ps.printf("        Address entryPoint = selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex);%n");
+//            }
+//        }
+//        generateBeforeAdvice(k, variant, tag);
+//        ps.printf("        ");
+//        if (!isVoid) {
+//            ps.printf("final %s result = ", k);
+//        }
+//        ps.printf("indirectCall%s(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);%n", ur(k));
+//        generateAfterAdvice(k, variant, tag);
+//        if (!isVoid) {
+//            ps.printf("        push%s(result);%n", ur(k));
+//        }
+//        ps.printf("    }%n");
+//        newLine();
+//    }
 
 
     /**
@@ -1075,57 +1059,57 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
      * @param variant one of "special" or "static"
      * @param xtag one of "" or "init" or "resolved"
      */
-    @Override
-    public void generateInvokeSSTemplate(String k, String variant, String xtag) {
-        boolean resolved = xtag.equals("resolved");
-        boolean isStatic = variant.equals("static");
-        String tag = isStatic && resolved ? "init" : xtag;
-        boolean isVoid = k.equals("void");
-        String params = xtag.equals("") ? "ResolutionGuard.InPool guard" :
-            (isStatic ? "StaticMethodActor methodActor" : "VirtualMethodActor methodActor");
-        if (variant.equals("special")) {
-            if (params.length() > 0) {
-                params += ", ";
-            }
-            params += "int receiverStackIndex";
-        }
-        t1xTemplateGen.generateAutoComment();
-        t1xTemplateGen.generateTemplateTag("INVOKE%s$%s%s", variant.toUpperCase(), lType(k), prefixDollar(tag));
-        out.printf("    public static void invoke%s%s(%s) {%n", variant, uType(k), params);
-        if (!isStatic) {
-            out.printf("        Object receiver = peekObject(receiverStackIndex);%n");
-            out.printf("        nullCheck(Reference.fromJava(receiver).toOrigin());%n");
-        }
-        if (!resolved) {
-            out.printf("        %sMethodActor methodActor = VMAT1XRuntime.resolve%sMethod(guard);%n", isStatic ? "Static" : "Virtual", toFirstUpper(variant));
-        }
-        generateBeforeAdvice(k, variant, tag);
-        out.printf("        ");
-        if (!isVoid) {
-            out.printf("final %s result = ", oType(k));
-        }
-        if (resolved) {
-            out.printf("directCall%s();%n", uoType(k));
-        } else {
-            out.printf("indirectCall%s(VMAT1XRuntime.initialize%sMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);%n", uoType(k), toFirstUpper(variant));
-        }
-        generateAfterAdvice(k, variant, tag);
-        if (!isVoid) {
-            out.printf("        push%s(result);%n", uoType(k));
-        }
-        out.printf("    }%n");
-        newLine();
-    }
+//    @Override
+//    public void generateInvokeSSTemplate(CiKind k, String variant, String xtag) {
+//        boolean resolved = xtag.equals("resolved");
+//        boolean isStatic = variant.equals("static");
+//        String tag = isStatic && resolved ? "init" : xtag;
+//        boolean isVoid = k.equals("void");
+//        String params = xtag.equals("") ? "ResolutionGuard.InPool guard" :
+//            (isStatic ? "StaticMethodActor methodActor" : "VirtualMethodActor methodActor");
+//        if (variant.equals("special")) {
+//            if (params.length() > 0) {
+//                params += ", ";
+//            }
+//            params += "int receiverStackIndex";
+//        }
+//        t1xTemplateGen.generateAutoComment();
+//        t1xTemplateGen.generateTemplateTag("INVOKE%s$%s%s", variant.toUpperCase(), l(k), prefixDollar(tag));
+//        ps.printf("    public static void invoke%s%s(%s) {%n", variant, u(k), params);
+//        if (!isStatic) {
+//            ps.printf("        Object receiver = peekObject(receiverStackIndex);%n");
+//            ps.printf("        nullCheck(Reference.fromJava(receiver).toOrigin());%n");
+//        }
+//        if (!resolved) {
+//            ps.printf("        %sMethodActor methodActor = VMAT1XRuntime.resolve%sMethod(guard);%n", isStatic ? "Static" : "Virtual", toFirstUpper(variant));
+//        }
+//        generateBeforeAdvice(k, variant, tag);
+//        ps.printf("        ");
+//        if (!isVoid) {
+//            ps.printf("final %s result = ", k);
+//        }
+//        if (resolved) {
+//            ps.printf("directCall%s();%n", ur(k));
+//        } else {
+//            ps.printf("indirectCall%s(VMAT1XRuntime.initialize%sMethod(methodActor), CallEntryPoint.OPTIMIZED_ENTRY_POINT);%n", ur(k), toFirstUpper(variant));
+//        }
+//        generateAfterAdvice(k, variant, tag);
+//        if (!isVoid) {
+//            ps.printf("        push%s(result);%n", ur(k));
+//        }
+//        ps.printf("    }%n");
+//        newLine();
+//    }
 
 
     @Override
     public void generateTraceMethodEntryTemplate() {
         generateAutoComment();
         generateTemplateTag("%s", TRACE_METHOD_ENTRY);
-        out.printf("    public static void traceMethodEntry(MethodActor methodActor, int dispToLocalSlot) {%n");
-        out.printf("        Object receiver = dispToLocalSlot == 0 ? null : getLocalObject(dispToLocalSlot);%n");
+        ps.printf("    public static void traceMethodEntry(MethodActor methodActor, int dispToLocalSlot) {%n");
+        ps.printf("        Object receiver = dispToLocalSlot == 0 ? null : getLocalObject(dispToLocalSlot);%n");
         generateAfterAdvice();
-        out.printf("    }%n");
+        ps.printf("    }%n");
         newLine();
 
     }

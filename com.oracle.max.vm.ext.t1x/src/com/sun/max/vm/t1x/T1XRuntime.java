@@ -24,6 +24,8 @@ package com.sun.max.vm.t1x;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.cri.bytecode.Bytecodes.MemoryBarriers.*;
+import static com.sun.max.vm.compiler.CallEntryPoint.*;
+import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
@@ -40,9 +42,7 @@ import com.sun.max.vm.type.*;
  * Collection of methods called from T1X templates. These methods are typically non-inlined
  * to satisfy invariants enforced for the templates. They can also be used to keep the
  * template code small.
- *
  */
-
 @NEVER_INLINE
 public class T1XRuntime {
 
@@ -50,27 +50,27 @@ public class T1XRuntime {
     // == Resolution routines ===================================================================================
     // ==========================================================================================================
 
-
-    public static Address resolveAndSelectVirtualMethod(Object receiver, ResolutionGuard.InPool guard, int receiverStackIndex) {
+    public static Address resolveAndSelectVirtualMethod(Object receiver, ResolutionGuard.InPool guard) {
         final VirtualMethodActor virtualMethodActor = Snippets.resolveVirtualMethod(guard);
-        return Snippets.selectNonPrivateVirtualMethod(receiver, virtualMethodActor).asAddress();
+        Address vtableEntryPoint = Snippets.selectNonPrivateVirtualMethod(receiver, virtualMethodActor).asAddress();
+        return vtableEntryPoint.plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
     public static Address resolveAndSelectInterfaceMethod(ResolutionGuard.InPool guard, final Object receiver) {
         final InterfaceMethodActor declaredInterfaceMethod = Snippets.resolveInterfaceMethod(guard);
-        final Address entryPoint = Snippets.selectInterfaceMethod(receiver, declaredInterfaceMethod).asAddress();
-        return entryPoint;
+        final Address vtableEntryPoint = Snippets.selectInterfaceMethod(receiver, declaredInterfaceMethod).asAddress();
+        return vtableEntryPoint.plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
     public static Address resolveSpecialMethod(ResolutionGuard.InPool guard) {
         final VirtualMethodActor virtualMethod = Snippets.resolveSpecialMethod(guard);
-        return Snippets.makeEntrypoint(virtualMethod);
+        return Snippets.makeEntrypoint(virtualMethod, BASELINE_ENTRY_POINT);
     }
 
     public static Address resolveStaticMethod(ResolutionGuard.InPool guard) {
         final StaticMethodActor staticMethod = Snippets.resolveStaticMethod(guard);
         Snippets.makeHolderInitialized(staticMethod);
-        return Snippets.makeEntrypoint(staticMethod);
+        return Snippets.makeEntrypoint(staticMethod, BASELINE_ENTRY_POINT);
     }
 
     public static Object resolveClassForNewAndCreate(ResolutionGuard guard) {
@@ -137,6 +137,23 @@ public class T1XRuntime {
 
     public static Object createReferenceArray(ArrayClassActor arrayClassActor, int length) {
         return Snippets.createArray(arrayClassActor, length);
+    }
+
+    public static int[] createMultianewarrayDimensions(Pointer sp, int n) {
+        int[] dims = new int[n];
+        for (int i = 0; i < n; i++) {
+            int len;
+            if (T1X.isAMD64()) {
+                int offset = (n - i - 1) * JVMS_SLOT_SIZE;
+                len = sp.readInt(offset);
+            } else {
+                throw T1X.unimplISA();
+            }
+            checkArrayDimension(len);
+            dims[i] = len;
+        }
+        return dims;
+
     }
 
     public static Object cloneArray(int[] arr) {

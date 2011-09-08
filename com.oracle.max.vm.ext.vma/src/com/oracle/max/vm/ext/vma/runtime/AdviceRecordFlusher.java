@@ -37,6 +37,9 @@ public interface AdviceRecordFlusher {
     public static class RecordBuffer {
         VmThread vmThread;
         AdviceRecord[] records;
+        /**
+         * Valid records are {@code x >= 0 && x < index}.
+         */
         int index;
 
         public RecordBuffer(AdviceRecord[] records) {

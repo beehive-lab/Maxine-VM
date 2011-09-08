@@ -53,7 +53,6 @@ public final class T1XOptions {
     public static boolean PrintTimers                        = ____;
     public static boolean PrintCompilation                   = ____;
     public static boolean PrintJsrRetRewrites                = ____;
-    public static boolean PrintBytecodeHistogram             = ____;
 
     public static boolean PrintCFGToFile                     = ____;
 

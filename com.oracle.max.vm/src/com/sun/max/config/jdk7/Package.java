@@ -32,6 +32,8 @@ public class Package extends BootImagePackage {
     private static final String[] packages = {
         "sun.misc.PerfCounter",
         "sun.misc.PerfCounter$CoreCounters",
+        "sun.util.LocaleServiceProviderPool",
+        "java.security.AccessController",
     };
 
     public Package() {

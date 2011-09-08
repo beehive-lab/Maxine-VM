@@ -256,6 +256,9 @@ public class VmThread {
 
     private final VmStackFrameWalker stackDumpStackFrameWalker = new VmStackFrameWalker(Pointer.zero());
 
+    @CONSTANT_WHEN_NOT_ZERO
+    private VmStackFrameWalker samplingProfilerStackFrameWalker;
+
     private final StackReferenceMapPreparer stackReferenceMapPreparer = new StackReferenceMapPreparer(true, true);
 
     private final StackReferenceMapPreparer stackReferenceMapVerifier = new StackReferenceMapPreparer(true, false);
@@ -353,8 +356,8 @@ public class VmThread {
      * </ol>
      */
     public Throwable loadExceptionForHandler() {
-        Safepoint.enable();
-        Safepoint.safepoint();
+        SafepointPoll.enable();
+        SafepointPoll.safepointPoll();
         Throwable e = exception;
         exception = null;
         FatalError.check(e != null, "Exception object lost during unwinding");
@@ -439,11 +442,11 @@ public class VmThread {
     /**
      * Gets the current {@linkplain VmThreadLocal TLA}.
      *
-     * @return the value of the safepoint {@linkplain Safepoint#latchRegister() latch} register.
+     * @return the value of the safepoint {@linkplain SafepointPoll#latchRegister() latch} register.
      */
     @INLINE
     public static Pointer currentTLA() {
-        return Safepoint.getLatchRegister();
+        return SafepointPoll.getLatchRegister();
     }
 
     /**
@@ -542,7 +545,7 @@ public class VmThread {
                     Pointer yellowZone) {
 
         // Disable safepoints:
-        Safepoint.setLatchRegister(DTLA.load(etla));
+        SafepointPoll.setLatchRegister(DTLA.load(etla));
 
         JNI_ENV.store3(etla, NativeInterfaces.jniEnv());
 
@@ -982,6 +985,16 @@ public class VmThread {
     public VmStackFrameWalker stackDumpStackFrameWalker() {
         FatalError.check(stackDumpStackFrameWalker != null, "Thread-local stack frame walker cannot be null for a running thread");
         return stackDumpStackFrameWalker;
+    }
+
+    /**
+     * Gets a dynamically allocated, thread local object that can be used by the sample profiler without incurring any allocation.
+     */
+    public VmStackFrameWalker samplingProfilerStackFrameWalker() {
+        if (samplingProfilerStackFrameWalker == null) {
+            samplingProfilerStackFrameWalker = new VmStackFrameWalker(ETLA.load(VmThread.currentTLA()));
+        }
+        return samplingProfilerStackFrameWalker;
     }
 
     /**

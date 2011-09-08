@@ -30,7 +30,7 @@ import com.sun.max.program.*;
  * An array-based recording of the history of a value, with
  * time expressed as the number of generations back from the current generation (0).
  */
-public class ArrayValueHistory<E> {
+public final class ArrayValueHistory<E> {
 
     private final ArrayDeque<E> generations;
     private final int limit;
@@ -49,38 +49,50 @@ public class ArrayValueHistory<E> {
      * Adds a new value, which becomes the current generation.
      * The generation of all previously recorded values increases by 1.
      */
-    public void add(E newValue) {
-        if (generations.size() > 0) {
-            if (newValue.equals(generations.getFirst())) {
-                if (age >= 0) {
-                    age++;
-                }
-            } else {
-                age = 0;
-            }
-        }
+    public void addNew(E newValue) {
+//        if (generations.size() > 0) {
+//            if (newValue.equals(generations.getFirst())) {
+//                if (age >= 0) {
+//                    age++;
+//                }
+//            } else {
+//                age = 0;
+//            }
+//        }
         generations.addFirst(newValue);
         if (generations.size() > limit) {
             generations.removeLast();
         }
+        this.age = currentAge();
     }
 
     /**
-     * @return the "current" value (at generation 0).
-     * Error if no values have been recorded.
+     * Replaces the current value in the history.
+     *
+     * @param newValue value which becomes current
+     * @throws ProgramError if no values have been recorded.
      */
-    public E get() {
+    public void updateCurrent(E newValue) {
         if (generations.size() > 0) {
+            if (!newValue.equals(generations.getFirst())) {
+                generations.pop();
+                addNew(newValue);
+            }
+        } else {
+            throw ProgramError.unexpected("attempt to update empty history");
+        }
+    }
+
+    /**
+     * Gets the historical value at some generation, 0 is current.
+     *
+     * @return The value at a specified generation.
+     * @throws ProgramError if the index is out of range of the current history
+     */
+    public E value(int generation) {
+        if (generation == 0 && generations.size() > 0) {
             return generations.getFirst();
         }
-        throw ProgramError.unexpected("empty history");
-    }
-
-    /**
-     * @return The value at a specified generation.
-     * Error if generation does not exist.
-     */
-    public E get(int generation) {
         final Iterator<E> iterator = generations.iterator();
         int index = 0;
         while (iterator.hasNext()) {
@@ -97,7 +109,7 @@ public class ArrayValueHistory<E> {
      * 0 if different from immediate predecessor; -1 if no different value ever recorded
      * Comparison uses {@linkplain Object#equals(Object) equals}.
      */
-    public int getAge() {
+    public int currentValueAge() {
         return age;
     }
 
@@ -111,7 +123,7 @@ public class ArrayValueHistory<E> {
     /**
      * @return the number of generations recorded; initially 0.
      */
-    public int getSize() {
+    public int size() {
         return generations.size();
     }
 
@@ -119,8 +131,27 @@ public class ArrayValueHistory<E> {
      * @return iteration of the values recorded in the history, starting with the current
      * generation and proceeding backward in time.
      */
-    public Iterator<E> values() {
+    public Iterator<E> generations() {
         return generations.iterator();
+    }
+
+    /**
+     * Computes the age of the current generation, defined to be the number of
+     * preceding values that are equal, or -1 if no different value exists.
+     */
+    private int currentAge() {
+        assert generations.size() > 0;
+        final Iterator<E> iterator = generations.iterator();
+        E currentValue = iterator.next();
+        int duplicates = 0;
+        while (iterator.hasNext()) {
+            if (iterator.next().equals(currentValue)) {
+                duplicates++;
+            } else {
+                return duplicates;
+            }
+        }
+        return -1;
     }
 
 }

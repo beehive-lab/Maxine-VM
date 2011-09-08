@@ -413,7 +413,7 @@ public abstract class ReferenceMapInterpreter {
      * @param bciIter the BCIs at which {@code visitor} should notified of the references
      *            in the abstract interpretation state
      */
-    public void interpretReferenceSlots(ReferenceMapInterpreterContext context, ReferenceSlotVisitor visitor, BCIIterator bciIter) {
+    public final void interpretReferenceSlots(ReferenceMapInterpreterContext context, ReferenceSlotVisitor visitor, BCIIterator bciIter) {
         boolean trace = traceRefMapInterpretation(context.classMethodActor());
         if (trace) {
             Log.print("Interpreting ref slots for ");
@@ -1312,7 +1312,6 @@ public abstract class ReferenceMapInterpreter {
                     break;
                 }
 
-                case TEMPLATE_CALL:
                 case INVOKESPECIAL:
                 case INVOKEVIRTUAL:
                 case INVOKEINTERFACE:
@@ -1327,7 +1326,7 @@ public abstract class ReferenceMapInterpreter {
                         final TypeDescriptor parameter = methodSignature.parameterDescriptorAt(i);
                         pop(parameter.toKind());
                     }
-                    if (opcode != Bytecodes.INVOKESTATIC && opcode != TEMPLATE_CALL) {
+                    if (opcode != Bytecodes.INVOKESTATIC) {
                         popCategory1(); // receiver
                     }
 
@@ -1666,12 +1665,6 @@ public abstract class ReferenceMapInterpreter {
                 case MSB:
                     skip2();
                     break;
-                case ICMP:
-                case WCMP:
-                    skip2();
-                    popCategory1();
-                    popCategory1();
-                    break;
                 case UWCMP:
                 case UCMP:
                     skip2();
@@ -1701,7 +1694,7 @@ public abstract class ReferenceMapInterpreter {
                     switch (opcode) {
                         case INFO:
                         case UNCOMMON_TRAP:
-                        case SAFEPOINT: {
+                        case SAFEPOINT_POLL: {
                             break;
                         }
                         case HERE: {

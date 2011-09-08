@@ -32,7 +32,7 @@ import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.runtime.Safepoint.State;
+import com.sun.max.vm.runtime.SafepointPoll.State;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.value.*;
 
@@ -99,7 +99,7 @@ public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements 
     private final String entityDescription;
     private final ThreadLocalsAreaMemoryRegion tlaMemoryRegion;
     private final TeleNativeThread teleNativeThread;
-    public final Safepoint.State safepointState;
+    public final SafepointPoll.State safepointState;
     private final int threadLocalAreaVariableCount;
     private final TeleThreadLocalVariable[] threadLocalVariables;
     private final Map<String, TeleThreadLocalVariable> nameToThreadLocalVariable = new HashMap<String, TeleThreadLocalVariable>();
@@ -113,7 +113,7 @@ public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements 
      * @param start memory location in the VM where the variables are stored, {@link Address#zero()} if the variables are invalid.
      * @param description a readable description of the area
      */
-    public TeleThreadLocalsArea(TeleVM teleVM, TeleNativeThread teleNativeThread, Safepoint.State safepointState, Pointer start) {
+    public TeleThreadLocalsArea(TeleVM teleVM, TeleNativeThread teleNativeThread, SafepointPoll.State safepointState, Pointer start) {
         super(teleNativeThread.vm());
         assert !start.isZero();
         this.teleNativeThread = teleNativeThread;
@@ -186,7 +186,7 @@ public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements 
         return null;
     }
 
-    public Safepoint.State safepointState() {
+    public SafepointPoll.State safepointState() {
         return safepointState;
     }
 

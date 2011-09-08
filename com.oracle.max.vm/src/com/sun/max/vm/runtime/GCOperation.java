@@ -58,9 +58,9 @@ public abstract class GCOperation extends VmOperation {
      * on the global GC and thread lock ({@link VmThreadMap#THREAD_LOCK}).
      */
     @Override
-    protected void doAtSafepointBeforeBlocking(Pointer trapState) {
+    protected void doAtSafepointBeforeBlocking(Pointer trapFrame) {
         // note that this procedure always runs with safepoints disabled
-        final Pointer tla = Safepoint.getLatchRegister();
+        final Pointer tla = SafepointPoll.getLatchRegister();
         final Pointer etla = ETLA.load(tla);
         Heap.disableAllocationForCurrentThread();
 
@@ -68,12 +68,12 @@ public abstract class GCOperation extends VmOperation {
             FatalError.unexpected("Stack reference map preparer should be cleared before GC");
         }
 
-        VmThreadLocal.prepareStackReferenceMapFromTrap(tla, trapState);
+        VmThreadLocal.prepareStackReferenceMapFromTrap(tla, trapFrame);
     }
 
     @Override
-    public void doAtSafepointAfterBlocking(Pointer trapState) {
-        final Pointer tla = Safepoint.getLatchRegister();
+    public void doAtSafepointAfterBlocking(Pointer trapFrame) {
+        final Pointer tla = SafepointPoll.getLatchRegister();
         final Pointer etla = ETLA.load(tla);
         if (!LOWEST_ACTIVE_STACK_SLOT_ADDRESS.load(etla).isZero()) {
             FatalError.unexpected("Stack reference map preparer should be cleared after GC");

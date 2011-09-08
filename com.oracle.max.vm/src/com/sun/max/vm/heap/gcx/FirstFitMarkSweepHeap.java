@@ -330,7 +330,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
          * We must be holding the refillLock of that allocator.
          */
         @Override
-        @NO_SAFEPOINTS("tlab allocation loop must not be subjected to safepoints")
+        @NO_SAFEPOINT_POLLS("tlab allocation loop must not be subjected to safepoints")
         Address allocateChunkList(Size tlabSize, Pointer leftover, Size leftoverSize) {
             Address firstChunk = chunkOrZero(leftover, leftoverSize);
             if (!firstChunk.isZero()) {

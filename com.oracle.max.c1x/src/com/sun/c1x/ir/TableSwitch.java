@@ -42,10 +42,10 @@ public final class TableSwitch extends Switch {
      * @param successors the list of successors
      * @param lowKey the lowest integer key in the table
      * @param stateBefore the state before the switch
-     * @param isSafepoint {@code true} if this instruction is a safepoint
+     * @param isSafepointPoll {@code true} if this instruction is a safepoint
      */
-    public TableSwitch(Value value, List<BlockBegin> successors, int lowKey, FrameState stateBefore, boolean isSafepoint) {
-        super(value, successors, stateBefore, isSafepoint);
+    public TableSwitch(Value value, List<BlockBegin> successors, int lowKey, FrameState stateBefore, boolean isSafepointPoll) {
+        super(value, successors, stateBefore, isSafepointPoll);
         this.lowKey = lowKey;
     }
 
@@ -73,7 +73,7 @@ public final class TableSwitch extends Switch {
     @Override
     public void print(LogStream out) {
         out.print("tableswitch ");
-        if (isSafepoint()) {
+        if (isSafepointPoll()) {
             out.print("(safepoint) ");
         }
         out.println(value());

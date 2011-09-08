@@ -444,6 +444,10 @@ public abstract class LIRAssembler {
         }
     }
 
+    protected final Object asCallTarget(Object o) {
+        return compilation.runtime.asCallTarget(o);
+    }
+
     protected abstract int initialFrameSizeInBytes();
 
     protected abstract void doPeephole(LIRList list);

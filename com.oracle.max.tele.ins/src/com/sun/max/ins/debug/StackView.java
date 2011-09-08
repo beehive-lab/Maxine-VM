@@ -156,9 +156,8 @@ public final class StackView extends AbstractView<StackView> {
                 setToolTipPrefix("call return in frame " + modelIndex + " points at:<br>");
                 setForeground(style().wordCallReturnPointColor());
             }
-            setWrappedText(Integer.toString(modelIndex) + ":  " + htmlify(methodName));
-            setWrappedToolTipText(toolTip);
-            setFont(style().defaultFont());
+            setText(Integer.toString(modelIndex) + ":  " + methodName);
+            setWrappedToolTipHtmlText(toolTip);
             setBackground(isSelected ? stackFrameList.getSelectionBackground() : stackFrameList.getBackground());
             return this;
         }
@@ -478,8 +477,8 @@ public final class StackView extends AbstractView<StackView> {
             final ListCellRenderer cellRenderer = stackFrameList.getCellRenderer();
             for (int index = 0; index < stackFrameListModel.getSize(); index++) {
                 final Object elementAt = stackFrameListModel.getElementAt(index);
-                final JLabel jLabel = (JLabel) cellRenderer.getListCellRendererComponent(stackFrameList, elementAt, index, false, false);
-                result.append(jLabel.getText()).append("\n");
+                final InspectorLabel label = (InspectorLabel) cellRenderer.getListCellRendererComponent(stackFrameList, elementAt, index, false, false);
+                result.append(label.getTextDeHtmlify()).append("\n");
             }
             gui().postToClipboard(result.toString());
         }

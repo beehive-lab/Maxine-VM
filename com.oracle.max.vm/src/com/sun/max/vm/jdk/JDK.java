@@ -89,6 +89,7 @@ public class JDK {
     public static final ClassRef java_math_BigInteger                = new LazyClassRef(java.math.BigInteger.class);
 
     public static final ClassRef java_util_concurrent_ConcurrentSkipListSet = new LazyClassRef(java.util.concurrent.ConcurrentSkipListSet.class);
+    public static final ClassRef java_util_concurrent_ConcurrentLinkedQueue= new LazyClassRef(java.util.concurrent.ConcurrentLinkedQueue.class);
     public static final ClassRef java_util_concurrent_CopyOnWriteArrayList = new LazyClassRef(java.util.concurrent.CopyOnWriteArrayList.class);
     public static final ClassRef java_util_concurrent_ConcurrentHashMap = new LazyClassRef(java.util.concurrent.ConcurrentHashMap.class);
     public static final ClassRef java_util_concurrent_ConcurrentHashMap$HashEntry = new LazyClassRef(java.util.concurrent.ConcurrentHashMap.class, "HashEntry");

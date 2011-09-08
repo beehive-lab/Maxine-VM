@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,22 +20,31 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.annotate;
+package com.sun.max.vm.t1x;
 
-import java.lang.annotation.*;
+import java.util.*;
 
 /**
- * Suppresses the insertion of safepoints in the body of the annotated method.
- *
- * ATTENTION: callees of the method may still contain safepoints.
+ * Records locations in the code buffer that need to be subsequently patched.
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface NO_SAFEPOINTS {
+public class PatchInfo {
+    /**
+     * Encoded patch data. The encoding format is defined in the platform specific subclasses.
+     */
+    public int[] data = new int[10];
 
     /**
-     * Documents the reason why the annotated code must have no safepoints.
+     * The length of valid data in {@code data} (which may be less that {@code data.length}).
      */
-    String value();
+    public int size;
 
+    public void ensureCapacity(int minCapacity) {
+        if (minCapacity > data.length) {
+            int newCapacity = (size * 3) / 2 + 1;
+            if (newCapacity < minCapacity) {
+                newCapacity = minCapacity;
+            }
+            data = Arrays.copyOf(data, newCapacity);
+        }
+    }
 }

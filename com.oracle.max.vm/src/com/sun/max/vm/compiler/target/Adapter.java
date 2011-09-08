@@ -23,16 +23,15 @@
 package com.sun.max.vm.compiler.target;
 
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
+import static com.sun.max.vm.compiler.target.Safepoints.*;
 
 import java.util.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.io.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.TargetBundleLayout.ArrayField;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.stack.*;
@@ -103,26 +102,29 @@ public abstract class Adapter extends TargetMethod {
      * @param description a textual description of the adapter
      * @param frameSize the size of the adapter frame
      * @param code the adapter code
-     * @param callPosition TODO
+     * @param callPos
+     * @param callSize
      */
-    public Adapter(AdapterGenerator generator, String description, int frameSize, byte[] code, int callPosition) {
+    public Adapter(AdapterGenerator generator, String description, int frameSize, byte[] code, int callPos, int callSize) {
         super(description, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         this.setFrameSize(frameSize);
         this.generator = generator;
 
-        final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(0, 0, 0);
-        targetBundleLayout.update(ArrayField.code, code.length);
+        final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(0, 0, code.length);
         Code.allocate(targetBundleLayout, this);
         setData(null, null, code);
-        setStopPositions(new int[] {callPosition}, NO_DIRECT_CALLEES, 1, 0);
+        setSafepoints(new Safepoints(Safepoints.make(Safepoints.safepointPosForCall(callPos, callSize), callPos, INDIRECT_CALL)), TargetMethod.NO_DIRECT_CALLEES);
     }
 
-    public static final Object[] NO_DIRECT_CALLEES = {};
-
     /**
-     * Gets the offset of the call to this in a method's prologue.
+     * Gets the offset of the call to this adapter in a method's prologue.
      */
     public abstract int callOffsetInPrologue();
+
+    /**
+     * Gets the size of the call to this adapter in a method's prologue.
+     */
+    public abstract int callSizeInPrologue();
 
     @Override
     public void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls, Set<MethodActor> inlinedMethods) {
@@ -150,14 +152,6 @@ public abstract class Adapter extends TargetMethod {
             throw FatalError.unexpected("Exception occurred in frame adapter");
         }
         return Address.zero();
-    }
-
-    @Override
-    public void traceDebugInfo(IndentWriter writer) {
-    }
-
-    @Override
-    public void traceExceptionHandlers(IndentWriter writer) {
     }
 
     @Override

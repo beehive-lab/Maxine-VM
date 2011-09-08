@@ -44,9 +44,9 @@ public enum CiKind {
     Float  ('f', "float",   "jfloat",   SLOTS_1,  FIELD_TYPE | RETURN_TYPE | PRIMITIVE),
     Long   ('l', "long",    "jlong",    SLOTS_2,  FIELD_TYPE | RETURN_TYPE | PRIMITIVE),
     Double ('d', "double",  "jdouble",  SLOTS_2,  FIELD_TYPE | RETURN_TYPE | PRIMITIVE),
-    Object ('a', "object",  "jobject",  SLOTS_1,  FIELD_TYPE | RETURN_TYPE),
+    Object ('a', "Object",  "jobject",  SLOTS_1,  FIELD_TYPE | RETURN_TYPE),
     /** Denotes a machine word type used in the extended bytecodes. */
-    Word   ('w', "word",    "jword",    SLOTS_1,  FIELD_TYPE | RETURN_TYPE),
+    Word   ('w', "Word",    "jword",    SLOTS_1,  FIELD_TYPE | RETURN_TYPE),
     Void   ('v', "void",    "void",     SLOTS_0,  RETURN_TYPE),
     /** Denote a bytecode address in a {@code JSR} bytecode. */
     Jsr    ('r', "jsr",     null,       SLOTS_1,  0),

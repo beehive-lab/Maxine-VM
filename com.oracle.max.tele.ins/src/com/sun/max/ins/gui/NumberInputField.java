@@ -101,7 +101,7 @@ public abstract class NumberInputField extends JTextField {
     public NumberInputField(Inspection inspection, long initialValue) {
         super(NUMBERINPUTFIELDDEFAULTSIZE);
         this.value = initialValue;
-        setFont(inspection.style().wordDataFont());
+        setFont(inspection.style().defaultWordDataFont());
         setValue(initialValue);
         addKeyListener(new KeyTypedListener() {
             @Override

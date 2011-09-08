@@ -23,7 +23,6 @@
 package com.sun.max.vm.runtime;
 
 import static com.sun.cri.bytecode.Bytecodes.MemoryBarriers.*;
-import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.compiler.CompilationScheme.Static.*;
 import static com.sun.max.vm.runtime.VMRegister.*;
 import static com.sun.max.vm.runtime.VmOperation.*;
@@ -44,7 +43,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.CompilationScheme.CompilationFlag;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.profile.*;
@@ -442,15 +441,14 @@ public class Snippets {
     }
 
     /**
-     * Produces an address corresponding to the entry point for the code of a given method
-     * as compiled by the {@linkplain CallEntryPoint#OPTIMIZED_ENTRY_POINT optimizing compiler}.
+     * Produces an address corresponding to a given entry point for the code of a given method.
      *
      * If the compiled code does not yet exist for the method, it is compiled with the
      * default compiler.
      */
     @INLINE
-    public static Address makeEntrypoint(ClassMethodActor classMethodActor) {
-        return compile(classMethodActor, CompilationFlag.NONE).getEntryPoint(OPTIMIZED_ENTRY_POINT).asAddress();
+    public static Address makeEntrypoint(ClassMethodActor classMethodActor, CallEntryPoint cep) {
+        return compile(classMethodActor, Compilations.Attr.NONE).getEntryPoint(cep).asAddress();
     }
 
     /**
@@ -504,7 +502,7 @@ public class Snippets {
     public static void nativeCallPrologue(NativeFunction nf) {
         Pointer etla = ETLA.load(currentTLA());
         Pointer previousAnchor = LAST_JAVA_FRAME_ANCHOR.load(etla);
-        Pointer ip = nf.nativeCallStopAddress().asPointer();
+        Pointer ip = nf.nativeCallSafepointAddress().asPointer();
         Pointer anchor = JavaFrameAnchor.create(getCpuStackPointer(), getCpuFramePointer(), ip, previousAnchor);
         nativeCallPrologue0(etla, anchor);
     }
@@ -562,7 +560,7 @@ public class Snippets {
      * This methods spins in a busy loop while the current thread is {@linkplain VmOperation frozen}.
      */
     @INLINE
-    @NO_SAFEPOINTS("Cannot take a trap while frozen")
+    @NO_SAFEPOINT_POLLS("Cannot take a trap while frozen")
     private static void spinWhileFrozen(Pointer etla) {
         if (UseCASBasedThreadFreezing) {
             while (true) {
@@ -613,7 +611,7 @@ public class Snippets {
     public static void nativeCallPrologueForC(NativeFunction nf) {
         Pointer etla = ETLA.load(currentTLA());
         Pointer previousAnchor = LAST_JAVA_FRAME_ANCHOR.load(etla);
-        Pointer ip = nf.nativeCallStopAddress().asPointer();
+        Pointer ip = nf.nativeCallSafepointAddress().asPointer();
         Pointer anchor = JavaFrameAnchor.create(getCpuStackPointer(), getCpuFramePointer(), ip, previousAnchor);
         LAST_JAVA_FRAME_ANCHOR.store(etla, anchor);
     }

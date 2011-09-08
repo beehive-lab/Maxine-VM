@@ -84,7 +84,7 @@ public class MaxineTester {
     private static final Option<Integer> javaRunTimeOutOption = options.newIntegerOption("timeout-max", 500,
                     "The maximum number of seconds to wait for the target VM to complete before " +
                     "timing out and killing it when running user programs.");
-    private static final Option<Integer> javaRunTimeOutScale = options.newIntegerOption("timeout-scale", 10,
+    private static final Option<Integer> javaRunTimeOutScale = options.newIntegerOption("timeout-scale", 20,
                     "The scaling factor for automatically computing the timeout for running user programs " +
                     "from how long the program took on the reference VM.");
     private static final Option<Integer> traceOption = options.newIntegerOption("trace", 0,
@@ -1590,11 +1590,24 @@ public class MaxineTester {
         void runSpecJVM2008Test(File outputDir, File imageDir, File workingDir, String test) {
             final String testName = "SpecJVM2008 " + (test == null ? "all" : test);
             final JavaCommand command = new JavaCommand(new File("SPECjvm2008.jar"));
-            // temp workarounds
+
+            // Disable generation of report files (no raw report, text report, and html report)
+            command.addArgument("-crf");
+            command.addArgument("false");
             command.addArgument("-ctf");
             command.addArgument("false");
             command.addArgument("-chf");
             command.addArgument("false");
+            // Disable checksum validation of benchmark kit - takes too long at startup
+            command.addArgument("-ikv");
+            // Continue on errors
+            command.addArgument("-coe");
+            // Fixed workload setting: Number of iterations and operations per iteration are fixed (default is a fixed execution time per benchmark)
+            command.addArgument("--lagom");
+            command.addArgument("-i");
+            command.addArgument("1");
+            command.addArgument("-ops");
+            command.addArgument("1");
 
             if (test != null) {
                 command.addArgument(test);

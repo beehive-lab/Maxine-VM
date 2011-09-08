@@ -48,6 +48,7 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.instrument.*;
 import com.sun.max.vm.jni.*;
+import com.sun.max.vm.profilers.sampling.*;
 import com.sun.max.vm.run.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
@@ -72,12 +73,15 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         "Selects the 64-bit data model if available. Currently ignored."), MaxineVM.Phase.PRISTINE);
     private static final AgentVMOption javaagentOption = register(new AgentVMOption(
         "-javaagent", "load Java programming language agent, see java.lang.instrument"), MaxineVM.Phase.STARTING);
+    private static final VMStringOption profOption = register(new VMStringOption(
+        "-Xprof", false, null, "run sampling profiler"), MaxineVM.Phase.STARTING);
 
     /**
      * List of classes to explicitly reinitialise in the {@link MaxineVM.Phase#STARTING} phase.
      * This supports extensions to the boot image.
      */
     private static List<String> reinitClasses = new LinkedList<String>();
+    private static boolean profiling;
 
     @HOSTED_ONLY
     public JavaRunScheme() {
@@ -188,8 +192,22 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                 break;
             }
 
+            case RUNNING: {
+                // This is always the last scheme to be initialized, so now is the right time
+                // to start the profiler if requested.
+                final String profValue = profOption.getValue();
+                if (profValue != null) {
+                    profiling = true;
+                    SamplingProfiler.create(profValue);
+                }
+                break;
+            }
+
             case TERMINATING: {
                 JniFunctions.printJniFunctionTimers();
+                if (profiling) {
+                    SamplingProfiler.terminate();
+                }
                 break;
             }
             default: {

@@ -22,6 +22,8 @@
  */
 package com.sun.c1x.opt;
 
+import com.sun.c1x.*;
+import com.sun.c1x.debug.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;
@@ -82,7 +84,7 @@ public class DiamondEliminator implements BlockClosure {
         }
 
         // check that there is only one phi function in this block, and that if can be statically decided
-        boolean onlyPhi = block.stateBefore().forEachLivePhi(block, new PhiProcedure() {
+        boolean onlyPhi = block.stateBefore().forEachPhi(block, new PhiProcedure() {
             public boolean doPhi(Phi phi) {
                 return phi == ifPhi;
             }
@@ -108,6 +110,10 @@ public class DiamondEliminator implements BlockClosure {
         } else {
             leftSux = block.suxAt(1);
             rightSux = block.suxAt(0);
+        }
+
+        if (C1XOptions.PrintHIR) {
+            TTY.println("Eliminating Block B" + block.blockID + ", phi " + ifPhi.id() + ", connecting blocks B" + leftPred.blockID + "->" + leftSux.blockID + " and " + rightPred.blockID + "->" + rightSux.blockID);
         }
 
         // connect leftPred with leftSux, and rightPred with rightSux. This eliminates the curIf and the ifPhi
@@ -143,6 +149,17 @@ public class DiamondEliminator implements BlockClosure {
             if (block != ignoreBlock) {
                 curBlock = block;
                 curValue = null;
+
+                block.stateBefore().forEachPhi(block, new PhiProcedure() {
+                    public boolean doPhi(Phi phi) {
+                        for (int i = 0; i < phi.inputCount(); i++) {
+                            if (phi.inputAt(i) == search) {
+                                found = true;
+                            }
+                        }
+                        return true;
+                    }
+                });
 
                 if (block.exceptionHandlerStates() != null) {
                     for (FrameState s : block.exceptionHandlerStates()) {

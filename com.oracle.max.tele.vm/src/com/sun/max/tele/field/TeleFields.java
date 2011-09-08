@@ -80,6 +80,7 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceReferenceFieldAccess ClassActor_classLoader = new TeleInstanceReferenceFieldAccess(ClassActor.class, "classLoader", ClassLoader.class);
     public final TeleInstanceReferenceFieldAccess ClassActor_classfile = new TeleInstanceReferenceFieldAccess(ClassActor.class, "classfile", byte[].class);
     public final TeleInstanceReferenceFieldAccess ClassActor_componentClassActor = new TeleInstanceReferenceFieldAccess(ClassActor.class, "componentClassActor", ClassActor.class);
+    public final TeleInstanceReferenceFieldAccess ClassActor_dynamicHub = new TeleInstanceReferenceFieldAccess(ClassActor.class, "dynamicHub", DynamicHub.class);
     public final TeleInstanceIntFieldAccess ClassActor_id = new TeleInstanceIntFieldAccess(ClassActor.class, "id");
     public final TeleInstanceReferenceFieldAccess ClassActor_javaClass = new TeleInstanceReferenceFieldAccess(ClassActor.class, "javaClass", Class.class);
     public final TeleInstanceReferenceFieldAccess ClassActor_localInstanceFieldActors = new TeleInstanceReferenceFieldAccess(ClassActor.class, "localInstanceFieldActors", FieldActor[].class);
@@ -87,10 +88,11 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceReferenceFieldAccess ClassActor_localStaticFieldActors = new TeleInstanceReferenceFieldAccess(ClassActor.class, "localStaticFieldActors", FieldActor[].class);
     public final TeleInstanceReferenceFieldAccess ClassActor_localStaticMethodActors = new TeleInstanceReferenceFieldAccess(ClassActor.class, "localStaticMethodActors", StaticMethodActor[].class);
     public final TeleInstanceReferenceFieldAccess ClassActor_localVirtualMethodActors = new TeleInstanceReferenceFieldAccess(ClassActor.class, "localVirtualMethodActors", VirtualMethodActor[].class);
+    public final TeleInstanceReferenceFieldAccess ClassActor_staticHub = new TeleInstanceReferenceFieldAccess(ClassActor.class, "staticHub", StaticHub.class);
     public final TeleInstanceReferenceFieldAccess ClassActor_staticTuple = new TeleInstanceReferenceFieldAccess(ClassActor.class, "staticTuple", Object.class);
     public final TeleInstanceReferenceFieldAccess ClassActor_typeDescriptor = new TeleInstanceReferenceFieldAccess(ClassActor.class, "typeDescriptor", TypeDescriptor.class);
     public final TeleInstanceReferenceFieldAccess ClassMethodActor_codeAttribute = new TeleInstanceReferenceFieldAccess(ClassMethodActor.class, "codeAttribute", CodeAttribute.class);
-    public final TeleInstanceReferenceFieldAccess ClassMethodActor_targetState = new TeleInstanceReferenceFieldAccess(ClassMethodActor.class, "targetState", Object.class);
+    public final TeleInstanceReferenceFieldAccess ClassMethodActor_compiledState = new TeleInstanceReferenceFieldAccess(ClassMethodActor.class, "compiledState", Object.class);
     public final TeleInstanceReferenceFieldAccess ClassRegistry_typeDescriptorToClassActor = new TeleInstanceReferenceFieldAccess(ClassRegistry.class, "typeDescriptorToClassActor", ConcurrentHashMap.class);
     public final TeleStaticReferenceFieldAccess Code_CODE_BOOT_NAME = new TeleStaticReferenceFieldAccess(Code.class, "CODE_BOOT_NAME", String.class);
     public final TeleStaticReferenceFieldAccess Code_bootCodeRegion = new TeleStaticReferenceFieldAccess(Code.class, "bootCodeRegion", CodeRegion.class);
@@ -100,7 +102,9 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleStaticReferenceFieldAccess CodeManager_runtimeCodeRegion = new TeleStaticReferenceFieldAccess(CodeManager.class, "runtimeCodeRegion", CodeRegion.class);
     public final TeleInstanceIntFieldAccess CodeRegion_length = new TeleInstanceIntFieldAccess(CodeRegion.class, "length");
     public final TeleInstanceReferenceFieldAccess CodeRegion_targetMethods = new TeleInstanceReferenceFieldAccess(CodeRegion.class, "targetMethods", TargetMethod[].class);
-    public final TeleInstanceReferenceFieldAccess Compilation_previousTargetState = new TeleInstanceReferenceFieldAccess(Compilation.class, "previousTargetState", Object.class);
+    public final TeleInstanceReferenceFieldAccess Compilation_prevCompilations = new TeleInstanceReferenceFieldAccess(Compilation.class, "prevCompilations", Compilations.class);
+    public final TeleInstanceReferenceFieldAccess Compilations_interpreterCompatible = new TeleInstanceReferenceFieldAccess(Compilations.class, "interpreterCompatible", TargetMethod.class);
+    public final TeleInstanceReferenceFieldAccess Compilations_optimized = new TeleInstanceReferenceFieldAccess(Compilations.class, "optimized", TargetMethod.class);
     public final TeleInstanceReferenceFieldAccess ConstantPool_constants = new TeleInstanceReferenceFieldAccess(ConstantPool.class, "constants", PoolConstant[].class);
     public final TeleInstanceReferenceFieldAccess ConstantPool_holder = new TeleInstanceReferenceFieldAccess(ConstantPool.class, "holder", ClassActor.class);
     public final TeleInstanceReferenceFieldAccess Descriptor_string = new TeleInstanceReferenceFieldAccess(Descriptor.class, "string", String.class);

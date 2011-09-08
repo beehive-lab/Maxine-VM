@@ -30,6 +30,7 @@ import java.util.*;
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;
@@ -42,6 +43,11 @@ import com.sun.max.vm.thread.*;
  */
 @METHOD_SUBSTITUTIONS(Throwable.class)
 public final class JDK_java_lang_Throwable {
+
+    public static boolean StackTraceInThrowable = true;
+    static {
+        VMOptions.addFieldOption("-XX:", "StackTraceInThrowable", "Collect backtrace in throwable when exception happens.");
+    }
 
     private static final ObjectThreadLocal<Throwable> TRACE_UNDER_CONSTRUCTION = new ObjectThreadLocal<Throwable>("TRACE_UNDER_CONSTRUCTION",
                     "Exception whose back or stack trace is currently being constructed");
@@ -80,7 +86,7 @@ public final class JDK_java_lang_Throwable {
     @SUBSTITUTE
     public synchronized Throwable fillInStackTrace() {
         final Throwable throwable = thisThrowable();
-        if (throwable instanceof OutOfMemoryError) {
+        if (!StackTraceInThrowable || throwable instanceof OutOfMemoryError) {
             // Don't record stack traces in situations where memory may be exhausted
             return throwable;
         }
@@ -111,16 +117,20 @@ public final class JDK_java_lang_Throwable {
      * A back trace is a lighter weight representation of a stack trace than
      * an array of {@link StackTraceElement}s.
      */
-    static class Backtrace extends StackTraceVisitor {
+    public static class Backtrace extends StackTraceVisitor {
 
-        static final int INITIAL_LENGTH = 32;
+        static final int INITIAL_LENGTH = 200;
 
-        int count;
-        int[] lineNos = new int[INITIAL_LENGTH];
-        ClassMethodActor[] methods = new ClassMethodActor[INITIAL_LENGTH];
+        public int count;
+        public int[] lineNos;
+        public ClassMethodActor[] methods;
 
         public Backtrace(ClassActor exceptionClass, int maxDepth) {
             super(exceptionClass, maxDepth);
+
+            int len = Math.min(maxDepth, INITIAL_LENGTH);
+            lineNos = new int[len];
+            methods = new ClassMethodActor[len];
         }
 
         @Override
@@ -198,6 +208,20 @@ public final class JDK_java_lang_Throwable {
             return new StackTraceElement[0];
         }
         return backtrace.getTrace();
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static native JDK_java_lang_Throwable asJLT(Throwable t);
+
+    /**
+     * Gets the backtrace from an exception object. This is only non-null between the call to
+     * {@link #fillInStackTrace()} and the first call to {@link #getOurStackTrace()}.
+     *
+     * @return the {@link Backtrace} object fro {@code t} if available, {@code null} otherwise
+     */
+    public static Backtrace getBacktrace(Throwable t) {
+        final JDK_java_lang_Throwable jlt = asJLT(t);
+        return (Backtrace) jlt.backtrace;
     }
 
     @SUBSTITUTE

@@ -23,6 +23,7 @@
 package com.sun.max.vm.compiler.target;
 
 import static com.sun.max.vm.VMOptions.*;
+import static com.sun.max.vm.compiler.target.Compilations.Attr.*;
 
 import java.util.concurrent.*;
 
@@ -39,7 +40,7 @@ import com.sun.max.vm.thread.*;
 /**
  * This class represents an ongoing or completed compilation.
  */
-public class Compilation /*implements Future<TargetMethod>*/ {
+public class Compilation {
 
     /**
      * Used to detect re-entrant compilation which indicates the boot image closure was not incomplete.
@@ -74,7 +75,7 @@ public class Compilation /*implements Future<TargetMethod>*/ {
     public final ClassMethodActor classMethodActor;
     public final Compilation parent;
     @INSPECTED
-    public final Object previousTargetState;
+    public final Compilations prevCompilations;
     public Thread compilingThread;
     public TargetMethod result;
 
@@ -84,16 +85,20 @@ public class Compilation /*implements Future<TargetMethod>*/ {
      */
     public boolean done;
 
+    public final int flags;
+
     public Compilation(CompilationScheme compilationScheme,
                        RuntimeCompiler compiler,
                        ClassMethodActor classMethodActor,
-                       Object previousTargetState, Thread compilingThread) {
+                       Compilations prevCompilations, Thread compilingThread, int flags) {
+        assert prevCompilations != null;
         this.parent = COMPILATION.get();
         this.compilationScheme = compilationScheme;
         this.compiler = compiler;
         this.classMethodActor = classMethodActor;
-        this.previousTargetState = previousTargetState;
+        this.prevCompilations = prevCompilations;
         this.compilingThread = compilingThread;
+        this.flags = flags;
 
         for (Compilation scope = parent; scope != null; scope = scope.parent) {
             if (scope.classMethodActor.equals(classMethodActor) && scope.compiler == compiler) {
@@ -144,7 +149,7 @@ public class Compilation /*implements Future<TargetMethod>*/ {
             boolean interrupted = false;
             if (!done) {
                 if (compilingThread == Thread.currentThread()) {
-                    throw new RuntimeException("Compilation of " + classMethodActor.format("%H.%n(%p)") + " is recursive, current compilation scheme: " + this.compilationScheme);
+                    throw new RuntimeException("Compilation of " + classMethodActor.format("%H.%n(%p)") + " is recursive, current compilation scheme: " + compilationScheme);
                 }
 
                 // the class method actor is used here as the condition variable
@@ -160,7 +165,7 @@ public class Compilation /*implements Future<TargetMethod>*/ {
             if (interrupted) {
                 Thread.currentThread().interrupt();
             }
-            return classMethodActor.currentTargetMethod();
+            return result;
         }
     }
 
@@ -175,20 +180,17 @@ public class Compilation /*implements Future<TargetMethod>*/ {
                 // the class method actor is used here as the condition variable
                 classMethodActor.wait(timeout); // TODO: convert timeout to milliseconds
             }
-            return classMethodActor.currentTargetMethod();
+            return result;
         }
     }
 
     /**
      * Perform the compilation, notifying the specified observers.
      *
-     * @param supersede specifies if the result should supersede any existing target method for the associated class
-     *            method actor (such that it becomes the new answer to {@link ClassMethodActor#currentTargetMethod()})
      * @return the target method that is the result of the compilation
      */
-    public TargetMethod compile(boolean supersede) {
+    public TargetMethod compile() {
         RuntimeCompiler compiler = this.compiler;
-        TargetMethod targetMethod = null;
 
         Throwable error = null;
         String methodString = "";
@@ -208,31 +210,40 @@ public class Compilation /*implements Future<TargetMethod>*/ {
             if (TIME_COMPILATION.getValue()) {
                 startCompile = System.currentTimeMillis();
             }
-            targetMethod = compiler.compile(classMethodActor, true, null);
-            if (targetMethod == null) {
+            result = compiler.compile(classMethodActor, true, null);
+            if (result == null) {
                 throw new InternalError(classMethodActor.format("Result of compiling of %H.%n(%p) is null"));
             }
-            InspectableCodeInfo.notifyCompilationEvent(targetMethod.classMethodActor, targetMethod);
+            InspectableCodeInfo.notifyCompilationEvent(result.classMethodActor, result);
 
             if (startCompile != 0) {
                 compilationTime += System.currentTimeMillis() - startCompile;
             }
 
-            logAfterCompilation(compiler, targetMethod, methodString);
+            logAfterCompilation(compiler, result, methodString);
         } catch (RuntimeException t) {
             error = t;
         } catch (Error t) {
             error = t;
         } finally {
-            // invariant: (targetMethod != null) != (error != null)
+            // invariant: (result != null) != (error != null)
             synchronized (classMethodActor) {
-                // update the target state of the class method actor
-                // assert classMethodActor.targetState == this;
-                if (targetMethod != null) {
+                // update the compilation state of the class method actor
+                if (result != null) {
+                    assert !INTERPRETER_COMPATIBLE.isSet(flags) || result.isInterpreterCompatible() : "a request for an interpreter compatible target method failed to produce one";
                     // compilation succeeded and produced a target method
-                    classMethodActor.targetState = TargetState.addTargetMethod(targetMethod, previousTargetState, supersede);
+                    TargetMethod interpreterCompatible = prevCompilations.interpreterCompatible;
+                    TargetMethod optimized = prevCompilations.optimized;
+                    if (INTERPRETER_COMPATIBLE.isSet(flags) || result.isInterpreterCompatible()) {
+                        interpreterCompatible = result;
+                    }
+                    if (OPTIMIZE.isSet(flags) || interpreterCompatible != result) {
+                        // We are assuming a method that is not interpreter compatible must be optimized
+                        optimized = result;
+                    }
+                    classMethodActor.compiledState = new Compilations(interpreterCompatible, optimized);
                 }
-                // compilation finished: this must come after the assignment to classMethodActor.targetState
+                // compilation finished: this must come after the assignment to classMethodActor.compState
                 done = true;
 
                 // notify any waiters on this compilation
@@ -242,14 +253,14 @@ public class Compilation /*implements Future<TargetMethod>*/ {
         if (error != null) {
             // an error occurred
             logCompilationError(error, compiler, methodString);
-        } else if (targetMethod == null) {
+        } else if (result == null) {
             // the compilation didn't produce a target method
             FatalError.unexpected("target method should not be null");
         }
 
         COMPILATION.set(parent);
 
-        return targetMethod;
+        return result;
     }
 
     /**
@@ -299,7 +310,7 @@ public class Compilation /*implements Future<TargetMethod>*/ {
             Log.printCurrentThread(false);
             Log.print(": ");
             Log.print(compiler.getClass().getSimpleName());
-            Log.print(previousTargetState == null ? ": Compiling " : ": Recompiling ");
+            Log.print(prevCompilations == Compilations.EMPTY ? ": Compiling " : ": Recompiling ");
             Log.println(methodString);
             Log.unlock(lockDisabledSafepoints);
         }
@@ -312,7 +323,7 @@ public class Compilation /*implements Future<TargetMethod>*/ {
             Log.printCurrentThread(false);
             Log.print(": ");
             Log.print(compiler.getClass().getSimpleName());
-            Log.print(previousTargetState == null ? ": Compiled " : ": Recompiled ");
+            Log.print(prevCompilations == Compilations.EMPTY ? ": Compiled " : ": Recompiled ");
             Log.print(methodString);
             Log.print(" @ ");
             Log.print(targetMethod.codeStart());

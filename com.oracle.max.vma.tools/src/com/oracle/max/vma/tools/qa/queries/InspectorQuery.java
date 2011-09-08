@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,19 +20,37 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.compiler.target;
+package com.oracle.max.vma.tools.qa.queries;
 
-import com.sun.max.vm.actor.member.*;
+import java.io.*;
+import java.util.*;
+
+import com.oracle.max.vma.tools.qa.*;
+import com.sun.max.tele.channel.agent.*;
 
 /**
- * Call back for use with {@link TargetMethod#forEachCodePos(CodePosClosure, com.sun.max.unsafe.Pointer, boolean)}.
+ * Run the {@link InspectorAgent}.
  */
-public interface CodePosClosure {
-    /**
-     *
-     * @param method
-     * @param bci
-     * @return true if the caller should continue to the next code position (if any), false if it should terminate now
-     */
-    boolean doCodePos(ClassMethodActor method, int bci);
+public class InspectorQuery extends QueryBase {
+
+    private static TraceRun traceRun;
+
+    @Override
+    public Object execute(ArrayList<TraceRun> traceRuns, int traceFocus, PrintStream ps, String[] args) {
+        traceRun = traceRuns.get(0);
+        try {
+            String[] xArgs = new String[args.length + 1];
+            System.arraycopy(args, 0, xArgs, 0, args.length);
+            xArgs[args.length] = "-os.sub=VMA";
+            InspectorAgent.main(xArgs);
+        } catch (Exception ex) {
+            System.err.println("Inspector agent threw: " + ex);
+        }
+        return null;
+    }
+
+    public static TraceRun getTraceRun() {
+        return traceRun;
+    }
+
 }

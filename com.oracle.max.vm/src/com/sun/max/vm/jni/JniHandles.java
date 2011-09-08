@@ -156,7 +156,7 @@ public final class JniHandles {
      * Resets the "top" (i.e. current size) of this handle pool to a value
      * equal to or less than its current size.
      */
-    @NO_SAFEPOINTS("cannot stop before pending exception in JNI stub has been processed")
+    @NO_SAFEPOINT_POLLS("cannot stop before pending exception in JNI stub has been processed")
     public void resetTop(int newTop) {
         if (newTop > this.top || newTop < 0) {
             FatalError.unexpected("Cannot reset JNI handle stack to higher stack height");

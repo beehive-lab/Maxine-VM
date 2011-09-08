@@ -118,7 +118,7 @@ public abstract class DataLabel extends InspectorLabel {
         private void updateText() {
             final String byteString = bytesToByteString(bytes);
             setText(byteString);
-            setWrappedToolTipText(byteString);
+            setWrappedToolTipHtmlText(byteString);
         }
     }
 
@@ -160,7 +160,7 @@ public abstract class DataLabel extends InspectorLabel {
                 result.append("]");
                 final String labelText = result.toString();
                 setText(labelText);
-                setWrappedToolTipText(labelText);
+                setWrappedToolTipHtmlText(labelText);
             }
         }
     }
@@ -202,7 +202,7 @@ public abstract class DataLabel extends InspectorLabel {
                 result.append("]");
                 final String labelText = result.toString();
                 setText(labelText);
-                setWrappedToolTipText(labelText);
+                setWrappedToolTipHtmlText(labelText);
             }
         }
     }
@@ -282,7 +282,7 @@ public abstract class DataLabel extends InspectorLabel {
 
         private void updateText() {
             setText(Integer.toString(n));
-            setWrappedToolTipText("int: " + intTo0xHex(n));
+            setWrappedToolTipHtmlText("int: " + intTo0xHex(n));
         }
     }
 
@@ -336,7 +336,7 @@ public abstract class DataLabel extends InspectorLabel {
         protected void updateText() {
             final String labelText = Float.toString(f);
             setText(labelText);
-            setWrappedToolTipText(labelText);
+            setWrappedToolTipHtmlText(labelText);
         }
 
         protected void setValue(float f) {
@@ -369,7 +369,7 @@ public abstract class DataLabel extends InspectorLabel {
         }
         private void updateText() {
             setText(Long.toString(n));
-            setWrappedToolTipText("long: " + longTo0xHex(n));
+            setWrappedToolTipHtmlText("long: " + longTo0xHex(n));
         }
     }
 
@@ -406,7 +406,7 @@ public abstract class DataLabel extends InspectorLabel {
         private void updateText() {
             final String labelText = Double.toString(f);
             setText(labelText);
-            setWrappedToolTipText(labelText);
+            setWrappedToolTipHtmlText(labelText);
         }
 
         protected void setValue(double f) {
