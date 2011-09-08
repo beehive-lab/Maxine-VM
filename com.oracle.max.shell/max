@@ -641,6 +641,12 @@ function run_check() {
         for source_dir in ${source_dirs} ; do
             javac_input=/tmp/javacfiles.txt.$$
             find $source_dir -name *.java | grep -v 'package-info.java' >$javac_input
+            
+            input_lines=$(cat $javac_input | wc -l)
+            if [ $input_lines -eq 0 ]; then
+                echo "[no Java sources in $source_dir - skipping]"
+                continue
+            fi 
 
             result=0
             if [ -f $project_dir/.checkstyle ]; then
