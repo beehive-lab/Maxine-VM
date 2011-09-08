@@ -41,6 +41,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.HeapScheme.PIN_SUPPORT_FLAG;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.*;
@@ -1671,11 +1672,38 @@ public final class JniFunctionsSource {
         buffer.setByte(utf.length, (byte) 0); // zero termination
     }
 
+    @INLINE
+    private static boolean useDirectPointer(Object object) {
+        HeapScheme heapScheme = VMConfiguration.vmConfig().heapScheme();
+        if (heapScheme.supportsPinning(PIN_SUPPORT_FLAG.CAN_NEST)) {
+            heapScheme.pin(object);
+            return true;
+        }
+        if (JniFunctions.OptimizeJNICritical) {
+            Heap.lock();
+            return true;
+        }
+        return false;
+    }
+
+    @INLINE
+    private static boolean releasedDirectPointer(Object object) {
+        HeapScheme heapScheme = VMConfiguration.vmConfig().heapScheme();
+        if (heapScheme.supportsPinning(PIN_SUPPORT_FLAG.CAN_NEST)) {
+            heapScheme.unpin(object);
+            return true;
+        }
+        if (JniFunctions.OptimizeJNICritical) {
+            Heap.unlock();
+            return true;
+      }
+        return false;
+    }
+
     @VM_ENTRY_POINT
     private static Pointer GetPrimitiveArrayCritical(Pointer env, JniHandle array, Pointer isCopy) {
         final Object arrayObject = array.unhand();
-        if (JniFunctions.OptimizeJNICritical) {
-            Heap.lock();
+        if (useDirectPointer(arrayObject)) {
             setCopyPointer(isCopy, false);
             return Reference.fromJava(arrayObject).toOrigin().plus(Layout.byteArrayLayout().getElementOffsetFromOrigin(0));
         }
@@ -1702,12 +1730,10 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static void ReleasePrimitiveArrayCritical(Pointer env, JniHandle array, Pointer elements, int mode) {
-        if (JniFunctions.OptimizeJNICritical) {
-            Heap.unlock();
+        final Object arrayObject = array.unhand();
+        if (releasedDirectPointer(arrayObject)) {
             return;
         }
-
-        final Object arrayObject = array.unhand();
         if (arrayObject instanceof boolean[]) {
             releaseBooleanArrayElements(array, elements, mode);
         } else if (arrayObject instanceof byte[]) {
