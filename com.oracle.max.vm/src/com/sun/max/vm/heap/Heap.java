@@ -624,6 +624,7 @@ public final class Heap {
     /**
      * Disable GC. Must be paired with a subsequent call to {@link Heap#enableGC()}
      */
+    @INLINE
     private static void disableGC() {
         final Pointer etla = ETLA.load(currentTLA());
         Pointer count = GC_DISABLING_COUNT.load(etla);
@@ -638,29 +639,22 @@ public final class Heap {
     /**
      * Enable GC. Must be paired with a previous call to {@link Heap#disableGC()}
      */
+    @INLINE
     private static void enableGC() {
         final Pointer etla = ETLA.load(currentTLA());
         Pointer count = GC_DISABLING_COUNT.load(etla);
+        assert count.greaterThan(Pointer.zero()) :  "thread has not issued a GC disabling request";
         if (count.equals(1)) {
             synchronized (HEAP_LOCK) {
-                if (disableGCThreadCount == 1) {
-                    disableGCThreadCount = 0;
-                    if (gcWaitForDisablingThreads) {
-                        // Wake up GC if waiting on the HEAP lock.
-                        HEAP_LOCK.notifyAll();
-                    }
-                } else if (disableGCThreadCount > 1) {
-                    disableGCThreadCount--;
+                assert disableGCThreadCount > 0 : "some thread have not issued a GC disabling request";
+                disableGCThreadCount--;
+                if (disableGCThreadCount == 0 && gcWaitForDisablingThreads) {
+                    // Wake up GC if waiting on the HEAP lock.
+                    HEAP_LOCK.notifyAll();
                 }
             }
-            GC_DISABLING_COUNT.store(etla, Pointer.zero());
-            return;
         }
-        if (count.greaterThan(1)) {
-            GC_DISABLING_COUNT.store(etla, count.minus(1));
-            return;
-        }
-        FatalError.check(!count.isZero(), "thread has not issued an GC disabling request");
+        GC_DISABLING_COUNT.store(etla, count.minus(1));
     }
 
     private static void waitForGCDisablingThreads() {
