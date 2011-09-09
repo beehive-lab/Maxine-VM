@@ -241,10 +241,6 @@ public abstract class LIRAssembler {
                 emitNativeCall((String) op.target, op.info, op.targetAddress());
                 break;
             }
-            case TemplateCall: {
-                emitTemplateCall(op.targetAddress(), op.info);
-                break;
-            }
             default:
                 throw Util.shouldNotReachHere();
         }
@@ -517,8 +513,6 @@ public abstract class LIRAssembler {
     protected abstract void emitDirectCall(Object target, LIRDebugInfo info);
 
     protected abstract void emitNativeCall(String symbol, LIRDebugInfo info, CiValue callAddress);
-
-    protected abstract void emitTemplateCall(CiValue address, LIRDebugInfo info);
 
     protected abstract void emitMemoryBarriers(int barriers);
 

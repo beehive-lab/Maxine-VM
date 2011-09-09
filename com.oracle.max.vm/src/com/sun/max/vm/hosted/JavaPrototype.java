@@ -264,7 +264,7 @@ public final class JavaPrototype extends Prototype {
      *
      * @param complete specifies whether to load more than just the VM scheme packages
      * @param threadCount the number of threads that can be used to load packages in parallel. Anything less than or
-     *            equal to 1 impliespackage loading is to be single-threaded.
+     *            equal to 1 implies package loading is to be single-threaded.
      */
     private JavaPrototype(final boolean complete, int threadCount) {
         VMConfiguration config = vmConfig();

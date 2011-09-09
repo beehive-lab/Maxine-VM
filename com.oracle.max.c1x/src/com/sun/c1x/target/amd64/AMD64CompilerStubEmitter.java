@@ -365,7 +365,9 @@ public class AMD64CompilerStubEmitter {
             asm.movq(location.asRegister(), comp.frameMap().toStackAddress(inArgs[i]));
         }
 
-        asm.alignCall();
+        if (C1XOptions.AlignDirectCallsForPatching) {
+            asm.alignCall();
+        }
         // Call to the runtime
         int before = asm.codeBuffer.position();
         asm.call();
