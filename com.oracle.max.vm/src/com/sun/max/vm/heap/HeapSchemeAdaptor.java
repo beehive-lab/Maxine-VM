@@ -40,6 +40,8 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.management.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
+import com.sun.max.vm.thread.VmThreadLocal.Nature;
 import com.sun.max.vm.type.*;
 
 /**
@@ -156,6 +158,12 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
      * Track pinning support. Default is not supported.
      */
     @CONSTANT_WHEN_NOT_ZERO protected int pinningSupportFlags = 0;
+
+    /**
+     * Per thread count of request for disabling GC. It allows to fail-fast if a thread pinning an object request garbage collection (which create a deadlock).
+     */
+    public static final VmThreadLocal GC_DISABLING_COUNT =
+        new VmThreadLocal("GC_DISABLING_COUNT", false, "Count of active GC-disabling requests issued by this thread", Nature.Single);
 
     @HOSTED_ONLY
     public HeapSchemeAdaptor() {
