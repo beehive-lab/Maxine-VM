@@ -565,6 +565,15 @@ public abstract class FrameState {
                     proc.doValue(value);
                 }
             }
+            if (state.locks != null) {
+                for (int i = 0; i < state.locks.size(); i++) {
+                    Value instr = state.locks.get(i);
+                    if (instr != null) {
+                        assert instr.isLive();
+                        proc.doValue(instr);
+                    }
+                }
+            }
             state = state.callerState();
         }
     }
