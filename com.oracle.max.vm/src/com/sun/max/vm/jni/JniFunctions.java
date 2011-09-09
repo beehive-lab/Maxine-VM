@@ -73,10 +73,8 @@ import com.sun.max.vm.value.*;
  */
 public final class JniFunctions {
 
-    public static boolean OptimizeJNICritical = true;
     public static boolean CheckJNI;
     static {
-        VMOptions.addFieldOption("-XX:", "OptimizeJNICritical", JniFunctions.class, "Use GC blocking to optimize JNI 'critical' functions.", MaxineVM.Phase.PRISTINE);
         VMOptions.register(new VMOption("-Xcheck:jni", "Perform additional checks for JNI functions.") {
             @Override
             public boolean parseValue(Pointer optionValue) {
@@ -3258,8 +3256,7 @@ public final class JniFunctions {
         Pointer anchor = prologue(env, "GetPrimitiveArrayCritical");
         try {
             final Object arrayObject = array.unhand();
-            if (JniFunctions.OptimizeJNICritical) {
-                Heap.lock();
+            if (Heap.useDirectPointer(arrayObject)) {
                 setCopyPointer(isCopy, false);
                 return Reference.fromJava(arrayObject).toOrigin().plus(Layout.byteArrayLayout().getElementOffsetFromOrigin(0));
             }
@@ -3292,15 +3289,13 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void ReleasePrimitiveArrayCritical(Pointer env, JniHandle array, Pointer elements, int mode) {
-        // Source: JniFunctionsSource.java:1704
+        // Source: JniFunctionsSource.java:1703
         Pointer anchor = prologue(env, "ReleasePrimitiveArrayCritical");
         try {
-            if (JniFunctions.OptimizeJNICritical) {
-                Heap.unlock();
+            final Object arrayObject = array.unhand();
+            if (Heap.releasedDirectPointer(arrayObject)) {
                 return;
             }
-    
-            final Object arrayObject = array.unhand();
             if (arrayObject instanceof boolean[]) {
                 releaseBooleanArrayElements(array, elements, mode);
             } else if (arrayObject instanceof byte[]) {
@@ -3327,7 +3322,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static Pointer GetStringCritical(Pointer env, JniHandle string, Pointer isCopy) {
-        // Source: JniFunctionsSource.java:1731
+        // Source: JniFunctionsSource.java:1728
         Pointer anchor = prologue(env, "GetStringCritical");
         try {
             // TODO(cwi): Implement optimized version for OptimizeJNICritical if a benchmark uses it frequently
@@ -3348,7 +3343,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void ReleaseStringCritical(Pointer env, JniHandle string, final Pointer chars) {
-        // Source: JniFunctionsSource.java:1743
+        // Source: JniFunctionsSource.java:1740
         Pointer anchor = prologue(env, "ReleaseStringCritical");
         try {
             Memory.deallocate(chars);
@@ -3361,7 +3356,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle NewWeakGlobalRef(Pointer env, JniHandle handle) {
-        // Source: JniFunctionsSource.java:1748
+        // Source: JniFunctionsSource.java:1745
         Pointer anchor = prologue(env, "NewWeakGlobalRef");
         try {
             return JniHandles.createWeakGlobalHandle(handle.unhand());
@@ -3375,7 +3370,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void DeleteWeakGlobalRef(Pointer env, JniHandle handle) {
-        // Source: JniFunctionsSource.java:1753
+        // Source: JniFunctionsSource.java:1750
         Pointer anchor = prologue(env, "DeleteWeakGlobalRef");
         try {
             JniHandles.destroyWeakGlobalHandle(handle);
@@ -3388,7 +3383,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static boolean ExceptionCheck(Pointer env) {
-        // Source: JniFunctionsSource.java:1758
+        // Source: JniFunctionsSource.java:1755
         Pointer anchor = prologue(env, "ExceptionCheck");
         try {
             return VmThread.fromJniEnv(env).jniException() != null;
@@ -3404,7 +3399,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle NewDirectByteBuffer(Pointer env, Pointer address, long capacity) throws Exception {
-        // Source: JniFunctionsSource.java:1765
+        // Source: JniFunctionsSource.java:1762
         Pointer anchor = prologue(env, "NewDirectByteBuffer");
         try {
             ByteBuffer buffer = ObjectAccess.createDirectByteBuffer(address.toLong(), (int) capacity);
@@ -3419,7 +3414,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static Pointer GetDirectBufferAddress(Pointer env, JniHandle buffer) throws Exception {
-        // Source: JniFunctionsSource.java:1771
+        // Source: JniFunctionsSource.java:1768
         Pointer anchor = prologue(env, "GetDirectBufferAddress");
         try {
             Object buf = buffer.unhand();
@@ -3438,7 +3433,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static long GetDirectBufferCapacity(Pointer env, JniHandle buffer) {
-        // Source: JniFunctionsSource.java:1781
+        // Source: JniFunctionsSource.java:1778
         Pointer anchor = prologue(env, "GetDirectBufferCapacity");
         try {
             Object buf = buffer.unhand();
@@ -3456,7 +3451,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static int GetObjectRefType(Pointer env, JniHandle obj) {
-        // Source: JniFunctionsSource.java:1790
+        // Source: JniFunctionsSource.java:1787
         Pointer anchor = prologue(env, "GetObjectRefType");
         try {
             final int tag = JniHandles.tag(obj);
@@ -3478,7 +3473,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static int GetNumberOfArguments(Pointer env, MethodID methodID) throws Exception {
-        // Source: JniFunctionsSource.java:1803
+        // Source: JniFunctionsSource.java:1800
         Pointer anchor = prologue(env, "GetNumberOfArguments");
         try {
             final MethodActor methodActor = MethodID.toMethodActor(methodID);
@@ -3496,7 +3491,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static void GetKindsOfArguments(Pointer env, MethodID methodID, Pointer kinds) throws Exception {
-        // Source: JniFunctionsSource.java:1812
+        // Source: JniFunctionsSource.java:1809
         Pointer anchor = prologue(env, "GetKindsOfArguments");
         try {
             final MethodActor methodActor = MethodID.toMethodActor(methodID);

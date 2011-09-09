@@ -94,6 +94,9 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
 
     final AfterMarkSweepVerifier afterGCVerifier;
 
+    // For debugging purposes only.
+    final private AtomicPinnedCounter pinnedCounter;
+
     /**
      * The application heap. Currently, where all dynamic allocation takes place.
      */
@@ -103,6 +106,9 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
         theHeap = new FirstFitMarkSweepHeap();
         heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT, new HeapAccounRootCellVisitor(theHeap));
         afterGCVerifier = new AfterMarkSweepVerifier(heapMarker, theHeap);
+
+        pinningSupportFlags = PIN_SUPPORT_FLAG.makePinSupportFlags(true, false, true);
+        pinnedCounter = MaxineVM.isDebug() ? new AtomicPinnedCounter() : null;
     }
 
     @Override
@@ -231,6 +237,22 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
 
     @INLINE(override = true)
     public void writeBarrier(Reference from, Reference to) {
+    }
+
+    @INLINE(override = true)
+    public boolean pin(Object object) {
+        // Objects never relocate. So this is always safe.
+        if (MaxineVM.isDebug()) {
+            pinnedCounter.increment();
+        }
+        return true;
+    }
+
+    @INLINE(override = true)
+    public void unpin(Object object) {
+        if (MaxineVM.isDebug()) {
+            pinnedCounter.decrement();
+        }
     }
 
     @Override

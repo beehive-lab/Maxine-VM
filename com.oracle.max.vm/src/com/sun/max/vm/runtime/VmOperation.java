@@ -485,6 +485,10 @@ public class VmOperation {
         VmOperationThread.submit(this);
     }
 
+    public boolean requiresGlobalSafepoint() {
+        return singleThread == null && mode.requiresSafepoint();
+    }
+
     /**
      * Called on the VM operation thread to perform this operation. This method does all the necessary
      * thread freezing and thawing around a call to {@link #doIt()}.

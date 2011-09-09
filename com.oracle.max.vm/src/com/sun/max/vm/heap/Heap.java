@@ -24,6 +24,8 @@ package com.sun.max.vm.heap;
 
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
+import static com.sun.max.vm.thread.VmThread.*;
+import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -32,6 +34,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.debug.*;
+import com.sun.max.vm.heap.HeapScheme.PIN_SUPPORT_FLAG;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.monitor.modal.sync.*;
@@ -39,6 +42,7 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.thread.VmThreadLocal.Nature;
 
 /**
  * The dynamic Java object heap.
@@ -71,6 +75,12 @@ public final class Heap {
     public static final VMSizeOption maxHeapSizeOption = register(new VMSizeOption("-Xmx", Size.G, "The maximum heap size."), MaxineVM.Phase.PRISTINE);
 
     public static final VMSizeOption initialHeapSizeOption = register(new InitialHeapSizeOption(), MaxineVM.Phase.PRISTINE);
+
+    public static boolean OptimizeJNICritical = true;
+
+    static {
+        VMOptions.addFieldOption("-XX:", "OptimizeJNICritical", Heap.class, "Use GC disabling to optimize JNI 'critical' functions when heap scheme doesn't support object pinning.", MaxineVM.Phase.PRISTINE);
+    }
 
     static class InitialHeapSizeOption extends VMSizeOption {
         String invalidHeapSizeReason;
@@ -504,6 +514,12 @@ public final class Heap {
             // the GC is not actually executing as this is the VM operation thread which is
             // executing another VM operation that triggers a GC. So, the GC is now executed
             // as a nested VM operation without acquiring the heap lock.
+            VmOperationThread.instance().promoteToGlobalSafepoint();
+
+            // We're at a global safepoint, no one can concurrently update disableGCThreadCount.
+            // It is possible that a VM operation (that isn't a GC operation) was running while mutator threads
+            // disabled the GC. If that is the case, the current GC operation is illegal.
+            FatalError.check(disableGCThreadCount == 0, "GC must be enabled");
             freedEnough = heapScheme().collectGarbage(requestedFreeSpace);
         } else {
             // Calls to collect garbage need to synchronize on the heap lock. This ensures that
@@ -512,6 +528,7 @@ public final class Heap {
             // method by another thread did not trigger a GC that freed up enough memory for
             // this request).
             synchronized (HEAP_LOCK) {
+                waitForGCDisablingThreads();
                 freedEnough = heapScheme().collectGarbage(requestedFreeSpace);
             }
         }
@@ -585,6 +602,114 @@ public final class Heap {
             Log.printCurrentThread(false);
             Log.println(": immortal heap allocation disabled");
         }
+    }
+
+    /**
+     * Per thread count of request for disabling GC. It allows to fail-fast if a thread pinning an object request garbage collection (which create a deadlock).
+     */
+    private static final VmThreadLocal GC_DISABLING_COUNT =
+        new VmThreadLocal("GC_DISABLING_COUNT", false, "Count of active GC-disabling requests issued by this thread", Nature.Single);
+
+    /**
+     *  Counter of threads that are disabling GC.
+     *  The counter is increased / decreased only when the thread local count change from zero to one (and vice-versa).
+     * @see Heap#disableGC()
+     * @see Heap#enableGC()
+     */
+    private static int disableGCThreadCount = 0;
+
+    /**
+     * Flags indicating that the GC is waiting for GC-disabling threads.
+     * This is currently used to implement an optimistic form of object pinning for heap schemes that don't support it, wherein threads disable GC while holding direct pointer to arrays.
+     *
+     * @see Heap#disableGC()
+     * @see Heap#enableGC()
+     */
+    private static boolean gcWaitForDisablingThreads = false;
+
+    /**
+     * Disable GC. Must be paired with a subsequent call to {@link Heap#enableGC()}
+     */
+    @INLINE
+    private static void disableGC() {
+        final Pointer etla = ETLA.load(currentTLA());
+        Pointer count = GC_DISABLING_COUNT.load(etla);
+        if (count.isZero()) {
+            synchronized (HEAP_LOCK) {
+                disableGCThreadCount++;
+            }
+        }
+        GC_DISABLING_COUNT.store(etla, count.plus(1));
+    }
+
+    /**
+     * Enable GC. Must be paired with a previous call to {@link Heap#disableGC()}
+     */
+    @INLINE
+    private static void enableGC() {
+        final Pointer etla = ETLA.load(currentTLA());
+        Pointer count = GC_DISABLING_COUNT.load(etla);
+        if (count.equals(1)) {
+            synchronized (Heap.HEAP_LOCK) {
+                if (disableGCThreadCount == 1) {
+                    disableGCThreadCount = 0;
+                    if (gcWaitForDisablingThreads) {
+                        // Wake up GC if waiting on the HEAP lock.
+                        HEAP_LOCK.notifyAll();
+                    }
+                } else if (disableGCThreadCount > 1) {
+                    disableGCThreadCount--;
+                }
+            }
+            GC_DISABLING_COUNT.store(etla, Pointer.zero());
+            return;
+        }
+        if (count.greaterThan(1)) {
+            GC_DISABLING_COUNT.store(etla, count.minus(1));
+            return;
+        }
+        FatalError.check(!count.isZero(), "thread has not issued an GC disabling request");
+    }
+
+    private static void waitForGCDisablingThreads() {
+        while (disableGCThreadCount > 0) {
+            gcWaitForDisablingThreads = true;
+            final Pointer etla = ETLA.load(currentTLA());
+            FatalError.check(GC_DISABLING_COUNT.load(etla).equals(0), "GC requester must not pin any objects");
+            try {
+                HEAP_LOCK.wait();
+            } catch (InterruptedException e) {
+            }
+        }
+        gcWaitForDisablingThreads = false;
+    }
+
+    @INLINE
+    public static boolean useDirectPointer(Object object) {
+        HeapScheme heapScheme = heapScheme();
+        if (heapScheme.supportsPinning(PIN_SUPPORT_FLAG.CAN_NEST)) {
+            heapScheme.pin(object);
+            return true;
+        }
+        if (OptimizeJNICritical) {
+            disableGC();
+            return true;
+        }
+        return false;
+    }
+
+    @INLINE
+    public static boolean releasedDirectPointer(Object object) {
+        HeapScheme heapScheme = VMConfiguration.vmConfig().heapScheme();
+        if (heapScheme.supportsPinning(PIN_SUPPORT_FLAG.CAN_NEST)) {
+            heapScheme.unpin(object);
+            return true;
+        }
+        if (OptimizeJNICritical) {
+            enableGC();
+            return true;
+        }
+        return false;
     }
 
     /**

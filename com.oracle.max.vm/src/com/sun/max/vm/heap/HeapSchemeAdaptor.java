@@ -152,6 +152,11 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
      */
     protected boolean allocationEnabled = true;
 
+    /**
+     * Track pinning support. Default is not supported.
+     */
+    @CONSTANT_WHEN_NOT_ZERO protected int pinningSupportFlags = 0;
+
     @HOSTED_ONLY
     public HeapSchemeAdaptor() {
     }
@@ -236,6 +241,16 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
 
     @INLINE(override = true)
     public void trackLifetime(Pointer cell) {
+    }
+
+    public boolean supportsPinning(PIN_SUPPORT_FLAG flag) {
+        return flag.isSet(pinningSupportFlags);
+    }
+
+    public boolean isPinned(Object object) {
+        FatalError.check(supportsPinning(PIN_SUPPORT_FLAG.IS_QUERYABLE), "Object pinning support doesn't support querying");
+        FatalError.unexpected("Must be overriden if supported");
+        return false;
     }
 
     public void disableCustomAllocation() {
