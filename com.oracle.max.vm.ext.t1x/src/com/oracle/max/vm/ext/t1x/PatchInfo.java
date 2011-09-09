@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,25 +20,31 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.config.vma;
+package com.oracle.max.vm.ext.t1x;
 
-import com.sun.max.config.BootImagePackage;
-import com.sun.max.vm.*;
+import java.util.*;
 
 /**
- * Includes the Virtual Machine Advising extension in the boot image.
- *
+ * Records locations in the code buffer that need to be subsequently patched.
  */
-public class Package extends BootImagePackage {
-    public Package() {
-        super(
-            "com.oracle.max.vm.ext.vma.**",
-            "com.oracle.max.vm.ext.t1x.vma.*"
-        );
-    }
+public class PatchInfo {
+    /**
+     * Encoded patch data. The encoding format is defined in the platform specific subclasses.
+     */
+    public int[] data = new int[10];
 
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
-        return vmConfig.runPackage.getClass() == com.oracle.max.vm.ext.vma.run.java.Package.class;
+    /**
+     * The length of valid data in {@code data} (which may be less that {@code data.length}).
+     */
+    public int size;
+
+    public void ensureCapacity(int minCapacity) {
+        if (minCapacity > data.length) {
+            int newCapacity = (size * 3) / 2 + 1;
+            if (newCapacity < minCapacity) {
+                newCapacity = minCapacity;
+            }
+            data = Arrays.copyOf(data, newCapacity);
+        }
     }
 }

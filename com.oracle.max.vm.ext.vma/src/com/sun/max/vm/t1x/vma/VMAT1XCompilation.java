@@ -22,12 +22,12 @@
  */
 package com.sun.max.vm.t1x.vma;
 
+import com.oracle.max.vm.ext.t1x.*;
+import com.oracle.max.vm.ext.t1x.T1XTemplateGenerator.*;
 import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.options.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.t1x.*;
-import com.sun.max.vm.t1x.T1XTemplateGenerator.AdviceType;
 
 /**
  * Overrides some {@link T1XCompilation} methods to provide finer compile time control over advising.

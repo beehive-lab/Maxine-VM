@@ -24,13 +24,13 @@ package com.sun.max.vm.t1x.vma;
 
 import static com.sun.max.vm.MaxineVM.*;
 
+import com.oracle.max.vm.ext.t1x.*;
 import com.oracle.max.vm.ext.vma.options.*;
 import com.sun.cri.ci.CiStatistics;
 import com.sun.max.annotate.HOSTED_ONLY;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.member.ClassMethodActor;
 import com.sun.max.vm.compiler.target.TargetMethod;
-import com.sun.max.vm.t1x.*;
 
 /**
  * Variant of T1X that uses modified templates to support VM advising.

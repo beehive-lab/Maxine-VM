@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,25 +20,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.config.vma;
+package com.oracle.max.vm.ext.t1x;
 
-import com.sun.max.config.BootImagePackage;
-import com.sun.max.vm.*;
+import com.sun.c1x.*;
+
 
 /**
- * Includes the Virtual Machine Advising extension in the boot image.
- *
+ * This class contains a number of fields that collect metrics about T1X compilation.
  */
-public class Package extends BootImagePackage {
-    public Package() {
-        super(
-            "com.oracle.max.vm.ext.vma.**",
-            "com.oracle.max.vm.ext.t1x.vma.*"
-        );
-    }
+public class T1XMetrics {
+    public static int CompiledMethods;
+    public static int TargetMethods;
+    public static int MethodsWithSubroutines;
+    public static int BytecodesCompiled;
+    public static int CodeBytesEmitted;
 
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
-        return vmConfig.runPackage.getClass() == com.oracle.max.vm.ext.vma.run.java.Package.class;
+    public static void print() {
+        C1XMetrics.printClassFields(T1XMetrics.class);
+
     }
 }

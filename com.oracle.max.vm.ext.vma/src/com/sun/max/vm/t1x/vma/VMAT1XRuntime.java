@@ -24,11 +24,11 @@ package com.sun.max.vm.t1x.vma;
 
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 
+import com.oracle.max.vm.ext.t1x.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.t1x.*;
 
 /**
  * A companion class to {@link T1XRuntime} that contains additional methods and variants needed by the VMA templates.

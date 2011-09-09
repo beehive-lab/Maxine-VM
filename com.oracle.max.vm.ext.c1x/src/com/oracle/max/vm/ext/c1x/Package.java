@@ -20,25 +20,28 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.config.vma;
+package com.oracle.max.vm.ext.c1x;
 
-import com.sun.max.config.BootImagePackage;
+import java.util.*;
+
+import com.sun.c1x.*;
+import com.sun.c1x.debug.*;
+import com.sun.max.config.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.hosted.*;
 
-/**
- * Includes the Virtual Machine Advising extension in the boot image.
- *
- */
-public class Package extends BootImagePackage {
+public class Package extends BootImagePackage{
     public Package() {
-        super(
-            "com.oracle.max.vm.ext.vma.**",
-            "com.oracle.max.vm.ext.t1x.vma.*"
-        );
+        JavaPrototype.addObjectIdentityMapContributor(new C1XObjectMapContributor());
     }
 
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
-        return vmConfig.runPackage.getClass() == com.oracle.max.vm.ext.vma.run.java.Package.class;
+    public static class C1XObjectMapContributor implements JavaPrototype.ObjectIdentityMapContributor {
+        @Override
+        public void initializeObjectIdentityMap(Map<Object, Object> objectMap) {
+            objectMap.put(TTY.out(), new LogStream(Log.os));
+            if (C1XOptions.PrintCFGToFile) {
+                objectMap.put(CFGPrinter.cfgFileStream(), JavaPrototype.NULL);
+            }
+        }
     }
 }

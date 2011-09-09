@@ -22,23 +22,21 @@
  */
 package com.oracle.max.vma.tools.gen.vma;
 
+import static com.oracle.max.vm.ext.t1x.T1XTemplateGenerator.*;
 import static com.oracle.max.vm.ext.vma.AdviceMode.*;
 import static com.oracle.max.vm.ext.vma.VMABytecodes.*;
 import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
 import static com.sun.cri.ci.CiKind.*;
-import static com.sun.max.vm.t1x.T1XTemplateGenerator.*;
 
 import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 
+import com.oracle.max.vm.ext.t1x.*;
 import com.oracle.max.vm.ext.vma.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
-import com.sun.max.vm.t1x.*;
-import com.sun.max.vm.t1x.T1XTemplateGenerator.AdviceHook;
-import com.sun.max.vm.t1x.T1XTemplateGenerator.AdviceType;
 
 /**
  * Generates the bytecode advising interface by processing {@link VMABytecodes}. This interface supports advising by having

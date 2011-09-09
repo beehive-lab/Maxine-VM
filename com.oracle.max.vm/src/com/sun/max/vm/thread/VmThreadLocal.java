@@ -31,6 +31,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.config.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -45,9 +46,14 @@ import com.sun.max.vm.stack.*;
  * VM thread local variables and mechanisms for accessing them. The majority of thread locals
  * are defined as static field of this class itself. However, thread locals can also be defined
  * in other {@linkplain VMScheme scheme}-specific classes.
- *
+ * <p>
+ * All {@link VmThreadLocal} objects must be instantiated before {@link #completeInitialization()},
+ * {@link #tlaSize()} or {@link #values()} is called. The recommended way to ensure this is
+ * to explicitly reference these instances from the constructor of a {@link BootImagePackage}
+ * subclass. A set of {@code registerThreadLocal()} methods are provided in
+ * {@link BootImagePackage} to support this.
+ * <p>
  * All thread local variables occupy one word and have a constant {@linkplain Nature nature}.
- *
  * <p>
  * All thread locals are in a contiguous block of memory called a thread locals area (TLA) and there
  * are three TLAs per thread, one for each of the {@linkplain SafepointPoll safepoint} states:
@@ -565,8 +571,6 @@ public class VmThreadLocal {
      */
     @HOSTED_ONLY
     public VmThreadLocal(String name, boolean isReference, String description, Nature nature) {
-        assert valuesNeedingInitialization == null : "Cannot add new thread local after completeInitialization was called";
-
         this.isReference = isReference;
         this.name = name;
         this.nature = nature;
@@ -575,6 +579,12 @@ public class VmThreadLocal {
         VALUES.add(this);
         this.description = description;
         this.declaration = findDeclaration(name, new Throwable().getStackTrace());
+
+        if (valuesNeedingInitialization != null) {
+            FatalError.unexpected("Cannot register " + name + " after " + VmThreadLocal.class.getSimpleName() + ".completeInitialization() was called.\n" +
+                            "Make sure " + BootImagePackage.class.getSimpleName() + ".registerThreadLocal() is called for this thread local in the constructor of the " +
+                            "Package class responsible for including " + declaration.getClassName() + " in the image.");
+        }
     }
 
     /**

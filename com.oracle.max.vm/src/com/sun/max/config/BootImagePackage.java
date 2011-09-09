@@ -31,11 +31,24 @@ import java.util.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * Describes a package in the Maxine VM boot image, providing programmatic package information manipulation, which is
  * lacking in {@link java.lang.Package}.
+ * <p>
+ * Any {@link BootImagePackage} subclass describing one or more packages that
+ * declare {@link Word} subclasses must override {@link #wordSubclasses()}.
+ * <p>
+ * Any {@link BootImagePackage} subclass describing one or more packages whose
+ * classes instantiate one or more {@link VmThreadLocal}s must reference those thread
+ * local objects in its constructor. This ensures all {@link VmThreadLocal}s
+ * are registered before the {@linkplain VmThreadLocal#tlaSize() size} of the
+ * thread locals area is computed. The only exception to this requirement are
+ * the thread locals declared in the {@link VmThreadLocal} class itself.
  */
 @HOSTED_ONLY
 public class BootImagePackage implements Comparable<BootImagePackage>, Cloneable {
@@ -262,12 +275,32 @@ public class BootImagePackage implements Comparable<BootImagePackage>, Cloneable
     }
 
     /**
-     * Gets the subclasses of {@code com.sun.max.unsafe.Word} in this package.
+     * Gets the subclasses of {@link Word} in this package.
      * The returned array must not include boxed (see com.sun.max.unsafe.Boxed)
      * word types as they are derived from the name of the unboxed types.
      */
     public Class[] wordSubclasses() {
         return NO_CLASSES;
+    }
+
+    protected static void registerThreadLocal(VmThreadLocal tl) {
+
+    }
+
+    protected static void registerThreadLocal(Class c, String fieldName) {
+        registerThreadLocal(c.getName(), fieldName);
+    }
+
+    protected static void registerThreadLocal(String className, String fieldName) {
+        try {
+            Class c = Class.forName(className);
+            Field f = c.getDeclaredField(fieldName);
+            f.setAccessible(true);
+            Object value = f.get(null);
+            FatalError.check(value instanceof VmThreadLocal, f + " is not an instance of " + VmThreadLocal.class);
+        } catch (Exception e) {
+            throw FatalError.unexpected("Error looking up thread local " + className + "." + fieldName, e);
+        }
     }
 
     public boolean isSubPackageOf(BootImagePackage superPackage) {

@@ -23,9 +23,8 @@
 package com.sun.max.config;
 
 /**
- * Defines to root of the search for package to include in the boot image.
+ * Defines a root of the search for packages to include in the boot image.
  */
-
 public class Package extends BootImagePackage {
     public Package() {
 

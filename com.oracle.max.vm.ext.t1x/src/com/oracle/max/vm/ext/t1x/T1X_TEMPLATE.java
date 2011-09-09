@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,25 +20,18 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.config.vma;
+package com.oracle.max.vm.ext.t1x;
 
-import com.sun.max.config.BootImagePackage;
-import com.sun.max.vm.*;
+import java.lang.annotation.*;
 
 /**
- * Includes the Virtual Machine Advising extension in the boot image.
- *
+ * Denotes a method that provides the implementation for a T1X template.
  */
-public class Package extends BootImagePackage {
-    public Package() {
-        super(
-            "com.oracle.max.vm.ext.vma.**",
-            "com.oracle.max.vm.ext.t1x.vma.*"
-        );
-    }
-
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
-        return vmConfig.runPackage.getClass() == com.oracle.max.vm.ext.vma.run.java.Package.class;
-    }
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface T1X_TEMPLATE {
+    /**
+     * The template implemented by the annotated method.
+     */
+    T1XTemplateTag value();
 }

@@ -22,9 +22,7 @@
  */
 package com.sun.max.vm.t1x.vma;
 
-import com.sun.max.vm.t1x.T1X;
-import com.sun.max.vm.t1x.T1XCompilation;
-import com.sun.max.vm.t1x.T1XCompilationFactory;
+import com.oracle.max.vm.ext.t1x.*;
 
 public class VMAT1XCompilationFactory extends T1XCompilationFactory {
     @Override

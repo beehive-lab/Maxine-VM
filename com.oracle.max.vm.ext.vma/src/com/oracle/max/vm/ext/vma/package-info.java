@@ -57,7 +57,7 @@
  * <li>A minor {@link com.oracle.max.vm.ext.vma.heap.semi.heap.semi.VMASemiSpaceHeapScheme extension} of
  * {@link com.sun.max.vm.heap.sequential.semiSpace.SemiSpaceHeapScheme} for garbage collection
  * and object lifetime advice</li>
- * <li>An {@link com.sun.max.vm.t1x.vma.VMAT1X extension} of {@link com.sun.max.vm.t1x.T1X} that
+ * <li>An {@link com.oracle.max.vm.ext.t1x.vma.VMAT1X extension} of {@link com.oracle.max.vm.ext.t1x.T1X} that
  * uses modified templates to add advice to the bytecode implementations.</li>
  * <li>A {@link com.sun.max.vm.layout.xohm.XOhmLayoutScheme variant} of
  * {@link com.sun.max.vm.layout.ohm.OhmLayoutScheme} that adds an extra field to the object header
@@ -65,7 +65,7 @@
  * </ul>
  * <p>
  * Bootstrap issues currently preclude instrumenting the classes in the boot image, which is built using the
- * standard {@link com.sun.max.vm.compiler.c1x.C1X optimizing compiler}. Dynamically loaded
+ * standard {@link com.oracle.max.vm.ext.c1x.C1X optimizing compiler}. Dynamically loaded
  * classes are instrumented using the custom scheme}. Since the optimizing compiler does not support
  * advising, the normal threshold recompilation is disabled for instrumented classes.
  * <p>

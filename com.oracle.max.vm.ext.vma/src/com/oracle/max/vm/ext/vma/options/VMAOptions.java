@@ -27,12 +27,12 @@ import static com.oracle.max.vm.ext.vma.options.VMAOptions.AdviceModeOption.*;
 
 import java.util.regex.Pattern;
 
+import com.oracle.max.vm.ext.t1x.*;
 import com.oracle.max.vm.ext.vma.*;
 import com.sun.max.vm.Log;
 import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.VMOptions;
 import com.sun.max.vm.actor.member.ClassMethodActor;
-import com.sun.max.vm.t1x.*;
 
 /**
  * Defines all the options that can be used to control the VMA system.

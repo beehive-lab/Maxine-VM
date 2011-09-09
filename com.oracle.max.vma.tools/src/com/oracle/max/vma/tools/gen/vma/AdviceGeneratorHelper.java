@@ -26,9 +26,9 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.oracle.max.vm.ext.t1x.*;
 import com.oracle.max.vm.ext.vma.*;
 import com.sun.max.annotate.*;
-import com.sun.max.vm.t1x.*;
 
 /**
  * Helper methods for auto-generation of code related to the advice interface.

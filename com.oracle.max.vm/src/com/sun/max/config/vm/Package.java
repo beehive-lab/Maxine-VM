@@ -23,6 +23,10 @@
 package com.sun.max.config.vm;
 
 import com.sun.max.config.*;
+import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.jdk.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * {@code com.sun.max.vm.*} packages to include in boot image.
@@ -70,5 +74,10 @@ public class Package extends BootImagePackage {
             "com.oracle.max.asm.**",
             "com.sun.max.vm.t1x.**"
                         );
+
+        registerThreadLocal(Compilation.class, "COMPILATION");
+        registerThreadLocal(Snippets.class, "NATIVE_CALLS_DISABLED");
+        registerThreadLocal(ErrorContext.class, "ERROR_CONTEXTS");
+        registerThreadLocal(JDK_java_lang_Throwable.class, "TRACE_UNDER_CONSTRUCTION");
     }
 }

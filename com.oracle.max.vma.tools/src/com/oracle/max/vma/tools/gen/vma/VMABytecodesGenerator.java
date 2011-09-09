@@ -22,7 +22,7 @@
  */
 package com.oracle.max.vma.tools.gen.vma;
 
-import static com.sun.max.vm.t1x.T1XTemplateGenerator.*;
+import static com.oracle.max.vm.ext.t1x.T1XTemplateGenerator.*;
 
 import java.io.*;
 import java.lang.reflect.*;

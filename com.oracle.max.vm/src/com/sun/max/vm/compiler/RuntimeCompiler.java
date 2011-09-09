@@ -43,8 +43,8 @@ public interface RuntimeCompiler {
      */
     @HOSTED_ONLY
     Map<String, String> aliases = Utils.addEntries(new HashMap<String, String>(),
-                    "T1X", "com.sun.max.vm.t1x.T1X",
-                    "C1X", "com.sun.max.vm.compiler.c1x.C1X");
+                    "T1X", "com.oracle.max.vm.ext.t1x.T1X",
+                    "C1X", "com.oracle.max.vm.ext.c1x.C1X");
 
     @HOSTED_ONLY
     OptionSet compilers = new OptionSet();

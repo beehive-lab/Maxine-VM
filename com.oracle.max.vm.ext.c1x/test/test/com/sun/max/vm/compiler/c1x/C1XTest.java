@@ -31,6 +31,7 @@ import java.util.*;
 import test.com.sun.max.vm.*;
 
 import com.oracle.max.asm.*;
+import com.oracle.max.vm.ext.c1x.*;
 import com.oracle.max.vm.ext.maxri.*;
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
@@ -51,7 +52,6 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.adaptive.*;
-import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.profile.*;
 
@@ -117,7 +117,7 @@ public class C1XTest {
         C1X.optionsRegistered = true;
 
         // add all the fields from T1XOptions as options
-        Class t1xOptionsClass = Classes.forName("com.sun.max.vm.t1x.T1XOptions");
+        Class t1xOptionsClass = Classes.forName("com.oracle.max.vm.ext.t1x.T1XOptions");
         try {
             Map<String, String> m = Utils.cast(Classes.getDeclaredMethod(t1xOptionsClass, "getHelpMap").invoke(null));
             options.addFieldOptions(t1xOptionsClass, "T1X", m);
