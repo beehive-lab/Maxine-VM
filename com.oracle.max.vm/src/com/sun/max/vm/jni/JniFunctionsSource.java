@@ -1674,8 +1674,7 @@ public final class JniFunctionsSource {
     @VM_ENTRY_POINT
     private static Pointer GetPrimitiveArrayCritical(Pointer env, JniHandle array, Pointer isCopy) {
         final Object arrayObject = array.unhand();
-        if (JniFunctions.OptimizeJNICritical) {
-            Heap.lock();
+        if (Heap.useDirectPointer(arrayObject)) {
             setCopyPointer(isCopy, false);
             return Reference.fromJava(arrayObject).toOrigin().plus(Layout.byteArrayLayout().getElementOffsetFromOrigin(0));
         }
@@ -1702,12 +1701,10 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static void ReleasePrimitiveArrayCritical(Pointer env, JniHandle array, Pointer elements, int mode) {
-        if (JniFunctions.OptimizeJNICritical) {
-            Heap.unlock();
+        final Object arrayObject = array.unhand();
+        if (Heap.releasedDirectPointer(arrayObject)) {
             return;
         }
-
-        final Object arrayObject = array.unhand();
         if (arrayObject instanceof boolean[]) {
             releaseBooleanArrayElements(array, elements, mode);
         } else if (arrayObject instanceof byte[]) {

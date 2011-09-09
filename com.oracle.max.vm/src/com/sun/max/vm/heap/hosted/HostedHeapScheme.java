@@ -126,6 +126,13 @@ public class HostedHeapScheme extends HeapSchemeAdaptor implements HeapScheme {
         // do nothing.
     }
 
+    public boolean pin(Object object) {
+        return false;
+    }
+
+    public void unpin(Object object) {
+    }
+
     @Override
     public void disableCustomAllocation() {
         FatalError.unexpected("Non implemented");

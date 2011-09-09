@@ -204,6 +204,96 @@ public interface HeapScheme extends VMScheme {
     @INLINE
     void writeBarrier(Reference from, Reference to);
 
+    enum PIN_SUPPORT_FLAG {
+        /**
+         * Just to indicate that the pin support flag has been initialized (makes the pinningSupportFlags treated as constant when not zero).
+         */
+        IS_INITIALIZED,
+        /**
+         * Is object pinning supported at all.
+         */
+        IS_SUPPORTED,
+         /**
+         * Is it possible to call pin (respectively unpin) on the same object multiple times ?
+         * If not possible, pinning must be at least queryable
+         */
+        CAN_NEST,
+        /**
+         * Is querying on individual object pinning status supported ?
+         */
+        IS_QUERYABLE;
+
+        private final int mask = 1 << ordinal();
+        public final boolean isSet(int flags) {
+            return (flags & mask) != 0;
+        }
+
+        private int or(int flags) {
+            return flags | mask;
+        }
+
+        public static final int makePinSupportFlags(boolean supported, boolean queryable, boolean canNest) {
+            int flags = IS_INITIALIZED.or(0);
+            if (supported) {
+                flags = IS_SUPPORTED.or(flags);
+                if (canNest) {
+                    flags = CAN_NEST.or(flags);
+                }
+                if (queryable) {
+                    flags = IS_QUERYABLE.or(flags);
+                } else {
+                    FatalError.check(canNest, "Must be able to nest pin request if not queryable");
+                }
+            }
+            return flags;
+        }
+    }
+
+    boolean supportsPinning(PIN_SUPPORT_FLAG flag);
+
+    /**
+     * Prevent the GC from moving the given object.
+     *
+     * Allocating very small amounts in the same thread before unpinning is strongly discouraged but not strictly
+     * forbidden.
+     *
+     * Pinning and then allocating may cause somewhat premature OutOfMemoryException. However, the implementation is
+     * supposed to not let pinning succeed in the first place if there is any plausible danger of that happening.
+     *
+     * Pinning and then allocating large amounts is prone to cause premature OutOfMemoryException.
+     *
+     * Example:
+     *
+     * ATTENTION: The period of time an object can remained pinned must be "very short". Pinning may block other threads
+     * that wait for GC to happen. Indefinite pinning will create deadlock!
+     *
+     * Calling this method on an already pinned object has undefined consequences.
+     *
+     * Note to GC implementors: you really don't need to implement pinning. It's an entirely optional/experimental
+     * feature. However, if present, there are parts of the JVM that will automatically take advantage of it.
+     *
+     * If pinning is not supported, make pin() and isPinned() always return false and declare @INLINE for both.
+     * Then all pinning client code will automatically be eliminated.
+     *
+     * @return whether pinning succeeded - callers are supposed to have an alternative plan when it fails
+     */
+    boolean pin(Object object);
+
+    /**
+     * Allow the given object to be moved by the GC. Always quickly balance each call to the above with a call to this
+     * method.
+     *
+     * Calling this method on an already unpinned object has undefined consequences.
+     */
+    void unpin(Object object);
+
+    /**
+     * Return true if the given object is already pinned. This method must be called only when IS_QUERYABLE is false.
+     * @param object
+     * @return
+     */
+    boolean isPinned(Object object);
+
     /**
      * Is TLAB used in this heap scheme or not.
      * @return true if TLAB is used
@@ -449,7 +539,5 @@ public interface HeapScheme extends VMScheme {
         // Ensure that the above method is compiled into the boot image so that it can be inspected conveniently
         private static CriticalMethod inspectableDecreaseMemoryRequestedCriticalMethod =
             new CriticalMethod(HeapScheme.Inspect.class, "inspectableDecreaseMemoryRequested", SignatureDescriptor.create(void.class, Size.class));
-
-
     }
 }

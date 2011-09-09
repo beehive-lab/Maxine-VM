@@ -180,6 +180,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
     public SemiSpaceHeapScheme() {
         super();
+        pinningSupportFlags = PIN_SUPPORT_FLAG.makePinSupportFlags(false, false, false);
     }
 
     @Override
@@ -1144,6 +1145,14 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
     @INLINE(override = true)
     public void writeBarrier(Reference from, Reference to) {
         // do nothing.
+    }
+
+    public boolean pin(Object object) {
+        return false;
+    }
+
+    public void unpin(Object object) {
+        throw new UnsupportedOperationException();
     }
 
     /**
