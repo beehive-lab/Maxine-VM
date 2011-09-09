@@ -2864,7 +2864,6 @@ public class AMD64Assembler extends AbstractAssembler {
      */
     public final void call() {
         emitByte(0xE8);
-        assert (codeBuffer.position() & ~(target.wordSize - 1)) == ((codeBuffer.position() + 3) & ~(target.wordSize - 1)) : "all call sites must be aligned for possible patching";
         emitInt(0);
     }
 

@@ -86,10 +86,6 @@ public final class LIRList {
         append(new LIRCall(LIROpcode.NativeCall, symbol, result, arguments, info, marks, false, null));
     }
 
-    public void templateCall(CiValue result, List<CiValue> arguments, LIRDebugInfo info) {
-        append(new LIRCall(LIROpcode.TemplateCall, null, result, arguments, info, null, false, null));
-    }
-
     public void membar(int barriers) {
         append(new LIRMemoryBarrier(barriers));
     }
