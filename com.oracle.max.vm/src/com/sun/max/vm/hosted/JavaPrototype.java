@@ -291,18 +291,11 @@ public final class JavaPrototype extends Prototype {
             for (BootImagePackage maxPackage : config.bootImagePackages) {
                 loadBootImagePackage(maxPackage);
             }
-
             loadExtraClassesAndPackages();
-
-            config.initializeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
-
-            VmThreadLocal.completeInitialization();
-
-        } else {
-            config.initializeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
-
-            VmThreadLocal.completeInitialization();
         }
+
+        config.initializeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
+        VmThreadLocal.completeInitialization();
     }
 
     /**
