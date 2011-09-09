@@ -280,7 +280,7 @@ public final class BlockBegin extends Instruction {
     }
 
     /**
-     * Iterate over this block, its exception handlers, and its successors, in that order.
+     * Iterate over this block, its successors, and its exception handlers, in that order.
      * @param closure the closure to apply to each block
      */
     public void iteratePreOrder(BlockClosure closure) {
@@ -323,11 +323,11 @@ public final class BlockBegin extends Instruction {
             mark.put(this, this);
             closure.apply(this);
             BlockEnd e = end();
+            assert e != null : "block must have block end";
+            iterateReverse(mark, closure, e.successors());
             if (exceptionHandlerBlocks != null) {
                 iterateReverse(mark, closure, exceptionHandlerBlocks);
             }
-            assert e != null : "block must have block end";
-            iterateReverse(mark, closure, e.successors());
         }
     }
 
