@@ -100,12 +100,18 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
     final AfterMarkSweepVerifier afterGCVerifier;
 
+    // For debugging purposes only.
+    final private AtomicPinnedCounter pinnedCounter;
+
     @HOSTED_ONLY
     public MSHeapScheme() {
         heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT, new ContiguousHeapRootCellVisitor());
         objectSpace = new FreeHeapSpaceManager();
         largeObjectSpace = new LargeObjectSpace();
         afterGCVerifier = new AfterMarkSweepVerifier(heapMarker, objectSpace);
+
+        pinningSupportFlags = PIN_SUPPORT_FLAG.makePinSupportFlags(true, false, true);
+        pinnedCounter = MaxineVM.isDebug() ? new AtomicPinnedCounter() : null;
     }
 
     @Override
@@ -220,6 +226,23 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
     @INLINE(override = true)
     public void writeBarrier(Reference from, Reference to) {
+    }
+
+    @INLINE(override = true)
+    public boolean pin(Object object) {
+        // Objects never relocate. So this is always safe.
+        if (MaxineVM.isDebug()) {
+            pinnedCounter.increment();
+        }
+        return true;
+    }
+
+
+    @INLINE(override = true)
+    public void unpin(Object object) {
+        if (MaxineVM.isDebug()) {
+            pinnedCounter.decrement();
+        }
     }
 
     @Override
