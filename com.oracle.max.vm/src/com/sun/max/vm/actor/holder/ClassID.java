@@ -97,7 +97,7 @@ public final class ClassID {
      */
     static synchronized void register(ClassActor classActor) {
         int id = classActor.id;
-        FatalError.check(usedIDs.get(id), "Class ID must be allocated");
+        FatalError.check(usedIDs.get(id), "Class ID must be allocated: id=" + id + ", class=" + classActor);
         idToClassActor.set(id, classActor);
         if (TraceClassIDs) {
             Log.println("Bound class identifier " + id + " to " + classActor);

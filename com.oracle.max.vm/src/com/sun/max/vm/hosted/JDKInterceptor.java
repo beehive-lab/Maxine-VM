@@ -194,6 +194,8 @@ public final class JDKInterceptor {
             new ValueField("methodFilterMap", ReferenceValue.from(new HashMap<Class, String[]>()), false),
         JDK.sun_util_calendar_ZoneInfo,
             new ZeroField("aliasTable", true, true),
+        JDK.sun_security_jca_ProviderConfig,
+            new ValueField("LOCK", ReferenceValue.from(new Object()), false),
         JDK.java_util_Random,
             new FieldOffsetRecomputation("seedOffset", "seed"),
         JDK.java_util_concurrent_ConcurrentSkipListSet,

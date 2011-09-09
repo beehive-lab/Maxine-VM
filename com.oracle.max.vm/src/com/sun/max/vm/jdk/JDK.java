@@ -137,6 +137,7 @@ public class JDK {
     public static final ClassRef sun_reflect_ConstantPool                   = new ClassRef(sun.reflect.ConstantPool.class);
 
     public static final ClassRef sun_security_action_GetPropertyAction      = new ClassRef(sun.security.action.GetPropertyAction.class);
+    public static final ClassRef sun_security_jca_ProviderConfig            = new LazyClassRef("sun.security.jca.ProviderConfig");
 
     // Checkstyle: resume field name check
 
