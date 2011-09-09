@@ -26,6 +26,7 @@ import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.thread.VmThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
+import static com.sun.max.vm.heap.HeapSchemeAdaptor.GC_DISABLING_COUNT;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -42,7 +43,6 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.thread.VmThreadLocal.Nature;
 
 /**
  * The dynamic Java object heap.
@@ -605,12 +605,6 @@ public final class Heap {
     }
 
     /**
-     * Per thread count of request for disabling GC. It allows to fail-fast if a thread pinning an object request garbage collection (which create a deadlock).
-     */
-    private static final VmThreadLocal GC_DISABLING_COUNT =
-        new VmThreadLocal("GC_DISABLING_COUNT", false, "Count of active GC-disabling requests issued by this thread", Nature.Single);
-
-    /**
      *  Counter of threads that are disabling GC.
      *  The counter is increased / decreased only when the thread local count change from zero to one (and vice-versa).
      * @see Heap#disableGC()
@@ -630,7 +624,6 @@ public final class Heap {
     /**
      * Disable GC. Must be paired with a subsequent call to {@link Heap#enableGC()}
      */
-    @INLINE
     private static void disableGC() {
         final Pointer etla = ETLA.load(currentTLA());
         Pointer count = GC_DISABLING_COUNT.load(etla);
@@ -645,12 +638,11 @@ public final class Heap {
     /**
      * Enable GC. Must be paired with a previous call to {@link Heap#disableGC()}
      */
-    @INLINE
     private static void enableGC() {
         final Pointer etla = ETLA.load(currentTLA());
         Pointer count = GC_DISABLING_COUNT.load(etla);
         if (count.equals(1)) {
-            synchronized (Heap.HEAP_LOCK) {
+            synchronized (HEAP_LOCK) {
                 if (disableGCThreadCount == 1) {
                     disableGCThreadCount = 0;
                     if (gcWaitForDisablingThreads) {

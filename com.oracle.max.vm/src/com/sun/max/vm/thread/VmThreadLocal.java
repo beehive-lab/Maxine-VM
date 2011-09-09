@@ -56,7 +56,7 @@ import com.sun.max.vm.stack.*;
  * All thread local variables occupy one word and have a constant {@linkplain Nature nature}.
  * <p>
  * All thread locals are in a contiguous block of memory called a thread locals area (TLA) and there
- * are three TLAs per thread, one for each of the {@linkplain SafepointPoll safepoint} states:
+ * are three TLAs per thread, one for each of the {@linkplain SafepointPoVmThreadLocalll safepoint} states:
  * <dl>
  * <dt>Enabled</dt>
  * <dd>Safepoints for the thread are {@linkplain SafepointPoll#enable() enabled}. The base address of this TLA is
