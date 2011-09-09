@@ -1404,22 +1404,6 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void emitTemplateCall(CiValue address, LIRDebugInfo info) {
-        if (address == null) {
-            directCall(null, info);
-            return;
-        }
-
-        CiRegister reg = rscratch1;
-        if (address.isRegister()) {
-            reg = address.asRegister();
-        } else {
-            moveOp(address, reg.asValue(address.kind), address.kind, null, false);
-        }
-        indirectCall(reg, null, info);
-    }
-
-    @Override
     protected void emitThrow(CiValue exceptionPC, CiValue exceptionOop, LIRDebugInfo info, boolean unwind) {
        // exception object is not added to oop map by LinearScan
        // (LinearScan assumes that no oops are in fixed registers)
@@ -2202,7 +2186,9 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     }
 
     public void directCall(Object target, LIRDebugInfo info) {
-        masm.alignCall();
+        if (C1XOptions.AlignDirectCallsForPatching) {
+            masm.alignCall();
+        }
         int before = masm.codeBuffer.position();
         masm.call();
         int after = masm.codeBuffer.position();

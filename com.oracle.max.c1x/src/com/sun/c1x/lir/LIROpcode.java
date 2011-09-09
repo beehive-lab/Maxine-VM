@@ -97,7 +97,6 @@ public enum LIROpcode {
     NativeCall,
     DirectCall,
     IndirectCall,
-    TemplateCall,
     InstanceOf,
     CheckCast,
     StoreCheck,
