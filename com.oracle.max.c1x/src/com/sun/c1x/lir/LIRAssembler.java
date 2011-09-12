@@ -226,6 +226,9 @@ public abstract class LIRAssembler {
 
         switch (op.code) {
             case DirectCall:
+                if (C1XOptions.AlignDirectCallsForPatching) {
+                    emitDirectCallAlignment();
+                }
                 if (op.marks != null) {
                     op.marks.put(XirMark.CALLSITE, tasm.recordMark(null, new Mark[0]));
                 }
@@ -514,6 +517,12 @@ public abstract class LIRAssembler {
 
     protected abstract void emitNativeCall(String symbol, LIRDebugInfo info, CiValue callAddress);
 
+    /**
+     * Emits code to ensure that the operand of the direct call about to be emitted is
+     * aligned such that it can be patched in an MP-safe manner.
+     */
+    protected abstract void emitDirectCallAlignment();
+
     protected abstract void emitMemoryBarriers(int barriers);
 
     protected abstract void emitOsrEntry();
@@ -539,5 +548,4 @@ public abstract class LIRAssembler {
     protected abstract void stack2reg(CiValue src, CiValue dest, CiKind kind);
 
     protected abstract void reg2reg(CiValue src, CiValue dest);
-
 }

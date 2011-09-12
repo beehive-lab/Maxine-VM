@@ -366,7 +366,7 @@ public class AMD64CompilerStubEmitter {
         }
 
         if (C1XOptions.AlignDirectCallsForPatching) {
-            asm.alignCall();
+            asm.alignForPatchableDirectCall();
         }
         // Call to the runtime
         int before = asm.codeBuffer.position();
