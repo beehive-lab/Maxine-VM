@@ -118,6 +118,9 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
             // VM-generation time initialization.
             TLAB_HEADROOM = MIN_OBJECT_SIZE;
             AtomicBumpPointerAllocator.hostInitialize();
+            if (MaxineVM.isDebug()) {
+                AtomicPinnedCounter.hostInitialize();
+            }
         } else if (phase == MaxineVM.Phase.PRISTINE) {
             allocateHeapAndGCStorage();
         } else if (phase == MaxineVM.Phase.TERMINATING) {
