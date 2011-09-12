@@ -1377,6 +1377,11 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     }
 
     @Override
+    protected void emitDirectCallAlignment() {
+        masm.alignForPatchableDirectCall();
+    }
+
+    @Override
     protected void emitIndirectCall(Object target, LIRDebugInfo info, CiValue callAddress) {
         CiRegister reg = rscratch1;
         if (callAddress.isRegister()) {
@@ -2186,9 +2191,6 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     }
 
     public void directCall(Object target, LIRDebugInfo info) {
-        if (C1XOptions.AlignDirectCallsForPatching) {
-            masm.alignCall();
-        }
         int before = masm.codeBuffer.position();
         masm.call();
         int after = masm.codeBuffer.position();
