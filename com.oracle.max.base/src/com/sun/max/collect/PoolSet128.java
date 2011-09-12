@@ -24,7 +24,6 @@ package com.sun.max.collect;
 
 import java.util.*;
 
-import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 
 /**
@@ -71,13 +70,11 @@ public class PoolSet128<T extends PoolObject> extends PoolSet<T> {
         return setLow == 0L && setHigh == 0L;
     }
 
-    @INLINE
     private static int bitToSerial(long bit) {
         assert bit != 0 && Longs.isPowerOfTwoOrZero(bit);
         return Long.numberOfTrailingZeros(bit);
     }
 
-    @INLINE
     private static long serialToBit(int serial) {
         assert serial >= 0 && serial < MAX_POOL_SIZE;
         return 1L << serial;

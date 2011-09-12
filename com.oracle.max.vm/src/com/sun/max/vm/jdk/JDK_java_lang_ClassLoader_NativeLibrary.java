@@ -24,7 +24,6 @@ package com.sun.max.vm.jdk;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
 
-import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;

@@ -28,7 +28,6 @@ import static com.sun.max.vm.MaxineVM.*;
 
 import java.math.*;
 
-import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;

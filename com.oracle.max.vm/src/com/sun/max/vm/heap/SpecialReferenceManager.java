@@ -26,7 +26,6 @@ package com.sun.max.vm.heap;
 import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.vm.jdk.JDK_java_lang_ref_ReferenceQueue.*;
 
-import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
