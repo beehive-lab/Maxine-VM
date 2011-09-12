@@ -38,7 +38,7 @@ public final class AtomicPinnedCounter {
 
     @HOSTED_ONLY
     public static void hostInitialize() {
-        ClassActor.fromJava(AtomicPinnedCounter.class).findLocalInstanceFieldActor("pinnedCounter").offset();
+        pinnedCounterOffset = ClassActor.fromJava(AtomicPinnedCounter.class).findLocalInstanceFieldActor("pinnedCounter").offset();
     }
 
     public void increment() {
@@ -48,7 +48,7 @@ public final class AtomicPinnedCounter {
             oldValue = pinnedCounter;
             FatalError.check(oldValue >= 0, "Unbalance pinned request");
             newValue  = oldValue + 1;
-        } while (Reference.fromJava(this).compareAndSwapInt(pinnedCounterOffset, oldValue, newValue) == newValue);
+        } while (Reference.fromJava(this).compareAndSwapInt(pinnedCounterOffset, oldValue, newValue) != oldValue);
     }
 
     public void decrement() {
@@ -58,6 +58,6 @@ public final class AtomicPinnedCounter {
             oldValue = pinnedCounter;
             FatalError.check(oldValue > 0, "Unbalance pinned request");
             newValue  = oldValue - 1;
-        } while (Reference.fromJava(this).compareAndSwapInt(pinnedCounterOffset, oldValue, newValue) == newValue);
+        } while (Reference.fromJava(this).compareAndSwapInt(pinnedCounterOffset, oldValue, newValue) != oldValue);
     }
 }
