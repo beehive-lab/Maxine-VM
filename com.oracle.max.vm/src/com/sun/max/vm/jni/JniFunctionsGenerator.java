@@ -194,7 +194,10 @@ public class JniFunctionsGenerator {
                             body = bodyBuffer.toString();
                             break;
                         }
-                        bodyBuffer.append("    ").append(line).append("\n");
+                        if (line.length() > 0) {
+                            bodyBuffer.append("    ");
+                        }
+                        bodyBuffer.append(line).append("\n");
                     }
 
                     if (body == null) {
