@@ -26,7 +26,6 @@ import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.vm.classfile.constant.PoolConstantFactory.*;
 import static com.sun.max.vm.classfile.constant.SymbolTable.*;
 
-import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.io.*;
 import com.sun.max.program.*;

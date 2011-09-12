@@ -27,7 +27,6 @@ import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
 
 import java.security.*;
 
-import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.platform.*;
 import com.sun.max.vm.heap.*;

@@ -31,6 +31,8 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.regex.*;
 
+import com.sun.max.annotate.*;
+
 /**
  * The definitions of the bytecodes that are valid input to the compiler and
  * related utility methods. This comprises two groups: the standard Java

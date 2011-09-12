@@ -34,7 +34,6 @@ import java.util.*;
 import sun.misc.*;
 import sun.reflect.*;
 
-import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;

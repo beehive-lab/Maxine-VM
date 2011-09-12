@@ -26,7 +26,6 @@ import static com.sun.cri.bytecode.Bytecodes.*;
 
 import java.io.*;
 
-import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
