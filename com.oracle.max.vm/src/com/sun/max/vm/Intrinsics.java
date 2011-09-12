@@ -25,7 +25,7 @@ package com.sun.max.vm;
 import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.cri.bytecode.Bytecodes.UnsignedComparisons.*;
 
-import com.sun.cri.bytecode.*;
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;

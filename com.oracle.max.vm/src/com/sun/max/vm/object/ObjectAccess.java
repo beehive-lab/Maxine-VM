@@ -28,7 +28,6 @@ import static com.sun.max.vm.MaxineVM.*;
 import java.lang.reflect.*;
 import java.nio.*;
 
-import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
