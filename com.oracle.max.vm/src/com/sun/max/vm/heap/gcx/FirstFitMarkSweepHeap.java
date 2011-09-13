@@ -412,7 +412,15 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                     chunk = HeapFreeChunk.getFreeChunkNext(chunk);
                 } while(!chunk.isZero());
                 result = nextFreeChunkInRegion;
-                FatalError.check(!lastChunk.isZero() || freeSpace.equals(allocatedSize), "must not have free space if no chunk left");
+                if (!(!lastChunk.isZero() || freeSpace.equals(allocatedSize))) {
+                    Log.print("lastChunk =");
+                    Log.print(lastChunk);
+                    Log.print(", freeSpace = ");
+                    Log.print(freeSpace.toLong());
+                    Log.print(", allocatedSize = ");
+                    Log.println(allocatedSize.toLong());
+                    FatalError.check(!lastChunk.isZero() || freeSpace.equals(allocatedSize), "must not have free space if no chunk left");
+                }
                 nextFreeChunkInRegion = lastChunk;
                 freeSpace = freeSpace.minus(allocatedSize);
             }
@@ -541,7 +549,6 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                 if (spaceLeft.greaterEqual(minReclaimableSpace)) {
                     if (traceOverflowRefill) {
                         final boolean lockDisabledSafepoints = Log.lock();
-                        Log.unlock(lockDisabledSafepoints);
                         Log.print("overflow allocator putback region #");
                         Log.print(currentOverflowAllocatingRegion);
                         Log.print(" in TLAB allocation list with ");
