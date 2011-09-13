@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.heap.gcx;
 
+import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -31,7 +32,14 @@ import com.sun.max.vm.runtime.*;
  */
 public final class AtomicPinnedCounter {
     private volatile int pinnedCounter = 0;
-    private static final int pinnedCounterOffset = ClassActor.fromJava(AtomicPinnedCounter.class).findLocalInstanceFieldActor("pinnedCounter").offset();
+
+    @CONSTANT_WHEN_NOT_ZERO
+    private static int pinnedCounterOffset;
+
+    @HOSTED_ONLY
+    public static void hostInitialize() {
+        pinnedCounterOffset = ClassActor.fromJava(AtomicPinnedCounter.class).findLocalInstanceFieldActor("pinnedCounter").offset();
+    }
 
     public void increment() {
         int newValue;
@@ -40,7 +48,7 @@ public final class AtomicPinnedCounter {
             oldValue = pinnedCounter;
             FatalError.check(oldValue >= 0, "Unbalance pinned request");
             newValue  = oldValue + 1;
-        } while (Reference.fromJava(this).compareAndSwapInt(pinnedCounterOffset, oldValue, newValue) == newValue);
+        } while (Reference.fromJava(this).compareAndSwapInt(pinnedCounterOffset, oldValue, newValue) != oldValue);
     }
 
     public void decrement() {
@@ -50,6 +58,6 @@ public final class AtomicPinnedCounter {
             oldValue = pinnedCounter;
             FatalError.check(oldValue > 0, "Unbalance pinned request");
             newValue  = oldValue - 1;
-        } while (Reference.fromJava(this).compareAndSwapInt(pinnedCounterOffset, oldValue, newValue) == newValue);
+        } while (Reference.fromJava(this).compareAndSwapInt(pinnedCounterOffset, oldValue, newValue) != oldValue);
     }
 }
