@@ -25,7 +25,6 @@ import java.lang.annotation.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.sun.cri.bytecode.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.holder.*;

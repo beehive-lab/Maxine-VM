@@ -321,7 +321,7 @@ public class Stubs {
             // load the return address into the third arg register
             asm.movq(args[2].asRegister(), new CiAddress(CiKind.Word, AMD64.rsp.asValue(), frameSize));
 
-            asm.alignCall();
+            asm.alignForPatchableDirectCall();
             int callPos = asm.codeBuffer.position();
             ClassMethodActor callee = isInterface ? resolveInterfaceCall.classMethodActor : resolveVirtualCall.classMethodActor;
             asm.call();
@@ -399,7 +399,7 @@ public class Stubs {
             // load the static trampoline call site into the first parameter register
             asm.movq(locations[0].asRegister(), callSite);
 
-            asm.alignCall();
+            asm.alignForPatchableDirectCall();
             int callPos = asm.codeBuffer.position();
             ClassMethodActor callee = patchStaticTrampoline.classMethodActor;
             asm.call();
@@ -489,7 +489,7 @@ public class Stubs {
             // load the fault address from the thread locals into the third parameter register
             asm.movq(args[2].asRegister(), new CiAddress(CiKind.Word, latch.asValue(), TRAP_FAULT_ADDRESS.offset));
 
-            asm.alignCall();
+            asm.alignForPatchableDirectCall();
             int callPos = asm.codeBuffer.position();
             ClassMethodActor callee = Trap.handleTrap.classMethodActor;
             asm.call();
@@ -635,7 +635,7 @@ public class Stubs {
             asm.subq(AMD64.rsp, AMD64.rsi);
 
             CriticalMethod unroll = new CriticalMethod(Deoptimization.class, "unroll", null);
-            asm.alignCall();
+            asm.alignForPatchableDirectCall();
             int callPos = asm.codeBuffer.position();
             ClassMethodActor callee = unroll.classMethodActor;
             asm.call();
@@ -886,7 +886,7 @@ public class Stubs {
             asm.movq(arg3, AMD64.rsp);
 
             // Call runtime routine
-            asm.alignCall();
+            asm.alignForPatchableDirectCall();
             int callPos = asm.codeBuffer.position();
             asm.call();
             int callSize = asm.codeBuffer.position() - callPos;
@@ -946,7 +946,7 @@ public class Stubs {
             CiRegister arg3 = args[3].asRegister();
             asm.movq(arg3, AMD64.rbp);
 
-            asm.alignCall();
+            asm.alignForPatchableDirectCall();
             int callPos = asm.codeBuffer.position();
             ClassMethodActor callee = uncommonTrap.classMethodActor;
             asm.call();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,15 +25,14 @@ package com.sun.max.annotate;
 import java.lang.annotation.*;
 
 /**
- * Every thus annotated class should not have static inlining heuristics applied.
- * The only inlining that should occur in classes with this annotation should
- * be methods explicitly marked {@linked INLINE}.
- *
- * This annotation exists primarily for annotating classes that call other methods
- * that <b>should not</b> be inlined for testing reasons (e.g. a test() method should not
- * be inlined into the testing framework that calls test()).
+ * Marks a method as being implemented by an extended bytecode.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE})
-public @interface NO_INLINING {
+@Target(ElementType.METHOD)
+public @interface INTRINSIC {
+    /**
+     * The value of the extended bytecode corresponding to this intrinsic.
+     * @return the extended bytecode value
+     */
+    int value();
 }

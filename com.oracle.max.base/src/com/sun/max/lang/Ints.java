@@ -22,7 +22,6 @@
  */
 package com.sun.max.lang;
 
-import com.sun.max.annotate.*;
 import com.sun.max.util.*;
 
 /**
@@ -122,7 +121,6 @@ public final class Ints {
      * @param by a positive power of two.
      * @return the unsigned integer calculated by rounding upwards to a multiple of {@code by}.
      */
-    @INLINE
     public static int roundUnsignedUpByPowerOfTwo(int value, int by) {
         assert isPowerOfTwoOrZero(by);
         final int mask = by - 1;

@@ -26,7 +26,6 @@ import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.heap.gcx.HeapRegionManager.*;
 
-import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;

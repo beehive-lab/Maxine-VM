@@ -30,7 +30,6 @@ import java.util.*;
 
 import sun.reflect.annotation.*;
 
-import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
 

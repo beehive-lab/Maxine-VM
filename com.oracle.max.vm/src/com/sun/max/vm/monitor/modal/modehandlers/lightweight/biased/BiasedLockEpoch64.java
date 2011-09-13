@@ -24,7 +24,6 @@ package com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
 
-import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 

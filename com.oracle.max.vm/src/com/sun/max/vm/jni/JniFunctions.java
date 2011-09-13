@@ -31,7 +31,6 @@ import java.lang.reflect.*;
 import java.nio.*;
 import java.util.*;
 
-import com.sun.cri.bytecode.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -698,13 +697,13 @@ public final class JniFunctions {
         // Source: JniFunctionsSource.java:308
         Pointer anchor = prologue(env, "NewObjectA");
         try {
-    
+
             final ClassActor classActor = ClassActor.fromJava((Class) javaClass.unhand());
             if (!(classActor instanceof TupleClassActor)) {
                 throw new NoSuchMethodException();
             }
             final TupleClassActor tupleClassActor = (TupleClassActor) classActor;
-    
+
             final MethodActor methodActor = MethodID.toMethodActor(methodID);
             if (methodActor == null || !methodActor.isInitializer()) {
                 throw new NoSuchMethodException();
@@ -713,7 +712,7 @@ public final class JniFunctions {
             if (virtualMethodActor == null) {
                 throw new NoSuchMethodException();
             }
-    
+
             final SignatureDescriptor signature = virtualMethodActor.descriptor();
             final Value[] argumentValues = new Value[signature.numberOfParameters()];
             copyJValueArrayToValueArray(arguments, signature, argumentValues, 0);
@@ -1363,7 +1362,7 @@ public final class JniFunctions {
             final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
             Snippets.makeClassInitialized(classActor);
             try {
-    
+
                 final Utf8Constant name = SymbolTable.lookupSymbol(CString.utf8ToJava(nameCString));
                 final TypeDescriptor descriptor = JavaTypeDescriptor.parseTypeDescriptor(CString.utf8ToJava(descriptorCString));
                 if (name == null || descriptor == null) {
@@ -3119,12 +3118,12 @@ public final class JniFunctions {
         Pointer anchor = prologue(env, "RegisterNatives");
         try {
             Pointer a = methods;
-    
+
             final int pointerSize = Word.size();
             final int NAME = 0 * pointerSize;
             final int SIGNATURE = 1 * pointerSize;
             final int FNPTR = 2 * pointerSize;
-    
+
             for (int i = 0; i < numberOfMethods; i++) {
                 try {
                     final Utf8Constant name = SymbolTable.lookupSymbol(CString.utf8ToJava(a.readWord(NAME).asPointer()));
@@ -3136,18 +3135,18 @@ public final class JniFunctions {
                         throw new NoSuchMethodError();
                     }
                     final Address fnPtr = a.readWord(FNPTR).asAddress();
-    
+
                     final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
                     final ClassMethodActor classMethodActor = classActor.findClassMethodActor(name, descriptor);
                     if (classMethodActor == null || !classMethodActor.isNative()) {
                         throw new NoSuchMethodError();
                     }
                     classMethodActor.nativeFunction.setAddress(fnPtr);
-    
+
                 } catch (Utf8Exception e) {
                     throw new NoSuchMethodError();
                 }
-    
+
                 // advance to next JNINativeMethod struct
                 a = a.plus(pointerSize * 3);
             }
@@ -3260,7 +3259,7 @@ public final class JniFunctions {
                 setCopyPointer(isCopy, false);
                 return Reference.fromJava(arrayObject).toOrigin().plus(Layout.byteArrayLayout().getElementOffsetFromOrigin(0));
             }
-    
+
             if (arrayObject instanceof boolean[]) {
                 return getBooleanArrayElements(array, isCopy);
             } else if (arrayObject instanceof byte[]) {

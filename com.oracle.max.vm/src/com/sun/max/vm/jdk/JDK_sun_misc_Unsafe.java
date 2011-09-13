@@ -33,7 +33,6 @@ import java.security.*;
 import sun.misc.*;
 import sun.reflect.*;
 
-import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;

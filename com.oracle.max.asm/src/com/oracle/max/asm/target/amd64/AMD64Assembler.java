@@ -2846,9 +2846,9 @@ public class AMD64Assembler extends AbstractAssembler {
     }
 
     /**
-     * Makes sure that at subsequent {@linkplain #call} does not fail the alignment check.
+     * Makes sure that a subsequent {@linkplain #call} does not fail the alignment check.
      */
-    public final void alignCall() {
+    public final void alignForPatchableDirectCall() {
         int dispStart = codeBuffer.position() + 1;
         int mask = target.wordSize - 1;
         if ((dispStart & ~mask) != ((dispStart + 3) & ~mask)) {

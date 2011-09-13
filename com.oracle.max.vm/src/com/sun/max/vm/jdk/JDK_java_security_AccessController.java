@@ -29,7 +29,6 @@ import static com.sun.max.vm.runtime.VMRegister.*;
 import java.security.*;
 import java.util.*;
 
-import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
