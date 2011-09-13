@@ -46,7 +46,7 @@ public final class HeapRegionConstants {
     @CONSTANT_WHEN_NOT_ZERO
     static int log2RegionSizeInWords;
     @CONSTANT_WHEN_NOT_ZERO
-    static int regionAlignmentMask;
+    static Address regionAlignmentMask;
 
     static void initializeConstants() {
         // TODO: this is where it would be interesting to use annotation to ask the boot image
@@ -58,7 +58,7 @@ public final class HeapRegionConstants {
         FatalError.check(regionSizeInBytes == (1 << log2RegionSizeInBytes), "Heap region size must be a power of 2");
         regionSizeInWords = regionSizeInBytes >> Word.widthValue().log2numberOfBytes;
         log2RegionSizeInWords = log2RegionSizeInBytes - Word.widthValue().log2numberOfBytes;
-        regionAlignmentMask = regionSizeInBytes - 1;
+        regionAlignmentMask = Address.fromInt(regionSizeInBytes).minus(1);
     }
 
     static boolean isAligned(Address address) {
@@ -66,7 +66,7 @@ public final class HeapRegionConstants {
     }
 
     static Address regionStart(Address address) {
-        return address.and(regionAlignmentMask);
+        return address.and(regionAlignmentMask.not());
     }
 
     /**

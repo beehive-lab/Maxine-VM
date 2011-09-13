@@ -27,8 +27,8 @@ import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
  * Generic iterator over a {@link HeapRegionList}.
  */
 public abstract class HeapRegionListIterable {
-    HeapRegionList regionList;
-    int cursor = INVALID_REGION_ID;
+    protected HeapRegionList regionList;
+    protected int cursor = INVALID_REGION_ID;
 
     HeapRegionListIterable() {
     }
@@ -39,6 +39,14 @@ public abstract class HeapRegionListIterable {
      */
     void initialize(HeapRegionList regionList) {
         this.regionList = regionList;
+    }
+
+    int cursor() {
+        return cursor;
+    }
+
+    void reset(int cursor) {
+        this.cursor = cursor;
     }
 
     /**
