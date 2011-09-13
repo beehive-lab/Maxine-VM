@@ -666,6 +666,19 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
+     * Patches the entry point(s) of this target method with direct jump(s) to the
+     * corresponding entry points of {@code tm}.
+     * <p>
+     * <b>This operation can only be performed when at a global safepoint as the patching
+     *    is not guaranteed to be atomic.</b>
+     *
+     * @param tm the target of the jump instruction(s) to be patched in
+     */
+    public void redirectTo(TargetMethod tm) {
+        throw FatalError.unexpected("Cannot patch entry points of " + getClass().getSimpleName() + " " + this);
+    }
+
+    /**
      * Links all the calls from this target method to other methods for which the exact method actor is known. Linking a
      * call means patching the operand of a call instruction that specifies the address of the target code to call. In
      * the case of a callee for which there is no target code available (i.e. it has not yet been compiled or it has
