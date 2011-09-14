@@ -362,14 +362,7 @@ public final class Throw {
             Log.print(codeStart);
             Log.print("+");
             Log.print(ip.minus(codeStart).toInt());
-            Log.print("] {");
-            String compiler = ObjectAccess.readClassActor(targetMethod).name.string;
-            // cannot use substring as it allocates
-            int index = compiler.lastIndexOf('.');
-            for (int i = index + 1; i < compiler.length(); i++) {
-                Log.print(compiler.charAt(i));
-            }
-            Log.print('}');
+            Log.print("]");
         } else {
             Log.print("native{");
             Log.printSymbol(ip);

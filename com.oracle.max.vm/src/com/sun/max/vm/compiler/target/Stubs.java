@@ -358,8 +358,29 @@ public class Stubs {
         final ClassMethodActor callee = caller.callSiteToCallee(callSite);
 
         // Use the caller's entry point to get the correct entry point.
-        final Address calleeEntryPoint = compile(callee, Compilations.Attr.NONE).getEntryPoint(caller.callEntryPoint).asAddress();
+        TargetMethod xxx = compile(callee, Compilations.Attr.NONE);
+//
+//        boolean lockDisabledSafepoints = Log.lock();
+//        Log.print("**** patching direct call site: ");
+//        Log.printMethod(caller, false);
+//
+//        final Pointer codeStart = caller.codeStart();
+//        Log.print(" [");
+//        Log.print(codeStart);
+//        Log.print("+");
+//        Log.print(callSite.minus(codeStart).toInt());
+//        Log.println("]");
+//
+//
+//        Log.print("  to: ");
+//        Log.printMethod(xxx, true);
+//        Log.unlock(lockDisabledSafepoints);
+
+
+        final Address calleeEntryPoint = xxx.getEntryPoint(caller.callEntryPoint).asAddress();
         AMD64TargetMethodUtil.mtSafePatchCallDisplacement(caller, callSite, calleeEntryPoint);
+
+
     }
 
     /**
