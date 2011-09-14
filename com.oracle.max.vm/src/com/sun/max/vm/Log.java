@@ -36,6 +36,7 @@ import com.sun.max.program.ProgramWarning.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
@@ -803,23 +804,37 @@ public final class Log {
          * {@linkplain TargetMethod#classMethodActor}, then the output is of the form:
          *
          * <pre>
-         *     &lt;holder&gt;.&lt;name&gt;&lt;descriptor&gt;
+         *     &lt;holder&gt;.&lt;name&gt;&lt;descriptor&gt; '{'&lt;TargetMethod class&gt;'@'&lt;code start address&gt;'}'
          * </pre>
          *
          * Otherwise, it is of the form:
          *
          * <pre>
-         *     &lt;description&gt;
+         *     &lt;description&gt; '{'&lt;TargetMethod class&gt;'@'&lt;code start address&gt;'}'
          * </pre>
          *
-         * @param targetMethod the target method to print
+         * @param tm the target method to print
          * @param withNewline specifies if a newline should be appended to the stream after the target method
          */
-        public void printMethod(TargetMethod targetMethod, boolean withNewline) {
-            if (targetMethod.classMethodActor != null) {
-                printMethod(targetMethod.classMethodActor, withNewline);
+        public void printMethod(TargetMethod tm, boolean withNewline) {
+            if (tm.classMethodActor != null) {
+                printMethod(tm.classMethodActor, false);
             } else {
-                print(targetMethod.regionName(), withNewline);
+                print(tm.regionName(), false);
+            }
+
+            Log.print(" {");
+            String tmClass = ObjectAccess.readClassActor(tm).name.string;
+            // cannot use substring as it allocates
+            int index = tmClass.lastIndexOf('.');
+            for (int i = index + 1; i < tmClass.length(); i++) {
+                Log.print(tmClass.charAt(i));
+            }
+            Log.print('@');
+            Log.print(tm.codeStart());
+            Log.print('}');
+            if (withNewline) {
+                println();
             }
         }
 
