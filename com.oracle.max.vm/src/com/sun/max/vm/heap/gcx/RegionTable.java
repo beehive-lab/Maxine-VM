@@ -46,8 +46,10 @@ import com.sun.max.vm.runtime.*;
 public final class RegionTable {
     public static final HeapRegionInfo nullHeapRegionInfo = new HeapRegionInfo();
 
+    @INSPECTED
     static final int TableOffset = ClassActor.fromJava(RegionTable.class).dynamicTupleSize().toInt();
 
+    @INSPECTED
     @CONSTANT_WHEN_NOT_ZERO
     private static RegionTable theRegionTable;
 
@@ -68,16 +70,28 @@ public final class RegionTable {
         return Reference.fromJava(this).toOrigin().plus(TableOffset);
     }
 
+    @INSPECTED
     final private Address regionPoolStart;
 
+    @INSPECTED
     final private Address regionPoolEnd;
 
+    @INSPECTED
     final private int regionInfoSize;
 
+    @INSPECTED
     final private int length;
 
     private boolean isInHeapRegion(Address address) {
         return address.greaterEqual(regionPoolStart) && address.lessThan(regionPoolEnd);
+    }
+
+    @HOSTED_ONLY
+    public RegionTable(Address start, Address end, int numRegions, int infoSize) {
+        regionPoolStart = start;
+        regionPoolEnd = end;
+        length = numRegions;
+        regionInfoSize = infoSize;
     }
 
     private RegionTable(Class<HeapRegionInfo> regionInfoClass, MemoryRegion regionPool, int numRegions) {

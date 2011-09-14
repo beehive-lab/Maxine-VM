@@ -248,6 +248,36 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
         return new HashSet<ObjectView>(teleObjectToView.values());
     }
 
+    private final class InteractiveViewRegionInfoByAddressAction extends InspectorAction {
+        InteractiveViewRegionInfoByAddressAction() {
+            super(inspection(),  "View RegionInfo for address...");
+        }
+
+        @Override
+        protected void procedure() {
+            new AddressInputDialog(inspection(), vm().heap().bootHeapRegion().memoryRegion().start(), "View RegionInfo for address...", "View") {
+
+                private TeleRegionTable regionTable;
+
+                @Override
+                public void entered(Address address) {
+                    try {
+                        final Pointer pointer = address.asPointer();
+                        if (vm().isValidOrigin(pointer)) {
+                            final Reference objectReference = vm().originToReference(pointer);
+                            final TeleObject teleObject = vm().heap().findTeleObject(objectReference);
+                            focus().setHeapObject(teleObject);
+                        } else {
+                            gui().errorMessage("heap object not found at "  + address.to0xHexString());
+                        }
+                    } catch (MaxVMBusyException maxVMBusyException) {
+                        inspection().announceVMBusyFailure(name());
+                    }
+                }
+            };
+        }
+    }
+
     private final class InteractiveViewObjectByAddressAction extends InspectorAction {
 
         InteractiveViewObjectByAddressAction() {
