@@ -1276,6 +1276,17 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         stopTimer(immortalSpaceScanTimer);
     }
 
+    /*
+     * Helper instance variables for debugging purposes only.
+     * Easier to track than local variables when under the inspector.
+     */
+    private Pointer debugCursor;
+    private Pointer debugGapLeftObject;
+    private Pointer debugGapRightObject;
+    private int debugBitmapWordIndex;
+    private int debugBitIndex;
+    private int debugRightmostBitmapWordIndex;
+
     /**
      * Return bit index in the color map of the first grey object in the specified area or -1 if none
      * is found.
@@ -1287,6 +1298,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         Pointer p = start.asPointer();
         while (p.lessThan(end)) {
             if (MaxineVM.isDebug()) {
+                debugCursor = p;
                 final Pointer origin = Layout.cellToOrigin(p);
                 final Hub hub = UnsafeCast.asHub(Layout.readHubReference(origin).toJava());
                 if (hub == HeapFreeChunk.HEAP_FREE_CHUNK_HUB) {
@@ -1302,6 +1314,10 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                 return bitIndex;
             }
             p = p.plus(Layout.size(Layout.cellToOrigin(p)));
+            if (MaxineVM.isDebug() && p.readWord(0).isZero()) {
+                Log.print(" suspiscious obj"); Log.print(debugCursor); Log.print(" size = ");
+                Log.println(Layout.size(Layout.cellToOrigin(debugCursor)).toLong());
+            }
         }
         return -1;
     }
@@ -1575,8 +1591,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         return -1;
     }
 
-    Pointer debugLiveObject;
-
     public void sweep(Sweeper sweeper) {
         if (Sweeper.DoImpreciseSweep) {
             impreciseSweep(sweeper, sweeper.minReclaimableSpace());
@@ -1605,7 +1619,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                     if (MaxineVM.isDebug()) {
                         debugBitmapWordIndex = bitmapWordIndex;
                         debugBitIndex = bitIndexInWord;
-                        debugLiveObject = addressOf(bitIndexOfBlackMark).asPointer();
+                        debugCursor = addressOf(bitIndexOfBlackMark).asPointer();
                     }
                     final Pointer endOfLastVisitedCell = sweeper.processLiveObject(addressOf(bitIndexOfBlackMark).asPointer());
                     if (endOfLastVisitedCell.greaterEqual(nextBitmapWordLimit)) {
@@ -1625,14 +1639,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         }
     }
 
-    /*
-     * Helper instance variable for debugging purposes. Make it easier to track when under the inspector.
-     */
-    Pointer gapLeftObject;
-    Pointer gapRightObject;
-    int     debugBitmapWordIndex;
-    int     debugBitIndex;
-    int     debugRightmostBitmapWordIndex;
 
     /**
      * Imprecise sweeping of the heap.
@@ -1667,8 +1673,8 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         // the minimum reclaimable space specified.
         int rightmostBitmapWordIndex =  bitmapWordIndex(bitIndexOf(rightmost));
         if (MaxineVM.isDebug()) {
-            gapLeftObject = Pointer.zero();
-            gapRightObject = Pointer.zero();
+            debugGapLeftObject = Pointer.zero();
+            debugGapRightObject = Pointer.zero();
             debugBitIndex = 0;
             debugBitmapWordIndex = 0;
         }
@@ -1698,8 +1704,8 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                         if (MaxineVM.isDebug()) {
                             debugBitIndex = bitIndexOfBlackMark;
                             debugBitmapWordIndex = bitmapWordIndex;
-                            gapLeftObject = addressOf(lastLiveMark).asPointer();
-                            gapRightObject = addressOf(bitIndexOfBlackMark).asPointer();
+                            debugGapLeftObject = addressOf(lastLiveMark).asPointer();
+                            debugGapRightObject = addressOf(bitIndexOfBlackMark).asPointer();
                         }
                         final Pointer endOfLastVisitedCell = sweeper.processLargeGap(addressOf(lastLiveMark).asPointer(), addressOf(bitIndexOfBlackMark).asPointer());
                         lastLiveMark  = bitIndexOfBlackMark;
@@ -1766,11 +1772,11 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         final int leftmostBitIndex = bitIndexOf(regionLeftmost);
         int lastLiveMark = firstBlackMark(leftmostBitIndex, rightmostBitIndex);
         if (lastLiveMark < 0) {
-            // The region is free.
-            sweeper.processFreeRegion();
+            // No live mark found on this region.
+            sweeper.processDeadRegion();
             return;
         }
-        if (lastLiveMark == leftmostBitIndex && sweeper.sweepingRegionIsLarge()) {
+        if (lastLiveMark == leftmostBitIndex && sweeper.sweepingRegionIsLargeHead()) {
             return;
         }
         final int minBitsBetweenMark = sweeper.minReclaimableSpace().toInt() >> log2BytesCoveredPerBit;
@@ -1791,8 +1797,8 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         if (MaxineVM.isDebug()) {
             debugBitIndex = 0;
             debugBitmapWordIndex = 0;
-            gapLeftObject = Pointer.zero();
-            gapRightObject =  Pointer.zero();
+            debugGapLeftObject = Pointer.zero();
+            debugGapRightObject =  Pointer.zero();
             debugRightmostBitmapWordIndex = rightmostBitmapWordIndex;
         }
         while (bitmapWordIndex <= rightmostBitmapWordIndex) {
@@ -1821,8 +1827,8 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                         if (MaxineVM.isDebug()) {
                             debugBitIndex = bitIndexOfBlackMark;
                             debugBitmapWordIndex = bitmapWordIndex;
-                            gapLeftObject = addressOf(lastLiveMark).asPointer();
-                            gapRightObject = addressOf(bitIndexOfBlackMark).asPointer();
+                            debugGapLeftObject = addressOf(lastLiveMark).asPointer();
+                            debugGapRightObject = addressOf(bitIndexOfBlackMark).asPointer();
                         }
                         final Pointer endOfLastVisitedCell = sweeper.processLargeGap(addressOf(lastLiveMark).asPointer(), addressOf(bitIndexOfBlackMark).asPointer());
                         lastLiveMark  = bitIndexOfBlackMark;
