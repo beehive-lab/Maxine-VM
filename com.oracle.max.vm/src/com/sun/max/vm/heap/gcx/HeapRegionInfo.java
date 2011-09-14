@@ -66,7 +66,7 @@ public class HeapRegionInfo {
          */
         IS_HEAD,
         /**
-         * Region is the last regions of a multi-region object. Space after the end of the large object may be used for allocation.
+         * Region is the last region of a multi-regions object. Space after the end of the large object may be used for allocation.
          */
         IS_TAIL;
 
@@ -302,11 +302,19 @@ public class HeapRegionInfo {
         return RegionTable.theRegionTable().regionAddress(this);
     }
 
+    private void clear() {
+        liveData = 0;
+        numFreeChunks  = 0;
+        firstFreeChunkIndex = 0;
+        freeSpace = 0;
+    }
+
     /**
      * Change heap region to full state (iterable, not allocating and without free chunks).
      */
     final void toFullState() {
         flags = IS_ITERABLE.or(HAS_FREE_CHUNK.clear(IS_ALLOCATING.clear(flags)));
+        clear();
     }
 
     /**
@@ -354,10 +362,7 @@ public class HeapRegionInfo {
 
     final void resetOccupancy() {
         EMPTY_REGION.setState(this);
-        liveData = 0;
-        numFreeChunks  = 0;
-        firstFreeChunkIndex = 0;
-        freeSpace = 0;
+        clear();
     }
 
     final HeapAccountOwner owner() {
