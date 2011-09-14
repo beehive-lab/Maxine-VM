@@ -25,6 +25,7 @@ package com.oracle.max.vm.ext.t1x;
 import static com.oracle.max.vm.ext.t1x.T1X.*;
 import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.compiler.target.Safepoints.*;
 import static com.sun.max.vm.compiler.target.Stub.Type.*;
 import static com.sun.max.vm.stack.JVMSFrameLayout.*;
@@ -39,6 +40,7 @@ import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.atomic.*;
+import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -325,6 +327,18 @@ public final class T1XTargetMethod extends TargetMethod {
     @Override
     public Address patchCallSite(int callOffset, Address callEntryPoint) {
         return AMD64TargetMethodUtil.mtSafePatchCallDisplacement(this, codeStart().plus(callOffset), callEntryPoint.asAddress());
+    }
+
+    @Override
+    public void redirectTo(TargetMethod tm) {
+        if (platform().isa == ISA.AMD64) {
+            AMD64TargetMethodUtil.patchWithJump(this, BASELINE_ENTRY_POINT.offset(), BASELINE_ENTRY_POINT.in(tm));
+            if (VMConfiguration.vmConfig().needsAdapters()) {
+                AMD64TargetMethodUtil.patchWithJump(this, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(tm));
+            }
+        } else {
+            throw FatalError.unimplemented();
+        }
     }
 
     @Override
@@ -622,7 +636,7 @@ public final class T1XTargetMethod extends TargetMethod {
             // use register reference maps in this method to fill in the map for the callee
             Pointer slotPointer = csa;
             int byteIndex = (safepointIndex * refMapSize) + frameRefMapSize;
-            preparer.tracePrepareReferenceMap(this, safepointIndex, slotPointer, "T1X registers frame");
+            preparer.tracePrepareReferenceMap(this, safepointIndex, slotPointer, "registers");
             // Need to translate from register numbers (as stored in the reg ref maps) to frame slots.
             for (int i = 0; i < regRefMapSize(); i++) {
                 int b = refMaps[byteIndex] & 0xff;
@@ -645,7 +659,7 @@ public final class T1XTargetMethod extends TargetMethod {
 
         // prepare the map for this stack frame
         Pointer slotPointer = current.fp().plus(frameRefMapOffset);
-        preparer.tracePrepareReferenceMap(this, safepointIndex, slotPointer, "T1X frame");
+        preparer.tracePrepareReferenceMap(this, safepointIndex, slotPointer, "frame");
         int byteIndex = safepointIndex * refMapSize;
         for (int i = 0; i < frameRefMapSize; i++) {
             preparer.setReferenceMapBits(current, slotPointer, refMaps[byteIndex] & 0xff, 8);

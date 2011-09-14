@@ -605,16 +605,18 @@ public final class Heap {
     }
 
     /**
-     *  Counter of threads that are disabling GC.
-     *  The counter is increased / decreased only when the thread local count change from zero to one (and vice-versa).
+     * Counter of threads that are disabling GC.
+     * The counter is increased / decreased only when the thread local count changes from zero to one (and vice-versa).
+     *
      * @see Heap#disableGC()
      * @see Heap#enableGC()
      */
     private static int disableGCThreadCount = 0;
 
     /**
-     * Flags indicating that the GC is waiting for GC-disabling threads.
-     * This is currently used to implement an optimistic form of object pinning for heap schemes that don't support it, wherein threads disable GC while holding direct pointer to arrays.
+     * Flag indicating that the GC is waiting for GC-disabling threads.
+     * This is currently used to implement an optimistic form of object pinning for heap schemes that don't
+     * support it, wherein threads disable GC while holding direct pointers to arrays.
      *
      * @see Heap#disableGC()
      * @see Heap#enableGC()
