@@ -582,7 +582,7 @@ function run_t1xgen() {
         exit 1
     fi
 
-    run ${jvm_exe} -cp $(jmax classpath com.oracle.max.vm.ext.t1x) com.sun.max.vm.t1x.T1XTemplateGenerator
+    run ${jvm_exe} -cp $(jmax classpath com.oracle.max.vm.ext.t1x) com.oracle.max.vm.ext.t1x.T1XTemplateGenerator
     result=$?
     exit $result
 }
