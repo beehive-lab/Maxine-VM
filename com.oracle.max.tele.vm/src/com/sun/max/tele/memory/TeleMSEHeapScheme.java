@@ -25,6 +25,7 @@ package com.sun.max.tele.memory;
 import java.util.*;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.gcx.mse.*;
 
@@ -33,9 +34,11 @@ import com.sun.max.vm.heap.gcx.mse.*;
  * specialized for the region-based mark-sweep implementation.
  */
 final class TeleMSEHeapScheme extends AbstractTeleVMHolder implements TeleHeapScheme {
+    private TeleRegionTable teleRegionTable;
 
     TeleMSEHeapScheme(TeleVM vm) {
         super(vm);
+        teleRegionTable = new TeleRegionTable(vm);
     }
 
     public Class heapSchemeClass() {
@@ -43,15 +46,17 @@ final class TeleMSEHeapScheme extends AbstractTeleVMHolder implements TeleHeapSc
     }
 
     public MaxMemoryManagementInfo getMemoryManagementInfo(final Address address) {
+
         return new MaxMemoryManagementInfo() {
+            final int regionID = teleRegionTable.regionID(address);
 
             public MaxMemoryStatus status() {
-                // TODO (mlvdv) Until we get anything better, should at least be sure that
-                // the address is in some part of the heap.
-                final MaxHeapRegion heapRegion = heap().findHeapRegion(address);
-                if (heapRegion == null) {
-                    // The location is not in any memory region allocated by the heap.
-                    return MaxMemoryStatus.UNKNOWN;
+                if (regionID < 0) {
+                    final MaxHeapRegion heapRegion = heap().findHeapRegion(address);
+                    if (heapRegion == null) {
+                        // The location is not in any memory region allocated by the heap.
+                        return MaxMemoryStatus.UNKNOWN;
+                    }
                 }
 
                 // Unclear what the semantics of this should be during GC.
@@ -68,8 +73,7 @@ final class TeleMSEHeapScheme extends AbstractTeleVMHolder implements TeleHeapSc
             }
 
             public String terseInfo() {
-                // Laurent: Provide text to appear in Memory View display cell
-                return "";
+                return regionID < 0 ? "-" : "region #" + regionID;
             }
 
             public String shortDescription() {
@@ -79,6 +83,14 @@ final class TeleMSEHeapScheme extends AbstractTeleVMHolder implements TeleHeapSc
 
             public Address address() {
                 return address;
+            }
+
+            public TeleObject tele() {
+                if (regionID < 0) {
+                    return null;
+                }
+                Address regionInfoAddress = teleRegionTable.regionInfo(regionID);
+                return heap().makeTeleObject(vm().originToReference(regionInfoAddress.asPointer()));
             }
         };
     }

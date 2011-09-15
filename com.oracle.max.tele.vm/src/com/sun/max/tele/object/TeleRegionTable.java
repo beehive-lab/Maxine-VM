@@ -26,36 +26,63 @@ import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.reference.*;
+import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 
+/**
+ *
+ */
+public class TeleRegionTable extends AbstractTeleVMHolder {
+    private boolean initializing;
+    private RegionTable regionTable;
+    private Address regionTableAddress = Address.zero();
 
-public class TeleRegionTable extends TeleTupleObject {
-    static private TeleRegionTable teleRegionTable = null;
+    public TeleRegionTable(TeleVM vm) {
+        super(vm);
+    }
 
-    static private synchronized void initialize(TeleVM vm) {
-        if (teleRegionTable != null) {
+    private boolean isInitialized() {
+        return regionTable != null;
+    }
+
+    private void initialize() {
+        if (isInitialized()) {
             return;
         }
-        Reference theRegionTableReference = vm.teleFields().RegionTable_theRegionTable.staticTupleReference(vm);
-        teleRegionTable = new TeleRegionTable(vm, theRegionTableReference);
+        initializing();
     }
 
-    public static TeleRegionTable theTeleRegionTable(TeleVM vm) {
-        if (teleRegionTable == null) {
-            initialize(vm);
+    private synchronized void initializing() {
+        if (initializing) {
+            return;
         }
-        return teleRegionTable;
-    }
-
-    final  RegionTable regionTable;
-
-    private TeleRegionTable(TeleVM vm, Reference reference) {
-        super(vm, reference);
-        Reference theRegionTable = vm().teleFields().RegionTable_theRegionTable.staticTupleReference(vm);
-        Address start = vm().teleFields().RegionTable_regionPoolStart.readWord(theRegionTable).asAddress();
-        Address end = vm().teleFields().RegionTable_regionPoolEnd.readWord(theRegionTable).asAddress();
-        int numRegions = vm().teleFields().RegionTable_length.readInt(theRegionTable);
-        int infoSize = vm().teleFields().RegionTable_regionInfoSize.readInt(theRegionTable);
+        initializing = true;
+        Reference theRegionTableReference =  vm().teleFields().RegionTable_theRegionTable.readReference(vm());
+        if (theRegionTableReference.isZero()) {
+            return;
+        }
+        int numRegions = vm().teleFields().RegionTable_length.readInt(theRegionTableReference);
+        if (numRegions == 0) {
+            return;
+        }
+        HeapRegionConstants.initializeWithConstants(vm().teleFields().HeapRegionConstants_regionSizeInBytes.readInt(vm()));
+        Address start = vm().teleFields().RegionTable_regionPoolStart.readWord(theRegionTableReference).asAddress();
+        Address end = vm().teleFields().RegionTable_regionPoolEnd.readWord(theRegionTableReference).asAddress();
+        int infoSize = vm().teleFields().RegionTable_regionInfoSize.readInt(theRegionTableReference);
         regionTable = new RegionTable(start, end, numRegions, infoSize);
+        regionTableAddress = theRegionTableReference.toOrigin();
+        initializing = false;
     }
 
+    public Address regionInfo(int regionID) {
+        assert regionID > INVALID_REGION_ID;
+        return regionTableAddress.plus(regionTable.regionInfoOffset(regionID));
+    }
+
+    public int regionID(Address address) {
+        initialize();
+        if (isInitialized()) {
+            return regionTable.regionID(address);
+        }
+        return INVALID_REGION_ID;
+    }
 }
