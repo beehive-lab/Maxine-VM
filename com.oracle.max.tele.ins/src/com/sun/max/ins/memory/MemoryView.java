@@ -67,7 +67,34 @@ public final class MemoryView extends AbstractView<MemoryView> {
     public static final class MemoryViewManager extends AbstractMultiViewManager<MemoryView> implements MemoryViewFactory {
 
         private final InspectorAction interactiveMakeViewAction;
+        private final InspectorAction interactiveViewRegionInfoByAddressAction;
         private final List<InspectorAction> makeViewActions;
+
+        private final class InteractiveViewRegionInfoByAddressAction extends InspectorAction {
+            InteractiveViewRegionInfoByAddressAction() {
+                super(inspection(),  "View RegionInfo for address...");
+            }
+
+            @Override
+            protected void procedure() {
+                new AddressInputDialog(inspection(), Address.zero(), "View RegionInfo for address...", "View") {
+
+                    private TeleRegionTable regionTable;
+
+                    @Override
+                    public void entered(Address address) {
+                        MaxMemoryManagementInfo info = vm().heap().getMemoryManagementInfo(address);
+                        // TODO: revisit this.
+                        if (info.status().equals(MaxMemoryStatus.LIVE)) {
+                            final TeleObject teleObject = info.tele();
+                            focus().setHeapObject(teleObject);
+                        } else {
+                            gui().errorMessage("Heap Region Info not found for address "  + address.to0xHexString());
+                        }
+                    }
+                };
+            }
+        }
 
         protected MemoryViewManager(final Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
@@ -86,8 +113,12 @@ public final class MemoryView extends AbstractView<MemoryView> {
                     };
                 }
             };
+
+            interactiveViewRegionInfoByAddressAction = new InteractiveViewRegionInfoByAddressAction();
+
             makeViewActions = new ArrayList<InspectorAction>(1);
             makeViewActions.add(interactiveMakeViewAction);
+            makeViewActions.add(interactiveViewRegionInfoByAddressAction);
             Trace.end(1, tracePrefix() + "initializing");
         }
 

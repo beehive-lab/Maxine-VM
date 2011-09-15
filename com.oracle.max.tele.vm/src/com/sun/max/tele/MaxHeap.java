@@ -133,4 +133,13 @@ public interface MaxHeap extends MaxEntity<MaxHeap> {
      */
     void printSessionStats(PrintStream printStream, int indent, boolean verbose);
 
+    /**
+     * Return heap-specific memory management information that the heap maintains about the region of memory containing the specified location,
+     * or null if the specified address is not under the control of the HeapScheme.
+     *
+     * @param address a location in VM process memory
+     * @return whatever information the heap scheme knows about the status of the location
+     * with respect to memory management, non-null.
+     */
+    MaxMemoryManagementInfo getMemoryManagementInfo(Address address);
 }

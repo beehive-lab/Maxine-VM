@@ -25,6 +25,7 @@ package com.sun.max.tele.memory;
 import java.util.*;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.gcx.ms.*;
 
@@ -79,6 +80,10 @@ final class TeleMSHeapScheme extends AbstractTeleVMHolder implements TeleHeapSch
 
             public Address address() {
                 return address;
+            }
+
+            public TeleObject tele() {
+                return null;
             }
         };
     }
