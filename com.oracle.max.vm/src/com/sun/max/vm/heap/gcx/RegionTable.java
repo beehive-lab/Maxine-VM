@@ -99,7 +99,6 @@ public final class RegionTable {
         final Hub regionInfoHub = ClassActor.fromJava(regionInfoClass).dynamicHub();
         regionPoolStart = regionPool.start();
         regionPoolEnd = regionPool.end();
-        length = numRegions;
         regionInfoSize = regionInfoHub.tupleSize.toInt();
 
         for (int i = 0; i < numRegions; i++) {
@@ -108,6 +107,8 @@ public final class RegionTable {
                 FatalError.check(regionInfo == regionInfo(i), "Failed to create valid region table");
             }
         }
+        // This makes the region table initialized with respect to the inspector.
+        length = numRegions;
     }
 
     static void initialize(Class<HeapRegionInfo> regionInfoClass, MemoryRegion regionPool, int numRegions) {
@@ -119,15 +120,30 @@ public final class RegionTable {
         return regionID;
     }
 
-    int inHeapAddressRegionID(Address addr) {
+    private int inHeapAddressRegionID(Address addr) {
         return addr.minus(regionPoolStart).unsignedShiftedRight(log2RegionSizeInBytes).toInt();
     }
 
-    int regionID(Address addr) {
-        if (!isInHeapRegion(addr)) {
+    /**
+     * Returns the region ID of the heap region an address refers to.
+     * @param address
+     * @return an integer identifying a heap region, or {@link HeapRegionConstants#INVALID_REGION_ID} if the address doesn't refer to a location in a heap region.
+     */
+    public int regionID(Address address) {
+        if (!isInHeapRegion(address)) {
             return INVALID_REGION_ID;
         }
-        return inHeapAddressRegionID(addr);
+        return inHeapAddressRegionID(address);
+    }
+
+    /**
+     * Inspector support.
+     * @param regionID
+     * @return
+     */
+    @HOSTED_ONLY
+    public int regionInfoOffset(int regionID) {
+        return TableOffset +  regionID * regionInfoSize;
     }
 
     HeapRegionInfo regionInfo(int regionID) {
@@ -145,14 +161,7 @@ public final class RegionTable {
         return regionInfo(inHeapAddressRegionID(addr));
     }
 
-    HeapRegionInfo regionInfoOrNull(Address addr) {
-        if (!isInHeapRegion(addr)) {
-            return null;
-        }
-        return regionInfo(inHeapAddressRegionID(addr));
-    }
-
-    Address regionAddress(int regionID) {
+    public Address regionAddress(int regionID) {
         return regionPoolStart.plus(regionID << log2RegionSizeInBytes);
     }
 
