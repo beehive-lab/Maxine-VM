@@ -157,7 +157,7 @@ public class CiHexCodeFile {
     public void writeTo(OutputStream out) {
         PrintStream ps = out instanceof PrintStream ? (PrintStream) out : new PrintStream(out);
         ps.printf("Platform %s %d %s%n",  isa, wordWidth, SECTION_DELIM);
-        ps.printf("HexCode %x %s %s%n", 0, CiHexCodeFile.hexCodeString(code), SECTION_DELIM);
+        ps.printf("HexCode %x %s %s%n", startAddress, CiHexCodeFile.hexCodeString(code), SECTION_DELIM);
 
         for (JumpTable table : jumpTables) {
             ps.printf("JumpTable %d %d %d %d %s%n", table.position, table.entrySize, table.low, table.high, SECTION_DELIM);
