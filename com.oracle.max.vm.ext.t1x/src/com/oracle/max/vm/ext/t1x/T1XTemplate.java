@@ -388,6 +388,8 @@ public class T1XTemplate {
 
         /**
          * Determines if this arg gets its value from the operand stack.
+         * If this arg represents the return value, then this method
+         * determines if the result is written to the stack.
          */
         public boolean isStack() {
             return slot >= 0;

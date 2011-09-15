@@ -861,11 +861,13 @@ public class T1XTemplateSource {
     }
 
     @T1X_TEMPLATE(IRETURN)
+    @Slot(-1)
     public static int ireturn(@Slot(0) int value) {
         return value;
     }
 
     @T1X_TEMPLATE(IRETURN$unlock)
+    @Slot(-1)
     public static int ireturnUnlock(Reference object, @Slot(0) int value) {
         Monitor.noninlineExit(object);
         return value;
@@ -1078,11 +1080,13 @@ public class T1XTemplateSource {
     }
 
     @T1X_TEMPLATE(FRETURN)
+    @Slot(-1)
     public static float freturn(@Slot(0) float value) {
         return value;
     }
 
     @T1X_TEMPLATE(FRETURN$unlock)
+    @Slot(-1)
     public static float freturnUnlock(Reference object, @Slot(0) float value) {
         Monitor.noninlineExit(object);
         return value;
@@ -1422,11 +1426,13 @@ public class T1XTemplateSource {
     }
 
     @T1X_TEMPLATE(LRETURN)
+    @Slot(-1)
     public static long lreturn(@Slot(0) long value) {
         return value;
     }
 
     @T1X_TEMPLATE(LRETURN$unlock)
+    @Slot(-1)
     public static long lreturnUnlock(Reference object, @Slot(0) long value) {
         Monitor.noninlineExit(object);
         return value;
@@ -1742,11 +1748,13 @@ public class T1XTemplateSource {
     }
 
     @T1X_TEMPLATE(DRETURN)
+    @Slot(-1)
     public static double dreturn(@Slot(0) double value) {
         return value;
     }
 
     @T1X_TEMPLATE(DRETURN$unlock)
+    @Slot(-1)
     public static double dreturnUnlock(Reference object, @Slot(0) double value) {
         Monitor.noninlineExit(object);
         return value;
@@ -2005,11 +2013,13 @@ public class T1XTemplateSource {
     }
 
     @T1X_TEMPLATE(ARETURN)
+    @Slot(-1)
     public static Reference areturn(@Slot(0) Reference value) {
         return value;
     }
 
     @T1X_TEMPLATE(ARETURN$unlock)
+    @Slot(-1)
     public static Reference areturnUnlock(Reference object, @Slot(0) Reference value) {
         Monitor.noninlineExit(object);
         return value;
@@ -2279,11 +2289,13 @@ public class T1XTemplateSource {
     }
 
     @T1X_TEMPLATE(WRETURN)
+    @Slot(-1)
     public static Word wreturn(@Slot(0) Word value) {
         return value;
     }
 
     @T1X_TEMPLATE(WRETURN$unlock)
+    @Slot(-1)
     public static Word wreturnUnlock(Reference object, @Slot(0) Word value) {
         Monitor.noninlineExit(object);
         return value;
@@ -2443,10 +2455,12 @@ public class T1XTemplateSource {
     }
 
     @T1X_TEMPLATE(RETURN)
+    @Slot(-1)
     public static void vreturn() {
     }
 
     @T1X_TEMPLATE(RETURN$unlock)
+    @Slot(-1)
     public static void vreturnUnlock(Reference object) {
         Monitor.noninlineExit(object);
     }
@@ -2700,6 +2714,7 @@ public class T1XTemplateSource {
     }
 
     @T1X_TEMPLATE(RETURN$registerFinalizer)
+    @Slot(-1)
     public static void vreturnRegisterFinalizer(Reference object) {
         if (ObjectAccess.readClassActor(object).hasFinalizer()) {
             SpecialReferenceManager.registerFinalizee(object);
