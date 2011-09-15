@@ -1358,6 +1358,7 @@ public class T1XTemplateGenerator {
         final String sep = !arg1.isEmpty() && !arg2.isEmpty() ? ", " : "";
         generateAutoComment();
         generateTemplateTag("%sRETURN%s", tagPrefix(k), prefixDollar(unlock));
+        out.printf("    @Slot(-1)%n");
         out.printf("    public static %s %sreturn%s(%s%s%s) {%n", rs(k), opPrefix(k), toFirstUpper(unlock), arg1, sep, arg2);
         if (unlock.equals("registerFinalizer")) {
             out.printf("        if (ObjectAccess.readClassActor(object).hasFinalizer()) {%n");
