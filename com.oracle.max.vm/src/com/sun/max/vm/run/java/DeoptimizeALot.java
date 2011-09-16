@@ -39,7 +39,7 @@ import com.sun.max.vm.thread.*;
 /**
  * A daemon thread that triggers deoptimization periodically.
  */
-class DeoptimizeALot extends Thread {
+public class DeoptimizeALot extends Thread {
 
     private final int frequency;
 
@@ -47,6 +47,7 @@ class DeoptimizeALot extends Thread {
         ArrayList<TargetMethod> methods = new ArrayList<TargetMethod>();
         MethodSelector() {
             super("DeoptimizeALotMethodSelector", null, Mode.Safepoint);
+            allowsNestedOperations = true;
         }
 
         class Visitor extends RawStackFrameVisitor {
@@ -96,20 +97,28 @@ class DeoptimizeALot extends Thread {
         while (true) {
             try {
                 Thread.sleep(frequency);
-                selector.submit();
-                ArrayList<TargetMethod> methods = selector.methods;
-                if (!methods.isEmpty()) {
-                    if (TraceDeopt) {
-                        Log.println("DEOPT: DeoptimizeALot selected methods:");
-                        for (TargetMethod tm : methods) {
-                            Log.println("DEOPT:   " + tm + " [" + tm.codeStart().to0xHexString() + "]");
-                        }
-                    }
-                    new Deoptimization(methods).go();
-                }
-                methods.clear();
+                runOnce(selector);
             } catch (InterruptedException e) {
             }
         }
+    }
+
+    public void runOnce(MethodSelector selector) {
+        if (selector == null) {
+            selector = new MethodSelector();
+        }
+        selector.submit();
+        ArrayList<TargetMethod> methods = selector.methods;
+        if (!methods.isEmpty()) {
+            if (TraceDeopt) {
+                Log.println("DEOPT: DeoptimizeALot selected methods:");
+                for (TargetMethod tm : methods) {
+                    Log.print("DEOPT:   ");
+                    Log.printMethod(tm, true);
+                }
+            }
+            new Deoptimization(methods).go();
+        }
+        methods.clear();
     }
 }

@@ -336,6 +336,20 @@ public final class Log {
     }
 
     /**
+     * Equivalent to calling {@link LogPrintStream#printLocation(TargetMethod, int, boolean)} on {@link #out}.
+     */
+    public static void printLocation(TargetMethod tm, int pos, boolean withNewline) {
+        out.printLocation(tm, pos, withNewline);
+    }
+
+    /**
+     * Equivalent to calling {@link #printLocation(TargetMethod, int, boolean) printLocation}{@code (tm, tm.posFor(ip), withNewLine)}.
+     */
+    public static void printLocation(TargetMethod tm, Address ip, boolean withNewline) {
+        printLocation(tm, tm.posFor(ip), withNewline);
+    }
+
+    /**
      * Prints the current VM thread via a call to {@link LogPrintStream#printThread(VmThread, boolean)} on {@link #out}.
      */
     public static void printCurrentThread(boolean withNewline) {
@@ -741,7 +755,7 @@ public final class Log {
         }
 
         /**
-         * Convenience routine for printing a {@link FieldActor} to this stream. The output is of the form:
+         * Prints a {@link FieldActor} to this stream. The output is of the form:
          *
          * <pre>
          *     &lt;holder&gt;.&lt;name&gt;:&lt;descriptor&gt;
@@ -771,7 +785,7 @@ public final class Log {
         }
 
         /**
-         * Convenience routine for printing a {@link MethodActor} to this stream. The output is of the form:
+         * Prints a {@link MethodActor} to this stream. The output is of the form:
          *
          * <pre>
          *     &lt;holder&gt;.&lt;name&gt;&lt;descriptor&gt;
@@ -786,21 +800,16 @@ public final class Log {
          * @param withNewline specifies if a newline should be appended to the stream after the method actor
          */
         public void printMethod(MethodActor methodActor, boolean withNewline) {
-            boolean lockDisabledSafepoints = false;
-            if (!MaxineVM.isHosted()) {
-                lockDisabledSafepoints = lock();
-            }
+            boolean lockDisabledSafepoints = lock();
             print(methodActor.holder().name.string);
             print('.');
             print(methodActor.name.string);
             print(methodActor.descriptor().string, withNewline);
-            if (!MaxineVM.isHosted()) {
-                unlock(lockDisabledSafepoints);
-            }
+            unlock(lockDisabledSafepoints);
         }
 
         /**
-         * Convenience routine for printing a {@link TargetMethod} to this stream. If the target method has a non-null
+         * Prints a {@link TargetMethod} to this stream. If the target method has a non-null
          * {@linkplain TargetMethod#classMethodActor}, then the output is of the form:
          *
          * <pre>
@@ -823,23 +832,74 @@ public final class Log {
                 print(tm.regionName(), false);
             }
 
-            Log.print(" {");
-            String tmClass = ObjectAccess.readClassActor(tm).name.string;
-            // cannot use substring as it allocates
-            int index = tmClass.lastIndexOf('.');
-            for (int i = index + 1; i < tmClass.length(); i++) {
-                Log.print(tmClass.charAt(i));
-            }
-            Log.print('@');
-            Log.print(tm.codeStart());
-            Log.print('}');
+            print(" {");
+            printSimpleName(ObjectAccess.readClassActor(tm).name.string);
+            print('@');
+            print(tm.codeStart());
+            print('}');
             if (withNewline) {
                 println();
             }
         }
 
+        public void printSimpleName(String className) {
+            // cannot use substring as it allocates
+            int index = className.lastIndexOf('.');
+            for (int i = index + 1; i < className.length(); i++) {
+                print(className.charAt(i));
+            }
+        }
+
         /**
-         * Convenience routine for printing a {@link VmThread} to this stream. The output is of the form:
+         * Prints a code location to this stream. If {@code tm} has a non-null
+         * {@linkplain TargetMethod#classMethodActor}, then the output is of the form:
+         *
+         * <pre>
+         *     &lt;ip&gt; ' {' &lt;TargetMethod class&gt; ': ' &lt;holder&gt;.&lt;name&gt;&lt;descriptor&gt; ' [' &lt;code start&gt; '+' &lt;pos&gt; ']}'
+         * </pre>
+         *
+         * Otherwise, it is of the form:
+         *
+         * <pre>
+         *     &lt;ip&gt; ' {' &lt;TargetMethod class&gt; ': ' &lt;description&gt; ' [' &lt;code start&gt; '+' &lt;pos&gt; ']}'
+         * </pre>
+         *
+         * For example:
+         *
+         * <pre>
+         *     0x5c512856 {MaxTargetMethod: java.lang.String.toString()Ljava/lang/String; [0x5c512800+86]}
+         *     0x5c511946 {MaxTargetMethod: strampoline [0x5c511940+6]}
+         * </pre>
+         *
+         * @param tm the target method to print
+         * @param pos a position within {@code tm}
+         * @param withNewline specifies if a newline should be appended to the stream after the target method
+         */
+        public void printLocation(TargetMethod tm, int pos, boolean withNewline) {
+            boolean lockDisabledSafepoints = lock();
+            Address ip = tm.codeStart().plus(pos);
+            print(ip);
+            print(" {");
+            printSimpleName(ObjectAccess.readClassActor(tm).name.string);
+            print(": ");
+            if (tm.classMethodActor != null) {
+                printMethod(tm.classMethodActor, false);
+            } else {
+                print(tm.regionName(), false);
+            }
+            print(" [");
+            print(tm.codeStart());
+            if (pos >= 0) {
+                print('+');
+            }
+            print(pos);
+            print("]}", withNewline);
+            unlock(lockDisabledSafepoints);
+        }
+
+
+        /**
+         * Prints a {@link VmThread} to this stream. The output is of the form:
          *
          * <pre>
          *     &lt;name&gt;[&lt;id&gt;]
@@ -872,7 +932,7 @@ public final class Log {
         }
 
         /**
-         * Convenience routine for printing {@linkplain VmThreadLocal VM thread locals} to this stream.
+         * Prints {@linkplain VmThreadLocal VM thread locals} to this stream.
          *
          * @param tla a pointer to VM thread locals
          * @param all specifies if all 3 {@linkplain VmThreadLocal TLS} areas are to be printed

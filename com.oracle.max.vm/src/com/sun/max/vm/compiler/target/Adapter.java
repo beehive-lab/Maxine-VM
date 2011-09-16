@@ -147,10 +147,7 @@ public abstract class Adapter extends TargetMethod {
     }
 
     @Override
-    public Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass) {
-        if (isTopFrame) {
-            throw FatalError.unexpected("Exception occurred in frame adapter");
-        }
+    public Address throwAddressToCatchAddress(Address throwAddress, Throwable exception) {
         return Address.zero();
     }
 

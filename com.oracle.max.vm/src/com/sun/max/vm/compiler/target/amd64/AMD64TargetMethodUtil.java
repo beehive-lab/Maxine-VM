@@ -22,9 +22,6 @@
  */
 package com.sun.max.vm.compiler.target.amd64;
 
-import static com.sun.max.vm.compiler.deopt.Deoptimization.*;
-import static com.sun.max.vm.compiler.target.Stub.Type.*;
-
 import com.oracle.max.asm.target.amd64.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
@@ -37,7 +34,6 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.stack.amd64.*;
-import com.sun.max.vm.thread.*;
 
 /**
  * A utility class factoring out code common to all AMD64 target method.
@@ -206,7 +202,7 @@ public final class AMD64TargetMethodUtil {
      */
     public static void patchWithJump(TargetMethod tm, int pos, Address target) {
         // We must be at a global safepoint to safely patch TargetMethods
-        FatalError.check(VmThread.current().isVmOperationThread(), "should only be patching entry points when at a safepoint");
+        FatalError.check(VmOperation.atSafepoint(), "should only be patching entry points when at a safepoint");
 
         final Pointer patchSite = tm.codeStart().plus(pos);
 
@@ -292,33 +288,8 @@ public final class AMD64TargetMethodUtil {
             callerFP = current.fp();
         }
 
-        // Rescue a return address that has been patched for deoptimization
-        callerIP = rescuePatchedReturnAddress(sfw, callerIP, callerSP);
-
         current.setCalleeSaveArea(csl, csa);
         sfw.advance(callerIP, callerSP, callerFP);
-    }
-
-    /**
-     * Gets the original return address for a method on the stack that may be deoptimized when it is returned to.
-     *
-     * @param callerIP the return address read from the "current" frame
-     * @param callerSP the stack pointer in the caller's frame
-     * @return the value of {@code callerIP} altered if necessary to "undo" the patching done for deoptimization
-     */
-    public static Pointer rescuePatchedReturnAddress(StackFrameWalker sfw, Pointer callerIP, Pointer callerSP) {
-        TargetMethod caller = sfw.targetMethodFor(callerIP);
-        if (caller != null && (caller.is(DeoptStub) || caller.is(DeoptStubFromCompilerStub) || caller.is(DeoptStubFromSafepoint))) {
-            if (callerIP.equals(caller.codeStart())) {
-                // Since callerIP denotes the start of a deopt stub, then we're dealing with a patched return address
-                // and the real caller is found in the 'rescue' slot
-                Pointer originalReturnAddress = sfw.readWord(callerSP, DEOPT_RETURN_ADDRESS_OFFSET).asPointer();
-                callerIP = originalReturnAddress;
-            } else {
-                // Since callerIP denotes an address within a deopt stub, then the caller really is the deopt stub
-            }
-        }
-        return callerIP;
     }
 
     public static Pointer returnAddressPointer(Cursor frame) {

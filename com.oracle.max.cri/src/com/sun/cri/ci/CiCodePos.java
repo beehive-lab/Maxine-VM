@@ -30,8 +30,7 @@ import com.sun.cri.ri.*;
  * Represents a code position, that is, a chain of inlined methods with bytecode
  * locations, that is communicated from the compiler to the runtime system. A code position
  * can be used by the runtime system to reconstruct a source-level stack trace
- * for exceptions and to create stack frames for deoptimization (switching from
- * optimized code to deoptimized code).
+ * for exceptions and to create {@linkplain CiFrame frames} for deoptimization.
  */
 public class CiCodePos implements Serializable {
     /**
@@ -52,11 +51,11 @@ public class CiCodePos implements Serializable {
     public final int bci;
 
     /**
-     * Constructs a new position with the given position as the parent, the given method, and the given
-     * bytecode index.
+     * Constructs a new object representing a given parent/caller, a given method, and a given BCI.
+     *
      * @param caller the parent position
      * @param method the method
-     * @param bci the bytecode index within the method
+     * @param bci a BCI within the method
      */
     public CiCodePos(CiCodePos caller, RiMethod method, int bci) {
         assert method != null;

@@ -233,7 +233,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                 new ExcessiveGCDaemon(Heap.ExcessiveGCFrequency).start();
             }
 
-            if (Deoptimization.DeoptimizeALot != 0) {
+            if (Deoptimization.DeoptimizeALot != 0 && Deoptimization.UseDeopt) {
                 new DeoptimizeALot(Deoptimization.DeoptimizeALot).start();
             }
 

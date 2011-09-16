@@ -563,9 +563,6 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
                 Pointer callerSP = ripPointer.plus(Word.size()); // Skip RIP word
                 Pointer callerFP = cursor.fp();
 
-                // Rescue a return address that has been patched for deoptimization
-                callerIP = AMD64TargetMethodUtil.rescuePatchedReturnAddress(sfw, callerIP, callerSP);
-
                 sfw.advance(callerIP, callerSP, callerFP);
             }
 
