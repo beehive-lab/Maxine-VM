@@ -317,9 +317,7 @@ public interface CompilationScheme extends VMScheme {
                 boolean lockDisabledSafepoints = Log.lock();
                 Log.printCurrentThread(false);
                 Log.print(": Patching static call at ");
-                Log.printMethod(current.targetMethod(), false);
-                Log.print('+');
-                Log.print(callSite.minus(current.targetMethod().codeStart()).toInt());
+                Log.printLocation(current.targetMethod(), callSite, false);
                 Log.print(" to ");
                 Log.println(to);
                 Log.unlock(lockDisabledSafepoints);

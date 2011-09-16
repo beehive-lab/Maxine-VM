@@ -116,6 +116,7 @@ public class VmOperationThread extends Thread implements UncaughtExceptionHandle
         }
         FatalError.unexpected("Only the VM thread can promote a VmOperation's mode to global safepoint");
     }
+
     public boolean runsGlobalSafepointOperation() {
         VmOperation vmOp = currentOperation;
         return vmOp != null && vmOp.requiresGlobalSafepoint();

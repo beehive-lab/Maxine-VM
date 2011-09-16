@@ -828,7 +828,7 @@ public abstract class TargetMethod extends MemoryRegion {
     @HOSTED_ONLY
     public abstract void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls, Set<MethodActor> inlinedMethods);
 
-    public abstract Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass);
+    public abstract Address throwAddressToCatchAddress(Address throwAddress, Throwable exception);
 
     /**
      * Modifies the call site at the specified offset to use the new specified entry point.
@@ -868,27 +868,17 @@ public abstract class TargetMethod extends MemoryRegion {
     public abstract void prepareReferenceMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer);
 
     /**
-     * The stack and frame pointers describing the extent of a physical frame.
-     */
-    public static class FrameInfo {
-        public FrameInfo(Pointer sp, Pointer fp) {
-            this.sp = sp;
-            this.fp = fp;
-        }
-        public Pointer sp;
-        public Pointer fp;
-    }
-
-    /**
-     * Adjusts the stack and frame pointers for the frame about to handle an exception.
-     * This is provided mainly for the benefit of deoptimization.
-     */
-    public void adjustFrameForHandler(FrameInfo frame) {
-    }
-
-    /**
-     * Attempts to catch an exception thrown by this method or a callee method. This method should not return
-     * if this method catches the exception, but instead should unwind the stack and resume execution at the handler.
+     * Attempts to catch an exception thrown by this method or a callee method. If a handler exists,
+     * then the stack is unwound and execution is resumed at the handler.
+     * <p>
+     * In the case that is an {@link #invalidated() invalidated} method, the same unwinding
+     * occurs but executed is redirected to an appropriate deoptimization stub.
+     * The value of {@code current.ip()} is saved in the {@linkplain Deoptimization#DEOPT_RETURN_ADDRESS_OFFSET
+     * rescue} slot. This is required so that the frame state associated with the call site is used when
+     * deoptimizing. This frame state matches the state on entry to the handler
+     * except that the operand stack is cleared (the exception object is explicitly retrieved and pushed by
+     * the handler).
+     *
      * @param current the current stack frame
      * @param callee the callee stack frame (ignoring any interposing {@linkplain Adapter adapter} frame)
      * @param throwable the exception thrown
@@ -923,7 +913,7 @@ public abstract class TargetMethod extends MemoryRegion {
      * <li> It has a {@linkplain #bciToPosMap() map} from every bytecode instruction
      *      in {@link #classMethodActor} to the target code position(s) implementing the instruction.</li>
      * <li> It can be used during deoptimization to create
-     *      {@linkplain #createDeoptimizedFrame(Info, CiFrame, Continuation) deoptimized frames}.</li>
+     *      {@linkplain #createDeoptimizedFrame(Info, CiFrame, Continuation, Throwable) deoptimized frames}.</li>
      * </ul>
      *
      */
@@ -938,9 +928,10 @@ public abstract class TargetMethod extends MemoryRegion {
      * @param info details of current deoptimization
      * @param frame debug info from which the slots of the deoptimized are initialized
      * @param callee used to notify callee of the execution state the deoptimized frame when it is returned to
+     * @param exception if non-null, this is an in-flight exception that must be handled by the deoptimized frame
      * @return object for notifying the deoptimized frame's caller of continuation state
      */
-    public Continuation createDeoptimizedFrame(Info info, CiFrame frame, Continuation callee) {
+    public Continuation createDeoptimizedFrame(Info info, CiFrame frame, Continuation callee, Throwable exception) {
         throw FatalError.unexpected("Cannot create deoptimized frame for " + getClass().getSimpleName() + " " + this);
     }
 

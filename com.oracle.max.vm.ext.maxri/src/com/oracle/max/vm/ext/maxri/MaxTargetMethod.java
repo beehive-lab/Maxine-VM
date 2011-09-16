@@ -47,9 +47,9 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.code.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.object.*;
@@ -234,7 +234,7 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
     }
 
     @Override
-    public Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass) {
+    public Address throwAddressToCatchAddress(Address throwAddress, Throwable exception) {
         final int exceptionPos = throwAddress.minus(codeStart).toInt();
         int count = getExceptionHandlerCount();
         for (int i = 0; i < count; i++) {
@@ -242,15 +242,15 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
             int catchPos = getCatchPosAt(i);
             ClassActor catchType = getCatchTypeAt(i);
 
-            if (codePos == exceptionPos && checkType(throwableClass, catchType)) {
+            if (codePos == exceptionPos && checkType(exception, catchType)) {
                 return codeStart.plus(catchPos);
             }
         }
         return Address.zero();
     }
 
-    private boolean checkType(Class<? extends Throwable> throwableClass, ClassActor catchType) {
-        return catchType == null || catchType.isAssignableFrom(ClassActor.fromJava(throwableClass));
+    private boolean checkType(Throwable exception, ClassActor catchType) {
+        return catchType == null || catchType.isAssignableFrom(ObjectAccess.readClassActor(exception));
     }
 
     /**
@@ -500,7 +500,7 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
         Pointer ip = current.ip();
         Pointer sp = current.sp();
         Pointer fp = current.fp();
-        Address catchAddress = throwAddressToCatchAddress(current.isTopFrame(), ip, throwable.getClass());
+        Address catchAddress = throwAddressToCatchAddress(ip, throwable);
         if (!catchAddress.isZero()) {
             if (StackFrameWalker.TraceStackWalk) {
                 Log.print("StackFrameWalk: Handler position for exception at position ");
@@ -509,21 +509,20 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
                 Log.println(catchAddress.minus(codeStart()).toInt());
             }
 
+            int catchPos = posFor(catchAddress);
             if (invalidated() != null) {
-                // Instead of unwinding to the invalidated method, execution is redirected to the void deopt stub.
-                // And the original return address (i.e. current.ip()) is saved in the DEOPT_RETURN_ADDRESS_OFFSET
-                // slot instead of the handler address. This is required so that the debug info associated with
-                // the call site is used during deopt. This debug info matches the state on entry to the handler
-                // except that the stack is empty (the exception object is explicitly retrieved and pushed by
-                // the handler in the deoptimized code).
-                current.sp().writeWord(DEOPT_RETURN_ADDRESS_OFFSET, ip);
-                Stub stub = vm().stubs.deoptStub(CiKind.Void, false);
-                Pointer deoptStub = stub.codeStart().asPointer();
-                if (Deoptimization.TraceDeopt) {
-                    Log.println("DEOPT: changed exception handler address " + catchAddress.to0xHexString() + " in " + this + " to redirect to deopt stub " +
-                                    deoptStub.to0xHexString() + " [sp=" + sp.to0xHexString() + ", fp=" + fp.to0xHexString() + "]");
+                assert current.sp().readWord(DEOPT_RETURN_ADDRESS_OFFSET) == current.ip() : "real caller IP should have been saved in rescue slot";
+                Pointer returnAddress = callee.targetMethod().returnAddressPointer(callee).readWord(0).asPointer();
+                assert Stub.isDeoptStubEntry(returnAddress, Code.codePointerToTargetMethod(returnAddress)) :
+                    "the return address of a method that was on the stack when marked for deoptimization should have been patched with a deopt stub";
+
+                Stub voidDeoptStub = vm().stubs.deoptStub(CiKind.Void, callee.targetMethod().is(CompilerStub));
+                if (TraceDeopt) {
+                    Log.println("DEOPT: changed exception handler address in " + this + " from " + Code.codePointerToTargetMethod(returnAddress) +
+                                    " to " + voidDeoptStub + " [sp=" + sp.to0xHexString() + ", fp=" + fp.to0xHexString() + "]");
                 }
-                catchAddress = deoptStub;
+
+                catchAddress = voidDeoptStub.codeStart().asPointer();
             }
 
             TargetMethod calleeMethod = callee.targetMethod();
@@ -531,7 +530,7 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
             current.stackFrameWalker().reset();
 
             // Store the exception for the handler
-            VmThread.current().storeExceptionForHandler(throwable, this, posFor(catchAddress));
+            VmThread.current().storeExceptionForHandler(throwable, this, catchPos);
 
             if (calleeMethod != null && calleeMethod.registerRestoreEpilogueOffset() != -1) {
                 unwindToCalleeEpilogue(catchAddress, sp, calleeMethod);
