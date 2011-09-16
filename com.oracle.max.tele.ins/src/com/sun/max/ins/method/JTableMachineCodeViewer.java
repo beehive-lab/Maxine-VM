@@ -717,7 +717,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
                             if (fileName != null) {
                                 final int lineNumber = stackTraceElement.getLineNumber();
                                 if (lineNumber > 0) {
-                                    if (vm().findJavaSourceFile(((MethodActor) location.method).holder()) != null) {
+                                    if (vm().findJavaSourceFile(((ClassMethodActor) location.method).codeAttribute().cp.holder()) != null) {
                                         final CiCodePos codePosCopy = location;
                                         menu.add(new AbstractAction("Open " + fileName + " at line " + lineNumber) {
                                             public void actionPerformed(ActionEvent e) {
