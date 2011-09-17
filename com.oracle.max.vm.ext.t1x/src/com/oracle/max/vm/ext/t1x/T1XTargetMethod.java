@@ -690,11 +690,19 @@ public final class T1XTargetMethod extends TargetMethod {
         }
     }
 
+    static Pointer throwAddress(Cursor frame) {
+        if (!frame.isTopFrame() && platform().isa.offsetToReturnPC == 0) {
+            // Adjust 'retAddr' to ensure it is within the call instruction.
+            return frame.ip().minus(1);
+        } else {
+            return frame.ip();
+        }
+    }
+
     @Override
     public void catchException(Cursor current, Cursor callee, Throwable throwable) {
         StackFrameWalker sfw = current.stackFrameWalker();
-        int safepointIndex = findSafepointIndex(current.ip());
-        Pointer throwAddress = codeStart.plus(safepoints.causePosAt(safepointIndex));
+        Pointer throwAddress = throwAddress(current);
         Address catchAddress = throwAddressToCatchAddress(throwAddress, throwable);
 
         if (!catchAddress.isZero()) {
