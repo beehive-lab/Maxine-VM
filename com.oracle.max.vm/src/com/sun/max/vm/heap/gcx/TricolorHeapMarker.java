@@ -993,10 +993,10 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                 }
                 return cell.plus(hub.tupleSize);
             }
-            if (specificLayout.isHybridLayout()) {
-                TupleReferenceMap.visitReferences(hub, origin, this);
-            } else if (specificLayout.isReferenceArrayLayout()) {
+            if (specificLayout.isReferenceArrayLayout()) {
                 visitArrayReferences(origin);
+            } else if (specificLayout.isHybridLayout()) {
+                TupleReferenceMap.visitReferences(hub, origin, this);
             }
             return cell.plus(Layout.size(origin));
         }

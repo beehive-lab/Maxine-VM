@@ -77,6 +77,8 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
 
     private final InspectorAction interactiveMakeViewByAddressAction;
     private final InspectorAction interactiveMakeViewByIDAction;
+
+
     private final List<InspectorAction> makeViewActions;
 
     ObjectViewManager(final Inspection inspection) {
@@ -113,6 +115,8 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
         makeViewActions = new ArrayList<InspectorAction>(1);
         makeViewActions.add(interactiveMakeViewByAddressAction);
         makeViewActions.add(interactiveMakeViewByIDAction);
+
+
         Trace.end(1, tracePrefix() + "initializing");
     }
 
