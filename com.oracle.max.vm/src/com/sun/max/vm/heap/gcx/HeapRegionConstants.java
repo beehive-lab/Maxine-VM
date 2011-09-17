@@ -37,6 +37,7 @@ public final class HeapRegionConstants {
     public static final int INVALID_REGION_ID = -1;
     public static final VMSizeOption regionSizeOption = register(new VMSizeOption("-XX:HeapRegionSize=", Size.K.times(256), "Heap Region Size"), MaxineVM.Phase.PRISTINE);
 
+    @INSPECTED
     @CONSTANT_WHEN_NOT_ZERO
     static int regionSizeInBytes;
     @CONSTANT_WHEN_NOT_ZERO
@@ -48,17 +49,28 @@ public final class HeapRegionConstants {
     @CONSTANT_WHEN_NOT_ZERO
     static Address regionAlignmentMask;
 
-    static void initializeConstants() {
-        // TODO: this is where it would be interesting to use annotation to ask the boot image
-        // generator to keep track of methods that depends on the values below and force a
-        // re-compilation of these methods at startup (or opportunistically).
+    /*
+     * Support for inspection.
+     */
+    @HOSTED_ONLY
+    public static void initializeWithConstants(int nBytes) {
+        initializeConstants(nBytes);
+    }
 
-        regionSizeInBytes = regionSizeOption.getValue().toInt();
+    private static void initializeConstants(int nBytes) {
+        regionSizeInBytes = nBytes;
         log2RegionSizeInBytes = Integer.numberOfTrailingZeros(regionSizeInBytes);
         FatalError.check(regionSizeInBytes == (1 << log2RegionSizeInBytes), "Heap region size must be a power of 2");
         regionSizeInWords = regionSizeInBytes >> Word.widthValue().log2numberOfBytes;
         log2RegionSizeInWords = log2RegionSizeInBytes - Word.widthValue().log2numberOfBytes;
         regionAlignmentMask = Address.fromInt(regionSizeInBytes).minus(1);
+    }
+
+    static void initializeConstants() {
+        // TODO: this is where it would be interesting to use annotation to ask the boot image
+        // generator to keep track of methods that depends on the values below and force a
+        // re-compilation of these methods at startup (or opportunistically).
+        initializeConstants(regionSizeOption.getValue().toInt());
     }
 
     static boolean isAligned(Address address) {

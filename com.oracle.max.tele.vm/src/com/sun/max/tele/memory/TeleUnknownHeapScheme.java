@@ -25,6 +25,7 @@ package com.sun.max.tele.memory;
 import java.util.*;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -70,6 +71,9 @@ final class TeleUnknownHeapScheme extends AbstractTeleVMHolder implements TeleHe
 
             public Address address() {
                 return address;
+            }
+            public TeleObject tele() {
+                return null;
             }
         };
     }
