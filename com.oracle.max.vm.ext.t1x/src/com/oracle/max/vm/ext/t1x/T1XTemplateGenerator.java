@@ -714,8 +714,8 @@ public class T1XTemplateGenerator {
     public void generateNewArrayTemplate() {
         generateAutoComment();
         generateTemplateTag("NEWARRAY");
-        out.printf("    public static Object newarray(Kind<?> kind, @Slot(0) int length) {%n");
-        out.printf("        Object array = createPrimitiveArray(kind, length);%n");
+        out.printf("    public static Object newarray(ClassActor arrayClass, @Slot(0) int length) {%n");
+        out.printf("        Object array = Snippets.createArray(arrayClass, length);%n");
         generateAfterAdvice(NULL_ARGS);
         out.printf("        return array;%n");
         out.printf("    }%n");
@@ -754,7 +754,7 @@ public class T1XTemplateGenerator {
         } else {
             out.printf("        ArrayClassActor<?> arrayClassActor = arrayType;%n");
         }
-        out.printf("        Object array = T1XRuntime.createReferenceArray(arrayClassActor, length);%n");
+        out.printf("        Object array = Snippets.createArray(arrayClassActor, length);%n");
         generateAfterAdvice(NULL_ARGS);
         out.printf("        return array;%n");
         out.printf("    }%n");
@@ -925,7 +925,7 @@ public class T1XTemplateGenerator {
         generateTemplateTag("MONITOR%s", tag.toUpperCase());
         out.printf("    public static void monitor%s(@Slot(0) Object object) {%n", tag);
         generateBeforeAdvice(NULL_ARGS);
-        out.printf("        T1XRuntime.monitor%s(object);%n", tag);
+        out.printf("        Monitor.%s(object);%n", tag);
         out.printf("    }%n");
         newLine();
     }

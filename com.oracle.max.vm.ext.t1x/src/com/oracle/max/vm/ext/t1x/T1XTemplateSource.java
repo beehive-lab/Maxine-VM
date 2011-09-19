@@ -41,7 +41,7 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.profile.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.type.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * The Java source for the templates used by T1X.
@@ -70,12 +70,12 @@ public class T1XTemplateSource {
 
     @T1X_TEMPLATE(LOAD_EXCEPTION)
     public static Object loadException() {
-        return T1XRuntime.loadException();
+        return VmThread.current().loadExceptionForHandler();
     }
 
     @T1X_TEMPLATE(RETHROW_EXCEPTION)
     public static void rethrowException() {
-        T1XRuntime.rethrowException();
+        Throw.raise(VmThread.current().loadExceptionForHandler());
     }
 
     @T1X_TEMPLATE(PROFILE_NONSTATIC_METHOD_ENTRY)
@@ -151,7 +151,7 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(LDC$reference)
     public static Object ldc(ResolutionGuard guard) {
         ClassActor classActor = Snippets.resolveClass(guard);
-        return T1XRuntime.getClassMirror(classActor);
+        return classActor.javaClass();
     }
 
     /**
@@ -167,12 +167,12 @@ public class T1XTemplateSource {
 
     @T1X_TEMPLATE(LOCK)
     public static void lock(Object object) {
-        T1XRuntime.monitorenter(object);
+        Monitor.enter(object);
     }
 
     @T1X_TEMPLATE(UNLOCK)
     public static void unlock(Object object) {
-        T1XRuntime.monitorexit(object);
+        Monitor.exit(object);
     }
 
 // START GENERATED CODE
@@ -2637,22 +2637,22 @@ public class T1XTemplateSource {
     }
 
     @T1X_TEMPLATE(NEWARRAY)
-    public static Object newarray(Kind<?> kind, @Slot(0) int length) {
-        Object array = createPrimitiveArray(kind, length);
+    public static Object newarray(ClassActor arrayClass, @Slot(0) int length) {
+        Object array = Snippets.createArray(arrayClass, length);
         return array;
     }
 
     @T1X_TEMPLATE(ANEWARRAY)
     public static Object anewarray(ResolutionGuard arrayType, @Slot(0) int length) {
         ArrayClassActor<?> arrayClassActor = UnsafeCast.asArrayClassActor(Snippets.resolveArrayClass(arrayType));
-        Object array = T1XRuntime.createReferenceArray(arrayClassActor, length);
+        Object array = Snippets.createArray(arrayClassActor, length);
         return array;
     }
 
     @T1X_TEMPLATE(ANEWARRAY$resolved)
     public static Object anewarray(ArrayClassActor<?> arrayType, @Slot(0) int length) {
         ArrayClassActor<?> arrayClassActor = arrayType;
-        Object array = T1XRuntime.createReferenceArray(arrayClassActor, length);
+        Object array = Snippets.createArray(arrayClassActor, length);
         return array;
     }
 
@@ -2700,12 +2700,12 @@ public class T1XTemplateSource {
 
     @T1X_TEMPLATE(MONITORENTER)
     public static void monitorenter(@Slot(0) Object object) {
-        T1XRuntime.monitorenter(object);
+        Monitor.enter(object);
     }
 
     @T1X_TEMPLATE(MONITOREXIT)
     public static void monitorexit(@Slot(0) Object object) {
-        T1XRuntime.monitorexit(object);
+        Monitor.exit(object);
     }
 
     @T1X_TEMPLATE(INSTANCEOF)
