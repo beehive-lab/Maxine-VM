@@ -38,11 +38,11 @@ import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
- * Collection of methods called from T1X templates. These methods are typically non-inlined
- * to satisfy invariants enforced for the templates. They can also be used to keep the
- * template code small.
+ * Collection of methods called from (or inlined by) T1X templates.
+ * They may be annotated with {@link NEVER_INLINE} to keep the
+ * template code small or to work around the constraint that T1X
+ * templates cannot contain scalar literals.
  */
-@NEVER_INLINE
 public class T1XRuntime {
 
     // ==========================================================================================================
@@ -148,19 +148,11 @@ public class T1XRuntime {
             } else {
                 throw T1X.unimplISA();
             }
-            checkArrayDimension(len);
+            Snippets.checkArrayDimension(len);
             dims[i] = len;
         }
         return dims;
 
-    }
-
-    public static Object cloneArray(int[] arr) {
-        return arr.clone();
-    }
-
-    public static void checkArrayDimension(int length) {
-        Snippets.checkArrayDimension(length);
     }
 
     public static Throwable loadException() {
@@ -179,21 +171,23 @@ public class T1XRuntime {
         Monitor.exit(rcvr);
     }
 
+    @NEVER_INLINE("T1X code cannot call compiler stubs")
     public static int f2i(float value) {
         return (int) value;
     }
 
+    @NEVER_INLINE("T1X code cannot call compiler stubs")
     public static long f2l(float value) {
         return (long) value;
     }
 
+    @NEVER_INLINE("T1X code cannot call compiler stubs")
     public static int d2i(double value) {
         return (int) value;
     }
 
+    @NEVER_INLINE("T1X code cannot call compiler stubs")
     public static long d2l(double value) {
         return (long) value;
     }
-
-
 }

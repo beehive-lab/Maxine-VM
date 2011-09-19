@@ -286,7 +286,7 @@ public class VmThread {
     /**
      * Records the fact that native code has unprotected the yellow zone.
      */
-    public void nativeTrapHandlerUnprotectedYellowZone() {
+    public final void nativeTrapHandlerUnprotectedYellowZone() {
         VmStackFrameWalker sfw = stackFrameWalker;
         if (sfw.isInUse()) {
             Log.println("stack overflow occurred while raising another exception or reference map preparing");
@@ -330,7 +330,7 @@ public class VmThread {
      * @param handler the target method that will handle the exception
      * @param pos the position in {@code handler} of the handler entry point
      */
-    public void storeExceptionForHandler(Throwable e, TargetMethod handler, int pos) {
+    public final void storeExceptionForHandler(Throwable e, TargetMethod handler, int pos) {
         if (exception != null) {
             e.printStackTrace(Log.out);
             FatalError.unexpected("Previous exception never loaded", exception);
@@ -355,7 +355,7 @@ public class VmThread {
      * <li>Reprotects the yellow zone if the raising process unprotected it.</li>
      * </ol>
      */
-    public Throwable loadExceptionForHandler() {
+    public final Throwable loadExceptionForHandler() {
         SafepointPoll.enable();
         SafepointPoll.safepointPoll();
         Throwable e = exception;
@@ -378,7 +378,7 @@ public class VmThread {
      *
      * @return {@code null} if there is not exception in flight
      */
-    public Throwable pendingException() {
+    public final Throwable pendingException() {
         return exception;
     }
 
@@ -414,11 +414,11 @@ public class VmThread {
     /**
      * Determines if this thread is on a monitor's list of waiting threads.
      */
-    public boolean isOnWaitersList() {
+    public final boolean isOnWaitersList() {
         return nextWaitingThread != this;
     }
 
-    public void unlinkFromWaitersList() {
+    public final void unlinkFromWaitersList() {
         nextWaitingThread = this;
     }
 
@@ -937,7 +937,7 @@ public class VmThread {
      *
      * @param throwable the exception being raised. If {@code null}, then a StackOverflowError is about to be raised.
      */
-    public VmStackFrameWalker unwindingStackFrameWalker(Throwable throwable) {
+    public final VmStackFrameWalker unwindingStackFrameWalker(Throwable throwable) {
         FatalError.check(stackFrameWalker != null, "Thread-local stack frame walker cannot be null for a running thread");
         VmStackFrameWalker sfw = stackFrameWalker;
         if (sfw.isInUse()) {
@@ -965,7 +965,7 @@ public class VmThread {
      * <b>This must only be used when {@linkplain StackReferenceMapPreparer preparing} a stack reference map.
      * Allocation must not occur in this context.</b>
      */
-    public VmStackFrameWalker referenceMapPreparingStackFrameWalker() {
+    public final VmStackFrameWalker referenceMapPreparingStackFrameWalker() {
         FatalError.check(stackFrameWalker != null, "Thread-local stack frame walker cannot be null for a running thread");
         return stackFrameWalker;
     }
@@ -974,7 +974,7 @@ public class VmThread {
      * Gets a preallocated, thread local object that can be used to walk the frames in this thread's stack
      * and check their reference maps.
      */
-    public VmStackFrameWalker referenceMapVerifyingStackFrameWalker() {
+    public final VmStackFrameWalker referenceMapVerifyingStackFrameWalker() {
         FatalError.check(stackDumpStackFrameWalker != null, "Thread-local stack frame walker cannot be null for a running thread");
         return stackDumpStackFrameWalker;
     }
@@ -982,7 +982,7 @@ public class VmThread {
     /**
      * Gets a preallocated, thread local object that can be used to log a stack dump without incurring any allocation.
      */
-    public VmStackFrameWalker stackDumpStackFrameWalker() {
+    public final VmStackFrameWalker stackDumpStackFrameWalker() {
         FatalError.check(stackDumpStackFrameWalker != null, "Thread-local stack frame walker cannot be null for a running thread");
         return stackDumpStackFrameWalker;
     }
@@ -990,7 +990,7 @@ public class VmThread {
     /**
      * Gets a dynamically allocated, thread local object that can be used by the sample profiler without incurring any allocation.
      */
-    public VmStackFrameWalker samplingProfilerStackFrameWalker() {
+    public final VmStackFrameWalker samplingProfilerStackFrameWalker() {
         if (samplingProfilerStackFrameWalker == null) {
             samplingProfilerStackFrameWalker = new VmStackFrameWalker(ETLA.load(VmThread.currentTLA()));
         }
@@ -1000,14 +1000,14 @@ public class VmThread {
     /**
      * Gets the thread-local object used to prepare the reference map for this stack's thread during garbage collection.
      */
-    public StackReferenceMapPreparer stackReferenceMapPreparer() {
+    public final StackReferenceMapPreparer stackReferenceMapPreparer() {
         return stackReferenceMapPreparer;
     }
 
     /**
      * Gets the thread-local object used to verify the reference map for this stack's thread.
      */
-    public StackReferenceMapPreparer stackReferenceMapVerifier() {
+    public final StackReferenceMapPreparer stackReferenceMapVerifier() {
         return stackReferenceMapVerifier;
     }
 
@@ -1018,11 +1018,11 @@ public class VmThread {
         return compactReferenceMapInterpreter;
     }
 
-    public Thread.State state() {
+    public final Thread.State state() {
         return state;
     }
 
-    public void setState(Thread.State state) {
+    public final void setState(Thread.State state) {
         this.state = state;
     }
 
@@ -1030,7 +1030,7 @@ public class VmThread {
         return javaThread;
     }
 
-    public Word nativeThread() {
+    public final Word nativeThread() {
         return nativeThread;
     }
 
@@ -1264,14 +1264,14 @@ public class VmThread {
      * Gets the number of VM operations {@linkplain VmOperationThread#submit(VmOperation) submitted}
      * by this thread for execution that have not yet completed.
      */
-    public int pendingOperations() {
+    public final int pendingOperations() {
         return pendingOperations;
     }
 
     /**
      * Increments the {@linkplain #pendingOperations() pending operations} count.
      */
-    public void incrementPendingOperations() {
+    public final void incrementPendingOperations() {
         ++pendingOperations;
     }
 
@@ -1329,11 +1329,11 @@ public class VmThread {
         Throw.raise(this); // not a Throwable => uncatchable - see 'run()' above
     }
 
-    public void suspend0() {
+    public final void suspend0() {
         FatalError.unimplemented();
     }
 
-    public void resume0() {
+    public final void resume0() {
         FatalError.unimplemented();
     }
 
@@ -1444,15 +1444,15 @@ public class VmThread {
         }
     }
 
-    public void pushPrivilegedElement(ClassActor classActor, long frameId, AccessControlContext context) {
+    public final void pushPrivilegedElement(ClassActor classActor, long frameId, AccessControlContext context) {
         privilegedStackTop = new PrivilegedElement(classActor, frameId, context, privilegedStackTop);
     }
 
-    public void popPrivilegedElement() {
+    public final void popPrivilegedElement() {
         privilegedStackTop = privilegedStackTop.next;
     }
 
-    public PrivilegedElement getTopPrivilegedElement() {
+    public final PrivilegedElement getTopPrivilegedElement() {
         return privilegedStackTop;
     }
 

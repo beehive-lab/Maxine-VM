@@ -418,22 +418,22 @@ public abstract class TargetMethod extends MemoryRegion {
                 switch (data.kind) {
                     case Double:
                         endianness.writeLong(output, Double.doubleToLongBits(data.asDouble()));
-                        currentPos += Long.SIZE / Byte.SIZE;
+                        currentPos += 8;
                         break;
 
                     case Float:
                         endianness.writeInt(output, Float.floatToIntBits(data.asFloat()));
-                        currentPos += Integer.SIZE / Byte.SIZE;
+                        currentPos += 4;
                         break;
 
                     case Int:
                         endianness.writeInt(output, data.asInt());
-                        currentPos += Integer.SIZE / Byte.SIZE;
+                        currentPos += 4;
                         break;
 
                     case Long:
                         endianness.writeLong(output, data.asLong());
-                        currentPos += Long.SIZE / Byte.SIZE;
+                        currentPos += 8;
                         break;
 
                     case Object:
@@ -445,7 +445,7 @@ public abstract class TargetMethod extends MemoryRegion {
                 }
 
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw (InternalError) new InternalError("Error serializing " + data).initCause(e);
             }
 
             // Align on double word boundary
@@ -551,20 +551,6 @@ public abstract class TargetMethod extends MemoryRegion {
             index++;
         }
 
-
-//        ArrayList<Site> sites = ciTargetMethod.safepoints;
-//        sites.addAll(ciTargetMethod.directCalls);
-//        sites.addAll(ciTargetMethod.indirectCalls);
-//        sites.addAll(ciTargetMethod.safepoints);
-//        Collections.sort(sites, new Comparator<Site>() {
-//
-//            public int compare(Site s1, Site s2) {
-//                if (s1.pcOffset == s2.pcOffset && (s1 instanceof Mark ^ s2 instanceof Mark)) {
-//                    return s1 instanceof Mark ? -1 : 1;
-//                }
-//                return s1.pcOffset - s2.pcOffset;
-//            }
-//        });
         for (Safepoint safepoint : ciTargetMethod.safepoints) {
             int encodedSafepoint;
             if (safepoint instanceof Call) {

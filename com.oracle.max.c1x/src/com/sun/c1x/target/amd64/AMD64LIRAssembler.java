@@ -105,8 +105,11 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     protected void emitInfopoint(CiValue dst, LIRDebugInfo info, int opcode) {
         if (opcode == HERE) {
             tasm.recordSafepoint(codePos(), info);
-            masm.codeBuffer.putMark();
+            int beforeLea = masm.codeBuffer.position();
             masm.leaq(dst.asRegister(), new CiAddress(CiKind.Word, InstructionRelative.asValue(), 0));
+            int afterLea = masm.codeBuffer.position();
+            masm.codeBuffer.setPosition(beforeLea);
+            masm.leaq(dst.asRegister(), new CiAddress(CiKind.Word, InstructionRelative.asValue(), beforeLea - afterLea));
         } else if (opcode == UNCOMMON_TRAP) {
             directCall(CiRuntimeCall.Deoptimize, info);
         } else {
@@ -191,7 +194,8 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         if (constant == 0.0f) {
             masm.xorps(dst, dst);
         } else {
-            masm.movflt(dst, tasm.recordDataReferenceInCode(CiConstant.forFloat(constant)));
+            masm.movl(rscratch1, Float.floatToRawIntBits(constant));
+            masm.movdl(dst, rscratch1);
         }
     }
 
@@ -199,7 +203,8 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         if (constant == 0.0f) {
             masm.xorpd(dst, dst);
         } else {
-            masm.movdbl(dst, tasm.recordDataReferenceInCode(CiConstant.forDouble(constant)));
+            masm.movq(rscratch1, Double.doubleToRawLongBits(constant));
+            masm.movdq(dst, rscratch1);
         }
     }
 
@@ -518,8 +523,8 @@ public final class AMD64LIRAssembler extends LIRAssembler {
 
         // Set scratch to address of jump table
         int leaPos = buf.position();
-        buf.putMark();
-        masm.leaq(rscratch1, new CiAddress(CiKind.Word, InstructionRelative.asValue(), 0));
+        masm.leaq(rscratch1, CiAddress.Placeholder);
+        int afterLea = buf.position();
 
         // Load jump table entry into scratch and jump to it
         masm.movslq(value, new CiAddress(CiKind.Int, rscratch1.asValue(), value.asValue(), Scale.Times4, 0));
@@ -534,8 +539,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         // Patch LEA instruction above now that we know the position of the jump table
         int jumpTablePos = buf.position();
         buf.setPosition(leaPos);
-        buf.putMark();
-        masm.leaq(rscratch1, new CiAddress(CiKind.Word, InstructionRelative.asValue(), jumpTablePos - leaPos));
+        masm.leaq(rscratch1, new CiAddress(CiKind.Word, InstructionRelative.asValue(), jumpTablePos - afterLea));
         buf.setPosition(jumpTablePos);
 
         // Emit jump table entries

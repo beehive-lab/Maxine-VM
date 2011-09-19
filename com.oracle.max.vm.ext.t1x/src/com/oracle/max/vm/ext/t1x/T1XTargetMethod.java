@@ -199,7 +199,7 @@ public final class T1XTargetMethod extends TargetMethod {
         }
 
         // Allocate and set the code and data buffer
-        final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(0, comp.referenceLiterals.size(), comp.buf.position());
+        final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(0, comp.objectLiterals.size(), comp.buf.position());
         if (install) {
             Code.allocate(targetBundleLayout, this);
         } else {
@@ -212,10 +212,9 @@ public final class T1XTargetMethod extends TargetMethod {
         // Copy reference literals
         if (referenceLiterals != null) {
             // Must not cause checkcast here, since some reference literals may be static tuples.
-            int j = 0;
-            for (int i = comp.referenceLiterals.size() - 1; i >= 0; i--) {
-                Object literal = comp.referenceLiterals.get(i);
-                ArrayAccess.setObject(referenceLiterals, j++, literal);
+            for (int i = 0; i < comp.objectLiterals.size(); i++) {
+                Object literal = comp.objectLiterals.get(i);
+                ArrayAccess.setObject(referenceLiterals, i, literal);
             }
         }
 

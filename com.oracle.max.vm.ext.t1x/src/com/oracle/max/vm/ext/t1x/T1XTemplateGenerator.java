@@ -679,35 +679,34 @@ public class T1XTemplateGenerator {
      * Generate all the {@link #NEW_TEMPLATE_TAGS}.
      */
     public void generateNewTemplates() {
-        generateNewTemplate("");
-        generateNewTemplate("init");
+        generateNewTemplate(T1XTemplateTag.NEW);
+        generateNewTemplate(T1XTemplateTag.NEW$init);
+        generateNewTemplate(T1XTemplateTag.NEW_HYBRID);
     }
 
     /**
      * Generate the requested {@code NEW} template.
-     * @param init if "" generate {@code NEW} template, else {@code NEW$init}.
      */
-    public void generateNewTemplate(String init) {
-        String t;
-        String m;
-        String a;
-        if (init.equals("")) {
-            t = "ResolutionGuard";
-            m = "resolveClassForNewAndCreate";
-            a = "guard";
+    public void generateNewTemplate(T1XTemplateTag tag) {
+        if (tag == T1XTemplateTag.NEW) {
+            generateAutoComment();
+            generateTemplateTag(tag.name());
+            out.printf("    public static Object new_(ResolutionGuard guard) {%n");
+            out.printf("        Object object = resolveClassForNewAndCreate(guard);%n");
+            generateAfterAdvice(NULL_ARGS);
+            out.printf("        return object;%n");
+            out.printf("    }%n");
+            newLine();
         } else {
-            t = "ClassActor";
-            m = "createTupleOrHybrid";
-            a = "classActor";
+            generateAutoComment();
+            generateTemplateTag(tag.name());
+            out.printf("    public static Object %s(DynamicHub hub) {%n", tag == T1XTemplateTag.NEW$init ? "new_" : "new_hybrid");
+            out.printf("        Object object = Heap.create%s(hub);%n", tag == T1XTemplateTag.NEW$init ? "Tuple" : "Hybrid");
+            generateAfterAdvice(NULL_ARGS);
+            out.printf("        return object;%n");
+            out.printf("    }%n");
+            newLine();
         }
-        generateAutoComment();
-        generateTemplateTag("NEW%s", prefixDollar(init));
-        out.printf("    public static Object new_(%s %s) {%n", t, a);
-        out.printf("        Object object = %s(%s);%n", m, a);
-        generateAfterAdvice(NULL_ARGS);
-        out.printf("        return object;%n");
-        out.printf("    }%n");
-        newLine();
     }
 
     public static final EnumSet<T1XTemplateTag> NEWARRAY_TEMPLATE_TAGS = EnumSet.of(NEWARRAY);

@@ -30,7 +30,6 @@ import java.util.*;
 public abstract class Buffer {
     protected byte[] data;
     protected int position;
-    private int mark = -1;
 
     public Buffer() {
         data = new byte[AsmOptions.InitialCodeBufferSize];
@@ -38,7 +37,6 @@ public abstract class Buffer {
 
     public void reset() {
         position = 0;
-        mark = -1;
     }
 
     public int position() {
@@ -48,24 +46,6 @@ public abstract class Buffer {
     public void setPosition(int position) {
         assert position >= 0 && position <= data.length;
         this.position = position;
-    }
-
-    /**
-     * Places a bookmark at the {@linkplain #position() current position}.
-     */
-    public void putMark() {
-        assert this.mark == -1 : "overwriting existing mark";
-        this.mark = position;
-    }
-
-    /**
-     * Returns a bookmark previously set via {@linkplain #putMark()} and removes the mark.
-     */
-    public int getMark() {
-        int mark = this.mark;
-        assert mark != -1 : "mark must be set";
-        this.mark = -1;
-        return mark;
     }
 
     /**
