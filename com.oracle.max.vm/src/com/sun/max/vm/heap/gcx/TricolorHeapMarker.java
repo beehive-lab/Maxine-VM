@@ -1297,26 +1297,27 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     public int scanForGreyMark(Address start, Address end) {
         Pointer p = start.asPointer();
         while (p.lessThan(end)) {
-            if (MaxineVM.isDebug()) {
-                debugCursor = p;
-                final Pointer origin = Layout.cellToOrigin(p);
-                final Hub hub = UnsafeCast.asHub(Layout.readHubReference(origin).toJava());
-                if (hub == HeapFreeChunk.HEAP_FREE_CHUNK_HUB) {
+            final int bitIndex = bitIndexOf(p);
+            if (isGrey(bitIndex)) {
+                return bitIndex;
+            }
+            final Pointer origin = Layout.cellToOrigin(p);
+            final Hub hub = UnsafeCast.asHub(Layout.readHubReference(origin).toJava());
+            if (hub == HeapFreeChunk.HEAP_FREE_CHUNK_HUB) {
+                if (MaxineVM.isDebug() && !isWhite(bitIndex)) {
                     final boolean lockDisabledSafepoints = Log.lock();
                     Log.print("Found chunk at ");
                     Log.println(p);
                     Log.unlock(lockDisabledSafepoints);
                     FatalError.unexpected("Must not have FreeHeapChunk when tracing");
                 }
+                p = p.plus(HeapFreeChunk.getFreechunkSize(p));
+            } else {
+                p = p.plus(Layout.size(origin));
             }
-            final int bitIndex = bitIndexOf(p);
-            if (isGrey(bitIndex)) {
-                return bitIndex;
-            }
-            p = p.plus(Layout.size(Layout.cellToOrigin(p)));
             if (MaxineVM.isDebug() && p.readWord(0).isZero()) {
-                Log.print(" suspiscious obj"); Log.print(debugCursor); Log.print(" size = ");
-                Log.println(Layout.size(Layout.cellToOrigin(debugCursor)).toLong());
+                Log.print(" suspiscious obj @ "); Log.print(origin); Log.print(" size = ");
+                Log.println(Layout.size(origin).toLong());
             }
         }
         return -1;
