@@ -195,10 +195,12 @@ public class HeapRegionInfo {
      * Index, in number of words relative to the beginning of a region to the first free chunk of the region.
      * Zero if the region is empty.
      */
+    @INSPECTED
     short firstFreeChunkIndex;
     /**
      * Number of free chunks. Zero if the region is empty.
      */
+    @INSPECTED
     short numFreeChunks;
     /**
      * Space available for allocation, in words. This excludes dark matter than cannot be used

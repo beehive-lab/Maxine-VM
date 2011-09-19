@@ -78,9 +78,6 @@ public final class MemoryView extends AbstractView<MemoryView> {
             @Override
             protected void procedure() {
                 new AddressInputDialog(inspection(), Address.zero(), "View RegionInfo for address...", "View") {
-
-                    private TeleRegionTable regionTable;
-
                     @Override
                     public void entered(Address address) {
                         MaxMemoryManagementInfo info = vm().heap().getMemoryManagementInfo(address);

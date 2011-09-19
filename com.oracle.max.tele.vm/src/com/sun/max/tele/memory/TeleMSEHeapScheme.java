@@ -38,7 +38,7 @@ final class TeleMSEHeapScheme extends AbstractTeleVMHolder implements TeleHeapSc
 
     TeleMSEHeapScheme(TeleVM vm) {
         super(vm);
-        teleRegionTable = new TeleRegionTable(vm);
+        teleRegionTable = TeleRegionTable.makeTheTeleRegionTable(vm);
     }
 
     public Class heapSchemeClass() {
@@ -89,8 +89,7 @@ final class TeleMSEHeapScheme extends AbstractTeleVMHolder implements TeleHeapSc
                 if (regionID < 0) {
                     return null;
                 }
-                Address regionInfoAddress = teleRegionTable.regionInfo(regionID);
-                return heap().makeTeleObject(vm().originToReference(regionInfoAddress.asPointer()));
+                return heap().makeTeleObject(vm().originToReference(teleRegionTable.regionInfo(regionID).asPointer()));
             }
         };
     }

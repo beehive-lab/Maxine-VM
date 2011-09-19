@@ -40,6 +40,7 @@ import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.Reference;
 import com.sun.max.vm.thread.*;
@@ -220,6 +221,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
         classToTeleTupleObjectConstructor.put(Kind.class, getConstructor(TeleKind.class));
         classToTeleTupleObjectConstructor.put(ObjectReferenceValue.class, getConstructor(TeleObjectReferenceValue.class));
         classToTeleTupleObjectConstructor.put(CiConstant.class, getConstructor(TeleCiConstant.class));
+        classToTeleTupleObjectConstructor.put(HeapRegionInfo.class, getConstructor(TeleHeapRegionInfo.class));
         // ConstantPool and PoolConstants
         classToTeleTupleObjectConstructor.put(ConstantPool.class, getConstructor(TeleConstantPool.class));
         classToTeleTupleObjectConstructor.put(CodeAttribute.class, getConstructor(TeleCodeAttribute.class));

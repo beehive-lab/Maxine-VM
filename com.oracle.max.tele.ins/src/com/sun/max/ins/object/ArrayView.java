@@ -34,8 +34,8 @@ public final class ArrayView extends ObjectView<ArrayView> {
 
     private ObjectScrollPane elementsPane;
 
-    ArrayView(Inspection inspection, ObjectViewManager factory, TeleObject teleObject) {
-        super(inspection, factory, teleObject);
+    ArrayView(Inspection inspection, TeleObject teleObject) {
+        super(inspection, teleObject);
         final InspectorFrame frame = createFrame(true);
         frame.makeMenu(MenuKind.OBJECT_MENU).add(defaultMenuItems(MenuKind.OBJECT_MENU));
     }

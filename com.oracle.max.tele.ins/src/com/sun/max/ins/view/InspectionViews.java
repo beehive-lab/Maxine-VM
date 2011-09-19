@@ -50,6 +50,7 @@ import com.sun.max.ins.memory.MemoryBytesView.MemoryBytesViewManager;
 import com.sun.max.ins.memory.MemoryView.MemoryViewManager;
 import com.sun.max.ins.method.*;
 import com.sun.max.ins.method.MethodViewContainer.MethodViewManager;
+import com.sun.max.ins.object.HeapRegionInfoView.HeapRegionInfoViewManager;
 import com.sun.max.ins.object.*;
 import com.sun.max.program.option.*;
 
@@ -97,6 +98,14 @@ public final class InspectionViews extends AbstractInspectionHolder {
             @Override
             public DebugInfoViewManager viewManager() {
                 final DebugInfoViewManager viewManager = DebugInfoView.makeViewManager(inspection);
+                assert viewManager.viewKind() == this;
+                return viewManager;
+            }
+        },
+        HEAP_REGION_INFO(false, false, "The Heap Region Info for a memory location") {
+            @Override
+            public HeapRegionInfoViewManager viewManager() {
+                final HeapRegionInfoViewManager viewManager = HeapRegionInfoView.viewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }

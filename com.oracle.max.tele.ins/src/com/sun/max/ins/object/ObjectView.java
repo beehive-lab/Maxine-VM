@@ -92,7 +92,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 
     private Rectangle originalFrameGeometry = null;
 
-    protected ObjectView(final Inspection inspection, ObjectViewManager factory, final TeleObject teleObject) {
+    protected ObjectView(final Inspection inspection, final TeleObject teleObject) {
         super(inspection, VIEW_KIND, null);
         this.teleObject = teleObject;
         this.currentObjectOrigin = teleObject().origin();
@@ -130,6 +130,12 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(views().memory().makeViewAction(teleObject, "View this object's memory"));
+        if (vm().heap().providesHeapRegionInfo()) {
+            // TODO: Need to revisit this to better integrate with the Views framework, e.g., have something like:
+            // views().heapRegionInfo().makeViewAction(...). This requires adding a factory and other boiler plate.
+            InspectorAction action = HeapRegionInfoView.viewManager(inspection()).makeViewAction(teleObject, "View this object's heap region info");
+            memoryMenu.add(action);
+        }
         if (vm().watchpointManager() != null) {
             memoryMenu.add(actions().setObjectWatchpoint(teleObject, "Watch this object's memory"));
         }
