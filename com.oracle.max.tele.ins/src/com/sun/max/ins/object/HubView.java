@@ -54,8 +54,8 @@ public final class HubView extends ObjectView<HubView> {
     private ObjectScrollPane mTablePane;
     private ObjectScrollPane refMapPane;
 
-    HubView(Inspection inspection, ObjectViewManager factory, TeleObject teleObject) {
-        super(inspection, factory, teleObject);
+    HubView(Inspection inspection, TeleObject teleObject) {
+        super(inspection, teleObject);
         teleHub = (TeleHub) teleObject;
 
         // Initialize instance preferences from the global preferences

@@ -145,6 +145,14 @@ public final class RegionTable {
     public int regionInfoOffset(int regionID) {
         return TableOffset +  regionID * regionInfoSize;
     }
+    @HOSTED_ONLY
+    public int regionIDFromRegionInfoOffset(int offsetFromTableAddress) {
+        int offsetFromTableBase = offsetFromTableAddress - TableOffset;
+        assert offsetFromTableBase % regionInfoSize == 0;
+        int index = (offsetFromTableAddress - TableOffset) / regionInfoSize;
+        assert index < length;
+        return index;
+    }
 
     HeapRegionInfo regionInfo(int regionID) {
         return toHeapRegionInfo(table().plus(regionID * regionInfoSize));

@@ -142,4 +142,10 @@ public interface MaxHeap extends MaxEntity<MaxHeap> {
      * with respect to memory management, non-null.
      */
     MaxMemoryManagementInfo getMemoryManagementInfo(Address address);
+
+    /**
+     * Indicates whether heap management provides detailed heap region information.
+     * @return true if detailed heap region information can be provided by heap management.
+     */
+    boolean providesHeapRegionInfo();
 }

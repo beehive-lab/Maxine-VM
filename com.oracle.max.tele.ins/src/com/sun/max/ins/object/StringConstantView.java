@@ -43,8 +43,8 @@ public class StringConstantView extends ObjectView<StringConstantView> {
     // Follows user's tab selection, but should persist when view reconstructed.
     private boolean alternateDisplay;
 
-    StringConstantView(Inspection inspection, ObjectViewManager factory, TeleObject teleObject) {
-        super(inspection, factory, teleObject);
+    StringConstantView(Inspection inspection, TeleObject teleObject) {
+        super(inspection, teleObject);
         // This is the default for a newly created view.
         // TODO (mlvdv) make this a global view option?
         alternateDisplay = true;
