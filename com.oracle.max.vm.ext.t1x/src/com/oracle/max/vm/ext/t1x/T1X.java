@@ -46,6 +46,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
@@ -55,6 +56,7 @@ import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.type.*;
@@ -250,21 +252,25 @@ public class T1X implements RuntimeCompiler {
                 CiDebugInfo info = t1xMethod.debugInfoAt(safepointIndex, null);
                 hcf.addComment(pos, CiUtil.append(new StringBuilder(100), info, slotFormatter).toString());
 
-                String operandComment = "safepoint";
+                String callComment = null;
                 if (safepoints.isSetAt(DIRECT_CALL, safepointIndex)) {
                     Object callee = directCallees[dcIndex];
-                    operandComment = String.valueOf(callee);
+                    callComment = String.valueOf(callee);
                     dcIndex++;
-                } else {
+                } else if (safepoints.isSetAt(TEMPLATE_CALL, safepointIndex)) {
+                    callComment = "<template_call>";
+                } else if (safepoints.isSetAt(INDIRECT_CALL, safepointIndex)) {
                     CiCodePos codePos = info.codePos;
                     if (codePos != null) {
                         RiMethod callee = t1xMethod.codeAttribute.calleeAt(codePos.bci);
                         if (callee != null) {
-                            operandComment = String.valueOf(callee);
+                            callComment = String.valueOf(callee);
                         }
                     }
                 }
-                hcf.addOperandComment(causePos, operandComment);
+                if (callComment != null) {
+                    hcf.addOperandComment(causePos, callComment);
+                }
             }
         }
     }
@@ -408,7 +414,7 @@ public class T1X implements RuntimeCompiler {
     }
 
     private MaxTargetMethod compileTemplate(C1X bootCompiler, ClassMethodActor templateSource) {
-        FatalError.check(templateSource.isTemplate(), "Method should be a template: " + templateSource);
+        FatalError.check(templateSource.isTemplate(), "Method with " + T1X_TEMPLATE.class.getSimpleName() + " annotation should be a template: " + templateSource);
         FatalError.check(!hasStackParameters(templateSource), "Template must not have *any* stack parameters: " + templateSource);
 
         FatalError.check(templateSource.resultKind().stackKind == templateSource.resultKind(), "Template return type must be a stack kind: " + templateSource);
@@ -418,15 +424,7 @@ public class T1X implements RuntimeCompiler {
         }
 
         final MaxTargetMethod templateCode = (MaxTargetMethod) bootCompiler.compile(templateSource, true, null);
-        if (!(templateCode.referenceLiterals() == null)) {
-            final StringBuilder sb = new StringBuilder("Template must not have *any* reference literals: " + templateCode);
-            for (int i = 0; i < templateCode.referenceLiterals().length; i++) {
-                Object literal = templateCode.referenceLiterals()[i];
-                sb.append("\n  " + i + ": " + literal.getClass().getName() + " // \"" + literal + "\"\n");
-            }
-            throw FatalError.unexpected(sb.toString());
-        }
-        FatalError.check(templateCode.scalarLiterals() == null, "Template must not have *any* scalar literals: " + templateCode + "\n\n" + templateCode);
+        FatalError.check(templateCode.scalarLiterals() == null, "Template must not have *any* scalar literals: " + templateCode);
         int frameSlots = Ints.roundUp(templateCode.frameSize(), STACK_SLOT_SIZE) / STACK_SLOT_SIZE;
         if (frameSlots > T1XTargetMethod.templateSlots) {
             T1XTargetMethod.templateSlots = frameSlots;
@@ -520,6 +518,26 @@ public class T1X implements RuntimeCompiler {
     @Override
     public String toString() {
         return getClass().getSimpleName();
+    }
+
+    /**
+     * Gets the displacement from the start of the code to the address of some data co-located with the code.
+     *
+     * @param objectLiteralsLength the total number of object literals associated with the code
+     * @param scalarLiteralsLength the size of the serialized scalar literals associated with the code
+     * @param dataIndex the index into the object literals array or the serialized scalar literals of the data
+     * @param isObject specifies if the data is an object
+     */
+    public static int dispFromCodeStart(int objectLiteralsLength, int scalarLiteralsLength, int dataIndex, boolean isObject) {
+        int distance = Layout.byteArrayLayout().headerSize();
+        if (isObject) {
+            distance += (objectLiteralsLength - dataIndex) * Word.size();
+        } else {
+            distance += objectLiteralsLength * Word.size();
+            distance += Layout.referenceArrayLayout().headerSize();
+            distance += scalarLiteralsLength - dataIndex;
+        }
+        return -distance;
     }
 
     /**

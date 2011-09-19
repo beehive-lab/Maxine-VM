@@ -35,8 +35,8 @@ public class TupleView extends ObjectView<TupleView> {
 
     private ObjectScrollPane fieldsPane;
 
-    TupleView(Inspection inspection, ObjectViewManager factory, TeleObject teleObject) {
-        super(inspection, factory, teleObject);
+    TupleView(Inspection inspection, TeleObject teleObject) {
+        super(inspection, teleObject);
         final InspectorFrame frame = createFrame(true);
 
         final MaxCompilation compiledCode = vm().codeCache().findCompiledCode(teleObject.origin());

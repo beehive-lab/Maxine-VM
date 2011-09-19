@@ -25,13 +25,15 @@ package com.oracle.max.vm.ext.c1x;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 
+import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
 import com.oracle.max.asm.*;
 import com.oracle.max.vm.ext.maxri.*;
-import com.oracle.max.vm.ext.maxri.MaxXirGenerator.*;
+import com.oracle.max.vm.ext.maxri.MaxXirGenerator.RuntimeCalls;
 import com.sun.c1x.*;
+import com.sun.c1x.debug.*;
 import com.sun.c1x.graph.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -225,21 +227,55 @@ public class C1X implements RuntimeCompiler {
                 if (C1XOptions.PrintTimers) {
                     C1XTimers.INSTALL.start();
                 }
-                MaxTargetMethod c1xTargetMethod = new MaxTargetMethod(method, compiledMethod, install);
+                MaxTargetMethod maxTargetMethod = new MaxTargetMethod(method, compiledMethod, install);
                 if (C1XOptions.PrintTimers) {
                     C1XTimers.INSTALL.stop();
                 }
                 if (deps != null) {
-                    DependenciesManager.registerValidatedTarget(deps, c1xTargetMethod);
+                    DependenciesManager.registerValidatedTarget(deps, maxTargetMethod);
                     if (DependenciesManager.TraceDeps) {
                         Log.println("DEPS: " + deps.toString(true));
                     }
                 }
-                return c1xTargetMethod;
+
+                TTY.Filter filter = new TTY.Filter(C1XOptions.PrintFilter, method);
+                try {
+                    printMachineCode(compiledMethod, maxTargetMethod, false);
+                } finally {
+                    filter.remove();
+                }
+
+                return maxTargetMethod;
 
             }
             // Loop back and recompile.
         } while(true);
+    }
+
+    void printMachineCode(CiTargetMethod ciTM, MaxTargetMethod maxTM, boolean reentrant) {
+        if (!C1XOptions.PrintCFGToFile || reentrant || TTY.isSuppressed()) {
+            return;
+        }
+        if (!isHosted() && !isRunning()) {
+            // Cannot write to file system at runtime until the VM is in the RUNNING phase
+            return;
+        }
+
+        ByteArrayOutputStream cfgPrinterBuffer = new ByteArrayOutputStream();
+        CFGPrinter cfgPrinter = new CFGPrinter(cfgPrinterBuffer, target());
+
+        cfgPrinter.printMachineCode(runtime.disassemble(ciTM, maxTM), "After code installation");
+        cfgPrinter.flush();
+        OutputStream cfgFileStream = CFGPrinter.cfgFileStream();
+        if (cfgFileStream != null) {
+            synchronized (cfgFileStream) {
+                try {
+                    cfgFileStream.write(cfgPrinterBuffer.toByteArray());
+                } catch (IOException e) {
+                    TTY.println("WARNING: Error writing CFGPrinter output for %s to disk: %s", maxTM.classMethodActor, e.getMessage());
+                }
+            }
+        }
     }
 
     public boolean supportsInterpreterCompatibility() {

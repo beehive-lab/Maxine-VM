@@ -50,6 +50,8 @@ public class LinuxDumpThreadAccess extends ThreadAccess {
         @Override
         public int getThreadState() {
             // It seems that state is not available per thread
+            assert taskData != null;
+            assert taskData.psinfo != null;
             return taskStatusToThreadState(taskData.psinfo);
         }
 

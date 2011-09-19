@@ -22,6 +22,9 @@
  */
 package com.sun.max.vm.stack;
 
+import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.compiler.deopt.Deoptimization.*;
+import static com.sun.max.vm.compiler.target.Stub.*;
 import static com.sun.max.vm.compiler.target.Stub.Type.*;
 import static com.sun.max.vm.stack.StackFrameWalker.Purpose.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
@@ -29,7 +32,6 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
-import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
@@ -61,7 +63,7 @@ public abstract class StackFrameWalker {
      */
     public final class Cursor {
 
-        TargetMethod targetMethod;
+        TargetMethod tm;
         Pointer ip = Pointer.zero();
         Pointer sp = Pointer.zero();
         Pointer fp = Pointer.zero();
@@ -76,12 +78,13 @@ public abstract class StackFrameWalker {
          * Updates the cursor to point to the next stack frame.
          * This method implicitly sets {@link Cursor#isTopFrame()} of this cursor to {@code false} and
          * {@link Cursor#targetMethod()} of this cursor to {@code null}.
+         * @param tm the new target method or {@code null} if {@code ip} denotes native code
          * @param ip the new instruction pointer
          * @param sp the new stack pointer
          * @param fp the new frame pointer
          */
-        Cursor advance(Pointer ip, Pointer sp, Pointer fp) {
-            return setFields(null, ip, sp, fp, false);
+        Cursor advance(TargetMethod tm, Pointer ip, Pointer sp, Pointer fp) {
+            return setFields(tm, ip, sp, fp, false);
         }
 
         void reset() {
@@ -89,12 +92,12 @@ public abstract class StackFrameWalker {
         }
 
         private void copyFrom(Cursor other) {
-            setFields(other.targetMethod, other.ip, other.sp, other.fp, other.isTopFrame);
+            setFields(other.tm, other.ip, other.sp, other.fp, other.isTopFrame);
             setCalleeSaveArea(other.csl, other.csa);
         }
 
         private Cursor setFields(TargetMethod targetMethod, Pointer ip, Pointer sp, Pointer fp, boolean isTopFrame) {
-            this.targetMethod = targetMethod;
+            this.tm = targetMethod;
             this.ip = ip;
             this.sp = sp;
             this.fp = fp;
@@ -129,7 +132,7 @@ public abstract class StackFrameWalker {
          * @return the target method corresponding to the instruction pointer.
          */
         public TargetMethod targetMethod() {
-            return targetMethod;
+            return tm;
         }
 
         /**
@@ -261,6 +264,7 @@ public abstract class StackFrameWalker {
         current.sp = sp;
         current.fp = fp;
         current.isTopFrame = true;
+        current.tm = targetMethodFor(ip);
 
         this.purpose = purpose;
         this.currentAnchor = readPointer(LAST_JAVA_FRAME_ANCHOR);
@@ -268,32 +272,19 @@ public abstract class StackFrameWalker {
         boolean inNative = !currentAnchor.isZero() && !readWord(currentAnchor, JavaFrameAnchor.PC.offset).isZero();
 
         while (!current.sp.isZero()) {
-            Pointer adjustedIP;
-            if (!isTopFrame && Platform.platform().isa.offsetToReturnPC == 0) {
-                // Adjust the current IP to ensure it is within the call instruction of the current frame.
-                // This ensures we will always get the correct method, even if the call instruction was the
-                // last instruction in a method and calls a method never expected to return (such as a call
-                // emitted by the compiler to implement a 'throw' statement at the end of a method).
-                adjustedIP = current.ip().minus(1);
-            } else {
-                adjustedIP = current.ip();
-            }
-
-
-            TargetMethod targetMethod = targetMethodFor(adjustedIP);
-            TargetMethod calleeMethod = callee.targetMethod;
-            current.targetMethod = targetMethod;
+            TargetMethod tm = current.tm;
+            TargetMethod calleeTM = callee.tm;
             traceCursor(current);
 
-            if (targetMethod != null && (!inNative || (purpose == INSPECTING || purpose == RAW_INSPECTING))) {
+            if (tm != null && (!inNative || (purpose == INSPECTING || purpose == RAW_INSPECTING))) {
 
                 // found target method
                 inNative = false;
 
-                checkVmEntrypointCaller(calleeMethod, targetMethod);
+                checkVmEntrypointCaller(calleeTM, tm);
 
                 // walk the frame
-                if (!walkFrame(current, callee, targetMethod, purpose, context)) {
+                if (!walkFrame(current, callee, tm, purpose, context)) {
                     break;
                 }
             } else {
@@ -305,7 +296,7 @@ public abstract class StackFrameWalker {
                     }
                 } else if (purpose == RAW_INSPECTING) {
                     final RawStackFrameVisitor stackFrameVisitor = (RawStackFrameVisitor) context;
-                    current.targetMethod = null;
+                    current.tm = null;
                     current.isTopFrame = isTopFrame;
                     if (!stackFrameVisitor.visitFrame(current, callee)) {
                         break;
@@ -317,14 +308,14 @@ public abstract class StackFrameWalker {
                     Pointer anchor = nextNativeStubAnchor();
                     advanceFrameInNative(anchor, purpose);
                 } else {
-                    if (calleeMethod == null) {
+                    if (calleeTM == null) {
                         // This is a native function that called a VM entry point such as VmThread.run(),
                         // MaxineVM.run() or a JNI function.
                         break;
                     }
 
-                    ClassMethodActor lastJavaCalleeMethodActor = calleeMethod.classMethodActor();
-                    if (calleeMethod.is(TrapStub)) {
+                    ClassMethodActor lastJavaCalleeMethodActor = calleeTM.classMethodActor();
+                    if (calleeTM.is(TrapStub)) {
                         Pointer anchor = nextNativeStubAnchor();
                         if (!anchor.isZero()) {
                             // This can only occur in the Inspector and implies that execution is in
@@ -339,7 +330,7 @@ public abstract class StackFrameWalker {
                             break;
                         }
                     } else if (lastJavaCalleeMethodActor != null && lastJavaCalleeMethodActor.isVmEntryPoint()) {
-                        if (!advanceVmEntryPointFrame(calleeMethod)) {
+                        if (!advanceVmEntryPointFrame(calleeTM)) {
                             break;
                         }
                     } else if (lastJavaCalleeMethodActor == null) {
@@ -350,7 +341,12 @@ public abstract class StackFrameWalker {
                         Log.print(lastJavaCalleeMethodActor.descriptor().string);
                         Log.print(" in ");
                         Log.println(lastJavaCalleeMethodActor.holder().name.string);
-                        FatalError.unexpected("Native code called/entered a Java method that is not a JNI function, a Java trap stub or a VM/thread entry point");
+                        if (!FatalError.inFatalError()) {
+                            FatalError.unexpected("Native code called/entered a Java method that is not a JNI function, a Java trap stub or a VM/thread entry point");
+                        } else {
+                            reset();
+                            break;
+                        }
                     }
                 }
             }
@@ -402,20 +398,10 @@ public abstract class StackFrameWalker {
 
     private void traceCursor(Cursor cursor) {
         if (TraceStackWalk) {
-            if (cursor.targetMethod != null) {
-                Log.print("StackFrameWalk: Frame for ");
-                if (cursor.targetMethod.classMethodActor() == null) {
-                    Log.print(cursor.targetMethod.regionName());
-                } else {
-                    Log.printMethod(cursor.targetMethod, false);
-                }
-                Log.print(", pc=");
-                Log.print(cursor.ip);
-                Log.print("[");
-                Log.print(cursor.targetMethod.codeStart());
-                Log.print("+");
-                Log.print(cursor.ip.minus(cursor.targetMethod.codeStart()).toInt());
-                Log.print("], isTopFrame=");
+            if (cursor.tm != null) {
+                Log.print("StackFrameWalk: Frame at ");
+                Log.printLocation(cursor.tm, cursor.ip, false);
+                Log.print(", isTopFrame=");
                 Log.print(cursor.isTopFrame);
                 Log.print(", sp=");
                 Log.print(cursor.sp);
@@ -677,13 +663,42 @@ public abstract class StackFrameWalker {
     /**
      * Advances this stack walker such that {@link #current} becomes {@link #callee}.
      *
-     * @param ip the instruction pointer of the new current frame
+     * @param retAddr the instruction pointer of the new current frame (i.e. the return address of the previous/callee frame)
      * @param sp the stack pointer of the new current frame
      * @param fp the frame pointer of the new current frame
      */
-    public final void advance(Word ip, Word sp, Word fp) {
+    public final void advance(Word retAddr, Word sp, Word fp) {
         callee.copyFrom(current);
-        current.advance(ip.asPointer(), sp.asPointer(), fp.asPointer());
+        Pointer ip = retAddr.asPointer();
+
+        TargetMethod tm = targetMethodForReturnAddress(retAddr);
+
+        // Rescue a return address that has been patched for deoptimization
+        if (isDeoptStubEntry(ip, tm)) {
+            // Since 'ip' denotes the start of a deopt stub, then we're dealing with a patched return address
+            // and the real caller is found in the rescue slot
+            Pointer originalReturnAddress = readWord(sp.asAddress(), DEOPT_RETURN_ADDRESS_OFFSET).asPointer();
+            tm = targetMethodForReturnAddress(originalReturnAddress);
+            ip = originalReturnAddress;
+        }
+
+        current.advance(tm, ip, sp.asPointer(), fp.asPointer());
+    }
+
+    /**
+     * Looks up a method based on a return address read from a frame. Depending on the architecture,
+     * the return address must be adjusted before searching the code cache to ensure the
+     * address within the method containing the call instruction.
+     */
+    TargetMethod targetMethodForReturnAddress(Word retAddr) {
+        if (platform().isa.offsetToReturnPC == 0) {
+            // Adjust 'retAddr' to ensure it is within the call instruction.
+            // This ensures we will always get the correct method, even if
+            // the call instruction was the last instruction in a method.
+            return targetMethodFor(retAddr.asPointer().minus(1));
+        } else {
+            return targetMethodFor(retAddr.asPointer());
+        }
     }
 
     public abstract Word readWord(Address address, int offset);

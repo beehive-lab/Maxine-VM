@@ -418,22 +418,22 @@ public abstract class TargetMethod extends MemoryRegion {
                 switch (data.kind) {
                     case Double:
                         endianness.writeLong(output, Double.doubleToLongBits(data.asDouble()));
-                        currentPos += Long.SIZE / Byte.SIZE;
+                        currentPos += 8;
                         break;
 
                     case Float:
                         endianness.writeInt(output, Float.floatToIntBits(data.asFloat()));
-                        currentPos += Integer.SIZE / Byte.SIZE;
+                        currentPos += 4;
                         break;
 
                     case Int:
                         endianness.writeInt(output, data.asInt());
-                        currentPos += Integer.SIZE / Byte.SIZE;
+                        currentPos += 4;
                         break;
 
                     case Long:
                         endianness.writeLong(output, data.asLong());
-                        currentPos += Long.SIZE / Byte.SIZE;
+                        currentPos += 8;
                         break;
 
                     case Object:
@@ -445,7 +445,7 @@ public abstract class TargetMethod extends MemoryRegion {
                 }
 
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw (InternalError) new InternalError("Error serializing " + data).initCause(e);
             }
 
             // Align on double word boundary
@@ -551,20 +551,6 @@ public abstract class TargetMethod extends MemoryRegion {
             index++;
         }
 
-
-//        ArrayList<Site> sites = ciTargetMethod.safepoints;
-//        sites.addAll(ciTargetMethod.directCalls);
-//        sites.addAll(ciTargetMethod.indirectCalls);
-//        sites.addAll(ciTargetMethod.safepoints);
-//        Collections.sort(sites, new Comparator<Site>() {
-//
-//            public int compare(Site s1, Site s2) {
-//                if (s1.pcOffset == s2.pcOffset && (s1 instanceof Mark ^ s2 instanceof Mark)) {
-//                    return s1 instanceof Mark ? -1 : 1;
-//                }
-//                return s1.pcOffset - s2.pcOffset;
-//            }
-//        });
         for (Safepoint safepoint : ciTargetMethod.safepoints) {
             int encodedSafepoint;
             if (safepoint instanceof Call) {
@@ -663,6 +649,19 @@ public abstract class TargetMethod extends MemoryRegion {
         final int callPos = safepoints.causePosAt(safepointIndex);
         Pointer trampoline = vm().stubs.staticTrampoline().codeStart.plus(offset);
         return !patchCallSite(callPos, trampoline).equals(trampoline);
+    }
+
+    /**
+     * Patches the entry point(s) of this target method with direct jump(s) to the
+     * corresponding entry points of {@code tm}.
+     * <p>
+     * <b>This operation can only be performed when at a global safepoint as the patching
+     *    is not guaranteed to be atomic.</b>
+     *
+     * @param tm the target of the jump instruction(s) to be patched in
+     */
+    public void redirectTo(TargetMethod tm) {
+        throw FatalError.unexpected("Cannot patch entry points of " + getClass().getSimpleName() + " " + this);
     }
 
     /**
@@ -815,7 +814,7 @@ public abstract class TargetMethod extends MemoryRegion {
     @HOSTED_ONLY
     public abstract void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls, Set<MethodActor> inlinedMethods);
 
-    public abstract Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass);
+    public abstract Address throwAddressToCatchAddress(Address throwAddress, Throwable exception);
 
     /**
      * Modifies the call site at the specified offset to use the new specified entry point.
@@ -855,27 +854,17 @@ public abstract class TargetMethod extends MemoryRegion {
     public abstract void prepareReferenceMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer);
 
     /**
-     * The stack and frame pointers describing the extent of a physical frame.
-     */
-    public static class FrameInfo {
-        public FrameInfo(Pointer sp, Pointer fp) {
-            this.sp = sp;
-            this.fp = fp;
-        }
-        public Pointer sp;
-        public Pointer fp;
-    }
-
-    /**
-     * Adjusts the stack and frame pointers for the frame about to handle an exception.
-     * This is provided mainly for the benefit of deoptimization.
-     */
-    public void adjustFrameForHandler(FrameInfo frame) {
-    }
-
-    /**
-     * Attempts to catch an exception thrown by this method or a callee method. This method should not return
-     * if this method catches the exception, but instead should unwind the stack and resume execution at the handler.
+     * Attempts to catch an exception thrown by this method or a callee method. If a handler exists,
+     * then the stack is unwound and execution is resumed at the handler.
+     * <p>
+     * In the case that is an {@link #invalidated() invalidated} method, the same unwinding
+     * occurs but executed is redirected to an appropriate deoptimization stub.
+     * The value of {@code current.ip()} is saved in the {@linkplain Deoptimization#DEOPT_RETURN_ADDRESS_OFFSET
+     * rescue} slot. This is required so that the frame state associated with the call site is used when
+     * deoptimizing. This frame state matches the state on entry to the handler
+     * except that the operand stack is cleared (the exception object is explicitly retrieved and pushed by
+     * the handler).
+     *
      * @param current the current stack frame
      * @param callee the callee stack frame (ignoring any interposing {@linkplain Adapter adapter} frame)
      * @param throwable the exception thrown
@@ -910,7 +899,7 @@ public abstract class TargetMethod extends MemoryRegion {
      * <li> It has a {@linkplain #bciToPosMap() map} from every bytecode instruction
      *      in {@link #classMethodActor} to the target code position(s) implementing the instruction.</li>
      * <li> It can be used during deoptimization to create
-     *      {@linkplain #createDeoptimizedFrame(Info, CiFrame, Continuation) deoptimized frames}.</li>
+     *      {@linkplain #createDeoptimizedFrame(Info, CiFrame, Continuation, Throwable) deoptimized frames}.</li>
      * </ul>
      *
      */
@@ -925,9 +914,10 @@ public abstract class TargetMethod extends MemoryRegion {
      * @param info details of current deoptimization
      * @param frame debug info from which the slots of the deoptimized are initialized
      * @param callee used to notify callee of the execution state the deoptimized frame when it is returned to
+     * @param exception if non-null, this is an in-flight exception that must be handled by the deoptimized frame
      * @return object for notifying the deoptimized frame's caller of continuation state
      */
-    public Continuation createDeoptimizedFrame(Info info, CiFrame frame, Continuation callee) {
+    public Continuation createDeoptimizedFrame(Info info, CiFrame frame, Continuation callee, Throwable exception) {
         throw FatalError.unexpected("Cannot create deoptimized frame for " + getClass().getSimpleName() + " " + this);
     }
 

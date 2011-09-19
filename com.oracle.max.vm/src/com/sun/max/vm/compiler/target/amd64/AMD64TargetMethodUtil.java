@@ -22,9 +22,6 @@
  */
 package com.sun.max.vm.compiler.target.amd64;
 
-import static com.sun.max.vm.compiler.deopt.Deoptimization.*;
-import static com.sun.max.vm.compiler.target.Stub.Type.*;
-
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.cri.intrinsics.*;
 import com.sun.cri.ci.*;
@@ -82,7 +79,7 @@ public final class AMD64TargetMethodUtil {
         // We only update the disp of the call instruction.
         // C1X imposes that disp of the call be aligned to a word boundary.
         // This may cause up to 7 nops to be inserted before a call.
-        final Address endOfCallSite = callSite.plus(DIRECT_METHOD_CALL_INSTRUCTION_LENGTH - 1);
+        final Address endOfCallSite = callSite.plus(RIP_CALL_INSTRUCTION_LENGTH - 1);
         return callSite.plus(1).isWordAligned() ? true :
         // last byte of call site:
         callSite.roundedDownBy(8).equals(endOfCallSite.roundedDownBy(8));
@@ -91,15 +88,15 @@ public final class AMD64TargetMethodUtil {
     /**
      * Gets the target of a 32-bit relative CALL instruction.
      *
-     * @param targetMethod the method containing the CALL instruction
+     * @param tm the method containing the CALL instruction
      * @param callPos the offset within the code of {@code targetMethod} of the CALL
      * @return the absolute target address of the CALL
      */
-    public static Address readCall32Target(TargetMethod targetMethod, int callPos) {
-        final Pointer callSite = targetMethod.codeStart().plus(callPos);
+    public static Address readCall32Target(TargetMethod tm, int callPos) {
+        final Pointer callSite = tm.codeStart().plus(callPos);
         int disp32;
         if (MaxineVM.isHosted()) {
-            final byte[] code = targetMethod.code();
+            final byte[] code = tm.code();
             assert code[0] == (byte) RIP_CALL;
             disp32 =
                 (code[callPos + 4] & 0xff) << 24 |
@@ -114,19 +111,19 @@ public final class AMD64TargetMethodUtil {
                 (callSite.readByte(2) & 0xff) << 8 |
                 (callSite.readByte(1) & 0xff) << 0;
         }
-        return callSite.plus(DIRECT_METHOD_CALL_INSTRUCTION_LENGTH).plus(disp32);
+        return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(disp32);
     }
 
     /**
      * Patches the offset operand of a 32-bit relative CALL instruction.
      *
-     * @param targetMethod the method containing the CALL instruction
+     * @param tm the method containing the CALL instruction
      * @param callOffset the offset within the code of {@code targetMethod} of the CALL to be patched
      * @param target the absolute target address of the CALL
      * @return the target of the call prior to patching
      */
-    public static Address fixupCall32Site(TargetMethod targetMethod, int callOffset, Address target) {
-        final Pointer callSite = targetMethod.codeStart().plus(callOffset);
+    public static Address fixupCall32Site(TargetMethod tm, int callOffset, Address target) {
+        final Pointer callSite = tm.codeStart().plus(callOffset);
         if (!isPatchableCallSite(callSite)) {
             // Every call site that is fixed up here might also be patched later.  To avoid failed patching,
             // check for alignment of call site also here.
@@ -134,12 +131,12 @@ public final class AMD64TargetMethodUtil {
             // FatalError.unexpected(" invalid patchable call site:  " + targetMethod + "+" + offset + " " + callSite.toHexString());
         }
 
-        long disp64 = target.asAddress().minus(callSite.plus(DIRECT_METHOD_CALL_INSTRUCTION_LENGTH)).toLong();
+        long disp64 = target.asAddress().minus(callSite.plus(RIP_CALL_INSTRUCTION_LENGTH)).toLong();
         int disp32 = (int) disp64;
         int oldDisp32;
         FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
         if (MaxineVM.isHosted()) {
-            final byte[] code = targetMethod.code();
+            final byte[] code = tm.code();
             oldDisp32 =
                 (code[callOffset + 4] & 0xff) << 24 |
                 (code[callOffset + 3] & 0xff) << 16 |
@@ -166,21 +163,23 @@ public final class AMD64TargetMethodUtil {
                 callSite.writeByte(4, (byte) (disp32 >> 24));
             }
         }
-        return callSite.plus(DIRECT_METHOD_CALL_INSTRUCTION_LENGTH).plus(oldDisp32);
+        return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(oldDisp32);
     }
 
-    private static final long DIRECT_METHOD_CALL_INSTRUCTION_LENGTH = 5L;
+    private static final int RIP_CALL_INSTRUCTION_LENGTH = 5;
+
+    private static final int RIP_JMP_INSTRUCTION_LENGTH = 5;
 
     /**
      * Thread safe patching of the displacement field in a direct call.
      *
      * @return the target of the call prior to patching
      */
-    public static Address mtSafePatchCallDisplacement(TargetMethod targetMethod, Pointer callSite, Address target) {
+    public static Address mtSafePatchCallDisplacement(TargetMethod tm, Pointer callSite, Address target) {
         if (!isPatchableCallSite(callSite)) {
             throw FatalError.unexpected(" invalid patchable call site:  " + callSite.toHexString());
         }
-        long disp64 = target.minus(callSite.plus(DIRECT_METHOD_CALL_INSTRUCTION_LENGTH)).toLong();
+        long disp64 = target.minus(callSite.plus(RIP_CALL_INSTRUCTION_LENGTH)).toLong();
         int disp32 = (int) disp64;
         FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
         int oldDisp32 = callSite.readInt(1);
@@ -192,7 +191,31 @@ public final class AMD64TargetMethodUtil {
                 // Don't need icache invalidation to be correct (see AMD64's Architecture Programmer Manual Vol.2, p173 on self-modifying code)
             }
         }
-        return callSite.plus(DIRECT_METHOD_CALL_INSTRUCTION_LENGTH).plus(oldDisp32);
+        return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(oldDisp32);
+    }
+
+    /**
+     * Patches a position in a target method with a direct jump to a given target address.
+     *
+     * @param tm the target method to be patched
+     * @param pos the position in {@code tm} at which to apply the patch
+     * @param target the target of the jump instruction being patched in
+     */
+    public static void patchWithJump(TargetMethod tm, int pos, Address target) {
+        // We must be at a global safepoint to safely patch TargetMethods
+        FatalError.check(VmOperation.atSafepoint(), "should only be patching entry points when at a safepoint");
+
+        final Pointer patchSite = tm.codeStart().plus(pos);
+
+        long disp64 = target.asAddress().minus(patchSite.plus(RIP_JMP_INSTRUCTION_LENGTH)).toLong();
+        int disp32 = (int) disp64;
+        FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
+
+        patchSite.writeByte(0, (byte) RIP_JMP);
+        patchSite.writeByte(1, (byte) disp32);
+        patchSite.writeByte(2, (byte) (disp32 >> 8));
+        patchSite.writeByte(3, (byte) (disp32 >> 16));
+        patchSite.writeByte(4, (byte) (disp32 >> 24));
     }
 
     // Disable instance creation.
@@ -203,10 +226,10 @@ public final class AMD64TargetMethodUtil {
     public static boolean atFirstOrLastInstruction(Cursor current) {
         // check whether the current ip is at the first instruction or a return
         // which means the stack pointer has not been adjusted yet (or has already been adjusted back)
-        TargetMethod targetMethod = current.targetMethod();
-        Pointer entryPoint = targetMethod.callEntryPoint.equals(CallEntryPoint.C_ENTRY_POINT) ?
-            CallEntryPoint.C_ENTRY_POINT.in(targetMethod) :
-            CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(targetMethod);
+        TargetMethod tm = current.targetMethod();
+        Pointer entryPoint = tm.callEntryPoint.equals(CallEntryPoint.C_ENTRY_POINT) ?
+            CallEntryPoint.C_ENTRY_POINT.in(tm) :
+            CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(tm);
 
         return entryPoint.equals(current.ip()) || current.stackFrameWalker().readByte(current.ip(), 0) == RET;
     }
@@ -226,8 +249,8 @@ public final class AMD64TargetMethodUtil {
         return visitor.visitFrame(stackFrame);
     }
 
-    public static VMFrameLayout frameLayout(TargetMethod targetMethod) {
-        return new OptoStackFrameLayout(targetMethod.frameSize(), true, AMD64.rsp);
+    public static VMFrameLayout frameLayout(TargetMethod tm) {
+        return new OptoStackFrameLayout(tm.frameSize(), true, AMD64.rsp);
     }
 
     /**
@@ -239,9 +262,9 @@ public final class AMD64TargetMethodUtil {
      */
     public static void advance(Cursor current, CiCalleeSaveLayout csl, Pointer csa) {
         assert csa.isZero() == (csl == null);
-        TargetMethod targetMethod = current.targetMethod();
+        TargetMethod tm = current.targetMethod();
         Pointer sp = current.sp();
-        Pointer ripPointer = sp.plus(targetMethod.frameSize());
+        Pointer ripPointer = sp.plus(tm.frameSize());
         if (MaxineVM.isHosted()) {
             // Only during a stack walk in the context of the Inspector can execution
             // be anywhere other than at a safepoint.
@@ -266,39 +289,14 @@ public final class AMD64TargetMethodUtil {
             callerFP = current.fp();
         }
 
-        // Rescue a return address that has been patched for deoptimization
-        callerIP = rescuePatchedReturnAddress(sfw, callerIP, callerSP);
-
         current.setCalleeSaveArea(csl, csa);
         sfw.advance(callerIP, callerSP, callerFP);
     }
 
-    /**
-     * Gets the original return address for a method on the stack that may be deoptimized when it is returned to.
-     *
-     * @param callerIP the return address read from the "current" frame
-     * @param callerSP the stack pointer in the caller's frame
-     * @return the value of {@code callerIP} altered if necessary to "undo" the patching done for deoptimization
-     */
-    public static Pointer rescuePatchedReturnAddress(StackFrameWalker sfw, Pointer callerIP, Pointer callerSP) {
-        TargetMethod caller = sfw.targetMethodFor(callerIP);
-        if (caller != null && (caller.is(DeoptStub) || caller.is(DeoptStubFromCompilerStub) || caller.is(DeoptStubFromSafepoint))) {
-            if (callerIP.equals(caller.codeStart())) {
-                // Since callerIP denotes the start of a deopt stub, then we're dealing with a patched return address
-                // and the real caller is found in the 'rescue' slot
-                Pointer originalReturnAddress = sfw.readWord(callerSP, DEOPT_RETURN_ADDRESS_OFFSET).asPointer();
-                callerIP = originalReturnAddress;
-            } else {
-                // Since callerIP denotes an address within a deopt stub, then the caller really is the deopt stub
-            }
-        }
-        return callerIP;
-    }
-
     public static Pointer returnAddressPointer(Cursor frame) {
-        TargetMethod targetMethod = frame.targetMethod();
+        TargetMethod tm = frame.targetMethod();
         Pointer sp = frame.sp();
-        return sp.plus(targetMethod.frameSize());
+        return sp.plus(tm.frameSize());
     }
 
     public static int callInstructionSize(byte[] code, int pos) {

@@ -22,6 +22,8 @@
  */
 package com.sun.max.tele;
 
+import com.sun.max.tele.memory.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -52,5 +54,10 @@ public interface MaxMemoryManagementInfo  {
      * @return the location in VM memory whose status is being described.
      */
     Address address();
+
+    /**
+     * @return a {@link TeleHeapScheme} specific {@link TeleObject} that represents the memory management info, if any.
+     */
+    TeleObject tele();
 
 }

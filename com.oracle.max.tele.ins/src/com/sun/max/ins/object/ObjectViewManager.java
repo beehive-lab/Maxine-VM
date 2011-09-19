@@ -77,6 +77,8 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
 
     private final InspectorAction interactiveMakeViewByAddressAction;
     private final InspectorAction interactiveMakeViewByIDAction;
+
+
     private final List<InspectorAction> makeViewActions;
 
     ObjectViewManager(final Inspection inspection) {
@@ -96,7 +98,7 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
         teleTupleObjectClassToObjectViewConstructor.put(TeleString.class, getConstructor(StringView.class));
         teleTupleObjectClassToObjectViewConstructor.put(TeleStringConstant.class, getConstructor(StringConstantView.class));
         teleTupleObjectClassToObjectViewConstructor.put(TeleUtf8Constant.class, getConstructor(Utf8ConstantView.class));
-
+        teleTupleObjectClassToObjectViewConstructor.put(TeleHeapRegionInfo.class, getConstructor(HeapRegionInfoView.class));
         focus().addListener(new InspectionFocusAdapter() {
 
             @Override
@@ -113,6 +115,8 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
         makeViewActions = new ArrayList<InspectorAction>(1);
         makeViewActions.add(interactiveMakeViewByAddressAction);
         makeViewActions.add(interactiveMakeViewByIDAction);
+
+
         Trace.end(1, tracePrefix() + "initializing");
     }
 
@@ -149,7 +153,7 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
         if (objectView == null) {
             switch (teleObject.kind()) {
                 case HYBRID: {
-                    objectView = new HubView(inspection, this, teleObject);
+                    objectView = new HubView(inspection, teleObject);
                     break;
                 }
                 case TUPLE: {
@@ -158,7 +162,7 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
                         constructor = defaultTupleInspectorConstructor;
                     }
                     try {
-                        objectView = (ObjectView) constructor.newInstance(inspection, this, teleObject);
+                        objectView = (ObjectView) constructor.newInstance(inspection, teleObject);
                     } catch (InstantiationException e) {
                         throw InspectorError.unexpected(e);
                     } catch (IllegalAccessException e) {
@@ -179,7 +183,7 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
                         constructor = defaultArrayInspectorConstructor;
                     }
                     try {
-                        objectView = (ObjectView) constructor.newInstance(inspection, this, teleObject);
+                        objectView = (ObjectView) constructor.newInstance(inspection, teleObject);
                     } catch (InstantiationException e) {
                         throw InspectorError.unexpected();
                     } catch (IllegalAccessException e) {
@@ -212,7 +216,7 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
     }
 
     private Constructor getConstructor(Class clazz) {
-        return Classes.getDeclaredConstructor(clazz, Inspection.class, ObjectViewManager.class, TeleObject.class);
+        return Classes.getDeclaredConstructor(clazz, Inspection.class, TeleObject.class);
     }
 
     private Constructor lookupInspectorConstructor(Map<Class, Constructor> map, Class clazz) {

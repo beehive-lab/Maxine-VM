@@ -22,19 +22,18 @@
  */
 package com.sun.max.vm.compiler.deopt;
 
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
-import static com.sun.max.vm.compiler.deps.DependenciesManager.*;
 import static com.sun.max.vm.compiler.target.Compilations.Attr.*;
 import static com.sun.max.vm.compiler.target.Stub.Type.*;
 import static com.sun.max.vm.stack.VMFrameLayout.*;
-import static com.sun.max.vm.thread.VmThreadLocal.*;
-
 import java.util.*;
 
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -43,8 +42,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetMethod.FrameAccess;
-import com.sun.max.vm.compiler.target.TargetMethod.FrameInfo;
-import com.sun.max.vm.compiler.target.amd64.*;
+import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -53,37 +51,43 @@ import com.sun.max.vm.thread.*;
 
 /**
  * Mechanism for applying deoptimization to one or more target methods.
- * The algorithm for applying deoptimization to a set of methods is as follows:
- * <ol>
- * <li>
- * Atomically {@linkplain TargetMethod#invalidate(InvalidationMarker) invalidate} the target methods.
- * </li>
- * <li>
- * Find all references to the invalidated target methods in dispatch tables (e.g. vtables,
- * itables etc) and revert to trampoline references. Concurrent patching is ok here as it is
- * an atomic update to a constant value.
- * </li>
- * <li>{@link #submit() Submit} deoptimization VM operation.</li>
- * <li>
- * Scan each thread looking for frames executing an invalidated method:
+ * There are two separate parts to deoptimization:
  * <ul>
- *    <li>For each non-top frame executing an invalidated method, patch the callee's return address to the relevant {@linkplain Stubs#deoptStub(CiKind, boolean) stub}.</li>
- *    <li>For each top-frame executing an invalidated method, patch the return address in the trap stub to {@link Stubs#deoptStubForSafepoint()}.</li>
+ * <li><b>Mark methods for deoptimization.</b>
+ * <ol>
+ * <li>A deoptimization {@linkplain #Deoptimization(ArrayList) request} specifies a set of methods, <i>M</i>, to be deoptimized.</li>
+ * <li>Each method in <i>M</i> is {@linkplain TargetMethod#invalidate(InvalidationMarker) invalidated}.</li>
+ * <li>Any vtable or itable entry denoting a method in <i>M</i> is reverted to a {@link Stubs#virtualTrampoline(int) vtable}
+ * or {@link Stubs#interfaceTrampoline(int) itable} trampoline.</li>
+ * <li>
+ * Patch the entry points of all invalidated methods to {@linkplain TargetMethod#redirectTo(TargetMethod) redirect} the caller
+ * to the {@linkplain Stubs#staticTrampoline() static trampoline}. This ensures all direct calls to an
+ * invalidated method will be re-linked the next time they are executed.
+ * </li>
+ * <li>Scan each thread looking for frames executing a method in <i>M</i>:
+ * <ul>
+ *    <li>For each non-top frame executing a method in <i>M</i>, patch the callee's return address to the relevant {@linkplain Stubs#deoptStub(CiKind, boolean) stub}.</li>
+ *    <li>For each top-frame executing a method in <i>M</i>, patch the return address in the trap stub to {@link Stubs#deoptStubForSafepointPoll()}.</li>
  * </ul>
- * One optimization applied is for each thread to perform the above two operations on itself just
+ * </li>
+ * </ol>
+ * All but step 1 above are performed in a {@linkplain #doIt() VM operation} (i.e. all threads have been stopped as a safepoint).
+ * <p>
+ * One optimization applied is for each thread to perform step 5 on itself just
  * {@linkplain VmOperation#doAtSafepointBeforeBlocking before} suspending. This is
  * analogous to each thread preparing its own reference map when being stopped
  * for a garbage collection.
- * </li>
- * <li>
- * Find all references to invalidated target methods (i.e. at call sites) and revert them to trampolines.
- * This code patching is why we must be at a safepoint. This process involves a complete traversal
- * of the safepoints in every method in the code cache. This may be too slow. Maybe we should patch
- * the entry points of invalidated methods to revert lazily.
- * </li>
- * <li>Resume from safepoint.</li>
+
+ * <li><b>Convert the frame of an optimized method into one or more deoptimized frames.</b>
+ * <p>
+ * This occurs when one of the deoptimization stubs is executed. A deoptimization stub is executed either as the result of the
+ * return address patching described above or by a (compiled) call to the {@linkplain Stubs#genUncommonTrapStub() uncommon trap} stub.
+ * All the deoptimization stubs eventually route through to {@link #deoptimize(Pointer, Pointer, Pointer, Pointer, CiCalleeSaveLayout, CiConstant) deoptimize()}
+ * which constructs the deoptimized frames, unrolls them onto the stack and continues execution in the appropriate deoptimized frame.
+ * </i>
+ * </ul>
  */
-public class Deoptimization extends VmOperation implements TargetMethod.Closure {
+public class Deoptimization extends VmOperation {
 
     /**
      * Option for enabling use of deoptimization.
@@ -122,12 +126,15 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
     }
 
     /**
-     * Performs deoptimization for the set of methods this object was constructed with.
+     * Mark methods for deoptimization.
      */
     public void go() {
-        if (methods.isEmpty()) {
-            return;
-        }
+        submit();
+    }
+
+    @Override
+    protected void doIt() {
+        Stub staticTrampoline = vm().stubs.staticTrampoline();
         int i = 0;
         while (i < methods.size()) {
             TargetMethod tm = methods.get(i);
@@ -148,14 +155,18 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
                 // Concurrent patching ok here as it is atomic.
                 patchDispatchTables(tm);
 
+                tm.redirectTo(staticTrampoline);
+                if (TraceDeopt) {
+                    Log.print("DEOPT: patched entry points of ");
+                    Log.printMethod(tm, true);
+                }
+
                 i++;
             }
         }
 
-        // Check whether any methods remain after invalidation loop above
-        if (!methods.isEmpty()) {
-            submit();
-        }
+        // Scan the stacks to patch return addresses
+        doAllThreads();
     }
 
     /**
@@ -191,95 +202,26 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
                     }
                 };
                 c.doClass(method.holder());
-
-                if (classHierarchyLock.isWriteLockedByCurrentThread() || VmThread.current().isVmOperationThread()) {
-                    method.holder().allSubclassesDo(c);
-                } else {
-                    classHierarchyLock.writeLock().lock();
-                    try {
-                        method.holder().allSubclassesDo(c);
-                    } finally {
-                        classHierarchyLock.writeLock().unlock();
-                    }
-                }
+                method.holder().allSubclassesDo(c);
             }
         }
-    }
-
-    int directCallProcessed;
-
-    @Override
-    public boolean doTargetMethod(TargetMethod tm) {
-        Safepoints safepoints = tm.safepoints();
-        int dcIndex = 0;
-        Object[] directCallees = tm.directCallees();
-        for (int i = safepoints.nextDirectCall(0); i >= 0; i = safepoints.nextDirectCall(i + 1)) {
-            Object directCallee = directCallees[dcIndex];
-            if (directCallee instanceof ClassMethodActor) {
-                int callPos = safepoints.causePosAt(i);
-                final Address target = AMD64TargetMethodUtil.readCall32Target(tm, callPos);
-                final TargetMethod callee = Code.codePointerToTargetMethod(target);
-                FatalError.check(callee != null, "Could not resolve " + target.to0xHexString() + " at " + tm + "+" + callPos);
-                if (callee.invalidated() != null) {
-                    if (tm.resetDirectCall(i, dcIndex)) {
-                        if (TraceDeopt) {
-                            Log.println("DEOPT:   reset direct call " + dcIndex + " in " + tm + " to " + directCallee);
-                        }
-                    }
-                }
-            }
-            dcIndex++;
-        }
-        directCallProcessed += dcIndex;
-        return true;
-    }
-
-    @Override
-    protected void doIt() {
-        // Process code cache
-        if (TraceDeopt) {
-            Log.println("DEOPT: processing code cache");
-        }
-
-        directCallProcessed = 0;
-        Code.bootCodeRegion().doAllTargetMethods(this);
-        Code.getCodeManager().getRuntimeCodeRegion().doAllTargetMethods(this);
-        if (TraceDeopt) {
-            Log.println("DEOPT: processed code cache [direct calls processed: " + directCallProcessed + "]");
-        }
-
-        doAllThreads();
     }
 
     @Override
     public void doThread(VmThread vmThread, Pointer ip, Pointer sp, Pointer fp) {
-        Pointer tla = vmThread.tla();
-        final boolean threadWasInNative = TRAP_INSTRUCTION_POINTER.load(tla).isZero();
-        if (threadWasInNative) {
-            // If a thread was in native then it did not do return address patching
-            Patcher patcher = new Patcher(Pointer.zero(), methods);
-            patcher.go(vmThread, ip, sp, fp);
-        }
-    }
-
-    @Override
-    protected void doAtSafepointBeforeBlocking(Pointer trapFrame) {
-        SafepointPoll.disable();
-
-        TrapFrameAccess tfa = vm().trapFrameAccess;
-        Pointer ip = tfa.getPC(trapFrame);
-        Pointer sp = tfa.getSP(trapFrame);
-        Pointer fp = tfa.getFP(trapFrame);
-        VmThread thread = VmThread.current();
-
-        Patcher patcher = new Patcher(trapFrame, methods);
-        patcher.go(thread, ip, sp, fp);
+        Patcher patcher = new Patcher(methods);
+        patcher.go(vmThread, ip, sp, fp);
     }
 
     /**
      * Mechanism for a frame reconstruction to specify its execution state when it is resumed or returned to.
      */
     public static abstract class Continuation {
+
+        /**
+         * The target method to which this continuation applies.
+         */
+        TargetMethod tm;
 
         /**
          * Sets the continuation frame pointer.
@@ -310,6 +252,15 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
         public abstract void setIP(Info info, Pointer ip);
     }
 
+    static void traceContinuation(Pointer ip) {
+        if (TraceDeopt) {
+            TargetMethod tm = Code.codePointerToTargetMethod(ip);
+            assert tm != null : "cannot deoptimize frame of a VM entry method";
+            Log.print("DEOPT: continuation: ");
+            Log.printLocation(tm, ip, true);
+        }
+    }
+
     /**
      * Mechanism for a caller frame reconstruction to specify its execution state when it is returned to.
      */
@@ -317,13 +268,11 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
         public final int callerFPIndex;
         public final int callerSPIndex;
         public final int returnAddressIndex;
-        public final CiKind returnKind;
 
-        public CallerContinuation(int callerFPIndex, int callerSPIndex, int returnAddressIndex, CiKind returnKind) {
+        public CallerContinuation(int callerFPIndex, int callerSPIndex, int returnAddressIndex) {
             this.callerFPIndex = callerFPIndex;
             this.callerSPIndex = callerSPIndex;
             this.returnAddressIndex = returnAddressIndex;
-            this.returnKind = returnKind;
         }
 
         @Override
@@ -341,9 +290,10 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
         }
 
         @Override
-        public void setIP(Info info, Pointer returnAddress) {
+        public void setIP(Info info, Pointer ip) {
             if (returnAddressIndex >= 0) {
-                info.slots.set(returnAddressIndex, CiConstant.forWord(returnAddress.toLong()));
+                info.slots.set(returnAddressIndex, CiConstant.forWord(ip.toLong()));
+                traceContinuation(ip);
             }
         }
     }
@@ -352,24 +302,24 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
      * Mechanism for a top frame reconstruction to specify its execution state when it is resumed.
      */
     static class TopFrameContinuation extends Continuation {
-        TargetMethod tm;
         int fp;
         int sp;
         Pointer ip;
 
         @Override
-        public void setFP(Info slots, CiConstant fp) {
+        public void setFP(Info info, CiConstant fp) {
             this.fp = fp.asInt();
         }
 
         @Override
-        public void setSP(Info slots, CiConstant sp) {
+        public void setSP(Info info, CiConstant sp) {
             this.sp = sp.asInt();
         }
 
         @Override
-        public void setIP(Info slots, Pointer ip) {
+        public void setIP(Info info, Pointer ip) {
             this.ip = ip;
+            traceContinuation(ip);
         }
     }
 
@@ -524,17 +474,11 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
      */
     public static class Patcher extends RawStackFrameVisitor {
         /**
-         * The trap frame for a thread stopped by a safepoint poll.
-         */
-        final Pointer trapFrame;
-
-        /**
          * The set of methods being deoptimized.
          */
         final ArrayList<TargetMethod> methods;
 
-        public Patcher(Pointer trapFrame, ArrayList<TargetMethod> methods) {
-            this.trapFrame = trapFrame;
+        public Patcher(ArrayList<TargetMethod> methods) {
             this.methods = methods;
         }
 
@@ -556,23 +500,21 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
         @Override
         public boolean visitFrame(Cursor current, Cursor callee) {
             TargetMethod tm = current.targetMethod();
+            TargetMethod calleeTM = callee.targetMethod();
             boolean deopt = methods.contains(tm);
-            if (deopt && current.isTopFrame() && !trapFrame.isZero()) {
-                TrapFrameAccess tfa = vm().trapFrameAccess;
-
+            if (deopt && calleeTM.is(TrapStub)) {
                 // Patches the return address in the trap frame to trigger deoptimization
                 // of the top frame when the trap stub returns.
-                Stub stub = vm().stubs.deoptStubForSafepoint();
+                Stub stub = vm().stubs.deoptStubForSafepointPoll();
                 Pointer to = stub.codeStart().asPointer();
                 Pointer save = current.sp().plus(DEOPT_RETURN_ADDRESS_OFFSET);
-                Pointer patch = tfa.getPCPointer(trapFrame);
+                Pointer patch = tm.returnAddressPointer(callee);
                 Address from = patch.readWord(0).asAddress();
                 assert to != from;
-                logPatchReturnAddress(tm, vm().stubs.trapStub().name(), stub, to, save, patch, from);
+                logPatchReturnAddress(tm, "TRAP STUB", stub, to, save, patch, from);
                 patch.writeWord(0, to);
                 save.writeWord(0, from);
             } else {
-                TargetMethod calleeTM = callee.targetMethod();
                 if (calleeTM != null && calleeTM.classMethodActor != null) {
                     lastCalleeMethod = calleeTM.classMethodActor;
                 }
@@ -585,7 +527,7 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
     }
 
     /**
-     * Encapsulates various state related to a deoptimization.
+     * Encapsulates various info used during deoptimization of a single optimized frame.
      */
     public static class Info extends RawStackFrameVisitor {
 
@@ -608,9 +550,31 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
         Pointer slotsAddr;
 
         // The following are the details of the caller of the frame being deoptimized.
+
+        /**
+         * The caller of the frame being deoptimized.
+         */
         TargetMethod callerTM;
+
+        /**
+         * The actual return address in frame being deoptimized. This will differ from
+         * {@link #callerIP} when the caller is (also) marked for deoptimization.
+         */
+        Pointer returnIP;
+
+        /**
+         * The instruction pointer in the caller of the frame being deoptimized.
+         */
         Pointer callerIP;
+
+        /**
+         * The stack pointer in the caller (frame) of the frame being deoptimized.
+         */
         Pointer callerSP;
+
+        /**
+         * The frame pointer in the caller (frame) of the frame being deoptimized.
+         */
         Pointer callerFP;
 
         /**
@@ -658,30 +622,26 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
                 assert sp == current.sp();
                 assert fp == current.fp();
                 return true;
-            } else {
-                TargetMethod calleeTM = callee.targetMethod();
-                assert calleeTM == tm;
-                TargetMethod tm = current.targetMethod();
-
-                if (callee.isTopFrame()) {
-                    callerTM = tm;
-                    callerSP = current.sp();
-                    callerFP = current.fp();
-
-                    if (tm != null && tm.invalidated() != null) {
-                        // The caller is (also) being deoptimized so we need to fetch the deopt stub
-                        // that was patched into the callee's return address slot and ensure that it
-                        // is returned to after deoptimization
-                        callerIP = calleeTM.returnAddressPointer(callee).readWord(0).asPointer();
-                        Pointer stub = vm().stubs.deoptStub(calleeTM.classMethodActor.resultKind().ciKind, calleeTM.is(CompilerStub)).codeStart();
-                        assert stub == callerIP : tm + " stub=" + stub.to0xHexString() + " callerIP=" + callerIP.to0xHexString();
-                    } else {
-                        this.callerIP = current.ip();
-                    }
-                    return false;
-                }
             }
-            return true;
+
+            assert callee.isTopFrame();
+            TargetMethod calleeTM = callee.targetMethod();
+            assert calleeTM == tm;
+            TargetMethod tm = current.targetMethod();
+
+            callerTM = tm;
+            callerSP = current.sp();
+            callerFP = current.fp();
+            callerIP = current.ip();
+
+            // The caller may (also) be marked for deoptimization. If so, then the callee's
+            // return address slot may denote a deopt stub address. However,
+            // the stack frame walker "recovers" the original return address which is
+            // reflected in current.ip(). We must use the actual return address after
+            // deoptimizing the callee and so the code below by-passes any
+            // stack frame walker "recovery".
+            returnIP = calleeTM.returnAddressPointer(callee).readWord(0).asPointer();
+            return false;
         }
 
         public void addSlot(CiConstant slot, String name) {
@@ -738,7 +698,7 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
         Pointer patch = callee.targetMethod().returnAddressPointer(callee);
         Address from = patch.readWord(0).asAddress();
         assert to != from;
-        logPatchReturnAddress(tm, calleeMethod, stub, to, save, patch, from);
+        logPatchReturnAddress(tm, callee.targetMethod(), stub, to, save, patch, from);
         patch.writeWord(0, to);
         save.writeWord(0, from);
     }
@@ -799,38 +759,50 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
             Log.println("DEOPT: " + tm + ", safepointIndex=" + safepointIndex + ", pos=" + tm.safepoints().posAt(safepointIndex));
         }
 
-        if (TraceDeopt) {
-            logFrames(tm.debugInfoAt(safepointIndex, null).frame(), "locations");
-        }
-
         FrameAccess fa = new FrameAccess(csl, csa, sp, fp, info.callerSP, info.callerFP);
         CiDebugInfo debugInfo = tm.debugInfoAt(safepointIndex, fa);
         CiFrame topFrame = debugInfo.frame();
         FatalError.check(topFrame != null, "No frame info found at deopt site: " + tm.posFor(ip));
 
+        if (pendingException != null) {
+            topFrame = unwindToHandlerFrame(topFrame, pendingException);
+            assert topFrame != null : "could not (re)find handler for " + pendingException +
+                                       " thrown at " + tm + "+" + ip.to0xHexString();
+        }
+
         if (TraceDeopt) {
+            // Trace the frame states in terms of the locations holding the frame values
+            logFrames(unwindToHandlerFrame(tm.debugInfoAt(safepointIndex, null).frame(), pendingException), "locations");
+        }
+
+        if (TraceDeopt) {
+            // Trace the frame states in terms of the frame values
             logFrames(topFrame, "values");
         }
 
-        // Construct the deoptimized frames for each frame in the debuf info
+        // Construct the deoptimized frames for each frame in the debug info
         final TopFrameContinuation topCont = new TopFrameContinuation();
         Continuation cont = topCont;
         for (CiFrame frame = topFrame; frame != null; frame = frame.caller()) {
             ClassMethodActor method = (ClassMethodActor) frame.method;
             TargetMethod compiledMethod = vmConfig().compilationScheme().synchronousCompile(method, INTERPRETER_COMPATIBLE.mask);
             FatalError.check(compiledMethod.isInterpreterCompatible(), compiledMethod + " should be a deopt target");
-            if (cont == topCont) {
-                topCont.tm = compiledMethod;
-            }
-            cont = compiledMethod.createDeoptimizedFrame(info, frame, cont);
+            cont.tm = compiledMethod;
+            cont = compiledMethod.createDeoptimizedFrame(info, frame, cont, pendingException);
+
+            // The exception (if any) must be handled in the top frame
+            pendingException = null;
         }
 
         // On AMD64, both T1X and C1X agree on the registers used for return values (i.e. RAX and XMM0).
         // As such there is no current need to reconstruct an adapter frame between the lowest
-        // deoptimized frame and the frame of its caller.
+        // deoptimized frame and the frame of its caller. This may need to be revisted for
+        // other platforms so use an assertion for now.
+        assert platform().isa == ISA.AMD64;
 
         // Fix up the caller details for the bottom most deoptimized frame
-        cont.setIP(info, info.callerIP);
+        cont.tm = info.callerTM;
+        cont.setIP(info, info.returnIP);
         cont.setSP(info, CiConstant.forWord(info.callerSP.toLong()));
         cont.setFP(info, CiConstant.forWord(info.callerFP.toLong()));
 
@@ -853,30 +825,11 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
         sp = slotsAddrs.plus(topCont.sp * STACK_SLOT_SIZE);
         fp = slotsAddrs.plus(topCont.fp * STACK_SLOT_SIZE);
 
-        // Redirect execution to the handler in the top most deoptimized frame if we were
-        // unwinding to an invalidated frame
-        if (pendingException != null) {
-            Address handler = topCont.tm.throwAddressToCatchAddress(false, topCont.ip, pendingException.getClass());
-            String exception = pendingException.getClass().getSimpleName();
-            assert !handler.isZero() : "could not (re)find handler for " + exception +
-                                       " thrown at " + tm + "+" + ip.to0xHexString();
-            FrameInfo fi = new FrameInfo(sp, fp);
-            topCont.tm.adjustFrameForHandler(fi);
-
-            // Set the deopt continuation to the handler with the correctly adjusted frame
-            info.ip = handler.asPointer();
-            info.sp = fi.sp;
-            info.fp = fi.fp;
-            if (TraceDeopt) {
-                Log.println("DEOPT: redirected deopt continuation to handler for " + exception + " at " + handler.to0xHexString());
-            }
-        } else {
-            // Set the deopt continuation to the top most deoptimized frame
-            info.ip = topCont.ip;
-            info.sp = sp;
-            info.fp = fp;
-            info.returnValue = returnValue;
-        }
+        // Set the deopt continuation to the top most deoptimized frame
+        info.ip = topCont.ip;
+        info.sp = sp;
+        info.fp = fp;
+        info.returnValue = returnValue;
 
         // Compute the stack space between the current frame (executing this method) and the
         // the top most deoptimized frame and use it to ensure that the unroll method
@@ -885,6 +838,36 @@ public class Deoptimization extends VmOperation implements TargetMethod.Closure 
         int frameSize = Platform.target().alignFrameSize(Math.max(slotsSize - used, 0));
         Stubs.unroll(info, frameSize);
         FatalError.unexpected("should not reach here");
+    }
+
+    /**
+     * Finds the frame containing a handler for an exception thrown at the current BCI of the frame.
+     *
+     * @param topFrame the frame to start searching in
+     * @param exception the exception being thrown
+     * @return the frame that catches {@code exception}
+     */
+    static CiFrame unwindToHandlerFrame(CiFrame topFrame, Throwable exception) {
+        if (exception == null) {
+            return topFrame;
+        }
+        // Unwind to frame with handler
+        for (CiFrame frame = topFrame; frame != null; frame = frame.caller()) {
+            ClassMethodActor method = (ClassMethodActor) frame.method;
+            CiExceptionHandler[] handlers = method.exceptionHandlers();
+            if (handlers != null) {
+                int bci = frame.bci;
+                for (CiExceptionHandler h : handlers) {
+                    if (h.startBCI <= bci && bci < h.endBCI) {
+                        ClassActor catchType = (ClassActor) h.catchType;
+                        if (catchType == null || catchType.isAssignableFrom(ObjectAccess.readClassActor(exception))) {
+                            return frame.withEmptyStack();
+                        }
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     /**

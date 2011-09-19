@@ -76,14 +76,19 @@ public abstract class HeapRegionSweeper extends Sweeper {
      */
     Address csrEnd;
     /**
-     * Indicate whether the region is part of a multi-regions object.
+     * Indicate that the region is the head of a multi-regions object.
      */
-    boolean csrIsMultiRegionObject;
+    boolean csrIsMultiRegionObjectHead;
+    /**
+     * Indicate that the sweeping region is the tail of a multi-regions object.
+     */
+    boolean csrIsMultiRegionObjectTail;
 
     /**
      * Cursor on the last live address seen during sweeping of the csr.
      */
     Address csrLastLiveAddress;
+
 
     private void printNotifiedGap(Pointer leftLiveObject, Pointer rightLiveObject, Pointer gapAddress, Size gapSize) {
         final boolean lockDisabledSafepoints = Log.lock();
@@ -148,10 +153,19 @@ public abstract class HeapRegionSweeper extends Sweeper {
         csrFreeChunks = 0;
 
         csrLiveBytes = 0;
-        csrLastLiveAddress = csrInfo.regionStart();
-        csrIsMultiRegionObject = csrInfo.isHeadOfLargeObject();
+        csrIsMultiRegionObjectHead = csrInfo.isHeadOfLargeObject();
+        csrIsMultiRegionObjectTail = csrInfo.isTailOfLargeObject();
         csrInfo.resetOccupancy();
-        csrEnd = csrLastLiveAddress.plus(regionSizeInBytes);
+        if (csrIsMultiRegionObjectTail) {
+            Address regionStart = csrInfo.regionStart();
+            csrEnd = regionStart.plus(regionSizeInBytes);
+            if (MaxineVM.isDebug()) {
+                FatalError.check(csrLastLiveAddress.greaterEqual(regionStart) && csrLastLiveAddress.lessEqual(csrEnd), "csrLastLiveAddress must be within tail region");
+            }
+        } else {
+            csrLastLiveAddress = csrInfo.regionStart();
+            csrEnd = csrLastLiveAddress.plus(regionSizeInBytes);
+        }
     }
 
     void recordFreeSpace(Address chunk, Size chunkSize) {
@@ -166,15 +180,35 @@ public abstract class HeapRegionSweeper extends Sweeper {
         csrFreeBytes += chunkSize.toInt();
     }
 
-    public void processFreeRegion() {
-        csrFreeBytes = regionSizeInBytes;
+    /**
+     * Process a region without any live mark. If the region isn't part of a multi-region object, then it is free.
+     * Otherwise, if it is the tail of a multi-region object, we need to record a single chunk after its tail.
+     */
+    public void processDeadRegion() {
+        if (csrIsMultiRegionObjectTail && csrLastLiveAddress.greaterThan(csrInfo.regionStart())) {
+            recordFreeSpace(csrLastLiveAddress, csrEnd.minus(csrLastLiveAddress).asSize());
+        } else {
+            csrFreeBytes = regionSizeInBytes;
+        }
     }
 
     public abstract boolean hasNextSweepingRegion();
     public abstract void reachedRightmostLiveRegion();
 
-    public final boolean sweepingRegionIsLarge() {
-        return csrIsMultiRegionObject;
+    /**
+     * Indicates whether the current sweeping region is the head of a multi-regions object.
+     * @return
+     */
+    public final boolean sweepingRegionIsLargeHead() {
+        return csrIsMultiRegionObjectHead;
+    }
+
+    /**
+     * Indicates whether the current sweeping region hosts the tail of a multi-regions object.
+     * @return
+     */
+    public final boolean sweepingRegionIsLargeTail() {
+        return csrIsMultiRegionObjectTail;
     }
 
     @Override

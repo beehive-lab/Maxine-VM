@@ -43,8 +43,8 @@ public class EnumView extends ObjectView<EnumView> {
     // Follows user's tab selection, but should persist when view reconstructed.
     private boolean alternateDisplay;
 
-    EnumView(Inspection inspection, ObjectViewManager factory, TeleObject teleObject) {
-        super(inspection, factory, teleObject);
+    EnumView(Inspection inspection, TeleObject teleObject) {
+        super(inspection, teleObject);
         // This is the default for a newly created view.
         // TODO (mlvdv) make this a global view option?
         alternateDisplay = true;

@@ -72,7 +72,7 @@ public class SourceFrameVisitor extends RawStackFrameVisitor implements TargetMe
 
     @Override
     public boolean visitFrame(Cursor current, Cursor callee) {
-        final TargetMethod targetMethod = current.targetMethod;
+        final TargetMethod targetMethod = current.tm;
         if (targetMethod == null) {
             visitNativeFrame(current.ip.toLong());
             return true;
@@ -83,7 +83,7 @@ public class SourceFrameVisitor extends RawStackFrameVisitor implements TargetMe
         }
 
         frameId = current.sp.toLong() << 16;
-        trapped = callee.targetMethod != null && callee.targetMethod.is(TrapStub);
+        trapped = callee.tm != null && callee.tm.is(TrapStub);
         stopped = false;
         int count = targetMethod.forEachCodePos(this, current.ip);
         if (count == 0 && !stopped) {

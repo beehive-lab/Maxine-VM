@@ -40,7 +40,7 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.profile.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.type.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * The Java source for the templates used by T1X.
@@ -60,12 +60,12 @@ public class T1XTemplateSource {
 
     @T1X_TEMPLATE(LOAD_EXCEPTION)
     public static Object loadException() {
-        return T1XRuntime.loadException();
+        return VmThread.current().loadExceptionForHandler();
     }
 
     @T1X_TEMPLATE(RETHROW_EXCEPTION)
     public static void rethrowException() {
-        T1XRuntime.rethrowException();
+        Throw.raise(VmThread.current().loadExceptionForHandler());
     }
 
     @T1X_TEMPLATE(PROFILE_NONSTATIC_METHOD_ENTRY)
@@ -106,7 +106,7 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(LDC$reference)
     public static Object ldc(ResolutionGuard guard) {
         ClassActor classActor = Snippets.resolveClass(guard);
-        return T1XRuntime.getClassMirror(classActor);
+        return classActor.javaClass();
     }
 
     /**
@@ -122,12 +122,12 @@ public class T1XTemplateSource {
 
     @T1X_TEMPLATE(LOCK)
     public static void lock(Object object) {
-        T1XRuntime.monitorenter(object);
+        Monitor.enter(object);
     }
 
     @T1X_TEMPLATE(UNLOCK)
     public static void unlock(Object object) {
-        T1XRuntime.monitorexit(object);
+        Monitor.exit(object);
     }
 
 // START GENERATED CODE
@@ -741,11 +741,13 @@ public class T1XTemplateSource {
     }
 
     @T1X_TEMPLATE(IRETURN)
+    @Slot(-1)
     public static int ireturn(@Slot(0) int value) {
         return value;
     }
 
     @T1X_TEMPLATE(IRETURN$unlock)
+    @Slot(-1)
     public static int ireturnUnlock(Reference object, @Slot(0) int value) {
         Monitor.noninlineExit(object);
         return value;
@@ -906,11 +908,13 @@ public class T1XTemplateSource {
     }
 
     @T1X_TEMPLATE(FRETURN)
+    @Slot(-1)
     public static float freturn(@Slot(0) float value) {
         return value;
     }
 
     @T1X_TEMPLATE(FRETURN$unlock)
+    @Slot(-1)
     public static float freturnUnlock(Reference object, @Slot(0) float value) {
         Monitor.noninlineExit(object);
         return value;
@@ -1214,11 +1218,13 @@ public class T1XTemplateSource {
     }
 
     @T1X_TEMPLATE(LRETURN)
+    @Slot(-1)
     public static long lreturn(@Slot(0) long value) {
         return value;
     }
 
     @T1X_TEMPLATE(LRETURN$unlock)
+    @Slot(-1)
     public static long lreturnUnlock(Reference object, @Slot(0) long value) {
         Monitor.noninlineExit(object);
         return value;
@@ -1492,11 +1498,13 @@ public class T1XTemplateSource {
     }
 
     @T1X_TEMPLATE(DRETURN)
+    @Slot(-1)
     public static double dreturn(@Slot(0) double value) {
         return value;
     }
 
     @T1X_TEMPLATE(DRETURN$unlock)
+    @Slot(-1)
     public static double dreturnUnlock(Reference object, @Slot(0) double value) {
         Monitor.noninlineExit(object);
         return value;
@@ -1725,11 +1733,13 @@ public class T1XTemplateSource {
     }
 
     @T1X_TEMPLATE(ARETURN)
+    @Slot(-1)
     public static Reference areturn(@Slot(0) Reference value) {
         return value;
     }
 
     @T1X_TEMPLATE(ARETURN$unlock)
+    @Slot(-1)
     public static Reference areturnUnlock(Reference object, @Slot(0) Reference value) {
         Monitor.noninlineExit(object);
         return value;
@@ -1959,11 +1969,13 @@ public class T1XTemplateSource {
     }
 
     @T1X_TEMPLATE(WRETURN)
+    @Slot(-1)
     public static Word wreturn(@Slot(0) Word value) {
         return value;
     }
 
     @T1X_TEMPLATE(WRETURN$unlock)
+    @Slot(-1)
     public static Word wreturnUnlock(Reference object, @Slot(0) Word value) {
         Monitor.noninlineExit(object);
         return value;
@@ -2083,10 +2095,12 @@ public class T1XTemplateSource {
     }
 
     @T1X_TEMPLATE(RETURN)
+    @Slot(-1)
     public static void vreturn() {
     }
 
     @T1X_TEMPLATE(RETURN$unlock)
+    @Slot(-1)
     public static void vreturnUnlock(Reference object) {
         Monitor.noninlineExit(object);
     }
@@ -2241,28 +2255,34 @@ public class T1XTemplateSource {
     }
 
     @T1X_TEMPLATE(NEW$init)
-    public static Object new_(ClassActor classActor) {
-        Object object = createTupleOrHybrid(classActor);
+    public static Object new_(DynamicHub hub) {
+        Object object = Heap.createTuple(hub);
+        return object;
+    }
+
+    @T1X_TEMPLATE(NEW_HYBRID)
+    public static Object new_hybrid(DynamicHub hub) {
+        Object object = Heap.createHybrid(hub);
         return object;
     }
 
     @T1X_TEMPLATE(NEWARRAY)
-    public static Object newarray(Kind<?> kind, @Slot(0) int length) {
-        Object array = createPrimitiveArray(kind, length);
+    public static Object newarray(ClassActor arrayClass, @Slot(0) int length) {
+        Object array = Snippets.createArray(arrayClass, length);
         return array;
     }
 
     @T1X_TEMPLATE(ANEWARRAY)
     public static Object anewarray(ResolutionGuard arrayType, @Slot(0) int length) {
         ArrayClassActor<?> arrayClassActor = UnsafeCast.asArrayClassActor(Snippets.resolveArrayClass(arrayType));
-        Object array = T1XRuntime.createReferenceArray(arrayClassActor, length);
+        Object array = Snippets.createArray(arrayClassActor, length);
         return array;
     }
 
     @T1X_TEMPLATE(ANEWARRAY$resolved)
     public static Object anewarray(ArrayClassActor<?> arrayType, @Slot(0) int length) {
         ArrayClassActor<?> arrayClassActor = arrayType;
-        Object array = T1XRuntime.createReferenceArray(arrayClassActor, length);
+        Object array = Snippets.createArray(arrayClassActor, length);
         return array;
     }
 
@@ -2310,12 +2330,12 @@ public class T1XTemplateSource {
 
     @T1X_TEMPLATE(MONITORENTER)
     public static void monitorenter(@Slot(0) Object object) {
-        T1XRuntime.monitorenter(object);
+        Monitor.enter(object);
     }
 
     @T1X_TEMPLATE(MONITOREXIT)
     public static void monitorexit(@Slot(0) Object object) {
-        T1XRuntime.monitorexit(object);
+        Monitor.exit(object);
     }
 
     @T1X_TEMPLATE(INSTANCEOF)
@@ -2330,6 +2350,7 @@ public class T1XTemplateSource {
     }
 
     @T1X_TEMPLATE(RETURN$registerFinalizer)
+    @Slot(-1)
     public static void vreturnRegisterFinalizer(Reference object) {
         if (ObjectAccess.readClassActor(object).hasFinalizer()) {
             SpecialReferenceManager.registerFinalizee(object);

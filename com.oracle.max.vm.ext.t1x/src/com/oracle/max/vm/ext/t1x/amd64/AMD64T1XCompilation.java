@@ -23,6 +23,7 @@
 package com.oracle.max.vm.ext.t1x.amd64;
 
 import static com.oracle.max.asm.target.amd64.AMD64.*;
+import static com.oracle.max.vm.ext.t1x.T1X.*;
 import static com.sun.cri.ci.CiRegister.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
@@ -31,9 +32,10 @@ import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 
 import java.util.*;
 
-import com.oracle.max.asm.target.amd64.AMD64Assembler.ConditionFlag;
 import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.asm.target.amd64.AMD64Assembler.ConditionFlag;
 import com.oracle.max.cri.intrinsics.*;
+import com.oracle.max.vm.ext.maxri.*;
 import com.oracle.max.vm.ext.t1x.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
@@ -41,11 +43,11 @@ import com.sun.cri.ci.CiAddress.Scale;
 import com.sun.cri.ci.CiTargetMethod.JumpTable;
 import com.sun.cri.ci.CiTargetMethod.LookupTable;
 import com.sun.cri.ri.*;
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.amd64.*;
@@ -73,19 +75,6 @@ public class AMD64T1XCompilation extends T1XCompilation {
             synchronizedReceiver = maxLocals++;
         }
         frame = new AMD64JVMSFrameLayout(maxLocals, maxStack, maxParams, T1XTargetMethod.templateSlots());
-    }
-
-    /**
-     * Computes the offset to a literal reference being created. The current position in the code buffer must be
-     * that of the instruction loading the literal.
-     *
-     * @param numReferenceLiterals number of created reference literals (including the one being created)
-     * @return an offset, in bytes, to the base used to load the literal
-     */
-    @Override
-    protected int computeReferenceLiteralOffset(int numReferenceLiterals) {
-        // Remember: in the target bundle, the reference literal cell is directly adjacent to the code cell.
-        return numReferenceLiterals * Word.size() + Layout.byteArrayLayout().getElementOffsetInCell(buf.position()).toInt();
     }
 
     @Override
@@ -186,9 +175,13 @@ public class AMD64T1XCompilation extends T1XCompilation {
             asm.xorq(dst, dst);
             return;
         }
-        buf.putMark();
-        CiAddress src = new CiAddress(CiKind.Word, InstructionRelative.asValue(), createReferenceLiteral(value));
-        asm.movq(dst, src);
+
+        int index = objectLiterals.size();
+        objectLiterals.add(value);
+
+        asm.movq(dst, CiAddress.Placeholder);
+        int dispPos = buf.position() - 4;
+        patchInfo.addObjectLiteral(dispPos, index);
     }
 
     @Override
@@ -238,14 +231,22 @@ public class AMD64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void assignFloat(CiRegister dst, float value) {
-        asm.movl(scratch, Float.floatToRawIntBits(value));
-        asm.movdl(dst, scratch);
+        if (value == 0.0f) {
+            asm.xorps(dst, dst);
+        } else {
+            asm.movl(scratch, Float.floatToRawIntBits(value));
+            asm.movdl(dst, scratch);
+        }
     }
 
     @Override
     protected void assignDouble(CiRegister dst, double value) {
-        asm.movq(scratch, Double.doubleToRawLongBits(value));
-        asm.movdq(dst, scratch);
+        if (value == 0.0d) {
+            asm.xorpd(dst, dst);
+        } else {
+            asm.movq(scratch, Double.doubleToRawLongBits(value));
+            asm.movdq(dst, scratch);
+        }
     }
 
     @Override
@@ -372,8 +373,8 @@ public class AMD64T1XCompilation extends T1XCompilation {
 
         // Set r15 to address of jump table
         int leaPos = buf.position();
-        buf.putMark();
-        asm.leaq(r15, new CiAddress(CiKind.Word, InstructionRelative.asValue(), 0));
+        asm.leaq(r15, CiAddress.Placeholder);
+        int afterLea = buf.position();
 
         // Load jump table entry into r15 and jump to it
         asm.movslq(rax, new CiAddress(CiKind.Int, r15.asValue(), rax.asValue(), Scale.Times4, 0));
@@ -388,8 +389,7 @@ public class AMD64T1XCompilation extends T1XCompilation {
         // Patch LEA instruction above now that we know the position of the jump table
         int jumpTablePos = buf.position();
         buf.setPosition(leaPos);
-        buf.putMark();
-        asm.leaq(r15, new CiAddress(CiKind.Word, InstructionRelative.asValue(), jumpTablePos - leaPos));
+        asm.leaq(r15, new CiAddress(CiKind.Word, InstructionRelative.asValue(), jumpTablePos - afterLea));
         buf.setPosition(jumpTablePos);
 
         // Emit jump table entries
@@ -434,8 +434,8 @@ public class AMD64T1XCompilation extends T1XCompilation {
 
             // Set rbx to address of lookup table
             int leaPos = buf.position();
-            buf.putMark();
-            asm.leaq(rbx, new CiAddress(CiKind.Word, InstructionRelative.asValue(), 0));
+            asm.leaq(rbx, CiAddress.Placeholder);
+            int afterLea = buf.position();
 
             // Initialize rcx to index of last entry
             asm.movl(rcx, (ls.numberOfCases() - 1) * 2);
@@ -479,8 +479,7 @@ public class AMD64T1XCompilation extends T1XCompilation {
             // Patch the LEA instruction above now that we know the position of the lookup table
             int lookupTablePos = buf.position();
             buf.setPosition(leaPos);
-            buf.putMark();
-            asm.leaq(rbx, new CiAddress(CiKind.Word, InstructionRelative.asValue(), lookupTablePos - leaPos));
+            asm.leaq(rbx, new CiAddress(CiKind.Word, InstructionRelative.asValue(), lookupTablePos - afterLea));
             buf.setPosition(lookupTablePos);
 
             // Emit lookup table entries
@@ -658,6 +657,12 @@ public class AMD64T1XCompilation extends T1XCompilation {
     }
 
     @Override
+    protected void addObjectLiteralPatch(int index, int patchPos) {
+        final int dispPos = patchPos;
+        patchInfo.addObjectLiteral(dispPos, index);
+    }
+
+    @Override
     protected void fixup() {
         int i = 0;
         int[] data = patchInfo.data;
@@ -698,10 +703,58 @@ public class AMD64T1XCompilation extends T1XCompilation {
                 buf.setPosition(pos);
                 buf.emitInt(key);
                 buf.emitInt(disp);
+            } else if (tag == PatchInfoAMD64.OBJECT_LITERAL) {
+                int dispPos = data[i++];
+                int index = data[i++];
+                assert objectLiterals.get(index) != null;
+                buf.setPosition(dispPos);
+                int dispFromCodeStart = dispFromCodeStart(objectLiterals.size(), 0, index, true);
+                int disp = movqDisp(dispPos, dispFromCodeStart);
+                buf.emitInt(disp);
             } else {
                 throw FatalError.unexpected(String.valueOf(tag));
             }
         }
+    }
+
+    /**
+     * Computes the displacement operand of a {@link AMD64Assembler#movq(CiRegister, CiAddress) movq} instruction that
+     * loads data from some memory co-located with the code array in memory.
+     *
+     * @param dispPos the position of the movq instruction's displacement operand
+     * @param dispFromCodeStart the displacement from the start of the code array of the data to load
+     * @return the value of the movq displacement operand
+     */
+    public static int movqDisp(int dispPos, int dispFromCodeStart) {
+        assert dispFromCodeStart < 0;
+        final int dispSize = 4;
+        return dispFromCodeStart - dispPos - dispSize;
+    }
+
+    @HOSTED_ONLY
+    public static int findDataPatchPos(MaxTargetMethod source, int dispFromCodeStart) {
+        for (int pos = 0; pos < source.codeLength(); pos++) {
+            for (CiRegister reg : AMD64.allRegisters) {
+                // Compute displacement operand position for a movq at 'pos'
+                AMD64Assembler asm = new AMD64Assembler(target(), null);
+                asm.movq(reg, CiAddress.Placeholder);
+                int dispPos = pos + asm.codeBuffer.position() - 4;
+                int disp = movqDisp(dispPos, dispFromCodeStart);
+                asm.codeBuffer.reset();
+
+                // Assemble the movq instruction at 'pos' and compare it to the actual bytes at 'pos'
+                CiAddress src = new CiAddress(CiKind.Word, InstructionRelative.asValue(), disp);
+                asm.movq(reg, src);
+                byte[] pattern = asm.codeBuffer.close(true);
+                byte[] instr = Arrays.copyOfRange(source.code(), pos, pos + pattern.length);
+//                    System.out.println(pos + ": movq " + reg + ", " + src + "  " + toHexString(pattern));
+                if (Arrays.equals(pattern, instr)) {
+                    return dispPos;
+                }
+            }
+
+        }
+        return -1;
     }
 
     static class PatchInfoAMD64 extends PatchInfo {
@@ -729,6 +782,12 @@ public class AMD64T1XCompilation extends T1XCompilation {
          * Encoding: {@code pos, key, lookupTablePos, targetBCI}.
          */
         static final int LOOKUP_TABLE_ENTRY = 3;
+
+        /**
+         * Denotes a movq instruction that loads an object literal.
+         * Encoding: {@code dispPos, index}.
+         */
+        static final int OBJECT_LITERAL = 4;
 
         void addJCC(ConditionFlag cc, int pos, int targetBCI) {
             ensureCapacity(size + 4);
@@ -760,6 +819,13 @@ public class AMD64T1XCompilation extends T1XCompilation {
             data[size++] = key;
             data[size++] = lookupTablePos;
             data[size++] = targetBCI;
+        }
+
+        void addObjectLiteral(int dispPos, int index) {
+            ensureCapacity(size + 3);
+            data[size++] = OBJECT_LITERAL;
+            data[size++] = dispPos;
+            data[size++] = index;
         }
     }
 

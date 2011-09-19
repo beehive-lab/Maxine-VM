@@ -25,6 +25,7 @@ package com.sun.max.vm.compiler.target;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.compiler.target.Safepoints.*;
+import static com.sun.max.vm.compiler.target.Stub.Type.*;
 
 import java.util.*;
 
@@ -103,6 +104,20 @@ public final class Stub extends TargetMethod {
          * The trap stub.
          */
         TrapStub
+    }
+
+    /**
+     * Determines if a given address in a given target method denotes the entry point of a deoptimization stub.
+     *
+     * @param ip a code address
+     * @param tm the target method {@linkplain Code#codePointerToTargetMethod(Address) found} in the code cache based on {@code ip}
+     */
+    public static boolean isDeoptStubEntry(Pointer ip, TargetMethod tm) {
+        if (tm != null && (tm.is(DeoptStub) || tm.is(DeoptStubFromCompilerStub) || tm.is(DeoptStubFromSafepoint))) {
+            return ip.asPointer().equals(tm.codeStart());
+        } else {
+            return false;
+        }
     }
 
     public final Type type;
@@ -230,10 +245,7 @@ public final class Stub extends TargetMethod {
     }
 
     @Override
-    public Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class< ? extends Throwable> throwableClass) {
-        if (isTopFrame) {
-            throw FatalError.unexpected("Exception occurred in stub frame");
-        }
+    public Address throwAddressToCatchAddress(Address throwAddress, Throwable exception) {
         return Address.zero();
     }
 

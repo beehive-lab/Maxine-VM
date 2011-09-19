@@ -22,6 +22,7 @@
  */
 package com.oracle.max.vm.ext.t1x;
 
+import static com.oracle.max.vm.ext.t1x.T1X.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.compiler.target.Safepoints.*;
@@ -30,16 +31,18 @@ import java.lang.annotation.*;
 import java.util.*;
 
 import com.oracle.max.vm.ext.maxri.*;
+import com.oracle.max.vm.ext.t1x.amd64.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiCallingConvention.*;
+import com.sun.cri.ci.CiCallingConvention.Type;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.classfile.LocalVariableTable.*;
+import com.sun.max.vm.classfile.LocalVariableTable.Entry;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.Safepoints.Attr;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -83,12 +86,19 @@ public class T1XTemplate {
         }
 
         /**
-         * Bytecode index of safepoint. This is {@code -1} for a template.
+         * Bytecode index of this safepoint. This is {@code -1} for a template.
          */
         int bci;
-        ClassMethodActor callee;
+
+        /**
+         * The direct callee (if any) at this safepoint.
+         */
+        Object callee;
+
         CiBitMap frameRefMap;
         CiBitMap regRefMap;
+
+
 
         @Override
         public String toString() {
@@ -133,6 +143,18 @@ public class T1XTemplate {
      * The safepoints in this template.
      */
     public final T1XSafepoint[] safepoints;
+
+    /**
+     * The object literals in this template or {@code null} if there are none.
+     */
+    public final Object[] objectLiterals;
+
+    /**
+     * Entry {@code i} indicates a position in {@code code} that must be {@linkplain T1XCompilation#fixup() patched}
+     * to load entry {@code i} from {@link #objectLiterals}. The exact interpretation of the position is
+     * platform dependent. For example, on AMD64, it is the displacement operand of a MOVQ instruction.
+     */
+    public final int[] objectLiteralDataPatches;
 
     /**
      * Describes the signature of a {@linkplain T1X_TEMPLATE template}
@@ -388,6 +410,8 @@ public class T1XTemplate {
 
         /**
          * Determines if this arg gets its value from the operand stack.
+         * If this arg represents the return value, then this method
+         * determines if the result is written to the stack.
          */
         public boolean isStack() {
             return slot >= 0;
@@ -484,8 +508,12 @@ public class T1XTemplate {
                 t1xSafepoint.frameRefMap = nullIfEmpty(source.debugInfo().frameRefMapAt(safepointIndex));
                 t1xSafepoint.regRefMap = nullIfEmpty(source.debugInfo().regRefMapAt(safepointIndex));
                 if (sourceSafepoints.isSetAt(DIRECT_CALL, safepointIndex)) {
-                    t1xSafepoint.callee = (ClassMethodActor) source.directCallees()[dcIndex];
+                    t1xSafepoint.callee = source.directCallees()[dcIndex];
                     assert t1xSafepoint.callee != null;
+                    // The calling convention for stubs is not guaranteed to be compatible with T1X's
+                    // calling convention. For example, some compiler stubs pass arguments and receive
+                    // return values purely on the stack.
+                    assert !(t1xSafepoint.callee instanceof Stub) : source + " cannot call a stub: " + t1xSafepoint.callee;
                     dcIndex++;
                 }
                 safepoints[safepointIndex] = t1xSafepoint;
@@ -493,6 +521,45 @@ public class T1XTemplate {
         }
 
         sig = initSig(method);
+
+        objectLiterals = source.referenceLiterals();
+        if (objectLiterals != null) {
+            objectLiteralDataPatches = new int[objectLiterals.length];
+            for (int i = 0; i < objectLiterals.length; i++) {
+                int dispFromCodeStart = dispFromCodeStart(objectLiterals.length, 0, i, true);
+                int patchPos = findDataPatchPos(source, dispFromCodeStart);
+                FatalError.check(patchPos >= 0, source + ": could not find load of reference literal " + i + "\"" + objectLiterals[i] + "\"");
+                objectLiteralDataPatches[i] = patchPos;
+            }
+        } else {
+            objectLiteralDataPatches = null;
+        }
+
+    }
+
+    @HOSTED_ONLY
+    static String toHexString(byte[] bytes) {
+        String result = "[";
+        String separator = "";
+        for (byte b : bytes) {
+            result += separator + String.format("%02X", b);
+            separator = " ";
+        }
+        result += "]";
+        return result;
+    }
+
+    /**
+     * Finds the platform dependent position needed to patch an instruction that loads
+     * an object from the array immediately preceding the code array in memory.
+     */
+    @HOSTED_ONLY
+    static int findDataPatchPos(MaxTargetMethod source, int dispFromCodeStart) {
+        if (T1X.isAMD64()) {
+            return AMD64T1XCompilation.findDataPatchPos(source, dispFromCodeStart);
+        } else {
+            throw T1X.unimplISA();
+        }
     }
 
     @HOSTED_ONLY

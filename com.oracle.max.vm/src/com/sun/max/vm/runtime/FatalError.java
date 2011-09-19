@@ -112,6 +112,13 @@ public final class FatalError extends Error {
     }
 
     /**
+     * Determines if a fatal error is in flight. This can be used to try and prevent recursive fatal errors.
+     */
+    public static boolean inFatalError() {
+        return recursionCount != 0;
+    }
+
+    /**
      * Reports the occurrence of some error condition. Before exiting the VM, this method attempts to print a stack
      * trace.
      *

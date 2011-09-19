@@ -26,22 +26,22 @@ import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 
 import com.oracle.max.cri.intrinsics.*;
+import com.sun.c1x.stub.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.monitor.*;
-import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
-import com.sun.max.vm.type.*;
 
 /**
- * Collection of methods called from T1X templates. These methods are typically non-inlined
- * to satisfy invariants enforced for the templates. They can also be used to keep the
- * template code small.
+ * Collection of methods called from (or inlined by) T1X templates.
+ * They may be annotated with {@link NEVER_INLINE} to keep the
+ * template code small or to work around these constraints:
+ * <ul>
+ * <li>T1X templates cannot contain scalar literals</li>
+ * <li>T1X templates cannot contain calls to {@link CompilerStub compiler stubs}</li>
+ * </ul>
  */
-@NEVER_INLINE
 public class T1XRuntime {
 
     // ==========================================================================================================
@@ -76,10 +76,6 @@ public class T1XRuntime {
         Snippets.makeClassInitialized(classActor);
         final Object tuple = Snippets.createTupleOrHybrid(classActor);
         return tuple;
-    }
-
-    public static Object resolveMirror(ResolutionGuard guard) {
-        return Snippets.resolveClass(guard).javaClass();
     }
 
     // ==========================================================================================================
@@ -122,28 +118,6 @@ public class T1XRuntime {
     // == Misc routines =========================================================================================
     // ==========================================================================================================
 
-    public static void arrayStore(final int index, final Object array, final Object value) {
-        ArrayAccess.checkIndex(array, index);
-        ArrayAccess.checkSetObject(array, value);
-        ArrayAccess.setObject(array, index, value);
-    }
-
-    public static Object getClassMirror(ClassActor classActor) {
-        return classActor.javaClass();
-    }
-
-    public static Object createTupleOrHybrid(ClassActor classActor) {
-        return Snippets.createTupleOrHybrid(classActor);
-    }
-
-    public static Object createPrimitiveArray(Kind kind, int length) {
-        return Snippets.createArray(kind.arrayClassActor(), length);
-    }
-
-    public static Object createReferenceArray(ArrayClassActor arrayClassActor, int length) {
-        return Snippets.createArray(arrayClassActor, length);
-    }
-
     public static int[] createMultianewarrayDimensions(Pointer sp, int n) {
         int[] dims = new int[n];
         for (int i = 0; i < n; i++) {
@@ -154,52 +128,30 @@ public class T1XRuntime {
             } else {
                 throw T1X.unimplISA();
             }
-            checkArrayDimension(len);
+            Snippets.checkArrayDimension(len);
             dims[i] = len;
         }
         return dims;
 
     }
 
-    public static Object cloneArray(int[] arr) {
-        return arr.clone();
-    }
-
-    public static void checkArrayDimension(int length) {
-        Snippets.checkArrayDimension(length);
-    }
-
-    public static Throwable loadException() {
-        return VmThread.current().loadExceptionForHandler();
-    }
-
-    public static void rethrowException() {
-        Throw.raise(VmThread.current().loadExceptionForHandler());
-    }
-
-    public static void monitorenter(Object rcvr) {
-        Monitor.enter(rcvr);
-    }
-
-    public static void monitorexit(Object rcvr) {
-        Monitor.exit(rcvr);
-    }
-
+    @NEVER_INLINE("T1X code cannot call compiler stubs")
     public static int f2i(float value) {
         return (int) value;
     }
 
+    @NEVER_INLINE("T1X code cannot call compiler stubs")
     public static long f2l(float value) {
         return (long) value;
     }
 
+    @NEVER_INLINE("T1X code cannot call compiler stubs")
     public static int d2i(double value) {
         return (int) value;
     }
 
+    @NEVER_INLINE("T1X code cannot call compiler stubs")
     public static long d2l(double value) {
         return (long) value;
     }
-
-
 }

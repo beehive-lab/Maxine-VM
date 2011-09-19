@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.sequential.semiSpace.*;
@@ -107,6 +108,9 @@ final class TeleSemiSpaceHeapScheme extends AbstractTeleVMHolder implements Tele
 
             public Address address() {
                 return address;
+            }
+            public TeleObject tele() {
+                return null;
             }
         };
     }

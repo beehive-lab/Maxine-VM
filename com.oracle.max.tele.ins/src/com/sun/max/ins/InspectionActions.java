@@ -36,6 +36,7 @@ import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.method.*;
+import com.sun.max.ins.object.*;
 import com.sun.max.ins.type.*;
 import com.sun.max.ins.util.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
@@ -686,6 +687,36 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return new ViewMemoryAllocationsMenu();
     }
 
+    public final JMenu viewHeapRegionInfoMenu() {
+        return HeapRegionInfoView.viewManager(inspection()).viewMenu();
+    }
+    /**
+     * Action: view the HeapRegionInfo for the currently selected WordValueLabel when this one is in a mode denoting a heap address.
+     */
+    final class ViewSelectedAddressHeapRegionInfo extends InspectorAction {
+        public ViewSelectedAddressHeapRegionInfo(String actionTitle) {
+            super(inspection(), actionTitle == null ? "View heap region info for selected address" : actionTitle);
+        }
+
+        @Override
+        protected void procedure() {
+            MaxMemoryManagementInfo info = inspection().vm().getMemoryManagementInfo(focus().address());
+            // TODO: revisit this.
+            if (info.status().equals(MaxMemoryStatus.LIVE)) {
+                final TeleObject teleObject = info.tele();
+                focus().setHeapObject(teleObject);
+            }
+        }
+    }
+    /**
+     * @param actionTitle title for the action, uses a default if null
+     * @return an action that will create a heap region info view
+     * for the memory location at the selected address
+     */
+    public final InspectorAction viewSelectedAddressHeapRegionInfo(String actionTitle) {
+        return new ViewSelectedAddressHeapRegionInfo(actionTitle);
+    }
+
     /**
      *Action:  view the memory allocated to the currently selected thread's stack.
      */
@@ -972,6 +1003,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         final String actionTitle = "Select memory region \"" + memoryRegion.regionName() + "\"";
         return new SelectMemoryRegionAction(memoryRegion, actionTitle);
     }
+
 
     /**
      * Action: create an Object view for the boot {@link ClassRegistry} in the VM.
@@ -4225,6 +4257,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             public void addTo(InspectorMenu menu) {
                 menu.add(viewMemoryAllocationsMenu());
                 menu.add(views().memory().viewMenu());
+                if (vm().heap().providesHeapRegionInfo()) {
+                    menu.add(viewHeapRegionInfoMenu());
+                }
                 menu.add(views().memoryBytes().viewMenu());
             }
         };

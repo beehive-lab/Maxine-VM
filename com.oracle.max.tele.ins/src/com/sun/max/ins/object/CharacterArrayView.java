@@ -42,8 +42,8 @@ public final class CharacterArrayView extends ObjectView<CharacterArrayView> {
     // Follows user's tab selection, but should persist when view reconstructed.
     private boolean alternateDisplay;
 
-    CharacterArrayView(Inspection inspection, ObjectViewManager factory, TeleObject teleObject) {
-        super(inspection, factory, teleObject);
+    CharacterArrayView(Inspection inspection, TeleObject teleObject) {
+        super(inspection, teleObject);
         // This is the default for a newly created view.
         // TODO (mlvdv) make this a global view option?
         alternateDisplay = true;

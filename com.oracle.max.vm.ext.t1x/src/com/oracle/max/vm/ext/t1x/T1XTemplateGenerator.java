@@ -667,35 +667,34 @@ public class T1XTemplateGenerator {
      * Generate all the {@link #NEW_TEMPLATE_TAGS}.
      */
     public void generateNewTemplates() {
-        generateNewTemplate("");
-        generateNewTemplate("init");
+        generateNewTemplate(T1XTemplateTag.NEW);
+        generateNewTemplate(T1XTemplateTag.NEW$init);
+        generateNewTemplate(T1XTemplateTag.NEW_HYBRID);
     }
 
     /**
      * Generate the requested {@code NEW} template.
-     * @param init if "" generate {@code NEW} template, else {@code NEW$init}.
      */
-    public void generateNewTemplate(String init) {
-        String t;
-        String m;
-        String a;
-        if (init.equals("")) {
-            t = "ResolutionGuard";
-            m = "resolveClassForNewAndCreate";
-            a = "guard";
+    public void generateNewTemplate(T1XTemplateTag tag) {
+        if (tag == T1XTemplateTag.NEW) {
+            generateAutoComment();
+            generateTemplateTag(tag.name());
+            out.printf("    public static Object new_(ResolutionGuard guard) {%n");
+            out.printf("        Object object = resolveClassForNewAndCreate(guard);%n");
+            generateAfterAdvice(NULL_ARGS);
+            out.printf("        return object;%n");
+            out.printf("    }%n");
+            newLine();
         } else {
-            t = "ClassActor";
-            m = "createTupleOrHybrid";
-            a = "classActor";
+            generateAutoComment();
+            generateTemplateTag(tag.name());
+            out.printf("    public static Object %s(DynamicHub hub) {%n", tag == T1XTemplateTag.NEW$init ? "new_" : "new_hybrid");
+            out.printf("        Object object = Heap.create%s(hub);%n", tag == T1XTemplateTag.NEW$init ? "Tuple" : "Hybrid");
+            generateAfterAdvice(NULL_ARGS);
+            out.printf("        return object;%n");
+            out.printf("    }%n");
+            newLine();
         }
-        generateAutoComment();
-        generateTemplateTag("NEW%s", prefixDollar(init));
-        out.printf("    public static Object new_(%s %s) {%n", t, a);
-        out.printf("        Object object = %s(%s);%n", m, a);
-        generateAfterAdvice(NULL_ARGS);
-        out.printf("        return object;%n");
-        out.printf("    }%n");
-        newLine();
     }
 
     public static final EnumSet<T1XTemplateTag> NEWARRAY_TEMPLATE_TAGS = EnumSet.of(NEWARRAY);
@@ -703,8 +702,8 @@ public class T1XTemplateGenerator {
     public void generateNewArrayTemplate() {
         generateAutoComment();
         generateTemplateTag("NEWARRAY");
-        out.printf("    public static Object newarray(Kind<?> kind, @Slot(0) int length) {%n");
-        out.printf("        Object array = createPrimitiveArray(kind, length);%n");
+        out.printf("    public static Object newarray(ClassActor arrayClass, @Slot(0) int length) {%n");
+        out.printf("        Object array = Snippets.createArray(arrayClass, length);%n");
         generateAfterAdvice(NULL_ARGS);
         out.printf("        return array;%n");
         out.printf("    }%n");
@@ -743,7 +742,7 @@ public class T1XTemplateGenerator {
         } else {
             out.printf("        ArrayClassActor<?> arrayClassActor = arrayType;%n");
         }
-        out.printf("        Object array = T1XRuntime.createReferenceArray(arrayClassActor, length);%n");
+        out.printf("        Object array = Snippets.createArray(arrayClassActor, length);%n");
         generateAfterAdvice(NULL_ARGS);
         out.printf("        return array;%n");
         out.printf("    }%n");
@@ -914,7 +913,7 @@ public class T1XTemplateGenerator {
         generateTemplateTag("MONITOR%s", tag.toUpperCase());
         out.printf("    public static void monitor%s(@Slot(0) Object object) {%n", tag);
         generateBeforeAdvice(NULL_ARGS);
-        out.printf("        T1XRuntime.monitor%s(object);%n", tag);
+        out.printf("        Monitor.%s(object);%n", tag);
         out.printf("    }%n");
         newLine();
     }
@@ -1290,6 +1289,7 @@ public class T1XTemplateGenerator {
         final String sep = !arg1.isEmpty() && !arg2.isEmpty() ? ", " : "";
         generateAutoComment();
         generateTemplateTag("%sRETURN%s", tagPrefix(k), prefixDollar(unlock));
+        out.printf("    @Slot(-1)%n");
         out.printf("    public static %s %sreturn%s(%s%s%s) {%n", rs(k), opPrefix(k), toFirstUpper(unlock), arg1, sep, arg2);
         if (unlock.equals("registerFinalizer")) {
             out.printf("        if (ObjectAccess.readClassActor(object).hasFinalizer()) {%n");

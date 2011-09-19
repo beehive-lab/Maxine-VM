@@ -24,6 +24,7 @@ package com.sun.max.vm.actor.holder;
 
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
+import static com.sun.max.vm.compiler.deps.DependenciesManager.*;
 import static com.sun.max.vm.type.ClassRegistry.*;
 import static com.sun.max.vm.type.ClassRegistry.Property.*;
 import static com.sun.max.vm.actor.holder.ClassID.NULL_CLASS_ID;
@@ -412,6 +413,7 @@ public abstract class ClassActor extends Actor implements RiType {
      *         the traversal prematurely
      */
     public boolean allSubclassesDo(Closure c) {
+        FatalError.check(classHierarchyLock.isWriteLockedByCurrentThread() || VmOperation.atSafepoint(), "Class hierarchy traversal require class hierarchy to be stable");
         boolean cont = true;
         if (hasSubclass()) {
             int classId = firstSubclassActorId;

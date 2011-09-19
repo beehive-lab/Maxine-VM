@@ -93,7 +93,11 @@ public class Stubs {
      */
     private final Stub[] deoptStubsForCompilerStubs = new Stub[CiKind.VALUES.length];
 
-    private Stub deoptStubForSafepoint;
+    /**
+     * The deopt stub used for a frame stopped at a safepoint poll.
+     * This stub saves the registers, making them available for deoptimization.
+     */
+    private Stub deoptStubForSafepointPoll;
 
     private CriticalMethod resolveVirtualCall;
     private CriticalMethod resolveInterfaceCall;
@@ -134,8 +138,8 @@ public class Stubs {
         return deoptStubs[returnValueKind.stackKind().ordinal()];
     }
 
-    public Stub deoptStubForSafepoint() {
-        return deoptStubForSafepoint;
+    public Stub deoptStubForSafepointPoll() {
+        return deoptStubForSafepointPoll;
     }
 
     /**
@@ -166,7 +170,7 @@ public class Stubs {
                                 CiUtil.signatureToKinds(unroll.classMethodActor.signature(), null), target(), false).locations;
                 unroll.classMethodActor.compiledState = new Compilations(null, genUnroll(unrollArgs));
 
-                deoptStubForSafepoint = genDeoptStubWithCSA(null, registerConfigs.trapStub, false);
+                deoptStubForSafepointPoll = genDeoptStubWithCSA(null, registerConfigs.trapStub, false);
                 for (CiKind kind : CiKind.VALUES) {
                     deoptStubs[kind.ordinal()] = genDeoptStub(kind);
                     deoptStubsForCompilerStubs[kind.ordinal()] = genDeoptStubWithCSA(kind, registerConfigs.compilerStub, true);
@@ -358,8 +362,29 @@ public class Stubs {
         final ClassMethodActor callee = caller.callSiteToCallee(callSite);
 
         // Use the caller's entry point to get the correct entry point.
-        final Address calleeEntryPoint = compile(callee, Compilations.Attr.NONE).getEntryPoint(caller.callEntryPoint).asAddress();
+        TargetMethod xxx = compile(callee, Compilations.Attr.NONE);
+//
+//        boolean lockDisabledSafepoints = Log.lock();
+//        Log.print("**** patching direct call site: ");
+//        Log.printMethod(caller, false);
+//
+//        final Pointer codeStart = caller.codeStart();
+//        Log.print(" [");
+//        Log.print(codeStart);
+//        Log.print("+");
+//        Log.print(callSite.minus(codeStart).toInt());
+//        Log.println("]");
+//
+//
+//        Log.print("  to: ");
+//        Log.printMethod(xxx, true);
+//        Log.unlock(lockDisabledSafepoints);
+
+
+        final Address calleeEntryPoint = xxx.getEntryPoint(caller.callEntryPoint).asAddress();
         AMD64TargetMethodUtil.mtSafePatchCallDisplacement(caller, callSite, calleeEntryPoint);
+
+
     }
 
     /**

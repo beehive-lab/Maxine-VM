@@ -183,12 +183,18 @@ public class MaxRuntime implements RiRuntime {
     }
 
     @Override
-    public String disassemble(final CiTargetMethod targetMethod) {
-        byte[] code = Arrays.copyOf(targetMethod.targetCode(), targetMethod.targetCodeSize());
+    public String disassemble(final CiTargetMethod tm) {
+        return disassemble(tm, null);
+    }
+
+    public String disassemble(CiTargetMethod ciTM, MaxTargetMethod maxTM) {
+        byte[] code = maxTM == null ? Arrays.copyOf(ciTM.targetCode(), ciTM.targetCodeSize()) : maxTM.code();
         final Platform platform = Platform.platform();
 
-        CiHexCodeFile hcf = new CiHexCodeFile(code, 0L, platform.isa.name(), platform.wordWidth().numberOfBits);
-        CiUtil.addAnnotations(hcf, targetMethod.annotations());
+        long startAddress = maxTM == null ? 0L : maxTM.codeStart().toLong();
+        CiHexCodeFile hcf = new CiHexCodeFile(code, startAddress, platform.isa.name(), platform.wordWidth().numberOfBits);
+        CiUtil.addAnnotations(hcf, ciTM.annotations());
+        addExceptionHandlersComment(ciTM, hcf);
         CiRegister fp;
         int refMapToFPOffset;
         if (platform.isa == ISA.AMD64) {
@@ -198,7 +204,7 @@ public class MaxRuntime implements RiRuntime {
             throw FatalError.unimplemented();
         }
         RefMapFormatter slotFormatter = new RefMapFormatter(target().arch, target().spillSlotSize, fp, refMapToFPOffset);
-        for (Safepoint safepoint : targetMethod.safepoints) {
+        for (Safepoint safepoint : ciTM.safepoints) {
             if (safepoint instanceof Call) {
                 Call call = (Call) safepoint;
                 if (call.debugInfo != null) {
@@ -212,11 +218,26 @@ public class MaxRuntime implements RiRuntime {
                 addOperandComment(hcf, safepoint.pcOffset, "{safepoint}");
             }
         }
-        for (DataPatch site : targetMethod.dataReferences) {
+        for (DataPatch site : ciTM.dataReferences) {
             hcf.addOperandComment(site.pcOffset, "{" + site.constant + "}");
         }
 
         return hcf.toEmbeddedString();
+    }
+
+    private static void addExceptionHandlersComment(CiTargetMethod tm, CiHexCodeFile hcf) {
+        if (!tm.exceptionHandlers.isEmpty()) {
+            String nl = CiHexCodeFile.NEW_LINE;
+            StringBuilder buf = new StringBuilder("------ Exception Handlers ------").append(nl);
+            for (CiTargetMethod.ExceptionHandler e : tm.exceptionHandlers) {
+                buf.append("    ").
+                    append(e.pcOffset).append(" -> ").
+                    append(e.handlerPos).
+                    append("  ").append(e.exceptionType == null ? "<any>" : e.exceptionType).
+                    append(nl);
+            }
+            hcf.addComment(0, buf.toString());
+        }
     }
 
     private static void addOperandComment(CiHexCodeFile hcf, int pos, String comment) {

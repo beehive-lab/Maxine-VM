@@ -608,6 +608,10 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
         return teleHeapScheme.getMemoryManagementInfo(address);
     }
 
+    public boolean providesHeapRegionInfo() {
+        return teleHeapScheme instanceof TeleMSEHeapScheme;
+    }
+
     public int gcForwardingPointerOffset() {
         return teleHeapScheme.gcForwardingPointerOffset();
     }

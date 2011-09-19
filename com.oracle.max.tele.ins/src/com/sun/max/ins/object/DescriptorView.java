@@ -44,8 +44,8 @@ public class DescriptorView extends ObjectView<DescriptorView> {
     // Follows user's tab selection, but should persist when view reconstructed.
     private boolean alternateDisplay;
 
-    DescriptorView(Inspection inspection, ObjectViewManager factory, TeleObject teleObject) {
-        super(inspection, factory, teleObject);
+    DescriptorView(Inspection inspection, TeleObject teleObject) {
+        super(inspection, teleObject);
         // This is the default for a newly created view.
         // TODO (mlvdv) make this a global view option?
         alternateDisplay = true;

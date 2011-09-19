@@ -45,7 +45,6 @@ import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.intrinsics.*;
 import com.sun.max.vm.profile.*;
 import com.sun.max.vm.runtime.*;
@@ -165,17 +164,17 @@ public abstract class T1XCompilation {
     /**
      * The compiler context.
      */
-    final T1X compiler;
+    protected final T1X compiler;
 
     /**
      * Object used to aggregate all the stops for the compiled code.
      */
-    final SafepointsBuilder safepointsBuilder = new SafepointsBuilder();
+    protected final SafepointsBuilder safepointsBuilder = new SafepointsBuilder();
 
     /**
-     * The set of reference literals.
+     * The set of object literals.
      */
-    final ArrayList<Object> referenceLiterals;
+    protected final ArrayList<Object> objectLiterals;
 
     /**
      * Code annotations for disassembly jump tables (lazily initialized).
@@ -189,7 +188,7 @@ public abstract class T1XCompilation {
      */
     protected ClassMethodActor method;
 
-    CodeAttribute codeAttribute;
+    protected CodeAttribute codeAttribute;
 
     /**
      * The last bytecode compiled.
@@ -280,7 +279,7 @@ public abstract class T1XCompilation {
      */
     public T1XCompilation(T1X compiler) {
         this.compiler = compiler;
-        this.referenceLiterals = new ArrayList<Object>();
+        this.objectLiterals = new ArrayList<Object>();
     }
 
     /**
@@ -291,7 +290,7 @@ public abstract class T1XCompilation {
     protected void initCompile(ClassMethodActor method, CodeAttribute codeAttribute) {
         assert this.method == null;
         assert buf.position() == 0;
-        assert referenceLiterals.isEmpty();
+        assert objectLiterals.isEmpty();
         this.method = method;
         this.codeAttribute = codeAttribute;
         cp = codeAttribute.cp;
@@ -357,7 +356,7 @@ public abstract class T1XCompilation {
         syncMethodHandlerPos = -1;
         cp = null;
         buf.reset();
-        referenceLiterals.clear();
+        objectLiterals.clear();
         if (codeAnnotations != null) {
             codeAnnotations.clear();
         }
@@ -654,8 +653,25 @@ public abstract class T1XCompilation {
             int bci = stream.currentBCI();
             safepointsBuilder.add(template, buf.position(), bci == stream.endBCI() ? -1 : bci);
         }
+
+        if (template.objectLiterals != null) {
+            for (int i = 0; i < template.objectLiterals.length; i++) {
+                int index = objectLiterals.size();
+                objectLiterals.add(template.objectLiterals[i]);
+                int patchPos = template.objectLiteralDataPatches[i] + buf.position();
+                addObjectLiteralPatch(index, patchPos);
+            }
+        }
         buf.emitBytes(template.code, 0, template.code.length);
     }
+
+    /**
+     * Records a patch site for a load of an object literal.
+     *
+     * @param index the index in {@link #objectLiterals} of the object
+     * @param patchPos the position in the generated code that must be {@linkplain T1XCompilation#fixup() patched}
+     */
+    protected abstract void addObjectLiteralPatch(int index, int patchPos);
 
     protected abstract Adapter emitPrologue();
 
@@ -714,32 +730,6 @@ public abstract class T1XCompilation {
      * Fixes up the code locations that need to be patched.
      */
     protected abstract void fixup();
-
-    /**
-     * Computes the offset to a literal reference being created. The current position in the code buffer must be
-     * that of the instruction loading the literal.
-     *
-     * @param numReferenceLiterals number of created reference literals (including the one being created)
-     * @return an offset, in bytes, to the base used to load the literal
-     */
-    protected abstract int computeReferenceLiteralOffset(int numReferenceLiterals);
-
-    /**
-     * Return the relative offset of the literal to the current code buffer position. (negative number since literals
-     * are placed before code in the bundle)
-     *
-     * @param literal the object
-     * @return the offset of the literal relative to the current code position
-     */
-    protected int createReferenceLiteral(Object literal) {
-        int literalOffset = computeReferenceLiteralOffset(1 + referenceLiterals.size());
-        referenceLiterals.add(literal);
-        if (DebugHeap.isTagging()) {
-            // Account for the DebugHeap tag in front of the code object:
-            literalOffset += Word.size();
-        }
-        return -literalOffset;
-    }
 
     /**
      * Emits code to assign the value in {@code src} to {@code dst}.
@@ -1971,9 +1961,15 @@ public abstract class T1XCompilation {
         ClassConstant classRef = cp.classAt(index);
         if (classRef.isResolvableWithoutClassLoading(cp)) {
             ClassActor classActor = classRef.resolve(cp, index);
+            if (classActor.isHybridClass()) {
+                start(NEW_HYBRID);
+                assignObject(0, "hub", classActor.dynamicHub());
+                finish();
+                return;
+            }
             if (classActor.isInitialized()) {
                 start(NEW$init);
-                assignObject(0, "classActor", classActor);
+                assignObject(0, "hub", classActor.dynamicHub());
                 finish();
                 return;
             }
@@ -1986,7 +1982,7 @@ public abstract class T1XCompilation {
     protected void do_newarray(int tag) {
         start(NEWARRAY);
         Kind arrayElementKind = Kind.fromNewArrayTag(tag);
-        assignObject(0, "kind", arrayElementKind);
+        assignObject(0, "arrayClass", arrayElementKind.arrayClassActor());
         finish();
     }
 

@@ -36,6 +36,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jdk.*;
+import com.sun.max.vm.jdk.JDK_java_lang_Throwable.Backtrace;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.Cursor;
@@ -120,6 +121,7 @@ public final class Throw {
 
         VmThread.current().checkYellowZoneForRaisingException();
         SafepointPoll.disable();
+
         sfw.unwind(ip, sp, fp, throwable);
         FatalError.unexpected("could not find top-level exception handler");
     }
@@ -162,10 +164,9 @@ public final class Throw {
     /**
      * Unwinds the current thread's stack to the frame containing an exception handler (there is guaranteed to be one).
      *
-     * @param throwable throwable the object to be passed to the exception handler. If this value is null, then a
+     * @param throwable the object to be passed to the exception handler. If this value is null, then a
      *            {@link NullPointerException} is instantiated and raised instead.
      */
-    // Checkstyle: stop (parameter assignment)
     public static void raise(Throwable throwable) {
         if (throwable == null) {
             throwable = new NullPointerException();
@@ -274,18 +275,10 @@ public final class Throw {
         Log.println(message);
         Pointer pointer = sp.wordAligned();
         while (pointer.lessThan(end)) {
-            final Address potentialCodePointer = pointer.getWord().asAddress();
+            final Pointer potentialCodePointer = pointer.getWord().asPointer();
             final TargetMethod targetMethod = Code.codePointerToTargetMethod(potentialCodePointer);
             if (targetMethod != null) {
-                Log.print("        -> ");
-                Log.printMethod(targetMethod, false);
-                final Pointer codeStart = targetMethod.codeStart();
-                Log.print(" [");
-                Log.print(codeStart);
-                Log.print("+");
-                Log.print(potentialCodePointer.minus(codeStart).toInt());
-                Log.println("]");
-
+                logFrame(null, targetMethod, potentialCodePointer);
             }
             pointer = pointer.plus(Word.size());
         }
@@ -362,14 +355,7 @@ public final class Throw {
             Log.print(codeStart);
             Log.print("+");
             Log.print(ip.minus(codeStart).toInt());
-            Log.print("] {");
-            String compiler = ObjectAccess.readClassActor(targetMethod).name.string;
-            // cannot use substring as it allocates
-            int index = compiler.lastIndexOf('.');
-            for (int i = index + 1; i < compiler.length(); i++) {
-                Log.print(compiler.charAt(i));
-            }
-            Log.print('}');
+            Log.print("]");
         } else {
             Log.print("native{");
             Log.printSymbol(ip);
