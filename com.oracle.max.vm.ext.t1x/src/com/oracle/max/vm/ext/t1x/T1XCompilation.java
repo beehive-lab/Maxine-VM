@@ -2060,7 +2060,7 @@ public abstract class T1XCompilation {
     protected void do_newarray(int tag) {
         start(NEWARRAY);
         Kind arrayElementKind = Kind.fromNewArrayTag(tag);
-        assignObject(0, "kind", arrayElementKind);
+        assignObject(0, "arrayClass", arrayElementKind.arrayClassActor());
         finish();
     }
 

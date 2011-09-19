@@ -27,21 +27,21 @@ import static com.sun.cri.bytecode.Bytecodes.MemoryBarriers.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 
+import com.sun.c1x.stub.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.monitor.*;
-import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
-import com.sun.max.vm.type.*;
 
 /**
  * Collection of methods called from (or inlined by) T1X templates.
  * They may be annotated with {@link NEVER_INLINE} to keep the
- * template code small or to work around the constraint that T1X
- * templates cannot contain scalar literals.
+ * template code small or to work around these constraints:
+ * <ul>
+ * <li>T1X templates cannot contain scalar literals</li>
+ * <li>T1X templates cannot contain calls to {@link CompilerStub compiler stubs}</li>
+ * </ul>
  */
 public class T1XRuntime {
 
@@ -79,10 +79,6 @@ public class T1XRuntime {
         return tuple;
     }
 
-    public static Object resolveMirror(ResolutionGuard guard) {
-        return Snippets.resolveClass(guard).javaClass();
-    }
-
     // ==========================================================================================================
     // == Field access           ================================================================================
     // ==========================================================================================================
@@ -116,28 +112,6 @@ public class T1XRuntime {
     // == Misc routines =========================================================================================
     // ==========================================================================================================
 
-    public static void arrayStore(final int index, final Object array, final Object value) {
-        ArrayAccess.checkIndex(array, index);
-        ArrayAccess.checkSetObject(array, value);
-        ArrayAccess.setObject(array, index, value);
-    }
-
-    public static Object getClassMirror(ClassActor classActor) {
-        return classActor.javaClass();
-    }
-
-    public static Object createTupleOrHybrid(ClassActor classActor) {
-        return Snippets.createTupleOrHybrid(classActor);
-    }
-
-    public static Object createPrimitiveArray(Kind kind, int length) {
-        return Snippets.createArray(kind.arrayClassActor(), length);
-    }
-
-    public static Object createReferenceArray(ArrayClassActor arrayClassActor, int length) {
-        return Snippets.createArray(arrayClassActor, length);
-    }
-
     public static int[] createMultianewarrayDimensions(Pointer sp, int n) {
         int[] dims = new int[n];
         for (int i = 0; i < n; i++) {
@@ -153,22 +127,6 @@ public class T1XRuntime {
         }
         return dims;
 
-    }
-
-    public static Throwable loadException() {
-        return VmThread.current().loadExceptionForHandler();
-    }
-
-    public static void rethrowException() {
-        Throw.raise(VmThread.current().loadExceptionForHandler());
-    }
-
-    public static void monitorenter(Object rcvr) {
-        Monitor.enter(rcvr);
-    }
-
-    public static void monitorexit(Object rcvr) {
-        Monitor.exit(rcvr);
     }
 
     @NEVER_INLINE("T1X code cannot call compiler stubs")
