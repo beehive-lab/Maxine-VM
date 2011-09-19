@@ -703,12 +703,6 @@ public class ProcessLog {
                 break;
             }
 
-            case ADVISE_BEFORE_IPUSH: {
-                adviceRecord = createAdviceRecordAndSetTimeAndThread(IPush, AdviceMode.BEFORE);
-                adviceRecord.setPackedValue(Integer.parseInt(arg3));
-                break;
-            }
-
             case ADVISE_BEFORE_ARRAY_LOAD: {
                 objectRecord = getTraceRecord(objIdArg);
                 int arrayIndex = (int) expectNumber(recordParts[ARRAY_INDEX_INDEX]);
@@ -798,15 +792,6 @@ public class ProcessLog {
                 adviceRecord.setPackedValue(Integer.parseInt(arg3));
                 break;
             }
-            case ADVISE_BEFORE_IINC: {
-                LongLongAdviceRecord longLongAdviceRecord = (LongLongAdviceRecord) createAdviceRecordAndSetTimeAndThread(IInc, AdviceMode.BEFORE);
-                longLongAdviceRecord.setPackedValue(Integer.parseInt(arg3));
-                longLongAdviceRecord.value = Long.parseLong(arg4);
-                longLongAdviceRecord.value2 = Long.parseLong(arg5);
-                adviceRecord = longLongAdviceRecord;
-                break;
-            }
-
             case ADVISE_BEFORE_OPERATION: {
                 adviceRecord = createAdviceRecordAndSetTimeThreadValue("Operation", AdviceMode.BEFORE, arg4, arg5);
                 adviceRecord.setPackedValue(Integer.parseInt(arg3));
@@ -1107,11 +1092,6 @@ public class ProcessLog {
                 return ArrayLength;
             case ADVISE_BEFORE_CHECK_CAST:
                 return CheckCast;
-            case ADVISE_BEFORE_IPUSH:
-                return IPush;
-            case ADVISE_BEFORE_IINC:
-                return IInc;
-
             case ADVISE_BEFORE_GET_STATIC:
                 return GetStatic;
             case ADVISE_BEFORE_GET_FIELD:

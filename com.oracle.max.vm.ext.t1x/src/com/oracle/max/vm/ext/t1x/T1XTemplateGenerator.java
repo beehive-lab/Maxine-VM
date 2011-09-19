@@ -105,7 +105,7 @@ public class T1XTemplateGenerator {
      */
     public static final CiKind[] kinds = {Boolean, Byte, Char, Short, Int, Float, Long, Double, Object, Word, Void};
 
-    private static final String[] conditions = new String[] {"eq", "ne", "lt", "ge", "gt", "le"};
+    public static final String[] conditions = new String[] {"eq", "ne", "lt", "ge", "gt", "le"};
 
     /**
      * Returns {@code k.javaName} with first character lower cased.
@@ -329,10 +329,7 @@ public class T1XTemplateGenerator {
 
     private AdviceHook adviceHook;
 
-    private String generatingClassName;
-
-    public T1XTemplateGenerator(Class<?> generatingClass, PrintStream out) {
-        generatingClassName = generatingClass.getSimpleName();
+    public T1XTemplateGenerator(PrintStream out) {
         this.out = out;
     }
 
@@ -346,13 +343,13 @@ public class T1XTemplateGenerator {
     }
 
     /**
-     * Generate a // GENERATED comment with T1XTemplateGenerator to rerun.
+     * Notify advice hook that a new method is being generated.
+     * N.B. This may be a support method for a {@link T1X_TEMPLATE} method.
      */
-    public void generateAutoComment() {
+    public void startMethodGeneration() {
         if (adviceHook != null) {
             adviceHook.startMethodGeneration();
         }
-        //out.printf("    // GENERATED -- EDIT AND RUN %s.main() TO MODIFY%n", generatingClassName);
     }
 
     public void newLine() {
@@ -398,7 +395,7 @@ public class T1XTemplateGenerator {
     // Here starts the actual template generation methods
 
     public void generateTraceMethodEntryTemplate() {
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("%s", TRACE_METHOD_ENTRY);
         out.printf("    public static void traceMethodEntry(String method) {%n");
         out.printf("        Log.println(method);%n");
@@ -426,7 +423,7 @@ public class T1XTemplateGenerator {
     public void generatePutFieldTemplate(CiKind k) {
         final int objectSlot = k.isDoubleWord() ? 2 : 1;
         final String m = k == Object ? "noninlineW" : "w";
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("PUTFIELD$%s$resolved", lr(k));
         out.printf("    public static void putfield%s(@Slot(%d) Object object, int offset, @Slot(0) %s value) {%n", ur(k), objectSlot, rs(k));
         generateBeforeAdvice(k);
@@ -434,14 +431,14 @@ public class T1XTemplateGenerator {
         out.printf("    }%n");
         newLine();
 
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("PUTFIELD$%s", lr(k));
         out.printf("    public static void putfield%s(ResolutionGuard.InPool guard, @Slot(%d) Object object, @Slot(0) %s value) {%n", ur(k), objectSlot, rs(k));
         out.printf("        resolveAndPutField%s(guard, object, value);%n", ur(k));
         out.printf("    }%n");
         newLine();
 
-        generateAutoComment();
+        startMethodGeneration();
         out.printf("    @NEVER_INLINE%n");
         out.printf("    public static void resolveAndPutField%s(ResolutionGuard.InPool guard, Object object, %s value) {%n", ur(k), rs(k));
         out.printf("        FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);%n");
@@ -475,7 +472,7 @@ public class T1XTemplateGenerator {
      */
     public void generatePutStaticTemplate(CiKind k) {
         final String m = k == Object ? "noninlineW" : "w";
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("PUTSTATIC$%s$init", lr(k));
         out.printf("    public static void putstatic%s(Object staticTuple, int offset, @Slot(0) %s value) {%n", ur(k), rs(k));
         generateBeforeAdvice(k);
@@ -483,14 +480,14 @@ public class T1XTemplateGenerator {
         out.printf("    }%n");
         newLine();
 
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("PUTSTATIC$%s", lr(k));
         out.printf("    public static void putstatic%s(ResolutionGuard.InPool guard, @Slot(0) %s value) {%n", ur(k), rs(k));
         out.printf("        resolveAndPutStatic%s(guard, value);%n", ur(k));
         out.printf("    }%n");
         newLine();
 
-        generateAutoComment();
+        startMethodGeneration();
         out.printf("    @NEVER_INLINE%n");
         out.printf("    public static void resolveAndPutStatic%s(ResolutionGuard.InPool guard, %s value) {%n", ur(k), rs(k));
         out.printf("        FieldActor f = Snippets.resolveStaticFieldForWriting(guard);%n");
@@ -525,7 +522,7 @@ public class T1XTemplateGenerator {
      * @param k type
      */
     public void generateGetFieldTemplate(CiKind k) {
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("GETFIELD$%s$resolved", lr(k));
         out.printf("    public static %s getfield%s(@Slot(0) Object object, int offset) {%n", rs(k), u(k));
         generateBeforeAdvice(k);
@@ -534,14 +531,14 @@ public class T1XTemplateGenerator {
         out.printf("    }%n");
         newLine();
 
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("GETFIELD$%s", lr(k));
         out.printf("    public static %s getfield%s(ResolutionGuard.InPool guard, @Slot(0) Object object) {%n", rs(k), ur(k));
         out.printf("        return resolveAndGetField%s(guard, object);%n", ur(k), u(k));
         out.printf("    }%n");
         newLine();
 
-        generateAutoComment();
+        startMethodGeneration();
         out.printf("    @NEVER_INLINE%n");
         out.printf("    public static %s resolveAndGetField%s(ResolutionGuard.InPool guard, Object object) {%n", rs(k), ur(k));
         out.printf("        FieldActor f = Snippets.resolveInstanceFieldForReading(guard);%n");
@@ -577,14 +574,14 @@ public class T1XTemplateGenerator {
      * @param k type
      */
     public void generateGetStaticTemplate(CiKind k) {
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("GETSTATIC$%s", lr(k));
         out.printf("    public static %s getstatic%s(ResolutionGuard.InPool guard) {%n", rs(k), ur(k));
         out.printf("        return resolveAndGetStatic%s(guard);%n", ur(k), u(k));
         out.printf("    }%n");
         newLine();
 
-        generateAutoComment();
+        startMethodGeneration();
         out.printf("    @NEVER_INLINE%n");
         out.printf("    public static %s resolveAndGetStatic%s(ResolutionGuard.InPool guard) {%n", rs(k), ur(k));
         out.printf("        FieldActor f = Snippets.resolveStaticFieldForReading(guard);%n");
@@ -602,7 +599,7 @@ public class T1XTemplateGenerator {
         out.printf("    }%n");
         out.printf("%n");
 
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("GETSTATIC$%s$init", lr(k));
         out.printf("    public static %s getstatic%s(Object staticTuple, int offset) {%n", rs(k), u(k));
         generateBeforeAdvice(k);
@@ -629,7 +626,7 @@ public class T1XTemplateGenerator {
      * Generate the {@code ALOAD} template(s) for given type.
      */
     public void generateArrayLoadTemplate(CiKind k) {
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("%sALOAD", tagPrefix(k));
         out.printf("    public static %s %saload(@Slot(1) Object array, @Slot(0) int index) {%n", rs(k), opPrefix(k));
         out.printf("        ArrayAccess.checkIndex(array, index);%n");
@@ -660,7 +657,7 @@ public class T1XTemplateGenerator {
     public void generateArrayStoreTemplate(CiKind k) {
         final int arraySlot = k.isDoubleWord() ? 3 : 2;
         final int indexSlot = k.isDoubleWord() ? 2 : 1;
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("%sASTORE", tagPrefix(k));
         out.printf("    public static void %sastore(@Slot(%d) Object array, @Slot(%d) int index, @Slot(0) %s value) {%n", opPrefix(k), arraySlot, indexSlot, rs(k));
         out.printf("        ArrayAccess.checkIndex(array, index);%n");
@@ -700,7 +697,7 @@ public class T1XTemplateGenerator {
             m = "createTupleOrHybrid";
             a = "classActor";
         }
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("NEW%s", prefixDollar(init));
         out.printf("    public static Object new_(%s %s) {%n", t, a);
         out.printf("        Object object = %s(%s);%n", m, a);
@@ -713,7 +710,7 @@ public class T1XTemplateGenerator {
     public static final EnumSet<T1XTemplateTag> NEWARRAY_TEMPLATE_TAGS = EnumSet.of(NEWARRAY);
 
     public void generateNewArrayTemplate() {
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("NEWARRAY");
         out.printf("    public static Object newarray(Kind<?> kind, @Slot(0) int length) {%n");
         out.printf("        Object array = createPrimitiveArray(kind, length);%n");
@@ -747,7 +744,7 @@ public class T1XTemplateGenerator {
             t = "ArrayClassActor<?>";
             v = "arrayType";
         }
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("ANEWARRAY%s", prefixDollar(resolved));
         out.printf("    public static Object anewarray(%s %s, @Slot(0) int length) {%n", t, v);
         if (resolved.equals("")) {
@@ -786,7 +783,7 @@ public class T1XTemplateGenerator {
             t = "ArrayClassActor<?>";
             v = "arrayClassActor";
         }
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("MULTIANEWARRAY%s", prefixDollar(resolved));
         out.printf("    public static Reference multianewarray(%s %s, int[] lengths) {%n", t, v);
         if (resolved.equals("")) {
@@ -827,7 +824,7 @@ public class T1XTemplateGenerator {
             t = "ClassActor";
             m = "Snippets.checkCast";
         }
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("CHECKCAST%s", prefixDollar(resolved));
         out.printf("    public static Object checkcast(%s %s, @Slot(0) Object object) {%n", t, arg);
         if (isResolved) {
@@ -840,7 +837,7 @@ public class T1XTemplateGenerator {
     }
 
     public void generateResolveAndCheckCast() {
-        generateAutoComment();
+        startMethodGeneration();
         out.printf("    @NEVER_INLINE%n");
         out.printf("    private static void resolveAndCheckcast(ResolutionGuard guard, final Object object) {%n");
         out.printf("        ClassActor classActor = Snippets.resolveClass(guard);%n");
@@ -874,7 +871,7 @@ public class T1XTemplateGenerator {
             t = "ClassActor";
             v = "classActor";
         }
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("INSTANCEOF%s", prefixDollar(resolved));
         out.printf("    public static int instanceof_(%s %s, @Slot(0) Object object) {%n", t, v);
         if (resolved.equals("")) {
@@ -887,7 +884,7 @@ public class T1XTemplateGenerator {
     }
 
     public void generateArraylengthTemplate() {
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("ARRAYLENGTH");
         out.printf("    public static int arraylength(@Slot(0) Object array) {%n");
         out.printf("        int length = ArrayAccess.readArrayLength(array);%n");
@@ -898,7 +895,7 @@ public class T1XTemplateGenerator {
     }
 
     public void generateAThrowTemplate() {
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("ATHROW");
         out.printf("    public static void athrow(@Slot(0) Object object) {%n");
         generateBeforeAdvice(NULL_ARGS);
@@ -922,11 +919,29 @@ public class T1XTemplateGenerator {
      * @param tag one of "enter" or "exit":
      */
     public void generateMonitorTemplate(String tag) {
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("MONITOR%s", tag.toUpperCase());
         out.printf("    public static void monitor%s(@Slot(0) Object object) {%n", tag);
         generateBeforeAdvice(NULL_ARGS);
         out.printf("        T1XRuntime.monitor%s(object);%n", tag);
+        out.printf("    }%n");
+        newLine();
+    }
+
+    public static final EnumSet<T1XTemplateTag> LOCK_TEMPLATE_TAGS = EnumSet.of(LOCK, UNLOCK);
+
+    public void generateLockTemplates() {
+        for (T1XTemplateTag tag : LOCK_TEMPLATE_TAGS) {
+            generateLockTemplate(tag);
+        }
+    }
+
+    public void generateLockTemplate(T1XTemplateTag tag) {
+        startMethodGeneration();
+        generateTemplateTag("%s", tag);
+        out.printf("    public static void %s(Object object) {%n", tag.name().toLowerCase());
+        generateBeforeAdvice();
+        out.printf("        T1XRuntime.monitor%s(object);%n", tag == LOCK ? "enter" : "exit");
         out.printf("    }%n");
         newLine();
     }
@@ -977,7 +992,7 @@ public class T1XTemplateGenerator {
      * @param variant one of "virtual" or "interface"
      */
     public void generateUnresolvedInvokeVITemplate(CiKind k, String variant) {
-        generateAutoComment();
+        startMethodGeneration();
         out.printf("    /**%n");
         out.printf("     * Resolves and selects the correct implementation of a method referenced by an INVOKE%s instruction.%n", variant.toUpperCase());
         out.printf("     *%n");
@@ -1004,16 +1019,16 @@ public class T1XTemplateGenerator {
      * @param variant one of "virtual" or "interface"
      */
     public void generateInvokeVITemplate(CiKind k, String variant, boolean instrumented) {
-        String params = variant.equals("interface") ? "InterfaceMethodActor interfaceMethodActor" : "int vTableIndex";
+        String params = variant.equals("interface") ? "InterfaceMethodActor methodActor" : "int vTableIndex";
         if (instrumented) {
             params += ", MethodProfile mpo, int mpoIndex";
         }
-        generateAutoComment();
+        startMethodGeneration();
         out.printf("    /**%n");
         out.printf("     * Selects the correct implementation of a resolved method referenced by an INVOKE%s instruction.%n", variant.toUpperCase());
         out.printf("     *%n");
         if (variant.equals("interface")) {
-            out.printf("     * @param interfaceMethodActor the resolved interface method being invoked%n");
+            out.printf("     * @param methodActor the resolved interface method being invoked%n");
         } else {
             out.printf("     * @param vTableIndex the index into the vtable of the virtual method being invoked%n");
         }
@@ -1030,9 +1045,9 @@ public class T1XTemplateGenerator {
         generateBeforeAdvice(k, variant);
         if (variant.equals("interface")) {
             if (!instrumented) {
-                out.printf("        return Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress().%n");
+                out.printf("        return Snippets.selectInterfaceMethod(receiver, methodActor).asAddress().%n");
             } else {
-                out.printf("        return Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex).%n");
+                out.printf("        return Snippets.selectInterfaceMethod(receiver, methodActor, mpo, mpoIndex).%n");
             }
         } else {
             if (!instrumented) {
@@ -1085,7 +1100,7 @@ public class T1XTemplateGenerator {
         if (variant.equals("special")) {
             params += ", Reference receiver";
         }
-        generateAutoComment();
+        startMethodGeneration();
         out.printf("    /**%n");
         out.printf("     * Resolves a method referenced by an INVOKE%s instruction.%n", variant.toUpperCase());
         out.printf("     *%n");
@@ -1124,7 +1139,7 @@ public class T1XTemplateGenerator {
      * @param k target type
      */
     public void generateI2Template(CiKind k) {
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("I2%c", u(k).charAt(0));
         out.printf("    public static %s i2%c(@Slot(0) int value) {%n", rs(k), k.typeChar);
         String cast = k == Char || k == Byte || k == Short ? "(" + k + ") " : "";
@@ -1153,7 +1168,7 @@ public class T1XTemplateGenerator {
      * @param k target type
      */
     public void generateL2Template(CiKind k) {
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("L2%c", u(k).charAt(0));
         out.printf("    public static %s l2%c(@Slot(0) long value) {%n", rs(k), k.typeChar);
         generateBeforeAdvice(k);
@@ -1182,7 +1197,7 @@ public class T1XTemplateGenerator {
      * @param k target type
      */
     public void generateD2Template(CiKind k) {
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("D2%c", u(k).charAt(0));
         out.printf("    public static %s d2%c(@Slot(0) double value) {%n", rs(k), k.typeChar);
         generateBeforeAdvice(k);
@@ -1211,7 +1226,7 @@ public class T1XTemplateGenerator {
      * @param k target type
      */
     public void generateF2Template(CiKind k) {
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("F2%c", u(k).charAt(0));
         out.printf("    public static %s f2%c(@Slot(0) float value) {%n", rs(k), k.typeChar);
         generateBeforeAdvice(k);
@@ -1239,7 +1254,7 @@ public class T1XTemplateGenerator {
      * @param target type
      */
     public void generateMovTemplate(CiKind from, CiKind to) {
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("MOV_%s2%s", u(from).charAt(0), u(to).charAt(0));
         out.printf("    public static %s mov_%s2%s(@Slot(0) %s value) {%n", rs(to), from.typeChar, to.typeChar, rs(from));
         generateBeforeAdvice(from, to);
@@ -1267,7 +1282,7 @@ public class T1XTemplateGenerator {
      */
     public void generateNegTemplate(CiKind k) {
         final String op = "neg";
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("%s%s", tagPrefix(k), op.toUpperCase());
         out.printf("    public static %s %s%s(@Slot(0) %s value, %s zero) {%n", k, opPrefix(k), op, k, k);
         generateBeforeAdvice(k);
@@ -1296,7 +1311,7 @@ public class T1XTemplateGenerator {
     public void generateWordDivRemTemplate(String op, String iTag) {
         final String m = op.equals("div") ? "dividedBy" : "remainder";
         final String t = op.equals("rem") && iTag.equals("i") ? "int" : "Address";
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("W%s%s", op.toUpperCase(), iTag.toUpperCase());
         out.printf("    public static %s w%s%s(@Slot(1) Address value1, @Slot(0) %s value2) {%n", t, op, iTag, iTag.equals("i") ? "int" : "Address");
         generateBeforeAdvice(op, iTag);
@@ -1337,7 +1352,7 @@ public class T1XTemplateGenerator {
     public void generateDyadicTemplate(CiKind k, String op) {
         final boolean arg2IsInt = isShift(op);
         final int arg1Slot = isShift(op) || k.jvmSlots == 1 ? 1 : 2;
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("%s%s", tagPrefix(k), op.toUpperCase());
         out.printf("    public static %s %s%s(@Slot(%d) %s value1, @Slot(0) %s value2) {%n", s(k), opPrefix(k), op, arg1Slot, s(k), arg2IsInt ? "int" : s(k));
         generateBeforeAdvice(k);
@@ -1356,7 +1371,7 @@ public class T1XTemplateGenerator {
         final String arg1 = unlock.equals("") ? "" : "Reference object";
         final String arg2 = k == Void ? "" : "@Slot(0) " + rs(k) + " value";
         final String sep = !arg1.isEmpty() && !arg2.isEmpty() ? ", " : "";
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("%sRETURN%s", tagPrefix(k), prefixDollar(unlock));
         out.printf("    @Slot(-1)%n");
         out.printf("    public static %s %sreturn%s(%s%s%s) {%n", rs(k), opPrefix(k), toFirstUpper(unlock), arg1, sep, arg2);
@@ -1401,7 +1416,7 @@ public class T1XTemplateGenerator {
      * @param variant "g" or "l"
      */
     public void generateCmpTemplate(CiKind k, String variant) {
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("%sCMP%s", tagPrefix(k), variant.toUpperCase());
         out.printf("    public static int %scmp%sOp(@Slot(%d) %s value1, @Slot(0) %s value2) {%n", opPrefix(k), variant, k.isDoubleWord() ? 2 : 1, s(k), s(k));
         out.printf("        int result = %scmp%s(value1, value2);%n", opPrefix(k), variant);
@@ -1433,7 +1448,7 @@ public class T1XTemplateGenerator {
             return;
         }
         final int indexSlot = k.isDoubleWord() ? 2 : 1;
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("PSET_%s", au(k));
         out.printf("    public static void pset_%s(@Slot(%d) Pointer pointer, @Slot(%d) int disp, @Slot(%d) int index, @Slot(0) %s value) {%n", l(k), indexSlot + 2, indexSlot + 1, indexSlot, rs(k));
         generateBeforeAdvice(k);
@@ -1460,7 +1475,7 @@ public class T1XTemplateGenerator {
      * @param k type
      */
     public void generatePGetTemplate(CiKind k) {
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("PGET_%s", au(k));
         out.printf("    public static %s pget_%s(@Slot(2) Pointer pointer, @Slot(1) int disp, @Slot(0) int index) {%n", rs(k), l(k));
         generateBeforeAdvice(k);
@@ -1489,7 +1504,7 @@ public class T1XTemplateGenerator {
      * @param isI true iff {@code PREAD_XXX_I} variant
      */
     public void generatePReadTemplate(CiKind k, boolean isI) {
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("PREAD_%s%s", au(k), isI ? "_I" : "");
         out.printf("    public static %s pread_%s%s(@Slot(2) Pointer pointer, @Slot(1) %s offset) {%n", k.stackKind(), l(k), isI ? "_i" : "", isI ? "int" : "Offset");
         generateBeforeAdvice(k);
@@ -1522,7 +1537,7 @@ public class T1XTemplateGenerator {
             return;
         }
         final int offsetSlot = k.isDoubleWord() ? 2 : 1;
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("PWRITE_%s%s", au(k), isI ? "_I" : "");
         out.printf("    public static void pwrite_%s%s(@Slot(%d) Pointer pointer, @Slot(%d) %s offset, @Slot(0) %s value) {%n", l(k), isI ? "_i" : "", offsetSlot + 1, offsetSlot, isI ? "int" : "Offset", rs(k));
         generateBeforeAdvice(k);
@@ -1551,7 +1566,7 @@ public class T1XTemplateGenerator {
      * @param isI true iff {@code PCMPSWP_XXX_I} variant
      */
     public void generatePCmpSwpTemplate(CiKind k, boolean isI) {
-        generateAutoComment();
+        startMethodGeneration();
         generateTemplateTag("PCMPSWP_%s%s", au(k), isI ? "_I" : "");
         out.printf("    public static %s pcmpswp_%s%s(@Slot(3) Pointer ptr, @Slot(2) %s off, @Slot(1) %s expectedValue, @Slot(0) %s newValue) {%n", rs(k), lr(k), isI ? "_i" : "", isI ? "int" : "Offset", rs(k), rs(k));
         generateBeforeAdvice(k);
@@ -1656,6 +1671,7 @@ public class T1XTemplateGenerator {
         generateMonitorTemplates();
         generateInstanceofTemplates();
         generateReturnTemplate(Void, "registerFinalizer");
+        generateLockTemplates();
         generateTraceMethodEntryTemplate();
     }
 
@@ -1687,7 +1703,7 @@ public class T1XTemplateGenerator {
         File outputFile = new File(base, target.getName().replace('.', File.separatorChar) + ".java").getAbsoluteFile();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PrintStream out = new PrintStream(baos);
-        new T1XTemplateGenerator(T1XTemplateGenerator.class, out).generateAll(null);
+        new T1XTemplateGenerator(out).generateAll(null);
         ReadableSource content = ReadableSource.Static.fromString(baos.toString());
         return Files.updateGeneratedContent(outputFile, content, "// START GENERATED CODE", "// END GENERATED CODE", checkOnly);
     }

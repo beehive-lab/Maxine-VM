@@ -22,7 +22,10 @@
  */
 package com.sun.max.vm.t1x.vma;
 
+import static com.oracle.max.vm.ext.t1x.T1XTemplateTag.*;
 import static com.sun.max.vm.MaxineVM.*;
+
+import java.util.*;
 
 import com.oracle.max.vm.ext.t1x.*;
 import com.oracle.max.vm.ext.vma.options.*;
@@ -50,13 +53,17 @@ import com.sun.max.vm.compiler.target.TargetMethod;
  */
 public class VMAT1X extends T1X {
 
+    private static final Class<?> BeforeAfterTemplateSourceClass = VMAdviceBeforeAfterTemplateSource.class;
+    private static final Class<?> BeforeTemplateSourceClass = VMAdviceBeforeTemplateSource.class;
+    private static final Class<?> AfterTemplateSourceClass = VMAdviceAfterTemplateSource.class;
     private boolean instrumenting;
     T1XTemplate[]  beforeTemplates;
     T1XTemplate[]  afterTemplates;
+    Class<?> templateSource = BeforeAfterTemplateSourceClass;
 
     @HOSTED_ONLY
     public VMAT1X() {
-        super(getDefaultT1X(), new VMAT1XCompilationFactory());
+        super(VMAdviceBeforeAfterTemplateSource.class, getDefaultT1X(), new VMAT1XCompilationFactory());
     }
 
     private static T1X getDefaultT1X() {
@@ -70,23 +77,14 @@ public class VMAT1X extends T1X {
         instrumenting = VMAOptions.initialize(phase);
         altT1X.initialize(phase);
         if (isHosted() && phase == Phase.COMPILING) {
-            setTemplateSource(VMAdviceBeforeAfterTemplateSource.class);
             super.initialize(phase);
-            beforeTemplates = createTemplates(VMAdviceBeforeTemplateSource.class, altT1X, true, null);
-            afterTemplates = createTemplates(VMAdviceAfterTemplateSource.class, altT1X, true, null);
+            templateSource = BeforeTemplateSourceClass;
+            beforeTemplates = createTemplates(templateSource, altT1X, true, null);
+            templateSource = AfterTemplateSourceClass;
+            afterTemplates = createTemplates(templateSource, altT1X, true, null);
         } else {
             super.initialize(phase);
         }
-    }
-
-    /**
-     * By default {@link T1X} sets {@code useTemplateCallRefMaps} to false, so we override that decision here,
-     * as after advice on any template that contains a template call must honor the ref maps.
-     */
-    @Override
-    @HOSTED_ONLY
-    public T1XTemplate[] createTemplates(Class<?> templateSourceClass, T1X altT1X, boolean checkComplete, T1XTemplate[] templates) {
-        return super.createTemplates(templateSourceClass, altT1X, checkComplete, templates);
     }
 
     @Override
@@ -100,6 +98,49 @@ public class VMAT1X extends T1X {
 
     T1X getAltT1X() {
         return altT1X;
+    }
+
+    // These will eventually be implemented
+    private static final EnumSet<T1XTemplateTag>  TEMP_UNIMPLEMENTED_TEMPLATES = EnumSet.of(
+                    NOP, BIPUSH, SIPUSH, LDC$int, LDC$long, LDC$float, LDC$double,
+                    LDC$reference$resolved, ILOAD, LLOAD, FLOAD, DLOAD, ALOAD, WLOAD, ISTORE, LSTORE, FSTORE, DSTORE, ASTORE, WSTORE, POP, POP2, DUP, DUP_X1, DUP_X2, DUP2, DUP2_X1, DUP2_X2, SWAP,
+                    IINC, IFEQ, IFNE, IFLT, IFGE, IFGT, IFLE, IF_ICMPEQ, IF_ICMPNE, IF_ICMPLT, IF_ICMPGE, IF_ICMPGT, IF_ICMPLE, IF_ACMPEQ, IF_ACMPNE, IFNULL, IFNONNULL, GOTO, GOTO_W
+    );
+
+    private static final EnumSet<T1XTemplateTag>  AFTER_UNIMPLEMENTED_TEMPLATES = EnumSet.of(
+                    INVOKESPECIAL$void$resolved,
+                    INVOKESPECIAL$float$resolved,
+                    INVOKESPECIAL$long$resolved,
+                    INVOKESPECIAL$double$resolved,
+                    INVOKESPECIAL$reference$resolved,
+                    INVOKESPECIAL$word$resolved,
+                    INVOKESTATIC$void$init,
+                    INVOKESTATIC$float$init,
+                    INVOKESTATIC$long$init,
+                    INVOKESTATIC$double$init,
+                    INVOKESTATIC$reference$init,
+                    INVOKESTATIC$word$init
+    );
+
+    private static final EnumSet<T1XTemplateTag>  BEFORE_UNIMPLEMENTED_TEMPLATES = EnumSet.of(
+                    INVOKEVIRTUAL$adviseafter,
+                    INVOKEINTERFACE$adviseafter,
+                    INVOKESPECIAL$adviseafter,
+                    INVOKESTATIC$adviseafter
+    );
+
+    @Override
+    protected boolean isUnimplemented(T1XTemplateTag tag) {
+        if (TEMP_UNIMPLEMENTED_TEMPLATES.contains(tag)) {
+            return true;
+        }
+        if (templateSource == BeforeTemplateSourceClass) {
+            return BEFORE_UNIMPLEMENTED_TEMPLATES.contains(tag);
+        } else if (templateSource == AfterTemplateSourceClass) {
+            return AFTER_UNIMPLEMENTED_TEMPLATES.contains(tag);
+        } else {
+            return false;
+        }
     }
 
 }

@@ -100,408 +100,333 @@ public class SyncLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
     public void adviseBeforeThreadTerminating(VmThread vmThread) {
     }
 
-    // BEGIN GENERATED CODE
+// START GENERATED CODE
+// EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
-    @Override
-    public void adviseAfterMethodEntry(Object arg1, MethodActor arg2) {
-        super.adviseAfterMethodEntry(arg1, arg2);
-        logHandler.adviseAfterMethodEntry(arg1, arg2);
-    }
-
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeConstLoad(long arg1) {
-        super.adviseBeforeConstLoad(arg1);
-        logHandler.adviseBeforeConstLoad(arg1);
-    }
-
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeConstLoad(Object arg1) {
         super.adviseBeforeConstLoad(arg1);
         logHandler.adviseBeforeConstLoad(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeConstLoad(long arg1) {
+        super.adviseBeforeConstLoad(arg1);
+        logHandler.adviseBeforeConstLoad(arg1);
+    }
+
     @Override
     public void adviseBeforeConstLoad(float arg1) {
         super.adviseBeforeConstLoad(arg1);
         logHandler.adviseBeforeConstLoad(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeConstLoad(double arg1) {
         super.adviseBeforeConstLoad(arg1);
         logHandler.adviseBeforeConstLoad(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeIPush(int arg1) {
-        super.adviseBeforeIPush(arg1);
-        logHandler.adviseBeforeIPush(arg1);
-    }
-
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeLoad(int arg1) {
         super.adviseBeforeLoad(arg1);
         logHandler.adviseBeforeLoad(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeArrayLoad(Object arg1, int arg2) {
         super.adviseBeforeArrayLoad(arg1, arg2);
         logHandler.adviseBeforeArrayLoad(arg1, arg2);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeStore(int arg1, long arg2) {
         super.adviseBeforeStore(arg1, arg2);
         logHandler.adviseBeforeStore(arg1, arg2);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeStore(int arg1, float arg2) {
         super.adviseBeforeStore(arg1, arg2);
         logHandler.adviseBeforeStore(arg1, arg2);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeStore(int arg1, double arg2) {
         super.adviseBeforeStore(arg1, arg2);
         logHandler.adviseBeforeStore(arg1, arg2);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeStore(int arg1, Object arg2) {
         super.adviseBeforeStore(arg1, arg2);
         logHandler.adviseBeforeStore(arg1, arg2);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeArrayStore(Object arg1, int arg2, float arg3) {
-        super.adviseBeforeArrayStore(arg1, arg2, arg3);
-        logHandler.adviseBeforeArrayStore(arg1, arg2, arg3);
-    }
-
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeArrayStore(Object arg1, int arg2, long arg3) {
         super.adviseBeforeArrayStore(arg1, arg2, arg3);
         logHandler.adviseBeforeArrayStore(arg1, arg2, arg3);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeArrayStore(Object arg1, int arg2, float arg3) {
+        super.adviseBeforeArrayStore(arg1, arg2, arg3);
+        logHandler.adviseBeforeArrayStore(arg1, arg2, arg3);
+    }
+
     @Override
     public void adviseBeforeArrayStore(Object arg1, int arg2, double arg3) {
         super.adviseBeforeArrayStore(arg1, arg2, arg3);
         logHandler.adviseBeforeArrayStore(arg1, arg2, arg3);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeArrayStore(Object arg1, int arg2, Object arg3) {
         super.adviseBeforeArrayStore(arg1, arg2, arg3);
         logHandler.adviseBeforeArrayStore(arg1, arg2, arg3);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeStackAdjust(int arg1) {
         super.adviseBeforeStackAdjust(arg1);
         logHandler.adviseBeforeStackAdjust(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeOperation(int arg1, long arg2, long arg3) {
         super.adviseBeforeOperation(arg1, arg2, arg3);
         logHandler.adviseBeforeOperation(arg1, arg2, arg3);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeOperation(int arg1, float arg2, float arg3) {
         super.adviseBeforeOperation(arg1, arg2, arg3);
         logHandler.adviseBeforeOperation(arg1, arg2, arg3);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeOperation(int arg1, double arg2, double arg3) {
         super.adviseBeforeOperation(arg1, arg2, arg3);
         logHandler.adviseBeforeOperation(arg1, arg2, arg3);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeIInc(int arg1, int arg2, int arg3) {
-        super.adviseBeforeIInc(arg1, arg2, arg3);
-        logHandler.adviseBeforeIInc(arg1, arg2, arg3);
-    }
-
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeConversion(int arg1, long arg2) {
         super.adviseBeforeConversion(arg1, arg2);
         logHandler.adviseBeforeConversion(arg1, arg2);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeConversion(int arg1, float arg2) {
         super.adviseBeforeConversion(arg1, arg2);
         logHandler.adviseBeforeConversion(arg1, arg2);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeConversion(int arg1, double arg2) {
         super.adviseBeforeConversion(arg1, arg2);
         logHandler.adviseBeforeConversion(arg1, arg2);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeIf(int arg1, int arg2, int arg3) {
         super.adviseBeforeIf(arg1, arg2, arg3);
         logHandler.adviseBeforeIf(arg1, arg2, arg3);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeIf(int arg1, Object arg2, Object arg3) {
         super.adviseBeforeIf(arg1, arg2, arg3);
         logHandler.adviseBeforeIf(arg1, arg2, arg3);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeReturn(Object arg1) {
-        super.adviseBeforeReturn(arg1);
-        logHandler.adviseBeforeReturn(arg1);
-    }
-
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeReturn(long arg1) {
         super.adviseBeforeReturn(arg1);
         logHandler.adviseBeforeReturn(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeReturn(float arg1) {
         super.adviseBeforeReturn(arg1);
         logHandler.adviseBeforeReturn(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeReturn(double arg1) {
         super.adviseBeforeReturn(arg1);
         logHandler.adviseBeforeReturn(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeReturn(Object arg1) {
+        super.adviseBeforeReturn(arg1);
+        logHandler.adviseBeforeReturn(arg1);
+    }
+
     @Override
     public void adviseBeforeReturn() {
         super.adviseBeforeReturn();
         logHandler.adviseBeforeReturn();
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeGetStatic(Object arg1, int arg2) {
         super.adviseBeforeGetStatic(arg1, arg2);
         logHandler.adviseBeforeGetStatic(arg1, arg2);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforePutStatic(Object arg1, int arg2, double arg3) {
         super.adviseBeforePutStatic(arg1, arg2, arg3);
         logHandler.adviseBeforePutStatic(arg1, arg2, arg3);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforePutStatic(Object arg1, int arg2, long arg3) {
         super.adviseBeforePutStatic(arg1, arg2, arg3);
         logHandler.adviseBeforePutStatic(arg1, arg2, arg3);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforePutStatic(Object arg1, int arg2, float arg3) {
-        super.adviseBeforePutStatic(arg1, arg2, arg3);
-        logHandler.adviseBeforePutStatic(arg1, arg2, arg3);
-    }
-
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforePutStatic(Object arg1, int arg2, Object arg3) {
         super.adviseBeforePutStatic(arg1, arg2, arg3);
         logHandler.adviseBeforePutStatic(arg1, arg2, arg3);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforePutStatic(Object arg1, int arg2, float arg3) {
+        super.adviseBeforePutStatic(arg1, arg2, arg3);
+        logHandler.adviseBeforePutStatic(arg1, arg2, arg3);
+    }
+
     @Override
     public void adviseBeforeGetField(Object arg1, int arg2) {
         super.adviseBeforeGetField(arg1, arg2);
         logHandler.adviseBeforeGetField(arg1, arg2);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforePutField(Object arg1, int arg2, double arg3) {
         super.adviseBeforePutField(arg1, arg2, arg3);
         logHandler.adviseBeforePutField(arg1, arg2, arg3);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforePutField(Object arg1, int arg2, long arg3) {
         super.adviseBeforePutField(arg1, arg2, arg3);
         logHandler.adviseBeforePutField(arg1, arg2, arg3);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforePutField(Object arg1, int arg2, float arg3) {
-        super.adviseBeforePutField(arg1, arg2, arg3);
-        logHandler.adviseBeforePutField(arg1, arg2, arg3);
-    }
-
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforePutField(Object arg1, int arg2, Object arg3) {
         super.adviseBeforePutField(arg1, arg2, arg3);
         logHandler.adviseBeforePutField(arg1, arg2, arg3);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforePutField(Object arg1, int arg2, float arg3) {
+        super.adviseBeforePutField(arg1, arg2, arg3);
+        logHandler.adviseBeforePutField(arg1, arg2, arg3);
+    }
+
     @Override
     public void adviseBeforeInvokeVirtual(Object arg1, MethodActor arg2) {
         super.adviseBeforeInvokeVirtual(arg1, arg2);
         logHandler.adviseBeforeInvokeVirtual(arg1, arg2);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeInvokeSpecial(Object arg1, MethodActor arg2) {
         super.adviseBeforeInvokeSpecial(arg1, arg2);
         logHandler.adviseBeforeInvokeSpecial(arg1, arg2);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeInvokeStatic(Object arg1, MethodActor arg2) {
         super.adviseBeforeInvokeStatic(arg1, arg2);
         logHandler.adviseBeforeInvokeStatic(arg1, arg2);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeInvokeInterface(Object arg1, MethodActor arg2) {
         super.adviseBeforeInvokeInterface(arg1, arg2);
         logHandler.adviseBeforeInvokeInterface(arg1, arg2);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeArrayLength(Object arg1, int arg2) {
         super.adviseBeforeArrayLength(arg1, arg2);
         logHandler.adviseBeforeArrayLength(arg1, arg2);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeThrow(Object arg1) {
         super.adviseBeforeThrow(arg1);
         logHandler.adviseBeforeThrow(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeCheckCast(Object arg1, Object arg2) {
         super.adviseBeforeCheckCast(arg1, arg2);
         logHandler.adviseBeforeCheckCast(arg1, arg2);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeInstanceOf(Object arg1, Object arg2) {
         super.adviseBeforeInstanceOf(arg1, arg2);
         logHandler.adviseBeforeInstanceOf(arg1, arg2);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeMonitorEnter(Object arg1) {
         super.adviseBeforeMonitorEnter(arg1);
         logHandler.adviseBeforeMonitorEnter(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeMonitorExit(Object arg1) {
         super.adviseBeforeMonitorExit(arg1);
         logHandler.adviseBeforeMonitorExit(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeBytecode(int arg1) {
         super.adviseBeforeBytecode(arg1);
         logHandler.adviseBeforeBytecode(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseAfterInvokeVirtual(Object arg1, MethodActor arg2) {
         super.adviseAfterInvokeVirtual(arg1, arg2);
         logHandler.adviseAfterInvokeVirtual(arg1, arg2);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseAfterInvokeSpecial(Object arg1, MethodActor arg2) {
         super.adviseAfterInvokeSpecial(arg1, arg2);
         logHandler.adviseAfterInvokeSpecial(arg1, arg2);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseAfterInvokeStatic(Object arg1, MethodActor arg2) {
         super.adviseAfterInvokeStatic(arg1, arg2);
         logHandler.adviseAfterInvokeStatic(arg1, arg2);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseAfterInvokeInterface(Object arg1, MethodActor arg2) {
         super.adviseAfterInvokeInterface(arg1, arg2);
         logHandler.adviseAfterInvokeInterface(arg1, arg2);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseAfterNew(Object arg1) {
         super.adviseAfterNew(arg1);
         logHandler.adviseAfterNew(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseAfterNewArray(Object arg1, int arg2) {
         super.adviseAfterNewArray(arg1, arg2);
@@ -509,11 +434,16 @@ public class SyncLogVMAdviceHandler extends ObjectStateHandlerAdaptor {
         MultiNewArrayHelper.handleMultiArray(this, arg1);
     }
 
-    // GENERATED -- EDIT AND RUN SyncLogVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseAfterMultiNewArray(Object arg1, int[] arg2) {
         adviseAfterNewArray(arg1, arg2[0]);
     }
 
+    @Override
+    public void adviseAfterMethodEntry(Object arg1, MethodActor arg2) {
+        super.adviseAfterMethodEntry(arg1, arg2);
+        logHandler.adviseAfterMethodEntry(arg1, arg2);
+    }
 
+// END GENERATED CODE
 }

@@ -244,25 +244,18 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
         storeRecord(Unseen, 0, obj);
     }
 
-    // BEGIN GENERATED CODE
+// START GENERATED CODE
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseAfterMultiNewArray(Object arg1, int[] arg2) {
         adviseAfterNewArray(arg1, arg2[0]);
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeConstLoad(double arg1) {
-        super.adviseBeforeConstLoad(arg1);
-        DoubleAdviceRecord r = (DoubleAdviceRecord) storeRecord(ConstLoadDouble, 0);
-        if (r != null) {
-            r.value = arg1;
-        }
-    }
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeConstLoad(long arg1) {
         super.adviseBeforeConstLoad(arg1);
@@ -272,7 +265,8 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
         }
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseBeforeConstLoad(float arg1) {
         super.adviseBeforeConstLoad(arg1);
@@ -282,7 +276,19 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
         }
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
+    @Override
+    public void adviseBeforeConstLoad(double arg1) {
+        super.adviseBeforeConstLoad(arg1);
+        DoubleAdviceRecord r = (DoubleAdviceRecord) storeRecord(ConstLoadDouble, 0);
+        if (r != null) {
+            r.value = arg1;
+        }
+    }
+
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseBeforeConstLoad(Object arg1) {
         super.adviseBeforeConstLoad(arg1);
@@ -292,28 +298,24 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
         }
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeIPush(int arg1) {
-        super.adviseBeforeIPush(arg1);
-        storeRecord(IPush, 0, arg1);
-    }
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeLoad(int arg1) {
         super.adviseBeforeLoad(arg1);
         storeRecord(Load, 0, arg1);
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseBeforeArrayLoad(Object arg1, int arg2) {
         super.adviseBeforeArrayLoad(arg1, arg2);
         storeRecord(ArrayLoad, 0, arg1, arg2);
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseBeforeStore(int arg1, float arg2) {
         super.adviseBeforeStore(arg1, arg2);
@@ -323,7 +325,8 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
         }
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseBeforeStore(int arg1, double arg2) {
         super.adviseBeforeStore(arg1, arg2);
@@ -333,7 +336,8 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
         }
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseBeforeStore(int arg1, Object arg2) {
         super.adviseBeforeStore(arg1, arg2);
@@ -343,7 +347,8 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
         }
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseBeforeStore(int arg1, long arg2) {
         super.adviseBeforeStore(arg1, arg2);
@@ -353,7 +358,8 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
         }
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseBeforeArrayStore(Object arg1, int arg2, float arg3) {
         super.adviseBeforeArrayStore(arg1, arg2, arg3);
@@ -364,7 +370,8 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseBeforeArrayStore(Object arg1, int arg2, double arg3) {
         super.adviseBeforeArrayStore(arg1, arg2, arg3);
@@ -375,7 +382,8 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseBeforeArrayStore(Object arg1, int arg2, Object arg3) {
         super.adviseBeforeArrayStore(arg1, arg2, arg3);
@@ -386,7 +394,8 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseBeforeArrayStore(Object arg1, int arg2, long arg3) {
         super.adviseBeforeArrayStore(arg1, arg2, arg3);
@@ -397,14 +406,16 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseBeforeStackAdjust(int arg1) {
         super.adviseBeforeStackAdjust(arg1);
         storeRecord(StackAdjust, 0, arg1);
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseBeforeOperation(int arg1, float arg2, float arg3) {
         super.adviseBeforeOperation(arg1, arg2, arg3);
@@ -415,7 +426,8 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
         }
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseBeforeOperation(int arg1, double arg2, double arg3) {
         super.adviseBeforeOperation(arg1, arg2, arg3);
@@ -426,7 +438,8 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
         }
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseBeforeOperation(int arg1, long arg2, long arg3) {
         super.adviseBeforeOperation(arg1, arg2, arg3);
@@ -437,50 +450,32 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
         }
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeIInc(int arg1, int arg2, int arg3) {
-        super.adviseBeforeIInc(arg1, arg2, arg3);
-        LongLongAdviceRecord r = (LongLongAdviceRecord) storeRecord(IInc, 0, arg1);
-        if (r != null) {
-            r.value = arg2;
-            r.value2 = arg3;
-        }
-    }
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeConversion(int arg1, long arg2) {
-        super.adviseBeforeConversion(arg1, arg2);
-        storeRecord(ConversionLong, 0, arg1);
-    }
-
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeConversion(int arg1, float arg2) {
         super.adviseBeforeConversion(arg1, arg2);
         storeRecord(ConversionFloat, 0, arg1);
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseBeforeConversion(int arg1, double arg2) {
         super.adviseBeforeConversion(arg1, arg2);
         storeRecord(ConversionDouble, 0, arg1);
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
-    public void adviseBeforeIf(int arg1, int arg2, int arg3) {
-        super.adviseBeforeIf(arg1, arg2, arg3);
-        LongLongAdviceRecord r = (LongLongAdviceRecord) storeRecord(IfInt, 0, arg1);
-        if (r != null) {
-            r.value = arg2;
-            r.value2 = arg3;
-        }
+    public void adviseBeforeConversion(int arg1, long arg2) {
+        super.adviseBeforeConversion(arg1, arg2);
+        storeRecord(ConversionLong, 0, arg1);
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseBeforeIf(int arg1, Object arg2, Object arg3) {
         super.adviseBeforeIf(arg1, arg2, arg3);
@@ -491,82 +486,68 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
         }
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
-    public void adviseBeforeReturn() {
-        super.adviseBeforeReturn();
-        storeRecord(Return, 0);
+    public void adviseBeforeIf(int arg1, int arg2, int arg3) {
+        super.adviseBeforeIf(arg1, arg2, arg3);
+        LongLongAdviceRecord r = (LongLongAdviceRecord) storeRecord(IfInt, 0, arg1);
+        if (r != null) {
+            r.value = arg2;
+            r.value2 = arg3;
+        }
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeReturn(long arg1) {
-        super.adviseBeforeReturn(arg1);
-        storeRecord(ReturnLong, 0, arg1);
-    }
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeReturn(float arg1) {
         super.adviseBeforeReturn(arg1);
         storeRecord(ReturnFloat, 0, arg1);
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeReturn(double arg1) {
-        super.adviseBeforeReturn(arg1);
-        storeRecord(ReturnDouble, 0, arg1);
-    }
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeReturn(Object arg1) {
         super.adviseBeforeReturn(arg1);
         storeRecord(ReturnObject, 0, arg1);
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
+    @Override
+    public void adviseBeforeReturn() {
+        super.adviseBeforeReturn();
+        storeRecord(Return, 0);
+    }
+
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
+    @Override
+    public void adviseBeforeReturn(double arg1) {
+        super.adviseBeforeReturn(arg1);
+        storeRecord(ReturnDouble, 0, arg1);
+    }
+
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
+    @Override
+    public void adviseBeforeReturn(long arg1) {
+        super.adviseBeforeReturn(arg1);
+        storeRecord(ReturnLong, 0, arg1);
+    }
+
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseBeforeGetStatic(Object arg1, int arg2) {
         super.adviseBeforeGetStatic(arg1, arg2);
         storeRecord(GetStatic, 0, arg1, arg2);
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforePutStatic(Object arg1, int arg2, long arg3) {
-        super.adviseBeforePutStatic(arg1, arg2, arg3);
-        ObjectLongAdviceRecord r = (ObjectLongAdviceRecord) storeRecord(PutStaticLong, 0, arg1, arg2);
-        if (r != null) {
-            r.value2 = arg3;
-        }
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
 
-    }
-
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforePutStatic(Object arg1, int arg2, float arg3) {
-        super.adviseBeforePutStatic(arg1, arg2, arg3);
-        ObjectFloatAdviceRecord r = (ObjectFloatAdviceRecord) storeRecord(PutStaticFloat, 0, arg1, arg2);
-        if (r != null) {
-            r.value2 = arg3;
-        }
-
-    }
-
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforePutStatic(Object arg1, int arg2, Object arg3) {
-        super.adviseBeforePutStatic(arg1, arg2, arg3);
-        ObjectObjectAdviceRecord r = (ObjectObjectAdviceRecord) storeRecord(PutStaticObject, 0, arg1, arg2);
-        if (r != null) {
-            r.value2 = arg3;
-        }
-
-    }
-
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforePutStatic(Object arg1, int arg2, double arg3) {
         super.adviseBeforePutStatic(arg1, arg2, arg3);
@@ -577,14 +558,52 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
+    @Override
+    public void adviseBeforePutStatic(Object arg1, int arg2, Object arg3) {
+        super.adviseBeforePutStatic(arg1, arg2, arg3);
+        ObjectObjectAdviceRecord r = (ObjectObjectAdviceRecord) storeRecord(PutStaticObject, 0, arg1, arg2);
+        if (r != null) {
+            r.value2 = arg3;
+        }
+
+    }
+
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
+    @Override
+    public void adviseBeforePutStatic(Object arg1, int arg2, float arg3) {
+        super.adviseBeforePutStatic(arg1, arg2, arg3);
+        ObjectFloatAdviceRecord r = (ObjectFloatAdviceRecord) storeRecord(PutStaticFloat, 0, arg1, arg2);
+        if (r != null) {
+            r.value2 = arg3;
+        }
+
+    }
+
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
+    @Override
+    public void adviseBeforePutStatic(Object arg1, int arg2, long arg3) {
+        super.adviseBeforePutStatic(arg1, arg2, arg3);
+        ObjectLongAdviceRecord r = (ObjectLongAdviceRecord) storeRecord(PutStaticLong, 0, arg1, arg2);
+        if (r != null) {
+            r.value2 = arg3;
+        }
+
+    }
+
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseBeforeGetField(Object arg1, int arg2) {
         super.adviseBeforeGetField(arg1, arg2);
         storeRecord(GetField, 0, arg1, arg2);
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseBeforePutField(Object arg1, int arg2, long arg3) {
         super.adviseBeforePutField(arg1, arg2, arg3);
@@ -595,18 +614,8 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforePutField(Object arg1, int arg2, float arg3) {
-        super.adviseBeforePutField(arg1, arg2, arg3);
-        ObjectFloatAdviceRecord r = (ObjectFloatAdviceRecord) storeRecord(PutFieldFloat, 0, arg1, arg2);
-        if (r != null) {
-            r.value2 = arg3;
-        }
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
 
-    }
-
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
     @Override
     public void adviseBeforePutField(Object arg1, int arg2, Object arg3) {
         super.adviseBeforePutField(arg1, arg2, arg3);
@@ -617,7 +626,20 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
+    @Override
+    public void adviseBeforePutField(Object arg1, int arg2, float arg3) {
+        super.adviseBeforePutField(arg1, arg2, arg3);
+        ObjectFloatAdviceRecord r = (ObjectFloatAdviceRecord) storeRecord(PutFieldFloat, 0, arg1, arg2);
+        if (r != null) {
+            r.value2 = arg3;
+        }
+
+    }
+
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseBeforePutField(Object arg1, int arg2, double arg3) {
         super.adviseBeforePutField(arg1, arg2, arg3);
@@ -628,7 +650,8 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
 
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseBeforeInvokeVirtual(Object arg1, MethodActor arg2) {
         super.adviseBeforeInvokeVirtual(arg1, arg2);
@@ -638,7 +661,8 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
         }
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseBeforeInvokeSpecial(Object arg1, MethodActor arg2) {
         super.adviseBeforeInvokeSpecial(arg1, arg2);
@@ -648,7 +672,8 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
         }
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseBeforeInvokeStatic(Object arg1, MethodActor arg2) {
         super.adviseBeforeInvokeStatic(arg1, arg2);
@@ -658,7 +683,8 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
         }
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseBeforeInvokeInterface(Object arg1, MethodActor arg2) {
         super.adviseBeforeInvokeInterface(arg1, arg2);
@@ -668,21 +694,24 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
         }
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseBeforeArrayLength(Object arg1, int arg2) {
         super.adviseBeforeArrayLength(arg1, arg2);
         storeRecord(ArrayLength, 0, arg1, arg2);
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseBeforeThrow(Object arg1) {
         super.adviseBeforeThrow(arg1);
         storeRecord(Throw, 0, arg1);
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseBeforeCheckCast(Object arg1, Object arg2) {
         super.adviseBeforeCheckCast(arg1, arg2);
@@ -692,7 +721,8 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
         }
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseBeforeInstanceOf(Object arg1, Object arg2) {
         super.adviseBeforeInstanceOf(arg1, arg2);
@@ -702,28 +732,32 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
         }
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseBeforeMonitorEnter(Object arg1) {
         super.adviseBeforeMonitorEnter(arg1);
         storeRecord(MonitorEnter, 0, arg1);
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseBeforeMonitorExit(Object arg1) {
         super.adviseBeforeMonitorExit(arg1);
         storeRecord(MonitorExit, 0, arg1);
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseBeforeBytecode(int arg1) {
         super.adviseBeforeBytecode(arg1);
         storeRecord(Bytecode, 0, arg1);
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseAfterInvokeVirtual(Object arg1, MethodActor arg2) {
         super.adviseAfterInvokeVirtual(arg1, arg2);
@@ -733,7 +767,8 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
         }
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseAfterInvokeSpecial(Object arg1, MethodActor arg2) {
         super.adviseAfterInvokeSpecial(arg1, arg2);
@@ -743,7 +778,8 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
         }
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseAfterInvokeStatic(Object arg1, MethodActor arg2) {
         super.adviseAfterInvokeStatic(arg1, arg2);
@@ -753,7 +789,8 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
         }
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseAfterInvokeInterface(Object arg1, MethodActor arg2) {
         super.adviseAfterInvokeInterface(arg1, arg2);
@@ -763,21 +800,24 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
         }
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseAfterNew(Object arg1) {
         super.adviseAfterNew(arg1);
         storeRecord(New, 1, arg1);
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseAfterNewArray(Object arg1, int arg2) {
         super.adviseAfterNewArray(arg1, arg2);
         storeRecord(NewArray, 1, arg1, arg2);
     }
 
-    // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+// EDIT AND RUN TransientVMAdviceHandlerGenerator.main() TO MODIFY
+
     @Override
     public void adviseAfterMethodEntry(Object arg1, MethodActor arg2) {
         super.adviseAfterMethodEntry(arg1, arg2);
@@ -787,5 +827,5 @@ public class TransientVMAdviceHandler extends ObjectStateHandlerAdaptor {
         }
     }
 
-
+// END GENERATED CODE
 }

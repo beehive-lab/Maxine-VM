@@ -20,32 +20,43 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vma.tools.gen.vma.runtime;
+package test;
 
-import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
 import java.lang.reflect.*;
 
-import com.oracle.max.vm.ext.vma.*;
-import com.oracle.max.vm.ext.vma.runtime.*;
-import com.oracle.max.vma.tools.gen.vma.*;
+/**
+ * A reflective way to invoke any of the tests in jtt.*, e.g., all the bytecode tests.
+ */
+public class JTT {
 
-
-public class NullVMAdviceHandlerGenerator {
     public static void main(String[] args) throws Exception {
-        createGenerator(NullVMAdviceHandlerGenerator.class);
-        generateAutoComment();
-        for (Method m : VMAdviceHandler.class.getMethods()) {
-            String name = m.getName();
-            if (name.startsWith("advise")) {
-                generate(m);
+        // usage: testclass [args]
+        String jttClassName = "jtt.bytecode." + args[0];
+        Class<?> jttClass = Class.forName(jttClassName);
+        Method[] methods = jttClass.getDeclaredMethods();
+        Method jttTest = null;
+        for (Method m : methods) {
+            if (m.getName().equals("test")) {
+                jttTest = m;
+                break;
             }
         }
-        AdviceGeneratorHelper.updateSource(NullVMAdviceHandler.class, null, false);
+        Class<?>[] params = jttTest.getParameterTypes();
+        Object[] oArgs = new Object[params.length];
+        for (int p = 0; p < params.length; p++) {
+            Class<?> pClass = params[p];
+            String arg = args[p + 1];
+            Object oArg = arg;
+            if (pClass == int.class) {
+                oArg = Integer.parseInt(arg);
+            } else if (pClass == long.class) {
+                oArg = Long.parseLong(arg);
+            } else {
+                assert false;
+            }
+            oArgs[p] = oArg;
+        }
+        jttTest.invoke(null, oArgs);
     }
 
-    private static void generate(Method m) {
-        out.printf("    @Override%n");
-        generateSignature(m, null);
-        out.printf(" {%n    }%n%n");
-    }
 }

@@ -28,6 +28,7 @@ import java.lang.reflect.*;
 
 import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.runtime.*;
+import com.oracle.max.vma.tools.gen.vma.*;
 import com.oracle.max.vma.tools.gen.vma.log.*;
 import com.sun.max.annotate.*;
 
@@ -38,19 +39,20 @@ import com.sun.max.annotate.*;
 @HOSTED_ONLY
 public class LoggingVMAdviceHandlerGenerator {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         createGenerator(LoggingVMAdviceHandlerGenerator.class);
+        generateAutoComment();
         for (Method m : VMAdviceHandler.class.getMethods()) {
             if (m.getName().startsWith("advise")) {
                 generate(m);
             }
         }
+        AdviceGeneratorHelper.updateSource(LoggingVMAdviceHandler.class, null, false);
     }
 
     private static void generate(Method m) {
         String name = m.getName();
         String oname = VMAdviceHandlerLogGenerator.getMethodNameRenamingObject(m);
-        generateAutoComment();
         out.printf("    @Override%n");
         generateSignature(m, null);
         out.printf(" {%n");

@@ -27,6 +27,7 @@ import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.compiler.target.Safepoints.*;
 import static com.sun.max.vm.stack.VMFrameLayout.*;
+import static com.oracle.max.vm.ext.t1x.T1XTemplateTag.*;
 
 import java.io.*;
 import java.lang.reflect.*;
@@ -84,8 +85,6 @@ public class T1X implements RuntimeCompiler {
      */
     protected final T1XCompilationFactory t1XCompilationFactory;
 
-    private static final EnumSet UNIMPLEMENTED_TEMPLATES = EnumSet.noneOf(T1XTemplateTag.class);
-
     @HOSTED_ONLY
     public T1X() {
         this(T1XTemplateSource.class, null, new T1XCompilationFactory());
@@ -104,14 +103,10 @@ public class T1X implements RuntimeCompiler {
     }
 
     @HOSTED_ONLY
-    private T1X(Class<?> templateSource, T1X altT1X, T1XCompilationFactory factory) {
+    protected T1X(Class<?> templateSource, T1X altT1X, T1XCompilationFactory factory) {
         this.altT1X = altT1X;
         this.templateSource = templateSource;
         this.t1XCompilationFactory = factory;
-    }
-
-    protected void setTemplateSource(Class<?> templateSource) {
-        this.templateSource = templateSource;
     }
 
     private final ThreadLocal<T1XCompilation> compilation = new ThreadLocal<T1XCompilation>() {
@@ -410,9 +405,10 @@ public class T1X implements RuntimeCompiler {
         if (checkComplete) {
             // ensure everything is implemented
             for (int i = 0; i < T1XTemplateTag.values().length; i++) {
-                if (templates[i] == null && !UNIMPLEMENTED_TEMPLATES.contains(T1XTemplateTag.values()[i])) {
-                    if (altT1X == null || altT1X.templates[i] == null) {
-                        FatalError.unexpected("Template tag " + T1XTemplateTag.values()[i] + " is not implemented");
+                T1XTemplateTag tag  = T1XTemplateTag.values()[i];
+                if (templates[i] == null && !isUnimplemented(tag)) {
+                    if (altT1X == null || (altT1X.templates[i] == null && !altT1X.isUnimplemented(tag))) {
+                        FatalError.unexpected("Template tag " + tag + " is not implemented");
                     } else {
                         templates[i] = altT1X.templates[i];
                     }
@@ -421,6 +417,22 @@ public class T1X implements RuntimeCompiler {
         }
         Trace.end(1, "creating T1X templates from " + templateSourceClass.getName() + " [templates code size: " + codeSize + "]", startTime);
         return templates;
+    }
+
+    /**
+     * These templates are not used by T1X, but may be used by the VMA variant. Since enums cannot be
+     * subclassed, it is convenient to keep them in {@link T1XTemplateTag} and just avoid checking
+     * that they are implemented.
+     */
+    protected static final EnumSet UNIMPLEMENTED_TEMPLATES = EnumSet.of(NOP, WCONST_0, ACONST_NULL, ICONST, LCONST, FCONST, DCONST, BIPUSH, SIPUSH, LDC$int, LDC$long, LDC$float, LDC$double,
+                    LDC$reference$resolved, ILOAD, LLOAD, FLOAD, DLOAD, ALOAD, WLOAD, ISTORE, LSTORE, FSTORE, DSTORE, ASTORE, WSTORE, POP, POP2, DUP, DUP_X1, DUP_X2, DUP2, DUP2_X1, DUP2_X2, SWAP,
+                    IINC, IFEQ, IFNE, IFLT, IFGE, IFGT, IFLE, IF_ICMPEQ, IF_ICMPNE, IF_ICMPLT, IF_ICMPGE, IF_ICMPGT, IF_ICMPLE, IF_ACMPEQ, IF_ACMPNE, IFNULL, IFNONNULL, GOTO, GOTO_W,
+                    INVOKESPECIAL$void$resolved, INVOKESPECIAL$float$resolved, INVOKESPECIAL$long$resolved, INVOKESPECIAL$double$resolved, INVOKESPECIAL$reference$resolved,
+                    INVOKESPECIAL$word$resolved, INVOKESTATIC$void$init, INVOKESTATIC$float$init, INVOKESTATIC$long$init, INVOKESTATIC$double$init, INVOKESTATIC$reference$init,
+                    INVOKESTATIC$word$init, INVOKEVIRTUAL$adviseafter, INVOKEINTERFACE$adviseafter, INVOKESPECIAL$adviseafter, INVOKESTATIC$adviseafter);
+
+    protected boolean isUnimplemented(T1XTemplateTag tag) {
+        return UNIMPLEMENTED_TEMPLATES.contains(tag);
     }
 
     static {
