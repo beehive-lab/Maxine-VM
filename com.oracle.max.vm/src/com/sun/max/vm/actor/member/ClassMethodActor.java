@@ -332,11 +332,26 @@ public abstract class ClassMethodActor extends MethodActor {
      */
     public StackTraceElement toStackTraceElement(int bci) {
         final ClassActor holder = holder();
-        return new StackTraceElement(holder.name.string, name.string, holder.sourceFileName, sourceLineNumber(bci));
+        return new StackTraceElement(holder.name.string, name.string, sourceFileName(), sourceLineNumber(bci));
+    }
+
+    /**
+     * Gets the source file name for this method.
+     *
+     * @return {@code null} if a source file name is not available
+     */
+    public String sourceFileName() {
+        CodeAttribute codeAttribute = this.codeAttribute;
+        if (codeAttribute == null) {
+            return null;
+        }
+        return codeAttribute.cp.holder().sourceFileName;
+
     }
 
     /**
      * Gets the source line number corresponding to a given BCI in this method.
+     *
      * @param bci the BCI
      * @return -1 if a source line number is not available
      */

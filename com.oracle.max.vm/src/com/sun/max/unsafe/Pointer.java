@@ -934,70 +934,70 @@ public abstract class Pointer extends Address implements Accessor {
             case BOOLEAN: {
                 boolean[] arr = (boolean[]) dst;
                 for (int i = 0; i < length; ++i) {
-                    arr[dstIndex + i] = getBoolean(displacement, srcIndex);
+                    arr[dstIndex + i] = getBoolean(displacement, srcIndex + i);
                 }
                 break;
             }
             case BYTE: {
                 byte[] arr = (byte[]) dst;
                 for (int i = 0; i < length; ++i) {
-                    arr[dstIndex + i] = getByte(displacement, srcIndex);
+                    arr[dstIndex + i] = getByte(displacement, srcIndex + i);
                 }
                 break;
             }
             case CHAR: {
                 char[] arr = (char[]) dst;
                 for (int i = 0; i < length; ++i) {
-                    arr[dstIndex + i] = getChar(displacement, srcIndex);
+                    arr[dstIndex + i] = getChar(displacement, srcIndex + i);
                 }
                 break;
             }
             case SHORT: {
                 short[] arr = (short[]) dst;
                 for (int i = 0; i < length; ++i) {
-                    arr[dstIndex + i] = getShort(displacement, srcIndex);
+                    arr[dstIndex + i] = getShort(displacement, srcIndex + i);
                 }
                 break;
             }
             case INT: {
                 int[] arr = (int[]) dst;
                 for (int i = 0; i < length; ++i) {
-                    arr[dstIndex + i] = getInt(displacement, srcIndex);
+                    arr[dstIndex + i] = getInt(displacement, srcIndex + i);
                 }
                 break;
             }
             case FLOAT: {
                 float[] arr = (float[]) dst;
                 for (int i = 0; i < length; ++i) {
-                    arr[dstIndex + i] = getFloat(displacement, srcIndex);
+                    arr[dstIndex + i] = getFloat(displacement, srcIndex + i);
                 }
                 break;
             }
             case LONG: {
                 long[] arr = (long[]) dst;
                 for (int i = 0; i < length; ++i) {
-                    arr[dstIndex + i] = getLong(displacement, srcIndex);
+                    arr[dstIndex + i] = getLong(displacement, srcIndex + i);
                 }
                 break;
             }
             case DOUBLE: {
                 double[] arr = (double[]) dst;
                 for (int i = 0; i < length; ++i) {
-                    arr[dstIndex + i] = getDouble(displacement, srcIndex);
+                    arr[dstIndex + i] = getDouble(displacement, srcIndex + i);
                 }
                 break;
             }
             case REFERENCE: {
                 Reference[] arr = (Reference[]) dst;
                 for (int i = 0; i < length; ++i) {
-                    arr[dstIndex + i] = getReference(displacement, srcIndex);
+                    arr[dstIndex + i] = getReference(displacement, srcIndex + i);
                 }
                 break;
             }
             case WORD: {
                 Word[] arr = (Word[]) dst;
                 for (int i = 0; i < length; ++i) {
-                    WordArray.set(arr, dstIndex + i, getWord(displacement, srcIndex));
+                    WordArray.set(arr, dstIndex + i, getWord(displacement, srcIndex + i));
                 }
                 break;
             }

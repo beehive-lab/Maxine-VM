@@ -263,7 +263,7 @@ public abstract class Trap {
      * @param trapFrame the trap frame
      * @param faultAddress the faulting address that caused the trap (memory faults only)
      * @param pc the address of instruction causing the trap
-     * @return a reference to the {@code TargetMethod} or {@link RuntimeStub} containing the instruction pointer that
+     * @return a reference to the {@code TargetMethod} containing the instruction pointer that
      *         caused the trap or {@code null} if trap occurred in native code
      */
     private static Object checkTrapOrigin(int trapNumber, Pointer trapFrame, Address faultAddress, Pointer pc) {
@@ -276,8 +276,8 @@ public abstract class Trap {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.printCurrentThread(false);
             if (targetMethod != null) {
-                Log.print(": Trapped in ");
-                Log.printMethod(targetMethod, true);
+                Log.print(": Trapped at ");
+                Log.printLocation(targetMethod, pc, true);
             } else {
                 Log.println(": Trapped in <unknown>");
             }
@@ -397,8 +397,9 @@ public abstract class Trap {
      */
     private static void raiseImplicitException(Pointer trapFrame, TargetMethod targetMethod, Throwable throwable, Pointer sp, Pointer fp, Pointer ip) {
         Throw.traceThrow(throwable);
+        assert targetMethod.invalidated() == null : "invalidated methods should not be executing";
         if (targetMethod.preserveRegistersForLocalExceptionHandler()) {
-            final Address catchAddress = targetMethod.throwAddressToCatchAddress(true, ip, throwable.getClass());
+            final Address catchAddress = targetMethod.throwAddressToCatchAddress(ip, throwable);
             if (!catchAddress.isZero()) {
                 // Store the exception so that the handler can find it.
                 VmThread.current().storeExceptionForHandler(throwable, targetMethod, targetMethod.posFor(catchAddress));

@@ -319,7 +319,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
 
         private MachineCodeTableColumnModel(MachineCodeViewPreferences viewPreferences) {
             super(MachineCodeColumnKind.values().length, viewPreferences);
-            final Address startAddress = tableModel.rowToInstruction(0).address;
+            final Address startAddress = tableModel.machineCode.getInstructionMap().length() == 0 ? Address.zero() : tableModel.rowToInstruction(0).address;
             addColumn(MachineCodeColumnKind.TAG, new TagRenderer(inspection), null);
             addColumn(MachineCodeColumnKind.NUMBER, new NumberRenderer(), null);
             addColumn(MachineCodeColumnKind.ADDRESS, new AddressRenderer(startAddress), null);
@@ -717,7 +717,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
                             if (fileName != null) {
                                 final int lineNumber = stackTraceElement.getLineNumber();
                                 if (lineNumber > 0) {
-                                    if (vm().findJavaSourceFile(((MethodActor) location.method).holder()) != null) {
+                                    if (vm().findJavaSourceFile(((ClassMethodActor) location.method).codeAttribute().cp.holder()) != null) {
                                         final CiCodePos codePosCopy = location;
                                         menu.add(new AbstractAction("Open " + fileName + " at line " + lineNumber) {
                                             public void actionPerformed(ActionEvent e) {

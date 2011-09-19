@@ -27,26 +27,26 @@ import java.io.*;
 import com.sun.cri.ri.*;
 
 /**
- * Represents the Java bytecode frame(s) at a given position
- * including {@link CiValue locations} where to find the values of each local variable
- * and stack slot of the bytecode frame(s).
+ * Represents the Java bytecode frame state(s) at a given position
+ * including {@link CiValue locations} where to find the local variables,
+ * operand stack values and locked objects of the bytecode frame(s).
  */
 public class CiFrame extends CiCodePos implements Serializable {
     /**
      * An array of values representing how to reconstruct the state of the Java frame.
-     * Entries
-     * {@code [0 - numLocals)} represent the Java local variables,
-     * {@code [numLocals, numLocals + numStack)} the Java operand stack, and entries
-     * {@code [numLocals + numStack, values.length)} the list of acquired monitors.
+     * This is array is partitioned as follows:
+     * <p>
+     * <table border="1" cellpadding="5" frame="void", rules="all">
+     * <tr><th>Start index (inclusive)</th><th>End index (exclusive)</th><th>Description</th></tr>
+     * <tr><td>0</td>                   <td>numLocals</td>           <td>Local variables</td></tr>
+     * <tr><td>numLocals</td>           <td>numLocals + numStack</td><td>Operand stack</td></tr>
+     * <tr><td>numLocals + numStack</td><td>values.length</td>       <td>Locked objects</td></tr>
+     * </table>
+     * <p>
      * Note that the number of locals and the number of stack slots may be smaller than the
      * maximum number of locals and stack slots as specified in the compiled method.
      */
     public final CiValue[] values;
-
-    /**
-     * The number of locks in the values array.
-     */
-    public final int numLocks;
 
     /**
      * The number of locals in the values array.
@@ -58,6 +58,22 @@ public class CiFrame extends CiCodePos implements Serializable {
      */
     public final int numStack;
 
+    /**
+     * The number of locks in the values array.
+     */
+    public final int numLocks;
+
+    /**
+     * Creates a new frame object.
+     *
+     * @param caller the caller frame (which may be {@code null})
+     * @param method the method
+     * @param bci a BCI within the method
+     * @param values the frame state {@link #values}
+     * @param numLocals the number of local variables
+     * @param numStack the depth of the stack
+     * @param numLocks the number of locked objects
+     */
     public CiFrame(CiFrame caller, RiMethod method, int bci, CiValue[] values, int numLocals, int numStack, int numLocks) {
         super(caller, method, bci);
         assert values != null;
@@ -162,5 +178,18 @@ public class CiFrame extends CiCodePos implements Serializable {
     @Override
     public String toString() {
         return CiUtil.append(new StringBuilder(100), this).toString();
+    }
+
+    /**
+     * Gets a copy of this frame but with an empty stack.
+     */
+    public CiFrame withEmptyStack() {
+        if (numStack == 0) {
+            return this;
+        }
+        CiValue[] values = new CiValue[numLocals + numLocks];
+        System.arraycopy(this.values, 0, values, 0, numLocals);
+        System.arraycopy(this.values, numLocals + numStack, values, numLocals, numLocks);
+        return new CiFrame(caller(), method, bci, values, numLocals, 0, numLocks);
     }
 }

@@ -48,9 +48,9 @@ public abstract class JVMSFrameLayout extends VMFrameLayout {
 
     /**
      * Size of a stack slot. It may differ from {@link VMFrameLayout#STACK_SLOT_SIZE} due to alignment
-     * constraints imposed on a stack frame by the target platform (e.g., Darwin-AMD64 and Solaris-SPARC64 requires 16-byte aligned stack frame).
+     * constraints imposed on a stack frame by the target platform (e.g., AMD64 requires 16-byte aligned stack frame).
      * In this case, it's simpler to use a slot size larger than the optimal stack slot sized used by
-     * an optimizing compiler (e.g., 16 bytes instead of 8 on both Solaris-SPARC64 and Darwin-AMD64).
+     * an optimizing compiler.
      *
      * If {@code JVMS_SLOT_SIZE} is greater than {@link VMFrameLayout#STACK_SLOT_SIZE}, then stack values occupy
      * the lower address(es). For example, on a 64 bit machine with {@code JVMS_SLOT_SIZE == 16}, an integer in the

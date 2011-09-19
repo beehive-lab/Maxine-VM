@@ -453,6 +453,11 @@ public class VmOperation {
     private final Pointer.Procedure doThreadAdapter;
 
     /**
+     * Denotes whether all threads (except the VM operation thread) are stopped at a safepoint.
+     */
+    private static boolean atSafepoint;
+
+    /**
      * Creates a VM operation.
      *
      * @param name descriptive name of the {@linkplain #doIt() operation}. This value is only used for tracing.
@@ -476,6 +481,13 @@ public class VmOperation {
                 callDoThread(tla);
             }
         };
+    }
+
+    /**
+     * Determines if all threads (except the VM operation thread) are stopped at a safepoint.
+     */
+    public static boolean atSafepoint() {
+        return atSafepoint;
     }
 
     /**
@@ -518,7 +530,11 @@ public class VmOperation {
 
                 waitUntilFrozen();
 
+                boolean oldAtSafepoint = atSafepoint;
                 try {
+                    if (singleThread == null) {
+                        atSafepoint = true;
+                    }
                     run0();
                 } catch (Throwable t) {
                     if (TraceVmOperations) {
@@ -533,6 +549,7 @@ public class VmOperation {
                     // otherwise frozen threads will never be unfrozen
                     error = t;
                 }
+                atSafepoint = oldAtSafepoint;
 
                 thaw();
 

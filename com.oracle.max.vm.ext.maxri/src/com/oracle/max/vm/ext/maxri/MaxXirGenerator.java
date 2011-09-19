@@ -1829,7 +1829,7 @@ public class MaxXirGenerator implements RiXirGenerator {
 
         public static void arrayHubStoreCheck(DynamicHub componentHub, DynamicHub valueHub) {
             if (!valueHub.isSubClassHub(componentHub.classActor)) {
-                throw new ArrayStoreException(componentHub.classActor + " is not assignable to " + componentHub.classActor);
+                throw new ArrayStoreException(valueHub.classActor + " is not assignable to " + componentHub.classActor);
             }
         }
 
