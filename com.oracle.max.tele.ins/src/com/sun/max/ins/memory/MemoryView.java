@@ -67,7 +67,6 @@ public final class MemoryView extends AbstractView<MemoryView> {
     public static final class MemoryViewManager extends AbstractMultiViewManager<MemoryView> implements MemoryViewFactory {
 
         private final InspectorAction interactiveMakeViewAction;
-        private final InspectorAction interactiveViewRegionInfoByAddressAction;
         private final List<InspectorAction> makeViewActions;
 
         private final class InteractiveViewRegionInfoByAddressAction extends InspectorAction {
@@ -110,12 +109,8 @@ public final class MemoryView extends AbstractView<MemoryView> {
                     };
                 }
             };
-
-            interactiveViewRegionInfoByAddressAction = new InteractiveViewRegionInfoByAddressAction();
-
             makeViewActions = new ArrayList<InspectorAction>(1);
             makeViewActions.add(interactiveMakeViewAction);
-            makeViewActions.add(interactiveViewRegionInfoByAddressAction);
             Trace.end(1, tracePrefix() + "initializing");
         }
 

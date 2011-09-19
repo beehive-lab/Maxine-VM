@@ -36,6 +36,7 @@ import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.method.*;
+import com.sun.max.ins.object.*;
 import com.sun.max.ins.type.*;
 import com.sun.max.ins.util.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
@@ -686,6 +687,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return new ViewMemoryAllocationsMenu();
     }
 
+    public final JMenu viewHeapRegionInfoMenu() {
+        return HeapRegionInfoView.viewManager(inspection()).viewMenu();
+    }
     /**
      * Action: view the HeapRegionInfo for the currently selected WordValueLabel when this one is in a mode denoting a heap address.
      */
@@ -4253,6 +4257,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             public void addTo(InspectorMenu menu) {
                 menu.add(viewMemoryAllocationsMenu());
                 menu.add(views().memory().viewMenu());
+                if (vm().heap().providesHeapRegionInfo()) {
+                    menu.add(viewHeapRegionInfoMenu());
+                }
                 menu.add(views().memoryBytes().viewMenu());
             }
         };

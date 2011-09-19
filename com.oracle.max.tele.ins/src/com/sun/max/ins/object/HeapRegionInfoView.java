@@ -52,6 +52,7 @@ public final class HeapRegionInfoView  extends ObjectView<HeapRegionInfoView> {
 
     public static final class HeapRegionInfoViewManager extends AbstractMultiViewManager<HeapRegionInfoView> {
         private final InspectorAction interactiveViewRegionInfoByAddressAction;
+        private final InspectorAction interactiveViewRegionInfoByRegionIDAction;
         private final List<InspectorAction> makeViewActions;
 
         protected HeapRegionInfoViewManager(Inspection inspection) {
@@ -76,7 +77,32 @@ public final class HeapRegionInfoView  extends ObjectView<HeapRegionInfoView> {
                     };
                 }
             };
+            interactiveViewRegionInfoByRegionIDAction = new InspectorAction(inspection(),  "View RegionInfo for region ID ...") {
+                @Override
+                protected void procedure() {
+                    final String input = gui().inputDialog("View RegionInfo for region ID...", "0");
+                    if (input == null) {
+                        // User clicked cancel
+                        return;
+                    }
+                    try {
+                        final int regionID = Integer.parseInt(input);
+                        if (TeleRegionTable.theTeleRegionTable().isValidRegionID(regionID)) {
+                            Address regionInfoAddress = TeleRegionTable.theTeleRegionTable().regionInfo(regionID);
+                            final TeleObject teleObject = vm().heap().findObjectAt(regionInfoAddress);
+                            if (teleObject != null && teleObject instanceof TeleHeapRegionInfo) {
+                                focus().setHeapObject(teleObject);
+                            }
+                        } else {
+                            gui().errorMessage("Not a valid region ID"  + input);
+                        }
+                    } catch (NumberFormatException numberFormatException) {
+                        gui().errorMessage("Not a region ID: " + input);
+                    }
+                }
+            };
             makeViewActions.add(interactiveViewRegionInfoByAddressAction);
+            makeViewActions.add(interactiveViewRegionInfoByRegionIDAction);
         }
 
         public InspectorAction makeViewAction(final TeleObject teleObject, String actionTitle) {
@@ -89,6 +115,11 @@ public final class HeapRegionInfoView  extends ObjectView<HeapRegionInfoView> {
                     }
                 }
             };
+        }
+
+        @Override
+        protected List<InspectorAction> makeViewActions() {
+            return makeViewActions;
         }
     }
 

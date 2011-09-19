@@ -91,8 +91,12 @@ public class TeleRegionTable extends AbstractTeleVMHolder {
         initializing = false;
     }
 
+    public boolean isValidRegionID(int regionID) {
+        return regionTable.isValidRegionID(regionID);
+    }
+
     public Address regionInfo(int regionID) {
-        assert regionID > INVALID_REGION_ID;
+        assert regionTable.isValidRegionID(regionID);
         return regionTableAddress.plus(regionTable.regionInfoOffset(regionID));
     }
 

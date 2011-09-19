@@ -154,6 +154,10 @@ public final class RegionTable {
         return index;
     }
 
+    public boolean isValidRegionID(int regionID) {
+        return regionID >= 0 && regionID < length;
+    }
+
     HeapRegionInfo regionInfo(int regionID) {
         return toHeapRegionInfo(table().plus(regionID * regionInfoSize));
     }
