@@ -26,12 +26,15 @@ import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
 import java.lang.reflect.*;
 
 import com.oracle.max.vm.ext.vma.*;
+import com.oracle.max.vm.ext.vma.runtime.*;
+import com.oracle.max.vma.tools.gen.vma.*;
 import com.sun.max.annotate.*;
 
 @HOSTED_ONLY
 public class SyncLogVMAdviceHandlerGenerator {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         createGenerator(SyncLogVMAdviceHandlerGenerator.class);
+        generateAutoComment();
         for (Method m : VMAdviceHandler.class.getMethods()) {
             String name = m.getName();
             if (name.startsWith("advise")) {
@@ -42,10 +45,10 @@ public class SyncLogVMAdviceHandlerGenerator {
                 generate(m);
             }
         }
+        AdviceGeneratorHelper.updateSource(SyncLogVMAdviceHandler.class, null, false);
     }
 
     private static void generate(Method m) {
-        generateAutoComment();
         out.printf("    @Override%n");
         int argCount = generateSignature(m, null);
         out.printf(" {%n");

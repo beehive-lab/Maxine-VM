@@ -38,52 +38,50 @@ public class TransientVMAdviceHandlerTypes {
         Unseen,
         Removal,
 
-        // BEGIN GENERATED CODE
+// START GENERATED CODE
+// EDIT AND RUN TransientVMAdviceHandlerTypesGenerator.main() TO MODIFY
 
-        // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerTypesGenerator.main() TO MODIFY
         GC,
         ThreadStarting,
         ThreadTerminating,
-        ConstLoadLong,
         ConstLoadObject,
+        ConstLoadLong,
         ConstLoadFloat,
         ConstLoadDouble,
-        IPush,
         Load,
         ArrayLoad,
         StoreLong,
         StoreFloat,
         StoreDouble,
         StoreObject,
-        ArrayStoreFloat,
         ArrayStoreLong,
+        ArrayStoreFloat,
         ArrayStoreDouble,
         ArrayStoreObject,
         StackAdjust,
         OperationLong,
         OperationFloat,
         OperationDouble,
-        IInc,
         ConversionLong,
         ConversionFloat,
         ConversionDouble,
         IfInt,
         IfObject,
-        Return,
         ReturnLong,
         ReturnFloat,
         ReturnDouble,
         ReturnObject,
+        Return,
         GetStatic,
         PutStaticDouble,
         PutStaticLong,
-        PutStaticFloat,
         PutStaticObject,
+        PutStaticFloat,
         GetField,
         PutFieldDouble,
         PutFieldLong,
-        PutFieldFloat,
         PutFieldObject,
+        PutFieldFloat,
         InvokeVirtual,
         InvokeSpecial,
         InvokeStatic,
@@ -109,14 +107,12 @@ public class TransientVMAdviceHandlerTypes {
                     return new LongAdviceRecord();
                 case Bytecode:
                 case GC:
-                case IPush:
                 case Load:
                 case Return:
                 case StackAdjust:
                 case ThreadStarting:
                 case ThreadTerminating:
                     return new AdviceRecord();
-                case IInc:
                 case IfInt:
                 case OperationLong:
                     return new LongLongAdviceRecord();
@@ -173,8 +169,7 @@ public class TransientVMAdviceHandlerTypes {
                 case PutFieldLong:
                 case PutStaticLong:
                     return new ObjectLongAdviceRecord();
-
-    // END GENERATED CODE
+// END GENERATED CODE
 
                 case Unseen:
                     return new ObjectAdviceRecord();

@@ -84,15 +84,9 @@ public abstract class ObjectStateHandlerAdaptor extends VMAdviceHandler {
         state.incrementLifetime(cell);
     }
 
-    // BEGIN GENERATED CODE
+// START GENERATED CODE
+// EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
-    @Override
-    public void adviseAfterMethodEntry(Object arg1, MethodActor arg2) {
-        checkId(arg1);
-    }
-
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseAfterNew(Object arg1) {
         final Reference objRef = Reference.fromJava(arg1);
@@ -101,7 +95,6 @@ public abstract class ObjectStateHandlerAdaptor extends VMAdviceHandler {
         checkId(hub.classActor.classLoader);
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseAfterNewArray(Object arg1, int arg2) {
         final Reference objRef = Reference.fromJava(arg1);
@@ -110,324 +103,264 @@ public abstract class ObjectStateHandlerAdaptor extends VMAdviceHandler {
         checkId(hub.classActor.classLoader);
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeConstLoad(float arg1) {
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeConstLoad(double arg1) {
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeConstLoad(long arg1) {
+    }
+
     @Override
     public void adviseBeforeConstLoad(Object arg1) {
         checkId(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeConstLoad(long arg1) {
-    }
-
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeIPush(int arg1) {
-    }
-
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeLoad(int arg1) {
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeArrayLoad(Object arg1, int arg2) {
         checkId(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeStore(int arg1, double arg2) {
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeStore(int arg1, Object arg2) {
         checkId(arg2);
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeStore(int arg1, float arg2) {
-    }
-
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeStore(int arg1, long arg2) {
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeStore(int arg1, float arg2) {
+    }
+
     @Override
     public void adviseBeforeArrayStore(Object arg1, int arg2, double arg3) {
         checkId(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeArrayStore(Object arg1, int arg2, Object arg3) {
         checkId(arg1);
         checkId(arg3);
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeArrayStore(Object arg1, int arg2, long arg3) {
-        checkId(arg1);
-    }
-
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeArrayStore(Object arg1, int arg2, float arg3) {
         checkId(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeArrayStore(Object arg1, int arg2, long arg3) {
+        checkId(arg1);
+    }
+
     @Override
     public void adviseBeforeStackAdjust(int arg1) {
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeOperation(int arg1, double arg2, double arg3) {
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeOperation(int arg1, float arg2, float arg3) {
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeOperation(int arg1, long arg2, long arg3) {
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeIInc(int arg1, int arg2, int arg3) {
-    }
-
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeConversion(int arg1, float arg2) {
-    }
-
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeConversion(int arg1, double arg2) {
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeConversion(int arg1, long arg2) {
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeConversion(int arg1, float arg2) {
+    }
+
     @Override
     public void adviseBeforeIf(int arg1, int arg2, int arg3) {
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeIf(int arg1, Object arg2, Object arg3) {
         checkId(arg2);
         checkId(arg3);
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforeReturn(double arg1) {
+    }
+
+    @Override
+    public void adviseBeforeReturn(long arg1) {
+    }
+
+    @Override
+    public void adviseBeforeReturn() {
+    }
+
     @Override
     public void adviseBeforeReturn(Object arg1) {
         checkId(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeReturn(long arg1) {
-    }
-
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeReturn(float arg1) {
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeReturn(double arg1) {
-    }
-
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeReturn() {
-    }
-
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeGetStatic(Object arg1, int arg2) {
         checkClassLoaderId(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforePutStatic(Object arg1, int arg2, long arg3) {
+        checkClassLoaderId(arg1);
+    }
+
     @Override
     public void adviseBeforePutStatic(Object arg1, int arg2, float arg3) {
         checkClassLoaderId(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforePutStatic(Object arg1, int arg2, Object arg3) {
         checkClassLoaderId(arg1);
         checkId(arg3);
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforePutStatic(Object arg1, int arg2, double arg3) {
         checkClassLoaderId(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforePutStatic(Object arg1, int arg2, long arg3) {
-        checkClassLoaderId(arg1);
-    }
-
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeGetField(Object arg1, int arg2) {
         checkId(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforePutField(Object arg1, int arg2, float arg3) {
-        checkId(arg1);
-    }
-
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforePutField(Object arg1, int arg2, Object arg3) {
         checkId(arg1);
         checkId(arg3);
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
+    @Override
+    public void adviseBeforePutField(Object arg1, int arg2, float arg3) {
+        checkId(arg1);
+    }
+
     @Override
     public void adviseBeforePutField(Object arg1, int arg2, long arg3) {
         checkId(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforePutField(Object arg1, int arg2, double arg3) {
         checkId(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeInvokeVirtual(Object arg1, MethodActor arg2) {
         checkId(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeInvokeSpecial(Object arg1, MethodActor arg2) {
         checkId(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeInvokeStatic(Object arg1, MethodActor arg2) {
         checkId(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeInvokeInterface(Object arg1, MethodActor arg2) {
         checkId(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeArrayLength(Object arg1, int arg2) {
         checkId(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeThrow(Object arg1) {
         checkId(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeCheckCast(Object arg1, Object arg2) {
         checkId(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeInstanceOf(Object arg1, Object arg2) {
         checkId(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeMonitorEnter(Object arg1) {
         checkId(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeMonitorExit(Object arg1) {
         checkId(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseBeforeBytecode(int arg1) {
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseAfterInvokeVirtual(Object arg1, MethodActor arg2) {
         checkId(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseAfterInvokeSpecial(Object arg1, MethodActor arg2) {
         checkId(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseAfterInvokeStatic(Object arg1, MethodActor arg2) {
         checkId(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseAfterInvokeInterface(Object arg1, MethodActor arg2) {
         checkId(arg1);
     }
 
-    // GENERATED -- EDIT AND RUN ObjectStateHandlerAdaptorGenerator.main() TO MODIFY
     @Override
     public void adviseAfterMultiNewArray(Object arg1, int[] arg2) {
         checkId(arg1);
     }
 
+    @Override
+    public void adviseAfterMethodEntry(Object arg1, MethodActor arg2) {
+        checkId(arg1);
+    }
 
-
+// END GENERATED CODE
 }
