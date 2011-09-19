@@ -22,11 +22,10 @@
  */
 package com.oracle.max.vm.ext.t1x;
 
-import static com.sun.cri.bytecode.Bytecodes.*;
-import static com.sun.cri.bytecode.Bytecodes.MemoryBarriers.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 
+import com.oracle.max.cri.intrinsics.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
@@ -92,25 +91,32 @@ public class T1XRuntime {
      */
     @INLINE
     public static void preVolatileRead() {
+        MemoryBarriers.barrier(MemoryBarriers.JMM_PRE_VOLATILE_READ);
     }
 
     /**
      * Inserts any necessary memory barriers after a volatile read as required by the JMM.
      */
-    @INTRINSIC(MEMBAR | ((LOAD_LOAD | LOAD_STORE) << 8))
-    public static native void postVolatileRead();
+    @INLINE
+    public static void postVolatileRead() {
+        MemoryBarriers.barrier(MemoryBarriers.JMM_POST_VOLATILE_READ);
+    }
 
     /**
      * Inserts any necessary memory barriers before a volatile read as required by the JMM.
      */
-    @INTRINSIC(MEMBAR | ((LOAD_STORE | STORE_STORE) << 8))
-    public static native void preVolatileWrite();
+    @INLINE
+    public static void preVolatileWrite() {
+        MemoryBarriers.barrier(MemoryBarriers.JMM_PRE_VOLATILE_WRITE);
+    }
 
     /**
      * Inserts any necessary memory barriers after a volatile read as required by the JMM.
      */
-    @INTRINSIC(MEMBAR | ((STORE_LOAD | STORE_STORE) << 8))
-    public static native void postVolatileWrite();
+    @INLINE
+    public static void postVolatileWrite() {
+        MemoryBarriers.barrier(MemoryBarriers.JMM_POST_VOLATILE_WRITE);
+    }
 
     // ==========================================================================================================
     // == Misc routines =========================================================================================

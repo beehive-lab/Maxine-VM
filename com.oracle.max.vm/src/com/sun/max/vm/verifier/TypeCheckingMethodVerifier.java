@@ -23,8 +23,6 @@
 package com.sun.max.vm.verifier;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
-import static com.sun.cri.bytecode.Bytecodes.JniOp.*;
-import static com.sun.cri.bytecode.Bytecodes.UnsignedComparisons.*;
 import static com.sun.max.vm.verifier.types.VerificationType.*;
 
 import com.sun.cri.bytecode.*;
@@ -1839,18 +1837,6 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
             }
             switch (opcode) {
                 // Checkstyle: stop
-                case UNSAFE_CAST: {
-                    if (!frame.top().isCategory2()) {
-                        frame.pop(CATEGORY1);
-                    } else {
-                        frame.pop(CATEGORY2);
-                    }
-
-                    MethodRefConstant methodRef = constantPool().methodAt(operand);
-                    SignatureDescriptor sig = methodRef.signature(constantPool());
-                    frame.push(getVerificationType(sig.resultDescriptor()));
-                    break;
-                }
                 case WLOAD: performLoad(WORD, operand); break;
                 case WLOAD_0:                performLoad(WORD, 0); break;
                 case WLOAD_1:                performLoad(WORD, 1); break;
@@ -1861,204 +1847,18 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                 case WSTORE_1:               performStore(WORD, 1); break;
                 case WSTORE_2:               performStore(WORD, 2); break;
                 case WSTORE_3:               performStore(WORD, 3); break;
-                case WCONST_0:               frame.push(WORD); break;
-                case WDIV:                   performArithmetic(WORD); break;
-                case WDIVI:                  performArithmetic(WORD, INTEGER, WORD); break;
-                case WREM:                   performArithmetic(WORD); break;
-                case WREMI:                  performArithmetic(WORD, INTEGER, INTEGER); break;
 
-                case PCMPSWP:
-                case PGET:
-                case PSET:
-                case PREAD:
-                case PWRITE: {
-                    opcode = opcode | (operand << 8);
-                    switch (opcode) {
-                        case PREAD_BYTE:             pointerRead(BYTE, false); break;
-                        case PREAD_CHAR:             pointerRead(CHAR, false); break;
-                        case PREAD_SHORT:            pointerRead(SHORT, false); break;
-                        case PREAD_INT:              pointerRead(INTEGER, false); break;
-                        case PREAD_FLOAT:            pointerRead(FLOAT, false); break;
-                        case PREAD_LONG:             pointerRead(LONG, false); break;
-                        case PREAD_DOUBLE:           pointerRead(DOUBLE, false); break;
-                        case PREAD_WORD:             pointerRead(WORD, false); break;
-                        case PREAD_REFERENCE:        pointerRead(VM_REFERENCE, false); break;
-                        case PREAD_BYTE_I:           pointerRead(BYTE, true); break;
-                        case PREAD_CHAR_I:           pointerRead(CHAR, true); break;
-                        case PREAD_SHORT_I:          pointerRead(SHORT, true); break;
-                        case PREAD_INT_I:            pointerRead(INTEGER, true); break;
-                        case PREAD_FLOAT_I:          pointerRead(FLOAT, true); break;
-                        case PREAD_LONG_I:           pointerRead(LONG, true); break;
-                        case PREAD_DOUBLE_I:         pointerRead(DOUBLE, true); break;
-                        case PREAD_WORD_I:           pointerRead(WORD, true); break;
-                        case PREAD_REFERENCE_I:      pointerRead(VM_REFERENCE, true); break;
-                        case PWRITE_BYTE:            pointerWrite(BYTE, false); break;
-                        case PWRITE_SHORT:           pointerWrite(SHORT, false); break;
-                        case PWRITE_INT:             pointerWrite(INTEGER, false); break;
-                        case PWRITE_FLOAT:           pointerWrite(FLOAT, false); break;
-                        case PWRITE_LONG:            pointerWrite(LONG, false); break;
-                        case PWRITE_DOUBLE:          pointerWrite(DOUBLE, false); break;
-                        case PWRITE_WORD:            pointerWrite(WORD, false); break;
-                        case PWRITE_REFERENCE:       pointerWrite(VM_REFERENCE, false); break;
-                        case PWRITE_BYTE_I:          pointerWrite(BYTE, true); break;
-                        case PWRITE_SHORT_I:         pointerWrite(SHORT, true); break;
-                        case PWRITE_INT_I:           pointerWrite(INTEGER, true); break;
-                        case PWRITE_FLOAT_I:         pointerWrite(FLOAT, true); break;
-                        case PWRITE_LONG_I:          pointerWrite(LONG, true); break;
-                        case PWRITE_DOUBLE_I:        pointerWrite(DOUBLE, true); break;
-                        case PWRITE_WORD_I:          pointerWrite(WORD, true); break;
-                        case PWRITE_REFERENCE_I:     pointerWrite(VM_REFERENCE, true); break;
-                        case PGET_BYTE:              pointerGet(BYTE); break;
-                        case PGET_CHAR:              pointerGet(CHAR); break;
-                        case PGET_SHORT:             pointerGet(SHORT); break;
-                        case PGET_INT:               pointerGet(INTEGER); break;
-                        case PGET_FLOAT:             pointerGet(FLOAT); break;
-                        case PGET_LONG:              pointerGet(LONG); break;
-                        case PGET_DOUBLE:            pointerGet(DOUBLE); break;
-                        case PGET_WORD:              pointerGet(WORD); break;
-                        case PGET_REFERENCE:         pointerGet(VM_REFERENCE); break;
-                        case PSET_BYTE:              pointerSet(BYTE); break;
-                        case PSET_SHORT:             pointerSet(SHORT); break;
-                        case PSET_INT:               pointerSet(INTEGER); break;
-                        case PSET_FLOAT:             pointerSet(FLOAT); break;
-                        case PSET_LONG:              pointerSet(LONG); break;
-                        case PSET_DOUBLE:            pointerSet(DOUBLE); break;
-                        case PSET_WORD:              pointerSet(WORD); break;
-                        case PSET_REFERENCE:         pointerSet(VM_REFERENCE); break;
-                        case PCMPSWP_INT:            pointerCompareAndSwap(INTEGER, false); break;
-                        case PCMPSWP_WORD:           pointerCompareAndSwap(WORD, false); break;
-                        case PCMPSWP_REFERENCE:      pointerCompareAndSwap(VM_REFERENCE, false); break;
-                        case PCMPSWP_INT_I:          pointerCompareAndSwap(INTEGER, true); break;
-                        case PCMPSWP_WORD_I:         pointerCompareAndSwap(WORD, true); break;
-                        case PCMPSWP_REFERENCE_I:    pointerCompareAndSwap(VM_REFERENCE, true); break;
-                        default:                     verifyError("Unsupported bytecode: " + Bytecodes.nameOf(opcode));
-                    }
-                    break;
-                }
-
-                case MOV_I2F:                performConversion(INTEGER, FLOAT); break;
-                case MOV_F2I:                performConversion(FLOAT, INTEGER); break;
-                case MOV_L2D:                performConversion(LONG, DOUBLE); break;
-                case MOV_D2L:                performConversion(DOUBLE, LONG); break;
-
-                case UWCMP: {
-                    switch (operand) {
-                        case ABOVE_EQUAL: performCompare(WORD); break;
-                        case ABOVE_THAN:  performCompare(WORD); break;
-                        case BELOW_EQUAL: performCompare(WORD); break;
-                        case BELOW_THAN:  performCompare(WORD); break;
-                        default:          verifyError("Unsupported UWCMP operand: " + operand);
-                    }
-                    break;
-                }
-                case UCMP: {
-                    switch (operand) {
-                        case ABOVE_EQUAL: performCompare(INTEGER); break;
-                        case ABOVE_THAN : performCompare(INTEGER); break;
-                        case BELOW_EQUAL: performCompare(INTEGER); break;
-                        case BELOW_THAN : performCompare(INTEGER); break;
-                        default:          verifyError("Unsupported UCMP operand: " + operand);
-                    }
-                    break;
-                }
                 case JNICALL: {
                     jnicall(operand);
                     break;
                 }
-                case JNIOP: {
-                    if (!classMethodActor().isNative()) {
-                        verifyError("Cannot use " + Bytecodes.nameOf(JNIOP) + " instruction in non-native method " + classMethodActor());
-                    }
-                    switch (operand) {
-                        case LINK: {
-                            frame.push(WORD);
-                            break;
-                        }
-                        case J2N:
-                        case N2J:
-                            break;
-                        default:
-                            verifyError("Unsupported JNIOP operand: " + operand);
-                    }
-                    break;
-                }
-                case INFOPOINT: {
-                    opcode = INFOPOINT | ((operand & ~0xff) << 8);
-                    if (opcode == HERE) {
-                        frame.push(LONG);
-                    }
-                    break;
-                }
-
                 case WRETURN            : performReturn(WORD); break;
-                case PAUSE              : break;
-                case MEMBAR             : break;
-                case BREAKPOINT_TRAP    : break;
-                case FLUSHW             : break;
-                case LSB                : performConversion(WORD, INTEGER); break;
-                case MSB                : performConversion(WORD, INTEGER); break;
-                case ALLOCA             : frame.pop(INTEGER); frame.push(WORD); break;
-                case STACKHANDLE        : performStackHandle(); break;
 
-                case READREG            : frame.push(WORD); break;
-                case WRITEREG           : frame.pop(WORD); break;
-
-                case READBIT            : frame.pop(INTEGER); break;
-
-                default: {
+                default:
                     verifyError("Unsupported bytecode: " + Bytecodes.nameOf(opcode));
-                }
                 // Checkstyle: resume
             }
             return true;
-        }
-
-        private void performStackHandle() {
-            if (frame.top().isCategory2()) {
-                frame.pop(CATEGORY2);
-            } else {
-                frame.pop(CATEGORY1);
-            }
-            frame.push(WORD);
-        }
-
-        private void performCompare(VerificationType type) {
-            frame.pop(type);
-            frame.pop(type);
-            frame.push(BOOLEAN);
-        }
-
-        void pointerRead(VerificationType type, boolean intOffset) {
-            frame.pop(intOffset ? INTEGER : WORD); // offset
-            frame.pop(WORD); // pointer
-            frame.push(type); // value
-        }
-
-        void pointerWrite(VerificationType type, boolean intOffset) {
-            frame.pop(type); // value
-            frame.pop(intOffset ? INTEGER : WORD); // offset
-            frame.pop(WORD); // pointer
-        }
-
-        void pointerGet(VerificationType type) {
-            frame.pop(INTEGER); // index
-            frame.pop(INTEGER); // displacement
-            frame.push(type); // value
-        }
-
-        void pointerSet(VerificationType type) {
-            frame.pop(type); // value
-            frame.pop(INTEGER); // index
-            frame.pop(INTEGER); // displacement
-            frame.pop(WORD); // pointer
-        }
-
-        private void pointerCompareAndSwap(VerificationType type, boolean intOffset) {
-            frame.pop(type); // newValue
-            frame.pop(type); // expectedValue
-            frame.pop(intOffset ? INTEGER : WORD); // offset
-            frame.pop(WORD); // pointer
-            frame.push(type); // result
         }
     }
 }

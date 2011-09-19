@@ -55,7 +55,7 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
      * Extended {@linkplain Bytecodes#isStandard(int) opcode} for an {@linkplain INTRINSIC intrinsic} method.
      * A value of 0 means this method is not an intrinsic method.
      */
-    private final int intrinsic;
+    private final String intrinsic;
 
     public static final MethodActor[] NONE = {};
 
@@ -66,18 +66,15 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
     public MethodActor(Utf8Constant name,
                        SignatureDescriptor descriptor,
                        int flags,
-                       int intrinsic) {
+                       String intrinsic) {
         super(name, descriptor, flags);
         this.intrinsic = intrinsic;
     }
 
     /**
-     * Gets the {@linkplain Bytecodes#isStandard(int) extended opcode} of this method if
-     * it is an {@link INTRINSIC} method.
-     *
-     * @return 0 if this method is not an intrinsic method
+     * Gets the intrinsic id of this method.
      */
-    public final int intrinsic() {
+    public final String intrinsic() {
         return intrinsic;
     }
 
@@ -123,7 +120,7 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
 
     @INLINE
     public final boolean isIntrinsic() {
-        return intrinsic != 0;
+        return intrinsic != null;
     }
 
     @INLINE

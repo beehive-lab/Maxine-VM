@@ -24,8 +24,8 @@ package com.sun.max.vm.stack;
 
 import java.util.*;
 
+import com.oracle.max.cri.intrinsics.*;
 import com.sun.cri.ci.*;
-import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.runtime.*;
@@ -158,7 +158,7 @@ public abstract class VMFrameLayout {
             final int maximumSlotOffset = maximumSlotOffset();
             final int lowestSlotOffset = lowestSlotOffset();
             assert maximumSlotOffset >= lowestSlotOffset;
-            final int slotCount = Unsigned.idiv(maximumSlotOffset - lowestSlotOffset, STACK_SLOT_SIZE);
+            final int slotCount = UnsignedMath.divide(maximumSlotOffset - lowestSlotOffset, STACK_SLOT_SIZE);
             slots = new Slot[slotCount];
 
             int index = 0;
@@ -180,7 +180,7 @@ public abstract class VMFrameLayout {
                     return "return address";
                 }
             }
-            final int slotIndex = Unsigned.idiv(offset, STACK_SLOT_SIZE);
+            final int slotIndex = UnsignedMath.divide(offset, STACK_SLOT_SIZE);
             return "slot " + slotIndex;
         }
 
@@ -194,7 +194,7 @@ public abstract class VMFrameLayout {
          */
         protected int referenceMapIndexForSlot(int offset) {
             if (offset < frameSize() && offset >= 0) {
-                return Unsigned.idiv(offset, STACK_SLOT_SIZE);
+                return UnsignedMath.divide(offset, STACK_SLOT_SIZE);
             }
             return -1;
         }
@@ -222,7 +222,7 @@ public abstract class VMFrameLayout {
          * @return null if there is no slot at the given offset
          */
         public final Slot slotAtOffset(int offset) {
-            final int index = Unsigned.idiv(maximumSlotOffset() - offset, STACK_SLOT_SIZE);
+            final int index = UnsignedMath.divide(maximumSlotOffset() - offset, STACK_SLOT_SIZE);
             if (index < 0 || index >= slots.length) {
                 return null;
             }

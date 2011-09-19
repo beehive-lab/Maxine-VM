@@ -36,7 +36,6 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 import java.util.*;
 
 import com.oracle.max.asm.target.amd64.*;
-import com.sun.cri.bytecode.Bytecodes.Infopoints;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -50,6 +49,7 @@ import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.deopt.Deoptimization.Info;
 import com.sun.max.vm.compiler.target.Stub.Type;
 import com.sun.max.vm.compiler.target.amd64.*;
+import com.sun.max.vm.intrinsics.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.*;

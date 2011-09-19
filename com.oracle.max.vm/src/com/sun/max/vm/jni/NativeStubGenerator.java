@@ -22,9 +22,9 @@
  */
 package com.sun.max.vm.jni;
 
-import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.vm.classfile.constant.PoolConstantFactory.*;
 import static com.sun.max.vm.classfile.constant.SymbolTable.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.io.*;
@@ -36,6 +36,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.intrinsics.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
@@ -317,21 +318,24 @@ public final class NativeStubGenerator extends BytecodeAssembler {
     }
 
     /**
+     * @see MaxineIntrinsicIDs#JNI_LINK
      * @see #link
      */
-    @INTRINSIC(JNIOP_LINK)
+    @INTRINSIC(JNI_LINK)
     public static native Address link();
 
     /**
+     * @see MaxineIntrinsicIDs#JNI_N2J
      * @see #nativeToJava
      */
-    @INTRINSIC(JNIOP_N2J)
+    @INTRINSIC(JNI_N2J)
     public static native void nativeToJava();
 
     /**
+     * @see MaxineIntrinsicIDs#JNI_J2N
      * @see #javaToNative
      */
-    @INTRINSIC(JNIOP_J2N)
+    @INTRINSIC(JNI_J2N)
     public static native void javaToNative();
 
 }

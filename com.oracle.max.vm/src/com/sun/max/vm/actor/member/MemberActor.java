@@ -90,7 +90,7 @@ public abstract class MemberActor extends Actor {
         if (MaxineVM.isHosted() && this instanceof ClassMethodActor) {
             ClassMethodActor classMethodActor = (ClassMethodActor) this;
             if (classMethodActor.isNative()) {
-                if (classMethodActor.intrinsic() != 0 || classMethodActor.isVmEntryPoint()) {
+                if (classMethodActor.intrinsic() != null || classMethodActor.isVmEntryPoint()) {
                     // Ignore native methods that will never be linked by the VM
                 } else {
                     // Make sure the C symbol for a native method is cooked into the boot image

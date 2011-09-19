@@ -39,7 +39,6 @@ import java.util.*;
 import java.util.jar.*;
 import java.util.zip.*;
 
-import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
@@ -53,6 +52,7 @@ import com.sun.max.vm.classfile.ClassfileWriter.MaxineFlags;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.instrument.*;
+import com.sun.max.vm.intrinsics.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.type.ClassRegistry.Property;
 import com.sun.max.vm.value.*;
@@ -868,7 +868,7 @@ public final class ClassfileReader {
                 }
 
                 int substituteeIndex = -1;
-                int intrinsic = 0;
+                String intrinsic = null;
                 Class accessor = null;
 
                 boolean classHasNeverInlineAnnotation = false;
@@ -911,7 +911,7 @@ public final class ClassfileReader {
                         } else if (annotation.annotationType() == INTRINSIC.class) {
                             INTRINSIC intrinsicAnnotation = (INTRINSIC) annotation;
                             intrinsic = intrinsicAnnotation.value();
-                            if (intrinsic == Bytecodes.UNSAFE_CAST) {
+                            if (intrinsic == MaxineIntrinsicIDs.UNSAFE_CAST) {
                                 String anno = INTRINSIC.class.getSimpleName() + "(UNSAFE_CAST)";
                                 ProgramError.check(genericSignature == null, "Cannot apply " + anno + " to a generic method: " + memberString(name, descriptor));
                                 ProgramError.check(descriptor.resultKind() != Kind.VOID, "Cannot apply " + anno + " to a void method: " + memberString(name, descriptor));
@@ -948,7 +948,7 @@ public final class ClassfileReader {
 
                         }
 
-                        if (intrinsic != 0) {
+                        if (intrinsic != null) {
                             // discard bytecode for intrinsic methods
                             codeAttribute = null;
                         }

@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.collect;
 
+import com.oracle.max.cri.intrinsics.*;
 import com.sun.max.lang.*;
 
 /**
@@ -193,7 +194,7 @@ public final class ByteArrayBitMap implements Cloneable {
 
     // calculate the index of the relevant byte in the map
     private static int byteIndexFor(int offset, int size, int bitIndex) throws IndexOutOfBoundsException {
-        final int relativeByteIndex = Unsigned.idiv(bitIndex, Bytes.WIDTH);
+        final int relativeByteIndex = UnsignedMath.divide(bitIndex, Bytes.WIDTH);
         if (relativeByteIndex >= size) {
             throw new IndexOutOfBoundsException("Bit index: " + bitIndex + ", Width: " + (size * Bytes.WIDTH));
         }
@@ -258,7 +259,7 @@ public final class ByteArrayBitMap implements Cloneable {
             throw new IndexOutOfBoundsException("fromIndex < 0: " + fromIndex);
         }
 
-        int byteIndex = offset + Unsigned.idiv(fromIndex, Bytes.WIDTH);
+        int byteIndex = offset + UnsignedMath.divide(fromIndex, Bytes.WIDTH);
         final int end = offset + size;
         if (byteIndex >= end) {
             return -1;
@@ -302,6 +303,6 @@ public final class ByteArrayBitMap implements Cloneable {
      * Computes the minimum number of bytes required to encode a bit map with a given number of bits.
      */
     public static int computeBitMapSize(int numberOfBits) {
-        return Unsigned.idiv(Ints.roundUnsignedUpByPowerOfTwo(numberOfBits, Bytes.WIDTH), Bytes.WIDTH);
+        return UnsignedMath.divide(Ints.roundUnsignedUpByPowerOfTwo(numberOfBits, Bytes.WIDTH), Bytes.WIDTH);
     }
 }

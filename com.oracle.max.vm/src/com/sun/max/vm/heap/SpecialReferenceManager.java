@@ -23,7 +23,7 @@
 package com.sun.max.vm.heap;
 
 
-import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import static com.sun.max.vm.jdk.JDK_java_lang_ref_ReferenceQueue.*;
 
 import com.sun.max.annotate.*;

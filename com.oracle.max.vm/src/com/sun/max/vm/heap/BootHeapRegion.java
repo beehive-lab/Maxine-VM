@@ -22,8 +22,8 @@
  */
 package com.sun.max.vm.heap;
 
+import com.oracle.max.cri.intrinsics.*;
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -58,7 +58,7 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion {
         }
 
         final Pointer refMap = referenceMap;
-        final int referenceMapWords = Unsigned.idiv(referenceMapBytes.length, Word.size());
+        final int referenceMapWords = UnsignedMath.divide(referenceMapBytes.length, Word.size());
         if (Heap.traceRootScanning()) {
             Log.print("Scanning boot heap: start=");
             Log.print(start());

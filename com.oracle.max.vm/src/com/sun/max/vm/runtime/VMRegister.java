@@ -22,10 +22,11 @@
  */
 package com.sun.max.vm.runtime;
 
-import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.intrinsics.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -77,31 +78,46 @@ public final class VMRegister {
      */
     public static final int LINK = 9;
 
-    @INLINE
-    @INTRINSIC(READREG | (CPU_SP << 8))
-    public static native Pointer getCpuStackPointer();
+    /**
+     * @see MaxineIntrinsicIDs#READREG
+     */
+    @INTRINSIC(READREG)
+    public static native Pointer getRegister(@INTRINSIC.Constant int registerId);
+
+    /**
+     * @see MaxineIntrinsicIDs#WRITEREG
+     */
+    @INTRINSIC(WRITEREG)
+    public static native void setRegister(@INTRINSIC.Constant int registerId, Word value);
+
 
     @INLINE
-    @INTRINSIC(READREG | (CPU_FP << 8))
-    public static native Pointer getCpuFramePointer();
+    public static Pointer getCpuStackPointer() {
+        return getRegister(CPU_SP);
+    }
 
     @INLINE
-    @INTRINSIC(READREG | (ABI_SP << 8))
-    public static native Pointer getAbiStackPointer();
+    public static Pointer getCpuFramePointer() {
+        return getRegister(CPU_FP);
+    }
 
     @INLINE
-    @INTRINSIC(READREG | (ABI_FP << 8))
-    public static native Pointer getAbiFramePointer();
+    public static Pointer getAbiStackPointer() {
+        return getRegister(ABI_SP);
+    }
 
     @INLINE
-    @INTRINSIC(READREG | (LATCH << 8))
-    public static native Pointer getSafepointLatchRegister();
+    public static Pointer getAbiFramePointer() {
+        return getRegister(ABI_FP);
+    }
 
     @INLINE
-    @INTRINSIC(WRITEREG | (LATCH << 8))
-    public static native void setSafepointLatchRegister(Word value);
+    public static Pointer getSafepointLatchRegister() {
+        return getRegister(LATCH);
+    }
 
     @INLINE
-    @INTRINSIC(WRITEREG | (LINK << 8))
-    public static native void setCallAddressRegister(Word value);
+    public static void setSafepointLatchRegister(Word value) {
+        setRegister(LATCH, value);
+    }
 }

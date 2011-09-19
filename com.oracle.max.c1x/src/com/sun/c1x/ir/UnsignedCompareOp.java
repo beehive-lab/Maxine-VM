@@ -23,8 +23,8 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.debug.*;
+import com.sun.c1x.util.*;
 import com.sun.cri.bytecode.*;
-import com.sun.cri.bytecode.Bytecodes.UnsignedComparisons;
 import com.sun.cri.ci.*;
 
 /**
@@ -37,7 +37,7 @@ public final class UnsignedCompareOp extends Op2 {
     /**
      * One of the constants defined in {@link UnsignedComparisons} denoting the type of this comparison.
      */
-    public final int op;
+    public final Condition condition;
 
     /**
      * Creates a new compare operation.
@@ -47,10 +47,9 @@ public final class UnsignedCompareOp extends Op2 {
      * @param x the first input
      * @param y the second input
      */
-    public UnsignedCompareOp(int opcode, int op, Value x, Value y) {
-        super(CiKind.Int, opcode, x, y);
-        assert opcode == Bytecodes.UWCMP || opcode == Bytecodes.UCMP;
-        this.op = op;
+    public UnsignedCompareOp(Condition condition, Value x, Value y) {
+        super(CiKind.Int, -1, x, y);
+        this.condition = condition;
     }
 
     @Override
@@ -65,5 +64,10 @@ public final class UnsignedCompareOp extends Op2 {
             print(Bytecodes.operator(opcode)).
             print(' ').
             print(y());
+    }
+
+    @Override
+    public int valueNumber() {
+        return Util.hash2(condition.ordinal(), x, y);
     }
 }

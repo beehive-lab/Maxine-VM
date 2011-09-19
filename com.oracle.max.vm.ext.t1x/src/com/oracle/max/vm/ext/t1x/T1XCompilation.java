@@ -29,7 +29,9 @@ import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 import java.util.*;
 
 import com.oracle.max.asm.*;
-import com.oracle.max.vm.ext.t1x.T1XTemplate.*;
+import com.oracle.max.vm.ext.t1x.T1XTemplate.Arg;
+import com.oracle.max.vm.ext.t1x.T1XTemplate.SafepointsBuilder;
+import com.oracle.max.vm.ext.t1x.T1XTemplate.Sig;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
@@ -44,6 +46,7 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.debug.*;
+import com.sun.max.vm.intrinsics.*;
 import com.sun.max.vm.profile.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -484,6 +487,10 @@ public abstract class T1XCompilation {
         prevOpcode = representativeOpcode;
     }
 
+    protected void start(T1XTemplateTag tag) {
+        start(compiler.templates[tag.ordinal()]);
+    }
+
     /**
      * Starts the process of emitting a template.
      * This includes emitting code to copy any arguments from the stack to the
@@ -494,9 +501,9 @@ public abstract class T1XCompilation {
      *
      * @param tag denotes the template to emit
      */
-    protected void start(T1XTemplateTag tag) {
+    protected void start(T1XTemplate startTemplate) {
         assert template == null;
-        this.template = compiler.templates[tag.ordinal()];
+        this.template = startTemplate;
         initializedArgs = 0;
         Sig sig = template.sig;
         if (sig.stackArgs != 0) {
@@ -551,7 +558,7 @@ public abstract class T1XCompilation {
 
         // The stack parameters to an invoke are popped by the callee so they should not also be
         // popped as part of the stack adjustment above.
-        assert sig.stackArgs == 0 || !Bytecodes.isInvoke(template.tag.opcode) : template + ": invoke templates should not use @" + Slot.class.getSimpleName() + " annotation";
+        assert sig.stackArgs == 0 || template.tag == null || !Bytecodes.isInvoke(template.tag.opcode) : template + ": invoke templates should not use @" + Slot.class.getSimpleName() + " annotation";
 
         // Push the result of the template (if any)
         if (sig.out.isStack()) {
@@ -1230,8 +1237,6 @@ public abstract class T1XCompilation {
             case Bytecodes.IINC               : do_iinc(stream.readLocalIndex(), stream.readIncrement()); break;
             case Bytecodes.MULTIANEWARRAY     : do_multianewarray(stream.readCPI(), stream.readUByte(stream.currentBCI() + 3)); break;
 
-
-            case Bytecodes.UNSAFE_CAST        : break;
             case Bytecodes.WLOAD              : do_load(stream.readLocalIndex(), CiKind.Word); break;
             case Bytecodes.WLOAD_0            : do_load(0, CiKind.Word); break;
             case Bytecodes.WLOAD_1            : do_load(1, CiKind.Word); break;
@@ -1243,127 +1248,12 @@ public abstract class T1XCompilation {
             case Bytecodes.WSTORE_2           : do_store(2, CiKind.Word); break;
             case Bytecodes.WSTORE_3           : do_store(3, CiKind.Word); break;
 
-            case Bytecodes.WCONST_0           : if (Word.size() == 8) do_lconst(0); else do_iconst(0); break;
-            case Bytecodes.WDIV               : do_wdiv(); break;
-            case Bytecodes.WDIVI              : do_wdivi(); break;
-            case Bytecodes.WREM               : do_wrem(); break;
-            case Bytecodes.WREMI              : do_wremi(); break;
-
-            case Bytecodes.INFOPOINT: {
-                opcode = opcode | (stream.readUByte(stream.currentBCI() + 1) << 16);
-                if (opcode == Bytecodes.UNCOMMON_TRAP) {
-                    do_uncommonTrap();
-                    break;
-                } else if (opcode == Bytecodes.HERE) {
-                    do_here();
-                    break;
-                } else {
-                    throw new CiBailout("Unsupported opcode" + errorSuffix());
-                }
-            }
-
-            case Bytecodes.MEMBAR:
-            case Bytecodes.PCMPSWP:
-            case Bytecodes.PGET:
-            case Bytecodes.PSET:
-            case Bytecodes.PREAD:
-            case Bytecodes.PWRITE: {
-                opcode = opcode | (stream.readCPI() << 8);
-                switch (opcode) {
-                    case Bytecodes.PREAD_BYTE         : do_pread_byte(); break;
-                    case Bytecodes.PREAD_CHAR         : do_pread_char(); break;
-                    case Bytecodes.PREAD_SHORT        : do_pread_short(); break;
-                    case Bytecodes.PREAD_INT          : do_pread_int(); break;
-                    case Bytecodes.PREAD_LONG         : do_pread_long(); break;
-                    case Bytecodes.PREAD_FLOAT        : do_pread_float(); break;
-                    case Bytecodes.PREAD_DOUBLE       : do_pread_double(); break;
-                    case Bytecodes.PREAD_WORD         : do_pread_word(); break;
-                    case Bytecodes.PREAD_REFERENCE    : do_pread_reference(); break;
-
-                    case Bytecodes.PREAD_BYTE_I       : do_pread_byte_i(); break;
-                    case Bytecodes.PREAD_CHAR_I       : do_pread_char_i(); break;
-                    case Bytecodes.PREAD_SHORT_I      : do_pread_short_i(); break;
-                    case Bytecodes.PREAD_INT_I        : do_pread_int_i(); break;
-                    case Bytecodes.PREAD_LONG_I       : do_pread_long_i(); break;
-                    case Bytecodes.PREAD_FLOAT_I      : do_pread_float_i(); break;
-                    case Bytecodes.PREAD_DOUBLE_I     : do_pread_double_i(); break;
-                    case Bytecodes.PREAD_WORD_I       : do_pread_word_i(); break;
-                    case Bytecodes.PREAD_REFERENCE_I  : do_pread_reference_i(); break;
-
-                    case Bytecodes.PWRITE_BYTE        : do_pwrite_byte(); break;
-                    case Bytecodes.PWRITE_SHORT       : do_pwrite_short(); break;
-                    case Bytecodes.PWRITE_INT         : do_pwrite_int(); break;
-                    case Bytecodes.PWRITE_LONG        : do_pwrite_long(); break;
-                    case Bytecodes.PWRITE_FLOAT       : do_pwrite_float(); break;
-                    case Bytecodes.PWRITE_DOUBLE      : do_pwrite_double(); break;
-                    case Bytecodes.PWRITE_WORD        : do_pwrite_word(); break;
-                    case Bytecodes.PWRITE_REFERENCE   : do_pwrite_reference(); break;
-
-                    case Bytecodes.PWRITE_BYTE_I      : do_pwrite_byte_i(); break;
-                    case Bytecodes.PWRITE_SHORT_I     : do_pwrite_short_i(); break;
-                    case Bytecodes.PWRITE_INT_I       : do_pwrite_int_i(); break;
-                    case Bytecodes.PWRITE_LONG_I      : do_pwrite_long_i(); break;
-                    case Bytecodes.PWRITE_FLOAT_I     : do_pwrite_float_i(); break;
-                    case Bytecodes.PWRITE_DOUBLE_I    : do_pwrite_double_i(); break;
-                    case Bytecodes.PWRITE_WORD_I      : do_pwrite_word_i(); break;
-                    case Bytecodes.PWRITE_REFERENCE_I : do_pwrite_reference_i(); break;
-
-                    case Bytecodes.PGET_BYTE          : do_pget_byte(); break;
-                    case Bytecodes.PGET_CHAR          : do_pget_char(); break;
-                    case Bytecodes.PGET_SHORT         : do_pget_short(); break;
-                    case Bytecodes.PGET_INT           : do_pget_int(); break;
-                    case Bytecodes.PGET_LONG          : do_pget_long(); break;
-                    case Bytecodes.PGET_FLOAT         : do_pget_float(); break;
-                    case Bytecodes.PGET_DOUBLE        : do_pget_double(); break;
-                    case Bytecodes.PGET_WORD          : do_pget_word(); break;
-                    case Bytecodes.PGET_REFERENCE     : do_pget_reference(); break;
-
-                    case Bytecodes.PSET_BYTE          : do_pset_byte(); break;
-                    case Bytecodes.PSET_SHORT         : do_pset_short(); break;
-                    case Bytecodes.PSET_INT           : do_pset_int(); break;
-                    case Bytecodes.PSET_LONG          : do_pset_long(); break;
-                    case Bytecodes.PSET_FLOAT         : do_pset_float(); break;
-                    case Bytecodes.PSET_DOUBLE        : do_pset_double(); break;
-                    case Bytecodes.PSET_WORD          : do_pset_word(); break;
-                    case Bytecodes.PSET_REFERENCE     : do_pset_reference(); break;
-
-                    case Bytecodes.PCMPSWP_INT        : do_pcmpswp_int(); break;
-                    case Bytecodes.PCMPSWP_WORD       : do_pcmpswp_word(); break;
-                    case Bytecodes.PCMPSWP_REFERENCE  : do_pcmpswp_reference(); break;
-                    case Bytecodes.PCMPSWP_INT_I      : do_pcmpswp_int_i(); break;
-                    case Bytecodes.PCMPSWP_WORD_I     : do_pcmpswp_word_i(); break;
-                    case Bytecodes.PCMPSWP_REFERENCE_I: do_pcmpswp_reference_i(); break;
-
-                    case Bytecodes.MEMBAR_LOAD_LOAD   : do_membar_load_load(); break;
-                    case Bytecodes.MEMBAR_LOAD_STORE  : do_membar_load_store(); break;
-                    case Bytecodes.MEMBAR_STORE_LOAD  : do_membar_store_load(); break;
-                    case Bytecodes.MEMBAR_STORE_STORE : do_membar_store_store(); break;
-
-                    default                           : throw new CiBailout("Unsupported opcode" + errorSuffix());
-                }
-                break;
-            }
-
-            case Bytecodes.MOV_I2F            : do_mov_i2f(); break;
-            case Bytecodes.MOV_F2I            : do_mov_f2i(); break;
-            case Bytecodes.MOV_L2D            : do_mov_l2d(); break;
-            case Bytecodes.MOV_D2L            : do_mov_d2l(); break;
-
-
             case Bytecodes.WRETURN            : do_return(WRETURN, WRETURN$unlock); break;
-            case Bytecodes.PAUSE              : do_pause(); break;
-            case Bytecodes.LSB                : do_lsb(); break;
-            case Bytecodes.MSB                : do_msb(); break;
 
             case Bytecodes.RET                :
             case Bytecodes.JSR_W              :
             case Bytecodes.JSR                : throw new UnsupportedSubroutineException(opcode, stream.currentBCI());
 
-            case Bytecodes.READREG            :
-            case Bytecodes.WRITEREG           :
-            case Bytecodes.FLUSHW             :
-            case Bytecodes.ALLOCA             :
-            case Bytecodes.STACKHANDLE        :
             case Bytecodes.JNICALL            :
             default                           : throw new CiBailout("Unsupported opcode" + errorSuffix());
             // Checkstyle: resume
@@ -1378,10 +1268,6 @@ public abstract class T1XCompilation {
         byte[] safepointCode = vm().safepointPoll.code;
         buf.emitBytes(safepointCode, 0, safepointCode.length);
         safepointsBuilder.addSafepoint(stream.currentBCI(), Safepoints.make(pos), null);
-    }
-
-    protected void do_here() {
-        emit(HERE);
     }
 
     void do_profileMethodEntry() {
@@ -1451,13 +1337,13 @@ public abstract class T1XCompilation {
     }
 
     protected void do_dconst(double value) {
-        assignLong(scratch, Intrinsics.doubleToLong(value));
+        assignLong(scratch, Double.doubleToRawLongBits(value));
         incStack(2);
         pokeLong(scratch, 0);
     }
 
     protected void do_fconst(float value) {
-        assignInt(scratch, Intrinsics.floatToInt(value));
+        assignInt(scratch, Float.floatToRawIntBits(value));
         incStack(1);
         pokeInt(scratch, 0);
     }
@@ -1673,6 +1559,9 @@ public abstract class T1XCompilation {
             if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
                 try {
                     VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(cp, index);
+                    if (processIntrinsic(virtualMethodActor)) {
+                        return;
+                    }
                     if (virtualMethodActor.isPrivate() || virtualMethodActor.isFinal()) {
                         // this is an invokevirtual to a private or final method, treat it like invokespecial
                         peekObject(scratch, receiverStackIndex);
@@ -1720,6 +1609,9 @@ public abstract class T1XCompilation {
             if (interfaceMethodRef.isResolvableWithoutClassLoading(cp)) {
                 try {
                     MethodActor interfaceMethod = interfaceMethodRef.resolve(cp, index);
+                    if (processIntrinsic(interfaceMethod)) {
+                        return;
+                    }
                     start(tag.resolved);
                     CiRegister target = template.sig.out.reg;
                     assignObject(0, "interfaceMethodActor", interfaceMethod);
@@ -1755,6 +1647,9 @@ public abstract class T1XCompilation {
         try {
             if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
                 VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(cp, index);
+                if (processIntrinsic(virtualMethodActor)) {
+                    return;
+                }
                 peekObject(scratch, receiverStackIndex);
                 nullCheck(scratch);
 
@@ -1782,6 +1677,9 @@ public abstract class T1XCompilation {
         try {
             if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
                 StaticMethodActor staticMethodActor = classMethodRef.resolveStatic(cp, index);
+                if (processIntrinsic(staticMethodActor)) {
+                    return;
+                }
                 if (staticMethodActor.holder().isInitialized()) {
                     assert tag.initialized == null : "did not expect a template for an initialized invokestatic";
 
@@ -1800,6 +1698,32 @@ public abstract class T1XCompilation {
 
         int safepoint = callIndirect(target, -1);
         finishCall(kind, safepoint, null);
+    }
+
+    protected boolean processIntrinsic(MethodActor method) {
+        String intrinsic = method.intrinsic();
+
+        if (Intrinsifier.isUnsafe(intrinsic)) {
+            throw new CiBailout("Unsupported intrinsic " + intrinsic + ": " + errorSuffix());
+        }
+
+        if (intrinsic == MaxineIntrinsicIDs.UNSAFE_CAST) {
+            // Usafe casts do not need any implementation in T1X, so we are done.
+            return true;
+        } else if (intrinsic == MaxineIntrinsicIDs.UNCOMMON_TRAP) {
+            do_uncommonTrap();
+            return true;
+        }
+
+        T1XTemplate template = compiler.intrinsicTemplates.get(method);
+        if (template == null) {
+            return false;
+        }
+
+        start(template);
+        finish();
+
+        return true;
     }
 
     protected void do_instanceof(int cpi) {
@@ -2356,293 +2280,5 @@ public abstract class T1XCompilation {
 
     protected void do_sastore() {
         emit(SASTORE);
-    }
-
-    protected void do_wdiv() {
-        emit(WDIV);
-    }
-
-    protected void do_wdivi() {
-        emit(WDIVI);
-    }
-
-    protected void do_wrem() {
-        emit(WREM);
-    }
-
-    protected void do_wremi() {
-        emit(WREMI);
-    }
-
-    protected void do_pread_byte() {
-        emit(PREAD_BYTE);
-    }
-
-    protected void do_pread_char() {
-        emit(PREAD_CHAR);
-    }
-
-    protected void do_pread_short() {
-        emit(PREAD_SHORT);
-    }
-
-    protected void do_pread_int() {
-        emit(PREAD_INT);
-    }
-
-    protected void do_pread_long() {
-        emit(PREAD_LONG);
-    }
-
-    protected void do_pread_float() {
-        emit(PREAD_FLOAT);
-    }
-
-    protected void do_pread_double() {
-        emit(PREAD_DOUBLE);
-    }
-
-    protected void do_pread_word() {
-        emit(PREAD_WORD);
-    }
-
-    protected void do_pread_reference() {
-        emit(PREAD_REFERENCE);
-    }
-
-    protected void do_pread_byte_i() {
-        emit(PREAD_BYTE_I);
-    }
-
-    protected void do_pread_char_i() {
-        emit(PREAD_CHAR_I);
-    }
-
-    protected void do_pread_short_i() {
-        emit(PREAD_SHORT_I);
-    }
-
-    protected void do_pread_int_i() {
-        emit(PREAD_INT_I);
-    }
-
-    protected void do_pread_long_i() {
-        emit(PREAD_LONG_I);
-    }
-
-    protected void do_pread_float_i() {
-        emit(PREAD_FLOAT_I);
-    }
-
-    protected void do_pread_double_i() {
-        emit(PREAD_DOUBLE_I);
-    }
-
-    protected void do_pread_word_i() {
-        emit(PREAD_WORD_I);
-    }
-
-    protected void do_pread_reference_i() {
-        emit(PREAD_REFERENCE_I);
-    }
-
-    protected void do_pwrite_byte() {
-        emit(PWRITE_BYTE);
-    }
-
-    protected void do_pwrite_short() {
-        emit(PWRITE_SHORT);
-    }
-
-    protected void do_pwrite_int() {
-        emit(PWRITE_INT);
-    }
-
-    protected void do_pwrite_long() {
-        emit(PWRITE_LONG);
-    }
-
-    protected void do_pwrite_float() {
-        emit(PWRITE_FLOAT);
-    }
-
-    protected void do_pwrite_double() {
-        emit(PWRITE_DOUBLE);
-    }
-
-    protected void do_pwrite_word() {
-        emit(PWRITE_WORD);
-    }
-
-    protected void do_pwrite_reference() {
-        emit(PWRITE_REFERENCE);
-    }
-
-    protected void do_pwrite_byte_i() {
-        emit(PWRITE_BYTE_I);
-    }
-
-    protected void do_pwrite_short_i() {
-        emit(PWRITE_SHORT_I);
-    }
-
-    protected void do_pwrite_int_i() {
-        emit(PWRITE_INT_I);
-    }
-
-    protected void do_pwrite_long_i() {
-        emit(PWRITE_LONG_I);
-    }
-
-    protected void do_pwrite_float_i() {
-        emit(PWRITE_FLOAT_I);
-    }
-
-    protected void do_pwrite_double_i() {
-        emit(PWRITE_DOUBLE_I);
-    }
-
-    protected void do_pwrite_word_i() {
-        emit(PWRITE_WORD_I);
-    }
-
-    protected void do_pwrite_reference_i() {
-        emit(PWRITE_REFERENCE_I);
-    }
-
-    protected void do_pget_byte() {
-        emit(PGET_BYTE);
-    }
-
-    protected void do_pget_char() {
-        emit(PGET_CHAR);
-    }
-
-    protected void do_pget_short() {
-        emit(PGET_SHORT);
-    }
-
-    protected void do_pget_int() {
-        emit(PGET_INT);
-    }
-
-    protected void do_pget_long() {
-        emit(PGET_LONG);
-    }
-
-    protected void do_pget_float() {
-        emit(PGET_FLOAT);
-    }
-
-    protected void do_pget_double() {
-        emit(PGET_DOUBLE);
-    }
-
-    protected void do_pget_word() {
-        emit(PGET_WORD);
-    }
-
-    protected void do_pget_reference() {
-        emit(PGET_REFERENCE);
-    }
-
-    protected void do_pset_byte() {
-        emit(PSET_BYTE);
-    }
-
-    protected void do_pset_short() {
-        emit(PSET_SHORT);
-    }
-
-    protected void do_pset_int() {
-        emit(PSET_INT);
-    }
-
-    protected void do_pset_long() {
-        emit(PSET_LONG);
-    }
-
-    protected void do_pset_float() {
-        emit(PSET_FLOAT);
-    }
-
-    protected void do_pset_double() {
-        emit(PSET_DOUBLE);
-    }
-
-    protected void do_pset_word() {
-        emit(PSET_WORD);
-    }
-
-    protected void do_pset_reference() {
-        emit(PSET_REFERENCE);
-    }
-
-    protected void do_pcmpswp_int() {
-        emit(PCMPSWP_INT);
-    }
-
-    protected void do_pcmpswp_word() {
-        emit(PCMPSWP_WORD);
-    }
-
-    protected void do_pcmpswp_reference() {
-        emit(PCMPSWP_REFERENCE);
-    }
-
-    protected void do_pcmpswp_int_i() {
-        emit(PCMPSWP_INT_I);
-    }
-
-    protected void do_pcmpswp_word_i() {
-        emit(PCMPSWP_WORD_I);
-    }
-
-    protected void do_pcmpswp_reference_i() {
-        emit(PCMPSWP_REFERENCE_I);
-    }
-
-    protected void do_membar_load_load() {
-        emit(MEMBAR_LOAD_LOAD);
-    }
-
-    protected void do_membar_load_store() {
-        emit(MEMBAR_LOAD_STORE);
-    }
-
-    protected void do_membar_store_load() {
-        emit(MEMBAR_STORE_LOAD);
-    }
-
-    protected void do_membar_store_store() {
-        emit(MEMBAR_STORE_STORE);
-    }
-
-    protected void do_mov_i2f() {
-        emit(MOV_I2F);
-    }
-
-    protected void do_mov_f2i() {
-        emit(MOV_F2I);
-    }
-
-    protected void do_mov_l2d() {
-        emit(MOV_L2D);
-    }
-
-    protected void do_mov_d2l() {
-        emit(MOV_D2L);
-    }
-
-    protected void do_pause() {
-        emit(PAUSE);
-    }
-
-    protected void do_lsb() {
-        emit(LSB);
-    }
-
-    protected void do_msb() {
-        emit(MSB);
     }
 }

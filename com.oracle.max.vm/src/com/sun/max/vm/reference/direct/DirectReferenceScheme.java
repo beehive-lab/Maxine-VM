@@ -23,9 +23,9 @@
 /*VCSID=4db5fb46-e2e9-4aa7-81a5-2a0e13ac9265*/
 package com.sun.max.vm.reference.direct;
 
-import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;

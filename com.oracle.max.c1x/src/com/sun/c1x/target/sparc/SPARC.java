@@ -22,7 +22,7 @@
  */
 package com.sun.c1x.target.sparc;
 
-import static com.sun.cri.bytecode.Bytecodes.MemoryBarriers.*;
+import static com.oracle.max.cri.intrinsics.MemoryBarriers.*;
 import static com.sun.cri.ci.CiRegister.RegisterFlag.*;
 
 import com.sun.cri.ci.*;

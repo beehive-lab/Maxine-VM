@@ -30,6 +30,10 @@ import com.sun.cri.ci.*;
  * The {@code Op2} class is the base of arithmetic and logic operations with two inputs.
  */
 public abstract class Op2 extends Instruction {
+    // Opcodes that are not bytecodes, to have some sort of valid number for them.
+    public static final int UDIV = 240;
+    public static final int UREM = 241;
+
 
     /**
      * The opcode of this instruction.

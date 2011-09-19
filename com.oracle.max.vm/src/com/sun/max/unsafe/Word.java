@@ -22,9 +22,9 @@
  */
 package com.sun.max.unsafe;
 
-import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import java.io.*;
 import java.lang.reflect.*;
@@ -116,7 +116,6 @@ public abstract class Word {
     }
 
     @INLINE
-    @INTRINSIC(WCONST_0)
     public static Word zero() {
         return Address.zero();
     }
@@ -194,7 +193,6 @@ public abstract class Word {
     /**
      * @return bit index of the least significant bit set, or -1 if zero.
      */
-    @INTRINSIC(LSB)
     public final int leastSignificantBitSet() {
         return Intrinsics.leastSignificantBit(this);
     }
@@ -202,7 +200,6 @@ public abstract class Word {
     /**
      * @return bit index of the least significant bit set, or -1 if zero.
      */
-    @INTRINSIC(MSB)
     public final int mostSignificantBitSet() {
         return Intrinsics.mostSignificantBit(this);
     }

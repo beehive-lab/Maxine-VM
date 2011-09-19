@@ -22,7 +22,6 @@
  */
 package com.sun.max.vm.runtime;
 
-import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.lang.Classes.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
@@ -36,6 +35,7 @@ import com.sun.max.collect.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.intrinsics.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -162,8 +162,10 @@ public abstract class SafepointPoll {
     /**
      * Emits a safepoint at the call site.
      */
-    @INTRINSIC(SAFEPOINT_POLL)
-    public static native void safepointPoll();
+    @INLINE
+    public static void safepointPoll() {
+        Infopoints.safepointPoll();
+    }
 
     @HOSTED_ONLY
     protected abstract byte[] createCode();

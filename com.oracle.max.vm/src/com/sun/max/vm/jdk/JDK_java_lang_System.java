@@ -22,10 +22,10 @@
  */
 package com.sun.max.vm.jdk;
 
-import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import java.io.*;
 import java.nio.charset.*;

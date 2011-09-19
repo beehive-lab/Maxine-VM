@@ -23,6 +23,9 @@
 package com.sun.max.vm;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
+
+import java.util.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.cri.bytecode.BytecodeIntrinsifier.IntrinsifierClient;
@@ -94,6 +97,15 @@ public class Intrinsifier extends IntrinsifierClient {
         }
     }
 
+    private static Set<String> unsafeIntrinsics = new HashSet<String>(Arrays.asList(
+        READREG, WRITEREG,
+        SAFEPOINT_POLL, HERE, INFO,
+        ALLOCA, STACKHANDLE
+    ));
+
+    public static boolean isUnsafe(String intrinsicId) {
+        return unsafeIntrinsics.contains(intrinsicId);
+    }
     /**
      * Determines if a given opcode is unsafe (i.e. cannot be compiled by the baseline compiler).
      *
@@ -102,22 +114,8 @@ public class Intrinsifier extends IntrinsifierClient {
     private static boolean isUnsafe(int opcode, int intrinsic) {
         switch (opcode) {
             // Checkstyle: stop
-            case READREG            :
-            case WRITEREG           :
-            case PAUSE              :
-            case FLUSHW             :
-            case ALLOCA             :
-            case UCMP               :
-            case UWCMP              :
-            case STACKHANDLE        :
             case JNICALL            :
-            case INFOPOINT: {
-                if ((intrinsic & UNCOMMON_TRAP) == UNCOMMON_TRAP) {
-                    // An uncommon trap is OK to baseline-compile
-                    return false;
-                }
                 return true;
-            }
             // Checkstyle: resume
         }
         return false;
@@ -138,16 +136,11 @@ public class Intrinsifier extends IntrinsifierClient {
         if (holderIsWord || constant.isResolvableWithoutClassLoading(cp)) {
             try {
                 MethodActor method = constant.resolve(cp, cpi);
-                int intrinsic = method.intrinsic();
-                if (intrinsic == UNSAFE_CAST || intrinsic == STACKHANDLE) {
-                    bi.intrinsify(intrinsic, cpi);
-                } else if (intrinsic != 0) {
-                    int opcode = intrinsic & 0xff;
+                String intrinsic = method.intrinsic();
+                if (intrinsic != null) {
                     if (!unsafe) {
-                        unsafe = isUnsafe(opcode, intrinsic);
+                        unsafe |= isUnsafe(intrinsic);
                     }
-                    int operand = (intrinsic >> 8) & 0xffff;
-                    bi.intrinsify(opcode, operand);
                 } else {
                     if (!unsafe && (method.flags() & (Actor.FOLD | Actor.INLINE)) != 0) {
                         if (method instanceof ClassMethodActor && ((ClassMethodActor) method).compilee() != method) {

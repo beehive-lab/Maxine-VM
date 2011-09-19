@@ -22,7 +22,6 @@
  */
 package com.sun.c1x.target.amd64;
 
-import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.cri.ci.CiRegister.*;
 import static com.sun.cri.ci.CiValue.*;
@@ -102,16 +101,21 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void emitInfopoint(CiValue dst, LIRDebugInfo info, int opcode) {
-        if (opcode == HERE) {
-            tasm.recordSafepoint(codePos(), info);
-            masm.codeBuffer.putMark();
-            masm.leaq(dst.asRegister(), new CiAddress(CiKind.Word, InstructionRelative.asValue(), 0));
-        } else if (opcode == UNCOMMON_TRAP) {
-            directCall(CiRuntimeCall.Deoptimize, info);
-        } else {
-            assert opcode == INFO;
-            tasm.recordSafepoint(codePos(), info);
+    protected void emitInfopoint(CiValue dst, LIRDebugInfo info, Infopoint.Op op) {
+        switch (op) {
+            case HERE:
+                tasm.recordSafepoint(codePos(), info);
+                masm.codeBuffer.putMark();
+                masm.leaq(dst.asRegister(), new CiAddress(CiKind.Word, InstructionRelative.asValue(), 0));
+                break;
+            case UNCOMMON_TRAP:
+                directCall(CiRuntimeCall.Deoptimize, info);
+                break;
+            case INFO:
+                tasm.recordSafepoint(codePos(), info);
+                break;
+            default:
+                throw Util.shouldNotReachHere();
         }
     }
 
@@ -463,12 +467,12 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         switch (op.code) {
             case Idiv  :
             case Irem  : arithmeticIdiv(op.code, op.opr1(), op.opr2(), op.result(), op.info); break;
+            case Iudiv :
+            case Iurem : arithmeticIudiv(op.code, op.opr1(), op.opr2(), op.result(), op.info); break;
             case Ldiv  :
             case Lrem  : arithmeticLdiv(op.code, op.opr1(), op.opr2(), op.result(), op.info); break;
-            case Wdiv  :
-            case Wdivi :
-            case Wrem  :
-            case Wremi : arithmeticWdiv(op.code, op.opr1(), op.opr2(), op.result(), op.info); break;
+            case Ludiv :
+            case Lurem : arithmeticLudiv(op.code, op.opr1(), op.opr2(), op.result(), op.info); break;
             default    : throw Util.shouldNotReachHere();
         }
         // Checkstyle: on
@@ -608,7 +612,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         CiValue dest = op.result();
         Label endLabel = new Label();
         CiRegister srcRegister = src.asRegister();
-        switch (op.bytecode) {
+        switch (op.opcode) {
             case I2L:
                 masm.movslq(dest.asRegister(), srcRegister);
                 break;
@@ -1093,6 +1097,8 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         CiRegister dreg = result.asRegister();
 
         if (right.isConstant()) {
+            Util.shouldNotReachHere("cwi: I assume this is dead code, notify me if I'm wrong...");
+
             int divisor = ((CiConstant) right).asInt();
             assert divisor > 0 && CiUtil.isPowerOf2(divisor) : "divisor must be power of two";
             if (code == LIROpcode.Idiv) {
@@ -1158,6 +1164,34 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         }
     }
 
+    void arithmeticIudiv(LIROpcode code, CiValue left, CiValue right, CiValue result, LIRDebugInfo info) {
+        assert left.isRegister() : "left must be register";
+        assert right.isRegister() : "right must be register";
+        assert result.isRegister() : "result must be register";
+
+        CiRegister lreg = left.asRegister();
+        CiRegister dreg = result.asRegister();
+        CiRegister rreg = right.asRegister();
+        assert lreg == AMD64.rax : "left register must be rax";
+        assert rreg != AMD64.rdx : "right register must not be rdx";
+
+        // Must zero the high 64-bit word (in RDX) of the dividend
+        masm.xorq(AMD64.rdx, AMD64.rdx);
+
+        moveRegs(lreg, AMD64.rax);
+
+        int offset = masm.codeBuffer.position();
+        masm.divl(rreg);
+
+        tasm.recordImplicitException(offset, info);
+        if (code == LIROpcode.Iurem) {
+            moveRegs(AMD64.rdx, dreg);
+        } else {
+            assert code == LIROpcode.Iudiv;
+            moveRegs(AMD64.rax, dreg);
+        }
+    }
+
     void arithmeticLdiv(LIROpcode code, CiValue left, CiValue right, CiValue result, LIRDebugInfo info) {
         assert left.isRegister() : "left must be register";
         assert right.isRegister() : "right must be register";
@@ -1206,7 +1240,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         }
     }
 
-    void arithmeticWdiv(LIROpcode code, CiValue left, CiValue right, CiValue result, LIRDebugInfo info) {
+    void arithmeticLudiv(LIROpcode code, CiValue left, CiValue right, CiValue result, LIRDebugInfo info) {
         assert left.isRegister() : "left must be register";
         assert right.isRegister() : "right must be register";
         assert result.isRegister() : "result must be register";
@@ -1220,21 +1254,16 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         // Must zero the high 64-bit word (in RDX) of the dividend
         masm.xorq(AMD64.rdx, AMD64.rdx);
 
-        if (code == LIROpcode.Wdivi || code == LIROpcode.Wremi) {
-            // Zero the high 32 bits of the divisor
-            masm.movzxd(rreg, rreg);
-        }
-
         moveRegs(lreg, AMD64.rax);
 
         int offset = masm.codeBuffer.position();
         masm.divq(rreg);
 
         tasm.recordImplicitException(offset, info);
-        if (code == LIROpcode.Wrem || code == LIROpcode.Wremi) {
+        if (code == LIROpcode.Lurem) {
             moveRegs(AMD64.rdx, dreg);
         } else {
-            assert code == LIROpcode.Wdiv || code == LIROpcode.Wdivi;
+            assert code == LIROpcode.Ludiv;
             moveRegs(AMD64.rax, dreg);
         }
     }

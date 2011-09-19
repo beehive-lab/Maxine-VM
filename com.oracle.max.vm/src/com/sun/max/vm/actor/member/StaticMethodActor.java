@@ -31,7 +31,7 @@ import com.sun.max.vm.type.*;
  */
 public class StaticMethodActor extends ClassMethodActor {
 
-    public StaticMethodActor(Utf8Constant name, SignatureDescriptor descriptor, int flags, CodeAttribute codeAttribute, int intrinsic) {
+    public StaticMethodActor(Utf8Constant name, SignatureDescriptor descriptor, int flags, CodeAttribute codeAttribute, String intrinsic) {
         super(name, descriptor, flags, codeAttribute, intrinsic);
     }
 }

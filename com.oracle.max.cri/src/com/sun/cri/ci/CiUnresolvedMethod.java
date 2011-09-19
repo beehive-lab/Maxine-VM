@@ -146,7 +146,7 @@ public class CiUnresolvedMethod implements RiMethod {
         return null;
     }
 
-    public int intrinsic() {
-        return 0;
+    public String intrinsic() {
+        return null;
     }
 }

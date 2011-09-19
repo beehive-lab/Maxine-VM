@@ -24,7 +24,7 @@ package com.oracle.max.asm.target.amd64;
 
 import static com.oracle.max.asm.NumUtil.*;
 import static com.oracle.max.asm.target.amd64.AMD64.*;
-import static com.sun.cri.bytecode.Bytecodes.MemoryBarriers.*;
+import static com.oracle.max.cri.intrinsics.MemoryBarriers.*;
 import static com.sun.cri.ci.CiKind.*;
 
 import com.oracle.max.asm.*;
@@ -663,6 +663,12 @@ public class AMD64Assembler extends AbstractAssembler {
         int encode = prefixAndEncode(src.encoding);
         emitByte(0xF7);
         emitByte(0xF8 | encode);
+    }
+
+    public final void divl(CiRegister src) {
+        int encode = prefixAndEncode(src.encoding);
+        emitByte(0xF7);
+        emitByte(0xF0 | encode);
     }
 
     public final void imull(CiRegister dst, CiRegister src) {

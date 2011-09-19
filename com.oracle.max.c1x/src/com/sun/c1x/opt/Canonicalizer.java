@@ -27,6 +27,7 @@ import static com.sun.cri.bytecode.Bytecodes.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.oracle.max.cri.intrinsics.*;
 import com.sun.c1x.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;
@@ -190,28 +191,6 @@ public class Canonicalizer extends DefaultValueVisitor {
                     }
                     break;
                 }
-                case Word: {
-                    CiConstant val = runtime.foldWordOperation(i.opcode, new CiMethodInvokeArguments() {
-                        int argIndex;
-                        @Override
-                        public CiConstant nextArg() {
-                            if (argIndex == 0) {
-                                return x.asConstant();
-                            }
-                            if (argIndex == 1) {
-                                return y.asConstant();
-                            }
-                            argIndex++;
-                            return null;
-                        }
-                    });
-
-                    if (val != null) {
-                        setConstant(val); // the operation was successfully folded to a word
-                        return;
-                    }
-                    break;
-                }
             }
         }
 
@@ -229,12 +208,6 @@ public class Canonicalizer extends DefaultValueVisitor {
                 }
                 case Long: {
                     if (reduceLongOp2(i, i.x(), i.y().asConstant().asLong()) != null) {
-                        return;
-                    }
-                    break;
-                }
-                case Word: {
-                    if (reduceWordOp2(i, i.x(), i.y().asConstant().asLong()) != null) {
                         return;
                     }
                     break;
@@ -265,6 +238,23 @@ public class Canonicalizer extends DefaultValueVisitor {
             }
             case IDIV: return y == 1 ? setCanonical(x) : null;
             case IREM: return y == 1 ? setCanonical(x) : null;
+            case Op2.UDIV: {
+                if (y == 1) {
+                    return setCanonical(x);
+                } else if (CiUtil.isPowerOf2(y)) {
+                    return setCanonical(new ShiftOp(IUSHR, x, intInstr(CiUtil.log2(y))));
+                }
+                break;
+            }
+            case Op2.UREM: {
+                if (y == 1) {
+                    return setCanonical(wordInstr(0));
+                } else if (CiUtil.isPowerOf2(y)) {
+                    return setCanonical(new LogicOp(IAND, x, intInstr(y - 1)));
+                }
+                break;
+            }
+
             case IAND: {
                 if (y == -1) {
                     return setCanonical(x);
@@ -356,6 +346,24 @@ public class Canonicalizer extends DefaultValueVisitor {
             }
             case LDIV: return y == 1 ? setCanonical(x) : null;
             case LREM: return y == 1 ? setCanonical(x) : null;
+
+            case Op2.UDIV: {
+                if (y == 1) {
+                    return setCanonical(x);
+                } else if (CiUtil.isPowerOf2(y)) {
+                    return setCanonical(new ShiftOp(LUSHR, x, intInstr(CiUtil.log2(y))));
+                }
+                break;
+            }
+            case Op2.UREM: {
+                if (y == 1) {
+                    return setCanonical(wordInstr(0));
+                } else if (CiUtil.isPowerOf2(y)) {
+                    return setCanonical(new LogicOp(LAND, x, longInstr(y - 1)));
+                }
+                break;
+            }
+
             case LAND: {
                 if (y == -1) {
                     return setCanonical(x);
@@ -377,55 +385,189 @@ public class Canonicalizer extends DefaultValueVisitor {
         return null;
     }
 
-    private Value reduceWordOp2(Op2 original, Value x, long y) {
-        if (y == 0) {
-            // Defer to arithmetic exception at runtime
-            return null;
-        }
-        // attempt to reduce a binary operation with a constant on the right
-        int opcode = original.opcode;
+    /**
+     * Attempts to fold a binary operation on two constant integer inputs.
+     *
+     * @param opcode the bytecode operation to perform
+     * @param x the first input
+     * @param y the second input
+     * @return a {@code Integer} instance representing the result of folding the operation,
+     * if it is foldable, {@code null} otherwise
+     */
+    public static Integer foldIntOp2(int opcode, int x, int y) {
+        // attempt to fold a binary operation with constant inputs
+        // Checkstyle: stop
         switch (opcode) {
-            case WDIVI:
-            case WDIV: {
-                if (y == 1) {
-                    return setCanonical(x);
-                }
-                if (CiUtil.isPowerOf2(y)) {
-                    return setCanonical(new ShiftOp(target.arch.is64bit() ? LUSHR : IUSHR, x, intInstr(CiUtil.log2(y))));
-                }
-                break;
-            }
-            case WREMI: {
-                if (y == 1) {
-                    return setCanonical(intInstr(0));
-                }
-                if (CiUtil.isPowerOf2(y)) {
-                    int mask = (int) y - 1;
-                    if (target.arch.is64bit()) {
-                        Convert l2i = new Convert(L2I, x, CiKind.Int);
-                        addInstr(l2i);
-                        return setCanonical(new LogicOp(IAND, l2i, intInstr(mask)));
-                    }
-                    return setCanonical(new LogicOp(CiKind.Int, IAND, x, intInstr(mask)));
-                }
-                break;
-            }
-            case WREM: {
-                if (y == 1) {
-                    return setCanonical(wordInstr(0));
-                }
-                if (CiUtil.isPowerOf2(y)) {
-                    if (target.arch.is64bit()) {
-                        long mask = y - 1L;
-                        return setCanonical(new LogicOp(LAND, x, longInstr(mask)));
-                    }
-                    int mask = (int) y - 1;
-                    return setCanonical(new LogicOp(IAND, x, intInstr(mask)));
-                }
-                break;
-            }
+            case IADD: return x + y;
+            case ISUB: return x - y;
+            case IMUL: return x * y;
+            case IDIV: return y == 0 ? null : x / y;
+            case IREM: return y == 0 ? null : x % y;
+            case Op2.UDIV: return y == 0 ? null : UnsignedMath.divide(x, y);
+            case Op2.UREM: return y == 0 ? null : UnsignedMath.remainder(x, y);
+            case IAND: return x & y;
+            case IOR:  return x | y;
+            case IXOR: return x ^ y;
+            case ISHL: return x << y;
+            case ISHR: return x >> y;
+            case IUSHR: return x >>> y;
         }
+        // Checkstyle: resume
         return null;
+    }
+
+    /**
+     * Attempts to fold a binary operation on two constant long inputs.
+     *
+     * @param opcode the bytecode operation to perform
+     * @param x the first input
+     * @param y the second input
+     * @return a {@code Long} instance representing the result of folding the operation,
+     * if it is foldable, {@code null} otherwise
+     */
+    public static Long foldLongOp2(int opcode, long x, long y) {
+        // attempt to fold a binary operation with constant inputs
+        // Checkstyle: stop
+        switch (opcode) {
+            case LADD: return x + y;
+            case LSUB: return x - y;
+            case LMUL: return x * y;
+            case LDIV: return y == 0 ? null : x / y;
+            case LREM: return y == 0 ? null : x % y;
+            case Op2.UDIV: return y == 0 ? null : UnsignedMath.divide(x, y);
+            case Op2.UREM: return y == 0 ? null : UnsignedMath.remainder(x, y);
+            case LAND: return x & y;
+            case LOR:  return x | y;
+            case LXOR: return x ^ y;
+            case LSHL: return x << y;
+            case LSHR: return x >> y;
+            case LUSHR: return x >>> y;
+        }
+        // Checkstyle: resume
+        return null;
+    }
+
+    /**
+     * Attempts to fold a binary operation on two constant {@code float} inputs.
+     *
+     * @param opcode the bytecode operation to perform
+     * @param x the first input
+     * @param y the second input
+     * @return a {@code Float} instance representing the result of folding the operation,
+     * if it is foldable, {@code null} otherwise
+     */
+    public static strictfp Float foldFloatOp2(int opcode, float x, float y) {
+        // Checkstyle: stop
+        switch (opcode) {
+            case FADD: return x + y;
+            case FSUB: return x - y;
+            case FMUL: return x * y;
+            case FDIV: return x / y;
+            case FREM: return x % y;
+        }
+        // Checkstyle: resume
+        return null;
+    }
+
+    /**
+     * Attempts to fold a binary operation on two constant {@code double} inputs.
+     *
+     * @param opcode the bytecode operation to perform
+     * @param x the first input
+     * @param y the second input
+     * @return a {@code Double} instance representing the result of folding the operation,
+     * if it is foldable, {@code null} otherwise
+     */
+    public static strictfp Double foldDoubleOp2(int opcode, double x, double y) {
+        // Checkstyle: stop
+        switch (opcode) {
+            case DADD: return x + y;
+            case DSUB: return x - y;
+            case DMUL: return x * y;
+            case DDIV: return x / y;
+            case DREM: return x % y;
+        }
+        // Checkstyle: resume
+        return null;
+    }
+
+    /**
+     * Attempts to fold a comparison operation on two constant {@code long} inputs.
+     *
+     * @param x the first input
+     * @param y the second input
+     * @return an {@code int}  representing the result of the compare
+     */
+    public static int foldLongCompare(long x, long y) {
+        if (x < y) {
+            return -1;
+        }
+        if (x == y) {
+            return 0;
+        }
+        return 1;
+    }
+
+    /**
+     * Attempts to fold a comparison operation on two constant {@code float} inputs.
+     *
+     * @param opcode the bytecode operation to perform
+     * @param x the first input
+     * @param y the second input
+     * @return an {@code Integer}  instance representing the result of the compare,
+     * if it is foldable, {@code null} otherwise
+     */
+    public static Integer foldFloatCompare(int opcode, float x, float y) {
+        // unfortunately we cannot write Java source to generate FCMPL or FCMPG
+        int result = 0;
+        if (x < y) {
+            result = -1;
+        } else if (x > y) {
+            result = 1;
+        }
+        if (opcode == FCMPL) {
+            if (Float.isNaN(x) || Float.isNaN(y)) {
+                return -1;
+            }
+            return result;
+        } else if (opcode == FCMPG) {
+            if (Float.isNaN(x) || Float.isNaN(y)) {
+                return 1;
+            }
+            return result;
+        }
+        return null; // unknown compare opcode
+    }
+
+    /**
+     * Attempts to fold a comparison operation on two constant {@code double} inputs.
+     *
+     * @param opcode the bytecode operation to perform
+     * @param x the first input
+     * @param y the second input
+     * @return an {@code Integer}  instance representing the result of the compare,
+     * if it is foldable, {@code null} otherwise
+     */
+    public static Integer foldDoubleCompare(int opcode, double x, double y) {
+        // unfortunately we cannot write Java source to generate DCMPL or DCMPG
+        int result = 0;
+        if (x < y) {
+            result = -1;
+        } else if (x > y) {
+            result = 1;
+        }
+        if (opcode == DCMPL) {
+            if (Double.isNaN(x) || Double.isNaN(y)) {
+                return -1;
+            }
+            return result;
+        } else if (opcode == DCMPG) {
+            if (Double.isNaN(x) || Double.isNaN(y)) {
+                return 1;
+            }
+            return result;
+        }
+        return null; // unknown compare opcode
     }
 
     private boolean inCurrentBlock(Value x) {
@@ -1218,7 +1360,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                 if (y instanceof Convert) {
                     // match unsafe(x + (long) y)
                     Convert convert = (Convert) y;
-                    if (convert.opcode == I2L && convert.value().kind.isInt()) {
+                    if (convert.opcode == Convert.Op.I2L && convert.value().kind.isInt()) {
                         // the conversion is redundant
                         setUnsafeRawOp(i, x, convert.value(), 0);
                     }

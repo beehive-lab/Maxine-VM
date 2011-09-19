@@ -24,6 +24,7 @@ package com.sun.max.vm.stack;
 
 import static com.sun.max.platform.Platform.*;
 
+import com.oracle.max.cri.intrinsics.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -313,7 +314,7 @@ public abstract class JVMSFrameLayout extends VMFrameLayout {
         @Override
         protected int referenceMapIndexForSlot(int offset) {
             if (offset >= lowestSlotOffset() && offset < maximumSlotOffset()) {
-                return Unsigned.idiv(offset - lowestSlotOffset(), STACK_SLOT_SIZE);
+                return UnsignedMath.divide(offset - lowestSlotOffset(), STACK_SLOT_SIZE);
             }
             return -1;
         }

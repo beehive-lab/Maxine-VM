@@ -22,9 +22,9 @@
  */
 package com.sun.max.vm.heap.gcx.mse;
 
-import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.heap.gcx.HeapRegionManager.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;

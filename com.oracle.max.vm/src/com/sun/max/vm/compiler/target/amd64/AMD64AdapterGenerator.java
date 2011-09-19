@@ -34,6 +34,7 @@ import java.io.*;
 
 import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.cri.intrinsics.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -285,7 +286,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
 
             @Override
             public int frameReferenceMapSize() {
-                return ByteArrayBitMap.computeBitMapSize(Unsigned.idiv(frameSize(), STACK_SLOT_SIZE));
+                return ByteArrayBitMap.computeBitMapSize(UnsignedMath.divide(frameSize(), STACK_SLOT_SIZE));
             }
 
             @Override

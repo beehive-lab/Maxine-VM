@@ -179,6 +179,8 @@ public class C1X implements RuntimeCompiler {
 
             compiler = new C1XCompiler(runtime, target, xirGenerator, vm().registerConfigs.compilerStub);
 
+            MaxineIntrinsicImplementations.initialize(compiler.intrinsicRegistry);
+
             // search for the runtime call and register critical methods
             for (Method m : RuntimeCalls.class.getDeclaredMethods()) {
                 int flags = m.getModifiers();

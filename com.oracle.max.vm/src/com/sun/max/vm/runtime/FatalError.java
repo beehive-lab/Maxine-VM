@@ -22,16 +22,15 @@
  */
 package com.sun.max.vm.runtime;
 
-import static com.sun.cri.bytecode.Bytecodes.Infopoints.*;
 import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.intrinsics.Infopoints.*;
 import static com.sun.max.vm.runtime.VMRegister.*;
 import static com.sun.max.vm.thread.VmThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
-import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
-import com.sun.max.program.ProgramError.*;
+import com.sun.max.program.ProgramError.Handler;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.thread.*;
@@ -212,7 +211,7 @@ public final class FatalError extends Error {
             MaxineVM.core_dump();
         }
         if (TrapOnError) {
-            Bytecodes.breakpointTrap();
+            Intrinsics.breakpointTrap();
         }
         if (doTrapExit) {
             MaxineVM.native_trap_exit(11, instructionPointer);

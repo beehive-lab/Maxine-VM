@@ -22,7 +22,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.cri.bytecode.Bytecodes.*;
+import com.oracle.max.cri.intrinsics.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -179,10 +179,10 @@ public enum Condition {
                     case LE: return x <= y;
                     case GT: return x > y;
                     case GE: return x >= y;
-                    case AE: return UnsignedComparisons.aboveOrEqual(x, y);
-                    case BE: return UnsignedComparisons.belowOrEqual(x, y);
-                    case AT: return UnsignedComparisons.aboveThan(x, y);
-                    case BT: return UnsignedComparisons.belowThan(x, y);
+                    case AE: return UnsignedMath.aboveOrEqual(x, y);
+                    case BE: return UnsignedMath.belowOrEqual(x, y);
+                    case AT: return UnsignedMath.aboveThan(x, y);
+                    case BT: return UnsignedMath.belowThan(x, y);
                 }
                 break;
             }

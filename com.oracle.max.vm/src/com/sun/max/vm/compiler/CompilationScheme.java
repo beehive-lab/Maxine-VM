@@ -22,12 +22,12 @@
  */
 package com.sun.max.vm.compiler;
 
-import static com.sun.cri.bytecode.Bytecodes.Infopoints.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.compiler.target.Compilations.Attr.*;
+import static com.sun.max.vm.intrinsics.Infopoints.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;

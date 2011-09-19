@@ -22,7 +22,7 @@
  */
 package test.output;
 
-import static com.sun.cri.bytecode.Bytecodes.Infopoints.*;
+import static com.sun.max.vm.intrinsics.Infopoints.*;
 
 import com.sun.max.annotate.*;
 

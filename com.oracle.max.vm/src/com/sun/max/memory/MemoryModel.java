@@ -22,9 +22,9 @@
  */
 package com.sun.max.memory;
 
-import static com.sun.cri.bytecode.Bytecodes.MemoryBarriers.*;
+import static com.oracle.max.cri.intrinsics.MemoryBarriers.*;
 
-import com.sun.cri.bytecode.Bytecodes.*;
+import com.oracle.max.cri.intrinsics.*;
 
 /**
  * SMP memory models.

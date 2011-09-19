@@ -22,8 +22,6 @@
  */
 package jtt.exbytecode;
 
-import com.sun.max.vm.*;
-
 // register -> register
 
 /*
@@ -32,7 +30,7 @@ import com.sun.max.vm.*;
 */
 public class EBC_movi2f_01 {
     public static float test(int arg) {
-        return Intrinsics.intToFloat(arg);
+        return Float.intBitsToFloat(arg);
     }
 
 }

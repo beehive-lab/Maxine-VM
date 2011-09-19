@@ -26,13 +26,13 @@
  */
 package jtt.max;
 
-import com.sun.max.lang.*;
+import com.oracle.max.cri.intrinsics.*;
 
 public final class Unsigned_lrem01 {
     private Unsigned_lrem01() {
     }
 
     public static long test(long dividend, long divisor) {
-        return Unsigned.lrem(dividend, divisor);
+        return UnsignedMath.remainder(dividend, divisor);
     }
 }

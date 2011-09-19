@@ -22,11 +22,11 @@
  */
 package com.sun.max.vm;
 
-import static com.sun.cri.bytecode.Bytecodes.*;
-import static com.sun.cri.bytecode.Bytecodes.UnsignedComparisons.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.intrinsics.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 
@@ -38,31 +38,8 @@ import com.sun.max.vm.runtime.*;
  */
 public class Intrinsics {
 
-    @INTRINSIC(MOV_F2I)
-    public static int floatToInt(float value) {
-        return Float.floatToRawIntBits(value);
-    }
-
-    @INTRINSIC(MOV_D2L)
-    public static long doubleToLong(double value) {
-        return Double.doubleToRawLongBits(value);
-    }
-
-    @INTRINSIC(MOV_I2F)
-    public static float intToFloat(int value) {
-        return Float.intBitsToFloat(value);
-    }
-
-    @INTRINSIC(MOV_L2D)
-    public static double longToDouble(long value) {
-        return Double.longBitsToDouble(value);
-    }
-
     /**
-     * Returns the index of the least significant bit set in a given value.
-     *
-     * @param value the value to scan for the least significant bit
-     * @return the index of the least significant bit within {@code value} or {@code -1} if {@code value == 0}
+     * @see MaxineIntrinsicIDs#LSB
      */
     @INTRINSIC(LSB)
     public static int leastSignificantBit(Word value) {
@@ -74,10 +51,7 @@ public class Intrinsics {
     }
 
     /**
-     * Returns the index to the most significant bit set in a given value.
-     *
-     * @param value the value to scan for the most significant bit
-     * @return the index to the most significant bit within {@code value} or {@code -1} if {@code value == 0}
+     * @see MaxineIntrinsicIDs#MSB
      */
     @INTRINSIC(MSB)
     public static int mostSignificantBit(Word value) {
@@ -89,54 +63,44 @@ public class Intrinsics {
     }
 
     /**
-     * If the CPU supports it, then this builtin issues an instruction that improves the performance of spin loops by
-     * providing a hint to the processor that the current thread is in a spin loop. The processor may use this to
-     * optimize power consumption while in the spin loop.
-     *
-     * If the CPU does not support such an instruction, then nothing is emitted for this builtin.
+     * @see MaxineIntrinsicIDs#ALLOCA
+     */
+    @INTRINSIC(ALLOCA)
+    public static native Pointer stackAllocate(@INTRINSIC.Constant int size);
+
+    /**
+     * @see MaxineIntrinsicIDs#STACKHANDLE
+     */
+    @INTRINSIC(STACKHANDLE)
+    public static native Pointer stackHandle(int value);
+
+    /**
+     * @see MaxineIntrinsicIDs#STACKHANDLE
+     */
+    @INTRINSIC(STACKHANDLE)
+    public static native Pointer stackHandle(Reference value);
+
+    /**
+     * @see MaxineIntrinsicIDs#PAUSE
      */
     @INTRINSIC(PAUSE)
-    public static native void pause();
-
-    @INTRINSIC(ALLOCA)
-    public static native Pointer stackAllocate(int size);
-
-    @INTRINSIC(UCMP | (ABOVE_EQUAL << 8))
-    public static boolean aboveEqual(int value1, int value2) {
-        final long unsignedInt1 = value1 & 0xFFFFFFFFL;
-        final long unsignedInt2 = value2 & 0xFFFFFFFFL;
-        return unsignedInt1 >= unsignedInt2;
+    public static void pause() {
     }
 
-    @INTRINSIC(UCMP | (ABOVE_THAN << 8))
-    public static boolean aboveThan(int value1, int value2) {
-        final long unsignedInt1 = value1 & 0xFFFFFFFFL;
-        final long unsignedInt2 = value2 & 0xFFFFFFFFL;
-        return unsignedInt1 > unsignedInt2;
+    /**
+     * @see MaxineIntrinsicIDs#BREAKPOINT_TRAP
+     */
+    @INTRINSIC(BREAKPOINT_TRAP)
+    public static native void breakpointTrap();
 
+    /**
+     * @see MaxineIntrinsicIDs#READREGBIT
+     */
+    @INTRINSIC(READREGBIT)
+    public static native boolean readRegisterBit(@INTRINSIC.Constant int registerId, @INTRINSIC.Constant int offset, @INTRINSIC.Constant int bit);
+
+    @INLINE
+    public static boolean readLatchBit(int offset, int bit) {
+        return readRegisterBit(VMRegister.LATCH, offset, bit);
     }
-
-    @INTRINSIC(UCMP | (BELOW_EQUAL << 8))
-    public static boolean belowEqual(int value1, int value2) {
-        final long unsignedInt1 = value1 & 0xFFFFFFFFL;
-        final long unsignedInt2 = value2 & 0xFFFFFFFFL;
-        return unsignedInt1 <= unsignedInt2;
-    }
-
-    @INTRINSIC(UCMP | (BELOW_THAN << 8))
-    public static boolean belowThan(int value1, int value2) {
-        final long unsignedInt1 = value1 & 0xFFFFFFFFL;
-        final long unsignedInt2 = value2 & 0xFFFFFFFFL;
-        return unsignedInt1 < unsignedInt2;
-    }
-
-    @INTRINSIC(STACKHANDLE)
-    public static native Pointer stackHandle(int i);
-
-    @INTRINSIC(STACKHANDLE)
-    public static native Pointer stackHandle(Reference ref);
-
-    @INTRINSIC(READBIT | VMRegister.LATCH << 8)
-    public static native boolean readLatchBit(int offset, int bit);
-
 }

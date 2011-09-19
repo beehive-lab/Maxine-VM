@@ -22,7 +22,6 @@
  */
 package com.oracle.max.vm.ext.maxri;
 
-import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.compiler.target.Stub.Type.*;
@@ -313,22 +312,6 @@ public class MaxRuntime implements RiRuntime {
     }
 
     protected void notifyMethodFolded() {
-    }
-
-    public CiConstant foldWordOperation(int opcode, CiMethodInvokeArguments args) {
-        CiConstant x = args.nextArg();
-        CiConstant y = args.nextArg();
-        switch (opcode) {
-            case WDIV:
-                return CiConstant.forWord(Address.fromLong(x.asLong()).dividedBy(Address.fromLong(y.asLong())).toLong());
-            case WDIVI:
-                return CiConstant.forWord(Address.fromLong(x.asLong()).dividedBy(y.asInt()).toLong());
-            case WREM:
-                return CiConstant.forWord(Address.fromLong(x.asLong()).remainder(Address.fromLong(y.asLong())).toLong());
-            case WREMI:
-                return CiConstant.forInt(Address.fromLong(x.asLong()).remainder(y.asInt()));
-        }
-        return null;
     }
 
     public Object registerCompilerStub(CiTargetMethod ciTargetMethod, String name) {

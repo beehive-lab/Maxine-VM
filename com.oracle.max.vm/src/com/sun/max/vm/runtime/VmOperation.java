@@ -25,7 +25,7 @@ package com.sun.max.vm.runtime;
 import static com.sun.max.vm.runtime.VmOperationThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
-import com.sun.cri.bytecode.Bytecodes.MemoryBarriers;
+import com.oracle.max.cri.intrinsics.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.unsafe.Pointer.Predicate;
 import com.sun.max.vm.*;
@@ -514,7 +514,7 @@ public class VmOperation {
 
                 // Ensures updates to safepoint-related control variables are visible to all threads
                 // before the VM operation thread reads them
-                MemoryBarriers.storeLoad();
+                MemoryBarriers.barrier(MemoryBarriers.STORE_LOAD);
 
                 waitUntilFrozen();
 

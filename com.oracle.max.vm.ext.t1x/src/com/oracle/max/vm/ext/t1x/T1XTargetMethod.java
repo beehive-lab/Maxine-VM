@@ -839,19 +839,20 @@ public final class T1XTargetMethod extends TargetMethod {
         assert method == frame.method : method + " != " + frame.method;
         RiMethod callee = method.codeAttribute().calleeAt(bci);
         CiKind returnKind = callee == null ? null : callee.signature().returnKind();
+        int templateCallReturnPos = -1;
+        int curPos = bciToPos[bci];
+
         if (returnKind != null) {
             // Find the instruction *following* the template call by searching backwards
             // from the template emitted for the instruction after the invoke
             byte[] bytecode = method.code();
             int opcode = bytecode[bci] & 0xFF;
             assert opcode == INVOKEINTERFACE || opcode == INVOKESPECIAL || opcode == INVOKESTATIC || opcode == INVOKEVIRTUAL;
-            int curPos = bciToPos[bci];
             final int invokeSize = Bytecodes.lengthOf(opcode);
             int succBCI = bci + invokeSize;
             int succPos = bciToPos[succBCI];
             assert succPos > curPos;
 
-            int templateCallReturnPos = -1;
             for (int safepointIndex = 0; safepointIndex < safepoints.size(); ++safepointIndex) {
                 int safepointPos = safepoints.posAt(safepointIndex);
                 if (curPos <= safepointPos && safepointPos < succPos) {
@@ -866,13 +867,14 @@ public final class T1XTargetMethod extends TargetMethod {
                     }
                 }
             }
+        }
 
-            FatalError.check(templateCallReturnPos != -1, "could not find template call at " + curPos + " in " + this);
+        if (templateCallReturnPos != -1) {
             ip = codeStart().plus(templateCallReturnPos);
         } else {
+            FatalError.check(callee == null || callee.intrinsic() != null, "could not find template call for non-intrinisc method at " + curPos + " in " + this);
             // Must be a safepoint
-            int pos = bciToPos[bci];
-            ip = codeStart().plus(pos);
+            ip = codeStart().plus(curPos);
         }
 
         // record continuation instruction pointer

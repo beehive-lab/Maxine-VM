@@ -24,11 +24,10 @@ package com.oracle.max.vm.ext.t1x;
 
 import static com.oracle.max.vm.ext.t1x.T1XRuntime.*;
 import static com.oracle.max.vm.ext.t1x.T1XTemplateTag.*;
-import static com.sun.cri.bytecode.Bytecodes.MemoryBarriers.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import com.sun.cri.bytecode.*;
-import com.sun.cri.bytecode.Bytecodes.Infopoints;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -52,21 +51,12 @@ import com.sun.max.vm.type.*;
  */
 public class T1XTemplateSource {
 
-    @INTRINSIC(Bytecodes.LCMP)
-    public static native int lcmp(long l, long r);
-    @INTRINSIC(Bytecodes.FCMPG)
-    public static native int fcmpg(float l, float r);
-    @INTRINSIC(Bytecodes.FCMPL)
-    public static native int fcmpl(float l, float r);
-    @INTRINSIC(Bytecodes.DCMPG)
-    public static native int dcmpg(double l, double r);
-    @INTRINSIC(Bytecodes.DCMPL)
-    public static native int dcmpl(double l, double r);
-
-    @T1X_TEMPLATE(HERE)
-    public static Pointer here() {
-        return Pointer.fromLong(Infopoints.here());
-    }
+    @INTRINSIC(CMP_BYTECODE)
+    public static native int rawCompare(@INTRINSIC.Constant int opcode, long l, long r);
+    @INTRINSIC(CMP_BYTECODE)
+    public static native int rawCompare(@INTRINSIC.Constant int opcode, float l, float r);
+    @INTRINSIC(CMP_BYTECODE)
+    public static native int rawCompare(@INTRINSIC.Constant int opcode, double l, double r);
 
     @T1X_TEMPLATE(LOAD_EXCEPTION)
     public static Object loadException() {
@@ -97,7 +87,7 @@ public class T1XTemplateSource {
         MethodInstrumentation.recordBackwardBranch(mpo);
     }
 
-    @INTRINSIC(Bytecodes.UNSAFE_CAST)
+    @INTRINSIC(UNSAFE_CAST)
     public static native Word toWord(Object object);
 
     @INLINE
@@ -111,41 +101,6 @@ public class T1XTemplateSource {
         Address entryPoint = hub.getWord(vTableIndex).asAddress();
         MethodInstrumentation.recordType(mpo, hub, mpoIndex, MethodInstrumentation.DEFAULT_RECEIVER_METHOD_PROFILE_ENTRIES);
         return entryPoint;
-    }
-
-    @T1X_TEMPLATE(LSB)
-    public static int lsb(@Slot(0) Word value) {
-        return value.leastSignificantBitSet();
-    }
-
-    @T1X_TEMPLATE(MSB)
-    public static int msb(@Slot(0) Word value) {
-        return value.mostSignificantBitSet();
-    }
-
-    @T1X_TEMPLATE(MEMBAR_LOAD_LOAD)
-    public static void membar_load_load() {
-        loadLoad();
-    }
-
-    @T1X_TEMPLATE(MEMBAR_LOAD_STORE)
-    public static void membar_load_store() {
-        loadStore();
-    }
-
-    @T1X_TEMPLATE(MEMBAR_STORE_STORE)
-    public static void membar_store_store() {
-        loadStore();
-    }
-
-    @T1X_TEMPLATE(MEMBAR_STORE_LOAD)
-    public static void membar_store_load() {
-        storeLoad();
-    }
-
-    @T1X_TEMPLATE(PAUSE)
-    public static void pause() {
-        Intrinsics.pause();
     }
 
     @T1X_TEMPLATE(LDC$reference)
@@ -386,36 +341,6 @@ public class T1XTemplateSource {
         ArrayAccess.setByte(array, index, (byte) value);
     }
 
-    @T1X_TEMPLATE(PGET_BYTE)
-    public static int pget_byte(@Slot(2) Pointer pointer, @Slot(1) int disp, @Slot(0) int index) {
-        return pointer.getByte(disp, index);
-    }
-
-    @T1X_TEMPLATE(PSET_BYTE)
-    public static void pset_byte(@Slot(3) Pointer pointer, @Slot(2) int disp, @Slot(1) int index, @Slot(0) int value) {
-        pointer.setByte(disp, index, (byte) value);
-    }
-
-    @T1X_TEMPLATE(PREAD_BYTE)
-    public static int pread_byte(@Slot(2) Pointer pointer, @Slot(1) Offset offset) {
-        return pointer.readByte(offset);
-    }
-
-    @T1X_TEMPLATE(PWRITE_BYTE)
-    public static void pwrite_byte(@Slot(2) Pointer pointer, @Slot(1) Offset offset, @Slot(0) int value) {
-        pointer.writeByte(offset, (byte) value);
-    }
-
-    @T1X_TEMPLATE(PREAD_BYTE_I)
-    public static int pread_byte_i(@Slot(2) Pointer pointer, @Slot(1) int offset) {
-        return pointer.readByte(offset);
-    }
-
-    @T1X_TEMPLATE(PWRITE_BYTE_I)
-    public static void pwrite_byte_i(@Slot(2) Pointer pointer, @Slot(1) int offset, @Slot(0) int value) {
-        pointer.writeByte(offset, (byte) value);
-    }
-
     @T1X_TEMPLATE(GETFIELD$char$resolved)
     public static int getfieldChar(@Slot(0) Object object, int offset) {
         char result = TupleAccess.readChar(object, offset);
@@ -530,21 +455,6 @@ public class T1XTemplateSource {
         ArrayAccess.setChar(array, index, (char) value);
     }
 
-    @T1X_TEMPLATE(PGET_CHAR)
-    public static int pget_char(@Slot(2) Pointer pointer, @Slot(1) int disp, @Slot(0) int index) {
-        return pointer.getChar(disp, index);
-    }
-
-    @T1X_TEMPLATE(PREAD_CHAR)
-    public static int pread_char(@Slot(2) Pointer pointer, @Slot(1) Offset offset) {
-        return pointer.readChar(offset);
-    }
-
-    @T1X_TEMPLATE(PREAD_CHAR_I)
-    public static int pread_char_i(@Slot(2) Pointer pointer, @Slot(1) int offset) {
-        return pointer.readChar(offset);
-    }
-
     @T1X_TEMPLATE(GETFIELD$short$resolved)
     public static int getfieldShort(@Slot(0) Object object, int offset) {
         short result = TupleAccess.readShort(object, offset);
@@ -657,36 +567,6 @@ public class T1XTemplateSource {
     public static void sastore(@Slot(2) Object array, @Slot(1) int index, @Slot(0) int value) {
         ArrayAccess.checkIndex(array, index);
         ArrayAccess.setShort(array, index, (short) value);
-    }
-
-    @T1X_TEMPLATE(PGET_SHORT)
-    public static int pget_short(@Slot(2) Pointer pointer, @Slot(1) int disp, @Slot(0) int index) {
-        return pointer.getShort(disp, index);
-    }
-
-    @T1X_TEMPLATE(PSET_SHORT)
-    public static void pset_short(@Slot(3) Pointer pointer, @Slot(2) int disp, @Slot(1) int index, @Slot(0) int value) {
-        pointer.setShort(disp, index, (short) value);
-    }
-
-    @T1X_TEMPLATE(PREAD_SHORT)
-    public static int pread_short(@Slot(2) Pointer pointer, @Slot(1) Offset offset) {
-        return pointer.readShort(offset);
-    }
-
-    @T1X_TEMPLATE(PWRITE_SHORT)
-    public static void pwrite_short(@Slot(2) Pointer pointer, @Slot(1) Offset offset, @Slot(0) int value) {
-        pointer.writeShort(offset, (short) value);
-    }
-
-    @T1X_TEMPLATE(PREAD_SHORT_I)
-    public static int pread_short_i(@Slot(2) Pointer pointer, @Slot(1) int offset) {
-        return pointer.readShort(offset);
-    }
-
-    @T1X_TEMPLATE(PWRITE_SHORT_I)
-    public static void pwrite_short_i(@Slot(2) Pointer pointer, @Slot(1) int offset, @Slot(0) int value) {
-        pointer.writeShort(offset, (short) value);
     }
 
     @T1X_TEMPLATE(GETFIELD$int$resolved)
@@ -884,46 +764,6 @@ public class T1XTemplateSource {
         ArrayAccess.setInt(array, index, value);
     }
 
-    @T1X_TEMPLATE(PGET_INT)
-    public static int pget_int(@Slot(2) Pointer pointer, @Slot(1) int disp, @Slot(0) int index) {
-        return pointer.getInt(disp, index);
-    }
-
-    @T1X_TEMPLATE(PSET_INT)
-    public static void pset_int(@Slot(3) Pointer pointer, @Slot(2) int disp, @Slot(1) int index, @Slot(0) int value) {
-        pointer.setInt(disp, index, value);
-    }
-
-    @T1X_TEMPLATE(PREAD_INT)
-    public static int pread_int(@Slot(2) Pointer pointer, @Slot(1) Offset offset) {
-        return pointer.readInt(offset);
-    }
-
-    @T1X_TEMPLATE(PWRITE_INT)
-    public static void pwrite_int(@Slot(2) Pointer pointer, @Slot(1) Offset offset, @Slot(0) int value) {
-        pointer.writeInt(offset, value);
-    }
-
-    @T1X_TEMPLATE(PREAD_INT_I)
-    public static int pread_int_i(@Slot(2) Pointer pointer, @Slot(1) int offset) {
-        return pointer.readInt(offset);
-    }
-
-    @T1X_TEMPLATE(PWRITE_INT_I)
-    public static void pwrite_int_i(@Slot(2) Pointer pointer, @Slot(1) int offset, @Slot(0) int value) {
-        pointer.writeInt(offset, value);
-    }
-
-    @T1X_TEMPLATE(PCMPSWP_INT)
-    public static int pcmpswp_int(@Slot(3) Pointer ptr, @Slot(2) Offset off, @Slot(1) int expectedValue, @Slot(0) int newValue) {
-        return ptr.compareAndSwapInt(off, expectedValue, newValue);
-    }
-
-    @T1X_TEMPLATE(PCMPSWP_INT_I)
-    public static int pcmpswp_int_i(@Slot(3) Pointer ptr, @Slot(2) int off, @Slot(1) int expectedValue, @Slot(0) int newValue) {
-        return ptr.compareAndSwapInt(off, expectedValue, newValue);
-    }
-
     @T1X_TEMPLATE(GETFIELD$float$resolved)
     public static float getfieldFloat(@Slot(0) Object object, int offset) {
         float result = TupleAccess.readFloat(object, offset);
@@ -1065,18 +905,6 @@ public class T1XTemplateSource {
         return zero - value;
     }
 
-    @T1X_TEMPLATE(FCMPG)
-    public static int fcmpgOp(@Slot(1) float value1, @Slot(0) float value2) {
-        int result = fcmpg(value1, value2);
-        return result;
-    }
-
-    @T1X_TEMPLATE(FCMPL)
-    public static int fcmplOp(@Slot(1) float value1, @Slot(0) float value2) {
-        int result = fcmpl(value1, value2);
-        return result;
-    }
-
     @T1X_TEMPLATE(FRETURN)
     public static float freturn(@Slot(0) float value) {
         return value;
@@ -1212,36 +1040,6 @@ public class T1XTemplateSource {
     @Slot(-1)
     public static Address invokestaticFloat(ResolutionGuard.InPool guard) {
         return resolveStaticMethod(guard);
-    }
-
-    @T1X_TEMPLATE(PGET_FLOAT)
-    public static float pget_float(@Slot(2) Pointer pointer, @Slot(1) int disp, @Slot(0) int index) {
-        return pointer.getFloat(disp, index);
-    }
-
-    @T1X_TEMPLATE(PSET_FLOAT)
-    public static void pset_float(@Slot(3) Pointer pointer, @Slot(2) int disp, @Slot(1) int index, @Slot(0) float value) {
-        pointer.setFloat(disp, index, value);
-    }
-
-    @T1X_TEMPLATE(PREAD_FLOAT)
-    public static float pread_float(@Slot(2) Pointer pointer, @Slot(1) Offset offset) {
-        return pointer.readFloat(offset);
-    }
-
-    @T1X_TEMPLATE(PWRITE_FLOAT)
-    public static void pwrite_float(@Slot(2) Pointer pointer, @Slot(1) Offset offset, @Slot(0) float value) {
-        pointer.writeFloat(offset, value);
-    }
-
-    @T1X_TEMPLATE(PREAD_FLOAT_I)
-    public static float pread_float_i(@Slot(2) Pointer pointer, @Slot(1) int offset) {
-        return pointer.readFloat(offset);
-    }
-
-    @T1X_TEMPLATE(PWRITE_FLOAT_I)
-    public static void pwrite_float_i(@Slot(2) Pointer pointer, @Slot(1) int offset, @Slot(0) float value) {
-        pointer.writeFloat(offset, value);
     }
 
     @T1X_TEMPLATE(GETFIELD$long$resolved)
@@ -1415,12 +1213,6 @@ public class T1XTemplateSource {
         return value1 >>> value2;
     }
 
-    @T1X_TEMPLATE(LCMP)
-    public static int lcmpOp(@Slot(2) long value1, @Slot(0) long value2) {
-        int result = lcmp(value1, value2);
-        return result;
-    }
-
     @T1X_TEMPLATE(LRETURN)
     public static long lreturn(@Slot(0) long value) {
         return value;
@@ -1556,36 +1348,6 @@ public class T1XTemplateSource {
     @Slot(-1)
     public static Address invokestaticLong(ResolutionGuard.InPool guard) {
         return resolveStaticMethod(guard);
-    }
-
-    @T1X_TEMPLATE(PGET_LONG)
-    public static long pget_long(@Slot(2) Pointer pointer, @Slot(1) int disp, @Slot(0) int index) {
-        return pointer.getLong(disp, index);
-    }
-
-    @T1X_TEMPLATE(PSET_LONG)
-    public static void pset_long(@Slot(4) Pointer pointer, @Slot(3) int disp, @Slot(2) int index, @Slot(0) long value) {
-        pointer.setLong(disp, index, value);
-    }
-
-    @T1X_TEMPLATE(PREAD_LONG)
-    public static long pread_long(@Slot(2) Pointer pointer, @Slot(1) Offset offset) {
-        return pointer.readLong(offset);
-    }
-
-    @T1X_TEMPLATE(PWRITE_LONG)
-    public static void pwrite_long(@Slot(3) Pointer pointer, @Slot(2) Offset offset, @Slot(0) long value) {
-        pointer.writeLong(offset, value);
-    }
-
-    @T1X_TEMPLATE(PREAD_LONG_I)
-    public static long pread_long_i(@Slot(2) Pointer pointer, @Slot(1) int offset) {
-        return pointer.readLong(offset);
-    }
-
-    @T1X_TEMPLATE(PWRITE_LONG_I)
-    public static void pwrite_long_i(@Slot(3) Pointer pointer, @Slot(2) int offset, @Slot(0) long value) {
-        pointer.writeLong(offset, value);
     }
 
     @T1X_TEMPLATE(GETFIELD$double$resolved)
@@ -1729,18 +1491,6 @@ public class T1XTemplateSource {
         return zero - value;
     }
 
-    @T1X_TEMPLATE(DCMPG)
-    public static int dcmpgOp(@Slot(2) double value1, @Slot(0) double value2) {
-        int result = dcmpg(value1, value2);
-        return result;
-    }
-
-    @T1X_TEMPLATE(DCMPL)
-    public static int dcmplOp(@Slot(2) double value1, @Slot(0) double value2) {
-        int result = dcmpl(value1, value2);
-        return result;
-    }
-
     @T1X_TEMPLATE(DRETURN)
     public static double dreturn(@Slot(0) double value) {
         return value;
@@ -1876,36 +1626,6 @@ public class T1XTemplateSource {
     @Slot(-1)
     public static Address invokestaticDouble(ResolutionGuard.InPool guard) {
         return resolveStaticMethod(guard);
-    }
-
-    @T1X_TEMPLATE(PGET_DOUBLE)
-    public static double pget_double(@Slot(2) Pointer pointer, @Slot(1) int disp, @Slot(0) int index) {
-        return pointer.getDouble(disp, index);
-    }
-
-    @T1X_TEMPLATE(PSET_DOUBLE)
-    public static void pset_double(@Slot(4) Pointer pointer, @Slot(3) int disp, @Slot(2) int index, @Slot(0) double value) {
-        pointer.setDouble(disp, index, value);
-    }
-
-    @T1X_TEMPLATE(PREAD_DOUBLE)
-    public static double pread_double(@Slot(2) Pointer pointer, @Slot(1) Offset offset) {
-        return pointer.readDouble(offset);
-    }
-
-    @T1X_TEMPLATE(PWRITE_DOUBLE)
-    public static void pwrite_double(@Slot(3) Pointer pointer, @Slot(2) Offset offset, @Slot(0) double value) {
-        pointer.writeDouble(offset, value);
-    }
-
-    @T1X_TEMPLATE(PREAD_DOUBLE_I)
-    public static double pread_double_i(@Slot(2) Pointer pointer, @Slot(1) int offset) {
-        return pointer.readDouble(offset);
-    }
-
-    @T1X_TEMPLATE(PWRITE_DOUBLE_I)
-    public static void pwrite_double_i(@Slot(3) Pointer pointer, @Slot(2) int offset, @Slot(0) double value) {
-        pointer.writeDouble(offset, value);
     }
 
     @T1X_TEMPLATE(GETFIELD$reference$resolved)
@@ -2142,46 +1862,6 @@ public class T1XTemplateSource {
         return resolveStaticMethod(guard);
     }
 
-    @T1X_TEMPLATE(PGET_REFERENCE)
-    public static Reference pget_object(@Slot(2) Pointer pointer, @Slot(1) int disp, @Slot(0) int index) {
-        return pointer.getReference(disp, index);
-    }
-
-    @T1X_TEMPLATE(PSET_REFERENCE)
-    public static void pset_object(@Slot(3) Pointer pointer, @Slot(2) int disp, @Slot(1) int index, @Slot(0) Reference value) {
-        pointer.setReference(disp, index, value);
-    }
-
-    @T1X_TEMPLATE(PREAD_REFERENCE)
-    public static Object pread_object(@Slot(2) Pointer pointer, @Slot(1) Offset offset) {
-        return pointer.readReference(offset);
-    }
-
-    @T1X_TEMPLATE(PWRITE_REFERENCE)
-    public static void pwrite_object(@Slot(2) Pointer pointer, @Slot(1) Offset offset, @Slot(0) Reference value) {
-        pointer.writeReference(offset, value);
-    }
-
-    @T1X_TEMPLATE(PREAD_REFERENCE_I)
-    public static Object pread_object_i(@Slot(2) Pointer pointer, @Slot(1) int offset) {
-        return pointer.readReference(offset);
-    }
-
-    @T1X_TEMPLATE(PWRITE_REFERENCE_I)
-    public static void pwrite_object_i(@Slot(2) Pointer pointer, @Slot(1) int offset, @Slot(0) Reference value) {
-        pointer.writeReference(offset, value);
-    }
-
-    @T1X_TEMPLATE(PCMPSWP_REFERENCE)
-    public static Reference pcmpswp_reference(@Slot(3) Pointer ptr, @Slot(2) Offset off, @Slot(1) Reference expectedValue, @Slot(0) Reference newValue) {
-        return ptr.compareAndSwapReference(off, expectedValue, newValue);
-    }
-
-    @T1X_TEMPLATE(PCMPSWP_REFERENCE_I)
-    public static Reference pcmpswp_reference_i(@Slot(3) Pointer ptr, @Slot(2) int off, @Slot(1) Reference expectedValue, @Slot(0) Reference newValue) {
-        return ptr.compareAndSwapReference(off, expectedValue, newValue);
-    }
-
     @T1X_TEMPLATE(GETFIELD$word$resolved)
     public static Word getfieldWord(@Slot(0) Object object, int offset) {
         Word result = TupleAccess.readWord(object, offset);
@@ -2402,46 +2082,6 @@ public class T1XTemplateSource {
         return resolveStaticMethod(guard);
     }
 
-    @T1X_TEMPLATE(PGET_WORD)
-    public static Word pget_word(@Slot(2) Pointer pointer, @Slot(1) int disp, @Slot(0) int index) {
-        return pointer.getWord(disp, index);
-    }
-
-    @T1X_TEMPLATE(PSET_WORD)
-    public static void pset_word(@Slot(3) Pointer pointer, @Slot(2) int disp, @Slot(1) int index, @Slot(0) Word value) {
-        pointer.setWord(disp, index, value);
-    }
-
-    @T1X_TEMPLATE(PREAD_WORD)
-    public static Word pread_word(@Slot(2) Pointer pointer, @Slot(1) Offset offset) {
-        return pointer.readWord(offset);
-    }
-
-    @T1X_TEMPLATE(PWRITE_WORD)
-    public static void pwrite_word(@Slot(2) Pointer pointer, @Slot(1) Offset offset, @Slot(0) Word value) {
-        pointer.writeWord(offset, value);
-    }
-
-    @T1X_TEMPLATE(PREAD_WORD_I)
-    public static Word pread_word_i(@Slot(2) Pointer pointer, @Slot(1) int offset) {
-        return pointer.readWord(offset);
-    }
-
-    @T1X_TEMPLATE(PWRITE_WORD_I)
-    public static void pwrite_word_i(@Slot(2) Pointer pointer, @Slot(1) int offset, @Slot(0) Word value) {
-        pointer.writeWord(offset, value);
-    }
-
-    @T1X_TEMPLATE(PCMPSWP_WORD)
-    public static Word pcmpswp_word(@Slot(3) Pointer ptr, @Slot(2) Offset off, @Slot(1) Word expectedValue, @Slot(0) Word newValue) {
-        return ptr.compareAndSwapWord(off, expectedValue, newValue);
-    }
-
-    @T1X_TEMPLATE(PCMPSWP_WORD_I)
-    public static Word pcmpswp_word_i(@Slot(3) Pointer ptr, @Slot(2) int off, @Slot(1) Word expectedValue, @Slot(0) Word newValue) {
-        return ptr.compareAndSwapWord(off, expectedValue, newValue);
-    }
-
     @T1X_TEMPLATE(RETURN)
     public static void vreturn() {
     }
@@ -2564,44 +2204,34 @@ public class T1XTemplateSource {
         return resolveStaticMethod(guard);
     }
 
-    @T1X_TEMPLATE(WDIV)
-    public static Address wdiv(@Slot(1) Address value1, @Slot(0) Address value2) {
-        return value1.dividedBy(value2);
+    @T1X_TEMPLATE(LCMP)
+    public static int lcmp(@Slot(2) long value1, @Slot(0) long value2) {
+        int result = rawCompare(Bytecodes.LCMP, value1, value2);
+        return result;
     }
 
-    @T1X_TEMPLATE(WDIVI)
-    public static Address wdivi(@Slot(1) Address value1, @Slot(0) int value2) {
-        return value1.dividedBy(value2);
+    @T1X_TEMPLATE(FCMPL)
+    public static int fcmpl(@Slot(1) float value1, @Slot(0) float value2) {
+        int result = rawCompare(Bytecodes.FCMPL, value1, value2);
+        return result;
     }
 
-    @T1X_TEMPLATE(WREM)
-    public static Address wrem(@Slot(1) Address value1, @Slot(0) Address value2) {
-        return value1.remainder(value2);
+    @T1X_TEMPLATE(FCMPG)
+    public static int fcmpg(@Slot(1) float value1, @Slot(0) float value2) {
+        int result = rawCompare(Bytecodes.FCMPG, value1, value2);
+        return result;
     }
 
-    @T1X_TEMPLATE(WREMI)
-    public static int wremi(@Slot(1) Address value1, @Slot(0) int value2) {
-        return value1.remainder(value2);
+    @T1X_TEMPLATE(DCMPL)
+    public static int dcmpl(@Slot(2) double value1, @Slot(0) double value2) {
+        int result = rawCompare(Bytecodes.DCMPL, value1, value2);
+        return result;
     }
 
-    @T1X_TEMPLATE(MOV_F2I)
-    public static int mov_f2i(@Slot(0) float value) {
-        return Intrinsics.floatToInt(value);
-    }
-
-    @T1X_TEMPLATE(MOV_I2F)
-    public static float mov_i2f(@Slot(0) int value) {
-        return Intrinsics.intToFloat(value);
-    }
-
-    @T1X_TEMPLATE(MOV_D2L)
-    public static long mov_d2l(@Slot(0) double value) {
-        return Intrinsics.doubleToLong(value);
-    }
-
-    @T1X_TEMPLATE(MOV_L2D)
-    public static double mov_l2d(@Slot(0) long value) {
-        return Intrinsics.longToDouble(value);
+    @T1X_TEMPLATE(DCMPG)
+    public static int dcmpg(@Slot(2) double value1, @Slot(0) double value2) {
+        int result = rawCompare(Bytecodes.DCMPG, value1, value2);
+        return result;
     }
 
     @T1X_TEMPLATE(NEW)

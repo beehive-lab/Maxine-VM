@@ -187,8 +187,7 @@ public interface RiMethod {
     RiType accessor();
 
     /**
-     * Temporary work-around to support the @ACCESSOR Maxine annotation.
-     * Non-Maxine VMs should just return 0.
+     * Gets the intrinsic id of this method.
      */
-    int intrinsic();
+    String intrinsic();
 }

@@ -244,14 +244,6 @@ public class T1XTemplateGenerator {
         return !(k == Void || k == Boolean || k == Word);
     }
 
-    public static boolean hasPTemplates(CiKind k) {
-        return !(k == Void || k == Boolean);
-    }
-
-    public static boolean hasPCmpSwpTemplates(CiKind k) {
-        return k == Int || k == Object || k == Word;
-    }
-
     public static boolean hasI2Templates(CiKind k) {
         return !(k == Int || k == Void || k == Object || k == Word || k == Boolean);
     }
@@ -314,10 +306,6 @@ public class T1XTemplateGenerator {
 
     public static boolean hasInvokeTemplates(CiKind k) {
         return k == Void || k == Float || k == Long || k == Double || k == Object || k == Word;
-    }
-
-    public static boolean hasCmpTemplates(CiKind k) {
-        return k == Float || k == Double || k == Long;
     }
 
     /**
@@ -1221,33 +1209,6 @@ public class T1XTemplateGenerator {
         newLine();
     }
 
-    public static final EnumSet<T1XTemplateTag> MOV_TEMPLATE_TAGS = EnumSet.of(MOV_I2F, MOV_F2I, MOV_L2D, MOV_D2L);
-
-    /**
-     * Generate all the {@link #MOV_TEMPLATE_TAGS}.
-     */
-    public void generateMovTemplates() {
-        generateMovTemplate(Float, Int);
-        generateMovTemplate(Int, Float);
-        generateMovTemplate(Double, Long);
-        generateMovTemplate(Long, Double);
-    }
-
-    /**
-     * Generate a given {@code MOV} template.
-     * @param from source type
-     * @param target type
-     */
-    public void generateMovTemplate(CiKind from, CiKind to) {
-        generateAutoComment();
-        generateTemplateTag("MOV_%s2%s", u(from).charAt(0), u(to).charAt(0));
-        out.printf("    public static %s mov_%s2%s(@Slot(0) %s value) {%n", rs(to), from.typeChar, to.typeChar, rs(from));
-        generateBeforeAdvice(from, to);
-        out.printf("        return Intrinsics.%sTo%s(value);%n", from, u(to));
-        out.printf("    }%n");
-        newLine();
-    }
-
     public static final EnumSet<T1XTemplateTag> NEG_TEMPLATE_TAGS = EnumSet.of(INEG, LNEG, FNEG, DNEG);
 
     /**
@@ -1272,35 +1233,6 @@ public class T1XTemplateGenerator {
         out.printf("    public static %s %s%s(@Slot(0) %s value, %s zero) {%n", k, opPrefix(k), op, k, k);
         generateBeforeAdvice(k);
         out.printf("        return zero - value;%n");
-        out.printf("    }%n");
-        newLine();
-    }
-
-    public static final EnumSet<T1XTemplateTag> WDIVREM_TEMPLATE_TAGS = EnumSet.of(WDIV, WDIVI, WREM, WREMI);
-
-    /**
-     * Generate all the {@link #WDIVREM_TEMPLATE_TAGS}.
-     */
-    public void generateWordDivRemTemplates() {
-        for (String s : new String[] {"div", "rem"}) {
-            generateWordDivRemTemplate(s, "");
-            generateWordDivRemTemplate(s, "i");
-        }
-    }
-
-    /**
-     * Generate a specific {@link #WDIVREM_TEMPLATE_TAGS} template.
-     * @param op "div" or "rem"
-     * @param iTag "" or "i"
-     */
-    public void generateWordDivRemTemplate(String op, String iTag) {
-        final String m = op.equals("div") ? "dividedBy" : "remainder";
-        final String t = op.equals("rem") && iTag.equals("i") ? "int" : "Address";
-        generateAutoComment();
-        generateTemplateTag("W%s%s", op.toUpperCase(), iTag.toUpperCase());
-        out.printf("    public static %s w%s%s(@Slot(1) Address value1, @Slot(0) %s value2) {%n", t, op, iTag, iTag.equals("i") ? "int" : "Address");
-        generateBeforeAdvice(op, iTag);
-        out.printf("        return value1.%s(value2);%n", m);
         out.printf("    }%n");
         newLine();
     }
@@ -1386,12 +1318,11 @@ public class T1XTemplateGenerator {
      * Generate all the {@link #CMP_TEMPLATE_TAGS}.
      */
     public void generateCmpTemplates() {
-        generateCmpTemplate(Long, "");
-        for (CiKind k : new CiKind[] {Float, Double}) {
-            for (String s : new String[] {"g", "l"}) {
-                generateCmpTemplate(k, s);
-            }
-        }
+        generateCmpTemplate(Long, "LCMP");
+        generateCmpTemplate(Float, "FCMPL");
+        generateCmpTemplate(Float, "FCMPG");
+        generateCmpTemplate(Double, "DCMPL");
+        generateCmpTemplate(Double, "DCMPG");
     }
 
     /**
@@ -1399,162 +1330,13 @@ public class T1XTemplateGenerator {
      * @param k type one of "long", "float" or "double"
      * @param variant "g" or "l"
      */
-    public void generateCmpTemplate(CiKind k, String variant) {
+    public void generateCmpTemplate(CiKind k, String opcode) {
         generateAutoComment();
-        generateTemplateTag("%sCMP%s", tagPrefix(k), variant.toUpperCase());
-        out.printf("    public static int %scmp%sOp(@Slot(%d) %s value1, @Slot(0) %s value2) {%n", opPrefix(k), variant, k.isDoubleWord() ? 2 : 1, s(k), s(k));
-        out.printf("        int result = %scmp%s(value1, value2);%n", opPrefix(k), variant);
+        generateTemplateTag(opcode);
+        out.printf("    public static int %s(@Slot(%d) %s value1, @Slot(0) %s value2) {%n", opcode.toLowerCase(), k.isDoubleWord() ? 2 : 1, s(k), s(k));
+        out.printf("        int result = rawCompare(Bytecodes.%s, value1, value2);%n", opcode);
         generateBeforeAdvice(k);
         out.printf("        return result;%n");
-        out.printf("    }%n");
-        newLine();
-    }
-
-    public static final EnumSet<T1XTemplateTag> PSET_TEMPLATE_TAGS = EnumSet.of(PSET_BYTE, PSET_SHORT, PSET_INT, PSET_FLOAT, PSET_LONG, PSET_DOUBLE, PSET_WORD, PSET_REFERENCE);
-
-    /**
-     * Generate all the {@link #PSET_TEMPLATE_TAGS}.
-     */
-    public void generatePSetTemplates() {
-        for (CiKind k : kinds) {
-            if (hasPTemplates(k)) {
-                generatePSetTemplate(k);
-            }
-        }
-    }
-
-    /**
-     * Generate a specific {@link #PSET_TEMPLATE_TAGS) template.
-     * @param k type
-     */
-    public void generatePSetTemplate(CiKind k) {
-        if (k == Char) {
-            return;
-        }
-        final int indexSlot = k.isDoubleWord() ? 2 : 1;
-        generateAutoComment();
-        generateTemplateTag("PSET_%s", au(k));
-        out.printf("    public static void pset_%s(@Slot(%d) Pointer pointer, @Slot(%d) int disp, @Slot(%d) int index, @Slot(0) %s value) {%n", l(k), indexSlot + 2, indexSlot + 1, indexSlot, rs(k));
-        generateBeforeAdvice(k);
-        out.printf("        pointer.set%s(disp, index, %s);%n", ur(k), fromStackKindCast(k, "value"));
-        out.printf("    }%n");
-        newLine();
-    }
-
-    public static final EnumSet<T1XTemplateTag> PGET_TEMPLATE_TAGS = tags("PGET_");
-
-    /**
-     * Generate all the {@link #PGET_TEMPLATE_TAGS}.
-     */
-    public void generatePGetTemplates() {
-        for (CiKind k : kinds) {
-            if (hasPTemplates(k)) {
-                generatePGetTemplate(k);
-            }
-        }
-    }
-
-    /**
-     * Generate a specific {@link #PSET_TEMPLATE_TAGS) template.
-     * @param k type
-     */
-    public void generatePGetTemplate(CiKind k) {
-        generateAutoComment();
-        generateTemplateTag("PGET_%s", au(k));
-        out.printf("    public static %s pget_%s(@Slot(2) Pointer pointer, @Slot(1) int disp, @Slot(0) int index) {%n", rs(k), l(k));
-        generateBeforeAdvice(k);
-        out.printf("        return pointer.get%s(disp, index);%n", ur(k));
-        out.printf("    }%n");
-        newLine();
-    }
-
-    public static final EnumSet<T1XTemplateTag> PREAD_TEMPLATE_TAGS = tags("PREAD_");
-
-    /**
-     * Generate all the {@link #PREAD_TEMPLATE_TAGS}.
-     */
-    public void generatePReadTemplates() {
-        for (CiKind k : kinds) {
-            if (hasPTemplates(k)) {
-                generatePReadTemplate(k, false);
-                generatePReadTemplate(k, true);
-            }
-        }
-    }
-
-    /**
-     * Generate a specific {@link #PSET_TEMPLATE_TAGS) template.
-     * @param k type
-     * @param isI true iff {@code PREAD_XXX_I} variant
-     */
-    public void generatePReadTemplate(CiKind k, boolean isI) {
-        generateAutoComment();
-        generateTemplateTag("PREAD_%s%s", au(k), isI ? "_I" : "");
-        out.printf("    public static %s pread_%s%s(@Slot(2) Pointer pointer, @Slot(1) %s offset) {%n", k.stackKind(), l(k), isI ? "_i" : "", isI ? "int" : "Offset");
-        generateBeforeAdvice(k);
-        out.printf("        return pointer.read%s(offset);%n", ur(k));
-        out.printf("    }%n");
-        newLine();
-    }
-
-    public static final EnumSet<T1XTemplateTag> PWRITE_TEMPLATE_TAGS = tags("PWRITE_");
-
-    /**
-     * Generate all the {@link #PWRITE_TEMPLATE_TAGS}.
-     */
-    public void generatePWriteTemplates() {
-        for (CiKind k : kinds) {
-            if (hasPTemplates(k)) {
-                generatePWriteTemplate(k, false);
-                generatePWriteTemplate(k, true);
-            }
-        }
-    }
-
-    /**
-     * Generate a specific {@link #PSET_TEMPLATE_TAGS) template.
-     * @param k type
-     * @param isI true iff {@code PWRITE_XXX_I} variant
-     */
-    public void generatePWriteTemplate(CiKind k, boolean isI) {
-        if (k == Char) {
-            return;
-        }
-        final int offsetSlot = k.isDoubleWord() ? 2 : 1;
-        generateAutoComment();
-        generateTemplateTag("PWRITE_%s%s", au(k), isI ? "_I" : "");
-        out.printf("    public static void pwrite_%s%s(@Slot(%d) Pointer pointer, @Slot(%d) %s offset, @Slot(0) %s value) {%n", l(k), isI ? "_i" : "", offsetSlot + 1, offsetSlot, isI ? "int" : "Offset", rs(k));
-        generateBeforeAdvice(k);
-        out.printf("        pointer.write%s(offset, %s);%n", ur(k), fromStackKindCast(k, "value"));
-        out.printf("    }%n");
-        newLine();
-    }
-
-    public static final EnumSet<T1XTemplateTag> PCMPSWP_TEMPLATE_TAGS = tags("PCMPSWP_");
-
-    /**
-     * Generate all the {@link #PCMPSWP_TEMPLATE_TAGS}.
-     */
-    public void generatePCmpSwpTemplates() {
-        for (CiKind k : kinds) {
-            if (hasPCmpSwpTemplates(k)) {
-                generatePCmpSwpTemplate(k, false);
-                generatePCmpSwpTemplate(k, true);
-            }
-        }
-    }
-
-    /**
-     * Generate a specific {@link #PCMPSWP_TEMPLATE_TAGS) template.
-     * @param k type
-     * @param isI true iff {@code PCMPSWP_XXX_I} variant
-     */
-    public void generatePCmpSwpTemplate(CiKind k, boolean isI) {
-        generateAutoComment();
-        generateTemplateTag("PCMPSWP_%s%s", au(k), isI ? "_I" : "");
-        out.printf("    public static %s pcmpswp_%s%s(@Slot(3) Pointer ptr, @Slot(2) %s off, @Slot(1) %s expectedValue, @Slot(0) %s newValue) {%n", rs(k), lr(k), isI ? "_i" : "", isI ? "int" : "Offset", rs(k), rs(k));
-        generateBeforeAdvice(k);
-        out.printf("        return ptr.compareAndSwap%s(off, expectedValue, newValue);%n", ur(k));
         out.printf("    }%n");
         newLine();
     }
@@ -1599,15 +1381,6 @@ public class T1XTemplateGenerator {
                     generateDyadicTemplate(k, op);
                 }
             }
-            if (hasCmpTemplates(k)) {
-                if (k == Long) {
-                    generateCmpTemplate(k, "");
-                } else {
-                    for (String s : new String[] {"g", "l"}) {
-                        generateCmpTemplate(k, s);
-                    }
-                }
-            }
             if (hasReturnTemplates(k)) {
                 generateReturnTemplate(k, "");
                 generateReturnTemplate(k, "unlock");
@@ -1626,25 +1399,9 @@ public class T1XTemplateGenerator {
                     generateInvokeSSTemplate(k, s);
                 }
             }
-            if (hasPTemplates(k)) {
-                generatePGetTemplate(k);
-                generatePSetTemplate(k);
-                generatePReadTemplate(k, false);
-                generatePWriteTemplate(k, false);
-                generatePReadTemplate(k, true);
-                generatePWriteTemplate(k, true);
-            }
-            if (hasPCmpSwpTemplates(k)) {
-                generatePCmpSwpTemplate(k, false);
-                generatePCmpSwpTemplate(k, true);
-            }
         }
         // Special cases
-        for (String s : new String[] {"div", "rem"}) {
-            generateWordDivRemTemplate(s, "");
-            generateWordDivRemTemplate(s, "i");
-        }
-        generateMovTemplates();
+        generateCmpTemplates();
         generateNewTemplates();
         generateNewArrayTemplate();
         generateANewArrayTemplates();

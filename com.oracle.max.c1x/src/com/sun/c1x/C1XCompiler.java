@@ -24,7 +24,9 @@ package com.sun.c1x;
 
 import java.util.*;
 
+import com.oracle.max.cri.intrinsics.*;
 import com.sun.c1x.debug.*;
+import com.sun.c1x.intrinsics.*;
 import com.sun.c1x.observer.*;
 import com.sun.c1x.stub.*;
 import com.sun.c1x.target.*;
@@ -36,6 +38,8 @@ import com.sun.cri.xir.*;
  * This class implements the compiler interface for C1X.
  */
 public class C1XCompiler extends ObservableCompiler {
+
+    public final IntrinsicImpl.Registry intrinsicRegistry = new IntrinsicImpl.Registry();
 
     public final Map<Object, CompilerStub> stubs = new HashMap<Object, CompilerStub>();
 
@@ -112,6 +116,8 @@ public class C1XCompiler extends ObservableCompiler {
     }
 
     private void init() {
+        C1XIntrinsicImplementations.initialize(intrinsicRegistry);
+
         final List<XirTemplate> xirTemplateStubs = xir.buildTemplates(backend.newXirAssembler());
 
         if (xirTemplateStubs != null) {

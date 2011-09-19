@@ -22,8 +22,6 @@
  */
 package jtt.exbytecode;
 
-import com.sun.max.vm.*;
-
 // register -> memory
 
 /*
@@ -43,7 +41,7 @@ public class EBC_movl2d_04 {
     public static double test(long arg) {
         L l = new L(arg);
         D d = new D();
-        d.d = Intrinsics.longToDouble(l.l);
+        d.d = Double.longBitsToDouble(l.l);
         return d.d;
     }
 

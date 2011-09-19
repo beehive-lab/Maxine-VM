@@ -22,7 +22,7 @@
  */
 package com.sun.max.vm.thread;
 
-import static com.sun.cri.bytecode.Bytecodes.Infopoints.*;
+import static com.sun.max.vm.intrinsics.Infopoints.*;
 import static com.sun.max.vm.runtime.VMRegister.*;
 import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
 import static com.sun.max.vm.thread.VmThread.*;

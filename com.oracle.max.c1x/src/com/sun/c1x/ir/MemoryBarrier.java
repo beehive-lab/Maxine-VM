@@ -22,18 +22,17 @@
  */
 package com.sun.c1x.ir;
 
+import com.oracle.max.cri.intrinsics.*;
 import com.sun.c1x.debug.*;
-import com.sun.cri.bytecode.*;
-import com.sun.cri.bytecode.Bytecodes.*;
 import com.sun.cri.ci.*;
 
 /**
- * Instruction implementing the semantics of {@link Bytecodes#MEMBAR}.
+ * Instruction implementing the semantics of {@link IntrinsicIDs#MEMBAR}.
  */
 public final class MemoryBarrier extends Instruction {
 
     /**
-     * A mask of the constants defined by {@link Bytecodes.MemoryBarriers}.
+     * A mask of the constants defined by {@link MemoryBarriers}.
      */
     public final int barriers;
 

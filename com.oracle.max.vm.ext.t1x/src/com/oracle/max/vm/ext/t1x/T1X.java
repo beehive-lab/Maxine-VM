@@ -22,10 +22,12 @@
  */
 package com.oracle.max.vm.ext.t1x;
 
+import static com.oracle.max.cri.intrinsics.IntrinsicIDs.*;
 import static com.oracle.max.vm.ext.t1x.T1XOptions.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.compiler.target.Safepoints.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import static com.sun.max.vm.stack.VMFrameLayout.*;
 
 import java.io.*;
@@ -50,6 +52,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
@@ -64,9 +67,12 @@ public class T1X implements RuntimeCompiler {
 
     static {
         ClassfileReader.bytecodeTemplateClasses.add(T1X_TEMPLATE.class);
+        ClassfileReader.bytecodeTemplateClasses.add(T1X_INTRINSIC_TEMPLATE.class);
     }
 
     public final T1XTemplate[] templates = new T1XTemplate[T1XTemplateTag.values().length];
+
+    public Map<RiMethod, T1XTemplate> intrinsicTemplates;
 
     /**
      * Class defining the template definitions, default is {@link T1XTemplateSource}.
@@ -321,6 +327,7 @@ public class T1X implements RuntimeCompiler {
     public void initialize(Phase phase) {
         if (isHosted() && phase == Phase.COMPILING) {
             createTemplates(templateSource, altT1X, true, templates);
+            intrinsicTemplates = createIntrinsicTemplates();
         }
         if (phase == Phase.TERMINATING) {
 
@@ -374,31 +381,8 @@ public class T1X implements RuntimeCompiler {
                     T1XTemplateTag tag = anno.value();
                     ClassMethodActor templateSource = ClassMethodActor.fromJava(method);
                     templateSource.verify(verifier);
-
-                    FatalError.check(templateSource.isTemplate(), "Method with " + T1X_TEMPLATE.class.getSimpleName() + " annotation should be a template: " + templateSource);
-                    FatalError.check(!hasStackParameters(templateSource), "Template must not have *any* stack parameters: " + templateSource);
-
-                    FatalError.check(templateSource.resultKind().stackKind == templateSource.resultKind(), "Template return type must be a stack kind: " + templateSource);
-                    for (int i = 0; i < templateSource.getParameterKinds().length; i++) {
-                        Kind k = templateSource.getParameterKinds()[i];
-                        FatalError.check(k.stackKind == k, "Template parameter " + i + " is not a stack kind: " + templateSource);
-                    }
-
-                    final MaxTargetMethod templateCode = (MaxTargetMethod) bootCompiler.compile(templateSource, true, null);
-                    if (!(templateCode.referenceLiterals() == null)) {
-                        final StringBuilder sb = new StringBuilder("Template must not have *any* reference literals: " + templateCode);
-                        for (int i = 0; i < templateCode.referenceLiterals().length; i++) {
-                            Object literal = templateCode.referenceLiterals()[i];
-                            sb.append("\n  " + i + ": " + literal.getClass().getName() + " // \"" + literal + "\"\n");
-                        }
-                        throw FatalError.unexpected(sb.toString());
-                    }
-                    FatalError.check(templateCode.scalarLiterals() == null, "Template must not have *any* scalar literals: " + templateCode + "\n\n" + templateCode);
+                    MaxTargetMethod templateCode = compileTemplate(bootCompiler, templateSource);
                     codeSize += templateCode.codeLength();
-                    int frameSlots = Ints.roundUp(templateCode.frameSize(), STACK_SLOT_SIZE) / STACK_SLOT_SIZE;
-                    if (frameSlots > T1XTargetMethod.templateSlots) {
-                        T1XTargetMethod.templateSlots = frameSlots;
-                    }
                     T1XTemplate template = templates[tag.ordinal()];
                     if (template != null) {
                         FatalError.unexpected("Template tag " + tag + " is already bound to " + template.method + ", cannot rebind to " + templateSource);
@@ -422,6 +406,90 @@ public class T1X implements RuntimeCompiler {
         Trace.end(1, "creating T1X templates from " + templateSourceClass.getName() + " [templates code size: " + codeSize + "]", startTime);
         return templates;
     }
+
+    private MaxTargetMethod compileTemplate(C1X bootCompiler, ClassMethodActor templateSource) {
+        FatalError.check(templateSource.isTemplate(), "Method should be a template: " + templateSource);
+        FatalError.check(!hasStackParameters(templateSource), "Template must not have *any* stack parameters: " + templateSource);
+
+        FatalError.check(templateSource.resultKind().stackKind == templateSource.resultKind(), "Template return type must be a stack kind: " + templateSource);
+        for (int i = 0; i < templateSource.getParameterKinds().length; i++) {
+            Kind k = templateSource.getParameterKinds()[i];
+            FatalError.check(k.stackKind == k, "Template parameter " + i + " is not a stack kind: " + templateSource);
+        }
+
+        final MaxTargetMethod templateCode = (MaxTargetMethod) bootCompiler.compile(templateSource, true, null);
+        if (!(templateCode.referenceLiterals() == null)) {
+            final StringBuilder sb = new StringBuilder("Template must not have *any* reference literals: " + templateCode);
+            for (int i = 0; i < templateCode.referenceLiterals().length; i++) {
+                Object literal = templateCode.referenceLiterals()[i];
+                sb.append("\n  " + i + ": " + literal.getClass().getName() + " // \"" + literal + "\"\n");
+            }
+            throw FatalError.unexpected(sb.toString());
+        }
+        FatalError.check(templateCode.scalarLiterals() == null, "Template must not have *any* scalar literals: " + templateCode + "\n\n" + templateCode);
+        int frameSlots = Ints.roundUp(templateCode.frameSize(), STACK_SLOT_SIZE) / STACK_SLOT_SIZE;
+        if (frameSlots > T1XTargetMethod.templateSlots) {
+            T1XTargetMethod.templateSlots = frameSlots;
+        }
+        return templateCode;
+    }
+
+    private static final Set<String> templateIntriniscIDs = new HashSet<String>(Arrays.asList(
+        UCMP_AT, UCMP_AE, UCMP_BT, UCMP_BE,
+        UDIV, UREM,
+        LSB, MSB,
+        PREAD, PWRITE, PCMPSWP,
+        HERE,
+        PAUSE
+    ));
+
+    public static List<ClassMethodActor> intrinsicTemplateMethods() {
+        ArrayList<ClassMethodActor> result = new ArrayList<ClassMethodActor>();
+        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY.bootImageClasses()) {
+            for (MethodActor methodActor : classActor.getLocalMethodActors()) {
+                if (T1X.templateIntriniscIDs.contains(methodActor.intrinsic())) {
+                    result.add((ClassMethodActor) methodActor);
+                }
+            }
+        }
+        return result;
+    }
+
+    @HOSTED_ONLY
+    public Map<RiMethod, T1XTemplate> createIntrinsicTemplates() {
+        Map<RiMethod, T1XTemplate> result = new HashMap<RiMethod, T1XTemplate>();
+
+        Trace.begin(1, "creating T1X templates for intrinsics");
+        long startTime = System.currentTimeMillis();
+
+        try {
+            boolean modified = T1XIntrinsicTemplateGenerator.generate(T1XIntrinsicTemplateSource.class);
+            if (modified) {
+                System.out.printf("%nThe generated content in %s was regenerated. Recompile (or refresh it in your IDE) and restart the bootstrapping process.%n%n", T1XTemplateSource.class.getSimpleName());
+                System.exit(1);
+            }
+        } catch (Exception e) {
+            FatalError.unexpected("Error while generating source for " + T1XIntrinsicTemplateSource.class, e);
+        }
+
+        // Create a C1X compiler to compile the templates
+        C1X bootCompiler = C1X.instance;
+        if (bootCompiler == null) {
+            bootCompiler = new C1X();
+            bootCompiler.initialize(Phase.COMPILING);
+        }
+
+        ClassActor source = ClassActor.fromJava(T1XIntrinsicTemplateSource.class);
+        for (ClassMethodActor intrinsicMethod : intrinsicTemplateMethods()) {
+            ClassMethodActor templateSource = source.findLocalStaticMethodActor(SymbolTable.makeSymbol(T1XIntrinsicTemplateGenerator.templateInvokerName(intrinsicMethod)));
+            MaxTargetMethod templateCode = compileTemplate(bootCompiler, templateSource);
+            result.put(intrinsicMethod, new T1XTemplate(templateCode, null, templateSource));
+        }
+
+        Trace.end(1, "creating T1X templates for intrinsics", startTime);
+        return result;
+    }
+
 
     static {
         try {

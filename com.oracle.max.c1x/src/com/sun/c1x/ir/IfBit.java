@@ -32,11 +32,11 @@ import com.sun.cri.ci.*;
 public class IfBit extends BlockEnd {
 
     public final CiRegister register;
-    public final Value offset;
+    public final int offset;
     public final Condition condition;
-    public final Value bitNo;
+    public final int bitNo;
 
-    public IfBit(CiRegister reg, Value offset, Value bitNo, Condition cond, BlockBegin tSucc, BlockBegin fSucc) {
+    public IfBit(CiRegister reg, int offset, int bitNo, Condition cond, BlockBegin tSucc, BlockBegin fSucc) {
         super(CiKind.Illegal, null, false);
         setFlag(Flag.LiveControl);
         this.register = reg;
