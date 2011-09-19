@@ -38,4 +38,9 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.TYPE})
 public @interface NEVER_INLINE {
+
+    /**
+     * Documents the reason why the annotated code must notbe inlined.
+     */
+    String value() default "";
 }

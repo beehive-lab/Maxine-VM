@@ -342,6 +342,7 @@ public enum T1XTemplateTag {
 
     NEW,
     NEW$init,
+    NEW_HYBRID(-1),
     NEWARRAY,
     ANEWARRAY,
     ANEWARRAY$resolved,

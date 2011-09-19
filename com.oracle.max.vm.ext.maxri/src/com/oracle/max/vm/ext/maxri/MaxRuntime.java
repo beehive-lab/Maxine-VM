@@ -185,12 +185,17 @@ public class MaxRuntime implements RiRuntime {
 
     @Override
     public String disassemble(final CiTargetMethod tm) {
-        byte[] code = Arrays.copyOf(tm.targetCode(), tm.targetCodeSize());
+        return disassemble(tm, null);
+    }
+
+    public String disassemble(CiTargetMethod ciTM, MaxTargetMethod maxTM) {
+        byte[] code = maxTM == null ? Arrays.copyOf(ciTM.targetCode(), ciTM.targetCodeSize()) : maxTM.code();
         final Platform platform = Platform.platform();
 
-        CiHexCodeFile hcf = new CiHexCodeFile(code, 0L, platform.isa.name(), platform.wordWidth().numberOfBits);
-        CiUtil.addAnnotations(hcf, tm.annotations());
-        addExceptionHandlersComment(tm, hcf);
+        long startAddress = maxTM == null ? 0L : maxTM.codeStart().toLong();
+        CiHexCodeFile hcf = new CiHexCodeFile(code, startAddress, platform.isa.name(), platform.wordWidth().numberOfBits);
+        CiUtil.addAnnotations(hcf, ciTM.annotations());
+        addExceptionHandlersComment(ciTM, hcf);
         CiRegister fp;
         int refMapToFPOffset;
         if (platform.isa == ISA.AMD64) {
@@ -200,7 +205,7 @@ public class MaxRuntime implements RiRuntime {
             throw FatalError.unimplemented();
         }
         RefMapFormatter slotFormatter = new RefMapFormatter(target().arch, target().spillSlotSize, fp, refMapToFPOffset);
-        for (Safepoint safepoint : tm.safepoints) {
+        for (Safepoint safepoint : ciTM.safepoints) {
             if (safepoint instanceof Call) {
                 Call call = (Call) safepoint;
                 if (call.debugInfo != null) {
@@ -214,7 +219,7 @@ public class MaxRuntime implements RiRuntime {
                 addOperandComment(hcf, safepoint.pcOffset, "{safepoint}");
             }
         }
-        for (DataPatch site : tm.dataReferences) {
+        for (DataPatch site : ciTM.dataReferences) {
             hcf.addOperandComment(site.pcOffset, "{" + site.constant + "}");
         }
 

@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.monitor.modal.modehandlers.lightweight.thin;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.monitor.*;
@@ -339,6 +340,7 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
             super(delegate);
         }
 
+        @INLINE
         public void monitorEnter(Object object) {
             nullCheck(object);
             if (MaxineVM.isHosted()) {
@@ -357,6 +359,7 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
             }
         }
 
+        @INLINE
         public void monitorExit(Object object) {
             nullCheck(object);
             if (MaxineVM.isHosted()) {
@@ -375,10 +378,12 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
             }
         }
 
+        @INLINE
         public Word createMisc(Object object) {
             return ThinLockword64.unlockedFromHashcode(monitorScheme().createHashCode(object));
         }
 
+        @INLINE
         public int makeHashCode(Object object) {
             nullCheck(object);
             if (MaxineVM.isHosted()) {

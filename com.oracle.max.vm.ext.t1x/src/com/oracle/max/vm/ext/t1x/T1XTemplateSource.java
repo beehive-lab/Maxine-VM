@@ -2625,8 +2625,14 @@ public class T1XTemplateSource {
     }
 
     @T1X_TEMPLATE(NEW$init)
-    public static Object new_(ClassActor classActor) {
-        Object object = createTupleOrHybrid(classActor);
+    public static Object new_(DynamicHub hub) {
+        Object object = Heap.createTuple(hub);
+        return object;
+    }
+
+    @T1X_TEMPLATE(NEW_HYBRID)
+    public static Object new_hybrid(DynamicHub hub) {
+        Object object = Heap.createHybrid(hub);
         return object;
     }
 
