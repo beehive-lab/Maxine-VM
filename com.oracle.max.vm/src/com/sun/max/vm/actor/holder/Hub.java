@@ -25,6 +25,7 @@ package com.sun.max.vm.actor.holder;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.type.ClassRegistry.*;
 
+import com.oracle.max.cri.intrinsics.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
@@ -162,7 +163,7 @@ public abstract class Hub extends Hybrid {
 
     @Override
     public final int firstIntIndex() {
-        return Unsigned.idiv((iTableStartIndex + iTableLength) * Word.size(), Ints.SIZE);
+        return UnsignedMath.divide((iTableStartIndex + iTableLength) * Word.size(), Ints.SIZE);
     }
 
     @Override
@@ -296,7 +297,7 @@ public abstract class Hub extends Hybrid {
      */
     protected static int computeLength(int referenceMapStartIndex, int referenceMapLength) {
         int referenceMapSize = Ints.roundUnsignedUpByPowerOfTwo((referenceMapStartIndex + referenceMapLength) * Ints.SIZE, Word.size());
-        return Unsigned.idiv(referenceMapSize, Word.size());
+        return UnsignedMath.divide(referenceMapSize, Word.size());
     }
 
     @INLINE

@@ -24,7 +24,7 @@ package com.sun.max.vm.heap;
 
 import java.util.*;
 
-import com.sun.max.lang.*;
+import com.oracle.max.cri.intrinsics.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -50,7 +50,7 @@ public class TupleReferenceMap {
     public TupleReferenceMap(FieldActor[] staticFieldActors) {
         for (FieldActor staticFieldActor : staticFieldActors) {
             if (staticFieldActor.kind.isReference) {
-                final int fieldIndex = Unsigned.idiv(staticFieldActor.offset(), Word.size());
+                final int fieldIndex = UnsignedMath.divide(staticFieldActor.offset(), Word.size());
                 indexes.add(fieldIndex);
             }
         }
@@ -66,7 +66,7 @@ public class TupleReferenceMap {
         do {
             for (FieldActor instanceFieldActor : c.localInstanceFieldActors()) {
                 if (instanceFieldActor.kind.isReference && instanceFieldActor != ClassRegistry.JLRReference_referent) {
-                    final int fieldIndex = Unsigned.idiv(instanceFieldActor.offset(), Word.size());
+                    final int fieldIndex = UnsignedMath.divide(instanceFieldActor.offset(), Word.size());
                     indexes.add(fieldIndex);
                 }
             }

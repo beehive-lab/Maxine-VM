@@ -24,7 +24,6 @@ package com.sun.c1x.ir;
 
 import com.sun.c1x.debug.*;
 import com.sun.c1x.util.*;
-import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -32,10 +31,14 @@ import com.sun.cri.ci.*;
  */
 public final class Convert extends Instruction {
 
+    public enum Op {
+        I2L, L2I, I2B, I2C, I2S, F2D, D2F, I2F, I2D, F2I, D2I, L2F, L2D, F2L, D2L, MOV_I2F, MOV_L2D, MOV_F2I, MOV_D2L
+    }
+
     /**
      * The opcode for this conversion operation.
      */
-    public final int opcode;
+    public final Op opcode;
 
     Value value;
 
@@ -45,7 +48,7 @@ public final class Convert extends Instruction {
      * @param value the instruction producing the input value
      * @param kind the result type of this instruction
      */
-    public Convert(int opcode, Value value, CiKind kind) {
+    public Convert(Op opcode, Value value, CiKind kind) {
         super(kind);
         this.opcode = opcode;
         this.value = value;
@@ -71,7 +74,7 @@ public final class Convert extends Instruction {
 
     @Override
     public int valueNumber() {
-        return Util.hash1(opcode, value);
+        return Util.hash1(opcode.ordinal(), value);
     }
 
     @Override
@@ -85,6 +88,6 @@ public final class Convert extends Instruction {
 
     @Override
     public void print(LogStream out) {
-        out.print(Bytecodes.nameOf(opcode)).print('(').print(value()).print(')');
+        out.print(opcode.name()).print('(').print(value()).print(')');
     }
 }

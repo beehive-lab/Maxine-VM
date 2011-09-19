@@ -23,11 +23,7 @@
 
 /**
  * A collection of classes that support the processing of bytecodes.
- * The majority are merely utility classes that simplify and reduce errors during bytecode processing,
- * whereas, {@link com.sun.cri.bytecode.INTRINSIC} and {@link com.sun.cri.bytecode.BytecodeIntrinsifier}
- * provide the capability to transform the bytecodes of a method by replacing certain bytecode instructions
- * with alternatives drawn from a set of <i>extended</i> bytecodes.
- *
+ * The majority are merely utility classes that simplify and reduce errors during bytecode processing.
  */
 package com.sun.cri.bytecode;
 

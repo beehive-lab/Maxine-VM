@@ -27,11 +27,11 @@
 
 package jtt.exbytecode;
 
-import com.sun.max.vm.*;
+import com.oracle.max.cri.intrinsics.*;
 
 public class EBC_ucmp_bt_01 {
     public static boolean test(int a, int b) {
-        return Intrinsics.belowThan(a, b);
+        return UnsignedMath.belowThan(a, b);
     }
 
 }

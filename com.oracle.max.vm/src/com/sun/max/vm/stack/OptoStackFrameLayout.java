@@ -22,8 +22,8 @@
  */
 package com.sun.max.vm.stack;
 
+import com.oracle.max.cri.intrinsics.*;
 import com.sun.cri.ci.*;
-import com.sun.max.lang.*;
 import com.sun.max.vm.collect.*;
 
 /**
@@ -63,6 +63,6 @@ public class OptoStackFrameLayout extends VMFrameLayout {
 
     @Override
     public int frameReferenceMapSize() {
-        return ByteArrayBitMap.computeBitMapSize(Unsigned.idiv(frameSize(), STACK_SLOT_SIZE));
+        return ByteArrayBitMap.computeBitMapSize(UnsignedMath.divide(frameSize(), STACK_SLOT_SIZE));
     }
 }

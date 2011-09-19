@@ -22,8 +22,6 @@
  */
 package jtt.exbytecode;
 
-import com.sun.max.vm.*;
-
 // register -> register
 
 /*
@@ -32,7 +30,7 @@ import com.sun.max.vm.*;
 */
 public class EBC_movl2d_01 {
     public static double test(long arg) {
-        return Intrinsics.longToDouble(arg);
+        return Double.longBitsToDouble(arg);
     }
 
 }

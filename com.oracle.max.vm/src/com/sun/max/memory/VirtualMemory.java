@@ -22,7 +22,8 @@
  */
 
 package com.sun.max.memory;
-import static com.sun.cri.bytecode.Bytecodes.*;
+
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import java.io.*;
 

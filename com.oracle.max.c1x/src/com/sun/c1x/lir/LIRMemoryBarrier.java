@@ -22,7 +22,7 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.cri.bytecode.Bytecodes.*;
+import com.oracle.max.cri.intrinsics.*;
 import com.sun.cri.ci.*;
 
 /**

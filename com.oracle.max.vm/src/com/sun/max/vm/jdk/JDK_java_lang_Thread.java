@@ -22,8 +22,8 @@
  */
 package com.sun.max.vm.jdk;
 
-import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import java.security.*;
 

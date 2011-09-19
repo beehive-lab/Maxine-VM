@@ -45,8 +45,8 @@ public final class LoadPointer extends PointerOp {
      * @param isVolatile {@code true} if the access is volatile
      * @see PointerOp#PointerOp(CiKind, int, Value, Value, Value, FrameState, boolean)
      */
-    public LoadPointer(CiKind kind, int opcode, Value pointer, Value displacement, Value offsetOrIndex, FrameState stateBefore, boolean isVolatile) {
-        super(kind, kind, opcode, pointer, displacement, offsetOrIndex, stateBefore, isVolatile);
+    public LoadPointer(CiKind kind, Value pointer, Value displacement, Value offsetOrIndex, FrameState stateBefore, boolean isVolatile) {
+        super(kind, kind, pointer, displacement, offsetOrIndex, stateBefore, isVolatile);
     }
 
     @Override

@@ -33,7 +33,7 @@ import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
 
 import java.util.*;
 
-import com.oracle.max.vm.ext.t1x.T1XTemplate.*;
+import com.oracle.max.vm.ext.t1x.T1XTemplate.SafepointsBuilder;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
@@ -957,15 +957,7 @@ public final class T1XTargetMethod extends TargetMethod {
         Pointer ip;
         if (exception == null) {
             RiMethod callee = classMethodActor.codeAttribute().calleeAt(bci);
-            CiKind returnKind = callee == null ? null : callee.signature().returnKind();
-            if (returnKind != null) {
-                // Must be in a call
-                ip = findTemplateCallReturnAddress(bci);
-            } else {
-                // Must be at a safepoint poll
-                int pos = bciToPos[bci];
-                ip = codeStart().plus(pos);
-            }
+            ip = findTemplateCallReturnAddress(bci, callee);
         } else {
             // Unwinding to deoptimized frame containing the handler for 'exception'
             int curPos = bciToPos[bci];
@@ -981,38 +973,43 @@ public final class T1XTargetMethod extends TargetMethod {
      *
      * @param bci BCI of the bytecode invoke instruction that was translated to a template call
      */
-    private Pointer findTemplateCallReturnAddress(int bci) throws FatalError {
-        Pointer ip;
-        // Find the instruction *following* the template call by searching backwards
-        // from the template emitted for the instruction after the invoke
-        byte[] bytecode = classMethodActor.code();
-        int opcode = bytecode[bci] & 0xFF;
-        assert opcode == INVOKEINTERFACE || opcode == INVOKESPECIAL || opcode == INVOKESTATIC || opcode == INVOKEVIRTUAL;
-        int curPos = bciToPos[bci];
-        final int invokeSize = Bytecodes.lengthOf(opcode);
-        int succBCI = bci + invokeSize;
-        int succPos = bciToPos[succBCI];
-        assert succPos > curPos;
-
+    private Pointer findTemplateCallReturnAddress(int bci, RiMethod callee) throws FatalError {
         int templateCallReturnPos = -1;
-        for (int safepointIndex = 0; safepointIndex < safepoints.size(); ++safepointIndex) {
-            int safepointPos = safepoints.posAt(safepointIndex);
-            if (curPos <= safepointPos && safepointPos < succPos) {
-                if (safepoints.isSetAt(TEMPLATE_CALL, safepointIndex)) {
-                    if (isAMD64()) {
-                        //On x86 the safepoint position of a call *is* the return position
-                        templateCallReturnPos = safepointPos;
-                    } else {
-                        throw unimplISA();
+        int curPos = bciToPos[bci];
+        if (callee != null) {
+            // Must be in a call
+            // Find the instruction *following* the template call by searching backwards
+            // from the template emitted for the instruction after the invoke
+            byte[] bytecode = classMethodActor.code();
+            int opcode = bytecode[bci] & 0xFF;
+            assert opcode == INVOKEINTERFACE || opcode == INVOKESPECIAL || opcode == INVOKESTATIC || opcode == INVOKEVIRTUAL;
+            final int invokeSize = Bytecodes.lengthOf(opcode);
+            int succBCI = bci + invokeSize;
+            int succPos = bciToPos[succBCI];
+            assert succPos > curPos;
+
+            for (int safepointIndex = 0; safepointIndex < safepoints.size(); ++safepointIndex) {
+                int safepointPos = safepoints.posAt(safepointIndex);
+                if (curPos <= safepointPos && safepointPos < succPos) {
+                    if (safepoints.isSetAt(TEMPLATE_CALL, safepointIndex)) {
+                        if (isAMD64()) {
+                            // On x86 the safepoint position of a call *is* the return position
+                            templateCallReturnPos = safepointPos;
+                        } else {
+                            throw unimplISA();
+                        }
+                        break;
                     }
-                    break;
                 }
             }
         }
-
-        FatalError.check(templateCallReturnPos != -1, "could not find template call at " + curPos + " in " + this);
-        ip = codeStart().plus(templateCallReturnPos);
-        return ip;
+        if (templateCallReturnPos != -1) {
+            return codeStart().plus(templateCallReturnPos);
+        } else {
+            FatalError.check(callee == null || callee.intrinsic() != null, "could not find template call for non-intrinisc method at " + curPos + " in " + this);
+            // Must be a safepoint
+            return codeStart().plus(curPos);
+        }
     }
 }
 

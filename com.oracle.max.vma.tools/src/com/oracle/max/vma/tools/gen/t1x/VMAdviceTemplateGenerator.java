@@ -430,14 +430,6 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                     generateOperation(tag, k);
                     break;
 
-                case WDIV:
-                case WDIVI:
-                case WREM:
-                case WREMI:
-                    assert adviceType == AdviceType.BEFORE;
-                    generateWOperation(tag);
-                    break;
-
 //                case IINC:
 //                    assert adviceType == AdviceType.BEFORE;
 //                    generateIInc();
@@ -458,10 +450,10 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                 case I2B:
                 case I2C:
                 case I2S:
-                case MOV_I2F:
-                case MOV_F2I:
-                case MOV_L2D:
-                case MOV_D2L:
+//                case MOV_I2F:
+//                case MOV_F2I:
+//                case MOV_L2D:
+//                case MOV_D2L:
                     assert adviceType == AdviceType.BEFORE;
                     generateConversion(tag, k);
                     break;
@@ -650,71 +642,6 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
 
                 // No special treatment for the following codes
                 case RETURN$registerFinalizer:
-
-                case PREAD_BYTE:
-                case PREAD_CHAR:
-                case PREAD_SHORT:
-                case PREAD_INT:
-                case PREAD_FLOAT:
-                case PREAD_LONG:
-                case PREAD_DOUBLE:
-                case PREAD_WORD:
-                case PREAD_REFERENCE:
-
-                case PREAD_BYTE_I:
-                case PREAD_CHAR_I:
-                case PREAD_SHORT_I:
-                case PREAD_INT_I:
-                case PREAD_FLOAT_I:
-                case PREAD_LONG_I:
-                case PREAD_DOUBLE_I:
-                case PREAD_WORD_I:
-                case PREAD_REFERENCE_I:
-
-                case PWRITE_BYTE:
-                case PWRITE_SHORT:
-                case PWRITE_INT:
-                case PWRITE_FLOAT:
-                case PWRITE_LONG:
-                case PWRITE_DOUBLE:
-                case PWRITE_WORD:
-                case PWRITE_REFERENCE:
-
-                case PWRITE_BYTE_I:
-                case PWRITE_SHORT_I:
-                case PWRITE_INT_I:
-                case PWRITE_FLOAT_I:
-                case PWRITE_LONG_I:
-                case PWRITE_DOUBLE_I:
-                case PWRITE_WORD_I:
-                case PWRITE_REFERENCE_I:
-
-                case PGET_BYTE:
-                case PGET_CHAR:
-                case PGET_SHORT:
-                case PGET_INT:
-                case PGET_FLOAT:
-                case PGET_LONG:
-                case PGET_DOUBLE:
-                case PGET_WORD:
-                case PGET_REFERENCE:
-
-                case PSET_BYTE:
-                case PSET_SHORT:
-                case PSET_INT:
-                case PSET_FLOAT:
-                case PSET_LONG:
-                case PSET_DOUBLE:
-                case PSET_WORD:
-                case PSET_REFERENCE:
-
-                case PCMPSWP_INT:
-                case PCMPSWP_WORD:
-                case PCMPSWP_REFERENCE:
-
-                case PCMPSWP_INT_I:
-                case PCMPSWP_WORD_I:
-                case PCMPSWP_REFERENCE_I:
                     generateDefault(tag);
                     break;
 
@@ -810,14 +737,6 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
     private static void generateOperation(T1XTemplateTag tag, String k) {
         String value1 = "value1";
         String value2 = "value2";
-        startGuardAdvice();
-        ps.printf(METHOD_PREFIX + "(%d, %s, %s);%n", adviceType.methodNameComponent, methodName, tag.opcode, value1, value2);
-        endGuardAdvice();
-    }
-
-    private static void generateWOperation(T1XTemplateTag tag) {
-        String value1 = "value1.toLong()";
-        String value2 = tag == T1XTemplateTag.WDIVI || tag == T1XTemplateTag.WREMI ? "value2" : "value2.toLong()";
         startGuardAdvice();
         ps.printf(METHOD_PREFIX + "(%d, %s, %s);%n", adviceType.methodNameComponent, methodName, tag.opcode, value1, value2);
         endGuardAdvice();

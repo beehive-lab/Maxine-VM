@@ -22,13 +22,13 @@
  */
 package com.sun.max.vm.heap;
 
-import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.thread.VmThreadLocal.*;
+import com.sun.max.vm.thread.VmThreadLocal.Nature;
 /**
  * A policy object that helps with taking decisions with respect to when to refill a tlab on allocation failure, what size the tlab should have on next refill etc....
  * TLABRefillPolicy are stored in a thread local variable TLAB_REFILL_POLICY if tlabs are being used. Threads may refer to the same TLAB policy or

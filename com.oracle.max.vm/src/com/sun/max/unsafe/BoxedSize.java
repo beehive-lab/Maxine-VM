@@ -77,25 +77,4 @@ public final class BoxedSize extends Size implements Boxed {
     public long value() {
         return nativeWord;
     }
-
-    @Override
-    protected Size dividedByAddress(Address divisor) {
-        return BoxedAddress.from(nativeWord).dividedByAddress(divisor).asSize();
-    }
-
-    @Override
-    protected Size dividedByInt(int divisor) {
-        return BoxedAddress.from(nativeWord).dividedByInt(divisor).asSize();
-    }
-
-    @Override
-    protected Size remainderByAddress(Address divisor) {
-        return BoxedAddress.from(nativeWord).remainderByAddress(divisor).asSize();
-    }
-
-    @Override
-    protected int remainderByInt(int divisor) {
-        return BoxedAddress.from(nativeWord).remainderByInt(divisor);
-    }
-
 }

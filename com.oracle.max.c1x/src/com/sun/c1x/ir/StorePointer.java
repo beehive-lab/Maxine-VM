@@ -47,8 +47,8 @@ public final class StorePointer extends PointerOp {
      * @param stateBefore the state before
      * @param isVolatile {@code true} if the access is volatile
      */
-    public StorePointer(int opcode, CiKind dataKind, Value pointer, Value displacement, Value offsetOrIndex, Value value, FrameState stateBefore, boolean isVolatile) {
-        super(CiKind.Void, dataKind, opcode, pointer, displacement, offsetOrIndex, stateBefore, isVolatile);
+    public StorePointer(CiKind dataKind, Value pointer, Value displacement, Value offsetOrIndex, Value value, FrameState stateBefore, boolean isVolatile) {
+        super(CiKind.Void, dataKind, pointer, displacement, offsetOrIndex, stateBefore, isVolatile);
         this.value = value;
         setFlag(Flag.LiveStore);
     }

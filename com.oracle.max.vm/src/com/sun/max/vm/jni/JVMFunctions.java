@@ -22,8 +22,8 @@
  */
 package com.sun.max.vm.jni;
 
-import static com.sun.cri.bytecode.Bytecodes.Infopoints.*;
 import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.intrinsics.Infopoints.*;
 import static com.sun.max.vm.runtime.VMRegister.*;
 
 import java.lang.reflect.*;

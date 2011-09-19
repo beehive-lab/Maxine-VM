@@ -22,9 +22,9 @@
  */
 package com.sun.max.vm.type;
 
-import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import java.io.*;
 import java.lang.reflect.*;

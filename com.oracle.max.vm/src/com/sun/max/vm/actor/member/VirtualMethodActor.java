@@ -35,7 +35,7 @@ public class VirtualMethodActor extends ClassMethodActor {
     public VirtualMethodActor(Utf8Constant name,
                     SignatureDescriptor descriptor,
                     int flags,
-                    CodeAttribute codeAttribute, int intrinsic) {
+                    CodeAttribute codeAttribute, String intrinsic) {
         super(name,
               descriptor,
               flags,

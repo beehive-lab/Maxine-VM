@@ -22,8 +22,6 @@
  */
 package jtt.exbytecode;
 
-import com.sun.max.vm.*;
-
 // memory -> memory
 
 /*
@@ -43,7 +41,7 @@ public class EBC_movf2i_04 {
     public static int test(float arg) {
         F f = new F(arg);
         I i = new I();
-        i.i = Intrinsics.floatToInt(f.f);
+        i.i = Float.floatToRawIntBits(f.f);
         return i.i;
     }
 

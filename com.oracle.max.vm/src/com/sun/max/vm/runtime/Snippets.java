@@ -22,7 +22,6 @@
  */
 package com.sun.max.vm.runtime;
 
-import static com.sun.cri.bytecode.Bytecodes.MemoryBarriers.*;
 import static com.sun.max.vm.compiler.CompilationScheme.Static.*;
 import static com.sun.max.vm.runtime.VMRegister.*;
 import static com.sun.max.vm.runtime.VmOperation.*;
@@ -32,8 +31,8 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.lang.reflect.*;
 
+import com.oracle.max.cri.intrinsics.*;
 import com.sun.cri.bytecode.*;
-import com.sun.cri.bytecode.Bytecodes.MemoryBarriers;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -526,7 +525,7 @@ public class Snippets {
         if (UseCASBasedThreadFreezing) {
             MUTATOR_STATE.store(etla, THREAD_IN_NATIVE);
         } else {
-            memopStore();
+            MemoryBarriers.barrier(MemoryBarriers.LOAD_STORE | MemoryBarriers.STORE_STORE);
             // The following store must be last:
             MUTATOR_STATE.store(etla, THREAD_IN_NATIVE);
         }
@@ -581,7 +580,7 @@ public class Snippets {
                 MUTATOR_STATE.store(etla, THREAD_IN_JAVA);
 
                 // Ensure that the VM operation thread sees the above state transition:
-                MemoryBarriers.storeLoad();
+                MemoryBarriers.barrier(MemoryBarriers.STORE_LOAD);
 
                 // Ask if current thread is frozen:
                 if (FROZEN.load(etla).isZero()) {

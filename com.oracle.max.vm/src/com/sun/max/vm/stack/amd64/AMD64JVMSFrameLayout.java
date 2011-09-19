@@ -25,8 +25,8 @@ package com.sun.max.vm.stack.amd64;
 import static com.sun.max.platform.Platform.*;
 
 import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.cri.intrinsics.*;
 import com.sun.cri.ci.*;
-import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.collect.*;
@@ -91,8 +91,8 @@ public class AMD64JVMSFrameLayout extends JVMSFrameLayout {
 
     public AMD64JVMSFrameLayout(TargetMethod targetMethod) {
         super(targetMethod.classMethodActor());
-        final int frameSlots = Unsigned.idiv(targetMethod.frameSize(), STACK_SLOT_SIZE);
-        final int nonTemplateSlots = 1 + Unsigned.idiv(sizeOfNonParameterLocals(), STACK_SLOT_SIZE);
+        final int frameSlots = UnsignedMath.divide(targetMethod.frameSize(), STACK_SLOT_SIZE);
+        final int nonTemplateSlots = 1 + UnsignedMath.divide(sizeOfNonParameterLocals(), STACK_SLOT_SIZE);
         numberOfTemplateSlots = frameSlots - nonTemplateSlots;
         assert targetMethod.frameSize() == frameSize();
     }
@@ -183,7 +183,7 @@ public class AMD64JVMSFrameLayout extends JVMSFrameLayout {
 
     @Override
     public int frameReferenceMapSize() {
-        return ByteArrayBitMap.computeBitMapSize(Unsigned.idiv(maximumSlotOffset() - lowestSlotOffset(), STACK_SLOT_SIZE));
+        return ByteArrayBitMap.computeBitMapSize(UnsignedMath.divide(maximumSlotOffset() - lowestSlotOffset(), STACK_SLOT_SIZE));
     }
 
     @Override
@@ -201,7 +201,7 @@ public class AMD64JVMSFrameLayout extends JVMSFrameLayout {
         //       ^ operand offset (wrt. RBP)      ^ RBP                                                ^ local offset (wrt. RBP)
         // <-------- frame pointer bias ---------->
         final int framePointerBias = sizeOfOperandStack() + sizeOfNonParameterLocals();
-        return Unsigned.idiv(offset + framePointerBias, STACK_SLOT_SIZE);
+        return UnsignedMath.divide(offset + framePointerBias, STACK_SLOT_SIZE);
     }
 
     @Override
@@ -209,7 +209,7 @@ public class AMD64JVMSFrameLayout extends JVMSFrameLayout {
         return new JVMSSlots() {
             @Override
             protected String nameOfSlot(int offset) {
-                final int templateSlotIndex = Unsigned.idiv(offset, STACK_SLOT_SIZE);
+                final int templateSlotIndex = UnsignedMath.divide(offset, STACK_SLOT_SIZE);
                 if (templateSlotIndex >= 0 && templateSlotIndex < numberOfTemplateSlots) {
                     return "template slot " + templateSlotIndex;
 

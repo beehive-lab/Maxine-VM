@@ -22,12 +22,11 @@
  */
 package com.sun.max.unsafe;
 
-import static com.sun.cri.bytecode.Bytecodes.*;
-import static com.sun.cri.bytecode.Bytecodes.UnsignedComparisons.*;
 import static com.sun.max.vm.MaxineVM.*;
 
 import java.math.*;
 
+import com.oracle.max.cri.intrinsics.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -199,51 +198,54 @@ public abstract class Address extends Word {
         return fromInt(other) == this;
     }
 
-    @INTRINSIC(UWCMP | (ABOVE_THAN << 8))
+    @INLINE
     public final boolean greaterThan(Address other) {
-        assert isHosted();
-        final long a = toLong();
-        final long b = other.toLong();
-        if (a < 0 == b < 0) {
-            return a > b;
+        if (Word.width() == 64) {
+            return UnsignedMath.aboveThan(toLong(), other.toLong());
         }
-        return a < b;
+        return UnsignedMath.aboveThan(toInt(), other.toInt());
     }
 
-    @INLINE(override = true)
+    @INLINE
     public final boolean greaterThan(int other) {
         return greaterThan(fromInt(other));
     }
 
-    @INTRINSIC(UWCMP | (ABOVE_EQUAL << 8))
+    @INLINE
     public final boolean greaterEqual(Address other) {
-        assert isHosted();
-        return !other.greaterThan(this);
+        if (Word.width() == 64) {
+            return UnsignedMath.aboveOrEqual(toLong(), other.toLong());
+        }
+        return UnsignedMath.aboveOrEqual(toInt(), other.toInt());
     }
 
-    @INLINE(override = true)
+    @INLINE
     public final boolean greaterEqual(int other) {
         return greaterEqual(fromInt(other));
     }
 
-    @INTRINSIC(UWCMP | (BELOW_THAN << 8))
+    @INLINE
     public final boolean lessThan(Address other) {
-        assert isHosted();
-        return other.greaterThan(this);
+        if (Word.width() == 64) {
+            return UnsignedMath.belowThan(toLong(), other.toLong());
+        }
+        return UnsignedMath.belowThan(toInt(), other.toInt());
     }
 
-    @INLINE(override = true)
+    @INLINE
     public final boolean lessThan(int other) {
         return lessThan(fromInt(other));
     }
 
-    @INTRINSIC(UWCMP | (BELOW_EQUAL << 8))
+    @INLINE
     public final boolean lessEqual(Address other) {
-        assert isHosted();
-        return !greaterThan(other);
+        if (Word.width() == 64) {
+            return UnsignedMath.belowOrEqual(toLong(), other.toLong());
+        }
+        return UnsignedMath.belowOrEqual(toInt(), other.toInt());
     }
 
-    @INLINE(override = true)
+    @INLINE
     public final boolean lessEqual(int other) {
         return lessEqual(fromInt(other));
     }
@@ -298,40 +300,30 @@ public abstract class Address extends Word {
         return asOffset().times(factor).asAddress();
     }
 
-    @INTRINSIC(WDIV)
-    protected abstract Address dividedByAddress(Address divisor);
-
     @INLINE(override = true)
-    @INTRINSIC(WDIV)
     public Address dividedBy(Address divisor) {
-        return dividedByAddress(divisor);
+        if (Word.width() == 64) {
+            return fromLong(UnsignedMath.divide(toLong(), divisor.toLong()));
+        }
+        return fromInt(UnsignedMath.divide(toInt(), divisor.toInt()));
     }
 
-    @INTRINSIC(WDIVI)
-    protected abstract Address dividedByInt(int divisor);
-
     @INLINE(override = true)
-    @INTRINSIC(WDIVI)
     public Address dividedBy(int divisor) {
-        return dividedByInt(divisor);
+        return dividedBy(fromInt(divisor));
     }
 
-    @INTRINSIC(WREM)
-    protected abstract Address remainderByAddress(Address divisor);
-
     @INLINE(override = true)
-    @INTRINSIC(WREM)
     public Address remainder(Address divisor) {
-        return remainderByAddress(divisor);
+        if (Word.width() == 64) {
+            return fromLong(UnsignedMath.remainder(toLong(), divisor.toLong()));
+        }
+        return fromInt(UnsignedMath.remainder(toInt(), divisor.toInt()));
     }
 
-    @INTRINSIC(WREMI)
-    protected abstract int remainderByInt(int divisor);
-
     @INLINE(override = true)
-    @INTRINSIC(WREMI)
     public final int remainder(int divisor) {
-        return remainderByInt(divisor);
+        return remainder(fromInt(divisor)).toInt();
     }
 
     @INLINE(override = true)

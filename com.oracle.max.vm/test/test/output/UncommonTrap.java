@@ -24,7 +24,7 @@ package test.output;
 
 import java.util.*;
 
-import com.sun.cri.bytecode.Bytecodes.Infopoints;
+import com.sun.max.vm.intrinsics.*;
 
 /**
  * Simple test for uncommon trap support.

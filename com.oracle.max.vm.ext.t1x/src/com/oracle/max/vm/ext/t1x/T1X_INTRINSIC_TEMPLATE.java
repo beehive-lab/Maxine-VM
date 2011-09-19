@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,24 +20,14 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.jdk;
+package com.oracle.max.vm.ext.t1x;
 
-import com.sun.max.annotate.*;
-import com.sun.max.vm.*;
+import java.lang.annotation.*;
 
 /**
- * The {@code JDK_java_lang_Float} class implements substitutions for the
- * float class.
+ * Denotes a method that provides the implementation for a T1X intrinsic template.
  */
-@METHOD_SUBSTITUTIONS(Float.class)
-public class JDK_java_lang_Float {
-    @SUBSTITUTE
-    public static int floatToRawIntBits(float f) {
-        return Intrinsics.floatToInt(f);
-    }
-
-    @SUBSTITUTE
-    public static float intBitsToFloat(int i) {
-        return Intrinsics.intToFloat(i);
-    }
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface T1X_INTRINSIC_TEMPLATE {
 }

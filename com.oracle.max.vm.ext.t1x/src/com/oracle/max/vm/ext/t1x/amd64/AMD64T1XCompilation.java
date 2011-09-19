@@ -34,10 +34,10 @@ import java.util.*;
 
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.asm.target.amd64.AMD64Assembler.ConditionFlag;
+import com.oracle.max.cri.intrinsics.*;
 import com.oracle.max.vm.ext.maxri.*;
 import com.oracle.max.vm.ext.t1x.*;
 import com.sun.cri.bytecode.*;
-import com.sun.cri.bytecode.Bytecodes.MemoryBarriers;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiAddress.Scale;
 import com.sun.cri.ci.CiTargetMethod.JumpTable;
@@ -45,7 +45,6 @@ import com.sun.cri.ci.CiTargetMethod.LookupTable;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.target.*;
@@ -235,7 +234,7 @@ public class AMD64T1XCompilation extends T1XCompilation {
         if (value == 0.0f) {
             asm.xorps(dst, dst);
         } else {
-            asm.movl(scratch, Intrinsics.floatToInt(value));
+            asm.movl(scratch, Float.floatToRawIntBits(value));
             asm.movdl(dst, scratch);
         }
     }
@@ -245,7 +244,7 @@ public class AMD64T1XCompilation extends T1XCompilation {
         if (value == 0.0d) {
             asm.xorpd(dst, dst);
         } else {
-            asm.movq(scratch, Intrinsics.doubleToLong(value));
+            asm.movq(scratch, Double.doubleToRawLongBits(value));
             asm.movdq(dst, scratch);
         }
     }

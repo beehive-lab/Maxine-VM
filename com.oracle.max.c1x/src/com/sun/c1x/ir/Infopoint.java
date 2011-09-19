@@ -22,11 +22,8 @@
  */
 package com.sun.c1x.ir;
 
-import static com.sun.cri.bytecode.Bytecodes.*;
-
 import com.sun.c1x.debug.*;
 import com.sun.c1x.value.*;
-import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -34,24 +31,22 @@ import com.sun.cri.ci.*;
  */
 public final class Infopoint extends Instruction {
 
+    public static enum Op { SAFEPOINT_POLL, HERE, INFO, UNCOMMON_TRAP }
+
     public final FrameState state;
 
-    /**
-     * {@link Bytecodes#HERE}, {@link Bytecodes#INFO} or {@link Bytecodes#SAFEPOINT_POLL}.
-     */
-    public final int opcode;
+    public final Op op;
 
     /**
      * Creates a new Infopoint instance.
      * @param state the debug info at this instruction
      */
-    public Infopoint(int opcode, FrameState state) {
-        super(opcode == HERE ? CiKind.Long : CiKind.Void);
-        assert opcode == HERE || opcode == INFO || opcode == SAFEPOINT_POLL || opcode == UNCOMMON_TRAP : Bytecodes.nameOf(opcode);
-        this.opcode = opcode;
+    public Infopoint(Op op, FrameState state) {
+        super(op == Op.HERE ? CiKind.Long : CiKind.Void);
+        this.op = op;
         this.state = state;
         setFlag(Flag.LiveSideEffect); // ensure this instruction is not eliminated
-        if (opcode == SAFEPOINT_POLL) {
+        if (op == Op.SAFEPOINT_POLL) {
             setFlag(Value.Flag.IsSafepointPoll);
         }
     }
@@ -68,6 +63,6 @@ public final class Infopoint extends Instruction {
 
     @Override
     public void print(LogStream out) {
-        out.print(Bytecodes.nameOf(opcode));
+        out.print(op.name());
     }
 }

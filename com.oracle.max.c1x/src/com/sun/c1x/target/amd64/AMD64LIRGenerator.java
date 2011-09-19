@@ -23,8 +23,6 @@
 
 package com.sun.c1x.target.amd64;
 
-import static com.sun.cri.bytecode.Bytecodes.UnsignedComparisons.*;
-
 import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.amd64.*;
 import com.sun.c1x.*;
@@ -150,7 +148,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
         value.setDestroysRegister();
         value.loadItem();
         CiValue reg = createResultVariable(x);
-        if (x.op == Bytecodes.LSB) {
+        if (x.op == LIROpcode.Lsb) {
             lir.lsb(value.result(), reg);
         } else {
             lir.msb(value.result(), reg);
@@ -209,7 +207,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
     public void visitArithmeticOpLong(ArithmeticOp x) {
         int opcode = x.opcode;
-        if (opcode == Bytecodes.LDIV || opcode == Bytecodes.LREM) {
+        if (opcode == Bytecodes.LDIV || opcode == Bytecodes.LREM || opcode == Op2.UDIV || opcode == Op2.UREM) {
             // emit inline 64-bit code
             LIRDebugInfo info = x.needsZeroCheck() ? stateFor(x) : null;
             CiValue dividend = force(x.x(), RAX_L); // dividend must be in RAX
@@ -220,9 +218,17 @@ public class AMD64LIRGenerator extends LIRGenerator {
             if (opcode == Bytecodes.LREM) {
                 resultReg = RDX_L; // remainder result is produced in rdx
                 lir.lrem(dividend, divisor, resultReg, LDIV_TMP, info);
-            } else {
+            } else if (opcode == Bytecodes.LDIV) {
                 resultReg = RAX_L; // division result is produced in rax
                 lir.ldiv(dividend, divisor, resultReg, LDIV_TMP, info);
+            } else if (opcode == Op2.UREM) {
+                resultReg = RDX_L; // remainder result is produced in rdx
+                lir.lurem(dividend, divisor, resultReg, LDIV_TMP, info);
+            } else if (opcode == Op2.UDIV) {
+                resultReg = RAX_L; // division result is produced in rax
+                lir.ludiv(dividend, divisor, resultReg, LDIV_TMP, info);
+            } else {
+                throw Util.shouldNotReachHere();
             }
 
             lir.move(resultReg, result);
@@ -252,7 +258,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
     public void visitArithmeticOpInt(ArithmeticOp x) {
         int opcode = x.opcode;
-        if (opcode == Bytecodes.IDIV || opcode == Bytecodes.IREM) {
+        if (opcode == Bytecodes.IDIV || opcode == Bytecodes.IREM || opcode == Op2.UDIV || opcode == Op2.UREM) {
             // emit code for integer division or modulus
 
             // Call 'stateFor' before 'force()' because 'stateFor()' may
@@ -274,9 +280,17 @@ public class AMD64LIRGenerator extends LIRGenerator {
             if (opcode == Bytecodes.IREM) {
                 resultReg = tmp; // remainder result is produced in rdx
                 lir.irem(dividend, divisor, resultReg, tmp, info);
-            } else {
+            } else if (opcode == Bytecodes.IDIV) {
                 resultReg = RAX_I; // division result is produced in rax
                 lir.idiv(dividend, divisor, resultReg, tmp, info);
+            } else if (opcode == Op2.UREM) {
+                resultReg = tmp; // remainder result is produced in rdx
+                lir.iurem(dividend, divisor, resultReg, tmp, info);
+            } else if (opcode == Op2.UDIV) {
+                resultReg = RAX_I; // division result is produced in rax
+                lir.iudiv(dividend, divisor, resultReg, tmp, info);
+            } else {
+                throw Util.shouldNotReachHere();
             }
 
             lir.move(resultReg, result);
@@ -328,66 +342,9 @@ public class AMD64LIRGenerator extends LIRGenerator {
         }
     }
 
-    public void visitArithmeticOpWord(ArithmeticOp x) {
-        int opcode = x.opcode;
-        if (opcode == Bytecodes.WDIV || opcode == Bytecodes.WREM || opcode == Bytecodes.WDIVI || opcode == Bytecodes.WREMI) {
-            // emit code for long division or modulus
-            // emit inline 64-bit code
-            LIRDebugInfo info = x.needsZeroCheck() ? stateFor(x) : null;
-            CiValue dividend = force(x.x(), RAX_L); // dividend must be in RAX
-            CiValue divisor = load(x.y());            // divisor can be in any (other) register
-
-            CiValue result = createResultVariable(x);
-            CiValue resultReg;
-            if (opcode == Bytecodes.WREM) {
-                resultReg = RDX_L; // remainder result is produced in rdx
-                lir.wrem(dividend, divisor, resultReg, LDIV_TMP, info);
-            } else if (opcode == Bytecodes.WREMI) {
-                resultReg = RDX_L; // remainder result is produced in rdx
-                lir.wremi(dividend, divisor, resultReg, LDIV_TMP, info);
-            } else if (opcode == Bytecodes.WDIV) {
-                resultReg = RAX_L; // division result is produced in rax
-                lir.wdiv(dividend, divisor, resultReg, LDIV_TMP, info);
-            } else {
-                assert opcode == Bytecodes.WDIVI;
-                resultReg = RAX_L; // division result is produced in rax
-                lir.wdivi(dividend, divisor, resultReg, LDIV_TMP, info);
-            }
-
-            lir.move(resultReg, result);
-        } else if (opcode == Bytecodes.LMUL) {
-            LIRItem right = new LIRItem(x.y(), this);
-
-            // right register is destroyed by the long mul, so it must be
-            // copied to a new register.
-            right.setDestroysRegister();
-
-            CiValue left = load(x.x());
-            right.loadItem();
-
-            CiValue reg = LMUL_OUT;
-            arithmeticOpLong(opcode, reg, left, right.result(), null);
-            CiValue result = createResultVariable(x);
-            lir.move(reg, result);
-        } else {
-            LIRItem right = new LIRItem(x.y(), this);
-
-            CiValue left = load(x.x());
-            // don't load constants to save register
-            right.loadNonconstant();
-            createResultVariable(x);
-            arithmeticOpLong(opcode, x.operand(), left, right.result(), null);
-        }
-    }
-
     @Override
     public void visitArithmeticOp(ArithmeticOp x) {
         trySwap(x);
-
-        if (x.kind.isWord() || x.opcode == Bytecodes.WREMI) {
-            visitArithmeticOpWord(x);
-            return;
-        }
 
         assert Util.archKindsEqual(x.x().kind, x.kind) && Util.archKindsEqual(x.y().kind, x.kind) : "wrong parameter types: " + Bytecodes.nameOf(x.opcode);
         switch (x.kind) {
@@ -400,6 +357,9 @@ public class AMD64LIRGenerator extends LIRGenerator {
                 return;
             case Int:
                 visitArithmeticOpInt(x);
+                return;
+            case Word:
+                visitArithmeticOpLong(x);
                 return;
         }
         throw Util.shouldNotReachHere();
@@ -468,20 +428,9 @@ public class AMD64LIRGenerator extends LIRGenerator {
         LIRItem right = new LIRItem(x.y(), this);
         left.loadItem();
         right.loadItem();
-        Condition condition = null;
-        // Checkstyle: off
-        switch (x.op) {
-            case BELOW_THAN  : condition = Condition.BT; break;
-            case ABOVE_THAN  : condition = Condition.AT; break;
-            case BELOW_EQUAL : condition = Condition.BE; break;
-            case ABOVE_EQUAL : condition = Condition.AE; break;
-            default:
-                Util.unimplemented();
-        }
-        // Checkstyle: on
         CiValue result = createResultVariable(x);
-        lir.cmp(condition, left.result(), right.result());
-        lir.cmove(condition, CiConstant.INT_1, CiConstant.INT_0, result);
+        lir.cmp(x.condition, left.result(), right.result());
+        lir.cmove(x.condition, CiConstant.INT_1, CiConstant.INT_0, result);
     }
 
     @Override
@@ -617,10 +566,10 @@ public class AMD64LIRGenerator extends LIRGenerator {
         CompilerStub stub = null;
         // Checkstyle: off
         switch (x.opcode) {
-            case Bytecodes.F2I: stub = stubFor(CompilerStub.Id.f2i); break;
-            case Bytecodes.F2L: stub = stubFor(CompilerStub.Id.f2l); break;
-            case Bytecodes.D2I: stub = stubFor(CompilerStub.Id.d2i); break;
-            case Bytecodes.D2L: stub = stubFor(CompilerStub.Id.d2l); break;
+            case F2I: stub = stubFor(CompilerStub.Id.f2i); break;
+            case F2L: stub = stubFor(CompilerStub.Id.f2l); break;
+            case D2I: stub = stubFor(CompilerStub.Id.d2i); break;
+            case D2L: stub = stubFor(CompilerStub.Id.d2l); break;
         }
         // Checkstyle: on
         if (stub != null) {
@@ -689,8 +638,8 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
     @Override
     public void visitIfBit(IfBit i) {
-        CiAddress address = new CiAddress(CiKind.Byte, i.register.asValue(i.kind), i.offset.asConstant().asInt());
-        lir.testbit(address, i.bitNo.asConstant());
+        CiAddress address = new CiAddress(CiKind.Byte, i.register.asValue(i.kind), i.offset);
+        lir.testbit(address, CiConstant.forInt(i.bitNo));
         lir.branch(i.condition == Condition.EQ ? Condition.AE : Condition.BT, CiKind.Int, i.trueSuccessor());
         lir.jump(i.falseSuccessor());
     }

@@ -23,6 +23,7 @@
 package com.sun.max.vm.compiler.target.amd64;
 
 import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.cri.intrinsics.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -71,7 +72,7 @@ public final class AMD64TargetMethodUtil {
     private static final Object PatchingLock = new Object(); // JavaMonitorManager.newVmLock("PATCHING_LOCK");
 
     public static int registerReferenceMapSize() {
-        return Unsigned.idiv(AMD64.cpuRegisters.length, Bytes.WIDTH);
+        return UnsignedMath.divide(AMD64.cpuRegisters.length, Bytes.WIDTH);
     }
 
     public static boolean isPatchableCallSite(Address callSite) {

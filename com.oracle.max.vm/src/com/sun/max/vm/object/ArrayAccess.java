@@ -26,9 +26,9 @@ import static com.sun.max.vm.MaxineVM.*;
 
 import java.lang.reflect.*;
 
+import com.oracle.max.cri.intrinsics.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
@@ -75,7 +75,7 @@ public final class ArrayAccess {
     @INLINE
     public static void checkIndex(Object array, int index) {
         // note that we must read the array length first (implicit null check has precedence over bounds check)
-        if (Intrinsics.aboveEqual(index, readArrayLength(array))) {
+        if (UnsignedMath.aboveOrEqual(index, readArrayLength(array))) {
             Throw.arrayIndexOutOfBoundsException(array, index);
         }
     }

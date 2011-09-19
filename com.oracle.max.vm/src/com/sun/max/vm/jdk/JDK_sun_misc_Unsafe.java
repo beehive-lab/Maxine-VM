@@ -22,8 +22,6 @@
  */
 package com.sun.max.vm.jdk;
 
-import static com.sun.cri.bytecode.Bytecodes.*;
-import static com.sun.cri.bytecode.Bytecodes.MemoryBarriers.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 
@@ -33,6 +31,7 @@ import java.security.*;
 import sun.misc.*;
 import sun.reflect.*;
 
+import com.oracle.max.cri.intrinsics.*;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
@@ -830,27 +829,33 @@ final class JDK_sun_misc_Unsafe {
      * Inserts any necessary memory barriers before a volatile read as required by the JMM.
      */
     @INLINE
-    private static void preVolatileRead() {
-        // no-op
+    public static void preVolatileRead() {
+        MemoryBarriers.barrier(MemoryBarriers.JMM_PRE_VOLATILE_READ);
     }
 
     /**
      * Inserts any necessary memory barriers after a volatile read as required by the JMM.
      */
-    @INTRINSIC(MEMBAR | ((LOAD_LOAD | LOAD_STORE) << 8))
-    private static native void postVolatileRead();
+    @INLINE
+    public static void postVolatileRead() {
+        MemoryBarriers.barrier(MemoryBarriers.JMM_POST_VOLATILE_READ);
+    }
 
     /**
      * Inserts any necessary memory barriers before a volatile read as required by the JMM.
      */
-    @INTRINSIC(MEMBAR | ((LOAD_STORE | STORE_STORE) << 8))
-    private static native void preVolatileWrite();
+    @INLINE
+    public static void preVolatileWrite() {
+        MemoryBarriers.barrier(MemoryBarriers.JMM_PRE_VOLATILE_WRITE);
+    }
 
     /**
      * Inserts any necessary memory barriers after a volatile read as required by the JMM.
      */
-    @INTRINSIC(MEMBAR | ((STORE_LOAD | STORE_STORE) << 8))
-    private static native void postVolatileWrite();
+    @INLINE
+    public static void postVolatileWrite() {
+        MemoryBarriers.barrier(MemoryBarriers.JMM_POST_VOLATILE_WRITE);
+    }
 
     /**
      * Reads a volatile object field from an object at the specified offset.

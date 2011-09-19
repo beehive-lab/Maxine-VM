@@ -27,7 +27,6 @@ import java.io.*;
 import com.sun.cri.ci.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -67,7 +66,7 @@ public final class DoubleValue extends PrimitiveValue<DoubleValue> {
 
     @Override
     public boolean isAllOnes() {
-        return Intrinsics.doubleToLong(value) == -1L;
+        return Double.doubleToRawLongBits(value) == -1L;
     }
 
     @Override

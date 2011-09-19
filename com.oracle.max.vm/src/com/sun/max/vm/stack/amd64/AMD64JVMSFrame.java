@@ -22,7 +22,7 @@
  */
 package com.sun.max.vm.stack.amd64;
 
-import com.sun.max.lang.*;
+import com.oracle.max.cri.intrinsics.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.stack.*;
@@ -57,7 +57,7 @@ public class AMD64JVMSFrame extends JVMSFrame {
     @Override
     public int operandStackDepth() {
         final Pointer operandStackBase = operandStackPointer(0);
-        return Unsigned.idiv(sp.minus(operandStackBase).toInt(), JVMSFrameLayout.JVMS_SLOT_SIZE);
+        return UnsignedMath.divide(sp.minus(operandStackBase).toInt(), JVMSFrameLayout.JVMS_SLOT_SIZE);
     }
 
     @Override

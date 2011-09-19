@@ -61,7 +61,7 @@ public class MirandaMethodActor extends VirtualMethodActor {
         super(interfaceMethodActor.name,
               interfaceMethodActor.descriptor(),
               ACC_PUBLIC | MethodActor.ACC_ABSTRACT | ACC_SYNTHETIC,
-              null, 0);
+              null, null);
     }
 
     @Override

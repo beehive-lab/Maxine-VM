@@ -23,6 +23,7 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.debug.*;
+import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
@@ -36,7 +37,7 @@ public class SignificantBitOp extends Instruction {
     /**
      * This will be {@link Bytecodes#LSB} or {@link Bytecodes#MSB}.
      */
-    public final int op;
+    public final LIROpcode op;
 
     /**
      * Create a a new SignificantBitOp instance.
@@ -44,9 +45,9 @@ public class SignificantBitOp extends Instruction {
      * @param value the instruction producing the value that is input to this instruction
      * @param opcodeop either {@link Bytecodes#LSB} or {@link Bytecodes#MSB}
      */
-    public SignificantBitOp(Value value, int opcodeop) {
+    public SignificantBitOp(Value value, LIROpcode opcodeop) {
         super(CiKind.Int);
-        assert opcodeop == Bytecodes.LSB || opcodeop == Bytecodes.MSB;
+        assert opcodeop == LIROpcode.Lsb || opcodeop == LIROpcode.Msb;
         this.value = value;
         this.op = opcodeop;
     }
@@ -71,7 +72,7 @@ public class SignificantBitOp extends Instruction {
 
     @Override
     public int valueNumber() {
-        return Util.hash1(op, value);
+        return Util.hash1(op.ordinal(), value);
     }
 
     @Override
@@ -87,6 +88,6 @@ public class SignificantBitOp extends Instruction {
 
     @Override
     public void print(LogStream out) {
-        out.print(Bytecodes.nameOf(op) + " [").print(this).print("] ");
+        out.print(op.toString() + " [").print(this).print("] ");
     }
 }

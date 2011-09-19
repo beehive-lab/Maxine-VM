@@ -24,7 +24,7 @@ package com.sun.cri.ci;
 
 import java.util.*;
 
-import com.sun.cri.bytecode.Bytecodes.MemoryBarriers;
+import com.oracle.max.cri.intrinsics.*;
 import com.sun.cri.ci.CiRegister.RegisterFlag;
 
 

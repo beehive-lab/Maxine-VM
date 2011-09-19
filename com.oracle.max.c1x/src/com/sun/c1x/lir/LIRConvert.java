@@ -22,8 +22,8 @@
  */
 package com.sun.c1x.lir;
 
+import com.sun.c1x.ir.*;
 import com.sun.c1x.stub.*;
-import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -32,7 +32,7 @@ import com.sun.cri.ci.*;
  */
 public class LIRConvert extends LIROp1 {
 
-    public final int bytecode;
+    public final Convert.Op opcode;
     public CompilerStub stub;
 
     /**
@@ -42,9 +42,9 @@ public class LIRConvert extends LIROp1 {
      * @param operand the input operand for this instruction
      * @param result the result operand for this instruction
      */
-    public LIRConvert(int bytecode, CiValue operand, CiValue result) {
+    public LIRConvert(Convert.Op opcode, CiValue operand, CiValue result) {
         super(LIROpcode.Convert, operand, result);
-        this.bytecode = bytecode;
+        this.opcode = opcode;
     }
 
     /**
@@ -62,6 +62,6 @@ public class LIRConvert extends LIROp1 {
      */
     @Override
     public String operationString(OperandFormatter operandFmt) {
-        return "[" + Bytecodes.nameOf(bytecode) + "] " + super.operationString(operandFmt);
+        return "[" + opcode.name() + "] " + super.operationString(operandFmt);
     }
 }

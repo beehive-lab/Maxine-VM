@@ -22,7 +22,7 @@
  */
 package com.sun.max.vm.monitor.modal.sync;
 
-import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import java.util.*;
 

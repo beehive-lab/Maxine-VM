@@ -25,14 +25,24 @@ package com.sun.max.annotate;
 import java.lang.annotation.*;
 
 /**
- * Marks a method as being implemented by an extended bytecode.
+ * Marks a method as being implemented by a compiler intrinsic.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface INTRINSIC {
     /**
-     * The value of the extended bytecode corresponding to this intrinsic.
-     * @return the extended bytecode value
+     * The id of the intrinsic, which is used by the compiler to lookup an implementation of the intrinsic.
      */
-    int value();
+    String value();
+
+
+    /**
+     * Marks a parameter of an intrinsic method as a compile-time parameter. Callers of the intrinsic
+     * must make sure to pass only constants. This is not checked by the Java compiler or classloader,
+     * but the compiler will fail when the parameter is not a constant.
+     */
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.PARAMETER)
+    public @interface Constant {
+    }
 }

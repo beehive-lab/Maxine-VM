@@ -22,8 +22,8 @@
  */
 package com.sun.c1x.gen;
 
+import static com.oracle.max.cri.intrinsics.MemoryBarriers.*;
 import static com.sun.cri.bytecode.Bytecodes.*;
-import static com.sun.cri.bytecode.Bytecodes.MemoryBarriers.*;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.cri.ci.CiValue.*;
 
@@ -31,6 +31,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.oracle.max.asm.*;
+import com.oracle.max.cri.intrinsics.*;
 import com.sun.c1x.*;
 import com.sun.c1x.alloc.*;
 import com.sun.c1x.alloc.OperandPool.VariableFlag;
@@ -46,7 +47,6 @@ import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.c1x.value.FrameState.PhiProcedure;
 import com.sun.cri.bytecode.*;
-import com.sun.cri.bytecode.Bytecodes.MemoryBarriers;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiAddress.Scale;
 import com.sun.cri.ri.*;
@@ -670,7 +670,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             }
         } else {
             // address is [pointer + disp + (index * scale)]
-            assert (x.opcode & 0xff) == PGET || (x.opcode & 0xff) == PSET;
+//            assert (x.opcode & 0xff) == PGET || (x.opcode & 0xff) == PSET;
             if (!x.displacement().isConstant()) {
                 CiVariable tmp = newVariable(CiKind.Word);
                 arithmeticOpLong(Bytecodes.LADD, tmp, pointer, load(x.displacement()), null);
@@ -739,15 +739,14 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitInfopoint(Infopoint x) {
         LIRDebugInfo info = stateFor(x);
-        if (x.opcode == SAFEPOINT_POLL) {
+        if (x.op == Infopoint.Op.SAFEPOINT_POLL) {
             emitXir(xir.genSafepointPoll(site(x)), x, info, null, false);
             return;
         }
-        assert x.opcode == HERE || x.opcode == INFO || x.opcode == UNCOMMON_TRAP;
         CiValue result = x.kind.isVoid() ? CiValue.IllegalValue : createResultVariable(x);
 
         LIROpcode opcode;
-        switch (x.opcode) {
+        switch (x.op) {
             case HERE:
                 opcode = LIROpcode.Here;
                 break;
@@ -758,7 +757,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                 opcode = LIROpcode.UncommonTrap;
                 break;
             default:
-                throw new InternalError("Unexpected opcode: " + Bytecodes.nameOf(x.opcode));
+                throw new InternalError("Unexpected opcode: " + x.op.name());
 
         }
         lir.infopoint(opcode, result, info);

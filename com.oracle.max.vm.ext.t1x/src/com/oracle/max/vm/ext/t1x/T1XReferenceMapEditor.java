@@ -29,6 +29,7 @@ import static com.sun.max.vm.stack.VMFrameLayout.*;
 
 import java.util.*;
 
+import com.oracle.max.cri.intrinsics.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.max.lang.*;
@@ -217,7 +218,7 @@ public class T1XReferenceMapEditor implements ReferenceMapInterpreterContext, Re
                         Log.print(" }");
                         Log.print(", template={");
                         for (int i = 0; i < frame.numberOfTemplateSlots(); i++) {
-                            int refMapIndex = Unsigned.idiv(-t1xMethod.frameRefMapOffset, STACK_SLOT_SIZE) + i;
+                            int refMapIndex = UnsignedMath.divide(-t1xMethod.frameRefMapOffset, STACK_SLOT_SIZE) + i;
                             CiRegister fp = frame.framePointerReg();
                             if (ByteArrayBitMap.isSet(refMaps, offset, t1xMethod.frameRefMapSize, refMapIndex)) {
                                 Log.print(' ');

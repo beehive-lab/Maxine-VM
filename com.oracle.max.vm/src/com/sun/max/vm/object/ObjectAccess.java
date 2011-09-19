@@ -22,8 +22,8 @@
  */
 package com.sun.max.vm.object;
 
-import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import java.lang.reflect.*;
 import java.nio.*;

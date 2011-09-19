@@ -152,7 +152,7 @@ public final class LIRList {
         append(new LIRStackAllocate(dst, stackBlock));
     }
 
-    public void convert(int code, CiValue left, CiValue dst, CompilerStub stub) {
+    public void convert(Convert.Op code, CiValue left, CiValue dst, CompilerStub stub) {
         LIRConvert op = new LIRConvert(code, left, dst);
         op.stub = stub;
         append(op);
@@ -320,6 +320,14 @@ public final class LIRList {
         append(new LIROp3(LIROpcode.Irem, left, right, tmp, res, info));
     }
 
+    public void iudiv(CiValue left, CiValue right, CiValue res, CiValue tmp, LIRDebugInfo info) {
+        append(new LIROp3(LIROpcode.Iudiv, left, right, tmp, res, info));
+    }
+
+    public void iurem(CiValue left, CiValue right, CiValue res, CiValue tmp, LIRDebugInfo info) {
+        append(new LIROp3(LIROpcode.Iurem, left, right, tmp, res, info));
+    }
+
     public void ldiv(CiValue left, CiValue right, CiValue res, CiValue tmp, LIRDebugInfo info) {
         append(new LIROp3(LIROpcode.Ldiv, left, right, tmp, res, info));
     }
@@ -328,28 +336,20 @@ public final class LIRList {
         append(new LIROp3(LIROpcode.Lrem, left, right, tmp, res, info));
     }
 
+    public void ludiv(CiValue left, CiValue right, CiValue res, CiValue tmp, LIRDebugInfo info) {
+        append(new LIROp3(LIROpcode.Ludiv, left, right, tmp, res, info));
+    }
+
+    public void lurem(CiValue left, CiValue right, CiValue res, CiValue tmp, LIRDebugInfo info) {
+        append(new LIROp3(LIROpcode.Lurem, left, right, tmp, res, info));
+    }
+
     public void lsb(CiValue src, CiValue dst) {
         append(new LIRSignificantBit(LIROpcode.Lsb, src, dst));
     }
 
     public void msb(CiValue src, CiValue dst) {
         append(new LIRSignificantBit(LIROpcode.Msb, src, dst));
-    }
-
-    public void wdiv(CiValue left, CiValue right, CiValue res, CiValue tmp, LIRDebugInfo info) {
-        append(new LIROp3(LIROpcode.Wdiv, left, right, tmp, res, info));
-    }
-
-    public void wrem(CiValue left, CiValue right, CiValue res, CiValue tmp, LIRDebugInfo info) {
-        append(new LIROp3(LIROpcode.Wrem, left, right, tmp, res, info));
-    }
-
-    public void wdivi(CiValue left, CiValue right, CiValue res, CiValue tmp, LIRDebugInfo info) {
-        append(new LIROp3(LIROpcode.Wdivi, left, right, tmp, res, info));
-    }
-
-    public void wremi(CiValue left, CiValue right, CiValue res, CiValue tmp, LIRDebugInfo info) {
-        append(new LIROp3(LIROpcode.Wremi, left, right, tmp, res, info));
     }
 
     public void cmpMemInt(Condition condition, CiValue base, int disp, int c, LIRDebugInfo info) {

@@ -22,12 +22,12 @@
  */
 package com.sun.max.unsafe;
 
-import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
+import com.oracle.max.cri.intrinsics.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
-import com.sun.max.lang.Bytes;
 import com.sun.max.platform.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -53,7 +53,6 @@ public abstract class Pointer extends Address implements Accessor {
     }
 
     @INLINE
-    @INTRINSIC(WCONST_0)
     public static Pointer zero() {
         return isHosted() ? BoxedPointer.ZERO : fromInt(0);
     }
@@ -150,21 +149,18 @@ public abstract class Pointer extends Address implements Accessor {
 
     @Override
     @INLINE
-    @INTRINSIC(WDIV)
     public final Pointer dividedBy(Address divisor) {
         return asAddress().dividedBy(divisor).asPointer();
     }
 
     @Override
     @INLINE
-    @INTRINSIC(WDIVI)
     public final Pointer dividedBy(int divisor) {
         return asAddress().dividedBy(divisor).asPointer();
     }
 
     @Override
     @INLINE
-    @INTRINSIC(WREM)
     public final Pointer remainder(Address divisor) {
         return asAddress().remainder(divisor).asPointer();
     }
@@ -270,23 +266,17 @@ public abstract class Pointer extends Address implements Accessor {
         return Platform.platform().isa.category == ISA.Category.RISC;
     }
 
-    @INTRINSIC(PREAD_BYTE_I)
+    @INTRINSIC(PREAD)
     public byte readByte(int offset) {
         return readByte(Offset.fromInt(offset));
     }
 
-    @INTRINSIC(PREAD_BYTE)
+    @INTRINSIC(PREAD)
     public abstract byte readByte(Offset offset);
 
-    @INTRINSIC(PGET_BYTE)
-    private native byte builtinGetByte(int displacement, int index);
-
-    @INLINE
+    @INTRINSIC(PREAD)
     public final byte getByte(int displacement, int index) {
-        if (risc() || isHosted()) {
-            return readByte(Offset.fromInt(index).plus(displacement));
-        }
-        return builtinGetByte(displacement, index);
+        return readByte(Offset.fromInt(index).plus(displacement));
     }
 
     @INLINE
@@ -324,23 +314,17 @@ public abstract class Pointer extends Address implements Accessor {
         return getBoolean(0);
     }
 
-    @INTRINSIC(PREAD_SHORT_I)
+    @INTRINSIC(PREAD)
     public final short readShort(int offset) {
         return readShort(Offset.fromInt(offset));
     }
 
-    @INTRINSIC(PREAD_SHORT)
+    @INTRINSIC(PREAD)
     public abstract short readShort(Offset offset);
 
-    @INTRINSIC(PGET_SHORT)
-    private native short builtinGetShort(int displacement, int index);
-
-    @INLINE
+    @INTRINSIC(PREAD)
     public final short getShort(int displacement, int index) {
-        if (risc() || isHosted()) {
-            return readShort(Offset.fromInt(index).times(Shorts.SIZE).plus(displacement));
-        }
-        return builtinGetShort(displacement, index);
+        return readShort(Offset.fromInt(index).times(Shorts.SIZE).plus(displacement));
     }
 
     @INLINE
@@ -353,23 +337,17 @@ public abstract class Pointer extends Address implements Accessor {
         return getShort(0);
     }
 
-    @INTRINSIC(PREAD_CHAR_I)
+    @INTRINSIC(PREAD)
     public final char readChar(int offset) {
         return readChar(Offset.fromInt(offset));
     }
 
-    @INTRINSIC(PREAD_CHAR)
+    @INTRINSIC(PREAD)
     public abstract char readChar(Offset offset);
 
-    @INTRINSIC(PGET_CHAR)
-    private native char builtinGetChar(int displacement, int index);
-
-    @INLINE
+    @INTRINSIC(PREAD)
     public final char getChar(int displacement, int index) {
-        if (risc() || isHosted()) {
-            return readChar(Offset.fromInt(index).times(Chars.SIZE).plus(displacement));
-        }
-        return builtinGetChar(displacement, index);
+        return readChar(Offset.fromInt(index).times(Chars.SIZE).plus(displacement));
     }
 
     @INLINE
@@ -382,23 +360,17 @@ public abstract class Pointer extends Address implements Accessor {
         return getChar(0);
     }
 
-    @INTRINSIC(PREAD_INT_I)
+    @INTRINSIC(PREAD)
     public final int readInt(int offset) {
         return readInt(Offset.fromInt(offset));
     }
 
-    @INTRINSIC(PREAD_INT)
+    @INTRINSIC(PREAD)
     public abstract int readInt(Offset offset);
 
-    @INTRINSIC(PGET_INT)
-    private native int builtinGetInt(int displacement, int index);
-
-    @INLINE
+    @INTRINSIC(PREAD)
     public final int getInt(int displacement, int index) {
-        if (risc() || isHosted()) {
-            return readInt(Offset.fromInt(index).times(Ints.SIZE).plus(displacement));
-        }
-        return builtinGetInt(displacement, index);
+        return readInt(Offset.fromInt(index).times(Ints.SIZE).plus(displacement));
     }
 
     @INLINE
@@ -411,23 +383,17 @@ public abstract class Pointer extends Address implements Accessor {
         return getInt(0);
     }
 
-    @INTRINSIC(PREAD_FLOAT_I)
+    @INTRINSIC(PREAD)
     public final float readFloat(int offset) {
         return readFloat(Offset.fromInt(offset));
     }
 
-    @INTRINSIC(PREAD_FLOAT)
+    @INTRINSIC(PREAD)
     public abstract float readFloat(Offset offset);
 
-    @INTRINSIC(PGET_FLOAT)
-    private native float builtinGetFloat(int displacement, int index);
-
-    @INLINE
+    @INTRINSIC(PREAD)
     public final float getFloat(int displacement, int index) {
-        if (risc() || isHosted()) {
-            return readFloat(Offset.fromInt(index).times(FLOAT_SIZE).plus(displacement));
-        }
-        return builtinGetFloat(displacement, index);
+        return readFloat(Offset.fromInt(index).times(FLOAT_SIZE).plus(displacement));
     }
 
     @INLINE
@@ -440,23 +406,17 @@ public abstract class Pointer extends Address implements Accessor {
         return getFloat(0);
     }
 
-    @INTRINSIC(PREAD_LONG_I)
+    @INTRINSIC(PREAD)
     public final long readLong(int offset) {
         return readLong(Offset.fromInt(offset));
     }
 
-    @INTRINSIC(PREAD_LONG)
+    @INTRINSIC(PREAD)
     public abstract long readLong(Offset offset);
 
-    @INTRINSIC(PGET_LONG)
-    private native long builtinGetLong(int displacement, int index);
-
-    @INLINE
+    @INTRINSIC(PREAD)
     public final long getLong(int displacement, int index) {
-        if (risc() || isHosted()) {
-            return readLong(Offset.fromInt(index).times(Longs.SIZE).plus(displacement));
-        }
-        return builtinGetLong(displacement, index);
+        return readLong(Offset.fromInt(index).times(Longs.SIZE).plus(displacement));
     }
 
     @INLINE
@@ -469,23 +429,17 @@ public abstract class Pointer extends Address implements Accessor {
         return getLong(0);
     }
 
-    @INTRINSIC(PREAD_DOUBLE_I)
+    @INTRINSIC(PREAD)
     public final double readDouble(int offset) {
         return readDouble(Offset.fromInt(offset));
     }
 
-    @INTRINSIC(PREAD_DOUBLE)
+    @INTRINSIC(PREAD)
     public abstract double readDouble(Offset offset);
 
-    @INTRINSIC(PGET_DOUBLE)
-    private native double builtinGetDouble(int displacement, int index);
-
-    @INLINE
+    @INTRINSIC(PREAD)
     public final double getDouble(int displacement, int index) {
-        if (risc() || isHosted()) {
-            return readDouble(Offset.fromInt(index).times(DOUBLE_SIZE).plus(displacement));
-        }
-        return builtinGetDouble(displacement, index);
+        return readDouble(Offset.fromInt(index).times(DOUBLE_SIZE).plus(displacement));
     }
 
     @INLINE
@@ -498,23 +452,17 @@ public abstract class Pointer extends Address implements Accessor {
         return getDouble(0);
     }
 
-    @INTRINSIC(PREAD_WORD_I)
+    @INTRINSIC(PREAD)
     public final Word readWord(int offset) {
         return readWord(Offset.fromInt(offset));
     }
 
-    @INTRINSIC(PREAD_WORD)
+    @INTRINSIC(PREAD)
     public abstract Word readWord(Offset offset);
 
-    @INTRINSIC(PGET_WORD)
-    private native Word builtinGetWord(int displacement, int index);
-
-    @INLINE
+    @INTRINSIC(PREAD)
     public final Word getWord(int displacement, int index) {
-        if (risc() || isHosted()) {
-            return readWord(Offset.fromInt(index).times(Word.size()).plus(displacement));
-        }
-        return builtinGetWord(displacement, index);
+        return readWord(Offset.fromInt(index).times(Word.size()).plus(displacement));
     }
 
     @INLINE
@@ -527,23 +475,17 @@ public abstract class Pointer extends Address implements Accessor {
         return getWord(0);
     }
 
-    @INTRINSIC(PREAD_REFERENCE_I)
+    @INTRINSIC(PREAD)
     public final Reference readReference(int offset) {
         return readReference(Offset.fromInt(offset));
     }
 
-    @INTRINSIC(PREAD_REFERENCE)
+    @INTRINSIC(PREAD)
     public abstract Reference readReference(Offset offset);
 
-    @INTRINSIC(PGET_REFERENCE)
-    private native Reference builtinGetReference(int displacement, int index);
-
-    @INLINE
+    @INTRINSIC(PREAD)
     public final Reference getReference(int displacement, int index) {
-        if (risc() || isHosted()) {
-            return readReference(Offset.fromInt(index).times(Word.size()).plus(displacement));
-        }
-        return builtinGetReference(displacement, index);
+        return readReference(Offset.fromInt(index).times(Word.size()).plus(displacement));
     }
 
     @INLINE
@@ -556,24 +498,17 @@ public abstract class Pointer extends Address implements Accessor {
         return getReference(0);
     }
 
-    @INTRINSIC(PWRITE_BYTE_I)
+    @INTRINSIC(PWRITE)
     public final void writeByte(int offset, byte value) {
         writeByte(Offset.fromInt(offset), value);
     }
 
-    @INTRINSIC(PWRITE_BYTE)
+    @INTRINSIC(PWRITE)
     public abstract void writeByte(Offset offset, byte value);
 
-    @INTRINSIC(PSET_BYTE)
-    private native void builtinSetByte(int displacement, int index, byte value);
-
-    @INLINE
+    @INTRINSIC(PWRITE)
     public final void setByte(int displacement, int index, byte value) {
-        if (risc() || isHosted()) {
-            writeByte(Offset.fromInt(index).plus(displacement), value);
-        } else {
-            builtinSetByte(displacement, index, value);
-        }
+        writeByte(Offset.fromInt(index).plus(displacement), value);
     }
 
     @INLINE
@@ -611,24 +546,17 @@ public abstract class Pointer extends Address implements Accessor {
         setBoolean(0, value);
     }
 
-    @INTRINSIC(PWRITE_SHORT_I)
+    @INTRINSIC(PWRITE)
     public final void writeShort(int offset, short value) {
         writeShort(Offset.fromInt(offset), value);
     }
 
-    @INTRINSIC(PWRITE_SHORT)
+    @INTRINSIC(PWRITE)
     public abstract void writeShort(Offset offset, short value);
 
-    @INTRINSIC(PSET_SHORT)
-    private native void builtinSetShort(int displacement, int index, short value);
-
-    @INLINE
+    @INTRINSIC(PWRITE)
     public final void setShort(int displacement, int index, short value) {
-        if (risc() || isHosted()) {
-            writeShort(Offset.fromInt(index).times(Shorts.SIZE).plus(displacement), value);
-        } else {
-            builtinSetShort(displacement, index, value);
-        }
+        writeShort(Offset.fromInt(index).times(Shorts.SIZE).plus(displacement), value);
     }
 
     @INLINE
@@ -666,24 +594,17 @@ public abstract class Pointer extends Address implements Accessor {
         setChar(0, value);
     }
 
-    @INTRINSIC(PWRITE_INT_I)
+    @INTRINSIC(PWRITE)
     public final void writeInt(int offset, int value) {
         writeInt(Offset.fromInt(offset), value);
     }
 
-    @INTRINSIC(PWRITE_INT)
+    @INTRINSIC(PWRITE)
     public abstract void writeInt(Offset offset, int value);
 
-    @INTRINSIC(PSET_INT)
-    private native void builtinSetInt(int displacement, int index, int value);
-
-    @INLINE
+    @INTRINSIC(PWRITE)
     public final void setInt(int displacement, int index, int value) {
-        if (risc() || isHosted()) {
-            writeInt(Offset.fromInt(index).times(Ints.SIZE).plus(displacement), value);
-        } else {
-            builtinSetInt(displacement, index, value);
-        }
+        writeInt(Offset.fromInt(index).times(Ints.SIZE).plus(displacement), value);
     }
 
     @INLINE
@@ -696,24 +617,17 @@ public abstract class Pointer extends Address implements Accessor {
         setInt(0, value);
     }
 
-    @INTRINSIC(PWRITE_FLOAT_I)
+    @INTRINSIC(PWRITE)
     public final void writeFloat(int offset, float value) {
         writeFloat(Offset.fromInt(offset), value);
     }
 
-    @INTRINSIC(PWRITE_FLOAT)
+    @INTRINSIC(PWRITE)
     public abstract void writeFloat(Offset offset, float value);
 
-    @INTRINSIC(PSET_FLOAT)
-    private native void builtinSetFloat(int displacement, int index, float value);
-
-    @INLINE
+    @INTRINSIC(PWRITE)
     public final void setFloat(int displacement, int index, float value) {
-        if (risc() || isHosted()) {
-            writeFloat(Offset.fromInt(index).times(FLOAT_SIZE).plus(displacement), value);
-        } else {
-            builtinSetFloat(displacement, index, value);
-        }
+        writeFloat(Offset.fromInt(index).times(FLOAT_SIZE).plus(displacement), value);
     }
 
     @INLINE
@@ -726,24 +640,17 @@ public abstract class Pointer extends Address implements Accessor {
         setFloat(0, value);
     }
 
-    @INTRINSIC(PWRITE_LONG_I)
+    @INTRINSIC(PWRITE)
     public final void writeLong(int offset, long value) {
         writeLong(Offset.fromInt(offset), value);
     }
 
-    @INTRINSIC(PWRITE_LONG)
+    @INTRINSIC(PWRITE)
     public abstract void writeLong(Offset offset, long value);
 
-    @INTRINSIC(PSET_LONG)
-    private native void builtinSetLong(int displacement, int index, long value);
-
-    @INLINE
+    @INTRINSIC(PWRITE)
     public final void setLong(int displacement, int index, long value) {
-        if (risc() || isHosted()) {
-            writeLong(Offset.fromInt(index).times(Longs.SIZE).plus(displacement), value);
-        } else {
-            builtinSetLong(displacement, index, value);
-        }
+        writeLong(Offset.fromInt(index).times(Longs.SIZE).plus(displacement), value);
     }
 
     @INLINE
@@ -756,24 +663,17 @@ public abstract class Pointer extends Address implements Accessor {
         setLong(0, value);
     }
 
-    @INTRINSIC(PWRITE_DOUBLE_I)
+    @INTRINSIC(PWRITE)
     public final void writeDouble(int offset, double value) {
         writeDouble(Offset.fromInt(offset), value);
     }
 
-    @INTRINSIC(PWRITE_DOUBLE)
+    @INTRINSIC(PWRITE)
     public abstract void writeDouble(Offset offset, double value);
 
-    @INTRINSIC(PSET_DOUBLE)
-    private native void builtinSetDouble(int displacement, int index, double value);
-
-    @INLINE
+    @INTRINSIC(PWRITE)
     public final void setDouble(int displacement, int index, double value) {
-        if (risc() || isHosted()) {
-            writeDouble(Offset.fromInt(index).times(DOUBLE_SIZE).plus(displacement), value);
-        } else {
-            builtinSetDouble(displacement, index, value);
-        }
+        writeDouble(Offset.fromInt(index).times(DOUBLE_SIZE).plus(displacement), value);
     }
 
     @INLINE
@@ -786,24 +686,17 @@ public abstract class Pointer extends Address implements Accessor {
         setDouble(0, value);
     }
 
-    @INTRINSIC(PWRITE_WORD_I)
+    @INTRINSIC(PWRITE)
     public final void writeWord(int offset, Word value) {
         writeWord(Offset.fromInt(offset), value);
     }
 
-    @INTRINSIC(PWRITE_WORD)
+    @INTRINSIC(PWRITE)
     public abstract void writeWord(Offset offset, Word value);
 
-    @INTRINSIC(PSET_WORD)
-    private native void builtinSetWord(int displacement, int index, Word value);
-
-    @INLINE
+    @INTRINSIC(PWRITE)
     public final void setWord(int displacement, int index, Word value) {
-        if (risc() || isHosted()) {
-            writeWord(Offset.fromInt(index).times(Word.size()).plus(displacement), value);
-        } else {
-            builtinSetWord(displacement, index, value);
-        }
+        writeWord(Offset.fromInt(index).times(Word.size()).plus(displacement), value);
     }
 
     @INLINE
@@ -816,24 +709,17 @@ public abstract class Pointer extends Address implements Accessor {
         setWord(0, value);
     }
 
-    @INTRINSIC(PWRITE_REFERENCE_I)
+    @INTRINSIC(PWRITE)
     public final void writeReference(int offset, Reference value) {
         writeReference(Offset.fromInt(offset), value);
     }
 
-    @INTRINSIC(PWRITE_REFERENCE)
+    @INTRINSIC(PWRITE)
     public abstract void writeReference(Offset offset, Reference value);
 
-    @INTRINSIC(PSET_REFERENCE)
-    private native void builtinSetReference(int displacement, int index, Reference value);
-
-    @INLINE
+    @INTRINSIC(PWRITE)
     public final void setReference(int displacement, int index, Reference value) {
-        if (risc() || isHosted()) {
-            writeReference(Offset.fromInt(index).times(Word.size()).plus(displacement), value);
-        } else {
-            builtinSetReference(displacement, index, value);
-        }
+        writeReference(Offset.fromInt(index).times(Word.size()).plus(displacement), value);
     }
 
     @INLINE
@@ -849,37 +735,59 @@ public abstract class Pointer extends Address implements Accessor {
     /**
      * @see Accessor#compareAndSwapInt(Offset, int, int)
      */
-    @INTRINSIC(PCMPSWP_INT_I)
+    @INTRINSIC(PCMPSWP)
     public native int compareAndSwapInt(int offset, int expectedValue, int newValue);
 
     /**
      * @see Accessor#compareAndSwapInt(Offset, int, int)
      */
-    @INTRINSIC(PCMPSWP_INT)
+    @INTRINSIC(PCMPSWP)
     public native int compareAndSwapInt(Offset offset, int expectedValue, int newValue);
 
     /**
      * @see Accessor#compareAndSwapInt(Offset, int, int)
      */
-    @INTRINSIC(PCMPSWP_WORD_I)
-    public native Word compareAndSwapWord(int offset, Word expectedValue, Word newValue);
+    @INTRINSIC(PCMPSWP)
+    public native long compareAndSwapLong(int offset, long expectedValue, long newValue);
 
     /**
      * @see Accessor#compareAndSwapInt(Offset, int, int)
      */
-    @INTRINSIC(PCMPSWP_WORD)
-    public native Word compareAndSwapWord(Offset offset, Word expectedValue, Word newValue);
+    @INTRINSIC(PCMPSWP)
+    public native long compareAndSwapLong(Offset offset, long expectedValue, long newValue);
 
     /**
      * @see Accessor#compareAndSwapInt(Offset, int, int)
      */
-    @INTRINSIC(PCMPSWP_REFERENCE_I)
+    @INLINE
+    public Word compareAndSwapWord(int offset, Word expectedValue, Word newValue) {
+        if (Word.width() == 64) {
+            return fromLong(compareAndSwapLong(offset, expectedValue.asAddress().toLong(), newValue.asAddress().toLong()));
+        }
+        return fromInt(compareAndSwapInt(offset, expectedValue.asAddress().toInt(), newValue.asAddress().toInt()));
+    }
+
+    /**
+     * @see Accessor#compareAndSwapInt(Offset, int, int)
+     */
+    @INLINE
+    public Word compareAndSwapWord(Offset offset, Word expectedValue, Word newValue) {
+        if (Word.width() == 64) {
+            return fromLong(compareAndSwapLong(offset, expectedValue.asAddress().toLong(), newValue.asAddress().toLong()));
+        }
+        return fromInt(compareAndSwapInt(offset, expectedValue.asAddress().toInt(), newValue.asAddress().toInt()));
+    }
+
+    /**
+     * @see Accessor#compareAndSwapInt(Offset, int, int)
+     */
+    @INTRINSIC(PCMPSWP)
     public native Reference compareAndSwapReference(int offset, Reference expectedValue, Reference newValue);
 
     /**
      * @see Accessor#compareAndSwapInt(Offset, int, int)
      */
-    @INTRINSIC(PCMPSWP_REFERENCE)
+    @INTRINSIC(PCMPSWP)
     public native Reference compareAndSwapReference(Offset offset, Reference expectedValue, Reference newValue);
 
     /**
@@ -892,7 +800,7 @@ public abstract class Pointer extends Address implements Accessor {
      * @param bitIndex the index of the bit to set
      */
     public void setBit(int bitIndex) {
-        final int byteIndex = Unsigned.idiv(bitIndex, Bytes.WIDTH);
+        final int byteIndex = UnsignedMath.divide(bitIndex, Bytes.WIDTH);
         byte byteValue = getByte(byteIndex);
         byteValue |= 1 << (bitIndex % Bytes.WIDTH);
         setByte(byteIndex, byteValue);
@@ -915,7 +823,7 @@ public abstract class Pointer extends Address implements Accessor {
         // then the arithmetic operations below will convert implicitly to int and may insert sign bits.
         final int intBits = bits & 0xff;
 
-        int byteIndex = Unsigned.idiv(bitIndex, Bytes.WIDTH);
+        int byteIndex = UnsignedMath.divide(bitIndex, Bytes.WIDTH);
         final int rest = bitIndex % Bytes.WIDTH;
         byte byteValue = getByte(byteIndex);
         byteValue |= intBits << rest;

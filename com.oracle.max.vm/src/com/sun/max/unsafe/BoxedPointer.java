@@ -23,7 +23,6 @@
 package com.sun.max.unsafe;
 
 import com.sun.max.annotate.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.reference.*;
 
@@ -81,26 +80,6 @@ public final class BoxedPointer extends Pointer implements Boxed {
         return nativeWord;
     }
 
-    @Override
-    protected Pointer dividedByAddress(Address divisor) {
-        return BoxedAddress.from(nativeWord).dividedByAddress(divisor).asPointer();
-    }
-
-    @Override
-    protected Pointer dividedByInt(int divisor) {
-        return BoxedAddress.from(nativeWord).dividedByInt(divisor).asPointer();
-    }
-
-    @Override
-    protected Pointer remainderByAddress(Address divisor) {
-        return BoxedAddress.from(nativeWord).remainderByAddress(divisor).asPointer();
-    }
-
-    @Override
-    protected int remainderByInt(int divisor) {
-        return BoxedAddress.from(nativeWord).remainderByInt(divisor);
-    }
-
     private static native byte nativeReadByte(long pointer, long offset);
 
     @Override
@@ -129,7 +108,7 @@ public final class BoxedPointer extends Pointer implements Boxed {
 
     @Override
     public float readFloat(Offset offset) {
-        return Intrinsics.intToFloat(readInt(offset));
+        return Float.intBitsToFloat(readInt(offset));
     }
 
     private static native long nativeReadLong(long pointer, long offset);
@@ -141,7 +120,7 @@ public final class BoxedPointer extends Pointer implements Boxed {
 
     @Override
     public double readDouble(Offset offset) {
-        return Intrinsics.longToDouble(readLong(offset));
+        return Double.longBitsToDouble(readLong(offset));
     }
 
     @Override
@@ -182,7 +161,7 @@ public final class BoxedPointer extends Pointer implements Boxed {
 
     @Override
     public void writeFloat(Offset offset, float value) {
-        writeInt(offset, Intrinsics.floatToInt(value));
+        writeInt(offset, Float.floatToRawIntBits(value));
     }
 
     private static native void nativeWriteLong(long pointer, long offset, long value);
@@ -194,7 +173,7 @@ public final class BoxedPointer extends Pointer implements Boxed {
 
     @Override
     public void writeDouble(Offset offset, double value) {
-        writeLong(offset, Intrinsics.doubleToLong(value));
+        writeLong(offset, Double.doubleToRawLongBits(value));
     }
 
     @Override

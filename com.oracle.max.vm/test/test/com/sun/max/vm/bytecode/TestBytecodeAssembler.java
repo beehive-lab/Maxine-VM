@@ -122,7 +122,7 @@ public abstract class TestBytecodeAssembler extends BytecodeAssembler {
                             SymbolTable.INIT,
                             SignatureDescriptor.fromJava(Void.TYPE),
                             Modifier.PUBLIC | Actor.INITIALIZER,
-                            codeAttribute, 0);
+                            codeAttribute, null);
         } catch (NoSuchMethodException e) {
             return null;
         }
@@ -148,12 +148,12 @@ public abstract class TestBytecodeAssembler extends BytecodeAssembler {
                                 methodName,
                                 signature,
                                 Modifier.PUBLIC | Modifier.STATIC,
-                                codeAttribute, 0) :
+                                codeAttribute, null) :
                 new VirtualMethodActor(
                                 methodName,
                                 signature,
                                 Modifier.PUBLIC,
-                                codeAttribute, 0);
+                                codeAttribute, null);
             final Utf8Constant className = this.className == null ? makeSymbol(superClass.getName() + "_$GENERATED$_" + methodName) : this.className;
             final ClassMethodActor defaultConstructor = generateDefaultConstructor(superClass);
             final ClassMethodActor[] classMethodActors;

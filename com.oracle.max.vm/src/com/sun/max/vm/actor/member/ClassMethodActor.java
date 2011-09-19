@@ -82,7 +82,7 @@ public abstract class ClassMethodActor extends MethodActor {
 
     private CiExceptionHandler[] exceptionHandlers;
 
-    public ClassMethodActor(Utf8Constant name, SignatureDescriptor descriptor, int flags, CodeAttribute codeAttribute, int intrinsic) {
+    public ClassMethodActor(Utf8Constant name, SignatureDescriptor descriptor, int flags, CodeAttribute codeAttribute, String intrinsic) {
         super(name, descriptor, flags, intrinsic);
         this.codeAttribute = codeAttribute;
         this.nativeFunction = isNative() ? new NativeFunction(this) : null;

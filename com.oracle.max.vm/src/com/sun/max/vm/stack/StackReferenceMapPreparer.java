@@ -22,13 +22,14 @@
  */
 package com.sun.max.vm.stack;
 
-import static com.sun.cri.bytecode.Bytecodes.Infopoints.*;
 import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.intrinsics.Infopoints.*;
 import static com.sun.max.vm.runtime.VMRegister.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.util.concurrent.atomic.*;
 
+import com.oracle.max.cri.intrinsics.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
@@ -231,12 +232,12 @@ public final class StackReferenceMapPreparer {
 
     @INLINE
     private static int referenceMapByteIndex(final Pointer lowestStackSlot, Pointer slot) {
-        return Unsigned.idiv(referenceMapBitIndex(lowestStackSlot, slot), Bytes.WIDTH);
+        return UnsignedMath.divide(referenceMapBitIndex(lowestStackSlot, slot), Bytes.WIDTH);
     }
 
     @INLINE
     private static int referenceMapBitIndex(final Pointer lowestStackSlot, Pointer slot) {
-        return Unsigned.idiv(slot.minus(lowestStackSlot).toInt(), Word.size());
+        return UnsignedMath.divide(slot.minus(lowestStackSlot).toInt(), Word.size());
     }
 
     private static void checkValidReferenceMapRange(Pointer tla, Pointer lowestSlot, Pointer highestSlot) {
@@ -702,7 +703,7 @@ public final class StackReferenceMapPreparer {
             while (slotIndex < slotEnd) {
                 int rest = slotIndex % Bytes.WIDTH; // number of bits to shift mapBits over
                 int bits = Bytes.WIDTH - rest;      // number of bits from mapBits to use
-                int byteIndex = Unsigned.idiv(slotIndex, Bytes.WIDTH);
+                int byteIndex = UnsignedMath.divide(slotIndex, Bytes.WIDTH);
 
                 byte prev = referenceMap.getByte(byteIndex);
                 prev |= mapBits << rest;

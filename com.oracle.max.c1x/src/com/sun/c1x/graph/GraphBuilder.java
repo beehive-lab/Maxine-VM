@@ -28,16 +28,16 @@ import static java.lang.reflect.Modifier.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.oracle.max.cri.intrinsics.*;
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.graph.ScopeData.ReturnBlock;
+import com.sun.c1x.intrinsics.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.ir.Value.Flag;
 import com.sun.c1x.opt.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.bytecode.*;
-import com.sun.cri.bytecode.Bytecodes.JniOp;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.ri.RiType.Representation;
@@ -62,7 +62,7 @@ public final class GraphBuilder {
     public static final int TRACELEVEL_STATE = 2;
 
     final IR ir;
-    final C1XCompilation compilation;
+    public final C1XCompilation compilation;
     final CiStatistics stats;
 
     /**
@@ -76,7 +76,7 @@ public final class GraphBuilder {
     final MemoryMap memoryMap;
 
     final Canonicalizer canonicalizer;     // canonicalizer which does strength reduction + constant folding
-    ScopeData scopeData;                   // Per-scope data; used for inlining
+    public ScopeData scopeData;            // Per-scope data; used for inlining
     BlockBegin curBlock;                   // the current block
     MutableFrameState curState;            // the current execution state
     Instruction lastInstr;                 // the last instruction added
@@ -672,13 +672,7 @@ public final class GraphBuilder {
         }
     }
 
-    void genUnsignedCompareOp(CiKind kind, int opcode, int op) {
-        Value y = pop(kind);
-        Value x = pop(kind);
-        ipush(append(new UnsignedCompareOp(opcode, op, x, y)));
-    }
-
-    void genConvert(int opcode, CiKind from, CiKind to) {
+    void genConvert(Convert.Op opcode, CiKind from, CiKind to) {
         CiKind tt = to.stackKind();
         push(tt, append(new Convert(opcode, pop(from.stackKind()), tt)));
     }
@@ -730,25 +724,6 @@ public final class GraphBuilder {
         FrameState stateBefore = curState.immutableCopy(bci());
         Throw t = new Throw(apop(), stateBefore, !scopeData.noSafepointPolls());
         appendWithoutOptimization(t, bci);
-    }
-
-    void genUnsafeCast(RiMethod method) {
-        compilation.setNotTypesafe();
-        RiSignature signature = method.signature();
-        int argCount = signature.argumentCount(false);
-        RiType accessingClass = scope().method.holder();
-        RiType fromType;
-        RiType toType = signature.returnType(accessingClass);
-        if (argCount == 1) {
-            fromType = signature.argumentTypeAt(0, accessingClass);
-        } else {
-            assert argCount == 0 : "method with @UNSAFE_CAST must have exactly 1 argument";
-            fromType = method.holder();
-        }
-        CiKind from = fromType.kind();
-        CiKind to = toType.kind();
-        boolean redundant = compilation.archKindsEqual(to, from);
-        curState.push(to, append(new UnsafeCast(toType, curState.pop(from), redundant)));
     }
 
     void genCheckCast() {
@@ -897,32 +872,8 @@ public final class GraphBuilder {
         push(kind.stackKind(), optimized);
     }
 
-    /**
-     * Temporary work-around to support the @ACCESSOR Maxine annotation.
-     */
-    private RiMethod handleInvokeAccessorOrBuiltin(RiMethod target) {
-        target = bindAccessorMethod(target);
-        if (target.intrinsic() != 0) {
-            int intrinsic = target.intrinsic();
-            int opcode = intrinsic & 0xff;
-            // Checkstyle: off
-            switch (opcode) {
-                case PREAD          : genLoadPointer(intrinsic); break;
-                case PGET           : genLoadPointer(intrinsic); break;
-                case PWRITE         : genStorePointer(intrinsic); break;
-                case PSET           : genStorePointer(intrinsic); break;
-                case PCMPSWP        : genCompareAndSwap(intrinsic); break;
-                default:
-                    throw new CiBailout("unknown bytecode " + opcode + " (" + nameOf(opcode) + ")");
-            }
-            // Checkstyle: on
-            return null;
-        }
-        return target;
-    }
-
     void genInvokeStatic(RiMethod target, int cpi, RiConstantPool constantPool) {
-        target = handleInvokeAccessorOrBuiltin(target);
+        target = bindAccessorMethod(target);
         if (target == null) {
             return;
         }
@@ -944,7 +895,7 @@ public final class GraphBuilder {
     }
 
     void genInvokeInterface(RiMethod target, int cpi, RiConstantPool constantPool) {
-        target = handleInvokeAccessorOrBuiltin(target);
+        target = bindAccessorMethod(target);
         if (target == null) {
             return;
         }
@@ -955,7 +906,7 @@ public final class GraphBuilder {
     }
 
     void genInvokeVirtual(RiMethod target, int cpi, RiConstantPool constantPool) {
-        target = handleInvokeAccessorOrBuiltin(target);
+        target = bindAccessorMethod(target);
         if (target == null) {
             return;
         }
@@ -966,7 +917,7 @@ public final class GraphBuilder {
     }
 
     void genInvokeSpecial(RiMethod target, RiType knownHolder, int cpi, RiConstantPool constantPool) {
-        target = handleInvokeAccessorOrBuiltin(target);
+        target = bindAccessorMethod(target);
         if (target == null) {
             return;
         }
@@ -1358,7 +1309,7 @@ public final class GraphBuilder {
         return appendWithBCI(new Constant(type), bci(), false);
     }
 
-    private Value append(Instruction x) {
+    public Value append(Instruction x) {
         return appendWithBCI(x, bci(), C1XOptions.OptCanonicalize);
     }
 
@@ -1546,6 +1497,10 @@ public final class GraphBuilder {
 
     boolean tryRemoveCall(RiMethod target, Value[] args, boolean isStatic) {
         if (target.isResolved()) {
+            if (tryInlineIntrinsicId(target, args, isStatic)) {
+                return true;
+            }
+
             if (C1XOptions.OptIntrinsify) {
                 // try to create an intrinsic node instead of a call
                 C1XIntrinsic intrinsic = C1XIntrinsic.getIntrinsic(target);
@@ -1659,6 +1614,42 @@ public final class GraphBuilder {
         curState.popArguments(args.length);
 
         pushReturn(resultType, append(result));
+        stats.intrinsicCount++;
+        return true;
+    }
+
+    private boolean tryInlineIntrinsicId(RiMethod target, Value[] args, boolean isStatic) {
+        IntrinsicImpl rawIntrinsic = compilation.compiler.intrinsicRegistry.get(target);
+        if (!(rawIntrinsic instanceof C1XIntrinsicImpl)) {
+            return false;
+        }
+        C1XIntrinsicImpl intrinsic = (C1XIntrinsicImpl) rawIntrinsic;
+
+        // get the arguments for the intrinsic
+        CiKind resultType = returnKind(target);
+
+        if (C1XOptions.PrintInlinedIntrinsics) {
+            TTY.println("Inlining intrinsic: " + intrinsic);
+        }
+
+        // Create state before intrinsic.
+        for (int i = 0; i < args.length; ++i) {
+            if (args[i] != null) {
+                curState.push(args[i].kind.stackKind(), args[i]);
+            }
+        }
+        FrameState stateBefore = curState.immutableCopy(bci());
+
+        // Pop arguments.
+        curState.popArguments(args.length);
+
+
+        // Create the intrinsic node.
+        Value result = intrinsic.createHIR(this, target, args, isStatic, stateBefore);
+
+        if (result != null) {
+            pushReturn(resultType, result);
+        }
         stats.intrinsicCount++;
         return true;
     }
@@ -2341,21 +2332,21 @@ public final class GraphBuilder {
             case LOR            : // fall through
             case LXOR           : genLogicOp(CiKind.Long, opcode); break;
             case IINC           : genIncrement(); break;
-            case I2L            : genConvert(opcode, CiKind.Int   , CiKind.Long  ); break;
-            case I2F            : genConvert(opcode, CiKind.Int   , CiKind.Float ); break;
-            case I2D            : genConvert(opcode, CiKind.Int   , CiKind.Double); break;
-            case L2I            : genConvert(opcode, CiKind.Long  , CiKind.Int   ); break;
-            case L2F            : genConvert(opcode, CiKind.Long  , CiKind.Float ); break;
-            case L2D            : genConvert(opcode, CiKind.Long  , CiKind.Double); break;
-            case F2I            : genConvert(opcode, CiKind.Float , CiKind.Int   ); break;
-            case F2L            : genConvert(opcode, CiKind.Float , CiKind.Long  ); break;
-            case F2D            : genConvert(opcode, CiKind.Float , CiKind.Double); break;
-            case D2I            : genConvert(opcode, CiKind.Double, CiKind.Int   ); break;
-            case D2L            : genConvert(opcode, CiKind.Double, CiKind.Long  ); break;
-            case D2F            : genConvert(opcode, CiKind.Double, CiKind.Float ); break;
-            case I2B            : genConvert(opcode, CiKind.Int   , CiKind.Byte  ); break;
-            case I2C            : genConvert(opcode, CiKind.Int   , CiKind.Char  ); break;
-            case I2S            : genConvert(opcode, CiKind.Int   , CiKind.Short ); break;
+            case I2L            : genConvert(Convert.Op.I2L, CiKind.Int   , CiKind.Long  ); break;
+            case I2F            : genConvert(Convert.Op.I2F, CiKind.Int   , CiKind.Float ); break;
+            case I2D            : genConvert(Convert.Op.I2D, CiKind.Int   , CiKind.Double); break;
+            case L2I            : genConvert(Convert.Op.L2I, CiKind.Long  , CiKind.Int   ); break;
+            case L2F            : genConvert(Convert.Op.L2F, CiKind.Long  , CiKind.Float ); break;
+            case L2D            : genConvert(Convert.Op.L2D, CiKind.Long  , CiKind.Double); break;
+            case F2I            : genConvert(Convert.Op.F2I, CiKind.Float , CiKind.Int   ); break;
+            case F2L            : genConvert(Convert.Op.F2L, CiKind.Float , CiKind.Long  ); break;
+            case F2D            : genConvert(Convert.Op.F2D, CiKind.Float , CiKind.Double); break;
+            case D2I            : genConvert(Convert.Op.D2I, CiKind.Double, CiKind.Int   ); break;
+            case D2L            : genConvert(Convert.Op.D2L, CiKind.Double, CiKind.Long  ); break;
+            case D2F            : genConvert(Convert.Op.D2F, CiKind.Double, CiKind.Float ); break;
+            case I2B            : genConvert(Convert.Op.I2B, CiKind.Int   , CiKind.Byte  ); break;
+            case I2C            : genConvert(Convert.Op.I2C, CiKind.Int   , CiKind.Char  ); break;
+            case I2S            : genConvert(Convert.Op.I2S, CiKind.Int   , CiKind.Short ); break;
             case LCMP           : genCompareOp(CiKind.Long, opcode, CiKind.Int); break;
             case FCMPL          : genCompareOp(CiKind.Float, opcode, CiKind.Int); break;
             case FCMPG          : genCompareOp(CiKind.Float, opcode, CiKind.Int); break;
@@ -2417,7 +2408,6 @@ public final class GraphBuilder {
     private void processExtendedBytecode(int bci, BytecodeStream s, int opcode) {
         // Checkstyle: off
         switch (opcode) {
-            case UNSAFE_CAST    : genUnsafeCast(constantPool().lookupMethod(s.readCPI(), (byte)Bytecodes.UNSAFE_CAST)); break;
             case WLOAD          : loadLocal(s.readLocalIndex(), CiKind.Word); break;
             case WLOAD_0        : loadLocal(0, CiKind.Word); break;
             case WLOAD_1        : loadLocal(1, CiKind.Word); break;
@@ -2430,42 +2420,8 @@ public final class GraphBuilder {
             case WSTORE_2       : // fall through
             case WSTORE_3       : storeLocal(CiKind.Word, opcode - WSTORE_0); break;
 
-            case WCONST_0       : wpush(appendConstant(CiConstant.ZERO)); break;
-            case WDIV           : // fall through
-            case WREM           : genArithmeticOp(CiKind.Word, opcode, curState.immutableCopy(bci())); break;
-            case WDIVI          : genArithmeticOp(CiKind.Word, opcode, CiKind.Word, CiKind.Int, curState.immutableCopy(bci())); break;
-            case WREMI          : genArithmeticOp(CiKind.Int, opcode, CiKind.Word, CiKind.Int, curState.immutableCopy(bci())); break;
-
-            case READREG        : genLoadRegister(s.readCPI()); break;
-            case WRITEREG       : genStoreRegister(s.readCPI()); break;
-
-            case PREAD          : genLoadPointer(PREAD      | (s.readCPI() << 8)); break;
-            case PGET           : genLoadPointer(PGET       | (s.readCPI() << 8)); break;
-            case PWRITE         : genStorePointer(PWRITE    | (s.readCPI() << 8)); break;
-            case PSET           : genStorePointer(PSET      | (s.readCPI() << 8)); break;
-            case PCMPSWP        : genCompareAndSwap(PCMPSWP | (s.readCPI() << 8)); break;
-            case MEMBAR         : genMemoryBarrier(s.readCPI()); break;
-
             case WRETURN        : genReturn(wpop()); break;
-            case INFOPOINT      : genInfopoint(INFOPOINT | (s.readUByte(bci() + 1) << 16), s.readUByte(bci() + 2) != 0); break;
             case JNICALL        : genNativeCall(s.readCPI()); break;
-            case JNIOP          : genJniOp(s.readCPI()); break;
-            case ALLOCA         : genStackAllocate(); break;
-
-            case MOV_I2F        : genConvert(opcode, CiKind.Int, CiKind.Float ); break;
-            case MOV_F2I        : genConvert(opcode, CiKind.Float, CiKind.Int ); break;
-            case MOV_L2D        : genConvert(opcode, CiKind.Long, CiKind.Double ); break;
-            case MOV_D2L        : genConvert(opcode, CiKind.Double, CiKind.Long ); break;
-
-            case UCMP           : genUnsignedCompareOp(CiKind.Int, opcode, s.readCPI()); break;
-            case UWCMP          : genUnsignedCompareOp(CiKind.Word, opcode, s.readCPI()); break;
-
-            case STACKHANDLE    : genStackHandle(s.readCPI() == 0); break;
-            case BREAKPOINT_TRAP: genBreakpointTrap(); break;
-            case PAUSE          : genPause(); break;
-            case LSB            : // fall through
-            case MSB            : genSignificantBit(opcode);break;
-            case READBIT        : genReadBit(s.readCPI()); break;
 
             case BREAKPOINT:
                 throw new CiBailout("concurrent setting of breakpoint");
@@ -2492,44 +2448,12 @@ public final class GraphBuilder {
         }
     }
 
-    private void genPause() {
-        append(new Pause());
-    }
-
-    private void genBreakpointTrap() {
-        append(new BreakpointTrap());
-    }
-
-    private void genStackHandle(boolean isCategory1) {
-        Value value = curState.xpop();
-        wpush(append(new StackHandle(value)));
-    }
-
-    private void genStackAllocate() {
-        Value size = pop(CiKind.Int);
-        wpush(append(new StackAllocate(size)));
-    }
-
-    private void genSignificantBit(int opcode) {
-        Value value = pop(CiKind.Word);
-        push(CiKind.Int, append(new SignificantBitOp(value, opcode)));
-    }
-
-    private void genReadBit(int registerId) {
+    public void genReadBit(CiRegister register, int offset, int bitNo) {
         /*
          * To achieve the effect we want, which is to branch directly on the value of the bit,
          * we assert that the next opcode in the stream is an IFEQ/IFNE, and combine them into a single
          * instruction. This perhaps should be done as a more principled HIR optimization.
          */
-        CiRegister register = compilation.registerConfig.getRegisterForRole(registerId);
-        if (register == null) {
-            throw new CiBailout("Unsupported READBIT operand " + registerId);
-        }
-        Value bitNo = pop(CiKind.Int);
-        Value tlOffset = pop(CiKind.Int);
-        if (!(bitNo.isConstant() && tlOffset.isConstant())) {
-            throw new CiBailout("READBIT operands must be constants");
-        }
         stream().next();
         int opcode = stream().currentBC();
         if (!(opcode == IFEQ || opcode == IFNE)) {
@@ -2543,10 +2467,10 @@ public final class GraphBuilder {
         BlockBegin tSucc = blockAt(stream().readBranchDest());
         BlockBegin fSucc = blockAt(stream().nextBCI());
 
-        append(new IfBit(register, tlOffset, bitNo, cond, tSucc, fSucc));
+        append(new IfBit(register, offset, bitNo, cond, tSucc, fSucc));
     }
 
-    private void appendSnippetCall(RiSnippetCall snippetCall) {
+    public void appendSnippetCall(RiSnippetCall snippetCall) {
         Value[] args = new Value[snippetCall.arguments.length];
         RiMethod snippet = snippetCall.snippet;
         RiSignature signature = snippet.signature();
@@ -2576,32 +2500,6 @@ public final class GraphBuilder {
         }
     }
 
-    private void genJniOp(int operand) {
-        RiSnippets snippets = compilation.runtime.getSnippets();
-        switch (operand) {
-            case JniOp.LINK: {
-                RiMethod nativeMethod = scope().method;
-                RiSnippetCall linkSnippet = snippets.link(nativeMethod);
-                if (linkSnippet.result != null) {
-                    wpush(appendConstant(linkSnippet.result));
-                } else {
-                    appendSnippetCall(linkSnippet);
-                }
-                break;
-            }
-            case JniOp.J2N: {
-                RiMethod nativeMethod = scope().method;
-                appendSnippetCall(snippets.enterNative(nativeMethod));
-                break;
-            }
-            case JniOp.N2J: {
-                RiMethod nativeMethod = scope().method;
-                appendSnippetCall(snippets.enterVM(nativeMethod));
-                break;
-            }
-        }
-    }
-
     private void genNativeCall(int cpi) {
         Value nativeFunctionAddress = wpop();
         RiSignature sig = constantPool().lookupSignature(cpi);
@@ -2617,203 +2515,17 @@ public final class GraphBuilder {
         switch (sig.returnKind()) {
             case Boolean:
             case Byte: {
-                genConvert(I2B, CiKind.Int, CiKind.Byte);
+                genConvert(Convert.Op.I2B, CiKind.Int, CiKind.Byte);
                 break;
             }
             case Short: {
-                genConvert(I2S, CiKind.Int, CiKind.Short);
+                genConvert(Convert.Op.I2S, CiKind.Int, CiKind.Short);
                 break;
             }
             case Char: {
-                genConvert(I2C, CiKind.Int, CiKind.Char);
+                genConvert(Convert.Op.I2C, CiKind.Int, CiKind.Char);
                 break;
             }
-        }
-    }
-
-    private void genInfopoint(int opcode, boolean inclFrame) {
-        // TODO: create slimmer frame state if inclFrame is false
-        FrameState state = curState.immutableCopy(bci());
-        assert opcode != SAFEPOINT_POLL || !scopeData.noSafepointPolls() : "cannot place safepoint poll in uninterruptible code scope";
-        Value result = append(new Infopoint(opcode, state));
-        if (!result.kind.isVoid()) {
-            push(result.kind, result);
-        }
-    }
-
-    private void genLoadRegister(int registerId) {
-        CiRegister register = compilation.registerConfig.getRegisterForRole(registerId);
-        if (register == null) {
-            throw new CiBailout("Unsupported READREG operand " + registerId);
-        }
-        LoadRegister load = new LoadRegister(CiKind.Word, register);
-        RiRegisterAttributes regAttr = compilation.registerConfig.getAttributesMap()[register.number];
-        if (regAttr.isNonZero) {
-            load.setFlag(Flag.NonNull);
-        }
-        wpush(append(load));
-    }
-
-    private void genStoreRegister(int registerId) {
-        CiRegister register = compilation.registerConfig.getRegisterForRole(registerId);
-        if (register == null) {
-            throw new CiBailout("Unsupported WRITEREG operand " + registerId);
-        }
-        Value value = pop(CiKind.Word);
-        append(new StoreRegister(CiKind.Word, register, value));
-    }
-
-    /**
-     * Gets the data kind corresponding to a given pointer operation opcode.
-     * The data kind may be more specific than a {@linkplain CiKind#stackKind()}.
-     *
-     * @return the kind of value at the address accessed by the pointer operation denoted by {@code opcode}
-     */
-    private static CiKind dataKindForPointerOp(int opcode) {
-        // Checkstyle: off
-        switch (opcode) {
-            case PGET_BYTE          :
-            case PSET_BYTE          :
-            case PREAD_BYTE         :
-            case PREAD_BYTE_I       :
-            case PWRITE_BYTE        :
-            case PWRITE_BYTE_I      : return CiKind.Byte;
-            case PGET_CHAR          :
-            case PREAD_CHAR         :
-            case PREAD_CHAR_I       : return CiKind.Char;
-            case PGET_SHORT         :
-            case PSET_SHORT         :
-            case PREAD_SHORT        :
-            case PREAD_SHORT_I      :
-            case PWRITE_SHORT       :
-            case PWRITE_SHORT_I     : return CiKind.Short;
-            case PGET_INT           :
-            case PSET_INT           :
-            case PREAD_INT          :
-            case PREAD_INT_I        :
-            case PWRITE_INT         :
-            case PWRITE_INT_I       : return CiKind.Int;
-            case PGET_FLOAT         :
-            case PSET_FLOAT         :
-            case PREAD_FLOAT        :
-            case PREAD_FLOAT_I      :
-            case PWRITE_FLOAT       :
-            case PWRITE_FLOAT_I     : return CiKind.Float;
-            case PGET_LONG          :
-            case PSET_LONG          :
-            case PREAD_LONG         :
-            case PREAD_LONG_I       :
-            case PWRITE_LONG        :
-            case PWRITE_LONG_I      : return CiKind.Long;
-            case PGET_DOUBLE        :
-            case PSET_DOUBLE        :
-            case PREAD_DOUBLE       :
-            case PREAD_DOUBLE_I     :
-            case PWRITE_DOUBLE      :
-            case PWRITE_DOUBLE_I    : return CiKind.Double;
-            case PGET_WORD          :
-            case PSET_WORD          :
-            case PREAD_WORD         :
-            case PREAD_WORD_I       :
-            case PWRITE_WORD        :
-            case PWRITE_WORD_I      : return CiKind.Word;
-            case PGET_REFERENCE     :
-            case PSET_REFERENCE     :
-            case PREAD_REFERENCE    :
-            case PREAD_REFERENCE_I  :
-            case PWRITE_REFERENCE   :
-            case PWRITE_REFERENCE_I : return CiKind.Object;
-            default:
-                throw new CiBailout("Unsupported pointer operation opcode " + opcode + "(" + nameOf(opcode) + ")");
-        }
-        // Checkstyle: on
-    }
-
-    /**
-     * Pops the value producing the scaled-index or the byte offset for a pointer operation.
-     * If compiling for a 64-bit platform and the value is an {@link CiKind#Int} parameter,
-     * then a conversion is inserted to sign extend the int to a word.
-     *
-     * This is required as the value is used as a 64-bit value and so the high 32 bits
-     * need to be correct.
-     *
-     * @param isInt specifies if the value is an {@code int}
-     */
-    private Value popOffsetOrIndexForPointerOp(boolean isInt) {
-        if (isInt) {
-            Value offsetOrIndex = ipop();
-            if (compilation.target.arch.is64bit() && offsetOrIndex instanceof Local) {
-                return append(new Convert(I2L, offsetOrIndex, CiKind.Word));
-            }
-            return offsetOrIndex;
-        }
-        return wpop();
-    }
-
-    private void genLoadPointer(int opcode) {
-        FrameState stateBefore = curState.immutableCopy(bci());
-        CiKind dataKind = dataKindForPointerOp(opcode);
-        Value offsetOrIndex;
-        Value displacement;
-        if ((opcode & 0xff) == PREAD) {
-            offsetOrIndex = popOffsetOrIndexForPointerOp(opcode >= PREAD_BYTE_I && opcode <= PREAD_REFERENCE_I);
-            displacement = null;
-        } else {
-            offsetOrIndex = popOffsetOrIndexForPointerOp(true);
-            displacement = ipop();
-        }
-        Value pointer = wpop();
-        push(dataKind.stackKind(), append(new LoadPointer(dataKind, opcode, pointer, displacement, offsetOrIndex, stateBefore, false)));
-    }
-
-    private void genStorePointer(int opcode) {
-        FrameState stateBefore = curState.immutableCopy(bci());
-        CiKind dataKind = dataKindForPointerOp(opcode);
-        Value value = pop(dataKind.stackKind());
-        Value offsetOrIndex;
-        Value displacement;
-        if ((opcode & 0xff) == PWRITE) {
-            offsetOrIndex = popOffsetOrIndexForPointerOp(opcode >= PWRITE_BYTE_I && opcode <= PWRITE_REFERENCE_I);
-            displacement = null;
-        } else {
-            offsetOrIndex = popOffsetOrIndexForPointerOp(true);
-            displacement = ipop();
-        }
-        Value pointer = wpop();
-        append(new StorePointer(opcode, dataKind, pointer, displacement, offsetOrIndex, value, stateBefore, false));
-    }
-
-    private static CiKind kindForCompareAndSwap(int opcode) {
-        // Checkstyle: off
-        switch (opcode) {
-            case PCMPSWP_INT        :
-            case PCMPSWP_INT_I      : return CiKind.Int;
-            case PCMPSWP_WORD       :
-            case PCMPSWP_WORD_I     : return CiKind.Word;
-            case PCMPSWP_REFERENCE  :
-            case PCMPSWP_REFERENCE_I: return CiKind.Object;
-            default:
-                throw new CiBailout("Unsupported compare-and-swap opcode " + opcode + "(" + nameOf(opcode) + ")");
-        }
-        // Checkstyle: on
-    }
-
-    private void genCompareAndSwap(int opcode) {
-        FrameState stateBefore = curState.immutableCopy(bci());
-        CiKind kind = kindForCompareAndSwap(opcode);
-        Value newValue = pop(kind);
-        Value expectedValue = pop(kind);
-        Value offset;
-        offset = popOffsetOrIndexForPointerOp(opcode >= PCMPSWP_INT_I && opcode <= PCMPSWP_REFERENCE_I);
-        Value pointer = wpop();
-        push(kind, append(new CompareAndSwap(opcode, pointer, offset, expectedValue, newValue, stateBefore, false)));
-    }
-
-
-    private void genMemoryBarrier(int barriers) {
-        int explicitMemoryBarriers = barriers & ~compilation.target.arch.implicitMemoryBarriers;
-        if (explicitMemoryBarriers != 0) {
-            append(new MemoryBarrier(explicitMemoryBarriers));
         }
     }
 

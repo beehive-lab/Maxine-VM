@@ -22,7 +22,7 @@
  */
 package com.sun.max.vm.runtime;
 
-import static com.sun.cri.bytecode.Bytecodes.Infopoints.*;
+import static com.sun.max.vm.intrinsics.Infopoints.*;
 import static com.sun.max.vm.jdk.JDK_java_lang_Throwable.*;
 import static com.sun.max.vm.object.ArrayAccess.*;
 import static com.sun.max.vm.runtime.VMRegister.*;
