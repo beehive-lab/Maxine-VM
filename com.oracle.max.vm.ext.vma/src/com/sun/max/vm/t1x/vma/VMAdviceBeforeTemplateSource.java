@@ -2337,112 +2337,112 @@ public class VMAdviceBeforeTemplateSource {
     }
 
     @T1X_TEMPLATE(IFEQ)
-    public static void ifeq(@Slot(0) int value1) {
+    public static void ifeq(int value1) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIf(153, value1, 0);
         }
     }
 
     @T1X_TEMPLATE(IFNE)
-    public static void ifne(@Slot(0) int value1) {
+    public static void ifne(int value1) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIf(154, value1, 0);
         }
     }
 
     @T1X_TEMPLATE(IFLT)
-    public static void iflt(@Slot(0) int value1) {
+    public static void iflt(int value1) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIf(155, value1, 0);
         }
     }
 
     @T1X_TEMPLATE(IFGE)
-    public static void ifge(@Slot(0) int value1) {
+    public static void ifge(int value1) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIf(156, value1, 0);
         }
     }
 
     @T1X_TEMPLATE(IFGT)
-    public static void ifgt(@Slot(0) int value1) {
+    public static void ifgt(int value1) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIf(157, value1, 0);
         }
     }
 
     @T1X_TEMPLATE(IFLE)
-    public static void ifle(@Slot(0) int value1) {
+    public static void ifle(int value1) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIf(158, value1, 0);
         }
     }
 
     @T1X_TEMPLATE(IFNULL)
-    public static void ifnull(@Slot(0) Object value1) {
+    public static void ifnull(Object value1) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIf(198, value1, null);
         }
     }
 
     @T1X_TEMPLATE(IFNONNULL)
-    public static void ifnonnull(@Slot(0) Object value1) {
+    public static void ifnonnull(Object value1) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIf(199, value1, null);
         }
     }
 
     @T1X_TEMPLATE(IF_ICMPEQ)
-    public static void if_icmpeq(@Slot(1) int value1, @Slot(0) int value2) {
+    public static void if_icmpeq(int value1, int value2) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIf(159, value1, value2);
         }
     }
 
     @T1X_TEMPLATE(IF_ICMPNE)
-    public static void if_icmpne(@Slot(1) int value1, @Slot(0) int value2) {
+    public static void if_icmpne(int value1, int value2) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIf(160, value1, value2);
         }
     }
 
     @T1X_TEMPLATE(IF_ICMPLT)
-    public static void if_icmplt(@Slot(1) int value1, @Slot(0) int value2) {
+    public static void if_icmplt(int value1, int value2) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIf(161, value1, value2);
         }
     }
 
     @T1X_TEMPLATE(IF_ICMPGE)
-    public static void if_icmpge(@Slot(1) int value1, @Slot(0) int value2) {
+    public static void if_icmpge(int value1, int value2) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIf(162, value1, value2);
         }
     }
 
     @T1X_TEMPLATE(IF_ICMPGT)
-    public static void if_icmpgt(@Slot(1) int value1, @Slot(0) int value2) {
+    public static void if_icmpgt(int value1, int value2) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIf(163, value1, value2);
         }
     }
 
     @T1X_TEMPLATE(IF_ICMPLE)
-    public static void if_icmple(@Slot(1) int value1, @Slot(0) int value2) {
+    public static void if_icmple(int value1, int value2) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIf(164, value1, value2);
         }
     }
 
     @T1X_TEMPLATE(IF_ACMPEQ)
-    public static void if_acmpeq(@Slot(1) Object value1, @Slot(0) Object value2) {
+    public static void if_acmpeq(Object value1, Object value2) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIf(165, value1, value2);
         }
     }
 
     @T1X_TEMPLATE(IF_ACMPNE)
-    public static void if_acmpne(@Slot(1) Object value1, @Slot(0) Object value2) {
+    public static void if_acmpne(Object value1, Object value2) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeIf(166, value1, value2);
         }
