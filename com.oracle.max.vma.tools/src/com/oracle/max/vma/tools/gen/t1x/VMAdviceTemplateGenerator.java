@@ -1295,7 +1295,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
     private void generateIfCmpTemplate(CiKind ciKind, String op) {
         startMethodGeneration();
         generateTemplateTag("IF_%sCMP%s", tagPrefix(ciKind), op.toUpperCase());
-        out.printf("    public static void if_%scmp%s(@Slot(1) %s value1, @Slot(0) %s value2) {%n", opPrefix(ciKind), op, ciKind.javaName, ciKind.javaName);
+        out.printf("    public static void if_%scmp%s(%s value1, %s value2) {%n", opPrefix(ciKind), op, ciKind.javaName, ciKind.javaName);
         generateBeforeAdvice();
         out.printf("    }%n");
         newLine();
@@ -1324,7 +1324,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
     private void generateIfTemplate(CiKind ciKind, String op) {
         startMethodGeneration();
         generateTemplateTag("IF%s", op.toUpperCase());
-        out.printf("    public static void if%s(@Slot(0) %s value1) {%n", op, ciKind.javaName);
+        out.printf("    public static void if%s(%s value1) {%n", op, ciKind.javaName);
         generateBeforeAdvice();
         out.printf("    }%n");
         newLine();

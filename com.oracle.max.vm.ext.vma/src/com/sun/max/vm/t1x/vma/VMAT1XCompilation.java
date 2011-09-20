@@ -373,7 +373,38 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
     protected void do_branch(int opcode, int targetBCI) {
         if (templates != defaultTemplates) {
             T1XTemplateTag tag = branchTagMap.get(opcode);
-            emit(tag);
+            switch (tag) {
+                case GOTO:
+                case GOTO_W:
+                    emit(tag);
+                    break;
+                case IFNULL: case IFNONNULL: {
+                    start(tag);
+                    CiRegister reg = reg(0, "value1", CiKind.Object);
+                    peekObject(reg, 0);
+                    finish();
+                    break;
+                }
+
+                case IFEQ: case IFNE: case IFLT: case IFLE: case IFGE: case IFGT: {
+                    start(tag);
+                    CiRegister reg = reg(0, "value1", CiKind.Int);
+                    peekInt(reg, 0);
+                    finish();
+                    break;
+                }
+
+                case IF_ICMPEQ: case IF_ICMPNE: case IF_ICMPLT: case IF_ICMPGE:
+                case IF_ICMPGT: case IF_ICMPLE: case IF_ACMPEQ: case IF_ACMPNE: {
+                    start(tag);
+                    CiRegister reg1 = reg(0, "value1", CiKind.Int);
+                    CiRegister reg2 = reg(1, "value2", CiKind.Int);
+                    peekInt(reg1, 1);
+                    peekInt(reg2, 0);
+                    finish();
+                    break;
+                }
+            }
         }
         super.do_branch(opcode, targetBCI);
     }
@@ -401,13 +432,18 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
 
     private static Map<Integer, T1XTemplateTag> branchTagMap;
 
-    private static final EnumSet<T1XTemplateTag> BRANCH_TEMPLATE_TAGS = EnumSet.of(
+    private static final EnumSet<T1XTemplateTag> IF_TEMPLATE_TAGS = EnumSet.of(
                     IF_ICMPEQ, IF_ICMPNE, IF_ICMPLT, IF_ICMPGE, IF_ICMPGT, IF_ICMPLE, IF_ACMPEQ, IF_ACMPNE,
-                    IFEQ, IFNE, IFLT, IFLE, IFGE, IFGT, IFNULL, IFNONNULL, GOTO, GOTO_W);
+                    IFEQ, IFNE, IFLT, IFLE, IFGE, IFGT, IFNULL, IFNONNULL);
+
+    private static final EnumSet<T1XTemplateTag> GOTO_TEMPLATE_TAGS = EnumSet.of(GOTO, GOTO_W);
 
     private static void makeIfTagMap() {
         branchTagMap = new HashMap<Integer, T1XTemplateTag>();
-        for (T1XTemplateTag tag : BRANCH_TEMPLATE_TAGS) {
+        for (T1XTemplateTag tag : IF_TEMPLATE_TAGS) {
+            branchTagMap.put(tag.opcode, tag);
+        }
+        for (T1XTemplateTag tag : GOTO_TEMPLATE_TAGS) {
             branchTagMap.put(tag.opcode, tag);
         }
     }
