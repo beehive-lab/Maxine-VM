@@ -198,20 +198,20 @@ public class MaxineIntrinsicIDs {
     public static final String WRITEREG = p + "WRITEREG";
 
     /**
-     * Reads/tests the value of a bit specified by a register playing a runtime-defined role, a byte offset,
-     * and a bit number (LSB=0).
+     * Reads/tests the value of a bit specified by the {@link VMRegister#LATCH} register, a byte offset,
+     * and a bit number (LSB=0), that will be then used to branch on the value. I.e. this is not a general
+     * purpose bit reading mechanism.
      * <p>
      * The method definition must have the following form:
      * <pre>
-     * static boolean m(@INTRINSIC.Constant int registerId, @INTRINSIC.Constant int offset, @INTRINSIC.Constant int bit);
-     * registerId: The {@link VMRegister register id} of the register used as the base of the address to read.
+     * static boolean m(@INTRINSIC.Constant int offset, @INTRINSIC.Constant int bit);
      * offset: The offset of the address to read.
      * bit: The bit of the memory cell to read.
-     *     All three parameters must be compile-time constants.
+     *     Both parameters must be compile-time constants.
      *     The call of the intrinsic must be followed by an {@link Bytecodes#IFEQ} or {@link Bytecodes#IFNE} bytecode.
      * </pre>
      */
-    public static final String READREGBIT = p + "READREGBIT";
+    public static final String IFLATCHBITREAD = p + "IFLATCHBITREAD";
 
     /**
      * Read a value from memory.

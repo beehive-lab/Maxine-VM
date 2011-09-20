@@ -27,6 +27,8 @@ import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
 import java.lang.reflect.*;
 
 import com.oracle.max.vm.ext.vma.*;
+import com.oracle.max.vm.ext.vma.runtime.*;
+import com.oracle.max.vma.tools.gen.vma.*;
 import com.sun.max.annotate.*;
 
 /**
@@ -40,8 +42,9 @@ import com.sun.max.annotate.*;
 @HOSTED_ONLY
 public class ObjectStateHandlerAdaptorGenerator {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         createGenerator(ObjectStateHandlerAdaptorGenerator.class);
+        generateAutoComment();
         for (Method m : VMAdviceHandler.class.getMethods()) {
             String name = m.getName();
             if (name.startsWith("advise")) {
@@ -52,11 +55,11 @@ public class ObjectStateHandlerAdaptorGenerator {
                 generate(m);
             }
         }
+        AdviceGeneratorHelper.updateSource(ObjectStateHandlerAdaptor.class, null, false);
     }
 
     private static void generate(Method m) {
         String name = m.getName();
-        generateAutoComment();
         out.printf("    @Override%n");
         generateSignature(m, null);
         out.printf(" {%n");

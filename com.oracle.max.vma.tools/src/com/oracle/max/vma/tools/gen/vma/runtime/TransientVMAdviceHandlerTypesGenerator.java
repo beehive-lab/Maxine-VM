@@ -30,6 +30,8 @@ import java.util.*;
 import java.util.Map.Entry;
 
 import com.oracle.max.vm.ext.vma.*;
+import com.oracle.max.vm.ext.vma.runtime.*;
+import com.oracle.max.vma.tools.gen.vma.*;
 
 
 public class TransientVMAdviceHandlerTypesGenerator {
@@ -43,7 +45,7 @@ public class TransientVMAdviceHandlerTypesGenerator {
     public static Map<String, String> enumToRecordName = new HashMap<String, String>();
     public static Map<String, ArrayList<String>> recordToEnumList = new HashMap<String, ArrayList<String>>();
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         createGenerator(TransientVMAdviceHandlerTypesGenerator.class);
         generateAutoComment();
         for (Method m : VMAdviceHandler.class.getMethods()) {
@@ -54,6 +56,8 @@ public class TransientVMAdviceHandlerTypesGenerator {
         }
         out.printf(";%n%n");
         generateNewAdviceRecord();
+        AdviceGeneratorHelper.updateSource(TransientVMAdviceHandlerTypes.class, null, false);
+
     }
 
     public static void createEnumMaps() {
@@ -117,7 +121,7 @@ public class TransientVMAdviceHandlerTypesGenerator {
                 adviceRecordName = "Object" + uLastParam;
             } else if (name.contains("Operation")) {
                 adviceRecordName = uLastParam + uLastParam;
-            } else if (name.equals("IfInt") || name.equals("IInc")) {
+            } else if (name.equals("IfInt")) {
                 adviceRecordName = "LongLong";
             } else if (name.equals("IfObject") || name.equals("CheckCast") || name.equals("InstanceOf") ||
                             name.endsWith("MultiNewArray")) {

@@ -27,21 +27,24 @@ import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
 import java.lang.reflect.*;
 
 import com.oracle.max.vm.ext.vma.log.*;
+import com.oracle.max.vm.ext.vma.log.txt.*;
+import com.oracle.max.vma.tools.gen.vma.*;
 
 public class CompactTextVMAdviceHandlerLogGenerator {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         createGenerator(CompactTextVMAdviceHandlerLogGenerator.class);
+        generateAutoComment();
         for (Method m : VMAdviceHandlerLog.class.getMethods()) {
             if (m.getName().startsWith("advise")) {
                 generate(m);
             }
         }
+        AdviceGeneratorHelper.updateSource(CompactTextVMAdviceHandlerLog.class, null, false);
     }
 
     private static void generate(Method m) {
         final String name = m.getName();
-        generateAutoComment();
         out.printf("    @Override%n");
         generateSignature(m, null);
         out.printf(" {%n");

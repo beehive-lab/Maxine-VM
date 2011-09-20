@@ -120,16 +120,6 @@ public class T1XTemplateSource {
         return T1XRuntime.createMultianewarrayDimensions(sp, n);
     }
 
-    @T1X_TEMPLATE(LOCK)
-    public static void lock(Object object) {
-        Monitor.enter(object);
-    }
-
-    @T1X_TEMPLATE(UNLOCK)
-    public static void unlock(Object object) {
-        Monitor.exit(object);
-    }
-
 // START GENERATED CODE
     @T1X_TEMPLATE(GETFIELD$boolean$resolved)
     public static int getfieldBoolean(@Slot(0) Object object, int offset) {
@@ -992,21 +982,21 @@ public class T1XTemplateSource {
     /**
      * Selects the correct implementation of a resolved method referenced by an INVOKEINTERFACE instruction.
      *
-     * @param interfaceMethodActor the resolved interface method being invoked
+     * @param methodActor the resolved interface method being invoked
      * @param receiver the receiver object of the invocation
      * @return the {@link CallEntryPoint#BASELINE_ENTRY_POINT} to be called
      */
     @T1X_TEMPLATE(INVOKEINTERFACE$float$resolved)
     @Slot(-1)
-    public static Address invokeinterfaceFloat(InterfaceMethodActor interfaceMethodActor, Reference receiver) {
-        return Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress().
+    public static Address invokeinterfaceFloat(InterfaceMethodActor methodActor, Reference receiver) {
+        return Snippets.selectInterfaceMethod(receiver, methodActor).asAddress().
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
     /**
      * Selects the correct implementation of a resolved method referenced by an INVOKEINTERFACE instruction.
      *
-     * @param interfaceMethodActor the resolved interface method being invoked
+     * @param methodActor the resolved interface method being invoked
      * @param mpo the profile object for an instrumented invocation
      * @param mpoIndex a profile specific index
      * @param receiver the receiver object of the invocation
@@ -1014,8 +1004,8 @@ public class T1XTemplateSource {
      */
     @T1X_TEMPLATE(INVOKEINTERFACE$float$instrumented)
     @Slot(-1)
-    public static Address invokeinterfaceFloat(InterfaceMethodActor interfaceMethodActor, MethodProfile mpo, int mpoIndex, Reference receiver) {
-        return Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex).
+    public static Address invokeinterfaceFloat(InterfaceMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver) {
+        return Snippets.selectInterfaceMethod(receiver, methodActor, mpo, mpoIndex).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -1302,21 +1292,21 @@ public class T1XTemplateSource {
     /**
      * Selects the correct implementation of a resolved method referenced by an INVOKEINTERFACE instruction.
      *
-     * @param interfaceMethodActor the resolved interface method being invoked
+     * @param methodActor the resolved interface method being invoked
      * @param receiver the receiver object of the invocation
      * @return the {@link CallEntryPoint#BASELINE_ENTRY_POINT} to be called
      */
     @T1X_TEMPLATE(INVOKEINTERFACE$long$resolved)
     @Slot(-1)
-    public static Address invokeinterfaceLong(InterfaceMethodActor interfaceMethodActor, Reference receiver) {
-        return Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress().
+    public static Address invokeinterfaceLong(InterfaceMethodActor methodActor, Reference receiver) {
+        return Snippets.selectInterfaceMethod(receiver, methodActor).asAddress().
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
     /**
      * Selects the correct implementation of a resolved method referenced by an INVOKEINTERFACE instruction.
      *
-     * @param interfaceMethodActor the resolved interface method being invoked
+     * @param methodActor the resolved interface method being invoked
      * @param mpo the profile object for an instrumented invocation
      * @param mpoIndex a profile specific index
      * @param receiver the receiver object of the invocation
@@ -1324,8 +1314,8 @@ public class T1XTemplateSource {
      */
     @T1X_TEMPLATE(INVOKEINTERFACE$long$instrumented)
     @Slot(-1)
-    public static Address invokeinterfaceLong(InterfaceMethodActor interfaceMethodActor, MethodProfile mpo, int mpoIndex, Reference receiver) {
-        return Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex).
+    public static Address invokeinterfaceLong(InterfaceMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver) {
+        return Snippets.selectInterfaceMethod(receiver, methodActor, mpo, mpoIndex).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -1582,21 +1572,21 @@ public class T1XTemplateSource {
     /**
      * Selects the correct implementation of a resolved method referenced by an INVOKEINTERFACE instruction.
      *
-     * @param interfaceMethodActor the resolved interface method being invoked
+     * @param methodActor the resolved interface method being invoked
      * @param receiver the receiver object of the invocation
      * @return the {@link CallEntryPoint#BASELINE_ENTRY_POINT} to be called
      */
     @T1X_TEMPLATE(INVOKEINTERFACE$double$resolved)
     @Slot(-1)
-    public static Address invokeinterfaceDouble(InterfaceMethodActor interfaceMethodActor, Reference receiver) {
-        return Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress().
+    public static Address invokeinterfaceDouble(InterfaceMethodActor methodActor, Reference receiver) {
+        return Snippets.selectInterfaceMethod(receiver, methodActor).asAddress().
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
     /**
      * Selects the correct implementation of a resolved method referenced by an INVOKEINTERFACE instruction.
      *
-     * @param interfaceMethodActor the resolved interface method being invoked
+     * @param methodActor the resolved interface method being invoked
      * @param mpo the profile object for an instrumented invocation
      * @param mpoIndex a profile specific index
      * @param receiver the receiver object of the invocation
@@ -1604,8 +1594,8 @@ public class T1XTemplateSource {
      */
     @T1X_TEMPLATE(INVOKEINTERFACE$double$instrumented)
     @Slot(-1)
-    public static Address invokeinterfaceDouble(InterfaceMethodActor interfaceMethodActor, MethodProfile mpo, int mpoIndex, Reference receiver) {
-        return Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex).
+    public static Address invokeinterfaceDouble(InterfaceMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver) {
+        return Snippets.selectInterfaceMethod(receiver, methodActor, mpo, mpoIndex).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -1818,21 +1808,21 @@ public class T1XTemplateSource {
     /**
      * Selects the correct implementation of a resolved method referenced by an INVOKEINTERFACE instruction.
      *
-     * @param interfaceMethodActor the resolved interface method being invoked
+     * @param methodActor the resolved interface method being invoked
      * @param receiver the receiver object of the invocation
      * @return the {@link CallEntryPoint#BASELINE_ENTRY_POINT} to be called
      */
     @T1X_TEMPLATE(INVOKEINTERFACE$reference$resolved)
     @Slot(-1)
-    public static Address invokeinterfaceObject(InterfaceMethodActor interfaceMethodActor, Reference receiver) {
-        return Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress().
+    public static Address invokeinterfaceObject(InterfaceMethodActor methodActor, Reference receiver) {
+        return Snippets.selectInterfaceMethod(receiver, methodActor).asAddress().
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
     /**
      * Selects the correct implementation of a resolved method referenced by an INVOKEINTERFACE instruction.
      *
-     * @param interfaceMethodActor the resolved interface method being invoked
+     * @param methodActor the resolved interface method being invoked
      * @param mpo the profile object for an instrumented invocation
      * @param mpoIndex a profile specific index
      * @param receiver the receiver object of the invocation
@@ -1840,8 +1830,8 @@ public class T1XTemplateSource {
      */
     @T1X_TEMPLATE(INVOKEINTERFACE$reference$instrumented)
     @Slot(-1)
-    public static Address invokeinterfaceObject(InterfaceMethodActor interfaceMethodActor, MethodProfile mpo, int mpoIndex, Reference receiver) {
-        return Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex).
+    public static Address invokeinterfaceObject(InterfaceMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver) {
+        return Snippets.selectInterfaceMethod(receiver, methodActor, mpo, mpoIndex).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -2040,21 +2030,21 @@ public class T1XTemplateSource {
     /**
      * Selects the correct implementation of a resolved method referenced by an INVOKEINTERFACE instruction.
      *
-     * @param interfaceMethodActor the resolved interface method being invoked
+     * @param methodActor the resolved interface method being invoked
      * @param receiver the receiver object of the invocation
      * @return the {@link CallEntryPoint#BASELINE_ENTRY_POINT} to be called
      */
     @T1X_TEMPLATE(INVOKEINTERFACE$word$resolved)
     @Slot(-1)
-    public static Address invokeinterfaceWord(InterfaceMethodActor interfaceMethodActor, Reference receiver) {
-        return Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress().
+    public static Address invokeinterfaceWord(InterfaceMethodActor methodActor, Reference receiver) {
+        return Snippets.selectInterfaceMethod(receiver, methodActor).asAddress().
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
     /**
      * Selects the correct implementation of a resolved method referenced by an INVOKEINTERFACE instruction.
      *
-     * @param interfaceMethodActor the resolved interface method being invoked
+     * @param methodActor the resolved interface method being invoked
      * @param mpo the profile object for an instrumented invocation
      * @param mpoIndex a profile specific index
      * @param receiver the receiver object of the invocation
@@ -2062,8 +2052,8 @@ public class T1XTemplateSource {
      */
     @T1X_TEMPLATE(INVOKEINTERFACE$word$instrumented)
     @Slot(-1)
-    public static Address invokeinterfaceWord(InterfaceMethodActor interfaceMethodActor, MethodProfile mpo, int mpoIndex, Reference receiver) {
-        return Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex).
+    public static Address invokeinterfaceWord(InterfaceMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver) {
+        return Snippets.selectInterfaceMethod(receiver, methodActor, mpo, mpoIndex).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -2164,21 +2154,21 @@ public class T1XTemplateSource {
     /**
      * Selects the correct implementation of a resolved method referenced by an INVOKEINTERFACE instruction.
      *
-     * @param interfaceMethodActor the resolved interface method being invoked
+     * @param methodActor the resolved interface method being invoked
      * @param receiver the receiver object of the invocation
      * @return the {@link CallEntryPoint#BASELINE_ENTRY_POINT} to be called
      */
     @T1X_TEMPLATE(INVOKEINTERFACE$void$resolved)
     @Slot(-1)
-    public static Address invokeinterfaceVoid(InterfaceMethodActor interfaceMethodActor, Reference receiver) {
-        return Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress().
+    public static Address invokeinterfaceVoid(InterfaceMethodActor methodActor, Reference receiver) {
+        return Snippets.selectInterfaceMethod(receiver, methodActor).asAddress().
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
     /**
      * Selects the correct implementation of a resolved method referenced by an INVOKEINTERFACE instruction.
      *
-     * @param interfaceMethodActor the resolved interface method being invoked
+     * @param methodActor the resolved interface method being invoked
      * @param mpo the profile object for an instrumented invocation
      * @param mpoIndex a profile specific index
      * @param receiver the receiver object of the invocation
@@ -2186,8 +2176,8 @@ public class T1XTemplateSource {
      */
     @T1X_TEMPLATE(INVOKEINTERFACE$void$instrumented)
     @Slot(-1)
-    public static Address invokeinterfaceVoid(InterfaceMethodActor interfaceMethodActor, MethodProfile mpo, int mpoIndex, Reference receiver) {
-        return Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex).
+    public static Address invokeinterfaceVoid(InterfaceMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver) {
+        return Snippets.selectInterfaceMethod(receiver, methodActor, mpo, mpoIndex).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -2355,6 +2345,16 @@ public class T1XTemplateSource {
         if (ObjectAccess.readClassActor(object).hasFinalizer()) {
             SpecialReferenceManager.registerFinalizee(object);
         }
+    }
+
+    @T1X_TEMPLATE(LOCK)
+    public static void lock(Object object) {
+        Monitor.enter(object);
+    }
+
+    @T1X_TEMPLATE(UNLOCK)
+    public static void unlock(Object object) {
+        Monitor.exit(object);
     }
 
     @T1X_TEMPLATE(TRACE_METHOD_ENTRY)

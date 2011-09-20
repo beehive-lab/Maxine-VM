@@ -56,8 +56,6 @@ public class AdviceRecordsQuery extends QueryBase {
                     break;
 
                 case Load:
-                case IPush:
-                    ps.print(ar.getPackedValue());
                     break;
 
                 case StoreLong:
@@ -97,12 +95,6 @@ public class AdviceRecordsQuery extends QueryBase {
                             break;
                     }
                     break;
-
-                case IInc: {
-                    LongLongAdviceRecord llar = (LongLongAdviceRecord) ar;
-                    ps.printf("%d %d %d", llar.getPackedValue(), llar.value, llar.value2);
-                    break;
-                }
 
                 case ConversionLong:
                 case ConversionFloat:
@@ -170,7 +162,6 @@ public class AdviceRecordsQuery extends QueryBase {
 
 
                 case StackAdjust:
-                case Bytecode:
                     ps.printf("%s", VMABytecodes.values()[ar.getPackedValue()]);
                     break;
 

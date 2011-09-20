@@ -93,9 +93,9 @@ public abstract class TextVMAdviceHandlerLog extends VMAdviceHandlerLog {
         return hasTime(key);
     }
 
-    // BEGIN GENERATED CODE
+// START GENERATED CODE
+// EDIT AND RUN TextVMAdviceHandlerLogGenerator.main() TO MODIFY
 
-    // GENERATED -- EDIT AND RUN TextVMAdviceHandlerLogGenerator.main() TO MODIFY
     public enum Key {
         CLASS_DEFINITION("C"),
         FIELD_DEFINITION("F"),
@@ -110,24 +110,22 @@ public abstract class TextVMAdviceHandlerLog extends VMAdviceHandlerLog {
         ADVISE_BEFORE_STORE("BS"),
         ADVISE_BEFORE_INSTANCE_OF("BIO"),
         ADVISE_BEFORE_ARRAY_STORE("BAS"),
-        ADVISE_BEFORE_PUT_FIELD("BPF"),
         ADVISE_BEFORE_GET_STATIC("BGS"),
+        ADVISE_BEFORE_PUT_FIELD("BPF"),
         ADVISE_AFTER_INVOKE_INTERFACE("AII"),
-        ADVISE_BEFORE_INVOKE_STATIC("BIS"),
         ADVISE_BEFORE_PUT_STATIC("BPS"),
+        ADVISE_BEFORE_INVOKE_STATIC("BIS"),
         ADVISE_AFTER_INVOKE_VIRTUAL("AIV"),
         ADVISE_BEFORE_MONITOR_EXIT("BMX"),
         ADVISE_BEFORE_ARRAY_LENGTH("BAG"),
         REMOVAL("D"),
         ADVISE_BEFORE_CHECK_CAST("BCC"),
-        ADVISE_BEFORE_IPUSH("BIP"),
         ADVISE_AFTER_GC("AGC"),
-        ADVISE_BEFORE_IINC("BIN"),
         ADVISE_BEFORE_GET_FIELD("BGF"),
         ADVISE_BEFORE_OPERATION("BO"),
         ADVISE_AFTER_INVOKE_SPECIAL("AIZ"),
-        ADVISE_BEFORE_INVOKE_SPECIAL("BIZ"),
         ADVISE_BEFORE_STACK_ADJUST("BSA"),
+        ADVISE_BEFORE_INVOKE_SPECIAL("BIZ"),
         ADVISE_BEFORE_GC("BGC"),
         ADVISE_AFTER_INVOKE_STATIC("AIS"),
         ADVISE_BEFORE_RETURN("BR"),
@@ -137,23 +135,24 @@ public abstract class TextVMAdviceHandlerLog extends VMAdviceHandlerLog {
         ADVISE_BEFORE_THREAD_TERMINATING("BTT"),
         INITIALIZE_LOG("IL"),
         ADVISE_BEFORE_THREAD_STARTING("BTS"),
-        ADVISE_BEFORE_CONST_LOAD("BCL"),
         ADVISE_AFTER_METHOD_ENTRY("AME"),
+        ADVISE_BEFORE_CONST_LOAD("BCL"),
         FINALIZE_LOG("FL"),
-        ADVISE_AFTER_NEW("AN"),
         RESET_TIME("ZT"),
+        ADVISE_AFTER_NEW("AN"),
+        UNSEEN("U"),
         ADVISE_AFTER_NEW_ARRAY("ANA"),
-        ADVISE_BEFORE_INVOKE_VIRTUAL("BIV"),
-        UNSEEN("U");
+        ADVISE_BEFORE_INVOKE_VIRTUAL("BIV");
         public final String code;
         private Key(String code) {
             this.code = code;
         }
     }
 
-    // GENERATED -- EDIT AND RUN TextVMAdviceHandlerLogGenerator.main() TO MODIFY
     public static final EnumSet<Key> hasIdSet = EnumSet.of(
-        Key.ADVISE_AFTER_METHOD_ENTRY,
+        Key.ADVISE_AFTER_NEW,
+        Key.ADVISE_AFTER_NEW_ARRAY,
+        Key.ADVISE_AFTER_MULTI_NEW_ARRAY,
         Key.ADVISE_BEFORE_ARRAY_LOAD,
         Key.ADVISE_BEFORE_ARRAY_STORE,
         Key.ADVISE_BEFORE_GET_FIELD,
@@ -172,8 +171,6 @@ public abstract class TextVMAdviceHandlerLog extends VMAdviceHandlerLog {
         Key.ADVISE_AFTER_INVOKE_SPECIAL,
         Key.ADVISE_AFTER_INVOKE_STATIC,
         Key.ADVISE_AFTER_INVOKE_INTERFACE,
-        Key.ADVISE_AFTER_NEW,
-        Key.ADVISE_AFTER_NEW_ARRAY,
-        Key.ADVISE_AFTER_MULTI_NEW_ARRAY);
-
+        Key.ADVISE_AFTER_METHOD_ENTRY);
+// END GENERATED CODE
 }

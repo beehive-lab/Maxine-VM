@@ -56,7 +56,7 @@ import com.sun.max.vm.thread.*;
 
 public class AMD64T1XCompilation extends T1XCompilation {
 
-    final AMD64MacroAssembler asm;
+    protected final AMD64MacroAssembler asm;
     final PatchInfoAMD64 patchInfo;
 
     public AMD64T1XCompilation(T1X compiler) {

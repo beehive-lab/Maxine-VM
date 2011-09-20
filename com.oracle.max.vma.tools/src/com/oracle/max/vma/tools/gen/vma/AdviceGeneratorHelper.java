@@ -28,7 +28,10 @@ import java.util.*;
 
 import com.oracle.max.vm.ext.t1x.*;
 import com.oracle.max.vm.ext.vma.*;
+import com.oracle.max.vma.tools.gen.t1x.*;
 import com.sun.max.annotate.*;
+import com.sun.max.ide.*;
+import com.sun.max.io.*;
 
 /**
  * Helper methods for auto-generation of code related to the advice interface.
@@ -50,18 +53,39 @@ public class AdviceGeneratorHelper {
         }
     }
 
-    public static T1XTemplateGenerator t1xTemplateGen;
+    public static VMAdviceTemplateGenerator t1xTemplateGen;
+    private static String generatingClassName;
+
+    public static ByteArrayOutputStream bsOut;
     public static PrintStream out = System.out;
 
     public static void generateAutoComment() {
-        t1xTemplateGen.generateAutoComment();
+        out.printf("// EDIT AND RUN %s.main() TO MODIFY%n%n", generatingClassName);
     }
 
     public static void createGenerator(Class<?> klass) {
-        t1xTemplateGen = new T1XTemplateGenerator(klass, out);
+        generatingClassName = klass.getSimpleName();
+        bsOut = new ByteArrayOutputStream();
+        out = new PrintStream(bsOut);
+        t1xTemplateGen = new VMAdviceTemplateGenerator(out);
 
     }
 
+    public static int updateSource(Class target, String updatedContent, boolean checkOnly) throws IOException {
+        File base = new File(JavaProject.findWorkspaceDirectory(), "com.oracle.max.vm.ext.vma/src");
+        File outputFile = new File(base, target.getName().replace('.', File.separatorChar) + ".java").getAbsoluteFile();
+        if (updatedContent == null) {
+            updatedContent = bsOut.toString();
+        }
+        ReadableSource content = ReadableSource.Static.fromString(updatedContent);
+        if (Files.updateGeneratedContent(outputFile, content,
+                        "// START GENERATED CODE", "// END GENERATED CODE", checkOnly)) {
+            System.out.println("Source for " + target + " was updated");
+            return 1;
+        }
+        return 0;
+
+    }
     /**
      * Generates the name/signature definition for given method, returning a count of the
      * number of arguments.

@@ -35,6 +35,7 @@ import com.sun.c1x.value.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
+import com.sun.max.vm.runtime.*;
 
 public class MaxineIntrinsicImplementations {
     public static class JNILinkIntrinsic implements C1XIntrinsicImpl {
@@ -256,22 +257,21 @@ public class MaxineIntrinsicImplementations {
         }
     }
 
-    public static class ReadRegisterBitIntrinsic implements C1XIntrinsicImpl {
+    public static class IfLatchBitReadIntrinsic implements C1XIntrinsicImpl {
         @Override
         public Value createHIR(GraphBuilder b, RiMethod target, Value[] args, boolean isStatic, FrameState stateBefore) {
-            assert args.length == 3;
-            int registerId = intConstant(args[0]);
-            int offset = intConstant(args[1]);
-            int bit = intConstant(args[2]);
+            assert args.length == 2;
+            int offset = intConstant(args[0]);
+            int bit = intConstant(args[1]);
 
-            CiRegister register = b.compilation.registerConfig.getRegisterForRole(registerId);
+            CiRegister register = b.compilation.registerConfig.getRegisterForRole(VMRegister.LATCH);
             if (register == null) {
-                throw new CiBailout("Unsupported READREG operand " + registerId);
+                throw new CiBailout("Unsupported IFLATCHBITREAD operand " + VMRegister.LATCH);
             }
 
             // The intrinsic implicitly consumes also the following IFEQ or IFNE bytecode.  This is very badly designed,
             // but for now keep it and make a call into GraphBuilder which has access to the bytecode stream.
-            b.genReadBit(register, offset, bit);
+            b.genIfLatchReadBit(register, offset, bit);
             return null;
         }
     }
@@ -302,7 +302,7 @@ public class MaxineIntrinsicImplementations {
 
         registry.add(READREG, new ReadRegisterIntrinsic());
         registry.add(WRITEREG, new WriteRegisterIntrinsic());
-        registry.add(READREGBIT, new ReadRegisterBitIntrinsic());
+        registry.add(IFLATCHBITREAD, new IfLatchBitReadIntrinsic());
 
         registry.add(PREAD, new PointerReadIntrinsic());
         registry.add(PWRITE, new PointerWriteIntrinsic());

@@ -23,11 +23,12 @@
 package com.oracle.max.vma.tools.gen.vma;
 
 import static com.oracle.max.vm.ext.t1x.T1XTemplateGenerator.*;
+import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
 
-import java.io.*;
 import java.lang.reflect.*;
 import java.util.regex.*;
 
+import com.oracle.max.vm.ext.vma.*;
 import com.sun.cri.bytecode.*;
 
 /**
@@ -40,10 +41,10 @@ import com.sun.cri.bytecode.*;
  */
 public class VMABytecodesGenerator {
 
-    static PrintStream out = System.out;
-
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         boolean first = true;
+        createGenerator(VMABytecodesGenerator.class);
+        generateAutoComment();
         for (Field f : Bytecodes.class.getDeclaredFields()) {
             int modifiers = f.getModifiers();
             if (Modifier.isPublic(modifiers))  {
@@ -108,8 +109,8 @@ public class VMABytecodesGenerator {
         } else if (Pattern.matches(".{1}STORE.*", name)) {
             return "Store";
         } else if (Pattern.matches(".{1}IPUSH", name)) {
-            return "IPush";
-        } else if (Pattern.matches(".{1}(ADD|SUB|MUL|DIV|REM|AND|OR|XOR|SHL|SHR|USHR|NEG)|WREMI|WDIVI", name)) {
+            return "ConstLoad";
+        } else if (Pattern.matches(".{1}(ADD|SUB|MUL|DIV|REM|AND|OR|XOR|SHL|SHR|USHR|NEG)", name)) {
             return "Operation";
         } else if (Pattern.matches(".{1}2.{1}|MOV_.*", name)) {
             return "Conversion";
@@ -120,7 +121,7 @@ public class VMABytecodesGenerator {
         } else if (Pattern.matches("[FLD]CMP.*", name)) {
             return "Operation";
         } else if (name.equals("IINC")) {
-            return "IInc";
+            return "Operation";
         } else {
             return "Bytecode";
         }

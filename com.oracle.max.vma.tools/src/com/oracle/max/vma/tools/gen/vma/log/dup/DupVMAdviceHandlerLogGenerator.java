@@ -27,19 +27,22 @@ import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
 import java.lang.reflect.*;
 
 import com.oracle.max.vm.ext.vma.log.*;
+import com.oracle.max.vm.ext.vma.log.dup.*;
+import com.oracle.max.vma.tools.gen.vma.*;
 
 public class DupVMAdviceHandlerLogGenerator {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         createGenerator(DupVMAdviceHandlerLogGenerator.class);
+        generateAutoComment();
         for (Method m : VMAdviceHandlerLog.class.getMethods()) {
             if (m.getName().startsWith("advise")) {
                 generate(m);
             }
         }
+        AdviceGeneratorHelper.updateSource(DupVMAdviceHandlerLog.class, null, false);
     }
 
     private static void generate(Method m) {
-        generateAutoComment();
         out.printf("    @Override%n");
         final int argCount = generateSignature(m, null);
         out.printf(" {%n");

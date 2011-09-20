@@ -27,8 +27,7 @@ import com.oracle.max.vm.ext.t1x.*;
 public class VMAT1XCompilationFactory extends T1XCompilationFactory {
     @Override
     public T1XCompilation newT1XCompilation(T1X t1x) {
-        //return new VMAT1XCompilation(t1x);
-        return null;
+        return new VMAT1XCompilation(t1x);
     }
 
 }
