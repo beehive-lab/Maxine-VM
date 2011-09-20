@@ -29,7 +29,8 @@ import com.sun.cri.bytecode.*;
  */
 public enum VMABytecodes {
 
-    // BEGIN GENERATED CODE
+// START GENERATED CODE
+// EDIT AND RUN VMABytecodesGenerator.main() TO MODIFY
 
     NOP(Bytecodes.NOP, "Bytecode"),
     ACONST_NULL(Bytecodes.ACONST_NULL, "ConstLoad"),
@@ -47,8 +48,8 @@ public enum VMABytecodes {
     FCONST_2(Bytecodes.FCONST_2, "ConstLoad"),
     DCONST_0(Bytecodes.DCONST_0, "ConstLoad"),
     DCONST_1(Bytecodes.DCONST_1, "ConstLoad"),
-    BIPUSH(Bytecodes.BIPUSH, "IPush"),
-    SIPUSH(Bytecodes.SIPUSH, "IPush"),
+    BIPUSH(Bytecodes.BIPUSH, "ConstLoad"),
+    SIPUSH(Bytecodes.SIPUSH, "ConstLoad"),
     LDC(Bytecodes.LDC, "ConstLoad"),
     LDC_W(Bytecodes.LDC_W, "ConstLoad"),
     LDC2_W(Bytecodes.LDC2_W, "ConstLoad"),
@@ -163,7 +164,7 @@ public enum VMABytecodes {
     LOR(Bytecodes.LOR, "Operation"),
     IXOR(Bytecodes.IXOR, "Operation"),
     LXOR(Bytecodes.LXOR, "Operation"),
-    IINC(Bytecodes.IINC, "IInc"),
+    IINC(Bytecodes.IINC, "Operation"),
     I2L(Bytecodes.I2L, "Conversion"),
     I2F(Bytecodes.I2F, "Conversion"),
     I2D(Bytecodes.I2D, "Conversion"),
@@ -234,6 +235,7 @@ public enum VMABytecodes {
     GOTO_W(Bytecodes.GOTO_W, "Bytecode"),
     JSR_W(Bytecodes.JSR_W, "Bytecode"),
     BREAKPOINT(Bytecodes.BREAKPOINT, "Bytecode"),
+    JNICALL(Bytecodes.JNICALL, "Bytecode"),
     WLOAD(Bytecodes.WLOAD, "Load"),
     WLOAD_0(Bytecodes.WLOAD_0, "Load"),
     WLOAD_1(Bytecodes.WLOAD_1, "Load"),
@@ -249,8 +251,7 @@ public enum VMABytecodes {
     END(Bytecodes.END, "Bytecode"),
     LAST_JVM_OPCODE(Bytecodes.LAST_JVM_OPCODE, "Bytecode"),
     MENTRY(-1, "MethodEntry");
-
-    // END GENERATED CODE
+// END GENERATED CODE
 
     public final int code;
     public final String methodName;

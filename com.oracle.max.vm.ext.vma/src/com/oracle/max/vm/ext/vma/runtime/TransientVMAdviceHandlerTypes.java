@@ -38,52 +38,54 @@ public class TransientVMAdviceHandlerTypes {
         Unseen,
         Removal,
 
-        // BEGIN GENERATED CODE
+// START GENERATED CODE
+// EDIT AND RUN TransientVMAdviceHandlerTypesGenerator.main() TO MODIFY
 
-        // GENERATED -- EDIT AND RUN TransientVMAdviceHandlerTypesGenerator.main() TO MODIFY
         GC,
         ThreadStarting,
         ThreadTerminating,
-        ConstLoadLong,
-        ConstLoadObject,
-        ConstLoadFloat,
+        New,
+        NewArray,
+        MultiNewArray,
         ConstLoadDouble,
-        IPush,
+        ConstLoadObject,
+        ConstLoadLong,
+        ConstLoadFloat,
         Load,
         ArrayLoad,
-        StoreLong,
+        StoreObject,
         StoreFloat,
         StoreDouble,
-        StoreObject,
+        StoreLong,
+        ArrayStoreObject,
         ArrayStoreFloat,
         ArrayStoreLong,
         ArrayStoreDouble,
-        ArrayStoreObject,
         StackAdjust,
+        OperationDouble,
         OperationLong,
         OperationFloat,
-        OperationDouble,
-        IInc,
         ConversionLong,
         ConversionFloat,
         ConversionDouble,
         IfInt,
         IfObject,
+        Bytecode,
         Return,
         ReturnLong,
         ReturnFloat,
         ReturnDouble,
         ReturnObject,
         GetStatic,
-        PutStaticDouble,
-        PutStaticLong,
         PutStaticFloat,
+        PutStaticLong,
+        PutStaticDouble,
         PutStaticObject,
         GetField,
-        PutFieldDouble,
-        PutFieldLong,
         PutFieldFloat,
+        PutFieldDouble,
         PutFieldObject,
+        PutFieldLong,
         InvokeVirtual,
         InvokeSpecial,
         InvokeStatic,
@@ -94,10 +96,6 @@ public class TransientVMAdviceHandlerTypes {
         InstanceOf,
         MonitorEnter,
         MonitorExit,
-        Bytecode,
-        New,
-        NewArray,
-        MultiNewArray,
         MethodEntry;
 
         public AdviceRecord newAdviceRecord() {
@@ -109,14 +107,12 @@ public class TransientVMAdviceHandlerTypes {
                     return new LongAdviceRecord();
                 case Bytecode:
                 case GC:
-                case IPush:
                 case Load:
                 case Return:
                 case StackAdjust:
                 case ThreadStarting:
                 case ThreadTerminating:
                     return new AdviceRecord();
-                case IInc:
                 case IfInt:
                 case OperationLong:
                     return new LongLongAdviceRecord();
@@ -173,8 +169,7 @@ public class TransientVMAdviceHandlerTypes {
                 case PutFieldLong:
                 case PutStaticLong:
                     return new ObjectLongAdviceRecord();
-
-    // END GENERATED CODE
+// END GENERATED CODE
 
                 case Unseen:
                     return new ObjectAdviceRecord();

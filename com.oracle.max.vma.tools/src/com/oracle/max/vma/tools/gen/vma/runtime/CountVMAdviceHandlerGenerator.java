@@ -27,12 +27,15 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.oracle.max.vm.ext.vma.*;
+import com.oracle.max.vm.ext.vma.runtime.*;
+import com.oracle.max.vma.tools.gen.vma.*;
 
 public class CountVMAdviceHandlerGenerator {
     private static int maxLength;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         createGenerator(CountVMAdviceHandlerGenerator.class);
+        generateAutoComment();
         SortedMap<String, Integer> enumMap = createEnum(VMAdviceHandler.class);
         out.printf("%n    private static final int MAX_LENGTH = %d;%n%n", maxLength);
         for (Method m : VMAdviceHandler.class.getMethods()) {
@@ -41,10 +44,10 @@ public class CountVMAdviceHandlerGenerator {
                 generate(m, enumMap);
             }
         }
+        AdviceGeneratorHelper.updateSource(CountsVMAdviceHandler.class, null, false);
     }
 
     private static void generate(Method m, SortedMap<String, Integer> enumMap) {
-        generateAutoComment();
         out.printf("    @Override%n");
         generateSignature(m, null);
         out.printf(" {%n");

@@ -571,9 +571,6 @@ public class ConvertLog {
                     }
                     break;
 
-                case ADVISE_BEFORE_IPUSH:
-                    break;
-
                 case ADVISE_BEFORE_ARRAY_LOAD:
                 case ADVISE_BEFORE_ARRAY_STORE:
                     out.printf(" %s", threadArg, objIdArg, lineParts[ARRAY_INDEX_INDEX]);
@@ -610,10 +607,6 @@ public class ConvertLog {
                         printObjId(arg5);
                         printObjId(arg6);
                     }
-                    break;
-
-                case ADVISE_BEFORE_IINC:
-                    out.printf(" %s %s inc:%s", arg3, arg4, arg5);
                     break;
 
                 case ADVISE_BEFORE_OPERATION:
@@ -655,7 +648,6 @@ public class ConvertLog {
                     break;
 
                 case ADVISE_BEFORE_STACK_ADJUST:
-                case ADVISE_BEFORE_BYTECODE:
                     out.printf(" %s", VMABytecodes.values()[Integer.parseInt(arg3)]);
                     break;
 

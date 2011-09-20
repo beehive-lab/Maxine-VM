@@ -28,7 +28,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.intrinsics.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.runtime.*;
 
 /**
  * A set of methods {@linkplain INTRINSIC intrinsified} via extended bytecodes.
@@ -94,13 +93,9 @@ public class Intrinsics {
     public static native void breakpointTrap();
 
     /**
-     * @see MaxineIntrinsicIDs#READREGBIT
+     * @see MaxineIntrinsicIDs#IFLATCHBITREAD
      */
-    @INTRINSIC(READREGBIT)
-    public static native boolean readRegisterBit(@INTRINSIC.Constant int registerId, @INTRINSIC.Constant int offset, @INTRINSIC.Constant int bit);
+    @INTRINSIC(IFLATCHBITREAD)
+    public static native boolean readLatchBit(@INTRINSIC.Constant int offset, @INTRINSIC.Constant int bit);
 
-    @INLINE
-    public static boolean readLatchBit(int offset, int bit) {
-        return readRegisterBit(VMRegister.LATCH, offset, bit);
-    }
 }

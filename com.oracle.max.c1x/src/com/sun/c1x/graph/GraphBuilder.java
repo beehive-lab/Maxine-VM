@@ -2448,7 +2448,7 @@ public final class GraphBuilder {
         }
     }
 
-    public void genReadBit(CiRegister register, int offset, int bitNo) {
+    public void genIfLatchReadBit(CiRegister register, int offset, int bitNo) {
         /*
          * To achieve the effect we want, which is to branch directly on the value of the bit,
          * we assert that the next opcode in the stream is an IFEQ/IFNE, and combine them into a single
@@ -2457,7 +2457,7 @@ public final class GraphBuilder {
         stream().next();
         int opcode = stream().currentBC();
         if (!(opcode == IFEQ || opcode == IFNE)) {
-            throw new CiBailout("READBIT must be followed by IFEQ/NE");
+            throw new CiBailout("IFLATCHREADBIT must be followed by IFEQ/NE");
         }
         Condition cond = opcode == IFEQ ? Condition.EQ : Condition.NE;
         /*

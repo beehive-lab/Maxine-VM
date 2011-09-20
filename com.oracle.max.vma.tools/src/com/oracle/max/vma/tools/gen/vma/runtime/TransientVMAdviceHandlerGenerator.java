@@ -28,13 +28,16 @@ import static com.oracle.max.vma.tools.gen.vma.runtime.TransientVMAdviceHandlerT
 import java.lang.reflect.*;
 
 import com.oracle.max.vm.ext.vma.*;
+import com.oracle.max.vm.ext.vma.runtime.*;
+import com.oracle.max.vma.tools.gen.vma.*;
 import com.sun.max.annotate.*;
 
 @HOSTED_ONLY
 public class TransientVMAdviceHandlerGenerator {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         createGenerator(TransientVMAdviceHandlerGenerator.class);
+        generateAutoComment();
         TransientVMAdviceHandlerTypesGenerator.createEnumMaps();
         TransientVMAdviceHandlerTypesGenerator.generateRecordToEnumList();
         for (Method m : VMAdviceHandler.class.getMethods()) {
@@ -42,6 +45,7 @@ public class TransientVMAdviceHandlerGenerator {
                 generate(m);
             }
         }
+        AdviceGeneratorHelper.updateSource(TransientVMAdviceHandler.class, null, false);
     }
 
     private static void generate(Method m) {

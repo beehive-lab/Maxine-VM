@@ -72,6 +72,11 @@ public class NullVMAdviceHandlerLog extends VMAdviceHandlerLog {
     }
 
     @Override
+    public void adviseBeforeBytecode(String threadName, int code) {
+
+    }
+
+    @Override
     public void adviseBeforeThreadStarting(String threadName) {
 
 
@@ -103,12 +108,6 @@ public class NullVMAdviceHandlerLog extends VMAdviceHandlerLog {
 
     @Override
     public void adviseBeforeConstLoad(String threadName, double value) {
-
-
-    }
-
-    @Override
-    public void adviseBeforeIPush(String threadName, int arg1) {
 
 
     }
@@ -193,12 +192,6 @@ public class NullVMAdviceHandlerLog extends VMAdviceHandlerLog {
 
     @Override
     public void adviseBeforeOperation(String threadName, int arg1, double arg2, double arg3) {
-
-
-    }
-
-    @Override
-    public void adviseBeforeIInc(String threadName, int arg1, int arg2, int arg3) {
 
 
     }
@@ -379,12 +372,6 @@ public class NullVMAdviceHandlerLog extends VMAdviceHandlerLog {
 
     @Override
     public void adviseBeforeMonitorExit(String threadName, long objId) {
-
-
-    }
-
-    @Override
-    public void adviseBeforeBytecode(String threadName, int arg1) {
 
 
     }

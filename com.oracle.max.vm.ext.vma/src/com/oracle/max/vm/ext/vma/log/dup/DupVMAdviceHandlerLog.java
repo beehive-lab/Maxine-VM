@@ -86,448 +86,375 @@ public class DupVMAdviceHandlerLog extends VMAdviceHandlerLog {
     }
 
 
-    // BEGIN GENERATED CODE
+// START GENERATED CODE
+// EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
 
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeGC(String arg1) {
-        a.adviseBeforeGC(arg1);
-        b.adviseBeforeGC(arg1);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseAfterGC(String arg1) {
-        a.adviseAfterGC(arg1);
-        b.adviseAfterGC(arg1);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeThreadStarting(String arg1) {
-        a.adviseBeforeThreadStarting(arg1);
-        b.adviseBeforeThreadStarting(arg1);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeThreadTerminating(String arg1) {
-        a.adviseBeforeThreadTerminating(arg1);
-        b.adviseBeforeThreadTerminating(arg1);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseAfterMethodEntry(String arg1, long arg2, String arg3, long arg4, String arg5) {
-        a.adviseAfterMethodEntry(arg1, arg2, arg3, arg4, arg5);
-        b.adviseAfterMethodEntry(arg1, arg2, arg3, arg4, arg5);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeConstLoad(String arg1, double arg2) {
-        a.adviseBeforeConstLoad(arg1, arg2);
-        b.adviseBeforeConstLoad(arg1, arg2);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeConstLoad(String arg1, long arg2) {
-        a.adviseBeforeConstLoad(arg1, arg2);
-        b.adviseBeforeConstLoad(arg1, arg2);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeConstLoad(String arg1, float arg2) {
-        a.adviseBeforeConstLoad(arg1, arg2);
-        b.adviseBeforeConstLoad(arg1, arg2);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeConstLoadObject(String arg1, long arg2) {
-        a.adviseBeforeConstLoadObject(arg1, arg2);
-        b.adviseBeforeConstLoadObject(arg1, arg2);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeIPush(String arg1, int arg2) {
-        a.adviseBeforeIPush(arg1, arg2);
-        b.adviseBeforeIPush(arg1, arg2);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeLoad(String arg1, int arg2) {
-        a.adviseBeforeLoad(arg1, arg2);
-        b.adviseBeforeLoad(arg1, arg2);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeArrayLoad(String arg1, long arg2, int arg3) {
-        a.adviseBeforeArrayLoad(arg1, arg2, arg3);
-        b.adviseBeforeArrayLoad(arg1, arg2, arg3);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeStore(String arg1, int arg2, long arg3) {
-        a.adviseBeforeStore(arg1, arg2, arg3);
-        b.adviseBeforeStore(arg1, arg2, arg3);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeStore(String arg1, int arg2, float arg3) {
-        a.adviseBeforeStore(arg1, arg2, arg3);
-        b.adviseBeforeStore(arg1, arg2, arg3);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeStore(String arg1, int arg2, double arg3) {
-        a.adviseBeforeStore(arg1, arg2, arg3);
-        b.adviseBeforeStore(arg1, arg2, arg3);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeStoreObject(String arg1, int arg2, long arg3) {
-        a.adviseBeforeStoreObject(arg1, arg2, arg3);
-        b.adviseBeforeStoreObject(arg1, arg2, arg3);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeArrayStore(String arg1, long arg2, int arg3, float arg4) {
-        a.adviseBeforeArrayStore(arg1, arg2, arg3, arg4);
-        b.adviseBeforeArrayStore(arg1, arg2, arg3, arg4);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeArrayStore(String arg1, long arg2, int arg3, long arg4) {
-        a.adviseBeforeArrayStore(arg1, arg2, arg3, arg4);
-        b.adviseBeforeArrayStore(arg1, arg2, arg3, arg4);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeArrayStore(String arg1, long arg2, int arg3, double arg4) {
-        a.adviseBeforeArrayStore(arg1, arg2, arg3, arg4);
-        b.adviseBeforeArrayStore(arg1, arg2, arg3, arg4);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeArrayStoreObject(String arg1, long arg2, int arg3, long arg4) {
-        a.adviseBeforeArrayStoreObject(arg1, arg2, arg3, arg4);
-        b.adviseBeforeArrayStoreObject(arg1, arg2, arg3, arg4);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeStackAdjust(String arg1, int arg2) {
-        a.adviseBeforeStackAdjust(arg1, arg2);
-        b.adviseBeforeStackAdjust(arg1, arg2);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeOperation(String arg1, int arg2, long arg3, long arg4) {
-        a.adviseBeforeOperation(arg1, arg2, arg3, arg4);
-        b.adviseBeforeOperation(arg1, arg2, arg3, arg4);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeOperation(String arg1, int arg2, float arg3, float arg4) {
-        a.adviseBeforeOperation(arg1, arg2, arg3, arg4);
-        b.adviseBeforeOperation(arg1, arg2, arg3, arg4);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeOperation(String arg1, int arg2, double arg3, double arg4) {
-        a.adviseBeforeOperation(arg1, arg2, arg3, arg4);
-        b.adviseBeforeOperation(arg1, arg2, arg3, arg4);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeIInc(String arg1, int arg2, int arg3, int arg4) {
-        a.adviseBeforeIInc(arg1, arg2, arg3, arg4);
-        b.adviseBeforeIInc(arg1, arg2, arg3, arg4);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeConversion(String arg1, int arg2, double arg3) {
-        a.adviseBeforeConversion(arg1, arg2, arg3);
-        b.adviseBeforeConversion(arg1, arg2, arg3);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeConversion(String arg1, int arg2, long arg3) {
-        a.adviseBeforeConversion(arg1, arg2, arg3);
-        b.adviseBeforeConversion(arg1, arg2, arg3);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeConversion(String arg1, int arg2, float arg3) {
-        a.adviseBeforeConversion(arg1, arg2, arg3);
-        b.adviseBeforeConversion(arg1, arg2, arg3);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeIf(String arg1, int arg2, int arg3, int arg4) {
-        a.adviseBeforeIf(arg1, arg2, arg3, arg4);
-        b.adviseBeforeIf(arg1, arg2, arg3, arg4);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeIfObject(String arg1, int arg2, long arg3, long arg4) {
-        a.adviseBeforeIfObject(arg1, arg2, arg3, arg4);
-        b.adviseBeforeIfObject(arg1, arg2, arg3, arg4);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeReturnObject(String arg1, long arg2) {
-        a.adviseBeforeReturnObject(arg1, arg2);
-        b.adviseBeforeReturnObject(arg1, arg2);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeReturn(String arg1, long arg2) {
-        a.adviseBeforeReturn(arg1, arg2);
-        b.adviseBeforeReturn(arg1, arg2);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeReturn(String arg1, float arg2) {
-        a.adviseBeforeReturn(arg1, arg2);
-        b.adviseBeforeReturn(arg1, arg2);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeReturn(String arg1, double arg2) {
-        a.adviseBeforeReturn(arg1, arg2);
-        b.adviseBeforeReturn(arg1, arg2);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeReturn(String arg1) {
-        a.adviseBeforeReturn(arg1);
-        b.adviseBeforeReturn(arg1);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeGetStatic(String arg1, String arg2, long arg3, String arg4) {
-        a.adviseBeforeGetStatic(arg1, arg2, arg3, arg4);
-        b.adviseBeforeGetStatic(arg1, arg2, arg3, arg4);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforePutStatic(String arg1, String arg2, long arg3, String arg4, double arg5) {
-        a.adviseBeforePutStatic(arg1, arg2, arg3, arg4, arg5);
-        b.adviseBeforePutStatic(arg1, arg2, arg3, arg4, arg5);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforePutStatic(String arg1, String arg2, long arg3, String arg4, long arg5) {
-        a.adviseBeforePutStatic(arg1, arg2, arg3, arg4, arg5);
-        b.adviseBeforePutStatic(arg1, arg2, arg3, arg4, arg5);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforePutStatic(String arg1, String arg2, long arg3, String arg4, float arg5) {
-        a.adviseBeforePutStatic(arg1, arg2, arg3, arg4, arg5);
-        b.adviseBeforePutStatic(arg1, arg2, arg3, arg4, arg5);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforePutStaticObject(String arg1, String arg2, long arg3, String arg4, long arg5) {
-        a.adviseBeforePutStaticObject(arg1, arg2, arg3, arg4, arg5);
-        b.adviseBeforePutStaticObject(arg1, arg2, arg3, arg4, arg5);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeGetField(String arg1, long arg2, String arg3, long arg4, String arg5) {
-        a.adviseBeforeGetField(arg1, arg2, arg3, arg4, arg5);
-        b.adviseBeforeGetField(arg1, arg2, arg3, arg4, arg5);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforePutField(String arg1, long arg2, String arg3, long arg4, String arg5, double arg6) {
-        a.adviseBeforePutField(arg1, arg2, arg3, arg4, arg5, arg6);
-        b.adviseBeforePutField(arg1, arg2, arg3, arg4, arg5, arg6);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforePutField(String arg1, long arg2, String arg3, long arg4, String arg5, long arg6) {
-        a.adviseBeforePutField(arg1, arg2, arg3, arg4, arg5, arg6);
-        b.adviseBeforePutField(arg1, arg2, arg3, arg4, arg5, arg6);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforePutField(String arg1, long arg2, String arg3, long arg4, String arg5, float arg6) {
-        a.adviseBeforePutField(arg1, arg2, arg3, arg4, arg5, arg6);
-        b.adviseBeforePutField(arg1, arg2, arg3, arg4, arg5, arg6);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforePutFieldObject(String arg1, long arg2, String arg3, long arg4, String arg5, long arg6) {
-        a.adviseBeforePutFieldObject(arg1, arg2, arg3, arg4, arg5, arg6);
-        b.adviseBeforePutFieldObject(arg1, arg2, arg3, arg4, arg5, arg6);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeInvokeVirtual(String arg1, long arg2, String arg3, long arg4, String arg5) {
-        a.adviseBeforeInvokeVirtual(arg1, arg2, arg3, arg4, arg5);
-        b.adviseBeforeInvokeVirtual(arg1, arg2, arg3, arg4, arg5);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeInvokeSpecial(String arg1, long arg2, String arg3, long arg4, String arg5) {
-        a.adviseBeforeInvokeSpecial(arg1, arg2, arg3, arg4, arg5);
-        b.adviseBeforeInvokeSpecial(arg1, arg2, arg3, arg4, arg5);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeInvokeStatic(String arg1, long arg2, String arg3, long arg4, String arg5) {
-        a.adviseBeforeInvokeStatic(arg1, arg2, arg3, arg4, arg5);
-        b.adviseBeforeInvokeStatic(arg1, arg2, arg3, arg4, arg5);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeInvokeInterface(String arg1, long arg2, String arg3, long arg4, String arg5) {
-        a.adviseBeforeInvokeInterface(arg1, arg2, arg3, arg4, arg5);
-        b.adviseBeforeInvokeInterface(arg1, arg2, arg3, arg4, arg5);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeArrayLength(String arg1, long arg2, int arg3) {
-        a.adviseBeforeArrayLength(arg1, arg2, arg3);
-        b.adviseBeforeArrayLength(arg1, arg2, arg3);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeThrow(String arg1, long arg2) {
-        a.adviseBeforeThrow(arg1, arg2);
-        b.adviseBeforeThrow(arg1, arg2);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeCheckCast(String arg1, long arg2, String arg3, long arg4) {
-        a.adviseBeforeCheckCast(arg1, arg2, arg3, arg4);
-        b.adviseBeforeCheckCast(arg1, arg2, arg3, arg4);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeInstanceOf(String arg1, long arg2, String arg3, long arg4) {
-        a.adviseBeforeInstanceOf(arg1, arg2, arg3, arg4);
-        b.adviseBeforeInstanceOf(arg1, arg2, arg3, arg4);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeMonitorEnter(String arg1, long arg2) {
-        a.adviseBeforeMonitorEnter(arg1, arg2);
-        b.adviseBeforeMonitorEnter(arg1, arg2);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeMonitorExit(String arg1, long arg2) {
-        a.adviseBeforeMonitorExit(arg1, arg2);
-        b.adviseBeforeMonitorExit(arg1, arg2);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseBeforeBytecode(String arg1, int arg2) {
-        a.adviseBeforeBytecode(arg1, arg2);
-        b.adviseBeforeBytecode(arg1, arg2);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseAfterInvokeVirtual(String arg1, long arg2, String arg3, long arg4, String arg5) {
-        a.adviseAfterInvokeVirtual(arg1, arg2, arg3, arg4, arg5);
-        b.adviseAfterInvokeVirtual(arg1, arg2, arg3, arg4, arg5);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseAfterInvokeSpecial(String arg1, long arg2, String arg3, long arg4, String arg5) {
-        a.adviseAfterInvokeSpecial(arg1, arg2, arg3, arg4, arg5);
-        b.adviseAfterInvokeSpecial(arg1, arg2, arg3, arg4, arg5);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseAfterInvokeStatic(String arg1, long arg2, String arg3, long arg4, String arg5) {
-        a.adviseAfterInvokeStatic(arg1, arg2, arg3, arg4, arg5);
-        b.adviseAfterInvokeStatic(arg1, arg2, arg3, arg4, arg5);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
-    @Override
-    public void adviseAfterInvokeInterface(String arg1, long arg2, String arg3, long arg4, String arg5) {
-        a.adviseAfterInvokeInterface(arg1, arg2, arg3, arg4, arg5);
-        b.adviseAfterInvokeInterface(arg1, arg2, arg3, arg4, arg5);
-    }
-
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
     public void adviseAfterNew(String arg1, long arg2, String arg3, long arg4) {
         a.adviseAfterNew(arg1, arg2, arg3, arg4);
         b.adviseAfterNew(arg1, arg2, arg3, arg4);
     }
 
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
     public void adviseAfterNewArray(String arg1, long arg2, String arg3, long arg4, int arg5) {
         a.adviseAfterNewArray(arg1, arg2, arg3, arg4, arg5);
         b.adviseAfterNewArray(arg1, arg2, arg3, arg4, arg5);
     }
 
-    // GENERATED -- EDIT AND RUN DupVMAdviceHandlerLogGenerator.main() TO MODIFY
     @Override
     public void adviseAfterMultiNewArray(String arg1, long arg2, String arg3, long arg4, int arg5) {
         a.adviseAfterMultiNewArray(arg1, arg2, arg3, arg4, arg5);
         b.adviseAfterMultiNewArray(arg1, arg2, arg3, arg4, arg5);
     }
 
+    @Override
+    public void adviseBeforeConstLoad(String arg1, float arg2) {
+        a.adviseBeforeConstLoad(arg1, arg2);
+        b.adviseBeforeConstLoad(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeConstLoad(String arg1, long arg2) {
+        a.adviseBeforeConstLoad(arg1, arg2);
+        b.adviseBeforeConstLoad(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeConstLoad(String arg1, double arg2) {
+        a.adviseBeforeConstLoad(arg1, arg2);
+        b.adviseBeforeConstLoad(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeLoad(String arg1, int arg2) {
+        a.adviseBeforeLoad(arg1, arg2);
+        b.adviseBeforeLoad(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeArrayLoad(String arg1, long arg2, int arg3) {
+        a.adviseBeforeArrayLoad(arg1, arg2, arg3);
+        b.adviseBeforeArrayLoad(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforeStore(String arg1, int arg2, long arg3) {
+        a.adviseBeforeStore(arg1, arg2, arg3);
+        b.adviseBeforeStore(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforeStore(String arg1, int arg2, float arg3) {
+        a.adviseBeforeStore(arg1, arg2, arg3);
+        b.adviseBeforeStore(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforeStore(String arg1, int arg2, double arg3) {
+        a.adviseBeforeStore(arg1, arg2, arg3);
+        b.adviseBeforeStore(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforeArrayStore(String arg1, long arg2, int arg3, double arg4) {
+        a.adviseBeforeArrayStore(arg1, arg2, arg3, arg4);
+        b.adviseBeforeArrayStore(arg1, arg2, arg3, arg4);
+    }
+
+    @Override
+    public void adviseBeforeArrayStore(String arg1, long arg2, int arg3, long arg4) {
+        a.adviseBeforeArrayStore(arg1, arg2, arg3, arg4);
+        b.adviseBeforeArrayStore(arg1, arg2, arg3, arg4);
+    }
+
+    @Override
+    public void adviseBeforeArrayStore(String arg1, long arg2, int arg3, float arg4) {
+        a.adviseBeforeArrayStore(arg1, arg2, arg3, arg4);
+        b.adviseBeforeArrayStore(arg1, arg2, arg3, arg4);
+    }
+
+    @Override
+    public void adviseBeforeStackAdjust(String arg1, int arg2) {
+        a.adviseBeforeStackAdjust(arg1, arg2);
+        b.adviseBeforeStackAdjust(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeOperation(String arg1, int arg2, double arg3, double arg4) {
+        a.adviseBeforeOperation(arg1, arg2, arg3, arg4);
+        b.adviseBeforeOperation(arg1, arg2, arg3, arg4);
+    }
+
+    @Override
+    public void adviseBeforeOperation(String arg1, int arg2, long arg3, long arg4) {
+        a.adviseBeforeOperation(arg1, arg2, arg3, arg4);
+        b.adviseBeforeOperation(arg1, arg2, arg3, arg4);
+    }
+
+    @Override
+    public void adviseBeforeOperation(String arg1, int arg2, float arg3, float arg4) {
+        a.adviseBeforeOperation(arg1, arg2, arg3, arg4);
+        b.adviseBeforeOperation(arg1, arg2, arg3, arg4);
+    }
+
+    @Override
+    public void adviseBeforeConversion(String arg1, int arg2, long arg3) {
+        a.adviseBeforeConversion(arg1, arg2, arg3);
+        b.adviseBeforeConversion(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforeConversion(String arg1, int arg2, double arg3) {
+        a.adviseBeforeConversion(arg1, arg2, arg3);
+        b.adviseBeforeConversion(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforeConversion(String arg1, int arg2, float arg3) {
+        a.adviseBeforeConversion(arg1, arg2, arg3);
+        b.adviseBeforeConversion(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforeIf(String arg1, int arg2, int arg3, int arg4) {
+        a.adviseBeforeIf(arg1, arg2, arg3, arg4);
+        b.adviseBeforeIf(arg1, arg2, arg3, arg4);
+    }
+
+    @Override
+    public void adviseBeforeBytecode(String arg1, int arg2) {
+        a.adviseBeforeBytecode(arg1, arg2);
+        b.adviseBeforeBytecode(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeReturn(String arg1) {
+        a.adviseBeforeReturn(arg1);
+        b.adviseBeforeReturn(arg1);
+    }
+
+    @Override
+    public void adviseBeforeReturn(String arg1, long arg2) {
+        a.adviseBeforeReturn(arg1, arg2);
+        b.adviseBeforeReturn(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeReturn(String arg1, float arg2) {
+        a.adviseBeforeReturn(arg1, arg2);
+        b.adviseBeforeReturn(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeReturn(String arg1, double arg2) {
+        a.adviseBeforeReturn(arg1, arg2);
+        b.adviseBeforeReturn(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeGetStatic(String arg1, String arg2, long arg3, String arg4) {
+        a.adviseBeforeGetStatic(arg1, arg2, arg3, arg4);
+        b.adviseBeforeGetStatic(arg1, arg2, arg3, arg4);
+    }
+
+    @Override
+    public void adviseBeforePutStatic(String arg1, String arg2, long arg3, String arg4, float arg5) {
+        a.adviseBeforePutStatic(arg1, arg2, arg3, arg4, arg5);
+        b.adviseBeforePutStatic(arg1, arg2, arg3, arg4, arg5);
+    }
+
+    @Override
+    public void adviseBeforePutStatic(String arg1, String arg2, long arg3, String arg4, double arg5) {
+        a.adviseBeforePutStatic(arg1, arg2, arg3, arg4, arg5);
+        b.adviseBeforePutStatic(arg1, arg2, arg3, arg4, arg5);
+    }
+
+    @Override
+    public void adviseBeforePutStatic(String arg1, String arg2, long arg3, String arg4, long arg5) {
+        a.adviseBeforePutStatic(arg1, arg2, arg3, arg4, arg5);
+        b.adviseBeforePutStatic(arg1, arg2, arg3, arg4, arg5);
+    }
+
+    @Override
+    public void adviseBeforeGetField(String arg1, long arg2, String arg3, long arg4, String arg5) {
+        a.adviseBeforeGetField(arg1, arg2, arg3, arg4, arg5);
+        b.adviseBeforeGetField(arg1, arg2, arg3, arg4, arg5);
+    }
+
+    @Override
+    public void adviseBeforePutField(String arg1, long arg2, String arg3, long arg4, String arg5, float arg6) {
+        a.adviseBeforePutField(arg1, arg2, arg3, arg4, arg5, arg6);
+        b.adviseBeforePutField(arg1, arg2, arg3, arg4, arg5, arg6);
+    }
+
+    @Override
+    public void adviseBeforePutField(String arg1, long arg2, String arg3, long arg4, String arg5, long arg6) {
+        a.adviseBeforePutField(arg1, arg2, arg3, arg4, arg5, arg6);
+        b.adviseBeforePutField(arg1, arg2, arg3, arg4, arg5, arg6);
+    }
+
+    @Override
+    public void adviseBeforePutField(String arg1, long arg2, String arg3, long arg4, String arg5, double arg6) {
+        a.adviseBeforePutField(arg1, arg2, arg3, arg4, arg5, arg6);
+        b.adviseBeforePutField(arg1, arg2, arg3, arg4, arg5, arg6);
+    }
+
+    @Override
+    public void adviseBeforeInvokeVirtual(String arg1, long arg2, String arg3, long arg4, String arg5) {
+        a.adviseBeforeInvokeVirtual(arg1, arg2, arg3, arg4, arg5);
+        b.adviseBeforeInvokeVirtual(arg1, arg2, arg3, arg4, arg5);
+    }
+
+    @Override
+    public void adviseBeforeInvokeSpecial(String arg1, long arg2, String arg3, long arg4, String arg5) {
+        a.adviseBeforeInvokeSpecial(arg1, arg2, arg3, arg4, arg5);
+        b.adviseBeforeInvokeSpecial(arg1, arg2, arg3, arg4, arg5);
+    }
+
+    @Override
+    public void adviseBeforeInvokeStatic(String arg1, long arg2, String arg3, long arg4, String arg5) {
+        a.adviseBeforeInvokeStatic(arg1, arg2, arg3, arg4, arg5);
+        b.adviseBeforeInvokeStatic(arg1, arg2, arg3, arg4, arg5);
+    }
+
+    @Override
+    public void adviseBeforeInvokeInterface(String arg1, long arg2, String arg3, long arg4, String arg5) {
+        a.adviseBeforeInvokeInterface(arg1, arg2, arg3, arg4, arg5);
+        b.adviseBeforeInvokeInterface(arg1, arg2, arg3, arg4, arg5);
+    }
+
+    @Override
+    public void adviseBeforeArrayLength(String arg1, long arg2, int arg3) {
+        a.adviseBeforeArrayLength(arg1, arg2, arg3);
+        b.adviseBeforeArrayLength(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforeThrow(String arg1, long arg2) {
+        a.adviseBeforeThrow(arg1, arg2);
+        b.adviseBeforeThrow(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeCheckCast(String arg1, long arg2, String arg3, long arg4) {
+        a.adviseBeforeCheckCast(arg1, arg2, arg3, arg4);
+        b.adviseBeforeCheckCast(arg1, arg2, arg3, arg4);
+    }
+
+    @Override
+    public void adviseBeforeInstanceOf(String arg1, long arg2, String arg3, long arg4) {
+        a.adviseBeforeInstanceOf(arg1, arg2, arg3, arg4);
+        b.adviseBeforeInstanceOf(arg1, arg2, arg3, arg4);
+    }
+
+    @Override
+    public void adviseBeforeMonitorEnter(String arg1, long arg2) {
+        a.adviseBeforeMonitorEnter(arg1, arg2);
+        b.adviseBeforeMonitorEnter(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeMonitorExit(String arg1, long arg2) {
+        a.adviseBeforeMonitorExit(arg1, arg2);
+        b.adviseBeforeMonitorExit(arg1, arg2);
+    }
+
+    @Override
+    public void adviseAfterInvokeVirtual(String arg1, long arg2, String arg3, long arg4, String arg5) {
+        a.adviseAfterInvokeVirtual(arg1, arg2, arg3, arg4, arg5);
+        b.adviseAfterInvokeVirtual(arg1, arg2, arg3, arg4, arg5);
+    }
+
+    @Override
+    public void adviseAfterInvokeSpecial(String arg1, long arg2, String arg3, long arg4, String arg5) {
+        a.adviseAfterInvokeSpecial(arg1, arg2, arg3, arg4, arg5);
+        b.adviseAfterInvokeSpecial(arg1, arg2, arg3, arg4, arg5);
+    }
+
+    @Override
+    public void adviseAfterInvokeStatic(String arg1, long arg2, String arg3, long arg4, String arg5) {
+        a.adviseAfterInvokeStatic(arg1, arg2, arg3, arg4, arg5);
+        b.adviseAfterInvokeStatic(arg1, arg2, arg3, arg4, arg5);
+    }
+
+    @Override
+    public void adviseAfterInvokeInterface(String arg1, long arg2, String arg3, long arg4, String arg5) {
+        a.adviseAfterInvokeInterface(arg1, arg2, arg3, arg4, arg5);
+        b.adviseAfterInvokeInterface(arg1, arg2, arg3, arg4, arg5);
+    }
+
+    @Override
+    public void adviseAfterMethodEntry(String arg1, long arg2, String arg3, long arg4, String arg5) {
+        a.adviseAfterMethodEntry(arg1, arg2, arg3, arg4, arg5);
+        b.adviseAfterMethodEntry(arg1, arg2, arg3, arg4, arg5);
+    }
+
+    @Override
+    public void adviseBeforeGC(String arg1) {
+        a.adviseBeforeGC(arg1);
+        b.adviseBeforeGC(arg1);
+    }
+
+    @Override
+    public void adviseAfterGC(String arg1) {
+        a.adviseAfterGC(arg1);
+        b.adviseAfterGC(arg1);
+    }
+
+    @Override
+    public void adviseBeforeThreadStarting(String arg1) {
+        a.adviseBeforeThreadStarting(arg1);
+        b.adviseBeforeThreadStarting(arg1);
+    }
+
+    @Override
+    public void adviseBeforeThreadTerminating(String arg1) {
+        a.adviseBeforeThreadTerminating(arg1);
+        b.adviseBeforeThreadTerminating(arg1);
+    }
+
+    @Override
+    public void adviseBeforeConstLoadObject(String arg1, long arg2) {
+        a.adviseBeforeConstLoadObject(arg1, arg2);
+        b.adviseBeforeConstLoadObject(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforeStoreObject(String arg1, int arg2, long arg3) {
+        a.adviseBeforeStoreObject(arg1, arg2, arg3);
+        b.adviseBeforeStoreObject(arg1, arg2, arg3);
+    }
+
+    @Override
+    public void adviseBeforeArrayStoreObject(String arg1, long arg2, int arg3, long arg4) {
+        a.adviseBeforeArrayStoreObject(arg1, arg2, arg3, arg4);
+        b.adviseBeforeArrayStoreObject(arg1, arg2, arg3, arg4);
+    }
+
+    @Override
+    public void adviseBeforeIfObject(String arg1, int arg2, long arg3, long arg4) {
+        a.adviseBeforeIfObject(arg1, arg2, arg3, arg4);
+        b.adviseBeforeIfObject(arg1, arg2, arg3, arg4);
+    }
+
+    @Override
+    public void adviseBeforeReturnObject(String arg1, long arg2) {
+        a.adviseBeforeReturnObject(arg1, arg2);
+        b.adviseBeforeReturnObject(arg1, arg2);
+    }
+
+    @Override
+    public void adviseBeforePutStaticObject(String arg1, String arg2, long arg3, String arg4, long arg5) {
+        a.adviseBeforePutStaticObject(arg1, arg2, arg3, arg4, arg5);
+        b.adviseBeforePutStaticObject(arg1, arg2, arg3, arg4, arg5);
+    }
+
+    @Override
+    public void adviseBeforePutFieldObject(String arg1, long arg2, String arg3, long arg4, String arg5, long arg6) {
+        a.adviseBeforePutFieldObject(arg1, arg2, arg3, arg4, arg5, arg6);
+        b.adviseBeforePutFieldObject(arg1, arg2, arg3, arg4, arg5, arg6);
+    }
+
+// END GENERATED CODE
 
 }

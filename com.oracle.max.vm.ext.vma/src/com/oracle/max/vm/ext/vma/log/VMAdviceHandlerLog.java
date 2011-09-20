@@ -111,196 +111,130 @@ public abstract class VMAdviceHandlerLog {
      */
     public abstract void resetTime();
 
-     // BEGIN GENERATED CODE
+// START GENERATED CODE
+// EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
 
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
     public abstract void adviseBeforeGC(String threadName);
 
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
     public abstract void adviseAfterGC(String threadName);
 
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
     public abstract void adviseBeforeThreadStarting(String threadName);
 
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
     public abstract void adviseBeforeThreadTerminating(String threadName);
 
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseAfterMethodEntry(String threadName, long objId, String className, long clId, String methodName);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeConstLoad(String threadName, long value);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeConstLoadObject(String threadName, long value);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeConstLoad(String threadName, float value);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeConstLoad(String threadName, double value);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeIPush(String threadName, int arg1);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeLoad(String threadName, int arg1);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeArrayLoad(String threadName, long objId, int index);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeStore(String threadName, int dispToLocalSlot, long value);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeStore(String threadName, int dispToLocalSlot, float value);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeStore(String threadName, int dispToLocalSlot, double value);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeStoreObject(String threadName, int dispToLocalSlot, long value);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeArrayStore(String threadName, long objId, int index, float value);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeArrayStore(String threadName, long objId, int index, long value);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeArrayStore(String threadName, long objId, int index, double value);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeArrayStoreObject(String threadName, long objId, int index, long value);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeStackAdjust(String threadName, int arg1);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeOperation(String threadName, int arg1, long arg2, long arg3);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeOperation(String threadName, int arg1, float arg2, float arg3);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeOperation(String threadName, int arg1, double arg2, double arg3);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeIInc(String threadName, int arg1, int arg2, int arg3);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeConversion(String threadName, int arg1, long arg2);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeConversion(String threadName, int arg1, float arg2);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeConversion(String threadName, int arg1, double arg2);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeIf(String threadName, int opcode, int op1, int op2);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeIfObject(String threadName, int opcode, long objId1, long objId2);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeReturnObject(String threadName, long value);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeReturn(String threadName, long value);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeReturn(String threadName, float value);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeReturn(String threadName, double value);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeReturn(String threadName);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeGetStatic(String threadName, String className, long clId, String fieldName);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforePutStatic(String threadName, String className, long clId, String fieldName, double value);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforePutStatic(String threadName, String className, long clId, String fieldName, long value);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforePutStatic(String threadName, String className, long clId, String fieldName, float value);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforePutStaticObject(String threadName, String className, long clId, String fieldName, long value);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeGetField(String threadName, long objId, String className, long clId, String fieldName);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforePutField(String threadName, long objId, String className, long clId, String fieldName, double value);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforePutField(String threadName, long objId, String className, long clId, String fieldName, long value);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforePutField(String threadName, long objId, String className, long clId, String fieldName, float value);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforePutFieldObject(String threadName, long objId, String className, long clId, String fieldName, long value);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeInvokeVirtual(String threadName, long objId, String className, long clId, String methodName);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeInvokeSpecial(String threadName, long objId, String className, long clId, String methodName);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeInvokeStatic(String threadName, long objId, String className, long clId, String methodName);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeInvokeInterface(String threadName, long objId, String className, long clId, String methodName);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeArrayLength(String threadName, long objId, int length);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeThrow(String threadName, long objId);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeCheckCast(String threadName, long objId, String className, long clId);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeInstanceOf(String threadName, long objId, String className, long clId);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeMonitorEnter(String threadName, long objId);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeMonitorExit(String threadName, long objId);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseBeforeBytecode(String threadName, int arg1);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseAfterInvokeVirtual(String threadName, long objId, String className, long clId, String methodName);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseAfterInvokeSpecial(String threadName, long objId, String className, long clId, String methodName);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseAfterInvokeStatic(String threadName, long objId, String className, long clId, String methodName);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
-    public abstract void adviseAfterInvokeInterface(String threadName, long objId, String className, long clId, String methodName);
-
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
     public abstract void adviseAfterNew(String threadName, long objId, String className, long clId);
 
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
     public abstract void adviseAfterNewArray(String threadName, long objId, String className, long clId, int length);
 
-    // GENERATED -- EDIT AND RUN VMAdviceHandlerLogGenerator.main() TO MODIFY
     public abstract void adviseAfterMultiNewArray(String threadName, long objId, String className, long clId, int length);
 
+    public abstract void adviseBeforeConstLoad(String threadName, double value);
 
+    public abstract void adviseBeforeConstLoadObject(String threadName, long value);
+
+    public abstract void adviseBeforeConstLoad(String threadName, long value);
+
+    public abstract void adviseBeforeConstLoad(String threadName, float value);
+
+    public abstract void adviseBeforeLoad(String threadName, int arg1);
+
+    public abstract void adviseBeforeArrayLoad(String threadName, long objId, int index);
+
+    public abstract void adviseBeforeStoreObject(String threadName, int index, long value);
+
+    public abstract void adviseBeforeStore(String threadName, int index, float value);
+
+    public abstract void adviseBeforeStore(String threadName, int index, double value);
+
+    public abstract void adviseBeforeStore(String threadName, int index, long value);
+
+    public abstract void adviseBeforeArrayStoreObject(String threadName, long objId, int index, long value);
+
+    public abstract void adviseBeforeArrayStore(String threadName, long objId, int index, float value);
+
+    public abstract void adviseBeforeArrayStore(String threadName, long objId, int index, long value);
+
+    public abstract void adviseBeforeArrayStore(String threadName, long objId, int index, double value);
+
+    public abstract void adviseBeforeStackAdjust(String threadName, int arg1);
+
+    public abstract void adviseBeforeOperation(String threadName, int arg1, double arg2, double arg3);
+
+    public abstract void adviseBeforeOperation(String threadName, int arg1, long arg2, long arg3);
+
+    public abstract void adviseBeforeOperation(String threadName, int arg1, float arg2, float arg3);
+
+    public abstract void adviseBeforeConversion(String threadName, int arg1, long arg2);
+
+    public abstract void adviseBeforeConversion(String threadName, int arg1, float arg2);
+
+    public abstract void adviseBeforeConversion(String threadName, int arg1, double arg2);
+
+    public abstract void adviseBeforeIf(String threadName, int opcode, int op1, int op2);
+
+    public abstract void adviseBeforeIfObject(String threadName, int opcode, long objId1, long objId2);
+
+    public abstract void adviseBeforeBytecode(String threadName, int arg1);
+
+    public abstract void adviseBeforeReturn(String threadName);
+
+    public abstract void adviseBeforeReturn(String threadName, long value);
+
+    public abstract void adviseBeforeReturn(String threadName, float value);
+
+    public abstract void adviseBeforeReturn(String threadName, double value);
+
+    public abstract void adviseBeforeReturnObject(String threadName, long value);
+
+    public abstract void adviseBeforeGetStatic(String threadName, String className, long clId, String fieldName);
+
+    public abstract void adviseBeforePutStatic(String threadName, String className, long clId, String fieldName, float value);
+
+    public abstract void adviseBeforePutStatic(String threadName, String className, long clId, String fieldName, long value);
+
+    public abstract void adviseBeforePutStatic(String threadName, String className, long clId, String fieldName, double value);
+
+    public abstract void adviseBeforePutStaticObject(String threadName, String className, long clId, String fieldName, long value);
+
+    public abstract void adviseBeforeGetField(String threadName, long objId, String className, long clId, String fieldName);
+
+    public abstract void adviseBeforePutField(String threadName, long objId, String className, long clId, String fieldName, float value);
+
+    public abstract void adviseBeforePutField(String threadName, long objId, String className, long clId, String fieldName, double value);
+
+    public abstract void adviseBeforePutFieldObject(String threadName, long objId, String className, long clId, String fieldName, long value);
+
+    public abstract void adviseBeforePutField(String threadName, long objId, String className, long clId, String fieldName, long value);
+
+    public abstract void adviseBeforeInvokeVirtual(String threadName, long objId, String className, long clId, String methodName);
+
+    public abstract void adviseBeforeInvokeSpecial(String threadName, long objId, String className, long clId, String methodName);
+
+    public abstract void adviseBeforeInvokeStatic(String threadName, long objId, String className, long clId, String methodName);
+
+    public abstract void adviseBeforeInvokeInterface(String threadName, long objId, String className, long clId, String methodName);
+
+    public abstract void adviseBeforeArrayLength(String threadName, long objId, int length);
+
+    public abstract void adviseBeforeThrow(String threadName, long objId);
+
+    public abstract void adviseBeforeCheckCast(String threadName, long objId, String className, long clId);
+
+    public abstract void adviseBeforeInstanceOf(String threadName, long objId, String className, long clId);
+
+    public abstract void adviseBeforeMonitorEnter(String threadName, long objId);
+
+    public abstract void adviseBeforeMonitorExit(String threadName, long objId);
+
+    public abstract void adviseAfterInvokeVirtual(String threadName, long objId, String className, long clId, String methodName);
+
+    public abstract void adviseAfterInvokeSpecial(String threadName, long objId, String className, long clId, String methodName);
+
+    public abstract void adviseAfterInvokeStatic(String threadName, long objId, String className, long clId, String methodName);
+
+    public abstract void adviseAfterInvokeInterface(String threadName, long objId, String className, long clId, String methodName);
+
+    public abstract void adviseAfterMethodEntry(String threadName, long objId, String className, long clId, String methodName);
+
+// END GENERATED CODE
 }

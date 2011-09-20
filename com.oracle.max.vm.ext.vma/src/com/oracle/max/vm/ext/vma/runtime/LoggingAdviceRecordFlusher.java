@@ -103,9 +103,9 @@ public class LoggingAdviceRecordFlusher extends AdviceRecordFlusherAdapter {
             }
             RecordType rt = thisRecord.getRecordType();
             switch (rt) {
-                // BEGIN GENERATED CODE
+// START GENERATED CODE
+// EDIT AND RUN LoggingAdviceRecordFlusherGenerator.main() TO MODIFY
 
-                // GENERATED -- EDIT AND RUN LoggingAdviceRecordFlusherGenerator.main() TO MODIFY
                 case Unseen: {
                     ObjectAdviceRecord record = (ObjectAdviceRecord) thisRecord;
                     logHandler.unseenObject(record.value);
@@ -128,9 +128,25 @@ public class LoggingAdviceRecordFlusher extends AdviceRecordFlusherAdapter {
                     assert thisRecord.getAdviceMode() == 0;
                     break;
                 }
-                case ConstLoadLong: {
+                case New: {
+                    assert thisRecord.getAdviceMode() == 1;
+                    ObjectAdviceRecord record = (ObjectAdviceRecord) thisRecord;
+                    logHandler.adviseAfterNew(record.value);
+                    break;
+                }
+                case NewArray: {
+                    assert thisRecord.getAdviceMode() == 1;
+                    ObjectAdviceRecord record = (ObjectAdviceRecord) thisRecord;
+                    logHandler.adviseAfterNewArray(record.value, record.getPackedValue());
+                    break;
+                }
+                case MultiNewArray: {
+                    assert false;
+                    break;
+                }
+                case ConstLoadDouble: {
                     assert thisRecord.getAdviceMode() == 0;
-                    LongAdviceRecord record = (LongAdviceRecord) thisRecord;
+                    DoubleAdviceRecord record = (DoubleAdviceRecord) thisRecord;
                     logHandler.adviseBeforeConstLoad(record.value);
                     break;
                 }
@@ -140,21 +156,16 @@ public class LoggingAdviceRecordFlusher extends AdviceRecordFlusherAdapter {
                     logHandler.adviseBeforeConstLoad(record.value);
                     break;
                 }
+                case ConstLoadLong: {
+                    assert thisRecord.getAdviceMode() == 0;
+                    LongAdviceRecord record = (LongAdviceRecord) thisRecord;
+                    logHandler.adviseBeforeConstLoad(record.value);
+                    break;
+                }
                 case ConstLoadFloat: {
                     assert thisRecord.getAdviceMode() == 0;
                     FloatAdviceRecord record = (FloatAdviceRecord) thisRecord;
                     logHandler.adviseBeforeConstLoad(record.value);
-                    break;
-                }
-                case ConstLoadDouble: {
-                    assert thisRecord.getAdviceMode() == 0;
-                    DoubleAdviceRecord record = (DoubleAdviceRecord) thisRecord;
-                    logHandler.adviseBeforeConstLoad(record.value);
-                    break;
-                }
-                case IPush: {
-                    assert thisRecord.getAdviceMode() == 0;
-                    logHandler.adviseBeforeIPush(thisRecord.getPackedValue());
                     break;
                 }
                 case Load: {
@@ -168,9 +179,9 @@ public class LoggingAdviceRecordFlusher extends AdviceRecordFlusherAdapter {
                     logHandler.adviseBeforeArrayLoad(record.value, record.getArrayIndex());
                     break;
                 }
-                case StoreLong: {
+                case StoreObject: {
                     assert thisRecord.getAdviceMode() == 0;
-                    LongAdviceRecord record = (LongAdviceRecord) thisRecord;
+                    ObjectAdviceRecord record = (ObjectAdviceRecord) thisRecord;
                     logHandler.adviseBeforeStore(record.getPackedValue(), record.value);
                     break;
                 }
@@ -186,10 +197,16 @@ public class LoggingAdviceRecordFlusher extends AdviceRecordFlusherAdapter {
                     logHandler.adviseBeforeStore(record.getPackedValue(), record.value);
                     break;
                 }
-                case StoreObject: {
+                case StoreLong: {
                     assert thisRecord.getAdviceMode() == 0;
-                    ObjectAdviceRecord record = (ObjectAdviceRecord) thisRecord;
+                    LongAdviceRecord record = (LongAdviceRecord) thisRecord;
                     logHandler.adviseBeforeStore(record.getPackedValue(), record.value);
+                    break;
+                }
+                case ArrayStoreObject: {
+                    assert thisRecord.getAdviceMode() == 0;
+                    ObjectObjectAdviceRecord record = (ObjectObjectAdviceRecord) thisRecord;
+                    logHandler.adviseBeforeArrayStore(record.value, record.getArrayIndex(), record.value2);
                     break;
                 }
                 case ArrayStoreFloat: {
@@ -210,15 +227,15 @@ public class LoggingAdviceRecordFlusher extends AdviceRecordFlusherAdapter {
                     logHandler.adviseBeforeArrayStore(record.value, record.getArrayIndex(), record.value2);
                     break;
                 }
-                case ArrayStoreObject: {
-                    assert thisRecord.getAdviceMode() == 0;
-                    ObjectObjectAdviceRecord record = (ObjectObjectAdviceRecord) thisRecord;
-                    logHandler.adviseBeforeArrayStore(record.value, record.getArrayIndex(), record.value2);
-                    break;
-                }
                 case StackAdjust: {
                     assert thisRecord.getAdviceMode() == 0;
                     logHandler.adviseBeforeStackAdjust(thisRecord.getPackedValue());
+                    break;
+                }
+                case OperationDouble: {
+                    assert thisRecord.getAdviceMode() == 0;
+                    DoubleDoubleAdviceRecord record = (DoubleDoubleAdviceRecord) thisRecord;
+                    logHandler.adviseBeforeOperation(record.getPackedValue(), record.value, record.value2);
                     break;
                 }
                 case OperationLong: {
@@ -231,18 +248,6 @@ public class LoggingAdviceRecordFlusher extends AdviceRecordFlusherAdapter {
                     assert thisRecord.getAdviceMode() == 0;
                     FloatFloatAdviceRecord record = (FloatFloatAdviceRecord) thisRecord;
                     logHandler.adviseBeforeOperation(record.getPackedValue(), record.value, record.value2);
-                    break;
-                }
-                case OperationDouble: {
-                    assert thisRecord.getAdviceMode() == 0;
-                    DoubleDoubleAdviceRecord record = (DoubleDoubleAdviceRecord) thisRecord;
-                    logHandler.adviseBeforeOperation(record.getPackedValue(), record.value, record.value2);
-                    break;
-                }
-                case IInc: {
-                    assert thisRecord.getAdviceMode() == 0;
-                    LongLongAdviceRecord record = (LongLongAdviceRecord) thisRecord;
-                    logHandler.adviseBeforeIInc(record.getPackedValue(), (int) record.value, (int) record.value2);
                     break;
                 }
                 case ConversionLong: {
@@ -273,6 +278,11 @@ public class LoggingAdviceRecordFlusher extends AdviceRecordFlusherAdapter {
                     assert thisRecord.getAdviceMode() == 0;
                     ObjectObjectAdviceRecord record = (ObjectObjectAdviceRecord) thisRecord;
                     logHandler.adviseBeforeIf(record.getPackedValue(), record.value, record.value2);
+                    break;
+                }
+                case Bytecode: {
+                    assert thisRecord.getAdviceMode() == 0;
+                    logHandler.adviseBeforeBytecode(thisRecord.getPackedValue());
                     break;
                 }
                 case Return: {
@@ -310,9 +320,9 @@ public class LoggingAdviceRecordFlusher extends AdviceRecordFlusherAdapter {
                     logHandler.adviseBeforeGetStatic(record.value, record.getPackedValue());
                     break;
                 }
-                case PutStaticDouble: {
+                case PutStaticFloat: {
                     assert thisRecord.getAdviceMode() == 0;
-                    ObjectDoubleAdviceRecord record = (ObjectDoubleAdviceRecord) thisRecord;
+                    ObjectFloatAdviceRecord record = (ObjectFloatAdviceRecord) thisRecord;
                     logHandler.adviseBeforePutStatic(record.value, record.getPackedValue(), record.value2);
                     break;
                 }
@@ -322,9 +332,9 @@ public class LoggingAdviceRecordFlusher extends AdviceRecordFlusherAdapter {
                     logHandler.adviseBeforePutStatic(record.value, record.getPackedValue(), record.value2);
                     break;
                 }
-                case PutStaticFloat: {
+                case PutStaticDouble: {
                     assert thisRecord.getAdviceMode() == 0;
-                    ObjectFloatAdviceRecord record = (ObjectFloatAdviceRecord) thisRecord;
+                    ObjectDoubleAdviceRecord record = (ObjectDoubleAdviceRecord) thisRecord;
                     logHandler.adviseBeforePutStatic(record.value, record.getPackedValue(), record.value2);
                     break;
                 }
@@ -340,27 +350,27 @@ public class LoggingAdviceRecordFlusher extends AdviceRecordFlusherAdapter {
                     logHandler.adviseBeforeGetField(record.value, record.getPackedValue());
                     break;
                 }
-                case PutFieldDouble: {
-                    assert thisRecord.getAdviceMode() == 0;
-                    ObjectDoubleAdviceRecord record = (ObjectDoubleAdviceRecord) thisRecord;
-                    logHandler.adviseBeforePutField(record.value, record.getPackedValue(), record.value2);
-                    break;
-                }
-                case PutFieldLong: {
-                    assert thisRecord.getAdviceMode() == 0;
-                    ObjectLongAdviceRecord record = (ObjectLongAdviceRecord) thisRecord;
-                    logHandler.adviseBeforePutField(record.value, record.getPackedValue(), record.value2);
-                    break;
-                }
                 case PutFieldFloat: {
                     assert thisRecord.getAdviceMode() == 0;
                     ObjectFloatAdviceRecord record = (ObjectFloatAdviceRecord) thisRecord;
                     logHandler.adviseBeforePutField(record.value, record.getPackedValue(), record.value2);
                     break;
                 }
+                case PutFieldDouble: {
+                    assert thisRecord.getAdviceMode() == 0;
+                    ObjectDoubleAdviceRecord record = (ObjectDoubleAdviceRecord) thisRecord;
+                    logHandler.adviseBeforePutField(record.value, record.getPackedValue(), record.value2);
+                    break;
+                }
                 case PutFieldObject: {
                     assert thisRecord.getAdviceMode() == 0;
                     ObjectObjectAdviceRecord record = (ObjectObjectAdviceRecord) thisRecord;
+                    logHandler.adviseBeforePutField(record.value, record.getPackedValue(), record.value2);
+                    break;
+                }
+                case PutFieldLong: {
+                    assert thisRecord.getAdviceMode() == 0;
+                    ObjectLongAdviceRecord record = (ObjectLongAdviceRecord) thisRecord;
                     logHandler.adviseBeforePutField(record.value, record.getPackedValue(), record.value2);
                     break;
                 }
@@ -436,35 +446,13 @@ public class LoggingAdviceRecordFlusher extends AdviceRecordFlusherAdapter {
                     logHandler.adviseBeforeMonitorExit(record.value);
                     break;
                 }
-                case Bytecode: {
-                    assert thisRecord.getAdviceMode() == 0;
-                    logHandler.adviseBeforeBytecode(thisRecord.getPackedValue());
-                    break;
-                }
-                case New: {
-                    assert thisRecord.getAdviceMode() == 1;
-                    ObjectAdviceRecord record = (ObjectAdviceRecord) thisRecord;
-                    logHandler.adviseAfterNew(record.value);
-                    break;
-                }
-                case NewArray: {
-                    assert thisRecord.getAdviceMode() == 1;
-                    ObjectAdviceRecord record = (ObjectAdviceRecord) thisRecord;
-                    logHandler.adviseAfterNewArray(record.value, record.getPackedValue());
-                    break;
-                }
-                case MultiNewArray: {
-                    assert false;
-                    break;
-                }
                 case MethodEntry: {
                     assert thisRecord.getAdviceMode() == 1;
                     ObjectMethodAdviceRecord record = (ObjectMethodAdviceRecord) thisRecord;
                     logHandler.adviseAfterMethodEntry(record.value, (MethodActor) record.value2);
                     break;
                 }
-
-                // END GENERATED CODE
+// END GENERATED CODE
                 default:
                     assert false : "unhandled event type: " + rt;
                     break;

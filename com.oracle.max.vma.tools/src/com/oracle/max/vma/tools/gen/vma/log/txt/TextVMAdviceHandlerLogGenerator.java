@@ -28,6 +28,8 @@ import java.util.*;
 
 import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.log.*;
+import com.oracle.max.vm.ext.vma.log.txt.*;
+import com.oracle.max.vma.tools.gen.vma.*;
 
 /**
  * Generate the string codes used to identify advice methods in textual log files.
@@ -40,7 +42,7 @@ public class TextVMAdviceHandlerLogGenerator {
     private static Map<String, String> reverseCodeMap = new HashMap<String, String>();
     private static Map<String, String> declMap = new HashMap<String, String>();
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         boolean duplicates = false;
         for (Method m : VMAdviceHandlerLog.class.getDeclaredMethods()) {
             String name = m.getName();
@@ -106,11 +108,11 @@ public class TextVMAdviceHandlerLogGenerator {
             out.printf("        }%n");
             out.printf("    }%n%n");
             generateHasIdSet();
+            AdviceGeneratorHelper.updateSource(TextVMAdviceHandlerLog.class, null, false);
         }
     }
 
     private static void generateHasIdSet() {
-        generateAutoComment();
         out.printf("    public static final EnumSet<Key> hasIdSet = EnumSet.of(%n");
         HashSet<String> doneSet = new HashSet<String>();
         boolean first = true;

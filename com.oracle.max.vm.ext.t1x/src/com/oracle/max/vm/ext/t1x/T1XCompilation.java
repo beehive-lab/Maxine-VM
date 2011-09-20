@@ -467,7 +467,7 @@ public abstract class T1XCompilation {
         }
     }
 
-    private void beginBytecode(int representativeOpcode) {
+    protected void beginBytecode(int representativeOpcode) {
         int bci = stream.currentBCI();
         int pos = buf.position();
 
@@ -486,8 +486,22 @@ public abstract class T1XCompilation {
         prevOpcode = representativeOpcode;
     }
 
+    /**
+     * Returns the template to use for {@code tag}.
+     * By default, returns the template in the associated {@link #compiler compiler}
+     * templates array, but may be overridden by a subclass to make the behavior
+     * more context sensitive.
+     * @param tag
+     * @return
+     */
+    protected T1XTemplate getTemplate(T1XTemplateTag tag) {
+        return compiler.templates[tag.ordinal()];
+    }
+
     protected void start(T1XTemplateTag tag) {
-        start(compiler.templates[tag.ordinal()]);
+        T1XTemplate template = getTemplate(tag);
+        assert template != null : "template for tag " + tag + " is null";
+        start(template);
     }
 
     /**
@@ -908,7 +922,7 @@ public abstract class T1XCompilation {
      *
      * @param name the expected name of the parameter
      */
-    final void assignObject(int n, String name, Object value) {
+    final protected void assignObject(int n, String name, Object value) {
         assignObject(reg(n, name, CiKind.Object), value);
     }
 
@@ -917,7 +931,7 @@ public abstract class T1XCompilation {
      *
      * @param name the expected name of the parameter
      */
-    final void assignInt(int n, String name, int value) {
+    final protected void assignInt(int n, String name, int value) {
         assignInt(reg(n, name, CiKind.Int), value);
     }
 
@@ -926,7 +940,7 @@ public abstract class T1XCompilation {
      *
      * @param name the expected name of the parameter
      */
-    final void assignFloat(int n, String name, float value) {
+    final protected void assignFloat(int n, String name, float value) {
         assignFloat(reg(n, name, CiKind.Float), value);
     }
 
@@ -935,7 +949,7 @@ public abstract class T1XCompilation {
      *
      * @param name the expected name of the parameter
      */
-    final void assignLong(int n, String name, long value) {
+    final protected void assignLong(int n, String name, long value) {
         assignLong(reg(n, name, CiKind.Long), value);
     }
 
@@ -944,7 +958,7 @@ public abstract class T1XCompilation {
      *
      * @param name the expected name of the parameter
      */
-    final void assignDouble(int n, String name, double value) {
+    final protected void assignDouble(int n, String name, double value) {
         assignDouble(reg(n, name, CiKind.Double), value);
     }
 
@@ -954,7 +968,7 @@ public abstract class T1XCompilation {
      *
      * @param name the expected name of the parameter
      */
-    final void loadInt(int n, String name, int i) {
+    final protected void loadInt(int n, String name, int i) {
         loadInt(reg(n, name, CiKind.Int), i);
     }
 
@@ -964,7 +978,7 @@ public abstract class T1XCompilation {
      *
      * @param name the expected name of the parameter
      */
-    final void loadObject(int n, String name, int i) {
+    final protected void loadObject(int n, String name, int i) {
         loadObject(reg(n, name, CiKind.Object), i);
     }
 
@@ -974,7 +988,7 @@ public abstract class T1XCompilation {
      *
      * @param name the expected name of the parameter
      */
-    final void peekObject(int n, String name, int i) {
+    protected final void peekObject(int n, String name, int i) {
         peekObject(reg(n, name, CiKind.Object), i);
     }
 
@@ -1510,7 +1524,7 @@ public abstract class T1XCompilation {
         branch(opcode, targetBCI, bci);
     }
 
-    protected void finishCall(CiKind returnKind, int safepoint, ClassMethodActor directCallee) {
+    protected void finishCall(T1XTemplateTag tag, CiKind returnKind, int safepoint, ClassMethodActor directCallee) {
         safepointsBuilder.addSafepoint(stream.currentBCI(), safepoint, directCallee);
 
         if (!returnKind.isVoid()) {
@@ -1539,6 +1553,26 @@ public abstract class T1XCompilation {
 
     }
 
+    /*
+     * The following three methods exist to be overridden by the VMA extension.
+     * They permit flexibility in the form of the templates for the INVOKE bytecodes
+     * without hard-wiring in additional forms. In particular, they allow access to the
+     * associated {@link MethodActor} in all situations.
+     */
+
+    protected void assignInvokeVirtualTemplateParameters(VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
+        assignInt(0, "vTableIndex", virtualMethodActor.vTableIndex());
+        peekObject(1, "receiver", receiverStackIndex);
+    }
+
+    protected void do_invokespecial_resolved(T1XTemplateTag tag, VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
+        peekObject(scratch, receiverStackIndex);
+        nullCheck(scratch);
+    }
+
+    protected void do_invokestatic_resolved(T1XTemplateTag tag, StaticMethodActor staticMethodActor) {
+    }
+
     protected void do_invokevirtual(int index) {
         ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
         SignatureDescriptor signature = classMethodRef.signature(cp);
@@ -1554,22 +1588,19 @@ public abstract class T1XCompilation {
                     }
                     if (virtualMethodActor.isPrivate() || virtualMethodActor.isFinal()) {
                         // this is an invokevirtual to a private or final method, treat it like invokespecial
-                        peekObject(scratch, receiverStackIndex);
-                        nullCheck(scratch);
+                        do_invokespecial_resolved(tag, virtualMethodActor, receiverStackIndex);
 
                         int safepoint = callDirect();
-                        finishCall(kind, safepoint, virtualMethodActor);
+                        finishCall(tag, kind, safepoint, virtualMethodActor);
                         return;
                     } else {
                         // emit an unprofiled virtual dispatch
                         start(tag.resolved);
                         CiRegister target = template.sig.out.reg;
-                        assignInt(0, "vTableIndex", virtualMethodActor.vTableIndex());
-                        peekObject(1, "receiver", receiverStackIndex);
+                        assignInvokeVirtualTemplateParameters(virtualMethodActor, receiverStackIndex);
                         finish();
-
                         int safepoint = callIndirect(target, receiverStackIndex);
-                        finishCall(kind, safepoint, null);
+                        finishCall(tag, kind, safepoint, null);
                     }
                     return;
                 } catch (LinkageError e) {
@@ -1586,7 +1617,7 @@ public abstract class T1XCompilation {
         finish();
 
         int safepoint = callIndirect(target, receiverStackIndex);
-        finishCall(kind, safepoint, null);
+        finishCall(tag, kind, safepoint, null);
     }
 
     protected void do_invokeinterface(int index) {
@@ -1604,12 +1635,12 @@ public abstract class T1XCompilation {
                     }
                     start(tag.resolved);
                     CiRegister target = template.sig.out.reg;
-                    assignObject(0, "interfaceMethodActor", interfaceMethod);
+                    assignObject(0, "methodActor", interfaceMethod);
                     peekObject(1, "receiver", receiverStackIndex);
                     finish();
 
                     int safepoint = callIndirect(target, receiverStackIndex);
-                    finishCall(kind, safepoint, null);
+                    finishCall(tag, kind, safepoint, null);
                     return;
                 } catch (LinkageError e) {
                     // fall through
@@ -1625,7 +1656,7 @@ public abstract class T1XCompilation {
         finish();
 
         int safepoint = callIndirect(target, receiverStackIndex);
-        finishCall(kind, safepoint, null);
+        finishCall(tag, kind, safepoint, null);
     }
 
     protected void do_invokespecial(int index) {
@@ -1640,11 +1671,10 @@ public abstract class T1XCompilation {
                 if (processIntrinsic(virtualMethodActor)) {
                     return;
                 }
-                peekObject(scratch, receiverStackIndex);
-                nullCheck(scratch);
+                do_invokespecial_resolved(tag, virtualMethodActor, receiverStackIndex);
 
                 int safepoint = callDirect();
-                finishCall(kind, safepoint, virtualMethodActor);
+                finishCall(tag, kind, safepoint, virtualMethodActor);
                 return;
             }
         } catch (LinkageError error) {
@@ -1657,7 +1687,7 @@ public abstract class T1XCompilation {
         finish();
 
         int safepoint = callIndirect(target, receiverStackIndex);
-        finishCall(kind, safepoint, null);
+        finishCall(tag, kind, safepoint, null);
     }
 
     protected void do_invokestatic(int index) {
@@ -1671,10 +1701,10 @@ public abstract class T1XCompilation {
                     return;
                 }
                 if (staticMethodActor.holder().isInitialized()) {
-                    assert tag.initialized == null : "did not expect a template for an initialized invokestatic";
+                    do_invokestatic_resolved(tag, staticMethodActor);
 
                     int safepoint = callDirect();
-                    finishCall(kind, safepoint, staticMethodActor);
+                    finishCall(tag, kind, safepoint, staticMethodActor);
                     return;
                 }
             }
@@ -1687,7 +1717,7 @@ public abstract class T1XCompilation {
         finish();
 
         int safepoint = callIndirect(target, -1);
-        finishCall(kind, safepoint, null);
+        finishCall(tag, kind, safepoint, null);
     }
 
     protected boolean processIntrinsic(MethodActor method) {

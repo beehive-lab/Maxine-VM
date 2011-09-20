@@ -27,6 +27,8 @@ import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
 import java.lang.reflect.*;
 
 import com.oracle.max.vm.ext.vma.*;
+import com.oracle.max.vm.ext.vma.log.*;
+import com.oracle.max.vma.tools.gen.vma.*;
 import com.sun.max.annotate.*;
 
 /**
@@ -52,13 +54,15 @@ import com.sun.max.annotate.*;
 @HOSTED_ONLY
 public class VMAdviceHandlerLogGenerator {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         createGenerator(VMAdviceHandlerLogGenerator.class);
+        generateAutoComment();
         for (Method m : VMAdviceHandler.class.getMethods()) {
             if (m.getName().startsWith("advise")) {
                 generate(m);
             }
         }
+        AdviceGeneratorHelper.updateSource(VMAdviceHandlerLog.class, null, false);
     }
 
     private static boolean getFieldDone;
@@ -67,7 +71,6 @@ public class VMAdviceHandlerLogGenerator {
 
     private static void generate(Method m) {
         final String name = m.getName();
-        generateAutoComment();
         out.printf("    public abstract void %s(String threadName", getMethodNameRenamingObject(m));
         if (name.endsWith("ConstLoad")) {
             out.printf(", %s value", getLastParameterNameHandlingObject(m));
@@ -87,7 +90,7 @@ public class VMAdviceHandlerLogGenerator {
         } else if (name.endsWith("ArrayStore")) {
             out.printf(", long objId, int index, %s value", getLastParameterNameHandlingObject(m));
         } else if (name.endsWith("Store")) {
-            out.printf(", int dispToLocalSlot, %s value", getLastParameterNameHandlingObject(m));
+            out.printf(", int index, %s value", getLastParameterNameHandlingObject(m));
         } else if (name.contains("New")) {
             out.print(", long objId, String className, long clId");
             if (name.contains("NewArray")) {

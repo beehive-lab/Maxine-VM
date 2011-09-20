@@ -459,14 +459,6 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
-    public synchronized void adviseBeforeIPush(String threadName, int arg1) {
-        appendTT(ADVISE_BEFORE_IPUSH, threadName);
-        appendSpace();
-        sb.append(arg1);
-        end();
-    }
-
-    @Override
     public synchronized void adviseBeforeLoad(String threadName, int arg1) {
         appendTT(ADVISE_BEFORE_LOAD, threadName);
         appendSpace();
@@ -556,18 +548,6 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     public synchronized void adviseBeforeOperation(String threadName, int arg1, double arg2, double arg3) {
         prefixAdviseBeforeOperation(threadName, arg1);
         sb.append(DOUBLE_VALUE);
-        appendSpace();
-        sb.append(arg2);
-        appendSpace();
-        sb.append(arg3);
-        end();
-    }
-
-    @Override
-    public synchronized void adviseBeforeIInc(String threadName, int arg1, int arg2, int arg3) {
-        appendTT(ADVISE_BEFORE_IINC, threadName);
-        appendSpace();
-        sb.append(arg1);
         appendSpace();
         sb.append(arg2);
         appendSpace();
@@ -746,6 +726,14 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     }
 
     @Override
+    public synchronized void adviseBeforeBytecode(String threadName, int arg1) {
+        appendTT(ADVISE_BEFORE_BYTECODE, threadName);
+        appendSpace();
+        sb.append(arg1);
+        end();
+    }
+
+    @Override
     public synchronized void adviseBeforeMonitorEnter(String threadName, long objId) {
         appendTTId(ADVISE_BEFORE_MONITOR_ENTER, objId, threadName);
         end();
@@ -754,14 +742,6 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
     @Override
     public synchronized void adviseBeforeMonitorExit(String threadName, long objId) {
         appendTTId(ADVISE_BEFORE_MONITOR_EXIT, objId, threadName);
-        end();
-    }
-
-    @Override
-    public synchronized void adviseBeforeBytecode(String threadName, int arg1) {
-        appendTT(ADVISE_BEFORE_BYTECODE, threadName);
-        appendSpace();
-        sb.append(arg1);
         end();
     }
 
@@ -799,6 +779,5 @@ public class SBPSTextVMAdviceHandlerLog extends TextVMAdviceHandlerLog {
         appendQualName(className, clId, memberName);
         end();
     }
-
 
 }

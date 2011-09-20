@@ -22,12 +22,127 @@
  */
 package com.sun.max.vm.t1x.vma;
 
+import static com.oracle.max.vm.ext.t1x.T1XRuntime.*;
+import static com.oracle.max.vm.ext.t1x.T1XTemplateTag.*;
+
+import com.oracle.max.vm.ext.vma.run.java.*;
+import com.oracle.max.vm.ext.vma.runtime.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.heap.*;
+import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
+import com.oracle.max.vm.ext.t1x.*;
 
 /**
  * Template source for after advice (where available).
  */
 public class VMAdviceAfterTemplateSource {
 
-    // BEGIN GENERATED CODE
-    // END GENERATED CODE
+// START GENERATED CODE
+    @T1X_TEMPLATE(NEW)
+    public static Object new_(ResolutionGuard guard) {
+        Object object = resolveClassForNewAndCreate(guard);
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseAfterNew(object);
+        }
+        return object;
+    }
+
+    @T1X_TEMPLATE(NEW$init)
+    public static Object new_(DynamicHub hub) {
+        Object object = Heap.createTuple(hub);
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseAfterNew(object);
+        }
+        return object;
+    }
+
+    @T1X_TEMPLATE(NEW_HYBRID)
+    public static Object new_hybrid(DynamicHub hub) {
+        Object object = Heap.createHybrid(hub);
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseAfterNew(object);
+        }
+        return object;
+    }
+
+    @T1X_TEMPLATE(NEWARRAY)
+    public static Object newarray(ClassActor arrayClass, @Slot(0) int length) {
+        Object array = Snippets.createArray(arrayClass, length);
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseAfterNewArray(array, length);
+        }
+        return array;
+    }
+
+    @T1X_TEMPLATE(ANEWARRAY)
+    public static Object anewarray(ResolutionGuard arrayType, @Slot(0) int length) {
+        ArrayClassActor<?> arrayClassActor = UnsafeCast.asArrayClassActor(Snippets.resolveArrayClass(arrayType));
+        Object array = Snippets.createArray(arrayClassActor, length);
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseAfterNewArray(array, length);
+        }
+        return array;
+    }
+
+    @T1X_TEMPLATE(ANEWARRAY$resolved)
+    public static Object anewarray(ArrayClassActor<?> arrayType, @Slot(0) int length) {
+        ArrayClassActor<?> arrayClassActor = arrayType;
+        Object array = Snippets.createArray(arrayClassActor, length);
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseAfterNewArray(array, length);
+        }
+        return array;
+    }
+
+    @T1X_TEMPLATE(MULTIANEWARRAY)
+    public static Reference multianewarray(ResolutionGuard guard, int[] lengths) {
+        ClassActor arrayClassActor = Snippets.resolveClass(guard);
+        Object array = Snippets.createMultiReferenceArray(arrayClassActor, lengths);
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseAfterMultiNewArray(array, lengths);
+        }
+        return Reference.fromJava(array);
+    }
+
+    @T1X_TEMPLATE(MULTIANEWARRAY$resolved)
+    public static Reference multianewarray(ArrayClassActor<?> arrayClassActor, int[] lengths) {
+        Object array = Snippets.createMultiReferenceArray(arrayClassActor, lengths);
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseAfterMultiNewArray(array, lengths);
+        }
+        return Reference.fromJava(array);
+    }
+
+    @T1X_TEMPLATE(TRACE_METHOD_ENTRY)
+    public static void traceMethodEntry(MethodActor methodActor, Object receiver) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseAfterMethodEntry(receiver, methodActor);
+        }
+    }
+
+    @T1X_TEMPLATE(INVOKEVIRTUAL$adviseafter)
+    public static void adviseAfterInvokeVirtual() {
+        VMAStaticBytecodeAdvice.adviseAfterInvokeVirtual(VMAJavaRunScheme.loadReceiver(), VMAJavaRunScheme.loadMethodActor());
+    }
+
+    @T1X_TEMPLATE(INVOKEINTERFACE$adviseafter)
+    public static void adviseAfterInvokeInterface() {
+        VMAStaticBytecodeAdvice.adviseAfterInvokeInterface(VMAJavaRunScheme.loadReceiver(), VMAJavaRunScheme.loadMethodActor());
+    }
+
+    @T1X_TEMPLATE(INVOKESPECIAL$adviseafter)
+    public static void adviseAfterInvokeSpecial() {
+        VMAStaticBytecodeAdvice.adviseAfterInvokeSpecial(VMAJavaRunScheme.loadReceiver(), VMAJavaRunScheme.loadMethodActor());
+    }
+
+    @T1X_TEMPLATE(INVOKESTATIC$adviseafter)
+    public static void adviseAfterInvokeStatic() {
+        VMAStaticBytecodeAdvice.adviseAfterInvokeStatic(VMAJavaRunScheme.loadReceiver(), VMAJavaRunScheme.loadMethodActor());
+    }
+
+// END GENERATED CODE
 }
