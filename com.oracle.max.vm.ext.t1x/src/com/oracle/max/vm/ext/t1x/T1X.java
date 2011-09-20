@@ -478,7 +478,7 @@ public class T1X implements RuntimeCompiler {
         try {
             boolean modified = T1XIntrinsicTemplateGenerator.generate(T1XIntrinsicTemplateSource.class);
             if (modified) {
-                System.out.printf("%nThe generated content in %s was regenerated. Recompile (or refresh it in your IDE) and restart the bootstrapping process.%n%n", T1XTemplateSource.class.getSimpleName());
+                System.out.printf("%nThe generated content in %s was regenerated. Recompile (or refresh it in your IDE) and restart the bootstrapping process.%n%n", T1XIntrinsicTemplateSource.class.getSimpleName());
                 System.exit(1);
             }
         } catch (Exception e) {
