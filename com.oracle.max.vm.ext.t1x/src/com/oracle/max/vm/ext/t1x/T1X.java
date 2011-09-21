@@ -214,7 +214,7 @@ public class T1X implements RuntimeCompiler {
 
         String label = CiUtil.format("T1X %f %R %H.%n(%P)", c.method, false);
 
-        cfgPrinter.printMachineCode(hcf.toEmbeddedString(), label);
+        cfgPrinter.printMachineCode(HexCodeFileTool.toText(hcf), label);
 
         String bytecodes = c.method.format("%f %R %H.%n(%P)") + String.format("%n%s", CodeAttributePrinter.toString(c.method.codeAttribute()));
         cfgPrinter.printBytecodes(bytecodes);

@@ -179,7 +179,7 @@ public class MaxRuntime implements RiRuntime {
     public String disassemble(byte[] code, long address) {
         final Platform platform = Platform.platform();
         CiHexCodeFile hcf = new CiHexCodeFile(code, address, platform.isa.name(), platform.wordWidth().numberOfBits);
-        return hcf.toEmbeddedString();
+        return HexCodeFileTool.toText(hcf);
     }
 
     @Override
@@ -222,7 +222,7 @@ public class MaxRuntime implements RiRuntime {
             hcf.addOperandComment(site.pcOffset, "{" + site.constant + "}");
         }
 
-        return hcf.toEmbeddedString();
+        return HexCodeFileTool.toText(hcf);
     }
 
     private static void addExceptionHandlersComment(CiTargetMethod tm, CiHexCodeFile hcf) {
