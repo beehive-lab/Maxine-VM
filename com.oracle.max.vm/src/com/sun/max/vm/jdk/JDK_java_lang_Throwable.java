@@ -125,7 +125,7 @@ public final class JDK_java_lang_Throwable {
         public ClassMethodActor[] methods;
 
         public Backtrace(ClassActor exceptionClass, int maxDepth) {
-            super(exceptionClass, maxDepth);
+            super(exceptionClass);
 
             int len = Math.min(maxDepth, INITIAL_LENGTH);
             lineNos = new int[len];
