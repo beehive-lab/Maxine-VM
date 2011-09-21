@@ -26,7 +26,6 @@ import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.ClassActor;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -46,6 +45,14 @@ import com.sun.max.unsafe.*;
  * A singleton global instance, {@link #workingStackInfo}, of {@link StackInfo} is used to gather the stack for a thread,
  * and an exact-length copy is entered into the map when a new stack is discovered.
  *
+ * Note that due to the way the {@link VMOperation} works, all threads will be stopped in a
+ * native method at the time the stack is gathered. Some threads may indeed be blocked
+ * on a native method called by the thread. Others will be in the monitor code after
+ * taking the trap that starts the thread stopping machinery. These stack frames should not
+ * be presented to the user. This is handled by {@link SamplingStackTraceVisitor#clear()}.
+ * Unfortunately this does mean that the stack depth control can't be honored trivially
+ * as the stack is being gathered. This is optimized with {@link #workingStackClearSeen}
+ *
  * The {@link #terminate} method outputs the data at VM shutdown, but it can also be dumped
  * periodically. Data is output using the {@link Log} class. By default output is sorted by thread and by sample count
  * This has more allocation overhead at the time of output and so is the default only if data is output at
@@ -54,9 +61,15 @@ import com.sun.max.unsafe.*;
 public final class SamplingProfiler extends Thread {
     private static final int DEFAULT_FREQUENCY = 10;
     /**
+     * This is a conservative empirically derived number that includes the {@link VMOperation}
+     * frames for a stopped thread.
+     */
+    private static final int MINIMUM_DEPTH = 16;
+    /**
      * The default depth is quite large mostly because of the depth of the current monitor lock acquisition call stack.
      */
-    private static final int DEFAULT_DEPTH = 16;
+    private static final int DEFAULT_DEPTH = 4;
+
     private static final Random rand = new Random();
     /**
      * The base period in milliseconds between activations of the profiler.
@@ -73,6 +86,8 @@ public final class SamplingProfiler extends Thread {
 
     /**
      * The maximum stack depth the profiler will ever gather.
+     * N.B. This applies to "user" frames, not the raw frames that include those caused
+     * by the {@link VMOperation} thread stopping mechanism.
      */
     @CONSTANT_WHEN_NOT_ZERO
     private static int maxStackDepth;
@@ -91,6 +106,12 @@ public final class SamplingProfiler extends Thread {
      * Records the depth for the working stack being analyzed.
      */
     private static int workingStackDepth;
+
+    /**
+     * This value is set {@code false} before any stack is gathered and set {@code true}
+     * if and when {@link SamplingStackTraceVisitor#clear} is called.
+     */
+    private static boolean workingStackClearSeen;
 
     /**
      * Allows profiling to be turned off temporarily.
@@ -114,9 +135,15 @@ public final class SamplingProfiler extends Thread {
     private static VmThread theProfiler;
 
     /**
-     * {@code true} if an only if we are generated sorted output.
+     * {@code true} if an only if we are generating sorted output.
      */
     private static boolean sortedOutput;
+
+    /**
+     * Produces "flat" output like Hotspot. This implies {@link #sortedOutput} {@code = true}
+     * and {@link #maxStackDepth} {@code = 1}.
+     */
+    private static boolean flat;
 
     /**
      * {@code true} if and only if we are tracking (system) VM threads.
@@ -146,14 +173,15 @@ public final class SamplingProfiler extends Thread {
         int frequency = 0;
         int stackDepth = 0;
         int dumpPeriod = 0;
-        int sortOption = -1;
+        boolean sortedOutputOptionSet = false;
+        boolean flatOptionSet = false;
         if (optionValue.length() > 0) {
             if (optionValue.charAt(0) == ':') {
                 String[] options = optionValue.substring(1).split(",");
                 for (String option : options) {
                     if (option.startsWith("frequency")) {
                         frequency = getOption(option);
-                    } else if (option.startsWith("stackdepth")) {
+                    } else if (option.startsWith("depth")) {
                         stackDepth = getOption(option);
                         if (stackDepth < 0) {
                             usage();
@@ -163,9 +191,11 @@ public final class SamplingProfiler extends Thread {
                     } else if (option.startsWith("debug")) {
                         logSampleTimes = true;
                     } else if (option.startsWith("systhreads")) {
-                        trackSystemThreads = true;
-                    } else if (option.startsWith("sort")) {
-                        sortOption = getOption(option);
+                        trackSystemThreads = getBoolOption(option);
+                    } else if (option.equals("sort")) {
+                        sortedOutputOptionSet = getBoolOption(option);
+                    } else if (option.startsWith("flat")) {
+                        flatOptionSet = getBoolOption(option);
                     } else {
                         usage();
                     }
@@ -175,13 +205,26 @@ public final class SamplingProfiler extends Thread {
             }
         }
         // if sort option is set, honor it, otherwise default based on dump
-        sortedOutput = sortOption >= 0 ? (sortOption == 0 ? false : true) : dumpPeriod == 0;
+        sortedOutput = sortedOutputOptionSet ? true : dumpPeriod == 0;
+        flat = flatOptionSet ? true : dumpPeriod == 0;
+        if (flat) {
+            sortedOutput = true;
+            stackDepth = 1;
+        }
         create(frequency, stackDepth, dumpPeriod);
     }
 
     private static void usage() {
-        System.err.println("usage: -Xprof:frequency=f,stackdepth=d,dump=t,sort=s,systhreads");
+        System.err.println("usage: -Xprof:frequency=f,depth=d,systhreads,dump=t,sort[=t],flat[=t]");
         MaxineVM.native_exit(-1);
+    }
+
+    private static boolean getBoolOption(String s) {
+        final int index = s.indexOf('=');
+        if (index < 0) {
+            return true;
+        }
+        return Boolean.parseBoolean(s.substring(index + 1));
     }
 
     private static int getOption(String s) {
@@ -206,7 +249,7 @@ public final class SamplingProfiler extends Thread {
         }
         maxStackDepth = depth == 0 ? DEFAULT_DEPTH : depth;
         dumpInterval = dumpPeriod * 1000000000L;
-        workingStackInfo = new StackInfo(maxStackDepth);
+        workingStackInfo = new StackInfo(Math.max(MINIMUM_DEPTH, maxStackDepth));
         final Thread profileThread = new SamplingProfiler();
         isProfiling = true;
         profileThread.start();
@@ -260,14 +303,21 @@ public final class SamplingProfiler extends Thread {
         public void doThread(VmThread vmThread, Pointer ip, Pointer sp, Pointer fp) {
             SamplingStackTraceVisitor stv = new SamplingStackTraceVisitor();
             final VmStackFrameWalker stackFrameWalker = vmThread.samplingProfilerStackFrameWalker();
-            workingStackInfo.reset();
+            workingStackInfo.reset(0);
             workingStackDepth = 0;
+            workingStackClearSeen = false;
             stv.walk(stackFrameWalker, ip, sp, fp);
+            if (!workingStackClearSeen) {
+                // we may have gathered > maxStackDepth frames; fix that here before we do the lookup
+                if (workingStackDepth > maxStackDepth) {
+                    workingStackInfo.reset(maxStackDepth);
+                }
+            }
             // Have we seen this stack before?
             List<ThreadSample> threadSampleList = stackInfoMap.get(workingStackInfo);
             if (threadSampleList == null) {
                 threadSampleList = new ArrayList<ThreadSample>();
-                final StackInfo copy = workingStackInfo.copy(workingStackDepth);
+                final StackInfo copy = workingStackInfo.copy(maxStackDepth);
                 List<ThreadSample> existing = stackInfoMap.put(copy, threadSampleList);
                 assert existing == null;
             }
@@ -292,20 +342,22 @@ public final class SamplingProfiler extends Thread {
     private static class SamplingStackTraceVisitor extends StackTraceVisitor {
 
         SamplingStackTraceVisitor() {
-            super(null, maxStackDepth);
+            super(null);
         }
         @Override
         public boolean add(ClassMethodActor classMethodActor, int sourceLineNumber) {
+            assert classMethodActor != null;
             workingStackInfo.stack[workingStackDepth].classMethodActor = classMethodActor;
             workingStackInfo.stack[workingStackDepth].lineNumber = sourceLineNumber;
             workingStackDepth++;
-            return workingStackDepth < maxStackDepth;
+            return workingStackClearSeen ? workingStackDepth < maxStackDepth : workingStackDepth < workingStackInfo.stack.length;
         }
 
         @Override
         public void clear() {
-            workingStackInfo.reset();
+            workingStackInfo.reset(0);
             workingStackDepth = 0;
+            workingStackClearSeen = true;
         }
 
         @Override
@@ -362,26 +414,31 @@ public final class SamplingProfiler extends Thread {
         int lineNumber;  // < 0 if unknown
 
         void print() {
-            if (classMethodActor != null) {
-                final ClassActor holder = classMethodActor.holder();
-                Log.print(holder.name.toString());
-                Log.print('.');
-                Log.print(classMethodActor.name().toString());
-                Log.print('(');
+            printName();
+            Log.print('(');
+            if (classMethodActor.nativeFunction == null) {
+                Log.print(classMethodActor.holder().sourceFileName);
                 if (lineNumber > 0) {
-                    Log.print(holder.sourceFileName);
                     Log.print(':');
                     Log.print(lineNumber);
-                } else {
-                    Log.print("Native Method");
                 }
-                Log.println(')');
+            } else {
+                Log.print("Native Method");
             }
+            Log.println(')');
+        }
+
+        void printName() {
+            Log.print(classMethodActor.holder().name.toString());
+            Log.print('.');
+            Log.print(classMethodActor.name().toString());
         }
     }
 
     /**
      * The essential information on a sequence of frames, with support for comparison and hashing.
+     * The "logical" length of the stack is the number of elements, starting from zero,
+     * for which classMethodActor != null. Comparison and hashing use the logical length.
      */
     private static class StackInfo {
         StackElement[] stack;
@@ -397,8 +454,8 @@ public final class SamplingProfiler extends Thread {
             this.stack = stack;
         }
 
-        void reset() {
-            for (int i = 0; i < stack.length; i++) {
+        void reset(int start) {
+            for (int i = start; i < stack.length; i++) {
                 stack[i].classMethodActor = null;
                 stack[i].lineNumber = -1;
             }
@@ -447,7 +504,9 @@ public final class SamplingProfiler extends Thread {
         StackInfo copy(int depth) {
             final StackInfo result = new StackInfo(depth);
             for (int i = 0; i < result.stack.length; i++) {
-                result.stack[i].classMethodActor = this.stack[i].classMethodActor;
+                ClassMethodActor cm = this.stack[i].classMethodActor;
+                assert cm != null;
+                result.stack[i].classMethodActor = cm;
                 result.stack[i].lineNumber = this.stack[i].lineNumber;
             }
             return result;
@@ -465,8 +524,9 @@ public final class SamplingProfiler extends Thread {
             sortedInfo = sortByThread();
         }
         boolean state = Log.lock();
-        Log.print("Maxine Sampling Profiler Stack Traces, #samples: ");
+        Log.print("Maxine Sampling Profiler, #samples: ");
         Log.println(sampleCount);
+        Log.println();
         if (sortedOutput) {
             dumpSortedOutput(sortedInfo);
         } else {
@@ -494,24 +554,71 @@ public final class SamplingProfiler extends Thread {
     private static void dumpSortedOutput(Map<VmThread, CountedStackInfo[]> sortedInfo) {
         for (Map.Entry<VmThread, CountedStackInfo[]> entry : sortedInfo.entrySet()) {
             ThreadSample.print(entry.getKey());
-            Log.println();
             long totalSamples = 0;
             for (CountedStackInfo countedStackInfo : entry.getValue()) {
                 totalSamples += countedStackInfo.count;
             }
+            Log.print(", #samples: ");
+            Log.print(totalSamples);
+            Log.println();
             for (CountedStackInfo countedStackInfo : entry.getValue()) {
-                Log.print("Sample count ");
-                Log.print(countedStackInfo.count);
-                double percentage = ((double) countedStackInfo.count) * 100.0f / totalSamples;
-                Log.print(" (");
-                Log.print(percentage);
-                Log.println("%)");
-                for (StackElement se : countedStackInfo.stack) {
-                    se.print();
+                // percentage to two decimal places, rounded
+                long p1000 = (countedStackInfo.count * 100000) / totalSamples;
+                long last = p1000 % 10;
+                long p100 = p1000 / 10;
+                if (last >= 5) {
+                    p100++;
+                }
+
+
+                if (flat) {
+                    printPercentage(p100);
+                    Log.print("   ");
+                    printCount(countedStackInfo.count);
+                    Log.print("   ");
+                    countedStackInfo.stack[0].printName();
+                } else {
+                    Log.print("Sample count ");
+                    Log.print(countedStackInfo.count);
+                    Log.print(" (");
+                    printPercentage(p100);
+                    Log.println(")");
+                    for (StackElement se : countedStackInfo.stack) {
+                        se.print();
+                    }
                 }
                 Log.println();
             }
+            Log.println();
         }
+    }
+
+    private static void printPercentage(long p100) {
+        long d1 = p100 / 100;
+        if (d1 < 10) {
+            Log.print(' ');
+        }
+        Log.print(d1);
+        Log.print('.');
+        long d2 = p100 % 100;
+        if (d2 < 10) {
+            Log.print('0');
+        }
+        Log.print(d2);
+        Log.print("%");
+    }
+
+    private static void printCount(long count) {
+        long c = count;
+        int s = 0;
+        while (c > 0) {
+            c = c / 10;
+            s++;
+        }
+        for (int i = 0; i < 8 - s; i++) {
+            Log.print(' ');
+        }
+        Log.print(count);
     }
 
     /**

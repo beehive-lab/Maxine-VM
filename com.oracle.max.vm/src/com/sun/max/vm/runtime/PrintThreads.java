@@ -75,7 +75,7 @@ public class PrintThreads extends VmOperation implements SignalHandler {
 
             if (!ip.isZero()) {
                 VmStackFrameWalker sfw = new VmStackFrameWalker(vmThread.tla());
-                StackTraceVisitor stv = new StackTraceVisitor(null, Integer.MAX_VALUE) {
+                StackTraceVisitor stv = new StackTraceVisitor(null) {
                     @Override
                     public boolean add(ClassMethodActor method, int sourceLineNumber) {
                         ClassActor holder = method.holder();

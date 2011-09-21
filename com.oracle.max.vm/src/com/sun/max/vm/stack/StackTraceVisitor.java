@@ -39,15 +39,8 @@ public class StackTraceVisitor extends SourceFrameVisitor {
 
     boolean seenConstructor;
 
-    /**
-     * The maximum number of elements in the returned array or {@link Integer#MAX_VALUE} if the complete
-     * sequence of stack trace elements for {@code stackFrames} is required.
-     */
-    final int maxDepth;
-
-    protected StackTraceVisitor(ClassActor exceptionClass, int maxDepth) {
+    protected StackTraceVisitor(ClassActor exceptionClass) {
         this.exceptionClass = exceptionClass;
-        this.maxDepth = maxDepth;
     }
 
     @Override
