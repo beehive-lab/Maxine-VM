@@ -26,6 +26,7 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.cri.ci.*;
+import com.sun.max.annotate.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
 import com.sun.max.vm.actor.holder.*;
@@ -35,6 +36,7 @@ import com.sun.max.vm.actor.member.*;
  * Generates Java code that wraps an intrinsic method. It emits the correct {@link Slot} annotations and makes sure
  * the parameter and return types are the ones supported by T1X.
  */
+@HOSTED_ONLY
 public class T1XIntrinsicTemplateGenerator {
     /**
      * The stream to use for the generated output.

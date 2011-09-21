@@ -447,6 +447,7 @@ public class T1X implements RuntimeCompiler {
         return templateCode;
     }
 
+    @HOSTED_ONLY
     private static final Set<String> templateIntriniscIDs = new HashSet<String>(Arrays.asList(
         UCMP_AT, UCMP_AE, UCMP_BT, UCMP_BE,
         UDIV, UREM,
@@ -456,12 +457,33 @@ public class T1X implements RuntimeCompiler {
         PAUSE
     ));
 
+    @HOSTED_ONLY
+    private static final Class[] templateIntrinsicClasses = {
+        com.sun.max.unsafe.Pointer.class,
+        com.oracle.max.cri.intrinsics.UnsignedMath.class,
+        com.sun.max.vm.intrinsics.Infopoints.class,
+        com.sun.max.vm.Intrinsics.class
+    };
+
+    @HOSTED_ONLY
     public static List<ClassMethodActor> intrinsicTemplateMethods() {
+        // Process all classes of the statically defined list above, then check that the list does not miss any classes.
+        // The rational behind that: The list of classes processed must be stable, otherwise the code generator
+        // complains that the generated wrapper source code has changed, which requires a recompile cycle.
         ArrayList<ClassMethodActor> result = new ArrayList<ClassMethodActor>();
-        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY.bootImageClasses()) {
-            for (MethodActor methodActor : classActor.getLocalMethodActors()) {
+        for (Class clazz : templateIntrinsicClasses) {
+            for (MethodActor methodActor : ClassActor.fromJava(clazz).getLocalMethodActors()) {
                 if (T1X.templateIntriniscIDs.contains(methodActor.intrinsic())) {
                     result.add((ClassMethodActor) methodActor);
+                }
+            }
+        }
+        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY.bootImageClasses()) {
+            for (MethodActor methodActor : classActor.getLocalMethodActors()) {
+                if (T1X.templateIntriniscIDs.contains(methodActor.intrinsic()) && !result.contains(methodActor)) {
+                    System.out.printf("%nClass with intrinisc methods found that should be in templateIntrinsicClasses: class %s, method %s%n%n",
+                        classActor, methodActor);
+                    System.exit(1);
                 }
             }
         }
