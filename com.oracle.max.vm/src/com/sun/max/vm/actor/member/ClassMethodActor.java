@@ -184,13 +184,6 @@ public abstract class ClassMethodActor extends MethodActor {
     }
 
     /**
-     * Allows bytecode verification and {@linkplain #validateInlineAnnotation(ClassMethodActor) validation} of
-     * inlining annotations to be enabled by a hosted process.
-     */
-    @HOSTED_ONLY
-    public static boolean hostedVerificationEnabled;
-
-    /**
      * @return the actor for the method that will be compiled and/or executed in lieu of this method
      */
     public final ClassMethodActor compilee() {
@@ -201,15 +194,11 @@ public abstract class ClassMethodActor extends MethodActor {
                 }
 
                 if (!isMiranda()) {
-                    final boolean isConstructor = isInitializer();
                     final ClassMethodActor substitute = METHOD_SUBSTITUTIONS.Static.findSubstituteFor(this);
                     if (substitute != null) {
                         compilee = substitute.compilee();
                         codeAttribute = compilee.codeAttribute;
                         return compilee;
-                    }
-                    if (MaxineVM.isHosted() && hostedVerificationEnabled && !isConstructor) {
-                        validateInlineAnnotation(this);
                     }
                 }
 
@@ -222,20 +211,13 @@ public abstract class ClassMethodActor extends MethodActor {
                 codeAttribute = processedCodeAttribute;
 
                 final ClassActor holder = compilee.holder();
-                if (MaxineVM.isHosted()) {
-                    if (hostedVerificationEnabled) {
-                        // We simply verify all methods during boot image build time as the overhead should be acceptable.
-                        verifier = modified ? new TypeInferencingVerifier(holder) : Verifier.verifierFor(holder);
-                    }
-                } else {
-                    if (holder().majorVersion >= 50) {
-                        if (modified) {
-                            // The methods in class files whose version is greater than or equal to 50.0 are required to
-                            // have stack maps. If the bytecode of such a method has been preprocessed, then its
-                            // pre-existing stack maps will have been invalidated and must be regenerated with the
-                            // type inferencing verifier
-                            verifier = new TypeInferencingVerifier(holder);
-                        }
+                if (holder().majorVersion >= 50) {
+                    if (modified) {
+                        // The methods in class files whose version is greater than or equal to 50.0 are required to
+                        // have stack maps. If the bytecode of such a method has been preprocessed, then its
+                        // pre-existing stack maps will have been invalidated and must be regenerated with the
+                        // type inferencing verifier
+                        verifier = new TypeInferencingVerifier(holder);
                     }
                 }
 
@@ -361,20 +343,6 @@ public abstract class ClassMethodActor extends MethodActor {
             return -1;
         }
         return codeAttribute.lineNumberTable().findLineNumber(bci);
-    }
-
-    /**
-     * @see InliningAnnotationsValidator#apply(ClassMethodActor)
-     */
-    @HOSTED_ONLY
-    private void validateInlineAnnotation(ClassMethodActor compilee) {
-        if (!compilee.holder().isReflectionStub()) {
-            try {
-                InliningAnnotationsValidator.apply(compilee);
-            } catch (LinkageError linkageError) {
-                ProgramWarning.message("Error while validating INLINE annotation for " + compilee + ": " + linkageError);
-            }
-        }
     }
 
     /**
