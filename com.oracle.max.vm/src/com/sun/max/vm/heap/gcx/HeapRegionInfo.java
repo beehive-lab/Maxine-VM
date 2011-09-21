@@ -144,9 +144,22 @@ public class HeapRegionInfo {
 
     static final int LARGE_REGION_FLAGS = IS_LARGE.or(IS_TAIL.or(IS_HEAD.or(0)));
 
+    public static String flagsToString(int flags) {
+        StringBuffer b = new StringBuffer("");
+        String sep = "";
+        for (Flag f : allFlags) {
+            if (f.isSet(flags)) {
+                b.append(sep); b.append(f);
+                sep = " | ";
+            }
+        }
+        return b.toString();
+    }
+
     /**
      * A 32-bit vector compounding several flags information. See {@link Flag} for usage of each of the bits.
      */
+    @INSPECTED
     int flags; // NOTE: don't want to use an EnumSet here. Don't want a long for storing flags; and want the flags embedded in the heap region info.
 
     public final boolean isEmpty() {

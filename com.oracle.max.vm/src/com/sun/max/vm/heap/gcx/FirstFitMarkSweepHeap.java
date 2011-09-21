@@ -739,7 +739,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
     @Override
     public Size freeSpace() {
         // TODO: temp trace. Remove me
-        if (DebugMSE) {
+        if (MaxineVM.isDebug()) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("allocationRegionsFreeSpace = ");
             Log.print(allocationRegionsFreeSpace.toInt());
