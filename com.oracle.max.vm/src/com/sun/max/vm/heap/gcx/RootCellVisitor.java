@@ -29,7 +29,7 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Marking of strong roots outside of the covered area.
+ * Marking of strong roots outside of the area covered by a heap marker.
  *
  * Implements cell visitor and pointer index visitor.
  * Cell visitor must be used only for region outside of the heap areas covered by the heap marker.
@@ -84,7 +84,7 @@ abstract class RootCellVisitor extends PointerIndexVisitor implements CellVisito
     }
 
     @Override
-    public void visit(Pointer pointer, int wordIndex) {
+    final public void visit(Pointer pointer, int wordIndex) {
         markExternalRoot(Layout.originToCell(pointer.getReference(wordIndex).toOrigin()));
     }
 
@@ -98,6 +98,8 @@ abstract class RootCellVisitor extends PointerIndexVisitor implements CellVisito
         if (Heap.traceRootScanning()) {
             TricolorHeapMarker.printVisitedCell(cell, "Visiting root cell ");
         }
+        // FIXME: can we have a hub for a cell in the boot heap that is not itself in the boot heap !!!
+        // I don't think we can, so it should be safe to remove the marking of the hub.
         final Pointer origin = Layout.cellToOrigin(cell);
         final Reference hubRef = Layout.readHubReference(origin);
         markExternalRoot(Layout.originToCell(hubRef.toOrigin()));

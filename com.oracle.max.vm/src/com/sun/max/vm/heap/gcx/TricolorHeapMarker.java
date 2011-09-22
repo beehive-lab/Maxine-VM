@@ -205,11 +205,13 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     /**
      * Start of the contiguous range of addresses covered by the mark bitmap.
      */
+    @INSPECTED
     Address coveredAreaStart;
 
     /**
      * End of the contiguous range of addresses  covered by the mark bitmap.
      */
+    @INSPECTED
     Address coveredAreaEnd;
 
     /**
@@ -241,6 +243,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     /**
      * Shortcut to colorMap.start() for fast bitmap operation.
      */
+    @INSPECTED
     private Address base;
 
     /**
@@ -379,23 +382,52 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
 
     /**
-     * Returns max amount of memory needed for a max heap size.
+     * Returns max amount of memory needed to cover a contiguous range of address of the specified size.
      * Let the HeapScheme decide where to allocate.
      *
-     * @param maxHeapSize the maximum size, in bytes, of the heap
-     * @return
+     * @param maxCoveredAreaSize the maximum size, in bytes, of the contiguous range of memory that needs to be covered
+     * @return a size in bytes
      */
-    public Size memoryRequirement(Size maxHeapSize) {
-        return bitmapSize(maxHeapSize);
+    public Size memoryRequirement(Size maxCoveredAreaSize) {
+        return bitmapSize(maxCoveredAreaSize);
     }
 
+    /**
+     * Change the bound of the area covered by the mark bitmap. Typically used when the heap covered is resized.
+     * @param start new start of the covered area
+     * @param end new end of the covered area
+     */
     public void setCoveredArea(Address start, Address end) {
         coveredAreaStart = start;
         coveredAreaEnd = end;
     }
 
     /**
+     * Constructor for inspection support. This allows an inspector to create a surrogate of a VM mark-bitmap to perform local computation of mark bit and mark word indexes.
      *
+     * @param wordsCoveredPerBit
+    * @param start start of the covered area
+     * @param end end of the covered area
+     * @param bitmapStorage address to the first byte of the mark bitmap
+     * @param bitmapSize size of the mark bitmap
+     */
+    @HOSTED_ONLY
+    public TricolorHeapMarker(int wordsCoveredPerBit, Address start, Address end, Address bitmapStorage, Size bitmapSize)  {
+        this.wordsCoveredPerBit = wordsCoveredPerBit;
+        log2BytesCoveredPerBit = Word.widthValue().log2numberOfBytes + Integer.numberOfTrailingZeros(wordsCoveredPerBit);
+        assert wordsCoveredPerBit * Word.widthValue().numberOfBytes == 1 << log2BytesCoveredPerBit;
+        log2BitmapWord = log2BytesCoveredPerBit + Word.widthValue().log2numberOfBits;
+        colorMap = new MemoryRegion("Mark Bitmap");
+        markingStack = null;
+        rootCellVisitor = null;
+        heapRootsScanner = null;
+        overflowLinearScanState = null;
+        overflowScanWithRescanMapState = null;
+        initialize(start, end, bitmapStorage, bitmapSize);
+    }
+
+    /**
+     * Boot image generation constructor.
      */
     public TricolorHeapMarker(int wordsCoveredPerBit, RootCellVisitor rootCellVisitor)  {
         this.wordsCoveredPerBit = wordsCoveredPerBit;
@@ -408,13 +440,18 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         this.rootCellVisitor = rootCellVisitor;
         rootCellVisitor.initialize(this);
         heapRootsScanner = new SequentialHeapRootsScanner(rootCellVisitor);
+        overflowLinearScanState = new OverflowLinearScanState(this);
+        overflowScanWithRescanMapState = new OverflowScanWithRescanMapState(this);
     }
 
     /**
-     * Initialize a tricolor mark bitmap for the covered area. The mark-bitmap is generated at VM startup.
+     * Initialize a tricolor mark bitmap to cover a specified area. The mark-bitmap is generated at VM startup.
+     * The mark bitmap must be large enough to accommodate the largest possible area that the mark bitmap might cover.
      *
-     * @param bitmapStorage
-     * @param coveredArea
+     * @param start start of the covered area
+     * @param end end of the covered area
+     * @param bitmapStorage address to the first byte of the mark bitmap
+     * @param bitmapSize size of the mark bitmap
      */
     public void initialize(Address start, Address end, Address bitmapStorage, Size bitmapSize) {
         if (MaxineVM.isDebug()) {
@@ -1187,8 +1224,8 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      * depending on whether a rescan map is used.
      */
     private OverflowScanState overflowScanState;
-    private final OverflowLinearScanState overflowLinearScanState = new OverflowLinearScanState(this);
-    private final OverflowScanWithRescanMapState overflowScanWithRescanMapState = new OverflowScanWithRescanMapState(this);
+    private final OverflowLinearScanState overflowLinearScanState;
+    private final OverflowScanWithRescanMapState overflowScanWithRescanMapState;
 
     /**
      * Indicates whether we're recovering from a marking stack overflow

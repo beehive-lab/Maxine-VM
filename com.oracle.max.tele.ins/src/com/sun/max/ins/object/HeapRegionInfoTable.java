@@ -32,6 +32,7 @@ import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -111,11 +112,36 @@ final class HeapRegionInfoTable extends InspectorTable {
         }
     }
 
-    static final String [] infoNames = {"start", "end", "firstFreeChunk"};
+    final class FlagsRenderer extends PlainLabel {
+
+        private void updateText() {
+            int flags = teleHeapRegionInfo.flags();
+            setValue(HeapRegionInfo.flagsToString(flags), intTo0xHex(flags));
+        }
+
+        public FlagsRenderer(Inspection inspection) {
+            super(inspection, "");
+            updateText();
+        }
+
+
+        @Override
+        public void refresh(boolean force) {
+            updateText();
+        }
+
+
+        @Override
+        public void redisplay() {
+            updateText();
+        }
+    }
+
+    static final String [] infoNames = {"start", "end", "firstFreeChunk", "state"};
 
     final class HeapRegionInfoTableModel extends InspectorTableModel  implements TableCellRenderer, Prober {
         TextLabel [] nameLabels = new TextLabel[infoNames.length];
-        WordValueLabel[] valueLabels = new WordValueLabel[infoNames.length];
+        InspectorLabel[] valueLabels = new InspectorLabel[infoNames.length];
 
         public HeapRegionInfoTableModel(Inspection inspection) {
             super(inspection);
@@ -127,6 +153,7 @@ final class HeapRegionInfoTable extends InspectorTable {
                     return new WordValue(teleHeapRegionInfo.firstFreeChunk());
                 }
             };
+            valueLabels[3] = new FlagsRenderer(inspection);
 
             for (int i = 0; i < infoNames.length; i++) {
                 nameLabels[i] = new TextLabel(inspection, infoNames[i]);
@@ -166,12 +193,11 @@ final class HeapRegionInfoTable extends InspectorTable {
         @Override
         public void refresh(boolean force) {
             valueLabels[2].refresh(force);
+            valueLabels[3].refresh(force);
         }
 
         @Override
         public void redisplay() {
-            // The only one that need refresh is the firstFreeChunk word. The other are constant for a given region.
-            valueLabels[2].redisplay();
         }
 
     }
@@ -192,5 +218,18 @@ final class HeapRegionInfoTable extends InspectorTable {
         tableModel = new HeapRegionInfoTableModel(inspection);
         HeapRegionInfoColumnModel columnModel = new HeapRegionInfoColumnModel(tableModel, HeapRegionInfoViewPreferences.globalPreferences(inspection));
         configureMemoryTable(tableModel, columnModel);
+    }
+
+    public InspectorScrollPane makeHeapRegionInfoPane() {
+        return new InspectorScrollPane(inspection(), this) {
+            @Override
+            public void refresh(boolean force) {
+                HeapRegionInfoTable.this.refresh(force);
+            }
+            @Override
+            public void redisplay() {
+                HeapRegionInfoTable.this.redisplay();
+            }
+        };
     }
 }

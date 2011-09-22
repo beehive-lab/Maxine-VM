@@ -462,6 +462,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
         }
     }
 
+
     private TeleObject heapObject;
 
     private final Object objectFocusTracer = new Object() {

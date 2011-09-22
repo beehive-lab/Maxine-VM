@@ -77,10 +77,16 @@ public class ChunkListAllocator<T extends ChunkListRefillManager> extends Atomic
                         // Bring allocation hand to the limit of the chunk of memory backing the allocator.
                         // We hold the refill lock so we're guaranteed that the chunk will not be replaced while we're doing this.
                         Pointer startOfLeftover = atomicSetTopToLimit();
-                        Size sizeOfLeftover = hardLimit().minus(startOfLeftover).asSize();
-                        cell = refillManager.allocateChunkList(tlabSize, startOfLeftover, sizeOfLeftover).asPointer();
-                        FatalError.check(!cell.isZero(), "Refill manager must not return a null TLAB");
-                        return cell;
+                        Pointer h = hardLimit().asPointer();
+                        Size sizeOfLeftover = h.minus(startOfLeftover).asSize();
+                        if (sizeOfLeftover.equals(tlabSize)) {
+                            cell = startOfLeftover;
+                            break;
+                        }
+                        cell = refillManager.allocateChunkListOrRefill(this, tlabSize, startOfLeftover, sizeOfLeftover).asPointer();
+                        if (!cell.isZero()) {
+                            return cell;
+                        }
                     }
                     // Otherwise, we lost the race to refill the TLAB. loop back to try again.
                     newTop = cell.plus(tlabSize);
