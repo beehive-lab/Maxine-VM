@@ -518,7 +518,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void checkcast(int index) {
-            frame.pop(REFERENCE_OR_WORD);
+            frame.pop(REFERENCE);
 
             final ClassConstant classConstant = constantPool().classAt(index);
             final TypeDescriptor toType = classConstant.typeDescriptor();
@@ -1075,12 +1075,12 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void if_acmpeq(int offset) {
-            performIfCompareBranch(offset, REFERENCE_OR_WORD);
+            performIfCompareBranch(offset, frame.top() == WORD ? WORD : REFERENCE);
         }
 
         @Override
         public void if_acmpne(int offset) {
-            performIfCompareBranch(offset, REFERENCE_OR_WORD);
+            performIfCompareBranch(offset, frame.top() == WORD ? WORD : REFERENCE);
         }
 
         @Override
@@ -1196,7 +1196,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
         @Override
         public void instanceof_(int index) {
             constantPool().classAt(index);
-            frame.pop(REFERENCE_OR_WORD);
+            frame.pop(REFERENCE);
             frame.push(INTEGER);
         }
 
