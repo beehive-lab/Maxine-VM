@@ -30,8 +30,8 @@ import com.sun.max.annotate.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.deopt.Deoptimization.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.compiler.target.Compilations.Attr;
 
 /**
  * The interface implemented by a compiler that translates {@link ClassMethodActor}s into {@link TargetMethod}s.
@@ -53,7 +53,7 @@ public interface RuntimeCompiler {
      * The option whose value (if non-null) specifies the class name of the optimizing compiler to use.
      */
     @HOSTED_ONLY
-    Option<String> optimizingCompilerOption = compilers.newStringOption("opt", "C1X", "Specifies the class name of the optimizing compiler.");
+    Option<String> optimizingCompilerOption = compilers.newStringOption("opt", "C1X", "Specifies the class name of the optimizing compiler class.");
     /**
      * The option whose value (if non-null) specifies the class name of the baseline compiler to use.
      */
@@ -80,14 +80,31 @@ public interface RuntimeCompiler {
     TargetMethod compile(ClassMethodActor classMethodActor, boolean install, CiStatistics stats);
 
     /**
-     * Determines if this compiler can support a {@linkplain CompilationScheme#synchronousCompile(ClassMethodActor, int) compilation request}
-     * with the {@link Attr#INTERPRETER_COMPATIBLE} flag set.
+     * Determines the type of target method produced by this compiler.
      */
-    boolean supportsInterpreterCompatibility();
+    Nature nature();
 
     /**
-     * Informs this compiler that the VM does not support deoptimization.
+     * The target method types supported and used by the VM. A compiler produces target methods
+     * matching exactly one of the constants declared by this enum.
      */
-    @HOSTED_ONLY
-    void deoptimizationNotSupported();
+    public enum Nature {
+        /**
+         * A baseline target method supports an interpreter-like execution model. Specifically:
+         * <ul>
+         * <li> It has a {@linkplain TargetMethod#bciToPosMap() map} from every bytecode instruction
+         *      in {@link TargetMethod#classMethodActor} to the target code position(s) implementing the instruction.</li>
+         * <li> It can be used during deoptimization to create
+         *      {@linkplain TargetMethod#createDeoptimizedFrame(Info, CiFrame, Continuation, Throwable) deoptimized frames}.</li>
+         * </ul>
+         */
+        BASELINE,
+
+        /**
+         * An optimized method is, strictly speaking, a target method that is not a baseline target method.
+         * In practice, various optimizations will have been employed in the process of converting
+         * the input bytecode to produce the target method.
+         */
+        OPT;
+    }
 }

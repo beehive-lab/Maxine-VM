@@ -29,7 +29,6 @@ import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 
@@ -110,7 +109,7 @@ public final class DynamicHub extends Hub {
             final VirtualMethodActor virtualMethodActor = allVirtualMethodActors[i];
             final int vTableIndex = firstWordIndex() + i;
             assert virtualMethodActor.vTableIndex() == vTableIndex;
-            Address vTableEntry = CallEntryPoint.VTABLE_ENTRY_POINT.in(vmConfig().compilationScheme().synchronousCompile(virtualMethodActor, Compilations.Attr.NONE));
+            Address vTableEntry = CallEntryPoint.VTABLE_ENTRY_POINT.in(vmConfig().compilationScheme().synchronousCompile(virtualMethodActor, null));
             setWord(vTableIndex, vTableEntry);
         }
     }

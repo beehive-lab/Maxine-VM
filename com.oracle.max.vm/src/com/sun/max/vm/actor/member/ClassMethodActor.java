@@ -371,7 +371,7 @@ public abstract class ClassMethodActor extends MethodActor {
      * Note that this will never return an invalidated target method.
      */
     public TargetMethod currentTargetMethod() {
-        return Compilations.currentTargetMethod(compiledState, Compilations.Attr.NONE);
+        return Compilations.currentTargetMethod(compiledState, null);
     }
 
     private static BytecodeTransformation transformationClient;

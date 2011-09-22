@@ -31,7 +31,6 @@ import com.sun.max.program.option.*;
 import com.sun.max.test.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.target.*;
 
 /**
  * The {@code JTMaxine} class implements a main program for running the generated Java tester tests
@@ -103,7 +102,7 @@ public class JTMaxine {
         }
         for (ClassMethodActor method : methods) {
             printer.begin(method.toString());
-            vmConfig().compilationScheme().synchronousCompile(method, Compilations.Attr.NONE);
+            vmConfig().compilationScheme().synchronousCompile(method, null);
             printer.pass();
         }
         methods.clear();
@@ -117,7 +116,7 @@ public class JTMaxine {
         System.out.println("Compiling callee methods...");
         for (ClassMethodActor method : methods) {
             printer.begin(method.toString());
-            vmConfig().compilationScheme().synchronousCompile(method, Compilations.Attr.NONE);
+            vmConfig().compilationScheme().synchronousCompile(method, null);
             printer.pass();
         }
 

@@ -542,7 +542,7 @@ public class CompiledPrototype extends Prototype {
                 if (needsCompilation(methodActor)) {
                     TargetMethod targetMethod;
                     try {
-                        targetMethod = compilationScheme.synchronousCompile((ClassMethodActor) methodActor, Compilations.Attr.NONE);
+                        targetMethod = compilationScheme.synchronousCompile((ClassMethodActor) methodActor, null);
                     } catch (Throwable error) {
                         throw reportCompilationError(methodActor, error);
                     }
@@ -568,7 +568,7 @@ public class CompiledPrototype extends Prototype {
                         compilationCompletionService.submit(new Callable<TargetMethod>() {
                             public TargetMethod call() throws Exception {
                                 try {
-                                    TargetMethod result = compilationScheme.synchronousCompile((ClassMethodActor) methodActor, Compilations.Attr.NONE);
+                                    TargetMethod result = compilationScheme.synchronousCompile((ClassMethodActor) methodActor, null);
                                     assert result != null;
                                     return result;
                                 } catch (Throwable error) {

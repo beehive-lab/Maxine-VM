@@ -244,20 +244,16 @@ public class MaxineTesterConfiguration {
 
         String opt_c1x = "-opt=C1X";
 
-        String baseline_c1x = "-baseline=C1X";
-        String baseline_t1x = "-baseline=T1X";
-
-
         imageConfig("java", "-run=java");
-        imageConfig("jtt-t1xc1x", opt_c1x, baseline_t1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-baseline");
-        imageConfig("jtt-c1xt1x", opt_c1x, baseline_t1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-baseline", "--XX:+FailOverCompilation");
-        imageConfig("jtt-t1xt1x", opt_c1x, baseline_t1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-baseline", "-test-callee-baseline", "--XX:+FailOverCompilation");
-        imageConfig("jtt-c1xc1x", opt_c1x, baseline_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests");
+        imageConfig("jtt-t1xc1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-baseline");
+        imageConfig("jtt-c1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-baseline", "--XX:+FailOverCompilation");
+        imageConfig("jtt-t1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-baseline", "-test-callee-baseline", "--XX:+FailOverCompilation");
+        imageConfig("jtt-c1xc1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests");
 
-        imageConfig("jtt-msc1xt1x", opt_c1x, baseline_t1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-callee-baseline");
-        imageConfig("jtt-mst1xc1x", opt_c1x, baseline_t1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-caller-baseline");
-        imageConfig("jtt-mst1xt1x", opt_c1x, baseline_t1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-caller-baseline", "-test-callee-baseline");
-        imageConfig("jtt-msc1xc1x", opt_c1x, baseline_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests");
+        imageConfig("jtt-msc1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-callee-baseline");
+        imageConfig("jtt-mst1xc1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-caller-baseline");
+        imageConfig("jtt-mst1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-caller-baseline", "-test-callee-baseline");
+        imageConfig("jtt-msc1xc1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests");
 
         maxvmConfig("std", "-Xms2g", "-Xmx2g");
         maxvmConfig("baseline", "-Xms2g", "-Xmx2g", "-Xbaseline");
@@ -269,28 +265,28 @@ public class MaxineTesterConfiguration {
         maxvmConfig("noGC", "-XX:+DisableGC", "-Xmx3g");
         maxvmConfig("GC", "-Xmx2g");
 
-        imageConfig("baseline-c1x0",  baseline_c1x, "--C1X:OptLevel=0");
-        imageConfig("baseline-c1x1",  baseline_c1x, "--C1X:OptLevel=1");
-        imageConfig("baseline-c1x2",  baseline_c1x, "--C1X:OptLevel=2");
-        imageConfig("baseline-c1x3",  baseline_c1x, "--C1X:OptLevel=3");
+        imageConfig("baseline-c1x0",  "--C1X:OptLevel=0");
+        imageConfig("baseline-c1x1",  "--C1X:OptLevel=1");
+        imageConfig("baseline-c1x2",  "--C1X:OptLevel=2");
+        imageConfig("baseline-c1x3",  "--C1X:OptLevel=3");
 
         imageConfig("opt-c1x0",  opt_c1x, "--C1X:OptLevel=0");
         imageConfig("opt-c1x1",  opt_c1x, "--C1X:OptLevel=1");
         imageConfig("opt-c1x2",  opt_c1x, "--C1X:OptLevel=2");
         imageConfig("opt-c1x3",  opt_c1x, "--C1X:OptLevel=3");
 
-        imageConfig("c1x0",  opt_c1x, baseline_c1x, "--C1X:OptLevel=0");
-        imageConfig("c1x1",  opt_c1x, baseline_c1x, "--C1X:OptLevel=1");
-        imageConfig("c1x2",  opt_c1x, baseline_c1x, "--C1X:OptLevel=2");
-        imageConfig("c1x3",  opt_c1x, baseline_c1x, "--C1X:OptLevel=3");
+        imageConfig("c1x0",  opt_c1x, "--C1X:OptLevel=0");
+        imageConfig("c1x1",  opt_c1x, "--C1X:OptLevel=1");
+        imageConfig("c1x2",  opt_c1x, "--C1X:OptLevel=2");
+        imageConfig("c1x3",  opt_c1x, "--C1X:OptLevel=3");
 
         // Alternate GC configs
-        imageConfig("ms",   opt_c1x, baseline_t1x,      "-run=java", "-heap=gcx.ms");
-        imageConfig("msd",  opt_c1x, baseline_t1x,     "-run=java", "-heap=gcx.ms", "-build=DEBUG");
-        imageConfig("msed",  opt_c1x, baseline_t1x,     "-run=java", "-heap=gcx.mse", "-build=DEBUG");
-        imageConfig("mse",  opt_c1x, baseline_t1x,   "-run=java", "-heap=gcx.mse");
-        imageConfig("msc1x",      "-run=java", "-heap=gcx.ms", opt_c1x, baseline_c1x);
-        imageConfig("msec1x",     "-run=java", "-heap=gcx.mse", opt_c1x, baseline_c1x);
+        imageConfig("ms",   opt_c1x,      "-run=java", "-heap=gcx.ms");
+        imageConfig("msd",  opt_c1x,     "-run=java", "-heap=gcx.ms", "-build=DEBUG");
+        imageConfig("msed",  opt_c1x,     "-run=java", "-heap=gcx.mse", "-build=DEBUG");
+        imageConfig("mse",  opt_c1x,   "-run=java", "-heap=gcx.mse");
+        imageConfig("msc1x",      "-run=java", "-heap=gcx.ms", opt_c1x);
+        imageConfig("msec1x",     "-run=java", "-heap=gcx.mse", opt_c1x);
 
         // VMA configs - the -vma option is interpreted by the max script to set additional system properties
         final String vmaT1X = "com.sun.max.vm.t1x.vma.VMAT1X";
