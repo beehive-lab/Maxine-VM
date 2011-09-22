@@ -90,11 +90,4 @@ public interface RuntimeCompiler {
      */
     @HOSTED_ONLY
     void deoptimizationNotSupported();
-
-    /**
-     * Resets any metrics gathered by this compiler.
-     */
-    void resetMetrics();
-
-    CallEntryPoint calleeEntryPoint();
 }

@@ -132,18 +132,6 @@ public class T1X implements RuntimeCompiler {
         return true;
     }
 
-    public void resetMetrics() {
-        for (Field f : T1XMetrics.class.getFields()) {
-            if (f.getType() == int.class) {
-                try {
-                    f.set(null, 0);
-                } catch (IllegalAccessException e) {
-                    // do nothing.
-                }
-            }
-        }
-    }
-
     public TargetMethod compile(ClassMethodActor method, boolean install, CiStatistics stats) {
         T1XCompilation c = compilation.get();
         boolean reentrant = false;
@@ -319,10 +307,6 @@ public class T1X implements RuntimeCompiler {
                 hcf.addComment(pos, sb.toString());
             }
         }
-    }
-
-    public CallEntryPoint calleeEntryPoint() {
-        return CallEntryPoint.BASELINE_ENTRY_POINT;
     }
 
     public void initialize(Phase phase) {
