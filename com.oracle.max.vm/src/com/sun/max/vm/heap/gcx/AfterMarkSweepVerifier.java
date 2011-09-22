@@ -41,10 +41,12 @@ public class AfterMarkSweepVerifier extends PointerIndexVisitor implements CellV
     long freeChunksByteCount;
     long liveDataByteCount;
     Pointer visitedCellOrigin;
+    final AfterMarkSweepBootHeapVerifier bootHeapVerifier;
 
-    public AfterMarkSweepVerifier(TricolorHeapMarker heapMarker, Sweeper msVerification) {
+    public AfterMarkSweepVerifier(TricolorHeapMarker heapMarker, Sweeper msVerification, AfterMarkSweepBootHeapVerifier bootHeapVerifier) {
         this.heapMarker = heapMarker;
         this.sweeper = msVerification;
+        this.bootHeapVerifier = bootHeapVerifier;
     }
 
     @INLINE
@@ -83,6 +85,7 @@ public class AfterMarkSweepVerifier extends PointerIndexVisitor implements CellV
         final Reference hubRef = Layout.readHubReference(origin);
         final Hub hub = UnsafeCast.asHub(hubRef.toJava());
         if (hub == HeapFreeChunk.HEAP_FREE_CHUNK_HUB) {
+            FatalError.check(heapMarker.isWhite(cell), "free chunk must not be marked");
             Size chunkSize = HeapFreeChunk.getFreechunkSize(cell);
             freeChunksByteCount += chunkSize.toLong();
             return cell.plus(chunkSize);
@@ -117,5 +120,6 @@ public class AfterMarkSweepVerifier extends PointerIndexVisitor implements CellV
         freeChunksByteCount = 0L;
         liveDataByteCount = 0L;
         sweeper.verify(this);
+        bootHeapVerifier.run();
     }
 }

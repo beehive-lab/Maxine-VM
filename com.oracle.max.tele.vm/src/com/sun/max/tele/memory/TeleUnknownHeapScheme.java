@@ -99,4 +99,8 @@ final class TeleUnknownHeapScheme extends AbstractTeleVMHolder implements TeleHe
         return false;
     }
 
+    public MaxMarkBitsInfo markBitInfo() {
+        return null;
+    }
+
 }

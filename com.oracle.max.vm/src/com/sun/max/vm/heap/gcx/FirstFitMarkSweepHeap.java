@@ -334,7 +334,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
          */
         @Override
         @NO_SAFEPOINT_POLLS("tlab allocation loop must not be subjected to safepoints")
-        Address allocateChunkList(Size tlabSize, Pointer leftover, Size leftoverSize) {
+        Address allocateChunkListOrRefill(AtomicBumpPointerAllocator<? extends ChunkListRefillManager> allocator, Size tlabSize, Pointer leftover, Size leftoverSize) {
             Address firstChunk = chunkOrZero(leftover, leftoverSize);
             if (!firstChunk.isZero()) {
                 tlabSize = tlabSize.minus(leftoverSize);
@@ -375,8 +375,13 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                 } else {
                     FatalError.check(!nextFreeChunkInRegion.isZero(), "must never be null");
                     // It's an empty region.
-                    freeSpace = Size.fromInt(regionSizeInBytes);
-                    HeapFreeChunk.format(nextFreeChunkInRegion, freeSpace);
+                    // Just refill the allocator
+                    freeSpace = Size.zero();
+                    allocator.refill(nextFreeChunkInRegion, Size.fromInt(regionSizeInBytes));
+                    nextFreeChunkInRegion = Address.zero();
+                    return Address.zero(); // indicates that allocator was refilled.
+                    // freeSpace = Size.fromInt(regionSizeInBytes);
+                    // HeapFreeChunk.format(nextFreeChunkInRegion, freeSpace);
                 }
             }
             Address result = Address.zero();
@@ -453,15 +458,6 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
             FatalError.unexpected("Should not reach here");
             FatalError.check(spaceLeft.lessThan(refillThreshold), "Should not refill before threshold is reached");
             return Address.zero();
-        }
-
-
-        @Override
-        void makeParsable(Pointer start, Pointer end) {
-            if (MaxineVM.isDebug()) {
-                FatalError.check(regionStart(end).lessEqual(start), "space left must be in the same regions");
-            }
-            HeapSchemeAdaptor.fillWithDeadObject(start, end);
         }
 
         @Override
@@ -629,11 +625,6 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         }
 
         @Override
-        void makeParsable(Pointer start, Pointer end) {
-            HeapSchemeAdaptor.fillWithDeadObject(start, end);
-        }
-
-        @Override
         void doBeforeGC() {
         }
     }
@@ -739,7 +730,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
     @Override
     public Size freeSpace() {
         // TODO: temp trace. Remove me
-        if (DebugMSE) {
+        if (MaxineVM.isDebug()) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("allocationRegionsFreeSpace = ");
             Log.print(allocationRegionsFreeSpace.toInt());

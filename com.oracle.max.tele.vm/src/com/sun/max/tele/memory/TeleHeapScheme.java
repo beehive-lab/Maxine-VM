@@ -83,4 +83,10 @@ public interface TeleHeapScheme extends TeleScheme {
      */
     Pointer getForwardedOrigin(Pointer origin);
 
+    /**
+     * Return heap-specific implementation of {@link MaxMarkBitsInfo} that the inspector can use to display mark-bit information for heap
+     * scheme using a mark-bitmap for trace-based collection.
+     * @return an implementation of MaxMarBitsInfo or null
+     */
+    MaxMarkBitsInfo markBitInfo();
 }

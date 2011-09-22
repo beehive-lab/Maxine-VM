@@ -144,9 +144,25 @@ public class HeapRegionInfo {
 
     static final int LARGE_REGION_FLAGS = IS_LARGE.or(IS_TAIL.or(IS_HEAD.or(0)));
 
+    public static String flagsToString(int flags) {
+        if (flags == 0) {
+            return "IS_EMPTY";
+        }
+        StringBuffer b = new StringBuffer("");
+        String sep = "";
+        for (Flag f : Flag.values()) {
+            if (f.isSet(flags)) {
+                b.append(sep); b.append(f);
+                sep = " | ";
+            }
+        }
+        return b.toString();
+    }
+
     /**
      * A 32-bit vector compounding several flags information. See {@link Flag} for usage of each of the bits.
      */
+    @INSPECTED
     int flags; // NOTE: don't want to use an EnumSet here. Don't want a long for storing flags; and want the flags embedded in the heap region info.
 
     public final boolean isEmpty() {
@@ -250,7 +266,6 @@ public class HeapRegionInfo {
     public final int numFreeChunks() {
         return numFreeChunks;
     }
-
 
     public void dump(boolean enumerateFreeChunks) {
         Log.print("region #");
@@ -367,7 +382,7 @@ public class HeapRegionInfo {
         clear();
     }
 
-    final HeapAccountOwner owner() {
+    public final HeapAccountOwner owner() {
         return owner;
     }
 
