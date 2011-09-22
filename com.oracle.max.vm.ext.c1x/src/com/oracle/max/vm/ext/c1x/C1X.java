@@ -294,23 +294,6 @@ public class C1X implements RuntimeCompiler {
         deoptimizationSupported = false;
     }
 
-    public void resetMetrics() {
-        C1XTimers.reset();
-        for (Field f : C1XMetrics.class.getFields()) {
-            if (f.getType() == int.class) {
-                try {
-                    f.set(null, 0);
-                } catch (IllegalAccessException e) {
-                    // do nothing.
-                }
-            }
-        }
-    }
-
-    public CallEntryPoint calleeEntryPoint() {
-        return CallEntryPoint.OPTIMIZED_ENTRY_POINT;
-    }
-
     @Override
     public String toString() {
         return getClass().getSimpleName();
