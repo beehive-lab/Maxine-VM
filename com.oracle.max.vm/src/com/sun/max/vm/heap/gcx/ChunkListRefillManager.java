@@ -56,5 +56,15 @@ abstract class ChunkListRefillManager extends RefillManager {
         return Address.zero();
     }
 
-    abstract Address allocateChunkList(Size listSize, Pointer leftover, Size leftoverSize);
+    /**
+     * Try to refill the allocator with a single contiguous range of free space large enough to accommodate the allocator, or return a list of chunk
+     * large enough to satisfy the requested size. The allocator's has been toped off and its refill lock is being held.
+     *
+     * @param allocator the allocator issuing the request
+     * @param listSize
+     * @param leftover pointer to space that was left in the bump pointer allocator
+     * @param leftoverSize size of the space that was left in the  bump pointer allocator
+     * @return a zero address if the allocator was refilled, the head of a list of free chunk otherwise
+     */
+    abstract Address allocateChunkListOrRefill(AtomicBumpPointerAllocator<? extends ChunkListRefillManager> allocator, Size listSize, Pointer leftover, Size leftoverSize);
 }
