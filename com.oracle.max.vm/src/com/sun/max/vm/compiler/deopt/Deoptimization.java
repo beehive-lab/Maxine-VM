@@ -473,7 +473,7 @@ public class Deoptimization extends VmOperation {
     /**
      * Stack visitor used to patch return addresses denoting a method being deoptimized.
      */
-    public static class Patcher extends RawStackFrameVisitor {
+    public static class Patcher extends com.sun.max.vm.stack.RawStackFrameVisitor {
         /**
          * The set of methods being deoptimized.
          */
@@ -530,7 +530,7 @@ public class Deoptimization extends VmOperation {
     /**
      * Encapsulates various info used during deoptimization of a single optimized frame.
      */
-    public static class Info extends RawStackFrameVisitor {
+    public static class Info extends com.sun.max.vm.stack.RawStackFrameVisitor {
 
         /**
          * Method being deoptimized.
