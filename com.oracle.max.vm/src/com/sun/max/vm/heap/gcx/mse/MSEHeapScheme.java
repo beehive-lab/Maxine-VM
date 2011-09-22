@@ -104,8 +104,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
     public MSEHeapScheme() {
         theHeap = new FirstFitMarkSweepHeap();
         heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT, new HeapAccounRootCellVisitor(theHeap));
-        afterGCVerifier = new AfterMarkSweepVerifier(heapMarker, theHeap);
-
+        afterGCVerifier = new AfterMarkSweepVerifier(heapMarker, theHeap, AfterMarkSweepBootHeapVerifier.makeVerifier(heapMarker, theHeap));
         pinningSupportFlags = PIN_SUPPORT_FLAG.makePinSupportFlags(true, false, true);
         pinnedCounter = MaxineVM.isDebug() ? new AtomicPinnedCounter() : null;
     }

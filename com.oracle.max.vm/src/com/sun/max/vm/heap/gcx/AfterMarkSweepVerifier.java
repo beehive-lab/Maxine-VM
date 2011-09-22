@@ -41,10 +41,12 @@ public class AfterMarkSweepVerifier extends PointerIndexVisitor implements CellV
     long freeChunksByteCount;
     long liveDataByteCount;
     Pointer visitedCellOrigin;
+    final AfterMarkSweepBootHeapVerifier bootHeapVerifier;
 
-    public AfterMarkSweepVerifier(TricolorHeapMarker heapMarker, Sweeper msVerification) {
+    public AfterMarkSweepVerifier(TricolorHeapMarker heapMarker, Sweeper msVerification, AfterMarkSweepBootHeapVerifier bootHeapVerifier) {
         this.heapMarker = heapMarker;
         this.sweeper = msVerification;
+        this.bootHeapVerifier = bootHeapVerifier;
     }
 
     @INLINE
@@ -118,5 +120,6 @@ public class AfterMarkSweepVerifier extends PointerIndexVisitor implements CellV
         freeChunksByteCount = 0L;
         liveDataByteCount = 0L;
         sweeper.verify(this);
+        bootHeapVerifier.run();
     }
 }
