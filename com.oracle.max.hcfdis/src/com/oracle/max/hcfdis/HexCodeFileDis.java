@@ -97,7 +97,7 @@ public class HexCodeFileDis extends DisassemblyPrinter {
     }
 
     /**
-     * Decoding method called from c1visualizer. The visualizer loads this class and calls this method using reflection.
+     * Decoding method called by external tools via reflection.
      */
     public static String processEmbeddedString(String source) {
         if (!source.startsWith(EMBEDDED_HCF_OPEN) || !source.endsWith(EMBEDDED_HCF_CLOSE)) {
