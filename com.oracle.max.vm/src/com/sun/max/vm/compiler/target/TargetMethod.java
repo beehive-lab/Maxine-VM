@@ -45,6 +45,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
 import com.sun.max.vm.compiler.deopt.Deoptimization.Continuation;
 import com.sun.max.vm.compiler.deopt.Deoptimization.Info;
 import com.sun.max.vm.compiler.deopt.*;
@@ -893,22 +894,14 @@ public abstract class TargetMethod extends MemoryRegion {
     public abstract Pointer returnAddressPointer(Cursor frame);
 
     /**
-     * Determines if this target method has execution semantics compatible with interpretation.
-     * This will be the case if all the following hold:
-     * <ul>
-     * <li> It has a {@linkplain #bciToPosMap() map} from every bytecode instruction
-     *      in {@link #classMethodActor} to the target code position(s) implementing the instruction.</li>
-     * <li> It can be used during deoptimization to create
-     *      {@linkplain #createDeoptimizedFrame(Info, CiFrame, Continuation, Throwable) deoptimized frames}.</li>
-     * </ul>
-     *
+     * Determines if this a {@link Nature#BASELINE} target method.
      */
-    public boolean isInterpreterCompatible() {
+    public boolean isBaseline() {
         return false;
     }
 
     /**
-     * Creates a deoptimized frame for this method. This can only be called if {@link #isInterpreterCompatible()}
+     * Creates a deoptimized frame for this method. This can only be called if {@link #isBaseline()}
      * returns {@code true} for this object.
      *
      * @param info details of current deoptimization

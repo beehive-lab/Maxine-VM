@@ -833,7 +833,7 @@ public final class T1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public boolean isInterpreterCompatible() {
+    public boolean isBaseline() {
         return true;
     }
 

@@ -95,8 +95,8 @@ public abstract class AbstractVMScheme {
         if (value == null && option != null) {
             value = option.getValue();
         }
-        if (value == null) {
-            return value;
+        if (value == null || value.isEmpty()) {
+            return null;
         }
         if (aliasMap != null && aliasMap.containsKey(value)) {
             return aliasMap.get(value);

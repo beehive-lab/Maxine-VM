@@ -26,7 +26,6 @@ import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
-import static com.sun.max.vm.compiler.target.Compilations.Attr.*;
 import static com.sun.max.vm.intrinsics.Infopoints.*;
 
 import com.sun.max.annotate.*;
@@ -35,6 +34,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.heap.*;
@@ -59,15 +59,17 @@ public interface CompilationScheme extends VMScheme {
      * waits for the result of a compilation to return it.
      *
      * @param cma the method for which to make the target method
-     * @param flags a mask of {@link Compilations.Attr} values
+     * @param nature the specific type of target method required or {@code null} if any target method is acceptable
      * @return a newly compiled version of a {@code cma}
      * @throws InteralError if an uncaught exception is thrown during compilation
      */
-    TargetMethod synchronousCompile(ClassMethodActor cma, int flags);
+    TargetMethod synchronousCompile(ClassMethodActor cma, Nature nature);
 
     boolean needsAdapters();
 
     String description();
+
+    boolean isDeoptSupported();
 
     /**
      * This class provides a facade for the {@code CompilationScheme} interface, simplifying usage. It provides a number
@@ -82,18 +84,18 @@ public interface CompilationScheme extends VMScheme {
          * Gets compiled code for a given method.
          *
          * @param classMethodActor the method to compile
-         * @param flags a mask of {@link Compilations.Attr} values
+         * @param nature the specific type of target method required or {@code null} if any target method is acceptable
          * @return the compiled method
          */
-        public static TargetMethod compile(ClassMethodActor classMethodActor, int flags) {
-            TargetMethod currentTargetMethod = Compilations.currentTargetMethod(classMethodActor.compiledState, flags);
+        public static TargetMethod compile(ClassMethodActor classMethodActor, RuntimeCompiler.Nature nature) {
+            TargetMethod currentTargetMethod = Compilations.currentTargetMethod(classMethodActor.compiledState, nature);
             if (currentTargetMethod != null) {
                 // fast path: a suitable compiled version of method is available
                 return currentTargetMethod;
             }
 
             // slow path: a suitable compiled version of method is *not* available
-            return vmConfig().compilationScheme().synchronousCompile(classMethodActor, flags);
+            return vmConfig().compilationScheme().synchronousCompile(classMethodActor, nature);
         }
 
         /**
@@ -198,14 +200,14 @@ public interface CompilationScheme extends VMScheme {
 
             ClassMethodActor classMethodActor = mpo.method.classMethodActor;
             TargetMethod oldMethod = mpo.method;
-            TargetMethod newMethod = Compilations.currentTargetMethod(classMethodActor.compiledState, Compilations.Attr.NONE);
+            TargetMethod newMethod = Compilations.currentTargetMethod(classMethodActor.compiledState, null);
 
             if (oldMethod == newMethod || newMethod == null) {
                 if (!(classMethodActor.compiledState instanceof Compilation)) {
                     // There is no newer compiled version available yet that we could just patch to, so recompile
                     logCounterOverflow(mpo, "");
                     try {
-                        newMethod = vmConfig().compilationScheme().synchronousCompile(classMethodActor, OPTIMIZE.mask);
+                        newMethod = vmConfig().compilationScheme().synchronousCompile(classMethodActor, Nature.OPT);
                     } catch (InternalError e) {
                         if (VMOptions.verboseOption.verboseCompilation) {
                             e.printStackTrace(Log.out);

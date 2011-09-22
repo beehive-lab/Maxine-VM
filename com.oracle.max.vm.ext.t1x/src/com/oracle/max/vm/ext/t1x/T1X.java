@@ -24,12 +24,12 @@ package com.oracle.max.vm.ext.t1x;
 
 import static com.oracle.max.cri.intrinsics.IntrinsicIDs.*;
 import static com.oracle.max.vm.ext.t1x.T1XOptions.*;
+import static com.oracle.max.vm.ext.t1x.T1XTemplateTag.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.compiler.target.Safepoints.*;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import static com.sun.max.vm.stack.VMFrameLayout.*;
-import static com.oracle.max.vm.ext.t1x.T1XTemplateTag.*;
 
 import java.io.*;
 import java.lang.reflect.*;
@@ -124,24 +124,9 @@ public class T1X implements RuntimeCompiler {
         }
     };
 
-    @HOSTED_ONLY
-    public void deoptimizationNotSupported() {
-    }
-
-    public boolean supportsInterpreterCompatibility() {
-        return true;
-    }
-
-    public void resetMetrics() {
-        for (Field f : T1XMetrics.class.getFields()) {
-            if (f.getType() == int.class) {
-                try {
-                    f.set(null, 0);
-                } catch (IllegalAccessException e) {
-                    // do nothing.
-                }
-            }
-        }
+    @Override
+    public RuntimeCompiler.Nature nature() {
+        return RuntimeCompiler.Nature.BASELINE;
     }
 
     public TargetMethod compile(ClassMethodActor method, boolean install, CiStatistics stats) {
@@ -319,10 +304,6 @@ public class T1X implements RuntimeCompiler {
                 hcf.addComment(pos, sb.toString());
             }
         }
-    }
-
-    public CallEntryPoint calleeEntryPoint() {
-        return CallEntryPoint.BASELINE_ENTRY_POINT;
     }
 
     public void initialize(Phase phase) {

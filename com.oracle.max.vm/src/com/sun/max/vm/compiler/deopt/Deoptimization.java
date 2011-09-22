@@ -26,9 +26,9 @@ import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
-import static com.sun.max.vm.compiler.target.Compilations.Attr.*;
 import static com.sun.max.vm.compiler.target.Stub.Type.*;
 import static com.sun.max.vm.stack.VMFrameLayout.*;
+
 import java.util.*;
 
 import com.sun.cri.ci.*;
@@ -40,6 +40,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
+import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetMethod.FrameAccess;
 import com.sun.max.vm.object.*;
@@ -785,8 +786,8 @@ public class Deoptimization extends VmOperation {
         Continuation cont = topCont;
         for (CiFrame frame = topFrame; frame != null; frame = frame.caller()) {
             ClassMethodActor method = (ClassMethodActor) frame.method;
-            TargetMethod compiledMethod = vmConfig().compilationScheme().synchronousCompile(method, INTERPRETER_COMPATIBLE.mask);
-            FatalError.check(compiledMethod.isInterpreterCompatible(), compiledMethod + " should be a deopt target");
+            TargetMethod compiledMethod = vmConfig().compilationScheme().synchronousCompile(method, Nature.BASELINE);
+            FatalError.check(compiledMethod.isBaseline(), compiledMethod + " should be a deopt target");
             cont.tm = compiledMethod;
             cont = compiledMethod.createDeoptimizedFrame(info, frame, cont, pendingException);
 

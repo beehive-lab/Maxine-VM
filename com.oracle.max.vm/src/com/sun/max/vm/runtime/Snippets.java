@@ -42,7 +42,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.profile.*;
@@ -447,7 +446,7 @@ public class Snippets {
      */
     @INLINE
     public static Address makeEntrypoint(ClassMethodActor classMethodActor, CallEntryPoint cep) {
-        return compile(classMethodActor, Compilations.Attr.NONE).getEntryPoint(cep).asAddress();
+        return compile(classMethodActor, null).getEntryPoint(cep).asAddress();
     }
 
     /**
