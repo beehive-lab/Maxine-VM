@@ -145,9 +145,12 @@ public class HeapRegionInfo {
     static final int LARGE_REGION_FLAGS = IS_LARGE.or(IS_TAIL.or(IS_HEAD.or(0)));
 
     public static String flagsToString(int flags) {
+        if (flags == 0) {
+            return "IS_EMPTY";
+        }
         StringBuffer b = new StringBuffer("");
         String sep = "";
-        for (Flag f : allFlags) {
+        for (Flag f : Flag.values()) {
             if (f.isSet(flags)) {
                 b.append(sep); b.append(f);
                 sep = " | ";
@@ -264,7 +267,6 @@ public class HeapRegionInfo {
         return numFreeChunks;
     }
 
-
     public void dump(boolean enumerateFreeChunks) {
         Log.print("region #");
         Log.print(toRegionID());
@@ -380,7 +382,7 @@ public class HeapRegionInfo {
         clear();
     }
 
-    final HeapAccountOwner owner() {
+    public final HeapAccountOwner owner() {
         return owner;
     }
 
