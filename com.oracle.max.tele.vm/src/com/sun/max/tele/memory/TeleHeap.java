@@ -659,4 +659,8 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
         }
     }
 
+    public MaxMarkBitsInfo markBitInfo() {
+        return teleHeapScheme.markBitInfo();
+    }
+
 }
