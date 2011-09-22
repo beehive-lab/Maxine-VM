@@ -3454,13 +3454,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 public void entered(Address address) {
                     MaxMarkBitsInfo m = vm().heap().markBitInfo();
                     assert m != null;
-                    if (m.isCovered(address)) {
-
+                    if (!m.isCovered(address)) {
+                        gui().errorMessage("Address " + address + " is not covered with a mark bit");
+                        return;
                     }
+                    // TODO (ld): Need to add a mark bit  if one isn't created already for the address, and update  the MarkBitView.
                 }
             };
         }
-
     }
 
 
