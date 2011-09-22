@@ -102,7 +102,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements ResizableSpac
          * which will trigger GC on next request.
          */
         @Override
-        Address allocateChunkList(Size tlabSize, Pointer leftover, Size leftoverSize) {
+        Address allocateChunkListOrRefill(AtomicBumpPointerAllocator<? extends ChunkListRefillManager> allocator, Size tlabSize, Pointer leftover, Size leftoverSize) {
             // FIXME (ld) this never refill the allocator!
             Address firstChunk = chunkOrZero(leftover, leftoverSize);
             if (!firstChunk.isZero()) {
@@ -113,11 +113,6 @@ public final class FreeHeapSpaceManager extends Sweeper implements ResizableSpac
                 }
             }
             return binAllocateTLAB(tlabSize, firstChunk);
-        }
-
-        @Override
-        void makeParsable(Pointer start, Pointer end) {
-            HeapSchemeAdaptor.fillWithDeadObject(start, end);
         }
 
         @Override
@@ -391,7 +386,6 @@ public final class FreeHeapSpaceManager extends Sweeper implements ResizableSpac
 
     /**
      * Allocate a TLAB from the segregated list of free chunks.
-     * Space allocated to the
      * @param size
      * @return  the address of the first chunks allocated to the TLAB
      */
