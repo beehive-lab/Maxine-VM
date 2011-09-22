@@ -1670,7 +1670,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         public static Word resolveStaticMethod(ResolutionGuard.InPool guard) {
             StaticMethodActor methodActor = Snippets.resolveStaticMethod(guard);
             Snippets.makeHolderInitialized(methodActor);
-            return compile(methodActor, Compilations.Attr.NONE).getEntryPoint(OPTIMIZED_ENTRY_POINT).asAddress();
+            return compile(methodActor, null).getEntryPoint(OPTIMIZED_ENTRY_POINT).asAddress();
         }
 
         public static int resolveVirtualMethod(ResolutionGuard.InPool guard) {
@@ -1678,7 +1678,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
 
         public static Word resolveSpecialMethod(ResolutionGuard.InPool guard) {
-            return compile(Snippets.resolveSpecialMethod(guard), Compilations.Attr.NONE).getEntryPoint(OPTIMIZED_ENTRY_POINT).asAddress();
+            return compile(Snippets.resolveSpecialMethod(guard), null).getEntryPoint(OPTIMIZED_ENTRY_POINT).asAddress();
         }
 
         public static int resolveInterfaceMethod(ResolutionGuard.InPool guard) {

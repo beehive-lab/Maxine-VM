@@ -267,7 +267,7 @@ public class Stubs {
         if (selectedCallee.isAbstract()) {
             throw new AbstractMethodError();
         }
-        final Address vtableEntryPoint = compile(selectedCallee, Compilations.Attr.NONE).getEntryPoint(VTABLE_ENTRY_POINT).asAddress();
+        final Address vtableEntryPoint = compile(selectedCallee, null).getEntryPoint(VTABLE_ENTRY_POINT).asAddress();
         hub.setWord(vTableIndex, vtableEntryPoint);
         return adjustEntryPointForCaller(vtableEntryPoint, pcInCaller);
     }
@@ -286,7 +286,7 @@ public class Stubs {
         if (selectedCallee.isAbstract()) {
             throw new AbstractMethodError();
         }
-        final Address itableEntryPoint = compile(selectedCallee, Compilations.Attr.NONE).getEntryPoint(VTABLE_ENTRY_POINT).asAddress();
+        final Address itableEntryPoint = compile(selectedCallee, null).getEntryPoint(VTABLE_ENTRY_POINT).asAddress();
         hub.setWord(hub.iTableStartIndex + iIndex, itableEntryPoint);
         return adjustEntryPointForCaller(itableEntryPoint, pcInCaller);
     }
@@ -361,30 +361,8 @@ public class Stubs {
 
         final ClassMethodActor callee = caller.callSiteToCallee(callSite);
 
-        // Use the caller's entry point to get the correct entry point.
-        TargetMethod xxx = compile(callee, Compilations.Attr.NONE);
-//
-//        boolean lockDisabledSafepoints = Log.lock();
-//        Log.print("**** patching direct call site: ");
-//        Log.printMethod(caller, false);
-//
-//        final Pointer codeStart = caller.codeStart();
-//        Log.print(" [");
-//        Log.print(codeStart);
-//        Log.print("+");
-//        Log.print(callSite.minus(codeStart).toInt());
-//        Log.println("]");
-//
-//
-//        Log.print("  to: ");
-//        Log.printMethod(xxx, true);
-//        Log.unlock(lockDisabledSafepoints);
-
-
-        final Address calleeEntryPoint = xxx.getEntryPoint(caller.callEntryPoint).asAddress();
+        final Address calleeEntryPoint = compile(callee, null).getEntryPoint(caller.callEntryPoint).asAddress();
         AMD64TargetMethodUtil.mtSafePatchCallDisplacement(caller, callSite, calleeEntryPoint);
-
-
     }
 
     /**

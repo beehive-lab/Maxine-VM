@@ -202,7 +202,7 @@ public class MaxRuntimeCalls {
         if (MaxineVM.isHosted()) {
             new CriticalMethod(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         } else {
-            vmConfig().compilationScheme().synchronousCompile(classMethodActor, Compilations.Attr.NONE);
+            vmConfig().compilationScheme().synchronousCompile(classMethodActor, null);
         }
     }
 }
