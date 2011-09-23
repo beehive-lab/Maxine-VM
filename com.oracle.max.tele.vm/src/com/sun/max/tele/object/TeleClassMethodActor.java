@@ -155,14 +155,14 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
             return;
         }
         if (compiledState.classActorForObjectType().javaClass() == Compilations.class) {
-            Reference interpreterCompatibleReference = vm().teleFields().Compilations_interpreterCompatible.readReference(compiledState.reference());
+            Reference baselineReference = vm().teleFields().Compilations_baseline.readReference(compiledState.reference());
             Reference optimizedReference = vm().teleFields().Compilations_optimized.readReference(compiledState.reference());
             ArrayList<TeleTargetMethod> hist = new ArrayList<TeleTargetMethod>(2);
             if (!optimizedReference.isZero()) {
                 hist.add((TeleTargetMethod) heap().makeTeleObject(optimizedReference));
             }
-            if (!interpreterCompatibleReference.isZero()) {
-                hist.add((TeleTargetMethod) heap().makeTeleObject(interpreterCompatibleReference));
+            if (!baselineReference.isZero()) {
+                hist.add((TeleTargetMethod) heap().makeTeleObject(baselineReference));
             }
             teleTargetMethodHistory = hist.toArray(new TeleTargetMethod[hist.size()]);
         } else if (compiledState.classActorForObjectType().javaClass() == Compilation.class) {
