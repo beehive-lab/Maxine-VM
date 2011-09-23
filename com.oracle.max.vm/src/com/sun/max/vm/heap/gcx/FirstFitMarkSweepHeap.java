@@ -182,7 +182,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                         if (rinfo.isEmpty()) {
                             allocationRegionsFreeSpace = allocationRegionsFreeSpace.minus(regionSizeInBytes);
                             return allocateSingleRegionLargeObject(rinfo, rinfo.regionStart().asPointer(), size, Size.fromInt(regionSizeInBytes));
-                        } else if (rinfo.isAllocating() && rinfo.numFreeChunks == 1 && rinfo.freeSpace >= numWordsNeeded) {
+                        } else if (!rinfo.isAllocating() && rinfo.numFreeChunks == 1 && rinfo.freeSpace >= numWordsNeeded) {
                             allocationRegionsFreeSpace = allocationRegionsFreeSpace.minus(rinfo.freeBytesInChunks());
                             return allocateSingleRegionLargeObject(rinfo,  rinfo.firstFreeBytes().asPointer(), size, Size.fromInt(rinfo.freeBytesInChunks()));
                         }
@@ -484,7 +484,12 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
             int gcCount = 0;
             if (currentTLABAllocatingRegion != INVALID_REGION_ID) {
                 // No more free chunk in this region.
-                fromRegionID(currentTLABAllocatingRegion).toFullState();
+                final HeapRegionInfo regionInfo = fromRegionID(currentTLABAllocatingRegion);
+                if (MaxineVM.isDebug()) {
+                    FatalError.check(!regionInfo.hasFreeChunks() && regionInfo.numFreeChunks() == 0 &&
+                                    regionInfo.firstFreeChunkIndex == 0, "Region with chunks should not be set to full state !");
+                }
+                regionInfo.toFullState();
             }
             do {
                 currentTLABAllocatingRegion = tlabAllocationRegionList().removeHead();
