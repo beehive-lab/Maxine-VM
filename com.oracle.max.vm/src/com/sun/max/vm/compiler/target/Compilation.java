@@ -247,6 +247,8 @@ public class Compilation {
                 // notify any waiters on this compilation
                 classMethodActor.notifyAll();
             }
+
+            COMPILATION.set(parent);
         }
         if (error != null) {
             // an error occurred
@@ -256,7 +258,6 @@ public class Compilation {
             FatalError.unexpected("target method should not be null");
         }
 
-        COMPILATION.set(parent);
 
         return result;
     }
