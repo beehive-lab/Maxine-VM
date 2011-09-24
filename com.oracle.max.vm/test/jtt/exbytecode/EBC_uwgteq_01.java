@@ -26,13 +26,11 @@
  */
 package jtt.exbytecode;
 
-import com.sun.max.unsafe.*;
+import com.oracle.max.cri.intrinsics.*;
 
 public class EBC_uwgteq_01 {
     public static boolean test(long a, long b) {
-        Address aa = Address.fromLong(a);
-        Address ab = Address.fromLong(b);
-        return aa.greaterEqual(ab);
+        return UnsignedMath.aboveOrEqual(a, b);
     }
 
 }
