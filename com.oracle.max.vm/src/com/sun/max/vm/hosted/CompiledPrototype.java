@@ -720,6 +720,11 @@ public class CompiledPrototype extends Prototype {
     public synchronized static void invalidateTargetMethod(TargetMethod targetMethod) {
         assert targetMethod != null;
 
+        if (instance == null) {
+            // We are not actually constructing a boot image, but in some testing harness, e.g., compiler unit tests
+            return;
+        }
+
         // Ensures that calling currentTargetMethod on targetMethod.classMethodActor returns null
         // which is need for needsCompilation() to return true for the method.
         targetMethod.invalidate(new InvalidationMarker(targetMethod));
