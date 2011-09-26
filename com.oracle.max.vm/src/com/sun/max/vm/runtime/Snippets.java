@@ -22,7 +22,6 @@
  */
 package com.sun.max.vm.runtime;
 
-import static com.sun.max.vm.compiler.CompilationScheme.Static.*;
 import static com.sun.max.vm.runtime.VMRegister.*;
 import static com.sun.max.vm.runtime.VmOperation.*;
 import static com.sun.max.vm.stack.JavaFrameAnchor.*;
@@ -446,7 +445,7 @@ public class Snippets {
      */
     @INLINE
     public static Address makeEntrypoint(ClassMethodActor classMethodActor, CallEntryPoint cep) {
-        return compile(classMethodActor, null).getEntryPoint(cep).asAddress();
+        return classMethodActor.makeTargetMethod().getEntryPoint(cep).asAddress();
     }
 
     /**

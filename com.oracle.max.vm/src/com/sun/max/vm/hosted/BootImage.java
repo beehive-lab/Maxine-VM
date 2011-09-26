@@ -429,7 +429,6 @@ public class BootImage {
             LAYOUT(BootImagePackage.class),
             HEAP(BootImagePackage.class),
             MONITOR(BootImagePackage.class),
-            COMPILATION(BootImagePackage.class),
             RUN(BootImagePackage.class),
             OPT(String.class),
             BASELINE(String.class);
@@ -506,7 +505,6 @@ public class BootImage {
             put(Key.LAYOUT, vmConfig.layoutPackage);
             put(Key.HEAP, vmConfig.heapPackage);
             put(Key.MONITOR, vmConfig.monitorPackage);
-            put(Key.COMPILATION, vmConfig.compilationPackage);
             put(Key.RUN, vmConfig.runPackage);
 
             for (VMScheme scheme : vmConfig.vmSchemes()) {
@@ -518,6 +516,16 @@ public class BootImage {
                         put(key, value);
 
                     }
+                }
+            }
+
+            Properties props = MaxineVM.vm().compilationBroker.properties();
+            if (props != null) {
+                for (Object k : props.keySet()) {
+                    String key = (String) k;
+                    String value = props.getProperty(key);
+                    put(key, value);
+
                 }
             }
         }
@@ -668,7 +676,6 @@ public class BootImage {
                                                       stringInfo.bootImagePackage(Key.LAYOUT),
                                                       stringInfo.bootImagePackage(Key.HEAP),
                                                       stringInfo.bootImagePackage(Key.MONITOR),
-                                                      stringInfo.bootImagePackage(Key.COMPILATION),
                                                       stringInfo.bootImagePackage(Key.RUN));
 
                 fileInputStream.skip(header.heapSize + header.codeSize);

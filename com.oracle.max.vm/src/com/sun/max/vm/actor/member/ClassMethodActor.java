@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.actor.member;
 
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.actor.member.LivenessAdapter.*;
 
@@ -37,6 +38,7 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.type.*;
@@ -370,8 +372,31 @@ public abstract class ClassMethodActor extends MethodActor {
      * Gets the most optimized version of compiled code for this method that can be executed.
      * Note that this will never return an invalidated target method.
      */
-    public TargetMethod currentTargetMethod() {
+    public final TargetMethod currentTargetMethod() {
         return Compilations.currentTargetMethod(compiledState, null);
+    }
+
+    /**
+     * Gets a target method for this class method actor, invoking a compiler to produce one if necessary.
+     */
+    public final TargetMethod makeTargetMethod() {
+        return makeTargetMethod(null);
+    }
+
+    /**
+     * Gets a target method for this class method actor, invoking a compiler to produce one if necessary.
+     *
+     * @param nature the specific type of target method required or {@code null} if any target method is acceptable
+     */
+    public final TargetMethod makeTargetMethod(Nature nature) {
+        TargetMethod currentTargetMethod = Compilations.currentTargetMethod(compiledState, nature);
+        if (currentTargetMethod != null) {
+            // fast path: a suitable compiled version of method is available
+            return currentTargetMethod;
+        }
+
+        // slow path: a suitable compiled version of method is *not* available
+        return vm().compilationBroker.compile(this, nature);
     }
 
     private static BytecodeTransformation transformationClient;

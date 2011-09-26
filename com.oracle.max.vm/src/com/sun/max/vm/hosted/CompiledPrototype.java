@@ -23,6 +23,7 @@
 package com.sun.max.vm.hosted;
 
 import static com.sun.max.lang.Classes.*;
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.type.ClassRegistry.*;
@@ -533,7 +534,7 @@ public class CompiledPrototype extends Prototype {
         final CodeRegion region = Code.bootCodeRegion();
         final Address oldMark = region.getAllocationMark();
         final int initialNumberOfCompilations = totalCompilations;
-        final CompilationScheme compilationScheme = vmConfig().compilationScheme();
+        final CompilationBroker cb = vm().compilationBroker;
 
         if (numberOfCompilerThreads == 1) {
             while (!worklist.isEmpty() || !invalidatedTargetMethods.isEmpty()) {
@@ -542,7 +543,7 @@ public class CompiledPrototype extends Prototype {
                 if (needsCompilation(methodActor)) {
                     TargetMethod targetMethod;
                     try {
-                        targetMethod = compilationScheme.synchronousCompile((ClassMethodActor) methodActor, null);
+                        targetMethod = cb.compile((ClassMethodActor) methodActor, null);
                     } catch (Throwable error) {
                         throw reportCompilationError(methodActor, error);
                     }
@@ -568,7 +569,7 @@ public class CompiledPrototype extends Prototype {
                         compilationCompletionService.submit(new Callable<TargetMethod>() {
                             public TargetMethod call() throws Exception {
                                 try {
-                                    TargetMethod result = compilationScheme.synchronousCompile((ClassMethodActor) methodActor, null);
+                                    TargetMethod result = cb.compile((ClassMethodActor) methodActor, null);
                                     assert result != null;
                                     return result;
                                 } catch (Throwable error) {
@@ -812,7 +813,7 @@ public class CompiledPrototype extends Prototype {
         Word[] words = hub.expansion.words;
         for (int vTableIndex = Hub.vTableStartIndex(); vTableIndex < Hub.vTableStartIndex() + hub.vTableLength(); vTableIndex++) {
             final VirtualMethodActor virtualMethodActor = classActor.getVirtualMethodActorByVTableIndex(vTableIndex);
-            final TargetMethod targetMethod = CompilationScheme.Static.getCurrentTargetMethod(virtualMethodActor);
+            final TargetMethod targetMethod = virtualMethodActor.currentTargetMethod();
             if (targetMethod != null) {
                 words[vTableIndex] = VTABLE_ENTRY_POINT.in(targetMethod);
             }
@@ -853,7 +854,7 @@ public class CompiledPrototype extends Prototype {
                 final int iTableIndex = interfaceIndex + interfaceMethodActor.iIndexInInterface();
                 final int iIndex = iTableIndex - hub.iTableStartIndex;
                 final VirtualMethodActor virtualMethodActor = classActor.getVirtualMethodActorByIIndex(iIndex);
-                final TargetMethod targetMethod = CompilationScheme.Static.getCurrentTargetMethod(virtualMethodActor);
+                final TargetMethod targetMethod = virtualMethodActor.currentTargetMethod();
                 assert virtualMethodActor.name == interfaceMethodActor.name;
                 if (targetMethod != null) {
                     words[iTableIndex] = VTABLE_ENTRY_POINT.in(targetMethod);

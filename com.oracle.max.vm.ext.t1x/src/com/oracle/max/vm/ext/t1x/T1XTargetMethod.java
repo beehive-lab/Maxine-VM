@@ -25,6 +25,7 @@ package com.oracle.max.vm.ext.t1x;
 import static com.oracle.max.vm.ext.t1x.T1X.*;
 import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.compiler.target.Safepoints.*;
 import static com.sun.max.vm.compiler.target.Stub.Type.*;
@@ -332,7 +333,7 @@ public final class T1XTargetMethod extends TargetMethod {
     public void redirectTo(TargetMethod tm) {
         if (platform().isa == ISA.AMD64) {
             AMD64TargetMethodUtil.patchWithJump(this, BASELINE_ENTRY_POINT.offset(), BASELINE_ENTRY_POINT.in(tm));
-            if (VMConfiguration.vmConfig().needsAdapters()) {
+            if (vm().compilationBroker.needsAdapters()) {
                 AMD64TargetMethodUtil.patchWithJump(this, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(tm));
             }
         } else {

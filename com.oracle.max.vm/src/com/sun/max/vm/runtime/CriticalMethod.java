@@ -115,6 +115,6 @@ public class CriticalMethod {
      * @return {@code null} if this critical method has not been compiled.
      */
     public TargetMethod targetMethod() {
-        return CompilationScheme.Static.getCurrentTargetMethod(classMethodActor);
+        return classMethodActor.currentTargetMethod();
     }
 }

@@ -225,7 +225,7 @@ public final class MaxTargetMethod extends TargetMethod implements Cloneable {
     public void redirectTo(TargetMethod tm) {
         if (platform().isa == ISA.AMD64) {
             AMD64TargetMethodUtil.patchWithJump(this, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(tm));
-            if (VMConfiguration.vmConfig().needsAdapters()) {
+            if (vm().compilationBroker.needsAdapters()) {
                 AMD64TargetMethodUtil.patchWithJump(this, BASELINE_ENTRY_POINT.offset(), BASELINE_ENTRY_POINT.in(tm));
             }
         } else {

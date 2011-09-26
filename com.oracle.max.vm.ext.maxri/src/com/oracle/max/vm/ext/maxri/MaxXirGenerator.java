@@ -25,7 +25,6 @@ package com.oracle.max.vm.ext.maxri;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
-import static com.sun.max.vm.compiler.CompilationScheme.Static.*;
 import static com.sun.max.vm.layout.Layout.*;
 import static com.sun.max.vm.runtime.amd64.AMD64SafepointPoll.*;
 import static java.lang.reflect.Modifier.*;
@@ -1670,7 +1669,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         public static Word resolveStaticMethod(ResolutionGuard.InPool guard) {
             StaticMethodActor methodActor = Snippets.resolveStaticMethod(guard);
             Snippets.makeHolderInitialized(methodActor);
-            return compile(methodActor, null).getEntryPoint(OPTIMIZED_ENTRY_POINT).asAddress();
+            return methodActor.makeTargetMethod().getEntryPoint(OPTIMIZED_ENTRY_POINT).asAddress();
         }
 
         public static int resolveVirtualMethod(ResolutionGuard.InPool guard) {
@@ -1678,7 +1677,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
 
         public static Word resolveSpecialMethod(ResolutionGuard.InPool guard) {
-            return compile(Snippets.resolveSpecialMethod(guard), null).getEntryPoint(OPTIMIZED_ENTRY_POINT).asAddress();
+            return Snippets.resolveSpecialMethod(guard).makeTargetMethod().getEntryPoint(OPTIMIZED_ENTRY_POINT).asAddress();
         }
 
         public static int resolveInterfaceMethod(ResolutionGuard.InPool guard) {
