@@ -27,7 +27,6 @@ import static com.sun.max.vm.actor.member.LivenessAdapter.*;
 
 import java.lang.reflect.*;
 
-import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
@@ -224,8 +223,6 @@ public abstract class ClassMethodActor extends MethodActor {
                     codeAttribute = verify(compilee, codeAttribute, verifier);
                 }
 
-                codeAttribute = intrinsify(compilee, codeAttribute);
-
                 this.codeAttribute = codeAttribute;
                 this.compilee = compilee;
             }
@@ -246,38 +243,6 @@ public abstract class ClassMethodActor extends MethodActor {
         } else {
             codeAttribute = verifier.verify(compilee, codeAttribute);
             beVerified();
-        }
-        return codeAttribute;
-    }
-
-    /**
-     * Performs {@linkplain BytecodeIntrinsifier intrinsification} on a given code attribute.
-     * This method also rewrites the code attribute if it contains any subroutines.
-     */
-    private CodeAttribute intrinsify(ClassMethodActor compilee, CodeAttribute codeAttribute) {
-        if (codeAttribute != null) {
-            Intrinsifier intrinsifier = new Intrinsifier(compilee, codeAttribute);
-            intrinsifier.run();
-            ClassActor holder = compilee.holder();
-            if ((intrinsifier.flags & BytecodeIntrinsifier.FLAG_HAS_SUBROUTINE) != 0) {
-                // Inline subroutines
-                String methodString = logBeforeSubroutineInlining(compilee);
-                TypeInferencingVerifier verifier = new TypeInferencingVerifier(holder);
-                codeAttribute = verify(compilee, codeAttribute, verifier);
-                logAfterSubroutineInlining(compilee, methodString);
-            } else if ((intrinsifier.flags & BytecodeIntrinsifier.FLAG_CHANGED) != 0) {
-                // Verify code that changed as it usually means word types are used and
-                // we want to make sure they are not being mixed with Object types.
-                if (!holder.kind.isWord) {
-                    ClassVerifier verifier = Verifier.verifierFor(holder);
-                    codeAttribute = verify(compilee, codeAttribute, verifier);
-                }
-            }
-
-            if (intrinsifier.unsafe) {
-                compilee.beUnsafe();
-                beUnsafe();
-            }
         }
         return codeAttribute;
     }
@@ -397,6 +362,8 @@ public abstract class ClassMethodActor extends MethodActor {
                 assert newCodeAttribute == null;
                 constantPoolEditor = cma.holder().constantPool().edit();
                 newCodeAttribute = new NativeStubGenerator(constantPoolEditor, cma).codeAttribute();
+                // The CALL_JNI bytecode is only supported by the optimizing compiler
+                cma.beUnsafe();
                 reason = "native";
             }
             if (transformationClient != null) {

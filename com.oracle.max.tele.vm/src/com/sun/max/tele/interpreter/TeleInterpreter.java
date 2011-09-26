@@ -449,7 +449,6 @@ public final class TeleInterpreter {
             case LLOAD:
             case FLOAD:
             case DLOAD:
-            case WLOAD:
             case ALOAD:              push(local(isWide ? readU2() : readU1())); break;
             case ILOAD_0:
             case ILOAD_1:
@@ -471,10 +470,6 @@ public final class TeleInterpreter {
             case ALOAD_1:
             case ALOAD_2:
             case ALOAD_3:            push(local(opcode - ALOAD_0)); break;
-            case WLOAD_0:
-            case WLOAD_1:
-            case WLOAD_2:
-            case WLOAD_3:            push(local(opcode - WLOAD_0)); break;
             case IALOAD:             arrayLoad(Kind.INT); break;
             case LALOAD:             arrayLoad(Kind.LONG); break;
             case FALOAD:             arrayLoad(Kind.FLOAT); break;
@@ -487,7 +482,6 @@ public final class TeleInterpreter {
             case LSTORE:
             case FSTORE:
             case DSTORE:
-            case WSTORE:
             case ASTORE:             setLocal(isWide ? readU2() : readU1(), pop()); break;
             case ISTORE_0:
             case ISTORE_1:
@@ -509,10 +503,6 @@ public final class TeleInterpreter {
             case ASTORE_1:
             case ASTORE_2:
             case ASTORE_3:           setLocal(opcode - ASTORE_0, pop()); break;
-            case WSTORE_0:
-            case WSTORE_1:
-            case WSTORE_2:
-            case WSTORE_3:           setLocal(opcode - WSTORE_0, pop()); break;
             case IASTORE:            arrayStore(Kind.INT); break;
             case LASTORE:            arrayStore(Kind.LONG); break;
             case FASTORE:            arrayStore(Kind.FLOAT); break;
@@ -944,7 +934,6 @@ public final class TeleInterpreter {
             case LRETURN:
             case FRETURN:
             case DRETURN:
-            case WRETURN:
             case ARETURN: {
                 Value result = pop();
                 ExecutionFrame frame = machine.popFrame();
