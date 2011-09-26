@@ -25,10 +25,8 @@ package com.sun.max.vm.compiler.target;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
-import static com.sun.max.vm.compiler.CompilationScheme.Static.*;
 import static com.sun.max.vm.compiler.deopt.Deoptimization.*;
 import static com.sun.max.vm.compiler.target.Stub.Type.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
@@ -154,8 +152,7 @@ public class Stubs {
     private void delayedInit() {
         if (isHosted()) {
             if (prologueSize == -1) {
-                // TODO: Compute prologue size properly
-                prologueSize = vmConfig().needsAdapters() ? 8 : 0;
+                prologueSize = OPTIMIZED_ENTRY_POINT.offset();
                 resolveVirtualCall = new CriticalMethod(Stubs.class, "resolveVirtualCall", null);
                 resolveInterfaceCall = new CriticalMethod(Stubs.class, "resolveInterfaceCall", null);
                 resolveVirtualCallArgs = registerConfigs.trampoline.getCallingConvention(JavaCall,
@@ -267,7 +264,7 @@ public class Stubs {
         if (selectedCallee.isAbstract()) {
             throw new AbstractMethodError();
         }
-        final Address vtableEntryPoint = compile(selectedCallee, null).getEntryPoint(VTABLE_ENTRY_POINT).asAddress();
+        final Address vtableEntryPoint = selectedCallee.makeTargetMethod().getEntryPoint(VTABLE_ENTRY_POINT).asAddress();
         hub.setWord(vTableIndex, vtableEntryPoint);
         return adjustEntryPointForCaller(vtableEntryPoint, pcInCaller);
     }
@@ -286,7 +283,7 @@ public class Stubs {
         if (selectedCallee.isAbstract()) {
             throw new AbstractMethodError();
         }
-        final Address itableEntryPoint = compile(selectedCallee, null).getEntryPoint(VTABLE_ENTRY_POINT).asAddress();
+        final Address itableEntryPoint = selectedCallee.makeTargetMethod().getEntryPoint(VTABLE_ENTRY_POINT).asAddress();
         hub.setWord(hub.iTableStartIndex + iIndex, itableEntryPoint);
         return adjustEntryPointForCaller(itableEntryPoint, pcInCaller);
     }
@@ -361,7 +358,7 @@ public class Stubs {
 
         final ClassMethodActor callee = caller.callSiteToCallee(callSite);
 
-        final Address calleeEntryPoint = compile(callee, null).getEntryPoint(caller.callEntryPoint).asAddress();
+        final Address calleeEntryPoint = callee.makeTargetMethod().getEntryPoint(caller.callEntryPoint).asAddress();
         AMD64TargetMethodUtil.mtSafePatchCallDisplacement(caller, callSite, calleeEntryPoint);
     }
 

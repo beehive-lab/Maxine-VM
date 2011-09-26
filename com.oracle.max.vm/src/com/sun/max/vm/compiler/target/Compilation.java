@@ -70,7 +70,6 @@ public class Compilation {
     @RESET
     private static long compilationTime;
 
-    public final CompilationScheme compilationScheme;
     public RuntimeCompiler compiler;
     public final ClassMethodActor classMethodActor;
     public final Compilation parent;
@@ -87,13 +86,12 @@ public class Compilation {
 
     public final RuntimeCompiler.Nature nature;
 
-    public Compilation(CompilationScheme compilationScheme,
-                       RuntimeCompiler compiler,
+    public Compilation(RuntimeCompiler compiler,
                        ClassMethodActor classMethodActor,
-                       Compilations prevCompilations, Thread compilingThread, RuntimeCompiler.Nature nature) {
+                       Compilations prevCompilations,
+                       Thread compilingThread, RuntimeCompiler.Nature nature) {
         assert prevCompilations != null;
         this.parent = COMPILATION.get();
-        this.compilationScheme = compilationScheme;
         this.compiler = compiler;
         this.classMethodActor = classMethodActor;
         this.prevCompilations = prevCompilations;
@@ -149,7 +147,7 @@ public class Compilation {
             boolean interrupted = false;
             if (!done) {
                 if (compilingThread == Thread.currentThread()) {
-                    throw new RuntimeException("Compilation of " + classMethodActor.format("%H.%n(%p)") + " is recursive, current compilation scheme: " + compilationScheme);
+                    throw new RuntimeException("Compilation of " + classMethodActor.format("%H.%n(%p)") + " is recursive");
                 }
 
                 // the class method actor is used here as the condition variable

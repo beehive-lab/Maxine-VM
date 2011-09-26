@@ -22,8 +22,7 @@
  */
 package com.oracle.max.vm.ext.maxri;
 
-import static com.sun.max.vm.VMConfiguration.*;
-
+import static com.sun.max.vm.MaxineVM.*;
 import java.lang.annotation.*;
 import java.lang.reflect.*;
 
@@ -202,7 +201,7 @@ public class MaxRuntimeCalls {
         if (MaxineVM.isHosted()) {
             new CriticalMethod(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         } else {
-            vmConfig().compilationScheme().synchronousCompile(classMethodActor, null);
+            vm().compilationBroker.compile(classMethodActor, null);
         }
     }
 }
