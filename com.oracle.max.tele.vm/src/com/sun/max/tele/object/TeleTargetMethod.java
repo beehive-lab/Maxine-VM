@@ -23,7 +23,6 @@
 package com.sun.max.tele.object;
 
 import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.VMConfiguration.*;
 
 import java.io.*;
 import java.util.*;
@@ -49,6 +48,7 @@ import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.type.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -300,7 +300,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
                     this.callEntryPoint = Address.zero();
                 } else {
                     Address callEntryAddress = codeStart;
-                    if (vmConfig().needsAdapters()) {
+                    if (MaxineVM.vm().compilationBroker.needsAdapters()) {
                         final Reference callEntryPointReference = vm().teleFields().TargetMethod_callEntryPoint.readReference(reference());
                         final TeleObject teleCallEntryPoint = heap().makeTeleObject(callEntryPointReference);
                         if (teleCallEntryPoint != null) {

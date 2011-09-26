@@ -23,6 +23,7 @@
 package com.sun.max.vm.jdk;
 
 import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
@@ -652,7 +653,7 @@ public final class JDK_java_lang_System {
         // 2. set up basic Maxine configuration information
         setIfAbsent(properties, "java.vm.name", MaxineVM.name());
         setIfAbsent(properties, "java.vm.version", MaxineVM.VERSION_STRING);
-        setIfAbsent(properties, "java.vm.info", vmConfig().compilationScheme().description());
+        setIfAbsent(properties, "java.vm.info", vm().compilationBroker.mode());
 
         setIfAbsent(properties, "sun.arch.data.model", Integer.toString(Word.width()));
         setIfAbsent(properties, "sun.cpu.endian", Word.endianness().name().toLowerCase());

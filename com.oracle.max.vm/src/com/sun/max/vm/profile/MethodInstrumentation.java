@@ -63,7 +63,7 @@ public class MethodInstrumentation {
     @INLINE
     public static void recordEntrypoint(MethodProfile mpo, Object receiver) {
         if (--mpo.entryCount <= 0) {
-            CompilationScheme.Static.instrumentationCounterOverflow(mpo, receiver);
+            CompilationBroker.instrumentationCounterOverflow(mpo, receiver);
         }
     }
 

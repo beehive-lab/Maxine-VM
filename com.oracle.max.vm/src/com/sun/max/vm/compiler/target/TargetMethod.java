@@ -715,7 +715,7 @@ public abstract class TargetMethod extends MemoryRegion {
     public final TargetMethod getTargetMethod(Object o) {
         TargetMethod result = null;
         if (o instanceof ClassMethodActor) {
-            result = CompilationScheme.Static.getCurrentTargetMethod((ClassMethodActor) o);
+            result = ((ClassMethodActor) o).currentTargetMethod();
         } else if (o instanceof TargetMethod) {
             result = (TargetMethod) o;
         }

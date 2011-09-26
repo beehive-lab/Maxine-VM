@@ -24,8 +24,6 @@ package com.oracle.max.vm.ext.c1x;
 
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.VMConfiguration.*;
-
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
@@ -200,7 +198,7 @@ public class C1X implements RuntimeCompiler {
         }
         if (phase == Phase.STARTING) {
             // Now it is safe to use speculative opts
-            C1XOptions.UseAssumptions = vmConfig().compilationScheme().isDeoptSupported() && Deoptimization.UseDeopt;
+            C1XOptions.UseAssumptions = vm().compilationBroker.isDeoptSupported() && Deoptimization.UseDeopt;
         } else if (phase == Phase.TERMINATING) {
             if (C1XOptions.PrintMetrics) {
                 C1XMetrics.print();
