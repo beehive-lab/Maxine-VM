@@ -103,7 +103,7 @@ public class VMAT1X extends T1X {
     // These will eventually be implemented
     private static final EnumSet<T1XTemplateTag>  TEMP_UNIMPLEMENTED_TEMPLATES = EnumSet.of(
                     NOP, BIPUSH, SIPUSH, LDC$int, LDC$long, LDC$float, LDC$double,
-                    LDC$reference$resolved, ILOAD, LLOAD, FLOAD, DLOAD, ALOAD, WLOAD, ISTORE, LSTORE, FSTORE, DSTORE, ASTORE, WSTORE, POP, POP2, DUP, DUP_X1, DUP_X2, DUP2, DUP2_X1, DUP2_X2, SWAP,
+                    LDC$reference$resolved, ILOAD, LLOAD, FLOAD, DLOAD, ALOAD, ISTORE, LSTORE, FSTORE, DSTORE, ASTORE, POP, POP2, DUP, DUP_X1, DUP_X2, DUP2, DUP2_X1, DUP2_X2, SWAP,
                     IINC, IFEQ, IFNE, IFLT, IFGE, IFGT, IFLE, IF_ICMPEQ, IF_ICMPNE, IF_ICMPLT, IF_ICMPGE, IF_ICMPGT, IF_ICMPLE, IF_ACMPEQ, IF_ACMPNE, IFNULL, IFNONNULL, GOTO, GOTO_W
     );
 

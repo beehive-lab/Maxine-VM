@@ -374,7 +374,6 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                 case FLOAD:
                 case DLOAD:
                 case ALOAD:
-                case WLOAD:
                     assert adviceType == AdviceType.BEFORE;
                     generateLoad(k);
                     break;
@@ -384,7 +383,6 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                 case FSTORE:
                 case DSTORE:
                 case ASTORE:
-                case WSTORE:
                     assert adviceType == AdviceType.BEFORE;
                     generateStore(k);
                     break;
@@ -641,7 +639,6 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                 case FRETURN:
                 case DRETURN:
                 case ARETURN:
-                case WRETURN:
                 case RETURN:
 
                 case IRETURN$unlock:
@@ -649,7 +646,6 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
                 case FRETURN$unlock:
                 case DRETURN$unlock:
                 case ARETURN$unlock:
-                case WRETURN$unlock:
                 case RETURN$unlock:
                     generateReturn(tag, k);
                     break;
@@ -1180,7 +1176,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
 
     }
 
-    private static final EnumSet<T1XTemplateTag> LOAD_TEMPLATE_TAGS = EnumSet.of(ILOAD, LLOAD, FLOAD, DLOAD, ALOAD, WLOAD);
+    private static final EnumSet<T1XTemplateTag> LOAD_TEMPLATE_TAGS = EnumSet.of(ILOAD, LLOAD, FLOAD, DLOAD, ALOAD);
 
     private static String lsType(T1XTemplateTag tag) {
         // Checkstyle: stop
@@ -1190,7 +1186,6 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
             case FLOAD: case FSTORE: return "float";
             case DLOAD: case DSTORE: return "double";
             case ALOAD: case ASTORE: return "Object";
-            case WLOAD: case WSTORE: return "Word";
         }
         // Checkstype: resume
         return "???";
@@ -1218,7 +1213,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
     }
 
 
-    private static final EnumSet<T1XTemplateTag> STORE_TEMPLATE_TAGS = EnumSet.of(ISTORE, LSTORE, FSTORE, DSTORE, ASTORE, WSTORE);
+    private static final EnumSet<T1XTemplateTag> STORE_TEMPLATE_TAGS = EnumSet.of(ISTORE, LSTORE, FSTORE, DSTORE, ASTORE);
 
     /**
      * Generate all the {@link #STORE_TEMPLATE_TAGS}.

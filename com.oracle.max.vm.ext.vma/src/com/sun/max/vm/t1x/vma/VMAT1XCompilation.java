@@ -321,7 +321,7 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
                 case Long: tag = LLOAD; break;
                 case Float: tag = FLOAD; break;
                 case Double: tag = DLOAD; break;
-                case Word: tag = WLOAD; break;
+                case Word: tag = ALOAD; break;
             }
             // Checkstyle: resume
             start(tag);
@@ -342,7 +342,7 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
                 case Long: tag = LSTORE; break;
                 case Float: tag = FSTORE; break;
                 case Double: tag = DSTORE; break;
-                case Word: tag = WSTORE; break;
+                case Word: tag = ASTORE; break;
             }
             // Checkstyle: resume
             start(tag);

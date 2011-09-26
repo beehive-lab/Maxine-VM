@@ -34,6 +34,7 @@ public class T1XMetrics {
     public static int MethodsWithSubroutines;
     public static int BytecodesCompiled;
     public static int CodeBytesEmitted;
+    public static int Bailouts;
 
     public static void print() {
         C1XMetrics.printClassFields(T1XMetrics.class);

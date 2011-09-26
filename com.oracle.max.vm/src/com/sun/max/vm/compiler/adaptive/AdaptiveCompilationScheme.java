@@ -70,7 +70,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
 
     private static boolean opt;
     private static boolean GCOnRecompilation;
-    private static boolean FailOverCompilation;
+    private static boolean FailOverCompilation = true;
     static int PrintCodeCacheMetrics;
 
     static {
@@ -265,7 +265,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                     t.printStackTrace(Log.out);
                     Log.unlock(lockDisabledSafepoints);
                 }
-                if (!FailOverCompilation || retryCompiler != null || (baselineCompiler == null) || isHosted()) {
+                if (!FailOverCompilation || retryCompiler != null || (baselineCompiler == null) || (isHosted() && compilation.compiler == optimizingCompiler)) {
                     // This is the final failure: no other compilers available or failover is disabled
                     throw (InternalError) new InternalError(errorMessage + " (final attempt)").initCause(t);
                 }

@@ -1958,19 +1958,6 @@ public class T1XTemplateSource {
         }
     }
 
-    @T1X_TEMPLATE(WRETURN)
-    @Slot(-1)
-    public static Word wreturn(@Slot(0) Word value) {
-        return value;
-    }
-
-    @T1X_TEMPLATE(WRETURN$unlock)
-    @Slot(-1)
-    public static Word wreturnUnlock(Reference object, @Slot(0) Word value) {
-        Monitor.noninlineExit(object);
-        return value;
-    }
-
     /**
      * Resolves and selects the correct implementation of a method referenced by an INVOKEVIRTUAL instruction.
      *
