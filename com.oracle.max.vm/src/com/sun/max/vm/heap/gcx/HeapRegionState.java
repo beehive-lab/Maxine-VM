@@ -130,4 +130,12 @@ public enum HeapRegionState {
         }
         rinfo.flags = flags;
     }
+
+    public final static void toFreeChunkState(HeapRegionInfo rinfo) {
+        int flags = IS_ITERABLE.or(HAS_FREE_CHUNK.or(IS_ALLOCATING.clear(rinfo.flags)));
+        if (MaxineVM.isDebug()) {
+            checkStateTransition(rinfo, toHeapRegionState(flags));
+        }
+        rinfo.flags = flags;
+    }
 }
