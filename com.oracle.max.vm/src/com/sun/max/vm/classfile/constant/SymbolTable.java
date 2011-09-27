@@ -22,6 +22,8 @@
  */
 package com.sun.max.vm.classfile.constant;
 
+import java.io.*;
+
 import com.sun.max.collect.*;
 import com.sun.max.collect.ChainedHashMapping.*;
 import com.sun.max.vm.*;
@@ -65,6 +67,12 @@ public final class SymbolTable {
 
         public Utf8ConstantEntry value() {
             return this;
+        }
+
+        @Override
+        public void writeOn(DataOutputStream stream, ConstantPoolEditor editor, int index) throws IOException {
+            super.writeOn(stream, editor, index);
+            stream.writeUTF(editor.pool().utf8At(index, null).toString());
         }
     }
 
