@@ -1837,22 +1837,10 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
             }
             switch (opcode) {
                 // Checkstyle: stop
-                case WLOAD: performLoad(WORD, operand); break;
-                case WLOAD_0:                performLoad(WORD, 0); break;
-                case WLOAD_1:                performLoad(WORD, 1); break;
-                case WLOAD_2:                performLoad(WORD, 2); break;
-                case WLOAD_3:                performLoad(WORD, 3); break;
-                case WSTORE:                 performStore(WORD, operand); break;
-                case WSTORE_0:               performStore(WORD, 0); break;
-                case WSTORE_1:               performStore(WORD, 1); break;
-                case WSTORE_2:               performStore(WORD, 2); break;
-                case WSTORE_3:               performStore(WORD, 3); break;
-
                 case JNICALL: {
                     jnicall(operand);
                     break;
                 }
-                case WRETURN            : performReturn(WORD); break;
 
                 default:
                     verifyError("Unsupported bytecode: " + Bytecodes.nameOf(opcode));

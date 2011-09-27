@@ -377,7 +377,6 @@ public final class BlockMap {
                 case FRETURN: // fall through
                 case DRETURN: // fall through
                 case ARETURN: // fall through
-                case WRETURN: // fall through
                 case RETURN:
                     if (exceptionMap != null && exceptionMap.isObjectInit) {
                         exceptionMap.setCanTrap(bci);
@@ -611,7 +610,6 @@ public final class BlockMap {
             case LSTORE:   storeTwo(code[bci + 1] & 0xff); return 2;
             case FSTORE:   storeOne(code[bci + 1] & 0xff); return 2;
             case DSTORE:   storeTwo(code[bci + 1] & 0xff); return 2;
-            case WSTORE:
             case ASTORE:   storeOne(code[bci + 1] & 0xff); return 2;
             case ISTORE_0: // fall through
             case ISTORE_1: // fall through
@@ -633,10 +631,6 @@ public final class BlockMap {
             case ASTORE_1: // fall through
             case ASTORE_2: // fall through
             case ASTORE_3: storeOne(opcode - ASTORE_0); return 1;
-            case WSTORE_0: // fall through
-            case WSTORE_1: // fall through
-            case WSTORE_2: // fall through
-            case WSTORE_3: storeOne(opcode - WSTORE_0); return 1;
         }
         // Checkstyle: on
         throw Util.shouldNotReachHere();

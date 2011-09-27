@@ -50,7 +50,6 @@ final class JDK_java_lang_Object {
      * @return the class of this object
      */
     @SUBSTITUTE("getClass")
-    @INLINE
     public Class getClass_SUBSTITUTE() {
         return ObjectAccess.readClassActor(this).javaClass();
     }

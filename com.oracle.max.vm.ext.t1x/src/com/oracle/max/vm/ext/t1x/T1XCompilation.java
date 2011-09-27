@@ -39,6 +39,7 @@ import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
@@ -1240,20 +1241,6 @@ public abstract class T1XCompilation {
             case Bytecodes.LOOKUPSWITCH       : do_lookupswitch(); break;
             case Bytecodes.IINC               : do_iinc(stream.readLocalIndex(), stream.readIncrement()); break;
             case Bytecodes.MULTIANEWARRAY     : do_multianewarray(stream.readCPI(), stream.readUByte(stream.currentBCI() + 3)); break;
-
-            case Bytecodes.WLOAD              : do_load(stream.readLocalIndex(), CiKind.Word); break;
-            case Bytecodes.WLOAD_0            : do_load(0, CiKind.Word); break;
-            case Bytecodes.WLOAD_1            : do_load(1, CiKind.Word); break;
-            case Bytecodes.WLOAD_2            : do_load(2, CiKind.Word); break;
-            case Bytecodes.WLOAD_3            : do_load(3, CiKind.Word); break;
-            case Bytecodes.WSTORE             : do_store(stream.readLocalIndex(), CiKind.Word); break;
-            case Bytecodes.WSTORE_0           : do_store(0, CiKind.Word); break;
-            case Bytecodes.WSTORE_1           : do_store(1, CiKind.Word); break;
-            case Bytecodes.WSTORE_2           : do_store(2, CiKind.Word); break;
-            case Bytecodes.WSTORE_3           : do_store(3, CiKind.Word); break;
-
-            case Bytecodes.WRETURN            : do_return(WRETURN, WRETURN$unlock); break;
-
             case Bytecodes.RET                :
             case Bytecodes.JSR_W              :
             case Bytecodes.JSR                : throw new UnsupportedSubroutineException(opcode, stream.currentBCI());
@@ -1576,6 +1563,13 @@ public abstract class T1XCompilation {
     protected void do_invokevirtual(int index) {
         ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
         SignatureDescriptor signature = classMethodRef.signature(cp);
+
+        if (classMethodRef.holder(cp).toKind().isWord) {
+            // Dynamic dispatch on Word types is not possible, since raw pointers do not have any method tables.
+            do_invokespecial(index);
+            return;
+        }
+
         CiKind kind = invokeKind(signature);
         T1XTemplateTag tag = INVOKEVIRTUALS.get(kind);
         int receiverStackIndex = receiverStackIndex(signature);
@@ -1623,6 +1617,13 @@ public abstract class T1XCompilation {
     protected void do_invokeinterface(int index) {
         InterfaceMethodRefConstant interfaceMethodRef = cp.interfaceMethodAt(index);
         SignatureDescriptor signature = interfaceMethodRef.signature(cp);
+
+        if (interfaceMethodRef.holder(cp).toKind().isWord) {
+            // Dynamic dispatch on Word types is not possible, since raw pointers do not have any method tables.
+            do_invokespecial(index);
+            return;
+        }
+
         CiKind kind = invokeKind(signature);
         T1XTemplateTag tag = INVOKEINTERFACES.get(kind);
         int receiverStackIndex = receiverStackIndex(signature);
@@ -1723,8 +1724,18 @@ public abstract class T1XCompilation {
     protected boolean processIntrinsic(MethodActor method) {
         String intrinsic = method.intrinsic();
 
-        if (Intrinsifier.isUnsafe(intrinsic)) {
+        if (T1X.unsafeIntrinsicIDs.contains(intrinsic)) {
+            T1XMetrics.Bailouts++;
+            if (T1XOptions.PrintBailouts) {
+                Log.println("T1X bailout: unsupported intrinsic method " + method + "  called from " + this.method);
+            }
             throw new CiBailout("Unsupported intrinsic " + intrinsic + ": " + errorSuffix());
+        } else if ((method.flags() & (Actor.FOLD | Actor.INLINE)) != 0) {
+            T1XMetrics.Bailouts++;
+            if (T1XOptions.PrintBailouts) {
+                Log.println("T1X bailout: unsupported INLINE or FOLD method method " + method + "  called from " + this.method);
+            }
+            throw new CiBailout("INLINE and FOLD methods are not supported: " + method);
         }
 
         if (intrinsic == MaxineIntrinsicIDs.UNSAFE_CAST) {

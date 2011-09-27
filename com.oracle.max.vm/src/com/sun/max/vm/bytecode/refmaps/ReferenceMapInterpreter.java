@@ -1212,7 +1212,6 @@ public abstract class ReferenceMapInterpreter {
                 }
                 case IRETURN:
                 case FRETURN:
-                case WRETURN:
                 case ARETURN:
                 {
                     popCategory1();
@@ -1438,30 +1437,6 @@ public abstract class ReferenceMapInterpreter {
                     break;
                 }
 
-                case WLOAD: {
-                    skip1();
-                    pushCategory1();
-                    break;
-                }
-                case WLOAD_0:
-                case WLOAD_1:
-                case WLOAD_2:
-                case WLOAD_3: {
-                    pushCategory1();
-                    break;
-                }
-                case WSTORE: {
-                    skip1();
-                    popCategory1();
-                    break;
-                }
-                case WSTORE_0:
-                case WSTORE_1:
-                case WSTORE_2:
-                case WSTORE_3: {
-                    popCategory1();
-                    break;
-                }
                 default: {
                     String name = Bytecodes.nameOf(opcode);
                     FatalError.unexpected("Unknown bytcode: " + name);

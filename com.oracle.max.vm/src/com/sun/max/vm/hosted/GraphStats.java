@@ -31,7 +31,6 @@ import com.sun.max.program.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.hosted.GraphPrototype.ClassInfo;
 import com.sun.max.vm.object.*;
@@ -235,7 +234,7 @@ public class GraphStats {
         if (methodActor instanceof ClassMethodActor) {
             final ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
             methodStats.bytecodeSize = computeCodeAttributeSize(getCodeAttribute(classMethodActor));
-            final TargetMethod targetMethod = CompilationScheme.Static.getCurrentTargetMethod(classMethodActor);
+            final TargetMethod targetMethod = classMethodActor.currentTargetMethod();
             if (targetMethod != null) {
                 methodStats.targetMethodSize = computeTargetMethodSize(targetMethod);
                 methodStats.targetCodeSize = sizeOf(targetMethod.code());

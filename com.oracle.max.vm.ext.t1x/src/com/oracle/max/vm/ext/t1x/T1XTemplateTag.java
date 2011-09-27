@@ -68,7 +68,6 @@ public enum T1XTemplateTag {
     FLOAD,
     DLOAD,
     ALOAD,
-    WLOAD,
     IALOAD,
     LALOAD,
     FALOAD,
@@ -82,7 +81,6 @@ public enum T1XTemplateTag {
     FSTORE,
     DSTORE,
     ASTORE,
-    WSTORE,
     IASTORE,
     LASTORE,
     FASTORE,
@@ -356,9 +354,6 @@ public enum T1XTemplateTag {
     MULTIANEWARRAY$resolved,
     IFNULL,
     IFNONNULL,
-
-    WRETURN,
-    WRETURN$unlock,
 
     LOAD_EXCEPTION(-1),
     RETHROW_EXCEPTION(-1),
