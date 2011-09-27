@@ -24,7 +24,7 @@ package com.sun.max.vm.heap.gcx;
 
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 import static com.sun.max.vm.heap.gcx.HeapRegionInfo.*;
-import static com.sun.max.vm.heap.gcx.HeapRegionInfo.HeapRegionState.*;
+import static com.sun.max.vm.heap.gcx.HeapRegionState.*;
 import static com.sun.max.vm.heap.gcx.RegionTable.*;
 
 import com.sun.max.annotate.*;
@@ -148,6 +148,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
             }
             HeapFreeChunk.format(leftover, spaceLeft);
             rinfo.setFreeChunks(leftover,  spaceLeft, 1);
+            FREE_CHUNKS_REGION.setState(rinfo);
             tlabAllocationRegions.append(regionID);
             allocationRegionsFreeSpace = allocationRegionsFreeSpace.plus(spaceLeft);
         }
@@ -221,7 +222,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                                     }
                                     allocationRegions.remove(firstRegion);
                                     HeapRegionInfo firstRegionInfo = HeapRegionInfo.fromRegionID(firstRegion);
-                                    LARGE_HEAD_ONLY.setState(firstRegionInfo);
+                                    LARGE_HEAD.setState(firstRegionInfo);
                                     if (n > 2) {
                                         for (int i = firstRegion + 1; i < lastRegion; i++) {
                                             allocationRegions.remove(i);
@@ -239,7 +240,8 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                                     } else {
                                         // Format the tail as a free chunk.
                                         HeapFreeChunk.format(tail, tailSize);
-                                        lastRegionInfo.setLargeTail(tail, tailSize);
+                                        LARGE_TAIL.setState(lastRegionInfo);
+                                        lastRegionInfo.setFreeChunks(tail, tailSize, 1);
                                         if (tailSize.lessThan(minOverflowRefillSize)) {
                                             allocationRegions.remove(lastRegion);
                                             tlabAllocationRegions.append(lastRegion);
@@ -358,6 +360,8 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                     // Return what we have for now as changeAllocatingRegion can cause a GC.
                     return firstChunk;
                 }
+                // FIXME: we're not under the heap lock anymore here. (although we're protected with the refill lock).
+                // Is it ok to change the heap region info in these conditions ?
                 HeapRegionInfo regionInfo = changeAllocatingRegion();
                 FatalError.check(regionInfo != null, "must never be null");
                 nextFreeChunkInRegion = regionInfo.firstFreeBytes();
@@ -372,6 +376,8 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                         Log.unlock(lockDisabledSafepoints);
                     }
                     freeSpace = Size.fromInt(regionInfo.freeBytesInChunks());
+                    regionInfo.clearFreeChunks();
+                    HeapRegionState.toAllocatingState(regionInfo);
                 } else {
                     FatalError.check(!nextFreeChunkInRegion.isZero(), "must never be null");
                     // It's an empty region.
@@ -379,9 +385,8 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                     freeSpace = Size.zero();
                     allocator.refill(nextFreeChunkInRegion, Size.fromInt(regionSizeInBytes));
                     nextFreeChunkInRegion = Address.zero();
+                    HeapRegionState.toAllocatingState(regionInfo);
                     return Address.zero(); // indicates that allocator was refilled.
-                    // freeSpace = Size.fromInt(regionSizeInBytes);
-                    // HeapFreeChunk.format(nextFreeChunkInRegion, freeSpace);
                 }
             }
             Address result = Address.zero();
@@ -463,7 +468,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         @Override
         void doBeforeGC() {
             if (currentTLABAllocatingRegion != INVALID_REGION_ID) {
-                theRegionTable().regionInfo(currentTLABAllocatingRegion).toIterable();
+                FULL_REGION.setState(theRegionTable().regionInfo(currentTLABAllocatingRegion));
                 currentTLABAllocatingRegion = INVALID_REGION_ID;
             }
             nextFreeChunkInRegion = Address.zero();
@@ -489,7 +494,8 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                     FatalError.check(!regionInfo.hasFreeChunks() && regionInfo.numFreeChunks() == 0 &&
                                     regionInfo.firstFreeChunkIndex == 0, "Region with chunks should not be set to full state !");
                 }
-                regionInfo.toFullState();
+                // We don't know what specific allocating states we're in, so use this method to move to the corresponding a full state.
+                HeapRegionState.toFullState(regionInfo);
             }
             do {
                 currentTLABAllocatingRegion = tlabAllocationRegionList().removeHead();
@@ -508,7 +514,6 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                         Log.unlock(lockDisabledSafepoints);
                     }
                     allocationRegionsFreeSpace = allocationRegionsFreeSpace.minus(numFreeBytes);
-                    regionInfo.toAllocatingState();
                     return regionInfo;
                 }
 
@@ -562,7 +567,9 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                     }
                     overflowRefillFreeSpace = overflowRefillFreeSpace.plus(spaceLeft);
                     HeapFreeChunk.format(startOfSpaceLeft, spaceLeft);
+
                     regionInfo.setFreeChunks(startOfSpaceLeft, spaceLeft, 1);
+                    HeapRegionState.FREE_CHUNKS_REGION.setState(regionInfo);
                     // Can turn the left over into a chunk for tlab allocation.
                     allocationRegionsFreeSpace = allocationRegionsFreeSpace.plus(spaceLeft);
                     tlabAllocationRegions.append(currentOverflowAllocatingRegion);
@@ -605,7 +612,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                         Log.println(currentOverflowAllocatingRegion);
                     }
                     allocationRegions.remove(currentOverflowAllocatingRegion);
-                    regionInfo.toAllocatingState();
+                    ALLOCATING_REGION.setState(regionInfo);
                     return refill;
                 }
 
@@ -631,6 +638,11 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
 
         @Override
         void doBeforeGC() {
+            if (currentOverflowAllocatingRegion != INVALID_REGION_ID) {
+                // the bump allocator must have filled the allocated with a dead object. So mark it full.
+                FULL_REGION.setState(theRegionTable().regionInfo(currentOverflowAllocatingRegion));
+                currentOverflowAllocatingRegion = INVALID_REGION_ID;
+            }
         }
     }
 
@@ -680,7 +692,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         // Initialize TLAB allocator with first region.
         currentTLABAllocatingRegion = allocationRegions.removeHead();
         final HeapRegionInfo regionInfo = fromRegionID(currentTLABAllocatingRegion);
-        regionInfo.toAllocatingState();
+        ALLOCATING_REGION.setState(regionInfo);
         final Size allocatorsHeadroom = HeapSchemeAdaptor.MIN_OBJECT_SIZE;
         tlabAllocator.initialize(regionInfo.firstFreeBytes(), regionSize, regionSize, allocatorsHeadroom);
         overflowAllocator.initialize(Address.zero(), Size.zero(), allocatorsHeadroom);
@@ -825,7 +837,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         } else if (csrInfo.isEmpty()) {
             Log.println("  E");
         } else if (csrInfo.isLarge()) {
-            if (LARGE_HEAD_ONLY.isInState(csrInfo)) {
+            if (LARGE_HEAD.isInState(csrInfo)) {
                 Log.println(" H");
             } else if (LARGE_BODY.isInState(csrInfo)) {
                 Log.println(" B");
@@ -849,7 +861,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                 // Large object is live.
                 csrLastLiveAddress =  csrLastLiveAddress.plus(Layout.size(Layout.cellToOrigin(csrLastLiveAddress.asPointer())));
                 // Reset the flag
-                LARGE_HEAD_ONLY.setState(csrInfo);
+                LARGE_HEAD.setState(csrInfo);
                 // Skip all intermediate regions. They are full.
                 if (TraceSweep) {
                     traceSweptRegion();
@@ -891,6 +903,11 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                 allocationRegions.append(csrInfo.toRegionID());
                 allocationRegionsFreeSpace =  allocationRegionsFreeSpace.plus(regionSizeInBytes);
             } else {
+                if (csrIsMultiRegionObjectTail) {
+                    LARGE_TAIL.setState(csrInfo);
+                } else {
+                    FREE_CHUNKS_REGION.setState(csrInfo);
+                }
                 allocationRegionsFreeSpace =  allocationRegionsFreeSpace.plus(csrFreeBytes);
                 if (csrFreeChunks == 1 && minOverflowRefillSize.lessEqual(csrFreeBytes)) {
                     csrInfo.setFreeChunks(HeapFreeChunk.fromHeapFreeChunk(csrHead), csrFreeBytes,  csrFreeChunks);
@@ -899,9 +916,6 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                     FatalError.check(csrFreeBytes > 0 && (csrFreeChunks > 1 || minOverflowRefillSize.greaterThan(csrFreeBytes)) && csrHead != null, "unknown state for a swept region");
                     csrInfo.setFreeChunks(HeapFreeChunk.fromHeapFreeChunk(csrHead),  csrFreeBytes, csrFreeChunks);
                     tlabAllocationRegions.append(csrInfo.toRegionID());
-                }
-                if (csrIsMultiRegionObjectTail) {
-                    LARGE_TAIL.setState(csrInfo);
                 }
             }
             if (TraceSweep) {
@@ -914,6 +928,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
     public void reachedRightmostLiveRegion() {
         while (hasNextSweepingRegion()) {
             HeapRegionInfo rinfo = regionInfoIterable.next();
+            EMPTY_REGION.setState(rinfo);
             rinfo.resetOccupancy();
             allocationRegionsFreeSpace =  allocationRegionsFreeSpace.plus(regionSizeInBytes);
             allocationRegions.append(rinfo.toRegionID());
