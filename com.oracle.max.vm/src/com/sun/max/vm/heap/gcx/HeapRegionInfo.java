@@ -24,7 +24,7 @@ package com.sun.max.vm.heap.gcx;
 
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 import static com.sun.max.vm.heap.gcx.HeapRegionInfo.Flag.*;
-import static com.sun.max.vm.heap.gcx.HeapRegionInfo.HeapRegionState.*;
+import static com.sun.max.vm.heap.gcx.HeapRegionState.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
@@ -42,9 +42,9 @@ public class HeapRegionInfo {
 
     static enum Flag {
         /**
-         * Indicates that the region can be iterated over.
+         * Indicates that the region is part of an iterable range.
          * GCs and other operations walking over the heap must never come
-         * across a non-iterable region. Empty and allocating region may not be iterable.
+         * across a non-iterable region. Empty and allocating regions may not be iterable.
          */
         IS_ITERABLE,
         /**
@@ -113,32 +113,6 @@ public class HeapRegionInfo {
                     sep = " | ";
                 }
             }
-        }
-    }
-
-    enum HeapRegionState {
-        EMPTY_REGION(0),
-        ALLOCATING_FROM_EMPTY_REGION(IS_ALLOCATING.or(0)),
-        ALLOCATING_REGION(IS_ALLOCATING.or(HAS_FREE_CHUNK.or(0))),
-        FULL_REGION(IS_ITERABLE.or(0)),
-        FREE_CHUNKS_REGION(IS_ITERABLE.or(HAS_FREE_CHUNK.or(0))),
-        LARGE_HEAD_ONLY(IS_ITERABLE.or(IS_LARGE.or(IS_HEAD.or(0)))),
-        LARGE_BODY(IS_ITERABLE.or(IS_LARGE.or(0))),
-        LARGE_FULL_TAIL(IS_ITERABLE.or(IS_LARGE.or(IS_TAIL.or(0)))),
-        LARGE_TAIL(IS_ITERABLE.or(IS_LARGE.or(IS_TAIL.or(HAS_FREE_CHUNK.or(0))))),
-        LARGE_ALLOCATING_TAIL(IS_ALLOCATING.or(IS_LARGE.or(IS_TAIL.or(HAS_FREE_CHUNK.or(0)))));
-
-        final int flags;
-        HeapRegionState(int flags) {
-            this.flags = flags;
-        }
-
-        final boolean isInState(HeapRegionInfo rinfo) {
-            return rinfo.flags == flags;
-        }
-
-        final void setState(HeapRegionInfo rinfo) {
-            rinfo.flags = flags;
         }
     }
 
@@ -326,37 +300,7 @@ public class HeapRegionInfo {
         freeSpace = 0;
     }
 
-    /**
-     * Change heap region to full state (iterable, not allocating and without free chunks).
-     */
-    final void toFullState() {
-        flags = IS_ITERABLE.or(HAS_FREE_CHUNK.clear(IS_ALLOCATING.clear(flags)));
-        clear();
-    }
-
-    /**
-     * Change heap region to allocating state (not iterable, backing an allocator).
-     */
-    final void toAllocatingState() {
-        flags = IS_ALLOCATING.or(IS_ITERABLE.clear(flags));
-    }
-
-    /**
-     * Change heap region to iterable state (region stopped allocating).
-     */
-    final void toIterable() {
-        flags = IS_ITERABLE.and(IS_ALLOCATING.clear(flags));
-    }
-
-    final void setLargeTail(Address firstChunkAddress, Size numBytes) {
-        LARGE_TAIL.setState(this);
-        firstFreeChunkIndex = (short) indexInRegion(firstChunkAddress);
-        numFreeChunks = 1;
-        freeSpace = (short) numBytes.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
-    }
-
     final void setFreeChunks(Address firstChunkAddress, short numFreeWords, short numChunks) {
-        flags = HAS_FREE_CHUNK.or(flags);
         firstFreeChunkIndex = (short) indexInRegion(firstChunkAddress);
         numFreeChunks = numChunks;
         freeSpace = numFreeWords;
@@ -372,13 +316,12 @@ public class HeapRegionInfo {
     }
 
     final void clearFreeChunks() {
+        firstFreeChunkIndex = 0;
         numFreeChunks = 0;
         freeSpace = 0;
-        flags = HAS_FREE_CHUNK.clear(flags);
     }
 
     final void resetOccupancy() {
-        EMPTY_REGION.setState(this);
         clear();
     }
 
