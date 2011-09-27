@@ -22,9 +22,13 @@
  */
 package com.sun.max.vm.classfile.constant;
 
+import static com.sun.max.vm.classfile.constant.PoolConstantFactory.*;
+
+import java.io.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.classfile.constant.ConstantPool.*;
+import com.sun.max.vm.classfile.constant.ConstantPool.Tag;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -39,7 +43,7 @@ public interface ClassConstant extends PoolConstant<ClassConstant>, ValueConstan
 
     ClassConstant key(ConstantPool pool);
 
-    public static final class Resolved extends AbstractPoolConstant<ClassConstant> implements ClassConstant {
+    public static final class Resolved extends AbstractClassConstant {
 
         @INSPECTED
         public final ClassActor classActor;
@@ -65,45 +69,21 @@ public interface ClassConstant extends PoolConstant<ClassConstant>, ValueConstan
         }
 
         @Override
-        public boolean equals(Object object) {
-            return object instanceof ClassConstant && ((ClassConstant) object).typeDescriptor().equals(typeDescriptor());
-        }
-
-        @Override
-        public int hashCode() {
-            return typeDescriptor().hashCode();
-        }
-
-        @Override
         public ClassConstant key(ConstantPool pool) {
             return this;
-        }
-
-        @Override
-        public Tag tag() {
-            return Tag.CLASS;
         }
 
         public Value value(ConstantPool pool, int index) {
             return ReferenceValue.from(classActor);
         }
-
-        public String valueString(ConstantPool pool) {
-            return typeDescriptor().toJavaString();
-        }
     }
 
-    public static class Unresolved extends AbstractPoolConstant<ClassConstant> implements ClassConstant {
+    public static class Unresolved extends AbstractClassConstant {
 
         private final TypeDescriptor typeDescriptor;
 
         Unresolved(TypeDescriptor typeDescriptor) {
             this.typeDescriptor = typeDescriptor;
-        }
-
-        @Override
-        public Tag tag() {
-            return Tag.CLASS;
         }
 
         public boolean isResolved() {
@@ -145,16 +125,6 @@ public interface ClassConstant extends PoolConstant<ClassConstant>, ValueConstan
         }
 
         @Override
-        public boolean equals(Object object) {
-            return object instanceof ClassConstant && ((ClassConstant) object).typeDescriptor().equals(typeDescriptor);
-        }
-
-        @Override
-        public int hashCode() {
-            return typeDescriptor.hashCode();
-        }
-
-        @Override
         public ClassConstant key(ConstantPool pool) {
             return this;
         }
@@ -162,9 +132,44 @@ public interface ClassConstant extends PoolConstant<ClassConstant>, ValueConstan
         public Value value(ConstantPool pool, int index) {
             return ReferenceValue.from(resolve(pool, index));
         }
-
-        public String valueString(ConstantPool pool) {
-            return typeDescriptor().toJavaString();
-        }
     }
+}
+
+abstract class AbstractClassConstant extends AbstractPoolConstant<ClassConstant> implements ClassConstant {
+
+    @Override
+    public Tag tag() {
+        return Tag.CLASS;
+    }
+
+    @Override
+    public int hashCode() {
+        return typeDescriptor().hashCode();
+    }
+
+    public String valueString(ConstantPool pool) {
+        return typeDescriptor().toJavaString();
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        return object instanceof ClassConstant && ((ClassConstant) object).typeDescriptor().equals(typeDescriptor());
+    }
+
+
+    @Override
+    public void writeOn(DataOutputStream stream, ConstantPoolEditor editor, int index) throws IOException {
+        super.writeOn(stream, editor, index);
+        final String classDescriptor;
+        final String string = editor.pool().classAt(index).typeDescriptor().toString();
+        if (string.charAt(0) == 'L') {
+            // Strip 'L' and ';' surrounding class name
+            classDescriptor = string.substring(1, string.length() - 1);
+        } else {
+            classDescriptor = string;
+        }
+        final int classIndex = editor.indexOf(makeUtf8Constant(classDescriptor));
+        stream.writeShort(classIndex);
+    }
+
 }
