@@ -168,8 +168,10 @@ public class CompilationBroker {
             baselineCompiler = instantiateCompiler(baselineName);
             assert baselineCompiler.nature() == Nature.BASELINE : baselineCompiler + " is not a baseline compiler";
             assert baselineCompiler != optimizingCompiler;
+            defaultCompiler = baselineCompiler;
         } else {
             baselineCompiler = null;
+            defaultCompiler = optimizingCompiler;
         }
     }
 
@@ -219,9 +221,6 @@ public class CompilationBroker {
         optimizingCompiler.initialize(phase);
         if (baselineCompiler != null) {
             baselineCompiler.initialize(phase);
-            defaultCompiler = baselineCompiler;
-        } else {
-            defaultCompiler = optimizingCompiler;
         }
 
         if (isHosted()) {
