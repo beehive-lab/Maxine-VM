@@ -22,6 +22,8 @@
  */
 package com.sun.max.vm.compiler;
 
+import static com.sun.max.vm.MaxineVM.*;
+
 import java.util.*;
 
 import com.sun.max.annotate.*;
@@ -79,26 +81,6 @@ public enum CallEntryPoint {
      */
     private int offsetInCallee = -1;
 
-    @HOSTED_ONLY
-    public void init(CallEntryPoint cep) {
-        init(cep.offset, cep.offsetInCallee);
-    }
-
-    @HOSTED_ONLY
-    public void init(int offset, int offsetInCallee) {
-        assert this.offset == -1 || this.offset == offset : "cannot re-initialize with different value";
-        assert this.offsetInCallee == -1 || this.offsetInCallee == offsetInCallee : "cannot re-initialize with different value";
-        this.offset = offset;
-        this.offsetInCallee = offsetInCallee;
-    }
-
-    @HOSTED_ONLY
-    public static void initAllToZero() {
-        for (CallEntryPoint e : VALUES) {
-            e.init(0, 0);
-        }
-    }
-
     /**
      * Gets the offset of this call entry point in a target method associated with this entry point.
      *
@@ -128,4 +110,35 @@ public enum CallEntryPoint {
         return offsetInCallee;
     }
 
+    @HOSTED_ONLY
+    private void init(CallEntryPoint cep) {
+        init(cep.offset, cep.offsetInCallee);
+    }
+
+    @HOSTED_ONLY
+    private void init(int offset, int offsetInCallee) {
+        assert this.offset == -1 || this.offset == offset : "cannot re-initialize with different value";
+        assert this.offsetInCallee == -1 || this.offsetInCallee == offsetInCallee : "cannot re-initialize with different value";
+        this.offset = offset;
+        this.offsetInCallee = offsetInCallee;
+    }
+
+    @HOSTED_ONLY
+    private static void initAllToZero() {
+        for (CallEntryPoint e : VALUES) {
+            e.init(0, 0);
+        }
+    }
+
+    static {
+        if (vm().compilationBroker.needsAdapters()) {
+            OPTIMIZED_ENTRY_POINT.init(8, 8);
+            BASELINE_ENTRY_POINT.init(0, 0);
+            VTABLE_ENTRY_POINT.init(OPTIMIZED_ENTRY_POINT);
+            // Calls made from a C_ENTRY_POINT method link to the OPTIMIZED_ENTRY_POINT of the callee
+            C_ENTRY_POINT.init(0, OPTIMIZED_ENTRY_POINT.offset());
+        } else {
+            CallEntryPoint.initAllToZero();
+        }
+    }
 }

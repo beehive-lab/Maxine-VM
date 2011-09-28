@@ -24,7 +24,6 @@ package com.sun.max.vm.compiler.deopt;
 
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.compiler.target.Stub.Type.*;
 import static com.sun.max.vm.stack.VMFrameLayout.*;
@@ -786,7 +785,7 @@ public class Deoptimization extends VmOperation {
         Continuation cont = topCont;
         for (CiFrame frame = topFrame; frame != null; frame = frame.caller()) {
             ClassMethodActor method = (ClassMethodActor) frame.method;
-            TargetMethod compiledMethod = vmConfig().compilationScheme().synchronousCompile(method, Nature.BASELINE);
+            TargetMethod compiledMethod = vm().compilationBroker.compile(method, Nature.BASELINE);
             FatalError.check(compiledMethod.isBaseline(), compiledMethod + " should be a deopt target");
             cont.tm = compiledMethod;
             cont = compiledMethod.createDeoptimizedFrame(info, frame, cont, pendingException);

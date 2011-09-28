@@ -23,7 +23,6 @@
 package com.sun.max.vm.compiler.target;
 
 import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 
 import java.io.*;
@@ -201,7 +200,7 @@ public abstract class AdapterGenerator {
      *         compiler configured for the VM.
      */
     public static AdapterGenerator forCallee(ClassMethodActor callee, CallEntryPoint callingConvention) {
-        if (!vmConfig().needsAdapters()) {
+        if (!vm().compilationBroker.needsAdapters()) {
             // Only one calling convention; no adapters in use
             return null;
         }

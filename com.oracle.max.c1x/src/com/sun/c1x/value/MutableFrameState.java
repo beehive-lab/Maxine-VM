@@ -265,7 +265,7 @@ public final class MutableFrameState extends FrameState {
     }
 
     private static Value assertKind(CiKind kind, Value x) {
-        assert x != null && (x.kind == kind || !isTypesafe()) : "kind=" + kind + ", value=" + x + ((x == null) ? "" : ", value.kind=" + x.kind);
+        assert x != null && (x.kind == kind || !isTypesafe() || (kind == CiKind.Object && x.kind == CiKind.Word)) : "kind=" + kind + ", value=" + x + ((x == null) ? "" : ", value.kind=" + x.kind);
         return x;
     }
 
@@ -290,7 +290,7 @@ public final class MutableFrameState extends FrameState {
     }
 
     private static Value assertObject(Value x) {
-        assert x != null && (x.kind == CiKind.Object || !isTypesafe());
+        assert x != null && (x.kind == CiKind.Object || x.kind == CiKind.Word || !isTypesafe());
         return x;
     }
 

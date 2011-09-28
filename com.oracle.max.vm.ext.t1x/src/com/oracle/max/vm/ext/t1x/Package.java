@@ -24,7 +24,7 @@ package com.oracle.max.vm.ext.t1x;
 
 import com.sun.max.config.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.adaptive.*;
+import com.sun.max.vm.compiler.*;
 
 /**
  * T1X compiler.
@@ -37,9 +37,6 @@ public class Package extends BootImagePackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        if (vmConfiguration.compilationPackage.getClass().equals(com.sun.max.vm.compiler.adaptive.Package.class)) {
-            return isT1X(AdaptiveCompilationScheme.optName()) || isT1X(AdaptiveCompilationScheme.baselineName());
-        }
-        return false;
+        return isT1X(CompilationBroker.optName()) || isT1X(CompilationBroker.baselineName());
     }
 }

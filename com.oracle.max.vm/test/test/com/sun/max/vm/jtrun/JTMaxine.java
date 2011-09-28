@@ -22,7 +22,7 @@
  */
 package test.com.sun.max.vm.jtrun;
 
-import static com.sun.max.vm.VMConfiguration.*;
+import static com.sun.max.vm.MaxineVM.*;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -102,7 +102,7 @@ public class JTMaxine {
         }
         for (ClassMethodActor method : methods) {
             printer.begin(method.toString());
-            vmConfig().compilationScheme().synchronousCompile(method, null);
+            vm().compilationBroker.compile(method, null);
             printer.pass();
         }
         methods.clear();
@@ -116,7 +116,7 @@ public class JTMaxine {
         System.out.println("Compiling callee methods...");
         for (ClassMethodActor method : methods) {
             printer.begin(method.toString());
-            vmConfig().compilationScheme().synchronousCompile(method, null);
+            vm().compilationBroker.compile(method, null);
             printer.pass();
         }
 

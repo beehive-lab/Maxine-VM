@@ -26,7 +26,6 @@ import java.util.*;
 
 import com.sun.max.lang.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
 import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.target.*;
@@ -42,7 +41,7 @@ public class DeoptAtSafepoint {
         TargetMethod tm = null;
         if (isMaxine) {
             ClassMethodActor cma = ClassMethodActor.fromJava(Classes.getDeclaredMethod(Spinner.class, "run"));
-            tm = CompilationScheme.Static.compile(cma, Nature.OPT);
+            tm = cma.makeTargetMethod(Nature.OPT);
         }
         s.start();
         Thread.sleep(100);

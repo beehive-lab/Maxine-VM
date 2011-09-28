@@ -269,20 +269,6 @@ public class Bytecodes {
      */
     public static final int JNICALL              = 203;
 
-    public static final int WLOAD                = 205;
-    public static final int WLOAD_0              = 206;
-    public static final int WLOAD_1              = 207;
-    public static final int WLOAD_2              = 208;
-    public static final int WLOAD_3              = 209;
-
-    public static final int WSTORE               = 210;
-    public static final int WSTORE_0             = 211;
-    public static final int WSTORE_1             = 212;
-    public static final int WSTORE_2             = 213;
-    public static final int WSTORE_3             = 214;
-
-    public static final int WRETURN              = 234;
-
     // End extended bytecodes
 
     public static final int ILLEGAL = 255;
@@ -602,19 +588,7 @@ public class Bytecodes {
         def(JSR_W               , "jsr_w"           , "boooo", STOP | BRANCH);
         def(BREAKPOINT          , "breakpoint"      , "b"    , TRAP);
 
-
-        def(WLOAD               , "wload"           , "bi"   , EXTENSION | LOAD);
-        def(WLOAD_0             , "wload_0"         , "b"    , EXTENSION | LOAD);
-        def(WLOAD_1             , "wload_1"         , "b"    , EXTENSION | LOAD);
-        def(WLOAD_2             , "wload_2"         , "b"    , EXTENSION | LOAD);
-        def(WLOAD_3             , "wload_3"         , "b"    , EXTENSION | LOAD);
-        def(WSTORE              , "wstore"          , "bi"   , EXTENSION | STORE);
-        def(WSTORE_0            , "wstore_0"        , "b"    , EXTENSION | STORE);
-        def(WSTORE_1            , "wstore_1"        , "b"    , EXTENSION | STORE);
-        def(WSTORE_2            , "wstore_2"        , "b"    , EXTENSION | STORE);
-        def(WSTORE_3            , "wstore_3"        , "b"    , EXTENSION | STORE);
         def(JNICALL             , "jnicall"         , "bii"  , EXTENSION | TRAP);
-        def(WRETURN             , "wreturn"         , "b"    , EXTENSION | TRAP | STOP);
     }
     // Checkstyle: resume
 

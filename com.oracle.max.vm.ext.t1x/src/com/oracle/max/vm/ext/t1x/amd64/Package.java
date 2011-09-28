@@ -28,15 +28,13 @@ import static com.sun.max.platform.Platform.*;
 import com.sun.max.config.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.adaptive.*;
+import com.sun.max.vm.compiler.*;
 
 public class Package extends BootImagePackage {
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
         if (platform().isa == ISA.AMD64) {
-            if (vmConfiguration.compilationPackage.getClass().equals(com.sun.max.vm.compiler.adaptive.Package.class)) {
-                return isT1X(AdaptiveCompilationScheme.optName()) || isT1X(AdaptiveCompilationScheme.baselineName());
-            }
+            return isT1X(CompilationBroker.optName()) || isT1X(CompilationBroker.baselineName());
         }
         return false;
     }

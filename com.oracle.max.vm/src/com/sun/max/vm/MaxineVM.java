@@ -40,6 +40,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.*;
@@ -533,6 +534,7 @@ public final class MaxineVM {
     public Phase phase = Phase.BOOTSTRAPPING;
     public final RegisterConfigs registerConfigs;
     public final Stubs stubs;
+    public final CompilationBroker compilationBroker;
     public final SafepointPoll safepointPoll;
     public final TrapFrameAccess trapFrameAccess;
 
@@ -542,6 +544,7 @@ public final class MaxineVM {
         this.stubs = new Stubs(registerConfigs);
         this.safepointPoll = SafepointPoll.create();
         this.trapFrameAccess = TrapFrameAccess.create();
+        this.compilationBroker = CompilationBroker.create();
     }
 
     public static void reportPristineMemoryFailure(String memoryAreaName, String operation, Size numberOfBytes) {

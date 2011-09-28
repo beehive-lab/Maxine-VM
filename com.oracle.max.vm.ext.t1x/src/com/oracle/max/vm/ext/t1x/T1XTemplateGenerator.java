@@ -301,7 +301,7 @@ public class T1XTemplateGenerator {
     }
 
     public static boolean hasReturnTemplates(CiKind k) {
-        return k == k.stackKind() && k.isValidReturnType();
+        return k == k.stackKind() && k.isValidReturnType() && k != Word;
     }
 
     public static boolean hasInvokeTemplates(CiKind k) {

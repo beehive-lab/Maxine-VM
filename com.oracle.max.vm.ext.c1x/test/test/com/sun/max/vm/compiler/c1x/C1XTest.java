@@ -22,7 +22,7 @@
  */
 package test.com.sun.max.vm.compiler.c1x;
 
-import static com.sun.max.vm.VMConfiguration.*;
+import static com.sun.max.vm.MaxineVM.*;
 
 import java.io.*;
 import java.lang.reflect.*;
@@ -45,13 +45,11 @@ import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.test.*;
 import com.sun.max.vm.MaxineVM.Phase;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.adaptive.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.profile.*;
 
@@ -215,9 +213,8 @@ public class C1XTest {
         }
 
         // create MaxineRuntime
-        VMConfiguration configuration = vmConfig();
-        AdaptiveCompilationScheme adc = (AdaptiveCompilationScheme) configuration.compilationScheme();
-        final RuntimeCompiler compiler = useBaseline ? adc.baselineCompiler : adc.optimizingCompiler;
+        CompilationBroker cb = vm().compilationBroker;
+        final RuntimeCompiler compiler = useBaseline ? cb.baselineCompiler : cb.optimizingCompiler;
         compiler.initialize(Phase.COMPILING);
 
         String searchCp = searchCpOption.getValue();

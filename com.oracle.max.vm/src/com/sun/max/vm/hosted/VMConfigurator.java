@@ -29,7 +29,6 @@ import com.sun.max.config.*;
 import com.sun.max.lang.ISA.Category;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.*;
@@ -58,8 +57,6 @@ public final class VMConfigurator {
             VMConfigurator.defaultHeapScheme());
     public final Option<String> monitorScheme = schemeOption("monitor", MonitorScheme.class, "Specifies the monitor scheme for the target.",
             VMConfigurator.defaultMonitorScheme());
-    public final Option<String> compScheme = schemeOption("comp", CompilationScheme.class, "Specifies the compilation scheme for the target.",
-            VMConfigurator.defaultCompilationScheme());
     public final Option<String> runScheme = schemeOption("run", RunScheme.class, "Specifies the run scheme for the target.",
             VMConfigurator.defaultRunScheme());
 
@@ -93,7 +90,6 @@ public final class VMConfigurator {
                                     vm(layoutScheme),
                                     vm(heapScheme),
                                     vm(monitorScheme),
-                                    vm(compScheme),
                                     vm(runScheme));
         MaxineVM vm = new MaxineVM(config);
         if (install) {
@@ -101,13 +97,6 @@ public final class VMConfigurator {
             config.loadAndInstantiateSchemes(null);
         }
         return vm;
-    }
-
-    /**
-     * Gets the package providing the default {@link CompilationScheme}.
-     */
-    public static BootImagePackage defaultCompilationScheme() {
-        return new com.sun.max.vm.compiler.adaptive.Package();
     }
 
     /**
