@@ -25,6 +25,8 @@ package com.sun.max.vm.classfile.constant;
 import static com.sun.max.vm.classfile.ErrorContext.*;
 import static com.sun.max.vm.classfile.constant.ConstantPool.Tag.*;
 
+import java.io.*;
+
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.ConstantPool.*;
 import com.sun.max.vm.type.*;
@@ -97,36 +99,28 @@ public interface PoolConstant<PoolConstant_Type extends PoolConstant<PoolConstan
             return -1;
         }
     }
+
+    /**
+     * Writes myself to a classfile stream.
+     * <p>
+     * This may cause extra entries to be added to the pool.
+     * @param stream classfile or nullstream to write to
+     * @param editor constant pool editor currently writing
+     * @param index index of ourselves in the editors pool
+     */
+    void writeOn(DataOutputStream stream, ConstantPoolEditor editor, int index) throws IOException;
+
 }
 
 //The rest of this file contains package-private abstract classes that provide most of the implementation
 //for the pool constant interfaces.
 
 /**
- * An abstract class that implements the most basic parts of the {@link PoolConstant} interface.
- */
-abstract class AbstractPoolConstant<PoolConstant_Type extends PoolConstant<PoolConstant_Type>> implements PoolConstant<PoolConstant_Type> {
-
-    public abstract Tag tag();
-
-    public abstract PoolConstantKey<PoolConstant_Type> key(ConstantPool pool);
-
-    @Override
-    public String toString() {
-        return toString(null);
-    }
-
-    public final String toString(ConstantPool pool) {
-        return Static.toString(this, pool);
-    }
-}
-
-/**
  * An abstract class that implements some of the functionality of a method or field entry in a constant pool
  * that is in a completely unresolved state. That is, the references to the holder, name and signature of
  * the field or method are indices to other constant pool entries.
  */
-abstract class UnresolvedRefIndices<PoolConstant_Type extends PoolConstant<PoolConstant_Type>> extends AbstractPoolConstant<PoolConstant_Type> implements MemberRefConstant<PoolConstant_Type> {
+abstract class UnresolvedRefIndices<PoolConstant_Type extends PoolConstant<PoolConstant_Type>> extends AbstractMemberRefConstant<PoolConstant_Type> {
 
     public final int classIndex;
 
@@ -226,8 +220,7 @@ abstract class RefKey {
  * indices to other constant pool entries and as such, this class (and it subclasses) are useful for constructing pool
  * constants that don't rely on the existence of extra pool constants.
  */
-abstract class UnresolvedRef<PoolConstant_Type extends PoolConstant<PoolConstant_Type>> extends AbstractPoolConstant<PoolConstant_Type> implements MemberRefConstant<PoolConstant_Type> {
-
+abstract class UnresolvedRef<PoolConstant_Type extends PoolConstant<PoolConstant_Type>> extends AbstractMemberRefConstant<PoolConstant_Type> {
     final ClassActor holder;
     final Utf8Constant name;
     final Descriptor descriptor;
