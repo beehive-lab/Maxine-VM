@@ -23,6 +23,10 @@
 package com.sun.max.vm.classfile.constant;
 
 import static com.sun.max.vm.classfile.ErrorContext.*;
+import static com.sun.max.vm.classfile.constant.PoolConstantFactory.*;
+
+import java.io.*;
+
 import com.sun.max.vm.classfile.constant.ConstantPool.*;
 import com.sun.max.vm.type.*;
 
@@ -125,4 +129,13 @@ public final class NameAndTypeConstant extends AbstractPoolConstant<NameAndTypeC
     public String valueString(ConstantPool pool) {
         return "name=\"" + name() + "\",descriptor=\"" + descriptor + "\"";
     }
+
+    @Override
+    public void writeOn(DataOutputStream stream, ConstantPoolEditor editor, int index) throws IOException {
+        super.writeOn(stream, editor, index);
+        final NameAndTypeConstant nameAndType = editor.pool().nameAndTypeAt(index);
+        stream.writeShort(editor.indexOf(nameAndType.name()));
+        stream.writeShort(editor.indexOf(makeUtf8Constant(nameAndType.descriptorString())));
+    }
+
 }

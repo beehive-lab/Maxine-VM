@@ -22,13 +22,11 @@
  */
 package com.sun.max.vm.classfile.constant;
 
-import com.sun.max.collect.*;
-import com.sun.max.program.*;
-import com.sun.max.vm.classfile.constant.ConstantPool.*;
 import static com.sun.max.vm.classfile.constant.ConstantPool.Tag.*;
-import static com.sun.max.vm.classfile.constant.PoolConstantFactory.*;
 
 import java.io.*;
+
+import com.sun.max.collect.*;
 
 /**
  * A mechanism for looking up and adding new entries to a constant pool. To ensure that
@@ -179,129 +177,10 @@ public final class ConstantPoolEditor {
      * This may cause extra entries to be added to the pool.
      */
     public void write(DataOutputStream stream) throws IOException {
-        makeComplete();
         stream.writeShort(pool.numberOfConstants());
         for (int index = 1; index != pool.numberOfConstants(); ++index) {
             final PoolConstant constant = pool.at(index);
-            final Tag tag = constant.tag();
-            if (tag != INVALID) {
-                stream.writeByte(tag.classfileTag());
-                switch (tag) {
-                    case UTF8: {
-                        stream.writeUTF(pool.utf8At(index, null).toString());
-                        break;
-                    }
-                    case CLASS: {
-                        final String classDescriptor;
-                        final String string = pool.classAt(index).typeDescriptor().toString();
-                        if (string.charAt(0) == 'L') {
-                            // Strip 'L' and ';' surrounding class name
-                            classDescriptor = string.substring(1, string.length() - 1);
-                        } else {
-                            classDescriptor = string;
-                        }
-                        final int classIndex = indexOf(makeUtf8Constant(classDescriptor));
-                        stream.writeShort(classIndex);
-                        break;
-                    }
-                    case DOUBLE: {
-                        stream.writeDouble(pool.doubleAt(index));
-                        break;
-                    }
-                    case INTEGER: {
-                        stream.writeInt(pool.intAt(index));
-                        break;
-                    }
-                    case FLOAT: {
-                        stream.writeFloat(pool.floatAt(index));
-                        break;
-                    }
-                    case LONG: {
-                        stream.writeLong(pool.longAt(index));
-                        break;
-                    }
-                    case NAME_AND_TYPE: {
-                        final NameAndTypeConstant nameAndType = pool.nameAndTypeAt(index);
-                        stream.writeShort(indexOf(nameAndType.name()));
-                        stream.writeShort(indexOf(makeUtf8Constant(nameAndType.descriptorString())));
-                        break;
-                    }
-                    case INTERFACE_METHOD_REF:
-                    case METHOD_REF:
-                    case FIELD_REF: {
-                        final MemberRefConstant member = pool.memberAt(index);
-                        final int classIndex = indexOf(createClassConstant(member.holder(pool)));
-                        Utf8Constant name = member.name(pool);
-                        if (name == SymbolTable.CLINIT) {
-                            name = $CLINIT$;
-                        }
-                        final int nameAndTypeIndex = indexOf(createNameAndTypeConstant(name, member.descriptor(pool)));
-                        stream.writeShort(classIndex);
-                        stream.writeShort(nameAndTypeIndex);
-                        break;
-                    }
-                    case STRING: {
-                        final String string = pool.stringAt(index);
-                        stream.writeShort(indexOf(makeUtf8Constant(string)));
-                        break;
-                    }
-                    default: {
-                        throw ProgramError.unexpected("unknown tag: " + tag);
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Creates any entries required for {@linkplain #write(DataOutputStream) writing out} a JVM specification compliant constant pool.
-     */
-    public void makeComplete() {
-        for (int index = 1; index != pool.numberOfConstants(); ++index) {
-            final PoolConstant constant = pool.at(index);
-            final Tag tag = constant.tag();
-            if (tag != INVALID) {
-                switch (tag) {
-                    case CLASS: {
-                        final String classDescriptor;
-                        final String string = pool.classAt(index).typeDescriptor().toString();
-                        if (string.charAt(0) == 'L') {
-                            // Strip 'L' and ';' surrounding class name
-                            classDescriptor = string.substring(1, string.length() - 1);
-                        } else {
-                            classDescriptor = string;
-                        }
-                        indexOf(makeUtf8Constant(classDescriptor));
-                        break;
-                    }
-                    case NAME_AND_TYPE: {
-                        final NameAndTypeConstant nameAndType = pool.nameAndTypeAt(index);
-                        indexOf(nameAndType.name());
-                        indexOf(makeUtf8Constant(nameAndType.descriptorString()));
-                        break;
-                    }
-                    case INTERFACE_METHOD_REF:
-                    case METHOD_REF:
-                    case FIELD_REF: {
-                        final MemberRefConstant member = pool.memberAt(index);
-                        Utf8Constant name = member.name(pool);
-                        if (name == SymbolTable.CLINIT) {
-                            name = $CLINIT$;
-                        }
-                        indexOf(createClassConstant(member.holder(pool)));
-                        indexOf(createNameAndTypeConstant(name, member.descriptor(pool)));
-                        break;
-                    }
-                    case STRING: {
-                        final String string = pool.stringAt(index);
-                        indexOf(makeUtf8Constant(string));
-                        break;
-                    }
-                    default: {
-                        // Entry does not cross-reference another entry
-                    }
-                }
-            }
+            constant.writeOn(stream, this, index);
         }
     }
 
