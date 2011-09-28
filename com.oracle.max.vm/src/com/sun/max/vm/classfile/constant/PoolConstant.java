@@ -101,10 +101,10 @@ public interface PoolConstant<PoolConstant_Type extends PoolConstant<PoolConstan
     }
 
     /**
-     * Writes myself to a classfile stream.
-     * <p>
+     * Writes myself to a class file stream.
      * This may cause extra entries to be added to the pool.
-     * @param stream classfile or nullstream to write to
+     *
+     * @param stream stream to write to
      * @param editor constant pool editor currently writing
      * @param index index of ourselves in the editors pool
      */

@@ -177,23 +177,12 @@ public final class ConstantPoolEditor {
      * This may cause extra entries to be added to the pool.
      */
     public void write(DataOutputStream stream) throws IOException {
-//        makeComplete();
         stream.writeShort(pool.numberOfConstants());
         for (int index = 1; index != pool.numberOfConstants(); ++index) {
             final PoolConstant constant = pool.at(index);
             constant.writeOn(stream, this, index);
         }
     }
-
-//    /**
-//     * Creates any entries required for {@linkplain #write(DataOutputStream) writing out} a JVM specification compliant constant pool.
-//     */
-//    public void makeComplete() {
-//        for (int index = 1; index != pool.numberOfConstants(); ++index) {
-//            final PoolConstant constant = pool.at(index);
-//            constant.complete(this, index);
-//        }
-//    }
 
     // Checkstyle: stop
     /**
