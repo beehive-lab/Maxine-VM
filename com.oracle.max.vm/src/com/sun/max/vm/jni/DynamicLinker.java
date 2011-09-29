@@ -134,6 +134,15 @@ public final class DynamicLinker {
     }
 
     /**
+     * Variant of {@link #load(String)} used to load JVMTI agent libraries, before we have a heap.
+     * @param absolutePath
+     * @return
+     */
+    public static Word load(Pointer absolutePath) {
+        return dlopen(absolutePath);
+    }
+
+    /**
      * Looks up a symbol from a given dynamically loaded native library.
      *
      * @param handle a handle to a native library dynamically loaded by {@link #load}
@@ -144,9 +153,9 @@ public final class DynamicLinker {
         Word h = handle;
         if (h.isZero()) {
             h = mainHandle;
-            if (MaxineVM.isPrimordialOrPristine()) {
-                return dlsym(symbol, h);
-            }
+        }
+        if (MaxineVM.isPrimordialOrPristine()) {
+            return dlsym(symbol, h);
         }
         synchronized (buffer) {
             return dlsym(symbol, h);

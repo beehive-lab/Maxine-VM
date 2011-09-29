@@ -48,6 +48,7 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jni.*;
+import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
@@ -620,6 +621,11 @@ public class VmThread {
             // The main thread must now bring the VM to the pristine state so as to
             // provide basic services (most importantly, heap allocation) before starting the other "system" threads.
             //
+
+            // Initialize JVMTI agents and send the VM start event
+            JVMTI.initialize();
+            JVMTI.vmEvent(JvmtiConstants.JVMTI_EVENT_VM_START);
+
             // Code manager initialization must happen after parsing of pristine options
             // It must also be performed before pristine initialization of the heap scheme.
             // This is a temporary issue due to all code managers being instances of
@@ -635,6 +641,8 @@ public class VmThread {
             VmThread.vmOperationThread.start0();
             SpecialReferenceManager.initialize(MaxineVM.Phase.PRISTINE);
             VmThread.signalDispatcherThread.start0();
+
+            JVMTI.vmEvent(JvmtiConstants.JVMTI_EVENT_VM_INIT);
         }
 
         try {

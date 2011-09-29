@@ -20,17 +20,25 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.jni;
+package com.sun.max.vm.jvmti;
 
-import com.sun.max.config.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.runtime.*;
 
-public class Package extends BootImagePackage {
-    public Package() {
-        super();
+
+public class JvmtiCallbacks {
+    static {
+        new CriticalNativeMethod(JvmtiCallbacks.class, "invokeAgentOnLoad");
+        new CriticalNativeMethod(JvmtiCallbacks.class, "invokeAgentOnUnLoad");
+        new CriticalNativeMethod(JvmtiCallbacks.class, "invokeStartFunction");
+        new CriticalNativeMethod(JvmtiCallbacks.class, "invokeStartFunctionNoArg");
+        new CriticalNativeMethod(JvmtiCallbacks.class, "invokeGarbageCollectionCallback");
     }
 
-    @Override
-    public Class[] wordSubclasses() {
-        return new Class[] {MemberID.class, FieldID.class, MethodID.class, JniHandle.class};
-    }
+    static native int invokeAgentOnLoad(Address onLoad, Pointer options);
+    static native int invokeAgentOnUnLoad(Address onLoad);
+
+    static native void invokeStartFunction(Pointer callback, Pointer jvmtiEnv, Word arg);
+    static native void invokeStartFunctionNoArg(Pointer callback, Pointer jvmtiEnv);
+    static native void invokeGarbageCollectionCallback(Pointer callback, Pointer jvmtiEnv);
 }
