@@ -71,8 +71,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         "-showversion", "print product version and continue"), MaxineVM.Phase.STARTING);
     private static final VMOption D64Option = register(new VMOption("-d64",
         "Selects the 64-bit data model if available. Currently ignored."), MaxineVM.Phase.PRISTINE);
-    private static final AgentVMOption javaagentOption = register(new AgentVMOption(
-        "-javaagent", "load Java programming language agent, see java.lang.instrument"), MaxineVM.Phase.STARTING);
+    private static final JavaAgentVMOption javaagentOption = register(new JavaAgentVMOption(), MaxineVM.Phase.STARTING);
     private static final VMStringOption profOption = register(new VMStringOption(
         "-Xprof", false, null, "run sampling profiler"), MaxineVM.Phase.STARTING);
 

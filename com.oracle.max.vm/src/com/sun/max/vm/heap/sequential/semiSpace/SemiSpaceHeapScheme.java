@@ -42,6 +42,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.management.*;
 import com.sun.max.vm.reference.*;
@@ -365,6 +366,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 // Pre-verification of the heap.
                 verifyObjectSpaces("before GC");
 
+                JVMTI.vmEvent(JvmtiConstants.JVMTI_EVENT_GARBAGE_COLLECTION_START);
                 HeapScheme.Inspect.notifyGCStarted();
 
                 vmConfig().monitorScheme().beforeGarbageCollection();
@@ -440,6 +442,8 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
                 // Post-verification of the heap.
                 verifyObjectSpaces("after GC");
+
+                JVMTI.vmEvent(JvmtiConstants.JVMTI_EVENT_GARBAGE_COLLECTION_FINISH);
 
                 HeapScheme.Inspect.notifyGCCompleted();
 

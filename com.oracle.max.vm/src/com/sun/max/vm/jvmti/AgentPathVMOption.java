@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,17 +20,25 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.jni;
+package com.sun.max.vm.jvmti;
 
-import com.sun.max.config.*;
+import com.sun.max.annotate.*;
+import com.sun.max.vm.*;
 
-public class Package extends BootImagePackage {
-    public Package() {
-        super();
+
+public class AgentPathVMOption extends NativeAgentVMOption {
+
+    private static final String optionValueTemplate = ":<pathname>[=<options>]";
+
+    @HOSTED_ONLY
+    public AgentPathVMOption() {
+        super("-agentpath", optionValueTemplate,
+              "load native agent library by full pathname");
     }
 
     @Override
-    public Class[] wordSubclasses() {
-        return new Class[] {MemberID.class, FieldID.class, MethodID.class, JniHandle.class};
+    public void printHelp() {
+        VMOptions.printHelpForOption(category(), prefix, optionValueTemplate, help);
     }
+
 }

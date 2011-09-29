@@ -131,6 +131,16 @@ public class JniFunctionsGenerator {
         }
     }
 
+    public static class Customizer {
+        public String customize(String line) {
+            return line;
+        }
+    }
+
+    public static boolean generate(boolean checkOnly, Class source, Class target) throws Exception {
+        return generate(checkOnly, source, target, new Customizer());
+    }
+
     /**
      * Inserts or updates generated source into {@code target}. The generated source is derived from
      * {@code source} and is delineated in {@code target} by the following lines:
@@ -147,7 +157,7 @@ public class JniFunctionsGenerator {
      *            whether it would have been updated were this argument {@code true}
      * @return {@code true} if {@code target} was modified (or would have been if {@code checkOnly} was {@code false}); {@code false} otherwise
      */
-    static boolean generate(boolean checkOnly, Class source, Class target) throws Exception {
+    public static boolean generate(boolean checkOnly, Class source, Class target, Customizer customizer) throws Exception {
         File base = new File(JavaProject.findWorkspaceDirectory(), "com.oracle.max.vm/src");
         File inputFile = new File(base, source.getName().replace('.', File.separatorChar) + ".java").getAbsoluteFile();
         File outputFile = new File(base, target.getName().replace('.', File.separatorChar) + ".java").getAbsoluteFile();
@@ -197,7 +207,7 @@ public class JniFunctionsGenerator {
                         if (line.length() > 0) {
                             bodyBuffer.append("    ");
                         }
-                        bodyBuffer.append(line).append("\n");
+                        bodyBuffer.append(customizer.customize(line)).append("\n");
                     }
 
                     if (body == null) {
