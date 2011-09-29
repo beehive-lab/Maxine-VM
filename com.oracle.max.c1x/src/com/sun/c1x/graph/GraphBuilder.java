@@ -977,6 +977,15 @@ public final class GraphBuilder {
 
     private void genInvokeIndirect(int opcode, RiMethod target, Value[] args, int cpi, RiConstantPool constantPool) {
         Value receiver = args[0];
+
+        if (target.holder().kind() == CiKind.Word) {
+            // Dynamic dispatch on Word types is not possible, since raw pointers do not have any method tables.
+            assert target.isResolved();
+            invokeDirect(target, args, null, cpi, constantPool);
+            return;
+        }
+        assert receiver.kind != CiKind.Word;
+
         // attempt to devirtualize the call
         if (target.isResolved()) {
             RiType klass = target.holder();
@@ -2408,19 +2417,6 @@ public final class GraphBuilder {
     private void processExtendedBytecode(int bci, BytecodeStream s, int opcode) {
         // Checkstyle: off
         switch (opcode) {
-            case WLOAD          : loadLocal(s.readLocalIndex(), CiKind.Word); break;
-            case WLOAD_0        : loadLocal(0, CiKind.Word); break;
-            case WLOAD_1        : loadLocal(1, CiKind.Word); break;
-            case WLOAD_2        : loadLocal(2, CiKind.Word); break;
-            case WLOAD_3        : loadLocal(3, CiKind.Word); break;
-
-            case WSTORE         : storeLocal(CiKind.Word, s.readLocalIndex()); break;
-            case WSTORE_0       : // fall through
-            case WSTORE_1       : // fall through
-            case WSTORE_2       : // fall through
-            case WSTORE_3       : storeLocal(CiKind.Word, opcode - WSTORE_0); break;
-
-            case WRETURN        : genReturn(wpop()); break;
             case JNICALL        : genNativeCall(s.readCPI()); break;
 
             case BREAKPOINT:

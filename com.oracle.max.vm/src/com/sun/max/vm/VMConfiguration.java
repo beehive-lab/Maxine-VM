@@ -23,7 +23,6 @@
 package com.sun.max.vm;
 
 import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.compiler.CallEntryPoint.*;
 
 import java.io.*;
 import java.util.*;
@@ -32,8 +31,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.config.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
-import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.layout.*;
@@ -59,7 +56,6 @@ public final class VMConfiguration {
     @HOSTED_ONLY public final BootImagePackage layoutPackage;
     @HOSTED_ONLY public final BootImagePackage heapPackage;
     @HOSTED_ONLY public final BootImagePackage monitorPackage;
-    @HOSTED_ONLY public final BootImagePackage compilationPackage;
     @HOSTED_ONLY public final BootImagePackage runPackage;
     @HOSTED_ONLY public final List<BootImagePackage> bootImagePackages;
     @HOSTED_ONLY private final Set<BootImagePackage> schemePackages = new HashSet<BootImagePackage>();
@@ -71,7 +67,6 @@ public final class VMConfiguration {
     @CONSTANT_WHEN_NOT_ZERO private LayoutScheme layoutScheme;
     @CONSTANT_WHEN_NOT_ZERO private HeapScheme heapScheme;
     @CONSTANT_WHEN_NOT_ZERO private MonitorScheme monitorScheme;
-    @CONSTANT_WHEN_NOT_ZERO private CompilationScheme compilationScheme;
     @CONSTANT_WHEN_NOT_ZERO private RunScheme runScheme;
 
     public VMConfiguration(BuildLevel buildLevel,
@@ -80,14 +75,12 @@ public final class VMConfiguration {
                            BootImagePackage layoutPackage,
                            BootImagePackage heapPackage,
                            BootImagePackage monitorPackage,
-                           BootImagePackage compilationPackage,
                            BootImagePackage runPackage) {
         this.buildLevel = buildLevel;
         this.referencePackage = referencePackage;
         this.layoutPackage = layoutPackage;
         this.heapPackage = heapPackage;
         this.monitorPackage = monitorPackage;
-        this.compilationPackage = compilationPackage;
         this.runPackage = runPackage;
         /**
          * We now gather all the packages that might be part of the VM boot image by scanning the class
@@ -106,7 +99,6 @@ public final class VMConfiguration {
         addSchemePackage(layoutPackage);
         addSchemePackage(heapPackage);
         addSchemePackage(monitorPackage);
-        addSchemePackage(compilationPackage);
         addSchemePackage(runPackage);
 
         bootImagePackages = new ArrayList<BootImagePackage>();
@@ -131,7 +123,6 @@ public final class VMConfiguration {
     @INLINE public LayoutScheme          layoutScheme()      { return layoutScheme;      }
     @INLINE public HeapScheme            heapScheme()        { return heapScheme;        }
     @INLINE public MonitorScheme         monitorScheme()     { return monitorScheme;     }
-    @INLINE public CompilationScheme     compilationScheme() { return compilationScheme; }
     @INLINE public RunScheme             runScheme()         { return runScheme;         }
 
     @HOSTED_ONLY
@@ -141,7 +132,6 @@ public final class VMConfiguration {
             layoutPackage,
             heapPackage,
             monitorPackage,
-            compilationPackage,
             runPackage});
     }
 
@@ -217,35 +207,13 @@ public final class VMConfiguration {
         layoutScheme = loadAndInstantiateScheme(loadedSchemes, layoutPackage, LayoutScheme.class);
         monitorScheme = loadAndInstantiateScheme(loadedSchemes, monitorPackage, MonitorScheme.class);
         heapScheme = loadAndInstantiateScheme(loadedSchemes, heapPackage, HeapScheme.class);
-        compilationScheme = loadAndInstantiateScheme(loadedSchemes, compilationPackage, CompilationScheme.class);
-
-        if (loadedSchemes == null) {
-            // FIXME: This is a hack to avoid adding an "AdapterFrameScheme".
-            if (needsAdapters()) {
-                OPTIMIZED_ENTRY_POINT.init(8, 8);
-                BASELINE_ENTRY_POINT.init(0, 0);
-                VTABLE_ENTRY_POINT.init(OPTIMIZED_ENTRY_POINT);
-                // Calls made from a C_ENTRY_POINT method link to the OPTIMIZED_ENTRY_POINT of the callee
-                C_ENTRY_POINT.init(0, OPTIMIZED_ENTRY_POINT.offset());
-            } else {
-                CallEntryPoint.initAllToZero();
-            }
-        }
 
         runScheme = loadAndInstantiateScheme(loadedSchemes, runPackage, RunScheme.class);
         areSchemesLoadedAndInstantiated = true;
     }
 
-    /**
-     * Determines if any pair of compilers in this configuration use different
-     * calling conventions and thus mandate the use of {@linkplain Adapter adapters}
-     * to adapt the arguments when a call crosses a calling convention boundary.
-     */
-    public boolean needsAdapters() {
-        return compilationScheme.needsAdapters();
-    }
-
     public void initializeSchemes(MaxineVM.Phase phase) {
+        vm().compilationBroker.initialize(phase);
         for (int i = 0; i < vmSchemes.size(); i++) {
             try {
                 //Log.print("Initializing: ");
@@ -279,6 +247,8 @@ public final class VMConfiguration {
             final String specification = vmScheme.specification().getSimpleName();
             out.println(indent + specification.replace("Scheme", " scheme") + ": " + vmScheme.about());
         }
+        out.println(indent + "Optimizing compiler: " + vm().compilationBroker.optimizingCompiler);
+        out.println(indent + "Baseline compiler: " + vm().compilationBroker.baselineCompiler);
     }
 
     /**

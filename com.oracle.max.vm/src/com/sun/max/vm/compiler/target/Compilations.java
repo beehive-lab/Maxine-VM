@@ -22,48 +22,22 @@
  */
 package com.sun.max.vm.compiler.target;
 
-import static com.sun.max.vm.compiler.target.Compilations.Attr.*;
-
 import com.sun.max.annotate.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
 
 /**
- * Manages the compilations of a method, organized by attributes.
- * Depending on the compilers in use, the same target method
- * may be assigned to {@link #interpreterCompatible} and {@link #optimized}.
+ * Manages the compilations of a method, organized by {@link Nature}.
  */
 public class Compilations {
-
-    /**
-     * Attributes describing a target method. A compilation request or retrieval of a target
-     * method for a bytecode method can be refined by a mask of these attributes.
-     */
-    public static enum Attr {
-        /**
-         * Request for an {@link TargetMethod#isInterpreterCompatible() interpreter compatible} target method.
-         */
-        INTERPRETER_COMPATIBLE,
-
-        /**
-         * Request for an optimized target method.
-         */
-        OPTIMIZE;
-
-        public static final int NONE = 0;
-
-        public boolean isSet(int flags) {
-            return (flags & mask) != 0;
-        }
-
-        public final int mask = 1 << ordinal();
-    }
 
     public static final Compilations EMPTY = new Compilations();
 
     /**
-     * Compiled code that is {@linkplain TargetMethod#isInterpreterCompatible() interpreter compatible}.
+     * Compiled code that is {@linkplain TargetMethod#isBaseline() baseline}.
      */
     @INSPECTED
-    public final TargetMethod interpreterCompatible;
+    public final TargetMethod baseline;
 
     /**
      * Compiled code that is optimized.
@@ -72,31 +46,28 @@ public class Compilations {
     public final TargetMethod optimized;
 
     private Compilations() {
-        interpreterCompatible = null;
+        baseline = null;
         optimized = null;
     }
 
     /**
      * Creates an object encapsulating the compiled versions of a method.
      */
-    public Compilations(TargetMethod interpreterCompatible, TargetMethod optimized) {
-        assert interpreterCompatible != null || optimized != null;
-        this.interpreterCompatible = interpreterCompatible;
+    public Compilations(TargetMethod baseline, TargetMethod optimized) {
+        assert baseline != null || optimized != null;
+        this.baseline = baseline;
         this.optimized = optimized;
     }
 
     /**
-     * Gets a target method that compatible with a given set of attributes.
-     * If {@code flags == 0}, then {@link #optimized} is returned if
-     * it is non-null and {@linkplain TargetMethod#invalidated() valid}.
-     * Otherwise, {@link #interpreterCompatible} is returned.
+     * Gets a target method that matches a given nature.
      *
-     * @param flags a mask of {@link Compilations.Attr} values
+     * @param nature the specific type of target method required or {@code null} if any target method is acceptable
      */
-    public TargetMethod currentTargetMethod(int flags) {
-        if (INTERPRETER_COMPATIBLE.isSet(flags)) {
-            return interpreterCompatible;
-        } else if (OPTIMIZE.isSet(flags)) {
+    public TargetMethod currentTargetMethod(RuntimeCompiler.Nature nature) {
+        if (nature == Nature.BASELINE) {
+            return baseline;
+        } else if (nature == Nature.OPT) {
             if (optimized != null && optimized.invalidated() == null) {
                 return optimized;
             } else {
@@ -108,26 +79,25 @@ public class Compilations {
         if (optimized != null && optimized.invalidated() == null) {
             return optimized;
         }
-        assert interpreterCompatible == null || interpreterCompatible.invalidated() == null;
-        return interpreterCompatible;
+        return baseline;
     }
 
     @Override
     public String toString() {
-        return "Compilations[interpreterCompatible=" + interpreterCompatible + ", optimized=" + optimized + "]";
+        return "Compilations[baseline=" + baseline + ", optimized=" + optimized + "]";
     }
 
     /**
      * Gets the compiled code represented by a given compiled state object.
      */
-    public static TargetMethod currentTargetMethod(Object compiledState, int flags) {
+    public static TargetMethod currentTargetMethod(Object compiledState, RuntimeCompiler.Nature nature) {
         if (compiledState instanceof Compilations) {
             // compiled
-            return ((Compilations) compiledState).currentTargetMethod(flags);
+            return ((Compilations) compiledState).currentTargetMethod(nature);
         } else {
             assert compiledState instanceof Compilation : "unknown compiled state type: " + compiledState.getClass();
             // currently being compiled, return any previous target method
-            return currentTargetMethod(((Compilation) compiledState).prevCompilations, flags);
+            return currentTargetMethod(((Compilation) compiledState).prevCompilations, nature);
         }
     }
 }

@@ -28,7 +28,7 @@ import com.sun.max.vm.type.*;
 
 /**
  */
-public abstract class ResolvedMethodRefConstant<PoolConstant_Type extends PoolConstant<PoolConstant_Type>> extends AbstractPoolConstant<PoolConstant_Type> implements MethodRefConstant<PoolConstant_Type> {
+public abstract class ResolvedMethodRefConstant<PoolConstant_Type extends PoolConstant<PoolConstant_Type>> extends AbstractMemberRefConstant<PoolConstant_Type> implements MethodRefConstant<PoolConstant_Type> {
 
     @INSPECTED
     private final MethodActor methodActor;

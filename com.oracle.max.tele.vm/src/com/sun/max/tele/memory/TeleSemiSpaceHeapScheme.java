@@ -150,4 +150,9 @@ final class TeleSemiSpaceHeapScheme extends AbstractTeleVMHolder implements Tele
         }
         return origin;
     }
+
+    public MaxMarkBitsInfo markBitInfo() {
+        return null;
+    }
+
 }

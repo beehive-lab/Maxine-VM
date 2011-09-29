@@ -2352,28 +2352,6 @@ public class VMAdviceBeforeAfterTemplateSource {
         }
     }
 
-    @T1X_TEMPLATE(WRETURN)
-    @Slot(-1)
-    public static Word wreturn(@Slot(0) Word value) {
-        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeReturn(value.asAddress().toLong());
-        }
-        return value;
-    }
-
-    @T1X_TEMPLATE(WRETURN$unlock)
-    @Slot(-1)
-    public static Word wreturnUnlock(Reference object, @Slot(0) Word value) {
-        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(object);
-        }
-        Monitor.noninlineExit(object);
-        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeReturn(value.asAddress().toLong());
-        }
-        return value;
-    }
-
     @T1X_TEMPLATE(INVOKEVIRTUAL$word)
     @Slot(-1)
     public static Address invokevirtualWord(ResolutionGuard.InPool guard, Reference receiver) {
@@ -3012,13 +2990,6 @@ public class VMAdviceBeforeAfterTemplateSource {
         }
     }
 
-    @T1X_TEMPLATE(WLOAD)
-    public static void wload(int index) {
-        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeLoad(index);
-        }
-    }
-
     @T1X_TEMPLATE(ISTORE)
     public static void istore(int index, int value) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
@@ -3051,13 +3022,6 @@ public class VMAdviceBeforeAfterTemplateSource {
     public static void ostore(int index, Object value) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeStore(index, value);
-        }
-    }
-
-    @T1X_TEMPLATE(WSTORE)
-    public static void wstore(int index, Word value) {
-        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseBeforeStore(index, value.asAddress().toLong());
         }
     }
 

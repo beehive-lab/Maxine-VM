@@ -23,7 +23,6 @@
 package com.sun.max.vm.compiler.target;
 
 import static com.sun.max.vm.VMOptions.*;
-import static com.sun.max.vm.compiler.target.Compilations.Attr.*;
 
 import java.util.concurrent.*;
 
@@ -31,6 +30,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -70,7 +70,6 @@ public class Compilation {
     @RESET
     private static long compilationTime;
 
-    public final CompilationScheme compilationScheme;
     public RuntimeCompiler compiler;
     public final ClassMethodActor classMethodActor;
     public final Compilation parent;
@@ -85,20 +84,19 @@ public class Compilation {
      */
     public boolean done;
 
-    public final int flags;
+    public final RuntimeCompiler.Nature nature;
 
-    public Compilation(CompilationScheme compilationScheme,
-                       RuntimeCompiler compiler,
+    public Compilation(RuntimeCompiler compiler,
                        ClassMethodActor classMethodActor,
-                       Compilations prevCompilations, Thread compilingThread, int flags) {
+                       Compilations prevCompilations,
+                       Thread compilingThread, RuntimeCompiler.Nature nature) {
         assert prevCompilations != null;
         this.parent = COMPILATION.get();
-        this.compilationScheme = compilationScheme;
         this.compiler = compiler;
         this.classMethodActor = classMethodActor;
         this.prevCompilations = prevCompilations;
         this.compilingThread = compilingThread;
-        this.flags = flags;
+        this.nature = nature;
 
         for (Compilation scope = parent; scope != null; scope = scope.parent) {
             if (scope.classMethodActor.equals(classMethodActor) && scope.compiler == compiler) {
@@ -149,7 +147,7 @@ public class Compilation {
             boolean interrupted = false;
             if (!done) {
                 if (compilingThread == Thread.currentThread()) {
-                    throw new RuntimeException("Compilation of " + classMethodActor.format("%H.%n(%p)") + " is recursive, current compilation scheme: " + compilationScheme);
+                    throw new RuntimeException("Compilation of " + classMethodActor.format("%H.%n(%p)") + " is recursive");
                 }
 
                 // the class method actor is used here as the condition variable
@@ -230,18 +228,16 @@ public class Compilation {
             synchronized (classMethodActor) {
                 // update the compilation state of the class method actor
                 if (result != null) {
-                    assert !INTERPRETER_COMPATIBLE.isSet(flags) || result.isInterpreterCompatible() : "a request for an interpreter compatible target method failed to produce one";
+                    assert nature != Nature.BASELINE || result.isBaseline() : "a request for a baseline target method failed to produce one";
                     // compilation succeeded and produced a target method
-                    TargetMethod interpreterCompatible = prevCompilations.interpreterCompatible;
+                    TargetMethod baseline = prevCompilations.baseline;
                     TargetMethod optimized = prevCompilations.optimized;
-                    if (INTERPRETER_COMPATIBLE.isSet(flags) || result.isInterpreterCompatible()) {
-                        interpreterCompatible = result;
-                    }
-                    if (OPTIMIZE.isSet(flags) || interpreterCompatible != result) {
-                        // We are assuming a method that is not interpreter compatible must be optimized
+                    if (result.isBaseline()) {
+                        baseline = result;
+                    } else {
                         optimized = result;
                     }
-                    classMethodActor.compiledState = new Compilations(interpreterCompatible, optimized);
+                    classMethodActor.compiledState = new Compilations(baseline, optimized);
                 }
                 // compilation finished: this must come after the assignment to classMethodActor.compState
                 done = true;
@@ -249,6 +245,8 @@ public class Compilation {
                 // notify any waiters on this compilation
                 classMethodActor.notifyAll();
             }
+
+            COMPILATION.set(parent);
         }
         if (error != null) {
             // an error occurred
@@ -258,7 +256,6 @@ public class Compilation {
             FatalError.unexpected("target method should not be null");
         }
 
-        COMPILATION.set(parent);
 
         return result;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,9 +20,32 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package com.sun.max.vm.classfile.constant;
+
+import java.io.*;
+
+import com.sun.max.vm.classfile.constant.ConstantPool.Tag;
+
 /**
- * This package implements the {@code AdaptiveCompilationScheme}, a runtime compilation
- * manager that determines the policies and thresholds for dynamic, feedback-driven compilation,
- * coordinating multiple compilers, compilation threads, queues, etc.
+ * An abstract class that implements the most basic parts of the {@link PoolConstant} interface.
  */
-package com.sun.max.vm.compiler.adaptive;
+public abstract class AbstractPoolConstant<PoolConstant_Type extends PoolConstant<PoolConstant_Type>> implements PoolConstant<PoolConstant_Type> {
+
+    public abstract Tag tag();
+
+    public abstract PoolConstantKey<PoolConstant_Type> key(ConstantPool pool);
+
+    @Override
+    public String toString() {
+        return toString(null);
+    }
+
+    public final String toString(ConstantPool pool) {
+        return Static.toString(this, pool);
+    }
+
+    public void writeOn(DataOutputStream stream, ConstantPoolEditor editor, int index) throws IOException {
+        stream.writeByte(tag().classfileTag());
+    }
+
+}

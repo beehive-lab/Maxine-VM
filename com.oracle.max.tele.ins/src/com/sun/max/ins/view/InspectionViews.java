@@ -33,6 +33,7 @@ import com.sun.max.ins.NotepadView.NotepadViewManager;
 import com.sun.max.ins.UserFocusView.UserFocusViewManager;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.debug.BreakpointsView.BreakpointsViewManager;
+import com.sun.max.ins.debug.MarkBitsView.*;
 import com.sun.max.ins.debug.RegistersView.RegistersViewManager;
 import com.sun.max.ins.debug.StackFrameView.StackFrameViewManager;
 import com.sun.max.ins.debug.StackView.StackViewManager;
@@ -106,6 +107,15 @@ public final class InspectionViews extends AbstractInspectionHolder {
             @Override
             public HeapRegionInfoViewManager viewManager() {
                 final HeapRegionInfoViewManager viewManager = HeapRegionInfoView.viewManager(inspection);
+                assert viewManager.viewKind() == this;
+                return viewManager;
+            }
+        },
+        MARK_BITS_INFO(true, false, "Mark Bits for selected heap addresses") {
+            @Override
+            public MarkBitsViewManager viewManager() {
+                final MarkBitsViewManager viewManager = MarkBitsView.makeViewManager(inspection);
+
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
@@ -281,7 +291,9 @@ public final class InspectionViews extends AbstractInspectionHolder {
             public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
                 for (ViewKind kind : ViewKind.singletonViewKinds) {
                     final SingletonViewManager singletonViewManager = (SingletonViewManager) kind.viewManager();
-                    saveSettingsEvent.save(kind.key, singletonViewManager.isActive());
+                    if (singletonViewManager.isSupported()) {
+                        saveSettingsEvent.save(kind.key, singletonViewManager.isActive());
+                    }
                 }
             }
         };

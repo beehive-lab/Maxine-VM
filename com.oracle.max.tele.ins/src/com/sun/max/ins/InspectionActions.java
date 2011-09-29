@@ -3439,11 +3439,72 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
     private InspectorAction removeAllWatchpoints = new RemoveAllWatchpointsAction(null);
 
+
+    final class SetMarkBitAction extends InspectorAction {
+        private static final String DEFAULT_TITLE = "Mark bit";
+        SetMarkBitAction() {
+            super(inspection(), "Display mark bit for word at address...");
+            setEnabled(true);
+        }
+
+        @Override
+        protected void procedure() {
+            new AddressInputDialog(inspection(), Address.zero(), "View Mark Bit for word at address...", "View") {
+                @Override
+                public void entered(Address address) {
+                    MaxMarkBitsInfo m = vm().heap().markBitInfo();
+                    assert m != null;
+                    if (!m.isCovered(address)) {
+                        gui().errorMessage("Address " + address + " is not covered with a mark bit");
+                        return;
+                    }
+                    // TODO (ld): Need to add a mark bit  if one isn't created already for the address, and update  the MarkBitView.
+                }
+            };
+        }
+    }
+
+
     /**
      * @return an Action that will remove all watchpoints in the VM.
      */
     public final InspectorAction removeAllWatchpoints() {
         return removeAllWatchpoints;
+    }
+
+    private InspectorAction setMarkBitAtIndex;
+
+    /**
+     * @return an Action that will add a mark bit from a specified bit index to the mark bits view.
+     */
+    public final InspectorAction setMarkBitAtIndex() {
+        return setMarkBitAtIndex;
+    }
+
+    private InspectorAction setMarkBitAtAddress;
+
+    /**
+     * @return an Action that will add a mark bit from a specified heap address to the mark bits view.
+     */
+    public final InspectorAction setMarkBitAtAddress() {
+        return setMarkBitAtAddress;
+    }
+
+    private InspectorAction removeSelectedMarkBit;
+
+    /**
+     * @return an Action that will remove the currently selected mark bit from the mark bits view.
+     */
+    public final InspectorAction removeSelectedMarkBit() {
+        return removeSelectedMarkBit;
+    }
+
+    private InspectorAction removeAllMarkBits;
+    /**
+     * @return an Action that will remove all mark bits from the mark bits view.
+     */
+    public final InspectorAction removeAllMarkBits() {
+        return removeAllMarkBits;
     }
 
      /**

@@ -24,12 +24,12 @@ package com.oracle.max.vm.ext.t1x;
 
 import static com.oracle.max.cri.intrinsics.IntrinsicIDs.*;
 import static com.oracle.max.vm.ext.t1x.T1XOptions.*;
+import static com.oracle.max.vm.ext.t1x.T1XTemplateTag.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.compiler.target.Safepoints.*;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import static com.sun.max.vm.stack.VMFrameLayout.*;
-import static com.oracle.max.vm.ext.t1x.T1XTemplateTag.*;
 
 import java.io.*;
 import java.lang.reflect.*;
@@ -124,24 +124,9 @@ public class T1X implements RuntimeCompiler {
         }
     };
 
-    @HOSTED_ONLY
-    public void deoptimizationNotSupported() {
-    }
-
-    public boolean supportsInterpreterCompatibility() {
-        return true;
-    }
-
-    public void resetMetrics() {
-        for (Field f : T1XMetrics.class.getFields()) {
-            if (f.getType() == int.class) {
-                try {
-                    f.set(null, 0);
-                } catch (IllegalAccessException e) {
-                    // do nothing.
-                }
-            }
-        }
+    @Override
+    public RuntimeCompiler.Nature nature() {
+        return RuntimeCompiler.Nature.BASELINE;
     }
 
     public TargetMethod compile(ClassMethodActor method, boolean install, CiStatistics stats) {
@@ -321,10 +306,6 @@ public class T1X implements RuntimeCompiler {
         }
     }
 
-    public CallEntryPoint calleeEntryPoint() {
-        return CallEntryPoint.BASELINE_ENTRY_POINT;
-    }
-
     public void initialize(Phase phase) {
         if (isHosted() && phase == Phase.COMPILING) {
             createTemplates(templateSource, altT1X, true, templates);
@@ -419,7 +400,7 @@ public class T1X implements RuntimeCompiler {
      * that they are implemented.
      */
     protected static final EnumSet UNIMPLEMENTED_TEMPLATES = EnumSet.of(NOP, ACONST_NULL, ICONST, LCONST, FCONST, DCONST, BIPUSH, SIPUSH, LDC$int, LDC$long, LDC$float, LDC$double,
-                    LDC$reference$resolved, ILOAD, LLOAD, FLOAD, DLOAD, ALOAD, WLOAD, ISTORE, LSTORE, FSTORE, DSTORE, ASTORE, WSTORE, POP, POP2, DUP, DUP_X1, DUP_X2, DUP2, DUP2_X1, DUP2_X2, SWAP,
+                    LDC$reference$resolved, ILOAD, LLOAD, FLOAD, DLOAD, ALOAD, ISTORE, LSTORE, FSTORE, DSTORE, ASTORE, POP, POP2, DUP, DUP_X1, DUP_X2, DUP2, DUP2_X1, DUP2_X2, SWAP,
                     IINC, IFEQ, IFNE, IFLT, IFGE, IFGT, IFLE, IF_ICMPEQ, IF_ICMPNE, IF_ICMPLT, IF_ICMPGE, IF_ICMPGT, IF_ICMPLE, IF_ACMPEQ, IF_ACMPNE, IFNULL, IFNONNULL, GOTO, GOTO_W,
                     INVOKESPECIAL$void$resolved, INVOKESPECIAL$float$resolved, INVOKESPECIAL$long$resolved, INVOKESPECIAL$double$resolved, INVOKESPECIAL$reference$resolved,
                     INVOKESPECIAL$word$resolved, INVOKESTATIC$void$init, INVOKESTATIC$float$init, INVOKESTATIC$long$init, INVOKESTATIC$double$init, INVOKESTATIC$reference$init,
@@ -455,6 +436,16 @@ public class T1X implements RuntimeCompiler {
         PREAD, PWRITE, PCMPSWP,
         HERE,
         PAUSE
+    ));
+
+    /**
+     * List of intrinsic that T1X cannot handle, i.e., methods that call these intrinsics lead to a bailout.
+     */
+    public static final Set<String> unsafeIntrinsicIDs = new HashSet<String>(Arrays.asList(
+        READREG, WRITEREG, IFLATCHBITREAD,
+        SAFEPOINT_POLL, HERE, INFO, BREAKPOINT_TRAP,
+        ALLOCA, STACKHANDLE,
+        JNI_LINK, JNI_J2N, JNI_N2J
     ));
 
     @HOSTED_ONLY

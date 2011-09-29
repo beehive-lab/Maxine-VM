@@ -25,7 +25,7 @@ package com.sun.max.vm.compiler.target.amd64;
 import static com.oracle.max.asm.target.amd64.AMD64.*;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.VMConfiguration.*;
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.compiler.deopt.Deoptimization.*;
 import static com.sun.max.vm.compiler.target.amd64.AMD64TargetMethodUtil.*;
@@ -58,7 +58,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
     final CiRegister scratch;
 
     static {
-        if (vmConfig().needsAdapters()) {
+        if (vm().compilationBroker.needsAdapters()) {
             // Create and register the adapter generators
             new Baseline2Opt();
             new Opt2Baseline();

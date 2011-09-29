@@ -24,7 +24,6 @@ package com.oracle.max.vm.ext.c1x;
 
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
-
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
@@ -199,7 +198,7 @@ public class C1X implements RuntimeCompiler {
         }
         if (phase == Phase.STARTING) {
             // Now it is safe to use speculative opts
-            C1XOptions.UseAssumptions = deoptimizationSupported && Deoptimization.UseDeopt;
+            C1XOptions.UseAssumptions = vm().compilationBroker.isDeoptSupported() && Deoptimization.UseDeopt;
         } else if (phase == Phase.TERMINATING) {
             if (C1XOptions.PrintMetrics) {
                 C1XMetrics.print();
@@ -278,37 +277,9 @@ public class C1X implements RuntimeCompiler {
         }
     }
 
-    public boolean supportsInterpreterCompatibility() {
-        return false;
-    }
-
-    /**
-     * Specifies whether or not the VM context supports deoptimization. By default, this
-     * is true and is only changed if {@link #deoptimizationNotSupported()} is called.
-     */
-    private static boolean deoptimizationSupported = true;
-
-    @HOSTED_ONLY
-    public void deoptimizationNotSupported() {
-        C1XOptions.UseAssumptions = false;
-        deoptimizationSupported = false;
-    }
-
-    public void resetMetrics() {
-        C1XTimers.reset();
-        for (Field f : C1XMetrics.class.getFields()) {
-            if (f.getType() == int.class) {
-                try {
-                    f.set(null, 0);
-                } catch (IllegalAccessException e) {
-                    // do nothing.
-                }
-            }
-        }
-    }
-
-    public CallEntryPoint calleeEntryPoint() {
-        return CallEntryPoint.OPTIMIZED_ENTRY_POINT;
+    @Override
+    public Nature nature() {
+        return Nature.OPT;
     }
 
     @Override

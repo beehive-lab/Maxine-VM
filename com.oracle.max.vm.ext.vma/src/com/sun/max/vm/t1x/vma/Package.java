@@ -24,7 +24,7 @@ package com.sun.max.vm.t1x.vma;
 
 import com.sun.max.config.BootImagePackage;
 import com.sun.max.vm.VMConfiguration;
-import com.sun.max.vm.compiler.adaptive.AdaptiveCompilationScheme;
+import com.sun.max.vm.compiler.*;
 
 public class Package extends BootImagePackage {
     public Package() {
@@ -37,10 +37,7 @@ public class Package extends BootImagePackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        if (vmConfiguration.compilationPackage.getClass().equals(com.sun.max.vm.compiler.adaptive.Package.class)) {
-            return isOAT1X(AdaptiveCompilationScheme.optName()) || isOAT1X(AdaptiveCompilationScheme.baselineName());
-        }
-        return false;
+        return isOAT1X(CompilationBroker.optName()) || isOAT1X(CompilationBroker.baselineName());
     }
 
 }

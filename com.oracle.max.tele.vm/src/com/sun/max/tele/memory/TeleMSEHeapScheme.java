@@ -121,4 +121,8 @@ final class TeleMSEHeapScheme extends AbstractTeleVMHolder implements TeleHeapSc
         return Collections.emptyList();
     }
 
+    public MaxMarkBitsInfo markBitInfo() {
+        // TODO (ld)
+        return null;
+    }
 }

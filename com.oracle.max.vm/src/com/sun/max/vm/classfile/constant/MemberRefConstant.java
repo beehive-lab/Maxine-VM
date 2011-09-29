@@ -22,6 +22,10 @@
  */
 package com.sun.max.vm.classfile.constant;
 
+import static com.sun.max.vm.classfile.constant.PoolConstantFactory.*;
+
+import java.io.*;
+
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.type.*;
 
@@ -51,4 +55,20 @@ public interface MemberRefConstant<PoolConstant_Type extends PoolConstant<PoolCo
      * @param pool the constant pool that maybe be required to convert a constant pool index to this field/method's type/signature.
      */
     Descriptor descriptor(ConstantPool pool);
+}
+
+abstract class AbstractMemberRefConstant<PoolConstant_Type extends PoolConstant<PoolConstant_Type>> extends AbstractPoolConstant<PoolConstant_Type> implements MemberRefConstant<PoolConstant_Type> {
+    @Override
+    public void writeOn(DataOutputStream stream, ConstantPoolEditor editor, int index) throws IOException {
+        super.writeOn(stream, editor, index);
+        final MemberRefConstant member = editor.pool().memberAt(index);
+        final int classIndex = editor.indexOf(createClassConstant(member.holder(editor.pool())));
+        Utf8Constant name = member.name(editor.pool());
+        if (name == SymbolTable.CLINIT) {
+            name = ConstantPoolEditor.$CLINIT$;
+        }
+        final int nameAndTypeIndex = editor.indexOf(createNameAndTypeConstant(name, member.descriptor(editor.pool())));
+        stream.writeShort(classIndex);
+        stream.writeShort(nameAndTypeIndex);
+    }
 }

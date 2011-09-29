@@ -553,6 +553,9 @@ public final class Heap {
                 Log.println("--GC did not free enough--");
             }
             Log.unlock(lockDisabledSafepoints);
+            if (reclaimed == 0L) {
+                FatalError.breakpoint();
+            }
         }
         return freedEnough;
     }

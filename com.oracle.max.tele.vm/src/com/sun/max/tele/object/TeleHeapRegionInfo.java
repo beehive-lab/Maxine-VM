@@ -53,4 +53,11 @@ public class TeleHeapRegionInfo extends TeleTupleObject {
         }
         return Address.zero();
     }
+
+    public int flags() {
+        if (regionID  >= 0) {
+            return vm().teleFields().HeapRegionInfo_flags.readInt(getReference());
+        }
+        return 0;
+    }
 }

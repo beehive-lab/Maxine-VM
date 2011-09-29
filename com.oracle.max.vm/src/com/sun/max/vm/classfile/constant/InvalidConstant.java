@@ -23,6 +23,9 @@
 package com.sun.max.vm.classfile.constant;
 
 import static com.sun.max.vm.classfile.ErrorContext.*;
+
+import java.io.*;
+
 import com.sun.max.vm.classfile.constant.ConstantPool.*;
 
 /**
@@ -50,4 +53,9 @@ public final class InvalidConstant extends AbstractPoolConstant<InvalidConstant>
     }
 
     public static final InvalidConstant VALUE = new InvalidConstant();
+
+    @Override
+    public void writeOn(DataOutputStream stream, ConstantPoolEditor editor, int index) throws IOException {
+        // NOOP
+    }
 }
