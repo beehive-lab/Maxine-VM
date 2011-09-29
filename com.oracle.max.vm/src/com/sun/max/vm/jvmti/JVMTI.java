@@ -32,6 +32,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.jni.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -72,6 +73,7 @@ public class JVMTI {
         for (int i = 0; i < jvmtiEnvs.length; i++) {
             jvmtiEnvs[i] = new JVMTIEnv();
         }
+        new CriticalNativeMethod(JVMTI.class, "jvmtiCurrentJniEnv");
     }
 
     @C_FUNCTION
@@ -91,6 +93,7 @@ public class JVMTI {
     }
 
     public static void initialize() {
+        JvmtiRawMonitor.initialize();
         // TODO agentLibOption variant
         for (int i = 0; i < agentPathOption.count(); i++) {
             Pointer path = agentPathOption.getLibStart(i);
@@ -133,12 +136,12 @@ public class JVMTI {
      * TODO handle the (error) case of an upcall from an unattached thread
      */
 
-    @C_FUNCTION
-    private static native Pointer currentJniEnv();
+    @C_FUNCTION(noLatch = true)
+    private static native Pointer jvmtiCurrentJniEnv();
 
     @INLINE
     public static Pointer prologue(Pointer env, String name) {
-        return JniFunctions.prologue(currentJniEnv(), name);
+        return JniFunctions.prologue(jvmtiCurrentJniEnv(), name);
     }
 
     public static void vmEvent(int eventId) {

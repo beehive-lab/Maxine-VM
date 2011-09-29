@@ -258,7 +258,7 @@ public class FixedSizeRegionAllocator {
      * is used to allocate the part or all of the objects implementing it).
      *
      * @param start address to the first byte of backing storage for the allocator
-     * @param size size of the memory region backing the region allocator
+     * @param mutexSize size of the memory region backing the region allocator
      * @param the size of the regions. Must be a multiple of the platform's page size.
      * @param amount of space already allocated from the start of the backing storage space.
      */
