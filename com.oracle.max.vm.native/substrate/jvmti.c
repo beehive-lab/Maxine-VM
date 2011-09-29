@@ -24,6 +24,7 @@
 #include <jvmti.h>
 #include <jni.h>
 #include "mutex.h"
+#include "condition.h"
 
 extern struct JavaVM_ main_vm;
 
@@ -62,6 +63,11 @@ Java_com_sun_max_vm_jvmti_JvmtiCallbacks_invokeGarbageCollectionCallback(JNIEnv 
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_vm_jvmti_JvmtiRawMonitor_nativeMutexLock(JNIEnv *env, jclass c, Mutex mutex) {
     return mutex_enter(mutex) == 0;
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_sun_max_vm_jvmti_JvmtiRawMonitor_nativeConditionWait(JNIEnv *env, jclass c, Mutex mutex, Condition condition, jlong timeoutMilliSeconds) {
+    return condition_timedWait(condition, mutex, timeoutMilliSeconds);
 }
 
 static void jvmti_reserved() {
@@ -257,7 +263,22 @@ void *getJVMTIInterface(int version) {
     return NULL;
 }
 
-extern JNIEnv *currentJniEnv();
+//extern JNIEnv *currentJniEnv();
+/**
+ * Gets the thread-local pointer to the pointer to the global JNI function table.
+ */
+#include <threadLocals.h>
+
+JNIEnv *jvmtiCurrentJniEnv() {
+    TLA tla = tla_current();
+//    c_ASSERT(tla != 0);
+    if (tla == 0) {
+        return NULL;
+    }
+    JNIEnv *env = (JNIEnv *) tla_addressOf(tla, JNI_ENV);
+    c_ASSERT(env != NULL);
+    return env;
+}
 
 void *getJVMTIImpl(int version) {
     jvmtienv_impl.functions = &jvmti_extended_interface;
