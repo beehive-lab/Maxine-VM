@@ -49,6 +49,7 @@ import com.sun.max.vm.compiler.target.Adapter.Type;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.Cursor;
+import com.sun.max.vm.type.*;
 
 /**
  * Adapter generators for AMD64.
@@ -366,7 +367,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
          */
         @Override
         protected Adapter create(Sig sig) {
-            CiValue[] optArgs = opt.getCallingConvention(JavaCall, sig.kinds, target(), false).locations;
+            CiValue[] optArgs = opt.getCallingConvention(JavaCall, WordUtil.ciKinds(sig.kinds, true), target(), false).locations;
 
             AMD64Assembler asm = new AMD64Assembler(target(), null);
 
@@ -376,7 +377,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             // address in the baseline caller.
 
             // Save the address of the OPT callee's main body in RAX
-            asm.movq(rax, new CiAddress(CiKind.Word, rsp.asValue()));
+            asm.movq(rax, new CiAddress(WordUtil.archKind(), rsp.asValue()));
 
             // Compute the number of stack args needed for the call (i.e. the args that won't
             // be put into registers)
@@ -416,7 +417,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             int baselineArgsSize = 0;
             CiBitMap refMap = null;
             for (int i = optArgs.length - 1; i >= 0;  i--) {
-                CiKind kind = sig.kinds[i];
+                Kind kind = sig.kinds[i];
                 int refMapIndex = adaptArgument(asm, kind, optArgs[i], baselineStackOffset, 0);
                 if (refMapIndex != -1) {
                     if (refMap == null) {
@@ -460,25 +461,25 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
 
         // Checkstyle: stop
         @Override
-        protected void adapt(AMD64Assembler asm, CiKind kind, CiRegister reg, int offset32) {
-            switch (kind) {
-                case Byte:     asm.movsxb(reg, new CiAddress(CiKind.Byte, rsp.asValue(), offset32));    break;
-                case Boolean:  asm.movzxb(reg, new CiAddress(CiKind.Boolean, rsp.asValue(), offset32)); break;
-                case Short:    asm.movsxw(reg, new CiAddress(CiKind.Short, rsp.asValue(), offset32));   break;
-                case Char:     asm.movzxl(reg, new CiAddress(CiKind.Char, rsp.asValue(), offset32));    break;
-                case Int:      asm.movslq(reg, new CiAddress(CiKind.Int, rsp.asValue(), offset32));     break;
-                case Long:
-                case Word:
-                case Object:   asm.movq(reg, new CiAddress(CiKind.Word, rsp.asValue(), offset32));      break;
-                case Float:    asm.movss(reg, new CiAddress(CiKind.Float, rsp.asValue(), offset32));    break;
-                case Double:   asm.movsd(reg, new CiAddress(CiKind.Double, rsp.asValue(), offset32));   break;
-                default:       throw ProgramError.unexpected();
+        protected void adapt(AMD64Assembler asm, Kind kind, CiRegister reg, int offset32) {
+            switch (kind.asEnum) {
+                case BYTE:      asm.movsxb(reg, new CiAddress(CiKind.Byte, rsp.asValue(), offset32));    break;
+                case BOOLEAN:   asm.movzxb(reg, new CiAddress(CiKind.Boolean, rsp.asValue(), offset32)); break;
+                case SHORT:     asm.movsxw(reg, new CiAddress(CiKind.Short, rsp.asValue(), offset32));   break;
+                case CHAR:      asm.movzxl(reg, new CiAddress(CiKind.Char, rsp.asValue(), offset32));    break;
+                case INT:       asm.movslq(reg, new CiAddress(CiKind.Int, rsp.asValue(), offset32));     break;
+                case LONG:
+                case WORD:
+                case REFERENCE: asm.movq(reg, new CiAddress(CiKind.Long, rsp.asValue(), offset32));      break;
+                case FLOAT:     asm.movss(reg, new CiAddress(CiKind.Float, rsp.asValue(), offset32));    break;
+                case DOUBLE:    asm.movsd(reg, new CiAddress(CiKind.Double, rsp.asValue(), offset32));   break;
+                default:        throw ProgramError.unexpected();
             }
         }
         // Checkstyle: resume
 
         @Override
-        public void adapt(AMD64Assembler asm, CiKind kind, int optStackOffset32, int baselineStackOffset32, int adapterFrameSize) {
+        public void adapt(AMD64Assembler asm, Kind kind, int optStackOffset32, int baselineStackOffset32, int adapterFrameSize) {
             int src = baselineStackOffset32;
             int dst = optStackOffset32;
             stackCopy(asm, kind, src, dst);
@@ -692,7 +693,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
          */
         @Override
         protected Adapter create(Sig sig) {
-            CiValue[] optArgs = opt.getCallingConvention(JavaCall, sig.kinds, target(), false).locations;
+            CiValue[] optArgs = opt.getCallingConvention(JavaCall, WordUtil.ciKinds(sig.kinds, true), target(), false).locations;
             AMD64Assembler asm = new AMD64Assembler(target(), null);
 
             // On entry to the frame, there are 2 return addresses at [RSP] and [RSP + 8].
@@ -701,7 +702,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             // address in the OPT caller.
 
             // Save the address of the baseline callee's main body in RAX
-            asm.movq(rax, new CiAddress(CiKind.Word, rsp.asValue()));
+            asm.movq(rax, new CiAddress(WordUtil.archKind(), rsp.asValue()));
 
             // Initial args are in registers, remaining args are on the stack.
             int baselineArgsSize = frameSizeFor(sig.kinds, BASELINE_SLOT_SIZE);
@@ -741,25 +742,25 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
 
         // Checkstyle: stop
         @Override
-        protected void adapt(AMD64Assembler asm, CiKind kind, CiRegister reg, int offset32) {
-            switch (kind) {
-                case Byte:
-                case Boolean:
-                case Short:
-                case Char:
-                case Int:       asm.movl(new CiAddress(CiKind.Word, rsp.asValue(), offset32), reg);  break;
-                case Long:
-                case Word:
-                case Object:    asm.movq(new CiAddress(CiKind.Word, rsp.asValue(), offset32), reg);  break;
-                case Float:     asm.movss(new CiAddress(CiKind.Float, rsp.asValue(), offset32), reg);  break;
-                case Double:    asm.movsd(new CiAddress(CiKind.Double, rsp.asValue(), offset32), reg);  break;
+        protected void adapt(AMD64Assembler asm, Kind kind, CiRegister reg, int offset32) {
+            switch (kind.asEnum) {
+                case BYTE:
+                case BOOLEAN:
+                case SHORT:
+                case CHAR:
+                case INT:       asm.movl(new CiAddress(CiKind.Int, rsp.asValue(), offset32), reg);  break;
+                case LONG:
+                case WORD:
+                case REFERENCE: asm.movq(new CiAddress(CiKind.Long, rsp.asValue(), offset32), reg);  break;
+                case FLOAT:     asm.movss(new CiAddress(CiKind.Float, rsp.asValue(), offset32), reg);  break;
+                case DOUBLE:    asm.movsd(new CiAddress(CiKind.Double, rsp.asValue(), offset32), reg);  break;
                 default:        throw ProgramError.unexpected();
             }
         }
         // Checkstyle: resume
 
         @Override
-        public void adapt(AMD64Assembler asm, CiKind kind, int optStackOffset32, int baselineStackOffset32, int adapterFrameSize) {
+        public void adapt(AMD64Assembler asm, Kind kind, int optStackOffset32, int baselineStackOffset32, int adapterFrameSize) {
             // Add word size to take into account the slot used by the RIP of the caller
             int src = adapterFrameSize + optStackOffset32 + Word.size();
             int dst = baselineStackOffset32;
@@ -778,13 +779,13 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
      * @param adapterFrameSize the size of the adapter frame
      * @return the reference map index of the reference slot on the adapter frame corresponding to the argument or -1
      */
-    protected int adaptArgument(AMD64Assembler asm, CiKind kind, CiValue optArg, int baselineStackOffset32, int adapterFrameSize) {
+    protected int adaptArgument(AMD64Assembler asm, Kind kind, CiValue optArg, int baselineStackOffset32, int adapterFrameSize) {
         if (optArg.isRegister()) {
             adapt(asm, kind, optArg.asRegister(), baselineStackOffset32);
         } else if (optArg.isStackSlot()) {
             int optStackOffset32 = ((CiStackSlot) optArg).index() * OPT_SLOT_SIZE;
             adapt(asm, kind, optStackOffset32, baselineStackOffset32, adapterFrameSize);
-            if (kind.isObject()) {
+            if (kind.isReference) {
                 return optStackOffset32 / Word.size();
             }
         } else {
@@ -793,19 +794,19 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
         return -1;
     }
 
-    protected void stackCopy(AMD64Assembler asm, CiKind kind, int sourceStackOffset, int destStackOffset) {
+    protected void stackCopy(AMD64Assembler asm, Kind kind, int sourceStackOffset, int destStackOffset) {
         // First, load into a scratch register of appropriate size for the kind, then write to memory location
-        if (kind.isDoubleWord() || kind.isWord() || kind.isObject()) {
-            asm.movq(scratch, new CiAddress(CiKind.Word, rsp.asValue(), sourceStackOffset));
-            asm.movq(new CiAddress(CiKind.Word, rsp.asValue(), destStackOffset), scratch);
+        if (kind.width == WordWidth.BITS_64) {
+            asm.movq(scratch, new CiAddress(WordUtil.archKind(), rsp.asValue(), sourceStackOffset));
+            asm.movq(new CiAddress(WordUtil.archKind(), rsp.asValue(), destStackOffset), scratch);
         } else {
-            asm.movzxd(scratch, new CiAddress(CiKind.Word, rsp.asValue(), sourceStackOffset));
-            asm.movl(new CiAddress(CiKind.Word, rsp.asValue(), destStackOffset), scratch);
+            asm.movzxd(scratch, new CiAddress(WordUtil.archKind(), rsp.asValue(), sourceStackOffset));
+            asm.movl(new CiAddress(WordUtil.archKind(), rsp.asValue(), destStackOffset), scratch);
         }
     }
 
-    protected abstract void adapt(AMD64Assembler asm, CiKind kind, int optStackOffset32, int baselineStackOffset32, int adapterFrameSize);
-    protected abstract void adapt(AMD64Assembler asm, CiKind kind, CiRegister reg, int offset32);
+    protected abstract void adapt(AMD64Assembler asm, Kind kind, int optStackOffset32, int baselineStackOffset32, int adapterFrameSize);
+    protected abstract void adapt(AMD64Assembler asm, Kind kind, CiRegister reg, int offset32);
 
     public static final byte REXW = (byte) 0x48;
     public static final byte RET2 = (byte) 0xC2;

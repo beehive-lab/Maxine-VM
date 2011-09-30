@@ -47,6 +47,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.deps.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.*;
@@ -1692,8 +1693,9 @@ public abstract class ClassActor extends Actor implements RiType {
         return false;
     }
 
-    public final CiKind kind() {
-        return kind.ciKind;
+    @Override
+    public final CiKind kind(boolean architecture) {
+        return WordUtil.ciKind(kind, architecture);
     }
 
     public final String name() {

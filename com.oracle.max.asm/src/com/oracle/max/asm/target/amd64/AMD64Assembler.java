@@ -25,7 +25,6 @@ package com.oracle.max.asm.target.amd64;
 import static com.oracle.max.asm.NumUtil.*;
 import static com.oracle.max.asm.target.amd64.AMD64.*;
 import static com.oracle.max.cri.intrinsics.MemoryBarriers.*;
-import static com.sun.cri.ci.CiKind.*;
 
 import com.oracle.max.asm.*;
 import com.sun.cri.ci.*;
@@ -35,6 +34,10 @@ import com.sun.cri.ri.*;
  * This class implements an assembler that can encode most X86 instructions.
  */
 public class AMD64Assembler extends AbstractAssembler {
+    /**
+     * The kind for pointers and raw registers.  Since we know we are 64 bit here, we can hardcode it.
+     */
+    private static final CiKind Word = CiKind.Long;
 
     private static final int MinEncodingNeedsRex = 8;
 
@@ -2789,7 +2792,7 @@ public class AMD64Assembler extends AbstractAssembler {
                 // the code where this idiom is used, in particular the
                 // orderAccess code.
                 lock();
-                addl(new CiAddress(CiKind.Word, RSP, 0), 0); // Assert the lock# signal here
+                addl(new CiAddress(Word, RSP, 0), 0); // Assert the lock# signal here
             }
         }
     }
@@ -2829,7 +2832,7 @@ public class AMD64Assembler extends AbstractAssembler {
     }
 
     public void nullCheck(CiRegister r) {
-        testl(AMD64.rax, new CiAddress(CiKind.Word, r.asValue(Word), 0));
+        testl(AMD64.rax, new CiAddress(Word, r.asValue(Word), 0));
     }
 
     public void align(int modulus) {

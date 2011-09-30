@@ -80,9 +80,10 @@ public class MaxRuntimeCalls {
 
     @HOSTED_ONLY
     private static boolean checkCompatible(CiRuntimeCall call, ClassMethodActor classMethodActor) {
-        assert classMethodActor.resultKind().ciKind == call.resultKind;
+        assert classMethodActor.descriptor().returnKind(true) == call.resultKind;
+        CiKind[] kinds = CiUtil.signatureToKinds(classMethodActor.signature(), classMethodActor.isStatic() ? null : classMethodActor.holder().kind(true));
         for (int i = 0; i < call.arguments.length; i++) {
-            assert classMethodActor.getParameterKinds()[i].ciKind == call.arguments[i] : call + " incompatible with " + classMethodActor;
+            assert kinds[i] == call.arguments[i] : call + " incompatible with " + classMethodActor;
         }
         return true;
     }

@@ -172,7 +172,7 @@ public class CiUtil {
      * @return the Java name corresponding to {@code riType}
      */
     public static String toJavaName(RiType riType, boolean qualified) {
-        CiKind kind = riType.kind();
+        CiKind kind = riType.kind(false);
         if (kind.isPrimitive() || kind == CiKind.Void) {
             return kind.javaName;
         }
@@ -244,7 +244,7 @@ public class CiUtil {
      * @return the result of formatting this method according to {@code format}
      * @throws IllegalFormatException if an illegal specifier is encountered in {@code format}
      */
-    public static String format(String format, RiMethod method, boolean kinds) throws IllegalFormatException {
+    public static String format(String format, RiMethod method) throws IllegalFormatException {
         final StringBuilder sb = new StringBuilder();
         int index = 0;
         RiSignature sig = method.signature();
@@ -261,7 +261,7 @@ public class CiUtil {
                         qualified = true;
                         // fall through
                     case 'r': {
-                        sb.append(kinds ? sig.returnKind().jniName : toJavaName(sig.returnType(null), qualified));
+                        sb.append(toJavaName(sig.returnType(null), qualified));
                         break;
                     }
                     case 'H':
@@ -283,7 +283,7 @@ public class CiUtil {
                             if (i != 0) {
                                 sb.append(", ");
                             }
-                            sb.append(kinds ? sig.argumentKindAt(i).jniName : toJavaName(sig.argumentTypeAt(i, null), qualified));
+                            sb.append(toJavaName(sig.argumentTypeAt(i, null), qualified));
                         }
                         break;
                     }
@@ -330,7 +330,7 @@ public class CiUtil {
      * @return the result of formatting this field according to {@code format}
      * @throws IllegalFormatException if an illegal specifier is encountered in {@code format}
      */
-    public static String format(String format, RiField field, boolean kinds) throws IllegalFormatException {
+    public static String format(String format, RiField field) throws IllegalFormatException {
         final StringBuilder sb = new StringBuilder();
         int index = 0;
         RiType type = field.type();
@@ -347,7 +347,7 @@ public class CiUtil {
                         qualified = true;
                         // fall through
                     case 't': {
-                        sb.append(kinds ? type.kind().jniName : toJavaName(type, qualified));
+                        sb.append(toJavaName(type, qualified));
                         break;
                     }
                     case 'H':
@@ -547,7 +547,7 @@ public class CiUtil {
         if (ste.getFileName() != null && ste.getLineNumber() > 0) {
             sb.append(ste);
         } else {
-            sb.append(CiUtil.format("%H.%n(%p)", method, false));
+            sb.append(CiUtil.format("%H.%n(%p)", method));
         }
         return sb.append(" [bci: ").append(bci).append(']');
     }
@@ -715,7 +715,7 @@ public class CiUtil {
             result = new CiKind[args];
         }
         for (int j = 0; j < args; j++) {
-            result[i + j] = signature.argumentKindAt(j);
+            result[i + j] = signature.argumentKindAt(j, true);
         }
         return result;
     }

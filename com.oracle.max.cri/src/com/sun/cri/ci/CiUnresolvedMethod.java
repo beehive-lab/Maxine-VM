@@ -120,7 +120,7 @@ public class CiUnresolvedMethod implements RiMethod {
     }
 
     private CiUnresolvedException unresolved(String operation) {
-        throw new CiUnresolvedException(operation + " not defined for unresolved method " + CiUtil.format("%H.%n(%p)", this, false));
+        throw new CiUnresolvedException(operation + " not defined for unresolved method " + CiUtil.format("%H.%n(%p)", this));
     }
 
     @Override
@@ -139,7 +139,7 @@ public class CiUnresolvedMethod implements RiMethod {
 
     @Override
     public String toString() {
-        return CiUtil.format("%H.%n(%p) [unresolved]", this, false);
+        return CiUtil.format("%H.%n(%p) [unresolved]", this);
     }
 
     public RiType accessor() {

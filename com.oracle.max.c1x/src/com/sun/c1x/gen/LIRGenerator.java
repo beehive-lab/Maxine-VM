@@ -136,7 +136,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         CiValue result = makeOperand(instruction);
         if (result != operand) {
             assert result.kind != CiKind.Illegal;
-            if (!compilation.archKindsEqual(result.kind, operand.kind)) {
+            if (!Util.archKindsEqual(result.kind, operand.kind)) {
                 // moves between different types need an intervening spill slot
                 CiValue tmp = forceToSpill(result, operand.kind, false);
                 lir.move(tmp, operand);
@@ -277,22 +277,26 @@ public abstract class LIRGenerator extends ValueVisitor {
     private void setOperandsForLocals(FrameState state) {
         CiCallingConvention args = compilation.frameMap().incomingArguments();
         int javaIndex = 0;
-        for (int i = 0; i < args.locations.length; i++) {
-            CiValue src = args.locations[i];
+        for (CiValue src : args.locations) {
             assert src.isLegal() : "check";
 
             CiVariable dest = newVariable(src.kind.stackKind());
             lir.move(src, dest, src.kind);
 
             // Assign new location to Local instruction for this local
-            Value instr = state.localAt(javaIndex);
-            Local local = (Local) instr;
+            Local local = (Local) state.localAt(javaIndex);
+            assert local.javaIndex() == javaIndex;
             CiKind kind = src.kind.stackKind();
             assert kind == local.kind.stackKind() : "local type check failed";
             if (local.isLive()) {
                 setResult(local, dest);
             }
-            javaIndex += kind.jvmSlots;
+
+            javaIndex++;
+            if (javaIndex < state.localsSize() && state.localAt(javaIndex) == null) {
+                // Doubleword values are followed by a null entry, so skip that
+                javaIndex++;
+            }
         }
     }
 
@@ -450,7 +454,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         CiKind xtype = x.kind;
         CiKind ttype = i.trueValue().kind;
         assert xtype.isInt() || xtype.isObject() : "cannot handle others";
-        assert ttype.isInt() || ttype.isObject() || ttype.isLong() || ttype.isWord() : "cannot handle others";
+        assert ttype.isInt() || ttype.isObject() || ttype.isLong() : "cannot handle others";
         assert ttype.equals(i.falseValue().kind) : "cannot handle others";
 
         CiValue left = load(x);
@@ -672,7 +676,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             // address is [pointer + disp + (index * scale)]
 //            assert (x.opcode & 0xff) == PGET || (x.opcode & 0xff) == PSET;
             if (!x.displacement().isConstant()) {
-                CiVariable tmp = newVariable(CiKind.Word);
+                CiVariable tmp = newVariable(compilation.target.wordKind);
                 arithmeticOpLong(Bytecodes.LADD, tmp, pointer, load(x.displacement()), null);
                 int kindSize = compilation.target.sizeInBytes(kind);
                 Scale scale = Scale.fromInt(kindSize);
@@ -703,8 +707,9 @@ public abstract class LIRGenerator extends ValueVisitor {
         CiValue dst = createResultVariable(x);
 
         CiConstant constant = x.value().isConstant() ? x.value().asConstant() : null;
+        CiConstant zero = null;
         if (constant == null) {
-            CiConstant zero = CiConstant.defaultValue(x.value().kind);
+            zero = CiConstant.defaultValue(x.value().kind);
             lir.cmp(Condition.EQ, src, zero);
         }
         lir.lea(src, dst);
@@ -713,7 +718,8 @@ public abstract class LIRGenerator extends ValueVisitor {
                 lir.move(value, dst);
             }
         } else {
-            lir.cmove(Condition.EQ, CiConstant.ZERO, dst, dst);
+            assert zero != null;
+            lir.cmove(Condition.EQ, zero, dst, dst);
         }
     }
 
@@ -722,7 +728,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         LIRDebugInfo info = maybeStateFor(x);
         CiValue pointer = load(x.pointer());
         CiValue dst = createResultVariable(x);
-        CiAddress src = getAddressForPointerOp(x, x.dataKind, pointer);
+        CiAddress src = getAddressForPointerOp(x, x.dataType.kind(true), pointer);
         lir.load(src, dst, info);
     }
 
@@ -731,8 +737,8 @@ public abstract class LIRGenerator extends ValueVisitor {
         LIRDebugInfo info = maybeStateFor(x);
         LIRItem value = new LIRItem(x.value(), this);
         CiValue pointer = load(x.pointer());
-        value.loadItem(x.dataKind);
-        CiAddress dst = getAddressForPointerOp(x, x.dataKind, pointer);
+        value.loadItem(x.dataType.kind(true));
+        CiAddress dst = getAddressForPointerOp(x, x.dataType.kind(true), pointer);
         lir.store(value.result(), dst, info);
     }
 
@@ -1098,7 +1104,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitStoreRegister(StoreRegister x) {
-        CiValue reg = x.register.asValue(x.kind);
+        CiValue reg = x.register.asValue(x.value().kind);
         lir.move(makeOperand(x.value()), reg);
     }
 
@@ -1380,7 +1386,6 @@ public abstract class LIRGenerator extends ValueVisitor {
      */
     CiValue forceToSpill(CiValue value, CiKind kind, boolean mustStayOnStack) {
         assert value.isLegal() : "value should not be illegal";
-        assert kind.jvmSlots == value.kind.jvmSlots : "size mismatch";
         if (!value.isVariableOrRegister()) {
             // force into a variable that must start in memory
             CiValue operand = operands.newVariable(value.kind, mustStayOnStack ? VariableFlag.MustStayInMemory : VariableFlag.MustStartInMemory);
@@ -2122,13 +2127,13 @@ public abstract class LIRGenerator extends ValueVisitor {
         RiType destType = dest.declaredType();
         if ((srcType != null && srcType.isArrayClass()) || (destType != null && destType.isArrayClass())) {
             RiType type = (srcType == null) ? destType : srcType;
-            if ((srcType == null || destType == null || srcType.kind() != destType.kind()) && type.kind() != CiKind.Object) {
+            if ((srcType == null || destType == null || srcType.kind(true) != destType.kind(true)) && type.kind(true) != CiKind.Object) {
                 TypeEqualityCheck typeCheck = new TypeEqualityCheck(src, dest, arrayCopy.stateBefore(), Condition.EQ);
                 visitTypeEqualityCheck(typeCheck);
             }
             boolean inputsSame = src == dest;
             boolean inputsDifferent = !inputsSame && (src.checkFlag(Flag.ResultIsUnique) || dest.checkFlag(Flag.ResultIsUnique));
-            boolean needsStoreCheck = type.componentType().kind() == CiKind.Object && destType != srcType;
+            boolean needsStoreCheck = type.componentType().kind(true) == CiKind.Object && destType != srcType;
             if (!needsStoreCheck) {
                 arrayCopy.setFlag(Flag.NoStoreCheck);
             }
@@ -2145,7 +2150,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     private CiValue emitInvokeKnown(RiMethod method, FrameState stateBefore, Value... args) {
         boolean isStatic = Modifier.isStatic(method.accessFlags());
-        Invoke invoke = new Invoke(isStatic ? Bytecodes.INVOKESTATIC : Bytecodes.INVOKESPECIAL, method.signature().returnKind(), args, isStatic, method, null, stateBefore);
+        Invoke invoke = new Invoke(isStatic ? Bytecodes.INVOKESTATIC : Bytecodes.INVOKESPECIAL, method.signature().returnKind(true), args, isStatic, method, null, stateBefore);
         visitInvoke(invoke);
         return invoke.operand();
     }

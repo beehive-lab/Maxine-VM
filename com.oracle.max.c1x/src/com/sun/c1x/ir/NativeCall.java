@@ -62,7 +62,7 @@ public final class NativeCall extends StateSplit {
      * @param stateBefore the state before executing the invocation
      */
     public NativeCall(RiMethod nativeMethod, RiSignature signature, Value address, Value[] args, FrameState stateBefore) {
-        super(signature.returnKind().stackKind(), stateBefore);
+        super(signature.returnKind(false).stackKind(), stateBefore);
         this.address = address;
         this.nativeMethod = nativeMethod;
         this.arguments = args;
@@ -101,6 +101,11 @@ public final class NativeCall extends StateSplit {
     @Override
     public void accept(ValueVisitor v) {
         v.visitNativeCall(this);
+    }
+
+    @Override
+    public RiType declaredType() {
+        return signature.returnType(null);
     }
 
     @Override

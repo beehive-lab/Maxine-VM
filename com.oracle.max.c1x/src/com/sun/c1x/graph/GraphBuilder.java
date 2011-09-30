@@ -347,7 +347,7 @@ public final class GraphBuilder {
         if (top == null) {
             top = curState.stackAt(curState.stackSize() - 2);
             assert top != null;
-            assert top.kind.isDoubleWord();
+            assert MutableFrameState.isTwoSlot(top.kind);
         }
         return top.kind;
     }
@@ -766,9 +766,31 @@ public final class GraphBuilder {
         apush(append(n));
     }
 
+    /**
+     * Gets the kind of array elements for the array type code that appears
+     * in a {@link Bytecodes#NEWARRAY} bytecode.
+     * @param code the array type code
+     * @return the kind from the array type code
+     */
+    public static CiKind arrayTypeCodeToKind(int code) {
+        // Checkstyle: stop
+        switch (code) {
+            case 4:  return CiKind.Boolean;
+            case 5:  return CiKind.Char;
+            case 6:  return CiKind.Float;
+            case 7:  return CiKind.Double;
+            case 8:  return CiKind.Byte;
+            case 9:  return CiKind.Short;
+            case 10: return CiKind.Int;
+            case 11: return CiKind.Long;
+            default: throw new IllegalArgumentException("unknown array type code: " + code);
+        }
+        // Checkstyle: resume
+    }
+
     void genNewTypeArray(int typeCode) {
         FrameState stateBefore = curState.immutableCopy(bci());
-        CiKind kind = CiKind.fromArrayTypeCode(typeCode);
+        CiKind kind = arrayTypeCodeToKind(typeCode);
         RiType elementType = compilation.runtime.asRiType(kind);
         apush(append(new NewTypeArray(ipop(), elementType, stateBefore)));
     }
@@ -797,14 +819,14 @@ public final class GraphBuilder {
         FrameState stateBefore = curState.immutableCopy(bci());
         boolean isLoaded = !C1XOptions.TestPatching && field.isResolved();
         LoadField load = new LoadField(apop(), field, false, stateBefore, isLoaded);
-        appendOptimizedLoadField(field.kind(), load);
+        appendOptimizedLoadField(field.kind(false).stackKind(), load);
     }
 
     void genPutField(int cpi, RiField field) {
         // Must copy the state here, because the field holder must still be on the stack.
         FrameState stateBefore = curState.immutableCopy(bci());
         boolean isLoaded = !C1XOptions.TestPatching && field.isResolved();
-        Value value = pop(field.kind().stackKind());
+        Value value = pop(field.kind(false).stackKind());
         appendOptimizedStoreField(new StoreField(apop(), field, value, false, stateBefore, isLoaded));
     }
 
@@ -816,11 +838,11 @@ public final class GraphBuilder {
             constantValue = field.constantValue(null);
         }
         if (constantValue != null) {
-            push(constantValue.kind.stackKind(), appendConstant(constantValue));
+            push(field.kind(false).stackKind(), appendWithBCI(new Constant(field.kind(false), constantValue), bci(), false));
         } else {
             Value container = genResolveClass(RiType.Representation.StaticFields, holder, isInitialized, cpi);
             LoadField load = new LoadField(container, field, true, null, isInitialized);
-            appendOptimizedLoadField(field.kind(), load);
+            appendOptimizedLoadField(field.kind(false).stackKind(), load);
         }
     }
 
@@ -828,7 +850,7 @@ public final class GraphBuilder {
         RiType holder = field.holder();
         boolean isInitialized = !C1XOptions.TestPatching && field.isResolved() && holder.isResolved() && holder.isInitialized();
         Value container = genResolveClass(RiType.Representation.StaticFields, holder, isInitialized, cpi);
-        Value value = pop(field.kind().stackKind());
+        Value value = pop(field.kind(false).stackKind());
         StoreField store = new StoreField(container, field, value, true, null, isInitialized);
         appendOptimizedStoreField(store);
     }
@@ -978,13 +1000,13 @@ public final class GraphBuilder {
     private void genInvokeIndirect(int opcode, RiMethod target, Value[] args, int cpi, RiConstantPool constantPool) {
         Value receiver = args[0];
 
-        if (target.holder().kind() == CiKind.Word) {
-            // Dynamic dispatch on Word types is not possible, since raw pointers do not have any method tables.
+        assert target.holder().kind(false) == CiKind.Object || target.holder().kind(false) == CiKind.Word;
+        if (target.holder().kind(true) != CiKind.Object) {
+            // When the machine-specific representation of the holder is not an object, dynamic dispatch is not possible; raw pointers do not have any method tables.
             assert target.isResolved();
             invokeDirect(target, args, null, cpi, constantPool);
             return;
         }
-        assert receiver.kind != CiKind.Word;
 
         // attempt to devirtualize the call
         if (target.isResolved()) {
@@ -1033,7 +1055,7 @@ public final class GraphBuilder {
     }
 
     private CiKind returnKind(RiMethod target) {
-        return target.signature().returnKind();
+        return target.signature().returnKind(false);
     }
 
     private void invokeDirect(RiMethod target, Value[] args, RiType knownHolder, int cpi, RiConstantPool constantPool) {
@@ -1482,7 +1504,7 @@ public final class GraphBuilder {
         int index = 0;
         if (!isStatic(method.accessFlags())) {
             // add the receiver and assume it is non null
-            Local local = new Local(method.holder().kind(), index);
+            Local local = new Local(method.holder().kind(false), index);
             local.setFlag(Value.Flag.NonNull, true);
             local.setDeclaredType(method.holder());
             state.storeLocal(index, local);
@@ -1493,13 +1515,13 @@ public final class GraphBuilder {
         RiType accessingClass = method.holder();
         for (int i = 0; i < max; i++) {
             RiType type = sig.argumentTypeAt(i, accessingClass);
-            CiKind kind = type.kind().stackKind();
+            CiKind kind = type.kind(false).stackKind();
             Local local = new Local(kind, index);
             if (type.isResolved()) {
                 local.setDeclaredType(type);
             }
             state.storeLocal(index, local);
-            index += kind.sizeInSlots();
+            index += MutableFrameState.isTwoSlot(kind) ? 2 : 1;
         }
         return state;
     }
@@ -1724,7 +1746,8 @@ public final class GraphBuilder {
                 log.println("|");
             }
 
-            pushReturn(returnKind(target), append(new Constant(result)));
+            CiKind returnKind = target.signature().returnKind(false);
+            pushReturn(returnKind, append(new Constant(returnKind, result)));
             return true;
         }
         return false;
@@ -1833,7 +1856,8 @@ public final class GraphBuilder {
         if (!forcedInline && !isStatic(target.accessFlags())) {
             // the receiver object must be null-checked for instance methods
             Value receiver = args[0];
-            if (!receiver.isNonNull() && !receiver.kind.isWord()) {
+            assert target.holder().kind(false) == CiKind.Object || target.holder().kind(false) == CiKind.Word;
+            if (!receiver.isNonNull() && target.holder().kind(true) == CiKind.Object) {
                 NullCheck check = new NullCheck(receiver, null);
                 args[0] = append(check);
             }
@@ -2474,18 +2498,18 @@ public final class GraphBuilder {
         int rcvr = isStatic ? -1 : 0;
         assert signature.argumentCount(!isStatic) == args.length;
         for (int i = args.length - 1; i > rcvr; --i) {
-            CiKind argKind = signature.argumentKindAt(i);
+            CiKind argKind = signature.argumentKindAt(i, false);
             if (snippetCall.arguments[i] == null) {
                 args[i] = pop(argKind);
             } else {
-                args[i] = append(new Constant(snippetCall.arguments[i]));
+                args[i] = append(new Constant(argKind, snippetCall.arguments[i]));
             }
         }
         if (!isStatic) {
             if (snippetCall.arguments[0] == null) {
                 args[0] = pop(CiKind.Object);
             } else {
-                args[0] = append(new Constant(snippetCall.arguments[0]));
+                args[0] = append(new Constant(CiKind.Object, snippetCall.arguments[0]));
             }
         }
 
@@ -2502,13 +2526,13 @@ public final class GraphBuilder {
         Value[] args = curState.popArguments(sig.argumentSlots(false));
 
         RiMethod nativeMethod = scope().method;
-        CiKind returnKind = sig.returnKind();
+        CiKind returnKind = sig.returnKind(false);
         pushReturn(returnKind, append(new NativeCall(nativeMethod, sig, nativeFunctionAddress, args, null)));
 
         // Sign extend or zero the upper bits of a return value smaller than an int to
         // preserve the invariant that all such values are represented by an int
         // in the VM. We cannot rely on the native C compiler doing this for us.
-        switch (sig.returnKind()) {
+        switch (sig.returnKind(false)) {
             case Boolean:
             case Byte: {
                 genConvert(Convert.Op.I2B, CiKind.Int, CiKind.Byte);

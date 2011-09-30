@@ -27,6 +27,7 @@ import static com.sun.max.platform.Platform.*;
 import com.oracle.max.asm.target.amd64.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -49,7 +50,7 @@ public final class AMD64SafepointPoll extends SafepointPoll {
     @Override
     protected byte[] createCode() {
         final AMD64Assembler asm = new AMD64Assembler(target(), null);
-        asm.movq(LATCH_REGISTER, new CiAddress(CiKind.Word, LATCH_REGISTER.asValue()));
+        asm.movq(LATCH_REGISTER, new CiAddress(WordUtil.archKind(), LATCH_REGISTER.asValue()));
         return asm.codeBuffer.close(true);
     }
 }

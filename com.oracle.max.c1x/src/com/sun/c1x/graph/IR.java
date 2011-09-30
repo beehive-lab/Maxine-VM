@@ -100,7 +100,7 @@ public class IR {
         // Graph builder must set the startBlock and the osrEntryBlock
         new GraphBuilder(compilation, this).build(topScope);
         assert startBlock != null;
-        verifyAndPrint("After graph building");
+        verifyAndPrint(CompilationEvent.AFTER_PARSING);
 
         if (C1XOptions.PrintCompilation) {
             TTY.print(String.format("%3d blocks | ", this.numberOfBlocks()));

@@ -169,6 +169,11 @@ public class Stubs {
 
                 deoptStubForSafepointPoll = genDeoptStubWithCSA(null, registerConfigs.trapStub, false);
                 for (CiKind kind : CiKind.VALUES) {
+                    // TODO(cwi) temporary
+                    if (kind == CiKind.Word) {
+                        continue;
+                    }
+
                     deoptStubs[kind.ordinal()] = genDeoptStub(kind);
                     deoptStubsForCompilerStubs[kind.ordinal()] = genDeoptStubWithCSA(kind, registerConfigs.compilerStub, true);
 
@@ -320,7 +325,7 @@ public class Stubs {
             asm.movl(args[1].asRegister(), index);
 
             // load the return address into the third arg register
-            asm.movq(args[2].asRegister(), new CiAddress(CiKind.Word, AMD64.rsp.asValue(), frameSize));
+            asm.movq(args[2].asRegister(), new CiAddress(WordUtil.archKind(), AMD64.rsp.asValue(), frameSize));
 
             asm.alignForPatchableDirectCall();
             int callPos = asm.codeBuffer.position();
@@ -333,8 +338,8 @@ public class Stubs {
             // this second return address and executing a 'ret' instruction, execution
             // continues in the resolved method as if it was called by the trampoline's
             // caller which is exactly what we want.
-            CiRegister returnReg = registerConfig.getReturnRegister(CiKind.Word);
-            asm.movq(new CiAddress(CiKind.Word, AMD64.rsp.asValue(), frameSize - 8), returnReg);
+            CiRegister returnReg = registerConfig.getReturnRegister(WordUtil.archKind());
+            asm.movq(new CiAddress(WordUtil.archKind(), AMD64.rsp.asValue(), frameSize - 8), returnReg);
 
             // Restore all parameter registers before returning
             int registerRestoreEpilogueOffset = asm.codeBuffer.position();
@@ -383,7 +388,7 @@ public class Stubs {
 
             // compute the static trampoline call site
             CiRegister callSite = registerConfig.getScratchRegister();
-            asm.movq(callSite, new CiAddress(CiKind.Word, AMD64.rsp.asValue()));
+            asm.movq(callSite, new CiAddress(WordUtil.archKind(), AMD64.rsp.asValue()));
             asm.subq(callSite, AMD64TargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
 
             // now allocate the frame for this method
@@ -413,9 +418,9 @@ public class Stubs {
             asm.addq(AMD64.rsp, frameSize);
 
             // patch the return address to re-execute the static call
-            asm.movq(callSite, new CiAddress(CiKind.Word, AMD64.rsp.asValue()));
+            asm.movq(callSite, new CiAddress(WordUtil.archKind(), AMD64.rsp.asValue()));
             asm.subq(callSite, AMD64TargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
-            asm.movq(new CiAddress(CiKind.Word, AMD64.rsp.asValue()), callSite);
+            asm.movq(new CiAddress(WordUtil.archKind(), AMD64.rsp.asValue()), callSite);
 
             asm.ret(0);
 
@@ -472,22 +477,22 @@ public class Stubs {
 
             // Now that we have saved all general purpose registers (including the scratch register),
             // store the value of the latch register from the thread locals into the trap frame
-            asm.movq(scratch, new CiAddress(CiKind.Word, latch.asValue(), TRAP_LATCH_REGISTER.offset));
-            asm.movq(new CiAddress(CiKind.Word, AMD64.rsp.asValue(), frameToCSA + csl.offsetOf(latch)), scratch);
+            asm.movq(scratch, new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_LATCH_REGISTER.offset));
+            asm.movq(new CiAddress(WordUtil.archKind(), AMD64.rsp.asValue(), frameToCSA + csl.offsetOf(latch)), scratch);
 
             // write the return address pointer to the end of the frame
-            asm.movq(scratch, new CiAddress(CiKind.Word, latch.asValue(), TRAP_INSTRUCTION_POINTER.offset));
-            asm.movq(new CiAddress(CiKind.Word, AMD64.rsp.asValue(), frameSize), scratch);
+            asm.movq(scratch, new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_INSTRUCTION_POINTER.offset));
+            asm.movq(new CiAddress(WordUtil.archKind(), AMD64.rsp.asValue(), frameSize), scratch);
 
 
             // load the trap number from the thread locals into the first parameter register
-            asm.movq(args[0].asRegister(), new CiAddress(CiKind.Word, latch.asValue(), TRAP_NUMBER.offset));
+            asm.movq(args[0].asRegister(), new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_NUMBER.offset));
             // also save the trap number into the trap frame
-            asm.movq(new CiAddress(CiKind.Word, AMD64.rsp.asValue(), frameToCSA + AMD64TrapFrameAccess.TRAP_NUMBER_OFFSET), args[0].asRegister());
+            asm.movq(new CiAddress(WordUtil.archKind(), AMD64.rsp.asValue(), frameToCSA + AMD64TrapFrameAccess.TRAP_NUMBER_OFFSET), args[0].asRegister());
             // load the trap frame pointer into the second parameter register
-            asm.leaq(args[1].asRegister(), new CiAddress(CiKind.Word, AMD64.rsp.asValue(), frameToCSA));
+            asm.leaq(args[1].asRegister(), new CiAddress(WordUtil.archKind(), AMD64.rsp.asValue(), frameToCSA));
             // load the fault address from the thread locals into the third parameter register
-            asm.movq(args[2].asRegister(), new CiAddress(CiKind.Word, latch.asValue(), TRAP_FAULT_ADDRESS.offset));
+            asm.movq(args[2].asRegister(), new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_FAULT_ADDRESS.offset));
 
             asm.alignForPatchableDirectCall();
             int callPos = asm.codeBuffer.position();
@@ -524,11 +529,6 @@ public class Stubs {
 
     @NEVER_INLINE
     public static void unwindObject(Address ip, Pointer sp, Pointer fp, Object returnValue) {
-        FatalError.unexpected("stub should be overwritten");
-    }
-
-    @NEVER_INLINE
-    public static void unwindWord(Address ip, Pointer sp, Pointer fp, Word returnValue) {
         FatalError.unexpected("stub should be overwritten");
     }
 
@@ -580,7 +580,6 @@ public class Stubs {
                     case Int:
                     case Long:
                     case Object:
-                    case Word:
                         asm.movq(registerConfig.getReturnRegister(CiKind.Int), reg);
                         break;
                     case Float:
@@ -598,7 +597,7 @@ public class Stubs {
             // When the RET instruction is executed, the pushed 'pc' will be popped from the stack
             // and the stack will be in the correct state for the handler.
             asm.subq(sp, Word.size());
-            asm.movq(new CiAddress(CiKind.Word, sp.asValue()), pc);
+            asm.movq(new CiAddress(WordUtil.archKind(), sp.asValue()), pc);
             asm.movq(AMD64.rbp, fp);
             asm.movq(AMD64.rsp, sp);
             asm.ret(0);
@@ -752,7 +751,7 @@ public class Stubs {
 
             // Copy original return address into arg 0 (i.e. 'ip')
             CiRegister arg0 = args[0].asRegister();
-            asm.movq(arg0, new CiAddress(CiKind.Word, AMD64.RSP, DEOPT_RETURN_ADDRESS_OFFSET));
+            asm.movq(arg0, new CiAddress(WordUtil.archKind(), AMD64.RSP, DEOPT_RETURN_ADDRESS_OFFSET));
 
             // Copy original stack pointer into arg 1 (i.e. 'sp')
             CiRegister arg1 = args[1].asRegister();
@@ -770,13 +769,13 @@ public class Stubs {
             asm.subq(AMD64.rsp, 16);
 
             // Put original return address into high slot
-            asm.movq(new CiAddress(CiKind.Word, AMD64.RSP, 8), arg0);
+            asm.movq(new CiAddress(WordUtil.archKind(), AMD64.RSP, 8), arg0);
 
             // Put deopt method entry point into low slot
             CiRegister scratch = registerConfig.getScratchRegister();
             asm.movq(scratch, 0xFFFFFFFFFFFFFFFFL);
             final int patchPos = asm.codeBuffer.position() - 8;
-            asm.movq(new CiAddress(CiKind.Word, AMD64.RSP), scratch);
+            asm.movq(new CiAddress(WordUtil.archKind(), AMD64.RSP), scratch);
 
             // "return" to deopt routine
             asm.ret(0);
@@ -871,11 +870,11 @@ public class Stubs {
 
             // Copy original return address into arg 0 (i.e. 'ip')
             CiRegister arg0 = args[0].asRegister();
-            asm.movq(arg0, new CiAddress(CiKind.Word, AMD64.RSP, cfo + DEOPT_RETURN_ADDRESS_OFFSET));
+            asm.movq(arg0, new CiAddress(WordUtil.archKind(), AMD64.RSP, cfo + DEOPT_RETURN_ADDRESS_OFFSET));
 
             // Copy original stack pointer into arg 1 (i.e. 'sp')
             CiRegister arg1 = args[1].asRegister();
-            asm.leaq(arg1, new CiAddress(CiKind.Word, AMD64.RSP, cfo));
+            asm.leaq(arg1, new CiAddress(WordUtil.archKind(), AMD64.RSP, cfo));
 
             // Copy original frame pointer into arg 2 (i.e. 'sp')
             CiRegister arg2 = args[2].asRegister();
@@ -928,19 +927,19 @@ public class Stubs {
             String name = "uncommonTrap";
             final CriticalMethod uncommonTrap = new CriticalMethod(Deoptimization.class, name, null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
 
-            CiValue[] args = registerConfig.getCallingConvention(JavaCall, new CiKind[] {CiKind.Word, CiKind.Word, CiKind.Word, CiKind.Word}, target(), false).locations;
+            CiValue[] args = registerConfig.getCallingConvention(JavaCall, new CiKind[] {WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind()}, target(), false).locations;
 
             // Copy callee save area address into arg 0 (i.e. 'csa')
             CiRegister arg0 = args[0].asRegister();
-            asm.leaq(arg0, new CiAddress(CiKind.Word, AMD64.RSP, frameToCSA));
+            asm.leaq(arg0, new CiAddress(WordUtil.archKind(), AMD64.RSP, frameToCSA));
 
             // Copy return address into arg 1 (i.e. 'ip')
             CiRegister arg1 = args[1].asRegister();
-            asm.movq(arg1, new CiAddress(CiKind.Word, AMD64.RSP, frameSize));
+            asm.movq(arg1, new CiAddress(WordUtil.archKind(), AMD64.RSP, frameSize));
 
             // Copy stack pointer into arg 1 (i.e. 'sp')
             CiRegister arg2 = args[2].asRegister();
-            asm.leaq(arg2, new CiAddress(CiKind.Word, AMD64.RSP, frameSize + 8));
+            asm.leaq(arg2, new CiAddress(WordUtil.archKind(), AMD64.RSP, frameSize + 8));
 
             // Copy original frame pointer into arg 2 (i.e. 'fp')
             CiRegister arg3 = args[3].asRegister();

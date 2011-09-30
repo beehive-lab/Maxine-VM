@@ -61,6 +61,11 @@ public class CiTarget {
     public final int wordSize;
 
     /**
+     * The CiKind to be used for representing raw pointers and CPU registers.
+     */
+    public final CiKind wordKind;
+
+    /**
      * The stack alignment requirement of the platform. For example,
      * from Appendix D of <a href="http://www.intel.com/Assets/PDF/manual/248966.pdf">Intel 64 and IA-32 Architectures Optimization Reference Manual</a>:
      * <pre>
@@ -107,6 +112,11 @@ public class CiTarget {
         this.isMP = isMP;
         this.spillSlotSize = spillSlotSize;
         this.wordSize = arch.wordSize;
+        if (wordSize == 8) {
+            this.wordKind = CiKind.Long;
+        } else {
+            this.wordKind = CiKind.Int;
+        }
         this.stackAlignment = stackAlignment;
         this.stackBias = 0; // TODO: configure with param once SPARC port exists
         this.cacheAlignment = cacheAlignment;
@@ -116,7 +126,7 @@ public class CiTarget {
 
         for (CiKind k : CiKind.values()) {
             // initialize the number of spill slots required for each kind
-            int size = k.sizeInBytes(arch.wordSize);
+            int size = sizeInBytes(k);
             int slots = 0;
             while (slots * spillSlotSize < size) {
                 slots++;
@@ -132,7 +142,22 @@ public class CiTarget {
      * @return the size in bytes of {@code kind}
      */
     public int sizeInBytes(CiKind kind) {
-        return kind.sizeInBytes(wordSize);
+        // Checkstyle: stop
+        switch (kind) {
+            case Boolean: return 1;
+            case Byte: return 1;
+            case Char: return 2;
+            case Short: return 2;
+            case Int: return 4;
+            case Long: return 8;
+            case Float: return 4;
+            case Double: return 8;
+            case Object: return wordSize;
+            case Jsr: return 4;
+            case Word: return wordSize;
+            default: return 0;
+        }
+        // Checkstyle: resume
     }
 
     /**

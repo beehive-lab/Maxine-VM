@@ -107,8 +107,8 @@ public class CFGPrinter {
      */
     public void printCompilation(RiMethod method) {
         begin("compilation");
-        out.print("name \"").print(CiUtil.format("%H.%n(%P)", method, false)).println('"');
-        out.print("method \"").print(CiUtil.format("%f %R %H.%n(%P)", method, false)).println('"');
+        out.print("name \"").print(CiUtil.format("%H.%n(%P)", method)).println('"');
+        out.print("method \"").print(CiUtil.format("%f %R %H.%n(%P)", method)).println('"');
         out.print("date ").println(System.currentTimeMillis());
         end("compilation");
     }
@@ -217,16 +217,14 @@ public class CFGPrinter {
                 int i = 0;
                 while (i < stackSize) {
                     Value value = state.stackAt(i);
-                    out.disableIndentation();
-                    out.print(block.stateString(i, value));
-                    printOperand(value);
-                    out.println();
-                    out.enableIndentation();
-                    if (value == null) {
-                        i++;
-                    } else {
-                        i += value.kind.sizeInSlots();
+                    if (value != null) {
+                        out.disableIndentation();
+                        out.print(block.stateString(i, value));
+                        printOperand(value);
+                        out.println();
+                        out.enableIndentation();
                     }
+                    i++;
                 }
                 end("stack");
             }
@@ -259,11 +257,8 @@ public class CFGPrinter {
                     printOperand(value);
                     out.println();
                     out.enableIndentation();
-                    // also ignore illegal HiWords
-                    i += value.isIllegal() ? 1 : value.kind.sizeInSlots();
-                } else {
-                    i++;
                 }
+                i++;
             }
             state = state.callerState();
             end("locals");

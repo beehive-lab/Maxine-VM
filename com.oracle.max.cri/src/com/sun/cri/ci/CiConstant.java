@@ -22,9 +22,6 @@
  */
 package com.sun.cri.ci;
 
-
-
-
 /**
  * Represents a constant (boxed) value, such as an integer, floating point number, or object reference,
  * within the compiler and across the compiler/runtime interface. Exports a set of {@code CiConstant}
@@ -40,7 +37,6 @@ public final class CiConstant extends CiValue {
     }
 
     public static final CiConstant NULL_OBJECT = new CiConstant(CiKind.Object, null);
-    public static final CiConstant ZERO = new CiConstant(CiKind.Word, 0L);
     public static final CiConstant INT_MINUS_1 = new CiConstant(CiKind.Int, -1);
     public static final CiConstant INT_0 = forInt(0);
     public static final CiConstant INT_1 = forInt(1);
@@ -59,7 +55,6 @@ public final class CiConstant extends CiValue {
     public static final CiConstant FALSE = new CiConstant(CiKind.Boolean, 0L);
 
     static {
-        assert ZERO.isDefaultValue();
         assert NULL_OBJECT.isDefaultValue();
         assert INT_0.isDefaultValue();
         assert FLOAT_0.isDefaultValue();
@@ -150,8 +145,6 @@ public final class CiConstant extends CiValue {
             } else {
                 return "<object: " + kind.format(object) + ">";
             }
-        } else if (kind.isWord()) {
-            return "0x" + Long.toHexString(asLong());
         } else if (kind.isJsr()) {
             return "bci:" + boxedValue().toString();
         } else {
@@ -176,7 +169,6 @@ public final class CiConstant extends CiValue {
             case Float: return asFloat();
             case Double: return asDouble();
             case Object: return object;
-            case Word: return asLong();
         }
         // Checkstyle: resume
         throw new IllegalArgumentException();
@@ -223,7 +215,6 @@ public final class CiConstant extends CiValue {
         // Checkstyle: stop
         switch (kind.stackKind()) {
             case Int:
-            case Word:
             case Long: return primitive;
             case Float: return (long) asFloat();
             case Double: return (long) asDouble();
@@ -328,10 +319,9 @@ public final class CiConstant extends CiValue {
             case Float: return this == FLOAT_0;
             case Double: return this == DOUBLE_0;
             case Object: return object == null;
-            case Word: return this == ZERO;
         }
         // Checkstyle: resume
-        return false;
+        throw new IllegalArgumentException("Cannot det default CiConstant for kind " + kind);
     }
 
     /**
@@ -347,10 +337,9 @@ public final class CiConstant extends CiValue {
             case Float: return FLOAT_0;
             case Double: return DOUBLE_0;
             case Object: return NULL_OBJECT;
-            case Word: return ZERO;
         }
         // Checkstyle: resume
-        throw new IllegalArgumentException("Cannot det default CiConstant for kind " + kind);
+        throw new IllegalArgumentException("Cannot get default CiConstant for kind " + kind);
     }
 
     /**
@@ -456,18 +445,6 @@ public final class CiConstant extends CiValue {
     }
 
     /**
-     * Creates a boxed word constant.
-     * @param w the value to box
-     * @return a boxed copy of {@code value}
-     */
-    public static CiConstant forWord(long w) {
-        if (w == 0) {
-            return ZERO;
-        }
-        return new CiConstant(CiKind.Word, w);
-    }
-
-    /**
      * Creates a boxed object constant.
      * @param o the object value to box
      * @return a boxed copy of {@code value}
@@ -477,31 +454,5 @@ public final class CiConstant extends CiValue {
             return NULL_OBJECT;
         }
         return new CiConstant(CiKind.Object, o);
-    }
-
-    /**
-     * Creates a boxed constant from a given {@linkplain #boxedValue() boxed value}.
-     *
-     * @param kind
-     * @param boxedValue the Java boxed value to box as a {@link CiConstant}
-     * @return the {@link CiConstant} for {@code boxedValue}
-     */
-    public static CiConstant forBoxed(CiKind kind, Object boxedValue) {
-        // Checkstyle: stop
-        switch (kind) {
-            case Byte    : return forByte(((Byte) boxedValue).byteValue());
-            case Boolean : return forBoolean(((Boolean) boxedValue).booleanValue());
-            case Char    : return forChar(((Character) boxedValue).charValue());
-            case Short   : return forShort(((Short) boxedValue).shortValue());
-            case Int     : return forInt(((Integer) boxedValue).intValue());
-            case Float   : return forFloat(((Float) boxedValue).floatValue());
-            case Long    : return forLong(((Long) boxedValue).longValue());
-            case Double  : return forDouble(((Double) boxedValue).doubleValue());
-            case Jsr     : return forJsr(((Integer) boxedValue).intValue());
-            case Object  : return forObject(boxedValue);
-            case Word    : return forWord(((Long) boxedValue).longValue());
-        }
-        // Checkstyle: resume
-        throw new IllegalArgumentException("Cannot create CiConstant for boxed value of kind " + kind);
     }
 }

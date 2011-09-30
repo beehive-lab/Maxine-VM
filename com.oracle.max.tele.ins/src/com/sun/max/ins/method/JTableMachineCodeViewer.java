@@ -812,9 +812,9 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
                     InstructionMap instructionMap = instructionMap();
                     final RiMethod callee = instructionMap.calleeAt(row);
                     if (machineCodeInstruction.mnemonic.contains("call") && callee != null) {
-                        renderer = new TextLabel(inspection, CiUtil.format("%h.%n()", callee, false));
+                        renderer = new TextLabel(inspection, CiUtil.format("%h.%n()", callee));
                         renderer.setToolTipPrefix(tableModel.getRowDescription(row) + ":");
-                        renderer.setToolTipSuffix("<br>" + CiUtil.format("%r %H.%n(%p)", callee, false));
+                        renderer.setToolTipSuffix("<br>" + CiUtil.format("%r %H.%n(%p)", callee));
                         renderer.setWrappedToolTipHtmlText("<br>operands = " + text);
                         renderer.setForeground(cellForegroundColor(row, column));
                     } else {

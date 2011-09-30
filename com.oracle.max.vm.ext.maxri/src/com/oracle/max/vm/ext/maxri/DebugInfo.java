@@ -39,6 +39,8 @@ import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.TargetMethod.CodePosClosure;
 import com.sun.max.vm.compiler.target.TargetMethod.FrameAccess;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -492,7 +494,7 @@ public final class DebugInfo {
                 value = CiConstant.forDouble(d);
             } else {
                 Word w = fa.csa.readWord(offset);
-                value = CiConstant.forWord(w.asAddress().toLong());
+                value = WordUtil.constant(w);
             }
         } else if (value.isStackSlot()) {
             CiStackSlot ss = (CiStackSlot) value;
@@ -508,10 +510,10 @@ public final class DebugInfo {
                 value = CiConstant.forDouble(d);
             } else {
                 Word w = base.readWord(ss.index() * Word.size());
-                value = CiConstant.forWord(w.asAddress().toLong());
+                value = WordUtil.constant(w);
             }
         } else if (value.isIllegal()) {
-            value = CiConstant.ZERO;
+            value = null;
         } else {
             assert value.isConstant();
         }

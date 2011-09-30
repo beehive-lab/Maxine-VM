@@ -852,23 +852,29 @@ public final class T1XTargetMethod extends TargetMethod {
             // record continuation stack pointer
             cont.setSP(info, CiConstant.forJsr(info.slotsCount()));
             // add operand stack slots
+            boolean lastWasIllegal = false;
             for (int i = frame.numStack - 1; i >= 0; i--) {
                 CiConstant value = (CiConstant) frame.getStackValue(i);
-                info.addSlot(value, "ostack");
+                if (value == null) {
+                    info.addSlot(WordUtil.ZERO, "ostack (illegal)");
+                } else {
+                    info.addSlot(value, "ostack");
+                }
+
                 for (int pad = 0; pad < STACK_SLOTS_PER_JVMS_SLOT - 1; pad++) {
-                    info.addSlot(CiConstant.ZERO, "ostack (pad)");
+                    info.addSlot(WordUtil.ZERO, "ostack (pad)");
                 }
-                if (value.kind.isDoubleWord()) {
-                    // Must match the frame layout for longs and doubles used by T1X
-                    info.swapTopSlots(STACK_SLOTS_PER_JVMS_SLOT);
+                if (lastWasIllegal && value.kind != CiKind.Object) {
+                    info.duplicateTopSlots(STACK_SLOTS_PER_JVMS_SLOT);
                 }
+                lastWasIllegal = value == null;
             }
         } else {
             assert frame.numStack == 0 : "operand stack must be clear at exception handler";
             // The ref maps for the handler address will expect a valid reference to
             // to in stack slot 0 so we store a null there.
             for (int pad = 0; pad < STACK_SLOTS_PER_JVMS_SLOT; pad++) {
-                info.addSlot(CiConstant.ZERO, "ostack (pad)");
+                info.addSlot(WordUtil.ZERO, "ostack (pad)");
             }
 
             // The continuation stack pointer must denote an empty stack
@@ -886,6 +892,7 @@ public final class T1XTargetMethod extends TargetMethod {
         int nonParamLocals = numLocals - paramLocals;
 
         // add (non-parameter) local slots
+        boolean lastWasIllegal = false;
         for (int i = numLocals - 1; i >= paramLocals; i--) {
             CiConstant value;
             if (i == synchronizedReceiver) {
@@ -893,16 +900,19 @@ public final class T1XTargetMethod extends TargetMethod {
                 info.addSlot(value, "locked rcvr");
             } else {
                 value = (CiConstant) frame.getLocalValue(i);
-                info.addSlot(value, "local");
+                if (value == null) {
+                    info.addSlot(WordUtil.ZERO, "local (illegal)");
+                } else {
+                    info.addSlot(value, "local");
+                }
             }
             for (int pad = 0; pad < STACK_SLOTS_PER_JVMS_SLOT - 1; pad++) {
-                info.addSlot(CiConstant.ZERO, "local (pad)");
+                info.addSlot(WordUtil.ZERO, "local (pad)");
             }
-            if (value.kind.isDoubleWord()) {
-                // Must match the frame layout for longs and doubles specified by
-                // T1XCompilation.assignLocalDisplacementTemplateArgument()
-                info.swapTopSlots(STACK_SLOTS_PER_JVMS_SLOT);
+            if (lastWasIllegal && value.kind != CiKind.Object) {
+                info.duplicateTopSlots(STACK_SLOTS_PER_JVMS_SLOT);
             }
+            lastWasIllegal = value == null;
         }
 
         // record continuation frame pointer
@@ -910,7 +920,7 @@ public final class T1XTargetMethod extends TargetMethod {
 
         // add template slots
         for (int i = 0; i < templateSlots; i++) {
-            info.addSlot(CiConstant.ZERO, "template");
+            info.addSlot(WordUtil.ZERO, "template");
         }
 
         // add alignment slots
@@ -919,29 +929,33 @@ public final class T1XTargetMethod extends TargetMethod {
         int alignedSize = target().alignFrameSize(unalignedSize);
         int alignmentSlots = (alignedSize - unalignedSize) / STACK_SLOT_SIZE;
         for (int i = 0; i < alignmentSlots; i++) {
-            info.addSlot(CiConstant.ZERO, "align");
+            info.addSlot(WordUtil.ZERO, "align");
         }
 
         // add caller FP slot with placeholder value
         int callerFPIndex = info.slotsCount();
-        info.addSlot(CiConstant.ZERO, "callerFP");
+        info.addSlot(WordUtil.ZERO, "callerFP");
 
         // add caller return address slot with placeholder value
         int returnAddressIndex = info.slotsCount();
-        info.addSlot(CiConstant.ZERO, "returnIP");
+        info.addSlot(WordUtil.ZERO, "returnIP");
 
         // add parameter slots
+        lastWasIllegal = false;
         for (int i = paramLocals - 1; i >= 0; i--) {
             CiConstant value = (CiConstant) frame.getLocalValue(i);
-            info.addSlot(value, "param");
+            if (value == null) {
+                info.addSlot(WordUtil.ZERO, "param (illegal)");
+            } else {
+                info.addSlot(value, "param");
+            }
             for (int pad = 0; pad < JVMSFrameLayout.STACK_SLOTS_PER_JVMS_SLOT - 1; pad++) {
-                info.addSlot(CiConstant.ZERO, "param (pad)");
+                info.addSlot(WordUtil.ZERO, "param (pad)");
             }
-            if (value.kind.isDoubleWord()) {
-                // Must match the frame layout for longs and doubles specified by
-                // T1XCompilation.assignLocalDisplacementTemplateArgument()
-                info.swapTopSlots(STACK_SLOTS_PER_JVMS_SLOT);
+            if (lastWasIllegal && value.kind != CiKind.Object) {
+                info.duplicateTopSlots(STACK_SLOTS_PER_JVMS_SLOT);
             }
+            lastWasIllegal = value == null;
         }
 
         return new CallerContinuation(callerFPIndex, -1, returnAddressIndex);

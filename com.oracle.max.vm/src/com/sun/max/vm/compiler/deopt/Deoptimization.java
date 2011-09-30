@@ -39,6 +39,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetMethod.FrameAccess;
@@ -292,7 +293,7 @@ public class Deoptimization extends VmOperation {
         @Override
         public void setIP(Info info, Pointer ip) {
             if (returnAddressIndex >= 0) {
-                info.slots.set(returnAddressIndex, CiConstant.forWord(ip.toLong()));
+                info.slots.set(returnAddressIndex, WordUtil.constant(ip));
                 traceContinuation(ip);
             }
         }
@@ -369,7 +370,6 @@ public class Deoptimization extends VmOperation {
                 case Long:    Stubs.unwindLong(info.ip, info.sp, info.fp, info.returnValue.asLong());
                 case Double:  Stubs.unwindDouble(info.ip, info.sp, info.fp, info.returnValue.asDouble());
                 case Object:  Stubs.unwindObject(info.ip, info.sp, info.fp, info.returnValue.asObject());
-                case Word:    Stubs.unwindWord(info.ip, info.sp, info.fp, Address.fromLong(info.returnValue.asLong()));
                 default:      FatalError.unexpected("unexpected return kind: " + info.returnValue.kind.stackKind());
             }
         }
@@ -445,7 +445,7 @@ public class Deoptimization extends VmOperation {
      */
     @NEVER_INLINE
     public static void deoptimizeWord(Pointer ip, Pointer sp, Pointer fp, Pointer csa, Word returnValue) {
-        deoptimizeOnReturn(ip, sp, fp, csa, CiConstant.forWord(returnValue.asAddress().toLong()));
+        deoptimizeOnReturn(ip, sp, fp, csa, WordUtil.constant(returnValue));
     }
 
     /**
@@ -652,21 +652,18 @@ public class Deoptimization extends VmOperation {
         }
 
         /**
-         * Swap the top n slots with the n slots immediately below them.
+         * Duplicate the top n slots to the n slots immediately below them.
          */
-        public void swapTopSlots(int n) {
+        public void duplicateTopSlots(int n) {
             assert slots.size() >= 2 * n;
             int top = slots.size() - 1;
             if (n == 1) {
                 CiConstant tmp = slots.get(top);
-                slots.set(top, slots.get(top - 1));
                 slots.set(top - 1, tmp);
             } else {
                 assert n == 2;
                 CiConstant tmp = slots.get(top);
                 CiConstant tmp2 = slots.get(top - 1);
-                slots.set(top, slots.get(top - 2));
-                slots.set(top - 1, slots.get(top - 3));
                 slots.set(top - 2, tmp);
                 slots.set(top - 3, tmp2);
             }
@@ -692,7 +689,7 @@ public class Deoptimization extends VmOperation {
     static void patchReturnAddress(Cursor caller, Cursor callee, ClassMethodActor calleeMethod) {
         assert calleeMethod != null;
         TargetMethod tm = caller.targetMethod();
-        Stub stub = vm().stubs.deoptStub(calleeMethod.resultKind().ciKind, callee.targetMethod().is(CompilerStub));
+        Stub stub = vm().stubs.deoptStub(calleeMethod.descriptor().returnKind(true), callee.targetMethod().is(CompilerStub));
         Pointer to = stub.codeStart().asPointer();
         Pointer save = caller.sp().plus(DEOPT_RETURN_ADDRESS_OFFSET);
         Pointer patch = callee.targetMethod().returnAddressPointer(callee);
@@ -803,8 +800,8 @@ public class Deoptimization extends VmOperation {
         // Fix up the caller details for the bottom most deoptimized frame
         cont.tm = info.callerTM;
         cont.setIP(info, info.returnIP);
-        cont.setSP(info, CiConstant.forWord(info.callerSP.toLong()));
-        cont.setFP(info, CiConstant.forWord(info.callerFP.toLong()));
+        cont.setSP(info, WordUtil.constant(info.callerSP));
+        cont.setFP(info, WordUtil.constant(info.callerFP));
 
         int slotsSize = info.slotsSize();
         Pointer slotsAddrs = sp.plus(tm.frameSize() + STACK_SLOT_SIZE).minus(slotsSize);
@@ -817,7 +814,7 @@ public class Deoptimization extends VmOperation {
             if (c.kind.isJsr()) {
                 int slotIndex = c.asInt();
                 Pointer slotAddr = slotsAddrs.plus(slotIndex * STACK_SLOT_SIZE);
-                slots.set(i, CiConstant.forWord(slotAddr.toLong()));
+                slots.set(i, WordUtil.constant(slotAddr));
             }
         }
 

@@ -206,7 +206,6 @@ public class CiRegisterConfig implements RiRegisterConfig {
                 case Char:
                 case Int:
                 case Long:
-                case Word:
                 case Object:
                     if (!stackOnly && currentGeneral < cpuParameters.length) {
                         CiRegister register = cpuParameters[currentGeneral++];

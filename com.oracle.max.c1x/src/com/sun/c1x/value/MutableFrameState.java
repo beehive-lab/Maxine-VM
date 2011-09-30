@@ -111,7 +111,7 @@ public final class MutableFrameState extends FrameState {
     public void push(CiKind kind, Value x) {
         assert kind != CiKind.Void;
         xpush(assertKind(kind, x));
-        if (kind.sizeInSlots() == 2) {
+        if (isTwoSlot(kind)) {
             xpush(null);
         }
     }
@@ -191,7 +191,7 @@ public final class MutableFrameState extends FrameState {
      * @return the instruction on the top of the stack
      */
     public Value pop(CiKind kind) {
-        if (kind.sizeInSlots() == 2) {
+        if (isTwoSlot(kind)) {
             xpop();
         }
         return assertKind(kind, xpop());
@@ -314,7 +314,7 @@ public final class MutableFrameState extends FrameState {
         Value[] r = new Value[size];
         int y = maxLocals + base;
         for (int i = 0; i < size; ++i) {
-            assert values[y] != null || values[y - 1].kind.jvmSlots == 2;
+            assert values[y] != null || isTwoSlot(values[y - 1].kind);
             r[i] = values[y++];
         }
         stackIndex = base;
@@ -361,4 +361,8 @@ public final class MutableFrameState extends FrameState {
         assert x == null;
     }
 
+    public static boolean isTwoSlot(CiKind kind) {
+        assert kind != CiKind.Void && kind != CiKind.Illegal;
+        return kind == CiKind.Long || kind == CiKind.Double;
+    }
 }

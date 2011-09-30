@@ -47,9 +47,9 @@ public class C1XIntrinsicImplementations {
         @Override
         public Value createHIR(GraphBuilder b, RiMethod target, Value[] args, boolean isStatic, FrameState stateBefore) {
             CiKind kind = args[0].kind;
-            assert args.length == (kind.isDoubleWord() ? 4 : 2);
+            assert args.length == (MutableFrameState.isTwoSlot(kind) ? 4 : 2);
             Value left = args[0];
-            Value right = args[kind.isDoubleWord() ? 2 : 1];
+            Value right = args[MutableFrameState.isTwoSlot(kind) ? 2 : 1];
             return b.append(new UnsignedCompareOp(condition, left, right));
         }
     }
@@ -64,9 +64,9 @@ public class C1XIntrinsicImplementations {
         @Override
         public Value createHIR(GraphBuilder b, RiMethod target, Value[] args, boolean isStatic, FrameState stateBefore) {
             CiKind kind = args[0].kind;
-            assert args.length == (kind.isDoubleWord() ? 4 : 2);
+            assert args.length == (MutableFrameState.isTwoSlot(kind) ? 4 : 2);
             Value left = args[0];
-            Value right = args[kind.isDoubleWord() ? 2 : 1];
+            Value right = args[MutableFrameState.isTwoSlot(kind) ? 2 : 1];
             return b.append(new ArithmeticOp(opcode, kind, left, right, false, stateBefore));
         }
     }
@@ -80,7 +80,7 @@ public class C1XIntrinsicImplementations {
 
         @Override
         public Value createHIR(GraphBuilder b, RiMethod target, Value[] args, boolean isStatic, FrameState stateBefore) {
-            return b.append(new Convert(opcode, args[0], target.signature().returnKind()));
+            return b.append(new Convert(opcode, args[0], target.signature().returnKind(false)));
         }
     }
 

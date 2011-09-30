@@ -26,18 +26,20 @@ import static com.oracle.max.vm.ext.t1x.T1XTemplateGenerator.*;
 import static com.oracle.max.vm.ext.vma.AdviceMode.*;
 import static com.oracle.max.vm.ext.vma.VMABytecodes.*;
 import static com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper.*;
-import static com.sun.cri.ci.CiKind.*;
+import static com.sun.max.vm.type.Kind.*;
 
 import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 
 import com.oracle.max.vm.ext.t1x.*;
+import com.oracle.max.vm.ext.t1x.T1XTemplateGenerator.AdviceHook;
+import com.oracle.max.vm.ext.t1x.T1XTemplateGenerator.AdviceType;
 import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vma.tools.gen.t1x.*;
 import com.sun.cri.bytecode.*;
-import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
+import com.sun.max.vm.type.*;
 
 /**
  * Generates the bytecode advising interface by processing {@link VMABytecodes}. This interface supports advising by having
@@ -70,7 +72,7 @@ public class BytecodeAdviceGenerator {
 
     private static final String METHOD_PREFIX = "    public abstract void advise%s%s(";
 
-    private static final Set<CiKind> getPutTypes = new HashSet<CiKind>();
+    private static final Set<Kind> getPutTypes = new HashSet<Kind>();
 
     /**
      * For each bytecode, this array records whether {@link AdviceMode#BEFORE} or {@link AdviceMode#AFTER}
@@ -96,8 +98,8 @@ public class BytecodeAdviceGenerator {
             }
         }
         AdviceGeneratorHelper.createGenerator(BytecodeAdviceGenerator.class);
-        for (CiKind k : kinds) {
-            if (!(k == Boolean || k == Byte || k == Char || k == Short || k == Int || k == Word)) {
+        for (Kind k : kinds) {
+            if (!(k == BOOLEAN || k == BYTE || k == CHAR || k == SHORT || k == INT || k == WORD)) {
                 getPutTypes.add(k);
             }
         }
@@ -214,7 +216,7 @@ public class BytecodeAdviceGenerator {
 
     private static void generatePutField(VMABytecodes bytecode) {
         assert adviceMode == BEFORE;
-        for (CiKind k : getPutTypes) {
+        for (Kind k : getPutTypes) {
             if (hasGetPutTemplates(k)) {
                 out.printf(METHOD_PREFIX + "Object object, int offset, %s value);%n%n", adviceModeString, bytecode.methodName, k);
             }
@@ -223,7 +225,7 @@ public class BytecodeAdviceGenerator {
 
     private static void generatePutStatic(VMABytecodes bytecode) {
         assert adviceMode == BEFORE;
-        for (CiKind k : getPutTypes) {
+        for (Kind k : getPutTypes) {
             if (hasGetPutTemplates(k)) {
                 // StaticTuple but ClassActor.staticTuple returns Object
                 out.printf(METHOD_PREFIX + "Object staticTuple, int offset, %s value);%n%n", adviceModeString, bytecode.methodName, k);

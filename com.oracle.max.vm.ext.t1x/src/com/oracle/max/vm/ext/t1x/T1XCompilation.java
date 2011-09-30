@@ -35,7 +35,6 @@ import com.oracle.max.vm.ext.t1x.T1XTemplate.Sig;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
-import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -66,7 +65,7 @@ public abstract class T1XCompilation {
     protected static final AdapterGenerator adapterGenerator = AdapterGenerator.forCallee(null, CallEntryPoint.BASELINE_ENTRY_POINT);
 
     protected static final CiRegister scratch = vm().registerConfigs.standard.getScratchRegister();
-    protected static final CiRegister scratch2 = vm().registerConfigs.standard.getReturnRegister(CiKind.Word);
+    protected static final CiRegister scratch2 = vm().registerConfigs.standard.getReturnRegister(CiKind.Int);
 
     protected static final CiRegister sp = vm().registerConfigs.bytecodeTemplate.getRegisterForRole(VMRegister.ABI_SP);
     protected static final CiRegister fp = vm().registerConfigs.bytecodeTemplate.getRegisterForRole(VMRegister.ABI_FP);
@@ -77,7 +76,7 @@ public abstract class T1XCompilation {
     private static final int WORDS_PER_SLOT = JVMS_SLOT_SIZE / Word.size();
     protected static final int HALFWORD_OFFSET_IN_WORD = JVMSFrameLayout.offsetWithinWord(Kind.INT);
 
-    protected static final CiAddress[] SP_WORD_ADDRESSES_CACHE = new CiAddress[4];
+    protected static final CiAddress[] SP_LONG_ADDRESSES_CACHE = new CiAddress[4];
     protected static final CiAddress[] SP_INT_ADDRESSES_CACHE = new CiAddress[4];
 
     protected static final int FP_SLOTS_CACHE_START_OFFSET = -(20 * JVMS_SLOT_SIZE);
@@ -85,32 +84,17 @@ public abstract class T1XCompilation {
     protected static final CiAddress[] FP_SLOTS_CACHE = new CiAddress[(FP_SLOTS_CACHE_END_OFFSET - FP_SLOTS_CACHE_START_OFFSET) / JVMS_SLOT_SIZE];
 
     static {
-        for (int i = 0; i < SP_WORD_ADDRESSES_CACHE.length; i++) {
-            SP_WORD_ADDRESSES_CACHE[i] = new CiAddress(CiKind.Word, SP, i * JVMS_SLOT_SIZE);
+        for (int i = 0; i < SP_LONG_ADDRESSES_CACHE.length; i++) {
+            SP_LONG_ADDRESSES_CACHE[i] = new CiAddress(CiKind.Long, SP, i * JVMS_SLOT_SIZE);
         }
         for (int i = 0; i < SP_INT_ADDRESSES_CACHE.length; i++) {
-            SP_INT_ADDRESSES_CACHE[i] = new CiAddress(CiKind.Word, SP, (i * JVMS_SLOT_SIZE) + HALFWORD_OFFSET_IN_WORD);
+            SP_INT_ADDRESSES_CACHE[i] = new CiAddress(CiKind.Int, SP, (i * JVMS_SLOT_SIZE) + HALFWORD_OFFSET_IN_WORD);
         }
         int offset = FP_SLOTS_CACHE_START_OFFSET;
         for (int i = 0; i < FP_SLOTS_CACHE.length; i++) {
-            FP_SLOTS_CACHE[i] = new CiAddress(CiKind.Word, FP, offset);
+            FP_SLOTS_CACHE[i] = new CiAddress(CiKind.Int, FP, offset);
             offset += JVMS_SLOT_SIZE;
         }
-    }
-
-    /**
-     * Gets the effective address of a word-sized operand stack slot.
-     *
-     * @param index an operand stack index where 0 is the top slot, 1 is the slot below it etc
-     * @return the effective address of the operand stack slot at index {@code index} from the top stack slot. This
-     *         value can be used for a word-sized access to the operand stack.
-     */
-    protected static CiAddress spWord(int index) {
-        assert index >= 0;
-        if (index < SP_WORD_ADDRESSES_CACHE.length) {
-            return SP_WORD_ADDRESSES_CACHE[index];
-        }
-        return new CiAddress(CiKind.Word, SP, index * JVMS_SLOT_SIZE);
     }
 
     /**
@@ -125,7 +109,7 @@ public abstract class T1XCompilation {
         if (index < SP_INT_ADDRESSES_CACHE.length) {
             return SP_INT_ADDRESSES_CACHE[index];
         }
-        return new CiAddress(CiKind.Word, SP, (index * JVMS_SLOT_SIZE) + HALFWORD_OFFSET_IN_WORD);
+        return new CiAddress(CiKind.Int, SP, (index * JVMS_SLOT_SIZE) + HALFWORD_OFFSET_IN_WORD);
     }
 
     /**
@@ -136,8 +120,11 @@ public abstract class T1XCompilation {
      *         value can be used for a long-sized access to the operand stack.
      */
     protected static CiAddress spLong(int index) {
-        assert Word.size() == 8 : "32-bit not yet supported";
-        return spWord(index);
+        assert index >= 0;
+        if (index < SP_LONG_ADDRESSES_CACHE.length) {
+            return SP_LONG_ADDRESSES_CACHE[index];
+        }
+        return new CiAddress(CiKind.Long, SP, index * JVMS_SLOT_SIZE);
     }
 
     protected static CiAddress localSlot(int offset) {
@@ -146,7 +133,7 @@ public abstract class T1XCompilation {
         if (cacheIndex >= 0 && cacheIndex < FP_SLOTS_CACHE.length) {
             return FP_SLOTS_CACHE[cacheIndex];
         }
-        return new CiAddress(CiKind.Word, FP, offset);
+        return new CiAddress(CiKind.Int, FP, offset);
     }
 
     /**
@@ -525,23 +512,23 @@ public abstract class T1XCompilation {
                 Arg a = sig.in[i];
                 if (a.isStack()) {
                     initializedArgs |= 1 << i;
-                    switch (a.kind) {
-                        case Int:
+                    switch (a.kind.asEnum) {
+                        case INT:
                             peekInt(a.reg, a.slot);
                             break;
-                        case Word:
-                            peekWord(a.reg, a.slot);
-                            break;
-                        case Float:
+                        case FLOAT:
                             peekFloat(a.reg, a.slot);
                             break;
-                        case Long:
+                        case LONG:
                             peekLong(a.reg, a.slot);
                             break;
-                        case Double:
+                        case DOUBLE:
                             peekDouble(a.reg, a.slot);
                             break;
-                        case Object:
+                        case WORD:
+                            peekWord(a.reg, a.slot);
+                            break;
+                        case REFERENCE:
                             peekObject(a.reg, a.slot);
                             break;
                         default:
@@ -577,23 +564,23 @@ public abstract class T1XCompilation {
         // Push the result of the template (if any)
         if (sig.out.isStack()) {
             Arg out = sig.out;
-            switch (out.kind) {
-                case Int:
+            switch (out.kind.asEnum) {
+                case INT:
                     pokeInt(out.reg, out.slot);
                     break;
-                case Word:
-                    pokeWord(out.reg, out.slot);
-                    break;
-                case Float:
+                case FLOAT:
                     pokeFloat(out.reg, out.slot);
                     break;
-                case Long:
+                case LONG:
                     pokeLong(out.reg, out.slot);
                     break;
-                case Double:
+                case DOUBLE:
                     pokeDouble(out.reg, out.slot);
                     break;
-                case Object:
+                case WORD:
+                    pokeWord(out.reg, out.slot);
+                    break;
+                case REFERENCE:
                     pokeObject(out.reg, out.slot);
                     break;
                 default:
@@ -692,11 +679,11 @@ public abstract class T1XCompilation {
 
     protected abstract void emitEpilogue();
 
-    protected int localSlotOffset(int localIndex, CiKind kind) {
+    protected int localSlotOffset(int localIndex, Kind kind) {
         // Long and double locals use two slots in the locals area,
         // as required by the JVM spec. The value of the long or double local is stored in
         // the second slot.
-        int slotIndex = localIndex + kind.jvmSlots - 1;
+        int slotIndex = localIndex + kind.stackSlots - 1;
         int slotOffset = frame.localVariableOffset(slotIndex) + JVMSFrameLayout.offsetInStackSlot(kind);
         return slotOffset;
     }
@@ -724,7 +711,7 @@ public abstract class T1XCompilation {
     /**
      * Gets the kind used to select an INVOKE... bytecode template.
      */
-    protected abstract CiKind invokeKind(RiSignature signature);
+    protected abstract Kind invokeKind(SignatureDescriptor signature);
 
     /**
      * Gets the index of the {@link Slot slot} containing the receiver for
@@ -891,7 +878,7 @@ public abstract class T1XCompilation {
      * @return the register for parameter {@code n} of the current template.
      */
     @INLINE
-    protected final CiRegister reg(int n, String name, CiKind kind) {
+    protected final CiRegister reg(int n, String name, Kind kind) {
         assert n >= 0 && n < template.sig.in.length : template + ": parameter " + n + " is out of bounds";
         Arg a = template.sig.in[n];
         assert assertInitializeArg(a, n);
@@ -906,7 +893,7 @@ public abstract class T1XCompilation {
      * @param name the expected name of the parameter
      */
     final void assignObjectReg(int n, String name, CiRegister src) {
-        assignObjectReg(reg(n, name, CiKind.Object), src);
+        assignObjectReg(reg(n, name, Kind.REFERENCE), src);
     }
 
     /**
@@ -915,7 +902,7 @@ public abstract class T1XCompilation {
      * @param name the expected name of the parameter
      */
     final void assignWordReg(int n, String name, CiRegister src) {
-        assignWordReg(reg(n, name, CiKind.Word), src);
+        assignWordReg(reg(n, name, Kind.WORD), src);
     }
 
     /**
@@ -924,7 +911,7 @@ public abstract class T1XCompilation {
      * @param name the expected name of the parameter
      */
     final protected void assignObject(int n, String name, Object value) {
-        assignObject(reg(n, name, CiKind.Object), value);
+        assignObject(reg(n, name, Kind.REFERENCE), value);
     }
 
     /**
@@ -933,7 +920,7 @@ public abstract class T1XCompilation {
      * @param name the expected name of the parameter
      */
     final protected void assignInt(int n, String name, int value) {
-        assignInt(reg(n, name, CiKind.Int), value);
+        assignInt(reg(n, name, Kind.INT), value);
     }
 
     /**
@@ -942,7 +929,7 @@ public abstract class T1XCompilation {
      * @param name the expected name of the parameter
      */
     final protected void assignFloat(int n, String name, float value) {
-        assignFloat(reg(n, name, CiKind.Float), value);
+        assignFloat(reg(n, name, Kind.FLOAT), value);
     }
 
     /**
@@ -951,7 +938,7 @@ public abstract class T1XCompilation {
      * @param name the expected name of the parameter
      */
     final protected void assignLong(int n, String name, long value) {
-        assignLong(reg(n, name, CiKind.Long), value);
+        assignLong(reg(n, name, Kind.LONG), value);
     }
 
     /**
@@ -960,7 +947,7 @@ public abstract class T1XCompilation {
      * @param name the expected name of the parameter
      */
     final protected void assignDouble(int n, String name, double value) {
-        assignDouble(reg(n, name, CiKind.Double), value);
+        assignDouble(reg(n, name, Kind.DOUBLE), value);
     }
 
     /**
@@ -970,7 +957,7 @@ public abstract class T1XCompilation {
      * @param name the expected name of the parameter
      */
     final protected void loadInt(int n, String name, int i) {
-        loadInt(reg(n, name, CiKind.Int), i);
+        loadInt(reg(n, name, Kind.INT), i);
     }
 
     /**
@@ -980,7 +967,7 @@ public abstract class T1XCompilation {
      * @param name the expected name of the parameter
      */
     final protected void loadObject(int n, String name, int i) {
-        loadObject(reg(n, name, CiKind.Object), i);
+        loadObject(reg(n, name, Kind.REFERENCE), i);
     }
 
     /**
@@ -990,7 +977,7 @@ public abstract class T1XCompilation {
      * @param name the expected name of the parameter
      */
     protected final void peekObject(int n, String name, int i) {
-        peekObject(reg(n, name, CiKind.Object), i);
+        peekObject(reg(n, name, Kind.REFERENCE), i);
     }
 
     /**
@@ -1000,7 +987,7 @@ public abstract class T1XCompilation {
      * @param name the expected name of the parameter
      */
     final void peekInt(int n, String name, int i) {
-        peekInt(reg(n, name, CiKind.Int), i);
+        peekInt(reg(n, name, Kind.INT), i);
     }
 
     /**
@@ -1010,7 +997,7 @@ public abstract class T1XCompilation {
      * @param name the expected name of the parameter
      */
     final void peekFloat(int n, String name, int i) {
-        peekFloat(reg(n, name, CiKind.Float), i);
+        peekFloat(reg(n, name, Kind.FLOAT), i);
     }
 
     /**
@@ -1020,7 +1007,7 @@ public abstract class T1XCompilation {
      * @param name the expected name of the parameter
      */
     final void peekDouble(int n, String name, int i) {
-        peekDouble(reg(n, name, CiKind.Double), i);
+        peekDouble(reg(n, name, Kind.DOUBLE), i);
     }
 
     /**
@@ -1030,7 +1017,7 @@ public abstract class T1XCompilation {
      * @param name the expected name of the parameter
      */
     final void peekLong(int n, String name, int i) {
-        peekLong(reg(n, name, CiKind.Long), i);
+        peekLong(reg(n, name, Kind.LONG), i);
     }
 
     private String errorSuffix() {
@@ -1151,56 +1138,56 @@ public abstract class T1XCompilation {
             case Bytecodes.IRETURN            : do_return(IRETURN, IRETURN$unlock); break;
             case Bytecodes.LRETURN            : do_return(LRETURN, LRETURN$unlock); break;
             case Bytecodes.RETURN             : do_return(RETURN, RETURN$unlock); break;
-            case Bytecodes.ALOAD              : do_load(stream.readLocalIndex(), CiKind.Object); break;
-            case Bytecodes.ALOAD_0            : do_load(0, CiKind.Object); break;
-            case Bytecodes.ALOAD_1            : do_load(1, CiKind.Object); break;
-            case Bytecodes.ALOAD_2            : do_load(2, CiKind.Object); break;
-            case Bytecodes.ALOAD_3            : do_load(3, CiKind.Object); break;
-            case Bytecodes.ASTORE             : do_store(stream.readLocalIndex(), CiKind.Object); break;
-            case Bytecodes.ASTORE_0           : do_store(0, CiKind.Object); break;
-            case Bytecodes.ASTORE_1           : do_store(1, CiKind.Object); break;
-            case Bytecodes.ASTORE_2           : do_store(2, CiKind.Object); break;
-            case Bytecodes.ASTORE_3           : do_store(3, CiKind.Object); break;
-            case Bytecodes.DLOAD              : do_load(stream.readLocalIndex(), CiKind.Double); break;
-            case Bytecodes.DLOAD_0            : do_load(0, CiKind.Double); break;
-            case Bytecodes.DLOAD_1            : do_load(1, CiKind.Double); break;
-            case Bytecodes.DLOAD_2            : do_load(2, CiKind.Double); break;
-            case Bytecodes.DLOAD_3            : do_load(3, CiKind.Double); break;
-            case Bytecodes.DSTORE             : do_store(stream.readLocalIndex(), CiKind.Double); break;
-            case Bytecodes.DSTORE_0           : do_store(0, CiKind.Double); break;
-            case Bytecodes.DSTORE_1           : do_store(1, CiKind.Double); break;
-            case Bytecodes.DSTORE_2           : do_store(2, CiKind.Double); break;
-            case Bytecodes.DSTORE_3           : do_store(3, CiKind.Double); break;
-            case Bytecodes.FLOAD              : do_load(stream.readLocalIndex(), CiKind.Float); break;
-            case Bytecodes.FLOAD_0            : do_load(0, CiKind.Float); break;
-            case Bytecodes.FLOAD_1            : do_load(1, CiKind.Float); break;
-            case Bytecodes.FLOAD_2            : do_load(2, CiKind.Float); break;
-            case Bytecodes.FLOAD_3            : do_load(3, CiKind.Float); break;
-            case Bytecodes.FSTORE             : do_store(stream.readLocalIndex(), CiKind.Float); break;
-            case Bytecodes.FSTORE_0           : do_store(0, CiKind.Float); break;
-            case Bytecodes.FSTORE_1           : do_store(1, CiKind.Float); break;
-            case Bytecodes.FSTORE_2           : do_store(2, CiKind.Float); break;
-            case Bytecodes.FSTORE_3           : do_store(3, CiKind.Float); break;
-            case Bytecodes.ILOAD              : do_load(stream.readLocalIndex(), CiKind.Int); break;
-            case Bytecodes.ILOAD_0            : do_load(0, CiKind.Int); break;
-            case Bytecodes.ILOAD_1            : do_load(1, CiKind.Int); break;
-            case Bytecodes.ILOAD_2            : do_load(2, CiKind.Int); break;
-            case Bytecodes.ILOAD_3            : do_load(3, CiKind.Int); break;
-            case Bytecodes.ISTORE             : do_store(stream.readLocalIndex(), CiKind.Int); break;
-            case Bytecodes.ISTORE_0           : do_store(0, CiKind.Int); break;
-            case Bytecodes.ISTORE_1           : do_store(1, CiKind.Int); break;
-            case Bytecodes.ISTORE_2           : do_store(2, CiKind.Int); break;
-            case Bytecodes.ISTORE_3           : do_store(3, CiKind.Int); break;
-            case Bytecodes.LLOAD              : do_load(stream.readLocalIndex(), CiKind.Long); break;
-            case Bytecodes.LLOAD_0            : do_load(0, CiKind.Long); break;
-            case Bytecodes.LLOAD_1            : do_load(1, CiKind.Long); break;
-            case Bytecodes.LLOAD_2            : do_load(2, CiKind.Long); break;
-            case Bytecodes.LLOAD_3            : do_load(3, CiKind.Long); break;
-            case Bytecodes.LSTORE             : do_store(stream.readLocalIndex(), CiKind.Long); break;
-            case Bytecodes.LSTORE_0           : do_store(0, CiKind.Long); break;
-            case Bytecodes.LSTORE_1           : do_store(1, CiKind.Long); break;
-            case Bytecodes.LSTORE_2           : do_store(2, CiKind.Long); break;
-            case Bytecodes.LSTORE_3           : do_store(3, CiKind.Long); break;
+            case Bytecodes.ALOAD              : do_load(stream.readLocalIndex(), Kind.REFERENCE); break;
+            case Bytecodes.ALOAD_0            : do_load(0, Kind.REFERENCE); break;
+            case Bytecodes.ALOAD_1            : do_load(1, Kind.REFERENCE); break;
+            case Bytecodes.ALOAD_2            : do_load(2, Kind.REFERENCE); break;
+            case Bytecodes.ALOAD_3            : do_load(3, Kind.REFERENCE); break;
+            case Bytecodes.ASTORE             : do_store(stream.readLocalIndex(), Kind.REFERENCE); break;
+            case Bytecodes.ASTORE_0           : do_store(0, Kind.REFERENCE); break;
+            case Bytecodes.ASTORE_1           : do_store(1, Kind.REFERENCE); break;
+            case Bytecodes.ASTORE_2           : do_store(2, Kind.REFERENCE); break;
+            case Bytecodes.ASTORE_3           : do_store(3, Kind.REFERENCE); break;
+            case Bytecodes.DLOAD              : do_load(stream.readLocalIndex(), Kind.DOUBLE); break;
+            case Bytecodes.DLOAD_0            : do_load(0, Kind.DOUBLE); break;
+            case Bytecodes.DLOAD_1            : do_load(1, Kind.DOUBLE); break;
+            case Bytecodes.DLOAD_2            : do_load(2, Kind.DOUBLE); break;
+            case Bytecodes.DLOAD_3            : do_load(3, Kind.DOUBLE); break;
+            case Bytecodes.DSTORE             : do_store(stream.readLocalIndex(), Kind.DOUBLE); break;
+            case Bytecodes.DSTORE_0           : do_store(0, Kind.DOUBLE); break;
+            case Bytecodes.DSTORE_1           : do_store(1, Kind.DOUBLE); break;
+            case Bytecodes.DSTORE_2           : do_store(2, Kind.DOUBLE); break;
+            case Bytecodes.DSTORE_3           : do_store(3, Kind.DOUBLE); break;
+            case Bytecodes.FLOAD              : do_load(stream.readLocalIndex(), Kind.FLOAT); break;
+            case Bytecodes.FLOAD_0            : do_load(0, Kind.FLOAT); break;
+            case Bytecodes.FLOAD_1            : do_load(1, Kind.FLOAT); break;
+            case Bytecodes.FLOAD_2            : do_load(2, Kind.FLOAT); break;
+            case Bytecodes.FLOAD_3            : do_load(3, Kind.FLOAT); break;
+            case Bytecodes.FSTORE             : do_store(stream.readLocalIndex(), Kind.FLOAT); break;
+            case Bytecodes.FSTORE_0           : do_store(0, Kind.FLOAT); break;
+            case Bytecodes.FSTORE_1           : do_store(1, Kind.FLOAT); break;
+            case Bytecodes.FSTORE_2           : do_store(2, Kind.FLOAT); break;
+            case Bytecodes.FSTORE_3           : do_store(3, Kind.FLOAT); break;
+            case Bytecodes.ILOAD              : do_load(stream.readLocalIndex(), Kind.INT); break;
+            case Bytecodes.ILOAD_0            : do_load(0, Kind.INT); break;
+            case Bytecodes.ILOAD_1            : do_load(1, Kind.INT); break;
+            case Bytecodes.ILOAD_2            : do_load(2, Kind.INT); break;
+            case Bytecodes.ILOAD_3            : do_load(3, Kind.INT); break;
+            case Bytecodes.ISTORE             : do_store(stream.readLocalIndex(), Kind.INT); break;
+            case Bytecodes.ISTORE_0           : do_store(0, Kind.INT); break;
+            case Bytecodes.ISTORE_1           : do_store(1, Kind.INT); break;
+            case Bytecodes.ISTORE_2           : do_store(2, Kind.INT); break;
+            case Bytecodes.ISTORE_3           : do_store(3, Kind.INT); break;
+            case Bytecodes.LLOAD              : do_load(stream.readLocalIndex(), Kind.LONG); break;
+            case Bytecodes.LLOAD_0            : do_load(0, Kind.LONG); break;
+            case Bytecodes.LLOAD_1            : do_load(1, Kind.LONG); break;
+            case Bytecodes.LLOAD_2            : do_load(2, Kind.LONG); break;
+            case Bytecodes.LLOAD_3            : do_load(3, Kind.LONG); break;
+            case Bytecodes.LSTORE             : do_store(stream.readLocalIndex(), Kind.LONG); break;
+            case Bytecodes.LSTORE_0           : do_store(0, Kind.LONG); break;
+            case Bytecodes.LSTORE_1           : do_store(1, Kind.LONG); break;
+            case Bytecodes.LSTORE_2           : do_store(2, Kind.LONG); break;
+            case Bytecodes.LSTORE_3           : do_store(3, Kind.LONG); break;
             case Bytecodes.IFEQ               : do_branch(Bytecodes.IFEQ, stream.readBranchDest()); break;
             case Bytecodes.IFNE               : do_branch(Bytecodes.IFNE, stream.readBranchDest()); break;
             case Bytecodes.IFLE               : do_branch(Bytecodes.IFLE, stream.readBranchDest()); break;
@@ -1345,22 +1332,21 @@ public abstract class T1XCompilation {
         pokeLong(scratch, 0);
     }
 
-    protected void do_load(int index, CiKind kind) {
-        switch(kind) {
-            case Int:
-            case Float:
+    protected void do_load(int index, Kind kind) {
+        switch(kind.asEnum) {
+            case INT:
+            case FLOAT:
                 loadInt(scratch, index);
                 incStack(1);
                 pokeInt(scratch, 0);
                 break;
-            case Word:
-            case Object:
+            case REFERENCE:
                 loadWord(scratch, index);
                 incStack(1);
                 pokeWord(scratch, 0);
                 break;
-            case Long:
-            case Double:
+            case LONG:
+            case DOUBLE:
                 loadLong(scratch, index);
                 incStack(2);
                 pokeLong(scratch, 0);
@@ -1370,22 +1356,21 @@ public abstract class T1XCompilation {
         }
     }
 
-    protected void do_store(int index, CiKind kind) {
-        switch(kind) {
-            case Int:
-            case Float:
+    protected void do_store(int index, Kind kind) {
+        switch(kind.asEnum) {
+            case INT:
+            case FLOAT:
                 peekInt(scratch, 0);
                 decStack(1);
                 storeInt(scratch, index);
                 break;
-            case Word:
-            case Object:
+            case REFERENCE:
                 peekWord(scratch, 0);
                 decStack(1);
                 storeWord(scratch, index);
                 break;
-            case Long:
-            case Double:
+            case LONG:
+            case DOUBLE:
                 peekLong(scratch, 0);
                 decStack(2);
                 storeLong(scratch, index);
@@ -1400,9 +1385,9 @@ public abstract class T1XCompilation {
      * @param index Index to the field ref constant.
      * @param template one of getfield, putfield, getstatic, putstatic
      */
-    protected void do_fieldAccess(EnumMap<CiKind, T1XTemplateTag> tags, int index) {
+    protected void do_fieldAccess(EnumMap<KindEnum, T1XTemplateTag> tags, int index) {
         FieldRefConstant fieldRefConstant = cp.fieldAt(index);
-        CiKind fieldKind = fieldRefConstant.type(cp).toKind().ciKind;
+        KindEnum fieldKind = fieldRefConstant.type(cp).toKind().asEnum;
         T1XTemplateTag tag = tags.get(fieldKind);
         if (fieldRefConstant.isResolvableWithoutClassLoading(cp)) {
             try {
@@ -1511,26 +1496,26 @@ public abstract class T1XCompilation {
         branch(opcode, targetBCI, bci);
     }
 
-    protected void finishCall(T1XTemplateTag tag, CiKind returnKind, int safepoint, ClassMethodActor directCallee) {
+    protected void finishCall(T1XTemplateTag tag, Kind returnKind, int safepoint, ClassMethodActor directCallee) {
         safepointsBuilder.addSafepoint(stream.currentBCI(), safepoint, directCallee);
 
-        if (!returnKind.isVoid()) {
-            incStack(returnKind.jvmSlots);
-            CiRegister reg = vm().registerConfigs.standard.getReturnRegister(returnKind);
-            switch (returnKind) {
-                case Float:
+        if (returnKind != Kind.VOID) {
+            incStack(returnKind.stackSlots);
+            CiRegister reg = vm().registerConfigs.standard.getReturnRegister(WordUtil.ciKind(returnKind, true));
+            switch (returnKind.asEnum) {
+                case FLOAT:
                     pokeFloat(reg, 0);
                     break;
-                case Long:
+                case LONG:
                     pokeLong(reg, 0);
                     break;
-                case Double:
+                case DOUBLE:
                     pokeDouble(reg, 0);
                     break;
-                case Word:
+                case WORD:
                     pokeWord(reg, 0);
                     break;
-                case Object:
+                case REFERENCE:
                     pokeObject(reg, 0);
                     break;
                 default:
@@ -1570,8 +1555,8 @@ public abstract class T1XCompilation {
             return;
         }
 
-        CiKind kind = invokeKind(signature);
-        T1XTemplateTag tag = INVOKEVIRTUALS.get(kind);
+        Kind kind = invokeKind(signature);
+        T1XTemplateTag tag = INVOKEVIRTUALS.get(kind.asEnum);
         int receiverStackIndex = receiverStackIndex(signature);
         try {
             if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
@@ -1624,8 +1609,8 @@ public abstract class T1XCompilation {
             return;
         }
 
-        CiKind kind = invokeKind(signature);
-        T1XTemplateTag tag = INVOKEINTERFACES.get(kind);
+        Kind kind = invokeKind(signature);
+        T1XTemplateTag tag = INVOKEINTERFACES.get(kind.asEnum);
         int receiverStackIndex = receiverStackIndex(signature);
         try {
             if (interfaceMethodRef.isResolvableWithoutClassLoading(cp)) {
@@ -1662,9 +1647,9 @@ public abstract class T1XCompilation {
 
     protected void do_invokespecial(int index) {
         ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
-        CiKind kind = invokeKind(classMethodRef.signature(cp));
+        Kind kind = invokeKind(classMethodRef.signature(cp));
         SignatureDescriptor signature = classMethodRef.signature(cp);
-        T1XTemplateTag tag = INVOKESPECIALS.get(kind);
+        T1XTemplateTag tag = INVOKESPECIALS.get(kind.asEnum);
         int receiverStackIndex = receiverStackIndex(signature);
         try {
             if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
@@ -1693,8 +1678,8 @@ public abstract class T1XCompilation {
 
     protected void do_invokestatic(int index) {
         ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
-        CiKind kind = invokeKind(classMethodRef.signature(cp));
-        T1XTemplateTag tag = INVOKESTATICS.get(kind);
+        Kind kind = invokeKind(classMethodRef.signature(cp));
+        T1XTemplateTag tag = INVOKESTATICS.get(kind.asEnum);
         try {
             if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
                 StaticMethodActor staticMethodActor = classMethodRef.resolveStatic(cp, index);

@@ -25,7 +25,6 @@ package com.sun.max.vm.type;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
 
-import com.sun.cri.ci.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -36,7 +35,7 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.type.JavaTypeDescriptor.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -54,17 +53,15 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
     @INSPECTED
     public final char character;
     public final Class boxedClass;
-    public final TypeDescriptor typeDescriptor;
     public final WordWidth width;
     public final boolean isCategory1;
     public final int stackSlots;
     public final boolean isWord;
     public final boolean isReference;
-    public final CiKind ciKind;
 
     @HOSTED_ONLY
     protected Kind(KindEnum kindEnum, String name, Class javaClass, Class javaArrayClass, Class<Value_Type> valueClass, char character,
-                   final Class boxedClass, TypeDescriptor typeDescriptor, WordWidth width) {
+                   final Class boxedClass, WordWidth width) {
         this.asEnum = kindEnum;
         kindEnum.setKind(this);
         this.name = SymbolTable.makeSymbol(name);
@@ -73,18 +70,12 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         this.valueClass = valueClass;
         this.character = character;
         this.boxedClass = boxedClass;
-        this.typeDescriptor = typeDescriptor;
         this.width = width;
         this.stackKind = "ZBCS".indexOf(character) != -1 ? INT : this;
         this.isCategory1 = "JD".indexOf(character) == -1;
         this.stackSlots = !isCategory1 ? 2 : (character == 'V' ? 0 : 1);
         this.isWord = kindEnum == KindEnum.WORD;
         this.isReference = kindEnum == KindEnum.REFERENCE;
-        if (typeDescriptor instanceof AtomicTypeDescriptor) {
-            ((AtomicTypeDescriptor) typeDescriptor).setKind(this);
-        }
-        String ciKindName = isReference ? "Object" : Strings.capitalizeFirst(name, true);
-        this.ciKind = CiKind.valueOf(ciKindName);
     }
 
     @Override
@@ -135,7 +126,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
      * Determines if this is a primitive kind other than {@code void}.
      */
     public final boolean isPrimitiveValue() {
-        return JavaTypeDescriptor.isPrimitive(typeDescriptor);
+        return JavaTypeDescriptor.isPrimitive(typeDescriptor());
     }
 
     public final boolean isExtendedPrimitiveValue() {
@@ -200,7 +191,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
 
     public abstract Value_Type zeroValue();
 
-    public static final Kind<VoidValue> VOID = new Kind<VoidValue>(KindEnum.VOID, "void", void.class, null, VoidValue.class, 'V', Void.class, JavaTypeDescriptor.VOID, null) {
+    public static final Kind<VoidValue> VOID = new Kind<VoidValue>(KindEnum.VOID, "void", void.class, null, VoidValue.class, 'V', Void.class, null) {
         @Override
         public VoidValue convert(Value value) {
             final Kind kind = this;
@@ -230,7 +221,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
     };
 
     public static final Kind<IntValue> INT = new Kind<IntValue>(KindEnum.INT, "int", int.class, int[].class,
-                                                                IntValue.class, 'I', Integer.class, JavaTypeDescriptor.INT,
+                                                                IntValue.class, 'I', Integer.class,
                                                                 WordWidth.BITS_32) {
         @Override
         public ArrayClassActor arrayClassActor() {
@@ -283,7 +274,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
     };
     public static final Kind<ByteValue> BYTE = new Kind<ByteValue>(KindEnum.BYTE, "byte", byte.class, byte[].class,
-                                                                   ByteValue.class, 'B', Byte.class, JavaTypeDescriptor.BYTE,
+                                                                   ByteValue.class, 'B', Byte.class,
                                                                    WordWidth.BITS_8) {
         @Override
         public ArrayClassActor arrayClassActor() {
@@ -337,7 +328,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
     };
 
     public static final Kind<BooleanValue> BOOLEAN = new Kind<BooleanValue>(KindEnum.BOOLEAN, "boolean", boolean.class, boolean[].class,
-                                                                            BooleanValue.class, 'Z', Boolean.class, JavaTypeDescriptor.BOOLEAN,
+                                                                            BooleanValue.class, 'Z', Boolean.class,
                                                                             WordWidth.BITS_8) {
         @Override
         public ArrayClassActor arrayClassActor() {
@@ -391,7 +382,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
     };
 
     public static final Kind<ShortValue> SHORT = new Kind<ShortValue>(KindEnum.SHORT, "short", short.class, short[].class,
-                                                                      ShortValue.class, 'S', Short.class, JavaTypeDescriptor.SHORT,
+                                                                      ShortValue.class, 'S', Short.class,
                                                                       WordWidth.BITS_16) {
         @Override
         public ArrayClassActor arrayClassActor() {
@@ -445,7 +436,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
     };
 
     public static final Kind<CharValue> CHAR = new Kind<CharValue>(KindEnum.CHAR, "char", char.class, char[].class,
-                                                                   CharValue.class, 'C', Character.class, JavaTypeDescriptor.CHAR,
+                                                                   CharValue.class, 'C', Character.class,
                                                                    WordWidth.BITS_16) {
         @Override
         public ArrayClassActor arrayClassActor() {
@@ -499,7 +490,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
     };
 
     public static final Kind<FloatValue> FLOAT = new Kind<FloatValue>(KindEnum.FLOAT, "float", float.class, float[].class,
-                                                                      FloatValue.class, 'F', Float.class, JavaTypeDescriptor.FLOAT,
+                                                                      FloatValue.class, 'F', Float.class,
                                                                       WordWidth.BITS_32) {
         @Override
         public ArrayClassActor arrayClassActor() {
@@ -553,7 +544,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
     };
 
     public static final Kind<LongValue> LONG = new Kind<LongValue>(KindEnum.LONG, "long", long.class, long[].class,
-                                                                   LongValue.class, 'J', Long.class, JavaTypeDescriptor.LONG,
+                                                                   LongValue.class, 'J', Long.class,
                                                                    WordWidth.BITS_64) {
         @Override
         public ArrayClassActor arrayClassActor() {
@@ -607,7 +598,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
     };
 
     public static final Kind<DoubleValue> DOUBLE = new Kind<DoubleValue>(KindEnum.DOUBLE, "double", double.class, double[].class,
-                                                                         DoubleValue.class, 'D', Double.class, JavaTypeDescriptor.DOUBLE,
+                                                                         DoubleValue.class, 'D', Double.class,
                                                                          WordWidth.BITS_64) {
         @Override
         public ArrayClassActor arrayClassActor() {
@@ -661,7 +652,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
     };
 
     public static final Kind<WordValue> WORD = new Kind<WordValue>(KindEnum.WORD, "Word", Word.class, Word[].class,
-                                                                   WordValue.class, 'W', Word.class, JavaTypeDescriptor.WORD,
+                                                                   WordValue.class, 'W', Word.class,
                                                                    Word.widthValue()) {
         @Override
         public WordValue readValue(Reference reference, int offset) {
@@ -718,7 +709,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
     };
 
     public static final Kind<ReferenceValue> REFERENCE = new Kind<ReferenceValue>(KindEnum.REFERENCE, "Reference", Object.class, Object[].class,
-                                                                                  ReferenceValue.class, 'R', Object.class, JavaTypeDescriptor.REFERENCE,
+                                                                                  ReferenceValue.class, 'R', Object.class,
                                                                                   Word.widthValue()) {
         @Override
         public ReferenceValue readValue(Reference reference, int offset) {
@@ -855,6 +846,26 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         throw new IllegalArgumentException("expected a boxed byte, got " + boxedJavaValue.getClass().getName());
     }
 
+    public TypeDescriptor typeDescriptor() {
+        // Note: the class Kind can not have a field of class TypeDescriptor because that leads to
+        // unnecessary and circular dependencies when initializing the class.
+        switch (asEnum) {
+            // Checkstyle: stop
+            case BOOLEAN:   return JavaTypeDescriptor.BOOLEAN;
+            case BYTE:      return JavaTypeDescriptor.BYTE;
+            case CHAR:      return JavaTypeDescriptor.CHAR;
+            case SHORT:     return JavaTypeDescriptor.SHORT;
+            case INT:       return JavaTypeDescriptor.INT;
+            case LONG:      return JavaTypeDescriptor.LONG;
+            case FLOAT:     return JavaTypeDescriptor.FLOAT;
+            case DOUBLE:    return JavaTypeDescriptor.DOUBLE;
+            case WORD:      return JavaTypeDescriptor.WORD;
+            case REFERENCE: return JavaTypeDescriptor.REFERENCE;
+            case VOID:      return JavaTypeDescriptor.VOID;
+            default:        throw FatalError.unexpected("invalid kind");
+            // Checkstyle: resume
+        }
+    }
     /**
      * Unboxes a given object to a char, doing a primitive widening conversion if necessary.
      *

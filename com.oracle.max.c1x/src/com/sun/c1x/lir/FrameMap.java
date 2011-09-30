@@ -23,7 +23,6 @@
 package com.sun.c1x.lir;
 
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
-import static com.sun.cri.ci.CiKind.*;
 import static java.lang.reflect.Modifier.*;
 
 import com.sun.c1x.*;
@@ -141,7 +140,7 @@ public final class FrameMap {
         if (method == null) {
             incomingArguments = new CiCallingConvention(new CiValue[0], 0);
         } else {
-            CiKind receiver = !isStatic(method.accessFlags()) ? method.holder().kind() : null;
+            CiKind receiver = !isStatic(method.accessFlags()) ? method.holder().kind(true) : null;
             incomingArguments = getCallingConvention(CiUtil.signatureToKinds(method.signature(), receiver), JavaCallee);
         }
     }
@@ -246,7 +245,7 @@ public final class FrameMap {
      * @return a representation of the stack location
      */
     public CiAddress toStackAddress(StackBlock stackBlock) {
-        return new CiAddress(CiKind.Word, compilation.registerConfig.getFrameRegister().asValue(Word), offsetForStackBlock(stackBlock));
+        return new CiAddress(compilation.target.wordKind, compilation.registerConfig.getFrameRegister().asValue(compilation.target.wordKind), offsetForStackBlock(stackBlock));
     }
 
     /**
@@ -313,7 +312,7 @@ public final class FrameMap {
      *         allocation is complete and the size of the frame has been {@linkplain #finalizeFrame(int) finalized}.
      */
     public StackBlock reserveStackBlock(int size) {
-        int wordSize = compilation.target.sizeInBytes(CiKind.Word);
+        int wordSize = compilation.target.wordSize;
         assert (size % wordSize) == 0;
         StackBlock block = new StackBlock(size, stackBlocksSize);
         stackBlocksSize += size;

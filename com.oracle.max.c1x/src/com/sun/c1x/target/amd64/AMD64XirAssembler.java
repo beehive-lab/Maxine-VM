@@ -36,6 +36,9 @@ import com.sun.cri.xir.*;
  *
  */
 public class AMD64XirAssembler extends CiXirAssembler {
+    public AMD64XirAssembler(CiTarget target) {
+        super(target);
+    }
 
     @Override
     protected XirTemplate buildTemplate(String name, boolean isStub) {
@@ -118,17 +121,17 @@ public class AMD64XirAssembler extends CiXirAssembler {
                 case RepeatMoveWords:
                 case RepeatMoveBytes:
                     if (fixedRSI == null) {
-                        fixedRSI = createRegisterTemp("fixedRSI", CiKind.Word, AMD64.rsi);
+                        fixedRSI = createRegisterTemp("fixedRSI", target.wordKind, AMD64.rsi);
                     }
                     if (fixedRDI == null) {
-                        fixedRDI = createRegisterTemp("fixedRDI", CiKind.Word, AMD64.rdi);
+                        fixedRDI = createRegisterTemp("fixedRDI", target.wordKind, AMD64.rdi);
                     }
                     if (fixedRCX == null) {
-                        fixedRCX = createRegisterTemp("fixedRCX", CiKind.Word, AMD64.rcx);
+                        fixedRCX = createRegisterTemp("fixedRCX", target.wordKind, AMD64.rcx);
                     }
-                    currentList.add(new XirInstruction(CiKind.Word, XirOp.Mov, fixedRSI, i.x()));
-                    currentList.add(new XirInstruction(CiKind.Word, XirOp.Mov, fixedRDI, i.y()));
-                    currentList.add(new XirInstruction(CiKind.Word, XirOp.Mov, fixedRCX, i.z()));
+                    currentList.add(new XirInstruction(target.wordKind, XirOp.Mov, fixedRSI, i.x()));
+                    currentList.add(new XirInstruction(target.wordKind, XirOp.Mov, fixedRDI, i.y()));
+                    currentList.add(new XirInstruction(target.wordKind, XirOp.Mov, fixedRCX, i.z()));
                     currentList.add(new XirInstruction(CiKind.Illegal, i.op, i.result, fixedRSI, fixedRDI, fixedRCX));
                     appended = true;
                     break;
@@ -142,12 +145,12 @@ public class AMD64XirAssembler extends CiXirAssembler {
                     break;
                 case PointerCAS:
                     if (fixedRAX == null) {
-                        fixedRAX = createRegisterTemp("fixedRAX", CiKind.Word, AMD64.rax);
+                        fixedRAX = createRegisterTemp("fixedRAX", target.wordKind, AMD64.rax);
                     }
                     // x = source of cmpxch
                     // y = new value
                     // z = old value (i.e., the one compared to). Must be in RAX (and so must the result).
-                    currentList.add(new XirInstruction(CiKind.Word, XirOp.Mov, fixedRAX, i.z()));
+                    currentList.add(new XirInstruction(target.wordKind, XirOp.Mov, fixedRAX, i.z()));
                     currentList.add(new XirInstruction(i.kind, i.op, i.result, i.x(), i.y(), fixedRAX));
                     appended = true;
                     break;
@@ -214,6 +217,6 @@ public class AMD64XirAssembler extends CiXirAssembler {
 
     @Override
     public CiXirAssembler copy() {
-        return new AMD64XirAssembler();
+        return new AMD64XirAssembler(target);
     }
 }

@@ -314,7 +314,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         CiRegisterValue frame = frameRegister.asValue();
         for (CiRegister r : csl.registers) {
             int offset = csl.offsetOf(r);
-            movq(new CiAddress(CiKind.Word, frame, frameToCSA + offset), r);
+            movq(new CiAddress(target.wordKind, frame, frameToCSA + offset), r);
         }
     }
 
@@ -322,7 +322,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         CiRegisterValue frame = frameRegister.asValue();
         for (CiRegister r : csl.registers) {
             int offset = csl.offsetOf(r);
-            movq(r, new CiAddress(CiKind.Word, frame, frameToCSA + offset));
+            movq(r, new CiAddress(target.wordKind, frame, frameToCSA + offset));
         }
     }
 }

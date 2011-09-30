@@ -114,11 +114,12 @@ public class CEEliminator implements BlockClosure {
 
         // check that phi function is present at end of successor stack and that
         // only this phi was pushed on the stack
-        final Value suxPhi = suxState.stackAt(curIf.stateAfter().stackSize());
-        if (suxPhi == null || !(suxPhi instanceof Phi) || ((Phi) suxPhi).block() != sux) {
+        int sizeDiff = suxState.stackSize() - curIf.stateAfter().stackSize();
+        if (!(sizeDiff == 1 || (sizeDiff == 2 && suxState.stackAt(suxState.stackSize() - 1) == null))) {
             return;
         }
-        if (suxPhi.kind.sizeInSlots() != suxState.stackSize() - curIf.stateAfter().stackSize()) {
+        final Value suxPhi = suxState.stackAt(curIf.stateAfter().stackSize());
+        if (suxPhi == null || !(suxPhi instanceof Phi) || ((Phi) suxPhi).block() != sux) {
             return;
         }
 

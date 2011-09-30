@@ -42,16 +42,17 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiAddress.Scale;
 import com.sun.cri.ci.CiTargetMethod.JumpTable;
 import com.sun.cri.ci.CiTargetMethod.LookupTable;
-import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.amd64.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.type.*;
 
 
 public class AMD64T1XCompilation extends T1XCompilation {
@@ -96,22 +97,22 @@ public class AMD64T1XCompilation extends T1XCompilation {
 
     @Override
     public void peekObject(CiRegister dst, int index) {
-        asm.movq(dst, spWord(index));
+        asm.movq(dst, spLong(index));
     }
 
     @Override
     public void pokeObject(CiRegister src, int index) {
-        asm.movq(spWord(index), src);
+        asm.movq(spLong(index), src);
     }
 
     @Override
     public void peekWord(CiRegister dst, int index) {
-        asm.movq(dst, spWord(index));
+        asm.movq(dst, spLong(index));
     }
 
     @Override
     public void pokeWord(CiRegister src, int index) {
-        asm.movq(spWord(index), src);
+        asm.movq(spLong(index), src);
     }
 
     @Override
@@ -186,42 +187,42 @@ public class AMD64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void loadInt(CiRegister dst, int index) {
-        asm.movl(dst, localSlot(localSlotOffset(index, CiKind.Int)));
+        asm.movl(dst, localSlot(localSlotOffset(index, Kind.INT)));
     }
 
     @Override
     protected void loadLong(CiRegister dst, int index) {
-        asm.movq(dst, localSlot(localSlotOffset(index, CiKind.Long)));
+        asm.movq(dst, localSlot(localSlotOffset(index, Kind.LONG)));
     }
 
     @Override
     protected void loadWord(CiRegister dst, int index) {
-        asm.movq(dst, localSlot(localSlotOffset(index, CiKind.Word)));
+        asm.movq(dst, localSlot(localSlotOffset(index, Kind.WORD)));
     }
 
     @Override
     protected void loadObject(CiRegister dst, int index) {
-        asm.movq(dst, localSlot(localSlotOffset(index, CiKind.Object)));
+        asm.movq(dst, localSlot(localSlotOffset(index, Kind.REFERENCE)));
     }
 
     @Override
     protected void storeInt(CiRegister src, int index) {
-        asm.movl(localSlot(localSlotOffset(index, CiKind.Int)), src);
+        asm.movl(localSlot(localSlotOffset(index, Kind.INT)), src);
     }
 
     @Override
     protected void storeLong(CiRegister src, int index) {
-        asm.movq(localSlot(localSlotOffset(index, CiKind.Long)), src);
+        asm.movq(localSlot(localSlotOffset(index, Kind.LONG)), src);
     }
 
     @Override
     protected void storeWord(CiRegister src, int index) {
-        asm.movq(localSlot(localSlotOffset(index, CiKind.Word)), src);
+        asm.movq(localSlot(localSlotOffset(index, Kind.WORD)), src);
     }
 
     @Override
     protected void storeObject(CiRegister src, int index) {
-        asm.movq(localSlot(localSlotOffset(index, CiKind.Object)), src);
+        asm.movq(localSlot(localSlotOffset(index, Kind.REFERENCE)), src);
     }
 
     @Override
@@ -311,7 +312,7 @@ public class AMD64T1XCompilation extends T1XCompilation {
                 int offset = (i + VmThread.STACK_SHADOW_PAGES) * pageSize;
                 // Deduct 'frameSize' to handle frames larger than (VmThread.STACK_SHADOW_PAGES * pageSize)
                 offset = offset - frameSize;
-                asm.movq(new CiAddress(CiKind.Word, RSP, -offset), rax);
+                asm.movq(new CiAddress(WordUtil.archKind(), RSP, -offset), rax);
             }
         }
         return adapter;
@@ -389,7 +390,7 @@ public class AMD64T1XCompilation extends T1XCompilation {
         // Patch LEA instruction above now that we know the position of the jump table
         int jumpTablePos = buf.position();
         buf.setPosition(leaPos);
-        asm.leaq(r15, new CiAddress(CiKind.Word, InstructionRelative.asValue(), jumpTablePos - afterLea));
+        asm.leaq(r15, new CiAddress(WordUtil.archKind(), InstructionRelative.asValue(), jumpTablePos - afterLea));
         buf.setPosition(jumpTablePos);
 
         // Emit jump table entries
@@ -479,7 +480,7 @@ public class AMD64T1XCompilation extends T1XCompilation {
             // Patch the LEA instruction above now that we know the position of the lookup table
             int lookupTablePos = buf.position();
             buf.setPosition(leaPos);
-            asm.leaq(rbx, new CiAddress(CiKind.Word, InstructionRelative.asValue(), lookupTablePos - afterLea));
+            asm.leaq(rbx, new CiAddress(WordUtil.archKind(), InstructionRelative.asValue(), lookupTablePos - afterLea));
             buf.setPosition(lookupTablePos);
 
             // Emit lookup table entries
@@ -743,7 +744,7 @@ public class AMD64T1XCompilation extends T1XCompilation {
                 asm.codeBuffer.reset();
 
                 // Assemble the movq instruction at 'pos' and compare it to the actual bytes at 'pos'
-                CiAddress src = new CiAddress(CiKind.Word, InstructionRelative.asValue(), disp);
+                CiAddress src = new CiAddress(WordUtil.archKind(), InstructionRelative.asValue(), disp);
                 asm.movq(reg, src);
                 byte[] pattern = asm.codeBuffer.close(true);
                 byte[] instr = Arrays.copyOfRange(source.code(), pos, pos + pattern.length);
@@ -830,10 +831,10 @@ public class AMD64T1XCompilation extends T1XCompilation {
     }
 
     @Override
-    protected CiKind invokeKind(RiSignature signature) {
-        CiKind returnKind = signature.returnKind();
-        if (returnKind.isWord() || returnKind.stackKind() == CiKind.Int) {
-            return CiKind.Word;
+    protected Kind invokeKind(SignatureDescriptor signature) {
+        Kind returnKind = signature.resultKind();
+        if (returnKind.stackKind == Kind.INT) {
+            return Kind.WORD;
         }
         return returnKind;
     }

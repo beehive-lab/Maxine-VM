@@ -29,6 +29,7 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -70,7 +71,7 @@ public class MaxSnippets implements RiSnippets {
         if (!isHosted()) {
             // Link at compile time
             try {
-                call.result = CiConstant.forWord(nativeFunction.link().toLong());
+                call.result = WordUtil.constant(nativeFunction.link());
             } catch (UnsatisfiedLinkError e) {
                 // Simply retry linking when the code runs
             }

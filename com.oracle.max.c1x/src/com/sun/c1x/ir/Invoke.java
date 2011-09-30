@@ -56,7 +56,7 @@ public final class Invoke extends StateSplit {
         if (isStatic) {
             setFlag(Flag.IsStatic);
             eliminateNullCheck();
-        } else if (args[0].isNonNull() || args[0].kind.isWord()) {
+        } else if (args[0].isNonNull() || target.holder().kind(true) != CiKind.Object) {
             eliminateNullCheck();
         }
     }
@@ -143,7 +143,7 @@ public final class Invoke extends StateSplit {
     }
 
     public CiKind[] signature() {
-        CiKind receiver = isStatic() ? null : target.holder().kind();
+        CiKind receiver = isStatic() ? null : target.holder().kind(true);
         return CiUtil.signatureToKinds(target.signature(), receiver);
     }
 
@@ -164,6 +164,6 @@ public final class Invoke extends StateSplit {
             }
             out.print(arguments[i]);
         }
-        out.print(CiUtil.format(") [method: %H.%n(%p):%r]", target, false));
+        out.print(CiUtil.format(") [method: %H.%n(%p):%r]", target));
     }
 }
