@@ -604,7 +604,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
 
         CiValue resultOperand = resultOperandFor(x.kind);
-        CiCallingConvention cc = compilation.frameMap().getCallingConvention(x.signature(), JavaCall);
+        CiCallingConvention cc = compilation.frameMap().getCallingConvention(CiUtil.signatureToKinds(x.target), JavaCall);
         List<CiValue> pointerSlots = new ArrayList<CiValue>(2);
         List<CiValue> argList = visitInvokeArguments(cc, x.arguments(), pointerSlots);
 

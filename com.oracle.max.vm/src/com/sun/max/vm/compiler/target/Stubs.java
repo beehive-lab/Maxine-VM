@@ -156,15 +156,15 @@ public class Stubs {
                 resolveVirtualCall = new CriticalMethod(Stubs.class, "resolveVirtualCall", null);
                 resolveInterfaceCall = new CriticalMethod(Stubs.class, "resolveInterfaceCall", null);
                 resolveVirtualCallArgs = registerConfigs.trampoline.getCallingConvention(JavaCall,
-                                CiUtil.signatureToKinds(resolveVirtualCall.classMethodActor.signature(), CiKind.Object), target(), false).locations;
+                                CiUtil.signatureToKinds(resolveVirtualCall.classMethodActor), target(), false).locations;
                 resolveInterfaceCallArgs = registerConfigs.trampoline.getCallingConvention(JavaCall,
-                                CiUtil.signatureToKinds(resolveInterfaceCall.classMethodActor.signature(), CiKind.Object), target(), false).locations;
+                                CiUtil.signatureToKinds(resolveInterfaceCall.classMethodActor), target(), false).locations;
                 staticTrampoline = genStaticTrampoline();
                 trapStub = genTrapStub();
 
                 CriticalMethod unroll = new CriticalMethod(Stubs.class, "unroll", null);
                 CiValue[] unrollArgs = registerConfigs.standard.getCallingConvention(JavaCall,
-                                CiUtil.signatureToKinds(unroll.classMethodActor.signature(), null), target(), false).locations;
+                                CiUtil.signatureToKinds(unroll.classMethodActor), target(), false).locations;
                 unroll.classMethodActor.compiledState = new Compilations(null, genUnroll(unrollArgs));
 
                 deoptStubForSafepointPoll = genDeoptStubWithCSA(null, registerConfigs.trapStub, false);
@@ -184,7 +184,7 @@ public class Stubs {
                     try {
                         CriticalMethod unwind = new CriticalMethod(Stubs.class, name, null);
                         CiValue[] unwindArgs = registerConfigs.standard.getCallingConvention(JavaCall,
-                                        CiUtil.signatureToKinds(unwind.classMethodActor.signature(), null), target(), false).locations;
+                                        CiUtil.signatureToKinds(unwind.classMethodActor), target(), false).locations;
                         unwind.classMethodActor.compiledState = new Compilations(null, genUnwind(unwindArgs));
                     } catch (NoSuchMethodError e) {
                         // No unwind method for this kind
@@ -398,7 +398,7 @@ public class Stubs {
             asm.save(csl, frameToCSA);
 
             CriticalMethod patchStaticTrampoline = new CriticalMethod(Stubs.class, "patchStaticTrampolineCallSiteAMD64", null);
-            CiKind[] trampolineParameters = CiUtil.signatureToKinds(patchStaticTrampoline.classMethodActor.signature(), null);
+            CiKind[] trampolineParameters = CiUtil.signatureToKinds(patchStaticTrampoline.classMethodActor);
             CiValue[] locations = registerConfig.getCallingConvention(JavaCall, trampolineParameters, target(), false).locations;
 
             // load the static trampoline call site into the first parameter register
@@ -461,7 +461,7 @@ public class Stubs {
             CiRegister scratch = registerConfig.getScratchRegister();
             int frameSize = platform().target.alignFrameSize(csl.size);
             int frameToCSA = csl.frameOffsetToCSA;
-            CiKind[] handleTrapParameters = CiUtil.signatureToKinds(Trap.handleTrap.classMethodActor.signature(), null);
+            CiKind[] handleTrapParameters = CiUtil.signatureToKinds(Trap.handleTrap.classMethodActor);
             CiValue[] args = registerConfig.getCallingConvention(JavaCallee, handleTrapParameters, target(), false).locations;
 
             // the very first instruction must save the flags.
@@ -729,10 +729,9 @@ public class Stubs {
                 return null;
             }
 
-            CiKind[] params = CiUtil.signatureToKinds(runtimeRoutine.classMethodActor.signature(), null);
-            CiValue[] args;
+            CiKind[] params = CiUtil.signatureToKinds(runtimeRoutine.classMethodActor);
+            CiValue[] args = registerConfig.getCallingConvention(JavaCall, params, target(), false).locations;
             if (!kind.isVoid()) {
-                args = registerConfig.getCallingConvention(JavaCall, params, target(), false).locations;
                 // Copy return value into arg 4
                 CiRegister arg4 = args[4].asRegister();
                 CiRegister returnRegister = registerConfig.getReturnRegister(kind);
@@ -745,8 +744,6 @@ public class Stubs {
                         asm.movq(arg4, returnRegister);
                     }
                 }
-            } else {
-                args = registerConfig.getCallingConvention(JavaCall, params, target(), false).locations;
             }
 
             // Copy original return address into arg 0 (i.e. 'ip')
@@ -847,10 +844,9 @@ public class Stubs {
             // save all the callee save registers
             asm.save(csl, csl.frameOffsetToCSA);
 
-            CiKind[] params = CiUtil.signatureToKinds(runtimeRoutine.classMethodActor.signature(), null);
-            CiValue[] args;
+            CiKind[] params = CiUtil.signatureToKinds(runtimeRoutine.classMethodActor);
+            CiValue[] args = registerConfig.getCallingConvention(JavaCall, params, target(), false).locations;
             if (kind != null && !kind.isVoid()) {
-                args = registerConfig.getCallingConvention(JavaCall, params, target(), false).locations;
                 // Copy return value into arg 4
                 CiRegister arg4 = args[4].asRegister();
                 CiStackSlot ss = (CiStackSlot) registerConfigs.compilerStub.getCallingConvention(JavaCall, new CiKind[] {kind}, target(), true).locations[0];
@@ -863,8 +859,6 @@ public class Stubs {
                 } else {
                     asm.movq(arg4, src);
                 }
-            } else {
-                args = registerConfig.getCallingConvention(JavaCall, params, target(), false).locations;
             }
 
 

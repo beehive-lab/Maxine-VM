@@ -866,6 +866,10 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             markRefGrey(hubRef);
             final Hub hub = UnsafeCast.asHub(hubRef.toJava());
             if (MaxineVM.isDebug()) {
+                if (hub == null) {
+                    Log.print("cell "); Log.print(cell); Log.println(" has null hub !");
+                    FatalError.unexpected("not a valid object");
+                }
                 FatalError.check(hub != HeapFreeChunk.HEAP_FREE_CHUNK_HUB, "Must never mark a HeapFreeChunk");
             }
             // Update the other references in the object
@@ -1012,6 +1016,10 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             markRefGrey(hubRef);
             final Hub hub = UnsafeCast.asHub(hubRef.toJava());
             if (MaxineVM.isDebug()) {
+                if (hub == null) {
+                    Log.print("cell "); Log.print(cell); Log.println(" has null hub !");
+                    FatalError.unexpected("not a valid object");
+                }
                 FatalError.check(hub != HeapFreeChunk.HEAP_FREE_CHUNK_HUB, "Must never mark a HeapFreeChunk");
             }
             final SpecificLayout specificLayout = hub.specificLayout;

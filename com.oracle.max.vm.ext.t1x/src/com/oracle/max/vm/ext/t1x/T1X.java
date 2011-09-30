@@ -533,8 +533,7 @@ public class T1X implements RuntimeCompiler {
 
     @HOSTED_ONLY
     private static boolean hasStackParameters(ClassMethodActor classMethodActor) {
-        CiKind receiver = !classMethodActor.isStatic() ? classMethodActor.holder().kind(true) : null;
-        for (CiValue arg : vm().registerConfigs.standard.getCallingConvention(Type.JavaCall, CiUtil.signatureToKinds(classMethodActor.signature(), receiver), target(), false).locations) {
+        for (CiValue arg : vm().registerConfigs.standard.getCallingConvention(Type.JavaCall, CiUtil.signatureToKinds(classMethodActor), target(), false).locations) {
             if (!arg.isRegister()) {
                 return true;
             }

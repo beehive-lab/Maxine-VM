@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,40 +22,30 @@
  */
 package com.sun.max.vm.classfile.constant;
 
-import static com.sun.max.vm.classfile.ErrorContext.*;
-
 import java.io.*;
 
-import com.sun.max.vm.classfile.constant.ConstantPool.*;
+import com.sun.max.vm.classfile.constant.ConstantPool.Tag;
 
 /**
- * Place holder for invalid constant pool indexes such as 0 and the indexes immediately after a {@link Tag#LONG} or
- * {@link Tag#DOUBLE} entry.
+ * An abstract class that implements the most basic parts of the {@link PoolConstant} interface.
  */
-public final class InvalidConstant extends AbstractPoolConstant<InvalidConstant> {
+public abstract class AbstractPoolConstant<PoolConstant_Type extends PoolConstant<PoolConstant_Type>> implements PoolConstant<PoolConstant_Type> {
 
-    private InvalidConstant() {
+    public abstract Tag tag();
 
-    }
-
-    @Override
-    public PoolConstantKey<InvalidConstant> key(ConstantPool pool) {
-        throw classFormatError("Invalid constant pool entry");
-    }
+    public abstract PoolConstantKey<PoolConstant_Type> key(ConstantPool pool);
 
     @Override
-    public Tag tag() {
-        return Tag.INVALID;
+    public String toString() {
+        return toString(null);
     }
 
-    public String valueString(ConstantPool pool) {
-        return "--INVALID--";
+    public final String toString(ConstantPool pool) {
+        return Static.toString(this, pool);
     }
 
-    public static final InvalidConstant VALUE = new InvalidConstant();
-
-    @Override
     public void writeOn(DataOutputStream stream, ConstantPoolEditor editor, int index) throws IOException {
-        // NOOP
+        stream.writeByte(tag().classfileTag());
     }
+
 }

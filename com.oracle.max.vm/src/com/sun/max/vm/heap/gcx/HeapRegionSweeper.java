@@ -130,7 +130,7 @@ public abstract class HeapRegionSweeper extends Sweeper {
     }
 
     final Address startOfSweepingRegion() {
-        return csrInfo.regionStart();
+        return csrLastLiveAddress;
     }
 
     final Address endOfSweepingRegion() {
@@ -155,6 +155,7 @@ public abstract class HeapRegionSweeper extends Sweeper {
         csrLiveBytes = 0;
         csrIsMultiRegionObjectHead = csrInfo.isHeadOfLargeObject();
         csrIsMultiRegionObjectTail = csrInfo.isTailOfLargeObject();
+        HeapRegionState.EMPTY_REGION.setState(csrInfo);
         csrInfo.resetOccupancy();
         if (csrIsMultiRegionObjectTail) {
             Address regionStart = csrInfo.regionStart();

@@ -703,6 +703,11 @@ public class CiUtil {
         }
     }
 
+    public static CiKind[] signatureToKinds(RiMethod method) {
+        CiKind receiver = isStatic(method.accessFlags()) ? null : method.holder().kind(true);
+        return signatureToKinds(method.signature(), receiver);
+    }
+
     public static CiKind[] signatureToKinds(RiSignature signature, CiKind receiverKind) {
         int args = signature.argumentCount(false);
         CiKind[] result;
