@@ -30,8 +30,6 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
-import com.sun.max.program.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.runtime.*;
@@ -65,17 +63,8 @@ public class WordTypeRewriter implements BlockClosure {
     }
 
     private void rewriteWord(Value value) {
-        if (value.kind == CiKind.Object || value.kind == CiKind.Word) {
-            boolean isWordFromKind = value.kind == CiKind.Word;
-            boolean isWordComputed = isWord(value);
-
-            if (isWordFromKind != isWordComputed) {
-                ProgramError.unexpected("isWord computation failed for " + value);
-            }
-
-            if (isWordFromKind) {
-                value.kind = WordUtil.archKind();
-            }
+        if (value.kind == CiKind.Object && isWord(value)) {
+            value.kind = WordUtil.archKind();
         }
     }
 
@@ -103,16 +92,9 @@ public class WordTypeRewriter implements BlockClosure {
                 return false;
             }
 
-            if (type == null || !type.isResolved()) {
-                return false;
-            }
-
             if (!(type instanceof ClassActor)) {
-                Log.println("Not a ClassActor for " + value + "  " + type.getClass().getSimpleName());
-                assert false;
                 return false;
             }
-
             ClassActor actor = (ClassActor) type;
             assert actor.kind == Kind.REFERENCE || actor.kind == Kind.WORD;
             return actor.kind == Kind.WORD;

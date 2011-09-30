@@ -73,7 +73,7 @@ public class WordUtil {
      */
     @FOLD
     public static CiKind javaKind() {
-        return CiKind.Word;
+        return CiKind.Object;
     }
 
     /**
