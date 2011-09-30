@@ -23,7 +23,7 @@
 package com.sun.max.vm.jvmti;
 
 
-public class JJJConstants {
+public class JVMTIConstants {
     public static final int JVMTI_VERSION_1   = 0x30010000;
     public static final int JVMTI_VERSION_1_0 = 0x30010000;
     public static final int JVMTI_VERSION_1_1 = 0x30010100;

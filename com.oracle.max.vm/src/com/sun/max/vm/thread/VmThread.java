@@ -624,7 +624,7 @@ public class VmThread {
 
             // Initialize JVMTI agents and send the VM start event
             JVMTI.initialize();
-            JVMTI.vmEvent(JJJConstants.JVMTI_EVENT_VM_START);
+            JVMTI.vmEvent(JVMTIConstants.JVMTI_EVENT_VM_START);
 
             // Code manager initialization must happen after parsing of pristine options
             // It must also be performed before pristine initialization of the heap scheme.
@@ -642,7 +642,7 @@ public class VmThread {
             SpecialReferenceManager.initialize(MaxineVM.Phase.PRISTINE);
             VmThread.signalDispatcherThread.start0();
 
-            JVMTI.vmEvent(JJJConstants.JVMTI_EVENT_VM_INIT);
+            JVMTI.vmEvent(JVMTIConstants.JVMTI_EVENT_VM_INIT);
         }
 
         try {

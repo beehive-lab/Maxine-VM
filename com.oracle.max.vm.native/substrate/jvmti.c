@@ -36,37 +36,37 @@ typedef void (JNICALL *jvmtiStartFunctionNoArg) (jvmtiEnv* jvmti_env, JNIEnv* jn
 
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_vm_jvmti_JJJCallbacks_invokeAgentOnLoad(JNIEnv *env, jclass c, Agent_OnLoad_t Agent_OnLoad, char *options) {
+Java_com_sun_max_vm_jvmti_JVMTICallbacks_invokeAgentOnLoad(JNIEnv *env, jclass c, Agent_OnLoad_t Agent_OnLoad, char *options) {
     return (*Agent_OnLoad)((JavaVM *) &main_vm, options, NULL);
 }
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_vm_jvmti_JJJCallbacks_invokeAgentOnUnLoad(JNIEnv *env, jclass c, Agent_OnUnLoad_t Agent_OnUnLoad) {
+Java_com_sun_max_vm_jvmti_JVMTICallbacks_invokeAgentOnUnLoad(JNIEnv *env, jclass c, Agent_OnUnLoad_t Agent_OnUnLoad) {
     return (*Agent_OnUnLoad)((JavaVM *) &main_vm);
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_vm_jvmti_JJJCallbacks_invokeStartFunction(JNIEnv *env, jclass c, jvmtiStartFunction callback, jvmtiEnv *jvmti_env, void *arg) {
+Java_com_sun_max_vm_jvmti_JVMTICallbacks_invokeStartFunction(JNIEnv *env, jclass c, jvmtiStartFunction callback, jvmtiEnv *jvmti_env, void *arg) {
     (*callback)(jvmti_env, env, arg);
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_vm_jvmti_JJJCallbacks_invokeStartFunctionNoArg(JNIEnv *env, jclass c, jvmtiStartFunctionNoArg callback, jvmtiEnv *jvmti_env) {
+Java_com_sun_max_vm_jvmti_JVMTICallbacks_invokeStartFunctionNoArg(JNIEnv *env, jclass c, jvmtiStartFunctionNoArg callback, jvmtiEnv *jvmti_env) {
     (*callback)(jvmti_env, env);
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_vm_jvmti_JJJCallbacks_invokeGarbageCollectionCallback(JNIEnv *env, jclass c, GarbageCollectionCallback callback, jvmtiEnv *jvmti_env) {
+Java_com_sun_max_vm_jvmti_JVMTICallbacks_invokeGarbageCollectionCallback(JNIEnv *env, jclass c, GarbageCollectionCallback callback, jvmtiEnv *jvmti_env) {
     (*callback)(jvmti_env);
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_vm_jvmti_JJJRawMonitor_nativeMutexLock(JNIEnv *env, jclass c, Mutex mutex) {
+Java_com_sun_max_vm_jvmti_JVMTIRawMonitor_nativeMutexLock(JNIEnv *env, jclass c, Mutex mutex) {
     return mutex_enter(mutex) == 0;
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_vm_jvmti_JJJRawMonitor_nativeConditionWait(JNIEnv *env, jclass c, Mutex mutex, Condition condition, jlong timeoutMilliSeconds) {
+Java_com_sun_max_vm_jvmti_JVMTIRawMonitor_nativeConditionWait(JNIEnv *env, jclass c, Mutex mutex, Condition condition, jlong timeoutMilliSeconds) {
     return condition_timedWait(condition, mutex, timeoutMilliSeconds);
 }
 

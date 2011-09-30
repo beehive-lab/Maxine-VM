@@ -24,7 +24,7 @@ package com.sun.max.vm.jvmti;
 
 import com.sun.max.vm.*;
 
-public class JJJVMOptions {
+public class JVMTIVMOptions {
     public static final AgentPathVMOption agentPathOption = VMOptions.register(new AgentPathVMOption(), MaxineVM.Phase.PRISTINE);
     public static final AgentLibVMOption agentLibOption = VMOptions.register(new AgentLibVMOption(), MaxineVM.Phase.PRISTINE);
 }

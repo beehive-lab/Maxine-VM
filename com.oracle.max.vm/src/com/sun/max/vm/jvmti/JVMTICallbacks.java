@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,35 +23,22 @@
 package com.sun.max.vm.jvmti;
 
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.runtime.*;
 
-/**
- * Names and offsets to the native struct used to hold the JVMTIEnv implementation fields.
- * Must match the definition in jvmti.c
- */
-enum JJJEnvImplFields {
-    FUNCTIONS(0),
-    CALLBACKS(8),
-    CAPABILITIES(16), // the capabilities that are active for this environment
-    EVENTMASK(24); // global event enabled mask
 
-    int offset;
-
-    JJJEnvImplFields(int offset) {
-        this.offset = offset;
+public class JVMTICallbacks {
+    static {
+        new CriticalNativeMethod(JVMTICallbacks.class, "invokeAgentOnLoad");
+        new CriticalNativeMethod(JVMTICallbacks.class, "invokeAgentOnUnLoad");
+        new CriticalNativeMethod(JVMTICallbacks.class, "invokeStartFunction");
+        new CriticalNativeMethod(JVMTICallbacks.class, "invokeStartFunctionNoArg");
+        new CriticalNativeMethod(JVMTICallbacks.class, "invokeGarbageCollectionCallback");
     }
 
-    /**
-     * Return the value of the field at our offset from {@code base}.
-     */
-    Word get(Pointer base) {
-        return base.readWord(offset);
-    }
+    static native int invokeAgentOnLoad(Address onLoad, Pointer options);
+    static native int invokeAgentOnUnLoad(Address onLoad);
 
-    Pointer getPtr(Pointer base) {
-        return base.readWord(offset).asPointer();
-    }
-
-    void set(Pointer base, Word value) {
-        base.writeWord(offset, value);
-    }
+    static native void invokeStartFunction(Pointer callback, Pointer jvmtiEnv, Word arg);
+    static native void invokeStartFunctionNoArg(Pointer callback, Pointer jvmtiEnv);
+    static native void invokeGarbageCollectionCallback(Pointer callback, Pointer jvmtiEnv);
 }
