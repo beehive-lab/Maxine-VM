@@ -27,12 +27,12 @@ import com.sun.max.annotate.*;
 import com.sun.max.vm.jni.*;
 
 @HOSTED_ONLY
-public class JJJFunctionsGenerator {
+public class JVMTIFunctionsGenerator {
 
     private static final String PHASES = "// PHASES: ";
     private static final String NULLCHECK = "// NULLCHECK: ";
 
-    public static class JvmtiCustomizer extends Customizer {
+    public static class JVMTICustomizer extends Customizer {
         @Override
         public String customize(String line) {
             String result = customizePhases(line);
@@ -47,7 +47,7 @@ public class JJJFunctionsGenerator {
         }
 
         /**
-         * Check for a PHASES comment. If found generate the check against the currebnt phase.
+         * Check for a PHASES comment. If found generate the check against the current phase.
          * @param line
          * @return null for no change or the string to replace the line
          */
@@ -101,8 +101,8 @@ public class JJJFunctionsGenerator {
 
     public static void main(String[] args) throws Exception {
         boolean updated = false;
-        if (JniFunctionsGenerator.generate(false, JJJFunctionsSource.class, JJJFunctions.class, new JvmtiCustomizer())) {
-            System.out.println("Source for " + JJJFunctions.class + " was updated");
+        if (JniFunctionsGenerator.generate(false, JVMTIFunctionsSource.class, JVMTIFunctions.class, new JVMTICustomizer())) {
+            System.out.println("Source for " + JVMTIFunctions.class + " was updated");
             updated = true;
         }
         if (updated) {
