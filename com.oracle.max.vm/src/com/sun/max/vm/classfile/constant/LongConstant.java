@@ -22,6 +22,8 @@
  */
 package com.sun.max.vm.classfile.constant;
 
+import java.io.*;
+
 import com.sun.max.vm.classfile.constant.ConstantPool.*;
 import com.sun.max.vm.value.*;
 
@@ -70,5 +72,11 @@ public final class LongConstant extends AbstractPoolConstant<LongConstant> imple
     @Override
     public LongConstant key(ConstantPool pool) {
         return this;
+    }
+
+    @Override
+    public void writeOn(DataOutputStream stream, ConstantPoolEditor editor, int index) throws IOException {
+        super.writeOn(stream, editor, index);
+        stream.writeLong(editor.pool().longAt(index));
     }
 }

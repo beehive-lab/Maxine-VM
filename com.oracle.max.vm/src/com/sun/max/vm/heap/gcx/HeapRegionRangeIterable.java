@@ -49,12 +49,14 @@ public final class HeapRegionRangeIterable extends HeapRegionListIterable {
      * @see HeapRegionInfo#isIterable()
      */
     public void resetToFirstIterable() {
+        reset();
         nextIterable();
     }
 
     private void nextIterable() {
+        final RegionTable theRegionTable = RegionTable.theRegionTable();
         while (cursor != INVALID_REGION_ID) {
-            if (RegionTable.theRegionTable().regionInfo(cursor).isIterable()) {
+            if (theRegionTable.regionInfo(cursor).isIterable()) {
                 return;
             }
             cursor = regionList.next(cursor);

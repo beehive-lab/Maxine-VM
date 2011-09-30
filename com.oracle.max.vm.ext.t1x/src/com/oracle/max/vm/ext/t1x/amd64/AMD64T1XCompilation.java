@@ -147,12 +147,12 @@ public class AMD64T1XCompilation extends T1XCompilation {
 
     @Override
     public void peekFloat(CiRegister dst, int index) {
-        asm.movflt(dst, spLong(index));
+        asm.movflt(dst, spInt(index));
     }
 
     @Override
     public void pokeFloat(CiRegister src, int index) {
-        asm.movflt(spLong(index), src);
+        asm.movflt(spInt(index), src);
     }
 
     @Override

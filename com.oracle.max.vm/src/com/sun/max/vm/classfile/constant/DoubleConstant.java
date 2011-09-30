@@ -22,6 +22,8 @@
  */
 package com.sun.max.vm.classfile.constant;
 
+import java.io.*;
+
 import com.sun.max.vm.classfile.constant.ConstantPool.*;
 import com.sun.max.vm.value.*;
 
@@ -70,5 +72,11 @@ public final class DoubleConstant extends AbstractPoolConstant<DoubleConstant> i
     @Override
     public DoubleConstant key(ConstantPool pool) {
         return this;
+    }
+
+    @Override
+    public void writeOn(DataOutputStream stream, ConstantPoolEditor editor, int index) throws IOException {
+        super.writeOn(stream, editor, index);
+        stream.writeDouble(editor.pool().doubleAt(index));
     }
 }

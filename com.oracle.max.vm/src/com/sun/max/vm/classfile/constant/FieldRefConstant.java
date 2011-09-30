@@ -69,7 +69,7 @@ public interface FieldRefConstant extends PoolConstant<FieldRefConstant>, Member
 
     FieldRefKey key(final ConstantPool pool);
 
-    public static final class Resolved extends AbstractPoolConstant<FieldRefConstant> implements FieldRefConstant, FieldRefKey {
+    public static final class Resolved extends AbstractMemberRefConstant<FieldRefConstant> implements FieldRefConstant, FieldRefKey {
 
         @INSPECTED
         private final FieldActor fieldActor;

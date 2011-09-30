@@ -168,7 +168,7 @@ public final class HeapRegionManager implements HeapAccountOwner {
                     FatalError.check(regionEnd.lessThan(end), "must be at region boundary");
                 }
                 HeapSchemeAdaptor.fillWithDeadObject(start, end);
-                rt.regionInfo(start).toIterable();
+                HeapRegionState.FULL_REGION.setState(rt.regionInfo(start));
             }
 
             @Override
