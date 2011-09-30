@@ -27,7 +27,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.vm.jni.*;
 
 @HOSTED_ONLY
-public class JvmtiFunctionsGenerator {
+public class JJJFunctionsGenerator {
 
     private static final String PHASES = "// PHASES: ";
     private static final String NULLCHECK = "// NULLCHECK: ";
@@ -101,8 +101,8 @@ public class JvmtiFunctionsGenerator {
 
     public static void main(String[] args) throws Exception {
         boolean updated = false;
-        if (JniFunctionsGenerator.generate(false, JvmtiFunctionsSource.class, JvmtiFunctions.class, new JvmtiCustomizer())) {
-            System.out.println("Source for " + JvmtiFunctions.class + " was updated");
+        if (JniFunctionsGenerator.generate(false, JJJFunctionsSource.class, JJJFunctions.class, new JvmtiCustomizer())) {
+            System.out.println("Source for " + JJJFunctions.class + " was updated");
             updated = true;
         }
         if (updated) {

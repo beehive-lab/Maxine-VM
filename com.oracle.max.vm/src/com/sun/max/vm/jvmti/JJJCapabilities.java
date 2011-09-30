@@ -28,7 +28,7 @@ import com.sun.max.unsafe.*;
  * JVMTI Capabilities.
  * A capability is on if the relevant bit is set in the {@code jvmtiCapabilities struct is set.
  */
-enum JvmtiCapabilities {
+enum JJJCapabilities {
     CAN_TAG_OBJECTS(false),
     CAN_GENERATE_FIELD_MODIFICATION_EVENTS(false),
     CAN_GENERATE_FIELD_ACCESS_EVENTS(false),
@@ -86,16 +86,16 @@ enum JvmtiCapabilities {
      */
     static long allMask;
 
-    static JvmtiCapabilities[] values = values();
+    static JJJCapabilities[] values = values();
 
     static {
-        for (int i = 0; i < JvmtiCapabilities.values.length; i++) {
-            JvmtiCapabilities cap = JvmtiCapabilities.values[i];
+        for (int i = 0; i < JJJCapabilities.values.length; i++) {
+            JJJCapabilities cap = JJJCapabilities.values[i];
             allMask |= cap.bitMask;
         }
     }
 
-    JvmtiCapabilities(boolean t) {
+    JJJCapabilities(boolean t) {
         can = t;
         bitMask = 1 << ordinal();
     }

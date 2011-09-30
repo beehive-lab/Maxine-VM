@@ -22,10 +22,10 @@
  */
 package com.sun.max.vm.jvmti;
 
-import static com.sun.max.vm.jvmti.JvmtiCallbacks.*;
-import static com.sun.max.vm.jvmti.JvmtiConstants.*;
-import static com.sun.max.vm.jvmti.JvmtiEnvImplFields.*;
-import static com.sun.max.vm.jvmti.JvmtiVMOptions.*;
+import static com.sun.max.vm.jvmti.JJJCallbacks.*;
+import static com.sun.max.vm.jvmti.JJJConstants.*;
+import static com.sun.max.vm.jvmti.JJJEnvImplFields.*;
+import static com.sun.max.vm.jvmti.JJJVMOptions.*;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import com.sun.max.annotate.*;
@@ -93,7 +93,7 @@ public class JVMTI {
     }
 
     public static void initialize() {
-        JvmtiRawMonitor.initialize();
+        JJJRawMonitor.initialize();
         // TODO agentLibOption variant
         for (int i = 0; i < agentPathOption.count(); i++) {
             Pointer path = agentPathOption.getLibStart(i);

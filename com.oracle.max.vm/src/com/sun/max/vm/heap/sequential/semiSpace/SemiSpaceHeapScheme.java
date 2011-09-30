@@ -366,7 +366,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 // Pre-verification of the heap.
                 verifyObjectSpaces("before GC");
 
-                JVMTI.vmEvent(JvmtiConstants.JVMTI_EVENT_GARBAGE_COLLECTION_START);
+                JVMTI.vmEvent(JJJConstants.JVMTI_EVENT_GARBAGE_COLLECTION_START);
                 HeapScheme.Inspect.notifyGCStarted();
 
                 vmConfig().monitorScheme().beforeGarbageCollection();
@@ -443,7 +443,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 // Post-verification of the heap.
                 verifyObjectSpaces("after GC");
 
-                JVMTI.vmEvent(JvmtiConstants.JVMTI_EVENT_GARBAGE_COLLECTION_FINISH);
+                JVMTI.vmEvent(JJJConstants.JVMTI_EVENT_GARBAGE_COLLECTION_FINISH);
 
                 HeapScheme.Inspect.notifyGCCompleted();
 

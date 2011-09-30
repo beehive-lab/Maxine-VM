@@ -51,7 +51,7 @@ public final class NativeInterfaces {
     static {
         checkGenerateSourcesInSync(JniFunctionsSource.class, JniFunctions.class, null);
         checkGenerateSourcesInSync(JmmFunctionsSource.class, JmmFunctions.class, null);
-        checkGenerateSourcesInSync(JvmtiFunctionsSource.class, JvmtiFunctions.class, new JvmtiFunctionsGenerator.JvmtiCustomizer());
+        checkGenerateSourcesInSync(JJJFunctionsSource.class, JJJFunctions.class, new JJJFunctionsGenerator.JvmtiCustomizer());
     }
 
     private NativeInterfaces() {
@@ -201,7 +201,7 @@ public final class NativeInterfaces {
 
     private static final StaticMethodActor[] jniFunctionActors = checkAgainstJniHeaderFile(getNativeInterfaceFunctionActors(JniFunctions.class));
     private static final StaticMethodActor[] jmmFunctionActors = checkAgainstJmmHeaderFile(getNativeInterfaceFunctionActors(JmmFunctions.class));
-    private static final StaticMethodActor[] jvmtiFunctionActors = checkAgainstJvmtiHeaderFile(getNativeInterfaceFunctionActors(JvmtiFunctions.class));
+    private static final StaticMethodActor[] jvmtiFunctionActors = checkAgainstJvmtiHeaderFile(getNativeInterfaceFunctionActors(JJJFunctions.class));
 
     private static final CriticalMethod[] jniFunctions = toCriticalMethods(jniFunctionActors);
     private static final CriticalMethod[] jmmFunctions = toCriticalMethods(jmmFunctionActors);

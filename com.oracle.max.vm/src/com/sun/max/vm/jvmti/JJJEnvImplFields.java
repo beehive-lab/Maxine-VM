@@ -28,7 +28,7 @@ import com.sun.max.unsafe.*;
  * Names and offsets to the native struct used to hold the JVMTIEnv implementation fields.
  * Must match the definition in jvmti.c
  */
-enum JvmtiEnvImplFields {
+enum JJJEnvImplFields {
     FUNCTIONS(0),
     CALLBACKS(8),
     CAPABILITIES(16), // the capabilities that are active for this environment
@@ -36,7 +36,7 @@ enum JvmtiEnvImplFields {
 
     int offset;
 
-    JvmtiEnvImplFields(int offset) {
+    JJJEnvImplFields(int offset) {
         this.offset = offset;
     }
 
