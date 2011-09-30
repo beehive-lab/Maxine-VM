@@ -22,8 +22,8 @@
  */
 package com.sun.max.vm.jvmti;
 
-import static com.sun.max.vm.jvmti.JvmtiEnvImplFields.*;
-import static com.sun.max.vm.jvmti.JvmtiConstants.*;
+import static com.sun.max.vm.jvmti.JJJEnvImplFields.*;
+import static com.sun.max.vm.jvmti.JJJConstants.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
@@ -34,7 +34,7 @@ import com.sun.max.vm.thread.*;
 
 // Checkstyle: stop method name check
 @HOSTED_ONLY
-public class JvmtiFunctionsSource {
+public class JJJFunctionsSource {
     @VM_ENTRY_POINT
     private static native void reserved1();
 
@@ -209,43 +209,43 @@ public class JvmtiFunctionsSource {
     private static int CreateRawMonitor(Pointer env, Pointer name, Pointer monitor_ptr) {
         // PHASES: ONLOAD,LIVE
         // NULLCHECK: name,monitor_ptr
-        return JvmtiRawMonitor.create(name, monitor_ptr);
+        return JJJRawMonitor.create(name, monitor_ptr);
     }
 
     @VM_ENTRY_POINT
     private static int DestroyRawMonitor(Pointer env, MonitorID rawMonitor) {
         // PHASES: ONLOAD,LIVE
-        return JvmtiRawMonitor.destroy(rawMonitor);
+        return JJJRawMonitor.destroy(rawMonitor);
     }
 
     @VM_ENTRY_POINT
     private static int RawMonitorEnter(Pointer env, MonitorID rawMonitor) {
         // PHASES: ANY
-        return JvmtiRawMonitor.enter(rawMonitor);
+        return JJJRawMonitor.enter(rawMonitor);
     }
 
     @VM_ENTRY_POINT
     private static int RawMonitorExit(Pointer env, MonitorID rawMonitor) {
         // PHASES: ANY
-        return JvmtiRawMonitor.exit(rawMonitor);
+        return JJJRawMonitor.exit(rawMonitor);
     }
 
     @VM_ENTRY_POINT
     private static int RawMonitorWait(Pointer env, MonitorID rawMonitor, long millis) {
         // PHASES: ANY
-        return JvmtiRawMonitor.wait(rawMonitor, millis);
+        return JJJRawMonitor.wait(rawMonitor, millis);
     }
 
     @VM_ENTRY_POINT
     private static int RawMonitorNotify(Pointer env, MonitorID rawMonitor) {
         // PHASES: ANY
-        return JvmtiRawMonitor.notify(rawMonitor);
+        return JJJRawMonitor.notify(rawMonitor);
     }
 
     @VM_ENTRY_POINT
     private static int RawMonitorNotifyAll(Pointer env, MonitorID rawMonitor) {
         // PHASES: ANY
-        return JvmtiRawMonitor.notifyAll(rawMonitor);
+        return JJJRawMonitor.notifyAll(rawMonitor);
     }
 
     @VM_ENTRY_POINT
@@ -746,7 +746,7 @@ public class JvmtiFunctionsSource {
         // PHASES: ONLOAD,LIVE
         // NULLCHECK: capabilities_ptr
         // Currently we don't have any phase-limited or ownership limitations
-        JvmtiCapabilities.setAll(capabilities_ptr);
+        JJJCapabilities.setAll(capabilities_ptr);
         return JVMTI_ERROR_NONE;
     }
 
@@ -758,8 +758,8 @@ public class JvmtiFunctionsSource {
         // PHASES: ONLOAD,LIVE
         // NULLCHECK: capabilities_ptr
         Pointer envCaps = CAPABILITIES.getPtr(env);
-        for (int i = 0; i < JvmtiCapabilities.values.length; i++) {
-            JvmtiCapabilities cap = JvmtiCapabilities.values[i];
+        for (int i = 0; i < JJJCapabilities.values.length; i++) {
+            JJJCapabilities cap = JJJCapabilities.values[i];
             if (cap.get(capabilities_ptr)) {
                 if (cap.can) {
                     cap.set(envCaps, true);
@@ -776,8 +776,8 @@ public class JvmtiFunctionsSource {
         // PHASES: ONLOAD,LIVE
         // NULLCHECK: capabilities_ptr
         Pointer envCaps = CAPABILITIES.getPtr(env);
-        for (int i = 0; i < JvmtiCapabilities.values.length; i++) {
-            JvmtiCapabilities cap = JvmtiCapabilities.values[i];
+        for (int i = 0; i < JJJCapabilities.values.length; i++) {
+            JJJCapabilities cap = JJJCapabilities.values[i];
             if (cap.get(capabilities_ptr)) {
                cap.set(envCaps, false);
             }

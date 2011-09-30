@@ -22,7 +22,7 @@
  */
 package com.sun.max.vm.jvmti;
 
-import static com.sun.max.vm.jvmti.JvmtiConstants.*;
+import static com.sun.max.vm.jvmti.JJJConstants.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
@@ -34,7 +34,7 @@ import com.sun.max.vm.runtime.*;
  * Simple implementation of the JVMTI Raw Monitor functionality.
  * For now just use native monitors and condition variables.
  */
-public class JvmtiRawMonitor {
+public class JJJRawMonitor {
 
     private static final long RM_MAGIC = ('T' << 24) + ('I' << 16) + ('R' << 8) + 'M';
 
@@ -68,13 +68,13 @@ public class JvmtiRawMonitor {
     static Size conditionSize;
 
     static {
-        new CriticalMethod(JvmtiRawMonitor.class, "create", null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        new CriticalMethod(JvmtiRawMonitor.class, "destroy", null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        new CriticalMethod(JvmtiRawMonitor.class, "enter", null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        new CriticalMethod(JvmtiRawMonitor.class, "exit", null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        new CriticalMethod(JvmtiRawMonitor.class, "wait", null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        new CriticalMethod(JvmtiRawMonitor.class, "notify", null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        new CriticalMethod(JvmtiRawMonitor.class, "notifyAll", null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        new CriticalMethod(JJJRawMonitor.class, "create", null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        new CriticalMethod(JJJRawMonitor.class, "destroy", null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        new CriticalMethod(JJJRawMonitor.class, "enter", null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        new CriticalMethod(JJJRawMonitor.class, "exit", null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        new CriticalMethod(JJJRawMonitor.class, "wait", null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        new CriticalMethod(JJJRawMonitor.class, "notify", null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        new CriticalMethod(JJJRawMonitor.class, "notifyAll", null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
     static void initialize() {
@@ -178,8 +178,8 @@ public class JvmtiRawMonitor {
      */
 
     static {
-        new CriticalNativeMethod(JvmtiRawMonitor.class, "nativeMutexUnlock");
-        new CriticalNativeMethod(JvmtiRawMonitor.class, "nativeConditionWait");
+        new CriticalNativeMethod(JJJRawMonitor.class, "nativeMutexUnlock");
+        new CriticalNativeMethod(JJJRawMonitor.class, "nativeConditionWait");
     }
 
     @C_FUNCTION
