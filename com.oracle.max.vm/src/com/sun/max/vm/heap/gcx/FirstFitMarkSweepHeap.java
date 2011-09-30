@@ -136,7 +136,9 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
             Log.println(regionID);
         }
         if (spaceLeft.lessThan(minReclaimableSpace)) {
-            HeapSchemeAdaptor.fillWithDeadObject(leftover, leftover.plus(spaceLeft));
+            if (!spaceLeft.isZero()) {
+                HeapSchemeAdaptor.fillWithDeadObject(leftover, leftover.plus(spaceLeft));
+            }
             FULL_REGION.setState(rinfo);
         } else {
             if (traceAllocateLarge) {
@@ -233,7 +235,9 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                                     Pointer tailEnd = lastRegionInfo.regionStart().plus(regionSizeInBytes).asPointer();
                                     Pointer tail = tailEnd.minus(tailSize);
                                     if (tailSize.lessThan(minReclaimableSpace)) {
-                                        HeapSchemeAdaptor.fillWithDeadObject(tail, tailEnd);
+                                        if (!tailSize.isZero()) {
+                                            HeapSchemeAdaptor.fillWithDeadObject(tail, tailEnd);
+                                        }
                                         allocationRegions.remove(lastRegion);
                                         LARGE_FULL_TAIL.setState(lastRegionInfo);
                                         allocationRegionsFreeSpace = allocationRegionsFreeSpace.minus(Size.fromInt(numContiguousRegionNeeded).shiftedLeft(log2RegionSizeInBytes));

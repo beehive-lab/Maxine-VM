@@ -40,10 +40,10 @@ public abstract class Refiller {
     abstract Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft);
 
     /**
-     * Make the portion of the allocator indicated by the start and end pointers iterable.
+     * Make a non-empty region of the allocator indicated by the start and end pointers iterable
      * by an object iterator.
-     * @param start
-     * @param end
+     * @param start start of the region
+     * @param end end of the region, must be greater than start
      */
     void makeParsable(Pointer start, Pointer end) {
         HeapSchemeAdaptor.fillWithDeadObject(start, end);
