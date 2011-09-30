@@ -151,14 +151,6 @@ public final class MutableFrameState extends FrameState {
     }
 
     /**
-     * Pushes a value onto the stack and checks that it is a word.
-     * @param x the instruction to push onto the stack
-     */
-    public void wpush(Value x) {
-        xpush(assertWord(x));
-    }
-
-    /**
      * Pushes a value onto the stack and checks that it is a JSR return address.
      * @param x the instruction to push onto the stack
      */
@@ -231,14 +223,6 @@ public final class MutableFrameState extends FrameState {
     }
 
     /**
-     * Pops a value off of the stack and checks that it is a word.
-     * @return x the instruction popped off the stack
-     */
-    public Value wpop() {
-        return assertWord(xpop());
-    }
-
-    /**
      * Pops a value off of the stack and checks that it is a JSR return address.
      * @return x the instruction popped off the stack
      */
@@ -265,7 +249,7 @@ public final class MutableFrameState extends FrameState {
     }
 
     private static Value assertKind(CiKind kind, Value x) {
-        assert x != null && (x.kind == kind || !isTypesafe() || (kind == CiKind.Object && x.kind == CiKind.Word)) : "kind=" + kind + ", value=" + x + ((x == null) ? "" : ", value.kind=" + x.kind);
+        assert x != null && (x.kind == kind || !isTypesafe()) : "kind=" + kind + ", value=" + x + ((x == null) ? "" : ", value.kind=" + x.kind);
         return x;
     }
 
@@ -290,12 +274,7 @@ public final class MutableFrameState extends FrameState {
     }
 
     private static Value assertObject(Value x) {
-        assert x != null && (x.kind == CiKind.Object || x.kind == CiKind.Word || !isTypesafe());
-        return x;
-    }
-
-    private static Value assertWord(Value x) {
-        assert x != null && (x.kind == CiKind.Word || !isTypesafe());
+        assert x != null && (x.kind == CiKind.Object || !isTypesafe());
         return x;
     }
 

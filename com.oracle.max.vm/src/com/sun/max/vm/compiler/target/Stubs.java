@@ -169,11 +169,6 @@ public class Stubs {
 
                 deoptStubForSafepointPoll = genDeoptStubWithCSA(null, registerConfigs.trapStub, false);
                 for (CiKind kind : CiKind.VALUES) {
-                    // TODO(cwi) temporary
-                    if (kind == CiKind.Word) {
-                        continue;
-                    }
-
                     deoptStubs[kind.ordinal()] = genDeoptStub(kind);
                     deoptStubsForCompilerStubs[kind.ordinal()] = genDeoptStubWithCSA(kind, registerConfigs.compilerStub, true);
 

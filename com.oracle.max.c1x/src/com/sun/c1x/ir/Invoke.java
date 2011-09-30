@@ -142,6 +142,11 @@ public final class Invoke extends StateSplit {
         v.visitInvoke(this);
     }
 
+    public CiKind[] signature() {
+        CiKind receiver = isStatic() ? null : target.holder().kind(true);
+        return CiUtil.signatureToKinds(target.signature(), receiver);
+    }
+
     @Override
     public void print(LogStream out) {
         int argStart = 0;

@@ -27,9 +27,8 @@ import static com.sun.cri.ci.CiKind.Flags.*;
 /**
  * Denotes the basic kinds of types in CRI, including the all the Java primitive types,
  * for example, {@link CiKind#Int} for {@code int} and {@link CiKind#Object}
- * for all object types. {@link CiKind#Jsr} and {@link CiKind#Word} are special cases.
- * A kind has a single character short name, a Java name, a JNI name,
- * the number of (abstract) stack slots the value occupies, and a set of flags
+ * for all object types.
+ * A kind has a single character short name, a Java name, and a set of flags
  * further describing its behavior.
  */
 public enum CiKind {
@@ -42,8 +41,6 @@ public enum CiKind {
     Long   ('l', "long",    FIELD_TYPE | RETURN_TYPE | PRIMITIVE),
     Double ('d', "double",  FIELD_TYPE | RETURN_TYPE | PRIMITIVE),
     Object ('a', "Object",  FIELD_TYPE | RETURN_TYPE),
-    /** Denotes a machine word type used in the extended bytecodes. */
-    Word   ('w', "Word",    FIELD_TYPE | RETURN_TYPE),
     Void   ('v', "void",    RETURN_TYPE),
     /** Denote a bytecode address in a {@code JSR} bytecode. */
     Jsr    ('r', "jsr",     0),

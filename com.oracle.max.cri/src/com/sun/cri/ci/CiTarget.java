@@ -154,7 +154,6 @@ public class CiTarget {
             case Double: return 8;
             case Object: return wordSize;
             case Jsr: return 4;
-            case Word: return wordSize;
             default: return 0;
         }
         // Checkstyle: resume

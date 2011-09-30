@@ -31,7 +31,6 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.ir.Infopoint.Op;
 import com.sun.c1x.ir.Value.Flag;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
@@ -104,10 +103,12 @@ public class MaxineIntrinsicImplementations {
                 assert argCount == 0 : "method with @UNSAFE_CAST must have exactly 1 argument";
                 fromType = target.holder();
             }
-            CiKind from = fromType.kind(false);
-            CiKind to = toType.kind(false);
-            boolean redundant = Util.archKindsEqual(to, from);
-            return b.append(new UnsafeCast(toType, args[0], redundant));
+            CiKind from = fromType.kind(true).stackKind();
+            CiKind to = toType.kind(true).stackKind();
+            if (b.compilation.target.sizeInBytes(from) != b.compilation.target.sizeInBytes(from) || from == CiKind.Float || from == CiKind.Double || to == CiKind.Float || to == CiKind.Double) {
+                throw new CiBailout("Unsupported unsafe cast from " + fromType + " to " + toType);
+            }
+            return b.append(new UnsafeCast(toType, args[0], from == to));
         }
     }
 

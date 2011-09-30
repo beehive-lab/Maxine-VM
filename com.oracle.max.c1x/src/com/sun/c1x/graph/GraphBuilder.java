@@ -300,10 +300,6 @@ public final class GraphBuilder {
         curState.apush(x);
     }
 
-    private void wpush(Value x) {
-        curState.wpush(x);
-    }
-
     private void push(CiKind kind, Value x) {
         curState.push(kind, x);
     }
@@ -332,10 +328,6 @@ public final class GraphBuilder {
 
     private Value apop() {
         return curState.apop();
-    }
-
-    private Value wpop() {
-        return curState.wpop();
     }
 
     private Value pop(CiKind kind) {
@@ -1000,7 +992,7 @@ public final class GraphBuilder {
     private void genInvokeIndirect(int opcode, RiMethod target, Value[] args, int cpi, RiConstantPool constantPool) {
         Value receiver = args[0];
 
-        assert target.holder().kind(false) == CiKind.Object || target.holder().kind(false) == CiKind.Word;
+        assert target.holder().kind(false) == CiKind.Object;
         if (target.holder().kind(true) != CiKind.Object) {
             // When the machine-specific representation of the holder is not an object, dynamic dispatch is not possible; raw pointers do not have any method tables.
             assert target.isResolved();
@@ -1856,7 +1848,7 @@ public final class GraphBuilder {
         if (!forcedInline && !isStatic(target.accessFlags())) {
             // the receiver object must be null-checked for instance methods
             Value receiver = args[0];
-            assert target.holder().kind(false) == CiKind.Object || target.holder().kind(false) == CiKind.Word;
+            assert target.holder().kind(false) == CiKind.Object;
             if (!receiver.isNonNull() && target.holder().kind(true) == CiKind.Object) {
                 NullCheck check = new NullCheck(receiver, null);
                 args[0] = append(check);
@@ -2521,7 +2513,7 @@ public final class GraphBuilder {
     }
 
     private void genNativeCall(int cpi) {
-        Value nativeFunctionAddress = wpop();
+        Value nativeFunctionAddress = apop();
         RiSignature sig = constantPool().lookupSignature(cpi);
         Value[] args = curState.popArguments(sig.argumentSlots(false));
 

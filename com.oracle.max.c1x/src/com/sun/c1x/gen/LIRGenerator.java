@@ -604,7 +604,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
 
         CiValue resultOperand = resultOperandFor(x.kind);
-        CiCallingConvention cc = compilation.frameMap().getCallingConvention(CiUtil.signatureToKinds(x.target), JavaCall);
+        CiCallingConvention cc = compilation.frameMap().getCallingConvention(x.signature(), JavaCall);
         List<CiValue> pointerSlots = new ArrayList<CiValue>(2);
         List<CiValue> argList = visitInvokeArguments(cc, x.arguments(), pointerSlots);
 
@@ -647,7 +647,8 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitLoadRegister(LoadRegister x) {
-        x.setOperand(x.register.asValue(x.kind));
+        CiValue dst = createResultVariable(x);
+        lir.move(x.register.asValue(x.kind), dst);
     }
 
     @Override
