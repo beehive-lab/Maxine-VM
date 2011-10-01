@@ -230,8 +230,13 @@ public final class ClassRegistry {
 
         final ClassActor existingClassActor = typeDescriptorToClassActor.putIfAbsent(typeDescriptor, classActor);
         if (existingClassActor != null) {
-            // Lost the race to define the class; release id(s) associated with 'classActor'
-            ClassID.remove(classActor);
+            if (classActor.isArrayClass()) {
+                // The IDs of array classes are maintained by ClassActor.arrayClassIDs, they don't need to be released.
+                assert classActor.id == existingClassActor.id;
+            } else {
+                // Lost the race to define the class; release id(s) associated with 'classActor'.
+                ClassID.remove(classActor);
+            }
             return existingClassActor;
         }
         loadCount++;
