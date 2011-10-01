@@ -84,14 +84,7 @@ public class WordTypeRewriter implements BlockClosure {
             return isWord(r.result());
 
         } else {
-            RiType type;
-            try {
-                type = value.declaredType();
-            } catch (Throwable t) {
-                // TODO temporary workaround: We load classes too eagerly, and when the class is not present, we end up with an exception here.
-                return false;
-            }
-
+            RiType type = value.declaredType();
             if (!(type instanceof ClassActor)) {
                 return false;
             }
