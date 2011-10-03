@@ -852,7 +852,6 @@ public final class T1XTargetMethod extends TargetMethod {
             // record continuation stack pointer
             cont.setSP(info, CiConstant.forJsr(info.slotsCount()));
             // add operand stack slots
-            boolean lastWasIllegal = false;
             for (int i = frame.numStack - 1; i >= 0; i--) {
                 CiConstant value = (CiConstant) frame.getStackValue(i);
                 if (value == null) {
@@ -860,14 +859,7 @@ public final class T1XTargetMethod extends TargetMethod {
                 } else {
                     info.addSlot(value, "ostack");
                 }
-
-                for (int pad = 0; pad < STACK_SLOTS_PER_JVMS_SLOT - 1; pad++) {
-                    info.addSlot(WordUtil.ZERO, "ostack (pad)");
-                }
-                if (lastWasIllegal && value.kind != CiKind.Object) {
-                    info.duplicateTopSlots(STACK_SLOTS_PER_JVMS_SLOT);
-                }
-                lastWasIllegal = value == null;
+                addSlotPadding(info, "ostack (pad)");
             }
         } else {
             assert frame.numStack == 0 : "operand stack must be clear at exception handler";
@@ -892,7 +884,6 @@ public final class T1XTargetMethod extends TargetMethod {
         int nonParamLocals = numLocals - paramLocals;
 
         // add (non-parameter) local slots
-        boolean lastWasIllegal = false;
         for (int i = numLocals - 1; i >= paramLocals; i--) {
             CiConstant value;
             if (i == synchronizedReceiver) {
@@ -906,13 +897,7 @@ public final class T1XTargetMethod extends TargetMethod {
                     info.addSlot(value, "local");
                 }
             }
-            for (int pad = 0; pad < STACK_SLOTS_PER_JVMS_SLOT - 1; pad++) {
-                info.addSlot(WordUtil.ZERO, "local (pad)");
-            }
-            if (lastWasIllegal && value.kind != CiKind.Object) {
-                info.duplicateTopSlots(STACK_SLOTS_PER_JVMS_SLOT);
-            }
-            lastWasIllegal = value == null;
+            addSlotPadding(info, "local (pad)");
         }
 
         // record continuation frame pointer
@@ -941,7 +926,6 @@ public final class T1XTargetMethod extends TargetMethod {
         info.addSlot(WordUtil.ZERO, "returnIP");
 
         // add parameter slots
-        lastWasIllegal = false;
         for (int i = paramLocals - 1; i >= 0; i--) {
             CiConstant value = (CiConstant) frame.getLocalValue(i);
             if (value == null) {
@@ -949,16 +933,19 @@ public final class T1XTargetMethod extends TargetMethod {
             } else {
                 info.addSlot(value, "param");
             }
-            for (int pad = 0; pad < JVMSFrameLayout.STACK_SLOTS_PER_JVMS_SLOT - 1; pad++) {
-                info.addSlot(WordUtil.ZERO, "param (pad)");
-            }
-            if (lastWasIllegal && value.kind != CiKind.Object) {
-                info.duplicateTopSlots(STACK_SLOTS_PER_JVMS_SLOT);
-            }
-            lastWasIllegal = value == null;
+            addSlotPadding(info, "param (pad)");
         }
 
         return new CallerContinuation(callerFPIndex, -1, returnAddressIndex);
+    }
+
+    /**
+     * Adds any per-JVMS slot padding required. The padding occupies the higher slots as per {@link JVMSFrameLayout#JVMS_SLOT_SIZE}.
+     */
+    private void addSlotPadding(Info info, String desc) {
+        for (int pad = 1; pad < STACK_SLOTS_PER_JVMS_SLOT; pad++) {
+            info.addSlot(WordUtil.ZERO, desc);
+        }
     }
 
     /**

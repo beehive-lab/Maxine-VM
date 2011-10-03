@@ -418,6 +418,13 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             CiBitMap refMap = null;
             for (int i = optArgs.length - 1; i >= 0;  i--) {
                 Kind kind = sig.kinds[i];
+
+                if (!kind.isCategory1) {
+                    // Skip over the second slot of a long or double
+                    baselineStackOffset += BASELINE_SLOT_SIZE;
+                    baselineArgsSize += BASELINE_SLOT_SIZE;
+                }
+
                 int refMapIndex = adaptArgument(asm, kind, optArgs[i], baselineStackOffset, 0);
                 if (refMapIndex != -1) {
                     if (refMap == null) {
@@ -425,9 +432,8 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
                     }
                     refMap.set(refMapIndex);
                 }
-                int baselineArgSize = frameSizeFor(kind, BASELINE_SLOT_SIZE);
-                baselineArgsSize += baselineArgSize;
-                baselineStackOffset += baselineArgSize;
+                baselineArgsSize += BASELINE_SLOT_SIZE;
+                baselineStackOffset += BASELINE_SLOT_SIZE;
             }
 
             // Args are now copied to the OPT locations; call the OPT main body
@@ -717,8 +723,13 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             // Copy OPT args into baseline args
             int baselineStackOffset = 0;
             for (int i = optArgs.length - 1; i >= 0; i--) {
-                adaptArgument(asm, sig.kinds[i], optArgs[i], baselineStackOffset, adapterFrameSize);
-                baselineStackOffset += frameSizeFor(sig.kinds[i], BASELINE_SLOT_SIZE);
+                Kind argKind = sig.kinds[i];
+                if (!argKind.isCategory1) {
+                    // Skip over the second slot of a long or double
+                    baselineStackOffset += BASELINE_SLOT_SIZE;
+                }
+                adaptArgument(asm, argKind, optArgs[i], baselineStackOffset, adapterFrameSize);
+                baselineStackOffset += BASELINE_SLOT_SIZE;
             }
 
             // Args are now copied to the baseline locations; call the baseline main body

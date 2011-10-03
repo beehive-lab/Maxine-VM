@@ -49,7 +49,7 @@ public abstract class JVMSFrameLayout extends VMFrameLayout {
     protected final int numberOfParameterSlots;
 
     /**
-     * Size of a stack slot. It may differ from {@link VMFrameLayout#STACK_SLOT_SIZE} due to alignment
+     * Size of a JVMS slot. It may differ from {@link VMFrameLayout#STACK_SLOT_SIZE} due to alignment
      * constraints imposed on a stack frame by the target platform (e.g., AMD64 requires 16-byte aligned stack frame).
      * In this case, it's simpler to use a slot size larger than the optimal stack slot sized used by
      * an optimizing compiler.

@@ -128,16 +128,6 @@ public abstract class AdapterGenerator {
     }
 
     /**
-     * Gets the number of bytes occupied in an adapter frame for a given value kind.
-     *
-     * @param kind a value kind
-     * @param slotSize the adapter frame slot size of a {@linkplain Kind#isCategory1() category 1} kind
-     */
-    public static int frameSizeFor(Kind kind, int slotSize) {
-        return kind.stackSlots * slotSize;
-    }
-
-    /**
      * Gets the number of bytes occupied in an adapter frame for a set of arguments.
      *
      * @param argKinds the kinds of the arguments
@@ -146,7 +136,7 @@ public abstract class AdapterGenerator {
     public static int frameSizeFor(Kind[] argKinds, int slotSize) {
         int size = 0;
         for (Kind k : argKinds) {
-            size += frameSizeFor(k, slotSize);
+            size += k.stackSlots * slotSize;
         }
         return size;
     }
