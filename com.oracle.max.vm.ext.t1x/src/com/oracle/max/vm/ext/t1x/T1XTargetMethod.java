@@ -854,11 +854,7 @@ public final class T1XTargetMethod extends TargetMethod {
             // add operand stack slots
             for (int i = frame.numStack - 1; i >= 0; i--) {
                 CiConstant value = (CiConstant) frame.getStackValue(i);
-                if (value == null) {
-                    info.addSlot(WordUtil.ZERO, "ostack (illegal)");
-                } else {
-                    info.addSlot(value, "ostack");
-                }
+                info.addSlot(value, "ostack");
                 addSlotPadding(info, "ostack (pad)");
             }
         } else {
@@ -885,17 +881,12 @@ public final class T1XTargetMethod extends TargetMethod {
 
         // add (non-parameter) local slots
         for (int i = numLocals - 1; i >= paramLocals; i--) {
-            CiConstant value;
             if (i == synchronizedReceiver) {
-                value = (CiConstant) frame.getLockValue(0);
+                CiConstant value = (CiConstant) frame.getLockValue(0);
                 info.addSlot(value, "locked rcvr");
             } else {
-                value = (CiConstant) frame.getLocalValue(i);
-                if (value == null) {
-                    info.addSlot(WordUtil.ZERO, "local (illegal)");
-                } else {
-                    info.addSlot(value, "local");
-                }
+                CiConstant value = (CiConstant) frame.getLocalValue(i);
+                info.addSlot(value, "local");
             }
             addSlotPadding(info, "local (pad)");
         }
@@ -928,11 +919,7 @@ public final class T1XTargetMethod extends TargetMethod {
         // add parameter slots
         for (int i = paramLocals - 1; i >= 0; i--) {
             CiConstant value = (CiConstant) frame.getLocalValue(i);
-            if (value == null) {
-                info.addSlot(WordUtil.ZERO, "param (illegal)");
-            } else {
-                info.addSlot(value, "param");
-            }
+            info.addSlot(value, "param");
             addSlotPadding(info, "param (pad)");
         }
 
