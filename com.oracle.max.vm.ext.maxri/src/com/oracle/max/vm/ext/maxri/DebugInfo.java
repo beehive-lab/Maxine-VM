@@ -513,7 +513,7 @@ public final class DebugInfo {
                 value = WordUtil.constant(w);
             }
         } else if (value.isIllegal()) {
-            value = null;
+            value = WordUtil.ZERO;
         } else {
             assert value.isConstant();
         }
