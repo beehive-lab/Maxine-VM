@@ -356,19 +356,19 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
             theHeap.mark(heapMarker);
             startTimer(reclaimTimer);
             theHeap.sweep(heapMarker);
-           // Size freeSpaceAfterGC = theHeap.freeSpaceAfterSweep();
+            Size freeSpaceAfterGC = theHeap.freeSpaceAfterSweep();
             stopTimer(reclaimTimer);
             if (VerifyAfterGC) {
                 afterGCVerifier.run();
             }
             vmConfig().monitorScheme().afterGarbageCollection();
-
-       /*     if (heapResizingPolicy.resizeAfterCollection(theHeap.totalSpace(), freeSpaceAfterGC, theHeap)) {
-                // Heap was resized.
-                // Update heapMarker's coveredArea.
-                ContiguousHeapSpace markedSpace = theHeap.committedHeapSpace();
-                heapMarker.setCoveredArea(markedSpace.start(), markedSpace.committedEnd());
-            }*/
+//
+//            if (heapResizingPolicy.resizeAfterCollection(theHeap.totalSpace(), freeSpaceAfterGC, theHeap)) {
+//                // Heap was resized.
+//                // Update heapMarker's coveredArea.
+//                ContiguousHeapSpace markedSpace = theHeap.committedHeapSpace();
+//                heapMarker.setCoveredArea(markedSpace.start(), markedSpace.committedEnd());
+//            }
             if (MaxineVM.isDebug() && Heap.traceGCPhases()) {
                 Log.print("End mark-sweep #");
                 Log.println(collectionCount);
