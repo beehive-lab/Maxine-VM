@@ -97,22 +97,22 @@ public class AMD64T1XCompilation extends T1XCompilation {
 
     @Override
     public void peekObject(CiRegister dst, int index) {
-        asm.movq(dst, spLong(index));
+        asm.movq(dst, spWord(index));
     }
 
     @Override
     public void pokeObject(CiRegister src, int index) {
-        asm.movq(spLong(index), src);
+        asm.movq(spWord(index), src);
     }
 
     @Override
     public void peekWord(CiRegister dst, int index) {
-        asm.movq(dst, spLong(index));
+        asm.movq(dst, spWord(index));
     }
 
     @Override
     public void pokeWord(CiRegister src, int index) {
-        asm.movq(spLong(index), src);
+        asm.movq(spWord(index), src);
     }
 
     @Override

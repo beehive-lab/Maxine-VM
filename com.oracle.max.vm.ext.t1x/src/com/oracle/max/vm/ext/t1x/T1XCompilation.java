@@ -76,6 +76,7 @@ public abstract class T1XCompilation {
     private static final int WORDS_PER_SLOT = JVMS_SLOT_SIZE / Word.size();
     protected static final int HALFWORD_OFFSET_IN_WORD = JVMSFrameLayout.offsetWithinWord(Kind.INT);
 
+    protected static final CiAddress[] SP_WORD_ADDRESSES_CACHE = new CiAddress[4];
     protected static final CiAddress[] SP_LONG_ADDRESSES_CACHE = new CiAddress[4];
     protected static final CiAddress[] SP_INT_ADDRESSES_CACHE = new CiAddress[4];
 
@@ -84,8 +85,11 @@ public abstract class T1XCompilation {
     protected static final CiAddress[] FP_SLOTS_CACHE = new CiAddress[(FP_SLOTS_CACHE_END_OFFSET - FP_SLOTS_CACHE_START_OFFSET) / JVMS_SLOT_SIZE];
 
     static {
+        for (int i = 0; i < SP_WORD_ADDRESSES_CACHE.length; i++) {
+            SP_WORD_ADDRESSES_CACHE[i] = new CiAddress(WordUtil.archKind(), SP, i * JVMS_SLOT_SIZE);
+        }
         for (int i = 0; i < SP_LONG_ADDRESSES_CACHE.length; i++) {
-            SP_LONG_ADDRESSES_CACHE[i] = new CiAddress(CiKind.Long, SP, i * JVMS_SLOT_SIZE);
+            SP_LONG_ADDRESSES_CACHE[i] = new CiAddress(CiKind.Long, SP,  (i + 1) * JVMS_SLOT_SIZE);
         }
         for (int i = 0; i < SP_INT_ADDRESSES_CACHE.length; i++) {
             SP_INT_ADDRESSES_CACHE[i] = new CiAddress(CiKind.Int, SP, (i * JVMS_SLOT_SIZE) + HALFWORD_OFFSET_IN_WORD);
@@ -95,6 +99,21 @@ public abstract class T1XCompilation {
             FP_SLOTS_CACHE[i] = new CiAddress(CiKind.Int, FP, offset);
             offset += JVMS_SLOT_SIZE;
         }
+    }
+
+    /**
+     * Gets the effective address of a word-sized operand stack slot.
+     *
+     * @param index an operand stack index where 0 is the top slot, 1 is the slot below it etc
+     * @return the effective address of the operand stack slot at index {@code index} from the top stack slot. This
+     *         value can be used for a word-sized access to the operand stack.
+     */
+    protected static CiAddress spWord(int index) {
+        assert index >= 0;
+        if (index < SP_WORD_ADDRESSES_CACHE.length) {
+            return SP_WORD_ADDRESSES_CACHE[index];
+        }
+        return new CiAddress(WordUtil.archKind(), SP, index * JVMS_SLOT_SIZE);
     }
 
     /**
@@ -113,18 +132,19 @@ public abstract class T1XCompilation {
     }
 
     /**
-     * Gets the effective address of a long-sized operand stack slot.
+     * Gets the effective address of a long or double operand stack slot.
      *
      * @param index an operand stack index where 0 is the top slot, 1 is the slot below it etc
      * @return the effective address of the operand stack slot at index {@code index} from the top stack slot. This
-     *         value can be used for a long-sized access to the operand stack.
+     *         value can be used for accessing a long or double value on the operand stack.
      */
     protected static CiAddress spLong(int index) {
         assert index >= 0;
         if (index < SP_LONG_ADDRESSES_CACHE.length) {
             return SP_LONG_ADDRESSES_CACHE[index];
         }
-        return new CiAddress(CiKind.Long, SP, index * JVMS_SLOT_SIZE);
+        // The value is in the first JVMS slot hence 'index + 1'
+        return new CiAddress(CiKind.Long, SP, (index + 1) * JVMS_SLOT_SIZE);
     }
 
     protected static CiAddress localSlot(int offset) {
@@ -680,14 +700,8 @@ public abstract class T1XCompilation {
     protected abstract void emitEpilogue();
 
     protected int localSlotOffset(int localIndex, Kind kind) {
-        // Long and double locals use two slots in the locals area,
-        // as required by the JVM spec. The value of the long or double local is stored in
-        // the second slot.
-        int slotIndex = localIndex + kind.stackSlots - 1;
-        int slotOffset = frame.localVariableOffset(slotIndex) + JVMSFrameLayout.offsetInStackSlot(kind);
-        return slotOffset;
+        return frame.localVariableOffset(localIndex) + JVMSFrameLayout.offsetInStackSlot(kind);
     }
-
 
     protected abstract void loadInt(CiRegister dst, int index);
     protected abstract void loadLong(CiRegister dst, int index);

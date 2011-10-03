@@ -651,24 +651,6 @@ public class Deoptimization extends VmOperation {
             }
         }
 
-        /**
-         * Duplicate the top n slots to the n slots immediately below them.
-         */
-        public void duplicateTopSlots(int n) {
-            assert slots.size() >= 2 * n;
-            int top = slots.size() - 1;
-            if (n == 1) {
-                CiConstant tmp = slots.get(top);
-                slots.set(top - 1, tmp);
-            } else {
-                assert n == 2;
-                CiConstant tmp = slots.get(top);
-                CiConstant tmp2 = slots.get(top - 1);
-                slots.set(top - 2, tmp);
-                slots.set(top - 3, tmp2);
-            }
-        }
-
         public int slotsSize() {
             return slotsCount() * STACK_SLOT_SIZE;
         }
