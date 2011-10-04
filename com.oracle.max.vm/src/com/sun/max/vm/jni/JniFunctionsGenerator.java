@@ -132,8 +132,16 @@ public class JniFunctionsGenerator {
     }
 
     public static class Customizer {
-        public String customize(String line) {
+        public String customizeBody(String line) {
             return line;
+        }
+
+        public String customizeHandler(String returnStatement) {
+            String result = "            VmThread.fromJniEnv(env).setJniException(t);";
+            if (returnStatement != null) {
+                result += "\n            " + returnStatement;
+            }
+            return result;
         }
     }
 
@@ -207,7 +215,7 @@ public class JniFunctionsGenerator {
                         if (line.length() > 0) {
                             bodyBuffer.append("    ");
                         }
-                        bodyBuffer.append(customizer.customize(line)).append("\n");
+                        bodyBuffer.append(customizer.customizeBody(line)).append("\n");
                     }
 
                     if (body == null) {
@@ -215,9 +223,9 @@ public class JniFunctionsGenerator {
                     }
 
                     if (decl.returnType.equals("void")) {
-                        generateVoidFunction(out, decl, body);
+                        generateVoidFunction(out, decl, body, customizer);
                     } else {
-                        generateNonVoidFunction(out, decl, body);
+                        generateNonVoidFunction(out, decl, body, customizer);
                     }
                 }
                 state = BEFORE_JNI_FUNCTION;
@@ -234,7 +242,7 @@ public class JniFunctionsGenerator {
         return Files.updateGeneratedContent(outputFile, ReadableSource.Static.fromString(writer.toString()), "// START GENERATED CODE", "// END GENERATED CODE", checkOnly);
     }
 
-    private static void generateNonVoidFunction(PrintWriter out, JniFunctionDeclaration decl, String body) {
+    private static void generateNonVoidFunction(PrintWriter out, JniFunctionDeclaration decl, String body, Customizer customizer) {
         final String errReturnValue;
         if (decl.returnType.equals("boolean")) {
             errReturnValue = "false";
@@ -252,14 +260,14 @@ public class JniFunctionsGenerator {
             errReturnValue = "as" + decl.returnType + "(0)";
         }
 
-        generateFunction(out, decl, body, "return " + errReturnValue + ";");
+        generateFunction(out, decl, body, "return " + errReturnValue + ";", customizer);
     }
 
-    private static void generateVoidFunction(PrintWriter out, JniFunctionDeclaration decl, String body) {
-        generateFunction(out, decl, body, null);
+    private static void generateVoidFunction(PrintWriter out, JniFunctionDeclaration decl, String body, Customizer customizer) {
+        generateFunction(out, decl, body, null, customizer);
     }
 
-    private static void generateFunction(PrintWriter out, JniFunctionDeclaration decl, String body, String returnStatement) {
+    private static void generateFunction(PrintWriter out, JniFunctionDeclaration decl, String body, String returnStatement, Customizer customizer) {
         boolean insertTimers = TIME_JNI_FUNCTIONS && decl.name != null;
 
         out.println("        Pointer anchor = prologue(env, \"" + decl.name + "\");");
@@ -269,10 +277,7 @@ public class JniFunctionsGenerator {
         out.println("        try {");
         out.print(body);
         out.println("        } catch (Throwable t) {");
-        out.println("            VmThread.fromJniEnv(env).setJniException(t);");
-        if (returnStatement != null) {
-            out.println("            " + returnStatement);
-        }
+        out.println(customizer.customizeHandler(returnStatement));
         out.println("        } finally {");
         if (insertTimers) {
             out.println("            TIMER_" + decl.name + " += System.nanoTime() - startTime;");

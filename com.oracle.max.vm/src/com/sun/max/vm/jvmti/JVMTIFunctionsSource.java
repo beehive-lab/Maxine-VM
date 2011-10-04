@@ -22,19 +22,52 @@
  */
 package com.sun.max.vm.jvmti;
 
-import static com.sun.max.vm.jvmti.JVMTIEnvImplFields.*;
+import static com.sun.max.vm.jvmti.JVMTIEnvNativeStruct.*;
 import static com.sun.max.vm.jvmti.JVMTIConstants.*;
+import static com.sun.max.vm.jvmti.JVMTIEvent.getEventBitMask;
 
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jni.*;
+import com.sun.max.vm.jvmti.JVMTI.JVMTIEnv;
 import com.sun.max.vm.thread.*;
 
 
-// Checkstyle: stop method name check
+/**
+ * The template for the implementations of the JVMTI functions.
+ * This is transformed by {@link JVMTIFunctionsGenerator} into the actual
+ * implementation in {@link JVMTIFunctions}. The transformation includes
+ * phase checks, null {@link Pointer} checks, JNI handle type checks,
+ * capability checks and exception handling.
+ *
+ *  Null {@link Pointer} checks are indicated by:
+ *  // NULLCHECK: arg1,arg2,...
+ *
+ *  Phase checks are indicated by:
+ *
+ *  // PHASES: phase1,phase2,...
+ *  JNI handle type checks are indicated by:
+ *
+ *  ClassName varAsClassName = null;
+ *  // TYPECHECK: var=ClassName
+ *
+ *  The declaration could be auto-generated but without it code in the method in this class
+ *  that uses the unhanded variable does not compile.
+ *
+ *  Capability checks are indicated by:
+ *  // CAPABILITIES: cap1, cap2,...
+ *
+ *  Generally, the method implementations are delegated to other classes, unless the
+ *  implementation is trivial.
+ */
 @HOSTED_ONLY
+@SuppressWarnings("null")
 public class JVMTIFunctionsSource {
+ // Checkstyle: stop method name check
+
     @VM_ENTRY_POINT
     private static native void reserved1();
 
@@ -67,7 +100,9 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int GetAllThreads(Pointer env, Pointer threads_count_ptr, Pointer threads_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: LIVE
+        // NULLCHECK: threads_count_ptr,threads_ptr
+        return JVMTIThreads.getAllThreads(threads_count_ptr, threads_ptr);
     }
 
     @VM_ENTRY_POINT
@@ -92,7 +127,11 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int GetThreadInfo(Pointer env, JniHandle thread, Pointer info_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: LIVE
+        // NULLCHECK: info_ptr
+        Thread threadAsThread = null;
+        // TYPECHECK: thread=Thread
+        return JVMTIThreads.getThreadInfo(threadAsThread, info_ptr);
     }
 
     @VM_ENTRY_POINT
@@ -134,7 +173,11 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int GetThreadState(Pointer env, JniHandle thread, Pointer thread_state_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: LIVE
+        // NULLCHECK: thread_state_ptr
+        Thread threadAsThread = null;
+        // TYPECHECK: thread=Thread
+        return JVMTIThreads.getThreadState(threadAsThread, thread_state_ptr);
     }
 
     @VM_ENTRY_POINT
@@ -213,37 +256,37 @@ public class JVMTIFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static int DestroyRawMonitor(Pointer env, MonitorID rawMonitor) {
+    private static int DestroyRawMonitor(Pointer env, Word rawMonitor) {
         // PHASES: ONLOAD,LIVE
         return JVMTIRawMonitor.destroy(rawMonitor);
     }
 
     @VM_ENTRY_POINT
-    private static int RawMonitorEnter(Pointer env, MonitorID rawMonitor) {
+    private static int RawMonitorEnter(Pointer env, Word rawMonitor) {
         // PHASES: ANY
         return JVMTIRawMonitor.enter(rawMonitor);
     }
 
     @VM_ENTRY_POINT
-    private static int RawMonitorExit(Pointer env, MonitorID rawMonitor) {
+    private static int RawMonitorExit(Pointer env, Word rawMonitor) {
         // PHASES: ANY
         return JVMTIRawMonitor.exit(rawMonitor);
     }
 
     @VM_ENTRY_POINT
-    private static int RawMonitorWait(Pointer env, MonitorID rawMonitor, long millis) {
+    private static int RawMonitorWait(Pointer env, Word rawMonitor, long millis) {
         // PHASES: ANY
         return JVMTIRawMonitor.wait(rawMonitor, millis);
     }
 
     @VM_ENTRY_POINT
-    private static int RawMonitorNotify(Pointer env, MonitorID rawMonitor) {
+    private static int RawMonitorNotify(Pointer env, Word rawMonitor) {
         // PHASES: ANY
         return JVMTIRawMonitor.notify(rawMonitor);
     }
 
     @VM_ENTRY_POINT
-    private static int RawMonitorNotifyAll(Pointer env, MonitorID rawMonitor) {
+    private static int RawMonitorNotifyAll(Pointer env, Word rawMonitor) {
         // PHASES: ANY
         return JVMTIRawMonitor.notifyAll(rawMonitor);
     }
@@ -288,12 +331,28 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int Allocate(Pointer env, long size, Pointer mem_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: ANY
+        // NULLCHECK: mem_ptr
+        if (size < 0) {
+            return JVMTI_ERROR_ILLEGAL_ARGUMENT;
+        }
+        if (size == 0) {
+            mem_ptr.setWord(Word.zero());
+        } else {
+            Pointer mem = Memory.allocate(Size.fromLong(size));
+            if (mem.isZero()) {
+                return JVMTI_ERROR_OUT_OF_MEMORY;
+            }
+            mem_ptr.setWord(mem);
+        }
+        return JVMTI_ERROR_NONE;
     }
 
     @VM_ENTRY_POINT
     private static int Deallocate(Pointer env, Pointer mem) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: ANY
+        Memory.deallocate(mem);
+        return JVMTI_ERROR_NONE;
     }
 
     @VM_ENTRY_POINT
@@ -308,7 +367,12 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int GetSourceFileName(Pointer env, JniHandle klass, Pointer source_name_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: START,LIVE
+        // CAPABILITIES: CAN_GET_SOURCE_FILE_NAME
+        // NULLCHECK: source_name_ptr
+        Class klassAsClass = null;
+        // TYPECHECK: klass=Class
+        return JVMTIClassFunctions.getSourceFileName(klassAsClass, source_name_ptr);
     }
 
     @VM_ENTRY_POINT
@@ -343,7 +407,12 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int GetClassLoader(Pointer env, JniHandle klass, Pointer classloader_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES START,LIVE
+        // NULLCHECK: classloader_ptr
+        Class klassAsClass = null;
+        // TYPECHECK: klass=Class
+        classloader_ptr.setWord(JniHandles.createLocalHandle(klassAsClass.getClassLoader()));
+        return JVMTI_ERROR_NONE;
     }
 
     @VM_ENTRY_POINT
@@ -431,12 +500,23 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int GetBytecodes(Pointer env, MethodID method, Pointer bytecode_count_ptr, Pointer bytecodes_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: START,LIVE
+        // CAPABILITIES: CAN_GET_BYTECODES
+        // NULLCHECK: bytecode_count_ptr,bytecodes_ptr
+        return JVMTIClassFunctions.getByteCodes(method, bytecode_count_ptr, bytecodes_ptr);
     }
 
     @VM_ENTRY_POINT
-    private static int IsMethodNative(Pointer env, MethodID method, Pointer is_native_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+    private static int IsMethodNative(Pointer env, MethodID methodID, Pointer is_native_ptr) {
+        // PHASES: START,LIVE
+        // NULLCHECK: is_native_ptr
+        try {
+            MethodActor methodActor = MethodID.toMethodActor(methodID);
+            is_native_ptr.setBoolean(methodActor.isNative());
+            return JVMTI_ERROR_NONE;
+        } catch (ClassCastException ex) {
+            return JVMTI_ERROR_INVALID_METHODID;
+        }
     }
 
     @VM_ENTRY_POINT
@@ -450,8 +530,12 @@ public class JVMTIFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static int GetClassLoaderClasses(Pointer env, JniHandle initiating_loader, Pointer class_count_ptr, Pointer classes_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+    private static int GetClassLoaderClasses(Pointer env, JniHandle initiatingLoader, Pointer class_count_ptr, Pointer classes_ptr) {
+        // PHASES: LIVE
+        // NULLCHECK: class_count_ptr,classes_ptr
+        ClassLoader initiatingLoaderAsClassLoader = null;
+        // TYPECHECK: initiatingLoader=ClassLoader
+        return JVMTIClassFunctions.getClassLoaderClasses(initiatingLoaderAsClassLoader, class_count_ptr, classes_ptr);
     }
 
     @VM_ENTRY_POINT
@@ -578,17 +662,29 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int GetTag(Pointer env, JniHandle object, Pointer tag_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: START,LIVE
+        // NULLCHECK: tag_ptr
+        JVMTIEnv jvmtiEnv = JVMTI.getEnv(env);
+        if (jvmtiEnv == null) {
+            return JVMTI_ERROR_INVALID_ENVIRONMENT;
+        }
+        return jvmtiEnv.tags.getTag(object.unhand(), tag_ptr);
     }
 
     @VM_ENTRY_POINT
     private static int SetTag(Pointer env, JniHandle object, long tag) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: START,LIVE
+        JVMTIEnv jvmtiEnv = JVMTI.getEnv(env);
+        if (jvmtiEnv == null) {
+            return JVMTI_ERROR_INVALID_ENVIRONMENT;
+        }
+        return jvmtiEnv.tags.setTag(object.unhand(), tag);
     }
 
     @VM_ENTRY_POINT
     private static int ForceGarbageCollection(Pointer env) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        System.gc();
+        return JVMTI_ERROR_NONE;
     }
 
     @VM_ENTRY_POINT
@@ -678,12 +774,22 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int DisposeEnvironment(Pointer env) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: ANY
+        return JVMTI.disposeEnv(env);
     }
 
     @VM_ENTRY_POINT
     private static int GetErrorName(Pointer env, int error, Pointer name_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: ANY
+        // NULLCHECK: name_ptr
+        if (error < 0 || error > JVMTI_ERROR_MAX) {
+            return JVMTI_ERROR_ILLEGAL_ARGUMENT;
+        }
+        byte[] nameBytes = JVMTIError.nameBytes[error];
+        Pointer cstring = Memory.allocate(Size.fromInt(nameBytes.length + 1));
+        CString.writeBytes(nameBytes, 0, nameBytes.length, cstring, nameBytes.length + 1);
+        name_ptr.setWord(0, cstring);
+        return JVMTI_ERROR_NONE;
     }
 
     @VM_ENTRY_POINT
@@ -698,7 +804,9 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int GetSystemProperty(Pointer env, Pointer property, Pointer value_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: ONLOAD,LIVE
+        // NULLCHECK: property,value_ptr
+        return JVMTI.getSystemProperty(env, property, value_ptr);
     }
 
     @VM_ENTRY_POINT
@@ -708,7 +816,10 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int GetPhase(Pointer env, Pointer phase_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: ANY
+        // NULLCHECK: phase_ptr
+        phase_ptr.setInt(0, JVMTI.phase);
+        return JVMTI_ERROR_NONE;
     }
 
     @VM_ENTRY_POINT
@@ -738,7 +849,10 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int GetTime(Pointer env, Pointer nanos_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: ANY
+        // NULLCHECK: nanos_ptr
+        nanos_ptr.setLong(System.nanoTime());
+        return JVMTI_ERROR_NONE;
     }
 
     @VM_ENTRY_POINT
@@ -764,6 +878,7 @@ public class JVMTIFunctionsSource {
                 if (cap.can) {
                     cap.set(envCaps, true);
                 } else {
+                    JVMTI.debug(cap);
                     return JVMTI_ERROR_NOT_AVAILABLE;
                 }
             }
@@ -787,11 +902,16 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int GetAvailableProcessors(Pointer env, Pointer processor_count_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: ANY
+        // NULLCHECK: processor_count_ptr
+        processor_count_ptr.setInt(Runtime.getRuntime().availableProcessors());
+        return JVMTI_ERROR_NONE;
     }
 
     @VM_ENTRY_POINT
     private static int GetClassVersionNumbers(Pointer env, JniHandle klass, Pointer minor_version_ptr, Pointer major_version_ptr) {
+        // PHASES: START,LIVE
+        // NULLCHECK: minor_version_ptr, minor_version_ptr
         return JVMTI_ERROR_NOT_AVAILABLE;
     }
 
@@ -812,12 +932,31 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int AddToBootstrapClassLoaderSearch(Pointer env, Pointer segment) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES ONLOAD,LIVE
+        // NULLCHECK: segment
+        return JVMTIClassFunctions.addToBootstrapClassLoaderSearch(env, segment);
     }
 
     @VM_ENTRY_POINT
     private static int SetVerboseFlag(Pointer env, int flag, boolean value) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: ANY
+        switch (flag) {
+            case JVMTI_VERBOSE_GC:
+                VMOptions.verboseOption.verboseGC = value;
+                break;
+            case JVMTI_VERBOSE_CLASS:
+                VMOptions.verboseOption.verboseClass = value;
+                break;
+            case JVMTI_VERBOSE_JNI:
+                VMOptions.verboseOption.verboseJNI = value;
+                break;
+            case JVMTI_VERBOSE_OTHER:
+                VMOptions.verboseOption.verboseCompilation = value;
+                break;
+            default:
+                return JVMTI_ERROR_ILLEGAL_ARGUMENT;
+        }
+        return JVMTI_ERROR_NONE;
     }
 
     @VM_ENTRY_POINT
@@ -840,9 +979,15 @@ public class JVMTIFunctionsSource {
         return JVMTI_ERROR_NOT_AVAILABLE;
     }
 
+    /**
+     * This function is an extension and appears in the extended JVMTI interface table,
+     * as that is a convenient way to invoke it from native code. It's purpose is
+     * simply to record the value of the C struct that denotes the JVMTI environment.
+     */
     @VM_ENTRY_POINT
-    private static void SetJVMTIEnv(Pointer env) {
+    private static int SetJVMTIEnv(Pointer env) {
         JVMTI.setJVMTIEnv(env);
+        return 0;
     }
 
 }

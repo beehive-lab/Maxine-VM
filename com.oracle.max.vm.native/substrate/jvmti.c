@@ -33,6 +33,7 @@ typedef jint (JNICALL *Agent_OnAttach_t)(JavaVM *, char *);
 typedef jint (JNICALL *Agent_OnUnLoad_t)(JavaVM *);
 typedef void (JNICALL *GarbageCollectionCallback) (jvmtiEnv *jvmti_env);
 typedef void (JNICALL *jvmtiStartFunctionNoArg) (jvmtiEnv* jvmti_env, JNIEnv* jni_env);
+typedef void (JNICALL *ThreadObjectCall) (jvmtiEnv *jvmti_env, JNIEnv* jni_env, jthread thread, jclass klass);
 
 
 JNIEXPORT jint JNICALL
@@ -60,6 +61,21 @@ Java_com_sun_max_vm_jvmti_JVMTICallbacks_invokeGarbageCollectionCallback(JNIEnv 
     (*callback)(jvmti_env);
 }
 
+JNIEXPORT void JNICALL
+Java_com_sun_max_vm_jvmti_JVMTICallbacks_invokeThreadObjectCallback(JNIEnv *env, jclass c, ThreadObjectCall callback, jvmtiEnv *jvmti_env, jthread thread, jobject object) {
+    (*callback)(jvmti_env, env, thread, object);
+}
+
+JNIEXPORT void JNICALL
+Java_com_sun_max_vm_jvmti_JVMTICallbacks_invokeClassfileLoadHookCallback(JNIEnv *env, jclass c, jvmtiEventClassFileLoadHook callback, jvmtiEnv *jvmti_env,
+                jclass klass, jobject loader, char *name, jobject protection_domain,
+                jint class_data_len,
+                const unsigned char* class_data,
+                jint* new_class_data_len,
+                unsigned char** new_class_data) {
+    (*callback)(jvmti_env, env, klass, loader, name, protection_domain, class_data_len, class_data, new_class_data_len, new_class_data);
+}
+
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_vm_jvmti_JVMTIRawMonitor_nativeMutexLock(JNIEnv *env, jclass c, Mutex mutex) {
     return mutex_enter(mutex) == 0;
@@ -68,6 +84,15 @@ Java_com_sun_max_vm_jvmti_JVMTIRawMonitor_nativeMutexLock(JNIEnv *env, jclass c,
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_vm_jvmti_JVMTIRawMonitor_nativeConditionWait(JNIEnv *env, jclass c, Mutex mutex, Condition condition, jlong timeoutMilliSeconds) {
     return condition_timedWait(condition, mutex, timeoutMilliSeconds);
+}
+
+void setJVMTIThreadInfo(jvmtiThreadInfo *threadInfo, char *name, jint priority, jboolean is_daemon,
+                jobject thread_group, jobject context_class_loader) {
+    threadInfo->name = name;
+    threadInfo->priority = priority;
+    threadInfo->is_daemon = is_daemon;
+    threadInfo->thread_group = thread_group;
+    threadInfo->context_class_loader = context_class_loader;
 }
 
 static void jvmti_reserved() {
