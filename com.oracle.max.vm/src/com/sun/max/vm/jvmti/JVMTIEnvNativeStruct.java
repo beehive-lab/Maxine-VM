@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,17 +20,38 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.jni;
+package com.sun.max.vm.jvmti;
 
-import com.sun.max.config.*;
+import com.sun.max.unsafe.*;
 
-public class Package extends BootImagePackage {
-    public Package() {
-        super();
+/**
+ * Names and offsets to the C struct (jvmtiEnv) used on the native side of the implementation.
+ * Must match the definition in jvmti.c
+ */
+enum JVMTIEnvNativeStruct {
+    FUNCTIONS(0),
+    CALLBACKS(8),
+    CAPABILITIES(16), // the capabilities that are active for this environment
+    EVENTMASK(24); // global event enabled mask
+
+    int offset;
+
+    JVMTIEnvNativeStruct(int offset) {
+        this.offset = offset;
     }
 
-    @Override
-    public Class[] wordSubclasses() {
-        return new Class[] {MemberID.class, FieldID.class, MethodID.class, JniHandle.class};
+    /**
+     * Return the value of the field at our offset from {@code base}.
+     */
+    Word get(Pointer base) {
+        return base.readWord(offset);
+    }
+
+    Pointer getPtr(Pointer base) {
+        return base.readWord(offset).asPointer();
+    }
+
+    void set(Pointer base, Word value) {
+        base.writeWord(offset, value);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,17 +20,17 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.jni;
+package com.sun.max.vm.jvmti;
 
-import com.sun.max.config.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 
-public class Package extends BootImagePackage {
-    public Package() {
-        super();
-    }
 
-    @Override
-    public Class[] wordSubclasses() {
-        return new Class[] {MemberID.class, FieldID.class, MethodID.class, JniHandle.class};
-    }
+public class JVMTIUtil {
+    /**
+     * The offset of the byte array data from the byte array object's origin.
+     */
+    static final Offset byteDataOffset = VMConfiguration.vmConfig().layoutScheme().byteArrayLayout.getElementOffsetFromOrigin(0);
+
+
 }
