@@ -25,12 +25,12 @@ package com.oracle.max.vm.ext.t1x;
 import java.io.*;
 import java.util.*;
 
-import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.type.*;
 
 /**
  * Generates Java code that wraps an intrinsic method. It emits the correct {@link Slot} annotations and makes sure
@@ -52,7 +52,7 @@ public class T1XIntrinsicTemplateGenerator {
         StringBuilder sb = new StringBuilder();
         sb.append(method.holder().javaSignature(true)).append("$").append(method.name()).append('$');
         for (int i = 0; i < method.signature().argumentCount(false); i++) {
-            sb.append(method.signature().argumentKindAt(i).typeChar);
+            sb.append(method.descriptor().parameterDescriptorAt(i).toKind().character);
         }
         return sb.toString().replace('.', '_');
     }
@@ -64,8 +64,8 @@ public class T1XIntrinsicTemplateGenerator {
     }
 
     private String tn(ClassActor type) {
-        if (type.kind().stackKind() != type.kind()) {
-            return type.kind().stackKind().javaName;
+        if (type.kind.stackKind != type.kind) {
+            return type.kind.stackKind.name.toString();
         } else {
             return type.javaSignature(true);
         }
@@ -99,7 +99,7 @@ public class T1XIntrinsicTemplateGenerator {
             param.type = (ClassActor) method.signature().argumentTypeAt(i - firstRealParam, method.holder());
             param.name = "param" + i;
             param.slot = slot;
-            slot += param.type.kind().sizeInSlots();
+            slot += param.type.kind.stackSlots;
             params[i] = param;
         }
         if (!isStatic) {
@@ -126,10 +126,10 @@ public class T1XIntrinsicTemplateGenerator {
 
         // Line: call of the intrinsic method
         out.printf("        ");
-        if (returnType.kind() != CiKind.Void) {
+        if (returnType.kind != Kind.VOID) {
             out.print("return ");
         }
-        if (returnType.kind() == CiKind.Boolean) {
+        if (returnType.kind == Kind.BOOLEAN) {
             out.print("UnsafeCast.asInt(");
         }
         if (isStatic) {
@@ -143,12 +143,12 @@ public class T1XIntrinsicTemplateGenerator {
             if (i != firstRealParam) {
                 out.print(", ");
             }
-            if (param.type.kind().stackKind() != param.type.kind()) {
-                out.printf("(%s) ", param.type.kind().javaName);
+            if (param.type.kind.stackKind != param.type.kind) {
+                out.printf("(%s) ", param.type.kind.name);
             }
             out.print(param.name);
         }
-        if (returnType.kind() == CiKind.Boolean) {
+        if (returnType.kind == Kind.BOOLEAN) {
             out.print(")");
         }
         out.printf(");%n");

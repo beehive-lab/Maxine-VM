@@ -24,6 +24,7 @@ package com.sun.c1x.ir;
 
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * The base class for pointer access operations.
@@ -31,9 +32,9 @@ import com.sun.cri.ci.*;
 public abstract class PointerOp extends StateSplit {
 
     /**
-     * The kind of value at the address accessed by the pointer operation.
+     * The type of value at the address accessed by the pointer operation.
      */
-    public final CiKind dataKind;
+    public final RiType dataType;
 
     protected Value pointer;
     protected Value displacement;
@@ -55,10 +56,10 @@ public abstract class PointerOp extends StateSplit {
      * @param stateBefore the state before
      * @param isVolatile {@code true} if the access is volatile
      */
-    public PointerOp(CiKind kind, CiKind dataKind, Value pointer, Value displacement, Value offsetOrIndex, FrameState stateBefore, boolean isVolatile) {
+    public PointerOp(CiKind kind, RiType dataType, Value pointer, Value displacement, Value offsetOrIndex, FrameState stateBefore, boolean isVolatile) {
         super(kind.stackKind(), stateBefore);
         this.pointer = pointer;
-        this.dataKind = dataKind;
+        this.dataType = dataType;
         this.displacement = displacement;
         this.offsetOrIndex = offsetOrIndex;
         this.isVolatile = isVolatile;

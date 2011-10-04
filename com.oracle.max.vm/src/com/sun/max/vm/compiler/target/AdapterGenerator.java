@@ -72,9 +72,9 @@ public abstract class AdapterGenerator {
      * location for holding this value.
      */
     public static class Sig {
-        public final CiKind[] kinds;
-        public Sig(SignatureDescriptor signature, int receiver) {
-            kinds = CiUtil.signatureToKinds(signature, receiver == 1 ? CiKind.Object : null);
+        public final Kind[] kinds;
+        public Sig(MethodActor method) {
+            kinds = method.getParameterKinds();
         }
         @Override
         public boolean equals(Object obj) {
@@ -89,14 +89,14 @@ public abstract class AdapterGenerator {
             if (kinds.length == 0) {
                 return kinds.length;
             }
-            return kinds.length ^ kinds[kinds.length - 1].typeChar;
+            return kinds.length ^ kinds[kinds.length - 1].character;
         }
         @Override
         public String toString() {
             StringBuilder buf = new StringBuilder(kinds.length + 2);
             buf.append('(');
-            for (CiKind k : kinds) {
-                buf.append(k.typeChar);
+            for (Kind k : kinds) {
+                buf.append(k.character);
             }
             return buf.append(')').toString();
         }
@@ -128,25 +128,15 @@ public abstract class AdapterGenerator {
     }
 
     /**
-     * Gets the number of bytes occupied in an adapter frame for a given value kind.
-     *
-     * @param kind a value kind
-     * @param slotSize the adapter frame slot size of a {@linkplain Kind#isCategory1() category 1} kind
-     */
-    public static int frameSizeFor(CiKind kind, int slotSize) {
-        return kind.jvmSlots * slotSize;
-    }
-
-    /**
      * Gets the number of bytes occupied in an adapter frame for a set of arguments.
      *
      * @param argKinds the kinds of the arguments
      * @param slotSize the adapter frame slot size of a {@linkplain Kind#isCategory1() category 1} kind
      */
-    public static int frameSizeFor(CiKind[] argKinds, int slotSize) {
+    public static int frameSizeFor(Kind[] argKinds, int slotSize) {
         int size = 0;
-        for (CiKind k : argKinds) {
-            size += frameSizeFor(k, slotSize);
+        for (Kind k : argKinds) {
+            size += k.stackSlots * slotSize;
         }
         return size;
     }
@@ -233,7 +223,7 @@ public abstract class AdapterGenerator {
 
         // Access to table of adapters must be synchronized
         synchronized (this) {
-            Sig sig = new Sig(signature, isStatic ? 0 : 1);
+            Sig sig = new Sig(callee);
             Adapter adapter = adapters.get(sig);
             if (adapter == null) {
                 if (verboseOption.verboseCompilation) {

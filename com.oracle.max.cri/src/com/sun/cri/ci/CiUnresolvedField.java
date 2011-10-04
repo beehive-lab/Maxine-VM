@@ -47,8 +47,8 @@ public class CiUnresolvedField implements RiField {
         return type;
     }
 
-    public CiKind kind() {
-        return type.kind();
+    public CiKind kind(boolean architecture) {
+        return type.kind(architecture);
     }
 
     public RiType holder() {
@@ -86,6 +86,6 @@ public class CiUnresolvedField implements RiField {
      */
     @Override
     public String toString() {
-        return CiUtil.format("%H.%n [unresolved]", this, false);
+        return CiUtil.format("%H.%n [unresolved]", this);
     }
 }

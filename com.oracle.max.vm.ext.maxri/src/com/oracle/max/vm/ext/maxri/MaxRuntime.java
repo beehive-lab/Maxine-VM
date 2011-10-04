@@ -50,6 +50,7 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -280,18 +281,25 @@ public class MaxRuntime implements RiRuntime {
                             return null;
                         }
                         Value value;
+                        Kind kind;
+                        if (!methodActor.isStatic() && i == 0) {
+                            kind = methodActor.holder().kind;
+                        } else {
+                            kind = methodActor.descriptor().parameterDescriptorAt(i - (methodActor.isStatic() ? 0 : 1)).toKind();
+                        }
+                        assert WordUtil.ciKind(kind, true) == arg.kind;
                         // Checkstyle: stop
-                        switch (arg.kind) {
-                            case Boolean: value = BooleanValue.from(arg.asBoolean()); break;
-                            case Byte:    value = ByteValue.from((byte) arg.asInt()); break;
-                            case Char:    value = CharValue.from((char) arg.asInt()); break;
-                            case Double:  value = DoubleValue.from(arg.asDouble()); break;
-                            case Float:   value = FloatValue.from(arg.asFloat()); break;
-                            case Int:     value = IntValue.from(arg.asInt()); break;
-                            case Long:    value = LongValue.from(arg.asLong()); break;
-                            case Object:  value = ReferenceValue.from(arg.asObject()); break;
-                            case Short:   value = ShortValue.from((short) arg.asInt()); break;
-                            case Word:    value = WordValue.from(Address.fromLong(arg.asLong())); break;
+                        switch (kind.asEnum) {
+                            case BOOLEAN:   value = BooleanValue.from(arg.asBoolean()); break;
+                            case BYTE:      value = ByteValue.from((byte) arg.asInt()); break;
+                            case CHAR:      value = CharValue.from((char) arg.asInt()); break;
+                            case DOUBLE:    value = DoubleValue.from(arg.asDouble()); break;
+                            case FLOAT:     value = FloatValue.from(arg.asFloat()); break;
+                            case INT:       value = IntValue.from(arg.asInt()); break;
+                            case LONG:      value = LongValue.from(arg.asLong()); break;
+                            case REFERENCE: value = ReferenceValue.from(arg.asObject()); break;
+                            case SHORT:     value = ShortValue.from((short) arg.asInt()); break;
+                            case WORD:      value = WordValue.from(Address.fromLong(arg.asLong())); break;
                             default: throw new IllegalArgumentException();
                         }
                         // Checkstyle: resume

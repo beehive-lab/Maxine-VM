@@ -34,12 +34,12 @@ import com.oracle.max.vm.ext.maxri.*;
 import com.oracle.max.vm.ext.t1x.amd64.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiCallingConvention.Type;
-import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.LocalVariableTable.Entry;
 import com.sun.max.vm.collect.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.Safepoints.Attr;
 import com.sun.max.vm.runtime.*;
@@ -385,7 +385,7 @@ public class T1XTemplate {
         /**
          * The kind of this arg.
          */
-        public final CiKind kind;
+        public final Kind kind;
 
         public final String name;
 
@@ -401,7 +401,7 @@ public class T1XTemplate {
          */
         public final int slot;
 
-        public Arg(CiKind kind, CiRegister reg, String name, int slot) {
+        public Arg(Kind kind, CiRegister reg, String name, int slot) {
             this.kind = kind;
             this.name = name;
             this.reg = reg;
@@ -425,7 +425,7 @@ public class T1XTemplate {
             if (slot < 0) {
                 return 0;
             } else {
-                return kind.jvmSlots;
+                return kind.stackSlots;
             }
         }
 
@@ -567,27 +567,27 @@ public class T1XTemplate {
         CiRegisterConfig regConfig = vm().registerConfigs.standard;
         Map<Integer, Integer> slots = extractSlots(method);
 
-        RiSignature sig = method.signature();
-        CiKind[] kinds = CiUtil.signatureToKinds(sig, null);
+        SignatureDescriptor sig = method.descriptor();
+        Kind[] kinds = method.getParameterKinds();
         Arg[] in = new Arg[kinds.length];
-        CiCallingConvention cc = regConfig.getCallingConvention(Type.RuntimeCall, kinds, target(), false);
+        CiCallingConvention cc = regConfig.getCallingConvention(Type.RuntimeCall, WordUtil.ciKinds(kinds, true), target(), false);
         int localVarIndex = 0;
         for (int i = 0; i < kinds.length; i++) {
-            CiKind kind = kinds[i];
+            Kind kind = kinds[i];
             Integer slotObj = slots.get(i);
             int slot = slotObj == null ? -1 : slotObj;
             assert cc.locations[i].isRegister() : "templates with non-reg args are not supported: " + method;
             CiRegister reg = cc.locations[i].asRegister();
             in[i] = new Arg(kind, reg, localVarName(method, localVarIndex, kind), slot);
-            localVarIndex += kind.jvmSlots;
+            localVarIndex += kind.stackSlots;
         }
-        CiKind outKind = sig.returnKind();
-        int outSlot = outKind.isVoid() ? -1 : 0;
+        Kind outKind = sig.resultKind();
+        int outSlot = outKind == Kind.VOID ? -1 : 0;
         Slot slot = method.toJava().getAnnotation(Slot.class);
         if (slot != null) {
             outSlot = slot.value();
         }
-        Arg out = new Arg(outKind, regConfig.getReturnRegister(outKind), null, outSlot);
+        Arg out = new Arg(outKind, regConfig.getReturnRegister(WordUtil.ciKind(outKind, true)), null, outSlot);
         Sig s = new Sig(in, out);
         return s;
     }
@@ -605,7 +605,7 @@ public class T1XTemplate {
                 }
             }
             if (s != null) {
-                assert !slots.containsValue(s.value()) : "operand stack index of " + sig.argumentKindAt(i) + " parameter " + i + " of " + template + " conflicts with another parameter";
+                assert !slots.containsValue(s.value()) : "operand stack index of " + sig.parameterDescriptorAt(i).toKind() + " parameter " + i + " of " + template + " conflicts with another parameter";
                 slots.put(i, s.value());
             }
         }
@@ -613,11 +613,11 @@ public class T1XTemplate {
     }
 
     @HOSTED_ONLY
-    private static String localVarName(ClassMethodActor template, int localVarIndex, CiKind kind) {
+    private static String localVarName(ClassMethodActor template, int localVarIndex, Kind kind) {
         CodeAttribute codeAttribute = template.codeAttribute();
         LocalVariableTable lvt = codeAttribute.localVariableTable();
         Entry e = lvt.findLocalVariable(localVarIndex, 0);
-        assert e.descriptor(codeAttribute.cp).toKind().ciKind == kind;
+        assert e.descriptor(codeAttribute.cp).toKind() == kind;
         return e.name(codeAttribute.cp).string;
     }
 }

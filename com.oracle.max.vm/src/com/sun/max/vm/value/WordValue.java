@@ -28,6 +28,7 @@ import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -201,7 +202,7 @@ public final class WordValue extends Value<WordValue> {
 
     @Override
     public CiConstant asCiConstant() {
-        return CiConstant.forWord(value.asAddress().toLong());
+        return WordUtil.constant(value);
     }
 
 }

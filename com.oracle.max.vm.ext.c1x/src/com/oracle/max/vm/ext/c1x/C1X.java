@@ -24,6 +24,7 @@ package com.oracle.max.vm.ext.c1x;
 
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
+
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
@@ -34,6 +35,7 @@ import com.oracle.max.vm.ext.maxri.MaxXirGenerator.RuntimeCalls;
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.graph.*;
+import com.sun.c1x.observer.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
@@ -179,7 +181,7 @@ public class C1X implements RuntimeCompiler {
             GraphBuilder.setAccessor(ClassActor.fromJava(Accessor.class));
 
             compiler = new C1XCompiler(runtime, target, xirGenerator, vm().registerConfigs.compilerStub);
-
+            compiler.addCompilationObserver(new WordTypeRewriterPhase());
             MaxineIntrinsicImplementations.initialize(compiler.intrinsicRegistry);
 
             // search for the runtime call and register critical methods
@@ -208,6 +210,20 @@ public class C1X implements RuntimeCompiler {
                 C1XTimers.print();
             }
         }
+    }
+
+    private static class WordTypeRewriterPhase implements CompilationObserver {
+        @Override
+        public void compilationEvent(CompilationEvent event) {
+            if (event.getLabel() == CompilationEvent.AFTER_PARSING) {
+                new WordTypeRewriter().apply(event.getCompilation());
+            }
+        }
+
+        @Override
+        public void compilationStarted(CompilationEvent event) { }
+        @Override
+        public void compilationFinished(CompilationEvent event) { }
     }
 
     public C1XCompiler compiler() {

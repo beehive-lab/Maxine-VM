@@ -38,6 +38,10 @@ import com.sun.cri.ri.*;
  * depending on the available information when and where the event was triggered.
  */
 public class CompilationEvent {
+    /**
+     * The name of the event fired immediately after bytecode parsing is finished.
+     */
+    public static final String AFTER_PARSING = "After graph building";
 
     private final C1XCompilation compilation;
     private final String label;

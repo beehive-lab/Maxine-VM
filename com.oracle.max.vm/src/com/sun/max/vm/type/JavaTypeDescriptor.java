@@ -52,12 +52,13 @@ public final class JavaTypeDescriptor {
      */
     public static final class AtomicTypeDescriptor extends TypeDescriptorEntry {
         public final Class javaClass;
-        private Kind kind;
+        private final Kind kind;
 
         @HOSTED_ONLY
-        AtomicTypeDescriptor(String name, Class javaClass) {
-            super(name);
-            this.javaClass = javaClass;
+        AtomicTypeDescriptor(Kind kind) {
+            super(String.valueOf(kind.character));
+            this.kind = kind;
+            this.javaClass = kind.javaClass;
         }
 
         @Override
@@ -76,12 +77,6 @@ public final class JavaTypeDescriptor {
                 return javaClass.getName();
             }
             return kind.name.toString();
-        }
-
-        @HOSTED_ONLY
-        void setKind(Kind kind) {
-            assert this.kind == null;
-            this.kind = kind;
         }
 
         @Override
@@ -134,15 +129,15 @@ public final class JavaTypeDescriptor {
         }
     }
 
-    public static final AtomicTypeDescriptor VOID = new AtomicTypeDescriptor("V", void.class);
-    public static final AtomicTypeDescriptor BYTE = new AtomicTypeDescriptor("B", byte.class);
-    public static final AtomicTypeDescriptor BOOLEAN = new AtomicTypeDescriptor("Z", boolean.class);
-    public static final AtomicTypeDescriptor SHORT = new AtomicTypeDescriptor("S", short.class);
-    public static final AtomicTypeDescriptor CHAR = new AtomicTypeDescriptor("C", char.class);
-    public static final AtomicTypeDescriptor INT = new AtomicTypeDescriptor("I", int.class);
-    public static final AtomicTypeDescriptor FLOAT = new AtomicTypeDescriptor("F", float.class);
-    public static final AtomicTypeDescriptor LONG = new AtomicTypeDescriptor("J", long.class);
-    public static final AtomicTypeDescriptor DOUBLE = new AtomicTypeDescriptor("D", double.class);
+    public static final AtomicTypeDescriptor VOID = new AtomicTypeDescriptor(Kind.VOID);
+    public static final AtomicTypeDescriptor BYTE = new AtomicTypeDescriptor(Kind.BYTE);
+    public static final AtomicTypeDescriptor BOOLEAN = new AtomicTypeDescriptor(Kind.BOOLEAN);
+    public static final AtomicTypeDescriptor SHORT = new AtomicTypeDescriptor(Kind.SHORT);
+    public static final AtomicTypeDescriptor CHAR = new AtomicTypeDescriptor(Kind.CHAR);
+    public static final AtomicTypeDescriptor INT = new AtomicTypeDescriptor(Kind.INT);
+    public static final AtomicTypeDescriptor FLOAT = new AtomicTypeDescriptor(Kind.FLOAT);
+    public static final AtomicTypeDescriptor LONG = new AtomicTypeDescriptor(Kind.LONG);
+    public static final AtomicTypeDescriptor DOUBLE = new AtomicTypeDescriptor(Kind.DOUBLE);
 
     private static final AtomicTypeDescriptor[] ATOMIC_DESCRIPTORS = {VOID, BYTE, BOOLEAN, SHORT, CHAR, INT, FLOAT, LONG, DOUBLE};
 

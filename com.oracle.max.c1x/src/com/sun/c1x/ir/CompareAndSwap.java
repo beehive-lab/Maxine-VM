@@ -25,6 +25,7 @@ package com.sun.c1x.ir;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.bytecode.*;
+import com.sun.cri.ri.*;
 
 /**
  * Atomic update of a value in memory. Implements the {@link Bytecodes#PCMPSWP} family of instructions.
@@ -53,8 +54,10 @@ public final class CompareAndSwap extends PointerOp {
      * @param stateBefore the state before
      * @param isVolatile {@code true} if the access is volatile
      */
-    public CompareAndSwap(Value pointer, Value offset, Value expectedValue, Value newValue, FrameState stateBefore, boolean isVolatile) {
-        super(expectedValue.kind, expectedValue.kind, pointer, null, offset, stateBefore, isVolatile);
+    public CompareAndSwap(RiType dataType, Value pointer, Value offset, Value expectedValue, Value newValue, FrameState stateBefore, boolean isVolatile) {
+        super(dataType.kind(false), dataType, pointer, null, offset, stateBefore, isVolatile);
+        assert kind == expectedValue.kind;
+        assert kind == newValue.kind;
         assert offset != null;
         this.expectedValue = expectedValue;
         this.newValue = newValue;

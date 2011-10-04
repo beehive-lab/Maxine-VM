@@ -101,7 +101,6 @@ public enum LIROpcode {
     CheckCast,
     StoreCheck,
     CasLong,
-    CasWord,
     CasObj,
     CasInt,
     Xir,

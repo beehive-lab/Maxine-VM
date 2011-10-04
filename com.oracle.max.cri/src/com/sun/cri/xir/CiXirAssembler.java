@@ -58,6 +58,12 @@ public abstract class CiXirAssembler {
      */
     protected boolean finished = true;
 
+    protected final CiTarget target;
+
+    public CiXirAssembler(CiTarget target) {
+        this.target = target;
+    }
+
     public static class RuntimeCallInformation {
         public final Object target;
         public final boolean useInfoAfter;
@@ -676,15 +682,15 @@ public abstract class CiXirAssembler {
     }
 
     public void lea(XirOperand result, XirOperand pointer, XirOperand index, int disp, Scale scale) {
-        append(new XirInstruction(CiKind.Word, new AddressAccessInformation(false, disp, scale), LoadEffectiveAddress, result, pointer, index));
+        append(new XirInstruction(target.wordKind, new AddressAccessInformation(false, disp, scale), LoadEffectiveAddress, result, pointer, index));
     }
 
     public void repmov(XirOperand src, XirOperand dest, XirOperand length) {
-        append(new XirInstruction(CiKind.Word, null, RepeatMoveWords, null, src, dest, length));
+        append(new XirInstruction(target.wordKind, null, RepeatMoveWords, null, src, dest, length));
     }
 
     public void repmovb(XirOperand src, XirOperand dest, XirOperand length) {
-        append(new XirInstruction(CiKind.Word, null, RepeatMoveBytes, null, src, dest, length));
+        append(new XirInstruction(target.wordKind, null, RepeatMoveBytes, null, src, dest, length));
     }
 
     public void pstore(CiKind kind, XirOperand pointer, XirOperand index, XirOperand value, int disp, Scale scale, boolean canTrap) {
@@ -911,10 +917,6 @@ public abstract class CiXirAssembler {
 
     public XirConstant b(boolean v) {
         return createConstant(CiConstant.forBoolean(v));
-    }
-
-    public XirConstant w(long v) {
-        return createConstant(CiConstant.forWord(v));
     }
 
     public XirConstant o(Object obj) {

@@ -162,12 +162,22 @@ abstract class UnresolvedRefIndices<PoolConstant_Type extends PoolConstant<PoolC
         return false;
     }
 
+    @Override
     public final boolean isResolvableWithoutClassLoading(ConstantPool pool) {
-        final ClassConstant classConstant = pool.classAt(classIndex);
-        if (!classConstant.isResolvableWithoutClassLoading(pool)) {
+        if (!pool.classAt(classIndex).isResolvableWithoutClassLoading(pool)) {
             return false;
         }
-        return true;
+        if (isFieldConstant()) {
+            return type(pool).isResolvableWithoutClassLoading(pool.classLoader());
+        } else {
+            SignatureDescriptor signature = signature(pool);
+            for (int i = 0; i < signature.numberOfParameters(); i++) {
+                if (!signature.parameterDescriptorAt(i).isResolvableWithoutClassLoading(pool.classLoader())) {
+                    return false;
+                }
+            }
+            return signature.resultDescriptor().isResolvableWithoutClassLoading(pool.classLoader());
+        }
     }
 
     final NameAndTypeConstant nameAndType(ConstantPool pool) {

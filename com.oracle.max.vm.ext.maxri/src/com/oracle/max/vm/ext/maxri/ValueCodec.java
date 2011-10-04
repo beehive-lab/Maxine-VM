@@ -28,9 +28,11 @@ import static com.sun.max.vm.MaxineVM.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.oracle.max.vm.ext.maxri.Package.MaxRiObjectMapContributor;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -323,7 +325,6 @@ public class ValueCodec {
                         case Long    : out.writeLong(c.asLong()); break;
                         case Double  : out.writeDouble(c.asDouble()); break;
                         case Jsr     : out.writeInt(c.asInt()); break;
-                        case Word    : out.writeLong(c.asLong()); break;
                         case Int: {
                             int b0 = c.asInt();
                             if (b0 >= 0 && b0 < 0xff) {
@@ -334,6 +335,7 @@ public class ValueCodec {
                             }
                             break;
                         }
+                        default: throw FatalError.unexpected("Unexpected kind: " + c.kind);
                     }
                     // Checkstyle: resume
                 }
@@ -367,26 +369,26 @@ public class ValueCodec {
                 if (frameRefMap != null && frameRefMap.get(index)) {
                     return CiStackSlot.get(CiKind.Object, index, false);
                 }
-                return CiStackSlot.get(CiKind.Word, index, false);
+                return CiStackSlot.get(WordUtil.archKind(), index, false);
             } else if (index <= STACK_1_MAX) {
-                return CiStackSlot.get(CiKind.Word, index - STACK_1_CURRENT_FRAME_MAX - 1, true);
+                return CiStackSlot.get(WordUtil.archKind(), index - STACK_1_CURRENT_FRAME_MAX - 1, true);
             } else  if (index == STACK_5_CALLER_FRAME) {
                 index = in.readInt();
-                return CiStackSlot.get(CiKind.Word, index, true);
+                return CiStackSlot.get(WordUtil.archKind(), index, true);
             } else {
                 assert index == STACK_5_CURRENT_FRAME;
                 index = in.readInt();
                 if (frameRefMap != null && frameRefMap.get(index)) {
                     return CiStackSlot.get(CiKind.Object, index, false);
                 }
-                return CiStackSlot.get(CiKind.Word, index, false);
+                return CiStackSlot.get(WordUtil.archKind(), index, false);
             }
         } else if (type == TYPE_REGISTER) {
             int num = REGISTER.get(b);
             if (regRefMap != null && num < regRefMap.size() && regRefMap.get(num)) {
                 return target().arch.registers[num].asValue(CiKind.Object);
             }
-            return target().arch.registers[num].asValue(CiKind.Word);
+            return target().arch.registers[num].asValue(WordUtil.archKind());
         } else if (type == TYPE_OBJECT_CONSTANT) {
             int index = OBJECT_CONSTANT.get(b);
             if (index < OBJECT_CONSTANT.max()) {
@@ -434,7 +436,6 @@ public class ValueCodec {
                 case Long    : return CiConstant.forLong(in.readLong());
                 case Double  : return CiConstant.forDouble(in.readDouble());
                 case Jsr     : return CiConstant.forJsr(in.readInt());
-                case Word    : return CiConstant.forWord(in.readLong());
                 case Int: {
                     int b0 = in.readByte() & 0xFF;
                     if (b0 == 0xFF) {
@@ -443,9 +444,9 @@ public class ValueCodec {
                         return CiConstant.forInt(b0);
                     }
                 }
+                default: throw FatalError.unexpected("Unexpected kind: " + kind);
             }
             // Checkstyle: resume
-            throw FatalError.unexpected("Unexpected kind: " + kind);
         }
     }
 

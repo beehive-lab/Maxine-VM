@@ -475,7 +475,7 @@ public final class BlockBegin extends Instruction {
             Value x = newState.localAt(i);
             if (x != null) {
                 if (requiresPhi != null) {
-                    if (requiresPhi.get(i) || x.kind.isDoubleWord() && requiresPhi.get(i + 1)) {
+                    if (requiresPhi.get(i) || MutableFrameState.isTwoSlot(x.kind) && requiresPhi.get(i + 1)) {
                         // selectively do a phi
                         newState.setupPhiForLocal(this, i);
                     }
@@ -796,23 +796,14 @@ public final class BlockBegin extends Instruction {
             while (!hasPhisOnStack && i < state.stackSize()) {
                 Value value = state.stackAt(i);
                 hasPhisOnStack = isPhiAtBlock(value);
-                if (value != null && !value.isIllegal()) {
-                    i += value.kind.sizeInSlots();
-                } else {
-                    i++;
-                }
+                i++;
             }
 
             do {
                 for (i = 0; !hasPhisInLocals && i < state.localsSize();) {
                     Value value = state.localAt(i);
                     hasPhisInLocals = isPhiAtBlock(value);
-                    // also ignore illegal HiWords
-                    if (value != null && !value.isIllegal()) {
-                        i += value.kind.sizeInSlots();
-                    } else {
-                        i++;
-                    }
+                    i++;
                 }
                 state = state.callerState();
             } while (state != null);
@@ -830,11 +821,8 @@ public final class BlockBegin extends Instruction {
                     Value value = state.localAt(i);
                     if (value != null) {
                         out.println(stateString(i, value));
-                        // also ignore illegal HiWords
-                        i += value.isIllegal() ? 1 : value.kind.sizeInSlots();
-                    } else {
-                        i++;
                     }
+                    i++;
                 }
                 out.println();
                 state = state.callerState();
@@ -850,10 +838,8 @@ public final class BlockBegin extends Instruction {
                 Value value = stateBefore().stackAt(i);
                 if (value != null) {
                     out.println(stateString(i, value));
-                    i += value.kind.sizeInSlots();
-                } else {
-                    i++;
                 }
+                i++;
             }
         }
 

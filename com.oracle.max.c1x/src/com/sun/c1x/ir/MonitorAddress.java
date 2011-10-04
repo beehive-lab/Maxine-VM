@@ -22,8 +22,8 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
-import com.sun.cri.ci.*;
 
 /**
  * Instruction that is used to refer to the address of an on-stack monitor.
@@ -33,7 +33,7 @@ public final class MonitorAddress extends Instruction {
     private int monitor;
 
     public MonitorAddress(int monitor) {
-        super(CiKind.Word);
+        super(C1XCompilation.compilation().target.wordKind);
         this.monitor = monitor;
         setFlag(Flag.NonNull);
         eliminateNullCheck();

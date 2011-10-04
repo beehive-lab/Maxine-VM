@@ -25,6 +25,7 @@ package com.sun.c1x.ir;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * The {@code StorePointer} instruction represents a write of a pointer.
@@ -39,7 +40,7 @@ public final class StorePointer extends PointerOp {
      * Creates an instruction for a pointer store. If {@code displacement != null}, the effective of the address of the store is
      * computed as the pointer plus a byte displacement plus a scaled index. Otherwise, the effective address is computed as the
      * pointer plus a byte offset.
-     * @param dataKind the kind of value at the address accessed by the pointer operation
+     * @param dataType the type of value at the address accessed by the pointer operation
      * @param pointer the value producing the pointer
      * @param displacement the value producing the displacement. This may be {@code null}.
      * @param offsetOrIndex the value producing the scaled-index or the byte offset depending on whether {@code displacement} is {@code null}
@@ -47,8 +48,8 @@ public final class StorePointer extends PointerOp {
      * @param stateBefore the state before
      * @param isVolatile {@code true} if the access is volatile
      */
-    public StorePointer(CiKind dataKind, Value pointer, Value displacement, Value offsetOrIndex, Value value, FrameState stateBefore, boolean isVolatile) {
-        super(CiKind.Void, dataKind, pointer, displacement, offsetOrIndex, stateBefore, isVolatile);
+    public StorePointer(RiType dataType, Value pointer, Value displacement, Value offsetOrIndex, Value value, FrameState stateBefore, boolean isVolatile) {
+        super(CiKind.Void, dataType, pointer, displacement, offsetOrIndex, stateBefore, isVolatile);
         this.value = value;
         setFlag(Flag.LiveStore);
     }
@@ -74,7 +75,7 @@ public final class StorePointer extends PointerOp {
         if (displacement() == null) {
             out.print(" + ").print(offset());
         } else {
-            out.print(" + ").print(displacement()).print(" + (").print(index()).print(" * sizeOf(" + dataKind.name() + "))");
+            out.print(" + ").print(displacement()).print(" + (").print(index()).print(" * sizeOf(" + dataType.name() + "))");
         }
         out.print(") := ").print(value());
     }

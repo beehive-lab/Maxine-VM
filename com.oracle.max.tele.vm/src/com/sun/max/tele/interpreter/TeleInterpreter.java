@@ -32,7 +32,6 @@ import java.util.*;
 
 import com.oracle.max.cri.intrinsics.*;
 import com.sun.cri.bytecode.*;
-import com.sun.cri.ci.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -304,48 +303,48 @@ public final class TeleInterpreter {
     }
 
     private void pointerLoad(MethodActor method) throws TeleInterpreterException {
-        CiKind kind = method.signature().returnKind();
-        if (method.signature().argumentCount(true) == 2) {
+        Kind kind = method.descriptor().resultKind();
+        if (method.descriptor().argumentCount(true) == 2) {
             Value offsetVal = pop();
             Offset off = offsetVal.kind() == Kind.INT ? Offset.fromInt(offsetVal.asInt()) : offsetVal.asWord().asOffset();
             Pointer ptr = pop().asWord().asPointer();
             DataAccess dataAccess = teleVM.teleProcess().dataAccess();
-            switch (kind) {
+            switch (kind.asEnum) {
                 // Checkstyle: stop
-                case Byte:      push(IntValue.from(dataAccess.readByte(ptr, off))); break;
-                case Char:      push(IntValue.from(dataAccess.readChar(ptr, off))); break;
-                case Short:     push(IntValue.from(dataAccess.readShort(ptr, off))); break;
-                case Int:       push(IntValue.from(dataAccess.readInt(ptr, off))); break;
-                case Long:      push(LongValue.from(dataAccess.readLong(ptr, off))); break;
-                case Float:     push(FloatValue.from(dataAccess.readFloat(ptr, off))); break;
-                case Double:    push(DoubleValue.from(dataAccess.readDouble(ptr, off))); break;
-                case Word:      push(WordValue.from(dataAccess.readWord(ptr, off))); break;
-                case Object:    push(machine.toReferenceValue(teleVM.wordToReference(dataAccess.readWord(ptr, off)))); break;
+                case BYTE:      push(IntValue.from(dataAccess.readByte(ptr, off))); break;
+                case CHAR:      push(IntValue.from(dataAccess.readChar(ptr, off))); break;
+                case SHORT:     push(IntValue.from(dataAccess.readShort(ptr, off))); break;
+                case INT:       push(IntValue.from(dataAccess.readInt(ptr, off))); break;
+                case LONG:      push(LongValue.from(dataAccess.readLong(ptr, off))); break;
+                case FLOAT:     push(FloatValue.from(dataAccess.readFloat(ptr, off))); break;
+                case DOUBLE:    push(DoubleValue.from(dataAccess.readDouble(ptr, off))); break;
+                case WORD:      push(WordValue.from(dataAccess.readWord(ptr, off))); break;
+                case REFERENCE: push(machine.toReferenceValue(teleVM.wordToReference(dataAccess.readWord(ptr, off)))); break;
                 default:        machine.raiseException(new ClassFormatError("Invalid pointer load kind: " + kind));
                 // Checkstyle: resume
             }
 
         } else {
-            assert method.signature().argumentCount(true) == 3;
-            assert method.signature().argumentKindAt(0) == CiKind.Word;
-            assert method.signature().argumentKindAt(1) == CiKind.Int;
-            assert method.signature().argumentKindAt(2) == CiKind.Int;
+            assert method.descriptor().argumentCount(true) == 3;
+            assert method.descriptor().parameterDescriptorAt(0).toKind() == Kind.WORD;
+            assert method.descriptor().parameterDescriptorAt(1).toKind() == Kind.INT;
+            assert method.descriptor().parameterDescriptorAt(2).toKind() == Kind.INT;
 
             int index = pop().asInt();
             int disp = pop().asInt();
             Pointer ptr = pop().asWord().asPointer();
             DataAccess dataAccess = teleVM.teleProcess().dataAccess();
-            switch (kind) {
+            switch (kind.asEnum) {
                 // Checkstyle: stop
-                case Byte:      push(IntValue.from(dataAccess.getByte(ptr, disp, index))); break;
-                case Char:      push(IntValue.from(dataAccess.getChar(ptr, disp, index))); break;
-                case Short:     push(IntValue.from(dataAccess.getShort(ptr, disp, index))); break;
-                case Int:       push(IntValue.from(dataAccess.getInt(ptr, disp, index))); break;
-                case Long:      push(LongValue.from(dataAccess.getLong(ptr, disp, index))); break;
-                case Float:     push(FloatValue.from(dataAccess.getFloat(ptr, disp, index))); break;
-                case Double:    push(DoubleValue.from(dataAccess.getDouble(ptr, disp, index))); break;
-                case Word:      push(WordValue.from(dataAccess.getWord(ptr, disp, index))); break;
-                case Object:    push(machine.toReferenceValue(teleVM.wordToReference(dataAccess.getWord(ptr, disp, index)))); break;
+                case BYTE:      push(IntValue.from(dataAccess.getByte(ptr, disp, index))); break;
+                case CHAR:      push(IntValue.from(dataAccess.getChar(ptr, disp, index))); break;
+                case SHORT:     push(IntValue.from(dataAccess.getShort(ptr, disp, index))); break;
+                case INT:       push(IntValue.from(dataAccess.getInt(ptr, disp, index))); break;
+                case LONG:      push(LongValue.from(dataAccess.getLong(ptr, disp, index))); break;
+                case FLOAT:     push(FloatValue.from(dataAccess.getFloat(ptr, disp, index))); break;
+                case DOUBLE:    push(DoubleValue.from(dataAccess.getDouble(ptr, disp, index))); break;
+                case WORD:      push(WordValue.from(dataAccess.getWord(ptr, disp, index))); break;
+                case REFERENCE: push(machine.toReferenceValue(teleVM.wordToReference(dataAccess.getWord(ptr, disp, index)))); break;
                 default:        machine.raiseException(new ClassFormatError("Invalid pointer load kind: " + kind));
                 // Checkstyle: resume
             }

@@ -79,15 +79,12 @@ public class BlockPrinter implements BlockClosure {
             out.print("stack [");
             int i = 0;
             while (i < newFrameState.stackSize()) {
-                if (i > 0) {
-                    out.print(", ");
-                }
                 Value value = newFrameState.stackAt(i);
-                out.print(i + ":" + Util.valueString(value));
-                if (value == null) {
-                    i++;
-                } else {
-                    i += value.kind.sizeInSlots();
+                if (value != null) {
+                    if (i > 0) {
+                        out.print(", ");
+                    }
+                    out.print(i + ":" + Util.valueString(value));
                     if (value instanceof Phi) {
                         Phi phi = (Phi) value;
                         if (phi.operand() != null) {
@@ -96,6 +93,7 @@ public class BlockPrinter implements BlockClosure {
                         }
                     }
                 }
+                i++;
             }
             out.print(']');
         }

@@ -197,7 +197,7 @@ public class T1X implements RuntimeCompiler {
         addExceptionHandlersComment(t1xMethod, hcf);
         addSafepointPositionComments(t1xMethod, hcf);
 
-        String label = CiUtil.format("T1X %f %R %H.%n(%P)", c.method, false);
+        String label = CiUtil.format("T1X %f %R %H.%n(%P)", c.method);
 
         cfgPrinter.printMachineCode(HexCodeFileTool.toText(hcf), label);
 
@@ -533,8 +533,7 @@ public class T1X implements RuntimeCompiler {
 
     @HOSTED_ONLY
     private static boolean hasStackParameters(ClassMethodActor classMethodActor) {
-        CiKind receiver = !classMethodActor.isStatic() ? classMethodActor.holder().kind() : null;
-        for (CiValue arg : vm().registerConfigs.standard.getCallingConvention(Type.JavaCall, CiUtil.signatureToKinds(classMethodActor.signature(), receiver), target(), false).locations) {
+        for (CiValue arg : vm().registerConfigs.standard.getCallingConvention(Type.JavaCall, CiUtil.signatureToKinds(classMethodActor), target(), false).locations) {
             if (!arg.isRegister()) {
                 return true;
             }

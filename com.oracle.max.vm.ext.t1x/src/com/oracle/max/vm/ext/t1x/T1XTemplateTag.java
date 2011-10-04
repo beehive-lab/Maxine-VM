@@ -25,8 +25,8 @@ package com.oracle.max.vm.ext.t1x;
 import java.util.*;
 
 import com.sun.cri.bytecode.*;
-import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
+import com.sun.max.vm.type.*;
 
 /**
  * The set of templates (potentially) used by T1X.
@@ -372,15 +372,15 @@ public enum T1XTemplateTag {
     INVOKESTATIC$adviseafter(-1);
     // END VMA additions
 
-    public static final EnumMap<CiKind, T1XTemplateTag> PUTSTATICS = makeKindMap(Bytecodes.PUTSTATIC);
-    public static final EnumMap<CiKind, T1XTemplateTag> GETSTATICS = makeKindMap(Bytecodes.GETSTATIC);
-    public static final EnumMap<CiKind, T1XTemplateTag> PUTFIELDS = makeKindMap(Bytecodes.PUTFIELD);
-    public static final EnumMap<CiKind, T1XTemplateTag> GETFIELDS = makeKindMap(Bytecodes.GETFIELD);
+    public static final EnumMap<KindEnum, T1XTemplateTag> PUTSTATICS = makeKindMap(Bytecodes.PUTSTATIC);
+    public static final EnumMap<KindEnum, T1XTemplateTag> GETSTATICS = makeKindMap(Bytecodes.GETSTATIC);
+    public static final EnumMap<KindEnum, T1XTemplateTag> PUTFIELDS = makeKindMap(Bytecodes.PUTFIELD);
+    public static final EnumMap<KindEnum, T1XTemplateTag> GETFIELDS = makeKindMap(Bytecodes.GETFIELD);
 
-    public static final EnumMap<CiKind, T1XTemplateTag> INVOKEVIRTUALS = makeKindMap(Bytecodes.INVOKEVIRTUAL);
-    public static final EnumMap<CiKind, T1XTemplateTag> INVOKEINTERFACES = makeKindMap(Bytecodes.INVOKEINTERFACE);
-    public static final EnumMap<CiKind, T1XTemplateTag> INVOKESPECIALS = makeKindMap(Bytecodes.INVOKESPECIAL);
-    public static final EnumMap<CiKind, T1XTemplateTag> INVOKESTATICS = makeKindMap(Bytecodes.INVOKESTATIC);
+    public static final EnumMap<KindEnum, T1XTemplateTag> INVOKEVIRTUALS = makeKindMap(Bytecodes.INVOKEVIRTUAL);
+    public static final EnumMap<KindEnum, T1XTemplateTag> INVOKEINTERFACES = makeKindMap(Bytecodes.INVOKEINTERFACE);
+    public static final EnumMap<KindEnum, T1XTemplateTag> INVOKESPECIALS = makeKindMap(Bytecodes.INVOKESPECIAL);
+    public static final EnumMap<KindEnum, T1XTemplateTag> INVOKESTATICS = makeKindMap(Bytecodes.INVOKESTATIC);
 
     /**
      * Creates a map from kinds to the template specialized for each kind a given bytecode is parameterized by.
@@ -388,13 +388,13 @@ public enum T1XTemplateTag {
      * @param bytecode a bytecode instruction that is specialized for a number of kinds
      */
     @HOSTED_ONLY
-    private static EnumMap<CiKind, T1XTemplateTag> makeKindMap(int bytecode) {
-        EnumMap<CiKind, T1XTemplateTag> map = new EnumMap<CiKind, T1XTemplateTag>(CiKind.class);
+    private static EnumMap<KindEnum, T1XTemplateTag> makeKindMap(int bytecode) {
+        EnumMap<KindEnum, T1XTemplateTag> map = new EnumMap<KindEnum, T1XTemplateTag>(KindEnum.class);
         for (T1XTemplateTag bt : values()) {
             String name = Bytecodes.nameOf(bytecode).toUpperCase();
             if (bt.name().startsWith(name)) {
-                for (CiKind kind : CiKind.VALUES) {
-                    String k = kind.isObject() ? "reference" : kind.name().toLowerCase();
+                for (KindEnum kind : KindEnum.VALUES) {
+                    String k = kind.name().toLowerCase();
                     if (bt.name().equals(name + "$" + k)) {
                         map.put(kind, bt);
                     }

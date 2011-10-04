@@ -1890,7 +1890,6 @@ public final class LinearScan {
                 case Char:
                 case Short:
                 case Jsr:
-                case Word:
                 case Object:
                 case Int: {
                     assert reg.isCpu() : "not cpu register";

@@ -89,7 +89,7 @@ public final class StoreField extends AccessField {
             print(field().name()).
             print(" := ").
             print(value()).
-            print(" [type: ").print(CiUtil.format("%h.%n:%t", field(), false)).
+            print(" [type: ").print(CiUtil.format("%h.%n:%t", field())).
             print(']');
     }
 }

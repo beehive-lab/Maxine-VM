@@ -172,7 +172,6 @@ public final class CiStackSlot extends CiValue {
         cache[CiKind.Long.ordinal()]    = makeCacheForKind(CiKind.Long, cachePerKindSize, inCallerFrame);
         cache[CiKind.Float.ordinal()]   = makeCacheForKind(CiKind.Float, cachePerKindSize, inCallerFrame);
         cache[CiKind.Double.ordinal()]  = makeCacheForKind(CiKind.Double, cachePerKindSize, inCallerFrame);
-        cache[CiKind.Word.ordinal()]    = makeCacheForKind(CiKind.Word, cachePerKindSize, inCallerFrame);
         cache[CiKind.Object.ordinal()]  = makeCacheForKind(CiKind.Object, cachePerKindSize, inCallerFrame);
         cache[CiKind.Jsr.ordinal()]     = makeCacheForKind(CiKind.Jsr, cachePerKindSize, inCallerFrame);
         return cache;

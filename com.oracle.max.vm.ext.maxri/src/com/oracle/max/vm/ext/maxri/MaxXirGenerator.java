@@ -223,7 +223,6 @@ public class MaxXirGenerator implements RiXirGenerator {
         arrayHubs[CiKind.Double.ordinal()] = ClassRegistry.DOUBLE_ARRAY.dynamicHub();
         arrayHubs[CiKind.Long.ordinal()] = ClassRegistry.LONG_ARRAY.dynamicHub();
         arrayHubs[CiKind.Object.ordinal()] = ClassActor.fromJava(Object[].class).dynamicHub();
-        arrayHubs[CiKind.Word.ordinal()] = ClassActor.fromJava(WordArray.class).dynamicHub();
 
         for (CiKind kind : kinds) {
             int index = kind.ordinal();
@@ -366,9 +365,9 @@ public class MaxXirGenerator implements RiXirGenerator {
     public XirSnippet genInvokeSpecial(XirSite site, XirArgument receiver, RiMethod method) {
         if (method.isResolved()) {
             if (site.requiresNullCheck()) {
-                return new XirSnippet(invokeSpecialTemplates.resolved, XirArgument.forWord(0), receiver);
+                return new XirSnippet(invokeSpecialTemplates.resolved, WordUtil.argument(Word.zero()), receiver);
             }
-            return new XirSnippet(invokeSpecialTemplates.resolvedNullCheckEliminated, XirArgument.forWord(0));
+            return new XirSnippet(invokeSpecialTemplates.resolvedNullCheckEliminated, WordUtil.argument(Word.zero()));
         }
 
         XirArgument guard = XirArgument.forObject(guardFor(method));
@@ -379,7 +378,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     public XirSnippet genInvokeStatic(XirSite site, RiMethod method) {
         if (method.isResolved()) {
             //assert C1XOptions.ResolveClassBeforeStaticInvoke : "need to add class initialization barrier for INVOKESTATIC";
-            return new XirSnippet(invokeStaticTemplates.resolved, XirArgument.forWord(0));
+            return new XirSnippet(invokeStaticTemplates.resolved, WordUtil.argument(Word.zero()));
         }
 
         XirArgument guard = XirArgument.forObject(guardFor(method));
@@ -398,7 +397,7 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     @Override
     public XirSnippet genGetField(XirSite site, XirArgument receiver, RiField field) {
-        XirPair pair = getFieldTemplates[field.kind().ordinal()];
+        XirPair pair = getFieldTemplates[field.kind(true).ordinal()];
         if (field.isResolved()) {
             FieldActor fieldActor = (FieldActor) field;
             XirArgument offset = XirArgument.forInt(fieldActor.offset());
@@ -411,7 +410,7 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     @Override
     public XirSnippet genPutField(XirSite site, XirArgument receiver, RiField field, XirArgument value) {
-        XirPair pair = putFieldTemplates[field.kind().ordinal()];
+        XirPair pair = putFieldTemplates[field.kind(true).ordinal()];
         if (field.isResolved()) {
             FieldActor fieldActor = (FieldActor) field;
             XirArgument offset = XirArgument.forInt(fieldActor.offset());
@@ -423,7 +422,7 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     @Override
     public XirSnippet genGetStatic(XirSite site, XirArgument staticTuple, RiField field) {
-        XirPair pair = getStaticFieldTemplates[field.kind().ordinal()];
+        XirPair pair = getStaticFieldTemplates[field.kind(true).ordinal()];
         if (field.isResolved()) {
             FieldActor fieldActor = (FieldActor) field;
             XirArgument offset = XirArgument.forInt(fieldActor.offset());
@@ -435,7 +434,7 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     @Override
     public XirSnippet genPutStatic(XirSite site, XirArgument staticTuple, RiField field, XirArgument value) {
-        XirPair pair = putStaticFieldTemplates[field.kind().ordinal()];
+        XirPair pair = putStaticFieldTemplates[field.kind(true).ordinal()];
         if (field.isResolved()) {
             FieldActor fieldActor = (FieldActor) field;
             XirArgument offset = XirArgument.forInt(fieldActor.offset());
@@ -667,9 +666,9 @@ public class MaxXirGenerator implements RiXirGenerator {
     @HOSTED_ONLY
     private XirTemplate buildSafepoint() {
         asm.restart(CiKind.Void);
-        XirOperand latch = asm.createRegisterTemp("latch", CiKind.Word, LATCH_REGISTER);
+        XirOperand latch = asm.createRegisterTemp("latch", WordUtil.archKind(), LATCH_REGISTER);
         asm.safepoint();
-        asm.pload(CiKind.Word, latch, latch, false);
+        asm.pload(WordUtil.archKind(), latch, latch, false);
         return finishTemplate(asm, "safepoint");
     }
 
@@ -677,7 +676,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     private XirTemplate buildArrayLength() {
         XirOperand result = asm.restart(CiKind.Int);
         XirOperand param = asm.createInputParameter("param", CiKind.Object);
-        asm.pload(CiKind.Word, result, param, asm.i(arrayLayout().arrayLengthOffset()), true);
+        asm.pload(WordUtil.archKind(), result, param, asm.i(arrayLayout().arrayLengthOffset()), true);
         return finishTemplate(asm, "arraylength");
     }
 
@@ -757,14 +756,14 @@ public class MaxXirGenerator implements RiXirGenerator {
         {
             // resolved invokestatic template
             asm.restart();
-            XirParameter addr = asm.createConstantInputParameter("addr", CiKind.Word);
+            XirParameter addr = asm.createConstantInputParameter("addr", WordUtil.archKind());
             resolved = finishTemplate(asm, addr, "invokestatic");
         }
         {
             // unresolved invokestatic template
             asm.restart();
             XirParameter guard = asm.createConstantInputParameter("guard", CiKind.Object);
-            XirOperand addr = asm.createTemp("addr", CiKind.Word);
+            XirOperand addr = asm.createTemp("addr", WordUtil.archKind());
             callRuntimeThroughStub(asm, "resolveStaticMethod", addr, guard);
             unresolved = finishTemplate(asm, addr, "invokestatic-unresolved");
         }
@@ -778,7 +777,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         {
             // resolved case
             asm.restart();
-            XirParameter addr = asm.createConstantInputParameter("addr", CiKind.Word); // address to call
+            XirParameter addr = asm.createConstantInputParameter("addr", WordUtil.archKind()); // address to call
             XirParameter receiver = asm.createInputParameter("receiver", CiKind.Object); // receiver object
             asm.nullCheck(receiver);
             resolved = finishTemplate(asm, addr, "invokespecial");
@@ -786,14 +785,14 @@ public class MaxXirGenerator implements RiXirGenerator {
         {
             // resolved case, null pointer check eliminated
             asm.restart();
-            XirParameter addr = asm.createConstantInputParameter("addr", CiKind.Word); // address to call
+            XirParameter addr = asm.createConstantInputParameter("addr", WordUtil.archKind()); // address to call
             resolvedNullCheckEliminated = finishTemplate(asm, addr, "invokespecial-nce");
         }
         {
             // unresolved invokespecial template
             asm.restart();
             XirParameter guard = asm.createConstantInputParameter("guard", CiKind.Object);
-            XirOperand addr = asm.createTemp("addr", CiKind.Word);
+            XirOperand addr = asm.createTemp("addr", WordUtil.archKind());
             callRuntimeThroughStub(asm, "resolveSpecialMethod", addr, guard);
             unresolved = finishTemplate(asm, addr, "invokespecial-unresolved");
         }
@@ -820,8 +819,8 @@ public class MaxXirGenerator implements RiXirGenerator {
             asm.add(a, a, mtableLengthOrStartIndex);
             asm.pload(CiKind.Int, a, hub, a, offsetOfFirstArrayElement(), Scale.Times4, false);
             asm.add(a, a, methodIndex);
-            XirOperand result = asm.createTemp("result", CiKind.Word);
-            asm.pload(CiKind.Word, result, hub, a, offsetOfFirstArrayElement(), Scale.fromInt(Word.size()), false);
+            XirOperand result = asm.createTemp("result", WordUtil.archKind());
+            asm.pload(WordUtil.archKind(), result, hub, a, offsetOfFirstArrayElement(), Scale.fromInt(Word.size()), false);
             resolved = finishTemplate(asm, result, "invokeinterface");
         }
         {
@@ -846,8 +845,8 @@ public class MaxXirGenerator implements RiXirGenerator {
             asm.add(a, a, mtableLengthOrStartIndex);
             asm.pload(CiKind.Int, a, hub, a, offsetOfFirstArrayElement(), Scale.Times4, false);
             asm.add(a, a, methodIndex);
-            XirOperand result = asm.createTemp("result", CiKind.Word);
-            asm.pload(CiKind.Word, result, hub, a, offsetOfFirstArrayElement(), Scale.fromInt(Word.size()), false);
+            XirOperand result = asm.createTemp("result", WordUtil.archKind());
+            asm.pload(WordUtil.archKind(), result, hub, a, offsetOfFirstArrayElement(), Scale.fromInt(Word.size()), false);
             unresolved = finishTemplate(asm, result, "invokeinterface");
         }
         return new XirPair(resolved, unresolved);
@@ -863,9 +862,9 @@ public class MaxXirGenerator implements RiXirGenerator {
             XirParameter receiver = asm.createInputParameter("receiver", CiKind.Object);
             XirParameter vtableOffset = asm.createConstantInputParameter("vtableOffset", CiKind.Int);
             XirOperand hub = asm.createTemp("hub", CiKind.Object);
-            XirOperand addr = asm.createTemp("addr", CiKind.Word);
+            XirOperand addr = asm.createTemp("addr", WordUtil.archKind());
             asm.pload(CiKind.Object, hub, receiver, asm.i(hubOffset()), true);
-            asm.pload(CiKind.Word, addr, hub, vtableOffset, false);
+            asm.pload(WordUtil.archKind(), addr, hub, vtableOffset, false);
             resolved = finishTemplate(asm, addr, "invokevirtual");
         }
         {
@@ -876,9 +875,9 @@ public class MaxXirGenerator implements RiXirGenerator {
             XirOperand vtableOffset = asm.createTemp("vtableOffset", CiKind.Int);
             callRuntimeThroughStub(asm, "resolveVirtualMethod", vtableOffset, guard);
             XirOperand hub = asm.createTemp("hub", CiKind.Object);
-            XirOperand addr = asm.createTemp("addr", CiKind.Word);
+            XirOperand addr = asm.createTemp("addr", WordUtil.archKind());
             asm.pload(CiKind.Object, hub, receiver, asm.i(hubOffset()), true);
-            asm.pload(CiKind.Word, addr, hub, vtableOffset, false);
+            asm.pload(WordUtil.archKind(), addr, hub, vtableOffset, false);
             unresolved = finishTemplate(asm, addr, "invokevirtual-unresolved");
         }
         return new XirPair(resolved, unresolved);
@@ -888,22 +887,22 @@ public class MaxXirGenerator implements RiXirGenerator {
     private XirTemplate buildTLABAllocateArrayIn(CiKind kind, XirOperand result, XirOperand hub) {
         XirParameter length = asm.createInputParameter("length", CiKind.Int);
         XirOperand arraySize = asm.createTemp("arraySize", CiKind.Int);
-        XirOperand cell = asm.createTemp("cell",  CiKind.Word);
+        XirOperand cell = asm.createTemp("cell",  WordUtil.archKind());
 
         XirLabel done = asm.createInlineLabel("done");
         XirLabel ok = asm.createInlineLabel("ok");
         XirLabel reportNegativeIndexError = asm.createOutOfLineLabel("indexError");
 
-        XirOperand tla = asm.createRegisterTemp("TLA", CiKind.Word, LATCH_REGISTER);
-        XirOperand etla = asm.createTemp("ETLA", CiKind.Word);
-        XirOperand tlabEnd = asm.createTemp("tlabEnd", CiKind.Word);
-        XirOperand newMark = asm.createTemp("newMark", CiKind.Word);
+        XirOperand tla = asm.createRegisterTemp("TLA", WordUtil.archKind(), LATCH_REGISTER);
+        XirOperand etla = asm.createTemp("ETLA", WordUtil.archKind());
+        XirOperand tlabEnd = asm.createTemp("tlabEnd", WordUtil.archKind());
+        XirOperand newMark = asm.createTemp("newMark", WordUtil.archKind());
 
         XirConstant offsetToTLABMark = asm.i(HeapSchemeWithTLAB.TLAB_MARK.offset);
         XirConstant offsetToTLABEnd = asm.i(HeapSchemeWithTLAB.TLAB_TOP.offset);
 
         asm.jlt(reportNegativeIndexError, length, asm.i(0));
-        asm.pload(CiKind.Word, etla, tla, asm.i(VmThreadLocal.ETLA.offset), false);
+        asm.pload(WordUtil.archKind(), etla, tla, asm.i(VmThreadLocal.ETLA.offset), false);
 
         int elemSize = target().sizeInBytes(kind);
         Scale scale = Scale.fromInt(elemSize);
@@ -919,8 +918,8 @@ public class MaxXirGenerator implements RiXirGenerator {
             asm.and(arraySize, arraySize, asm.i(~minObjectAlignmentMask()));
         }
 
-        asm.pload(CiKind.Word, cell, etla, offsetToTLABMark, false);
-        asm.pload(CiKind.Word, tlabEnd, etla, offsetToTLABEnd, false);
+        asm.pload(WordUtil.archKind(), cell, etla, offsetToTLABMark, false);
+        asm.pload(WordUtil.archKind(), tlabEnd, etla, offsetToTLABEnd, false);
         asm.add(newMark, cell, arraySize);
         asm.jlteq(ok, newMark, tlabEnd);
 
@@ -928,7 +927,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         asm.jmp(done);
 
         asm.bindInline(ok);
-        asm.pstore(CiKind.Word, etla, offsetToTLABMark, newMark, false);
+        asm.pstore(WordUtil.archKind(), etla, offsetToTLABMark, newMark, false);
 
         asm.bindInline(done);
         // Now, plant the hub to properly format the allocated cell as an object.
@@ -946,22 +945,22 @@ public class MaxXirGenerator implements RiXirGenerator {
     private XirTemplate buildTLABAllocateArray(CiKind kind, XirOperand result, XirOperand hub) {
         XirParameter length = asm.createInputParameter("length", CiKind.Int);
         XirOperand arraySize = asm.createTemp("arraySize", CiKind.Int);
-        XirOperand cell = asm.createTemp("cell",  CiKind.Word);
+        XirOperand cell = asm.createTemp("cell",  WordUtil.archKind());
 
         XirLabel done = asm.createInlineLabel("done");
         XirLabel slowPath = asm.createOutOfLineLabel("slowPath");
         XirLabel reportNegativeIndexError = asm.createOutOfLineLabel("indexError");
 
-        XirOperand tla = asm.createRegisterTemp("TLA", CiKind.Word, LATCH_REGISTER);
-        XirOperand etla = asm.createTemp("ETLA", CiKind.Word);
-        XirOperand tlabEnd = asm.createTemp("tlabEnd", CiKind.Word);
-        XirOperand newMark = asm.createTemp("newMark", CiKind.Word);
+        XirOperand tla = asm.createRegisterTemp("TLA", WordUtil.archKind(), LATCH_REGISTER);
+        XirOperand etla = asm.createTemp("ETLA", WordUtil.archKind());
+        XirOperand tlabEnd = asm.createTemp("tlabEnd", WordUtil.archKind());
+        XirOperand newMark = asm.createTemp("newMark", WordUtil.archKind());
 
         XirConstant offsetToTLABMark = asm.i(HeapSchemeWithTLAB.TLAB_MARK.offset);
         XirConstant offsetToTLABEnd = asm.i(HeapSchemeWithTLAB.TLAB_TOP.offset);
 
         asm.jlt(reportNegativeIndexError, length, asm.i(0));
-        asm.pload(CiKind.Word, etla, tla, asm.i(VmThreadLocal.ETLA.offset), false);
+        asm.pload(WordUtil.archKind(), etla, tla, asm.i(VmThreadLocal.ETLA.offset), false);
 
         int elemSize = target().sizeInBytes(kind);
         Scale scale = Scale.fromInt(elemSize);
@@ -977,11 +976,11 @@ public class MaxXirGenerator implements RiXirGenerator {
             asm.and(arraySize, arraySize, asm.i(~minObjectAlignmentMask()));
         }
 
-        asm.pload(CiKind.Word, cell, etla, offsetToTLABMark, false);
-        asm.pload(CiKind.Word, tlabEnd, etla, offsetToTLABEnd, false);
+        asm.pload(WordUtil.archKind(), cell, etla, offsetToTLABMark, false);
+        asm.pload(WordUtil.archKind(), tlabEnd, etla, offsetToTLABEnd, false);
         asm.add(newMark, cell, arraySize);
         asm.jgt(slowPath, newMark, tlabEnd);
-        asm.pstore(CiKind.Word, etla, offsetToTLABMark, newMark, false);
+        asm.pstore(WordUtil.archKind(), etla, offsetToTLABMark, newMark, false);
         asm.bindInline(done);
         // Now, plant the hub to properly format the allocated cell as an object.
         asm.pstore(CiKind.Object, cell, asm.i(hubOffset()), hub, false);
@@ -1098,19 +1097,19 @@ public class MaxXirGenerator implements RiXirGenerator {
     // Version that doesn't use out-of-line stub.
     @HOSTED_ONLY
     private void buildTLABAllocateIn(boolean isHybrid, XirOperand result, XirOperand hub, XirOperand tupleSize) {
-        XirOperand cell = asm.createTemp("cell",  CiKind.Word);
+        XirOperand cell = asm.createTemp("cell",  WordUtil.archKind());
         XirLabel done = asm.createInlineLabel("done");
         XirLabel ok = asm.createInlineLabel("slowPath");
-        XirOperand tla = asm.createRegisterTemp("TLA", CiKind.Word, LATCH_REGISTER);
-        XirOperand etla = asm.createTemp("ETLA", CiKind.Word);
-        XirOperand tlabEnd = asm.createTemp("tlabEnd", CiKind.Word);
-        XirOperand newMark = asm.createTemp("newMark", CiKind.Word);
+        XirOperand tla = asm.createRegisterTemp("TLA", WordUtil.archKind(), LATCH_REGISTER);
+        XirOperand etla = asm.createTemp("ETLA", WordUtil.archKind());
+        XirOperand tlabEnd = asm.createTemp("tlabEnd", WordUtil.archKind());
+        XirOperand newMark = asm.createTemp("newMark", WordUtil.archKind());
 
         XirConstant offsetToTLABMark = asm.i(HeapSchemeWithTLAB.TLAB_MARK.offset);
         XirConstant offsetToTLABEnd = asm.i(HeapSchemeWithTLAB.TLAB_TOP.offset);
-        asm.pload(CiKind.Word, etla, tla, asm.i(VmThreadLocal.ETLA.offset), false);
-        asm.pload(CiKind.Word, cell, etla, offsetToTLABMark, false);
-        asm.pload(CiKind.Word, tlabEnd, etla, offsetToTLABEnd, false);
+        asm.pload(WordUtil.archKind(), etla, tla, asm.i(VmThreadLocal.ETLA.offset), false);
+        asm.pload(WordUtil.archKind(), cell, etla, offsetToTLABMark, false);
+        asm.pload(WordUtil.archKind(), tlabEnd, etla, offsetToTLABEnd, false);
         asm.add(newMark, cell, tupleSize);
         asm.jlteq(ok, newMark, tlabEnd);
         // Slow path.
@@ -1118,7 +1117,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         // Jump over update of TLAB mark and go directly to code formatting the allocated cell.
         asm.jmp(done);
         asm.bindInline(ok);
-        asm.pstore(CiKind.Word, etla, offsetToTLABMark, newMark, false);
+        asm.pstore(WordUtil.archKind(), etla, offsetToTLABMark, newMark, false);
         asm.bindInline(done);
         // Now, plant the hub to properly format the allocated cell as an object.
         asm.pstore(CiKind.Object, cell, asm.i(hubOffset()), hub, false);
@@ -1130,22 +1129,22 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     @HOSTED_ONLY
     private void buildTLABAllocate(boolean isHybrid, XirOperand result, XirOperand hub, XirOperand tupleSize) {
-        XirOperand cell = asm.createTemp("cell",  CiKind.Word);
+        XirOperand cell = asm.createTemp("cell",  WordUtil.archKind());
         XirLabel done = asm.createInlineLabel("done");
         XirLabel slowPath = asm.createOutOfLineLabel("slowPath");
-        XirOperand tla = asm.createRegisterTemp("TLA", CiKind.Word, LATCH_REGISTER);
-        XirOperand etla = asm.createTemp("ETLA", CiKind.Word);
-        XirOperand tlabEnd = asm.createTemp("tlabEnd", CiKind.Word);
-        XirOperand newMark = asm.createTemp("newMark", CiKind.Word);
+        XirOperand tla = asm.createRegisterTemp("TLA", WordUtil.archKind(), LATCH_REGISTER);
+        XirOperand etla = asm.createTemp("ETLA", WordUtil.archKind());
+        XirOperand tlabEnd = asm.createTemp("tlabEnd", WordUtil.archKind());
+        XirOperand newMark = asm.createTemp("newMark", WordUtil.archKind());
 
         XirConstant offsetToTLABMark = asm.i(HeapSchemeWithTLAB.TLAB_MARK.offset);
         XirConstant offsetToTLABEnd = asm.i(HeapSchemeWithTLAB.TLAB_TOP.offset);
-        asm.pload(CiKind.Word, etla, tla, asm.i(VmThreadLocal.ETLA.offset), false);
-        asm.pload(CiKind.Word, cell, etla, offsetToTLABMark, false);
-        asm.pload(CiKind.Word, tlabEnd, etla, offsetToTLABEnd, false);
+        asm.pload(WordUtil.archKind(), etla, tla, asm.i(VmThreadLocal.ETLA.offset), false);
+        asm.pload(WordUtil.archKind(), cell, etla, offsetToTLABMark, false);
+        asm.pload(WordUtil.archKind(), tlabEnd, etla, offsetToTLABEnd, false);
         asm.add(newMark, cell, tupleSize);
         asm.jgt(slowPath, newMark, tlabEnd);
-        asm.pstore(CiKind.Word, etla, offsetToTLABMark, newMark, false);
+        asm.pstore(WordUtil.archKind(), etla, offsetToTLABMark, newMark, false);
         asm.bindInline(done);
         // Now, plant the hub to properly format the allocated cell as an object.
         asm.pstore(CiKind.Object, cell, asm.i(hubOffset()), hub, false);
@@ -1505,9 +1504,9 @@ public class MaxXirGenerator implements RiXirGenerator {
     private XirTemplate buildExceptionObject() {
         XirOperand result = asm.restart(CiKind.Object);
         // Emit a safepoint
-        XirOperand latch = asm.createRegisterTemp("latch", CiKind.Word, LATCH_REGISTER);
+        XirOperand latch = asm.createRegisterTemp("latch", WordUtil.archKind(), LATCH_REGISTER);
         asm.safepoint();
-        asm.pload(CiKind.Word, latch, latch, false);
+        asm.pload(WordUtil.archKind(), latch, latch, false);
 
         callRuntimeThroughStub(asm, "loadException", result);
         return finishTemplate(asm, "load-exception");
@@ -1566,18 +1565,18 @@ public class MaxXirGenerator implements RiXirGenerator {
                 if (result == null) {
                     assert signature.resultKind() == Kind.VOID;
                 } else {
-                    CiKind ciKind = signature.resultKind().ciKind;
+                    CiKind ciKind = signature.returnKind(true);
                     assert ciKind == result.kind : "return type mismatch in call to " + method;
                 }
 
                 assert signature.numberOfParameters() == args.length : "parameter mismatch in call to " + method;
                 CiXirAssembler stubAsm = asm.copy();
-                XirOperand resultVariable = stubAsm.restart(signature.resultKind().ciKind);
+                XirOperand resultVariable = stubAsm.restart(WordUtil.ciKind(signature.resultKind(), true));
 
                 XirParameter[] rtArgs = new XirParameter[signature.numberOfParameters()];
                 for (int i = 0; i < signature.numberOfParameters(); i++) {
                     // create a parameter for each parameter to the runtime call
-                    CiKind ciKind = signature.parameterDescriptorAt(i).toKind().ciKind;
+                    CiKind ciKind = signature.argumentKindAt(i, true);
                     assert ciKind == args[i].kind : "type mismatch in call to " + method;
                     rtArgs[i] = stubAsm.createInputParameter("rtArgs[" + i + "]", ciKind);
                 }

@@ -40,6 +40,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.hosted.JDKInterceptor.InterceptedField;
 import com.sun.max.vm.jni.*;
@@ -756,8 +757,9 @@ public class FieldActor extends MemberActor implements RiField {
         return true;
     }
 
-    public final CiKind kind() {
-        return kind.ciKind;
+    @Override
+    public final CiKind kind(boolean architecture) {
+        return WordUtil.ciKind(kind, architecture);
     }
 
     public final String name() {

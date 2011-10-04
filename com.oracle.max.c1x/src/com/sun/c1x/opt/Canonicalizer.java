@@ -80,20 +80,12 @@ public class Canonicalizer extends DefaultValueVisitor {
         return addInstr(Constant.forLong(v));
     }
 
-    private Constant wordInstr(long v) {
-        return addInstr(Constant.forWord(v));
-    }
-
     private Value setCanonical(Value x) {
         return canonical = x;
     }
 
     private Value setIntConstant(int val) {
         return canonical = Constant.forInt(val);
-    }
-
-    private Value setConstant(CiConstant val) {
-        return canonical = new Constant(val);
     }
 
     private Value setBooleanConstant(boolean val) {
@@ -248,7 +240,7 @@ public class Canonicalizer extends DefaultValueVisitor {
             }
             case Op2.UREM: {
                 if (y == 1) {
-                    return setCanonical(wordInstr(0));
+                    return setIntConstant(0);
                 } else if (CiUtil.isPowerOf2(y)) {
                     return setCanonical(new LogicOp(IAND, x, intInstr(y - 1)));
                 }
@@ -357,7 +349,7 @@ public class Canonicalizer extends DefaultValueVisitor {
             }
             case Op2.UREM: {
                 if (y == 1) {
-                    return setCanonical(wordInstr(0));
+                    return setLongConstant(0);
                 } else if (CiUtil.isPowerOf2(y)) {
                     return setCanonical(new LogicOp(LAND, x, longInstr(y - 1)));
                 }
@@ -618,14 +610,14 @@ public class Canonicalizer extends DefaultValueVisitor {
                     // don't do canonicalization in the <clinit> method
                     return;
                 }
-                setConstant(value);
+                canonical = new Constant(field.kind(false), value);
             }
         } else {
             RiField field = i.field();
             if (i.object().isConstant()) {
                 CiConstant value = field.constantValue(i.object().asConstant());
                 if (value != null) {
-                    setConstant(value);
+                    canonical = new Constant(field.kind(false), value);
                 }
             }
         }
@@ -638,7 +630,7 @@ public class Canonicalizer extends DefaultValueVisitor {
             // writing the value to a field that is packed
             Value v = i.value();
             if (v instanceof Convert) {
-                Value nv = eliminateNarrowing(i.field().kind(), (Convert) v);
+                Value nv = eliminateNarrowing(i.field().kind(false), (Convert) v);
                 // limit this optimization to the current basic block
                 // XXX: why is this limited to the current block?
                 if (nv != null && inCurrentBlock(v)) {
@@ -842,7 +834,7 @@ public class Canonicalizer extends DefaultValueVisitor {
         CiKind kind = CiKind.Illegal;
         if (v instanceof LoadField) {
             // remove redundant conversions from field loads of the correct type
-            kind = ((LoadField) v).field().kind();
+            kind = ((LoadField) v).field().kind(false);
         } else if (v instanceof LoadIndexed) {
             // remove redundant conversions from array loads of the correct type
             kind = ((LoadIndexed) v).elementKind();
@@ -925,7 +917,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                 CiConstant result = foldInvocation(runtime, i.target(), i.arguments());
                 if (result != null) {
                     // folding was successful
-                    setCanonical(new Constant(result));
+                    setCanonical(new Constant(method.signature().returnKind(false), result));
                 }
             }
         }
@@ -1007,10 +999,10 @@ public class Canonicalizer extends DefaultValueVisitor {
             // try to convert a call to Array.newInstance() into a NewObjectArray or NewTypeArray
             RiType type = getTypeOf(args[0]);
             if (type != null) {
-                if (type.kind() == CiKind.Object) {
+                if (type.kind(false) == CiKind.Object) {
                     setCanonical(new NewObjectArray(type, args[1], i.stateBefore()));
                 } else {
-                    RiType elementType = runtime.asRiType(type.kind());
+                    RiType elementType = runtime.asRiType(type.kind(false));
                     setCanonical(new NewTypeArray(args[1], elementType, i.stateBefore()));
                 }
                 return;

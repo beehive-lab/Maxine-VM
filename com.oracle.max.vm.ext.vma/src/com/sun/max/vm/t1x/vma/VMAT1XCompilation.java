@@ -34,6 +34,7 @@ import com.oracle.max.vm.ext.vma.options.*;
 import com.sun.cri.ci.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.type.*;
 
 /**
  * Overrides some {@link T1XCompilation} methods to provide finer compile time control over advising.
@@ -162,7 +163,7 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
     }
 
     @Override
-    protected void finishCall(T1XTemplateTag tag, CiKind returnKind, int safepoint, ClassMethodActor directCallee) {
+    protected void finishCall(T1XTemplateTag tag, Kind returnKind, int safepoint, ClassMethodActor directCallee) {
         super.finishCall(tag, returnKind, safepoint, directCallee);
         // check if after advice required and if so, set invokeAfterTag
         if (templates == vmaT1X.templates || templates == vmaT1X.afterTemplates) {
@@ -311,17 +312,16 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
     }
 
     @Override
-    protected void do_load(int index, CiKind kind) {
+    protected void do_load(int index, Kind kind) {
         if (templates != defaultTemplates) {
             T1XTemplateTag tag = null;
             // Checkstyle: stop
-            switch (kind) {
-                case Object: tag = ALOAD; break;
-                case Int: tag = ILOAD; break;
-                case Long: tag = LLOAD; break;
-                case Float: tag = FLOAD; break;
-                case Double: tag = DLOAD; break;
-                case Word: tag = ALOAD; break;
+            switch (kind.asEnum) {
+                case REFERENCE: tag = ALOAD; break;
+                case INT: tag = ILOAD; break;
+                case LONG: tag = LLOAD; break;
+                case FLOAT: tag = FLOAD; break;
+                case DOUBLE: tag = DLOAD; break;
             }
             // Checkstyle: resume
             start(tag);
@@ -332,33 +332,31 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
     }
 
     @Override
-    protected void do_store(int index, CiKind kind) {
+    protected void do_store(int index, Kind kind) {
         if (templates != defaultTemplates) {
             T1XTemplateTag tag = null;
             // Checkstyle: stop
-            switch (kind) {
-                case Object: tag = ASTORE; break;
-                case Int: tag = ISTORE; break;
-                case Long: tag = LSTORE; break;
-                case Float: tag = FSTORE; break;
-                case Double: tag = DSTORE; break;
-                case Word: tag = ASTORE; break;
+            switch (kind.asEnum) {
+                case REFERENCE: tag = ASTORE; break;
+                case INT: tag = ISTORE; break;
+                case LONG: tag = LSTORE; break;
+                case FLOAT: tag = FSTORE; break;
+                case DOUBLE: tag = DSTORE; break;
             }
             // Checkstyle: resume
             start(tag);
             assignInt(0, "index", index);
             CiRegister reg = reg(1, "value", kind);
-            switch(kind) {
-                case Int:
-                case Float:
+            switch(kind.asEnum) {
+                case INT:
+                case FLOAT:
                     peekInt(reg, 0);
                     break;
-                case Word:
-                case Object:
+                case REFERENCE:
                     peekWord(reg, 0);
                     break;
-                case Long:
-                case Double:
+                case LONG:
+                case DOUBLE:
                     peekLong(reg, 0);
                     break;
                 default:
@@ -380,7 +378,7 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
                     break;
                 case IFNULL: case IFNONNULL: {
                     start(tag);
-                    CiRegister reg = reg(0, "value1", CiKind.Object);
+                    CiRegister reg = reg(0, "value1", Kind.REFERENCE);
                     peekObject(reg, 0);
                     finish();
                     break;
@@ -388,7 +386,7 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
 
                 case IFEQ: case IFNE: case IFLT: case IFLE: case IFGE: case IFGT: {
                     start(tag);
-                    CiRegister reg = reg(0, "value1", CiKind.Int);
+                    CiRegister reg = reg(0, "value1", Kind.INT);
                     peekInt(reg, 0);
                     finish();
                     break;
@@ -397,8 +395,8 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
                 case IF_ICMPEQ: case IF_ICMPNE: case IF_ICMPLT: case IF_ICMPGE:
                 case IF_ICMPGT: case IF_ICMPLE: case IF_ACMPEQ: case IF_ACMPNE: {
                     start(tag);
-                    CiRegister reg1 = reg(0, "value1", CiKind.Int);
-                    CiRegister reg2 = reg(1, "value2", CiKind.Int);
+                    CiRegister reg1 = reg(0, "value1", Kind.INT);
+                    CiRegister reg2 = reg(1, "value2", Kind.INT);
                     peekInt(reg1, 1);
                     peekInt(reg2, 0);
                     finish();
@@ -422,7 +420,7 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
         addToInvokeAfterTagMap(T1XTemplateTag.INVOKESTATICS, INVOKESTATIC$adviseafter);
     }
 
-    private static void addToInvokeAfterTagMap(EnumMap<CiKind, T1XTemplateTag> map, T1XTemplateTag value) {
+    private static void addToInvokeAfterTagMap(EnumMap<KindEnum, T1XTemplateTag> map, T1XTemplateTag value) {
         for (T1XTemplateTag tag : map.values()) {
             invokeAfterTagMap.put(tag, value);
         }

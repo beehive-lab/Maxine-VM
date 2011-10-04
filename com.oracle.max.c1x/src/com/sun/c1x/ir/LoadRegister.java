@@ -24,6 +24,7 @@ package com.sun.c1x.ir;
 
 import com.sun.c1x.debug.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * The {@code LoadRegister} instruction represents a read of a physical register.
@@ -33,15 +34,22 @@ import com.sun.cri.ci.*;
 public final class LoadRegister extends Instruction {
 
     public final CiRegister register;
+    public final RiType declaredType;
 
     /**
      * Creates a new LoadRegister instance.
      * @param kind the kind of value loaded from the register
      * @param register the register to load
      */
-    public LoadRegister(CiKind kind, CiRegister register) {
+    public LoadRegister(CiKind kind, CiRegister register, RiType declaredType) {
         super(kind);
         this.register = register;
+        this.declaredType = declaredType;
+    }
+
+    @Override
+    public RiType declaredType() {
+        return declaredType;
     }
 
     @Override

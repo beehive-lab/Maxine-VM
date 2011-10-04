@@ -42,7 +42,6 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
     private static final CiRegisterValue RAX_I = AMD64.rax.asValue(CiKind.Int);
     private static final CiRegisterValue RAX_L = AMD64.rax.asValue(CiKind.Long);
-    private static final CiRegisterValue RAX_W = AMD64.rax.asValue(CiKind.Word);
     private static final CiRegisterValue RDX_I = AMD64.rdx.asValue(CiKind.Int);
     private static final CiRegisterValue RDX_L = AMD64.rdx.asValue(CiKind.Long);
 
@@ -358,9 +357,6 @@ public class AMD64LIRGenerator extends LIRGenerator {
             case Int:
                 visitArithmeticOpInt(x);
                 return;
-            case Word:
-                visitArithmeticOpLong(x);
-                return;
         }
         throw Util.shouldNotReachHere();
     }
@@ -414,7 +410,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
             CiValue reg = createResultVariable(x);
             int code = x.opcode;
             lir.fcmp2int(left.result(), right.result(), reg, code == Bytecodes.FCMPL || code == Bytecodes.DCMPL);
-        } else if (x.x().kind.isLong() || x.x().kind.isWord()) {
+        } else if (x.x().kind.isLong()) {
             CiValue reg = createResultVariable(x);
             lir.lcmp2int(left.result(), right.result(), reg);
         } else {
@@ -438,7 +434,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
         // (tw) TODO: Factor out common code with genCompareAndSwap.
 
-        CiKind dataKind = x.dataKind;
+        CiKind dataKind = x.dataType.kind(true);
         CiValue tempPointer = load(x.pointer());
         CiAddress addr = getAddressForPointerOp(x, dataKind, tempPointer);
 
@@ -451,7 +447,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
             preGCWriteBarrier(addr, false, null);
         }
 
-        CiValue pointer = newVariable(CiKind.Word);
+        CiValue pointer = newVariable(compilation.target.wordKind);
         lir.lea(addr, pointer);
         CiValue result = createResultVariable(x);
         CiValue resultReg = AMD64.rax.asValue(dataKind);
@@ -460,7 +456,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
         } else if (dataKind.isInt()) {
             lir.casInt(pointer, expectedValue, newValue);
         } else {
-            assert dataKind.isLong() || dataKind.isWord();
+            assert dataKind.isLong();
             lir.casLong(pointer, expectedValue, newValue);
         }
 
@@ -498,7 +494,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
         CiValue cmp = force(x.argumentAt(3), AMD64.rax.asValue(kind));
         val.loadItem();
 
-        CiValue pointer = newVariable(CiKind.Word);
+        CiValue pointer = newVariable(compilation.target.wordKind);
         lir.lea(addr, pointer);
 
         if (kind.isObject()) { // Write-barrier needed for Object fields.
