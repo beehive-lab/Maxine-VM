@@ -27,7 +27,7 @@ import com.sun.max.unsafe.*;
 /**
  * Application heap interface to a GCX heap scheme.
  */
-public interface ApplicationHeap {
+public interface ApplicationHeap extends ResizableSpace {
     Pointer allocate(Size size);
     Pointer allocateTLAB(Size size);
     boolean contains(Address address);

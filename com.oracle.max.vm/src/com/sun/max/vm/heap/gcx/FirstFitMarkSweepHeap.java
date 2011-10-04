@@ -117,6 +117,12 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
     private Size minOverflowRefillSize;
 
     /**
+     * Number of bytes reclaimed by the last GC.
+     */
+    private Size numReclaimedBytes;
+    private Size beforeGCUsedBytes;
+
+    /**
      * Indicate whether a size is categorized as large. Request for large size must go to the large object allocator.
      * @param size size in words
      * @return true if the size is considered large.
@@ -261,7 +267,8 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                     }
                 }
             } while(Heap.collectGarbage(roundedUpSize)); // Always collect for at least one region.
-            return Pointer.zero();
+            // Not enough freed memory.
+            throw outOfMemoryError;
         }
     }
 
@@ -677,7 +684,10 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         Size regionSize = Size.fromInt(regionSizeInBytes);
         tlabAllocationRegions = HeapRegionList.RegionListUse.OWNERSHIP.createList();
         allocationRegions = HeapRegionList.RegionListUse.OWNERSHIP.createList();
-        heapAccount.allocate(numberOfRegions(minSize), allocationRegions, true);
+        int result = heapAccount.allocate(numberOfRegions(minSize), allocationRegions, true);
+        if (result != 0) {
+            FatalError.unexpected("Failed to create application heap");
+        }
         minReclaimableSpace = Size.fromInt(freeChunkMinSizeOption.getValue());
         // FIXME:  the following two are connected: if you deny refill after overflow, the only solution left is allocating large.
         minLargeObjectSize = regionSize;
@@ -730,10 +740,13 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
 
     @Override
     public boolean canSatisfyAllocation(Size size) {
+        if (numReclaimedBytes.lessThan(size)) {
+            return false;
+        }
         // Keep it simple and over-conservative for now.
         if (isLarge(size)) {
+            int numRegionsNeeded = size.alignUp(regionSizeInBytes).unsignedShiftedRight(log2RegionSizeInBytes).toInt();
             // Over simplistic. Assumes all regions in the allocationRegions list are empty.
-            int numRegionsNeeded = size.alignUp(HeapRegionConstants.regionSizeInBytes).unsignedShiftedRight(HeapRegionConstants.log2RegionSizeInBytes).toInt();
             return numRegionsNeeded <= allocationRegions.size();
         }
         if (allocationRegions.size() > 0 || overflowAllocator.freeSpace().greaterEqual(size)) {
@@ -772,12 +785,18 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
 
     @Override
     public void doBeforeGC() {
+        beforeGCUsedBytes = usedSpace();
         overflowAllocator.doBeforeGC();
         tlabAllocator.doBeforeGC();
     }
 
     @Override
     public void doAfterGC() {
+        Size afterGCUsedBytes = usedSpace();
+        numReclaimedBytes = beforeGCUsedBytes.minus(afterGCUsedBytes);
+        if (numReclaimedBytes.isZero()) {
+            FatalError.breakpoint();
+        }
     }
 
     public void mark(TricolorHeapMarker heapMarker) {
@@ -953,5 +972,26 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         FatalError.unexpected("Precise Sweeping not implemented");
         return Pointer.zero();
     }
+
+    @Override
+    public Size growAfterGC(Size delta) {
+        int numRegions = delta.roundedUpBy(regionSizeInBytes).unsignedShiftedRight(log2RegionSizeInBytes).toInt();
+        if (numRegions == 0) {
+            numRegions = 1;
+        }
+        int result = heapAccount.allocate(numRegions, allocationRegions, false);
+        if (result != 0) {
+            return Size.zero();
+        }
+        return Size.fromInt(numRegions).shiftedLeft(log2RegionSizeInBytes);
+    }
+
+    @Override
+    public Size shrinkAfterGC(Size delta) {
+        // TODO Auto-generated method stub
+        return Size.zero();
+    }
+
+
 }
 
