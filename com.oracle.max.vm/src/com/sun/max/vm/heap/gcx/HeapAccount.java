@@ -160,12 +160,14 @@ public class HeapAccount<T extends HeapAccountOwner>{
      * @param numRegions number of contiguous regions requested
      * @param recipient the heap region list where the regions will be added if the request succeeds
      * @param prepend if true, insert the allocated regions at the head of the list, otherwise at the tail.
-     * @return true if the requested number of regions is allocated, false otherwise.
+     * @return 0 if the requested number of regions is allocated, the number of regions left in the account otherwise.
      */
-    public synchronized boolean allocate(int numRegions, HeapRegionList recipient, boolean prepend) {
-        if (allocated.size() + numRegions > reserve) {
-            return false;
+    public synchronized int allocate(int numRegions, HeapRegionList recipient, boolean prepend) {
+        int numRegionsLeft = reserve - allocated.size();
+        if (numRegionsLeft < numRegions) {
+            return numRegionsLeft;
         }
+
         final FixedSizeRegionAllocator regionAllocator = theHeapRegionManager.regionAllocator();
         int numRegionsNeeded = numRegions;
         while (numRegionsNeeded > 0) {
@@ -179,7 +181,7 @@ public class HeapAccount<T extends HeapAccountOwner>{
             recordAllocated(firstAllocatedRegion, numAllocatedRegions, recipient, prepend);
             numRegionsNeeded -= numAllocatedRegions;
         }
-        return true;
+        return 0;
     }
 
     /**
@@ -203,7 +205,7 @@ public class HeapAccount<T extends HeapAccountOwner>{
         return true;
     }
 
-    public boolean allocate(int numRegions) {
+    public int allocate(int numRegions) {
         return allocate(numRegions, null, false);
     }
 
