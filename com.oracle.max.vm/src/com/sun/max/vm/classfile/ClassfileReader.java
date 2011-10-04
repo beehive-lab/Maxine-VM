@@ -53,6 +53,7 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.instrument.*;
 import com.sun.max.vm.intrinsics.*;
+import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.type.ClassRegistry.Property;
 import com.sun.max.vm.value.*;
@@ -1324,6 +1325,19 @@ public final class ClassfileReader {
         if (superClassActor != null) {
             superClassActor.checkAccessBy(classActor);
         }
+
+        // Even though the following methods check against isHosted an explicit guard is needed
+        // here to prevent an initialization problem if JVMTI is initialized too early.
+        if (!MaxineVM.isHosted()) {
+            // Maxine is unable to usefully distinguish CLASS_LOAD and CLASS_PREPARE events
+            // as we need a ClassActor in order to create a Class object
+            if (JVMTI.eventNeeded(JVMTIEvent.CLASS_LOAD)) {
+                JVMTI.event(JVMTIEvent.CLASS_LOAD, classActor.javaClass());
+            }
+            if (JVMTI.eventNeeded(JVMTIEvent.CLASS_PREPARE)) {
+                JVMTI.event(JVMTIEvent.CLASS_PREPARE, classActor.javaClass());
+            }
+        }
         return classActor;
     }
 
@@ -1417,17 +1431,36 @@ public final class ClassfileReader {
      */
     public static ClassActor defineClassActor(String name, ClassLoader classLoader, byte[] bytes, int offset, int length, ProtectionDomain protectionDomain, Object source, boolean isRemote) {
         final Instrumentation instrumentation = InstrumentationManager.getInstrumentation();
+        boolean jvmtiAgents = JVMTI.eventNeeded(JVMTIEvent.CLASS_FILE_LOAD_HOOK);
         byte[] classfileBytes = bytes;
-        if (instrumentation != null) {
+        if (instrumentation != null || jvmtiAgents) {
             if (offset != 0 || length != bytes.length) {
                 classfileBytes = new byte[length];
                 System.arraycopy(bytes, offset, classfileBytes, 0, length);
                 offset = 0;
             }
-            final byte[] tBytes = InstrumentationManager.transform(classLoader == BootClassLoader.BOOT_CLASS_LOADER ? null : classLoader, name != null ? name.replace('.', '/') : null, null, protectionDomain, classfileBytes, false);
-            if (tBytes != null) {
-                classfileBytes = tBytes;
-                length = tBytes.length;
+            byte[] tClassfileBytes = classfileBytes;
+            String iName = name == null ? null : name.replace('.', '/');
+            ClassLoader agentClassLoader = classLoader == BootClassLoader.BOOT_CLASS_LOADER ? null : classLoader;
+            if (jvmtiAgents) {
+                // Call JVMTI agents first and then pass to the javaagent agents
+                final byte[] tBytes = JVMTI.classFileLoadHook(agentClassLoader, iName, protectionDomain, tClassfileBytes);
+                if (tBytes != null) {
+                    tClassfileBytes = tBytes;
+                }
+
+            }
+            if (instrumentation != null) {
+                final byte[] tBytes = InstrumentationManager.transform(agentClassLoader, iName, null, protectionDomain, tClassfileBytes, false);
+                if (tBytes != null) {
+                    tClassfileBytes = tBytes;
+                }
+            }
+
+            // If any agent changed the bytes update the incoming values
+            if (tClassfileBytes != null) {
+                classfileBytes = tClassfileBytes;
+                length = tClassfileBytes.length;
             }
         }
         saveClassfile(name, classfileBytes);

@@ -22,36 +22,34 @@
  */
 package com.sun.max.vm.jvmti;
 
+import java.util.*;
+
+import static com.sun.max.vm.jvmti.JVMTIConstants.*;
 import com.sun.max.unsafe.*;
 
 /**
- * Names and offsets to the native struct used to hold the JVMTIEnv implementation fields.
- * Must match the definition in jvmti.c
+ * JVMTI object tagging support.
+ * The tag map is allocated lazily.
+ * A more efficient and less heap instrusive implementation might be necessary.
  */
-enum JVMTIEnvImplFields {
-    FUNCTIONS(0),
-    CALLBACKS(8),
-    CAPABILITIES(16), // the capabilities that are active for this environment
-    EVENTMASK(24); // global event enabled mask
+class JVMTITags {
+    private Map<Object, Long> tagMap;
 
-    int offset;
-
-    JVMTIEnvImplFields(int offset) {
-        this.offset = offset;
+    int getTag(Object object, Pointer tagPtr) {
+        long tag = checkMap().get(object);
+        tagPtr.writeLong(0, tag);
+        return JVMTI_ERROR_NONE;
     }
 
-    /**
-     * Return the value of the field at our offset from {@code base}.
-     */
-    Word get(Pointer base) {
-        return base.readWord(offset);
+    int setTag(Object object, long tag) {
+        checkMap().put(object, tag);
+        return JVMTI_ERROR_NONE;
     }
 
-    Pointer getPtr(Pointer base) {
-        return base.readWord(offset).asPointer();
-    }
-
-    void set(Pointer base, Word value) {
-        base.writeWord(offset, value);
+    private Map<Object, Long> checkMap() {
+        if (tagMap == null) {
+            tagMap  = Collections.synchronizedMap(new WeakHashMap<Object, Long>());
+        }
+        return tagMap;
     }
 }

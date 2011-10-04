@@ -27,12 +27,13 @@ import com.sun.max.unsafe.*;
 /**
  * JVMTI Capabilities.
  * A capability is on if the relevant bit is set in the {@code jvmtiCapabilities struct is set.
+ * TODO This code currently assume 64 bit,little endian architecture.
  */
 enum JVMTICapabilities {
-    CAN_TAG_OBJECTS(false),
+    CAN_TAG_OBJECTS(true),
     CAN_GENERATE_FIELD_MODIFICATION_EVENTS(false),
     CAN_GENERATE_FIELD_ACCESS_EVENTS(false),
-    CAN_GET_BYTECODES(false),
+    CAN_GET_BYTECODES(true),
     CAN_GET_SYNTHETIC_ATTRIBUTE(false),
     CAN_GET_OWNED_MONITOR_INFO(false),
     CAN_GET_CURRENT_CONTENDED_MONITOR(false),
@@ -40,7 +41,7 @@ enum JVMTICapabilities {
     CAN_POP_FRAME(false),
     CAN_REDEFINE_CLASSES(false),
     CAN_SIGNAL_THREAD(false),
-    CAN_GET_SOURCE_FILE_NAME(false),
+    CAN_GET_SOURCE_FILE_NAME(true),
     CAN_GET_LINE_NUMBERS(false),
     CAN_GET_SOURCE_DEBUG_EXTENSION(false),
     CAN_ACCESS_LOCAL_VARIABLES(false),
@@ -55,7 +56,7 @@ enum JVMTICapabilities {
     CAN_GET_THREAD_CPU_TIME(false),
     CAN_GENERATE_METHOD_ENTRY_EVENTS(false),
     CAN_GENERATE_METHOD_EXIT_EVENTS(false),
-    CAN_GENERATE_ALL_CLASS_HOOK_EVENTS(false),
+    CAN_GENERATE_ALL_CLASS_HOOK_EVENTS(true),
     CAN_GENERATE_COMPILED_METHOD_LOAD_EVENTS(false),
     CAN_GENERATE_MONITOR_EVENTS(false),
     CAN_GENERATE_VM_OBJECT_ALLOC_EVENTS(false),
@@ -91,13 +92,15 @@ enum JVMTICapabilities {
     static {
         for (int i = 0; i < JVMTICapabilities.values.length; i++) {
             JVMTICapabilities cap = JVMTICapabilities.values[i];
-            allMask |= cap.bitMask;
+            if (cap.can) {
+                allMask |= cap.bitMask;
+            }
         }
     }
 
     JVMTICapabilities(boolean t) {
         can = t;
-        bitMask = 1 << ordinal();
+        bitMask = 1L << ordinal();
     }
 
     /**
@@ -106,7 +109,7 @@ enum JVMTICapabilities {
      * @return {@code true} if this capability is set, {@code false} otherwise
      */
     boolean get(Pointer base) {
-        return (base.readInt(0) & bitMask) != 0;
+        return (base.readLong(0) & bitMask) != 0;
     }
 
     void set(Pointer base, boolean value) {

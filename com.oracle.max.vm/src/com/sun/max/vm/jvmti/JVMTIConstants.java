@@ -22,7 +22,10 @@
  */
 package com.sun.max.vm.jvmti;
 
-
+/**
+ * Dump of all the constants in jvmti.h.
+ * Ideally, these would be distributed to the specific implementation classes.
+ */
 public class JVMTIConstants {
     public static final int JVMTI_VERSION_1   = 0x30010000;
     public static final int JVMTI_VERSION_1_0 = 0x30010000;
@@ -268,49 +271,38 @@ public class JVMTIConstants {
     public static final int JVMTI_ERROR_MAX = 116;
 
     // Event IDs
-    public static final int JVMTI_MIN_EVENT_TYPE_VAL = 50;
-    public static final int JVMTI_EVENT_VM_INIT = 50;
-    public static final int JVMTI_EVENT_VM_DEATH = 51;
-    public static final int JVMTI_EVENT_THREAD_START = 52;
-    public static final int JVMTI_EVENT_THREAD_END = 53;
-    public static final int JVMTI_EVENT_CLASS_FILE_LOAD_HOOK = 54;
-    public static final int JVMTI_EVENT_CLASS_LOAD = 55;
-    public static final int JVMTI_EVENT_CLASS_PREPARE = 56;
-    public static final int JVMTI_EVENT_VM_START = 57;
-    public static final int JVMTI_EVENT_EXCEPTION = 58;
-    public static final int JVMTI_EVENT_EXCEPTION_CATCH = 59;
-    public static final int JVMTI_EVENT_SINGLE_STEP = 60;
-    public static final int JVMTI_EVENT_FRAME_POP = 61;
-    public static final int JVMTI_EVENT_BREAKPOINT = 62;
-    public static final int JVMTI_EVENT_FIELD_ACCESS = 63;
-    public static final int JVMTI_EVENT_FIELD_MODIFICATION = 64;
-    public static final int JVMTI_EVENT_METHOD_ENTRY = 65;
-    public static final int JVMTI_EVENT_METHOD_EXIT = 66;
-    public static final int JVMTI_EVENT_NATIVE_METHOD_BIND = 67;
-    public static final int JVMTI_EVENT_COMPILED_METHOD_LOAD = 68;
-    public static final int JVMTI_EVENT_COMPILED_METHOD_UNLOAD = 69;
-    public static final int JVMTI_EVENT_DYNAMIC_CODE_GENERATED = 70;
-    public static final int JVMTI_EVENT_DATA_DUMP_REQUEST = 71;
-    public static final int JVMTI_EVENT_MONITOR_WAIT = 73;
-    public static final int JVMTI_EVENT_MONITOR_WAITED = 74;
-    public static final int JVMTI_EVENT_MONITOR_CONTENDED_ENTER = 75;
-    public static final int JVMTI_EVENT_MONITOR_CONTENDED_ENTERED = 76;
-    public static final int JVMTI_EVENT_RESOURCE_EXHAUSTED = 80;
-    public static final int JVMTI_EVENT_GARBAGE_COLLECTION_START = 81;
-    public static final int JVMTI_EVENT_GARBAGE_COLLECTION_FINISH = 82;
-    public static final int JVMTI_EVENT_OBJECT_FREE = 83;
-    public static final int JVMTI_EVENT_VM_OBJECT_ALLOC = 84;
-    public static final int JVMTI_MAX_EVENT_TYPE_VAL = 84;
+    static final int JVMTI_MIN_EVENT_TYPE_VAL = 50;
+    static final int JVMTI_EVENT_VM_INIT = 50;
+    static final int JVMTI_EVENT_VM_DEATH = 51;
+    static final int JVMTI_EVENT_THREAD_START = 52;
+    static final int JVMTI_EVENT_THREAD_END = 53;
+    static final int JVMTI_EVENT_CLASS_FILE_LOAD_HOOK = 54;
+    static final int JVMTI_EVENT_CLASS_LOAD = 55;
+    static final int JVMTI_EVENT_CLASS_PREPARE = 56;
+    static final int JVMTI_EVENT_VM_START = 57;
+    static final int JVMTI_EVENT_EXCEPTION = 58;
+    static final int JVMTI_EVENT_EXCEPTION_CATCH = 59;
+    static final int JVMTI_EVENT_SINGLE_STEP = 60;
+    static final int JVMTI_EVENT_FRAME_POP = 61;
+    static final int JVMTI_EVENT_BREAKPOINT = 62;
+    static final int JVMTI_EVENT_FIELD_ACCESS = 63;
+    static final int JVMTI_EVENT_FIELD_MODIFICATION = 64;
+    static final int JVMTI_EVENT_METHOD_ENTRY = 65;
+    static final int JVMTI_EVENT_METHOD_EXIT = 66;
+    static final int JVMTI_EVENT_NATIVE_METHOD_BIND = 67;
+    static final int JVMTI_EVENT_COMPILED_METHOD_LOAD = 68;
+    static final int JVMTI_EVENT_COMPILED_METHOD_UNLOAD = 69;
+    static final int JVMTI_EVENT_DYNAMIC_CODE_GENERATED = 70;
+    static final int JVMTI_EVENT_DATA_DUMP_REQUEST = 71;
+    static final int JVMTI_EVENT_MONITOR_WAIT = 73;
+    static final int JVMTI_EVENT_MONITOR_WAITED = 74;
+    static final int JVMTI_EVENT_MONITOR_CONTENDED_ENTER = 75;
+    static final int JVMTI_EVENT_MONITOR_CONTENDED_ENTERED = 76;
+    static final int JVMTI_EVENT_RESOURCE_EXHAUSTED = 80;
+    static final int JVMTI_EVENT_GARBAGE_COLLECTION_START = 81;
+    static final int JVMTI_EVENT_GARBAGE_COLLECTION_FINISH = 82;
+    static final int JVMTI_EVENT_OBJECT_FREE = 83;
+    static final int JVMTI_EVENT_VM_OBJECT_ALLOC = 84;
+    static final int JVMTI_MAX_EVENT_TYPE_VAL = 84;
 
-    /**
-     * Returns a bit mask for the given event, or -1 if invalid.
-     * The bit numbers are zero based, i.e. modulo {@link #JVMTI_MIN_EVENT_TYPE_VAL}.
-     */
-    public static long getEventBitMask(int eventType) {
-        if (eventType < JVMTI_MIN_EVENT_TYPE_VAL || eventType > JVMTI_MAX_EVENT_TYPE_VAL) {
-            return -1;
-        } else {
-            return 1L << (eventType - JVMTI_MIN_EVENT_TYPE_VAL);
-        }
-    }
 }

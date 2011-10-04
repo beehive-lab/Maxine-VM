@@ -22,16 +22,15 @@
  */
 package com.sun.max.vm.jvmti;
 
-import com.sun.max.config.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 
-public class Package extends BootImagePackage {
-    public Package() {
-        super();
-    }
 
-    @Override
-    public Class[] wordSubclasses() {
-        return new Class[] {MonitorID.class};
-    }
+public class JVMTIUtil {
+    /**
+     * The offset of the byte array data from the byte array object's origin.
+     */
+    static final Offset byteDataOffset = VMConfiguration.vmConfig().layoutScheme().byteArrayLayout.getElementOffsetFromOrigin(0);
+
 
 }

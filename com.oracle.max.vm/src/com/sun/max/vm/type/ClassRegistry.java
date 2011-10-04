@@ -216,6 +216,13 @@ public final class ClassRegistry {
     }
 
     /**
+     * For JVMTI.
+     */
+    public Collection<ClassActor> getClassActors() {
+        return typeDescriptorToClassActor.values();
+    }
+
+    /**
      * Defines a class and publishes it (i.e. makes it visible to the rest of the system).
      * In the context of parallel-capable class loaders, multiple threads may be concurrently trying to
      * define a given class. This method ensures that exactly one definition happens in this context.

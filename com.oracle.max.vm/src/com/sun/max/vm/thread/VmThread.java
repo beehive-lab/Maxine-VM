@@ -481,8 +481,10 @@ public class VmThread {
     private static void executeRunnable(VmThread vmThread) throws Throwable {
         try {
             if (vmThread == mainThread) {
+                // JVMTIEvent.THREAD_START is dispatched in JavaRunScheme
                 vmConfig().runScheme().run();
             } else {
+                JVMTI.event(JVMTIEvent.THREAD_START);
                 vmThread.javaThread.run();
             }
         } finally {
@@ -622,9 +624,8 @@ public class VmThread {
             // provide basic services (most importantly, heap allocation) before starting the other "system" threads.
             //
 
-            // Initialize JVMTI agents and send the VM start event
+            // Initialize JVMTI agents
             JVMTI.initialize();
-            JVMTI.vmEvent(JVMTIConstants.JVMTI_EVENT_VM_START);
 
             // Code manager initialization must happen after parsing of pristine options
             // It must also be performed before pristine initialization of the heap scheme.
@@ -642,7 +643,6 @@ public class VmThread {
             SpecialReferenceManager.initialize(MaxineVM.Phase.PRISTINE);
             VmThread.signalDispatcherThread.start0();
 
-            JVMTI.vmEvent(JVMTIConstants.JVMTI_EVENT_VM_INIT);
         }
 
         try {
@@ -659,6 +659,8 @@ public class VmThread {
             }
             thread.terminationCause = throwable;
         }
+        JVMTI.event(JVMTIEvent.THREAD_END);
+
         // If this is the main thread terminating, initiate shutdown hooks after waiting for other non-daemons to terminate
         if (thread == mainThread) {
             VmThreadMap.ACTIVE.joinAllNonDaemons();

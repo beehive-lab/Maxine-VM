@@ -22,14 +22,36 @@
  */
 package com.sun.max.vm.jvmti;
 
-import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
-
-import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 
-public abstract class MonitorID extends Word {
+/**
+ * Names and offsets to the C struct (jvmtiEnv) used on the native side of the implementation.
+ * Must match the definition in jvmti.c
+ */
+enum JVMTIEnvNativeStruct {
+    FUNCTIONS(0),
+    CALLBACKS(8),
+    CAPABILITIES(16), // the capabilities that are active for this environment
+    EVENTMASK(24); // global event enabled mask
 
-    @INTRINSIC(UNSAFE_CAST)
-    public static native MonitorID fromWord(Word word);
+    int offset;
 
+    JVMTIEnvNativeStruct(int offset) {
+        this.offset = offset;
+    }
+
+    /**
+     * Return the value of the field at our offset from {@code base}.
+     */
+    Word get(Pointer base) {
+        return base.readWord(offset);
+    }
+
+    Pointer getPtr(Pointer base) {
+        return base.readWord(offset).asPointer();
+    }
+
+    void set(Pointer base, Word value) {
+        base.writeWord(offset, value);
+    }
 }
