@@ -136,7 +136,11 @@ public class JVMTI {
         return JVMTI_ERROR_INVALID_ENVIRONMENT;
     }
 
-    static boolean anyActiveAgents() {
+    /**
+     * A guard to avoid any work when there are no active agents.
+     * @return
+     */
+    public static boolean anyActiveAgents() {
         return activeEnvCount > 0;
     }
 
