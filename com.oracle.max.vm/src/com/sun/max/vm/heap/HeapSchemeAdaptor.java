@@ -160,6 +160,11 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
     @CONSTANT_WHEN_NOT_ZERO protected int pinningSupportFlags = 0;
 
     /**
+     * Count of garbage collection performed.
+     */
+    protected long collectionCount;
+
+    /**
      * Per thread count of request for disabling GC. It allows to fail-fast if a thread pinning an object request garbage collection (which create a deadlock).
      */
     public static final VmThreadLocal GC_DISABLING_COUNT =

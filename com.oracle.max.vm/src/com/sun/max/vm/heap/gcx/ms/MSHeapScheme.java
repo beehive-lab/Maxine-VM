@@ -279,9 +279,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
      * This is the {@link VmOperationThread}'s entry point to garbage collection.
      */
     final class Collect extends GCOperation {
-        private long collectionCount = 0;
         private TLABFiller tlabFiller = new TLABFiller();
-
 
         public Collect() {
             super("Collect");

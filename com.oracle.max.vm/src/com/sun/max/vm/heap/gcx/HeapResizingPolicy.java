@@ -57,7 +57,7 @@ public class HeapResizingPolicy {
             if (MaxineVM.isDebug()) {
                 Log.print("Request to grow the heap: requested ");
                 Log.print(growth.toLong());
-                Log.print("bytes, obtained ");
+                Log.print(" bytes, obtained ");
                 Log.print(actualGrowth.toLong());
                 Log.println(" bytes");
             }

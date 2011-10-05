@@ -160,12 +160,17 @@ public class HeapAccount<T extends HeapAccountOwner>{
      * @param numRegions number of contiguous regions requested
      * @param recipient the heap region list where the regions will be added if the request succeeds
      * @param prepend if true, insert the allocated regions at the head of the list, otherwise at the tail.
-     * @return 0 if the requested number of regions is allocated, the number of regions left in the account otherwise.
+     * @param orLess  if true, allocate the remainder of what is left, otherwise, don't allocate any region.
+     * @return The number of regions allocated, or if orLess is false the number of regions left if the
+     * account doesn't have enough regions to satisfy the request.
      */
-    public synchronized int allocate(int numRegions, HeapRegionList recipient, boolean prepend) {
+    public synchronized int allocate(int numRegions, HeapRegionList recipient, boolean prepend, boolean orLess) {
         int numRegionsLeft = reserve - allocated.size();
         if (numRegionsLeft < numRegions) {
-            return numRegionsLeft;
+            if (!orLess) {
+                return numRegionsLeft;
+            }
+            numRegions = numRegionsLeft;
         }
 
         final FixedSizeRegionAllocator regionAllocator = theHeapRegionManager.regionAllocator();
@@ -181,7 +186,7 @@ public class HeapAccount<T extends HeapAccountOwner>{
             recordAllocated(firstAllocatedRegion, numAllocatedRegions, recipient, prepend);
             numRegionsNeeded -= numAllocatedRegions;
         }
-        return 0;
+        return numRegions;
     }
 
     /**
@@ -203,10 +208,6 @@ public class HeapAccount<T extends HeapAccountOwner>{
         theHeapRegionManager.regionAllocator().commit(regionID, numRegions);
         recordAllocated(regionID, numRegions, recipient, prepend);
         return true;
-    }
-
-    public int allocate(int numRegions) {
-        return allocate(numRegions, null, false);
     }
 
     public boolean allocateContiguous(int numRegions) {

@@ -117,12 +117,6 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
     private Size minOverflowRefillSize;
 
     /**
-     * Number of bytes reclaimed by the last GC.
-     */
-    private Size numReclaimedBytes;
-    private Size beforeGCUsedBytes;
-
-    /**
      * Indicate whether a size is categorized as large. Request for large size must go to the large object allocator.
      * @param size size in words
      * @return true if the size is considered large.
@@ -180,6 +174,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
             Log.println(" contiguous regions");
         }
         synchronized (heapLock()) {
+            int gcCount = 0;
             do {
                 regionInfoIterable.initialize(allocationRegions);
                 regionInfoIterable.reset();
@@ -265,6 +260,9 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                             }
                         }
                     }
+                }
+                if (MaxineVM.isDebug()) {
+                    checkForSuspisciousGC(gcCount++);
                 }
             } while(Heap.collectGarbage(roundedUpSize)); // Always collect for at least one region.
             // Not enough freed memory.
@@ -527,12 +525,8 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                     allocationRegionsFreeSpace = allocationRegionsFreeSpace.minus(numFreeBytes);
                     return regionInfo;
                 }
-
-                if (MaxineVM.isDebug() && Heap.traceGC()) {
-                    gcCount++;
-                    if (gcCount > 5) {
-                        FatalError.unexpected("Suspiscious repeating GC calls detected");
-                    }
+                if (MaxineVM.isDebug()) {
+                    checkForSuspisciousGC(gcCount++);
                 }
             } while(Heap.collectGarbage(Size.fromInt(regionSizeInBytes))); // Always collect for at least one region.
             // Not enough freed memory.
@@ -625,15 +619,20 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                     toAllocatingState(regionInfo);
                     return refill;
                 }
-
-                if (MaxineVM.isDebug() && Heap.traceGC()) {
-                    gcCount++;
-                    if (gcCount > 5) {
-                        FatalError.unexpected("Suspiscious repeating GC calls detected");
-                    }
+                if (MaxineVM.isDebug()) {
+                    checkForSuspisciousGC(gcCount++);
                 }
             } while(Heap.collectGarbage(minOverflowRefillSize));
             throw outOfMemoryError;
+        }
+    }
+
+    private void checkForSuspisciousGC(int gcCount) {
+        if (gcCount > 1) {
+            FatalError.breakpoint();
+        }
+        if (gcCount > 5) {
+            FatalError.unexpected("Suspiscious repeating GC calls detected");
         }
     }
 
@@ -684,8 +683,9 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         Size regionSize = Size.fromInt(regionSizeInBytes);
         tlabAllocationRegions = HeapRegionList.RegionListUse.OWNERSHIP.createList();
         allocationRegions = HeapRegionList.RegionListUse.OWNERSHIP.createList();
-        int result = heapAccount.allocate(numberOfRegions(minSize), allocationRegions, true);
-        if (result != 0) {
+        int initialNumberOfRegions = numberOfRegions(minSize);
+        int result = heapAccount.allocate(initialNumberOfRegions, allocationRegions, true, false);
+        if (result != initialNumberOfRegions) {
             FatalError.unexpected("Failed to create application heap");
         }
         minReclaimableSpace = Size.fromInt(freeChunkMinSizeOption.getValue());
@@ -738,32 +738,23 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         return regionInfo.owner() == this;
     }
 
-    @Override
     public boolean canSatisfyAllocation(Size size) {
-        if (numReclaimedBytes.lessThan(size)) {
-            return false;
-        }
-        // Keep it simple and over-conservative for now.
-        if (isLarge(size)) {
-            int numRegionsNeeded = size.alignUp(regionSizeInBytes).unsignedShiftedRight(log2RegionSizeInBytes).toInt();
-            // Over simplistic. Assumes all regions in the allocationRegions list are empty.
-            return numRegionsNeeded <= allocationRegions.size();
-        }
-        if (allocationRegions.size() > 0 || overflowAllocator.freeSpace().greaterEqual(size)) {
-            return true;
-        }
+        // FIXME: this is used to avoid redundant GC operation when a race occurred
+        // to trigger a GC. This is called with heap lock protection.
+        // Figuring this out is almost the same as running the allocation code.
+        // There might be better way to figure out if a race occurred.
         return false;
     }
 
     @Override
     public Size totalSpace() {
-        return Size.fromInt(heapAccount.used()).shiftedLeft(HeapRegionConstants.log2RegionSizeInBytes);
+        return Size.fromInt(heapAccount.used()).shiftedLeft(log2RegionSizeInBytes);
     }
 
     @Override
     public Size freeSpace() {
         // TODO: temp trace. Remove me
-        if (MaxineVM.isDebug()) {
+        if (MaxineVM.isDebug() && false) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("allocationRegionsFreeSpace = ");
             Log.print(allocationRegionsFreeSpace.toInt());
@@ -785,18 +776,12 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
 
     @Override
     public void doBeforeGC() {
-        beforeGCUsedBytes = usedSpace();
         overflowAllocator.doBeforeGC();
         tlabAllocator.doBeforeGC();
     }
 
     @Override
     public void doAfterGC() {
-        Size afterGCUsedBytes = usedSpace();
-        numReclaimedBytes = beforeGCUsedBytes.minus(afterGCUsedBytes);
-        if (numReclaimedBytes.isZero()) {
-            FatalError.breakpoint();
-        }
     }
 
     public void mark(TricolorHeapMarker heapMarker) {
@@ -815,7 +800,6 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
             HeapRegionInfo.walk(allRegions.nextIterableRange(), verifier);
         }
     }
-
 
     public void sweep(TricolorHeapMarker heapMarker) {
         HeapRegionList allRegions = heapAccount.allocatedRegions().regionList;
@@ -920,24 +904,26 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                 }  else {
                     FULL_REGION.setState(csrInfo);
                 }
-            } else if (csrFreeBytes == regionSizeInBytes) {
-                EMPTY_REGION.setState(csrInfo);
-                allocationRegions.append(csrInfo.toRegionID());
-                allocationRegionsFreeSpace =  allocationRegionsFreeSpace.plus(regionSizeInBytes);
             } else {
-                if (csrIsMultiRegionObjectTail) {
-                    LARGE_TAIL.setState(csrInfo);
-                } else {
-                    FREE_CHUNKS_REGION.setState(csrInfo);
-                }
-                allocationRegionsFreeSpace =  allocationRegionsFreeSpace.plus(csrFreeBytes);
-                if (csrFreeChunks == 1 && minOverflowRefillSize.lessEqual(csrFreeBytes)) {
-                    csrInfo.setFreeChunks(HeapFreeChunk.fromHeapFreeChunk(csrHead), csrFreeBytes,  csrFreeChunks);
+                if (csrFreeBytes == regionSizeInBytes) {
+                    EMPTY_REGION.setState(csrInfo);
                     allocationRegions.append(csrInfo.toRegionID());
+                    allocationRegionsFreeSpace =  allocationRegionsFreeSpace.plus(regionSizeInBytes);
                 } else {
-                    FatalError.check(csrFreeBytes > 0 && (csrFreeChunks > 1 || minOverflowRefillSize.greaterThan(csrFreeBytes)) && csrHead != null, "unknown state for a swept region");
-                    csrInfo.setFreeChunks(HeapFreeChunk.fromHeapFreeChunk(csrHead),  csrFreeBytes, csrFreeChunks);
-                    tlabAllocationRegions.append(csrInfo.toRegionID());
+                    if (csrIsMultiRegionObjectTail) {
+                        LARGE_TAIL.setState(csrInfo);
+                    } else {
+                        FREE_CHUNKS_REGION.setState(csrInfo);
+                    }
+                    allocationRegionsFreeSpace =  allocationRegionsFreeSpace.plus(csrFreeBytes);
+                    if (csrFreeChunks == 1 && minOverflowRefillSize.lessEqual(csrFreeBytes)) {
+                        csrInfo.setFreeChunks(HeapFreeChunk.fromHeapFreeChunk(csrHead), csrFreeBytes,  csrFreeChunks);
+                        allocationRegions.append(csrInfo.toRegionID());
+                    } else {
+                        FatalError.check(csrFreeBytes > 0 && (csrFreeChunks > 1 || minOverflowRefillSize.greaterThan(csrFreeBytes)) && csrHead != null, "unknown state for a swept region");
+                        csrInfo.setFreeChunks(HeapFreeChunk.fromHeapFreeChunk(csrHead),  csrFreeBytes, csrFreeChunks);
+                        tlabAllocationRegions.append(csrInfo.toRegionID());
+                    }
                 }
             }
             if (TraceSweep) {
@@ -979,11 +965,8 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         if (numRegions == 0) {
             numRegions = 1;
         }
-        int result = heapAccount.allocate(numRegions, allocationRegions, false);
-        if (result != 0) {
-            return Size.zero();
-        }
-        return Size.fromInt(numRegions).shiftedLeft(log2RegionSizeInBytes);
+        int allocated = heapAccount.allocate(numRegions, allocationRegions, false, true);
+        return Size.fromInt(allocated).shiftedLeft(log2RegionSizeInBytes);
     }
 
     @Override
@@ -992,6 +975,4 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         return Size.zero();
     }
 
-
 }
-
