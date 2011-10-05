@@ -98,7 +98,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
     final LargeObjectSpace largeObjectAllocator;
 
     /**
-     * Support for iterating over contiguous region ranges from a list.
+     * Pre-allocated region range iterator. Provides GC operations with allocation free  iteration over contiguous region ranges from a list.
      */
     final HeapRegionRangeIterable regionsRangeIterable;
 
@@ -282,11 +282,6 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
     private Object heapLock() {
         return this;
     }
-
-    private void outOfMemory() {
-        throw outOfMemoryError;
-    }
-
 
     /**
      * Refill Manager for the small object space.
@@ -689,7 +684,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
             FatalError.unexpected("Failed to create application heap");
         }
         minReclaimableSpace = Size.fromInt(freeChunkMinSizeOption.getValue());
-        // FIXME:  the following two are connected: if you deny refill after overflow, the only solution left is allocating large.
+        // The following two are connected: if you deny refill after overflow, the only solution left is allocating large.
         minLargeObjectSize = regionSize;
         minOverflowRefillSize = regionSize.dividedBy(4);
         tlabAllocator.refillManager.setRefillPolicy(minReclaimableSpace);
@@ -746,12 +741,14 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         return false;
     }
 
-    @Override
     public Size totalSpace() {
         return Size.fromInt(heapAccount.used()).shiftedLeft(log2RegionSizeInBytes);
     }
 
-    @Override
+    public Size capacity() {
+        return Size.fromInt(heapAccount.reserve()).shiftedLeft(log2RegionSizeInBytes);
+    }
+
     public Size freeSpace() {
         // TODO: temp trace. Remove me
         if (MaxineVM.isDebug() && false) {
@@ -769,18 +766,15 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         return allocationRegionsFreeSpace.plus(tlabAllocator.refillManager.freeSpace().plus(tlabAllocator.freeSpace().plus(overflowAllocator.freeSpace())));
     }
 
-    @Override
     public Size usedSpace() {
         return totalSpace().minus(freeSpace());
     }
 
-    @Override
     public void doBeforeGC() {
         overflowAllocator.doBeforeGC();
         tlabAllocator.doBeforeGC();
     }
 
-    @Override
     public void doAfterGC() {
     }
 
@@ -825,7 +819,6 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
     public void beginSweep() {
         resetSweepingRegion(regionInfoIterable.next());
     }
-
 
     private void traceSweptRegion() {
         Log.print("#");
