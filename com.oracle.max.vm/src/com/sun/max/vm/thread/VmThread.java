@@ -1289,6 +1289,7 @@ public class VmThread {
     public final void start0() {
         assert state == Thread.State.NEW;
         state = Thread.State.RUNNABLE;
+        Thread_vmThread.setObject(javaThread, this);
         VmThreadMap.ACTIVE.startThread(this, STACK_SIZE_OPTION.getValue().alignUp(platform().pageSize).asSize(), javaThread.getPriority());
     }
 
