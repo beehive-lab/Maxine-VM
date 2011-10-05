@@ -102,17 +102,25 @@ public class JVMTIFunctionsSource {
     private static int GetAllThreads(Pointer env, Pointer threads_count_ptr, Pointer threads_ptr) {
         // PHASES: LIVE
         // NULLCHECK: threads_count_ptr,threads_ptr
-        return JVMTIThreads.getAllThreads(threads_count_ptr, threads_ptr);
+        return JVMTIThreadFunctions.getAllThreads(threads_count_ptr, threads_ptr);
     }
 
     @VM_ENTRY_POINT
     private static int SuspendThread(Pointer env, JniHandle thread) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: LIVE
+        // CAPABILITIES: CAN_SUSPEND
+        Thread threadAsThread = null;
+        // TYPECHECK: thread=Thread
+        return JVMTIThreadFunctions.suspendThread(threadAsThread);
     }
 
     @VM_ENTRY_POINT
     private static int ResumeThread(Pointer env, JniHandle thread) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: LIVE
+        // CAPABILITIES: CAN_SUSPEND
+        Thread threadAsThread = null;
+        // TYPECHECK: thread=Thread
+        return JVMTIThreadFunctions.resumeThread(threadAsThread);
     }
 
     @VM_ENTRY_POINT
@@ -131,7 +139,7 @@ public class JVMTIFunctionsSource {
         // NULLCHECK: info_ptr
         Thread threadAsThread = null;
         // TYPECHECK: thread=Thread
-        return JVMTIThreads.getThreadInfo(threadAsThread, info_ptr);
+        return JVMTIThreadFunctions.getThreadInfo(threadAsThread, info_ptr);
     }
 
     @VM_ENTRY_POINT
@@ -168,6 +176,9 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int GetFrameCount(Pointer env, JniHandle thread, Pointer count_ptr) {
+        // PHASES: LIVE
+        // NULLCHECK: count_ptr
+        Thread threadAsThread = null;
         return JVMTI_ERROR_NOT_AVAILABLE;
     }
 
@@ -177,7 +188,7 @@ public class JVMTIFunctionsSource {
         // NULLCHECK: thread_state_ptr
         Thread threadAsThread = null;
         // TYPECHECK: thread=Thread
-        return JVMTIThreads.getThreadState(threadAsThread, thread_state_ptr);
+        return JVMTIThreadFunctions.getThreadState(threadAsThread, thread_state_ptr);
     }
 
     @VM_ENTRY_POINT
@@ -475,7 +486,10 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int GetLineNumberTable(Pointer env, MethodID method, Pointer entry_count_ptr, Pointer table_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: START,LIVE
+        // CAPABILITIES: CAN_GET_LINE_NUMBERS
+        // NULLCHECK: entry_count_ptr,table_ptr
+        return JVMTIClassFunctions.getLineNumberTable(method, entry_count_ptr, table_ptr);
     }
 
     @VM_ENTRY_POINT
@@ -596,7 +610,12 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int GetSourceDebugExtension(Pointer env, JniHandle klass, Pointer source_debug_extension_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: START,LIVE
+        // CAPABILITIES: CAN_GET_SOURCE_DEBUG_EXTENSION
+        // NULLCHECK: source_debug_extension_ptr
+        Class klassAsClass = null;
+        // TYPECHECK: klass=Class
+        return JVMTIClassFunctions.getSourceDebugExtension(klassAsClass, source_debug_extension_ptr);
     }
 
     @VM_ENTRY_POINT
@@ -606,12 +625,24 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int SuspendThreadList(Pointer env, int request_count, Pointer request_list, Pointer results) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: LIVE
+        // CAPABILITIES: CAN_SUSPEND
+        // NULLCHECK: request_list,results
+        if (request_count < 0) {
+            return JVMTI_ERROR_ILLEGAL_ARGUMENT;
+        }
+        return JVMTIThreadFunctions.suspendThreadList(request_count, request_list, results);
     }
 
     @VM_ENTRY_POINT
     private static int ResumeThreadList(Pointer env, int request_count, Pointer request_list, Pointer results) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: LIVE
+        // CAPABILITIES: CAN_SUSPEND
+        // NULLCHECK: request_list,results
+        if (request_count < 0) {
+            return JVMTI_ERROR_ILLEGAL_ARGUMENT;
+        }
+        return JVMTIThreadFunctions.resumeThreadList(request_count, request_list, results);
     }
 
     @VM_ENTRY_POINT
@@ -634,12 +665,22 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int GetAllStackTraces(Pointer env, int max_frame_count, Pointer stack_info_ptr, Pointer thread_count_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: LIVE
+        // NULLCHECK: stack_info_ptr,thread_count_ptr
+        if (max_frame_count < 0) {
+            return JVMTI_ERROR_ILLEGAL_ARGUMENT;
+        }
+        return JVMTIThreadFunctions.getAllStackTraces(max_frame_count, stack_info_ptr, thread_count_ptr);
     }
 
     @VM_ENTRY_POINT
     private static int GetThreadListStackTraces(Pointer env, int thread_count, Pointer thread_list, int max_frame_count, Pointer stack_info_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: LIVE
+        // NULLCHECK: thread_list,stack_info_ptr
+        if (thread_count < 0 || max_frame_count < 0) {
+            return JVMTI_ERROR_ILLEGAL_ARGUMENT;
+        }
+        return JVMTIThreadFunctions.getThreadListStackTraces(thread_count, thread_list, max_frame_count, stack_info_ptr);
     }
 
     @VM_ENTRY_POINT
@@ -654,7 +695,14 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int GetStackTrace(Pointer env, JniHandle thread, int start_depth, int max_frame_count, Pointer frame_buffer, Pointer count_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: LIVE
+        // NULLCHECK: frame_buffer,count_ptr
+        Thread threadAsThread = null;
+        // TYPECHECK: thread=Thread
+        if (max_frame_count < 0) {
+            return JVMTI_ERROR_ILLEGAL_ARGUMENT;
+        }
+        return JVMTIThreadFunctions.getStackTrace(threadAsThread, start_depth, max_frame_count, frame_buffer, count_ptr);
     }
 
     @VM_ENTRY_POINT

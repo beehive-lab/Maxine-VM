@@ -95,6 +95,26 @@ void setJVMTIThreadInfo(jvmtiThreadInfo *threadInfo, char *name, jint priority, 
     threadInfo->context_class_loader = context_class_loader;
 }
 
+int getJVMTILineNumberEntrySize() {
+    return sizeof(jvmtiLineNumberEntry);
+}
+
+void setJVMTILineNumberEntry(jvmtiLineNumberEntry *table, jint index, jlocation location, jint line_number) {
+    table[index].start_location = location;
+    table[index].line_number = line_number;
+}
+
+int getJVMTIStackInfoSize() {
+    return sizeof(jvmtiStackInfo);
+}
+
+void setJVMTIStackInfo(jvmtiStackInfo *stackInfo, jint index, jthread thread, jint state, jvmtiFrameInfo *frame_buffer, jint frame_count) {
+    stackInfo[index].thread = thread;
+    stackInfo[index].state = state;
+    stackInfo[index].frame_buffer = frame_buffer;
+    stackInfo[index].frame_count = frame_count;
+}
+
 static void jvmti_reserved() {
 }
 

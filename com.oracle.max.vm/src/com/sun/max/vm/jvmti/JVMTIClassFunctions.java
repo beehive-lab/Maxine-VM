@@ -37,6 +37,8 @@ import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.classfile.LineNumberTable.Entry;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
@@ -207,5 +209,48 @@ class JVMTIClassFunctions {
         Pointer classNamePtr = CString.utf8FromJava(className);
         sourceNamePtr.setWord(classNamePtr);
         return JVMTI_ERROR_NONE;
+    }
+
+    static int getLineNumberTable(MethodID methodID, Pointer entryCountPtr, Pointer tablePtr) {
+        try {
+            ClassMethodActor classMethodActor = (ClassMethodActor) MethodID.toMethodActor(methodID);
+            if (classMethodActor.isNative()) {
+                return JVMTI_ERROR_NATIVE_METHOD;
+            }
+            LineNumberTable table = classMethodActor.codeAttribute().lineNumberTable();
+            if (table.isEmpty()) {
+                return JVMTI_ERROR_ABSENT_INFORMATION;
+            }
+            Entry[] entries = table.entries();
+            entryCountPtr.setInt(entries.length);
+            Pointer nativeTablePtr = Memory.allocate(Size.fromInt(entries.length * getLineNumberEntrySize()));
+            for (int i = 0; i < entries.length; i++) {
+                Entry entry = entries[i];
+                setJVMTILineNumberEntry(nativeTablePtr, i, entry.bci(), entry.lineNumber());
+            }
+            tablePtr.setWord(nativeTablePtr);
+            return JVMTI_ERROR_NONE;
+        } catch (ClassCastException ex) {
+            return JVMTI_ERROR_INVALID_METHODID;
+        }
+    }
+
+    private static int lineNumberEntrySize = -1;
+
+    private static int getLineNumberEntrySize() {
+        if (lineNumberEntrySize < 0) {
+            lineNumberEntrySize = getJVMTILineNumberEntrySize();
+        }
+        return lineNumberEntrySize;
+    }
+
+    @C_FUNCTION
+    private static native int getJVMTILineNumberEntrySize();
+
+    @C_FUNCTION
+    private static native void setJVMTILineNumberEntry(Pointer table, int index, long location, int lineNumber);
+
+    static int getSourceDebugExtension(Class klass, Pointer sourceDebugExtensionPtr) {
+        return JVMTI_ERROR_ABSENT_INFORMATION;
     }
 }
