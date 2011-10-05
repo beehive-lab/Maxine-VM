@@ -33,7 +33,6 @@ public interface ApplicationHeap extends ResizableSpace {
     boolean contains(Address address);
     void doBeforeGC();
     void doAfterGC();
-    Size totalSpace();
     Size freeSpace();
     Size usedSpace();
 }

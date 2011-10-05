@@ -796,9 +796,8 @@ public final class FreeHeapSpaceManager extends Sweeper implements ResizableSpac
         return committedHeapSpace.committedSize();
     }
 
-    public Size totalCapacity() {
+    public Size capacity() {
         return committedHeapSpace.size();
-
     }
 
     @Override
@@ -806,4 +805,6 @@ public final class FreeHeapSpaceManager extends Sweeper implements ResizableSpac
         committedHeapSpace.walkCommittedSpace(verifier);
         verifyUsage(verifier.freeChunksByteCount, verifier.darkMatterByteCount, verifier.liveDataByteCount);
     }
+
+
 }

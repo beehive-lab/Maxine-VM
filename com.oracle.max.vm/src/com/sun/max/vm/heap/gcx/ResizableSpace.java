@@ -27,4 +27,6 @@ import com.sun.max.unsafe.*;
 public interface ResizableSpace {
     Size growAfterGC(Size delta);
     Size shrinkAfterGC(Size delta);
+    Size totalSpace();
+    Size capacity();
 }

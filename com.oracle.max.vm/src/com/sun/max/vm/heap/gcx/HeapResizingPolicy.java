@@ -44,11 +44,12 @@ public class HeapResizingPolicy {
      * @param heapSpace
      * @return true if the heap was resized
      */
-    public boolean resizeAfterCollection(Size totalSpace, Size spaceLeftAfterGC, ResizableSpace heapSpace) {
+    public boolean resizeAfterCollection(Size spaceLeftAfterGC, ResizableSpace heapSpace) {
+        Size totalSpace = heapSpace.totalSpace();
         Size min = Size.fromLong((totalSpace.toLong() * minFreeSpaceRatioForExpansion) / 100);
         Size spaceUsedAfterGC = totalSpace.minus(spaceLeftAfterGC);
 
-        if (spaceLeftAfterGC.lessThan(min)) {
+        if (spaceLeftAfterGC.lessThan(min) && totalSpace.lessThan(heapSpace.capacity())) {
             // Use current occupancy to compute heap growth.
             Size minDesiredCapacity =  Size.fromLong((spaceUsedAfterGC.toLong() * 100) / (100 - minFreeSpaceRatioForExpansion));
             Size growth = minDesiredCapacity.minus(totalSpace);

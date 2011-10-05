@@ -364,7 +364,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             }
             vmConfig().monitorScheme().afterGarbageCollection();
 
-            if (heapResizingPolicy.resizeAfterCollection(objectSpace.totalSpace(), freeSpaceAfterGC, objectSpace)) {
+            if (heapResizingPolicy.resizeAfterCollection(freeSpaceAfterGC, objectSpace)) {
                 // Heap was resized.
                 // Update heapMarker's coveredArea.
                 ContiguousHeapSpace markedSpace = objectSpace.committedHeapSpace();

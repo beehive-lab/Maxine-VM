@@ -52,8 +52,12 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
      */
     private static final int WORDS_COVERED_PER_BIT = 1;
     static boolean VerifyAfterGC = false;
+    static boolean DumpFragStatsAfterGC = false;
+    static boolean DumpFragStatsAtGCFailure = false;
     static {
         VMOptions.addFieldOption("-XX:", "VerifyAfterGC", MSEHeapScheme.class, "Verify heap after GC", Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "DumpFragStatsAfterGC", MSEHeapScheme.class, "Dump region fragmentation stats after GC", Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "DumpFragStatsAtGCFailure", MSEHeapScheme.class, "Dump region fragmentation when GC failed to reclaim enough space", Phase.PRISTINE);
     }
    /**
      * Size to reserve at the end of a TLABs to guarantee that a dead object can always be
@@ -95,6 +99,8 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
 
     // For debugging purposes only.
     final private AtomicPinnedCounter pinnedCounter;
+
+    private HeapRegionStatistics fragmentationStats;
 
     /**
      * The application heap. Currently, where all dynamic allocation takes place.
@@ -177,6 +183,9 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
 
             heapMarker.initialize(heapBounds.start(), heapBounds.end(), heapMarkerDataStart, heapMarkerDatasize);
 
+            if (DumpFragStatsAfterGC || DumpFragStatsAtGCFailure) {
+                fragmentationStats = new HeapRegionStatistics(theHeap.minReclaimableSpace());
+            }
             // Free reserved space we will not be using.
             Size leftoverSize = endOfReservedSpace.minus(unusedReservedSpaceStart).asSize();
 
@@ -201,27 +210,45 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
         return Size.G.toInt();
     }
 
+    private void reportFragmentationStats(boolean reclaimedEnoughSpace) {
+        if (DumpFragStatsAfterGC || (!reclaimedEnoughSpace && DumpFragStatsAtGCFailure)) {
+            fragmentationStats.reportStats(theHeap.heapAccount());
+        }
+    }
+
+    /**
+     * Log of recent amount of allocated space since last GC.
+     * For debugging.
+     */
+    private final long [] allocatedSinceLastGC = new long[16];
+    private long usedSpaceAfterLastGC;
+
     public boolean collectGarbage(Size requestedFreeSpace) {
         final Size usedSpaceBefore = theHeap.usedSpace();
+        if (MaxineVM.isDebug()) {
+            final int logCursor = (int) (collectionCount % 16);
+            allocatedSinceLastGC[logCursor] = usedSpaceBefore.minus(usedSpaceAfterLastGC).toLong();
+            if (logCursor == 15) {
+                long c = collectionCount - 15;
+                for (int i = 0; i <= 15; i++) {
+                    Log.print(c + i); Log.print(' '); Log.print(allocatedSinceLastGC[i]); Log.print(' ');
+                }
+                Log.println();
+            }
+        }
         if (requestedFreeSpace.isZero()) {
             // This is a forced GC.
             collect.submit();
+            reportFragmentationStats(true);
             return true;
         }
-        // We may reach here after a race. Don't run GC if request can be satisfied.
-
-        // TODO (ld) might be better to try allocate the requested space and save the result for the caller.
-        // This may avoid starvation case where in concurrent threads allocate the requested space
-        // in after this method returns but before the caller allocated the space.
-
-        // Can't really tell whether the allocation can be satisfied without actually doing it
-        //
-//        if (theHeap.canSatisfyAllocation(requestedFreeSpace)) {
-//            return true;
-//        }
         collect.submit();
-        final Size usedSpaceAfter = theHeap.usedSpace();
-        return usedSpaceAfter.minus(usedSpaceBefore).greaterThan(requestedFreeSpace);
+        if (MaxineVM.isDebug()) {
+            usedSpaceAfterLastGC = theHeap.usedSpace().toLong();
+        }
+        boolean result =  theHeap.usedSpace().minus(usedSpaceBefore).greaterThan(requestedFreeSpace);
+        reportFragmentationStats(result);
+        return result;
     }
 
     public boolean contains(Address address) {
@@ -364,7 +391,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
             }
             vmConfig().monitorScheme().afterGarbageCollection();
 
-            heapResizingPolicy.resizeAfterCollection(theHeap.totalSpace(), freeSpaceAfterGC, theHeap);
+            heapResizingPolicy.resizeAfterCollection(freeSpaceAfterGC, theHeap);
 
             if (MaxineVM.isDebug() && Heap.traceGCPhases()) {
                 Log.print("End mark-sweep #");
