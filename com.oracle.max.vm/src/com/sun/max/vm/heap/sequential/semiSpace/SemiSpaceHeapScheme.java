@@ -165,7 +165,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
     private final TimerMetric copyTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
     private final TimerMetric weakRefTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
 
-    private long collectionCount;
     private long accumulatedGCTime;
     private long lastGCTime;
 

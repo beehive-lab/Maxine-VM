@@ -202,9 +202,9 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
     }
 
     public boolean collectGarbage(Size requestedFreeSpace) {
-        collect.requestedSize = requestedFreeSpace;
-        boolean forcedGC = requestedFreeSpace.toInt() == 0;
-        if (forcedGC) {
+        final Size usedSpaceBefore = theHeap.usedSpace();
+        if (requestedFreeSpace.isZero()) {
+            // This is a forced GC.
             collect.submit();
             return true;
         }
@@ -212,12 +212,16 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
 
         // TODO (ld) might be better to try allocate the requested space and save the result for the caller.
         // This may avoid starvation case where in concurrent threads allocate the requested space
-        // in after this method returns but before the caller allocated the space..
-        if (theHeap.canSatisfyAllocation(requestedFreeSpace)) {
-            return true;
-        }
-        VmOperationThread.submit(collect);
-        return theHeap.canSatisfyAllocation(requestedFreeSpace);
+        // in after this method returns but before the caller allocated the space.
+
+        // Can't really tell whether the allocation can be satisfied without actually doing it
+        //
+//        if (theHeap.canSatisfyAllocation(requestedFreeSpace)) {
+//            return true;
+//        }
+        collect.submit();
+        final Size usedSpaceAfter = theHeap.usedSpace();
+        return usedSpaceAfter.minus(usedSpaceBefore).greaterThan(requestedFreeSpace);
     }
 
     public boolean contains(Address address) {
@@ -287,7 +291,6 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
      * This is the {@link VmOperationThread}'s entry point to garbage collection.
      */
     final class Collect extends GCOperation {
-        private long collectionCount = 0;
         private TLABFiller tlabFiller = new TLABFiller();
 
 
@@ -295,7 +298,6 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
             super("Collect");
         }
 
-        private Size requestedSize;
         private final TimerMetric reclaimTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
         private final TimerMetric totalPauseTime = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
 
