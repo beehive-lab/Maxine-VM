@@ -165,8 +165,6 @@ public final class JDK_java_lang_Thread {
     @SUBSTITUTE
     private void start0() {
         final VmThread vmThread = VmThreadFactory.create(thisThread());
-        Thread_vmThread.setObject(thisThread(), vmThread);
-        vmThread.setPriority0(thisThread().getPriority());
         vmThread.start0();
     }
 
