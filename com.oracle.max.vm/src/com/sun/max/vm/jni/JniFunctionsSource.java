@@ -133,9 +133,8 @@ public final class JniFunctionsSource {
         } catch (Utf8Exception utf8Exception) {
             throw new ClassNotFoundException();
         }
-        // Skip frames for 'getCallerClass' and 'FindClass'
-        int realFramesToSkip = 2;
-        Class caller = JDK_sun_reflect_Reflection.getCallerClass(realFramesToSkip);
+        // Skip our frame
+        Class caller = JDK_sun_reflect_Reflection.getCallerClassForFindClass(1);
         ClassLoader classLoader = caller == null ? ClassLoader.getSystemClassLoader() : ClassActor.fromJava(caller).classLoader;
         final Class javaClass = findClass(classLoader, className);
         Snippets.makeClassInitialized(ClassActor.fromJava(javaClass));

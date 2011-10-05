@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,17 +20,36 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.jni;
+package com.sun.max.vm.jvmti;
 
-import com.sun.max.config.*;
+import java.util.*;
 
-public class Package extends BootImagePackage {
-    public Package() {
-        super();
+import static com.sun.max.vm.jvmti.JVMTIConstants.*;
+import com.sun.max.unsafe.*;
+
+/**
+ * JVMTI object tagging support.
+ * The tag map is allocated lazily.
+ * A more efficient and less heap instrusive implementation might be necessary.
+ */
+class JVMTITags {
+    private Map<Object, Long> tagMap;
+
+    int getTag(Object object, Pointer tagPtr) {
+        long tag = checkMap().get(object);
+        tagPtr.writeLong(0, tag);
+        return JVMTI_ERROR_NONE;
     }
 
-    @Override
-    public Class[] wordSubclasses() {
-        return new Class[] {MemberID.class, FieldID.class, MethodID.class, JniHandle.class};
+    int setTag(Object object, long tag) {
+        checkMap().put(object, tag);
+        return JVMTI_ERROR_NONE;
+    }
+
+    private Map<Object, Long> checkMap() {
+        if (tagMap == null) {
+            tagMap  = Collections.synchronizedMap(new WeakHashMap<Object, Long>());
+        }
+        return tagMap;
     }
 }
