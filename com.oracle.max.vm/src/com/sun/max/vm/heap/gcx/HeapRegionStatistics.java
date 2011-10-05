@@ -140,7 +140,7 @@ public final class HeapRegionStatistics {
     }
 
     public void dump() {
-        Log.println("[ min, max ]           :  # holes         # regions");
+        Log.println("[ min, max ]      :  # fragments         # regions");
         for (int i = log2MinFragmentSize; i < log2LargestChunkSize; i++) {
             Log.print(" ["); Log.print(1 << i); Log.print(", "); Log.print((1 << i + 1) - 1); Log.print(" ]  : ");
             Log.print(fragmentSizes[i]);
