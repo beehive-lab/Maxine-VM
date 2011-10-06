@@ -1639,7 +1639,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
     public void sweep(Sweeper sweeper) {
         if (Sweeper.DoImpreciseSweep) {
-            impreciseSweep(sweeper, sweeper.minReclaimableSpace());
+            impreciseSweep(sweeper);
         } else {
             preciseSweep(sweeper);
         }
@@ -1695,7 +1695,8 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      * @param sweeper
      * @param minReclaimableSpace
      */
-    private void impreciseSweep(Sweeper sweeper, Size minReclaimableSpace) {
+    private void impreciseSweep(Sweeper sweeper) {
+        final Size minReclaimableSpace = sweeper.minReclaimableSpace();
         final Pointer colorMapBase = base.asPointer();
         final int minBitsBetweenMark = minReclaimableSpace.toInt() >> log2BytesCoveredPerBit;
         int bitmapWordIndex = 0;
@@ -1717,7 +1718,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
         // Loop over the color map and call the sweeper only when the distance between two live mark is larger than
         // the minimum reclaimable space specified.
-        final int rightmostBitmapWordIndex =  bitmapWordIndex(bitIndexOf(rightmost));
+        final int rightmostBitmapWordIndex = bitmapWordIndex(bitIndexOf(rightmost));
         if (MaxineVM.isDebug()) {
             debugGapLeftObject = Pointer.zero();
             debugGapRightObject = Pointer.zero();
@@ -1816,6 +1817,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         final Address regionRightmost = sweeper.endOfSweepingRegion();
         final Address rightmost =  regionRightmost.greaterThan(forwardScanState.rightmost) ? forwardScanState.rightmost : regionRightmost.minus(Word.size());
         final int rightmostBitIndex = bitIndexOf(rightmost);
+
         final int leftmostBitIndex = bitIndexOf(regionLeftmost);
         int lastLiveMark = firstBlackMark(leftmostBitIndex, rightmostBitIndex);
         if (lastLiveMark < 0) {
@@ -1835,66 +1837,69 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             }
             nextReclaimableMark = lastLiveMark + 2 + minBitsBetweenMark;
         }
+        if (true) {
+            lastLiveMark = impreciseSweep(sweeper, lastLiveMark, rightmostBitIndex);
+        } else {
+            int bitmapWordIndex =  bitmapWordIndex(lastLiveMark + 2); // FIXME: 2 here is to skip the object header. Need to derive that from some named constants.
 
-        int bitmapWordIndex =  bitmapWordIndex(lastLiveMark + 2); // FIXME: 2 here is to skip the object header. Need to derive that from some named constants.
-
-        // Loop over the color map and call the sweeper only when the distance between two live mark is larger than
-        // the minimum reclaimable space specified.
-        final int rightmostBitmapWordIndex =  bitmapWordIndex(rightmostBitIndex);
-        if (MaxineVM.isDebug()) {
-            debugBitIndex = 0;
-            debugBitmapWordIndex = 0;
-            debugGapLeftObject = Pointer.zero();
-            debugGapRightObject =  Pointer.zero();
-            debugRightmostBitmapWordIndex = rightmostBitmapWordIndex;
-        }
-        while (bitmapWordIndex <= rightmostBitmapWordIndex) {
-            final long bitmapWord = colorMapBase.getLong(bitmapWordIndex);
-            if (bitmapWord != 0) {
-                // At least one mark is set.
-                int bitIndexInWord = 0;
-                final int bitmapWordFirstBitIndex = bitmapWordIndex << Word.widthValue().log2numberOfBits;
-                int nextCellBitmapWordIndex = bitmapWordIndex + 1;
-                long w = bitmapWord;
-                do {
-                    // First mark is the least set bit.
-                    bitIndexInWord += Pointer.fromLong(w).leastSignificantBitSet();
-                    final int bitIndexOfBlackMark = bitmapWordFirstBitIndex + bitIndexInWord;
-                    if (bitIndexOfBlackMark < nextReclaimableMark) {
-                        // Too small a gap between two live marks to be worth reporting to the sweeper.
-                        // NOTE: it may be live data only, or it may comprise dead data. If the latter, we have some unaccounted dark matter.
-                        // Reset the next mark.
-                        lastLiveMark = bitIndexOfBlackMark;
-                        nextReclaimableMark = bitIndexOfBlackMark + minBitsBetweenMark;
-                        if (bitIndexInWord >= 62) {
-                            // next object begins in next word.
-                            break;
+            // Loop over the color map and call the sweeper only when the distance between two live mark is larger than
+            // the minimum reclaimable space specified.
+            final int rightmostBitmapWordIndex =  bitmapWordIndex(rightmostBitIndex);
+            if (MaxineVM.isDebug()) {
+                debugBitIndex = 0;
+                debugBitmapWordIndex = 0;
+                debugGapLeftObject = Pointer.zero();
+                debugGapRightObject =  Pointer.zero();
+                debugRightmostBitmapWordIndex = rightmostBitmapWordIndex;
+            }
+            while (bitmapWordIndex <= rightmostBitmapWordIndex) {
+                final long bitmapWord = colorMapBase.getLong(bitmapWordIndex);
+                if (bitmapWord != 0) {
+                    // At least one mark is set.
+                    int bitIndexInWord = 0;
+                    final int bitmapWordFirstBitIndex = bitmapWordIndex << Word.widthValue().log2numberOfBits;
+                    int nextCellBitmapWordIndex = bitmapWordIndex + 1;
+                    long w = bitmapWord;
+                    do {
+                        // First mark is the least set bit.
+                        bitIndexInWord += Pointer.fromLong(w).leastSignificantBitSet();
+                        final int bitIndexOfBlackMark = bitmapWordFirstBitIndex + bitIndexInWord;
+                        if (bitIndexOfBlackMark < nextReclaimableMark) {
+                            // Too small a gap between two live marks to be worth reporting to the sweeper.
+                            // NOTE: it may be live data only, or it may comprise dead data. If the latter, we have some unaccounted dark matter.
+                            // Reset the next mark.
+                            lastLiveMark = bitIndexOfBlackMark;
+                            nextReclaimableMark = bitIndexOfBlackMark + minBitsBetweenMark;
+                            if (bitIndexInWord >= 62) {
+                                // next object begins in next word.
+                                break;
+                            }
+                        } else {
+                            if (MaxineVM.isDebug()) {
+                                debugBitIndex = bitIndexOfBlackMark;
+                                debugBitmapWordIndex = bitmapWordIndex;
+                                debugGapLeftObject = addressOf(lastLiveMark).asPointer();
+                                debugGapRightObject = addressOf(bitIndexOfBlackMark).asPointer();
+                            }
+                            final Pointer endOfLastVisitedCell = sweeper.processLargeGap(addressOf(lastLiveMark).asPointer(), addressOf(bitIndexOfBlackMark).asPointer());
+                            lastLiveMark  = bitIndexOfBlackMark;
+                            nextReclaimableMark = bitIndexOf(endOfLastVisitedCell) + minBitsBetweenMark;
+                            final int index =  bitmapWordIndex(endOfLastVisitedCell);
+                            if (index > bitmapWordIndex) {
+                                nextCellBitmapWordIndex = index;
+                                break;
+                            }
+                            // End of visited cell is within the same mark word. Just
+                            // right-shift the bitmap word to skip the mark bits already processed and loop back to
+                            // find the next black object with this word.
                         }
-                    } else {
-                        if (MaxineVM.isDebug()) {
-                            debugBitIndex = bitIndexOfBlackMark;
-                            debugBitmapWordIndex = bitmapWordIndex;
-                            debugGapLeftObject = addressOf(lastLiveMark).asPointer();
-                            debugGapRightObject = addressOf(bitIndexOfBlackMark).asPointer();
-                        }
-                        final Pointer endOfLastVisitedCell = sweeper.processLargeGap(addressOf(lastLiveMark).asPointer(), addressOf(bitIndexOfBlackMark).asPointer());
-                        lastLiveMark  = bitIndexOfBlackMark;
-                        nextReclaimableMark = bitIndexOf(endOfLastVisitedCell) + minBitsBetweenMark;
-                        final int index =  bitmapWordIndex(endOfLastVisitedCell);
-                        if (index > bitmapWordIndex) {
-                            nextCellBitmapWordIndex = index;
-                            break;
-                        }
-                        // End of visited cell is within the same mark word. Just
-                        // right-shift the bitmap word to skip the mark bits already processed and loop back to
-                        // find the next black object with this word.
-                    }
-                    bitIndexInWord += 2;
-                    w = bitmapWord >>> bitIndexInWord;
-                } while(w != 0L);
-                bitmapWordIndex = nextCellBitmapWordIndex;
-            } else {
-                bitmapWordIndex++;
+                        bitIndexInWord += 2;
+                        w = bitmapWord >>> bitIndexInWord;
+                    } while(w != 0L);
+                    bitmapWordIndex = nextCellBitmapWordIndex;
+                } else {
+                    bitmapWordIndex++;
+                }
             }
         }
         Address tail = endOfCellAtBitIndex(lastLiveMark);
@@ -1909,16 +1914,18 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      * and call the sweeper only when the distance between two live marks is larger than
      * the minimum reclaimable space specified by the sweeper.
      *
-     * @param sweeper
-     * @param lastLiveMark
-     * @param rightmostBitIndex
+     * @param sweeper sweeper to which dead spaces are notified
+     * @param lastLiveMark bit index in the color map of the rightmost live object
+     * @param rightmostBitIndex rightmost bound of the color map scan
+     * @return the bit index of the rightmost live object scanned by the sweep
      */
-    private void impreciseSweepRange(Sweeper sweeper, int lastLiveMark, int rightmostBitIndex) {
+    private int impreciseSweep(Sweeper sweeper, int lastLiveMark, int rightmostBitIndex) {
         final int minBitsBetweenMark = sweeper.minReclaimableSpace().toInt() >> log2BytesCoveredPerBit;
         final Pointer colorMapBase = base.asPointer();
         int bitmapWordIndex =  bitmapWordIndex(lastLiveMark + 2);
         int nextReclaimableMark = lastLiveMark + 2 + minBitsBetweenMark;
-        final int rightmostBitmapWordIndex =  bitmapWordIndex(rightmostBitIndex);
+
+        final int rightmostBitmapWordIndex = bitmapWordIndex(rightmostBitIndex);
         if (MaxineVM.isDebug()) {
             debugBitIndex = 0;
             debugBitmapWordIndex = 0;
@@ -1975,6 +1982,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                 bitmapWordIndex++;
             }
         }
+        return lastLiveMark;
     }
 
     public void markAll() {
