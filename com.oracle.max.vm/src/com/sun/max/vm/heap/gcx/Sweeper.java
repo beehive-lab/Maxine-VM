@@ -108,4 +108,8 @@ public abstract class Sweeper {
 
     public abstract void verify(AfterMarkSweepVerifier verifier);
 
+    public abstract Address startOfSweepingRegion();
+
+    public abstract Address endOfSweepingRegion();
+
 }
