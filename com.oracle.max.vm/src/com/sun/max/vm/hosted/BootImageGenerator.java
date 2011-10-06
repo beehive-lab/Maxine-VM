@@ -88,6 +88,9 @@ public final class BootImageGenerator {
     private final Option<Boolean> testNative = options.newBooleanOption("native-tests", false,
             "For the Java tester, this option specifies that " + System.mapLibraryName("javatest") + " should be dynamically loaded.");
 
+    private final Option<String> compilationBrokerClassOption = options.newStringOption("compilationBrokerClass", null,
+            "The CompilationBroker subclass to use.");
+
     private final Option<Boolean> debugClassIDOption = options.newBooleanOption("debug-classid", false,
             "Trace array class id creation and prints reserved class id without array class actors.");
 
@@ -190,6 +193,11 @@ public final class BootImageGenerator {
                 options.printHelp(System.out, 80);
                 return;
             }
+
+            if (compilationBrokerClassOption.getValue() != null) {
+                System.setProperty(CompilationBroker.COMPILATION_BROKER_CLASS_PROPERTY_NAME, compilationBrokerClassOption.getValue());
+            }
+
             ClassID.traceArrayClassIDs = debugClassIDOption.getValue();
 
             String[] extraClassesAndPackages = options.getArguments();

@@ -269,7 +269,7 @@ public class CompilationBroker {
      * @throws InteralError if an uncaught exception is thrown during compilation
      */
     public TargetMethod compile(ClassMethodActor cma, Nature nature) {
-        RuntimeCompiler retryCompiler = null;
+        boolean retryRun = false;
         while (true) {
             Compilation compilation;
             boolean doCompile = true;
@@ -281,17 +281,20 @@ public class CompilationBroker {
                     // Only wait for a pending compilation if it is compatible with the current request.
                     // That is, the current request does not specify a special nature (nature == null)
                     // or it specifies the same nature as the pending compilation (nature == compilation.nature)
-                    if (retryCompiler != null) {
+                    if (retryRun) {
                         assert compilation.compilingThread == Thread.currentThread();
                         assert nature == null : "cannot retry if specific compilation nature is specified";
-                        compilation.compiler = retryCompiler;
+                        compilation.compiler = selectRetryCompiler(cma, nature, compilation.compiler);
                     } else {
                         // the method is currently being compiled, just wait for the result
                         doCompile = false;
                     }
                 } else {
                     Compilations prevCompilations = compilation != null ? compilation.prevCompilations :  (Compilations) compiledState;
-                    RuntimeCompiler compiler = retryCompiler == null ? selectCompiler(cma, nature) : retryCompiler;
+                    RuntimeCompiler compiler = selectCompiler(cma, nature);
+                    if (retryRun) {
+                        compiler = selectRetryCompiler(cma, nature, compiler);
+                    }
                     compilation = new Compilation(compiler, cma, prevCompilations, Thread.currentThread(), nature);
                     cma.compiledState = compilation;
                 }
@@ -313,19 +316,15 @@ public class CompilationBroker {
                     t.printStackTrace(Log.out);
                     Log.unlock(lockDisabledSafepoints);
                 }
-                if (!FailOverCompilation || retryCompiler != null || (baselineCompiler == null) || (isHosted() && compilation.compiler == optimizingCompiler)) {
+                if (!FailOverCompilation || retryRun || (baselineCompiler == null) || (isHosted() && compilation.compiler == optimizingCompiler)) {
                     // This is the final failure: no other compilers available or failover is disabled
                     throw (InternalError) new InternalError(errorMessage + " (final attempt)").initCause(t);
                 }
-                if (compilation.compiler == optimizingCompiler) {
-                    retryCompiler = baselineCompiler;
-                } else {
-                    retryCompiler = optimizingCompiler;
-                }
+                retryRun = true;
                 if (VMOptions.verboseOption.verboseCompilation) {
                     boolean lockDisabledSafepoints = Log.lock();
                     Log.printCurrentThread(false);
-                    Log.println(": Retrying with " + retryCompiler + "...");
+                    Log.println(": Retrying with " + selectRetryCompiler(cma, nature, compilation.compiler) + "...");
                     Log.unlock(lockDisabledSafepoints);
                 }
             }
@@ -372,6 +371,23 @@ public class CompilationBroker {
         }
 
         return compiler;
+    }
+
+    /**
+     * Select the appropriate compiler to retry compilation based on the current state of the method
+     * and the previous compiler.
+     *
+     * @param cma the class method actor to compile
+     * @param nature the specific type of target method required or {@code null} if any target method is acceptable
+     * @param previous compiler compiler that already tried to compile
+     * @return the compiler that should be used to perform the next compilation of the method
+     */
+    protected RuntimeCompiler selectRetryCompiler(ClassMethodActor cma, RuntimeCompiler.Nature nature, RuntimeCompiler previousCompiler) {
+        if (previousCompiler == optimizingCompiler) {
+            return baselineCompiler;
+        } else {
+            return optimizingCompiler;
+        }
     }
 
     /**
