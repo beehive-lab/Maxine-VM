@@ -33,12 +33,12 @@ import com.sun.max.vm.runtime.*;
 
 /**
  * Free heap space management.
- * Nothing ambitious, just to get going and test the tracing algorithm of the future hybrid mark-sweep-evacuate.
+ *
  * Implement the HeapSweeper abstract class which defines method called by a HeapMarker to notify free space.
- * The FreeHeapSpace manager records these into an vector of list of free space based on size of the freed space.
+ * The manager records free space into a vector of list of free space based on size of the freed space.
  *
  * Space allocation is primarily handled via TLABs, which are made of one or more heap chunks.
- * Request too large to be handled by TLABs are handled by the free space manager directly.
+ * Requests too large to be handled by TLABs are handled by the free space manager directly.
  * This one keeps a simple table of list of chunks, indexed by a power of 2 of the size requested, such that
  * Size >> log2FirstBin is an index to that table. The first bin in the table contains a linked list of chunk of any size
  * between log2FirstBin and minReclaimableSpace and is used primarily for TLAB and small object allocation.
@@ -806,5 +806,14 @@ public final class FreeHeapSpaceManager extends Sweeper implements ResizableSpac
         verifyUsage(verifier.freeChunksByteCount, verifier.darkMatterByteCount, verifier.liveDataByteCount);
     }
 
+    @Override
+    public Address startOfSweepingRegion() {
+        return committedHeapSpace.start();
+    }
+
+    @Override
+    public Address endOfSweepingRegion() {
+        return committedHeapSpace.end();
+    }
 
 }

@@ -129,11 +129,13 @@ public abstract class HeapRegionSweeper extends Sweeper {
         return minReclaimableSpace;
     }
 
-    final Address startOfSweepingRegion() {
+    @Override
+    public final Address startOfSweepingRegion() {
         return csrLastLiveAddress;
     }
 
-    final Address endOfSweepingRegion() {
+    @Override
+    public final Address endOfSweepingRegion() {
         return csrEnd;
     }
 
