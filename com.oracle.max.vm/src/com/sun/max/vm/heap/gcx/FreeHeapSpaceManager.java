@@ -854,7 +854,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements ResizableSpac
 
     @Override
     public Address endOfSweepingRegion() {
-        return committedHeapSpace.end();
+        return committedHeapSpace.committedEnd();
     }
 
 }
