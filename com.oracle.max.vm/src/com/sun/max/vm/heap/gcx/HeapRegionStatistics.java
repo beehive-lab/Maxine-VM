@@ -60,12 +60,16 @@ public final class HeapRegionStatistics {
     private final HeapRegionInfoIterable regionInfoIterable;
 
     private int sizeBin(int size) {
-        // bin index of a give size is the log 2 of its highest bit.
+        // bin index for a given size is the log 2 of its highest bit.
         return 31 - Integer.numberOfLeadingZeros(size);
     }
 
+    private int sizeBin(Size size) {
+        return size.mostSignificantBitSet();
+    }
+
     public HeapRegionStatistics(Size minFragmentSize) {
-        log2MinFragmentSize =  sizeBin(minFragmentSize.toInt());
+        log2MinFragmentSize =  sizeBin(minFragmentSize);
         log2LargestChunkSize = HeapRegionConstants.log2RegionSizeInBytes;
         // Maximum fragmentation for a region of size R when the smallest fragment size is F is (R / F) / 2.
         final int maxFragmentation = 1 << (log2LargestChunkSize - (log2MinFragmentSize + 1));
@@ -109,7 +113,7 @@ public final class HeapRegionStatistics {
         if (rinfo.hasFreeChunks()) {
             HeapFreeChunk c = HeapFreeChunk.toHeapFreeChunk(rinfo.firstFreeBytes());
             while (c != null) {
-                fragmentSizes[sizeBin(c.size.toInt())]++;
+                fragmentSizes[sizeBin(c.size)]++;
                 c = c.next;
             }
         }

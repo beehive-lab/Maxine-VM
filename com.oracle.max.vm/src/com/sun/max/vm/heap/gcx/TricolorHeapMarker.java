@@ -281,6 +281,11 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         return COLOR_CHARS[(int) color & 0x3];
     }
 
+    @INLINE
+    Pointer colorMapBase() {
+        return base.asPointer();
+    }
+
     private void traceMark(Address cell,  long color, int bitIndex) {
         final int bwi = bitmapWordIndex(bitIndex);
         Log.print("#mark ");
@@ -299,11 +304,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
     private void traceMark(Address cell,  long color) {
         traceMark(cell, color, bitIndexOf(cell));
-    }
-
-    @INLINE
-    Pointer colorMapBase() {
-        return base.asPointer();
     }
 
     @INLINE
