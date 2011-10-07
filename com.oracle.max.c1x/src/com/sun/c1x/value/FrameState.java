@@ -251,7 +251,7 @@ public abstract class FrameState {
             if (x.isIllegal()) {
                 return null;
             }
-            assert x.kind.isSingleWord() || values[i + 1] == null || values[i + 1] instanceof Phi;
+            assert !MutableFrameState.isTwoSlot(x.kind) || values[i + 1] == null || values[i + 1] instanceof Phi;
         }
         return x;
     }
@@ -267,14 +267,14 @@ public abstract class FrameState {
         assert i < maxLocals : "local variable index out of range: " + i;
         invalidateLocal(i);
         values[i] = x;
-        if (isDoubleWord(x)) {
+        if (MutableFrameState.isTwoSlot(x.kind)) {
             // (tw) if this was a double word then kill i+1
             values[i + 1] = null;
         }
         if (i > 0) {
             // if there was a double word at i - 1, then kill it
             Value p = values[i - 1];
-            if (isDoubleWord(p)) {
+            if (p != null && MutableFrameState.isTwoSlot(p.kind)) {
                 values[i - 1] = null;
             }
         }
@@ -438,10 +438,6 @@ public abstract class FrameState {
 
     private static boolean typeMismatch(Value x, Value y) {
         return y == null || x.kind != y.kind;
-    }
-
-    private static boolean isDoubleWord(Value x) {
-        return x != null && x.kind.isDoubleWord();
     }
 
     /**

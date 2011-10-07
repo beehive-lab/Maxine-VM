@@ -42,7 +42,7 @@ public final class LoadField extends AccessField {
      * @param isLoaded indicates if the class is loaded
      */
     public LoadField(Value object, RiField field, boolean isStatic, FrameState stateBefore, boolean isLoaded) {
-        super(field.kind().stackKind(), object, field, isStatic, stateBefore, isLoaded);
+        super(field.kind(false).stackKind(), object, field, isStatic, stateBefore, isLoaded);
     }
 
     /**
@@ -98,7 +98,7 @@ public final class LoadField extends AccessField {
             print(".").
             print(field.name()).
             print(" [field: ").
-            print(CiUtil.format("%h.%n:%t", field, false)).
+            print(CiUtil.format("%h.%n:%t", field)).
             print("]");
     }
 }

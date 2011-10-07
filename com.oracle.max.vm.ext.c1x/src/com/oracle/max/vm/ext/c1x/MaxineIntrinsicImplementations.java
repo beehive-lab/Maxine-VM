@@ -45,7 +45,7 @@ public class MaxineIntrinsicImplementations {
             RiMethod nativeMethod = b.scope().method;
             RiSnippetCall linkSnippet = snippets.link(nativeMethod);
             if (linkSnippet.result != null) {
-                return b.append(new Constant(linkSnippet.result));
+                return b.append(new Constant(target.signature().returnKind(false), linkSnippet.result));
             }
             b.appendSnippetCall(linkSnippet);
             return null;
@@ -96,17 +96,19 @@ public class MaxineIntrinsicImplementations {
             RiType accessingClass = b.scope().method.holder();
             RiType fromType;
             RiType toType = signature.returnType(accessingClass);
-            assert args.length == 1 || (args.length == 2 && args[0].kind.isDoubleWord()) : "method with @UNSAFE_CAST must have exactly 1 argument";
+            assert args.length == 1 || (args.length == 2 && MutableFrameState.isTwoSlot(args[0].kind)) : "method with @UNSAFE_CAST must have exactly 1 argument";
             if (argCount == 1) {
                 fromType = signature.argumentTypeAt(0, accessingClass);
             } else {
                 assert argCount == 0 : "method with @UNSAFE_CAST must have exactly 1 argument";
                 fromType = target.holder();
             }
-            CiKind from = fromType.kind();
-            CiKind to = toType.kind();
-            boolean redundant = b.compilation.archKindsEqual(to, from);
-            return b.append(new UnsafeCast(toType, args[0], redundant));
+            CiKind from = fromType.kind(true).stackKind();
+            CiKind to = toType.kind(true).stackKind();
+            if (b.compilation.target.sizeInBytes(from) != b.compilation.target.sizeInBytes(from) || from == CiKind.Float || from == CiKind.Double || to == CiKind.Float || to == CiKind.Double) {
+                throw new CiBailout("Unsupported unsafe cast from " + fromType + " to " + toType);
+            }
+            return b.append(new UnsafeCast(toType, args[0], from == to));
         }
     }
 
@@ -117,7 +119,7 @@ public class MaxineIntrinsicImplementations {
             Value pointer = args[0];
             Value displacement = args.length == 3 ? args[1] : null;
             Value offsetOrIndex = offsetOrIndex(b, args.length == 3 ? args[2] : args[1]);
-            return b.append(new LoadPointer(target.signature().returnKind(), pointer, displacement, offsetOrIndex, stateBefore, false));
+            return b.append(new LoadPointer(target.signature().returnType(null), pointer, displacement, offsetOrIndex, stateBefore, false));
         }
     }
 
@@ -133,9 +135,8 @@ public class MaxineIntrinsicImplementations {
             Value offsetOrIndex = offsetOrIndex(b, numArgs == 4 ? args[2] : args[1]);
             Value value = args[numArgs - 1];
 
-            // Note: cannot use value.kind because the compiler, e.g., converts byte to int for that already.
-            CiKind kind = target.signature().argumentKindAt(target.signature().argumentCount(false) - 1);
-            b.append(new StorePointer(kind, pointer, displacement, offsetOrIndex, value, stateBefore, false));
+            RiType dataType = target.signature().argumentTypeAt(target.signature().argumentCount(false) - 1, null);
+            b.append(new StorePointer(dataType, pointer, displacement, offsetOrIndex, value, stateBefore, false));
             return null;
         }
     }
@@ -148,7 +149,7 @@ public class MaxineIntrinsicImplementations {
             Value offset = offsetOrIndex(b, args[1]);
             Value expectedValue = args[2];
             Value newValue = args[args.length == 6 ? 4 : 3];
-            return b.append(new CompareAndSwap(pointer, offset, expectedValue, newValue, stateBefore, false));
+            return b.append(new CompareAndSwap(target.signature().returnType(null), pointer, offset, expectedValue, newValue, stateBefore, false));
         }
     }
 
@@ -163,7 +164,7 @@ public class MaxineIntrinsicImplementations {
      */
     private static Value offsetOrIndex(GraphBuilder b, Value offsetOrIndex) {
         if (offsetOrIndex.kind == CiKind.Int && b.compilation.target.arch.is64bit() && offsetOrIndex instanceof Local) {
-            return b.append(new Convert(Convert.Op.I2L, offsetOrIndex, CiKind.Word));
+            return b.append(new Convert(Convert.Op.I2L, offsetOrIndex, CiKind.Long));
         }
         return offsetOrIndex;
     }
@@ -179,7 +180,7 @@ public class MaxineIntrinsicImplementations {
             if (register == null) {
                 throw new CiBailout("Unsupported READREG operand " + registerId);
             }
-            LoadRegister load = new LoadRegister(CiKind.Word, register);
+            LoadRegister load = new LoadRegister(target.signature().returnKind(false), register, target.signature().returnType(null));
             RiRegisterAttributes regAttr = b.compilation.registerConfig.getAttributesMap()[register.number];
             if (regAttr.isNonZero) {
                 load.setFlag(Flag.NonNull);
@@ -199,7 +200,7 @@ public class MaxineIntrinsicImplementations {
             if (register == null) {
                 throw new CiBailout("Unsupported READREG operand " + registerId);
             }
-            b.append(new StoreRegister(CiKind.Word, register, value));
+            b.append(new StoreRegister(register, value));
             return null;
         }
     }
@@ -246,14 +247,14 @@ public class MaxineIntrinsicImplementations {
     public static class StackHandleIntrinsic implements C1XIntrinsicImpl {
         @Override
         public Value createHIR(GraphBuilder b, RiMethod target, Value[] args, boolean isStatic, FrameState stateBefore) {
-            return b.append(new StackHandle(args[0]));
+            return b.append(new StackHandle(args[0], target.signature().returnType(null)));
         }
     }
 
     public static class StackAllocateIntrinsic implements C1XIntrinsicImpl {
         @Override
         public Value createHIR(GraphBuilder b, RiMethod target, Value[] args, boolean isStatic, FrameState stateBefore) {
-            return b.append(new StackAllocate(args[0]));
+            return b.append(new StackAllocate(args[0], target.signature().returnType(null)));
         }
     }
 

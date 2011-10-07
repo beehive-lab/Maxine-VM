@@ -111,7 +111,7 @@ public final class MutableFrameState extends FrameState {
     public void push(CiKind kind, Value x) {
         assert kind != CiKind.Void;
         xpush(assertKind(kind, x));
-        if (kind.sizeInSlots() == 2) {
+        if (isTwoSlot(kind)) {
             xpush(null);
         }
     }
@@ -151,14 +151,6 @@ public final class MutableFrameState extends FrameState {
     }
 
     /**
-     * Pushes a value onto the stack and checks that it is a word.
-     * @param x the instruction to push onto the stack
-     */
-    public void wpush(Value x) {
-        xpush(assertWord(x));
-    }
-
-    /**
      * Pushes a value onto the stack and checks that it is a JSR return address.
      * @param x the instruction to push onto the stack
      */
@@ -191,7 +183,7 @@ public final class MutableFrameState extends FrameState {
      * @return the instruction on the top of the stack
      */
     public Value pop(CiKind kind) {
-        if (kind.sizeInSlots() == 2) {
+        if (isTwoSlot(kind)) {
             xpop();
         }
         return assertKind(kind, xpop());
@@ -231,14 +223,6 @@ public final class MutableFrameState extends FrameState {
     }
 
     /**
-     * Pops a value off of the stack and checks that it is a word.
-     * @return x the instruction popped off the stack
-     */
-    public Value wpop() {
-        return assertWord(xpop());
-    }
-
-    /**
      * Pops a value off of the stack and checks that it is a JSR return address.
      * @return x the instruction popped off the stack
      */
@@ -265,7 +249,7 @@ public final class MutableFrameState extends FrameState {
     }
 
     private static Value assertKind(CiKind kind, Value x) {
-        assert x != null && (x.kind == kind || !isTypesafe() || (kind == CiKind.Object && x.kind == CiKind.Word)) : "kind=" + kind + ", value=" + x + ((x == null) ? "" : ", value.kind=" + x.kind);
+        assert x != null && (x.kind == kind || !isTypesafe()) : "kind=" + kind + ", value=" + x + ((x == null) ? "" : ", value.kind=" + x.kind);
         return x;
     }
 
@@ -290,12 +274,7 @@ public final class MutableFrameState extends FrameState {
     }
 
     private static Value assertObject(Value x) {
-        assert x != null && (x.kind == CiKind.Object || x.kind == CiKind.Word || !isTypesafe());
-        return x;
-    }
-
-    private static Value assertWord(Value x) {
-        assert x != null && (x.kind == CiKind.Word || !isTypesafe());
+        assert x != null && (x.kind == CiKind.Object || !isTypesafe());
         return x;
     }
 
@@ -314,7 +293,7 @@ public final class MutableFrameState extends FrameState {
         Value[] r = new Value[size];
         int y = maxLocals + base;
         for (int i = 0; i < size; ++i) {
-            assert values[y] != null || values[y - 1].kind.jvmSlots == 2;
+            assert values[y] != null || isTwoSlot(values[y - 1].kind);
             r[i] = values[y++];
         }
         stackIndex = base;
@@ -361,4 +340,8 @@ public final class MutableFrameState extends FrameState {
         assert x == null;
     }
 
+    public static boolean isTwoSlot(CiKind kind) {
+        assert kind != CiKind.Void && kind != CiKind.Illegal;
+        return kind == CiKind.Long || kind == CiKind.Double;
+    }
 }

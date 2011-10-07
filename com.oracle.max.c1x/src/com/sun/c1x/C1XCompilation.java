@@ -133,27 +133,6 @@ public final class C1XCompilation {
     }
 
     /**
-     * Translates a given kind to a canonical architecture kind.
-     * This is an identity function for all but {@link CiKind#Word}
-     * which is translated to {@link CiKind#Int} or {@link CiKind#Long}
-     * depending on whether or not this is a {@linkplain #is64Bit() 64-bit}
-     * compilation.
-     */
-    public CiKind archKind(CiKind kind) {
-        if (kind.isWord()) {
-            return target.arch.is64bit() ? CiKind.Long : CiKind.Int;
-        }
-        return kind;
-    }
-
-    /**
-     * Determines if two given kinds are equal at the {@linkplain #archKind(CiKind) architecture} level.
-     */
-    public boolean archKindsEqual(CiKind kind1, CiKind kind2) {
-        return archKind(kind1) == archKind(kind2);
-    }
-
-    /**
      * Gets the frame which describes the layout of the OSR interpreter frame for this method.
      *
      * @return the OSR frame
@@ -204,7 +183,7 @@ public final class C1XCompilation {
             throw new CiBailout("build of BlockMap failed for " + method);
         } else {
             if (compiler.isObserved()) {
-                String label = CiUtil.format("BlockListBuilder %f %R %H.%n(%P)", method, false);
+                String label = CiUtil.format("BlockListBuilder %f %R %H.%n(%P)", method);
                 compiler.fireCompilationEvent(new CompilationEvent(this, label, method, map, method.code().length));
             }
         }

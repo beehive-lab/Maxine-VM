@@ -22,6 +22,10 @@
  */
 package com.sun.max.vm.classfile.constant;
 
+import static com.sun.max.vm.classfile.constant.PoolConstantFactory.*;
+
+import java.io.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.vm.classfile.constant.ConstantPool.*;
 import com.sun.max.vm.value.*;
@@ -69,4 +73,12 @@ public final class StringConstant extends AbstractPoolConstant<StringConstant> i
     public StringConstant key(ConstantPool pool) {
         return this;
     }
+
+    @Override
+    public void writeOn(DataOutputStream stream, ConstantPoolEditor editor, int index) throws IOException {
+        super.writeOn(stream, editor, index);
+        final String string = editor.pool().stringAt(index);
+        stream.writeShort(editor.indexOf(makeUtf8Constant(string)));
+    }
+
 }

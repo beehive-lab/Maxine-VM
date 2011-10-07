@@ -25,6 +25,7 @@ package com.sun.max.vm.classfile.constant;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.type.JavaTypeDescriptor.*;
 
@@ -211,8 +212,9 @@ public abstract class UnresolvedType implements RiType {
         throw unresolved("uniqueConcreteSubtype()");
     }
 
-    public CiKind kind() {
-        return typeDescriptor.toKind().ciKind;
+    @Override
+    public CiKind kind(boolean architecture) {
+        return WordUtil.ciKind(typeDescriptor.toKind(), architecture);
     }
 
     public CiUnresolvedException unresolved(String operation) {

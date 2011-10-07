@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.reflection;
 
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.classfile.constant.PoolConstantFactory.*;
 import static com.sun.max.vm.type.ClassRegistry.Property.*;
 
@@ -222,9 +223,11 @@ public class InvocationStubGenerator<T> {
                     ClassActor.NO_ENCLOSING_METHOD_INFO));
 
             try {
-                ClassfileWriter.saveGeneratedClass(new ClassInfo(stubClassActor), constantPoolEditor.copy());
-                if (MaxineVM.isHosted() && saveJavaSource) {
-                    traceStubAsJavaSource(superClass, name, declaringClass, returnType, parameterTypes, isStatic, classToInstantiate, target, boxing, stubClassName);
+                if (isHosted() || ClassfileReader.saveClassDir.getValue() != null) {
+                    ClassfileWriter.saveGeneratedClass(new ClassInfo(stubClassActor), constantPoolEditor.copy());
+                    if (isHosted() && saveJavaSource) {
+                        traceStubAsJavaSource(superClass, name, declaringClass, returnType, parameterTypes, isStatic, classToInstantiate, target, boxing, stubClassName);
+                    }
                 }
             } catch (IOException ioException) {
                 ioException.printStackTrace();

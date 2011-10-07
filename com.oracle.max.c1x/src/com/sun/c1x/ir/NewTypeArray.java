@@ -40,7 +40,7 @@ public final class NewTypeArray extends NewArray {
     }
 
     public CiKind elementKind() {
-        return elementType.kind();
+        return elementType.kind(true);
     }
 
     @Override

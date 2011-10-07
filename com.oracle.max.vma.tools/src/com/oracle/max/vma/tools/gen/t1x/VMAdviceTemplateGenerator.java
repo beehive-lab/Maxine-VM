@@ -30,12 +30,12 @@ import java.util.*;
 import com.oracle.max.vm.ext.t1x.*;
 import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.run.java.*;
-import com.sun.cri.ci.*;
+import com.oracle.max.vma.tools.gen.vma.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.t1x.vma.*;
-import com.oracle.max.vma.tools.gen.vma.AdviceGeneratorHelper;
+import com.sun.max.vm.type.*;
 
 /**
  * Template generation that supports the {@link VMAdviceHandler} interface.
@@ -212,8 +212,8 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
 
             String k = null;
             if (args.length > 0) {
-                if (args[0] instanceof CiKind) {
-                    k = ((CiKind) args[0]).javaName;
+                if (args[0] instanceof Kind) {
+                    k = j((Kind) args[0]);
                 } else {
                     assert args[0] instanceof String;
                     k = (String) args[0];
@@ -909,12 +909,12 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
     }
 
     @Override
-    public void generateUnresolvedInvokeVITemplate(CiKind k, String variant) {
+    public void generateUnresolvedInvokeVITemplate(Kind k, String variant) {
         generateInvokeVITemplate(k, variant, "");
     }
 
     @Override
-    public void generateInvokeVITemplate(CiKind k, String variant, boolean instrumented) {
+    public void generateInvokeVITemplate(Kind k, String variant, boolean instrumented) {
         generateInvokeVITemplate(k, variant, instrumented ? "instrumented" : "resolved");
     }
 
@@ -924,7 +924,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
      * @param variant one of "virtual" or "interface"
      * @param tag one of "", "resolved" or "instrumented"
      */
-    private void generateInvokeVITemplate(CiKind k, String variant, String tag) {
+    private void generateInvokeVITemplate(Kind k, String variant, String tag) {
         String params = tag.equals("") ? "ResolutionGuard.InPool guard" :
             (variant.equals("interface") ? "InterfaceMethodActor methodActor" : "VirtualMethodActor methodActor");
         if (tag.equals("instrumented")) {
@@ -970,7 +970,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
 
 
     @Override
-    public void generateInvokeSSTemplate(CiKind k, String variant) {
+    public void generateInvokeSSTemplate(Kind k, String variant) {
         generateInvokeSSTemplate(k, variant, "");
         generateInvokeSSTemplate(k, variant, "resolved");
     }
@@ -981,7 +981,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
      * @param variant one of "special" or "static"
      * @param xtag one of "" or "resolved"
      */
-    public void generateInvokeSSTemplate(CiKind k, String variant, String xtag) {
+    public void generateInvokeSSTemplate(Kind k, String variant, String xtag) {
         boolean resolved = xtag.equals("resolved");
         boolean isStatic = variant.equals("static");
         String tag = isStatic && resolved ? "init" : xtag;
@@ -1137,8 +1137,8 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
         newLine();
     }
 
-    private static boolean hasLDCTemplates(CiKind k) {
-        return k == CiKind.Int || k == CiKind.Long || k == CiKind.Float || k == CiKind.Double || k == CiKind.Object;
+    private static boolean hasLDCTemplates(Kind k) {
+        return k == Kind.INT || k == Kind.LONG || k == Kind.FLOAT || k == Kind.DOUBLE || k == Kind.REFERENCE;
     }
 
     private static final EnumSet<T1XTemplateTag> LDC_TEMPLATE_TAGS = EnumSet.of(LDC$int, LDC$long, LDC$float, LDC$double, LDC$reference, LDC$reference$resolved);
@@ -1253,9 +1253,9 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
      * Generate all the {@link #IFCMP_TEMPLATE_TAGS}.
      */
     private void generateIfCmpTemplates() {
-        for (CiKind k : new CiKind[] { CiKind.Int, CiKind.Object}) {
+        for (Kind k : new Kind[] { Kind.INT, Kind.REFERENCE}) {
             for (String s : T1XTemplateGenerator.conditions) {
-                if (k == CiKind.Object && !(s.equals("eq") || s.equals("ne"))) {
+                if (k == Kind.REFERENCE && !(s.equals("eq") || s.equals("ne"))) {
                     continue;
                 }
                 generateIfCmpTemplate(k, s);
@@ -1287,10 +1287,10 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
      * @param k type
      * @param op one of "eq", "ne", "lt", "ge", "gt", "le"
      */
-    private void generateIfCmpTemplate(CiKind ciKind, String op) {
+    private void generateIfCmpTemplate(Kind k, String op) {
         startMethodGeneration();
-        generateTemplateTag("IF_%sCMP%s", tagPrefix(ciKind), op.toUpperCase());
-        out.printf("    public static void if_%scmp%s(%s value1, %s value2) {%n", opPrefix(ciKind), op, ciKind.javaName, ciKind.javaName);
+        generateTemplateTag("IF_%sCMP%s", tagPrefix(k), op.toUpperCase());
+        out.printf("    public static void if_%scmp%s(%s value1, %s value2) {%n", opPrefix(k), op, j(k), j(k));
         generateBeforeAdvice();
         out.printf("    }%n");
         newLine();
@@ -1304,10 +1304,10 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
      */
     private void generateIfTemplates() {
         for (String s : T1XTemplateGenerator.conditions) {
-            generateIfTemplate(CiKind.Int, s);
+            generateIfTemplate(Kind.INT, s);
         }
         for (String s : new String[] {"null", "nonnull"}) {
-            generateIfTemplate(CiKind.Object, s);
+            generateIfTemplate(Kind.REFERENCE, s);
         }
     }
 
@@ -1316,10 +1316,10 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
      * @param k type one of "int" or "Reference"
      * @param op one of "eq", "ne", "lt", "ge", "gt", "le" ("null" or "nonnull" for k == "Reference")
      */
-    private void generateIfTemplate(CiKind ciKind, String op) {
+    private void generateIfTemplate(Kind k, String op) {
         startMethodGeneration();
         generateTemplateTag("IF%s", op.toUpperCase());
-        out.printf("    public static void if%s(%s value1) {%n", op, ciKind.javaName);
+        out.printf("    public static void if%s(%s value1) {%n", op, j(k));
         generateBeforeAdvice();
         out.printf("    }%n");
         newLine();

@@ -43,7 +43,7 @@ public final class PrimitiveClassActor extends ClassActor {
               NO_MAJOR_VERSION,
               NO_MINOR_VERSION,
               ACC_PUBLIC | ACC_FINAL,
-              kind.typeDescriptor,
+              kind.typeDescriptor(),
               NO_SUPER_CLASS_ACTOR,
               NO_COMPONENT_CLASS_ACTOR,
               InterfaceActor.NONE,

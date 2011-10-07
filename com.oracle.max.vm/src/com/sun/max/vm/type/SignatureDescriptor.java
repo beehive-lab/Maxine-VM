@@ -34,6 +34,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.collect.ChainedHashMapping.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.compiler.*;
 
 /**
  * A string description of a method signature, see #4.3.3.
@@ -361,16 +362,18 @@ public abstract class SignatureDescriptor extends Descriptor implements RiSignat
         return UnresolvedType.toRiType(parameterDescriptorAt(index), accessingClass);
     }
 
-    public CiKind argumentKindAt(int index) {
-        return parameterDescriptorAt(index).toKind().ciKind;
+    @Override
+    public CiKind argumentKindAt(int index, boolean architecture) {
+        return WordUtil.ciKind(parameterDescriptorAt(index).toKind(), architecture);
     }
 
     public final RiType returnType(RiType accessingClass) {
         return UnresolvedType.toRiType(resultDescriptor(), accessingClass);
     }
 
-    public final CiKind returnKind() {
-        return resultDescriptor().toKind().ciKind;
+    @Override
+    public final CiKind returnKind(boolean architecture) {
+        return WordUtil.ciKind(resultDescriptor().toKind(), architecture);
     }
 
     public final String asString() {

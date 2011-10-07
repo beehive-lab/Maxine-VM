@@ -41,7 +41,16 @@ public final class Constant extends Instruction {
      * @param value the constant
      */
     public Constant(CiConstant value) {
-        super(value.kind.stackKind());
+        this(value.kind, value);
+    }
+
+    /**
+     * Constructs a new instruction representing the specified kind and constant.
+     * Note that the specified kind and the kind of the constant value do not have to match.
+     * For example, a long constant denoting a raw pointer has the kind Object at first.
+     */
+    public Constant(CiKind kind, CiConstant value) {
+        super(kind.stackKind());
         this.value = value;
         initFlag(Value.Flag.NonNull, value.isNonNull());
     }
@@ -112,15 +121,6 @@ public final class Constant extends Instruction {
      */
     public static Constant forObject(Object o) {
         return new Constant(CiConstant.forObject(o));
-    }
-
-    /**
-     * Creates an instruction for a word constant.
-     * @param val the word value for which to create the instruction
-     * @return an instruction representing the word
-     */
-    public static Constant forWord(long val) {
-        return new Constant(CiConstant.forWord(val));
     }
 
     @Override

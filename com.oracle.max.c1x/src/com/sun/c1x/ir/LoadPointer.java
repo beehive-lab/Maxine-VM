@@ -25,6 +25,7 @@ package com.sun.c1x.ir;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * The {@code LoadPointer} instruction represents a read of a pointer.
@@ -36,7 +37,7 @@ public final class LoadPointer extends PointerOp {
     /**
      * Creates an instruction for a pointer load.
      *
-     * @param kind the kind of value loaded from the pointer
+     * @param dataType the type of value loaded from the pointer
      * @param opcode the opcode of the instruction
      * @param pointer the value producing the pointer
      * @param displacement the value producing the displacement. This may be {@code null}.
@@ -45,8 +46,8 @@ public final class LoadPointer extends PointerOp {
      * @param isVolatile {@code true} if the access is volatile
      * @see PointerOp#PointerOp(CiKind, int, Value, Value, Value, FrameState, boolean)
      */
-    public LoadPointer(CiKind kind, Value pointer, Value displacement, Value offsetOrIndex, FrameState stateBefore, boolean isVolatile) {
-        super(kind, kind, pointer, displacement, offsetOrIndex, stateBefore, isVolatile);
+    public LoadPointer(RiType dataType, Value pointer, Value displacement, Value offsetOrIndex, FrameState stateBefore, boolean isVolatile) {
+        super(dataType.kind(false), dataType, pointer, displacement, offsetOrIndex, stateBefore, isVolatile);
     }
 
     @Override
@@ -55,12 +56,17 @@ public final class LoadPointer extends PointerOp {
     }
 
     @Override
+    public RiType declaredType() {
+        return dataType;
+    }
+
+    @Override
     public void print(LogStream out) {
         out.print("*(").print(pointer());
         if (displacement() == null) {
             out.print(" + ").print(offset());
         } else {
-            out.print(" + ").print(displacement()).print(" + (").print(index()).print(" * sizeOf(" + dataKind + "))");
+            out.print(" + ").print(displacement()).print(" + (").print(index()).print(" * sizeOf(" + dataType + "))");
         }
         out.print(")");
     }

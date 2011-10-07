@@ -24,7 +24,7 @@ package com.sun.c1x.ir;
 
 import com.sun.c1x.debug.*;
 import com.sun.cri.bytecode.*;
-import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * Instruction implementing the semantics of {@link Bytecodes#STACKHANDLE}.
@@ -35,14 +35,16 @@ public final class StackHandle extends Instruction {
      * The value that will be used to initialize the stack slot by allocated by this instruction.
      */
     private Value value;
+    public final RiType declaredType;
 
     /**
      * Creates a new LoadStackAddress instance.
      */
-    public StackHandle(Value value) {
-        super(CiKind.Word);
+    public StackHandle(Value value, RiType declaredType) {
+        super(declaredType.kind(false));
         setFlag(Flag.NonNull);
         this.value = value;
+        this.declaredType = declaredType;
     }
 
     @Override
@@ -60,6 +62,11 @@ public final class StackHandle extends Instruction {
      */
     public Value value() {
         return value;
+    }
+
+    @Override
+    public RiType declaredType() {
+        return declaredType;
     }
 
     @Override

@@ -58,21 +58,18 @@ import com.sun.cri.xir.CiXirAssembler.XirMark;
 public final class AMD64LIRAssembler extends LIRAssembler {
 
     private static final Object[] NO_PARAMS = new Object[0];
-    private static final long NULLWORD = 0;
     private static final CiRegister SHIFTCount = AMD64.rcx;
 
     private static final long DoubleSignMask = 0x7FFFFFFFFFFFFFFFL;
 
     final CiTarget target;
     final AMD64MacroAssembler masm;
-    final int wordSize;
     final CiRegister rscratch1;
 
     public AMD64LIRAssembler(C1XCompilation compilation, TargetMethodAssembler tasm) {
         super(compilation, tasm);
         masm = (AMD64MacroAssembler) tasm.asm;
         target = compilation.target;
-        wordSize = target.wordSize;
         rscratch1 = compilation.registerConfig.getScratchRegister();
     }
 
@@ -106,10 +103,10 @@ public final class AMD64LIRAssembler extends LIRAssembler {
             case HERE:
                 tasm.recordSafepoint(codePos(), info);
                 int beforeLea = masm.codeBuffer.position();
-                masm.leaq(dst.asRegister(), new CiAddress(CiKind.Word, InstructionRelative.asValue(), 0));
+                masm.leaq(dst.asRegister(), new CiAddress(target.wordKind, InstructionRelative.asValue(), 0));
                 int afterLea = masm.codeBuffer.position();
                 masm.codeBuffer.setPosition(beforeLea);
-                masm.leaq(dst.asRegister(), new CiAddress(CiKind.Word, InstructionRelative.asValue(), beforeLea - afterLea));
+                masm.leaq(dst.asRegister(), new CiAddress(target.wordKind, InstructionRelative.asValue(), beforeLea - afterLea));
                 break;
             case UNCOMMON_TRAP:
                 directCall(CiRuntimeCall.Deoptimize, info);
@@ -226,7 +223,6 @@ public final class AMD64LIRAssembler extends LIRAssembler {
             case Short   :
             case Jsr     :
             case Int     : const2reg(dest.asRegister(), c.asInt()); break;
-            case Word    :
             case Long    : const2reg(dest.asRegister(), c.asLong()); break;
             case Object  : const2reg(dest.asRegister(), c); break;
             case Float   : const2reg(asXmmFloatReg(dest), c.asFloat()); break;
@@ -253,7 +249,6 @@ public final class AMD64LIRAssembler extends LIRAssembler {
             case Int     : masm.movl(frameMap.toStackAddress(slot), c.asInt()); break;
             case Float   : masm.movl(frameMap.toStackAddress(slot), floatToRawIntBits(c.asFloat())); break;
             case Object  : movoop(frameMap.toStackAddress(slot), c); break;
-            case Word    :
             case Long    : masm.movq(rscratch1, c.asLong());
                            masm.movq(frameMap.toStackAddress(slot), rscratch1); break;
             case Double  : masm.movq(rscratch1, doubleToRawLongBits(c.asDouble()));
@@ -281,7 +276,6 @@ public final class AMD64LIRAssembler extends LIRAssembler {
             case Int     : masm.movl(addr, constant.asInt()); break;
             case Float   : masm.movl(addr, floatToRawIntBits(constant.asFloat())); break;
             case Object  : movoop(addr, constant); break;
-            case Word:
             case Long    : masm.movq(rscratch1, constant.asLong());
                            nullCheckHere = codePos();
                            masm.movq(addr, rscratch1); break;
@@ -326,7 +320,6 @@ public final class AMD64LIRAssembler extends LIRAssembler {
             case Jsr     :
             case Int     : masm.movl(addr, src.asRegister()); break;
             case Object  :
-            case Word    :
             case Long    : masm.movq(addr, src.asRegister()); break;
             case Float   : masm.movflt(addr, asXmmFloatReg(src)); break;
             case Double  : masm.movsd(addr, asXmmDoubleReg(src)); break;
@@ -350,7 +343,6 @@ public final class AMD64LIRAssembler extends LIRAssembler {
             case Jsr     :
             case Int     : masm.movl(toAddr, src.asRegister()); break;
             case Long    :
-            case Word    :
             case Object  : masm.movq(toAddr, src.asRegister()); break;
             case Char    :
             case Short   : masm.movw(toAddr, src.asRegister()); break;
@@ -384,7 +376,6 @@ public final class AMD64LIRAssembler extends LIRAssembler {
             case Jsr     :
             case Int     : masm.movl(dest.asRegister(), addr); break;
             case Object  :
-            case Word    :
             case Long    : masm.movq(dest.asRegister(), addr); break;
             case Float   : masm.movflt(asXmmFloatReg(dest), addr); break;
             case Double  : masm.movdbl(asXmmDoubleReg(dest), addr); break;
@@ -442,7 +433,6 @@ public final class AMD64LIRAssembler extends LIRAssembler {
             case Double  : masm.movdbl(asXmmDoubleReg(dest), addr); break;
             case Object  : masm.movq(dest.asRegister(), addr); break;
             case Int     : masm.movslq(dest.asRegister(), addr); break;
-            case Word    :
             case Long    : masm.movq(dest.asRegister(), addr); break;
             case Boolean :
             case Byte    : masm.movsxb(dest.asRegister(), addr); break;
@@ -543,7 +533,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         // Patch LEA instruction above now that we know the position of the jump table
         int jumpTablePos = buf.position();
         buf.setPosition(leaPos);
-        masm.leaq(rscratch1, new CiAddress(CiKind.Word, InstructionRelative.asValue(), jumpTablePos - afterLea));
+        masm.leaq(rscratch1, new CiAddress(target.wordKind, InstructionRelative.asValue(), jumpTablePos - afterLea));
         buf.setPosition(jumpTablePos);
 
         // Emit jump table entries
@@ -745,7 +735,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         if (op.code == LIROpcode.CasInt) {
             masm.cmpxchgl(newval, address);
         } else {
-            assert op.code == LIROpcode.CasObj || op.code == LIROpcode.CasLong || op.code == LIROpcode.CasWord;
+            assert op.code == LIROpcode.CasObj || op.code == LIROpcode.CasLong;
             masm.cmpxchgq(newval, address);
         }
     }
@@ -859,7 +849,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     @Override
     protected void emitArithOp(LIROpcode code, CiValue left, CiValue right, CiValue dest, LIRDebugInfo info) {
         assert info == null : "should never be used :  idiv/irem and ldiv/lrem not handled by this method";
-        assert Util.archKindsEqual(left.kind, right.kind) || (left.kind == CiKind.Word && right.kind == CiKind.Int) : code.toString() + " left arch is " + left.kind + " and right arch is " +  right.kind;
+        assert Util.archKindsEqual(left.kind, right.kind) || (left.kind == CiKind.Long && right.kind == CiKind.Int) : code.toString() + " left arch is " + left.kind + " and right arch is " +  right.kind;
         assert left.equals(dest) : "left and dest must be equal";
         CiKind kind = left.kind;
 
@@ -1275,7 +1265,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     @Override
     protected void emitCompare(Condition condition, CiValue opr1, CiValue opr2, LIROp2 op) {
         // Checkstyle: off
-        assert Util.archKindsEqual(opr1.kind.stackKind(), opr2.kind.stackKind()) || (opr1.kind == CiKind.Word && opr2.kind == CiKind.Int) : "nonmatching stack kinds (" + condition + "): " + opr1.kind.stackKind() + "==" + opr2.kind.stackKind();
+        assert Util.archKindsEqual(opr1.kind.stackKind(), opr2.kind.stackKind()) || (opr1.kind == CiKind.Long && opr2.kind == CiKind.Int) : "nonmatching stack kinds (" + condition + "): " + opr1.kind.stackKind() + "==" + opr2.kind.stackKind();
 
         if (opr1.isConstant()) {
             // Use scratch register
@@ -1295,7 +1285,6 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     case Short   :
                     case Int     : masm.cmpl(reg1, opr2.asRegister()); break;
                     case Long    :
-                    case Word    :
                     case Object  : masm.cmpq(reg1, opr2.asRegister()); break;
                     case Float   : masm.ucomiss(reg1, asXmmFloatReg(opr2)); break;
                     case Double  : masm.ucomisd(reg1, asXmmDoubleReg(opr2)); break;
@@ -1311,7 +1300,6 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     case Short   :
                     case Int     : masm.cmpl(reg1, frameMap.toStackAddress(opr2Slot)); break;
                     case Long    :
-                    case Word    :
                     case Object  : masm.cmpptr(reg1, frameMap.toStackAddress(opr2Slot)); break;
                     case Float   : masm.ucomiss(reg1, frameMap.toStackAddress(opr2Slot)); break;
                     case Double  : masm.ucomisd(reg1, frameMap.toStackAddress(opr2Slot)); break;
@@ -1328,8 +1316,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     case Int     : masm.cmpl(reg1, c.asInt()); break;
                     case Float   : masm.ucomiss(reg1, tasm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) opr2).asFloat()))); break;
                     case Double  : masm.ucomisd(reg1, tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) opr2).asDouble()))); break;
-                    case Long    :
-                    case Word    : {
+                    case Long    : {
                         if (c.asLong() == 0) {
                             masm.cmpq(reg1, 0);
                         } else {
@@ -1360,8 +1347,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     case Char    :
                     case Short   :
                     case Int     : masm.cmpl(left, right.asInt()); break;
-                    case Long    :
-                    case Word    : assert NumUtil.isInt(right.asLong());
+                    case Long    : assert NumUtil.isInt(right.asLong());
                                    masm.cmpq(left, right.asInt()); break;
                     case Object  : assert right.isNull();
                                    masm.cmpq(left, 0); break;
@@ -1554,7 +1540,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitAlignment() {
-        masm.align(wordSize);
+        masm.align(target.wordSize);
     }
 
     @Override
@@ -1859,7 +1845,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     CiValue exchangedVal = operands[inst.y().index];
                     CiValue exchangedAddress = operands[inst.x().index];
                     CiRegisterValue pointerRegister = assureInRegister(exchangedAddress);
-                    CiAddress addr = new CiAddress(CiKind.Word, pointerRegister);
+                    CiAddress addr = new CiAddress(target.wordKind, pointerRegister);
                     masm.cmpxchgq(exchangedVal.asRegister(), addr);
 
                     break;
@@ -2100,7 +2086,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
      *            a slot "up" the stack above RSP).
      */
     private void bangStackWithOffset(int offset) {
-        masm.movq(new CiAddress(CiKind.Word, AMD64.RSP, -offset), AMD64.rax);
+        masm.movq(new CiAddress(target.wordKind, AMD64.RSP, -offset), AMD64.rax);
     }
 
     private CiRegisterValue assureInRegister(CiValue pointer) {

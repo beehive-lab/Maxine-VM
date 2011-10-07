@@ -114,12 +114,8 @@ public final class ClassID {
         assert ClassRegistry.get(classActor.classLoader, classActor.typeDescriptor, false) != classActor;
         int id = classActor.id;
         FatalError.check(usedIDs.get(id), "Class ID must be allocated");
+        FatalError.check(classActor.arrayClassIDs == null, "Can remove class ID only when no array classes were registered yet");
         clear(id);
-        if (classActor.arrayClassIDs != null) {
-            for (int arrayId : classActor.arrayClassIDs) {
-                clear(arrayId);
-            }
-        }
     }
 
     private static void clear(int id) {

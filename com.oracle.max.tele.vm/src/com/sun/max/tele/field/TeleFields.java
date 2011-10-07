@@ -316,28 +316,28 @@ public class TeleFields extends AbstractTeleVMHolder {
                 final Class c = field.getDeclaringClass();
                 final boolean isStatic = Modifier.isStatic(field.getModifiers());
                 final Class type = field.getType();
-                final CiKind kind = Word.class.isAssignableFrom(type) ? CiKind.Word : CiKind.fromJavaClass(type);
+                final Kind kind = Word.class.isAssignableFrom(type) ? Kind.WORD : Kind.fromJava(type);
                 final String holder = c.getName().substring(c.getPackage().getName().length() + 1);
                 final String name = field.getName();
-                final String kindName = kind.isObject() ? "Reference" : kind.javaName;
+                final String kindName = kind.toString();
                 final String inspectorFieldName = holder + (name.charAt(0) == '_' ? name : '_' + name);
                 final String inspectorFieldType = "Tele" + (isStatic ? "Static" : "Instance") + Strings.capitalizeFirst(kindName, true) + "FieldAccess";
                 writer.print("public final " + inspectorFieldType + " " + inspectorFieldName + " = ");
 
-                switch (kind) {
-                    case Boolean:
-                    case Byte:
-                    case Char:
-                    case Short:
-                    case Int:
-                    case Float:
-                    case Long:
-                    case Double:
-                    case Word: {
+                switch (kind.asEnum) {
+                    case BOOLEAN:
+                    case BYTE:
+                    case CHAR:
+                    case SHORT:
+                    case INT:
+                    case FLOAT:
+                    case LONG:
+                    case DOUBLE:
+                    case WORD: {
                         writer.print("new " + inspectorFieldType + "(" + holder.replace('$', '.') + ".class, \"" + name + "\")");
                         break;
                     }
-                    case Object: {
+                    case REFERENCE: {
                         writer.print("new " + inspectorFieldType + "(" + holder.replace('$', '.') + ".class, \"" + name + "\", " +  type.getSimpleName() + ".class)");
                         break;
                     }

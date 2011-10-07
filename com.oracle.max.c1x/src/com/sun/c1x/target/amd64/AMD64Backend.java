@@ -74,7 +74,7 @@ public class AMD64Backend extends Backend {
 
     @Override
     public CiXirAssembler newXirAssembler() {
-        return new AMD64XirAssembler();
+        return new AMD64XirAssembler(compiler.target);
     }
 
     @Override

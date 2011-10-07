@@ -31,6 +31,7 @@ import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -48,7 +49,7 @@ public abstract class JVMSFrameLayout extends VMFrameLayout {
     protected final int numberOfParameterSlots;
 
     /**
-     * Size of a stack slot. It may differ from {@link VMFrameLayout#STACK_SLOT_SIZE} due to alignment
+     * Size of a JVMS slot. It may differ from {@link VMFrameLayout#STACK_SLOT_SIZE} due to alignment
      * constraints imposed on a stack frame by the target platform (e.g., AMD64 requires 16-byte aligned stack frame).
      * In this case, it's simpler to use a slot size larger than the optimal stack slot sized used by
      * an optimizing compiler.
@@ -118,8 +119,8 @@ public abstract class JVMSFrameLayout extends VMFrameLayout {
         return kind.isCategory1 ? JVMS_SLOT_SIZE : 2 * JVMS_SLOT_SIZE;
     }
 
-    public static int offsetInStackSlot(CiKind kind) {
-        if (kind.isDoubleWord()) {
+    public static int offsetInStackSlot(Kind kind) {
+        if (kind.stackSlots == 2) {
             return CATEGORY2_OFFSET_WITHIN_WORD;
         }
         return CATEGORY1_OFFSET_WITHIN_WORD;
@@ -234,7 +235,7 @@ public abstract class JVMSFrameLayout extends VMFrameLayout {
         CiValue[] values = new CiValue[numLocals + numStack];
         CiValue fp = framePointerReg().asValue();
         for (int i = 0; i < numLocals; i++) {
-            CiKind kind = CiKind.Word;
+            CiKind kind = WordUtil.archKind();
             if (frameRefMap != null && frameRefMap.get(localVariableReferenceMapIndex(i))) {
                 kind = CiKind.Object;
             }
@@ -242,7 +243,7 @@ public abstract class JVMSFrameLayout extends VMFrameLayout {
             values[i] = value;
         }
         for (int i = 0; i < numStack; i++) {
-            CiKind kind = CiKind.Word;
+            CiKind kind = WordUtil.archKind();
             if (frameRefMap != null && frameRefMap.get(operandStackReferenceMapIndex(i))) {
                 kind = CiKind.Object;
             }

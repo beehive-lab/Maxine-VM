@@ -309,21 +309,9 @@ public class Util {
      * in the context of the {@linkplain C1XCompilation#compilation()} compilation.
      */
     public static boolean archKindsEqual(CiKind k1, CiKind k2) {
-        C1XCompilation compilation = C1XCompilation.compilation();
-        assert compilation != null : "missing compilation context";
-        return compilation.archKindsEqual(k1, k2);
+        // TODO(cwi): I think that implementation should do it with the new handling of Word types.
+        return k1 == k2;
     }
-
-    /**
-     * Translates a given kind to a {@linkplain C1XCompilation#archKind(CiKind) canonical architecture}
-     * kind in the context of the {@linkplain C1XCompilation#compilation() current} compilation.
-     */
-    public static CiKind archKind(CiKind kind) {
-        C1XCompilation compilation = C1XCompilation.compilation();
-        assert compilation != null : "missing compilation context";
-        return compilation.archKind(kind);
-    }
-
 
     /**
      * Checks that two instructions are equivalent, optionally comparing constants.

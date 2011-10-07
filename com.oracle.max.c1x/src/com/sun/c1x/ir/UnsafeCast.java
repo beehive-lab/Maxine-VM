@@ -52,7 +52,7 @@ public final class UnsafeCast extends Instruction {
      * @param value the value being cast
      */
     public UnsafeCast(RiType toType, Value value, boolean redundant) {
-        super(toType.kind().stackKind());
+        super(toType.kind(false).stackKind());
         this.toType = toType;
         this.value = value;
         this.redundant = redundant;

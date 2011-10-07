@@ -24,7 +24,7 @@ package com.sun.c1x.ir;
 
 import com.sun.c1x.debug.*;
 import com.sun.cri.bytecode.*;
-import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * Instruction implementing the semantics of {@link Bytecodes#ALLOCA}.
@@ -32,13 +32,15 @@ import com.sun.cri.ci.*;
 public final class StackAllocate extends Instruction {
 
     private Value size;
+    public final RiType declaredType;
 
     /**
      * Creates a new StackAllocate instance.
      */
-    public StackAllocate(Value size) {
-        super(CiKind.Word);
+    public StackAllocate(Value size, RiType declaredType) {
+        super(declaredType.kind(false));
         this.size = size;
+        this.declaredType = declaredType;
         setFlag(Flag.NonNull);
         eliminateNullCheck();
     }
@@ -58,6 +60,11 @@ public final class StackAllocate extends Instruction {
      */
     public Value size() {
         return size;
+    }
+
+    @Override
+    public RiType declaredType() {
+        return declaredType;
     }
 
     @Override

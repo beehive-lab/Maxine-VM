@@ -89,7 +89,7 @@ public class AMD64 extends CiArchitecture {
         xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15
     };
 
-    public static final CiRegisterValue RSP = rsp.asValue(Word);
+    public static final CiRegisterValue RSP = rsp.asValue(Long);
 
     public AMD64() {
         super("AMD64",

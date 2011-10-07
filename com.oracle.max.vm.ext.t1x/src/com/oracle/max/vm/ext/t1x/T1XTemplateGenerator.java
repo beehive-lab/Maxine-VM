@@ -23,12 +23,11 @@
 package com.oracle.max.vm.ext.t1x;
 
 import static com.oracle.max.vm.ext.t1x.T1XTemplateTag.*;
-import static com.sun.cri.ci.CiKind.*;
+import static com.sun.max.vm.type.Kind.*;
 
 import java.io.*;
 import java.util.*;
 
-import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
@@ -103,86 +102,88 @@ public class T1XTemplateGenerator {
      * {@link String} equivalent of {@link KindEnum} with standard case rules.
      * Arguably this class could use {@link KindEnum} more, but it is mostly doing string processing.
      */
-    public static final CiKind[] kinds = {Boolean, Byte, Char, Short, Int, Float, Long, Double, Object, Word, Void};
+    public static final Kind[] kinds = {BOOLEAN, BYTE, CHAR, SHORT, INT, FLOAT, LONG, DOUBLE, REFERENCE, WORD, VOID};
 
     public static final String[] conditions = new String[] {"eq", "ne", "lt", "ge", "gt", "le"};
 
     /**
+     * Returns {@code k.javaName}.
+     */
+    public static String j(Kind k) {
+        return k.javaClass.getSimpleName();
+    }
+
+    /**
      * Returns {@code k.javaName} with first character lower cased.
      */
-    public static String l(CiKind k) {
-        if (k == Object) {
-            return "object";
-        } else if (k == Word) {
-            return "word";
-        }
-        return k.javaName;
+    public static String l(Kind k) {
+        return j(k).toLowerCase();
     }
 
     /**
      * Returns {@code k.javaName} with first character upper cased.
      */
-    public static String u(CiKind k) {
-        return k.name();
+    public static String u(Kind k) {
+        return j(k).toUpperCase().substring(0, 1) + j(k).substring(1);
     }
 
     /**
      * Returns {@code k} except with "Object" replaced by "Reference".
      */
-    public static String r(CiKind k) {
-        return k == Object ? "Reference" : k.toString();
+    public static String r(Kind k) {
+        return k == REFERENCE ? "Reference" : k.javaClass.getSimpleName();
     }
 
     /**
      * Returns {@code k.stackKind().javaName}.
      */
-    public static String s(CiKind k) {
-        return k.stackKind().javaName;
+    public static String s(Kind k) {
+        return k.stackKind.javaClass.getSimpleName();
     }
 
     /**
      * Returns {@code k.stackKind().javaName} except with "Object" replaced by "Reference".
      */
-    public static String rs(CiKind k) {
-        return k == Object ? "Reference" : k.stackKind().toString();
+    public static String rs(Kind k) {
+        return k == REFERENCE ? "Reference" : s(k);
     }
 
     /**
      * Returns {@code k.javaName} with first letter upper-cased and "Object" replaced by "Reference".
      */
-    public static String ur(CiKind k) {
-        return k == Object ? "Reference" : u(k);
+    public static String ur(Kind k) {
+        return k == REFERENCE ? "Reference" : u(k);
     }
 
     /**
      * Returns {@code k.javaName} with first letter lower-cased and "object" replaced by "reference".
      */
-    public static String lr(CiKind k) {
-        return k == Object ? "reference" : l(k);
+    public static String lr(Kind k) {
+        return k == REFERENCE ? "reference" : l(k);
     }
 
     /**
      * Returns {@code k.javaName} all upper-cased and "OBJECT" replaced by "REFERENCE".
      */
-    public static String au(CiKind k) {
-        return k == Object ? "REFERENCE" : k.javaName.toUpperCase();
+    public static String au(Kind k) {
+        return r(k).toUpperCase();
     }
 
-    public static String toStackKindCast(CiKind k, String var) {
-        if (k == Boolean) {
+    public static String toStackKindCast(Kind k, String var) {
+        if (k == BOOLEAN) {
             return "UnsafeCast.asByte(" + var + ")";
-        } else if (k == Object) {
+        } else if (k == REFERENCE) {
             return "Reference.fromJava(" + var + ")";
         } else {
             return var;
         }
     }
 
-    public static String fromStackKindCast(CiKind k, String var) {
-        if (k == Boolean) {
+    public static String fromStackKindCast(Kind k, String var) {
+        if (k == BOOLEAN) {
             return "UnsafeCast.asBoolean((byte) " + var + ")";
-        } else if (k.stackKind() == Int && k != Int) {
-            return "(" + k + ") " + var;
+        } else if (k.stackKind == INT && k != INT) {
+            return "(" + k.javaClass.getSimpleName() + ") " + var;
         } else {
             return var;
         }
@@ -214,8 +215,8 @@ public class T1XTemplateGenerator {
         }
     }
 
-    public static boolean isRefOrWord(CiKind k) {
-        return k == Object || k == Word;
+    public static boolean isRefOrWord(Kind k) {
+        return k == REFERENCE || k == WORD;
     }
 
     /**
@@ -224,8 +225,17 @@ public class T1XTemplateGenerator {
      * @param k
      * @return
      */
-    public static String tagPrefix(CiKind k) {
-        return k == Void ? "" : String.valueOf(Character.toUpperCase(k.typeChar));
+    public static String tagPrefix(Kind k) {
+        switch (k.asEnum) {
+            case VOID:
+                return "";
+            case LONG:
+                return "L";
+            case REFERENCE:
+                return "A";
+            default:
+                return String.valueOf(Character.toUpperCase(k.character));
+        }
     }
 
     /**
@@ -233,39 +243,46 @@ public class T1XTemplateGenerator {
      * @param k
      * @return
      */
-    public static String opPrefix(CiKind k) {
-        return "" + k.typeChar;
+    public static String opPrefix(Kind k) {
+        switch (k.asEnum) {
+            case LONG:
+                return "l";
+            case REFERENCE:
+                return "a";
+            default:
+                return String.valueOf(Character.toLowerCase(k.character));
+        }
     }
 
-    public static boolean hasGetPutTemplates(CiKind k) {
-        return k != Void;
+    public static boolean hasGetPutTemplates(Kind k) {
+        return k != VOID;
     }
-    public static boolean hasArrayTemplates(CiKind k) {
-        return !(k == Void || k == Boolean || k == Word);
-    }
-
-    public static boolean hasI2Templates(CiKind k) {
-        return !(k == Int || k == Void || k == Object || k == Word || k == Boolean);
+    public static boolean hasArrayTemplates(Kind k) {
+        return !(k == VOID || k == BOOLEAN || k == WORD);
     }
 
-    public static boolean hasL2Templates(CiKind k) {
-        return k == Int || k == Float || k == Double;
+    public static boolean hasI2Templates(Kind k) {
+        return !(k == INT || k == VOID || k == REFERENCE || k == WORD || k == BOOLEAN);
     }
 
-    public static boolean hasF2Templates(CiKind k) {
-        return k == Int || k == Long || k == Double;
+    public static boolean hasL2Templates(Kind k) {
+        return k == INT || k == FLOAT || k == DOUBLE;
     }
 
-    public static boolean hasD2Templates(CiKind k) {
-        return k == Int || k == Long || k == Float;
+    public static boolean hasF2Templates(Kind k) {
+        return k == INT || k == LONG || k == DOUBLE;
     }
 
-    public static boolean hasArithTemplates(CiKind k) {
-        return k == Int || k == Long || k == Float || k == Double;
+    public static boolean hasD2Templates(Kind k) {
+        return k == INT || k == LONG || k == FLOAT;
     }
 
-    public static boolean hasLogTemplates(CiKind k) {
-        return k == Int || k == Long;
+    public static boolean hasArithTemplates(Kind k) {
+        return k == INT || k == LONG || k == FLOAT || k == DOUBLE;
+    }
+
+    public static boolean hasLogTemplates(Kind k) {
+        return k == INT || k == LONG;
     }
 
     private static boolean isShift(String op) {
@@ -300,12 +317,12 @@ public class T1XTemplateGenerator {
         }
     }
 
-    public static boolean hasReturnTemplates(CiKind k) {
-        return k == k.stackKind() && k.isValidReturnType() && k != Word;
+    public static boolean hasReturnTemplates(Kind k) {
+        return k == k.stackKind && k != WORD;
     }
 
-    public static boolean hasInvokeTemplates(CiKind k) {
-        return k == Void || k == Float || k == Long || k == Double || k == Object || k == Word;
+    public static boolean hasInvokeTemplates(Kind k) {
+        return k == VOID || k == FLOAT || k == LONG || k == DOUBLE || k == REFERENCE || k == WORD;
     }
 
     /**
@@ -398,7 +415,7 @@ public class T1XTemplateGenerator {
      * Generate all the {@link #PUTFIELD_TEMPLATE_TAGS}.
      */
     public void generatePutFieldTemplates() {
-        for (CiKind k : kinds) {
+        for (Kind k : kinds) {
             if (hasGetPutTemplates(k)) {
                 generatePutFieldTemplate(k);
             }
@@ -408,9 +425,9 @@ public class T1XTemplateGenerator {
     /**
      * Generate the resolved and unresolved {@code PUTFIELD} template tag for given type.
      */
-    public void generatePutFieldTemplate(CiKind k) {
-        final int objectSlot = k.isDoubleWord() ? 2 : 1;
-        final String m = k == Object ? "noninlineW" : "w";
+    public void generatePutFieldTemplate(Kind k) {
+        final int objectSlot = k.stackSlots;
+        final String m = k == REFERENCE ? "noninlineW" : "w";
         startMethodGeneration();
         generateTemplateTag("PUTFIELD$%s$resolved", lr(k));
         out.printf("    public static void putfield%s(@Slot(%d) Object object, int offset, @Slot(0) %s value) {%n", ur(k), objectSlot, rs(k));
@@ -447,7 +464,7 @@ public class T1XTemplateGenerator {
     * Generate all the {@link #PUTSTATIC_TEMPLATE_TAGS}.
     */
     public void generatePutStaticTemplates() {
-        for (CiKind k : kinds) {
+        for (Kind k : kinds) {
             if (hasGetPutTemplates(k)) {
                 generatePutStaticTemplate(k);
             }
@@ -458,8 +475,8 @@ public class T1XTemplateGenerator {
      * Generate the resolved and unresolved {@code PUTSTATIC} template tag for given type.
      * @param k type
      */
-    public void generatePutStaticTemplate(CiKind k) {
-        final String m = k == Object ? "noninlineW" : "w";
+    public void generatePutStaticTemplate(Kind k) {
+        final String m = k == REFERENCE ? "noninlineW" : "w";
         startMethodGeneration();
         generateTemplateTag("PUTSTATIC$%s$init", lr(k));
         out.printf("    public static void putstatic%s(Object staticTuple, int offset, @Slot(0) %s value) {%n", ur(k), rs(k));
@@ -498,7 +515,7 @@ public class T1XTemplateGenerator {
     * Generate all the {@link #GETFIELD_TEMPLATE_TAGS}.
     */
     public void generateGetFieldTemplates() {
-        for (CiKind k : kinds) {
+        for (Kind k : kinds) {
             if (hasGetPutTemplates(k)) {
                 generateGetFieldTemplate(k);
             }
@@ -509,12 +526,12 @@ public class T1XTemplateGenerator {
      * Generate the resolved and unresolved {@code GETFIELD} template tag for given type.
      * @param k type
      */
-    public void generateGetFieldTemplate(CiKind k) {
+    public void generateGetFieldTemplate(Kind k) {
         startMethodGeneration();
         generateTemplateTag("GETFIELD$%s$resolved", lr(k));
         out.printf("    public static %s getfield%s(@Slot(0) Object object, int offset) {%n", rs(k), u(k));
         generateBeforeAdvice(k);
-        out.printf("        %s result = TupleAccess.read%s(object, offset);%n", k, u(k));
+        out.printf("        %s result = TupleAccess.read%s(object, offset);%n", j(k), u(k));
         out.printf("        return %s;%n", toStackKindCast(k, "result"));
         out.printf("    }%n");
         newLine();
@@ -533,11 +550,11 @@ public class T1XTemplateGenerator {
         generateBeforeAdvice(k);
         out.printf("        if (f.isVolatile()) {%n");
         out.printf("            preVolatileRead();%n");
-        out.printf("            %s value = TupleAccess.read%s(object, f.offset());%n", k, u(k));
+        out.printf("            %s value = TupleAccess.read%s(object, f.offset());%n", j(k), u(k));
         out.printf("            postVolatileRead();%n");
         out.printf("            return %s;%n", toStackKindCast(k, "value"));
         out.printf("        } else {%n");
-        out.printf("            %s result = TupleAccess.read%s(object, f.offset());%n", k, u(k));
+        out.printf("            %s result = TupleAccess.read%s(object, f.offset());%n", j(k), u(k));
         out.printf("            return %s;%n", toStackKindCast(k, "result"));
         out.printf("        }%n");
         out.printf("    }%n");
@@ -550,7 +567,7 @@ public class T1XTemplateGenerator {
     * Generate all the {@link #GETSTATIC_TEMPLATE_TAGS}.
     */
     public void generateGetStaticTemplates() {
-        for (CiKind k : kinds) {
+        for (Kind k : kinds) {
             if (hasGetPutTemplates(k)) {
                 generateGetStaticTemplate(k);
             }
@@ -561,7 +578,7 @@ public class T1XTemplateGenerator {
      * Generate the resolved and unresolved {@code GETFIELD} template tag for given type.
      * @param k type
      */
-    public void generateGetStaticTemplate(CiKind k) {
+    public void generateGetStaticTemplate(Kind k) {
         startMethodGeneration();
         generateTemplateTag("GETSTATIC$%s", lr(k));
         out.printf("    public static %s getstatic%s(ResolutionGuard.InPool guard) {%n", rs(k), ur(k));
@@ -577,11 +594,11 @@ public class T1XTemplateGenerator {
         generateBeforeAdvice(k);
         out.printf("        if (f.isVolatile()) {%n");
         out.printf("            preVolatileRead();%n");
-        out.printf("            %s value = TupleAccess.read%s(f.holder().staticTuple(), f.offset());%n", k, u(k));
+        out.printf("            %s value = TupleAccess.read%s(f.holder().staticTuple(), f.offset());%n", j(k), u(k));
         out.printf("            postVolatileRead();%n");
         out.printf("            return %s;%n", toStackKindCast(k, "value"));
         out.printf("        } else {%n");
-        out.printf("            %s result = TupleAccess.read%s(f.holder().staticTuple(), f.offset());%n", k, u(k));
+        out.printf("            %s result = TupleAccess.read%s(f.holder().staticTuple(), f.offset());%n", j(k), u(k));
         out.printf("            return %s;%n", toStackKindCast(k, "result"));
         out.printf("        }%n");
         out.printf("    }%n");
@@ -591,7 +608,7 @@ public class T1XTemplateGenerator {
         generateTemplateTag("GETSTATIC$%s$init", lr(k));
         out.printf("    public static %s getstatic%s(Object staticTuple, int offset) {%n", rs(k), u(k));
         generateBeforeAdvice(k);
-        out.printf("        %s result = TupleAccess.read%s(staticTuple, offset);%n", k, u(k));
+        out.printf("        %s result = TupleAccess.read%s(staticTuple, offset);%n", j(k), u(k));
         out.printf("        return %s;%n", toStackKindCast(k, "result"));
         out.printf("    }%n");
         newLine();
@@ -603,7 +620,7 @@ public class T1XTemplateGenerator {
      * Generate all the {@link #ALOAD_TEMPLATE_TAGS}.
      */
     public void generateArrayLoadTemplates() {
-        for (CiKind k : kinds) {
+        for (Kind k : kinds) {
             if (hasArrayTemplates(k)) {
                 generateArrayLoadTemplate(k);
             }
@@ -613,13 +630,13 @@ public class T1XTemplateGenerator {
     /**
      * Generate the {@code ALOAD} template(s) for given type.
      */
-    public void generateArrayLoadTemplate(CiKind k) {
+    public void generateArrayLoadTemplate(Kind k) {
         startMethodGeneration();
         generateTemplateTag("%sALOAD", tagPrefix(k));
         out.printf("    public static %s %saload(@Slot(1) Object array, @Slot(0) int index) {%n", rs(k), opPrefix(k));
         out.printf("        ArrayAccess.checkIndex(array, index);%n");
         generateBeforeAdvice(k);
-        out.printf("        %s result = ArrayAccess.get%s(array, index);%n", k, u(k));
+        out.printf("        %s result = ArrayAccess.get%s(array, index);%n", j(k), u(k));
         out.printf("        return %s;%n", toStackKindCast(k, "result"));
         out.printf("    }%n");
         newLine();
@@ -631,7 +648,7 @@ public class T1XTemplateGenerator {
      * Generate all the {@link #ASTORE_TEMPLATE_TAGS}.
      */
     public void generateArrayStoreTemplates() {
-        for (CiKind k : kinds) {
+        for (Kind k : kinds) {
             if (hasArrayTemplates(k)) {
                 generateArrayStoreTemplate(k);
             }
@@ -642,15 +659,15 @@ public class T1XTemplateGenerator {
      * Generate the {@code ALOAD} template(s) for given type.
      * @param k type
      */
-    public void generateArrayStoreTemplate(CiKind k) {
-        final int arraySlot = k.isDoubleWord() ? 3 : 2;
-        final int indexSlot = k.isDoubleWord() ? 2 : 1;
+    public void generateArrayStoreTemplate(Kind k) {
+        final int arraySlot = k.stackSlots + 1;
+        final int indexSlot = k.stackSlots;
         startMethodGeneration();
         generateTemplateTag("%sASTORE", tagPrefix(k));
         out.printf("    public static void %sastore(@Slot(%d) Object array, @Slot(%d) int index, @Slot(0) %s value) {%n", opPrefix(k), arraySlot, indexSlot, rs(k));
         out.printf("        ArrayAccess.checkIndex(array, index);%n");
         generateBeforeAdvice(k);
-        if (k == Object) {
+        if (k == REFERENCE) {
             out.printf("        ArrayAccess.checkSetObject(array, value);%n");
         }
         out.printf("        ArrayAccess.set%s(array, index, %s);%n", u(k), fromStackKindCast(k, "value"));
@@ -951,7 +968,7 @@ public class T1XTemplateGenerator {
      * Generate all the {@link #INVOKE_VIRTUAL_TEMPLATE_TAGS}.
      */
     public void generateInvokeVirtualTemplates() {
-        for (CiKind k : kinds) {
+        for (Kind k : kinds) {
             if (hasInvokeTemplates(k)) {
                 generateUnresolvedInvokeVITemplate(k, "virtual");
                 generateInvokeVITemplate(k, "virtual", false);
@@ -964,7 +981,7 @@ public class T1XTemplateGenerator {
      * Generate all the {@link #INVOKE_INTERFACE_TEMPLATE_TAGS}.
      */
     public void generateInvokeInterfaceTemplates() {
-        for (CiKind k : kinds) {
+        for (Kind k : kinds) {
             if (hasInvokeTemplates(k)) {
                 generateUnresolvedInvokeVITemplate(k, "interface");
                 generateInvokeVITemplate(k, "interface", false);
@@ -978,7 +995,7 @@ public class T1XTemplateGenerator {
      * @param k type
      * @param variant one of "virtual" or "interface"
      */
-    public void generateUnresolvedInvokeVITemplate(CiKind k, String variant) {
+    public void generateUnresolvedInvokeVITemplate(Kind k, String variant) {
         startMethodGeneration();
         out.printf("    /**%n");
         out.printf("     * Resolves and selects the correct implementation of a method referenced by an INVOKE%s instruction.%n", variant.toUpperCase());
@@ -1005,7 +1022,7 @@ public class T1XTemplateGenerator {
      * @param k type
      * @param variant one of "virtual" or "interface"
      */
-    public void generateInvokeVITemplate(CiKind k, String variant, boolean instrumented) {
+    public void generateInvokeVITemplate(Kind k, String variant, boolean instrumented) {
         String params = variant.equals("interface") ? "InterfaceMethodActor methodActor" : "int vTableIndex";
         if (instrumented) {
             params += ", MethodProfile mpo, int mpoIndex";
@@ -1058,7 +1075,7 @@ public class T1XTemplateGenerator {
      * Generate all the {@link #INVOKE_STATIC_TEMPLATE_TAGS}.
      */
     public void generateInvokeStaticTemplates() {
-        for (CiKind k : kinds) {
+        for (Kind k : kinds) {
             if (hasInvokeTemplates(k)) {
                 generateInvokeSSTemplate(k, "static");
             }
@@ -1069,7 +1086,7 @@ public class T1XTemplateGenerator {
      * Generate all the {@link #INVOKE_SPECIAL_TEMPLATE_TAGS}.
      */
     public void generateInvokeSpecialTemplates() {
-        for (CiKind k : kinds) {
+        for (Kind k : kinds) {
             if (hasInvokeTemplates(k)) {
                 generateInvokeSSTemplate(k, "special");
             }
@@ -1082,7 +1099,7 @@ public class T1XTemplateGenerator {
      * @param variant one of "special" or "static"
      * @param xtag one of "" or "init" or "resolved"
      */
-    public void generateInvokeSSTemplate(CiKind k, String variant) {
+    public void generateInvokeSSTemplate(Kind k, String variant) {
         String params = "ResolutionGuard.InPool guard";
         if (variant.equals("special")) {
             params += ", Reference receiver";
@@ -1114,7 +1131,7 @@ public class T1XTemplateGenerator {
      * Generate all the {@link #I2_TEMPLATE_TAGS}.
      */
     public void generateI2Templates() {
-        for (CiKind k : kinds) {
+        for (Kind k : kinds) {
             if (hasI2Templates(k)) {
                 generateI2Template(k);
             }
@@ -1125,11 +1142,11 @@ public class T1XTemplateGenerator {
      * Generate a given {@code I2} template.
      * @param k target type
      */
-    public void generateI2Template(CiKind k) {
+    public void generateI2Template(Kind k) {
         startMethodGeneration();
         generateTemplateTag("I2%c", u(k).charAt(0));
-        out.printf("    public static %s i2%c(@Slot(0) int value) {%n", rs(k), k.typeChar);
-        String cast = k == Char || k == Byte || k == Short ? "(" + k + ") " : "";
+        out.printf("    public static %s i2%s(@Slot(0) int value) {%n", rs(k), opPrefix(k));
+        String cast = k == CHAR || k == BYTE || k == SHORT ? "(" + k + ") " : "";
         generateBeforeAdvice(k);
         out.printf("        return %svalue;%n", cast);
         out.printf("    }%n");
@@ -1143,7 +1160,7 @@ public class T1XTemplateGenerator {
      * Generate all the {@link #L2_TEMPLATE_TAGS}.
      */
     public void generateL2Templates() {
-        for (CiKind k : kinds) {
+        for (Kind k : kinds) {
             if (hasL2Templates(k)) {
                 generateL2Template(k);
             }
@@ -1154,12 +1171,12 @@ public class T1XTemplateGenerator {
      * Generate a given {@code L2} template.
      * @param k target type
      */
-    public void generateL2Template(CiKind k) {
+    public void generateL2Template(Kind k) {
         startMethodGeneration();
         generateTemplateTag("L2%c", u(k).charAt(0));
-        out.printf("    public static %s l2%c(@Slot(0) long value) {%n", rs(k), k.typeChar);
+        out.printf("    public static %s l2%s(@Slot(0) long value) {%n", rs(k), opPrefix(k));
         generateBeforeAdvice(k);
-        String cast = k == Int ? "(int) " : "";
+        String cast = k == INT ? "(int) " : "";
         out.printf("        return %svalue;%n", cast);
         out.printf("    }%n");
         newLine();
@@ -1172,7 +1189,7 @@ public class T1XTemplateGenerator {
      * Generate all the {@link #D2_TEMPLATE_TAGS}.
      */
     public void generateD2Templates() {
-        for (CiKind k : kinds) {
+        for (Kind k : kinds) {
             if (hasD2Templates(k)) {
                 generateD2Template(k);
             }
@@ -1183,12 +1200,12 @@ public class T1XTemplateGenerator {
      * Generate a given {@code D2} template.
      * @param k target type
      */
-    public void generateD2Template(CiKind k) {
+    public void generateD2Template(Kind k) {
         startMethodGeneration();
         generateTemplateTag("D2%c", u(k).charAt(0));
-        out.printf("    public static %s d2%c(@Slot(0) double value) {%n", rs(k), k.typeChar);
+        out.printf("    public static %s d2%s(@Slot(0) double value) {%n", rs(k), opPrefix(k));
         generateBeforeAdvice(k);
-        String arg2 = k == Float ? "(float) value" : "T1XRuntime.d2" + k.typeChar + "(value)";
+        String arg2 = k == FLOAT ? "(float) value" : "T1XRuntime.d2" + opPrefix(k) + "(value)";
         out.printf("        return %s;%n", arg2);
         out.printf("    }%n");
         newLine();
@@ -1201,7 +1218,7 @@ public class T1XTemplateGenerator {
      * Generate all the {@link #F2_TEMPLATE_TAGS}.
      */
     public void generateF2Templates() {
-        for (CiKind k : kinds) {
+        for (Kind k : kinds) {
             if (hasF2Templates(k)) {
                 generateF2Template(k);
             }
@@ -1212,12 +1229,12 @@ public class T1XTemplateGenerator {
      * Generate a given {@code F2} template.
      * @param k target type
      */
-    public void generateF2Template(CiKind k) {
+    public void generateF2Template(Kind k) {
         startMethodGeneration();
         generateTemplateTag("F2%c", u(k).charAt(0));
-        out.printf("    public static %s f2%c(@Slot(0) float value) {%n", rs(k), k.typeChar);
+        out.printf("    public static %s f2%s(@Slot(0) float value) {%n", rs(k), opPrefix(k));
         generateBeforeAdvice(k);
-        String arg2 = k == Double ? "value" : "T1XRuntime.f2" + k.typeChar + "(value)";
+        String arg2 = k == DOUBLE ? "value" : "T1XRuntime.f2" + opPrefix(k) + "(value)";
         out.printf("        return %s;%n", arg2);
         out.printf("    }%n");
         newLine();
@@ -1229,7 +1246,7 @@ public class T1XTemplateGenerator {
      * Generate all {@link #NEG_TEMPLATE_TAGS}.
      */
     public void generateNegTemplates() {
-        for (CiKind k : kinds) {
+        for (Kind k : kinds) {
             if (hasArithTemplates(k)) {
                 generateNegTemplate(k);
             }
@@ -1240,7 +1257,7 @@ public class T1XTemplateGenerator {
      * Generate specific {@code NEG} template.
      * @param k type
      */
-    public void generateNegTemplate(CiKind k) {
+    public void generateNegTemplate(Kind k) {
         final String op = "neg";
         startMethodGeneration();
         generateTemplateTag("%s%s", tagPrefix(k), op.toUpperCase());
@@ -1258,7 +1275,7 @@ public class T1XTemplateGenerator {
      * Generate all the {@link #DYADIC_TEMPLATE_TAGS).
      */
     public void generateDyadicTemplates() {
-        for (CiKind k : kinds) {
+        for (Kind k : kinds) {
             if (hasArithTemplates(k)) {
                 for (String op : new String[] {"add", "sub", "mul", "div", "rem"}) {
                     generateDyadicTemplate(k, op);
@@ -1280,9 +1297,9 @@ public class T1XTemplateGenerator {
      * @param k type
      * @param op one of "add", "sub", "mul", "div", "rem", "or", "and", "xor", "shl", "shr", "ushr"
      */
-    public void generateDyadicTemplate(CiKind k, String op) {
+    public void generateDyadicTemplate(Kind k, String op) {
         final boolean arg2IsInt = isShift(op);
-        final int arg1Slot = isShift(op) || k.jvmSlots == 1 ? 1 : 2;
+        final int arg1Slot = isShift(op) || k.stackSlots == 1 ? 1 : 2;
         startMethodGeneration();
         generateTemplateTag("%s%s", tagPrefix(k), op.toUpperCase());
         out.printf("    public static %s %s%s(@Slot(%d) %s value1, @Slot(0) %s value2) {%n", s(k), opPrefix(k), op, arg1Slot, s(k), arg2IsInt ? "int" : s(k));
@@ -1297,10 +1314,10 @@ public class T1XTemplateGenerator {
      * @param k type
      * @param unlock one of "", {@link #lockVariants} or "registerFinalizer"
      */
-    public void generateReturnTemplate(CiKind k, String unlock) {
+    public void generateReturnTemplate(Kind k, String unlock) {
         // Admittedly, the readability goal is a stretch here!
         final String arg1 = unlock.equals("") ? "" : "Reference object";
-        final String arg2 = k == Void ? "" : "@Slot(0) " + rs(k) + " value";
+        final String arg2 = k == VOID ? "" : "@Slot(0) " + rs(k) + " value";
         final String sep = !arg1.isEmpty() && !arg2.isEmpty() ? ", " : "";
         startMethodGeneration();
         generateTemplateTag("%sRETURN%s", tagPrefix(k), prefixDollar(unlock));
@@ -1316,7 +1333,7 @@ public class T1XTemplateGenerator {
                 generateBeforeAdvice(MONITOREXIT);
                 out.printf("        Monitor.noninlineExit(object);%n");
             }
-            if (k != Void) {
+            if (k != VOID) {
                 generateBeforeAdvice(k);
                 out.printf("        return value;%n");
             } else {
@@ -1333,11 +1350,11 @@ public class T1XTemplateGenerator {
      * Generate all the {@link #CMP_TEMPLATE_TAGS}.
      */
     public void generateCmpTemplates() {
-        generateCmpTemplate(Long, "LCMP");
-        generateCmpTemplate(Float, "FCMPL");
-        generateCmpTemplate(Float, "FCMPG");
-        generateCmpTemplate(Double, "DCMPL");
-        generateCmpTemplate(Double, "DCMPG");
+        generateCmpTemplate(LONG, "LCMP");
+        generateCmpTemplate(FLOAT, "FCMPL");
+        generateCmpTemplate(FLOAT, "FCMPG");
+        generateCmpTemplate(DOUBLE, "DCMPL");
+        generateCmpTemplate(DOUBLE, "DCMPG");
     }
 
     /**
@@ -1345,10 +1362,10 @@ public class T1XTemplateGenerator {
      * @param k type one of "long", "float" or "double"
      * @param variant "g" or "l"
      */
-    public void generateCmpTemplate(CiKind k, String opcode) {
+    public void generateCmpTemplate(Kind k, String opcode) {
         startMethodGeneration();
         generateTemplateTag(opcode);
-        out.printf("    public static int %s(@Slot(%d) %s value1, @Slot(0) %s value2) {%n", opcode.toLowerCase(), k.isDoubleWord() ? 2 : 1, s(k), s(k));
+        out.printf("    public static int %s(@Slot(%d) %s value1, @Slot(0) %s value2) {%n", opcode.toLowerCase(), k.stackSlots, s(k), s(k));
         out.printf("        int result = rawCompare(Bytecodes.%s, value1, value2);%n", opcode);
         generateBeforeAdvice(k);
         out.printf("        return result;%n");
@@ -1363,7 +1380,7 @@ public class T1XTemplateGenerator {
      */
     public void generateAll(AdviceHook hook) {
         adviceHook = hook;
-        for (CiKind k : kinds) {
+        for (Kind k : kinds) {
             if (hasGetPutTemplates(k)) {
                 generateGetFieldTemplate(k);
                 generateGetStaticTemplate(k);
@@ -1426,7 +1443,7 @@ public class T1XTemplateGenerator {
         generateAThrowTemplate();
         generateMonitorTemplates();
         generateInstanceofTemplates();
-        generateReturnTemplate(Void, "registerFinalizer");
+        generateReturnTemplate(VOID, "registerFinalizer");
         generateLockTemplates();
         generateTraceMethodEntryTemplate();
     }

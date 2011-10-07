@@ -37,12 +37,11 @@ public final class StoreRegister extends Instruction {
 
     /**
      * Creates a new StoreReigster instance.
-     * @param kind the kind of value stored to the register
      * @param register the register to store
      * @param value the value to write
      */
-    public StoreRegister(CiKind kind, CiRegister register, Value value) {
-        super(kind);
+    public StoreRegister(CiRegister register, Value value) {
+        super(CiKind.Void);
         this.register = register;
         this.value = value;
         setFlag(Flag.LiveStore);
