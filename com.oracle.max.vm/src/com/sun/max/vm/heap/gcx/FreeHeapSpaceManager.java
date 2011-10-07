@@ -27,29 +27,54 @@ import static com.sun.max.vm.VMOptions.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
 
 /**
  * Free heap space management.
- * Nothing ambitious, just to get going and test the tracing algorithm of the future hybrid mark-sweep-evacuate.
+ *
  * Implement the HeapSweeper abstract class which defines method called by a HeapMarker to notify free space.
- * The FreeHeapSpace manager records these into an vector of list of free space based on size of the freed space.
+ * The manager records free space into a vector of list of free space based on size of the freed space.
  *
  * Space allocation is primarily handled via TLABs, which are made of one or more heap chunks.
- * Request too large to be handled by TLABs are handled by the free space manager directly.
- * This one keeps a simple table of list of chunks, indexed by a power of 2 of the size requested, such that
- * Size >> log2FirstBin is an index to that table. The first bin in the table contains a linked list of chunk of any size
- * between log2FirstBin and minReclaimableSpace and is used primarily for TLAB and small object allocation.
- * The other bins are used for large object space allocation. "Bin" allocation are synchronized.
+ * Requests too large to be handled by TLABs are handled by the free space manager directly.
+ * This one keeps a simple table of list of chunks of same size range.
+ * The first bin in the table contains a linked list of chunk of any size
+ * between minReclaimableSpace and 1<< log2FirstBin and is used primarily for TLAB and small object allocation.
+ * The other bins are used for large object space allocation.
+ * "Bin" allocation are synchronized.
  */
 public final class FreeHeapSpaceManager extends Sweeper implements ResizableSpace {
     private static final VMIntOption largeObjectsMinSizeOption =
         register(new VMIntOption("-XX:LargeObjectsMinSize=", Size.K.times(64).toInt(),
                         "Minimum size to be treated as a large object"), MaxineVM.Phase.PRISTINE);
 
+    /**
+     * This controls how free chunks are distributed into bins. We are experimenting with two methods:
+     * Put in the the same bin size with the same most significant bit (i.e., all size comprises between 2^i and (2^i+1) -1 ends up in the same bin. Indexing requires computing the msb.
+     * Put in the same bin size that occupies the same number of 2^k block, when k is log2 of the first bin. Indexing is a simple shift in this case.
+     */
+    private static boolean UseLog2BinIndexing = false;
+    static {
+        VMOptions.addFieldOption("-XX:", "UseLog2BinIndexing", FreeHeapSpaceManager.class, "Use log2(msb(Size)) - log2FirstBin for bin index instead of Size >> log2FirstBin)", Phase.PRISTINE);
+    }
+
     private static boolean TraceTLAB = false;
+
+    /**
+     * Minimum size to be treated as a large object.
+     */
+    @CONSTANT_WHEN_NOT_ZERO
+    static Size minLargeObjectSize;
+
+    /**
+     * Index to the last bin of free chunk size. The vector of free space list has LastBin + 1 entries.
+     * Chunks of free space recorded in the list at entry i of the vector have a size  between 2^i and 2^(i+1) -1.
+     * Any chunks of size greater than 2^LastBin are recorded in the last bin.
+     */
+    static final int LastBin = 10;
 
     class LinearSpaceRefillManager extends ChunkListRefillManager {
         /**
@@ -129,18 +154,13 @@ public final class FreeHeapSpaceManager extends Sweeper implements ResizableSpac
 
     private final ChunkListAllocator<LinearSpaceRefillManager> smallObjectAllocator;
 
-
-    /**
-     * Minimum size to be treated as a large object.
-     */
-    @CONSTANT_WHEN_NOT_ZERO
-    static Size minLargeObjectSize;
-
     /**
      * Log 2 of the maximum size to enter the first bin of free space.
      */
-    int log2FirstBinSize;
+    private int log2FirstBinSize;
 
+    private Size lastBinThreshold;
+    private Size lastBinThreshold3;
 
     /**
      * Head of a linked list of free space recovered by the Sweeper.
@@ -366,7 +386,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements ResizableSpac
     /**
      * Free space is managed via segregated list. The minimum chunk size managed is minFreeChunkSize.
      */
-    final FreeSpaceList [] freeChunkBins = new FreeSpaceList[10];
+    final FreeSpaceList [] freeChunkBins = new FreeSpaceList[LastBin + 1];
 
     /**
      * Short cut to first bin dedicated to TLAB refills.
@@ -380,8 +400,23 @@ public final class FreeHeapSpaceManager extends Sweeper implements ResizableSpac
 
     @INLINE
     private int binIndex(Size size) {
-        final long l = size.unsignedShiftedRight(log2FirstBinSize).toLong();
-        return  (l < freeChunkBins.length) ?  (int) l : (freeChunkBins.length - 1);
+        return UseLog2BinIndexing ? binIndex2(size) : binIndex1(size);
+    }
+
+    @INLINE
+    private int binIndex1(Size size) {
+        if (size.greaterEqual(lastBinThreshold)) {
+            return LastBin;
+        }
+        return size.unsignedShiftedRight(log2FirstBinSize).toInt();
+    }
+
+    @INLINE
+    private int binIndex2(Size size) {
+        if (size.greaterEqual(lastBinThreshold)) {
+            return LastBin;
+        }
+        return size.unsignedShiftedRight(log2FirstBinSize).mostSignificantBitSet() + 1;
     }
 
     /**
@@ -677,7 +712,13 @@ public final class FreeHeapSpaceManager extends Sweeper implements ResizableSpac
         // Round down to power of two.
         minLargeObjectSize = Size.fromInt(Integer.highestOneBit(largeObjectsMinSizeOption.getValue()));
         log2FirstBinSize = Integer.numberOfTrailingZeros(minLargeObjectSize.toInt());
+        if (UseLog2BinIndexing) {
+            lastBinThreshold = Size.fromInt(1).shiftedLeft(LastBin + log2FirstBinSize);
+        } else {
+            lastBinThreshold = Size.fromInt(LastBin).shiftedLeft(log2FirstBinSize);
+        }
         minReclaimableSpace = Size.fromInt(freeChunkMinSizeOption.getValue());
+
         TraceTLAB = heapScheme instanceof HeapSchemeWithTLAB && HeapSchemeWithTLAB.traceTLAB();
 
         // Refill allocator if space left below this:
@@ -796,9 +837,8 @@ public final class FreeHeapSpaceManager extends Sweeper implements ResizableSpac
         return committedHeapSpace.committedSize();
     }
 
-    public Size totalCapacity() {
+    public Size capacity() {
         return committedHeapSpace.size();
-
     }
 
     @Override
@@ -806,4 +846,15 @@ public final class FreeHeapSpaceManager extends Sweeper implements ResizableSpac
         committedHeapSpace.walkCommittedSpace(verifier);
         verifyUsage(verifier.freeChunksByteCount, verifier.darkMatterByteCount, verifier.liveDataByteCount);
     }
+
+    @Override
+    public Address startOfSweepingRegion() {
+        return committedHeapSpace.start();
+    }
+
+    @Override
+    public Address endOfSweepingRegion() {
+        return committedHeapSpace.committedEnd();
+    }
+
 }

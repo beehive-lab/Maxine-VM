@@ -489,6 +489,32 @@ public final class Heap {
             Log.println("Cannot run GC on a thread still attaching to the VM");
             MaxineVM.native_exit(1);
         }
+        if (VmThread.current().isVmOperationThread()) {
+            // Even if another thread holds the heap lock for the purpose of executing a GC,
+            // the GC is not actually executing as this is the VM operation thread which is
+            // executing another VM operation that triggers a GC. So, the GC is now executed
+            // as a nested VM operation without acquiring the heap lock.
+            VmOperationThread.instance().promoteToGlobalSafepoint();
+
+            // We're at a global safepoint, no one can concurrently update disableGCThreadCount.
+            // It is possible that a VM operation (that isn't a GC operation) was running while mutator threads
+            // disabled the GC. If that is the case, the current GC operation is illegal.
+            FatalError.check(disableGCThreadCount == 0, "GC must be enabled");
+            return heapLockedCollectGarbage(requestedFreeSpace);
+        } else {
+            // Calls to collect garbage need to synchronize on the heap lock. This ensures that
+            // GC operations are submitted serially to the VM operation thread. It also means
+            // that a collection only actually occurs if needed (i.e. concurrent call to this
+            // method by another thread did not trigger a GC that freed up enough memory for
+            // this request).
+            synchronized (HEAP_LOCK) {
+                waitForGCDisablingThreads();
+                return heapLockedCollectGarbage(requestedFreeSpace);
+            }
+        }
+    }
+
+    private static boolean heapLockedCollectGarbage(Size requestedFreeSpace) {
         final long k = Size.K.toLong();
         long beforeFree = 0L;
         long beforeUsed = 0L;
@@ -508,30 +534,7 @@ public final class Heap {
             Log.println(" Kb --");
             Log.unlock(lockDisabledSafepoints);
         }
-        final boolean freedEnough;
-        if (VmThread.current().isVmOperationThread()) {
-            // Even if another thread holds the heap lock for the purpose of executing a GC,
-            // the GC is not actually executing as this is the VM operation thread which is
-            // executing another VM operation that triggers a GC. So, the GC is now executed
-            // as a nested VM operation without acquiring the heap lock.
-            VmOperationThread.instance().promoteToGlobalSafepoint();
-
-            // We're at a global safepoint, no one can concurrently update disableGCThreadCount.
-            // It is possible that a VM operation (that isn't a GC operation) was running while mutator threads
-            // disabled the GC. If that is the case, the current GC operation is illegal.
-            FatalError.check(disableGCThreadCount == 0, "GC must be enabled");
-            freedEnough = heapScheme().collectGarbage(requestedFreeSpace);
-        } else {
-            // Calls to collect garbage need to synchronize on the heap lock. This ensures that
-            // GC operations are submitted serially to the VM operation thread. It also means
-            // that a collection only actually occurs if needed (i.e. concurrent call to this
-            // method by another thread did not trigger a GC that freed up enough memory for
-            // this request).
-            synchronized (HEAP_LOCK) {
-                waitForGCDisablingThreads();
-                freedEnough = heapScheme().collectGarbage(requestedFreeSpace);
-            }
-        }
+        final boolean freedEnough = heapScheme().collectGarbage(requestedFreeSpace);
         if (verbose()) {
             final long afterUsed = reportUsedSpace();
             final long afterFree = reportFreeSpace();
