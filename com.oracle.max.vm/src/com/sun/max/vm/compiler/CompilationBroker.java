@@ -176,7 +176,7 @@ public class CompilationBroker {
     }
 
     @HOSTED_ONLY
-    private static RuntimeCompiler instantiateCompiler(String name) {
+    protected static RuntimeCompiler instantiateCompiler(String name) {
         try {
             return (RuntimeCompiler) Class.forName(name).newInstance();
         } catch (Exception e) {
