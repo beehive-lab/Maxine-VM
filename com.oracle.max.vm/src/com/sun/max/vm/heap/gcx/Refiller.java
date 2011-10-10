@@ -37,7 +37,7 @@ public abstract class Refiller {
      * @param spaceLeft size, in bytes, of the space left
      * @return
      */
-    abstract Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft);
+    public abstract Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft);
 
     /**
      * Make a non-empty region of the allocator indicated by the start and end pointers iterable
@@ -52,6 +52,6 @@ public abstract class Refiller {
     /**
      * Prepare for GC.
      */
-    abstract void doBeforeGC();
+    protected abstract void doBeforeGC();
 
 }

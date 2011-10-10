@@ -319,7 +319,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         // the refill allocate. We currently leave this as is because doing this change also requires changing the FreeHeapSpaceManager of the MSHeapScheme
 
         @Override
-        Address allocateLarge(Size size) {
+        public Address allocateLarge(Size size) {
             FatalError.unexpected("Should not reach here");
             return Address.zero();
         }
@@ -329,7 +329,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
          * Allocate to large or overflow allocator.
          */
         @Override
-        Address allocateOverflow(Size size) {
+        public Address allocateOverflow(Size size) {
             FatalError.unexpected("Should not reach here");
             return Address.zero();
         }
@@ -340,7 +340,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
          */
         @Override
         @NO_SAFEPOINT_POLLS("tlab allocation loop must not be subjected to safepoints")
-        Address allocateChunkListOrRefill(AtomicBumpPointerAllocator<? extends ChunkListRefillManager> allocator, Size tlabSize, Pointer leftover, Size leftoverSize) {
+        public Address allocateChunkListOrRefill(AtomicBumpPointerAllocator<? extends ChunkListRefillManager> allocator, Size tlabSize, Pointer leftover, Size leftoverSize) {
             Address firstChunk = chunkOrZero(leftover, leftoverSize);
             if (!firstChunk.isZero()) {
                 tlabSize = tlabSize.minus(leftoverSize);
@@ -449,7 +449,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         }
 
         @Override
-        boolean shouldRefill(Size requestedSpace, Size spaceLeft) {
+        public boolean shouldRefill(Size requestedSpace, Size spaceLeft) {
             // Should refill only if we're not going to waste too much space and
             // the refill will succeed (we assume it will if switching regions).
             return spaceLeft.lessThan(refillThreshold) && (nextFreeChunkInRegion.isZero() ||
@@ -461,7 +461,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
          * thread can enter this method.
          */
         @Override
-        Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
+        public Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
             // FIXME: see comment above. We should never reach here as request for refilling the allocator can only happen via the allocateCleared call, which
             // should never be called on the tlab allocator since these are routed early on to the overflow allocator.
             FatalError.unexpected("Should not reach here");
@@ -470,9 +470,9 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         }
 
         @Override
-        void doBeforeGC() {
+        protected void doBeforeGC() {
             if (currentTLABAllocatingRegion != INVALID_REGION_ID) {
-                FULL_REGION.setState(theRegionTable().regionInfo(currentTLABAllocatingRegion));
+                toFullState(theRegionTable().regionInfo(currentTLABAllocatingRegion));
                 currentTLABAllocatingRegion = INVALID_REGION_ID;
             }
             nextFreeChunkInRegion = Address.zero();
@@ -636,15 +636,15 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
      */
     final class  OverflowAllocatorRefiller extends Refiller {
         @Override
-        Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
+        public Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
             return overflowRefill(startOfSpaceLeft, spaceLeft);
         }
 
         @Override
-        void doBeforeGC() {
+        public void doBeforeGC() {
             if (currentOverflowAllocatingRegion != INVALID_REGION_ID) {
                 // the bump allocator must have filled the allocated with a dead object. So mark it full.
-                FULL_REGION.setState(theRegionTable().regionInfo(currentOverflowAllocatingRegion));
+                toFullState(theRegionTable().regionInfo(currentOverflowAllocatingRegion));
                 currentOverflowAllocatingRegion = INVALID_REGION_ID;
             }
         }
@@ -807,6 +807,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         allocationRegionsFreeSpace = Size.zero();
         regionInfoIterable.initialize(allRegions);
         regionInfoIterable.reset();
+        csrIsLiveMultiRegionObjectTail = false;
         heapMarker.sweep(this);
     }
 
@@ -858,7 +859,9 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
             // Large object regions are at least 2 regions long.
             if (csrFreeBytes == 0) {
                 // Large object is live.
-                csrLastLiveAddress =  csrLastLiveAddress.plus(Layout.size(Layout.cellToOrigin(csrLastLiveAddress.asPointer())));
+                Size largeObjectSize = Layout.size(Layout.cellToOrigin(csrLastLiveAddress.asPointer()));
+                csrLastLiveAddress =  csrLastLiveAddress.plus(largeObjectSize);
+                csrIsLiveMultiRegionObjectTail = true;
                 // Reset the flag
                 LARGE_HEAD.setState(csrInfo);
                 // Skip all intermediate regions. They are full.
@@ -872,7 +875,8 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                     }
                 }
             } else {
-                // Free all intermediate regions. The tail needs to be swept
+                Size largeObjectSize = Layout.size(Layout.cellToOrigin(csrInfo.regionStart().asPointer()));
+                 // Free all intermediate regions. The tail needs to be swept
                 // in case it was used for allocating small objects, so we
                 // don't free it. It'll be set as the next sweeping region by the next call to beginSweep, so
                 // be careful not to consume it from the iterable.
@@ -889,11 +893,22 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                     csrInfo = regionInfoIterable.next();
                 } while (true);
                 csrLastLiveAddress = csrInfo.regionStart().plus(regionSizeInBytes);
+                // If the large object is dead and its tail isn't large enough to be reclaimable, we must fill it with a dead object to maintain heap parsability.
+                Size tailSize = largeObjectSize.and(regionAlignmentMask);
+                if (tailSize.lessThan(minReclaimableSpace)) {
+                    if (!tailSize.isZero()) {
+                        final Pointer tailStart = csrLastLiveAddress.asPointer();
+                        HeapSchemeAdaptor.fillWithDeadObject(tailStart, tailStart.plus(tailSize));
+                    }
+                }
             }
+            csrIsMultiRegionObjectHead = false;
         } else {
             if (csrFreeBytes == 0) {
-                if (csrIsMultiRegionObjectTail) {
+                if (csrIsLiveMultiRegionObjectTail) {
+                    // FIXME: is this true if the large object was already dead ?
                     LARGE_FULL_TAIL.setState(csrInfo);
+                    csrIsLiveMultiRegionObjectTail = false;
                 }  else {
                     FULL_REGION.setState(csrInfo);
                 }
@@ -903,8 +918,9 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                     allocationRegions.append(csrInfo.toRegionID());
                     allocationRegionsFreeSpace =  allocationRegionsFreeSpace.plus(regionSizeInBytes);
                 } else {
-                    if (csrIsMultiRegionObjectTail) {
+                    if (csrIsLiveMultiRegionObjectTail) {
                         LARGE_TAIL.setState(csrInfo);
+                        csrIsLiveMultiRegionObjectTail = false;
                     } else {
                         FREE_CHUNKS_REGION.setState(csrInfo);
                     }
