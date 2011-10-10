@@ -137,24 +137,24 @@ public final class HeapRegionManager implements HeapAccountOwner {
         bootAllocator = new AtomicBumpPointerAllocator<RefillManager>(new RefillManager() {
 
             @Override
-            boolean shouldRefill(Size requestedSpace, Size spaceLeft) {
+            public boolean shouldRefill(Size requestedSpace, Size spaceLeft) {
                 return true;
             }
 
             @Override
-            Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
+            public Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
                 FatalError.unimplemented();
                 return Address.zero();
             }
 
             @Override
-            Address allocateOverflow(Size size) {
+            public Address allocateOverflow(Size size) {
                 FatalError.unimplemented();
                 return Address.zero();
             }
 
             @Override
-            Address allocateLarge(Size size) {
+            public Address allocateLarge(Size size) {
                 FatalError.unimplemented();
                 return Address.zero();
             }
@@ -172,7 +172,7 @@ public final class HeapRegionManager implements HeapAccountOwner {
             }
 
             @Override
-            void doBeforeGC() {
+            protected void doBeforeGC() {
             }
         });
     }

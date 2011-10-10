@@ -1771,10 +1771,10 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             return;
         }
 
-        final int minBitsBetweenMark = sweeper.minReclaimableSpace().toInt() >> log2BytesCoveredPerBit;
-        // Indicate the closest position the next live mark should be at to make the space reclaimable.
         if (lastLiveMark > leftmostBitIndex) {
-            int nextReclaimableMark =  lastLiveMark + 2 + minBitsBetweenMark;
+            final int minBitsBetweenMark = sweeper.minReclaimableSpace().toInt() >> log2BytesCoveredPerBit;
+             // Indicate the closest position the next live mark should be at to make the space reclaimable.
+            final int nextReclaimableMark =  leftmostBitIndex  + 2 + minBitsBetweenMark;
             if (lastLiveMark >=  nextReclaimableMark) {
                 sweeper.processDeadSpace(regionLeftmost, Size.fromInt((lastLiveMark - leftmostBitIndex) << log2BytesCoveredPerBit));
             }

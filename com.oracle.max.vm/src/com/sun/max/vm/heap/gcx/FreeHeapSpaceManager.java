@@ -55,8 +55,9 @@ public final class FreeHeapSpaceManager extends Sweeper implements ResizableSpac
      * This controls how free chunks are distributed into bins. We are experimenting with two methods:
      * Put in the the same bin size with the same most significant bit (i.e., all size comprises between 2^i and (2^i+1) -1 ends up in the same bin. Indexing requires computing the msb.
      * Put in the same bin size that occupies the same number of 2^k block, when k is log2 of the first bin. Indexing is a simple shift in this case.
+     * The former seems more efficient for now.
      */
-    private static boolean UseLog2BinIndexing = false;
+    private static boolean UseLog2BinIndexing = true;
     static {
         VMOptions.addFieldOption("-XX:", "UseLog2BinIndexing", FreeHeapSpaceManager.class, "Use log2(msb(Size)) - log2FirstBin for bin index instead of Size >> log2FirstBin)", Phase.PRISTINE);
     }
@@ -98,25 +99,25 @@ public final class FreeHeapSpaceManager extends Sweeper implements ResizableSpac
         }
 
         @Override
-        Address allocateLarge(Size size) {
+        public Address allocateLarge(Size size) {
             return binAllocate(size);
         }
 
         @Override
         @INLINE(override = true)
-        Address allocateOverflow(Size size) {
+        public Address allocateOverflow(Size size) {
             return binAllocate(size);
         }
 
         @Override
         @INLINE(override = true)
-        boolean shouldRefill(Size requestedSpace, Size spaceLeft) {
+        public boolean shouldRefill(Size requestedSpace, Size spaceLeft) {
             return spaceLeft.lessThan(refillThreshold);
         }
 
         @Override
         @INLINE(override = true)
-        Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
+        public Address allocateRefill(Pointer startOfSpaceLeft, Size spaceLeft) {
             return binRefill(refillSize, startOfSpaceLeft, spaceLeft);
         }
 
@@ -127,7 +128,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements ResizableSpac
          * which will trigger GC on next request.
          */
         @Override
-        Address allocateChunkListOrRefill(AtomicBumpPointerAllocator<? extends ChunkListRefillManager> allocator, Size tlabSize, Pointer leftover, Size leftoverSize) {
+        public Address allocateChunkListOrRefill(AtomicBumpPointerAllocator<? extends ChunkListRefillManager> allocator, Size tlabSize, Pointer leftover, Size leftoverSize) {
             // FIXME (ld) this never refill the allocator!
             Address firstChunk = chunkOrZero(leftover, leftoverSize);
             if (!firstChunk.isZero()) {
@@ -141,7 +142,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements ResizableSpac
         }
 
         @Override
-        void doBeforeGC() {
+        protected void doBeforeGC() {
         }
     }
 
