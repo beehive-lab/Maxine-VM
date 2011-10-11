@@ -347,6 +347,18 @@ public final class Platform {
     public static native String jniHeaderFilePath();
 
     /**
+     * Gets the absolute path to the "jvmti.h" file against which the native code was compiled.
+     * This lives in the same directory as jni.h
+     */
+    @HOSTED_ONLY
+    public static String jvmtiHeaderFilePath() {
+        final File jniFile = new File(jniHeaderFilePath());
+        final File jvmtiFile = new File(jniFile.getParentFile(), "jvmti.h");
+        ProgramError.check(jvmtiFile.exists(), "cannot locate jvmti.h");
+        return jvmtiFile.getAbsolutePath();
+    }
+
+    /**
      * Gets the width of the native word in bits (typically 32 or 64 bits).
      *
      * @return the width of the native word in bits

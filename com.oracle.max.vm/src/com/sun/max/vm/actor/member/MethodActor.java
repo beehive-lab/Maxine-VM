@@ -114,6 +114,11 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
     }
 
     @INLINE
+    public final boolean isCFunctionNoLatch() {
+        return isCFunctionNoLatch(flags());
+    }
+
+    @INLINE
     public final boolean isVmEntryPoint() {
         return isVmEntryPoint(flags());
     }

@@ -48,6 +48,7 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jni.*;
+import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
@@ -480,8 +481,10 @@ public class VmThread {
     private static void executeRunnable(VmThread vmThread) throws Throwable {
         try {
             if (vmThread == mainThread) {
+                // JVMTIEvent.THREAD_START is dispatched in JavaRunScheme
                 vmConfig().runScheme().run();
             } else {
+                JVMTI.event(JVMTIEvent.THREAD_START);
                 vmThread.javaThread.run();
             }
         } finally {
@@ -620,6 +623,10 @@ public class VmThread {
             // The main thread must now bring the VM to the pristine state so as to
             // provide basic services (most importantly, heap allocation) before starting the other "system" threads.
             //
+
+            // Initialize JVMTI agents
+            JVMTI.initialize();
+
             // Code manager initialization must happen after parsing of pristine options
             // It must also be performed before pristine initialization of the heap scheme.
             // This is a temporary issue due to all code managers being instances of
@@ -635,6 +642,7 @@ public class VmThread {
             VmThread.vmOperationThread.start0();
             SpecialReferenceManager.initialize(MaxineVM.Phase.PRISTINE);
             VmThread.signalDispatcherThread.start0();
+
         }
 
         try {
@@ -651,6 +659,8 @@ public class VmThread {
             }
             thread.terminationCause = throwable;
         }
+        JVMTI.event(JVMTIEvent.THREAD_END);
+
         // If this is the main thread terminating, initiate shutdown hooks after waiting for other non-daemons to terminate
         if (thread == mainThread) {
             VmThreadMap.ACTIVE.joinAllNonDaemons();
