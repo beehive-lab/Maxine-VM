@@ -182,7 +182,10 @@ public class JVMTIConstants {
     // Phases of execution
     public static final int JVMTI_PHASE_ONLOAD = 1;
     public static final int JVMTI_PHASE_PRIMORDIAL = 2;
-    public static final int JVMTI_PHASE_START = 6;
+    public static final int JVMTI_PHASE_START_ORIG = 6;
+    // We change this so that all the values are distinct bits for masking purposes.
+    // If the agent asks for the phase we make sure to give back the ORIG value
+    public static final int JVMTI_PHASE_START = 16;
     public static final int JVMTI_PHASE_LIVE = 4;
     public static final int JVMTI_PHASE_DEAD = 8;
 

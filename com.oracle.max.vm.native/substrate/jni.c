@@ -813,14 +813,14 @@ struct ExtendedJNINativeInterface_ jni_ExtendedNativeInterface = {
 extern void* getJVMTIImpl(int version);
 
 jint JNICALL jni_GetEnv(JavaVM *javaVM, void **penv, jint version) {
-    if (version && JVMTI_VERSION_MASK) {
-        *penv = getJVMTIImpl(version);
-        return *penv == NULL ? JNI_EVERSION : JNI_OK;
-    }
     TLA tla = tla_current();
     if (tla == 0) {
         *penv = NULL;
         return JNI_EDETACHED;
+    }
+    if (version && JVMTI_VERSION_MASK) {
+        *penv = getJVMTIImpl(version);
+        return *penv == NULL ? JNI_EVERSION : JNI_OK;
     }
     JNIEnv *env = (JNIEnv *) tla_addressOf(tla, JNI_ENV);
     c_ASSERT(env != NULL);

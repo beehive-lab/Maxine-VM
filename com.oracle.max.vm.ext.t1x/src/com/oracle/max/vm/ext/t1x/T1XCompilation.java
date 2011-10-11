@@ -409,7 +409,7 @@ public abstract class T1XCompilation {
         }
     }
 
-    public T1XTargetMethod compile1(ClassMethodActor method, CodeAttribute codeAttribute, boolean install) {
+    private T1XTargetMethod compile1(ClassMethodActor method, CodeAttribute codeAttribute, boolean install) {
         startTimer(T1XTimer.PRE_COMPILE);
         try {
             initCompile(method, codeAttribute);

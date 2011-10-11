@@ -76,6 +76,22 @@ Java_com_sun_max_vm_jvmti_JVMTICallbacks_invokeClassfileLoadHookCallback(JNIEnv 
     (*callback)(jvmti_env, env, klass, loader, name, protection_domain, class_data_len, class_data, new_class_data_len, new_class_data);
 }
 
+JNIEXPORT void JNICALL
+Java_com_sun_max_vm_jvmti_JVMTICallbacks_invokeFieldWatchCallback(JNIEnv *env, jclass c, void *callback,
+                jvmtiEnv *jvmti_env,
+                jthread thread, jmethodID method, jlocation location, jclass field_class,
+                jobject object, jfieldID field,
+                char signature_type,
+                jvalue new_value) {
+    if (signature_type == 0) {
+        jvmtiEventFieldAccess a_callback = (jvmtiEventFieldAccess) callback;
+        (*a_callback)(jvmti_env, env, thread, method, location, field_class, object, field);
+    } else {
+        jvmtiEventFieldModification m_callback = (jvmtiEventFieldModification) callback;
+        (*m_callback)(jvmti_env, env, thread, method, location, field_class, object, field, signature_type, new_value);
+    }
+}
+
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_vm_jvmti_JVMTIRawMonitor_nativeMutexLock(JNIEnv *env, jclass c, Mutex mutex) {
     return mutex_enter(mutex) == 0;
@@ -104,6 +120,20 @@ void setJVMTILineNumberEntry(jvmtiLineNumberEntry *table, jint index, jlocation 
     table[index].line_number = line_number;
 }
 
+int getJVMTILocalVariableEntrySize() {
+    return sizeof(jvmtiLocalVariableEntry);
+}
+
+void setJVMTILocalVariableEntry(jvmtiLocalVariableEntry *table, jint index, char * name, char * signature,
+                char *generic_signature, jlocation location, jint length, jint slot) {
+    table[index].name = name;
+    table[index].signature = signature;
+    table[index].generic_signature = generic_signature;
+    table[index].start_location = location;
+    table[index].length = length;
+    table[index].slot = slot;
+}
+
 int getJVMTIStackInfoSize() {
     return sizeof(jvmtiStackInfo);
 }
@@ -113,6 +143,18 @@ void setJVMTIStackInfo(jvmtiStackInfo *stackInfo, jint index, jthread thread, ji
     stackInfo[index].state = state;
     stackInfo[index].frame_buffer = frame_buffer;
     stackInfo[index].frame_count = frame_count;
+}
+
+void setJVMTIFrameInfo(jvmtiFrameInfo *frameInfo, jint index, jmethodID methodID, jlocation location) {
+    frameInfo[index].method = methodID;
+    frameInfo[index].location = location;
+}
+
+void setThreadGroupInfo(jvmtiThreadGroupInfo *info, jobject parent, char *name, jint max_priority, jboolean is_daemon) {
+    info->parent = parent;
+    info->name = name;
+    info->max_priority = max_priority;
+    info->is_daemon = is_daemon;
 }
 
 static void jvmti_reserved() {

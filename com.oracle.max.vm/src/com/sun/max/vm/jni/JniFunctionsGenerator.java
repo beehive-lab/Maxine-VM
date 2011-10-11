@@ -137,7 +137,7 @@ public class JniFunctionsGenerator {
         }
 
         public String customizeHandler(String returnStatement) {
-            String result = "            t.printStackTrace(); VmThread.fromJniEnv(env).setJniException(t);";
+            String result = "            VmThread.fromJniEnv(env).setJniException(t);";
             if (returnStatement != null) {
                 result += "\n            " + returnStatement;
             }

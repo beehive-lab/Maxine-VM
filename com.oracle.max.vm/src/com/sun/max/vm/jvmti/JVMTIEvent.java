@@ -22,6 +22,15 @@
  */
 package com.sun.max.vm.jvmti;
 
+import static com.sun.max.vm.jvmti.JVMTIConstants.*;
+import static com.sun.max.vm.jvmti.JVMTIEnvNativeStruct.*;
+
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.jni.*;
+
+/**
+ * Support for JVMTI event handling.
+ */
 public class JVMTIEvent {
     // Event IDs
     public static final int VM_INIT = JVMTIConstants.JVMTI_EVENT_VM_INIT;
@@ -56,16 +65,140 @@ public class JVMTIEvent {
     public static final int OBJECT_FREE = JVMTIConstants.JVMTI_EVENT_OBJECT_FREE;
     public static final int VM_OBJECT_ALLOC = JVMTIConstants.JVMTI_EVENT_VM_OBJECT_ALLOC;
 
+    private static final int EVENT_COUNT = JVMTIConstants.JVMTI_MAX_EVENT_TYPE_VAL - JVMTIConstants.JVMTI_MIN_EVENT_TYPE_VAL + 1;
+
+    static long CODE_EVENTS_MASK = computeEventBitMask(FIELD_ACCESS) | computeEventBitMask(FIELD_MODIFICATION) |
+                                   computeEventBitMask(METHOD_ENTRY) | computeEventBitMask(METHOD_EXIT);
+
     /**
      * Returns a bit mask for the given event, or -1 if invalid.
      * The bit numbers are zero based, i.e. modulo {@link #JVMTI_MIN_EVENT_TYPE_VAL}.
      */
-    public static long getEventBitMask(int eventType) {
-        if (eventType < JVMTIConstants.JVMTI_MIN_EVENT_TYPE_VAL || eventType > JVMTIConstants.JVMTI_MAX_EVENT_TYPE_VAL) {
-            return -1;
-        } else {
-            return 1L << (eventType - JVMTIConstants.JVMTI_MIN_EVENT_TYPE_VAL);
+    private static long computeEventBitMask(int eventType) {
+        return 1L << (eventType - JVMTIConstants.JVMTI_MIN_EVENT_TYPE_VAL);
+    }
+
+    /**
+     * Pre-computed masks.
+     */
+    private static long[] bitMasks = new long[EVENT_COUNT];
+
+    static boolean isEventSetGlobally(int eventType) {
+        return (bitMasks[eventType - JVMTIConstants.JVMTI_MIN_EVENT_TYPE_VAL] & globalEventMask) != 0;
+    }
+
+    static boolean anyCodeEventsSetGlobally() {
+        return (globalEventMask & JVMTIEvent.CODE_EVENTS_MASK) != 0;
+    }
+
+    /**
+     * A set of bits that correspond to the phases in which it is legal to dispatch the event.
+     */
+    private static int[] phases = new int[EVENT_COUNT];
+
+    static {
+        for (int i = JVMTIConstants.JVMTI_MIN_EVENT_TYPE_VAL; i <= JVMTIConstants.JVMTI_MAX_EVENT_TYPE_VAL; i++) {
+            int eventPhase = JVMTIConstants.JVMTI_PHASE_LIVE;
+            /* N.B. The START phase is considered to have been entered when the VM sends the VM_START event,
+               and similarly for VM_INIT. So when JVMTI.event receives these events it is still in the previous
+               phase. To avoid a special case we simply add the previous phase to their bitmask.
+            */
+            switch (i) {
+                case VM_INIT:
+                case THREAD_START:
+                case THREAD_END:
+                case CLASS_LOAD:
+                case CLASS_PREPARE:
+                    eventPhase = JVMTIConstants.JVMTI_PHASE_START | JVMTIConstants.JVMTI_PHASE_LIVE;
+                    break;
+
+                case VM_START:
+                case CLASS_FILE_LOAD_HOOK:
+                case NATIVE_METHOD_BIND:
+                case DYNAMIC_CODE_GENERATED:
+                    eventPhase = JVMTIConstants.JVMTI_PHASE_PRIMORDIAL | JVMTIConstants.JVMTI_PHASE_START | JVMTIConstants.JVMTI_PHASE_LIVE;
+                    break;
+
+                case EXCEPTION:
+                case EXCEPTION_CATCH:
+                case SINGLE_STEP:
+                case FRAME_POP:
+                case BREAKPOINT:
+                case FIELD_ACCESS:
+                case FIELD_MODIFICATION:
+                case METHOD_ENTRY:
+                case METHOD_EXIT:
+                case COMPILED_METHOD_LOAD:
+                case COMPILED_METHOD_UNLOAD:
+                case DATA_DUMP_REQUEST:
+                case MONITOR_WAIT:
+                case MONITOR_WAITED:
+                case MONITOR_CONTENDED_ENTER:
+                case MONITOR_CONTENDED_ENTERED:
+                case RESOURCE_EXHAUSTED:
+                case GARBAGE_COLLECTION_START:
+                case GARBAGE_COLLECTION_FINISH:
+                case OBJECT_FREE:
+                case VM_OBJECT_ALLOC:
+                case VM_DEATH:
+                    // LIVE
+                    break;
+            }
+            phases[i - JVMTIConstants.JVMTI_MIN_EVENT_TYPE_VAL] = eventPhase;
+            bitMasks[i - JVMTIConstants.JVMTI_MIN_EVENT_TYPE_VAL] = computeEventBitMask(i);
         }
     }
+
+    /**
+     * Gets the bitmask to determine if an event should be delivered based on the phase.
+     */
+    static int getPhase(int eventType) {
+        return phases[eventType - JVMTIConstants.JVMTI_MIN_EVENT_TYPE_VAL];
+    }
+
+    /**
+     * This provides a fast check for compiled code event checks.
+     * Tt is the union of the event masks for all agents.
+     */
+    private static long globalEventMask;
+
+    /**
+     * Implementation of upcall to request/release event notification.
+     */
+    static int setEventNotificationMode(Pointer env, int mode, int eventType, JniHandle eventThread) {
+        if (eventType < JVMTIConstants.JVMTI_MIN_EVENT_TYPE_VAL || eventType > JVMTIConstants.JVMTI_MAX_EVENT_TYPE_VAL) {
+            return JVMTI_ERROR_INVALID_EVENT_TYPE;
+        }
+        if (eventThread.isZero()) {
+            long envMask = EVENTMASK.get(env).asAddress().toLong();
+            long maskBit = bitMasks[eventType - JVMTIConstants.JVMTI_MIN_EVENT_TYPE_VAL];
+            if (mode == JVMTI_ENABLE) {
+                envMask = envMask | maskBit;
+            } else if (mode == JVMTI_DISABLE) {
+                envMask = envMask & ~maskBit;
+            } else {
+                return JVMTI_ERROR_ILLEGAL_ARGUMENT;
+            }
+            EVENTMASK.set(env, Address.fromLong(envMask));
+            // Update the Java field caching the mask
+            // Checkstyle: stop
+            JVMTI.getEnv(env).codeEventMask = envMask;
+            // Checkstyle: resume
+            // recompute globalEventMask
+            globalEventMask = 0;
+            for (int i = 0; i < JVMTI.jvmtiEnvs.length; i++) {
+                JVMTI.Env jvmtiEnv = JVMTI.jvmtiEnvs[i];
+                if (jvmtiEnv.env.isZero()) {
+                    continue;
+                }
+                globalEventMask |= jvmtiEnv.codeEventMask;
+            }
+            return JVMTI_ERROR_NONE;
+        } else {
+            // TODO handle per-thread events
+            return JVMTI_ERROR_ILLEGAL_ARGUMENT;
+        }
+    }
+
 
 }

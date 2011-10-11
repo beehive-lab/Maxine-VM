@@ -23,7 +23,6 @@
 package com.sun.max.vm.jvmti;
 
 import static com.sun.max.vm.jni.JniFunctionsGenerator.Customizer;
-import static com.sun.max.vm.jvmti.JVMTIEnvNativeStruct.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.jni.*;
@@ -33,11 +32,13 @@ public class JVMTIFunctionsGenerator {
 
     private static final String PHASES = "// PHASES: ";
     private static final String NULLCHECK = "// NULLCHECK: ";
-    private static final String TYPECHECK = "// TYPECHECK: ";
+    private static final String HANDLECHECK = "// HANDLECHECK: ";
     private static final String CAPABILITIES = "// CAPABILITIES: ";
+    private static final String MEMBERID = "// MEMBERID: ";
     private static final String INDENT8 = "        ";
     private static final String INDENT12 = INDENT8 + "    ";
     private static final String INDENT16 = INDENT12 + "    ";
+    private static final String INDENT20 = INDENT16 + "    ";
     private static final String FIRST_LINE_INDENT = INDENT8;
 
     public static class JVMTICustomizer extends Customizer {
@@ -57,6 +58,10 @@ public class JVMTIFunctionsGenerator {
                 return result;
             }
             result = customizeCapabilities(line);
+            if (result != null) {
+                return result;
+            }
+            result = customizeID(line);
             if (result != null) {
                 return result;
             }
@@ -107,19 +112,23 @@ public class JVMTIFunctionsGenerator {
         }
 
         private String customizeTypeCheck(String line) {
-            String[] tagArgs = getTagArgs(line, TYPECHECK);
+            String[] tagArgs = getTagArgs(line, HANDLECHECK);
             if (tagArgs == null) {
                 return null;
             }
             StringBuilder sb = new StringBuilder(FIRST_LINE_INDENT);
-            sb.append("try {\n");
             for (int i = 0; i < tagArgs.length; i++) {
                 String[] tagParts = tagArgs[i].split("=");
                 String className = tagParts[1];
                 String varName = tagParts[0];
+                sb.append(className);
+                sb.append(" handleAs");
+                sb.append(className);
+                sb.append(";\n");
+                sb.append(INDENT12);
+                sb.append("try {\n");
                 sb.append(INDENT16);
-                sb.append(varName);
-                sb.append("As");
+                sb.append("handleAs");
                 sb.append(className);
                 sb.append(" = ");
                 sb.append("(");
@@ -127,6 +136,18 @@ public class JVMTIFunctionsGenerator {
                 sb.append(") ");
                 sb.append(varName);
                 sb.append(".unhand();\n");
+                // null check
+                sb.append(INDENT16);
+                sb.append("if (handleAs");
+                sb.append(className);
+                sb.append(" == null) {\n");
+                sb.append(INDENT20);
+                sb.append("return JVMTI_ERROR_INVALID_");
+                sb.append(invalidName(className).toUpperCase());
+                sb.append(";\n");
+                sb.append(INDENT16);
+                sb.append("}\n");
+                // catch
                 sb.append(INDENT12);
                 sb.append("} catch (ClassCastException ex) {\n");
                 sb.append(INDENT16);
@@ -157,9 +178,45 @@ public class JVMTIFunctionsGenerator {
             return closeCheck(sb, "MUST_POSSESS_CAPABILITY");
         }
 
+        private String customizeID(String line) {
+            String[] tagArgs = getTagArgs(line, MEMBERID);
+            if (tagArgs == null) {
+                return null;
+            }
+            StringBuilder sb = new StringBuilder(FIRST_LINE_INDENT);
+            for (int i = 0; i < tagArgs.length; i++) {
+                String[] tagParts = tagArgs[i].split("=");
+                String actorName = tagParts[1];
+                String varName = tagParts[0];
+                sb.append(actorName);
+                sb.append("Actor ");
+                String lowerActorName = toFirstLower(actorName);
+                sb.append(lowerActorName);
+                sb.append("Actor");
+                sb.append(" = ");
+                sb.append(actorName);
+                sb.append("ID.to");
+                sb.append(actorName);
+                sb.append("Actor(");
+                sb.append(varName);
+                sb.append(");\n");
+                sb.append(INDENT12);
+                sb.append("if (");
+                sb.append(lowerActorName);
+                sb.append("Actor == null) {\n");
+                sb.append(INDENT16);
+                sb.append("return JVMTI_ERROR_INVALID_");
+                sb.append(actorName.toUpperCase());
+                sb.append("ID;\n" + INDENT12 + "}");
+            }
+            return sb.toString();
+        }
+
         private String invalidName(String className) {
             if (className.equals("Thread") || className.equals("Class"))  {
                 return className;
+            } else if (className.equals("ThreadGroup")) {
+                return "Thread_Group";
             } else {
                 return "Object";
             }
@@ -169,6 +226,10 @@ public class JVMTIFunctionsGenerator {
         public String customizeHandler(String returnStatement) {
             // any failure just means an internal error
             return "            return JVMTI_ERROR_INTERNAL;";
+        }
+
+        private static String toFirstLower(String s) {
+            return s.substring(0, 1).toLowerCase() + s.substring(1);
         }
     }
 
