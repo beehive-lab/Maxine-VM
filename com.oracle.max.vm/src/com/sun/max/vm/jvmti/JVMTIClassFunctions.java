@@ -38,15 +38,13 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.classfile.LineNumberTable.Entry;
+import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
 /**
  * Support for all the JVMTI functions related to {@link Class} handling.
- * @author Mick Jordan
- *
  */
 class JVMTIClassFunctions {
 
@@ -113,7 +111,7 @@ class JVMTIClassFunctions {
         if (getAddedBootClassPathCalled) {
             return JVMTI_ERROR_INTERNAL;
         }
-        JVMTIEnv jvmtiEnv = JVMTI.getEnv(env);
+        Env jvmtiEnv = JVMTI.getEnv(env);
         if (jvmtiEnv == null) {
             return JVMTI_ERROR_INVALID_ENVIRONMENT;
         }
@@ -142,7 +140,7 @@ class JVMTIClassFunctions {
         }
         String result = null;
         for (int i = 0; i < jvmtiEnvs.length; i++) {
-            JVMTIEnv jvmtiEnv = jvmtiEnvs[i];
+            Env jvmtiEnv = jvmtiEnvs[i];
             for (long pathAsLong : jvmtiEnv.bootClassPathAdd) {
                 if (pathAsLong != 0) {
                     Pointer pathPtr = Address.fromLong(pathAsLong).asPointer();
@@ -211,9 +209,9 @@ class JVMTIClassFunctions {
         return JVMTI_ERROR_NONE;
     }
 
-    static int getLineNumberTable(MethodID methodID, Pointer entryCountPtr, Pointer tablePtr) {
+    static int getLineNumberTable(MethodActor methodActor, Pointer entryCountPtr, Pointer tablePtr) {
         try {
-            ClassMethodActor classMethodActor = (ClassMethodActor) MethodID.toMethodActor(methodID);
+            ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
             if (classMethodActor.isNative()) {
                 return JVMTI_ERROR_NATIVE_METHOD;
             }
@@ -221,11 +219,11 @@ class JVMTIClassFunctions {
             if (table.isEmpty()) {
                 return JVMTI_ERROR_ABSENT_INFORMATION;
             }
-            Entry[] entries = table.entries();
+            LineNumberTable.Entry[] entries = table.entries();
             entryCountPtr.setInt(entries.length);
             Pointer nativeTablePtr = Memory.allocate(Size.fromInt(entries.length * getLineNumberEntrySize()));
             for (int i = 0; i < entries.length; i++) {
-                Entry entry = entries[i];
+                LineNumberTable.Entry entry = entries[i];
                 setJVMTILineNumberEntry(nativeTablePtr, i, entry.bci(), entry.lineNumber());
             }
             tablePtr.setWord(nativeTablePtr);
@@ -250,7 +248,179 @@ class JVMTIClassFunctions {
     @C_FUNCTION
     private static native void setJVMTILineNumberEntry(Pointer table, int index, long location, int lineNumber);
 
+    static int getLocalVariableTable(MethodActor methodActor, Pointer entryCountPtr, Pointer tablePtr) {
+        try {
+            ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
+            if (classMethodActor.isNative()) {
+                return JVMTI_ERROR_NATIVE_METHOD;
+            }
+            LocalVariableTable table = classMethodActor.codeAttribute().localVariableTable();
+            if (table.isEmpty()) {
+                return JVMTI_ERROR_ABSENT_INFORMATION;
+            }
+            LocalVariableTable.Entry[] entries = table.entries();
+            ConstantPool constantPool = classMethodActor.holder().constantPool();
+            entryCountPtr.setInt(entries.length);
+            Pointer nativeTablePtr = Memory.allocate(Size.fromInt(entries.length * getLocalVariableEntrySize()));
+            for (int i = 0; i < entries.length; i++) {
+                LocalVariableTable.Entry entry = entries[i];
+                setJVMTILocalVariableEntry(nativeTablePtr, i,
+                                CString.utf8FromJava(entry.name(constantPool).string),
+                                CString.utf8FromJava(constantPool.utf8At(entry.descriptorIndex(), "local variable type").toString()),
+                                entry.signatureIndex() == 0 ? Pointer.zero() : CString.utf8FromJava(entry.signature(constantPool).string),
+                                entry.startBCI(), entry.length(), entry.slot());
+            }
+            tablePtr.setWord(nativeTablePtr);
+            return JVMTI_ERROR_NONE;
+        } catch (ClassCastException ex) {
+            return JVMTI_ERROR_INVALID_METHODID;
+        }
+
+    }
+
+    private static int localVariableEntrySize = -1;
+
+    private static int getLocalVariableEntrySize() {
+        if (localVariableEntrySize < 0) {
+            localVariableEntrySize = getJVMTILocalVariableEntrySize();
+        }
+        return localVariableEntrySize;
+    }
+
+    @C_FUNCTION
+    private static native int getJVMTILocalVariableEntrySize();
+
+    @C_FUNCTION
+    private static native void setJVMTILocalVariableEntry(Pointer table, int index, Pointer name, Pointer signature,
+                    Pointer genericSignature, long location, int length, int slot);
+
     static int getSourceDebugExtension(Class klass, Pointer sourceDebugExtensionPtr) {
         return JVMTI_ERROR_ABSENT_INFORMATION;
     }
+
+    static int getMethodName(MethodActor methodActor, Pointer namePtrPtr, Pointer signaturePtrPtr, Pointer genericPtrPtr) {
+        if (!namePtrPtr.isZero()) {
+            namePtrPtr.setWord(CString.utf8FromJava(methodActor.name()));
+        }
+        if (!signaturePtrPtr.isZero()) {
+            signaturePtrPtr.setWord(CString.utf8FromJava(methodActor.descriptor().asString()));
+        }
+        if (!genericPtrPtr.isZero()) {
+            String generic = methodActor.genericSignatureString();
+            genericPtrPtr.setWord(generic == null ? Pointer.zero() : CString.utf8FromJava(generic));
+        }
+        return JVMTI_ERROR_NONE;
+    }
+
+    static int getMethodDeclaringClass(MethodActor methodActor, Pointer declaringClassPtr) {
+        declaringClassPtr.setWord(JniHandles.createLocalHandle(methodActor.holder().toJava()));
+        return JVMTI_ERROR_NONE;
+    }
+
+    static int getMaxLocals(MethodActor methodActor, Pointer maxPtr) {
+        try {
+            ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
+            if (classMethodActor.isNative()) {
+                return JVMTI_ERROR_INVALID_METHODID;
+            }
+            maxPtr.setInt(classMethodActor.codeAttribute().maxLocals);
+            return JVMTI_ERROR_NONE;
+        } catch (ClassCastException ex) {
+            return JVMTI_ERROR_INVALID_METHODID;
+        }
+    }
+
+    static int getArgumentsSize(MethodActor methodActor, Pointer sizePtr) {
+        try {
+            ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
+            if (classMethodActor.isNative()) {
+                return JVMTI_ERROR_INVALID_METHODID;
+            }
+            sizePtr.setInt(classMethodActor.numberOfParameterSlots());
+            return JVMTI_ERROR_NONE;
+        } catch (ClassCastException ex) {
+            return JVMTI_ERROR_INVALID_METHODID;
+        }
+    }
+
+    static int getMethodLocation(MethodActor methodActor, Pointer startLocationPtr, Pointer endLocationPtr) {
+        try {
+            ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
+            if (classMethodActor.isNative()) {
+                return JVMTI_ERROR_INVALID_METHODID;
+            }
+            byte[] code = classMethodActor.codeAttribute().code();
+            startLocationPtr.setInt(0);
+            endLocationPtr.setInt(code.length - 1);
+            return JVMTI_ERROR_NONE;
+        } catch (ClassCastException ex) {
+            return JVMTI_ERROR_INVALID_METHODID;
+        }
+    }
+
+    static int getFieldName(FieldActor fieldActor, Pointer namePtrPtr, Pointer signaturePtrPtr, Pointer genericPtrPtr) {
+        if (!namePtrPtr.isZero()) {
+            namePtrPtr.setWord(CString.utf8FromJava(fieldActor.name()));
+        }
+        if (!signaturePtrPtr.isZero()) {
+            signaturePtrPtr.setWord(CString.utf8FromJava(fieldActor.descriptor().string));
+        }
+        if (!genericPtrPtr.isZero()) {
+            String generic = fieldActor.genericSignatureString();
+            genericPtrPtr.setWord(generic == null ? Pointer.zero() : CString.utf8FromJava(generic));
+        }
+        return JVMTI_ERROR_NONE;
+    }
+
+    static int getFieldDeclaringClass(FieldActor fieldActor, Pointer declaringClassPtr) {
+        declaringClassPtr.setWord(JniHandles.createLocalHandle(fieldActor.holder().toJava()));
+        return JVMTI_ERROR_NONE;
+    }
+
+    static int getClassMethods(Class klass, Pointer methodCountPtr, Pointer methodsPtrPtr) {
+        List<MethodActor> methodActors = ClassActor.fromJava(klass).getLocalMethodActors();
+        Pointer methodsPtr = Memory.allocate(Size.fromInt(methodActors.size() * Word.size()));
+        if (methodsPtr.isZero()) {
+            return JVMTI_ERROR_OUT_OF_MEMORY;
+        }
+        methodsPtrPtr.setWord(methodsPtr);
+        int size = methodActors.size();
+        for (int i = 0; i < size; i++) {
+            methodsPtr.setWord(i, MethodID.fromMethodActor(methodActors.get(i)));
+        }
+        methodCountPtr.setInt(size);
+        return JVMTI_ERROR_NONE;
+    }
+
+    static int getClassFields(Class klass, Pointer fieldCountPtr, Pointer fieldsPtrPtr) {
+        List<FieldActor> fieldActors = ClassActor.fromJava(klass).getLocalFieldActors();
+        Pointer fieldsPtr = Memory.allocate(Size.fromInt(fieldActors.size() * Word.size()));
+        if (fieldsPtr.isZero()) {
+            return JVMTI_ERROR_OUT_OF_MEMORY;
+        }
+        fieldsPtrPtr.setWord(fieldsPtr);
+        int size = fieldActors.size();
+        for (int i = 0; i < size; i++) {
+            fieldsPtr.setWord(i, FieldID.fromFieldActor(fieldActors.get(i)));
+        }
+        fieldCountPtr.setInt(size);
+        return JVMTI_ERROR_NONE;
+    }
+
+    static int getImplementedInterfaces(Class klass, Pointer interfaceCountPtr, Pointer interfacesPtrPtr) {
+        List<InterfaceActor> interfaceActors = ClassActor.fromJava(klass).getLocalInterfaceActors();
+        Pointer interfacesPtr = Memory.allocate(Size.fromInt(interfaceActors.size() * Word.size()));
+        if (interfacesPtr.isZero()) {
+            return JVMTI_ERROR_OUT_OF_MEMORY;
+        }
+        interfacesPtrPtr.setWord(interfacesPtr);
+        int size = interfaceActors.size();
+        for (int i = 0; i < size; i++) {
+            interfacesPtr.setWord(i, JniHandles.createLocalHandle(interfaceActors.get(i).toJava()));
+        }
+        interfaceCountPtr.setInt(size);
+        return JVMTI_ERROR_NONE;
+
+    }
+
 }

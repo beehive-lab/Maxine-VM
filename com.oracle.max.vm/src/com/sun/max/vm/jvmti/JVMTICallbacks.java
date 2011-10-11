@@ -35,6 +35,7 @@ public class JVMTICallbacks {
         new CriticalNativeMethod(JVMTICallbacks.class, "invokeGarbageCollectionCallback");
         new CriticalNativeMethod(JVMTICallbacks.class, "invokeThreadObjectCallback");
         new CriticalNativeMethod(JVMTICallbacks.class, "invokeClassfileLoadHookCallback");
+        new CriticalNativeMethod(JVMTICallbacks.class, "invokeFieldWatchCallback");
     }
 
     static native int invokeAgentOnLoad(Address onLoad, Pointer options);
@@ -47,4 +48,7 @@ public class JVMTICallbacks {
     static native void invokeClassfileLoadHookCallback(Pointer callback, Pointer jvmtiEnv,
                     Word klass, Word loader, Pointer name, Word protectionDomain, int classDataLen,
                     Pointer classDataPtr, Pointer newClassDataLenPtr, Pointer newClassDataPtrPtr);
+    static native void invokeFieldWatchCallback(Pointer callback, Pointer jvmtiEnv,
+                    Word thread, Word methodID, long location, Word klass, Word object,
+                    Word fieldID, byte sigType, Word value);
 }

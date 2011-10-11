@@ -23,6 +23,7 @@
 package com.sun.max.vm.jvmti;
 
 import com.sun.max.annotate.*;
+import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 
@@ -94,12 +95,17 @@ public abstract class NativeAgentVMOption extends VMOption {
     }
 
     /**
-     * Get address of option string for i'th occurrence or {@link Pointer#zero} if none.
+     * Get address of option string for i'th occurrence or empty string if none.
      * @param i
      * @return
      */
     public Pointer getOptionStart(int i) {
-        return nativeStrings[i].optionStart;
+        Pointer result = nativeStrings[i].optionStart;
+        if (result.isZero()) {
+            result = Memory.allocate(Size.fromInt(1));
+            result.setByte((byte) 0);
+        }
+        return result;
     }
 
     static class NativeString {
