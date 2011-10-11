@@ -263,6 +263,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             // Before filling the current TLAB chunk, save link to next pointer.
             final Pointer nextChunk = tlabTop.getWord().asPointer();
             fillTLABWithDeadObject(tlabMark, tlabTop);
+            // FIXME: we shouldn't have to do the following. Heap walker should be able to walk over HeapFreeChunk.
             HeapFreeChunk.makeParsable(nextChunk);
         }
     }
@@ -278,9 +279,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
      * This is the {@link VmOperationThread}'s entry point to garbage collection.
      */
     final class Collect extends GCOperation {
-        private long collectionCount = 0;
         private TLABFiller tlabFiller = new TLABFiller();
-
 
         public Collect() {
             super("Collect");
@@ -365,7 +364,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             }
             vmConfig().monitorScheme().afterGarbageCollection();
 
-            if (heapResizingPolicy.resizeAfterCollection(objectSpace.totalSpace(), freeSpaceAfterGC, objectSpace)) {
+            if (heapResizingPolicy.resizeAfterCollection(freeSpaceAfterGC, objectSpace)) {
                 // Heap was resized.
                 // Update heapMarker's coveredArea.
                 ContiguousHeapSpace markedSpace = objectSpace.committedHeapSpace();

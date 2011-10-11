@@ -509,4 +509,14 @@ public class LargeObjectSpace extends Sweeper {
         return Size.fromInt(BLOCK_SIZE);
     }
 
+    @Override
+    public Address startOfSweepingRegion() {
+        return committedHeapSpace.start();
+    }
+
+    @Override
+    public Address endOfSweepingRegion() {
+        return committedHeapSpace.end();
+    }
+
 }

@@ -28,7 +28,7 @@ import com.sun.max.vm.heap.*;
 /**
  * A refill manager that can also hands out list of free chunks to an allocator.
  */
-abstract class ChunkListRefillManager extends RefillManager {
+public abstract class ChunkListRefillManager extends RefillManager {
     /**
      * Minimum size for a chunk.
      */
@@ -66,5 +66,5 @@ abstract class ChunkListRefillManager extends RefillManager {
      * @param leftoverSize size of the space that was left in the  bump pointer allocator
      * @return a zero address if the allocator was refilled, the head of a list of free chunk otherwise
      */
-    abstract Address allocateChunkListOrRefill(AtomicBumpPointerAllocator<? extends ChunkListRefillManager> allocator, Size listSize, Pointer leftover, Size leftoverSize);
+    public abstract Address allocateChunkListOrRefill(AtomicBumpPointerAllocator<? extends ChunkListRefillManager> allocator, Size listSize, Pointer leftover, Size leftoverSize);
 }
