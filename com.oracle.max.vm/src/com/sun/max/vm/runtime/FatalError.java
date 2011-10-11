@@ -67,6 +67,17 @@ public final class FatalError extends Error {
     }
 
     /**
+     * Support for running post-error diagnosis on unexpected error from the vm operation (useful for GC).
+     */
+    private static Runnable runOnVMOpError;
+
+    public static void setOnVMOpError(Runnable runOnError) {
+        if (VmThread.current().isVmOperationThread()) {
+            FatalError.runOnVMOpError = runOnError;
+        }
+    }
+
+    /**
      * A breakpoint should be set on this method when debugging the VM so that
      * fatal errors can be investigated before the VM exits.
      */
@@ -139,6 +150,11 @@ public final class FatalError extends Error {
         if (MaxineVM.isHosted()) {
             throw new FatalError(message, throwable);
         }
+        final VmThread vmThread = VmThread.current();
+
+        if (runOnVMOpError != null && vmThread.isVmOperationThread()) {
+            runOnVMOpError.run();
+        }
 
         SafepointPoll.disable();
 
@@ -148,7 +164,7 @@ public final class FatalError extends Error {
         // Try to recover from a fatal error while dumping stacks of the other threads
         if (DUMPING_STACKS_IN_FATAL_ERROR && FATAL_ERROR_WHILE_DUMPING_STACKS != null) {
             FatalError error = FATAL_ERROR_WHILE_DUMPING_STACKS;
-            VmThread.current().stackDumpStackFrameWalker().reset();
+            vmThread.stackDumpStackFrameWalker().reset();
             // Nulling FATAL_ERROR_WHILE_DUMPING_STACKS makes this is a one shot attempt at recovery
             FATAL_ERROR_WHILE_DUMPING_STACKS = null;
             throw error;
@@ -160,7 +176,6 @@ public final class FatalError extends Error {
         }
         recursionCount++;
 
-        final VmThread vmThread = VmThread.current();
         final boolean lockDisabledSafepoints = Log.lock();
         if (vmThread != null) {
             vmThread.stackDumpStackFrameWalker().reset();

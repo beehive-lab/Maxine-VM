@@ -176,20 +176,34 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      * @return
      */
     @INLINE
-    static final int bitIndexInWord(int bitIndex) {
+    static int bitIndexInWord(int bitIndex) {
         return bitIndex & bitIndexInWordMask;
     }
 
     @INLINE
-    static final long bitmaskFor(int bitIndex) {
+    static long bitmaskFor(int bitIndex) {
         return 1L << bitIndex;
     }
 
-    static final void printVisitedCell(Address cell, String message) {
+    static void printVisitedCell(Address cell, String message) {
         final boolean lockDisabledSafepoints = Log.lock();
         Log.print(message);
         Log.println(cell);
         Log.unlock(lockDisabledSafepoints);
+    }
+
+    final void checkGreyCellHub(Address cell, Hub hub) {
+        if (hub == null) {
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("grey cell "); Log.print(cell); Log.println(" has null hub !");
+            int bitmapWordIndex = bitmapWordIndex(cell);
+            Log.print("bit index = "); Log.print(bitIndexOf(cell));
+            Log.print(", bitmapWordIndex = "); Log.print(bitmapWordIndex);
+            Log.print(", bitmap word = "); Log.println(base.asPointer().getWord(bitmapWordIndex));
+            Log.unlock(lockDisabledSafepoints);
+            FatalError.unexpected("not a valid object");
+        }
+        FatalError.check(hub != HeapFreeChunk.HEAP_FREE_CHUNK_HUB, "Must never mark a HeapFreeChunk");
     }
 
     /**
@@ -870,11 +884,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             markRefGrey(hubRef);
             final Hub hub = UnsafeCast.asHub(hubRef.toJava());
             if (MaxineVM.isDebug()) {
-                if (hub == null) {
-                    Log.print("cell "); Log.print(cell); Log.println(" has null hub !");
-                    FatalError.unexpected("not a valid object");
-                }
-                FatalError.check(hub != HeapFreeChunk.HEAP_FREE_CHUNK_HUB, "Must never mark a HeapFreeChunk");
+                heapMarker.checkGreyCellHub(origin, hub);
             }
             // Update the other references in the object
             final SpecificLayout specificLayout = hub.specificLayout;
@@ -1020,11 +1030,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             markRefGrey(hubRef);
             final Hub hub = UnsafeCast.asHub(hubRef.toJava());
             if (MaxineVM.isDebug()) {
-                if (hub == null) {
-                    Log.print("cell "); Log.print(cell); Log.println(" has null hub !");
-                    FatalError.unexpected("not a valid object");
-                }
-                FatalError.check(hub != HeapFreeChunk.HEAP_FREE_CHUNK_HUB, "Must never mark a HeapFreeChunk");
+                heapMarker.checkGreyCellHub(origin, hub);
             }
             final SpecificLayout specificLayout = hub.specificLayout;
             if (specificLayout.isTupleLayout()) {
@@ -1337,17 +1343,58 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     private int debugRightmostBitmapWordIndex;
 
     /**
+     * Debugging support: address and size of cell over a range of address of the heap.
+     */
+    static class HeapWalkTracer implements Runnable {
+        Address start;
+        Address end;
+        Size printBefore;
+
+        public void run() {
+            FatalError.setOnVMOpError(null);
+            Pointer p = start.asPointer();
+            Pointer startPrinting = p;
+            if (printBefore.lessThan(end.minus(start))) {
+                startPrinting = end.minus(printBefore).asPointer();
+            }
+            long  objectCount = 1;
+            final boolean lockDisabledSafepoints = Log.lock();
+            while (p.lessThan(end)) {
+                final Pointer origin = Layout.cellToOrigin(p);
+                final Hub hub = UnsafeCast.asHub(Layout.readHubReference(origin).toJava());
+                final Size size =  (hub == HeapFreeChunk.HEAP_FREE_CHUNK_HUB)  ? HeapFreeChunk.getFreechunkSize(p) : Layout.size(origin);
+                if (p.greaterThan(startPrinting)) {
+                    Log.print(p); Log.print(" ["); Log.print(size.toLong()); Log.print("] ");
+                    if ((objectCount & 7) == 0) {
+                        Log.println();
+                    }
+                }
+                objectCount++;
+                p = p.plus(size);
+            }
+            Log.unlock(lockDisabledSafepoints);
+        }
+    }
+
+    private final HeapWalkTracer heapWalkTracer = new HeapWalkTracer();
+
+    /**
      * Return bit index in the color map of the first grey object in the specified area or -1 if none
-     * is found.
+     * is found. Currently used for debugging only.
      * @param start start of the scanned area
      * @param end end of the scanned area
      * @return a bit index in the color map, or -1 if no grey object was met during the scan.
      */
-    public int scanForGreyMark(Address start, Address end) {
+    private int scanForGreyMark(Address start, Address end) {
         Pointer p = start.asPointer();
+        heapWalkTracer.start = start;
+        heapWalkTracer.end = end;
+        heapWalkTracer.printBefore = Size.fromInt(2).shiftedLeft(HeapRegionConstants.log2RegionSizeInBytes);
+        FatalError.setOnVMOpError(heapWalkTracer);
         while (p.lessThan(end)) {
             final int bitIndex = bitIndexOf(p);
             if (isGrey(bitIndex)) {
+                FatalError.setOnVMOpError(null);
                 return bitIndex;
             }
             final Pointer origin = Layout.cellToOrigin(p);
@@ -1364,11 +1411,13 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             } else {
                 p = p.plus(Layout.size(origin));
             }
+            heapWalkTracer.end = p;
             if (MaxineVM.isDebug() && p.readWord(0).isZero()) {
                 Log.print(" suspiscious obj @ "); Log.print(origin); Log.print(" size = ");
                 Log.println(Layout.size(origin).toLong());
             }
         }
+        FatalError.setOnVMOpError(null);
         return -1;
     }
 
