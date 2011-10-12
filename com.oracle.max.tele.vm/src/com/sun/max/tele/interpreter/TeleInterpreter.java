@@ -47,6 +47,7 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -264,7 +265,12 @@ public final class TeleInterpreter {
         return value;
     }
 
+    private void push(boolean value) {
+        push(value ? IntValue.ONE : IntValue.ZERO);
+    }
+
     private void push(Value value) {
+        assert value.kind().stackKind == value.kind();
         machine.push(value);
     }
 
@@ -1259,6 +1265,22 @@ public final class TeleInterpreter {
     protected boolean processIntrinsic(MethodActor method) throws Throwable {
         String intrinsic = method.intrinsic();
 
+        // Handle special methods that cannot be interpreted. This is effectively
+        // TeleInterpreter specific intrinsification
+        if (method == SafepointPoll_disable) {
+            // Nothing to do
+            push(false);
+            return true;
+        } else if (method == SafepointPoll_enable) {
+            // Nothing to do
+            return true;
+        }
+
+        // If the method is not intrinsified, then return now.
+        if (intrinsic == null) {
+            return false;
+        }
+
         // A String-switch would be nice here, but we have to switch to Java 7 source level for that...
         if (intrinsic == LSB) {
             push(minus1IfWordWidth(Long.numberOfTrailingZeros(pop().asLong())));
@@ -1272,33 +1294,33 @@ public final class TeleInterpreter {
             Value value2 = pop();
             Value value1 = pop();
             if (value1.kind() == Kind.INT) {
-                push(BooleanValue.from(UnsignedMath.aboveThan(value1.asInt(), value2.asInt())));
+                push(UnsignedMath.aboveThan(value1.asInt(), value2.asInt()));
             } else {
-                push(BooleanValue.from(UnsignedMath.aboveThan(value1.asLong(), value2.asLong())));
+                push(UnsignedMath.aboveThan(value1.asLong(), value2.asLong()));
             }
         } else if (intrinsic == UCMP_AE) {
             Value value2 = pop();
             Value value1 = pop();
             if (value1.kind() == Kind.INT) {
-                push(BooleanValue.from(UnsignedMath.aboveOrEqual(value1.asInt(), value2.asInt())));
+                push(UnsignedMath.aboveOrEqual(value1.asInt(), value2.asInt()));
             } else {
-                push(BooleanValue.from(UnsignedMath.aboveOrEqual(value1.asLong(), value2.asLong())));
+                push(UnsignedMath.aboveOrEqual(value1.asLong(), value2.asLong()));
             }
         } else if (intrinsic == UCMP_BT) {
             Value value2 = pop();
             Value value1 = pop();
             if (value1.kind() == Kind.INT) {
-                push(BooleanValue.from(UnsignedMath.belowThan(value1.asInt(), value2.asInt())));
+                push(UnsignedMath.belowThan(value1.asInt(), value2.asInt()));
             } else {
-                push(BooleanValue.from(UnsignedMath.belowThan(value1.asLong(), value2.asLong())));
+                push(UnsignedMath.belowThan(value1.asLong(), value2.asLong()));
             }
         } else if (intrinsic == UCMP_BE) {
             Value value2 = pop();
             Value value1 = pop();
             if (value1.kind() == Kind.INT) {
-                push(BooleanValue.from(UnsignedMath.belowOrEqual(value1.asInt(), value2.asInt())));
+                push(UnsignedMath.belowOrEqual(value1.asInt(), value2.asInt()));
             } else {
-                push(BooleanValue.from(UnsignedMath.belowOrEqual(value1.asLong(), value2.asLong())));
+                push(UnsignedMath.belowOrEqual(value1.asLong(), value2.asLong()));
             }
 
         } else if (intrinsic == IntrinsicIDs.UDIV) {
@@ -1326,11 +1348,16 @@ public final class TeleInterpreter {
             throw TeleError.unexpected("Unsupported intrinsic: " + intrinsic);
         } else if (intrinsic == PAUSE) {
             // Nothing to do, since it can be no-op.
-
         } else {
             // Could also opt to just execute the method in case it has an implementation, but for now be safe.
             throw ProgramError.unexpected("Unknown intrinsic: " + intrinsic);
+            // return false
         }
         return true;
     }
+
+    // Methods intrinsified specially by TeleInterpreter (by necessity)
+    static final MethodActor SafepointPoll_disable = ClassRegistry.findMethod("disable", SafepointPoll.class);
+    static final MethodActor SafepointPoll_enable = ClassRegistry.findMethod("enable", SafepointPoll.class);
+
 }
