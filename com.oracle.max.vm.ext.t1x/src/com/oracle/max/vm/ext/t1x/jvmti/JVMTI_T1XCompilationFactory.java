@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,17 +20,20 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.jni;
+package com.oracle.max.vm.ext.t1x.jvmti;
 
-import com.sun.max.config.*;
+import com.oracle.max.vm.ext.t1x.*;
+import com.oracle.max.vm.ext.t1x.jvmti.amd64.*;
 
-public class Package extends BootImagePackage {
-    public Package() {
-        super();
-    }
 
+public class JVMTI_T1XCompilationFactory extends T1XCompilationFactory {
     @Override
-    public Class[] wordSubclasses() {
-        return new Class[] {MemberID.class, FieldID.class, MethodID.class, JniHandle.class};
+    public T1XCompilation newT1XCompilation(T1X t1x) {
+        if (T1X.isAMD64()) {
+            return new JVMTI_AMD64T1XCompilation(t1x);
+        } else {
+            throw T1X.unimplISA();
+        }
     }
+
 }
