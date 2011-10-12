@@ -163,7 +163,7 @@ public class MaxineIntrinsicImplementations {
      * need to be correct.
      */
     private static Value offsetOrIndex(GraphBuilder b, Value offsetOrIndex) {
-        if (offsetOrIndex.kind == CiKind.Int && b.compilation.target.arch.is64bit() && offsetOrIndex instanceof Local) {
+        if (offsetOrIndex.kind == CiKind.Int && b.compilation.target.arch.is64bit()) {
             return b.append(new Convert(Convert.Op.I2L, offsetOrIndex, CiKind.Long));
         }
         return offsetOrIndex;

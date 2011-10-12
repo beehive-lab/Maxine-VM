@@ -427,7 +427,7 @@ public class JVMTI {
         if (data == null) {
             return;
         }
-        data.unionTag = FieldEventData.DATA_NONE;
+        data.tag = FieldEventData.DATA_NONE;
         event(JVMTI_EVENT_FIELD_ACCESS, data);
     }
 
@@ -437,7 +437,7 @@ public class JVMTI {
         if (data == null) {
             return;
         }
-        data.unionTag = FieldEventData.DATA_LONG;
+        data.tag = FieldEventData.DATA_LONG;
         data.longValue = value;
         event(JVMTI_EVENT_FIELD_MODIFICATION, data);
     }
@@ -448,7 +448,7 @@ public class JVMTI {
         if (data == null) {
             return;
         }
-        data.unionTag = FieldEventData.DATA_FLOAT;
+        data.tag = FieldEventData.DATA_FLOAT;
         data.floatValue = value;
         event(JVMTI_EVENT_FIELD_MODIFICATION, data);
     }
@@ -459,7 +459,7 @@ public class JVMTI {
         if (data == null) {
             return;
         }
-        data.unionTag = FieldEventData.DATA_DOUBLE;
+        data.tag = FieldEventData.DATA_DOUBLE;
         data.doubleValue = value;
         event(JVMTI_EVENT_FIELD_MODIFICATION, data);
     }
@@ -470,7 +470,7 @@ public class JVMTI {
         if (data == null) {
             return;
         }
-        data.unionTag = FieldEventData.DATA_OBJECT;
+        data.tag = FieldEventData.DATA_OBJECT;
         data.objectValue = value;
         event(JVMTI_EVENT_FIELD_MODIFICATION, data);
     }

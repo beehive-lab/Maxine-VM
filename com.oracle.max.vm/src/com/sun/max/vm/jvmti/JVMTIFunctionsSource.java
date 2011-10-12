@@ -257,27 +257,42 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int SetLocalObject(Pointer env, JniHandle thread, int depth, int slot, JniHandle value) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: LIVE
+        // CAPABILITIES: CAN_ACCESS_LOCAL_VARIABLES
+        // HANDLECHECK: thread=Thread
+        return JVMTIThreadFunctions.setLocalObject(handleAsThread, depth, slot, value);
     }
 
     @VM_ENTRY_POINT
     private static int SetLocalInt(Pointer env, JniHandle thread, int depth, int slot, int value) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: LIVE
+        // CAPABILITIES: CAN_ACCESS_LOCAL_VARIABLES
+        // HANDLECHECK: thread=Thread
+        return JVMTIThreadFunctions.setLocalInt(handleAsThread, depth, slot, value);
     }
 
     @VM_ENTRY_POINT
     private static int SetLocalLong(Pointer env, JniHandle thread, int depth, int slot, long value) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: LIVE
+        // CAPABILITIES: CAN_ACCESS_LOCAL_VARIABLES
+        // HANDLECHECK: thread=Thread
+        return JVMTIThreadFunctions.setLocalLong(handleAsThread, depth, slot, value);
     }
 
     @VM_ENTRY_POINT
     private static int SetLocalFloat(Pointer env, JniHandle thread, int depth, int slot, float value) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: LIVE
+        // CAPABILITIES: CAN_ACCESS_LOCAL_VARIABLES
+        // HANDLECHECK: thread=Thread
+        return JVMTIThreadFunctions.setLocalFloat(handleAsThread, depth, slot, value);
     }
 
     @VM_ENTRY_POINT
     private static int SetLocalDouble(Pointer env, JniHandle thread, int depth, int slot, double value) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: LIVE
+        // CAPABILITIES: CAN_ACCESS_LOCAL_VARIABLES
+        // HANDLECHECK: thread=Thread
+        return JVMTIThreadFunctions.setLocalDouble(handleAsThread, depth, slot, value);
     }
 
     @VM_ENTRY_POINT

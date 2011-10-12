@@ -32,5 +32,57 @@ public class JVMTIUtil {
      */
     static final Offset byteDataOffset = VMConfiguration.vmConfig().layoutScheme().byteArrayLayout.getElementOffsetFromOrigin(0);
 
+    /**
+     * A tagged "union" type for basic types.
+     */
+    static class TypedData {
+        static final int DATA_NONE = 0;
+        static final int DATA_INT = 'I';
+        static final int DATA_LONG = 'J';
+        static final int DATA_FLOAT = 'F';
+        static final int DATA_DOUBLE = 'D';
+        static final int DATA_OBJECT = 'L';
+        static final int DATA_WORD = 'W';
+
+        TypedData() {
+        }
+
+        TypedData(int tag) {
+            this.tag = tag;
+        }
+
+        TypedData(int tag, int value) {
+            this.tag = tag;
+            this.intValue = value;
+        }
+
+        TypedData(int tag, long value) {
+            this.tag = tag;
+            this.longValue = value;
+        }
+
+        TypedData(int tag, float value) {
+            this.tag = tag;
+            this.floatValue = value;
+        }
+
+        TypedData(int tag, double value) {
+            this.tag = tag;
+            this.doubleValue = value;
+        }
+
+        TypedData(int tag, Object value) {
+            this.tag = tag;
+            this.objectValue = value;
+        }
+
+        int tag;
+        int intValue;
+        long longValue;
+        float floatValue;
+        double doubleValue;
+        Object objectValue;
+        Word wordValue;
+    }
 
 }

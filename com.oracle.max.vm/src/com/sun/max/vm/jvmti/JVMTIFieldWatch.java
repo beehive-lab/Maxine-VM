@@ -28,6 +28,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jni.*;
+import com.sun.max.vm.jvmti.JVMTIUtil.TypedData;
 import com.sun.max.vm.object.*;
 
 import static com.sun.max.vm.jvmti.JVMTIConstants.*;
@@ -124,23 +125,12 @@ public class JVMTIFieldWatch {
      *
      */
 
-    static class FieldEventData {
-        static final int DATA_NONE = 0;
-        static final int DATA_LONG = 1;
-        static final int DATA_FLOAT = 2;
-        static final int DATA_DOUBLE = 3;
-        static final int DATA_OBJECT = 4;
-
+    static class FieldEventData extends TypedData {
         Object object;
         int offset;
         boolean isStatic;
 
         // value "union" for modification events        //
-        int unionTag;
-        long longValue;
-        float floatValue;
-        double doubleValue;
-        Object objectValue;
     }
 
     public static void invokeFieldAccessCallback(Pointer callback, Pointer jvmtiEnv, JniHandle thread, FieldEventData data) {
@@ -152,13 +142,13 @@ public class JVMTIFieldWatch {
             fieldActor = classActor.findInstanceFieldActor(data.offset);
         }
         WatchState watchState = fieldMap.get(fieldActor);
-        int watchStateToCheck = data.unionTag == FieldEventData.DATA_NONE ? ACCESS : MODIFICATION;
+        int watchStateToCheck = data.tag == FieldEventData.DATA_NONE ? ACCESS : MODIFICATION;
         if (watchState != null && (watchState.state & watchStateToCheck) != 0) {
             JVMTICallbacks.invokeFieldWatchCallback(callback, jvmtiEnv, thread,
                 Word.zero(), 0, // TODO set these values
                 JniHandles.createLocalHandle(classActor.toJava()), JniHandles.createLocalHandle(data.object),
                 FieldID.fromFieldActor(fieldActor),
-                data.unionTag == FieldEventData.DATA_NONE ? 0 : signatureType(data.unionTag),
+                data.tag == FieldEventData.DATA_NONE ? 0 : signatureType(data.tag),
                 Word.zero());
         }
     }

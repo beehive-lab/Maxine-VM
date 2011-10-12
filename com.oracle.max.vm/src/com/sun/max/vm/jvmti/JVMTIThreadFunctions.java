@@ -35,6 +35,8 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jni.*;
+import com.sun.max.vm.jvmti.JVMTIUtil.TypedData;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.VmOperation;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
@@ -391,18 +393,18 @@ class JVMTIThreadFunctions {
         return JVMTI_ERROR_NONE;
     }
 
-    private static class GetValueStackFrameVisitor extends BaseStackTraceVisitor {
+    private static class GetPutValueStackFrameVisitor extends BaseStackTraceVisitor {
         int targetDepth;
         int slot;
-        char type;
-        Word value1;
-        Word value2;  // for double
+        boolean isSet;
+        TypedData typedData;
         int jvmtiError = JVMTI_ERROR_NO_MORE_FRAMES;
 
-        GetValueStackFrameVisitor(int targetDepth, int slot, char type) {
+        GetPutValueStackFrameVisitor(boolean isSet, int targetDepth, int slot, TypedData typedData) {
+            this.isSet = isSet;
             this.targetDepth = targetDepth;
             this.slot = slot;
-            this.type = type;
+            this.typedData = typedData;
         }
 
         @Override
@@ -416,23 +418,47 @@ class JVMTIThreadFunctions {
                     } else {
                         for (int i = 0; i < entries.length; i++) {
                             LocalVariableTable.Entry entry = entries[i];
-                            Log.print("checking "); Log.println(entry.slot());
                             if (entry.slot() == slot) {
                                 String slotType = original.holder().constantPool().utf8At(entry.descriptorIndex(), "local variable type").toString();
-                                Log.print("slot type "); Log.println(slotType);
-                                if (slotType.charAt(0) == type) {
-                                    Log.println("Hit!");
+                                if (slotType.charAt(0) == typedData.tag) {
                                     TargetMethod targetMethod = original.currentTargetMethod();
                                     if (!targetMethod.isBaseline()) {
                                         jvmtiError = JVMTI_ERROR_INVALID_SLOT;
                                     }
                                     int offset = targetMethod.frameLayout().localVariableOffset(slot);
-                                    long longOffset = offset;
-                                    Log.print("offset "); Log.println(longOffset);
                                     Pointer varPtr = this.currentCursor.fp();
-                                    value1 = varPtr.readWord(Offset.fromLong(longOffset));
-                                    if (type == 'D') {
-                                        value2 = varPtr.readWord(offset + Word.size());
+
+                                    switch (typedData.tag) {
+                                        case 'L':
+                                            if (isSet) {
+                                                varPtr.writeReference(offset, Reference.fromJava(typedData.objectValue));
+                                            } else {
+                                                typedData.objectValue = varPtr.readReference(offset).toJava();
+                                            }
+                                            break;
+
+                                        case 'F':
+                                            if (isSet) {
+                                                varPtr.writeFloat(offset, typedData.floatValue);
+                                            } else {
+                                                typedData.floatValue = varPtr.readFloat(offset);
+                                            }
+                                            break;
+
+                                        case 'D':
+                                            if (isSet) {
+                                                varPtr.writeDouble(offset, typedData.doubleValue);
+                                            } else {
+                                                typedData.doubleValue = varPtr.readDouble(offset);
+                                            }
+                                            break;
+
+                                        default:
+                                            if (isSet) {
+                                                varPtr.writeWord(offset, typedData.wordValue);
+                                            } else {
+                                                typedData.wordValue = varPtr.readWord(offset);
+                                            }
                                     }
                                     jvmtiError = JVMTI_ERROR_NONE;
                                     return false;
@@ -456,14 +482,52 @@ class JVMTIThreadFunctions {
         if (thread == null) {
             thread = VmThread.current().javaThread();
         }
-        GetValueStackFrameVisitor getValueStackFrameVisitor = new GetValueStackFrameVisitor(depth, slot, type);
+        TypedData typedData = new TypedData(type);
+        GetPutValueStackFrameVisitor getValueStackFrameVisitor = new GetPutValueStackFrameVisitor(false, depth, slot, typedData);
         SingleThreadStackTraceVmOperation op = new SingleThreadStackTraceVmOperation(VmThread.fromJava(thread), getValueStackFrameVisitor);
         op.submit();
         if (getValueStackFrameVisitor.jvmtiError == JVMTI_ERROR_NONE) {
-            valuePtr.setWord(getValueStackFrameVisitor.value1);
-            // TODO handle double
+            if (type == 'L') {
+                valuePtr.setWord(JniHandles.createLocalHandle(getValueStackFrameVisitor.typedData.objectValue));
+            } else if (type == 'F') {
+                valuePtr.setFloat(getValueStackFrameVisitor.typedData.floatValue);
+            } else if (type == 'D') {
+                valuePtr.setDouble(getValueStackFrameVisitor.typedData.doubleValue);
+            } else {
+                valuePtr.setWord(getValueStackFrameVisitor.typedData.wordValue);
+            }
         }
         return getValueStackFrameVisitor.jvmtiError;
+    }
+
+    static int setLocalValue(Thread thread, int depth, int slot, TypedData typedData) {
+        if (thread == null) {
+            thread = VmThread.current().javaThread();
+        }
+        GetPutValueStackFrameVisitor putValueStackFrameVisitor = new GetPutValueStackFrameVisitor(true, depth, slot, typedData);
+        SingleThreadStackTraceVmOperation op = new SingleThreadStackTraceVmOperation(VmThread.fromJava(thread), putValueStackFrameVisitor);
+        op.submit();
+        return putValueStackFrameVisitor.jvmtiError;
+    }
+
+    static int setLocalInt(Thread thread, int depth, int slot, int value) {
+        return setLocalValue(thread, depth, slot, new TypedData(TypedData.DATA_INT, value));
+    }
+
+    static int setLocalLong(Thread thread, int depth, int slot, long value) {
+        return setLocalValue(thread, depth, slot, new TypedData(TypedData.DATA_LONG, value));
+    }
+
+    static int setLocalFloat(Thread thread, int depth, int slot, float value) {
+        return setLocalValue(thread, depth, slot, new TypedData(TypedData.DATA_FLOAT, value));
+    }
+
+    static int setLocalDouble(Thread thread, int depth, int slot, double value) {
+        return setLocalValue(thread, depth, slot, new TypedData(TypedData.DATA_DOUBLE, value));
+    }
+
+    static int setLocalObject(Thread thread, int depth, int slot, Object value) {
+        return setLocalValue(thread, depth, slot, new TypedData(TypedData.DATA_OBJECT, value));
     }
 
     // Thread suspend/resume
