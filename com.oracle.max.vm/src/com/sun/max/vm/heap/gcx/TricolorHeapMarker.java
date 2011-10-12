@@ -721,11 +721,14 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             final long greymask =  bitmaskFor(greyBitIndex);
             if ((bitmapWordAt(greyBitIndex) & greymask) != 0L) {
                 final boolean lockDisabledSafepoints = Log.lock();
+                final int greyBitWordIndex = bitmapWordIndex(greyBitIndex);
                 Log.print("grey bit ");
                 Log.print(greyBitIndex);
-                Log.print(" in bitmap word ");
-                Log.print(bitmapWordIndex(bitIndex));
-                Log.print(" cells @ ");
+                Log.print(" in bitmap word #");
+                Log.print(greyBitWordIndex);
+                Log.print("@ ");
+                Log.print(bitmapWordPointerAt(greyBitIndex));
+                Log.print("for cell@ ");
                 Log.println(addressOf(bitIndex));
                 Log.unlock(lockDisabledSafepoints);
                 FatalError.unexpected("Must have no grey marks");
