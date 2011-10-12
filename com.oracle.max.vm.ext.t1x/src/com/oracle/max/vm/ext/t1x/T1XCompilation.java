@@ -1487,17 +1487,19 @@ public abstract class T1XCompilation {
         int bci = stream.currentBCI();
         startBlock(targetBCI);
 
-        if (bci >= targetBCI && methodProfileBuilder != null) {
-            // Profiling of backward branches.
+        if (bci >= targetBCI) {
+            if (methodProfileBuilder != null) {
+                // Profiling of backward branches.
+                start(PROFILE_BACKWARD_BRANCH);
+                assignObject(0, "mpo", methodProfileBuilder.methodProfileObject());
+                finish();
+            }
+
             // Ideally, we'd like to emit a safepoint at the target of a backward branch.
             // However, that would require at least one extra pass to determine where
             // the backward branches are. Instead, we simply emit a safepoint at the source of
             // a backward branch. This means the cost of the safepoint is taken even if
             // the backward branch is not taken but that cost should not be noticeable.
-            start(PROFILE_BACKWARD_BRANCH);
-            assignObject(0, "mpo", methodProfileBuilder.methodProfileObject());
-            finish();
-
             // Note also that the safepoint must be placed before conditional
             // test instruction(s) to avoid affecting the condition flags
             // with the safepoint poll instruction(s).
