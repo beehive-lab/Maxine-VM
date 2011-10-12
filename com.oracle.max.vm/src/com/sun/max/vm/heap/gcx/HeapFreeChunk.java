@@ -159,6 +159,11 @@ public class HeapFreeChunk {
         return format(deadSpace, numBytes, Address.zero());
     }
 
+    @INLINE
+    static HeapFreeChunk format(Address deadSpace, int numBytes) {
+        return format(deadSpace, Size.fromInt(numBytes), Address.zero());
+    }
+
     /**
      * Split a chunk. Format the right side of the split as a free chunk, and return
      * its address.
