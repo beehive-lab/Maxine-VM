@@ -33,6 +33,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.runtime.VmOperation;
 import com.sun.max.vm.stack.*;
@@ -408,20 +409,39 @@ class JVMTIThreadFunctions {
         public boolean visitSourceFrame(ClassMethodActor method, int bci, boolean trapped, long frameId) {
             if (!stubCheck(method)) {
                 if (depth == targetDepth + trapDepth) {
-                    debug(original);
+                    Log.println("depth match");
                     LocalVariableTable.Entry[] entries = original.codeAttribute().localVariableTable().entries();
                     if (entries.length == 0) {
                         jvmtiError = JVMTI_ERROR_INVALID_SLOT;
                     } else {
                         for (int i = 0; i < entries.length; i++) {
                             LocalVariableTable.Entry entry = entries[i];
+                            Log.print("checking "); Log.println(entry.slot());
                             if (entry.slot() == slot) {
                                 String slotType = original.holder().constantPool().utf8At(entry.descriptorIndex(), "local variable type").toString();
-                                debug(slotType);
+                                Log.print("slot type "); Log.println(slotType);
+                                if (slotType.charAt(0) == type) {
+                                    Log.println("Hit!");
+                                    TargetMethod targetMethod = original.currentTargetMethod();
+                                    if (!targetMethod.isBaseline()) {
+                                        jvmtiError = JVMTI_ERROR_INVALID_SLOT;
+                                    }
+                                    int offset = targetMethod.frameLayout().localVariableOffset(slot);
+                                    long longOffset = offset;
+                                    Log.print("offset "); Log.println(longOffset);
+                                    Pointer varPtr = this.currentCursor.fp();
+                                    value1 = varPtr.readWord(Offset.fromLong(longOffset));
+                                    if (type == 'D') {
+                                        value2 = varPtr.readWord(offset + Word.size());
+                                    }
+                                    jvmtiError = JVMTI_ERROR_NONE;
+                                    return false;
+                                }
                             }
                         }
                     }
                 }
+                depth++;
             }
             return true;
         }
