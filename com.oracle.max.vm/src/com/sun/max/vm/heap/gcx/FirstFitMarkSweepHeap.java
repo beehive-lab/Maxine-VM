@@ -882,6 +882,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                 // be careful not to consume it from the iterable.
                 do {
                     EMPTY_REGION.setState(csrInfo);
+                    HeapFreeChunk.format(csrInfo.regionStart(), regionSizeInBytes);
                     allocationRegions.append(csrInfo.toRegionID());
                     allocationRegionsFreeSpace =  allocationRegionsFreeSpace.plus(regionSizeInBytes);
                     if (TraceSweep) {
@@ -915,6 +916,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
             } else {
                 if (csrFreeBytes == regionSizeInBytes) {
                     EMPTY_REGION.setState(csrInfo);
+                    HeapFreeChunk.format(csrInfo.regionStart(), regionSizeInBytes);
                     allocationRegions.append(csrInfo.toRegionID());
                     allocationRegionsFreeSpace =  allocationRegionsFreeSpace.plus(regionSizeInBytes);
                 } else {
@@ -946,6 +948,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
         while (hasNextSweepingRegion()) {
             HeapRegionInfo rinfo = regionInfoIterable.next();
             EMPTY_REGION.setState(rinfo);
+            HeapFreeChunk.format(rinfo.regionStart(), regionSizeInBytes);
             rinfo.resetOccupancy();
             allocationRegionsFreeSpace =  allocationRegionsFreeSpace.plus(regionSizeInBytes);
             allocationRegions.append(rinfo.toRegionID());
