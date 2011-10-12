@@ -230,6 +230,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
             allocatedSinceLastGC[logCursor] = usedSpaceBefore.minus(usedSpaceAfterLastGC).toLong();
             if (logCursor == 15) {
                 long c = collectionCount - 15;
+                Log.print("#GC, bytes reclaimed: ");
                 for (int i = 0; i <= 15; i++) {
                     Log.print(c + i); Log.print(' '); Log.print(allocatedSinceLastGC[i]); Log.print(' ');
                 }
@@ -299,11 +300,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
                 // Already filled-up (mark is at the limit).
                 return;
             }
-            // Before filling the current TLAB chunk, save link to next pointer.
-            final Pointer nextChunk = tlabTop.getWord().asPointer();
             fillTLABWithDeadObject(tlabMark, tlabTop);
-            // FIXME: we shouldn't have to do the following. Heap walker should be able to walk over HeapFreeChunk.
-            HeapFreeChunk.makeParsable(nextChunk);
         }
     }
 
