@@ -1358,6 +1358,7 @@ public class MaxineTester {
                 runOutputTest(outputDir, imageDir, mainClass);
             }
         }
+
         void runOutputTest(File outputDir, File imageDir, Class mainClass) {
             final JavaCommand command = new JavaCommand(mainClass);
             for (String option : defaultJVMOptions()) {
@@ -1371,7 +1372,7 @@ public class MaxineTester {
                 "*runtime-variable*"
             };
             comparison.stdoutIgnore = ignored;
-            testJavaProgram(mainClass.getName(), command, null, outputDir, null, imageDir, comparison);
+            testJavaProgram(mainClass.getName(), command, null, outputDir, outputDir, imageDir, comparison);
         }
     }
 
