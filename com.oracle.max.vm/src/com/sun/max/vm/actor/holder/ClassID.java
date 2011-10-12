@@ -188,10 +188,19 @@ public final class ClassID {
             if (classActor != null && classActor.arrayClassIDs != null) {
                 final int [] arrayClassIDs = classActor.arrayClassIDs;
                 for (int i = 0; i < arrayClassIDs.length; i++) {
-
+                    ClassActor arrayClassActor = idToClassActor.get(arrayClassIDs[i]);
+                    if (arrayClassActor == null) {
+                        System.out.print("Class ID " + arrayClassIDs[i] + " created for array isn't assigned");
+                        if (usedIDs.get(arrayClassIDs[i])) {
+                            System.out.print(" but recorded used");
+                        }
+                        System.out.println();
+                    } else if (!(arrayClassActor instanceof ArrayClassActor) || arrayClassActor.elementClassActor() != classActor) {
+                        System.out.print("Class ID " + arrayClassIDs[i] + " is not an array class id for element class " + id);
+                    }
                 }
             }
-            id = usedIDs.nextSetBit(id);
+            id = usedIDs.nextSetBit(id + 1);
         }
     }
 
