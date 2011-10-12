@@ -662,43 +662,44 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     protected CiAddress getAddressForPointerOp(PointerOp x, CiKind kind, CiValue pointer) {
-        CiAddress addr;
-        Value offset = x.offset();
-        Value index = x.index();
         if (x.displacement() == null) {
             // address is [pointer + offset]
-            if (offset.isConstant() && offset.kind.isInt()) {
-                int displacement = x.offset().asConstant().asInt();
-                addr = new CiAddress(kind, pointer, displacement);
-            } else {
-                addr = new CiAddress(kind, pointer, load(offset));
+            if (x.offset().isConstant()) {
+                long disp = x.offset().asConstant().asLong();
+                if ((int) disp == disp) {
+                    return new CiAddress(kind, pointer, (int) disp);
+                }
             }
+            return new CiAddress(kind, pointer, load(x.offset()));
         } else {
             // address is [pointer + disp + (index * scale)]
-//            assert (x.opcode & 0xff) == PGET || (x.opcode & 0xff) == PSET;
-            if (!x.displacement().isConstant()) {
-                CiVariable tmp = newVariable(compilation.target.wordKind);
-                arithmeticOpLong(Bytecodes.LADD, tmp, pointer, load(x.displacement()), null);
-                int kindSize = compilation.target.sizeInBytes(kind);
-                Scale scale = Scale.fromInt(kindSize);
-                if (index.isConstant()) {
-                    addr = new CiAddress(kind, tmp, index.asConstant().asInt() * kindSize);
+            int kindSize = compilation.target.sizeInBytes(kind);
+            Scale scale = Scale.fromInt(kindSize);
+
+            if (x.displacement().isConstant()) {
+                long disp = x.displacement().asConstant().asLong();
+                if (x.index().isConstant()) {
+                    disp += x.index().asConstant().asLong() * kindSize;
+                    if ((int) disp == disp) {
+                        return new CiAddress(kind, pointer, (int) disp);
+                    }
                 } else {
-                    addr = new CiAddress(kind, tmp, load(index), scale, 0);
-                }
-            } else {
-                int displacement = x.displacement().asConstant().asInt();
-                int kindSize = compilation.target.sizeInBytes(kind);
-                Scale scale = Scale.fromInt(kindSize);
-                if (index.isConstant()) {
-                    displacement += index.asConstant().asInt() * kindSize;
-                    addr = new CiAddress(kind, pointer, displacement);
-                } else {
-                    addr = new CiAddress(kind, pointer, load(index), scale, displacement);
+                    if ((int) disp == disp) {
+                        return new CiAddress(kind, pointer, load(x.index()), scale, (int) disp);
+                    }
                 }
             }
+
+            CiVariable tmp = newVariable(compilation.target.wordKind);
+            arithmeticOpLong(Bytecodes.LADD, tmp, pointer, load(x.displacement()), null);
+            if (x.index().isConstant()) {
+                long disp = x.index().asConstant().asLong() * kindSize;
+                if ((int) disp == disp) {
+                    return new CiAddress(kind, tmp, (int) disp);
+                }
+            }
+            return new CiAddress(kind, tmp, load(x.index()), scale, 0);
         }
-        return addr;
     }
 
     @Override
