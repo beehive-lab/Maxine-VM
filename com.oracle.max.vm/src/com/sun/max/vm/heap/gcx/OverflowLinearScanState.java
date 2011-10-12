@@ -95,7 +95,9 @@ final class OverflowLinearScanState extends OverflowScanState {
                 visitGreyObjects();
             } while (startOfNextOverflowScan.lessThan(forwardScanFinger));
             endRecovery();
+            numMarkinkgStackOverflow = 0;
         } else if (leftmostFlushed.lessThan(startOfNextOverflowScan)) {
+            numMarkinkgStackOverflow++;
             // Schedule another rescan if the leftmost flushed cell is before the
             // currently visited cell.
             startOfNextOverflowScan = leftmostFlushed;
