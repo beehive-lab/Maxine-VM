@@ -1152,9 +1152,12 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             heapMarker.markingStack.drain();
         }
 
+        /**
+         * Forward scan over the mark bitmap, from the finger to the rightmost marked position.
+         * @param regionsRanges
+         */
         public void visitGreyObjects(HeapRegionRangeIterable regionsRanges) {
             final int log2RegionToBitmapWord = HeapRegionConstants.log2RegionSizeInBytes - heapMarker.log2BitmapWord;
-
             while (regionsRanges.hasNext()) {
                 final int fingerBitmapWordIndex = heapMarker.bitmapWordIndex(finger);
                 final RegionRange regionRange = regionsRanges.next();
@@ -1174,8 +1177,10 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                 do {
                     visitGreyObjects(rightmostBitmapWordIndex);
                     final int b = rightmostBitmapWordIndex();
+                    // Rightmost may have been updated (e.g., when the marking stack was drained). Check for this, and loop back if it has.
                     if (b <= rightmostBitmapWordIndex) {
                         // We reached the right most mark. No need to continue iterating over regions.
+                        FatalError.check(heapMarker.markingStack.isEmpty(), "marking stack must be empty");
                         return;
                     }
                     if (rightmostBitmapWordIndex ==  rangeRightmostBitmapWordIndex) {
@@ -1187,8 +1192,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                     rightmostBitmapWordIndex = b > rangeRightmostBitmapWordIndex ? rangeRightmostBitmapWordIndex : b;
                 } while(true);
             }
-            // There might be some objects left in the marking stack. Drain it.
-            heapMarker.markingStack.drain();
         }
 
         @Override
@@ -1196,7 +1199,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             int rightmostBitmapWordIndex = rightmostBitmapWordIndex();
             do {
                 visitGreyObjects(rightmostBitmapWordIndex);
-                // Rightmost may have been updated. Check for this, and loop back if it has.
+                // Rightmost may have been updated (e.g., when the marking stack was drained). Check for this, and loop back if it has.
                 final int b = rightmostBitmapWordIndex();
                 if (b <= rightmostBitmapWordIndex) {
                     // We're done.
@@ -1352,11 +1355,12 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         Address start;
         Address end;
         Size printBefore;
+        Pointer startPrinting;
 
         public void run() {
             FatalError.setOnVMOpError(null);
             Pointer p = start.asPointer();
-            Pointer startPrinting = p;
+            startPrinting = p;
             if (printBefore.lessThan(end.minus(start))) {
                 startPrinting = end.minus(printBefore).asPointer();
             }
@@ -1375,6 +1379,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                 objectCount++;
                 p = p.plus(size);
             }
+            Log.println();
             Log.unlock(lockDisabledSafepoints);
         }
     }
@@ -1391,7 +1396,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     private int scanForGreyMark(Address start, Address end) {
         Pointer p = start.asPointer();
         heapWalkTracer.start = start;
-        heapWalkTracer.end = end;
+        heapWalkTracer.end = start;
         heapWalkTracer.printBefore = Size.fromInt(2).shiftedLeft(HeapRegionConstants.log2RegionSizeInBytes);
         FatalError.setOnVMOpError(heapWalkTracer);
         while (p.lessThan(end)) {
@@ -1986,7 +1991,9 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         markPhase = MARK_PHASE.SPECIAL_REF;
         SpecialReferenceManager.processDiscoveredSpecialReferences(forwardScanState);
         // Note: the VISIT_GREY_FORWARD has already visited the whole heap, so any additional grey reference added by the special reference
-        // manager are on the marking stack. So the following reduces to flushing the marking stack.
+        // manager are on the marking stack. Draining that stack may nevertheless add new grey reference after the finger, so we still
+        // need to iterate over the region ranges past the finger, hence the reset.
+        regionsRanges.reset();
         visitGreyObjects(regionsRanges);
         stopTimer(weakRefTimer);
         FatalError.check(markingStack.isEmpty(), "Marking Stack must be empty after special references are processed.");
