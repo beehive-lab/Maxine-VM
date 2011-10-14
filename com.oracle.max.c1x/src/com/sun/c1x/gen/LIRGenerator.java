@@ -25,6 +25,7 @@ package com.sun.c1x.gen;
 import static com.oracle.max.cri.intrinsics.MemoryBarriers.*;
 import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
+import static com.sun.cri.ci.CiRegister.*;
 import static com.sun.cri.ci.CiValue.*;
 
 import java.lang.reflect.*;
@@ -909,6 +910,13 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitPhi(Phi i) {
         Util.shouldNotReachHere();
+    }
+
+    @Override
+    public void visitReadPC(ReadPC x) {
+        CiAddress src = new CiAddress(C1XCompilation.compilation().target.wordKind, InstructionRelative.asValue(), 0);
+        CiValue dst = createResultVariable(x);
+        lir.lea(src, dst);
     }
 
     @Override

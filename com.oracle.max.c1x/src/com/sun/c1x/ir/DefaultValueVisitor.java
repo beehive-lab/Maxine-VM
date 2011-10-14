@@ -82,6 +82,7 @@ public class DefaultValueVisitor extends ValueVisitor {
     @Override public void visitOsrEntry(OsrEntry i) { visit(i); }
     @Override public void visitPause(Pause i) { visit(i); }
     @Override public void visitPhi(Phi i) { visit(i); }
+    @Override public void visitReadPC(ReadPC i) {visit(i); }
     @Override public void visitResolveClass(ResolveClass i) { visit(i); }
     @Override public void visitReturn(Return i) { visit(i); }
     @Override public void visitShiftOp(ShiftOp i) { visit(i); }
