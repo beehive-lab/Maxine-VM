@@ -53,7 +53,6 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public static final String TLAB_MARK_THREAD_LOCAL_NAME = "TLAB_MARK";
     public static final String TLAB_DISABLED_THREAD_LOCAL_NAME = "TLAB_DISABLED";
 
-
     // TODO: clean this up. Used just for testing with and without inlined XIR tlab allocation.
     public static boolean GenInlinedTLABAlloc = true;
 
@@ -67,6 +66,10 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     @INLINE
     public static boolean traceTLAB() {
         return TraceTLAB;
+    }
+
+    public static void setTraceTLAB(boolean b) {
+        TraceTLAB = b;
     }
 
     private static boolean PrintTLABStats;
@@ -395,6 +398,10 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      */
     protected abstract void doBeforeTLABRefill(Pointer tlabAllocationMark, Pointer tlabEnd);
 
+    @NEVER_INLINE
+    private static void reportAllocatedCell(Pointer cell, Size size) {
+        Log.print(" tlabAllocate("); Log.print(size.toLong()); Log.print(") = "); Log.println(cell);
+    }
     /**
      * The fast, inline path for allocation.
      *
@@ -417,6 +424,10 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             return slowPathAllocate(size, etla, oldAllocationMark, tlabEnd);
         }
         TLAB_MARK.store(etla, end);
+
+        if (MaxineVM.isDebug()) {
+            TLABLog.record(etla, VMRegister.getPC(), cell, size);
+        }
         return cell;
     }
 
