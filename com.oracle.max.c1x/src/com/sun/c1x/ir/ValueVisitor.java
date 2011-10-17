@@ -72,7 +72,6 @@ public abstract class ValueVisitor {
     public abstract void visitOsrEntry(OsrEntry i);
     public abstract void visitPause(Pause i);
     public abstract void visitPhi(Phi i);
-    public abstract void visitReadPC(ReadPC i);
     public abstract void visitResolveClass(ResolveClass i);
     public abstract void visitReturn(Return i);
     public abstract void visitShiftOp(ShiftOp i);

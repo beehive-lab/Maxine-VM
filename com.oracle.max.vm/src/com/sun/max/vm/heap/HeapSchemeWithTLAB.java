@@ -33,6 +33,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.debug.*;
+import com.sun.max.vm.intrinsics.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
@@ -426,7 +427,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         TLAB_MARK.store(etla, end);
 
         if (MaxineVM.isDebug()) {
-            TLABLog.record(etla, VMRegister.getPC(), cell, size);
+            TLABLog.record(etla, Pointer.fromLong(Infopoints.here()), cell, size);
         }
         return cell;
     }

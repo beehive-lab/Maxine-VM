@@ -83,13 +83,6 @@ public final class VMRegister {
     @INTRINSIC(WRITEREG)
     public static native void setRegister(@INTRINSIC.Constant int registerId, Word value);
 
-
-    /**
-     * @see MaxineIntrinsicIDs#READPC
-     */
-    @INTRINSIC(READPC)
-    public static native Pointer getPC();
-
     @INLINE
     public static Pointer getCpuStackPointer() {
         return getRegister(CPU_SP);
