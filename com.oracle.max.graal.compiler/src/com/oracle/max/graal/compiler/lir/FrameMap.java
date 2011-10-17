@@ -157,11 +157,14 @@ public final class FrameMap {
      */
     public CiCallingConvention getCallingConvention(CiKind[] signature, Type type) {
         CiCallingConvention cc = registerConfig.getCallingConvention(type, signature, target, false);
-        if (type == RuntimeCall) {
-            assert cc.stackSize == 0 : "runtime call should not have stack arguments";
-        } else if (type.out) {
-            assert frameSize == -1 : "frame size must not yet be fixed!";
-            reserveOutgoing(cc.stackSize);
+        if (type.out) {
+            if (frameSize != -1 && cc.stackSize != 0) {
+                // TODO(tw): This is a special work around for Windows runtime calls that can happen and must be ignored.
+                assert type == RuntimeCall;
+            } else {
+                assert frameSize == -1 : "frame size must not yet be fixed!";
+                reserveOutgoing(cc.stackSize);
+            }
         }
         return cc;
     }
