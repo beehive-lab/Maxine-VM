@@ -106,7 +106,7 @@ public final class GraphBuilder {
      * @param scope the top IRScope
      */
     public void build(IRScope scope) {
-        RiMethod rootMethod = compilation.method;
+        RiResolvedMethod rootMethod = compilation.method;
 
         if (log != null) {
             log.println();
@@ -217,7 +217,7 @@ public final class GraphBuilder {
         }
     }
 
-    private RiType openAccessorScope(RiMethod rootMethod) {
+    private RiType openAccessorScope(RiResolvedMethod rootMethod) {
         RiType accessor = rootMethod.accessor();
         if (accessor != null) {
             assert boundAccessor.get() == null;
@@ -264,7 +264,7 @@ public final class GraphBuilder {
         return root;
     }
 
-    public RiMethod method() {
+    public RiResolvedMethod method() {
         return scopeData.scope.method;
     }
 
@@ -892,7 +892,7 @@ public final class GraphBuilder {
             return;
         }
         RiType holder = target.holder();
-        boolean isInitialized = !C1XOptions.TestPatching && target.isResolved() && holder.isInitialized();
+        boolean isInitialized = !C1XOptions.TestPatching && target instanceof RiResolvedMethod && holder.isInitialized();
         if (!isInitialized && C1XOptions.ResolveClassBeforeStaticInvoke) {
             // Re-use the same resolution code as for accessing a static field. Even though
             // the result of resolution is not used by the invocation (only the side effect
@@ -902,7 +902,7 @@ public final class GraphBuilder {
 
         Value[] args = curState.popArguments(target.signature().argumentSlots(false));
         if (!tryRemoveCall(target, args, true)) {
-            if (!tryInline(target, args)) {
+            if (!(target instanceof RiResolvedMethod) || !tryInline((RiResolvedMethod) target, args)) {
                 appendInvoke(INVOKESTATIC, target, args, true, cpi, constantPool);
             }
         }
@@ -959,10 +959,10 @@ public final class GraphBuilder {
      * Temporary work-around to support the @ACCESSOR Maxine annotation.
      */
     private static RiMethod bindAccessorMethod(RiMethod target) {
-        if (Accessor != null && target.isResolved() && target.holder() == Accessor) {
+        if (Accessor != null && target instanceof RiResolvedMethod && target.holder() == Accessor) {
             RiType accessor = boundAccessor.get();
             assert accessor != null : "Cannot compile call to method in " + target.holder() + " without enclosing @ACCESSOR annotated method";
-            RiMethod newTarget = accessor.resolveMethodImpl(target);
+            RiMethod newTarget = accessor.resolveMethodImpl((RiResolvedMethod) target);
             assert target != newTarget : "Could not bind " + target + " to a method in " + accessor;
             target = newTarget;
         }
@@ -972,7 +972,7 @@ public final class GraphBuilder {
     /**
      * Temporary work-around to support the @ACCESSOR Maxine annotation.
      */
-    private boolean inlineWithBoundAccessor(RiMethod target, Value[] args, boolean forcedInline) {
+    private boolean inlineWithBoundAccessor(RiResolvedMethod target, Value[] args, boolean forcedInline) {
         RiType accessor = target.accessor();
         if (accessor != null) {
             assert boundAccessor.get() == null;
@@ -995,31 +995,32 @@ public final class GraphBuilder {
         assert target.holder().kind(false) == CiKind.Object;
         if (target.holder().kind(true) != CiKind.Object) {
             // When the machine-specific representation of the holder is not an object, dynamic dispatch is not possible; raw pointers do not have any method tables.
-            assert target.isResolved();
+            assert target instanceof RiResolvedMethod;
             invokeDirect(target, args, null, cpi, constantPool);
             return;
         }
 
         // attempt to devirtualize the call
-        if (target.isResolved()) {
+        if (target instanceof RiResolvedMethod) {
             RiType klass = target.holder();
+            RiResolvedMethod resolvedTarget = (RiResolvedMethod) target;
 
             // 0. check for trivial cases
-            if (target.canBeStaticallyBound() && !isAbstract(target.accessFlags())) {
+            if (resolvedTarget.canBeStaticallyBound() && !isAbstract(resolvedTarget.accessFlags())) {
                 // check for trivial cases (e.g. final methods, nonvirtual methods)
-                invokeDirect(target, args, target.holder(), cpi, constantPool);
+                invokeDirect(resolvedTarget, args, target.holder(), cpi, constantPool);
                 return;
             }
             // 1. check if the exact type of the receiver can be determined
             RiType exact = getExactType(klass, receiver);
             if (exact != null && exact.isResolved()) {
                 // either the holder class is exact, or the receiver object has an exact type
-                invokeDirect(exact.resolveMethodImpl(target), args, exact, cpi, constantPool);
+                invokeDirect(exact.resolveMethodImpl(resolvedTarget), args, exact, cpi, constantPool);
                 return;
             }
             // 2. check if an assumed leaf method can be found
-            RiMethod leaf = getAssumedLeafMethod(target, receiver);
-            if (leaf != null && leaf.isResolved() && !isAbstract(leaf.accessFlags()) && leaf.holder().isResolved()) {
+            RiResolvedMethod leaf = getAssumedLeafMethod(resolvedTarget, receiver);
+            if (leaf != null && !isAbstract(leaf.accessFlags()) && leaf.holder().isResolved()) {
                 if (C1XOptions.PrintAssumptions) {
                     TTY.println("Optimistic invoke direct because of leaf method to " + leaf);
                 }
@@ -1031,7 +1032,7 @@ public final class GraphBuilder {
             // 3. check if the either of the holder or declared type of receiver can be assumed to be a leaf
             exact = getAssumedLeafType(klass, receiver);
             if (exact != null && exact.isResolved()) {
-                RiMethod targetMethod = exact.resolveMethodImpl(target);
+                RiMethod targetMethod = exact.resolveMethodImpl(resolvedTarget);
                 if (C1XOptions.PrintAssumptions) {
                     TTY.println("Optimistic invoke direct because of leaf type to " + targetMethod);
                 }
@@ -1051,7 +1052,7 @@ public final class GraphBuilder {
     }
 
     private void invokeDirect(RiMethod target, Value[] args, RiType knownHolder, int cpi, RiConstantPool constantPool) {
-        if (!tryInline(target, args)) {
+        if (!(target instanceof RiResolvedMethod) || !tryInline((RiResolvedMethod) target, args)) {
             // could not optimize or inline the method call
             appendInvoke(INVOKESPECIAL, target, args, false, cpi, constantPool);
         }
@@ -1110,14 +1111,14 @@ public final class GraphBuilder {
         return null;
     }
 
-    private RiMethod getAssumedLeafMethod(RiMethod target, Value receiver) {
-        RiMethod assumed = getAssumedLeafMethod(target);
+    private RiResolvedMethod getAssumedLeafMethod(RiResolvedMethod target, Value receiver) {
+        RiResolvedMethod assumed = getAssumedLeafMethod(target);
         if (assumed != null) {
             return assumed;
         }
         RiType declared = receiver.declaredType();
         if (declared != null && declared.isResolved() && !declared.isInterface()) {
-            RiMethod impl = declared.resolveMethodImpl(target);
+            RiResolvedMethod impl = declared.resolveMethodImpl(target);
             if (impl != null) {
                 assumed = getAssumedLeafMethod(impl);
             }
@@ -1477,7 +1478,7 @@ public final class GraphBuilder {
         scopeData = data;
     }
 
-    void pushScope(RiMethod target, BlockBegin continuation) {
+    void pushScope(RiResolvedMethod target, BlockBegin continuation) {
         // prepare callee scope
         IRScope calleeScope = new IRScope(scope(), curState.immutableCopy(bci()), target, -1);
         BlockMap blockMap = compilation.getBlockMap(calleeScope.method, -1);
@@ -1491,7 +1492,7 @@ public final class GraphBuilder {
         scopeData = data;
     }
 
-    MutableFrameState stateAtEntry(RiMethod method) {
+    MutableFrameState stateAtEntry(RiResolvedMethod method) {
         MutableFrameState state = new MutableFrameState(scope(), -1, method.maxLocals(), method.maxStackSize());
         int index = 0;
         if (!isStatic(method.accessFlags())) {
@@ -1519,22 +1520,23 @@ public final class GraphBuilder {
     }
 
     boolean tryRemoveCall(RiMethod target, Value[] args, boolean isStatic) {
-        if (target.isResolved()) {
-            if (tryInlineIntrinsicId(target, args, isStatic)) {
+        if (target instanceof RiResolvedMethod) {
+            RiResolvedMethod resolvedTarget = (RiResolvedMethod) target;
+            if (tryInlineIntrinsicId(resolvedTarget, args, isStatic)) {
                 return true;
             }
 
             if (C1XOptions.OptIntrinsify) {
                 // try to create an intrinsic node instead of a call
-                C1XIntrinsic intrinsic = C1XIntrinsic.getIntrinsic(target);
-                if (intrinsic != null && tryInlineIntrinsic(target, args, isStatic, intrinsic)) {
+                C1XIntrinsic intrinsic = C1XIntrinsic.getIntrinsic(resolvedTarget);
+                if (intrinsic != null && tryInlineIntrinsic(resolvedTarget, args, isStatic, intrinsic)) {
                     // this method is not an intrinsic
                     return true;
                 }
             }
             if (C1XOptions.CanonicalizeFoldableMethods) {
                 // next try to fold the method call
-                if (tryFoldable(target, args)) {
+                if (tryFoldable(resolvedTarget, args)) {
                     return true;
                 }
             }
@@ -1542,7 +1544,7 @@ public final class GraphBuilder {
         return false;
     }
 
-    private boolean tryInlineIntrinsic(RiMethod target, Value[] args, boolean isStatic, C1XIntrinsic intrinsic) {
+    private boolean tryInlineIntrinsic(RiResolvedMethod target, Value[] args, boolean isStatic, C1XIntrinsic intrinsic) {
         boolean preservesState = true;
         boolean canTrap = false;
 
@@ -1641,7 +1643,7 @@ public final class GraphBuilder {
         return true;
     }
 
-    private boolean tryInlineIntrinsicId(RiMethod target, Value[] args, boolean isStatic) {
+    private boolean tryInlineIntrinsicId(RiResolvedMethod target, Value[] args, boolean isStatic) {
         IntrinsicImpl rawIntrinsic = compilation.compiler.intrinsicRegistry.get(target);
         if (!(rawIntrinsic instanceof C1XIntrinsicImpl)) {
             return false;
@@ -1691,7 +1693,7 @@ public final class GraphBuilder {
         return (Instruction) newArray;
     }
 
-    private Instruction genArrayCopy(RiMethod target, Value[] args) {
+    private Instruction genArrayCopy(RiResolvedMethod target, Value[] args) {
         FrameState state = curState.immutableCopy(bci());
         Instruction result;
         Value src = args[0];
@@ -1729,7 +1731,7 @@ public final class GraphBuilder {
         return result;
     }
 
-    private boolean tryFoldable(RiMethod target, Value[] args) {
+    private boolean tryFoldable(RiResolvedMethod target, Value[] args) {
         CiConstant result = Canonicalizer.foldInvocation(compilation.runtime, target, args);
         if (result != null) {
             if (C1XOptions.TraceBytecodeParserLevel > 0) {
@@ -1745,7 +1747,7 @@ public final class GraphBuilder {
         return false;
     }
 
-    private boolean tryInline(RiMethod target, Value[] args) {
+    private boolean tryInline(RiResolvedMethod target, Value[] args) {
         boolean forcedInline = compilation.runtime.mustInline(target);
         if (forcedInline) {
             for (IRScope scope = scope().caller; scope != null; scope = scope.caller) {
@@ -1783,13 +1785,14 @@ public final class GraphBuilder {
         return false;
     }
 
-    private boolean checkInliningConditions(RiMethod target) {
+    private boolean checkInliningConditions(RiMethod method) {
         if (!C1XOptions.OptInline) {
             return false; // all inlining is turned off
         }
-        if (!target.isResolved()) {
-            return cannotInline(target, "unresolved method");
+        if (!(method instanceof RiResolvedMethod)) {
+            return cannotInline(method, "unresolved method");
         }
+        RiResolvedMethod target = (RiResolvedMethod) method;
         if (target.code() == null) {
             return cannotInline(target, "method has no code");
         }
@@ -1843,7 +1846,7 @@ public final class GraphBuilder {
         return false;
     }
 
-    private void inline(RiMethod target, Value[] args, boolean forcedInline) {
+    private void inline(RiResolvedMethod target, Value[] args, boolean forcedInline) {
         BlockBegin orig = curBlock;
         if (!forcedInline && !isStatic(target.accessFlags())) {
             // the receiver object must be null-checked for instance methods
@@ -1964,12 +1967,12 @@ public final class GraphBuilder {
         stats.inlineCount++;
     }
 
-    private Value synchronizedObject(FrameState curState2, RiMethod target) {
+    private Value synchronizedObject(FrameState curState, RiResolvedMethod target) {
         if (isStatic(target.accessFlags())) {
             Constant classConstant = new Constant(target.holder().getEncoding(Representation.JavaClass));
             return appendWithoutOptimization(classConstant, Instruction.SYNCHRONIZATION_ENTRY_BCI);
         } else {
-            return curState2.localAt(0);
+            return curState.localAt(0);
         }
     }
 
@@ -2424,7 +2427,7 @@ public final class GraphBuilder {
 
     public void appendSnippetCall(RiSnippetCall snippetCall) {
         Value[] args = new Value[snippetCall.arguments.length];
-        RiMethod snippet = snippetCall.snippet;
+        RiResolvedMethod snippet = snippetCall.snippet;
         RiSignature signature = snippet.signature();
         boolean isStatic = isStatic(snippet.accessFlags());
         int rcvr = isStatic ? -1 : 0;
@@ -2457,7 +2460,7 @@ public final class GraphBuilder {
         RiSignature sig = constantPool().lookupSignature(cpi);
         Value[] args = curState.popArguments(sig.argumentSlots(false));
 
-        RiMethod nativeMethod = scope().method;
+        RiResolvedMethod nativeMethod = scope().method;
         CiKind returnKind = sig.returnKind(false);
         pushReturn(returnKind, append(new NativeCall(nativeMethod, sig, nativeFunctionAddress, args, null)));
 
@@ -2515,14 +2518,15 @@ public final class GraphBuilder {
         return false;
     }
 
-    RiMethod getAssumedLeafMethod(RiMethod method) {
-        if (method.isResolved()) {
-            if (method.isLeafMethod()) {
-                return method;
+    RiResolvedMethod getAssumedLeafMethod(RiMethod method) {
+        if (method instanceof RiResolvedMethod) {
+            RiResolvedMethod resolvedMethod = (RiResolvedMethod) method;
+            if (resolvedMethod.isLeafMethod()) {
+                return resolvedMethod;
             }
 
             if (C1XOptions.UseAssumptions) {
-                RiMethod assumed = method.holder().uniqueConcreteMethod(method);
+                RiResolvedMethod assumed = method.holder().uniqueConcreteMethod(resolvedMethod);
                 if (assumed != null) {
                     if (C1XOptions.PrintAssumptions) {
                         TTY.println("Recording concrete method assumption in context of " + method.holder().name() + ": " + assumed.name());

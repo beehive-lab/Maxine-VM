@@ -56,8 +56,8 @@ public class SnippetIntrinsificationPhase extends Phase {
             return;
         }
 
-        RiMethod target = invoke.target;
-        if (target.isResolved() && Modifier.isStatic(target.accessFlags())) {
+        RiResolvedMethod target = invoke.target;
+        if (Modifier.isStatic(target.accessFlags())) {
             Class< ? > c = target.holder().toJava();
             if (c != null && target.holder().isSubtypeOf(runtime.getType(Node.class))) {
                 try {

@@ -222,7 +222,7 @@ public interface RiType {
      * @param method the method to select the implementation of
      * @return the method implementation that would be selected at runtime
      */
-    RiMethod resolveMethodImpl(RiMethod method);
+    RiResolvedMethod resolveMethodImpl(RiResolvedMethod method);
 
     /**
      * Given an RiMethod a, returns a concrete RiMethod b that is the only possible
@@ -237,7 +237,7 @@ public interface RiType {
      * @return the unique concrete target or {@code null} if no such target exists
      *         or assumptions are not supported by this runtime
      */
-    RiMethod uniqueConcreteMethod(RiMethod method);
+    RiResolvedMethod uniqueConcreteMethod(RiResolvedMethod method);
 
     /**
      * Returns the instance fields declared in this class sorted by field offset.

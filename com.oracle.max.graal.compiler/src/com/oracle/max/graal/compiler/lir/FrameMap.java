@@ -132,7 +132,7 @@ public final class FrameMap {
      * @param method the outermost method being compiled
      * @param monitors the number of monitors allocated on the stack for this method
      */
-    public FrameMap(GraalCompilation compilation, RiMethod method, int monitors) {
+    public FrameMap(GraalCompilation compilation, RiResolvedMethod method, int monitors) {
         this.runtime = compilation.compiler.runtime;
         this.target = compilation.compiler.target;
         this.registerConfig = compilation.registerConfig;

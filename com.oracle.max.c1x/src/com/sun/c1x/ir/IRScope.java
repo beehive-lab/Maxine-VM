@@ -33,7 +33,7 @@ import com.sun.cri.ri.*;
 public class IRScope {
 
     public final IRScope caller;
-    public final RiMethod method;
+    public final RiResolvedMethod method;
     public final int level;
     CiCodePos callerCodePos;
 
@@ -51,7 +51,7 @@ public class IRScope {
 
     CiBitMap storesInLoops;
 
-    public IRScope(IRScope caller, FrameState callerState, RiMethod method, int osrBCI) {
+    public IRScope(IRScope caller, FrameState callerState, RiResolvedMethod method, int osrBCI) {
         this.caller = caller;
         this.callerState = callerState;
         this.method = method;

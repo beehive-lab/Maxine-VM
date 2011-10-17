@@ -72,7 +72,7 @@ public final class GraphBuilderPhase extends Phase {
 
     private final CiStatistics stats;
     private final RiRuntime runtime;
-    private final RiMethod method;
+    private final RiResolvedMethod method;
     private final RiConstantPool constantPool;
     private RiExceptionHandler[] exceptionHandlers;
 
@@ -112,15 +112,15 @@ public final class GraphBuilderPhase extends Phase {
     public static final Map<RiMethod, CompilerGraph> cachedGraphs = new WeakHashMap<RiMethod, CompilerGraph>();
 
 
-    public GraphBuilderPhase(GraalContext context, RiRuntime runtime, RiMethod method) {
+    public GraphBuilderPhase(GraalContext context, RiRuntime runtime, RiResolvedMethod method) {
         this(context, runtime, method, null);
     }
 
-    public GraphBuilderPhase(GraalContext context, RiRuntime runtime, RiMethod method, CiStatistics stats) {
+    public GraphBuilderPhase(GraalContext context, RiRuntime runtime, RiResolvedMethod method, CiStatistics stats) {
         this(context, runtime, method, stats, GraalOptions.UseBranchPrediction, false);
     }
 
-    public GraphBuilderPhase(GraalContext context, RiRuntime runtime, RiMethod method, CiStatistics stats, boolean useBranchPrediction, boolean eagerResolving) {
+    public GraphBuilderPhase(GraalContext context, RiRuntime runtime, RiResolvedMethod method, CiStatistics stats, boolean useBranchPrediction, boolean eagerResolving) {
         super(context);
 
         this.useBranchPrediction = useBranchPrediction;
@@ -711,7 +711,7 @@ public final class GraphBuilderPhase extends Phase {
     private RiMethod lookupMethod(int cpi, int opcode) {
         eagerResolving(cpi, opcode);
         RiMethod result = constantPool.lookupMethod(cpi, opcode);
-        assert !eagerResolving || (result.isResolved() && result.holder().isInitialized());
+        assert !eagerResolving || ((result instanceof RiResolvedMethod) && result.holder().isInitialized());
         return result;
     }
 
@@ -1004,67 +1004,87 @@ public final class GraphBuilderPhase extends Phase {
     }
 
     private void genInvokeStatic(RiMethod target, int cpi, RiConstantPool constantPool) {
-        RiType holder = target.holder();
-        boolean isInitialized = target.isResolved() && holder.isInitialized();
-        if (!isInitialized && GraalOptions.ResolveClassBeforeStaticInvoke) {
-            // Re-use the same resolution code as for accessing a static field. Even though
-            // the result of resolution is not used by the invocation (only the side effect
-            // of initialization is required), it can be commoned with static field accesses.
-            genTypeOrDeopt(RiType.Representation.StaticFields, holder, isInitialized);
+        if (target instanceof RiResolvedMethod) {
+            RiResolvedMethod resolvedTarget = (RiResolvedMethod) target;
+            RiType holder = resolvedTarget.holder();
+            if (!holder.isInitialized() && GraalOptions.ResolveClassBeforeStaticInvoke) {
+                // Re-use the same resolution code as for accessing a static field. Even though
+                // the result of resolution is not used by the invocation (only the side effect
+                // of initialization is required), it can be commoned with static field accesses.
+                genTypeOrDeopt(RiType.Representation.StaticFields, holder, false);
+            }
+            ValueNode[] args = frameState.popArguments(resolvedTarget.signature().argumentSlots(false));
+            appendInvoke(INVOKESTATIC, resolvedTarget, args, cpi, constantPool);
+        } else {
+            genInvokeDeopt(target);
         }
-        ValueNode[] args = frameState.popArguments(target.signature().argumentSlots(false));
-        appendInvoke(INVOKESTATIC, target, args, cpi, constantPool);
     }
 
     private void genInvokeInterface(RiMethod target, int cpi, RiConstantPool constantPool) {
-        ValueNode[] args = frameState.popArguments(target.signature().argumentSlots(true));
-        genInvokeIndirect(INVOKEINTERFACE, target, args, cpi, constantPool);
-
+        if (target instanceof RiResolvedMethod) {
+            ValueNode[] args = frameState.popArguments(target.signature().argumentSlots(true));
+            genInvokeIndirect(INVOKEINTERFACE, (RiResolvedMethod) target, args, cpi, constantPool);
+        } else {
+            genInvokeDeopt(target);
+        }
     }
 
     private void genInvokeVirtual(RiMethod target, int cpi, RiConstantPool constantPool) {
-        ValueNode[] args = frameState.popArguments(target.signature().argumentSlots(true));
-        genInvokeIndirect(INVOKEVIRTUAL, target, args, cpi, constantPool);
+        if (target instanceof RiResolvedMethod) {
+            ValueNode[] args = frameState.popArguments(target.signature().argumentSlots(true));
+            genInvokeIndirect(INVOKEVIRTUAL, (RiResolvedMethod) target, args, cpi, constantPool);
+        } else {
+            genInvokeDeopt(target);
+        }
 
     }
 
     private void genInvokeSpecial(RiMethod target, RiType knownHolder, int cpi, RiConstantPool constantPool) {
-        assert target != null;
-        assert target.signature() != null;
-        ValueNode[] args = frameState.popArguments(target.signature().argumentSlots(true));
-        invokeDirect(target, args, knownHolder, cpi, constantPool);
-
+        if (target instanceof RiResolvedMethod) {
+            assert target != null;
+            assert target.signature() != null;
+            ValueNode[] args = frameState.popArguments(target.signature().argumentSlots(true));
+            invokeDirect((RiResolvedMethod) target, args, knownHolder, cpi, constantPool);
+        } else {
+            genInvokeDeopt(target);
+        }
     }
 
-    private void genInvokeIndirect(int opcode, RiMethod target, ValueNode[] args, int cpi, RiConstantPool constantPool) {
+    private void genInvokeDeopt(RiMethod unresolvedTarget) {
+        storeResultGraph = false;
+        append(graph.add(new DeoptimizeNode(DeoptAction.InvalidateRecompile)));
+        frameState.popArguments(unresolvedTarget.signature().argumentSlots(false));
+        CiKind kind = unresolvedTarget.signature().returnKind(false);
+        frameState.push(kind.stackKind(), append(ConstantNode.defaultForKind(kind, graph)));
+    }
+
+    private void genInvokeIndirect(int opcode, RiResolvedMethod target, ValueNode[] args, int cpi, RiConstantPool constantPool) {
         ValueNode receiver = args[0];
         // attempt to devirtualize the call
-        if (target.isResolved()) {
-            RiType klass = target.holder();
+        RiType klass = target.holder();
 
-            // 0. check for trivial cases
-            if (target.canBeStaticallyBound() && !isAbstract(target.accessFlags())) {
-                // check for trivial cases (e.g. final methods, nonvirtual methods)
-                invokeDirect(target, args, target.holder(), cpi, constantPool);
-                return;
-            }
-            // 1. check if the exact type of the receiver can be determined
-            RiType exact = getExactType(klass, receiver);
-            if (exact != null && exact.isResolved()) {
-                // either the holder class is exact, or the receiver object has an exact type
-                invokeDirect(exact.resolveMethodImpl(target), args, exact, cpi, constantPool);
-                return;
-            }
+        // 0. check for trivial cases
+        if (target.canBeStaticallyBound() && !isAbstract(target.accessFlags())) {
+            // check for trivial cases (e.g. final methods, nonvirtual methods)
+            invokeDirect(target, args, target.holder(), cpi, constantPool);
+            return;
+        }
+        // 1. check if the exact type of the receiver can be determined
+        RiType exact = getExactType(klass, receiver);
+        if (exact != null && exact.isResolved()) {
+            // either the holder class is exact, or the receiver object has an exact type
+            invokeDirect(exact.resolveMethodImpl(target), args, exact, cpi, constantPool);
+            return;
         }
         // devirtualization failed, produce an actual invokevirtual
         appendInvoke(opcode, target, args, cpi, constantPool);
     }
 
-    private void invokeDirect(RiMethod target, ValueNode[] args, RiType knownHolder, int cpi, RiConstantPool constantPool) {
+    private void invokeDirect(RiResolvedMethod target, ValueNode[] args, RiType knownHolder, int cpi, RiConstantPool constantPool) {
         appendInvoke(INVOKESPECIAL, target, args, cpi, constantPool);
     }
 
-    private void appendInvoke(int opcode, RiMethod target, ValueNode[] args, int cpi, RiConstantPool constantPool) {
+    private void appendInvoke(int opcode, RiResolvedMethod target, ValueNode[] args, int cpi, RiConstantPool constantPool) {
         CiKind resultType = target.signature().returnKind(false);
         if (GraalOptions.DeoptALot) {
             storeResultGraph = false;
@@ -1298,7 +1318,7 @@ public final class GraphBuilderPhase extends Phase {
         return result;
     }
 
-    private ValueNode synchronizedObject(FrameStateAccess state, RiMethod target) {
+    private ValueNode synchronizedObject(FrameStateAccess state, RiResolvedMethod target) {
         if (isStatic(target.accessFlags())) {
             ConstantNode classConstant = graph.unique(new ConstantNode(target.holder().getEncoding(Representation.JavaClass)));
             return append(classConstant);

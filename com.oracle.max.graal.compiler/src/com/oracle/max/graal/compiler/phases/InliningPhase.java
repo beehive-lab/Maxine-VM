@@ -83,9 +83,9 @@ public class InliningPhase extends Phase {
     }
 
     private class StaticInlineInfo extends InlineInfo {
-        public final RiMethod concrete;
+        public final RiResolvedMethod concrete;
 
-        public StaticInlineInfo(InvokeNode invoke, double weight, RiMethod concrete) {
+        public StaticInlineInfo(InvokeNode invoke, double weight, RiResolvedMethod concrete) {
             super(invoke, weight);
             this.concrete = concrete;
         }
@@ -128,7 +128,7 @@ public class InliningPhase extends Phase {
         public final RiType type;
         public final double probability;
 
-        public TypeGuardInlineInfo(InvokeNode invoke, double weight, RiMethod concrete, RiType type, double probability) {
+        public TypeGuardInlineInfo(InvokeNode invoke, double weight, RiResolvedMethod concrete, RiType type, double probability) {
             super(invoke, weight, concrete);
             this.type = type;
             this.probability = probability;
@@ -156,7 +156,7 @@ public class InliningPhase extends Phase {
 
     private class AssumptionInlineInfo extends StaticInlineInfo {
 
-        public AssumptionInlineInfo(InvokeNode invoke, double weight, RiMethod concrete) {
+        public AssumptionInlineInfo(InvokeNode invoke, double weight, RiResolvedMethod concrete) {
             super(invoke, weight, concrete);
         }
 
@@ -259,7 +259,7 @@ public class InliningPhase extends Phase {
         if (!checkInvokeConditions(invoke)) {
             return null;
         }
-        RiMethod parent = invoke.stateAfter().method();
+        RiResolvedMethod parent = invoke.stateAfter().method();
 
         if (invoke.opcode() == Bytecodes.INVOKESPECIAL || invoke.target.canBeStaticallyBound()) {
             if (checkTargetConditions(invoke.target)) {
@@ -271,7 +271,7 @@ public class InliningPhase extends Phase {
         if (invoke.receiver().exactType() != null) {
             RiType exact = invoke.receiver().exactType();
             assert exact.isSubtypeOf(invoke.target().holder()) : exact + " subtype of " + invoke.target().holder();
-            RiMethod resolved = exact.resolveMethodImpl(invoke.target());
+            RiResolvedMethod resolved = exact.resolveMethodImpl(invoke.target());
             if (checkTargetConditions(resolved)) {
                 double weight = inliningWeight(parent, resolved, invoke);
                 return new StaticInlineInfo(invoke, weight, resolved);
@@ -289,7 +289,7 @@ public class InliningPhase extends Phase {
             }
         }
 
-        RiMethod concrete = holder.uniqueConcreteMethod(invoke.target);
+        RiResolvedMethod concrete = holder.uniqueConcreteMethod(invoke.target);
         if (concrete != null) {
             if (checkTargetConditions(concrete)) {
                 double weight = inliningWeight(parent, concrete, invoke);
@@ -353,12 +353,6 @@ public class InliningPhase extends Phase {
             }
             return false;
         }
-        if (!invoke.target.isResolved()) {
-            if (GraalOptions.TraceInlining) {
-                TTY.println("not inlining %s because the invoke target is unresolved", methodName(invoke.target, invoke));
-            }
-            return false;
-        }
         if (invoke.predecessor() == null) {
             if (GraalOptions.TraceInlining) {
                 TTY.println("not inlining %s because the invoke is dead code", methodName(invoke.target, invoke));
@@ -374,19 +368,20 @@ public class InliningPhase extends Phase {
     }
 
     private boolean checkTargetConditions(RiMethod method) {
-        if (!method.isResolved()) {
+        if (!(method instanceof RiResolvedMethod)) {
             if (GraalOptions.TraceInlining) {
                 TTY.println("not inlining %s because it is unresolved", methodName(method));
             }
             return false;
         }
-        if (Modifier.isNative(method.accessFlags())) {
+        RiResolvedMethod resolvedMethod = (RiResolvedMethod) method;
+        if (Modifier.isNative(resolvedMethod.accessFlags())) {
             if (GraalOptions.TraceInlining) {
                 TTY.println("not inlining %s because it is a native method", methodName(method));
             }
             return false;
         }
-        if (Modifier.isAbstract(method.accessFlags())) {
+        if (Modifier.isAbstract(resolvedMethod.accessFlags())) {
             if (GraalOptions.TraceInlining) {
                 TTY.println("not inlining %s because it is an abstract method", methodName(method));
             }
@@ -403,7 +398,7 @@ public class InliningPhase extends Phase {
 
     public static final Map<RiMethod, Integer> parsedMethods = new HashMap<RiMethod, Integer>();
 
-    private double inliningWeight(RiMethod caller, RiMethod method, InvokeNode invoke) {
+    private double inliningWeight(RiResolvedMethod caller, RiResolvedMethod method, InvokeNode invoke) {
         double ratio;
         if (hints != null && hints.contains(invoke)) {
             ratio = 1000000;
@@ -413,7 +408,7 @@ public class InliningPhase extends Phase {
             } else {
                 RiTypeProfile profile = caller.typeProfile(invoke.bci);
                 if (profile != null && profile.count > 0) {
-                    RiMethod parent = invoke.stateAfter().method();
+                    RiResolvedMethod parent = invoke.stateAfter().method();
                     ratio = profile.count / (float) parent.invocationCount();
                 } else {
                     ratio = 1;

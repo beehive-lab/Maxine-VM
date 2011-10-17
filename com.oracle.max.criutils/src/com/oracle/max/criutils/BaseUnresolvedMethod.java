@@ -22,8 +22,6 @@
  */
 package com.oracle.max.criutils;
 
-import java.util.*;
-
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -35,7 +33,6 @@ public class BaseUnresolvedMethod implements RiMethod {
     public final String name;
     public final RiType holder;
     public final RiSignature signature;
-    public Map<Object, Object> compilerStorage;
 
     public BaseUnresolvedMethod(RiType holder, String name, RiSignature signature) {
         this.name = name;
@@ -144,45 +141,5 @@ public class BaseUnresolvedMethod implements RiMethod {
     @Override
     public String toString() {
         return CiUtil.format("%H.%n(%p) [unresolved]", this);
-    }
-
-    public RiType accessor() {
-        return null;
-    }
-
-    public String intrinsic() {
-        return null;
-    }
-
-    public int invocationCount() {
-        return -1;
-    }
-
-    public int exceptionProbability(int bci) {
-        return -1;
-    }
-
-    public RiTypeProfile typeProfile(int bci) {
-        return null;
-    }
-
-    public double branchProbability(int bci) {
-        return -1;
-    }
-
-    public double[] switchProbability(int bci) {
-        return null;
-    }
-
-    public Map<Object, Object> compilerStorage() {
-        if (compilerStorage == null) {
-            compilerStorage = new HashMap<Object, Object>();
-        }
-        return compilerStorage;
-    }
-
-    @Override
-    public int compiledCodeSize() {
-        return -1;
     }
 }

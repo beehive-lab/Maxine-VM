@@ -158,7 +158,7 @@ public class HotSpotTypeUnresolved extends HotSpotType {
     }
 
     @Override
-    public RiMethod resolveMethodImpl(RiMethod method) {
+    public RiResolvedMethod resolveMethodImpl(RiResolvedMethod method) {
         throw unresolved("resolveMethodImpl()");
     }
 
@@ -197,7 +197,7 @@ public class HotSpotTypeUnresolved extends HotSpotType {
     }
 
     @Override
-    public RiMethod uniqueConcreteMethod(RiMethod method) {
+    public RiResolvedMethod uniqueConcreteMethod(RiResolvedMethod method) {
         throw unresolved("uniqueConcreteMethod");
     }
 

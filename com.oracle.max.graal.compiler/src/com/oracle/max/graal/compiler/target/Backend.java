@@ -55,7 +55,7 @@ public abstract class Backend {
         }
     }
 
-    public abstract FrameMap newFrameMap(RiMethod method, int numberOfLocks);
+    public abstract FrameMap newFrameMap(RiResolvedMethod method, int numberOfLocks);
     public abstract LIRGenerator newLIRGenerator(GraalCompilation compilation);
     public abstract LIRAssembler newLIRAssembler(GraalCompilation compilation, TargetMethodAssembler tasm);
     public abstract AbstractAssembler newAssembler(RiRegisterConfig registerConfig);

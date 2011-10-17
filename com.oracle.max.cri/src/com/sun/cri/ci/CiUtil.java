@@ -298,7 +298,7 @@ public class CiUtil {
                         break;
                     }
                     case 'f': {
-                        sb.append(!method.isResolved() ? "unresolved" : isStatic(method.accessFlags()) ? "static" : "virtual");
+                        sb.append(!(method instanceof RiResolvedMethod) ? "unresolved" : isStatic(((RiResolvedMethod) method).accessFlags()) ? "static" : "virtual");
                         break;
                     }
                     case '%': {
@@ -527,7 +527,7 @@ public class CiUtil {
      * without having to supply a a {@link StringBuilder} instance and convert the result
      * to a string.
      */
-    public static String toLocation(RiMethod method, int bci) {
+    public static String toLocation(RiResolvedMethod method, int bci) {
         return appendLocation(new StringBuilder(), method, bci).toString();
     }
 
@@ -552,7 +552,7 @@ public class CiUtil {
      * @param bci
      * @return
      */
-    public static StringBuilder appendLocation(StringBuilder sb, RiMethod method, int bci) {
+    public static StringBuilder appendLocation(StringBuilder sb, RiResolvedMethod method, int bci) {
         StackTraceElement ste = method.toStackTraceElement(bci);
         if (ste.getFileName() != null && ste.getLineNumber() > 0) {
             sb.append(ste);
@@ -713,7 +713,7 @@ public class CiUtil {
         }
     }
 
-    public static CiKind[] signatureToKinds(RiMethod method) {
+    public static CiKind[] signatureToKinds(RiResolvedMethod method) {
         CiKind receiver = isStatic(method.accessFlags()) ? null : method.holder().kind(true);
         return signatureToKinds(method.signature(), receiver);
     }

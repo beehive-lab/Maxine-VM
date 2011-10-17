@@ -61,7 +61,6 @@ public class HotSpotRuntime implements GraalRuntime {
     private final Compiler compiler;
     private IdentityHashMap<RiMethod, CompilerGraph> intrinsicGraphs = new IdentityHashMap<RiMethod, CompilerGraph>();
 
-
     public HotSpotRuntime(GraalContext context, HotSpotVMConfig config, Compiler compiler) {
         this.context = context;
         this.config = config;
@@ -161,17 +160,17 @@ public class HotSpotRuntime implements GraalRuntime {
     }
 
     @Override
-    public boolean mustInline(RiMethod method) {
+    public boolean mustInline(RiResolvedMethod method) {
         return false;
     }
 
     @Override
-    public boolean mustNotCompile(RiMethod method) {
+    public boolean mustNotCompile(RiResolvedMethod method) {
         return false;
     }
 
     @Override
-    public boolean mustNotInline(RiMethod method) {
+    public boolean mustNotInline(RiResolvedMethod method) {
         return Modifier.isNative(method.accessFlags());
     }
 
@@ -191,12 +190,12 @@ public class HotSpotRuntime implements GraalRuntime {
         return 8;
     }
 
-    public boolean isFoldable(RiMethod method) {
+    public boolean isFoldable(RiResolvedMethod method) {
         return false;
     }
 
     @Override
-    public CiConstant fold(RiMethod method, CiConstant[] args) {
+    public CiConstant fold(RiResolvedMethod method, CiConstant[] args) {
         return null;
     }
 
@@ -385,7 +384,7 @@ public class HotSpotRuntime implements GraalRuntime {
     }
 
     @Override
-    public Graph intrinsicGraph(RiMethod caller, int bci, RiMethod method, List<? extends Node> parameters) {
+    public Graph intrinsicGraph(RiResolvedMethod caller, int bci, RiResolvedMethod method, List<? extends Node> parameters) {
 
         if (method.holder().name().equals("Ljava/lang/Object;")) {
             String fullName = method.name() + method.signature().asString();
@@ -817,8 +816,8 @@ public class HotSpotRuntime implements GraalRuntime {
         return compiler.getVMEntries().getMaxCallTargetOffset(rtcall);
     }
 
-    public RiMethod getRiMethod(Method reflectionMethod) {
-        return compiler.getVMEntries().getRiMethod(reflectionMethod);
+    public RiResolvedMethod getRiMethod(Method reflectionMethod) {
+        return (RiResolvedMethod) compiler.getVMEntries().getRiMethod(reflectionMethod);
     }
 
     public void installMethod(RiMethod method, CiTargetMethod code) {
