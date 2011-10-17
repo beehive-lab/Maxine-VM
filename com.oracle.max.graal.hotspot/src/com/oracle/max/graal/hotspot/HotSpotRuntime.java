@@ -191,8 +191,12 @@ public class HotSpotRuntime implements GraalRuntime {
         return 8;
     }
 
+    public boolean isFoldable(RiMethod method) {
+        return false;
+    }
+
     @Override
-    public CiConstant invoke(RiMethod method, CiMethodInvokeArguments args) {
+    public CiConstant fold(RiMethod method, CiConstant[] args) {
         return null;
     }
 
