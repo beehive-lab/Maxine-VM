@@ -22,7 +22,8 @@
  */
 package com.sun.max.vm.jdk;
 
-import sun.misc.GC;
+import sun.misc.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.vm.heap.*;
 

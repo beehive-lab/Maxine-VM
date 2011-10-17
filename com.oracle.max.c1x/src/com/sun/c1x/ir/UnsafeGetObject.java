@@ -22,7 +22,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.debug.*;
+import com.oracle.max.criutils.*;
+import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -48,6 +49,6 @@ public final class UnsafeGetObject extends UnsafeObjectOp {
 
     @Override
     public void print(LogStream out) {
-        out.print("UnsafeGetObject.(").print(object()).print(", ").print(offset()).print(')');
+        out.print("UnsafeGetObject.(").print(Util.valueString(object())).print(", ").print(Util.valueString(offset())).print(')');
     }
 }

@@ -28,6 +28,6 @@ public class AsmOptions {
     public static boolean UseNormalNop                  = true;
     public static boolean UseAddressNop                 = true;
     public static boolean UseIncDec                     = false;
-    public static boolean UseXmmLoadAndClearUpper       = false;
+    public static boolean UseXmmLoadAndClearUpper       = true;
     public static boolean UseXmmRegToRegMoveAll         = false;
 }

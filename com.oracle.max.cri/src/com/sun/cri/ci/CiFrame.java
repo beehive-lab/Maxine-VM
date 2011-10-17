@@ -63,6 +63,8 @@ public class CiFrame extends CiCodePos implements Serializable {
      */
     public final int numLocks;
 
+    public final boolean rethrowException;
+
     /**
      * Creates a new frame object.
      *
@@ -74,13 +76,27 @@ public class CiFrame extends CiCodePos implements Serializable {
      * @param numStack the depth of the stack
      * @param numLocks the number of locked objects
      */
-    public CiFrame(CiFrame caller, RiMethod method, int bci, CiValue[] values, int numLocals, int numStack, int numLocks) {
+    public CiFrame(CiFrame caller, RiMethod method, int bci, boolean rethrowException, CiValue[] values, int numLocals, int numStack, int numLocks) {
+
+    /**
+     * Creates a new frame object.
+     *
+     * @param caller the caller frame (which may be {@code null})
+     * @param method the method
+     * @param bci a BCI within the method
+     * @param values the frame state {@link #values}
+     * @param numLocals the number of local variables
+     * @param numStack the depth of the stack
+     * @param numLocks the number of locked objects
+     */
         super(caller, method, bci);
         assert values != null;
+        this.rethrowException = rethrowException;
         this.values = values;
         this.numLocks = numLocks;
         this.numLocals = numLocals;
         this.numStack = numStack;
+        assert !rethrowException || numStack == 1 : "must have exception on top of the stack";
     }
 
     /**
@@ -190,6 +206,6 @@ public class CiFrame extends CiCodePos implements Serializable {
         CiValue[] values = new CiValue[numLocals + numLocks];
         System.arraycopy(this.values, 0, values, 0, numLocals);
         System.arraycopy(this.values, numLocals + numStack, values, numLocals, numLocks);
-        return new CiFrame(caller(), method, bci, values, numLocals, 0, numLocks);
+        return new CiFrame(caller(), method, bci, rethrowException, values, numLocals, 0, numLocks);
     }
 }

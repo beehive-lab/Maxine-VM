@@ -33,7 +33,13 @@ import com.sun.max.lang.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.verifier.TypeInferencingMethodVerifier.*;
+import com.sun.max.vm.verifier.TypeInferencingMethodVerifier.Branch;
+import com.sun.max.vm.verifier.TypeInferencingMethodVerifier.Instruction;
+import com.sun.max.vm.verifier.TypeInferencingMethodVerifier.Jsr;
+import com.sun.max.vm.verifier.TypeInferencingMethodVerifier.Lookupswitch;
+import com.sun.max.vm.verifier.TypeInferencingMethodVerifier.Ret;
+import com.sun.max.vm.verifier.TypeInferencingMethodVerifier.Select;
+import com.sun.max.vm.verifier.TypeInferencingMethodVerifier.Tableswitch;
 
 /**
  * Inlines subroutines and removes dead code.

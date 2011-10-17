@@ -22,7 +22,7 @@
  */
 package jtt.max;
 
-import com.sun.max.annotate.INLINE;
+import com.sun.max.annotate.*;
 
 /*
  * @Harness: java

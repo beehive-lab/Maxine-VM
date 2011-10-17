@@ -26,7 +26,8 @@ import static com.sun.max.vm.thread.VmThread.*;
 
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.monitor.modal.modehandlers.observer.ObserverModeHandler.*;
+import com.sun.max.vm.monitor.modal.modehandlers.observer.ObserverModeHandler.Event;
+import com.sun.max.vm.monitor.modal.modehandlers.observer.ObserverModeHandler.MonitorObserver;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.thread.*;
 

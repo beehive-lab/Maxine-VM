@@ -28,7 +28,6 @@ import com.sun.max.jdwp.protocol.ArrayTypeCommands.*;
 import com.sun.max.jdwp.vm.proxy.*;
 
 /**
- * @author Thomas Wuerthinger
  * 
  */
 public class ArrayTypeHandlers extends Handlers {

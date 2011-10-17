@@ -25,6 +25,7 @@ package com.sun.c1x.debug;
 import java.io.*;
 import java.util.*;
 
+import com.oracle.max.criutils.*;
 import com.sun.c1x.*;
 import com.sun.c1x.alloc.*;
 import com.sun.c1x.alloc.Interval.UsePosList;
@@ -549,7 +550,7 @@ public class CFGPrinter {
         if (i.operand().isLegal()) {
             out.print("result ").print(new CFGOperandFormatter(false).format(i.operand())).println(COLUMN_END);
         }
-        out.print("tid ").print(i).println(COLUMN_END);
+        out.print("tid ").print(Util.valueString(i)).println(COLUMN_END);
 
         String state = stateToString(i.stateBefore(), null);
         if (state != null) {

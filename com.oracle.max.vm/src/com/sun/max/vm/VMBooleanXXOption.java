@@ -25,7 +25,7 @@ package com.sun.max.vm;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.MaxineVM.*;
+import com.sun.max.vm.MaxineVM.Phase;
 
 /**
  * Support for HotSpot style boolean options that start with "-XX:+" or "-XX:-".

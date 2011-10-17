@@ -44,7 +44,9 @@ public interface RuntimeCompiler {
     @HOSTED_ONLY
     Map<String, String> aliases = Utils.addEntries(new HashMap<String, String>(),
                     "T1X", "com.oracle.max.vm.ext.t1x.T1X",
-                    "C1X", "com.oracle.max.vm.ext.c1x.C1X");
+                    "Graal", "com.oracle.max.vm.ext.graal.Graal",
+                    "C1X", "com.oracle.max.vm.ext.c1x.C1X",
+                    "C1XGraal", "com.oracle.max.vm.ext.c1xgraal.C1XGraal");
 
     @HOSTED_ONLY
     OptionSet compilers = new OptionSet();
@@ -107,4 +109,10 @@ public interface RuntimeCompiler {
          */
         OPT;
     }
+
+    /**
+     * Determines if this compiler matches a compiler name specified by a {@link CompilationBroker#CompileCommand}
+     * VM option.
+     */
+    boolean matches(String compilerName);
 }

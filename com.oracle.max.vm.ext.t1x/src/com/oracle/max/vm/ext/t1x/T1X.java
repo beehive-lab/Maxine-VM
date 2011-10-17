@@ -35,9 +35,8 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.oracle.max.vm.ext.c1x.*;
+import com.oracle.max.criutils.*;
 import com.oracle.max.vm.ext.maxri.*;
-import com.sun.c1x.debug.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.CiCallingConvention.Type;
 import com.sun.cri.ci.*;
@@ -183,10 +182,10 @@ public class T1X implements RuntimeCompiler {
             return;
         }
 
-        ByteArrayOutputStream cfgPrinterBuffer = new ByteArrayOutputStream();
-        CFGPrinter cfgPrinter = new CFGPrinter(cfgPrinterBuffer, target());
+        ByteArrayOutputStream buf = new ByteArrayOutputStream();
+        CompilationPrinter cprinter = new CompilationPrinter(buf);
 
-        cfgPrinter.printCompilation(c.method);
+        cprinter.printCompilation(c.method);
 
         byte[] code = t1xMethod.code();
         final Platform platform = Platform.platform();
@@ -199,17 +198,17 @@ public class T1X implements RuntimeCompiler {
 
         String label = CiUtil.format("T1X %f %R %H.%n(%P)", c.method);
 
-        cfgPrinter.printMachineCode(HexCodeFileTool.toText(hcf), label);
+        cprinter.printMachineCode(HexCodeFileTool.toText(hcf), label);
 
         String bytecodes = c.method.format("%f %R %H.%n(%P)") + String.format("%n%s", CodeAttributePrinter.toString(c.method.codeAttribute()));
-        cfgPrinter.printBytecodes(bytecodes);
+        cprinter.printBytecodes(bytecodes);
 
-        cfgPrinter.flush();
-        OutputStream cfgFileStream = CFGPrinter.cfgFileStream();
-        if (cfgFileStream != null) {
-            synchronized (cfgFileStream) {
+        cprinter.flush();
+        OutputStream cout = CompilationPrinter.globalOut();
+        if (cout != null) {
+            synchronized (cout) {
                 try {
-                    cfgFileStream.write(cfgPrinterBuffer.toByteArray());
+                    cout.write(buf.toByteArray());
                 } catch (IOException e) {
                     TTY.println("WARNING: Error writing CFGPrinter output for %s to disk: %s", c.method, e.getMessage());
                 }
@@ -307,12 +306,15 @@ public class T1X implements RuntimeCompiler {
     }
 
     public void initialize(Phase phase) {
-        if (isHosted() && phase == Phase.COMPILING) {
-            createTemplates(templateSource, altT1X, true, templates);
+        if (isHosted() && phase == Phase.HOSTED_COMPILING) {
+
+            RuntimeCompiler compiler = createBootCompiler();
+
+            createTemplates(compiler, templateSource, altT1X, true, templates);
             if (altT1X != null) {
                 intrinsicTemplates = altT1X.intrinsicTemplates;
             } else {
-                intrinsicTemplates = createIntrinsicTemplates();
+                intrinsicTemplates = createIntrinsicTemplates(compiler);
             }
         }
         if (phase == Phase.TERMINATING) {
@@ -325,6 +327,17 @@ public class T1X implements RuntimeCompiler {
             }
 
         }
+    }
+
+    @HOSTED_ONLY
+    protected RuntimeCompiler createBootCompiler() {
+        // Create a boot compiler to compile the templates
+        RuntimeCompiler compiler = vm().compilationBroker.optimizingCompiler;
+        if (compiler == null) {
+            compiler = CompilationBroker.instantiateCompiler(RuntimeCompiler.optimizingCompilerOption.getValue());
+            compiler.initialize(Phase.HOSTED_COMPILING);
+        }
+        return compiler;
     }
 
     /**
@@ -341,19 +354,12 @@ public class T1X implements RuntimeCompiler {
      * @return the templates array, either as passed in or created.
      */
     @HOSTED_ONLY
-    public T1XTemplate[] createTemplates(Class<?> templateSourceClass, T1X altT1X, boolean checkComplete, T1XTemplate[] templates) {
+    public T1XTemplate[] createTemplates(RuntimeCompiler compiler, Class<?> templateSourceClass, T1X altT1X, boolean checkComplete, T1XTemplate[] templates) {
         Trace.begin(1, "creating T1X templates from " + templateSourceClass.getName());
         if (templates == null) {
             templates = new T1XTemplate[T1XTemplateTag.values().length];
         }
         long startTime = System.currentTimeMillis();
-
-        // Create a C1X compiler to compile the templates
-        C1X bootCompiler = C1X.instance;
-        if (bootCompiler == null) {
-            bootCompiler = new C1X();
-            bootCompiler.initialize(Phase.COMPILING);
-        }
 
         ClassActor.fromJava(T1XRuntime.class);
         ClassVerifier verifier = new TypeCheckingVerifier(ClassActor.fromJava(T1XTemplateSource.class));
@@ -367,7 +373,7 @@ public class T1X implements RuntimeCompiler {
                     T1XTemplateTag tag = anno.value();
                     ClassMethodActor templateSource = ClassMethodActor.fromJava(method);
                     templateSource.verify(verifier);
-                    MaxTargetMethod templateCode = compileTemplate(bootCompiler, templateSource);
+                    MaxTargetMethod templateCode = compileTemplate(compiler, templateSource);
                     codeSize += templateCode.codeLength();
                     T1XTemplate template = templates[tag.ordinal()];
                     if (template != null) {
@@ -410,7 +416,7 @@ public class T1X implements RuntimeCompiler {
         return UNIMPLEMENTED_TEMPLATES.contains(tag);
     }
 
-    private MaxTargetMethod compileTemplate(C1X bootCompiler, ClassMethodActor templateSource) {
+    private MaxTargetMethod compileTemplate(RuntimeCompiler bootCompiler, ClassMethodActor templateSource) {
         FatalError.check(templateSource.isTemplate(), "Method with " + T1X_TEMPLATE.class.getSimpleName() + " annotation should be a template: " + templateSource);
         FatalError.check(!hasStackParameters(templateSource), "Template must not have *any* stack parameters: " + templateSource);
         FatalError.check(templateSource.resultKind().stackKind == templateSource.resultKind(), "Template return type must be a stack kind: " + templateSource);
@@ -482,7 +488,7 @@ public class T1X implements RuntimeCompiler {
     }
 
     @HOSTED_ONLY
-    public Map<RiMethod, T1XTemplate> createIntrinsicTemplates() {
+    public Map<RiMethod, T1XTemplate> createIntrinsicTemplates(RuntimeCompiler bootCompiler) {
         Map<RiMethod, T1XTemplate> result = new HashMap<RiMethod, T1XTemplate>();
 
         Trace.begin(1, "creating T1X templates for intrinsics");
@@ -496,13 +502,6 @@ public class T1X implements RuntimeCompiler {
             }
         } catch (Exception e) {
             FatalError.unexpected("Error while generating source for " + T1XIntrinsicTemplateSource.class, e);
-        }
-
-        // Create a C1X compiler to compile the templates
-        C1X bootCompiler = C1X.instance;
-        if (bootCompiler == null) {
-            bootCompiler = new C1X();
-            bootCompiler.initialize(Phase.COMPILING);
         }
 
         ClassActor source = ClassActor.fromJava(T1XIntrinsicTemplateSource.class);
@@ -544,6 +543,11 @@ public class T1X implements RuntimeCompiler {
     @Override
     public String toString() {
         return getClass().getSimpleName();
+    }
+
+    @Override
+    public boolean matches(String compilerName) {
+        return compilerName.equals("T1X");
     }
 
     /**

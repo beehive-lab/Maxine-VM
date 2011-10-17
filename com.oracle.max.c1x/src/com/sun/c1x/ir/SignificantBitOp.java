@@ -22,7 +22,9 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.debug.*;
+import static com.sun.c1x.util.Util.*;
+
+import com.oracle.max.criutils.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.bytecode.*;
@@ -88,6 +90,6 @@ public class SignificantBitOp extends Instruction {
 
     @Override
     public void print(LogStream out) {
-        out.print(op.toString() + " [").print(this).print("] ");
+        out.print(op.toString() + " [").print(valueString(this)).print("] ");
     }
 }

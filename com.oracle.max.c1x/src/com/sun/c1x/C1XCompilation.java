@@ -133,15 +133,6 @@ public final class C1XCompilation {
     }
 
     /**
-     * Gets the frame which describes the layout of the OSR interpreter frame for this method.
-     *
-     * @return the OSR frame
-     */
-    public RiOsrFrame getOsrFrame() {
-        return runtime.getOsrFrame(method, osrBCI);
-    }
-
-    /**
      * Records an assumption that the specified type has no finalizable subclasses.
      *
      * @param receiverType the type that is assumed to have no finalizable subclasses
@@ -184,7 +175,7 @@ public final class C1XCompilation {
         } else {
             if (compiler.isObserved()) {
                 String label = CiUtil.format("BlockListBuilder %f %R %H.%n(%P)", method);
-                compiler.fireCompilationEvent(new CompilationEvent(this, label, method, map, method.code().length));
+                compiler.fireCompilationEvent(new CompilationEvent(this, method, label, map, method.code().length));
             }
         }
         map.cleanup();

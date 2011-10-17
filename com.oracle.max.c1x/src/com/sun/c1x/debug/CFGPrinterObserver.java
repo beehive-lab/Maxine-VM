@@ -25,6 +25,7 @@ package com.sun.c1x.debug;
 import java.io.*;
 import java.util.*;
 
+import com.oracle.max.criutils.*;
 import com.sun.c1x.observer.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -35,6 +36,7 @@ import com.sun.cri.ri.*;
  * supports re-entrant compilation.
  */
 public class CFGPrinterObserver implements CompilationObserver {
+    private final OutputStream outputStream;
 
     /**
      * The observation of a single compilation.
@@ -58,7 +60,21 @@ public class CFGPrinterObserver implements CompilationObserver {
         }
     };
 
+    /**
+     * Creates an instance that writes control flow graphs to the default stream provided by
+     * {@link CFGPrinter#cfgFileStream()}.
+     */
     public CFGPrinterObserver() {
+        this(CFGPrinter.cfgFileStream());
+    }
+
+    /**
+     * Creates an instance that writes control flow graphs to the specified output stream.
+     *
+     * @param out The destination output stream.
+     */
+    public CFGPrinterObserver(OutputStream out) {
+        this.outputStream = out;
     }
 
     @Override
@@ -105,13 +121,12 @@ public class CFGPrinterObserver implements CompilationObserver {
         Observation o = observations.get().pop();
         o.cfgPrinter.flush();
 
-        OutputStream cfgFileStream = CFGPrinter.cfgFileStream();
-        if (cfgFileStream != null) {
-            synchronized (cfgFileStream) {
+        if (outputStream != null) {
+            synchronized (outputStream) {
                 try {
-                    cfgFileStream.write(o.buffer.toByteArray());
+                    outputStream.write(o.buffer.toByteArray());
                 } catch (IOException e) {
-                    TTY.println("WARNING: Error writing CFGPrinter output for %s to disk: %s", event.getMethod(), e);
+                    TTY.println("WARNING: Error writing CFGPrinter output for %s to stream: %s", event.getMethod(), e);
                 }
             }
         }

@@ -42,8 +42,6 @@ import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.AdviceRec
  * In practice, that feature was used mostly in the historic version that worked with the
  * output from multiple "isolates" in the (MVM) multi-tasking virtual machine.
  *
- * @author Mick Jordan
- *
  */
 
 public class TraceRun {

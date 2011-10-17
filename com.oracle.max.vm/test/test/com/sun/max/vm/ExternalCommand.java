@@ -27,7 +27,7 @@ import static test.com.sun.max.vm.MaxineTester.Logs.*;
 import java.io.*;
 import java.util.*;
 
-import test.com.sun.max.vm.MaxineTester.*;
+import test.com.sun.max.vm.MaxineTester.Logs;
 
 import com.sun.max.*;
 import com.sun.max.io.*;

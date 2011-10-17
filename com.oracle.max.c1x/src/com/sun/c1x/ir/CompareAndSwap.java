@@ -22,7 +22,9 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.debug.*;
+import static com.sun.c1x.util.Util.*;
+
+import com.oracle.max.criutils.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ri.*;
@@ -86,8 +88,8 @@ public final class CompareAndSwap extends PointerOp {
 
     @Override
     public void print(LogStream out) {
-        out.print("CompareAndSwap(").print(pointer());
-        out.print(" + ").print(offset());
-        out.print(", ").print(expectedValue()).print(", ").print(newValue()).print(')');
+        out.print("CompareAndSwap(").print(valueString(pointer()));
+        out.print(" + ").print(valueString(offset()));
+        out.print(", ").print(valueString(expectedValue())).print(", ").print(valueString(newValue())).print(')');
     }
 }

@@ -22,12 +22,12 @@
  */
 package com.sun.max.vm.actor.holder;
 
+import static com.sun.max.vm.actor.holder.ClassID.*;
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
 import static com.sun.max.vm.compiler.deps.DependenciesManager.*;
 import static com.sun.max.vm.type.ClassRegistry.*;
 import static com.sun.max.vm.type.ClassRegistry.Property.*;
-import static com.sun.max.vm.actor.holder.ClassID.NULL_CLASS_ID;
 
 import java.io.*;
 import java.lang.annotation.*;
@@ -45,6 +45,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
+import com.sun.max.collect.Mapping;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
@@ -72,7 +73,7 @@ public abstract class ClassActor extends Actor implements RiType {
     /**
      * Implemented by a client wanting to do something to a class.
      */
-    public static interface Closure {
+    public interface Closure {
         /**
          * Processes a given class.
          *
@@ -1737,5 +1738,9 @@ public abstract class ClassActor extends Actor implements RiType {
      */
     public RiMethod uniqueConcreteMethod(RiMethod method) {
         return DependenciesManager.getUniqueConcreteMethod(this, (MethodActor) method);
+    }
+
+    public RiField[] declaredFields() {
+        return null;
     }
 }

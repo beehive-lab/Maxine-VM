@@ -41,13 +41,15 @@ public final class CiRegister implements Comparable<CiRegister>, Serializable {
      */
     public static final CiRegister Frame = new CiRegister(-2, -2, 0, "framereg", RegisterFlag.CPU);
 
+    public static final CiRegister CallerFrame = new CiRegister(-3, -3, 0, "callerframereg", RegisterFlag.CPU);
+
     /**
      * Literals pointer register.
      */
     public static final CiRegister Literals = new CiRegister(-4, -4, 0, "literals", RegisterFlag.CPU);
 
     /**
-     * Register used to construct an RIP-Relative (x64) address.
+     * Register used to construct an RIP-Relative address.
      */
     public static final CiRegister InstructionRelative = new CiRegister(-5, -5, 0, "instr", RegisterFlag.CPU);
 

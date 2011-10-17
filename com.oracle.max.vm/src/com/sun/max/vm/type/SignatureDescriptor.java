@@ -32,7 +32,7 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
-import com.sun.max.collect.ChainedHashMapping.*;
+import com.sun.max.collect.ChainedHashMapping.Entry;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 

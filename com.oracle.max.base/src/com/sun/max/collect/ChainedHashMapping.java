@@ -66,7 +66,7 @@ public class ChainedHashMapping<K, V> extends HashMapping<K, V> implements Mappi
     /**
      * The interface for the chained entries of a bucket in a {@link ChainedHashMapping}.
      */
-    public static interface Entry<K, V> {
+    public interface Entry<K, V> {
         K key();
         V value();
         void setValue(V value);

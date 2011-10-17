@@ -25,7 +25,7 @@ package com.sun.max.vm.classfile.constant;
 import java.io.*;
 
 import com.sun.max.collect.*;
-import com.sun.max.collect.ChainedHashMapping.*;
+import com.sun.max.collect.ChainedHashMapping.Entry;
 import com.sun.max.vm.*;
 
 /**

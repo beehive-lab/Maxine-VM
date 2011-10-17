@@ -34,9 +34,9 @@ import com.sun.max.profile.ValueMetrics.IntegerDistribution;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.deps.DependenciesManager.DependencyChecker;
-import com.sun.max.vm.compiler.deps.DependenciesManager.DependenciesCounter;
 import com.sun.max.vm.compiler.deps.Dependencies.DependencyClosure;
+import com.sun.max.vm.compiler.deps.DependenciesManager.DependenciesCounter;
+import com.sun.max.vm.compiler.deps.DependenciesManager.DependencyChecker;
 import com.sun.max.vm.compiler.target.*;
 
 /**

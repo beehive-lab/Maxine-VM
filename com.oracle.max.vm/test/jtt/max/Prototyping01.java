@@ -22,7 +22,7 @@
  */
 package jtt.max;
 
-import com.sun.max.vm.MaxineVM;
+import com.sun.max.vm.*;
 
 /*
  * @Harness: java

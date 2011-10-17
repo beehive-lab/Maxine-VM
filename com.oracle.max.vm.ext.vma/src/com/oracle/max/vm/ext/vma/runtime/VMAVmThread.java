@@ -29,8 +29,6 @@ import com.sun.max.vm.thread.VmThread;
  * A variant of {@link VmThead} that sets up for VM advising.
  * Advising for the thread is enabled after the thread initialization is complete.
  *
- * @author Mick Jordan
- *
  */
 public class VMAVmThread extends VmThread {
 

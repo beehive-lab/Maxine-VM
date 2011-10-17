@@ -369,7 +369,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
                         // for the start of bytecode template.
                         if (bci < bciToPosMap.length && pos == bciToPosMap[bci]) {
                             // This is the start of the machine code block implementing the next bytecode
-                            CiFrame frame = new CiFrame(null, classMethodActor(), bci, new CiValue[0], 0, 0, 0);
+                            CiFrame frame = new CiFrame(null, classMethodActor(), bci, false, new CiValue[0], 0, 0, 0);
                             posToDebugInfoMap[pos] = new CiDebugInfo(frame, null, null);
                             do {
                                 ++bci;

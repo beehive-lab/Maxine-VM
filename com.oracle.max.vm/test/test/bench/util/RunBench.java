@@ -22,8 +22,8 @@
  */
 package test.bench.util;
 
-import java.lang.reflect.*;
 import java.io.*;
+import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.program.*;

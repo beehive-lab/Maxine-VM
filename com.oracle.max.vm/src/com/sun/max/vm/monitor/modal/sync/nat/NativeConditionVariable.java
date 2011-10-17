@@ -25,12 +25,13 @@ package com.sun.max.vm.monitor.modal.sync.nat;
 import static com.sun.max.vm.MaxineVM.*;
 
 import java.lang.ref.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.monitor.modal.sync.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * Java wrapper for a native condition variable.

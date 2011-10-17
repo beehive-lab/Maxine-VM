@@ -25,10 +25,12 @@ package com.sun.max.vm.compiler.deps;
 import java.util.*;
 
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiAssumptions.*;
+import com.sun.cri.ci.CiAssumptions.Assumption;
+import com.sun.cri.ci.CiAssumptions.ConcreteMethod;
+import com.sun.cri.ci.CiAssumptions.ConcreteSubtype;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.deps.DependenciesManager.*;
+import com.sun.max.vm.compiler.deps.DependenciesManager.UniqueConcreteMethodSearch;
 
 /**
  * Validates dependencies for a compiled method.

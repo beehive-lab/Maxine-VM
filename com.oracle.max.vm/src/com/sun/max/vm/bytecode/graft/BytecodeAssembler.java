@@ -31,7 +31,7 @@ import java.util.*;
 import com.sun.cri.bytecode.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.classfile.constant.ConstantPool.*;
+import com.sun.max.vm.classfile.constant.ConstantPool.Tag;
 import com.sun.max.vm.type.*;
 
 /**

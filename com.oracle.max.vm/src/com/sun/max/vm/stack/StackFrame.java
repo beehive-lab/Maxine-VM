@@ -24,7 +24,7 @@ package com.sun.max.vm.stack;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.stack.StackFrameWalker.*;
+import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 
 /**
  * A {@code StackFrame} object abstracts an activation frame on a call stack.

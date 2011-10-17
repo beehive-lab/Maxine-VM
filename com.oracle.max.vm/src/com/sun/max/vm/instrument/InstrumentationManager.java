@@ -22,10 +22,10 @@
  */
 package com.sun.max.vm.instrument;
 
-import java.lang.instrument.Instrumentation;
+import java.lang.instrument.*;
 import java.lang.reflect.*;
 import java.net.*;
-import java.security.ProtectionDomain;
+import java.security.*;
 import java.util.*;
 
 import com.sun.max.program.*;

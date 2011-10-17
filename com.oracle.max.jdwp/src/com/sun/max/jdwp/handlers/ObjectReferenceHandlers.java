@@ -30,7 +30,6 @@ import com.sun.max.jdwp.protocol.ObjectReferenceCommands.*;
 import com.sun.max.jdwp.vm.proxy.*;
 
 /**
- * @author Thomas Wuerthinger
  *
  */
 public class ObjectReferenceHandlers extends Handlers {

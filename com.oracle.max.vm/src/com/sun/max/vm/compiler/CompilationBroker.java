@@ -93,6 +93,55 @@ public class CompilationBroker {
         addFieldOption("-XX:", "PrintCodeCacheMetrics", "Print code cache metrics (0 = disabled, 1 = summary, 2 = verbose).");
     }
 
+    static String CompileCommand;
+    static {
+        VMOptions.addFieldOption("-XX:", "CompileCommand",
+            "Specify which compiler to use for methods matching given patterns. For example, " +
+            "'-XX:CompileCommand=test.output:T1X,com.acme.util.Strings:Graal' specifies that " +
+            "any method whose fully qualified name contains the substring 'test.output' " +
+            "should be compiled with the compiler named 'T1X' and any method whose fully " +
+            "qualified name contains 'com.acme.util.String' should be compiled with the 'Graal' " +
+            "compiler. No checking is done to ensure that a named compiler exists.");
+    }
+
+    private HashMap<String, String> compileCommandMap;
+
+    /**
+     * Gets the {@linkplain RuntimeCompiler#name() name} of the compiler to be used to
+     * compile {@code cma} as specified by the {@code -XX:CompileCommand} VM option.
+     *
+     * @return {@code null} if no specific compiler was specified for {@code cma} by a {@code -XX:CompileCommand} VM option
+     */
+    public String compilerFor(ClassMethodActor cma) {
+        if (CompileCommand == null) {
+            return null;
+        }
+        // A race to parse the option and create the map is fine. The result will be identical
+        // for both threads and so one result just becomes instant garbage.
+        if (compileCommandMap == null) {
+            HashMap<String, String> map = new HashMap<String, String>();
+            String[] parts = CompileCommand.split(",");
+            for (String part : parts) {
+                int colon = part.indexOf(':');
+                if (colon == -1 || colon == 0 || colon == part.length() - 1) {
+                    Log.println("CompileCommand part does not match a <key>:<value> pattern: " + part);
+                } else {
+                    String key = part.substring(0, colon);
+                    String value = part.substring(colon + 1);
+                    map.put(key, value);
+                }
+            }
+            compileCommandMap = map;
+        }
+        String methodString = cma.toString();
+        for (Map.Entry<String, String> e : compileCommandMap.entrySet()) {
+            if (methodString.contains(e.getKey())) {
+                return e.getValue();
+            }
+        }
+        return null;
+    }
+
     /**
      * The default compiler to use.
      */
@@ -176,7 +225,7 @@ public class CompilationBroker {
     }
 
     @HOSTED_ONLY
-    protected static RuntimeCompiler instantiateCompiler(String name) {
+    public static RuntimeCompiler instantiateCompiler(String name) {
         try {
             return (RuntimeCompiler) Class.forName(name).newInstance();
         } catch (Exception e) {
@@ -342,14 +391,12 @@ public class CompilationBroker {
      * @return the compiler that should be used to perform the next compilation of the method
      */
     protected RuntimeCompiler selectCompiler(ClassMethodActor cma, RuntimeCompiler.Nature nature) {
-
         if (Actor.isUnsafe(cma.flags() | cma.compilee().flags())) {
             assert nature != Nature.BASELINE : "cannot produce baseline version of " + cma;
             return optimizingCompiler;
         }
 
         RuntimeCompiler compiler;
-
         if (isHosted()) {
             if (compileWithBaseline.contains(cma.holder().javaClass())) {
                 compiler = baselineCompiler;
@@ -366,6 +413,14 @@ public class CompilationBroker {
                 compiler = optimizingCompiler;
             } else {
                 compiler = defaultCompiler;
+                String compilerName = compilerFor(cma);
+                if (compilerName != null) {
+                    if (optimizingCompiler != null && optimizingCompiler.matches(compilerName)) {
+                        compiler = optimizingCompiler;
+                    } else if (baselineCompiler != null && baselineCompiler.matches(compilerName)) {
+                        compiler = baselineCompiler;
+                    }
+                }
                 assert compiler != null;
             }
         }

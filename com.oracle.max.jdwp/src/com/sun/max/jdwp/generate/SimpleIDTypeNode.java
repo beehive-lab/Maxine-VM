@@ -25,7 +25,6 @@ package com.sun.max.jdwp.generate;
 import java.io.*;
 
 /**
- * @author Thomas Wuerthinger
  */
 public class SimpleIDTypeNode extends SimpleTypeNode {
 

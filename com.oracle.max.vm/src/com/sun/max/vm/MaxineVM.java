@@ -122,9 +122,14 @@ public final class MaxineVM {
         BOOTSTRAPPING,
 
         /**
-         * Creating the compiled boot image.
+         * Starting to compile while in {@link HOSTED_ONLY} mode (e.g. creating the compiled boot image).
          */
-        COMPILING,
+        HOSTED_COMPILING,
+
+        /**
+         * Starting the serialization of a graph of host VM objects into the boot image.
+         */
+        SERIALIZING_IMAGE,
 
         /**
          * Executing target VM code, but many features do not work yet.

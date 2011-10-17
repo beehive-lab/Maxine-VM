@@ -22,7 +22,9 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.debug.*;
+import static com.sun.c1x.util.Util.*;
+
+import com.oracle.max.criutils.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -68,10 +70,10 @@ public final class UnsafePutRaw extends UnsafeRawOp {
 
     @Override
     public void print(LogStream out) {
-        out.print("UnsafePutRaw.(base ").print(base());
+        out.print("UnsafePutRaw.(base ").print(valueString(base()));
         if (hasIndex()) {
-            out.print(", index ").print(index()).print(", log2_scale ").print(log2Scale());
+            out.print(", index ").print(valueString(index())).print(", log2_scale ").print(log2Scale());
         }
-        out.print(", value ").print(value()).print(')');
+        out.print(", value ").print(valueString(value())).print(')');
     }
 }

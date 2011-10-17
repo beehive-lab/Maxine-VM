@@ -24,22 +24,22 @@ package com.sun.max.vm.classfile.constant;
 
 import static com.sun.max.vm.MaxineVM.*;
 
+import java.lang.reflect.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.constant.ConstantPool.*;
+import com.sun.max.vm.classfile.constant.ConstantPool.Tag;
 import com.sun.max.vm.type.*;
-
-import java.lang.reflect.*;
 
 /**
  * #4.4.2.
  */
 public interface ClassMethodRefConstant extends PoolConstant<ClassMethodRefConstant>, MethodRefConstant<ClassMethodRefConstant> {
 
-    public static interface ClassMethodRefKey extends PoolConstantKey<ClassMethodRefConstant> {
+    public interface ClassMethodRefKey extends PoolConstantKey<ClassMethodRefConstant> {
 
         TypeDescriptor holder();
 

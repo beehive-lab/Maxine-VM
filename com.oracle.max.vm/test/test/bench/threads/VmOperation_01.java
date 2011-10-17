@@ -32,7 +32,7 @@ import test.bench.util.*;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.runtime.VmOperation.*;
+import com.sun.max.vm.runtime.VmOperation.Mode;
 import com.sun.max.vm.thread.*;
 
 /**

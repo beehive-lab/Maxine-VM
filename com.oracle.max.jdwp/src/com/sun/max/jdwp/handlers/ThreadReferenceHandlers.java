@@ -30,7 +30,6 @@ import com.sun.max.jdwp.protocol.ThreadReferenceCommands.ThreadGroup;
 import com.sun.max.jdwp.vm.proxy.*;
 
 /**
- * @author Thomas Wuerthinger
  *
  */
 public class ThreadReferenceHandlers extends Handlers {

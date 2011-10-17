@@ -24,7 +24,7 @@ package com.sun.max.vm.verifier;
 
 import static com.sun.max.vm.verifier.InstructionHandle.Flag.*;
 
-import com.sun.max.vm.verifier.TypeInferencingMethodVerifier.*;
+import com.sun.max.vm.verifier.TypeInferencingMethodVerifier.Instruction;
 
 /**
  * This class represents a single instruction in the method output as a result of

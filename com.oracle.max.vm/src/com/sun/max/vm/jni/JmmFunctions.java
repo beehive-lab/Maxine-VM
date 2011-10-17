@@ -22,15 +22,15 @@
  */
 package com.sun.max.vm.jni;
 
-import java.lang.management.*;
-
 import static com.sun.max.vm.jni.JniFunctions.*;
+
+import java.lang.management.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.management.*;
-import com.sun.max.vm.thread.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * Upcalls from C that implement the JMM Interface Functions.

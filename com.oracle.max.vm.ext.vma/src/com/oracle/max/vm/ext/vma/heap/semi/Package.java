@@ -29,8 +29,6 @@ import com.sun.max.vm.heap.HeapScheme;
 /**
  * Configures the OA semi-space heap scheme extension.
  *
- * @author Mick Jordan
- *
  */
 public class Package extends BootImagePackage {
     public Package() {

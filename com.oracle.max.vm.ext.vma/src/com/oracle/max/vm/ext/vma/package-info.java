@@ -65,7 +65,7 @@
  * </ul>
  * <p>
  * Bootstrap issues currently preclude instrumenting the classes in the boot image, which is built using the
- * standard {@link com.oracle.max.vm.ext.c1x.C1X optimizing compiler}. Dynamically loaded
+ * optimizing compiler. Dynamically loaded
  * classes are instrumented using the custom scheme}. Since the optimizing compiler does not support
  * advising, the normal threshold recompilation is disabled for instrumented classes.
  * <p>
@@ -77,7 +77,5 @@
  *
  * The default data logging mechanism is a compressed text file, see {@link com.oracle.max.vma.ot.log.txt.TextObjectTrackerLog}
  * and {@link com.oracle.max.vma.ot.log.txt.CompactTextObjectTrackerLog}.
- *
- * @author Mick Jordan
  */
 package com.oracle.max.vm.ext.vma;

@@ -22,7 +22,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.debug.*;
+import com.oracle.max.criutils.*;
+import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -151,7 +152,7 @@ public final class Invoke extends StateSplit {
     public void print(LogStream out) {
         int argStart = 0;
         if (hasReceiver()) {
-            out.print(receiver()).print('.');
+            out.print(Util.valueString(receiver())).print('.');
             argStart = 1;
         }
 
@@ -162,7 +163,7 @@ public final class Invoke extends StateSplit {
             if (i > argStart) {
                 out.print(", ");
             }
-            out.print(arguments[i]);
+            out.print(Util.valueString(arguments[i]));
         }
         out.print(CiUtil.format(") [method: %H.%n(%p):%r]", target));
     }

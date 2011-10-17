@@ -22,7 +22,6 @@
  */
 /**
  * @author JDK7: jdk/make/tools/src/build/tools/jdwpgen
- * @author Thomas Wuerthinger
  *
  * This package contains a source code modification of the jdwpgen module of JDK 7. The original source code was used
  * to build three different outputs from the JDWP specification file jdwp.spec:

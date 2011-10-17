@@ -24,7 +24,7 @@ package com.sun.max.test;
 
 import java.io.*;
 import java.util.*;
-import java.util.Arrays;
+import java.util.regex.Pattern;
 
 import com.sun.max.*;
 import com.sun.max.program.*;
@@ -87,7 +87,11 @@ public class TestEngine {
     }
 
     public void parseAndRunTests(String[] args) {
-        parseTests(args, true);
+        this.parseAndRunTests(args, null);
+    }
+
+    public void parseAndRunTests(String[] args, String filter) {
+        parseTests(args, true, filter);
         progress = new ProgressPrinter(System.out, allTests.size(), verbose, false);
         for (TestCase tcase = queue.poll(); tcase != null; tcase = queue.poll()) {
             runTest(tcase);
@@ -95,9 +99,13 @@ public class TestEngine {
     }
 
     public void parseTests(String[] args, boolean sort) {
+        this.parseTests(args, sort, null);
+    }
+
+    public void parseTests(String[] args, boolean sort, String filter) {
         for (String arg : args) {
             final File f = new File(arg);
-            parseTests(f, registry, sort);
+            parseTests(f, registry, sort, filter);
         }
     }
 
@@ -141,18 +149,18 @@ public class TestEngine {
         }
     }
 
-    private void parseTests(File file, Registry<TestHarness> reg, boolean sort) {
+    private void parseTests(File file, Registry<TestHarness> reg, boolean sort, String filter) {
         if (!file.exists()) {
             throw new Error("file " + file + " not found.");
         }
         if (file.isDirectory()) {
             for (File dirFile : getFilesFromDirectory(file, sort)) {
                 if (!dirFile.isDirectory()) {
-                    parseFile(dirFile, reg);
+                    parseFile(dirFile, reg, filter);
                 }
             }
         } else {
-            parseFile(file, reg);
+            parseFile(file, reg, filter);
         }
     }
 
@@ -162,6 +170,22 @@ public class TestEngine {
             Arrays.sort(list);
         }
         return list;
+    }
+
+    private void parseFile(File file, Registry<TestHarness> reg, String filter) {
+        if (filter != null) {
+            if (filter.startsWith("~")) {
+                filter = filter.substring(1);
+                if (!Pattern.compile(filter).matcher(file.getName()).find()) {
+                    return;
+                }
+            } else {
+                if (!file.getName().contains(filter)) {
+                    return;
+                }
+            }
+        }
+        parseFile(file, reg);
     }
 
     private void parseFile(File file, Registry<TestHarness> reg) {

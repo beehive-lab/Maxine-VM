@@ -22,10 +22,9 @@
  */
 package test.com.sun.max.vm.jtrun;
 
-import com.sun.max.vm.Log;
+import java.util.*;
 
-import java.util.List;
-import java.util.LinkedList;
+import com.sun.max.vm.*;
 
 /**
  * The {@code JTUtil} class definition.

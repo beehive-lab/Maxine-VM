@@ -29,7 +29,6 @@ import com.sun.max.jdwp.protocol.ClassTypeCommands.*;
 import com.sun.max.jdwp.vm.proxy.*;
 
 /**
- * @author Thomas Wuerthinger
  *
  */
 public class ClassTypeHandlers extends Handlers {

@@ -22,7 +22,7 @@
  */
 package jtt.except;
 
-import com.sun.max.annotate.NEVER_INLINE;
+import com.sun.max.annotate.*;
 
 /*
  * @Harness: java

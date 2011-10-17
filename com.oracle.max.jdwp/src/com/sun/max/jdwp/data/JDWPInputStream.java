@@ -28,8 +28,6 @@ import java.util.*;
 
 /**
  * Stream class for reading JDWP values. It has a child input stream to which the actual reads are delegated.
- *
- * @author Thomas Wuerthinger
  */
 public class JDWPInputStream {
 

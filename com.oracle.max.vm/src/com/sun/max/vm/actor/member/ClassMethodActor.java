@@ -118,6 +118,11 @@ public abstract class ClassMethodActor extends MethodActor {
         return null;
     }
 
+    @Override
+    public final int codeSize() {
+        return code().length;
+    }
+
     private CiBitMap[] livenessMap;
 
     @Override

@@ -22,7 +22,9 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.debug.*;
+import static com.sun.c1x.util.Util.*;
+
+import com.oracle.max.criutils.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
 
@@ -64,6 +66,6 @@ public final class TypeEqualityCheck extends Guard {
 
     @Override
     public void print(LogStream out) {
-        out.print("typeEqualityCheck ").print(left).print(" ").print(right);
+        out.print("typeEqualityCheck ").print(valueString(left)).print(" ").print(valueString(right));
     }
 }

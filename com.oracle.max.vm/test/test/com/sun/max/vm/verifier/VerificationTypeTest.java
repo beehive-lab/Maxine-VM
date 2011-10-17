@@ -234,12 +234,12 @@ public class VerificationTypeTest extends VmTestCase {
     private static class TestClassC implements TestInterfaceC {
     }
 
-    private static interface TestInterfaceA {
+    private interface TestInterfaceA {
     }
 
-    private static interface TestInterfaceB extends TestInterfaceA {
+    private interface TestInterfaceB extends TestInterfaceA {
     }
 
-    private static interface TestInterfaceC {
+    private interface TestInterfaceC {
     }
 }

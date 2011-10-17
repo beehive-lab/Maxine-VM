@@ -192,7 +192,7 @@ public class CiUtil {
      * @return the Java name corresponding to {@code riType}
      */
     public static String toJavaName(RiType riType) {
-        return internalNameToJava(riType.name(), true);
+        return (riType == null) ? null : internalNameToJava(riType.name(), true);
     }
 
     public static String internalNameToJava(String name, boolean qualified) {
@@ -217,6 +217,16 @@ public class CiUtil {
                 return CiKind.fromPrimitiveOrVoidTypeChar(name.charAt(0)).javaName;
         }
     }
+
+    // Stub so that there are fewer merging-related changes
+    // TODO remove
+    public static String format(String format, RiMethod method, boolean arg) throws IllegalFormatException {
+        return format(format, method);
+    }
+    public static String format(String format, RiField field, boolean arg) throws IllegalFormatException {
+        return format(format, field);
+    }
+
     /**
      * Gets a string for a given method formatted according to a given format specification. A format specification is
      * composed of characters that are to be copied verbatim to the result and specifiers that denote an attribute of

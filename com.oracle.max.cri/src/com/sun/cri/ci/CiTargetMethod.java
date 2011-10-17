@@ -64,8 +64,6 @@ public class CiTargetMethod implements Serializable {
             StringBuilder sb = new StringBuilder();
             sb.append(pcOffset);
             sb.append("[<safepoint>]");
-            appendRefMap(sb, "registerMap", debugInfo.registerRefMap);
-            appendRefMap(sb, "stackMap", debugInfo.frameRefMap);
             appendDebugInfo(sb, debugInfo);
             return sb.toString();
         }
@@ -118,8 +116,6 @@ public class CiTargetMethod implements Serializable {
             sb.append(']');
 
             if (debugInfo != null) {
-                appendRefMap(sb, "stackMap", debugInfo.frameRefMap);
-                appendRefMap(sb, "registerMap", debugInfo.registerRefMap);
                 appendDebugInfo(sb, debugInfo);
             }
 
@@ -522,10 +518,18 @@ public class CiTargetMethod implements Serializable {
     }
 
     private static void appendDebugInfo(StringBuilder sb, CiDebugInfo info) {
-        if (info != null && info.hasFrame()) {
-            sb.append(" #locals=").append(info.frame().numLocals).append(" #expr=").append(info.frame().numStack);
-            if (info.frame().numLocks > 0) {
-                sb.append(" #locks=").append(info.frame().numLocks);
+        if (info != null) {
+            appendRefMap(sb, "stackMap", info.frameRefMap);
+            appendRefMap(sb, "registerMap", info.registerRefMap);
+            CiCodePos codePos = info.codePos;
+            if (codePos != null) {
+                CiUtil.appendLocation(sb.append(" "), codePos.method, codePos.bci);
+                if (info.hasFrame()) {
+                    sb.append(" #locals=").append(info.frame().numLocals).append(" #expr=").append(info.frame().numStack);
+                    if (info.frame().numLocks > 0) {
+                        sb.append(" #locks=").append(info.frame().numLocks);
+                    }
+                }
             }
         }
     }

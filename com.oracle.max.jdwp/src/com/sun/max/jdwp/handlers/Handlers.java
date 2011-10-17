@@ -25,7 +25,6 @@ package com.sun.max.jdwp.handlers;
 import com.sun.max.jdwp.data.*;
 
 /**
- * @author Thomas Wuerthinger
  *
  */
 public abstract class Handlers {

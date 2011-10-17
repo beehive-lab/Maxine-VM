@@ -36,8 +36,6 @@ import java.io.*;
  * class loaders {@link CLA} and {@link CLB} will load the class from there and
  * not delegate to the system class loader.
  *
- * @author Mick Jordan
- *
  */
 
 public class ClassLoaders {

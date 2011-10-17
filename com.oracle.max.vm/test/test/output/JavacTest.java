@@ -27,7 +27,7 @@ import java.lang.reflect.*;
 import java.net.*;
 
 import javax.tools.*;
-import javax.tools.JavaCompiler.*;
+import javax.tools.JavaCompiler.CompilationTask;
 
 public class JavacTest {
     public static void main(String[] args) throws Exception {

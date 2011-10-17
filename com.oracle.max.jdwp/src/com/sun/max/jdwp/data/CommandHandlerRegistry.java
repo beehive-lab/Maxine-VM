@@ -25,8 +25,6 @@ package com.sun.max.jdwp.data;
 
 /**
  * Implementors of this interface are capable of managing a set of {@link CommandHandler} objects.
- *
- * @author Thomas Wuerthinger
  */
 public interface CommandHandlerRegistry {
 

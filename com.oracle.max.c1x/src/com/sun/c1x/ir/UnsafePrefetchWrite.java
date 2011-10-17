@@ -22,7 +22,9 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.debug.*;
+import static com.sun.c1x.util.Util.*;
+
+import com.oracle.max.criutils.*;
 
 /**
  * The {@code UnsafePrefetchWrite} instruction represents a prefetch write.
@@ -45,6 +47,6 @@ public final class UnsafePrefetchWrite extends UnsafePrefetch {
 
     @Override
     public void print(LogStream out) {
-        out.print("UnsafePrefetchWrite.(").print(object()).print(", ").print(offset()).print(')');
+        out.print("UnsafePrefetchWrite.(").print(valueString(object())).print(", ").print(valueString(offset())).print(')');
     }
 }

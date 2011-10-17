@@ -22,7 +22,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.debug.*;
+import com.oracle.max.criutils.*;
+import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -71,13 +72,13 @@ public final class StorePointer extends PointerOp {
 
     @Override
     public void print(LogStream out) {
-        out.print("*(").print(pointer);
+        out.print("*(").print(Util.valueString(pointer));
         if (displacement() == null) {
-            out.print(" + ").print(offset());
+            out.print(" + ").print(Util.valueString(offset()));
         } else {
-            out.print(" + ").print(displacement()).print(" + (").print(index()).print(" * sizeOf(" + dataType.name() + "))");
+            out.print(" + ").print(Util.valueString(displacement())).print(" + (").print(Util.valueString(index())).print(" * sizeOf(" + dataType.name() + "))");
         }
-        out.print(") := ").print(value());
+        out.print(") := ").print(Util.valueString(value()));
     }
 
 }

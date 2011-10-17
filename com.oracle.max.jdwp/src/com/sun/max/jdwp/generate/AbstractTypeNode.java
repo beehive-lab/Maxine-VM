@@ -26,7 +26,6 @@ import java.io.*;
 
 /**
  * @author JDK7: jdk/make/tools/src/build/tools/jdwpgen
- * @author Thomas Wuerthinger
  */
 public abstract class AbstractTypeNode extends AbstractNamedNode implements TypeNode {
 

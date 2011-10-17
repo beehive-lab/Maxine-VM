@@ -28,6 +28,7 @@ package test.bench.java.util;
 
 import java.util.*;
 
+import test.bench.java.util.concurrent.*;
 import test.bench.util.*;
 
 /**

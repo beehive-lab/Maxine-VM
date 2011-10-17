@@ -27,8 +27,6 @@ import java.io.*;
 
 /**
  * This class represents a code location in terms of JDWP semantics.
- *
- * @author Thomas Wuerthinger
  */
 public class JDWPLocation {
 

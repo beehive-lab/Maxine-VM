@@ -28,6 +28,8 @@ import java.io.*;
 
 import com.sun.max.vm.classfile.constant.ConstantPool.*;
 
+import com.sun.max.vm.classfile.constant.ConstantPool.Tag;
+
 /**
  * Place holder for invalid constant pool indexes such as 0 and the indexes immediately after a {@link Tag#LONG} or
  * {@link Tag#DOUBLE} entry.

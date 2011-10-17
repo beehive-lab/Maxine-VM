@@ -25,7 +25,7 @@ package com.sun.c1x.ir;
 import static com.sun.c1x.ir.Value.Flag.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.debug.*;
+import com.oracle.max.criutils.*;
 import com.sun.c1x.opt.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;

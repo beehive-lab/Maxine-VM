@@ -27,8 +27,6 @@ package com.oracle.max.vm.ext.vma.log;
  * The default file name is {@value DEFAULT_LOGFILE} but this
  * can be changed using the {@value LOGFILE_PROPERTY} system property.
  *
- * @author Mick Jordan
- *
  */
 public class VMAdviceHandlerLogFile {
     public static final String LOGFILE_PROPERTY = "max.vma.logfile";

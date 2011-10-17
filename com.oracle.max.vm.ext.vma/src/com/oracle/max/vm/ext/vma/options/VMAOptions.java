@@ -229,7 +229,7 @@ public class VMAOptions {
     private static final String DEFAULT_HANDLER_CLASS = "com.oracle.max.vm.ext.vma.runtime.SyncLogVMAdviceHandler";
 
     private static boolean isImageBuilding(MaxineVM.Phase phase) {
-        return phase == MaxineVM.Phase.BOOTSTRAPPING || phase == MaxineVM.Phase.COMPILING;
+        return phase == MaxineVM.Phase.BOOTSTRAPPING || phase == MaxineVM.Phase.HOSTED_COMPILING;
     }
 
     public static String getHandlerClassName() {

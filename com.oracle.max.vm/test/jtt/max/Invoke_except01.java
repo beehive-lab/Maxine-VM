@@ -22,11 +22,10 @@
  */
 package jtt.max;
 
-import com.sun.max.vm.actor.member.ClassMethodActor;
-import com.sun.max.vm.value.Value;
-import com.sun.max.vm.value.ReferenceValue;
-
 import java.lang.reflect.*;
+
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.value.*;
 
 /*
 * @Harness: java

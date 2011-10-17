@@ -24,6 +24,8 @@ package com.sun.max.annotate;
 
 import java.lang.annotation.*;
 
+import com.sun.max.platform.*;
+
 /**
  * This annotation is used to filter out classes, methods and fields from the boot image
  * based on the target platform. For example, to specify that a method should only be

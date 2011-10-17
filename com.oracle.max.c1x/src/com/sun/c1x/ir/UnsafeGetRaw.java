@@ -22,7 +22,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.debug.*;
+import com.oracle.max.criutils.*;
+import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -72,9 +73,9 @@ public final class UnsafeGetRaw extends UnsafeRawOp {
 
     @Override
     public void print(LogStream out) {
-        out.print("UnsafeGetRaw.(base ").print(base());
+        out.print("UnsafeGetRaw.(base ").print(Util.valueString(base()));
         if (hasIndex()) {
-            out.print(", index ").print(index()).print(", log2_scale ").print(log2Scale());
+            out.print(", index ").print(Util.valueString(index())).print(", log2_scale ").print(log2Scale());
         }
         out.print(')');
     }

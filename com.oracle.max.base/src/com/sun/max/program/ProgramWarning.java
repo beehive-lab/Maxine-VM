@@ -31,7 +31,7 @@ public final class ProgramWarning {
      * Implemented by a client that can {@linkplain ProgramWarning#setHandler(Handler) register}
      * itself to handle program warnings instead of having them printed to {@link System#err}.
      */
-    public static interface Handler {
+    public interface Handler {
 
         /**
          * Handles display a given warning message.

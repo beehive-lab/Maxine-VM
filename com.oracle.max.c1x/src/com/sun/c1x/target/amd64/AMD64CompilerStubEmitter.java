@@ -112,7 +112,7 @@ public class AMD64CompilerStubEmitter {
 
     public CompilerStub emit(CiRuntimeCall runtimeCall) {
         emitStandardForward(null, runtimeCall);
-        String name = "stub-" + runtimeCall;
+        String name = "c1x-stub-" + runtimeCall;
         CiTargetMethod targetMethod = tasm.finishTargetMethod(name, comp.runtime, registerRestoreEpilogueOffset, true);
         Object stubObject = comp.runtime.registerCompilerStub(targetMethod, name);
         return new CompilerStub(null, runtimeCall.resultKind, stubObject, inArgs, outResult);
@@ -140,7 +140,7 @@ public class AMD64CompilerStubEmitter {
                 break;
         }
 
-        String name = "stub-" + stub;
+        String name = "c1x-stub-" + stub;
         CiTargetMethod targetMethod = tasm.finishTargetMethod(name, comp.runtime, registerRestoreEpilogueOffset, true);
         Object stubObject = comp.runtime.registerCompilerStub(targetMethod, name);
         return new CompilerStub(stub, stub.resultKind, stubObject, inArgs, outResult);
@@ -230,8 +230,9 @@ public class AMD64CompilerStubEmitter {
         assert template.marks.length == 0 : "marks not supported in compiler stubs";
         lasm.emitXirInstructions(null, template.fastPath, labels, operands, null);
         epilogue();
-        CiTargetMethod targetMethod = tasm.finishTargetMethod(template.name, comp.runtime, registerRestoreEpilogueOffset, true);
-        Object stubObject = comp.runtime.registerCompilerStub(targetMethod, template.name);
+        String stubName = "c1x-" + template.name;
+        CiTargetMethod targetMethod = tasm.finishTargetMethod(stubName, comp.runtime, registerRestoreEpilogueOffset, true);
+        Object stubObject = comp.runtime.registerCompilerStub(targetMethod, stubName);
         return new CompilerStub(null, template.resultOperand.kind, stubObject, inArgs, outResult);
     }
 

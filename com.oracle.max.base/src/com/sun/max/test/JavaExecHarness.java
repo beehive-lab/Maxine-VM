@@ -46,7 +46,17 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
         }
         @Override
         public String toString() {
-            return codeLiteral;
+            return codeLiteral + " (" + value() + ")";
+        }
+        public Object value() {
+            try {
+                String className = codeLiteral.substring(0, codeLiteral.lastIndexOf('.'));
+                String fieldName = codeLiteral.substring(codeLiteral.lastIndexOf('.') + 1);
+                Class klass = Class.forName(className);
+                return klass.getField(fieldName).get(null);
+            } catch (Exception e) {
+                throw ProgramError.unexpected(e);
+            }
         }
     }
 
@@ -77,7 +87,11 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
 
         Run(Object[] input, Object expected, Class<? extends Throwable> expectedException) {
             this.input = input;
-            expectedValue = expected;
+            if (expected instanceof CodeLiteral) {
+                expectedValue = ((CodeLiteral) expected).value();
+            } else {
+                expectedValue = expected;
+            }
             this.expectedException = expectedException;
         }
     }
@@ -598,6 +612,6 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
         if (thrown == null) {
             return resultToString(val, null);
         }
-        return resultToString(val, thrown.getClass());
+        return resultToString(val, thrown.getClass()) + "(" + thrown.getMessage() + ")";
     }
 }

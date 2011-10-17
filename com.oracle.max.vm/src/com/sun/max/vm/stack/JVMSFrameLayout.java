@@ -250,7 +250,7 @@ public abstract class JVMSFrameLayout extends VMFrameLayout {
             CiAddress value = new CiAddress(kind, fp, operandStackOffset(i));
             values[i + numLocals] = value;
         }
-        return new CiFrame(null, method, bci, values, numLocals, numStack, numLocks);
+        return new CiFrame(null, method, bci, false, values, numLocals, numStack, numLocks);
 
     }
 

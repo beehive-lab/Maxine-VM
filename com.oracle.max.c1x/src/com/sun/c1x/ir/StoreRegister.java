@@ -22,7 +22,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.debug.*;
+import com.oracle.max.criutils.*;
+import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -63,6 +64,6 @@ public final class StoreRegister extends Instruction {
 
     @Override
     public void print(LogStream out) {
-        out.print(register.toString()).print(" := ").print(value());
+        out.print(register.toString()).print(" := ").print(Util.valueString(value()));
     }
 }

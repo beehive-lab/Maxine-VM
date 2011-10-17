@@ -27,8 +27,6 @@ import java.io.*;
 
 /**
  * This class defines outgoing JDWP data. The object can serialize itself to a {@link JDWPOutputStream} and identify the type of command.
- *
- * @author Thomas Wuerthinger
  */
 public interface OutgoingData {
 

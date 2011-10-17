@@ -25,8 +25,6 @@ package test;
 /**
  * Variant of {@link Simple} that uses a static.
  *
- * @author Mick Jordan
- *
  */
 public class StaticSimple {
 

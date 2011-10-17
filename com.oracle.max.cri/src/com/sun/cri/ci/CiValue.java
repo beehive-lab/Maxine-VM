@@ -136,4 +136,24 @@ public abstract class CiValue implements Serializable {
     public final boolean isConstant0() {
         return isConstant() && ((CiConstant) this).asInt() == 0;
     }
+
+    /**
+     * Utility for specializing how a {@linkplain CiValue LIR operand} is formatted to a string.
+     * The {@linkplain Formatter#DEFAULT default formatter} returns the value of
+     * {@link CiValue#toString()}.
+     */
+    public static class Formatter {
+        public static final Formatter DEFAULT = new Formatter();
+
+        /**
+         * Formats a given operand as a string.
+         *
+         * @param operand the operand to format
+         * @return {@code operand} as a string
+         */
+        public String format(CiValue operand) {
+            return operand.toString();
+        }
+    }
+
 }

@@ -48,7 +48,7 @@ public class MaxRuntimeCalls {
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
-    public @interface C1X_RUNTIME_ENTRYPOINT {
+    public @interface MAX_RUNTIME_ENTRYPOINT {
         CiRuntimeCall runtimeCall();
     }
 
@@ -62,7 +62,7 @@ public class MaxRuntimeCalls {
 
     static {
         for (Method method : MaxRuntimeCalls.class.getMethods()) {
-            C1X_RUNTIME_ENTRYPOINT entry = method.getAnnotation(C1X_RUNTIME_ENTRYPOINT.class);
+            MAX_RUNTIME_ENTRYPOINT entry = method.getAnnotation(MAX_RUNTIME_ENTRYPOINT.class);
             if (entry != null) {
                 registerMethod(method, entry.runtimeCall());
             }
@@ -73,7 +73,7 @@ public class MaxRuntimeCalls {
         }
     }
 
-    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.UnwindException)
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.UnwindException)
     public static void runtimeUnwindException(Throwable throwable) throws Throwable {
         Throw.raise(throwable);
     }
@@ -94,7 +94,7 @@ public class MaxRuntimeCalls {
         }
     }
 
-    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.RegisterFinalizer)
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.RegisterFinalizer)
     public static void runtimeRegisterFinalizer(Object object) {
         verifyRefMaps();
         if (ObjectAccess.readClassActor(object).hasFinalizer()) {
@@ -102,84 +102,84 @@ public class MaxRuntimeCalls {
         }
     }
 
-    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.HandleException)
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.HandleException)
     public static void runtimeHandleException(Throwable throwable) throws Throwable {
         verifyRefMaps();
         Throw.raise(throwable);
     }
 
-    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.OSRMigrationEnd)
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.OSRMigrationEnd)
     public static void runtimeOSRMigrationEnd() {
         verifyRefMaps();
     }
 
-    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.JavaTimeMillis)
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.JavaTimeMillis)
     public static long runtimeJavaTimeMillis() {
         verifyRefMaps();
         return MaxineVM.native_currentTimeMillis();
     }
 
-    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.JavaTimeNanos)
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.JavaTimeNanos)
     public static long runtimeJavaTimeNanos() {
         verifyRefMaps();
         return MaxineVM.native_nanoTime();
     }
 
-    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.Debug)
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.Debug)
     public static void runtimeDebug() {
         verifyRefMaps();
         throw FatalError.unexpected("Debug");
     }
 
-    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmethicLrem)
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmethicLrem)
     public static long runtimeArithmethicLrem(long a, long b) {
         verifyRefMaps();
         throw FatalError.unexpected("Compiler should directly translate LREM");
     }
 
-    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmeticLdiv)
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmeticLdiv)
     public static long runtimeArithmeticLdiv(long a, long b) {
         verifyRefMaps();
         throw FatalError.unexpected("Compiler should directly translate LDIV");
     }
 
-    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmeticFrem)
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmeticFrem)
     public static float runtimeArithmeticFrem(float v1, float v2) {
         verifyRefMaps();
         return Snippets.floatRemainder(v1, v2);
     }
 
-    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmeticDrem)
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmeticDrem)
     public static double runtimeArithmeticDrem(double v1, double v2) {
         verifyRefMaps();
         return Snippets.doubleRemainder(v1, v2);
     }
 
-    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmeticCos)
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmeticCos)
     public static double runtimeArithmeticCos(double v) {
         verifyRefMaps();
         return Math.cos(v);
     }
 
-    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmeticTan)
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmeticTan)
     public static double runtimeArithmeticTan(double v) {
         verifyRefMaps();
         return Math.tan(v);
     }
 
-    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmeticLog)
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmeticLog)
     public static double runtimeArithmeticLog(double v) {
         verifyRefMaps();
         return Math.log(v);
     }
 
-    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmeticLog10)
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmeticLog10)
     public static double runtimeArithmeticLog10(double v) {
         verifyRefMaps();
         return Math.log10(v);
     }
 
-    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmeticSin)
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmeticSin)
     public static double runtimeArithmeticSin(double v) {
         verifyRefMaps();
         return Math.sin(v);
@@ -188,9 +188,24 @@ public class MaxRuntimeCalls {
     /**
      * The body of this method is provided by {@link Stubs#genUncommonTrapStub()}.
      */
-    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.Deoptimize)
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.Deoptimize)
     public static void uncommonTrap() {
         throw FatalError.unexpected("stub should be overwritten");
+    }
+
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.SetDeoptInfo)
+    public static void setDeoptInfo(Object info) {
+        // TODO
+    }
+
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.CreateNullPointerException)
+    public static Object createNullPointerException() {
+        return new NullPointerException();
+    }
+
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.CreateOutOfBoundsException)
+    public static Object createOutOfBoundsException(int index) {
+        return new ArrayIndexOutOfBoundsException(index);
     }
 
     @HOSTED_ONLY

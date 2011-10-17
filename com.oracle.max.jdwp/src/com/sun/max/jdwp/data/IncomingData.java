@@ -27,8 +27,6 @@ import java.io.*;
 
 /**
  * This class represents data coming from a JDWP stream.
- *
- * @author Thomas Wuerthinger
  */
 public interface IncomingData {
 

@@ -444,6 +444,13 @@ function run_build() {
             pushd ${source_dir} >/dev/null
             javac_input=/tmp/javacfiles.txt.$$
             find . -name *.java | grep -v 'package-info.java' >$javac_input
+            
+            input_lines=$(cat $javac_input | wc -l)
+            if [ $input_lines -eq 0 ]; then
+                echo "[no Java sources in $source_dir - skipping]"
+                continue
+            fi 
+            
 	        echo "Compiling Java sources in ${source_dir}..."
                 run ${javac} -g -J-Xmx1g -classpath $(jmax classpath $project) -d ${project_dest} @$javac_input 2>&1 | \
                    awk ' BEGIN                    { s=0; c=-1}
@@ -930,11 +937,11 @@ function run_hcfdis() {
 }
 
 #=======================================
-# 'c1x' command
+# 'olc' command
 #=======================================
 
-c1x_usage="[options] patterns..."
-c1x_help="process a list of methods with the C1X compiler
+olc_usage="[options] patterns..."
+olc_help="offline compile a list of methods
 
     See Patterns below for a description of the format expected for \"patterns...\"
 
@@ -942,15 +949,59 @@ c1x_help="process a list of methods with the C1X compiler
     for a compilation performed at runtime. The code produced by a compiler is sensitive
     to the compilation context such as what classes have been resolved etc.
 
-    Use \"max c1x -help\" to see what other options this command accepts.
+    Use \"max olc -help\" to see what other options this command accepts.
 
     --- Patterns ---
 
     $method_finder_pattern_help"
 
+function run_olc() {
+    olc_cp=$(jmax classpath):`echo $@ | grep '\-search\-cp' | sed 's:.*-search-cp=\([^ ]*\).*:\1:g'`
+    run ${jvm_exe} -cp ${olc_cp} com.oracle.max.vm.ext.maxri.Compile $@
+}
+
+#=======================================
+# 'c1x' command
+#=======================================
+
+c1x_usage="[options] patterns..."
+c1x_help="alias for 'olc -c=C1X ...'"
+
 function run_c1x() {
-    c1x_cp=$(jmax classpath):`echo $@ | grep '\-search\-cp' | sed 's:.*-search-cp=\([^ ]*\).*:\1:g'`
-    run ${jvm_exe} -cp ${c1x_cp} test.com.sun.max.vm.compiler.c1x.C1XTest $@
+    run_olc -c=C1X $@
+}
+
+#=======================================
+# 't1x' command
+#=======================================
+
+t1x_usage="[options] patterns..."
+t1x_help="alias for 'olc -c=t1x ...'"
+
+function run_t1x() {
+    run_olc -c=T1X $@
+}
+
+#=======================================
+# 'graal' command
+#=======================================
+
+graal_usage="[options] patterns..."
+graal_help="alias for 'olc -c=Graal ...'"
+
+function run_graal() {
+    run_olc -c=Graal $@
+}
+
+#=======================================
+# 'c1xgraal' command
+#=======================================
+
+c1xgraal_usage="[options] patterns..."
+c1xgraal_help="alias for 'olc -c=C1XGraal ...'"
+
+function run_c1xgraal() {
+    run_olc -c=C1XGraal $@
 }
 
 #=======================================

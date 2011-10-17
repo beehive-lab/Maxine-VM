@@ -2889,4 +2889,58 @@ public class AMD64Assembler extends AbstractAssembler {
         emitByte(imm16 & 0xff);
         emitByte(imm8);
     }
+
+    private void emitx87(int b1, int b2, int i) {
+        assert 0 <= i && i < 8 : "illegal stack offset";
+        emitByte(b1);
+        emitByte(b2 + i);
+    }
+
+    public void fld(CiAddress src) {
+        emitByte(0xDD);
+        emitOperandHelper(rax, src);
+    }
+
+    public void fld(int i) {
+        emitx87(0xD9, 0xC0, i);
+    }
+
+    public void fldln2() {
+        emitByte(0xD9);
+        emitByte(0xED);
+    }
+
+    public void fldlg2() {
+        emitByte(0xD9);
+        emitByte(0xEC);
+    }
+
+    public void fyl2x() {
+        emitByte(0xD9);
+        emitByte(0xF1);
+    }
+
+    public void fstp(CiAddress src) {
+        emitByte(0xDD);
+        emitOperandHelper(rbx, src);
+    }
+
+    public void fsin() {
+        emitByte(0xD9);
+        emitByte(0xFE);
+    }
+
+    public void fcos() {
+        emitByte(0xD9);
+        emitByte(0xFF);
+    }
+
+    public void fptan() {
+        emitByte(0xD9);
+        emitByte(0xF2);
+    }
+
+    public void fstp(int i) {
+        emitx87(0xDD, 0xD8, i);
+    }
 }

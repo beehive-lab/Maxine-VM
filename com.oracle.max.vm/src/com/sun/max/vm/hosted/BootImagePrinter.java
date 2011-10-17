@@ -28,9 +28,9 @@ import java.nio.*;
 
 import com.sun.max.program.option.*;
 import com.sun.max.vm.collect.*;
-import com.sun.max.vm.hosted.BootImage.*;
+import com.sun.max.vm.hosted.BootImage.FieldSection;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.layout.Layout.*;
+import com.sun.max.vm.layout.Layout.HeaderField;
 
 /**
  * A utility for printing the contents of a {@link BootImage}.

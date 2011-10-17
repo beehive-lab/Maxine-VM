@@ -25,7 +25,7 @@ package jtt.optimize;
 /*
  * Tests optimization of integer operations.
  * @Harness: java
- * @Runs: 0=80; 1=11; 2=12; 3=13; 4=64
+ * @Runs: 0=80; 1=11; 2=12; 3=13; 4=64; 5=0
  */
 public class Reduce_IntShift02 {
     public static int test(int arg) {
@@ -44,6 +44,9 @@ public class Reduce_IntShift02 {
         if (arg == 4) {
             return shift4(arg);
         }
+        if (arg == 5) {
+            return shift5(arg);
+        }
         return 0;
     }
     public static int shift0(int x) {
@@ -60,5 +63,8 @@ public class Reduce_IntShift02 {
     }
     public static int shift4(int x) {
         return x << 3 << 1;
+    }
+    public static int shift5(int x) {
+        return x << 16 << 17;
     }
 }

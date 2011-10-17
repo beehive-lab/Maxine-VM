@@ -30,7 +30,6 @@ import com.sun.max.jdwp.protocol.StackFrameCommands.*;
 import com.sun.max.jdwp.vm.proxy.*;
 
 /**
- * @author Thomas Wuerthinger
  *
  */
 public class StackFrameHandlers extends Handlers {

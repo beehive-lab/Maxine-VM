@@ -27,8 +27,9 @@
 package test.bench.java.util.concurrent;
 
 import java.util.concurrent.*;
-import test.bench.util.*;
+
 import test.bench.java.util.*;
+import test.bench.util.*;
 
 /**
  * Variant of {@link HashMap_get01} that uses a {@link ConcurrentHashMap}.

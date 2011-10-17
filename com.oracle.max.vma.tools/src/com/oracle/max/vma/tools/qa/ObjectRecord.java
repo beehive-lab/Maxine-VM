@@ -30,8 +30,6 @@ import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.RecordTyp
 /**
  * Maintains the basic information on an object instance encountered in a trace.
  *
- * @author Mick Jordan
- *
  */
 public class ObjectRecord {
     /**

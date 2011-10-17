@@ -25,8 +25,6 @@ package test;
 /**
  * 2D int array allocated incrementally, i.e. not via multinewarray
  *
- * @author Mick Jordan
- *
  */
 
 public class IntI2UArrayWrite {

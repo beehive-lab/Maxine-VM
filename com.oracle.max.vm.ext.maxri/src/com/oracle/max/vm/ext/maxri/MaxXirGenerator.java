@@ -191,7 +191,10 @@ public class MaxXirGenerator implements RiXirGenerator {
     private CiXirAssembler asm;
 
     @Override
-    public List<XirTemplate> buildTemplates(CiXirAssembler asm) {
+    public List<XirTemplate> makeTemplates(CiXirAssembler asm) {
+        if (!stubs.isEmpty()) {
+            return stubs;
+        }
 
         CiKind[] kinds = CiKind.values();
         this.asm = asm;
@@ -1884,5 +1887,15 @@ public class MaxXirGenerator implements RiXirGenerator {
     @Override
     public XirSnippet genNewObjectArrayClone(XirSite site, XirArgument newLength, XirArgument referenceArray) {
         return null;
+    }
+
+    @Override
+    public XirSnippet genTypeCheck(XirSite site, XirArgument object, XirArgument hub, RiType type) {
+        throw new InternalError("unimplemented");
+    }
+
+    @Override
+    public XirSnippet genMaterializeInstanceOf(XirSite site, XirArgument receiver, XirArgument hub, XirArgument trueValue, XirArgument falseValue, RiType type) {
+        throw new InternalError("unimplemented");
     }
 }

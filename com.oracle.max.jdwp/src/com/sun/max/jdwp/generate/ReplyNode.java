@@ -28,7 +28,6 @@ import java.util.*;
 
 /**
  * @author JDK7: jdk/make/tools/src/build/tools/jdwpgen
- * @author Thomas Wuerthinger
  */
 class ReplyNode extends AbstractTypeListNode {
 

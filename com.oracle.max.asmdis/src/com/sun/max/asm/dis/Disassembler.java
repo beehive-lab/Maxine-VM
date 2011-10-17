@@ -56,7 +56,7 @@ public abstract class Disassembler {
         Constructor con = disassemblerConstructors.get(key);
         if (con == null) {
             // Try word-width specific class first:
-            String packageName = Disassembler.class.getPackage().getName() + "." + isa.name().toLowerCase();
+            String packageName = Classes.getPackageName(Disassembler.class) + "." + isa.name().toLowerCase();
             String className = packageName + "." + isa.name() + wordWidth.numberOfBits + "Disassembler";
             Class<?> disasmClass = null;
             try {

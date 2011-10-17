@@ -92,7 +92,7 @@ public final class CodeCacheMetricsPrinter {
 
         for (TargetMethod targetMethod : runtimeCodeRegion.copyOfTargetMethods()) {
             ClassMethodActor methodActor = targetMethod.classMethodActor();
-            int bcSize = methodActor == null ? 0 : methodActor.code().length;
+            int bcSize = methodActor == null ? 0 : methodActor.codeSize();
             int mcSize = targetMethod.codeLength();
             MethodProfile profile = targetMethod.profile();
             int invocations = 0;

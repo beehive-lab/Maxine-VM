@@ -22,7 +22,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.debug.*;
+import com.oracle.max.criutils.*;
+import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -60,6 +61,6 @@ public final class NewTypeArray extends NewArray {
 
     @Override
     public void print(LogStream out) {
-        out.print("new ").print(elementKind().name()).print(" array [").print(length()).print(']');
+        out.print("new ").print(elementKind().name()).print(" array [").print(Util.valueString(length())).print(']');
     }
 }

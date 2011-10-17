@@ -24,7 +24,9 @@ package com.sun.c1x.debug;
 
 import static com.sun.c1x.debug.InstructionPrinter.InstructionLineColumn.*;
 
+import com.oracle.max.criutils.*;
 import com.sun.c1x.ir.*;
+import com.sun.c1x.util.*;
 
 /**
  * A {@link ValueVisitor} for {@linkplain #printInstruction(Value) printing}
@@ -137,7 +139,7 @@ public class InstructionPrinter {
              fillTo(USE.position + indentation, ' ').
              print("0").
              fillTo(VALUE.position + indentation, ' ').
-             print(instruction).
+             print(Util.valueString(instruction)).
              fillTo(INSTRUCTION.position + indentation, ' ');
         printInstruction(instruction);
         String flags = instruction.flagsToString();

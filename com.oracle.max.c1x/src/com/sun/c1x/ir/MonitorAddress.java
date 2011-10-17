@@ -22,8 +22,8 @@
  */
 package com.sun.c1x.ir;
 
+import com.oracle.max.criutils.*;
 import com.sun.c1x.*;
-import com.sun.c1x.debug.*;
 
 /**
  * Instruction that is used to refer to the address of an on-stack monitor.

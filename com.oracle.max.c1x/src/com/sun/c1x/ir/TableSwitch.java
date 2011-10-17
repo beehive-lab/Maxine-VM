@@ -23,10 +23,11 @@
 package com.sun.c1x.ir;
 
 import static com.sun.c1x.debug.InstructionPrinter.InstructionLineColumn.*;
+import static com.sun.c1x.util.Util.*;
 
 import java.util.*;
 
-import com.sun.c1x.debug.*;
+import com.oracle.max.criutils.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -76,7 +77,7 @@ public final class TableSwitch extends Switch {
         if (isSafepointPoll()) {
             out.print("(safepoint) ");
         }
-        out.println(value());
+        out.println(valueString(value()));
         int l = numberOfCases();
         for (int i = 0; i < l; i++) {
             INSTRUCTION.advance(out);

@@ -26,8 +26,6 @@ import com.sun.max.jdwp.constants.Error;
 
 /**
  * Class provided for convenience that represents a JDWP exception with the error code for not implemented functionality.
- *
- * @author Thomas Wuerthinger
  */
 public class JDWPNotImplementedException extends JDWPException {
 

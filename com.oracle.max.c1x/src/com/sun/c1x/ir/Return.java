@@ -22,7 +22,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.debug.*;
+import com.oracle.max.criutils.*;
+import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -68,7 +69,7 @@ public final class Return extends BlockEnd {
         if (result == null) {
             out.print("return");
         } else {
-            out.print(kind.typeChar).print("return ").print(result);
+            out.print(kind.typeChar).print("return ").print(Util.valueString(result));
         }
     }
 }

@@ -29,8 +29,6 @@ import java.lang.reflect.*;
 /**
  * This class is a wrapper around a long value representing a JDWP identifier.
  *
- * @author Thomas Wuerthinger
- *
  */
 public class ID {
 

@@ -26,8 +26,6 @@ package test;
  * Construction of a simple, non-inheriting object, but with a nested
  * constructor.
  *
- * @author Mick Jordan
- *
  */
 public class New0 {
 

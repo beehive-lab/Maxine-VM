@@ -23,11 +23,12 @@
 package com.sun.max.vm.classfile.constant;
 
 import static com.sun.max.lang.Classes.*;
+
+import java.lang.reflect.*;
+
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.type.*;
-
-import java.lang.reflect.*;
 
 /**
  * All "context free" pool constants are created by this singleton factory. Context free pool constants are those that

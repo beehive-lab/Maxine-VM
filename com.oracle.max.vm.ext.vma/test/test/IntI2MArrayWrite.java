@@ -25,8 +25,6 @@ package test;
 /**
  * 2D int array allocated using multinewarray.
  *
- * @author Mick Jordan
- *
  */
 public class IntI2MArrayWrite {
     private int[][] intArray;

@@ -28,8 +28,6 @@ import java.text.DecimalFormat;
 /**
  * Misc. time functions.
  *
- * @author Mick Jordan
- *
  */
 
 public class TimeFunctions {

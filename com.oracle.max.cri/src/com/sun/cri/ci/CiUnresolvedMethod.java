@@ -22,6 +22,8 @@
  */
 package com.sun.cri.ci;
 
+import java.util.*;
+
 import com.sun.cri.ri.*;
 
 /**
@@ -32,6 +34,7 @@ public class CiUnresolvedMethod implements RiMethod {
     public final String name;
     public final RiType holder;
     public final RiSignature signature;
+    public Map<Object, Object> compilerStorage;
 
     public CiUnresolvedMethod(RiType holder, String name, RiSignature signature) {
         this.name = name;
@@ -57,6 +60,10 @@ public class CiUnresolvedMethod implements RiMethod {
 
     public byte[] code() {
         throw unresolved("code()");
+    }
+
+    public int codeSize() {
+        return 0;
     }
 
     public int maxLocals() {
@@ -148,5 +155,37 @@ public class CiUnresolvedMethod implements RiMethod {
 
     public String intrinsic() {
         return null;
+    }
+
+    public int invocationCount() {
+        return -1;
+    }
+
+    public int exceptionProbability(int bci) {
+        return -1;
+    }
+
+    public RiTypeProfile typeProfile(int bci) {
+        return null;
+    }
+
+    public double branchProbability(int bci) {
+        return -1;
+    }
+
+    public double[] switchProbability(int bci) {
+        return null;
+    }
+
+    public Map<Object, Object> compilerStorage() {
+        if (compilerStorage == null) {
+            compilerStorage = new HashMap<Object, Object>();
+        }
+        return compilerStorage;
+    }
+
+    @Override
+    public int compiledCodeSize() {
+        return -1;
     }
 }

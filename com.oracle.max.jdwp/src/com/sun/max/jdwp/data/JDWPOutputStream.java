@@ -30,8 +30,6 @@ import com.sun.max.jdwp.constants.*;
 
 /**
  * Stream for writing JDWP values. The bytes are written to an underlying stream object.
- *
- * @author Thomas Wuerthinger
  */
 public class JDWPOutputStream {
 

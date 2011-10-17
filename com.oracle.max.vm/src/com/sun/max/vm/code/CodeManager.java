@@ -24,13 +24,14 @@ package com.sun.max.vm.code;
 
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.VMOptions.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
+import com.sun.max.vm.compiler.target.TargetBundleLayout.ArrayField;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;

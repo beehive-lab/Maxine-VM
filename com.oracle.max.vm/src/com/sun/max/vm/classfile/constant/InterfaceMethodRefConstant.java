@@ -37,7 +37,7 @@ import com.sun.max.vm.type.*;
  */
 public interface InterfaceMethodRefConstant extends PoolConstant<InterfaceMethodRefConstant>, MethodRefConstant<InterfaceMethodRefConstant> {
 
-    public static interface InterfaceMethodRefKey extends PoolConstantKey<InterfaceMethodRefConstant> {
+    public interface InterfaceMethodRefKey extends PoolConstantKey<InterfaceMethodRefConstant> {
 
         TypeDescriptor holder();
 

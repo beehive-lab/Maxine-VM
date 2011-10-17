@@ -39,8 +39,6 @@ import com.sun.max.vm.heap.sequential.semiSpace.SemiSpaceHeapScheme;
  * Tracking only occurs if the option {@link VMAJavaRunScheme#objectAnalysis} is set
  * and only once the VM reaches the {@link MaxineVM.Phase#RUNNING} phase.
  *
- * @author Mick Jordan
- *
  */
 
 public class VMASemiSpaceHeapScheme extends SemiSpaceHeapScheme {

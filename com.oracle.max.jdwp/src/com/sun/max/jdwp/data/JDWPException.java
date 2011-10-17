@@ -27,8 +27,6 @@ import com.sun.max.jdwp.constants.Error;
 /**
  * Class representing an exception during JDWP processing. There is a string message as well as a JDWP error code associated with this exception.
  * For possible values of the error code see {@link com.sun.max.jdwp.constants.Error}.
- *
- * @author Thomas Wuerthinger
  */
 public class JDWPException extends Exception {
 

@@ -125,7 +125,7 @@ public interface MaxStackFrame extends MaxEntity<MaxStackFrame> {
     /**
      * A stack frame holding the activation of a compiled method.
      */
-    public static interface Compiled extends MaxStackFrame {
+    public interface Compiled extends MaxStackFrame {
 
         VMFrameLayout layout();
 
@@ -167,13 +167,13 @@ public interface MaxStackFrame extends MaxEntity<MaxStackFrame> {
     /**
      * A stack frame holding the activation of native code about which little is known.
      */
-    public static interface Native extends MaxStackFrame {
+    public interface Native extends MaxStackFrame {
     }
 
     /**
      * A synthetic stack frame (non-VM) used to denote an incomplete stack walk.
      */
-    public static interface Truncated extends MaxStackFrame {
+    public interface Truncated extends MaxStackFrame {
 
         /**
          * The error that truncated the stack walk or {@code null} if the stack walk

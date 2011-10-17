@@ -34,8 +34,6 @@ import com.sun.max.vm.reference.Reference;
  *
  * An implementation is required to be thread safe by design or by explicit synchronisation.
  *
- * @author Mick Jordan
- *
  */
 public abstract class ObjectStateHandler {
 

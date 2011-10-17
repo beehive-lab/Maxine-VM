@@ -474,7 +474,7 @@ public final class DebugInfo {
             assert frameIndex != callerIndex;
             caller = decodeFrame(in, fpt, callerIndex, fa, regRefMap, frameRefMap, stackSlotAsAddress);
         }
-        return new CiFrame(caller, method, bci, values, numLocals, numStack, numLocks);
+        return new CiFrame(caller, method, bci, false, values, numLocals, numStack, numLocks);
     }
 
     private static CiValue toLiveSlot(FrameAccess fa, CiValue value) {

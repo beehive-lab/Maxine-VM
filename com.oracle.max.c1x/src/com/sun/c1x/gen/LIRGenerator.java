@@ -36,6 +36,7 @@ import com.sun.c1x.*;
 import com.sun.c1x.alloc.*;
 import com.sun.c1x.alloc.OperandPool.VariableFlag;
 import com.sun.c1x.debug.*;
+import com.oracle.max.criutils.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.ir.Value.Flag;

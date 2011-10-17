@@ -105,7 +105,7 @@ public class InspectionSettings {
      * An object that uses settings to configure itself and therefore wants to participate in the saving of settings to
      * a persistent store.
      */
-    public static interface SaveSettingsListener {
+    public interface SaveSettingsListener {
         /**
          * Notifies this object that it should save it settings.
          *

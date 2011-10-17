@@ -25,8 +25,6 @@ package test;
 /**
  * 3D int array allocated using multinewarray.
  *
- * @author Mick Jordan
- *
  */
 
 public class IntI3MArrayWrite {

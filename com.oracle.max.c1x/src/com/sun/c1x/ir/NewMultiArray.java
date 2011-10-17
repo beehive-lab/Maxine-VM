@@ -22,7 +22,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.debug.*;
+import com.oracle.max.criutils.*;
+import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -97,7 +98,7 @@ public final class NewMultiArray extends NewArray {
             if (i > 0) {
                 out.print(", ");
             }
-            out.print(dimensions[i]);
+            out.print(Util.valueString(dimensions[i]));
         }
         out.print("] ").print(CiUtil.toJavaName(elementKind));
     }

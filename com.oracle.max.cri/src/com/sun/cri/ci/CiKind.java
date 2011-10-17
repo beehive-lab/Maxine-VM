@@ -24,6 +24,8 @@ package com.sun.cri.ci;
 
 import static com.sun.cri.ci.CiKind.Flags.*;
 
+import com.sun.cri.ri.*;
+
 /**
  * Denotes the basic kinds of types in CRI, including the all the Java primitive types,
  * for example, {@link CiKind#Int} for {@code int} and {@link CiKind#Object}
@@ -133,6 +135,15 @@ public enum CiKind {
             return Int;
         }
         return this;
+    }
+
+    public static CiKind fromTypeString(String typeString) {
+        assert typeString.length() > 0;
+        final char first = typeString.charAt(0);
+        if (first == '[' || first == 'L') {
+            return CiKind.Object;
+        }
+        return CiKind.fromPrimitiveOrVoidTypeChar(first);
     }
 
     /**
@@ -245,30 +256,29 @@ public enum CiKind {
      * @return a formatted string for {@code value} based on this kind
      */
     public String format(Object value) {
-        StringBuilder sb = new StringBuilder();
         if (isObject()) {
             if (value == null) {
-                sb.append("null");
+                return "null";
             } else {
-                String s = "";
-                try {
-                    if (value instanceof String) {
-                        s = (String) value;
-                        if (s.length() > 50) {
-                            s = s.substring(0, 30) + "...";
-                        }
-                        s = " \"" + s + '"';
+                if (value instanceof String) {
+                    String s = (String) value;
+                    if (s.length() > 50) {
+                        return "\"" + s.substring(0, 30) + "...\"";
+                    } else {
+                        return " \"" + s + '"';
                     }
-                } catch (Exception e) {
+                } else if (value instanceof RiType) {
+                    return "class " + CiUtil.toJavaName((RiType) value);
+                } else {
+                    return CiUtil.getSimpleName(value.getClass(), true) + "@" + System.identityHashCode(value);
                 }
-                if (s.isEmpty()) {
-                    s = "@" + System.identityHashCode(value);
-                }
-                sb.append(CiUtil.getSimpleName(value.getClass(), true)).append(s);
             }
         } else {
-            sb.append(value);
+            return value.toString();
         }
-        return sb.toString();
+    }
+
+    public final char signatureChar() {
+        return Character.toUpperCase(typeChar);
     }
 }
