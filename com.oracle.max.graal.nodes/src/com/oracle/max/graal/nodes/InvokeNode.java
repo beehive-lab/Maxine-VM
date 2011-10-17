@@ -35,7 +35,7 @@ import com.sun.cri.ri.*;
 /**
  * The {@code InvokeNode} represents all kinds of method calls.
  */
-public final class InvokeNode extends AbstractCallNode implements ExceptionExit, Node.IterableNodeType {
+public final class InvokeNode extends AbstractCallNode implements Node.IterableNodeType {
 
     @Successor private FixedNode exceptionEdge;
 
@@ -64,7 +64,6 @@ public final class InvokeNode extends AbstractCallNode implements ExceptionExit,
         this.bci = bci;
     }
 
-    @Override
     public FixedNode exceptionEdge() {
         return exceptionEdge;
     }
