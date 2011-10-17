@@ -93,9 +93,9 @@ public final class IfNode extends ControlSplitNode implements Canonicalizable {
 
     @Override
     public boolean verify() {
-        assertTrue(compare() != null);
-        assertTrue(trueSuccessor() != null);
-        assertTrue(falseSuccessor() != null);
+        assertTrue(compare() != null, "missing compare");
+        assertTrue(trueSuccessor() != null, "missing trueSuccessor");
+        assertTrue(falseSuccessor() != null, "missing falseSuccessor");
         return super.verify();
     }
 

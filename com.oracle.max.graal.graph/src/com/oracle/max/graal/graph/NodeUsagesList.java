@@ -150,32 +150,8 @@ public final class NodeUsagesList implements Iterable<Node> {
         return false;
     }
 
-    public Iterable<Node> snapshot() {
-        return new Iterable<Node>() {
-
-            @Override
-            public Iterator<Node> iterator() {
-                return new Iterator<Node>() {
-                    private Node[] nodesCopy = Arrays.copyOf(NodeUsagesList.this.nodes, NodeUsagesList.this.size);
-                    private int index = 0;
-
-                    @Override
-                    public boolean hasNext() {
-                        return index < nodesCopy.length;
-                    }
-
-                    @Override
-                    public Node next() {
-                        return nodesCopy[index++];
-                    }
-
-                    @Override
-                    public void remove() {
-                        throw new UnsupportedOperationException();
-                    }
-                };
-            }
-        };
+    public Node[] snapshot() {
+        return Arrays.copyOf(NodeUsagesList.this.nodes, NodeUsagesList.this.size);
     }
 
     @Override
