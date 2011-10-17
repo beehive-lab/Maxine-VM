@@ -44,11 +44,6 @@ public final class HotSpotMethodUnresolved extends HotSpotMethod {
     }
 
     @Override
-    public int codeSize() {
-        return 0;
-    }
-
-    @Override
     public RiType holder() {
         return holder;
     }
@@ -56,29 +51,5 @@ public final class HotSpotMethodUnresolved extends HotSpotMethod {
     @Override
     public String toString() {
         return "HotSpotMethod<" + holder.name() + ". " + name + ", unresolved>";
-    }
-
-    public boolean hasCompiledCode() {
-        return false;
-    }
-
-    public int invocationCount() {
-        return -1;
-    }
-
-    public int exceptionProbability(int bci) {
-        return -1;
-    }
-
-    public RiTypeProfile typeProfile(int bci) {
-        return null;
-    }
-
-    public double branchProbability(int bci) {
-        return -1;
-    }
-
-    public double[] switchProbability(int bci) {
-        return null;
     }
 }

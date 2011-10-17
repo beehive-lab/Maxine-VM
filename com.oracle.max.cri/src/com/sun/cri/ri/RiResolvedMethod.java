@@ -42,6 +42,12 @@ public interface RiResolvedMethod extends RiMethod {
     byte[] code();
 
     /**
+     * Gets the size of the bytecode of the method, if the method {@linkplain #isResolved()} and has code.
+     * @return the size of the bytecode in bytes, or 0 if no bytecode is available
+     */
+    int codeSize();
+
+    /**
      * Gets the symbol used to link this method if it is native, otherwise {@code null}.
      */
     String jniSymbol();
