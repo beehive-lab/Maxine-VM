@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -55,7 +55,7 @@ public abstract class Backend {
         }
     }
 
-    public abstract FrameMap newFrameMap(RiMethod method, int numberOfLocks);
+    public abstract FrameMap newFrameMap(GraalCompilation compilation, RiMethod method, int numberOfLocks);
     public abstract LIRGenerator newLIRGenerator(GraalCompilation compilation);
     public abstract LIRAssembler newLIRAssembler(GraalCompilation compilation, TargetMethodAssembler tasm);
     public abstract AbstractAssembler newAssembler(RiRegisterConfig registerConfig);

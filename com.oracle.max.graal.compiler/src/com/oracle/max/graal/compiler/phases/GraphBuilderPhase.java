@@ -52,7 +52,7 @@ import com.sun.cri.ri.*;
 import com.sun.cri.ri.RiType.Representation;
 
 /**
- * The {@code GraphBuilder} class parses the bytecode of a method and builds the LIR graph.
+ * The {@code GraphBuilder} class parses the bytecode of a method and builds the IR graph.
  */
 public final class GraphBuilderPhase extends Phase {
 
