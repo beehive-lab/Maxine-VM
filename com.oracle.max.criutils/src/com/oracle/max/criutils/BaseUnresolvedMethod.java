@@ -20,23 +20,24 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.cri.ci;
+package com.oracle.max.criutils;
 
 import java.util.*;
 
+import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 /**
  * A implementation of {@link RiMethod} for an unresolved method.
  */
-public class CiUnresolvedMethod implements RiMethod {
+public class BaseUnresolvedMethod implements RiMethod {
 
     public final String name;
     public final RiType holder;
     public final RiSignature signature;
     public Map<Object, Object> compilerStorage;
 
-    public CiUnresolvedMethod(RiType holder, String name, RiSignature signature) {
+    public BaseUnresolvedMethod(RiType holder, String name, RiSignature signature) {
         this.name = name;
         this.holder = holder;
         this.signature = signature;

@@ -22,14 +22,14 @@
  */
 package com.sun.max.vm.classfile.constant;
 
-import com.sun.cri.ci.*;
+import com.oracle.max.criutils.*;
 import com.sun.cri.ri.*;
 
 /**
  * An {@linkplain RiField#isResolved() unresolved} method with a back reference
  * to the constant pool entry from which it was derived.
  */
-public class UnresolvedMethod extends CiUnresolvedMethod {
+public class UnresolvedMethod extends BaseUnresolvedMethod {
 
     public final ConstantPool constantPool;
     public final int cpi;
