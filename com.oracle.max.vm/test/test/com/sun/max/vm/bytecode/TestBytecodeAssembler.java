@@ -34,7 +34,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.classfile.ClassfileWriter.*;
+import com.sun.max.vm.classfile.ClassfileWriter.ClassInfo;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;

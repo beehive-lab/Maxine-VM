@@ -28,12 +28,6 @@ package test.bench.java.util;
 
 import java.util.*;
 
-/**
- * Simple test of {@link HashMap#get}. This class is used as a base for {@link SyncHashMap_get01} and {@link ConcHashMap_get01}.
- * To simplify support for the multi-threaded variants we delegate rather than inherit the shared hashmap setup code. This does
- * result in one extra object indirection, but it is consistent across all versions.
- */
-
 import test.bench.util.*;
 
 public class HashMap_get01 extends RunBench {

@@ -25,7 +25,7 @@ package com.sun.max.vm;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.MaxineVM.*;
+import com.sun.max.vm.MaxineVM.Phase;
 
 /**
  * A VM command line option that can accept a size (i.e. a number that has an associated kilobyte,

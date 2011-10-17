@@ -22,7 +22,9 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.debug.*;
+import static com.sun.c1x.util.Util.*;
+
+import com.oracle.max.criutils.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.bytecode.*;
@@ -68,6 +70,6 @@ public final class InstanceOf extends TypeCheck {
 
     @Override
     public void print(LogStream out) {
-        out.print("instanceof(").print(object()).print(") ").print(CiUtil.toJavaName(targetClass()));
+        out.print("instanceof(").print(valueString(object())).print(") ").print(CiUtil.toJavaName(targetClass()));
     }
 }

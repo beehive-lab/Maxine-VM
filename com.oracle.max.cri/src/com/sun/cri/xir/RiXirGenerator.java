@@ -83,6 +83,8 @@ public interface RiXirGenerator {
 
     XirSnippet genInstanceOf(XirSite site, XirArgument receiver, XirArgument hub, RiType type);
 
+    XirSnippet genMaterializeInstanceOf(XirSite site, XirArgument receiver, XirArgument hub, XirArgument trueValue, XirArgument falseValue, RiType type);
+
     XirSnippet genArrayLoad(XirSite site, XirArgument array, XirArgument index, CiKind elementKind, RiType elementType);
 
     XirSnippet genArrayStore(XirSite site, XirArgument array, XirArgument index, XirArgument value, CiKind elementKind, RiType elementType);
@@ -97,12 +99,15 @@ public interface RiXirGenerator {
 
     XirSnippet genGetClass(XirSite site, XirArgument xirArgument);
 
+    XirSnippet genTypeCheck(XirSite site, XirArgument object, XirArgument hub, RiType type);
+
     /**
-     * Construct the list of XIR templates using the given XIR assembler.
+     * Gets the list of XIR templates, using the given XIR assembler to create them if
+     * they haven't yet been created.
      *
      * @param asm the XIR assembler
      * @return the list of templates
      */
-    List<XirTemplate> buildTemplates(CiXirAssembler asm);
+    List<XirTemplate> makeTemplates(CiXirAssembler asm);
 
 }

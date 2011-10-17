@@ -39,7 +39,6 @@ import com.sun.max.jdwp.protocol.EventRequestCommands.ClearAllBreakpoints;
 import com.sun.max.jdwp.protocol.EventRequestCommands.Set;
 
 /**
- * @author Thomas Wuerthinger
  *
  */
 public class EventRequestHandlers extends Handlers {

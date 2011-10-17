@@ -25,14 +25,14 @@ package com.sun.max.vm.type;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
-import com.sun.max.collect.ChainedHashMapping.*;
+import com.sun.max.collect.ChainedHashMapping.Entry;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.hosted.*;
-import com.sun.max.vm.type.JavaTypeDescriptor.*;
+import com.sun.max.vm.type.JavaTypeDescriptor.WordTypeDescriptor;
 
 /**
  * A string description of a Java runtime type, e.g. a field's type, see #4.3.2.

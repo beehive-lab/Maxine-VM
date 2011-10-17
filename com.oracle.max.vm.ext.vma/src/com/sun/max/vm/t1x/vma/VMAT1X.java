@@ -33,6 +33,7 @@ import com.sun.cri.ci.CiStatistics;
 import com.sun.max.annotate.HOSTED_ONLY;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.member.ClassMethodActor;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.TargetMethod;
 
 /**
@@ -76,12 +77,13 @@ public class VMAT1X extends T1X {
     public void initialize(Phase phase) {
         instrumenting = VMAOptions.initialize(phase);
         altT1X.initialize(phase);
-        if (isHosted() && phase == Phase.COMPILING) {
+        if (isHosted() && phase == Phase.HOSTED_COMPILING) {
             super.initialize(phase);
+            RuntimeCompiler compiler = createBootCompiler();
             templateSource = BeforeTemplateSourceClass;
-            beforeTemplates = createTemplates(templateSource, altT1X, true, null);
+            beforeTemplates = createTemplates(compiler, templateSource, altT1X, true, null);
             templateSource = AfterTemplateSourceClass;
-            afterTemplates = createTemplates(templateSource, altT1X, true, null);
+            afterTemplates = createTemplates(compiler, templateSource, altT1X, true, null);
         } else {
             super.initialize(phase);
         }

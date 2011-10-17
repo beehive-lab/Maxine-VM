@@ -23,7 +23,6 @@
 package com.sun.max.jdwp.generate;
 
 /**
- * @author Thomas Wuerthinger
  */
 public class SimpleTypeNode extends AbstractSimpleTypeNode {
 

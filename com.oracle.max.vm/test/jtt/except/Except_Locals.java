@@ -35,7 +35,7 @@ public class Except_Locals {
             x = 2;
             b.toString();
         } catch (NullPointerException e) {
-            System.out.println(x);
+            //System.out.println(x);
             return x;
         }
         return -1;

@@ -23,8 +23,9 @@
 package com.sun.c1x.ir;
 
 import static com.sun.c1x.ir.Value.Flag.*;
+import static com.sun.c1x.util.Util.*;
 
-import com.sun.c1x.debug.*;
+import com.oracle.max.criutils.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
 
@@ -106,6 +107,6 @@ public final class StoreIndexed extends AccessIndexed {
 
     @Override
     public void print(LogStream out) {
-        out.print(array()).print('[').print(index()).print("] := ").print(value()).print(" (").print(kind.typeChar).print(')');
+        out.print(valueString(array())).print('[').print(valueString(index())).print("] := ").print(valueString(value())).print(" (").print(kind.typeChar).print(')');
     }
 }

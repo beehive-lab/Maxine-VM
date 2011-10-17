@@ -25,6 +25,8 @@ package test.com.sun.max.vm.verifier;
 import java.io.*;
 import java.util.*;
 
+import test.com.sun.max.vm.*;
+
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
@@ -32,8 +34,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.verifier.*;
-
-import test.com.sun.max.vm.*;
 
 /**
  * A command line interface for running the Maxine bytecode verifier over a set of methods.

@@ -32,7 +32,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
-import com.sun.max.program.ProgramWarning.*;
+import com.sun.max.program.ProgramWarning.Handler;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;

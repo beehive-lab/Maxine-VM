@@ -26,8 +26,6 @@ package com.oracle.max.vma.tools.qa;
 /**
  * Misc sorting methods.
  *
- * @author Mick Jordan
- *
  */
 
 import java.util.*;

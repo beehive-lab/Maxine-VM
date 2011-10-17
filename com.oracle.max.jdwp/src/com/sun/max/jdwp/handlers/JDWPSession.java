@@ -74,8 +74,6 @@ import com.sun.max.jdwp.vm.proxy.VMValue;
  * This class is respondible for handling a JDWP session in terms of managing the JDWP object space.
  * It contains utility functions for looking up the identifier of an object or looking up an object based on the identifier.
  *
- * @author Thomas Wuerthinger
- *
  */
 public class JDWPSession {
 

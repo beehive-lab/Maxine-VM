@@ -31,8 +31,6 @@ import com.sun.max.jdwp.data.ID.*;
  * Class representing a JDWPValue. Instances of this class can represent any possible JDWP value (see {@link com.sun.max.jdwp.constants.Tag}).
  * For simplicity, this class is implemented as a union. The methods starting with "as" return the specific representation of the object or null, if
  * the object is of a different representation.
- *
- * @author Thomas Wuerthinger
  */
 public class JDWPValue {
 

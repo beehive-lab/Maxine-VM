@@ -26,7 +26,7 @@ import java.util.*;
 
 import com.oracle.max.asm.*;
 import com.sun.c1x.*;
-import com.sun.c1x.debug.*;
+import com.oracle.max.criutils.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;

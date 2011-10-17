@@ -24,8 +24,6 @@ package com.sun.max.jdwp.data;
 
 /**
  * This class represents a JDWP reply packet. It is always associated with the incoming packet for which this packet is a reply.
- *
- * @author Thomas Wuerthinger
  */
 public final class ReplyPacket<IncomingData_Type extends IncomingData, OutgoingData_Type extends OutgoingData> {
 

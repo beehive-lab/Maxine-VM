@@ -24,7 +24,7 @@ package com.sun.max.vm;
 
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.MaxineVM.*;
+import com.sun.max.vm.MaxineVM.Phase;
 
 /**
  * A VM option that represents an integer, such as a tuning parameter or other

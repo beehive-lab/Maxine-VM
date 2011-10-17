@@ -30,6 +30,15 @@ package com.sun.cri.ri;
 public interface RiConstantPool {
 
     /**
+     * Makes sure that the type referenced by the specified constant pool entry is loaded and
+     * initialized. This can be used to compile time resolve a type. It works for field, method,
+     * or type constant pool entries.
+     * @param cpi the index of the constant pool entry that references the type
+     * @param opcode the opcode of the instruction that references the type
+     */
+    void loadReferencedType(int cpi, int opcode);
+
+    /**
      * Looks up a reference to a field. If {@code opcode} is non-negative, then resolution checks
      * specific to the JVM instruction it denotes are performed if the field is already resolved.
      * Should any of these checks fail, an {@linkplain RiField#isResolved() unresolved}

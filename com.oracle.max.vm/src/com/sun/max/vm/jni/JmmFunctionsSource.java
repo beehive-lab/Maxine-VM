@@ -22,9 +22,9 @@
  */
 package com.sun.max.vm.jni;
 
-import java.lang.management.*;
-
 import static com.sun.max.vm.jni.JmmFunctions.*;
+
+import java.lang.management.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;

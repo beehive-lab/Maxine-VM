@@ -22,8 +22,8 @@
  */
 package com.sun.max.vm.stack;
 
-import com.sun.max.vm.actor.member.ClassMethodActor;
-import com.sun.max.vm.value.Value;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.value.*;
 
 /**
  * This interface represents a visitor of Java frames on a stack.

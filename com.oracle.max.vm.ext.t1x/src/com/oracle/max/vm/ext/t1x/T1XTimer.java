@@ -22,7 +22,7 @@
  */
 package com.oracle.max.vm.ext.t1x;
 
-import com.sun.c1x.debug.*;
+import com.oracle.max.criutils.*;
 
 /**
  * This class contains timers that record the amount of time spent in various

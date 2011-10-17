@@ -22,7 +22,9 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.debug.*;
+import static com.sun.c1x.util.Util.*;
+
+import com.oracle.max.criutils.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -108,7 +110,7 @@ public final class UnsafeCast extends Instruction {
     @Override
     public void print(LogStream out) {
         out.print("unsafe_cast(").
-            print(value).
+            print(valueString(value)).
             print(") ").
             print(CiUtil.toJavaName(toType));
     }

@@ -25,8 +25,6 @@ package test;
 /**
  * Very simple test program to test the basic functionality of the immutability analysis.
  *
- * @author Mick Jordan
- *
  */
 public class Simple {
 

@@ -22,7 +22,7 @@
  */
 package com.oracle.max.vm.ext.t1x;
 
-import com.sun.c1x.*;
+import com.oracle.max.criutils.*;
 
 
 /**
@@ -37,7 +37,7 @@ public class T1XMetrics {
     public static int Bailouts;
 
     public static void print() {
-        C1XMetrics.printClassFields(T1XMetrics.class);
+        TTY.printFields(T1XMetrics.class);
 
     }
 }

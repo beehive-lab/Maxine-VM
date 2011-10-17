@@ -22,6 +22,7 @@
  */
 package com.sun.c1x.debug;
 
+import com.oracle.max.criutils.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;

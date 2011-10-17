@@ -197,7 +197,7 @@ public class TeleFields extends AbstractTeleVMHolder {
 
     // Checkstyle: resume field name check
 
-    public static interface InspectedMemberReifier<Member_Type extends Member> {
+    public interface InspectedMemberReifier<Member_Type extends Member> {
         /**
          * Reifies a {@link Method}, {@link Field} or {@link Constructor} annotated with {@link INSPECTED} found on a
          * classpath search.

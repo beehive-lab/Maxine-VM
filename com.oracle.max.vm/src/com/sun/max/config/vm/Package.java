@@ -53,7 +53,6 @@ public class Package extends BootImagePackage {
             "com.sun.max.vm.instrument.*",
             "com.sun.max.vm.jdk.**",
             "com.sun.max.vm.jni.*",
-            "com.sun.max.vm.jvmti.*",
             "com.sun.max.vm.layout.**",
             "com.sun.max.vm.management.*",
             "com.sun.max.vm.monitor.**",
@@ -72,7 +71,7 @@ public class Package extends BootImagePackage {
             "com.sun.max.vm.value.*",
             "com.sun.max.vm.verifier.**",
             "com.oracle.max.asm.**",
-            "com.sun.max.vm.t1x.**"
+            "com.oracle.max.vm.ext.t1x.**"
                         );
 
         registerThreadLocal(Compilation.class, "COMPILATION");

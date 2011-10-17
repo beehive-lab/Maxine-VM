@@ -22,7 +22,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.debug.*;
+import com.oracle.max.criutils.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.bytecode.*;
 
@@ -76,6 +76,6 @@ public final class NegateOp extends Instruction {
 
     @Override
     public void print(LogStream out) {
-        out.print("- ").print(x());
+        out.print("- ").print(Util.valueString(x()));
     }
 }

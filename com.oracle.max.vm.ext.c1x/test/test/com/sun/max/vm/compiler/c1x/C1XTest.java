@@ -31,10 +31,10 @@ import java.util.*;
 import test.com.sun.max.vm.*;
 
 import com.oracle.max.asm.*;
+import com.oracle.max.criutils.*;
 import com.oracle.max.vm.ext.c1x.*;
 import com.oracle.max.vm.ext.maxri.*;
 import com.sun.c1x.*;
-import com.sun.c1x.debug.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.xir.*;
 import com.sun.max.*;
@@ -71,8 +71,6 @@ public class C1XTest {
         "Print bailout exceptions.");
     private static final Option<Boolean> printBailoutSizeOption = options.newBooleanOption("print-bailout-size", false,
         "Print the size of bailed out methods, which helps choosing the simplest failure case for debugging..");
-    private static final Option<File> outFileOption = options.newFileOption("o", (File) null,
-        "A file to which output should be sent. If not specified, then output is sent to stdout.");
     private static final Option<Boolean> clinitOption = options.newBooleanOption("clinit", true,
         "Compile class initializer (<clinit>) methods");
     private static final Option<Boolean> failFastOption = options.newBooleanOption("fail-fast", false,
@@ -169,17 +167,6 @@ public class C1XTest {
             return;
         }
 
-        if (outFileOption.getValue() != null) {
-            try {
-                out = new PrintStream(new FileOutputStream(outFileOption.getValue()));
-                Trace.setStream(out);
-                System.setProperty(TTY.C1X_TTY_LOG_FILE_PROPERTY, outFileOption.getValue().getPath());
-            } catch (FileNotFoundException e) {
-                System.err.println("Could not open " + outFileOption.getValue() + " for writing: " + e);
-                System.exit(1);
-            }
-        }
-
         if (timingOption.getValue() > 0) {
             verboseOption.setValue(0);
             failFastOption.setValue(false);
@@ -215,7 +202,7 @@ public class C1XTest {
         // create MaxineRuntime
         CompilationBroker cb = vm().compilationBroker;
         final RuntimeCompiler compiler = useBaseline ? cb.baselineCompiler : cb.optimizingCompiler;
-        compiler.initialize(Phase.COMPILING);
+        compiler.initialize(Phase.HOSTED_COMPILING);
 
         String searchCp = searchCpOption.getValue();
         final Classpath classpath = searchCp == null || searchCp.length() == 0 ? Classpath.fromSystem() : new Classpath(searchCp);
@@ -359,7 +346,7 @@ public class C1XTest {
 
     private static Throwable compile(C1XCompiler compiler, MaxRuntime runtime, RiXirGenerator xirGenerator, MethodActor method, boolean printBailout, boolean timing) {
         final long startNs = System.nanoTime();
-        CiResult result = compiler.compileMethod(method, -1, xirGenerator, null);
+        CiResult result = compiler.compileMethod(method, -1, null);
         if (timing && result.bailout() == null) {
             long timeNs = System.nanoTime() - startNs;
             recordTime(method, result.statistics().bytecodeCount, result.statistics().nodeCount, timeNs);
@@ -519,7 +506,7 @@ public class C1XTest {
             TTY.println();
             for (String s : metrics) {
                 try {
-                    C1XMetrics.printField(C1XMetrics.class.getDeclaredField(s), true);
+                    TTY.printField(C1XMetrics.class.getDeclaredField(s), true);
                 } catch (NoSuchFieldException e) {
                     TTY.println("-----");
                 }

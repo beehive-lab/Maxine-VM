@@ -29,8 +29,6 @@ import java.io.*;
  * Objects implementing this interface are capable of sending JDWP output data as a command to the client. The object is
  * responsible for creating the packet that encapsulate the outgoing data and coming up with a new packet identifier.
  *
- * @author Thomas Wuerthinger
- *
  */
 public interface JDWPSender {
 

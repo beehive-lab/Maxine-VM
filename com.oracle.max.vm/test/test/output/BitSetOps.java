@@ -28,7 +28,7 @@ import com.sun.max.unsafe.*;
  * Testing bitset builtin. Count bits of a long value and print them, iterating from left to right and right to left.
  */
 public class BitSetOps {
-    static interface BitClosure {
+    interface BitClosure {
         void doBit(int bitIndex);
     }
 

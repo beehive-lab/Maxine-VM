@@ -21,7 +21,6 @@
  * questions.
  */
 /**
- * @author Thomas Wuerthinger
  *
  * JDWP server implementation that is generally usable. For the actual handling of commands, the classes refer to registered
  * CommandHandler instances.

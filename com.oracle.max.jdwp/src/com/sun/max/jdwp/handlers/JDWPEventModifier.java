@@ -36,7 +36,6 @@ import com.sun.max.jdwp.vm.proxy.ReferenceTypeProvider;
 import com.sun.max.jdwp.vm.proxy.ThreadProvider;
 
 /**
- * @author Thomas Wuerthinger
  */
 public interface JDWPEventModifier {
 

@@ -30,7 +30,6 @@ package com.sun.max.jdwp.data;
  *
  * @see com.sun.max.jdwp.data.IncomingData
  * @see com.sun.max.jdwp.data.OutgoingData
- * @author Thomas Wuerthinger
  */
 public interface CommandHandler<IncomingData_Type extends IncomingData, OutgoingData_Type extends OutgoingData> {
 

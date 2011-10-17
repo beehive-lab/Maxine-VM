@@ -30,7 +30,7 @@ import java.util.*;
 
 import com.oracle.max.cri.intrinsics.*;
 import com.sun.c1x.*;
-import com.sun.c1x.debug.*;
+import com.oracle.max.criutils.*;
 import com.sun.c1x.graph.ScopeData.ReturnBlock;
 import com.sun.c1x.intrinsics.*;
 import com.sun.c1x.ir.*;
@@ -2031,10 +2031,8 @@ public final class GraphBuilder {
         while ((b = scopeData.removeFromWorkList()) != null) {
             if (!b.wasVisited()) {
                 if (b.isOsrEntry()) {
-                    // this is the OSR entry block, set up edges accordingly
-                    setupOsrEntryBlock();
-                    // this is no longer the OSR entry block
-                    b.setOsrEntry(false);
+                    // OSR not yet supported
+                    Util.shouldNotReachHere();
                 }
                 b.setWasVisited(true);
                 // now parse the block
@@ -2057,64 +2055,6 @@ public final class GraphBuilder {
 
     private void popScopeForJsr() {
         scopeData = scopeData.parent;
-    }
-
-    private void setupOsrEntryBlock() {
-        assert compilation.isOsrCompilation();
-
-        int osrBCI = compilation.osrBCI;
-        BytecodeStream s = scopeData.stream;
-        RiOsrFrame frame = compilation.getOsrFrame();
-        s.setBCI(osrBCI);
-        s.next(); // XXX: why go to next bytecode?
-
-        // create a new block to contain the OSR setup code
-        ir.osrEntryBlock = new BlockBegin(osrBCI, ir.nextBlockNumber());
-        ir.osrEntryBlock.setOsrEntry(true);
-        ir.osrEntryBlock.setDepthFirstNumber(0);
-
-        // get the target block of the OSR
-        BlockBegin target = scopeData.blockAt(osrBCI);
-        assert target != null && target.isOsrEntry();
-
-        MutableFrameState state = target.stateBefore().copy();
-        ir.osrEntryBlock.setStateBefore(state);
-
-        killMemoryMap();
-        curBlock = ir.osrEntryBlock;
-        curState = state.copy();
-        lastInstr = ir.osrEntryBlock;
-
-        // create the entry instruction which represents the OSR state buffer
-        // input from interpreter / JIT
-        Instruction e = new OsrEntry();
-        e.setFlag(Value.Flag.NonNull, true);
-
-        for (int i = 0; i < state.localsSize(); i++) {
-            Value local = state.localAt(i);
-            Value get;
-            int offset = frame.getLocalOffset(i);
-            if (local != null) {
-                // this is a live local according to compiler
-                if (local.kind.isObject() && !frame.isLiveObject(i)) {
-                    // the compiler thinks this is live, but not the interpreter
-                    // pretend that it passed null
-                    get = appendConstant(CiConstant.NULL_OBJECT);
-                } else {
-                    Value oc = appendConstant(CiConstant.forInt(offset));
-                    get = append(new UnsafeGetRaw(local.kind, e, oc, 0, true));
-                }
-                state.storeLocal(i, get);
-            }
-        }
-
-        assert state.callerState() == null;
-        state.clearLocals();
-        // ATTN: assumption: state is not used further below, else add .immutableCopy()
-        Goto g = new Goto(target, state, false);
-        append(g);
-        ir.osrEntryBlock.setEnd(g);
-        target.mergeOrClone(ir.osrEntryBlock.end().stateAfter());
     }
 
     private BlockEnd iterateBytecodesForBlock(int bci, boolean inliningIntoCurrentBlock) {

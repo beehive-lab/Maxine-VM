@@ -47,8 +47,6 @@ import com.sun.max.vm.reference.Reference;
  * Ids for objects whose creation was not tracked (unseen) are negative and descend from {@value UNSEEN_ID_BASE}.
  * Zero is not a valid id; instead it denotes "no id assigned" or the null object.
  *
- * @author Mick Jordan
- *
  */
 public class BitSetObjectStateHandler extends ObjectStateHandler {
     private static final String MAX_IDS_PROPERTY = "max.vma.maxids";

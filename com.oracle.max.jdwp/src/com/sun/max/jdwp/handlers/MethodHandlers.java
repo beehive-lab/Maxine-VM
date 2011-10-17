@@ -30,7 +30,6 @@ import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.jdwp.vm.proxy.*;
 
 /**
- * @author Thomas Wuerthinger
  *
  */
 public class MethodHandlers extends Handlers {

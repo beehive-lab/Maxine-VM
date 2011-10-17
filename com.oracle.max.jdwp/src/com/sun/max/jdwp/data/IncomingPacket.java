@@ -25,8 +25,6 @@ package com.sun.max.jdwp.data;
 /**
  * Class representing an incoming JDWP packet. The two template parameters determine the types of the incoming and outgoing
  * data of the packet.
- *
- * @author Thomas Wuerthinger
  */
 public final class IncomingPacket<IncomingData_Type extends IncomingData, OutgoingData_Type extends OutgoingData> {
 

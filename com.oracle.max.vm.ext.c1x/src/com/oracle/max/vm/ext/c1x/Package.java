@@ -24,7 +24,7 @@ package com.oracle.max.vm.ext.c1x;
 
 import com.sun.max.config.*;
 
-public class Package extends BootImagePackage{
+public class Package extends BootImagePackage {
     public Package() {
     }
 }

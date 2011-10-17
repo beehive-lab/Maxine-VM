@@ -23,6 +23,7 @@
 package com.sun.cri.ri;
 
 import java.lang.reflect.*;
+import java.util.*;
 
 import com.sun.cri.ci.*;
 
@@ -63,6 +64,12 @@ public interface RiMethod {
      * @return the bytecode of the method or {@code null} if none is available
      */
     byte[] code();
+
+    /**
+     * Gets the size of the bytecode of the method, if the method {@linkplain #isResolved()} and has code.
+     * @return the size of the bytecode in bytes, or 0 if no bytecode is available
+     */
+    int codeSize();
 
     /**
      * Gets the {@link RiMethodProfile method data} for this method, which stores instrumentation,
@@ -190,4 +197,47 @@ public interface RiMethod {
      * Gets the intrinsic id of this method.
      */
     String intrinsic();
+
+    /**
+     * Provides an estimate of how often this method has been executed.
+     * @return The number of invocations, or -1 if this information isn't available.
+     */
+    int invocationCount();
+
+    /**
+     * Returns an estimate of hot often an exception was seen at the given bytecode.
+     * @return The estimate in percent (0-100), with 0 meaning never and 100 meaning always, or -1 if this information isn't available.
+     */
+    int exceptionProbability(int bci);
+
+    /**
+     * Returns the type profile of the instruction at the given byte code index.
+     * @return The RiTypeProfile information, or null if it isn't available.
+     */
+    RiTypeProfile typeProfile(int bci);
+
+    /**
+     * Returns an estimate of how often the branch at the given byte code was taken.
+     * @return The estimated probability, with 0.0 meaning never and 1.0 meaning always, or -1 if this information isn't available.
+     */
+    double branchProbability(int bci);
+
+    /**
+     * Returns an estimate of how often the branches of the switch at the given byte code were taken.
+     * @return The estimated probability, with 0.0 meaning never and 1.0 meaning always, or NULL if this information isn't available.
+     * The default case is specified at the last index.
+     */
+    double[] switchProbability(int bci);
+
+    /**
+     * Returns a map that the compiler can use to store objects that should survive the current compilation.
+     */
+    Map<Object, Object> compilerStorage();
+
+    /**
+     * Provides the size of this method's compiled code (if any). Constitutes a possible metric for inlining decisions.
+     *
+     * @return Size of compiled method or -1 if this method has not been compiled or this information is not available.
+     */
+    int compiledCodeSize();
 }

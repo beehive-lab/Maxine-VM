@@ -178,6 +178,6 @@ public class BytecodeSafepointsIterator implements BCIIterator {
             assert bci > prev;
             prev = bci;
         }
-        return true;
+        return nSafepoints >= 0;
     }
 }

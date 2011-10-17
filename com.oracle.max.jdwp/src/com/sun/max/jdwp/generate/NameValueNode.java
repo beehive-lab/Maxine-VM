@@ -25,7 +25,6 @@ package com.sun.max.jdwp.generate;
 
 /**
  * @author JDK7: jdk/make/tools/src/build/tools/jdwpgen
- * @author Thomas Wuerthinger
  */
 class NameValueNode extends NameNode {
 

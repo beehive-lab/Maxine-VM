@@ -38,8 +38,6 @@ import com.oracle.max.vm.ext.vma.runtime.TransientVMAdviceHandlerTypes.AdviceRec
  * <li>{@link ChunkedArray lists 8 elements and larger} stored as a list of chunks of size 8
  * </ul>
  *
- * @author Mick Jordan
- *
  */
 public class GrowableArrayImpl {
 

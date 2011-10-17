@@ -55,7 +55,7 @@ public interface SpecificLayout extends GeneralLayout {
     int getHubReferenceOffsetInCell();
 
     @HOSTED_ONLY
-    public static interface ObjectMirror {
+    public interface ObjectMirror {
 
         ClassActor classActor();
 
@@ -91,7 +91,7 @@ public interface SpecificLayout extends GeneralLayout {
      *
      */
     @HOSTED_ONLY
-    public static interface ObjectCellVisitor {
+    public interface ObjectCellVisitor {
 
         void visitField(int offsetInCell, Utf8Constant name, TypeDescriptor type, Value value);
 

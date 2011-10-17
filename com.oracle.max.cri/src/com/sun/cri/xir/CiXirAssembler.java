@@ -117,6 +117,8 @@ public abstract class CiXirAssembler {
      * A label that is the target of a control flow instruction.
      */
     public static class XirLabel {
+        public static final String TrueSuccessor = "TrueSuccessor";
+        public static final String FalseSuccessor = "FalseSuccessor";
         public final String name;
         public final int index;
         /**

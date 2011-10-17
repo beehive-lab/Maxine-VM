@@ -21,7 +21,6 @@
  * questions.
  */
 /**
- * @author Thomas Wuerthinger
  *
  * Handlers for JDWP commands that use the interfaces defined in {@link com.sun.max.jdwp.vm.core} to implement the JDWP protocol.
  * There is a class for each command set that contains inner classes for each command in that set. The base class is {@link Handlers}.

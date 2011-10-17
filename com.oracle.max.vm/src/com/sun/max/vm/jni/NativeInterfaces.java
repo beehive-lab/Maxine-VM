@@ -164,6 +164,7 @@ public final class NativeInterfaces {
      * @param nativeHeaderFile the C header file to parse
      * @param jniFunctionNames the list to which the matched function names are added
      */
+    @HOSTED_ONLY
     private static void parseJniFunctions(File nativeHeaderFile, List<String> jniFunctionNames) {
         final Pattern pattern = Pattern.compile("\\(JNICALL \\*([^\\)]+)\\)\\s*\\(JNIEnv\\s*\\*");
 

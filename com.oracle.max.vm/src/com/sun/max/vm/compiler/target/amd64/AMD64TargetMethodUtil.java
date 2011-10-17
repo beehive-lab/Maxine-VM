@@ -77,7 +77,7 @@ public final class AMD64TargetMethodUtil {
 
     public static boolean isPatchableCallSite(Address callSite) {
         // We only update the disp of the call instruction.
-        // C1X imposes that disp of the call be aligned to a word boundary.
+        // The compiler(s) ensure that disp of the call be aligned to a word boundary.
         // This may cause up to 7 nops to be inserted before a call.
         final Address endOfCallSite = callSite.plus(RIP_CALL_INSTRUCTION_LENGTH - 1);
         return callSite.plus(1).isWordAligned() ? true :

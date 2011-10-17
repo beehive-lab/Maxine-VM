@@ -24,7 +24,7 @@ package com.sun.max.vm;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.MaxineVM.*;
+import com.sun.max.vm.MaxineVM.Phase;
 
 /**
  * A VM option that represents a float.
@@ -43,7 +43,7 @@ public class VMFloatOption extends VMOption {
      * @param help the help text for the option
      */
     @HOSTED_ONLY
-    public VMFloatOption(String prefix,  float defaultValue, String help) {
+    public VMFloatOption(String prefix, float defaultValue, String help) {
         super(prefix, appendDefaultValue(help, String.valueOf(defaultValue)));
         value = defaultValue;
     }

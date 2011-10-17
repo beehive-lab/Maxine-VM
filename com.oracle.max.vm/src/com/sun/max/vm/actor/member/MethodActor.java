@@ -63,6 +63,8 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
     public static final byte[] NO_ANNOTATION_DEFAULT_BYTES = null;
     public static final byte[] NO_RUNTIME_VISIBLE_PARAMETER_ANNOTATION_BYTES = null;
 
+    private Map<Object, Object> compilerStorage;
+
     public MethodActor(Utf8Constant name,
                        SignatureDescriptor descriptor,
                        int flags,
@@ -490,6 +492,10 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
         return null;
     }
 
+    public int codeSize() {
+        return 0;
+    }
+
     public CiExceptionHandler[] exceptionHandlers() {
         return CiExceptionHandler.NONE;
     }
@@ -542,5 +548,36 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
 
     public RiSignature signature() {
         return descriptor();
+    }
+    public int invocationCount() {
+        return -1;
+    }
+
+    public int exceptionProbability(int bci) {
+        return -1;
+    }
+
+    public RiTypeProfile typeProfile(int bci) {
+        return null;
+    }
+
+    public double branchProbability(int bci) {
+        return -1;
+    }
+
+    public double[] switchProbability(int bci) {
+        return null;
+    }
+
+    public Map<Object, Object> compilerStorage() {
+        if (compilerStorage == null) {
+            compilerStorage = new HashMap<Object, Object>();
+        }
+        return compilerStorage;
+    }
+
+    @Override
+    public int compiledCodeSize() {
+        return -1;
     }
 }

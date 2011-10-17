@@ -28,7 +28,6 @@ import com.sun.max.jdwp.protocol.StringReferenceCommands.*;
 import com.sun.max.jdwp.vm.proxy.*;
 
 /**
- * @author Thomas Wuerthinger
  * 
  */
 public class StringReferenceHandlers extends Handlers {

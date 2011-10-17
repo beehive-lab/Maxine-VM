@@ -22,8 +22,8 @@
  */
 package test.com.sun.max.vm.jni;
 
-import test.com.sun.max.vm.*;
 import junit.framework.*;
+import test.com.sun.max.vm.*;
 
 import com.sun.max.ide.*;
 

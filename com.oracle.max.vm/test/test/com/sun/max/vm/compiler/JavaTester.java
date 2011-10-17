@@ -28,7 +28,7 @@ import java.util.*;
 import test.com.sun.max.vm.jtrun.*;
 
 import com.sun.max.io.*;
-import com.sun.max.io.Streams.*;
+import com.sun.max.io.Streams.Redirector;
 import com.sun.max.profile.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
@@ -78,6 +78,8 @@ public final class JavaTester {
     private static final Option<Boolean> REPORT_METRICS = options.newBooleanOption("report-metrics", false,
                     "When specified, the JavaTester will report metrics that were gathered while running " +
                     "the tests.");
+    private static final Option<String> FILTER = options.newStringOption("filter", null,
+                    "When specified, the JavaTester will only run tests that match (contains) this filter. Start filter with ~ to use a regex instead of 'contains'");
 
     private static boolean filesUpdated = false;
 
@@ -172,7 +174,7 @@ public final class JavaTester {
         final TestEngine engine = new TestEngine(harnesses);
         engine.setVerboseLevel(VERBOSE.getValue());
         engine.setLoadingPackages(LOADING_PACKAGES.getValue());
-        engine.parseAndRunTests(args);
+        engine.parseAndRunTests(args, FILTER.getValue());
         engine.report(System.out);
         Trace.line(0);
     }

@@ -22,7 +22,9 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.debug.*;
+import static com.sun.c1x.util.Util.*;
+
+import com.oracle.max.criutils.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 
@@ -52,6 +54,6 @@ public final class LogicOp extends Op2 {
 
     @Override
     public void print(LogStream out) {
-        out.print(x()).print(' ').print(Bytecodes.operator(opcode)).print(' ').print(y());
+        out.print(valueString(x())).print(' ').print(Bytecodes.operator(opcode)).print(' ').print(valueString(y()));
     }
 }

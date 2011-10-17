@@ -21,7 +21,6 @@
  * questions.
  */
 /**
- * @author Thomas Wuerthinger
  *
  * Contains classes that represent the data model the JDWP protocol is working on. Most notable is the class {@link ID} and its subclasses.
  */

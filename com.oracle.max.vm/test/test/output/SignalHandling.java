@@ -23,8 +23,7 @@
 package test.output;
 import java.util.concurrent.atomic.*;
 
-import sun.misc.Signal;
-import sun.misc.SignalHandler;
+import sun.misc.*;
 
 /**
  * Tests signal handling by raising a specified signal a specified number of times.

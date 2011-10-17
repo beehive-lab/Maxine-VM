@@ -35,7 +35,7 @@ public final class ProgramError extends Error {
      * itself to handle program errors instead of having them result in a {@link ProgramError}
      * instance raised.
      */
-    public static interface Handler {
+    public interface Handler {
 
         /**
          * Handles a given error condition. This method should never return normally.

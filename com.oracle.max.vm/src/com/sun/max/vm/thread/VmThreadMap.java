@@ -27,7 +27,7 @@ import java.util.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.hosted.BootImage.*;
+import com.sun.max.vm.hosted.BootImage.Header;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.monitor.modal.sync.JavaMonitorManager.VmLock;
 import com.sun.max.vm.monitor.modal.sync.nat.*;

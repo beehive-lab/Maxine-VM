@@ -22,6 +22,7 @@
  */
 package com.sun.cri.ri;
 
+import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.cri.ci.*;
@@ -38,15 +39,6 @@ public interface RiRuntime {
      * @return the constant pool for the method
      */
     RiConstantPool getConstantPool(RiMethod method);
-
-    /**
-     * Gets an {@link RiOsrFrame OSR frame} instance for the specified method
-     * at the specified OSR bytecode index.
-     * @param method the method
-     * @param bci the bytecode index
-     * @return an OSR frame that describes the layout of the frame
-     */
-    RiOsrFrame getOsrFrame(RiMethod method, int bci);
 
     /**
      * Checks whether the specified method is required to be inlined (for semantic reasons).
@@ -141,6 +133,9 @@ public interface RiRuntime {
      */
     RiType getTypeOf(CiConstant constant);
 
+
+    RiType getType(Class<?> clazz);
+
     /**
      * Returns true if the given type is a subtype of java/lang/Throwable.
      */
@@ -210,4 +205,23 @@ public interface RiRuntime {
      * Performs any runtime-specific conversion on the object used to describe the target of a call.
      */
     Object asCallTarget(Object target);
+
+    /**
+     * Returns the maximum absolute offset of a runtime call target from any position in the code cache or -1
+     * when not known or not applicable. Intended for determining the required size of address/offset fields.
+     */
+    long getMaxCallTargetOffset(CiRuntimeCall rtcall);
+
+    /**
+     * Provides the {@link RiMethod} for a {@link Method} obtained via reflection.
+     */
+    RiMethod getRiMethod(Method reflectionMethod);
+
+    /**
+     * Installs some given machine code as the implementation of a given method.
+     *
+     * @param method a method whose executable code is being modified
+     * @param code the code to be executed when {@code method} is called
+     */
+    void installMethod(RiMethod method, CiTargetMethod code);
 }

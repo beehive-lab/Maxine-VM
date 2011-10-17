@@ -27,7 +27,6 @@ import java.io.*;
 
 /**
  * @author JDK7: jdk/make/tools/src/build/tools/jdwpgen
- * @author Thomas Wuerthinger
  */
 abstract class AbstractGroupNode extends AbstractTypeListNode {
 

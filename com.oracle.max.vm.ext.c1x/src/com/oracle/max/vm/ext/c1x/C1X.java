@@ -30,6 +30,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.oracle.max.asm.*;
+import com.oracle.max.criutils.*;
 import com.oracle.max.vm.ext.maxri.*;
 import com.oracle.max.vm.ext.maxri.MaxXirGenerator.RuntimeCalls;
 import com.sun.c1x.*;
@@ -176,7 +177,7 @@ public class C1X implements RuntimeCompiler {
             optionsRegistered = true;
         }
 
-        if (isHosted() && phase == Phase.COMPILING) {
+        if (isHosted() && phase == Phase.HOSTED_COMPILING) {
             // Temporary work-around to support the @ACCESSOR annotation.
             GraphBuilder.setAccessor(ClassActor.fromJava(Accessor.class));
 
@@ -228,7 +229,7 @@ public class C1X implements RuntimeCompiler {
 
     public C1XCompiler compiler() {
         if (isHosted() && compiler == null) {
-            initialize(Phase.COMPILING);
+            initialize(Phase.HOSTED_COMPILING);
         }
         return compiler;
     }
@@ -236,7 +237,7 @@ public class C1X implements RuntimeCompiler {
     public final TargetMethod compile(final ClassMethodActor method, boolean install, CiStatistics stats) {
         CiTargetMethod compiledMethod;
         do {
-            compiledMethod = compiler().compileMethod(method, -1, xirGenerator, stats).targetMethod();
+            compiledMethod = compiler().compileMethod(method, -1, stats).targetMethod();
             Dependencies deps = DependenciesManager.validateDependencies(compiledMethod.assumptions());
             if (deps != Dependencies.INVALID) {
                 if (C1XOptions.PrintTimers) {
@@ -301,5 +302,10 @@ public class C1X implements RuntimeCompiler {
     @Override
     public String toString() {
         return getClass().getSimpleName();
+    }
+
+    @Override
+    public boolean matches(String compilerName) {
+        return compilerName.equals("C1X");
     }
 }

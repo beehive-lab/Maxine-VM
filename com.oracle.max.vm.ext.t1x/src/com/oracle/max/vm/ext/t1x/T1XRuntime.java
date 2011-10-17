@@ -26,7 +26,6 @@ import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 
 import com.oracle.max.cri.intrinsics.*;
-import com.sun.c1x.stub.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;

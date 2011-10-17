@@ -32,6 +32,8 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.graal.cri.*;
+import com.oracle.max.graal.graph.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.Call;
 import com.sun.cri.ci.CiTargetMethod.DataPatch;
@@ -58,7 +60,7 @@ import com.sun.max.vm.value.*;
  * This includes access to runtime features such as class and method representations,
  * constant pools, as well as some compiler tuning.
  */
-public class MaxRuntime implements RiRuntime {
+public class MaxRuntime implements GraalRuntime {
 
     private RiSnippets snippets;
 
@@ -78,10 +80,6 @@ public class MaxRuntime implements RiRuntime {
      */
     public RiConstantPool getConstantPool(RiMethod method) {
         return asClassMethodActor(method, "getConstantPool()").compilee().codeAttribute().cp;
-    }
-
-    public RiOsrFrame getOsrFrame(RiMethod method, int bci) {
-        throw new InternalError("unimplemented");
     }
 
     /**
@@ -420,5 +418,31 @@ public class MaxRuntime implements RiRuntime {
 
     public int getArrayLength(CiConstant array) {
         return Array.getLength(array.asObject());
+    }
+
+    public void lower(Node n, CiLoweringTool tool) {
+        // TODO(tw): Implement lowering phase for Maxine.
+    }
+
+    public Graph intrinsicGraph(RiMethod caller, int bci, RiMethod method, List< ? extends Node> parameters) {
+        // TODO(tw): Implement intrinsics for Maxine.
+        return null;
+    }
+
+    public long getMaxCallTargetOffset(CiRuntimeCall rtcall) {
+        // TODO(tw): Implement for Maxine.
+        return 0;
+    }
+
+    public RiMethod getRiMethod(Method reflectionMethod) {
+        return MethodActor.fromJava(reflectionMethod);
+    }
+
+    public void installMethod(RiMethod method, CiTargetMethod code) {
+        ClassMethodActor cma = (ClassMethodActor) method;
+        synchronized (cma) {
+            MaxTargetMethod tm = new MaxTargetMethod(cma, code, true);
+            cma.compiledState = new Compilations(null, tm);
+        }
     }
 }

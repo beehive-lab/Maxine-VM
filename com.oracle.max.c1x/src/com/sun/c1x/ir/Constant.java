@@ -24,7 +24,7 @@ package com.sun.c1x.ir;
 
 import static com.sun.c1x.C1XCompilation.*;
 
-import com.sun.c1x.debug.*;
+import com.oracle.max.criutils.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 

@@ -29,7 +29,7 @@ import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.alloc.Interval.*;
-import com.sun.c1x.debug.*;
+import com.oracle.max.criutils.*;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
@@ -2135,7 +2135,7 @@ public final class LinearScan {
             }
         }
 
-        return new CiFrame(callerFrame, state.scope().method, state.bci, values, state.localsSize(), state.stackSize(), state.locksSize());
+        return new CiFrame(callerFrame, state.scope().method, state.bci, false, values, state.localsSize(), state.stackSize(), state.locksSize());
     }
 
     private void computeDebugInfo(IntervalWalker iw, LIRInstruction op) {

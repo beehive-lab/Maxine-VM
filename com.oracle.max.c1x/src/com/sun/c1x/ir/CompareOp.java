@@ -22,7 +22,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.debug.*;
+import com.oracle.max.criutils.*;
+import com.sun.c1x.util.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 
@@ -53,10 +54,10 @@ public final class CompareOp extends Op2 {
 
     @Override
     public void print(LogStream out) {
-        out.print(x()).
+        out.print(Util.valueString(x())).
             print(' ').
             print(Bytecodes.operator(opcode)).
             print(' ').
-            print(y());
+            print(Util.valueString(y()));
     }
 }

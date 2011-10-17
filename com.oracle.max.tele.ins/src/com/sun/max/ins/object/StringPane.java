@@ -37,7 +37,7 @@ public final class StringPane extends InspectorScrollPane {
         return new StringPane(objectInspector.inspection(), new JTextArea(), stringSource);
     }
 
-    public static interface StringSource {
+    public interface StringSource {
         String fetchString();
     }
 

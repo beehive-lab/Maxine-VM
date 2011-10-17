@@ -29,7 +29,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.MaxineVM.*;
+import com.sun.max.vm.MaxineVM.Phase;
 
 /**
  * A class that represents an option to the virtual machine, including both the low-level,

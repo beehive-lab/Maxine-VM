@@ -27,6 +27,9 @@ import com.sun.max.config.*;
 public class Package extends BootImagePackage {
 
     public Package() {
-        super("com.sun.cri.**", "com.oracle.max.cri.**", "com.oracle.max.vm.ext.maxri.**");
+        super("com.sun.cri.**",
+              "com.oracle.max.cri.**",
+              "com.oracle.max.criutils.**",
+              "com.oracle.max.vm.ext.maxri.**");
     }
 }

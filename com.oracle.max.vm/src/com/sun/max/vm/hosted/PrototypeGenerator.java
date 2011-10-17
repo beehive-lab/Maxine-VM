@@ -26,6 +26,7 @@ import static com.sun.max.vm.VMConfiguration.*;
 
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
+import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.type.*;
@@ -63,7 +64,7 @@ public final class PrototypeGenerator {
     public GraphPrototype createGraphPrototype() {
         // This initial graph prototype ensures that ClassActors are created for
         // all objects hanging off static fields.
-        GraphPrototype graphPrototype = new GraphPrototype(null);
+        GraphPrototype graphPrototype = null;
 
         int numberOfClassActors = 0;
         int numberOfCompilationThreads = threadsOption.getValue();
@@ -82,6 +83,9 @@ public final class PrototypeGenerator {
 
         compiledPrototype.resolveAlias();
         assert compiledPrototype.invalidatedTargetMethods.isEmpty();
+
+        vmConfig().initializeSchemes(Phase.SERIALIZING_IMAGE);
+
         compiledPrototype.link();
 
         graphPrototype = new GraphPrototype(compiledPrototype);

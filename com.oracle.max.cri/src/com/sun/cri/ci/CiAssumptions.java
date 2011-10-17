@@ -36,7 +36,7 @@ public final class CiAssumptions implements Serializable {
     public abstract static class Assumption implements Serializable {
         /**
          * Apply an assumption processor to the assumption.
-         * 
+         *
          * @param processor the assumption processor to apply
          * @return true if a next assumption in a list should be fed to the processor.
          */
@@ -56,6 +56,15 @@ public final class CiAssumptions implements Serializable {
         public ConcreteSubtype(RiType context, RiType subtype) {
             this.context = context;
             this.subtype = subtype;
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + context.hashCode();
+            result = prime * result + subtype.hashCode();
+            return result;
         }
 
         @Override
@@ -83,6 +92,15 @@ public final class CiAssumptions implements Serializable {
         }
 
         @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + context.hashCode();
+            result = prime * result + method.hashCode();
+            return result;
+        }
+
+        @Override
         public boolean equals(Object obj) {
             if (obj instanceof ConcreteMethod) {
                 ConcreteMethod other = (ConcreteMethod) obj;
@@ -104,12 +122,28 @@ public final class CiAssumptions implements Serializable {
         return count;
     }
 
+    /**
+     * Records an assumption that the specified type has no finalizable subclasses.
+     *
+     * @param receiverType the type that is assumed to have no finalizable subclasses
+     * @return {@code true} if the assumption was recorded and can be assumed; {@code false} otherwise
+     */
+    public boolean recordNoFinalizableSubclassAssumption(RiType receiverType) {
+        return false;
+    }
+
     public void recordConcreteSubtype(RiType context, RiType subtype) {
         record(new ConcreteSubtype(context, subtype));
     }
 
     public void recordConcreteMethod(RiMethod context, RiMethod method) {
         record(new ConcreteMethod(context, method));
+    }
+
+    public void recordAll(CiAssumptions other) {
+        for (int i = 0; i < other.count; i++) {
+            record(other.list[i]);
+        }
     }
 
     private void record(Assumption assumption) {

@@ -24,8 +24,6 @@ package com.sun.max.jdwp.data;
 
 /**
  * JDWP exception with the additional ability to store an incoming packet. Used when there is a JDWP exception while reading a packet.
- *
- * @author Thomas Wuerthinger
  */
 public class JDWPIncomingPacketException extends JDWPException {
 

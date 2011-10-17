@@ -411,7 +411,7 @@ public class BootImagePackage implements Comparable<BootImagePackage>, Cloneable
                             parentPkgName = getPackageName(parentPkgName);
                         }
                     }
-                    assert pkg != null;
+                    assert pkg != null : pkgName;
                 }
 
                 add(pkg, pkgMap);

@@ -23,7 +23,7 @@
 package com.sun.c1x.ir;
 
 import com.oracle.max.cri.intrinsics.*;
-import com.sun.c1x.debug.*;
+import com.oracle.max.criutils.*;
 import com.sun.cri.ci.*;
 
 /**

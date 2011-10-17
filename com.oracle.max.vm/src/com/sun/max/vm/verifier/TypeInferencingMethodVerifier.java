@@ -502,7 +502,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
         new BytecodeScanner(parser).scan(new BytecodeBlock(codeAttribute().code()));
     }
 
-    static interface TargetVisitor {
+    interface TargetVisitor {
         void visit(TypeState successor);
     }
 

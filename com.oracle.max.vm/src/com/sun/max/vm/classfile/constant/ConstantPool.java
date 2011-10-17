@@ -994,4 +994,9 @@ public final class ConstantPool implements RiConstantPool {
     public CiConstant encoding() {
         return CiConstant.forObject(this);
     }
+
+    @Override
+    public void loadReferencedType(int cpi, int bytecode) {
+        // TODO(tw): Implement this for Maxine.
+    }
 }

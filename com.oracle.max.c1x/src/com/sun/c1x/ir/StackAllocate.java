@@ -22,7 +22,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.debug.*;
+import com.oracle.max.criutils.*;
+import com.sun.c1x.util.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ri.*;
 
@@ -69,6 +70,6 @@ public final class StackAllocate extends Instruction {
 
     @Override
     public void print(LogStream out) {
-        out.print("alloca(").print(size).print(")");
+        out.print("alloca(").print(Util.valueString(size)).print(")");
     }
 }

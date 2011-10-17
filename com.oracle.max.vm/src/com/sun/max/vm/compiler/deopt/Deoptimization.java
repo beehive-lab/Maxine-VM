@@ -773,9 +773,9 @@ public class Deoptimization extends VmOperation {
             pendingException = null;
         }
 
-        // On AMD64, both T1X and C1X agree on the registers used for return values (i.e. RAX and XMM0).
+        // On AMD64, all compilers agree on the registers used for return values (i.e. RAX and XMM0).
         // As such there is no current need to reconstruct an adapter frame between the lowest
-        // deoptimized frame and the frame of its caller. This may need to be revisted for
+        // deoptimized frame and the frame of its caller. This may need to be revisited for
         // other platforms so use an assertion for now.
         assert platform().isa == ISA.AMD64;
 

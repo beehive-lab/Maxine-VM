@@ -24,10 +24,13 @@ package com.sun.max.config.c1x;
 
 import java.util.*;
 
+import com.oracle.max.criutils.*;
+import com.oracle.max.vm.ext.c1x.*;
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.max.config.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.hosted.*;
 
 public class Package extends BootImagePackage {
@@ -45,5 +48,10 @@ public class Package extends BootImagePackage {
                 objectMap.put(CFGPrinter.cfgFileStream(), JavaPrototype.NULL);
             }
         }
+    }
+
+    @Override
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
+        return C1X.class.getName().equals(CompilationBroker.optName());
     }
 }

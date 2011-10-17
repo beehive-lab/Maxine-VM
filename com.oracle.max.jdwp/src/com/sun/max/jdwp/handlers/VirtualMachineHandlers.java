@@ -28,7 +28,6 @@ import com.sun.max.jdwp.protocol.VirtualMachineCommands.*;
 import com.sun.max.jdwp.vm.proxy.*;
 
 /**
- * @author Thomas Wuerthinger
  *
  */
 public class VirtualMachineHandlers extends Handlers {

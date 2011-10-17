@@ -21,7 +21,6 @@
  * questions.
  */
 /**
- * @author Thomas Wuerthinger
  *
  * WARNING: Do not modify source code in this package directly!
  * The contents of this package are all automatically generated using the program located in the {@link com.sun.max.jdwp.generate} package.

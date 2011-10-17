@@ -31,8 +31,6 @@ import com.oracle.max.vm.ext.vma.log.*;
 /**
  * Main class of the object analysis query application.
  *
- * @author Mick Jordan
- *
  */
 public class QueryAnalysis {
 

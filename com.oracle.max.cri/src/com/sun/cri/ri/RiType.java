@@ -225,4 +225,18 @@ public interface RiType {
     RiMethod resolveMethodImpl(RiMethod method);
 
     RiMethod uniqueConcreteMethod(RiMethod method);
+
+    /**
+     * Returns the instance fields declared in this class sorted by field offset.
+     * NOTE: ONLY AVAILABLE ON RESOLVED TYPES.
+     * @return an array of instance fields
+     */
+    RiField[] declaredFields();
+
+    /**
+     * Returns the java.lang.Class object representing this RiType instance or {@code null} if none exists.
+     * NOTE: ONLY AVAILABLE ON RESOLVED TYPES.
+     * @return the java.lang.Class object
+     */
+    Class<?> toJava();
 }

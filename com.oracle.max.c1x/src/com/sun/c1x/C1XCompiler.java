@@ -25,6 +25,7 @@ package com.sun.c1x;
 import java.util.*;
 
 import com.oracle.max.cri.intrinsics.*;
+import com.oracle.max.criutils.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.intrinsics.*;
 import com.sun.c1x.observer.*;
@@ -81,7 +82,7 @@ public class C1XCompiler extends ObservableCompiler {
         init();
     }
 
-    public CiResult compileMethod(RiMethod method, int osrBCI, RiXirGenerator xirGenerator, CiStatistics stats) {
+    public CiResult compileMethod(RiMethod method, int osrBCI, CiStatistics stats) {
         if (C1XOptions.PrintCFGToFile && cfgPrinterObserver == null) {
             synchronized (this) {
                 if (cfgPrinterObserver == null) {
@@ -118,7 +119,7 @@ public class C1XCompiler extends ObservableCompiler {
     private void init() {
         C1XIntrinsicImplementations.initialize(intrinsicRegistry);
 
-        final List<XirTemplate> xirTemplateStubs = xir.buildTemplates(backend.newXirAssembler());
+        final List<XirTemplate> xirTemplateStubs = xir.makeTemplates(backend.newXirAssembler());
 
         if (xirTemplateStubs != null) {
             for (XirTemplate template : xirTemplateStubs) {

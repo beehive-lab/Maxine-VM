@@ -25,7 +25,7 @@ package com.sun.max.vm;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
-import com.sun.max.vm.MaxineVM.*;
+import com.sun.max.vm.MaxineVM.Phase;
 
 /**
  * A VM option that supports string values passed to parameters, including options

@@ -85,7 +85,6 @@ public abstract class Buffer {
     protected void ensureSize(int length) {
         if (length >= data.length) {
             data = Arrays.copyOf(data, length * 4);
-            // C1XMetrics.CodeBufferCopies++;
         }
     }
 

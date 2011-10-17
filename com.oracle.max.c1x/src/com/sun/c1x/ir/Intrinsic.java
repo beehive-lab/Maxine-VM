@@ -22,8 +22,9 @@
  */
 package com.sun.c1x.ir;
 
+import com.oracle.max.criutils.*;
 import com.sun.c1x.*;
-import com.sun.c1x.debug.*;
+import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -170,7 +171,7 @@ public final class Intrinsic extends StateSplit {
             if (i > 0) {
                 out.print(", ");
             }
-            out.print(arguments()[i]);
+            out.print(Util.valueString(arguments()[i]));
         }
         out.print(')');
     }

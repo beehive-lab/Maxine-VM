@@ -559,7 +559,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     /**
      * Renderer for a textual label reference pointing at heap objects in the VM.
      */
-    private static interface ReferenceRenderer {
+    private interface ReferenceRenderer {
 
 
         /**

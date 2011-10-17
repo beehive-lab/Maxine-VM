@@ -349,7 +349,7 @@ public class CompiledPrototype extends Prototype {
     CompiledPrototype(int numberCompilerThreads) {
         assert instance == null;
         instance = this;
-        vmConfig().initializeSchemes(Phase.COMPILING);
+        vmConfig().initializeSchemes(Phase.HOSTED_COMPILING);
         numberOfCompilerThreads = numberCompilerThreads;
         Trace.line(1, "# compiler threads:" + numberOfCompilerThreads);
     }

@@ -31,7 +31,7 @@ import com.sun.c1x.alloc.Interval.RegisterBinding;
 import com.sun.c1x.alloc.Interval.RegisterPriority;
 import com.sun.c1x.alloc.Interval.SpillState;
 import com.sun.c1x.alloc.Interval.State;
-import com.sun.c1x.debug.*;
+import com.oracle.max.criutils.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;

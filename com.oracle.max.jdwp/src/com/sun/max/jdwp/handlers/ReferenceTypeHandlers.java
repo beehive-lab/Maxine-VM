@@ -33,7 +33,6 @@ import com.sun.max.jdwp.protocol.ReferenceTypeCommands.Methods.Reply;
 import com.sun.max.jdwp.vm.proxy.*;
 
 /**
- * @author Thomas Wuerthinger
  *
  */
 public class ReferenceTypeHandlers extends Handlers {

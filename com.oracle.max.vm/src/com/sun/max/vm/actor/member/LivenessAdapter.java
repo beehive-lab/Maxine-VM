@@ -73,12 +73,12 @@ public final class LivenessAdapter implements FrameModel {
                     }
                 }
 
-                livenessMap[0] = locals.copy();
+                livenessMap[0] = new CiBitMap(locals.toByteArray());
                 int previousPos = -1;
                 for (StackMapFrame frame : stackMapTable.getFrames(null)) {
                     int pos = frame.getBCI(previousPos);
                     frame.applyTo(this);
-                    livenessMap[pos] = locals.copy();
+                    livenessMap[pos] = new CiBitMap(locals.toByteArray());
                     previousPos = pos;
                 }
             }

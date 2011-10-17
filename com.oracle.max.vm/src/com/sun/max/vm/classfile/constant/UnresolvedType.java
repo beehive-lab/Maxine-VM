@@ -27,7 +27,8 @@ import com.sun.cri.ri.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.type.JavaTypeDescriptor.*;
+import com.sun.max.vm.type.JavaTypeDescriptor.AtomicTypeDescriptor;
+import com.sun.max.vm.type.JavaTypeDescriptor.WordTypeDescriptor;
 
 /**
  * An {@linkplain RiType#isResolved() unresolved} type. An unresolved type is
@@ -88,6 +89,11 @@ public abstract class UnresolvedType implements RiType {
             }
             return false;
         }
+
+        @Override
+        public Class< ? > toJava() {
+            return null;
+        }
     }
 
     /**
@@ -108,6 +114,11 @@ public abstract class UnresolvedType implements RiType {
                        accessingClass.equals(other.accessingClass);
             }
             return false;
+        }
+
+        @Override
+        public Class< ? > toJava() {
+            return null;
         }
     }
 
@@ -245,5 +256,10 @@ public abstract class UnresolvedType implements RiType {
     public CiKind getRepresentationKind(RiType.Representation r) {
         // all portions of a type are represented by objects in Maxine
         return CiKind.Object;
+    }
+
+    @Override
+    public RiField[] declaredFields() {
+        throw unresolved("fields()");
     }
 }

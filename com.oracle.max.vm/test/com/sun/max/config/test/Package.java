@@ -22,6 +22,8 @@
  */
 package com.sun.max.config.test;
 
+import test.com.sun.max.vm.jtrun.all.*;
+
 import com.sun.max.config.*;
 
 /**

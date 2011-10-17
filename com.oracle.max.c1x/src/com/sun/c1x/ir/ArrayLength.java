@@ -22,7 +22,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.debug.*;
+import com.oracle.max.criutils.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.bytecode.*;
@@ -85,6 +85,6 @@ public final class ArrayLength extends AccessArray {
 
     @Override
     public void print(LogStream out) {
-        out.print(array).print(".length");
+        out.print(Util.valueString(array)).print(".length");
     }
 }

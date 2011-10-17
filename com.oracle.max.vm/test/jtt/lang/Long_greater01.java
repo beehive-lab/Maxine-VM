@@ -20,12 +20,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package jtt.lang;
+
 /*
  * @Harness: java
  * @Runs: -9223372036854775808L=false; -2L=false; -1L=false; 0L=false; 1L=true; 2L=true; 9223372036854775807L=true
  */
-package jtt.lang;
-
 public final class Long_greater01 {
     private Long_greater01() {
     }

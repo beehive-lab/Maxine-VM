@@ -22,7 +22,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.debug.*;
+import com.oracle.max.criutils.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.bytecode.*;
@@ -109,7 +109,7 @@ public final class NullCheck extends StateSplit {
 
     @Override
     public void print(LogStream out) {
-        out.print("null_check(").print(object()).print(')');
+        out.print("null_check(").print(Util.valueString(object())).print(')');
         if (!canTrap()) {
             out.print(" (eliminated)");
         }

@@ -23,8 +23,8 @@
 package com.sun.max.vm.classfile.constant;
 
 import com.sun.max.annotate.*;
-import com.sun.max.vm.classfile.constant.ConstantPool.*;
-import com.sun.max.vm.classfile.constant.SymbolTable.*;
+import com.sun.max.vm.classfile.constant.ConstantPool.Tag;
+import com.sun.max.vm.classfile.constant.SymbolTable.Utf8ConstantEntry;
 
 /**
  * Canonical representation of strings.

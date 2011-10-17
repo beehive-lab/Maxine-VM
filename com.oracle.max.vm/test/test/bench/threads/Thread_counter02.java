@@ -26,8 +26,8 @@
  */
 package test.bench.threads;
 
+import test.bench.threads.Thread_counter01.Counter;
 import test.bench.util.*;
-import static test.bench.threads.Thread_counter01.*;
 
 /**
  *

@@ -66,7 +66,7 @@ public abstract class TargetMethod extends MemoryRegion {
     /**
      * Implemented by a client wanting to do something to a target method.
      */
-    public static interface Closure {
+    public interface Closure {
         /**
          * Processes a given target method.
          *
@@ -79,7 +79,7 @@ public abstract class TargetMethod extends MemoryRegion {
     /**
      * Call back for use with {@link #forEachCodePos(CodePosClosure, com.sun.max.unsafe.Pointer)}.
      */
-    public static interface CodePosClosure {
+    public interface CodePosClosure {
         /**
          * Processes a given bytecode position.
          *

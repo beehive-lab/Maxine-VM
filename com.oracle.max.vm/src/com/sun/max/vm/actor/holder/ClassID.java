@@ -208,7 +208,7 @@ public final class ClassID {
      * Inspector support.
      */
     @HOSTED_ONLY
-    public static interface Mapping {
+    public interface Mapping {
         ClassActor idToClassActor(int id);
     }
 

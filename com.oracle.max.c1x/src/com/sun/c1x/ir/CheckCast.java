@@ -22,7 +22,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.debug.*;
+import com.oracle.max.criutils.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.bytecode.*;
@@ -85,9 +85,9 @@ public final class CheckCast extends TypeCheck {
     @Override
     public void print(LogStream out) {
         out.print("checkcast(").
-            print(object()).
+            print(Util.valueString(object())).
             print(",").
-            print(targetClassInstruction()).
+            print(Util.valueString(targetClassInstruction())).
             print(") ").
             print(CiUtil.toJavaName(targetClass()));
     }

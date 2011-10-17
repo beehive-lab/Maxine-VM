@@ -124,7 +124,7 @@ public final class JavaPrototype extends Prototype {
     /**
      * Interface that must be implemented by external contributors to the {@linkplain #objectMap}.
      */
-    public static interface ObjectIdentityMapContributor {
+    public interface ObjectIdentityMapContributor {
         void initializeObjectIdentityMap(Map<Object, Object> objectMap);
     }
 

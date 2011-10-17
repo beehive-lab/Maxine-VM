@@ -36,7 +36,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.type.TypeDescriptor.*;
+import com.sun.max.vm.type.TypeDescriptor.TypeDescriptorEntry;
 
 /**
  * The {@code JavaTypeDescriptor} class collects together commonly used functionality associated

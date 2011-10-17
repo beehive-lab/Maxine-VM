@@ -24,7 +24,7 @@ package com.sun.c1x.observer;
 
 import java.util.*;
 
-import com.sun.c1x.debug.*;
+import com.oracle.max.criutils.*;
 
 /**
  * Base class for compilers that notify subscribed {@link CompilationObserver CompilationObservers} of

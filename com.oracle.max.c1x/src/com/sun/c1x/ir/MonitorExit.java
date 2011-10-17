@@ -22,7 +22,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.debug.*;
+import com.oracle.max.criutils.*;
+import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -59,6 +60,6 @@ public final class MonitorExit extends AccessMonitor {
 
     @Override
     public void print(LogStream out) {
-        out.print("exit monitor[").print(lockNumber).print("](").print(object()).print(')');
+        out.print("exit monitor[").print(lockNumber).print("](").print(Util.valueString(object())).print(')');
     }
 }

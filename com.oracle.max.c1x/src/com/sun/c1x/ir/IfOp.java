@@ -22,7 +22,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.debug.*;
+import com.oracle.max.criutils.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.bytecode.*;
 
@@ -114,14 +114,14 @@ public final class IfOp extends Op2 {
 
     @Override
     public void print(LogStream out) {
-        out.print(x()).
+        out.print(Util.valueString(x())).
             print(' ').
             print(condition().operator).
             print(' ').
-            print(y()).
+            print(Util.valueString(y())).
             print(" ? ").
-            print(trueValue()).
+            print(Util.valueString(trueValue())).
             print(" : ").
-            print(falseValue());
+            print(Util.valueString(falseValue()));
     }
 }

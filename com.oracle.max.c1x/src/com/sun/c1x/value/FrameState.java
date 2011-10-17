@@ -444,7 +444,7 @@ public abstract class FrameState {
      * The interface implemented by a client of {@link FrameState#forEachPhi(BlockBegin, PhiProcedure)} and
      * {@link FrameState#forEachLivePhi(BlockBegin, PhiProcedure)}.
      */
-    public static interface PhiProcedure {
+    public interface PhiProcedure {
         boolean doPhi(Phi phi);
     }
 
@@ -542,7 +542,7 @@ public abstract class FrameState {
     /**
      * The interface implemented by a client of {@link FrameState#forEachLiveStateValue(ValueProcedure)}.
      */
-    public static interface ValueProcedure {
+    public interface ValueProcedure {
         void doValue(Value value);
     }
 

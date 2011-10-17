@@ -22,7 +22,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.debug.*;
+import com.oracle.max.criutils.*;
+import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -86,7 +87,7 @@ public class ArrayCopy extends StateSplit {
 
     @Override
     public void print(LogStream out) {
-        out.print("arrayCopy ").print(src).print(" ").print(srcPos).print(" ");
-        out.print(dest).print(" ").print(destPos).print(" ").print(length);
+        out.print("arrayCopy ").print(Util.valueString(this)).print(" ").print(Util.valueString(srcPos)).print(" ");
+        out.print(Util.valueString(dest)).print(" ").print(Util.valueString(destPos)).print(" ").print(Util.valueString(length));
     }
 }

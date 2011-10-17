@@ -22,7 +22,9 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.debug.*;
+import static com.sun.c1x.util.Util.*;
+
+import com.oracle.max.criutils.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -74,6 +76,6 @@ public final class LoadIndexed extends AccessIndexed {
 
     @Override
     public void print(LogStream out) {
-        out.print(array()).print('[').print(index()).print("] (").print(kind.typeChar).print(')');
+        out.print(valueString(array())).print('[').print(valueString(index())).print("] (").print(kind.typeChar).print(')');
     }
 }

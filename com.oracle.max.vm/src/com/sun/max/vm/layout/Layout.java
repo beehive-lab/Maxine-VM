@@ -26,6 +26,7 @@ import static com.sun.max.vm.VMConfiguration.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 

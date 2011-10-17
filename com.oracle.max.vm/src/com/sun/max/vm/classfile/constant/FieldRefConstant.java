@@ -37,7 +37,7 @@ import com.sun.max.vm.type.*;
  */
 public interface FieldRefConstant extends PoolConstant<FieldRefConstant>, MemberRefConstant<FieldRefConstant> {
 
-    public static interface FieldRefKey extends PoolConstantKey<FieldRefConstant> {
+    public interface FieldRefKey extends PoolConstantKey<FieldRefConstant> {
 
         TypeDescriptor holder();
 

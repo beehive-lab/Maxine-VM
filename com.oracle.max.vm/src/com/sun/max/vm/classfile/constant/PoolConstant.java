@@ -28,7 +28,7 @@ import static com.sun.max.vm.classfile.constant.ConstantPool.Tag.*;
 import java.io.*;
 
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.classfile.constant.ConstantPool.*;
+import com.sun.max.vm.classfile.constant.ConstantPool.Tag;
 import com.sun.max.vm.type.*;
 
 /**

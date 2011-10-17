@@ -22,7 +22,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.debug.*;
+import com.oracle.max.criutils.*;
+import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -84,11 +85,11 @@ public final class StoreField extends AccessField {
 
     @Override
     public void print(LogStream out) {
-        out.print(object()).
+        out.print(Util.valueString(object())).
             print(".").
             print(field().name()).
             print(" := ").
-            print(value()).
+            print(Util.valueString(value())).
             print(" [type: ").print(CiUtil.format("%h.%n:%t", field())).
             print(']');
     }

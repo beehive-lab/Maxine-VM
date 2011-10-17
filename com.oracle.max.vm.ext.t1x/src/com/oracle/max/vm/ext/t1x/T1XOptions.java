@@ -24,7 +24,6 @@ package com.oracle.max.vm.ext.t1x;
 
 import java.util.*;
 
-import com.sun.c1x.debug.TTY.Filter;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 

@@ -29,8 +29,6 @@ import java.util.Random;
  * By default each thread builds a private list of {@link Element} data.
  * If {@link #leak} is set, data will leak to the main thread.
  *
- * @author Mick Jordan
- *
  */
 public class ThreadLocal01 extends Thread {
 

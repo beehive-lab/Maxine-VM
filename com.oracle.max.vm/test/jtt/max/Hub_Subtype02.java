@@ -22,7 +22,7 @@
  */
 package jtt.max;
 
-import com.sun.max.vm.actor.holder.ClassActor;
+import com.sun.max.vm.actor.holder.*;
 
 /*
  * @Harness: java

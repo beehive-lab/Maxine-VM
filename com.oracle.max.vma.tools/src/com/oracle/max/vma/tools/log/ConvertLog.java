@@ -43,9 +43,6 @@ import com.sun.max.program.*;
  * <li>-unbatch convert unordered (i.e. per thread batches) to time-ordered
  * </ul>
  *
- *
- * @author Mick Jordan
- *
  */
 public class ConvertLog {
 
@@ -95,7 +92,6 @@ public class ConvertLog {
 
     private static void processLogFile(String inFile, String outFile, Command command) throws IOException {
         BufferedReader r = null;
-        int lineCount = 1;
         try {
             r = new BufferedReader(new FileReader(inFile));
             out = outFile == null ? System.out : new PrintStream(
@@ -111,7 +107,6 @@ public class ConvertLog {
                 }
 
                 command.visitLine(line);
-                lineCount++;
             }
             command.finish();
         } finally {
