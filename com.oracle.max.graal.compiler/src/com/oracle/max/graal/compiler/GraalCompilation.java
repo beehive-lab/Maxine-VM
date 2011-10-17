@@ -402,7 +402,7 @@ public final class GraalCompilation {
                 lirAssembler.emitTraps();
 
                 CiTargetMethod targetMethod = assembler().finishTargetMethod(method, compiler.runtime, lirAssembler.registerRestoreEpilogueOffset, false);
-                if (graph.assumptions().count() > 0) {
+                if (!graph.assumptions().isEmpty()) {
                     targetMethod.setAssumptions(graph.assumptions());
                 }
 

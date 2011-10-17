@@ -291,7 +291,7 @@ public final class C1XCompilation {
             lirAssembler.emitTraps();
 
             CiTargetMethod targetMethod = assembler().finishTargetMethod(method, runtime, lirAssembler.registerRestoreEpilogueOffset, false);
-            if (assumptions.count() > 0) {
+            if (!assumptions.isEmpty()) {
                 targetMethod.setAssumptions(assumptions);
             }
 

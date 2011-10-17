@@ -115,11 +115,19 @@ public final class CiAssumptions implements Serializable {
         }
     }
 
+    /**
+     * Array with the assumptions. This field is directly accessed from C++ code in the Graal/HotSpot implementation.
+     */
     private Assumption[] list;
+
     private int count;
 
-    public int count() {
-        return count;
+    /**
+     * Returns whether any assumptions have been registered.
+     * @return {@code true} if at least one assumption has been registered, {@code false} otherwise.
+     */
+    public boolean isEmpty() {
+        return count == 0;
     }
 
     /**
@@ -132,17 +140,33 @@ public final class CiAssumptions implements Serializable {
         return false;
     }
 
+    /**
+     * Records that "subtype" is the only concrete subtype in the class hierarchy below "context".
+     * @param context the root of the subtree of the class hierarchy that this assumptions is about
+     * @param subtype the one concrete subtype
+     */
     public void recordConcreteSubtype(RiType context, RiType subtype) {
         record(new ConcreteSubtype(context, subtype));
     }
 
+    /**
+     * Records that "method" is the only possible concrete target for a virtual call to "context".
+     * @param context the method that is the target of the virtual call
+     * @param method the concrete method that is the only possible target for the virtual call
+     */
     public void recordConcreteMethod(RiMethod context, RiMethod method) {
         record(new ConcreteMethod(context, method));
     }
 
-    public void recordAll(CiAssumptions other) {
-        for (int i = 0; i < other.count; i++) {
-            record(other.list[i]);
+    /**
+     * Iterate over assumptions using an assumption processor.
+     * @param processor the processor that is called back for each assumption
+     */
+    public void visit(CiAssumptionProcessor processor) {
+        for (int i = 0; i < count; i++) {
+            if (!list[i].visit(processor)) {
+                return;
+            }
         }
     }
 
@@ -165,14 +189,6 @@ public final class CiAssumptions implements Serializable {
         }
         list[count] = assumption;
         count++;
-    }
-
-    public void visit(CiAssumptionProcessor processor) {
-        for (int i = 0; i < count; i++) {
-            if (!list[i].visit(processor)) {
-                return;
-            }
-        }
     }
 
 }
