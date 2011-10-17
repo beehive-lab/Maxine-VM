@@ -1456,28 +1456,25 @@ public class Canonicalizer extends DefaultValueVisitor {
     }
 
     public static CiConstant foldInvocation(RiRuntime runtime, RiMethod method, final Value[] args) {
-        CiConstant result = runtime.invoke(method, new CiMethodInvokeArguments() {
-            int i;
-            @Override
-            public CiConstant nextArg() {
-                if (i >= args.length) {
-                    return null;
-                }
-                Value arg = args[i++];
-                if (arg == null) {
-                    if (i >= args.length) {
+        if (runtime.isFoldable(method)) {
+            int length = method.signature().argumentCount(!Modifier.isStatic(method.accessFlags()));
+            CiConstant[] constantArgs = new CiConstant[length];
+            int z = 0;
+            for (int i = 0; i < args.length; ++i) {
+                if (args[i] != null) {
+                    if (!args[i].isConstant()) {
                         return null;
                     }
-                    arg = args[i++];
-                    assert arg != null;
+                    constantArgs[z++] = args[i].asConstant();
                 }
-                return arg.isConstant() ? arg.asConstant() : null;
             }
-        });
-        if (result != null) {
-            C1XMetrics.MethodsFolded++;
+            CiConstant result = runtime.fold(method, constantArgs);
+            if (result != null) {
+                C1XMetrics.MethodsFolded++;
+            }
+            return result;
         }
-        return result;
+        return null;
     }
 
     @Override

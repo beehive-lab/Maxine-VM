@@ -147,15 +147,23 @@ public interface RiRuntime {
     RiSnippets getSnippets();
 
     /**
+     * Checks whether this method is foldable (i.e. if it is a pure function without side effects).
+     * @param method the method that is checked
+     * @return whether the method is foldable
+     */
+    boolean isFoldable(RiMethod method);
+
+    /**
      * Attempts to compile-time evaluate or "fold" a call to a given method. A foldable method is a pure function
      * that has no side effects. Such methods can be executed via reflection when all their inputs are constants,
-     * and the resulting value is substituted for the method call.
+     * and the resulting value is substituted for the method call. May only be called on methods for which
+     * isFoldable(method) returns {@code true}.
      *
      * @param method the compiler interface method for which folding is being requested
      * @param args the arguments to the call
      * @return the result of the folding or {@code null} if no folding occurred
      */
-    CiConstant invoke(RiMethod method, CiMethodInvokeArguments args);
+    CiConstant fold(RiMethod method, CiConstant[] args);
 
     /**
      * Used by the canonicalizer to compare objects, since a given runtime might not want to expose the real objects to the compiler.
