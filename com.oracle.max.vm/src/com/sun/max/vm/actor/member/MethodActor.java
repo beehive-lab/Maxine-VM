@@ -49,7 +49,7 @@ import com.sun.max.vm.value.*;
 /**
  * Internal representations of Java methods.
  */
-public abstract class MethodActor extends MemberActor implements RiMethod {
+public abstract class MethodActor extends MemberActor implements RiResolvedMethod {
 
     /**
      * Extended {@linkplain Bytecodes#isStandard(int) opcode} for an {@linkplain INTRINSIC intrinsic} method.

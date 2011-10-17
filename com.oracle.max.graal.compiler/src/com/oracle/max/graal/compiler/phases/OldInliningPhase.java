@@ -85,7 +85,7 @@ public class OldInliningPhase extends Phase {
                         context.metrics.InlineConsidered++;
                     }
 
-                    RiMethod code = inlineInvoke(invoke, iterations, ratio);
+                    RiResolvedMethod code = inlineInvoke(invoke, iterations, ratio);
                     if (code != null) {
                         if (graph.getNodeCount() > GraalOptions.MaximumInstructionCount) {
                             break;
@@ -127,8 +127,8 @@ public class OldInliningPhase extends Phase {
         }
     }
 
-    private RiMethod inlineInvoke(InvokeNode invoke, int iterations, float ratio) {
-        RiMethod parent = invoke.stateAfter().method();
+    private RiResolvedMethod inlineInvoke(InvokeNode invoke, int iterations, float ratio) {
+        RiResolvedMethod parent = invoke.stateAfter().method();
         RiTypeProfile profile = parent.typeProfile(invoke.bci);
         if (GraalOptions.Intrinsify) {
             if (GraalOptions.Extend && intrinsicGraph(parent, invoke.bci, invoke.target, invoke.arguments()) != null) {
@@ -152,7 +152,7 @@ public class OldInliningPhase extends Phase {
         if (invoke.receiver().exactType() != null) {
             RiType exact = invoke.receiver().exactType();
             assert exact.isSubtypeOf(invoke.target().holder()) : exact + " subtype of " + invoke.target().holder();
-            RiMethod resolved = exact.resolveMethodImpl(invoke.target());
+            RiResolvedMethod resolved = exact.resolveMethodImpl(invoke.target());
             if (checkTargetConditions(resolved, iterations) && checkSizeConditions(parent, iterations, resolved, invoke, profile, ratio)) {
                 return resolved;
             }
@@ -169,7 +169,7 @@ public class OldInliningPhase extends Phase {
             }
         }
 
-        RiMethod concrete = holder.uniqueConcreteMethod(invoke.target);
+        RiResolvedMethod concrete = holder.uniqueConcreteMethod(invoke.target);
         if (concrete != null) {
             if (checkTargetConditions(concrete, iterations) && checkSizeConditions(parent, iterations, concrete, invoke, profile, ratio)) {
                 if (GraalOptions.TraceInlining) {
@@ -245,12 +245,6 @@ public class OldInliningPhase extends Phase {
             }
             return false;
         }
-        if (!invoke.target.isResolved()) {
-            if (GraalOptions.TraceInlining) {
-                TTY.println("not inlining %s because the invoke target is unresolved", methodName(invoke.target, invoke));
-            }
-            return false;
-        }
         if (invoke.predecessor() == null) {
             if (GraalOptions.TraceInlining) {
                 TTY.println("not inlining %s because the invoke is dead code", methodName(invoke.target, invoke));
@@ -266,19 +260,20 @@ public class OldInliningPhase extends Phase {
     }
 
     private boolean checkTargetConditions(RiMethod method, int iterations) {
-        if (!method.isResolved()) {
+        if (!(method instanceof RiResolvedMethod)) {
             if (GraalOptions.TraceInlining) {
                 TTY.println("not inlining %s because it is unresolved", methodName(method));
             }
             return false;
         }
-        if (Modifier.isNative(method.accessFlags())) {
+        RiResolvedMethod resolvedMethod = (RiResolvedMethod) method;
+        if (Modifier.isNative(resolvedMethod.accessFlags())) {
             if (GraalOptions.TraceInlining) {
                 TTY.println("not inlining %s because it is a native method", methodName(method));
             }
             return false;
         }
-        if (Modifier.isAbstract(method.accessFlags())) {
+        if (Modifier.isAbstract(resolvedMethod.accessFlags())) {
             if (GraalOptions.TraceInlining) {
                 TTY.println("not inlining %s because it is an abstract method", methodName(method));
             }
@@ -309,12 +304,12 @@ public class OldInliningPhase extends Phase {
 
     public static final Map<RiMethod, Integer> parsedMethods = new HashMap<RiMethod, Integer>();
 
-    private boolean checkSizeConditions(RiMethod caller, int iterations, RiMethod method, InvokeNode invoke, RiTypeProfile profile, float adjustedRatio) {
+    private boolean checkSizeConditions(RiMethod caller, int iterations, RiResolvedMethod method, InvokeNode invoke, RiTypeProfile profile, float adjustedRatio) {
         int maximumSize = GraalOptions.MaximumTrivialSize;
         int maximumCompiledSize = GraalOptions.MaximumTrivialCompSize;
         double ratio = 0;
         if ((profile != null && profile.count > 0) || !GraalOptions.UseBranchPrediction) {
-            RiMethod parent = invoke.stateAfter().method();
+            RiResolvedMethod parent = invoke.stateAfter().method();
             if (GraalOptions.ProbabilityAnalysis) {
                 ratio = invoke.probability();
             } else {
@@ -422,10 +417,10 @@ public class OldInliningPhase extends Phase {
         return null;
     }
 
-    private void inlineMethod(InvokeNode invoke, RiMethod method) {
+    private void inlineMethod(InvokeNode invoke, RiResolvedMethod method) {
         CompilerGraph graph = null;
         if (GraalOptions.Intrinsify) {
-            RiMethod parent = invoke.stateAfter().method();
+            RiResolvedMethod parent = invoke.stateAfter().method();
             if (GraalOptions.Extend) {
                 graph = (CompilerGraph) intrinsicGraph(parent, invoke.bci, method, invoke.arguments());
             }

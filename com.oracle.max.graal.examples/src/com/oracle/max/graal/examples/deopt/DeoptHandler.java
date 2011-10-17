@@ -59,7 +59,7 @@ public class DeoptHandler {
         System.out.printf("Deoptimization: %s@%d", method.name(), bci);
         int p = 0;
         System.out.print("\nArguments: ");
-        int argCount = method.signature().argumentCount(!Modifier.isStatic(method.accessFlags()));
+        int argCount = method.signature().argumentCount(!Modifier.isStatic(((RiResolvedMethod) method).accessFlags()));
         for (int i = 0; i < argCount; i++) {
             System.out.printf("%s ", values[p++]);
         }

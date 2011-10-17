@@ -22,15 +22,12 @@
  */
 package com.oracle.max.graal.hotspot;
 
-import java.util.*;
-
 import com.sun.cri.ri.*;
 
 public abstract class HotSpotMethod extends CompilerObject implements RiMethod {
 
     protected RiType holder;
     protected String name;
-    public Map<Object, Object> compilerStorage;
 
     protected HotSpotMethod(Compiler compiler) {
         super(compiler);
@@ -44,13 +41,5 @@ public abstract class HotSpotMethod extends CompilerObject implements RiMethod {
     @Override
     public final String name() {
         return name;
-    }
-
-    @Override
-    public Map<Object, Object> compilerStorage() {
-        if (compilerStorage == null) {
-            compilerStorage = new HashMap<Object, Object>();
-        }
-        return compilerStorage;
     }
 }

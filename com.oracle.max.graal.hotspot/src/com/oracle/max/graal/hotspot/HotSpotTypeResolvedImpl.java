@@ -172,9 +172,9 @@ public final class HotSpotTypeResolvedImpl extends HotSpotType implements HotSpo
     }
 
     @Override
-    public RiMethod resolveMethodImpl(RiMethod method) {
+    public RiResolvedMethod resolveMethodImpl(RiResolvedMethod method) {
         assert method instanceof HotSpotMethod;
-        return compiler.getVMEntries().RiType_resolveMethodImpl(this, method.name(), method.signature().asString());
+        return (RiResolvedMethod) compiler.getVMEntries().RiType_resolveMethodImpl(this, method.name(), method.signature().asString());
     }
 
     @Override
@@ -218,8 +218,7 @@ public final class HotSpotTypeResolvedImpl extends HotSpotType implements HotSpo
     }
 
     @Override
-    public RiMethod uniqueConcreteMethod(RiMethod method) {
-        assert method instanceof HotSpotMethodResolved;
+    public RiResolvedMethod uniqueConcreteMethod(RiResolvedMethod method) {
         return ((HotSpotMethodResolved) method).uniqueConcreteMethod();
     }
 

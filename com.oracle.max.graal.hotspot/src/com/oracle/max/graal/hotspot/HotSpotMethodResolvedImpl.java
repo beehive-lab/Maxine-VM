@@ -23,6 +23,7 @@
 package com.oracle.max.graal.hotspot;
 
 import java.lang.reflect.*;
+import java.util.*;
 
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.graph.*;
@@ -47,6 +48,7 @@ public final class HotSpotMethodResolvedImpl extends HotSpotMethod implements Ho
     private RiSignature signature;
     private Boolean hasBalancedMonitors;
     private Graph intrinsicGraph;
+    private Map<Object, Object> compilerStorage;
 
     private HotSpotMethodResolvedImpl() {
         super(null);
@@ -119,11 +121,6 @@ public final class HotSpotMethodResolvedImpl extends HotSpotMethod implements Ho
     }
 
     @Override
-    public boolean isResolved() {
-        return true;
-    }
-
-    @Override
     public String jniSymbol() {
         throw new UnsupportedOperationException("jniSymbol");
     }
@@ -148,15 +145,14 @@ public final class HotSpotMethodResolvedImpl extends HotSpotMethod implements Ho
     }
 
     @Override
-    public RiMethod uniqueConcreteMethod() {
-        return compiler.getVMEntries().RiMethod_uniqueConcreteMethod(this);
+    public RiResolvedMethod uniqueConcreteMethod() {
+        return (RiResolvedMethod) compiler.getVMEntries().RiMethod_uniqueConcreteMethod(this);
     }
 
     @Override
     public RiSignature signature() {
         if (signature == null) {
             signature = new HotSpotSignature(compiler, compiler.getVMEntries().RiMethod_signature(this));
-//            dumpProfile();
         }
         return signature;
     }
@@ -208,6 +204,14 @@ public final class HotSpotMethodResolvedImpl extends HotSpotMethod implements Ho
     @Override
     public int compiledCodeSize() {
         return compiler.getVMEntries().RiMethod_compiledCodeSize(this);
+    }
+
+    @Override
+    public Map<Object, Object> compilerStorage() {
+        if (compilerStorage == null) {
+            compilerStorage = new HashMap<Object, Object>();
+        }
+        return compilerStorage;
     }
 
     public void dumpProfile() {

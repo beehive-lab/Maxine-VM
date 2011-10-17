@@ -1703,7 +1703,7 @@ public abstract class ClassActor extends Actor implements RiType {
         return typeDescriptor.string;
     }
 
-    public RiMethod resolveMethodImpl(RiMethod method) {
+    public RiResolvedMethod resolveMethodImpl(RiResolvedMethod method) {
         final MethodActor methodActor = (MethodActor) method;
         if (methodActor instanceof InterfaceMethodActor) {
             InterfaceMethodActor interfaceActor = (InterfaceMethodActor) methodActor;
@@ -1736,7 +1736,7 @@ public abstract class ClassActor extends Actor implements RiType {
      * @param method a method of this class actor
      * @return the unique concrete incarnation of the method, or null
      */
-    public RiMethod uniqueConcreteMethod(RiMethod method) {
+    public RiResolvedMethod uniqueConcreteMethod(RiResolvedMethod method) {
         return DependenciesManager.getUniqueConcreteMethod(this, (MethodActor) method);
     }
 

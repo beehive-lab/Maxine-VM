@@ -131,7 +131,7 @@ public final class HotSpotTypePrimitive extends HotSpotType {
     }
 
     @Override
-    public RiMethod resolveMethodImpl(RiMethod method) {
+    public RiResolvedMethod resolveMethodImpl(RiResolvedMethod method) {
         return null;
     }
 
@@ -146,7 +146,7 @@ public final class HotSpotTypePrimitive extends HotSpotType {
     }
 
     @Override
-    public RiMethod uniqueConcreteMethod(RiMethod method) {
+    public RiResolvedMethod uniqueConcreteMethod(RiResolvedMethod method) {
         return null;
     }
 

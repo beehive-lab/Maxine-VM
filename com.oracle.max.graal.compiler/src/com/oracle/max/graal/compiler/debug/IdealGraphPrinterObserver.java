@@ -101,7 +101,7 @@ public class IdealGraphPrinterObserver implements CompilationObserver {
         }
     }
 
-    private void openFilePrinter(String title, RiMethod method) {
+    private void openFilePrinter(String title, RiResolvedMethod method) {
         String filename = title + ".igv.xml";
         filename = INVALID_CHAR.matcher(filename).replaceAll("_");
 
@@ -118,7 +118,7 @@ public class IdealGraphPrinterObserver implements CompilationObserver {
         }
     }
 
-    private void openNetworkPrinter(String title, RiMethod method) {
+    private void openNetworkPrinter(String title, RiResolvedMethod method) {
         try {
             socket = new Socket(host, port);
             if (socket.getInputStream().read() == 'y') {

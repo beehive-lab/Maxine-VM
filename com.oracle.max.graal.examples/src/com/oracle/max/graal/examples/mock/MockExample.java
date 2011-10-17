@@ -69,7 +69,7 @@ public class MockExample {
         // Obtain RiMethod and RiRuntime instances.
         GraalCompiler graalCompiler = getGraalCompiler();
         RiRuntime runtime = graalCompiler.runtime;
-        RiMethod riMethod = runtime.getRiMethod(m);
+        RiResolvedMethod riMethod = runtime.getRiMethod(m);
 
         // Create the compiler graph for the method.
         CompilerGraph graph = new CompilerGraph(runtime);

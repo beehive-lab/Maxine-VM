@@ -46,9 +46,9 @@ public class FrameStateBuilder implements FrameStateAccess {
     private int stackIndex;
     private boolean rethrowException;
 
-    private final RiMethod method;
+    private final RiResolvedMethod method;
 
-    public FrameStateBuilder(RiMethod method, int maxLocals, int maxStackSize, CompilerGraph graph) {
+    public FrameStateBuilder(RiResolvedMethod method, int maxLocals, int maxStackSize, CompilerGraph graph) {
         assert graph != null;
         this.method = method;
         this.graph = graph;

@@ -173,7 +173,7 @@ public final class BlockMap {
      */
     public final BitSet storesInLoops;
 
-    private final RiMethod method;
+    private final RiResolvedMethod method;
 
     private final RiExceptionHandler[] exceptionHandlers;
 
@@ -191,7 +191,7 @@ public final class BlockMap {
      * Creates a new BlockMap instance from bytecode of the given method .
      * @param method the compiler interface method containing the code
      */
-    public BlockMap(RiMethod method, boolean useBranchPrediction) {
+    public BlockMap(RiResolvedMethod method, boolean useBranchPrediction) {
         this.method = method;
         exceptionHandlers = method.exceptionHandlers();
         this.blockMap = new Block[method.codeSize()];

@@ -36,12 +36,12 @@ public interface RiXirGenerator {
     /**
      * Note: may return {@code null}.
      */
-    XirSnippet genPrologue(XirSite site, RiMethod method);
+    XirSnippet genPrologue(XirSite site, RiResolvedMethod method);
 
     /**
      * Note: may return {@code null} in which case the compiler will not emit a return instruction.
      */
-    XirSnippet genEpilogue(XirSite site, RiMethod method);
+    XirSnippet genEpilogue(XirSite site, RiResolvedMethod method);
 
     XirSnippet genSafepointPoll(XirSite site);
 

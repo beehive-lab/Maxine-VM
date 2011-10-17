@@ -1130,13 +1130,13 @@ public class HotSpotXirGenerator implements RiXirGenerator {
     };
 
     @Override
-    public XirSnippet genPrologue(XirSite site, RiMethod method) {
+    public XirSnippet genPrologue(XirSite site, RiResolvedMethod method) {
         boolean staticMethod = Modifier.isStatic(method.accessFlags());
         return new XirSnippet(staticMethod ? prologueTemplates.get(site, STATIC_METHOD) : prologueTemplates.get(site));
     }
 
     @Override
-    public XirSnippet genEpilogue(XirSite site, RiMethod method) {
+    public XirSnippet genEpilogue(XirSite site, RiResolvedMethod method) {
         return new XirSnippet(epilogueTemplates.get(site));
     }
 

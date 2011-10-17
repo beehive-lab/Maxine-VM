@@ -41,7 +41,7 @@ public class CiCodePos implements Serializable {
     /**
      * The runtime interface method for this position.
      */
-    public final RiMethod method;
+    public final RiResolvedMethod method;
 
     /**
      * The location within the method, as a bytecode index. The constant
@@ -57,7 +57,7 @@ public class CiCodePos implements Serializable {
      * @param method the method
      * @param bci a BCI within the method
      */
-    public CiCodePos(CiCodePos caller, RiMethod method, int bci) {
+    public CiCodePos(CiCodePos caller, RiResolvedMethod method, int bci) {
         assert method != null;
         this.caller = caller;
         this.method = method;

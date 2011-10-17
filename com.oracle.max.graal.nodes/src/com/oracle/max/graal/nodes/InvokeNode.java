@@ -22,7 +22,6 @@
  */
 package com.oracle.max.graal.nodes;
 
-import java.lang.reflect.*;
 import java.util.*;
 
 import com.oracle.max.graal.graph.*;
@@ -42,7 +41,7 @@ public final class InvokeNode extends AbstractCallNode implements ExceptionExit,
     private boolean canInline = true;
 
     public final int opcode;
-    public final RiMethod target;
+    public final RiResolvedMethod target;
     public final RiType returnType;
     public final int bci; // needed because we can not compute the bci from the sateBefore bci of this Invoke was optimized from INVOKEINTERFACE to INVOKESPECIAL
 
@@ -56,7 +55,7 @@ public final class InvokeNode extends AbstractCallNode implements ExceptionExit,
      * @param target the target method being called
      * @param returnType the return type of the target method
      */
-    public InvokeNode(int bci, int opcode, CiKind result, ValueNode[] args, RiMethod target, RiType returnType) {
+    public InvokeNode(int bci, int opcode, CiKind result, ValueNode[] args, RiResolvedMethod target, RiType returnType) {
         super(result, args);
         this.opcode = opcode;
         this.target = target;
@@ -95,7 +94,6 @@ public final class InvokeNode extends AbstractCallNode implements ExceptionExit,
      * @return {@code true} if the invocation is a static invocation
      */
     public boolean isStatic() {
-        assert !target().isResolved() || (opcode == Bytecodes.INVOKESTATIC) == Modifier.isStatic(target().accessFlags());
         return opcode == Bytecodes.INVOKESTATIC;
     }
 
@@ -118,7 +116,7 @@ public final class InvokeNode extends AbstractCallNode implements ExceptionExit,
      * Gets the target method for this invocation instruction.
      * @return the target method
      */
-    public RiMethod target() {
+    public RiResolvedMethod target() {
         return target;
     }
 

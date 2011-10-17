@@ -49,7 +49,7 @@ public interface RiRuntime {
      * @return {@code true} if the method must be inlined; {@code false} to let the compiler
      * use its own heuristics
      */
-    boolean mustInline(RiMethod method);
+    boolean mustInline(RiResolvedMethod method);
 
     /**
      * Checks whether the specified method must not be inlined (for semantic reasons).
@@ -57,14 +57,14 @@ public interface RiRuntime {
      * @return {@code true} if the method must not be inlined; {@code false} to let the compiler
      * use its own heuristics
      */
-    boolean mustNotInline(RiMethod method);
+    boolean mustNotInline(RiResolvedMethod method);
 
     /**
      * Checks whether the specified method cannot be compiled.
      * @param method the method being called
      * @return {@code true} if the method cannot be compiled
      */
-    boolean mustNotCompile(RiMethod method);
+    boolean mustNotCompile(RiResolvedMethod method);
 
     /**
      * Offset of the lock within the lock object on the stack.
@@ -151,7 +151,7 @@ public interface RiRuntime {
      * @param method the method that is checked
      * @return whether the method is foldable
      */
-    boolean isFoldable(RiMethod method);
+    boolean isFoldable(RiResolvedMethod method);
 
     /**
      * Attempts to compile-time evaluate or "fold" a call to a given method. A foldable method is a pure function
@@ -164,7 +164,7 @@ public interface RiRuntime {
      * @param args the arguments to the call as an array of CiConstant objects
      * @return the result of the folding or {@code null} if no folding occurred
      */
-    CiConstant fold(RiMethod method, CiConstant[] args);
+    CiConstant fold(RiResolvedMethod method, CiConstant[] args);
 
     /**
      * Used by the canonicalizer to compare objects, since a given runtime might not want to expose the real objects to the compiler.
@@ -224,7 +224,7 @@ public interface RiRuntime {
     /**
      * Provides the {@link RiMethod} for a {@link Method} obtained via reflection.
      */
-    RiMethod getRiMethod(Method reflectionMethod);
+    RiResolvedMethod getRiMethod(Method reflectionMethod);
 
     /**
      * Installs some given machine code as the implementation of a given method.

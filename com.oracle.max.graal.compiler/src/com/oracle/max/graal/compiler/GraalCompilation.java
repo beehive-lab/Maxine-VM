@@ -51,7 +51,7 @@ public final class GraalCompilation {
 
     public final GraalContext context;
     public final GraalCompiler compiler;
-    public final RiMethod method;
+    public final RiResolvedMethod method;
     public final RiRegisterConfig registerConfig;
     public final CiStatistics stats;
     public final FrameState placeholderState;
@@ -78,7 +78,7 @@ public final class GraalCompilation {
      * @param osrBCI the bytecode index for on-stack replacement, if requested
      * @param stats externally supplied statistics object to be used if not {@code null}
      */
-    public GraalCompilation(GraalContext context, GraalCompiler compiler, RiMethod method, CompilerGraph graph, int osrBCI, CiStatistics stats) {
+    public GraalCompilation(GraalContext context, GraalCompiler compiler, RiResolvedMethod method, CompilerGraph graph, int osrBCI, CiStatistics stats) {
         if (osrBCI != -1) {
             throw new CiBailout("No OSR supported");
         }
@@ -97,7 +97,7 @@ public final class GraalCompilation {
         }
     }
 
-    public GraalCompilation(GraalContext context, GraalCompiler compiler, RiMethod method, int osrBCI, CiStatistics stats) {
+    public GraalCompilation(GraalContext context, GraalCompiler compiler, RiResolvedMethod method, int osrBCI, CiStatistics stats) {
         this(context, compiler, method, new CompilerGraph(compiler.runtime), osrBCI, stats);
     }
 

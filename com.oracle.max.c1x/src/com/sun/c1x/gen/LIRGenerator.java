@@ -2151,7 +2151,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         emitInvokeKnown(arrayCopy.arrayCopyMethod, arrayCopy.stateBefore(), arrayCopy.src(), arrayCopy.srcPos(), arrayCopy.dest(), arrayCopy.destPos(), arrayCopy.length());
     }
 
-    private CiValue emitInvokeKnown(RiMethod method, FrameState stateBefore, Value... args) {
+    private CiValue emitInvokeKnown(RiResolvedMethod method, FrameState stateBefore, Value... args) {
         boolean isStatic = Modifier.isStatic(method.accessFlags());
         Invoke invoke = new Invoke(isStatic ? Bytecodes.INVOKESTATIC : Bytecodes.INVOKESPECIAL, method.signature().returnKind(true), args, isStatic, method, null, stateBefore);
         visitInvoke(invoke);

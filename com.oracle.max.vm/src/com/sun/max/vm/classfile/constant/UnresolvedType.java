@@ -202,7 +202,7 @@ public abstract class UnresolvedType implements RiType {
         throw unresolved("superType()");
     }
 
-    public RiMethod uniqueConcreteMethod(RiMethod method) {
+    public RiResolvedMethod uniqueConcreteMethod(RiResolvedMethod method) {
         throw unresolved("uniqueConcreteMethod()");
     }
 
@@ -214,7 +214,7 @@ public abstract class UnresolvedType implements RiType {
         return UnresolvedType.toRiType(JavaTypeDescriptor.getArrayDescriptorForDescriptor(typeDescriptor, 1), null);
     }
 
-    public RiMethod resolveMethodImpl(RiMethod method) {
+    public RiResolvedMethod resolveMethodImpl(RiResolvedMethod method) {
         throw unresolved("resolveMethodImpl()");
     }
 

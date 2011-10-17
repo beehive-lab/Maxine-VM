@@ -88,11 +88,7 @@ public class MaxRuntime implements GraalRuntime {
      * @return {@code true} if the method must be inlined; {@code false}
      * to allow the compiler to use its own heuristics
      */
-    public boolean mustInline(RiMethod method) {
-        if (!method.isResolved()) {
-            return false;
-        }
-
+    public boolean mustInline(RiResolvedMethod method) {
         ClassMethodActor methodActor = asClassMethodActor(method, "mustNotInline()");
         if (methodActor.isInline()) {
             return true;
@@ -114,10 +110,7 @@ public class MaxRuntime implements GraalRuntime {
      * @return {@code true} if the runtime forbids inlining of the specified method;
      * {@code false} to allow the compiler to use its own heuristics
      */
-    public boolean mustNotInline(RiMethod method) {
-        if (!method.isResolved()) {
-            return false;
-        }
+    public boolean mustNotInline(RiResolvedMethod method) {
         final ClassMethodActor classMethodActor = asClassMethodActor(method, "mustNotInline()");
         if (classMethodActor.isNative()) {
             // Native stubs must not be inlined as there is a 1:1 relationship between
@@ -143,7 +136,7 @@ public class MaxRuntime implements GraalRuntime {
      * @return {@code true} if the runtime forbids compilation of the specified method;
      * {@code false} to allow the compiler to compile the method
      */
-    public boolean mustNotCompile(RiMethod method) {
+    public boolean mustNotCompile(RiResolvedMethod method) {
         return false;
     }
 
@@ -262,8 +255,8 @@ public class MaxRuntime implements GraalRuntime {
         return true;
     }
 
-    public boolean isFoldable(RiMethod method) {
-        if (canonicalizeFoldableMethods() && method.isResolved()) {
+    public boolean isFoldable(RiResolvedMethod method) {
+        if (canonicalizeFoldableMethods()) {
             MethodActor methodActor = (MethodActor) method;
             return Actor.isDeclaredFoldable(methodActor.flags());
         }
@@ -271,7 +264,7 @@ public class MaxRuntime implements GraalRuntime {
     }
 
     @Override
-    public CiConstant fold(RiMethod method, CiConstant[] args) {
+    public CiConstant fold(RiResolvedMethod method, CiConstant[] args) {
         assert isFoldable(method);
         MethodActor methodActor = (MethodActor) method;
         Value[] values;
@@ -429,7 +422,7 @@ public class MaxRuntime implements GraalRuntime {
         // TODO(tw): Implement lowering phase for Maxine.
     }
 
-    public Graph intrinsicGraph(RiMethod caller, int bci, RiMethod method, List< ? extends Node> parameters) {
+    public Graph intrinsicGraph(RiResolvedMethod caller, int bci, RiResolvedMethod method, List< ? extends Node> parameters) {
         // TODO(tw): Implement intrinsics for Maxine.
         return null;
     }
@@ -439,7 +432,7 @@ public class MaxRuntime implements GraalRuntime {
         return 0;
     }
 
-    public RiMethod getRiMethod(Method reflectionMethod) {
+    public RiResolvedMethod getRiMethod(Method reflectionMethod) {
         return MethodActor.fromJava(reflectionMethod);
     }
 
