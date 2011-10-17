@@ -35,8 +35,6 @@ import com.oracle.max.graal.graph.NodeClass.Position;
  */
 public class Graph {
 
-    public static final List<VerificationListener> verificationListeners = new ArrayList<VerificationListener>(4);
-
     private final String name;
 
     private final ArrayList<Node> nodes;
@@ -304,8 +302,18 @@ public class Graph {
     }
 
     public boolean verify() {
-        for (Node n : getNodes()) {
-            assert n.verify();
+        for (Node node : getNodes()) {
+            try {
+                try {
+                    assert node.verify();
+                } catch (AssertionError t) {
+                    throw new VerificationError(t);
+                } catch (RuntimeException t) {
+                    throw new VerificationError(t);
+                }
+            } catch (VerificationError e) {
+                throw e.addContext(node).addContext(this);
+            }
         }
         return true;
     }

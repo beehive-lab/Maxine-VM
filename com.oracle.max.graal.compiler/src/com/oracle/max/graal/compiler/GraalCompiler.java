@@ -74,24 +74,6 @@ public class GraalCompiler {
         this.compilerStubRegisterConfig = compilerStubRegisterConfig;
         this.backend = Backend.create(target.arch, this);
         init();
-
-        Graph.verificationListeners.add(new VerificationListener() {
-
-            @Override
-            public void verificationFailed(Node n, String message) {
-                if (currentCompilation != null && GraalCompiler.this.context.isObserved()) {
-                    GraalCompiler.this.context.observable.fireCompilationEvent(new CompilationEvent(currentCompilation, "Verification Error on Node " + n.id(), currentCompilation.graph, true, false, true));
-                }
-                TTY.println(n.toString());
-                if (n.predecessor() != null) {
-                    TTY.println("predecessor: " + n.predecessor());
-                }
-                for (Node p : n.usages()) {
-                    TTY.println("usage: " + p);
-                }
-                assert false : "Verification of node " + n + " failed: " + message;
-            }
-        });
     }
 
     public CiResult compileMethod(RiMethod method, int osrBCI, CiStatistics stats) {
@@ -110,6 +92,15 @@ public class GraalCompiler {
             currentCompilation = compilation;
             try {
                 result = compilation.compile();
+            } catch (VerificationError error) {
+                if (currentCompilation != null && GraalCompiler.this.context.isObserved()) {
+                    if (error.node() != null) {
+                        GraalCompiler.this.context.observable.fireCompilationEvent(new CompilationEvent(currentCompilation, "VerificationError on Node " + error.node(), error.node().graph(), true, false, true));
+                    } else if (error.graph() != null) {
+                        GraalCompiler.this.context.observable.fireCompilationEvent(new CompilationEvent(currentCompilation, "VerificationError on Graph " + error.graph(), error.graph(), true, false, true));
+                    }
+                }
+                throw error;
             } finally {
                 filter.remove();
                 compilation.close();

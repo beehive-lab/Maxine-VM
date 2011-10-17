@@ -149,6 +149,8 @@ public final class GraalCompilation {
             }
         } catch (CiBailout b) {
             return new CiResult(null, b, stats);
+        } catch (VerificationError e) {
+            throw e.addContext("method", CiUtil.format("%H.%n(%p):%r", method));
         } catch (Throwable t) {
             if (GraalOptions.BailoutOnException) {
                 return new CiResult(null, new CiBailout("Exception while compiling: " + method, t), stats);

@@ -55,9 +55,7 @@ public class NodeClass {
             return (Unsafe) theUnsafeInstance.get(Unsafe.class);
         } catch (Exception e) {
             // currently we rely on being able to use Unsafe...
-            System.out.println("exception while trying to get Unsafe.theUnsafe via reflection:");
-            e.printStackTrace();
-            return null;
+            throw new RuntimeException("exception while trying to get Unsafe.theUnsafe via reflection:", e);
         }
     }
 
