@@ -22,8 +22,6 @@
  */
 package com.oracle.max.graal.compiler.target.amd64;
 
-import static com.oracle.max.graal.compiler.GraalCompilation.*;
-
 import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.graal.compiler.*;
@@ -31,7 +29,7 @@ import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.gen.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.stub.*;
-import com.oracle.max.graal.compiler.stub.CompilerStub.*;
+import com.oracle.max.graal.compiler.stub.CompilerStub.Id;
 import com.oracle.max.graal.compiler.target.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -66,8 +64,8 @@ public class AMD64Backend extends Backend {
     }
 
     @Override
-    public FrameMap newFrameMap(RiMethod method, int numberOfLocks) {
-        return new FrameMap(compilation(), method, numberOfLocks);
+    public FrameMap newFrameMap(GraalCompilation compilation, RiMethod method, int numberOfLocks) {
+        return new FrameMap(compilation, method, numberOfLocks);
     }
     @Override
     public AbstractAssembler newAssembler(RiRegisterConfig registerConfig) {

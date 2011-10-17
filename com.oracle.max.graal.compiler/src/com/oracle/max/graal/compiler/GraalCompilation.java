@@ -61,7 +61,6 @@ public final class GraalCompilation {
     private final GraalCompilation parent;
 
     private FrameMap frameMap;
-    private TargetMethodAssembler assembler;
 
     private LIR lir;
 
@@ -106,7 +105,7 @@ public final class GraalCompilation {
         currentCompilation.set(parent);
     }
 
-    public LIR hir() {
+    public LIR lir() {
         return lir;
     }
 
@@ -127,13 +126,11 @@ public final class GraalCompilation {
         return frameMap;
     }
 
-    public TargetMethodAssembler assembler() {
-        if (assembler == null) {
-            AbstractAssembler asm = compiler.backend.newAssembler(registerConfig);
-            assembler = new TargetMethodAssembler(context, asm);
-            assembler.setFrameSize(frameMap.frameSize());
-            assembler.targetMethod.setCustomStackAreaOffset(frameMap.offsetToCustomArea());
-        }
+    private TargetMethodAssembler createAssembler() {
+        AbstractAssembler asm = compiler.backend.newAssembler(registerConfig);
+        TargetMethodAssembler assembler = new TargetMethodAssembler(context, asm);
+        assembler.setFrameSize(frameMap.frameSize());
+        assembler.targetMethod.setCustomStackAreaOffset(frameMap.offsetToCustomArea());
         return assembler;
     }
 
@@ -339,7 +336,7 @@ public final class GraalCompilation {
     }
 
     public void initFrameMap(int numberOfLocks) {
-        frameMap = this.compiler.backend.newFrameMap(method, numberOfLocks);
+        frameMap = this.compiler.backend.newFrameMap(this, method, numberOfLocks);
     }
 
     private void emitLIR() {
@@ -384,7 +381,8 @@ public final class GraalCompilation {
         if (GraalOptions.GenLIR && GraalOptions.GenCode) {
             context.timers.startScope("Create Code");
             try {
-                final LIRAssembler lirAssembler = compiler.backend.newLIRAssembler(this, assembler());
+                final TargetMethodAssembler tma = createAssembler();
+                final LIRAssembler lirAssembler = compiler.backend.newLIRAssembler(this, tma);
                 lirAssembler.emitCode(lir.codeEmittingOrder());
 
                 // generate code for slow cases
@@ -401,7 +399,7 @@ public final class GraalCompilation {
                 // generate traps at the end of the method
                 lirAssembler.emitTraps();
 
-                CiTargetMethod targetMethod = assembler().finishTargetMethod(method, compiler.runtime, lirAssembler.registerRestoreEpilogueOffset, false);
+                CiTargetMethod targetMethod = tma.finishTargetMethod(method, compiler.runtime, lirAssembler.registerRestoreEpilogueOffset, false);
                 if (graph.assumptions().count() > 0) {
                     targetMethod.setAssumptions(graph.assumptions());
                 }
