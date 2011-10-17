@@ -71,13 +71,6 @@ public interface RiMethod {
      */
     int codeSize();
 
-    /**
-     * Gets the {@link RiMethodProfile method data} for this method, which stores instrumentation,
-     * including invocation counts, branch counts, etc.
-     * @return the method data object, if it exists; {@code null} otherwise
-     */
-    RiMethodProfile methodData();
-
     // N.B. All operations beyond this point are only available on resolved methods.
 
     /**

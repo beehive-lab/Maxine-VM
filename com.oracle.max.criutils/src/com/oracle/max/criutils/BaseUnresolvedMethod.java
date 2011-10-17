@@ -111,10 +111,6 @@ public class BaseUnresolvedMethod implements RiMethod {
         throw unresolved("minimalDebugInfo()");
     }
 
-    public RiMethodProfile methodData() {
-        throw unresolved("methodData()");
-    }
-
     public CiBitMap[] livenessMap() {
         throw unresolved("livenessMap()");
     }
