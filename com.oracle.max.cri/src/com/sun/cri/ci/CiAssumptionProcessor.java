@@ -29,7 +29,7 @@ import com.sun.cri.ci.CiAssumptions.ConcreteSubtype;
  * Compiler assumption processor interface between classes implementing set of assumptions and
  * classes needing iteration over assumptions.
  */
-public abstract class AssumptionProcessor {
+public abstract class CiAssumptionProcessor {
 
     /**
      * Process a unique concrete method assumption.
