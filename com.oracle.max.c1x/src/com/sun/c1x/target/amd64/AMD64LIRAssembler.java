@@ -192,7 +192,8 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     }
 
     private void const2reg(CiRegister dst, float constant) {
-        if (constant == 0.0f) {
+        // This is *not* the same as 'constant == 0.0f' in the case where constant is -0.0f
+        if (Float.floatToRawIntBits(constant) == Float.floatToRawIntBits(0.0f)) {
             masm.xorps(dst, dst);
         } else {
             masm.movl(rscratch1, Float.floatToRawIntBits(constant));
@@ -201,7 +202,8 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     }
 
     private void const2reg(CiRegister dst, double constant) {
-        if (constant == 0.0f) {
+        // This is *not* the same as 'constant == 0.0d' in the case where constant is -0.0d
+        if (Double.doubleToRawLongBits(constant) == Double.doubleToRawLongBits(0.0d)) {
             masm.xorpd(dst, dst);
         } else {
             masm.movq(rscratch1, Double.doubleToRawLongBits(constant));
