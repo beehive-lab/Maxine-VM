@@ -442,7 +442,7 @@ public class T1X implements RuntimeCompiler {
      * List of intrinsic that T1X cannot handle, i.e., methods that call these intrinsics lead to a bailout.
      */
     public static final Set<String> unsafeIntrinsicIDs = new HashSet<String>(Arrays.asList(
-        READREG, WRITEREG, READPC, IFLATCHBITREAD,
+        READREG, WRITEREG, IFLATCHBITREAD,
         SAFEPOINT_POLL, HERE, INFO, BREAKPOINT_TRAP,
         ALLOCA, STACKHANDLE,
         JNI_LINK, JNI_J2N, JNI_N2J

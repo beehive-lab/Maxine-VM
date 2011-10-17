@@ -198,16 +198,6 @@ public class MaxineIntrinsicIDs {
     public static final String WRITEREG = p + "WRITEREG";
 
     /**
-     * Return the program counter. Useful for logging records of pc location, for sampling or debugging.
-     * <p>
-     * The method definition must have the following form:
-     * <pre>
-     * static Pointer m()
-     * </pre>
-     */
-    public static final String READPC = p + "READPC";
-
-    /**
      * Reads/tests the value of a bit specified by the {@link VMRegister#LATCH} register, a byte offset,
      * and a bit number (LSB=0), that will be then used to branch on the value. I.e. this is not a general
      * purpose bit reading mechanism.

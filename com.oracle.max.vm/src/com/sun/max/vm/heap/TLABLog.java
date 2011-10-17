@@ -39,7 +39,6 @@ import com.sun.max.vm.thread.VmThreadLocal.Nature;
  * The log is sized to accommodate the maximum number of allocations that can be made with a TLAB, i.e.,
  * the TLAB maximum size / smallest object size.
  * The log is flushed at TLAB refill.
- *
  */
 public final class TLABLog {
     public static final String TLAB_LOG_THREAD_LOCAL_NAME = "TLAB_LOG";
@@ -144,6 +143,7 @@ public final class TLABLog {
 
     @NO_SAFEPOINT_POLLS("GC debugging")
     private void flush(Pointer logTail) {
+        final boolean lockDisabledSafepoints = Log.lock();
         Log.print("TLAB allocation log for ");
         Log.printThread(logger, true);
         Pointer p = logStart();
@@ -155,5 +155,6 @@ public final class TLABLog {
             Log.println(p.getWord(2).asSize().toLong());
             p = p.plusWords(3);
         }
+        Log.unlock(lockDisabledSafepoints);
     }
 }

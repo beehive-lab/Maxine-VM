@@ -205,14 +205,6 @@ public class MaxineIntrinsicImplementations {
         }
     }
 
-    public static class ReadPCInstrinsic implements C1XIntrinsicImpl {
-        @Override
-        public Value createHIR(GraphBuilder b, RiMethod target, Value[] args, boolean isStatic, FrameState stateBefore) {
-            assert args.length == 0;
-            return b.append(new ReadPC(target.signature().returnType(null)));
-        }
-    }
-
     private static int intConstant(Value value) {
         if (!value.isConstant() || value.kind != CiKind.Int) {
             throw new CiBailout("instrinc parameter must be compile time integer constant");
@@ -311,7 +303,6 @@ public class MaxineIntrinsicImplementations {
 
         registry.add(READREG, new ReadRegisterIntrinsic());
         registry.add(WRITEREG, new WriteRegisterIntrinsic());
-        registry.add(READPC, new ReadPCInstrinsic());
         registry.add(IFLATCHBITREAD, new IfLatchBitReadIntrinsic());
 
         registry.add(PREAD, new PointerReadIntrinsic());
