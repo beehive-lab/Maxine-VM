@@ -195,7 +195,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     public LIRGenerator(GraalCompilation compilation) {
         this.context = compilation.context;
         this.compilation = compilation;
-        this.ir = compilation.hir();
+        this.ir = compilation.lir();
         this.xir = compilation.compiler.xir;
         this.xirSupport = new XirSupport();
         this.isTwoOperand = compilation.compiler.target.arch.twoOperandMode();
