@@ -55,13 +55,13 @@ public final class IsNonNullNode extends BooleanNode implements Canonicalizable 
     }
 
     @Override
-    public RiType declaredType() {
+    public RiResolvedType declaredType() {
         // null check does not alter the type of the object
         return object().declaredType();
     }
 
     @Override
-    public RiType exactType() {
+    public RiResolvedType exactType() {
         // null check does not alter the type of the object
         return object().exactType();
     }

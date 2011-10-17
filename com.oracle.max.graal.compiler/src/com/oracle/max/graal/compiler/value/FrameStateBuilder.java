@@ -74,8 +74,8 @@ public class FrameStateBuilder implements FrameStateAccess {
             RiType type = sig.argumentTypeAt(i, accessingClass);
             CiKind kind = type.kind(false).stackKind();
             LocalNode local = graph.unique(new LocalNode(kind, index, graph.start()));
-            if (type.isResolved()) {
-                local.setDeclaredType(type);
+            if (type instanceof RiResolvedType) {
+                local.setDeclaredType((RiResolvedType) type);
             }
             storeLocal(javaIndex, local);
             javaIndex += isTwoSlot(kind) ? 2 : 1;

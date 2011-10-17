@@ -124,22 +124,22 @@ public interface RiRuntime {
     /**
      * Returns the RiType object representing the base type for the given kind.
      */
-    RiType asRiType(CiKind kind);
+    RiResolvedType asRiType(CiKind kind);
 
     /**
      * Returns the type of the given constant object.
      *
      * @return {@code null} if {@code constant.isNull() || !constant.kind.isObject()}
      */
-    RiType getTypeOf(CiConstant constant);
+    RiResolvedType getTypeOf(CiConstant constant);
 
 
-    RiType getType(Class<?> clazz);
+    RiResolvedType getType(Class<?> clazz);
 
     /**
      * Returns true if the given type is a subtype of java/lang/Throwable.
      */
-    boolean isExceptionType(RiType type);
+    boolean isExceptionType(RiResolvedType type);
 
     /**
      * Gets the {@linkplain RiSnippets snippets} provided by the runtime.

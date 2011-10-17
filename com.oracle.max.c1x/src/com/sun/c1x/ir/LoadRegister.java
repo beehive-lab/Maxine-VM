@@ -34,21 +34,21 @@ import com.sun.cri.ri.*;
 public final class LoadRegister extends Instruction {
 
     public final CiRegister register;
-    public final RiType declaredType;
+    public final RiResolvedType declaredType;
 
     /**
      * Creates a new LoadRegister instance.
      * @param kind the kind of value loaded from the register
      * @param register the register to load
      */
-    public LoadRegister(CiKind kind, CiRegister register, RiType declaredType) {
+    public LoadRegister(CiKind kind, CiRegister register, RiResolvedType declaredType) {
         super(kind);
         this.register = register;
         this.declaredType = declaredType;
     }
 
     @Override
-    public RiType declaredType() {
+    public RiResolvedType declaredType() {
         return declaredType;
     }
 

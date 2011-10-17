@@ -31,25 +31,25 @@ import com.sun.cri.ri.*;
  */
 public final class NewTypeArrayNode extends NewArrayNode {
 
-    private final RiType elementType;
+    private final RiResolvedType elementType;
 
-    public NewTypeArrayNode(ValueNode length, RiType elementType) {
+    public NewTypeArrayNode(ValueNode length, RiResolvedType elementType) {
         super(length);
         this.elementType = elementType;
     }
 
     @Override
-    public RiType elementType() {
+    public RiResolvedType elementType() {
         return elementType;
     }
 
     @Override
-    public RiType declaredType() {
+    public RiResolvedType declaredType() {
         return elementType.arrayOf();
     }
 
     @Override
-    public RiType exactType() {
+    public RiResolvedType exactType() {
         return elementType.arrayOf();
     }
 

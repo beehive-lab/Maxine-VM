@@ -463,23 +463,23 @@ public class MaxXirGenerator implements RiXirGenerator {
     @Override
     public XirSnippet genNewInstance(XirSite site, RiType type) {
         NewInstanceTemplates templates = useTLABs() ? tlabNewInstanceTemplate : newInstanceTemplate;
-        if (type.isResolved() && type.isInitialized()) {
-            final DynamicHub hub = hubFor(type);
-            final XirTemplate template = hub.classActor.isHybridClass() ? templates.resolvedHybrid : templates.resolved;
-            if (useTLABs()) {
-                return new XirSnippet(template, XirArgument.forObject(hub), XirArgument.forInt(hub.tupleSize.toInt()));
+        if (type instanceof RiResolvedType) {
+            RiResolvedType resolvedType = (RiResolvedType) type;
+            if (resolvedType.isInitialized()) {
+                final DynamicHub hub = hubFor(resolvedType);
+                final XirTemplate template = hub.classActor.isHybridClass() ? templates.resolvedHybrid : templates.resolved;
+                if (useTLABs()) {
+                    return new XirSnippet(template, XirArgument.forObject(hub), XirArgument.forInt(hub.tupleSize.toInt()));
+                }
+                return new XirSnippet(template, XirArgument.forObject(hub));
             }
-            return new XirSnippet(template, XirArgument.forObject(hub));
         }
         XirArgument guard = guardFor(type);
         return new XirSnippet(templates.unresolved, guard);
     }
 
     private DynamicHub hubFor(RiType type) {
-        if (type instanceof ClassActor) {
-            return ((ClassActor) type).dynamicHub();
-        }
-        throw ((UnresolvedType) type).unresolved("new instance");
+        return ((ClassActor) type).dynamicHub();
     }
 
     @Override
@@ -487,7 +487,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         XirPair [] templates = useTLABs() ? tlabNewArrayTemplates : newArrayTemplates;
         XirPair pair = templates[elementKind.ordinal()];
         Object hub = arrayHubs[elementKind.ordinal()];
-        if (elementKind == CiKind.Object && arrayType.isResolved()) {
+        if (elementKind == CiKind.Object && arrayType instanceof RiResolvedType) {
             hub = hubFor(arrayType);
         } else if (elementKind == CiKind.Object) {
             hub = null;
@@ -503,7 +503,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     @Override
     public XirSnippet genNewMultiArray(XirSite site, XirArgument[] lengths, RiType type) {
         int rank = lengths.length;
-        if (!type.isResolved() || rank >= SMALL_MULTIANEWARRAY_RANK) {
+        if (!(type instanceof RiResolvedType) || rank >= SMALL_MULTIANEWARRAY_RANK) {
             XirArgument guard = guardFor(type);
             return new XirSnippet(multiNewArrayTemplate[rank].unresolved, Utils.concat(lengths, guard));
         }
@@ -516,21 +516,22 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     @Override
     public XirSnippet genCheckCast(XirSite site, XirArgument object, XirArgument hub, RiType type) {
-        if (type.isResolved()) {
+        if (type instanceof RiResolvedType) {
+            RiResolvedType resolvedType = (RiResolvedType) type;
             XirTemplate template;
-            if (type.isInterface()) {
+            if (resolvedType.isInterface()) {
                 // have to use the interface template
                 template = checkcastForInterfaceTemplate.resolved;
                 ClassActor classActor = (ClassActor) type;
                 int interfaceID = classActor.id;
                 return new XirSnippet(template, object, XirArgument.forInt(interfaceID), hub);
-            } else if (isFinal(type.accessFlags()) && !type.isArrayClass()) {
+            } else if (isFinal(resolvedType.accessFlags()) && !resolvedType.isArrayClass()) {
                 // can use the leaf class test
                 template = checkcastForLeafTemplate.resolved;
             } else {
                 // can use the class test
                 template = checkcastForClassTemplate.resolved;
-                ClassActor classActor = (ClassActor) type;
+                ClassActor classActor = (ClassActor) resolvedType;
                 int interfaceID = classActor.id;
                 return new XirSnippet(template, object, XirArgument.forInt(interfaceID), hub);
             }
@@ -542,16 +543,17 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     @Override
     public XirSnippet genInstanceOf(XirSite site, XirArgument object, XirArgument hub, RiType type) {
-        if (type.isResolved()) {
+        if (type instanceof RiResolvedType) {
+            RiResolvedType resolvedType = (RiResolvedType) type;
             XirTemplate template;
-            if (type.isInterface()) {
+            if (resolvedType.isInterface()) {
                 template = instanceofForInterfaceTemplate.resolved;
                 ClassActor classActor = (ClassActor) type;
                 int interfaceID = classActor.id;
                 return new XirSnippet(template, object, XirArgument.forInt(interfaceID), hub);
             }
 
-            if (isFinal(type.accessFlags()) && !type.isArrayClass()) {
+            if (isFinal(resolvedType.accessFlags()) && !resolvedType.isArrayClass()) {
                 template = instanceofForLeafTemplate.resolved;
             } else {
                 template = instanceofForClassTemplate.resolved;
@@ -629,16 +631,16 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     private XirArgument guardFor(RiType type) {
         ResolutionGuard guard;
-        if (!type.isResolved()) {
+        if (type instanceof RiResolvedType) {
+            guard = new ResolutionGuard.InPool(null, Integer.MAX_VALUE);
+            guard.value = (ClassActor) type;
+        } else {
             if (type instanceof InPool) {
                 InPool unresolvedType = (InPool) type;
                 guard = makeResolutionGuard(unresolvedType.pool, unresolvedType.cpi);
             } else {
                 guard = new ResolutionGuard.InAccessingClass((ByAccessingClass) type);
             }
-        } else {
-            guard = new ResolutionGuard.InPool(null, Integer.MAX_VALUE);
-            guard.value = (ClassActor) type;
         }
         return XirArgument.forObject(guard);
     }

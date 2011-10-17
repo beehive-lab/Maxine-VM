@@ -150,7 +150,7 @@ public class OldInliningPhase extends Phase {
             return null;
         }
         if (invoke.receiver().exactType() != null) {
-            RiType exact = invoke.receiver().exactType();
+            RiResolvedType exact = invoke.receiver().exactType();
             assert exact.isSubtypeOf(invoke.target().holder()) : exact + " subtype of " + invoke.target().holder();
             RiResolvedMethod resolved = exact.resolveMethodImpl(invoke.target());
             if (checkTargetConditions(resolved, iterations) && checkSizeConditions(parent, iterations, resolved, invoke, profile, ratio)) {
@@ -158,14 +158,14 @@ public class OldInliningPhase extends Phase {
             }
             return null;
         }
-        RiType holder = invoke.target().holder();
+        RiResolvedType holder = invoke.target().holder();
 
         if (invoke.receiver().declaredType() != null) {
             RiType declared = invoke.receiver().declaredType();
             // the invoke target might be more specific than the holder (happens after inlining: locals lose their declared type...)
             // TODO (ls) fix this
-            if (declared.isResolved() && declared.isSubtypeOf(invoke.target().holder())) {
-                holder = declared;
+            if (declared instanceof RiResolvedType && ((RiResolvedType) declared).isSubtypeOf(invoke.target().holder())) {
+                holder = (RiResolvedType) declared;
             }
         }
 
@@ -279,7 +279,7 @@ public class OldInliningPhase extends Phase {
             }
             return false;
         }
-        if (!method.holder().isInitialized()) {
+        if (!resolvedMethod.holder().isInitialized()) {
             if (GraalOptions.TraceInlining) {
                 TTY.println("not inlining %s because of non-initialized class", methodName(method));
             }

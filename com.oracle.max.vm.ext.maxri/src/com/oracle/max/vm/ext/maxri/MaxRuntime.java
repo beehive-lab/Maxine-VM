@@ -342,15 +342,15 @@ public class MaxRuntime implements GraalRuntime {
         return new Stub(CompilerStub, name, ciTargetMethod);
     }
 
-    public RiType getType(Class<?> javaClass) {
+    public RiResolvedType getType(Class<?> javaClass) {
         return ClassActor.fromJava(javaClass);
     }
 
-    public RiType asRiType(CiKind kind) {
+    public RiResolvedType asRiType(CiKind kind) {
         return getType(kind.toJavaClass());
     }
 
-    public RiType getTypeOf(CiConstant constant) {
+    public RiResolvedType getTypeOf(CiConstant constant) {
         if (constant.kind.isObject()) {
             Object o = constant.asObject();
             if (o != null) {
@@ -383,7 +383,7 @@ public class MaxRuntime implements GraalRuntime {
         return target;
     }
 
-    public boolean isExceptionType(RiType type) {
+    public boolean isExceptionType(RiResolvedType type) {
         return type.isSubtypeOf(getType(Throwable.class));
     }
 

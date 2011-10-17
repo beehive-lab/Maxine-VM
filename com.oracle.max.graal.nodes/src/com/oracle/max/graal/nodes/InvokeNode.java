@@ -97,8 +97,8 @@ public final class InvokeNode extends AbstractCallNode implements Node.IterableN
     }
 
     @Override
-    public RiType declaredType() {
-        return returnType;
+    public RiResolvedType declaredType() {
+        return (returnType instanceof RiResolvedType) ? ((RiResolvedType) returnType) : null;
     }
 
     /**

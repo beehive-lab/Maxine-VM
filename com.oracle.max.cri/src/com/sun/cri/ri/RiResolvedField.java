@@ -47,4 +47,10 @@ public interface RiResolvedField extends RiField {
      * @return the constant value of this field or {@code null} if the constant value is not available
      */
     CiConstant constantValue(CiConstant receiver);
+
+    /**
+     * Gets the holder of this field as a compiler-runtime interface type.
+     * @return the holder of this field
+     */
+    RiResolvedType holder();
 }

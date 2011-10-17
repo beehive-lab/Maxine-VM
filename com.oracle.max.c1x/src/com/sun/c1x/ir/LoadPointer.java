@@ -52,8 +52,8 @@ public final class LoadPointer extends PointerOp {
     }
 
     @Override
-    public RiType declaredType() {
-        return dataType;
+    public RiResolvedType declaredType() {
+        return (dataType instanceof RiResolvedType) ? (RiResolvedType) dataType : null;
     }
 
     @Override

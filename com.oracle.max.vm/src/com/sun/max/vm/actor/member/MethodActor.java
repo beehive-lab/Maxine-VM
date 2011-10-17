@@ -212,7 +212,7 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
      *
      * @return {@code null} if this method has no {@link ACCESSOR} annotation
      */
-    public final RiType accessor() {
+    public final RiResolvedType accessor() {
         Class<?> accessorClass = holder().classRegistry().get(ACCESSOR, this);
         return accessorClass == null ? null : ClassActor.fromJava(accessorClass);
     }

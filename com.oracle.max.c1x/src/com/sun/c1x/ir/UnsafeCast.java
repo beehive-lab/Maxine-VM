@@ -84,13 +84,13 @@ public final class UnsafeCast extends Instruction {
     }
 
     @Override
-    public RiType declaredType() {
-        return toType;
+    public RiResolvedType declaredType() {
+        return (toType instanceof RiResolvedType) ? (RiResolvedType) toType : null;
     }
 
     @Override
-    public RiType exactType() {
-        return declaredType().exactType();
+    public RiResolvedType exactType() {
+        return (declaredType() != null) ? declaredType().exactType() : null;
     }
 
     @Override

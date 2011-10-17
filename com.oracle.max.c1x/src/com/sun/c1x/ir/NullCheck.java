@@ -91,13 +91,13 @@ public final class NullCheck extends StateSplit {
     }
 
     @Override
-    public RiType declaredType() {
+    public RiResolvedType declaredType() {
         // null check does not alter the type of the object
         return object.declaredType();
     }
 
     @Override
-    public RiType exactType() {
+    public RiResolvedType exactType() {
         // null check does not alter the type of the object
         return object.exactType();
     }

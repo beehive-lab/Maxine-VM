@@ -50,8 +50,8 @@ public final class CheckCast extends TypeCheck {
      * @return the declared type of the result
      */
     @Override
-    public RiType declaredType() {
-        return targetClass;
+    public RiResolvedType declaredType() {
+        return targetClass instanceof RiResolvedType ? (RiResolvedType) targetClass : null;
     }
 
     /**
@@ -59,8 +59,8 @@ public final class CheckCast extends TypeCheck {
      * @return the exact type of the result
      */
     @Override
-    public RiType exactType() {
-        return targetClass.isResolved() ? targetClass.exactType() : null;
+    public RiResolvedType exactType() {
+        return targetClass instanceof RiResolvedType ? ((RiResolvedType) targetClass).exactType() : null;
     }
 
     @Override
@@ -70,7 +70,7 @@ public final class CheckCast extends TypeCheck {
 
     @Override
     public int valueNumber() {
-        return targetClass.isResolved() ? Util.hash1(Bytecodes.CHECKCAST, object) : 0;
+        return (targetClass instanceof RiResolvedType) ? Util.hash1(Bytecodes.CHECKCAST, object) : 0;
     }
 
     @Override

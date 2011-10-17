@@ -47,6 +47,12 @@ public interface RiResolvedMethod extends RiMethod {
     String jniSymbol();
 
     /**
+     * Gets the type in which this method is declared.
+     * @return the type in which this method is declared
+     */
+    RiResolvedType holder();
+
+    /**
      * Gets the maximum number of locals used in this method's bytecode.
      * @return the maximum number of locals
      */
@@ -140,7 +146,7 @@ public interface RiResolvedMethod extends RiMethod {
      * Temporary work-around to support the @ACCESSOR Maxine annotation.
      * Non-Maxine VMs should just return {@code null}.
      */
-    RiType accessor();
+    RiResolvedType accessor();
 
     /**
      * Gets the intrinsic id of this method.

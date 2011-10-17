@@ -51,8 +51,9 @@ public final class LoadField extends AccessField {
      * @return the declared type of the field being accessed.
      */
     @Override
-    public RiType declaredType() {
-        return field().type();
+    public RiResolvedType declaredType() {
+        RiType result = field().type();
+        return (result instanceof RiResolvedType) ? (RiResolvedType) result : null;
     }
 
     /**
@@ -62,9 +63,8 @@ public final class LoadField extends AccessField {
      * @return the exact type of the field if known; {@code null} otherwise
      */
     @Override
-    public RiType exactType() {
-        RiType declaredType = declaredType();
-        return declaredType.isResolved() ? declaredType.exactType() : null;
+    public RiResolvedType exactType() {
+        return declaredType();
     }
 
     @Override
