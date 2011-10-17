@@ -145,7 +145,7 @@ public final class GraphBuilderPhase extends Phase {
 
     @Override
     protected String getDetailedName() {
-        return getName() + " " + method.holder().name() + "." + method.name() + method.signature().asString();
+        return getName() + " " + CiUtil.format("%H.%n(%p):%r", method);
     }
 
     private BlockMap createBlockMap() {
