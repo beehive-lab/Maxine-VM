@@ -40,7 +40,6 @@ import com.oracle.max.graal.graph.NodeClass.Position;
  */
 public abstract class Node implements Cloneable {
 
-    public static final Node Null = null;
     static final int DELETED_ID = -1;
     static final int INITIAL_ID = -2;
     static final int ALIVE_ID_START = 0;
