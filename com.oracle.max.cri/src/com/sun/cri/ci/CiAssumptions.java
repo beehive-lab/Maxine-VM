@@ -47,13 +47,13 @@ public final class CiAssumptions implements Serializable {
         /**
          * Type the assumption is made about.
          */
-        public final RiType context;
+        public final RiResolvedType context;
         /**
          * Assumed unique concrete sub-type of the context type.
          */
-        public final RiType subtype;
+        public final RiResolvedType subtype;
 
-        public ConcreteSubtype(RiType context, RiType subtype) {
+        public ConcreteSubtype(RiResolvedType context, RiResolvedType subtype) {
             this.context = context;
             this.subtype = subtype;
         }
@@ -136,7 +136,7 @@ public final class CiAssumptions implements Serializable {
      * @param receiverType the type that is assumed to have no finalizable subclasses
      * @return {@code true} if the assumption was recorded and can be assumed; {@code false} otherwise
      */
-    public boolean recordNoFinalizableSubclassAssumption(RiType receiverType) {
+    public boolean recordNoFinalizableSubclassAssumption(RiResolvedType receiverType) {
         return false;
     }
 
@@ -145,7 +145,7 @@ public final class CiAssumptions implements Serializable {
      * @param context the root of the subtree of the class hierarchy that this assumptions is about
      * @param subtype the one concrete subtype
      */
-    public void recordConcreteSubtype(RiType context, RiType subtype) {
+    public void recordConcreteSubtype(RiResolvedType context, RiResolvedType subtype) {
         record(new ConcreteSubtype(context, subtype));
     }
 
@@ -154,7 +154,7 @@ public final class CiAssumptions implements Serializable {
      * @param context the method that is the target of the virtual call
      * @param method the concrete method that is the only possible target for the virtual call
      */
-    public void recordConcreteMethod(RiMethod context, RiMethod method) {
+    public void recordConcreteMethod(RiResolvedMethod context, RiResolvedMethod method) {
         record(new ConcreteMethod(context, method));
     }
 

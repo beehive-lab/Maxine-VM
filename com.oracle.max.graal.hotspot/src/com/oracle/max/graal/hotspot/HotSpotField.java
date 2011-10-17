@@ -34,16 +34,15 @@ import com.sun.cri.ri.*;
  */
 public class HotSpotField extends CompilerObject implements RiResolvedField {
 
-    private final RiType holder;
+    private final RiResolvedType holder;
     private final String name;
     private final RiType type;
     private final int offset;
     private final int accessFlags;
     private CiConstant constant;
 
-    public HotSpotField(Compiler compiler, RiType holder, String name, RiType type, int offset, int accessFlags) {
+    public HotSpotField(Compiler compiler, RiResolvedType holder, String name, RiType type, int offset, int accessFlags) {
         super(compiler);
-        assert holder.isResolved();
         this.holder = holder;
         this.name = name;
         this.type = type;
@@ -60,7 +59,7 @@ public class HotSpotField extends CompilerObject implements RiResolvedField {
     @Override
     public CiConstant constantValue(CiConstant receiver) {
         if (receiver == null) {
-            if (constant == null && holder.isResolved() && holder.isSubtypeOf(compiler.getVMEntries().getType(GraalOptions.class))) {
+            if (constant == null && holder.isSubtypeOf((RiResolvedType) compiler.getVMEntries().getType(GraalOptions.class))) {
                 Field f;
                 try {
                     f = GraalOptions.class.getField(name);
@@ -88,7 +87,7 @@ public class HotSpotField extends CompilerObject implements RiResolvedField {
     }
 
     @Override
-    public RiType holder() {
+    public RiResolvedType holder() {
         return holder;
     }
 

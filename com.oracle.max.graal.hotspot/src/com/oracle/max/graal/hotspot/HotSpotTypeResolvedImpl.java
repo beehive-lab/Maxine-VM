@@ -43,10 +43,9 @@ public final class HotSpotTypeResolvedImpl extends HotSpotType implements HotSpo
     private boolean isInstanceClass;
     private boolean isInterface;
     private int instanceSize;
-    private RiType componentType;
     private HashMap<Long, RiResolvedField> fieldCache;
     private RiConstantPool pool;
-    private RiType superType;
+    private RiResolvedType superType;
     private boolean superTypeSet;
     private RiField[] fields;
 
@@ -60,31 +59,31 @@ public final class HotSpotTypeResolvedImpl extends HotSpotType implements HotSpo
     }
 
     @Override
-    public RiType arrayOf() {
-        return compiler.getVMEntries().RiType_arrayOf(this);
+    public RiResolvedType arrayOf() {
+        return (RiResolvedType) compiler.getVMEntries().RiType_arrayOf(this);
     }
 
     @Override
-    public RiType componentType() {
-        return compiler.getVMEntries().RiType_componentType(this);
+    public RiResolvedType componentType() {
+        return (RiResolvedType) compiler.getVMEntries().RiType_componentType(this);
     }
 
     @Override
-    public RiType uniqueConcreteSubtype() {
-        return compiler.getVMEntries().RiType_uniqueConcreteSubtype(this);
+    public RiResolvedType uniqueConcreteSubtype() {
+        return (RiResolvedType) compiler.getVMEntries().RiType_uniqueConcreteSubtype(this);
     }
 
     @Override
-    public RiType superType() {
+    public RiResolvedType superType() {
         if (!superTypeSet) {
-            superType = compiler.getVMEntries().RiType_superType(this);
+            superType = (RiResolvedType) compiler.getVMEntries().RiType_superType(this);
             superTypeSet = true;
         }
         return superType;
     }
 
     @Override
-    public RiType exactType() {
+    public RiResolvedType exactType() {
         if (Modifier.isFinal(accessFlags)) {
             return this;
         }
@@ -153,12 +152,7 @@ public final class HotSpotTypeResolvedImpl extends HotSpotType implements HotSpo
     }
 
     @Override
-    public boolean isResolved() {
-        return true;
-    }
-
-    @Override
-    public boolean isSubtypeOf(RiType other) {
+    public boolean isSubtypeOf(RiResolvedType other) {
         if (other instanceof HotSpotTypeResolved) {
             return compiler.getVMEntries().RiType_isSubtypeOf(this, other);
         }

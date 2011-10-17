@@ -194,7 +194,7 @@ public class SnippetIntrinsificationPhase extends Phase {
         int count = signature.argumentCount(false);
         Class< ? >[] result = new Class< ? >[count];
         for (int i = 0; i < result.length; ++i) {
-            result[i] = signature.argumentTypeAt(i, accessingClass).toJava();
+            result[i] = ((RiResolvedType) signature.argumentTypeAt(i, accessingClass)).toJava();
         }
         return result;
     }

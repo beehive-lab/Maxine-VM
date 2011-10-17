@@ -49,8 +49,9 @@ public final class LoadFieldNode extends AccessFieldNode implements Canonicaliza
      * @return the declared type of the field being accessed.
      */
     @Override
-    public RiType declaredType() {
-        return field().type();
+    public RiResolvedType declaredType() {
+        RiType result = field().type();
+        return (result instanceof RiResolvedType) ? (RiResolvedType) result : null;
     }
 
     /**
@@ -60,9 +61,9 @@ public final class LoadFieldNode extends AccessFieldNode implements Canonicaliza
      * @return the exact type of the field if known; {@code null} otherwise
      */
     @Override
-    public RiType exactType() {
+    public RiResolvedType exactType() {
         RiType declared = declaredType();
-        return declared != null && declared.isResolved() ? declared.exactType() : null;
+        return (declared instanceof RiResolvedType) ? ((RiResolvedType) declared).exactType() : null;
     }
 
     @Override

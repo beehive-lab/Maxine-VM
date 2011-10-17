@@ -1217,7 +1217,6 @@ public class HotSpotXirGenerator implements RiXirGenerator {
 
     @Override
     public XirSnippet genNewInstance(XirSite site, RiType type) {
-        assert type.isResolved();
         int instanceSize = ((HotSpotTypeResolved) type).instanceSize();
         return new XirSnippet(newInstanceTemplates.get(site, instanceSize), XirArgument.forObject(type));
     }
@@ -1225,7 +1224,7 @@ public class HotSpotXirGenerator implements RiXirGenerator {
     @Override
     public XirSnippet genNewArray(XirSite site, XirArgument length, CiKind elementKind, RiType componentType, RiType arrayType) {
         if (elementKind == CiKind.Object) {
-            assert arrayType.isResolved();
+            assert arrayType instanceof RiResolvedType;
             return new XirSnippet(newObjectArrayTemplates.get(site), length, XirArgument.forObject(arrayType));
         }
         assert arrayType == null;
@@ -1240,7 +1239,6 @@ public class HotSpotXirGenerator implements RiXirGenerator {
 
     @Override
     public XirSnippet genNewMultiArray(XirSite site, XirArgument[] lengths, RiType type) {
-        assert type.isResolved();
         XirArgument[] params = Arrays.copyOf(lengths, lengths.length + 1);
         params[lengths.length] = XirArgument.forObject(type);
         return new XirSnippet(multiNewArrayTemplate.get(site, lengths.length), params);
@@ -1295,7 +1293,7 @@ public class HotSpotXirGenerator implements RiXirGenerator {
 
     @Override
     public XirSnippet genTypeCheck(XirSite site, XirArgument object, XirArgument hub, RiType type) {
-        assert type.isResolved();
+        assert type instanceof RiResolvedType;
         return new XirSnippet(typeCheckTemplates.get(site), object, hub);
     }
 

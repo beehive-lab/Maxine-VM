@@ -139,7 +139,7 @@ public final class Constant extends Instruction {
     }
 
     @Override
-    public RiType declaredType() {
+    public RiResolvedType declaredType() {
         RiRuntime runtime = compilation().runtime;
         if (kind.isPrimitive()) {
             runtime.asRiType(kind);
@@ -148,7 +148,7 @@ public final class Constant extends Instruction {
     }
 
     @Override
-    public RiType exactType() {
+    public RiResolvedType exactType() {
         return declaredType();
     }
 

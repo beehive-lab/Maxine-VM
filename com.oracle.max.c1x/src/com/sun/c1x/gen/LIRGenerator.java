@@ -1189,12 +1189,12 @@ public abstract class LIRGenerator extends ValueVisitor {
         } else {
             // get some idea of the throw type
             boolean typeIsExact = true;
-            RiType throwType = x.exception().exactType();
+            RiResolvedType throwType = x.exception().exactType();
             if (throwType == null) {
                 typeIsExact = false;
                 throwType = x.exception().declaredType();
             }
-            if (throwType != null && throwType.isResolved() && throwType.isInstanceClass()) {
+            if (throwType != null && throwType.isInstanceClass()) {
                 unwind = !ExceptionHandler.couldCatch(x.exceptionHandlers(), throwType, typeIsExact);
             }
         }
@@ -2126,8 +2126,8 @@ public abstract class LIRGenerator extends ValueVisitor {
         Value srcPos = arrayCopy.srcPos();
         Value destPos = arrayCopy.destPos();
         Value length = arrayCopy.length();
-        RiType srcType = src.declaredType();
-        RiType destType = dest.declaredType();
+        RiResolvedType srcType = src.declaredType();
+        RiResolvedType destType = dest.declaredType();
         if ((srcType != null && srcType.isArrayClass()) || (destType != null && destType.isArrayClass())) {
             RiType type = (srcType == null) ? destType : srcType;
             if ((srcType == null || destType == null || srcType.kind(true) != destType.kind(true)) && type.kind(true) != CiKind.Object) {

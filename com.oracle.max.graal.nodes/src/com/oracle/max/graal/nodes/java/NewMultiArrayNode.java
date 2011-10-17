@@ -45,7 +45,7 @@ public final class NewMultiArrayNode extends NewArrayNode {
         return dimensions.size();
     }
 
-    public final RiType elementType;
+    public final RiResolvedType elementType;
     public final int cpi;
     public final RiConstantPool constantPool;
 
@@ -56,7 +56,7 @@ public final class NewMultiArrayNode extends NewArrayNode {
      * @param cpi the constant pool index for resolution
      * @param riConstantPool the constant pool for resolution
      */
-    public NewMultiArrayNode(RiType elementType, ValueNode[] dimensions, int cpi, RiConstantPool riConstantPool) {
+    public NewMultiArrayNode(RiResolvedType elementType, ValueNode[] dimensions, int cpi, RiConstantPool riConstantPool) {
         super(null);
         this.constantPool = riConstantPool;
         this.elementType = elementType;
@@ -70,17 +70,17 @@ public final class NewMultiArrayNode extends NewArrayNode {
     }
 
     @Override
-    public RiType elementType() {
+    public RiResolvedType elementType() {
         return elementType;
     }
 
     @Override
-    public RiType exactType() {
+    public RiResolvedType exactType() {
         return elementType.arrayOf();
     }
 
     @Override
-    public RiType declaredType() {
+    public RiResolvedType declaredType() {
         return exactType();
     }
 }

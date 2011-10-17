@@ -67,8 +67,8 @@ public final class StackHandle extends Instruction {
     }
 
     @Override
-    public RiType declaredType() {
-        return declaredType;
+    public RiResolvedType declaredType() {
+        return (declaredType instanceof RiResolvedType) ? (RiResolvedType) declaredType : null;
     }
 
     @Override

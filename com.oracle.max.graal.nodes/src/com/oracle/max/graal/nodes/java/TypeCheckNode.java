@@ -58,7 +58,7 @@ public abstract class TypeCheckNode extends BooleanNode {
      * Gets the target class, i.e. the class being cast to, or the class being tested against.
      * @return the target class
      */
-    public RiType targetClass() {
-        return targetClassInstruction() instanceof ConstantNode ? (RiType) targetClassInstruction().asConstant().asObject() : null;
+    public RiResolvedType targetClass() {
+        return targetClassInstruction() instanceof ConstantNode ? (RiResolvedType) targetClassInstruction().asConstant().asObject() : null;
     }
 }

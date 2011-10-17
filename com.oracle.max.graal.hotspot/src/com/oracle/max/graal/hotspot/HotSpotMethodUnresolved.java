@@ -29,6 +29,7 @@ import com.sun.cri.ri.*;
  */
 public final class HotSpotMethodUnresolved extends HotSpotMethod {
     private final RiSignature signature;
+    protected RiType holder;
 
     public HotSpotMethodUnresolved(Compiler compiler, String name, String signature, RiType holder) {
         super(compiler);
@@ -45,6 +46,11 @@ public final class HotSpotMethodUnresolved extends HotSpotMethod {
     @Override
     public int codeSize() {
         return 0;
+    }
+
+    @Override
+    public RiType holder() {
+        return holder;
     }
 
     @Override

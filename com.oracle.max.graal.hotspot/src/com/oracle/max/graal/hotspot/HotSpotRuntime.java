@@ -140,18 +140,18 @@ public class HotSpotRuntime implements GraalRuntime {
     }
 
     @Override
-    public RiType asRiType(CiKind kind) {
-        return compiler.getVMEntries().getType(kind.toJavaClass());
+    public RiResolvedType asRiType(CiKind kind) {
+        return (RiResolvedType) compiler.getVMEntries().getType(kind.toJavaClass());
     }
 
     @Override
-    public RiType getTypeOf(CiConstant constant) {
-        return compiler.getVMEntries().getRiType(constant);
+    public RiResolvedType getTypeOf(CiConstant constant) {
+        return (RiResolvedType) compiler.getVMEntries().getRiType(constant);
     }
 
     @Override
-    public boolean isExceptionType(RiType type) {
-        return type.isSubtypeOf(compiler.getVMEntries().getType(Throwable.class));
+    public boolean isExceptionType(RiResolvedType type) {
+        return type.isSubtypeOf((RiResolvedType) compiler.getVMEntries().getType(Throwable.class));
     }
 
     @Override
@@ -313,7 +313,7 @@ public class HotSpotRuntime implements GraalRuntime {
             if (elementKind == CiKind.Object && !value.isNullConstant()) {
                 // Store check!
                 if (array.exactType() != null) {
-                    RiType elementType = array.exactType().componentType();
+                    RiResolvedType elementType = array.exactType().componentType();
                     if (elementType.superType() != null) {
                         ConstantNode type = graph.unique(new ConstantNode(elementType.getEncoding(Representation.ObjectHub)));
                         value = graph.unique(new CheckCastNode(anchor, type, value));
@@ -804,8 +804,8 @@ public class HotSpotRuntime implements GraalRuntime {
         return graph.add(new SafeReadNode(kind, value, LocationNode.create(LocationNode.FINAL_LOCATION, kind, offset, graph)));
     }
 
-    public RiType getType(Class<?> clazz) {
-        return compiler.getVMEntries().getType(clazz);
+    public RiResolvedType getType(Class<?> clazz) {
+        return (RiResolvedType) compiler.getVMEntries().getType(clazz);
     }
 
     public Object asCallTarget(Object target) {

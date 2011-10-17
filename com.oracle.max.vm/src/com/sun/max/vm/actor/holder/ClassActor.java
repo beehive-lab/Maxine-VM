@@ -66,7 +66,7 @@ import com.sun.max.vm.verifier.*;
  * a mirror, i.e. an instance of java.lang.Class reflecting on it.
  *
  */
-public abstract class ClassActor extends Actor implements RiType {
+public abstract class ClassActor extends Actor implements RiResolvedType {
 
     public static final Deferrable.Queue DEFERRABLE_QUEUE_1 = Deferrable.createDeferred();
 
@@ -1631,19 +1631,19 @@ public abstract class ClassActor extends Actor implements RiType {
         return flags() & JAVA_CLASS_FLAGS;
     }
 
-    public final RiType arrayOf() {
+    public final RiResolvedType arrayOf() {
         return ArrayClassActor.forComponentClassActor(this);
     }
 
-    public final RiType superType() {
+    public final RiResolvedType superType() {
         return superClassActor;
     }
 
-    public final RiType componentType() {
+    public final RiResolvedType componentType() {
         return componentClassActor;
     }
 
-    public final RiType exactType() {
+    public final RiResolvedType exactType() {
         ClassActor elementClassActor = elementClassActor();
         if (elementClassActor.isFinal() || elementClassActor.isPrimitiveClassActor()) {
             return this;
@@ -1686,7 +1686,7 @@ public abstract class ClassActor extends Actor implements RiType {
         return true;
     }
 
-    public final boolean isSubtypeOf(RiType other) {
+    public final boolean isSubtypeOf(RiResolvedType other) {
         if (other instanceof ClassActor) {
             ClassActor otherClassActor = (ClassActor) other;
             return otherClassActor.isAssignableFrom(this);
@@ -1725,7 +1725,7 @@ public abstract class ClassActor extends Actor implements RiType {
     }
 
     @Override
-    public final RiType uniqueConcreteSubtype() {
+    public final RiResolvedType uniqueConcreteSubtype() {
         return DependenciesManager.getUniqueConcreteSubtype(this);
     }
 

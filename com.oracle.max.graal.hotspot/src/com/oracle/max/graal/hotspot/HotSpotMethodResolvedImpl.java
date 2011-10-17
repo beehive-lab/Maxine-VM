@@ -49,6 +49,7 @@ public final class HotSpotMethodResolvedImpl extends HotSpotMethod implements Ho
     private Boolean hasBalancedMonitors;
     private Graph intrinsicGraph;
     private Map<Object, Object> compilerStorage;
+    private RiResolvedType holder;
 
     private HotSpotMethodResolvedImpl() {
         super(null);
@@ -56,6 +57,11 @@ public final class HotSpotMethodResolvedImpl extends HotSpotMethod implements Ho
         accessFlags = -1;
         maxLocals = -1;
         maxStackSize = -1;
+    }
+
+    @Override
+    public RiResolvedType holder() {
+        return holder;
     }
 
     @Override
@@ -70,8 +76,6 @@ public final class HotSpotMethodResolvedImpl extends HotSpotMethod implements Ho
 
     @Override
     public byte[] code() {
-        assert holder.isResolved();
-
         byte[] ret = compiler.getVMEntries().RiMethod_code(this);
         assert ret.length == codeSize : "expected: " + codeSize + ", actual: " + ret.length;
         return ret;
@@ -167,7 +171,7 @@ public final class HotSpotMethodResolvedImpl extends HotSpotMethod implements Ho
     }
 
     @Override
-    public RiType accessor() {
+    public RiResolvedType accessor() {
         return null;
     }
 

@@ -46,12 +46,12 @@ public final class NewObjectArrayClone extends NewArray {
     }
 
     @Override
-    public RiType exactType() {
+    public RiResolvedType exactType() {
         return referenceArray.exactType();
     }
 
     @Override
-    public RiType declaredType() {
+    public RiResolvedType declaredType() {
         return referenceArray.declaredType();
     }
 

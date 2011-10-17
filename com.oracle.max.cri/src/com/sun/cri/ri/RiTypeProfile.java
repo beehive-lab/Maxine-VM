@@ -30,5 +30,5 @@ public class RiTypeProfile implements Serializable {
     public int morphism;
 
     public float[] probabilities;
-    public RiType[] types;
+    public RiResolvedType[] types;
 }

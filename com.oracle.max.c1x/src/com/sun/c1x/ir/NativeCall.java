@@ -105,8 +105,9 @@ public final class NativeCall extends StateSplit {
     }
 
     @Override
-    public RiType declaredType() {
-        return signature.returnType(null);
+    public RiResolvedType declaredType() {
+        RiType result = signature.returnType(null);
+        return (result instanceof RiResolvedType) ? (RiResolvedType) result : null;
     }
 
     @Override

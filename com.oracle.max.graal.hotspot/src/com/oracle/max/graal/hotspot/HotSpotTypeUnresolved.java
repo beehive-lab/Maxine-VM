@@ -77,79 +77,9 @@ public class HotSpotTypeUnresolved extends HotSpotType {
     }
 
     @Override
-    public RiType uniqueConcreteSubtype() {
-        throw unresolved("uniqueConcreteSubtype");
-    }
-
-    @Override
-    public boolean hasSubclass() {
-        throw unresolved("hasSubclass()");
-    }
-
-    @Override
-    public boolean hasFinalizer() {
-        throw unresolved("hasFinalizer()");
-    }
-
-    @Override
-    public boolean hasFinalizableSubclass() {
-        throw unresolved("hasFinalizableSubclass()");
-    }
-
-    @Override
-    public boolean isInterface() {
-        throw unresolved("isInterface()");
-    }
-
-    @Override
-    public boolean isArrayClass() {
-        return dimensions > 0;
-    }
-
-    @Override
-    public boolean isInstanceClass() {
-        throw unresolved("isInstanceClass()");
-    }
-
-    @Override
-    public int accessFlags() {
-        throw unresolved("accessFlags()");
-    }
-
-    @Override
-    public boolean isResolved() {
-        return false;
-    }
-
-    @Override
-    public boolean isInitialized() {
-        throw unresolved("isInitialized()");
-    }
-
-    @Override
-    public boolean isSubtypeOf(RiType other) {
-        throw unresolved("isSubtypeOf()");
-    }
-
-    @Override
-    public boolean isInstance(CiConstant obj) {
-        throw unresolved("isInstance()");
-    }
-
-    @Override
     public RiType componentType() {
-        assert isArrayClass() : "no array class" + name();
+        assert dimensions > 0 : "no array class" + name();
         return new HotSpotTypeUnresolved(compiler, simpleName, dimensions - 1);
-    }
-
-    @Override
-    public RiType exactType() {
-        throw unresolved("exactType()");
-    }
-
-    @Override
-    public RiType superType() {
-        throw unresolved("superType()");
     }
 
     @Override
@@ -158,17 +88,8 @@ public class HotSpotTypeUnresolved extends HotSpotType {
     }
 
     @Override
-    public RiResolvedMethod resolveMethodImpl(RiResolvedMethod method) {
-        throw unresolved("resolveMethodImpl()");
-    }
-
-    @Override
     public CiKind kind(boolean architecture) {
         return CiKind.Object;
-    }
-
-    private CiUnresolvedException unresolved(String operation) {
-        throw new CiUnresolvedException(operation + " not defined for unresolved class " + simpleName);
     }
 
     @Override
@@ -187,27 +108,7 @@ public class HotSpotTypeUnresolved extends HotSpotType {
     }
 
     @Override
-    public CiConstant getEncoding(RiType.Representation r) {
-        throw unresolved("getEncoding()");
-    }
-
-    @Override
     public CiKind getRepresentationKind(RiType.Representation r) {
         return CiKind.Object;
-    }
-
-    @Override
-    public RiResolvedMethod uniqueConcreteMethod(RiResolvedMethod method) {
-        throw unresolved("uniqueConcreteMethod");
-    }
-
-    @Override
-    public RiField[] declaredFields() {
-        return null;
-    }
-
-    @Override
-    public Class< ? > toJava() {
-        return null;
     }
 }
