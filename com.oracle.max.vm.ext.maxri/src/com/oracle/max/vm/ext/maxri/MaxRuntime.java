@@ -282,10 +282,8 @@ public class MaxRuntime implements GraalRuntime {
         } else {
             values = new Value[length];
             for (int i = 0; i < length; ++i) {
-                CiConstant arg = args[0];
-                if (arg == null) {
-                    return null;
-                }
+                CiConstant arg = args[i];
+                assert arg != null;
                 Value value;
                 Kind kind;
                 if (!methodActor.isStatic() && i == 0) {
