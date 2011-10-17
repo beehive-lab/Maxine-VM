@@ -157,10 +157,11 @@ public interface RiRuntime {
      * Attempts to compile-time evaluate or "fold" a call to a given method. A foldable method is a pure function
      * that has no side effects. Such methods can be executed via reflection when all their inputs are constants,
      * and the resulting value is substituted for the method call. May only be called on methods for which
-     * isFoldable(method) returns {@code true}.
+     * isFoldable(method) returns {@code true}. The array of constant for arguments may contain {@code null} values, which
+     * means that this particular argument does not evaluate to a compile time constant.
      *
      * @param method the compiler interface method for which folding is being requested
-     * @param args the arguments to the call
+     * @param args the arguments to the call as an array of CiConstant objects
      * @return the result of the folding or {@code null} if no folding occurred
      */
     CiConstant fold(RiMethod method, CiConstant[] args);

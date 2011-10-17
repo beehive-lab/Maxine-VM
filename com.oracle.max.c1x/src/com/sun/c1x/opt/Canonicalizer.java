@@ -1462,9 +1462,6 @@ public class Canonicalizer extends DefaultValueVisitor {
             int z = 0;
             for (int i = 0; i < args.length; ++i) {
                 if (args[i] != null) {
-                    if (!args[i].isConstant()) {
-                        return null;
-                    }
                     constantArgs[z++] = args[i].asConstant();
                 }
             }
