@@ -138,17 +138,6 @@ public class LoopBeginNode extends MergeNode implements Node.IterableNodeType {
     }
 
     @Override
-    public Iterable< ? extends Node> dataUsages() {
-        final Iterator< ? extends Node> dataUsages = super.dataUsages().iterator();
-        return new Iterable<Node>() {
-            @Override
-            public Iterator<Node> iterator() {
-                return new FilteringNodeIterator(dataUsages, LoopEndNode.class);
-            }
-        };
-    }
-
-    @Override
     public Map<Object, Object> getDebugProperties() {
         Map<Object, Object> properties = super.getDebugProperties();
         properties.put("loopFrequency", String.format("%7.1f", loopFrequency));

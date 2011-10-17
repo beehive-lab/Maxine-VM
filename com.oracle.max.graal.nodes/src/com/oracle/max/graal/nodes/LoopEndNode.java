@@ -22,8 +22,6 @@
  */
 package com.oracle.max.graal.nodes;
 
-import java.util.*;
-
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
@@ -49,10 +47,5 @@ public class LoopEndNode extends FixedNode implements Node.IterableNodeType {
     @Override
     public void accept(ValueVisitor v) {
         v.visitLoopEnd(this);
-    }
-
-    @Override
-    public Iterable< ? extends Node> dataInputs() {
-        return Collections.emptyList();
     }
 }
