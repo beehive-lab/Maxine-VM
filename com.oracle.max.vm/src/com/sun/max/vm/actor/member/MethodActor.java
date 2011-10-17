@@ -538,10 +538,6 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
         return 0;
     }
 
-    public RiMethodProfile methodData() {
-        return null;
-    }
-
     public String name() {
         return name.string;
     }

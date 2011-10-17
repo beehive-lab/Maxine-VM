@@ -59,11 +59,6 @@ public final class HotSpotMethodUnresolved extends HotSpotMethod {
     }
 
     @Override
-    public RiMethodProfile methodData() {
-        throw unresolved("methodData");
-    }
-
-    @Override
     public String jniSymbol() {
         throw unresolved("jniSymbol");
     }

@@ -143,11 +143,6 @@ public final class HotSpotMethodResolvedImpl extends HotSpotMethod implements Ho
     }
 
     @Override
-    public RiMethodProfile methodData() {
-        return null;
-    }
-
-    @Override
     public StackTraceElement toStackTraceElement(int bci) {
         return CiUtil.toStackTraceElement(this, bci);
     }
