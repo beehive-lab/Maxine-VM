@@ -237,7 +237,7 @@ public class EscapeAnalysisPhase extends Phase {
 
     private static Node escape(EscapeRecord record, Node usage) {
         final Node node = record.node;
-        // unresolved fields cause problems later on, don't escape analyze anything used by with fields
+        // bail out on unresolved fields  - they will cause problems later on
         if (usage instanceof AccessFieldNode && !((AccessFieldNode) usage).field().isResolved()) {
             return node.graph().start();
         }
@@ -279,7 +279,7 @@ public class EscapeAnalysisPhase extends Phase {
                     return x.array();
                 } else {
                     assert x.array() == node || x.value() == node;
-                    // in order to not escape the access needs to have a valid constant index and either a store into node or self-referencing
+                    // in order to not escape, the access needs to have a valid constant index and either a store into node or be self-referencing
                     return EscapeOp.isValidConstantIndex(x) && x.value() != node ? null : x.array();
                 }
             } else if (usage instanceof VirtualObjectFieldNode) {
@@ -297,6 +297,8 @@ public class EscapeAnalysisPhase extends Phase {
     }
 
     private void completeAnalysis(Graph graph) {
+        // TODO(ls) debugging code
+
         TTY.println("================================================================");
         for (Node node : graph.getNodes()) {
             if (node != null) {
@@ -319,9 +321,6 @@ public class EscapeAnalysisPhase extends Phase {
 
     @Override
     protected void run(Graph graph) {
-//        completeAnalysis(graph);
-//
-//        for (int i = 0; i < 5; i++) {
         for (Node node : graph.getNodes()) {
             if (node != null) {
                 EscapeOp op = node.lookup(EscapeOp.class);
@@ -370,8 +369,6 @@ public class EscapeAnalysisPhase extends Phase {
                             }
                             new PhiSimplificationPhase(context).apply(graph);
 
-//                            completeAnalysis(graph);
-
                             break;
                         }
                         if (weight < minimumWeight) {
@@ -404,7 +401,6 @@ public class EscapeAnalysisPhase extends Phase {
                 }
             }
         }
-//        }
     }
 
     private double analyze(EscapeOp op, Node node, Collection<Node> exits, Collection<InvokeNode> invokes) {

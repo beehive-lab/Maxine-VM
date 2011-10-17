@@ -75,7 +75,7 @@ public abstract class Node implements Cloneable {
     // this next pointer is used in Graph to implement fast iteration over NodeClass types, it therefore points to the next Node of the same type.
     Node typeCacheNext;
 
-    private NodeReverseList usages;
+    private NodeUsagesList usages;
     private Node predecessor;
     private int modCount;
     private NodeClass nodeClass;
@@ -110,7 +110,7 @@ public abstract class Node implements Cloneable {
         return getNodeClass().getSuccessorIterable(this);
     }
 
-    public final NodeReverseList usages() {
+    public final NodeUsagesList usages() {
         return usages;
     }
 
@@ -177,7 +177,7 @@ public abstract class Node implements Cloneable {
         assert id == INITIAL_ID : "unexpected id: " + id;
         this.graph = graph;
         this.id = graph.register(this);
-        usages = new NodeReverseList();
+        usages = new NodeUsagesList();
         for (Node input : inputs()) {
             updateUsages(null, input);
         }
@@ -306,7 +306,7 @@ public abstract class Node implements Cloneable {
         newNode.typeCacheNext = null;
         newNode.id = INITIAL_ID;
         newNode.id = into.register(newNode);
-        newNode.usages = new NodeReverseList();
+        newNode.usages = new NodeUsagesList();
         newNode.predecessor = null;
         newNode.modCount = 0;
         return newNode;

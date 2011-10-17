@@ -38,7 +38,7 @@ public class ComputeProbabilityPhase extends Phase {
      * The computation of absolute probabilities works in three steps:
      *
      * - The first step, "PropagateProbability", traverses the graph in post order (merges after their ends, ...) and keeps track of the "probability state".
-     *   Whenever it encounters a ControlSplit it uses the splits probability information to divide the probability upon the successors.
+     *   Whenever it encounters a ControlSplit it uses the split's probability information to divide the probability upon the successors.
      *   Whenever it encounters an Invoke it assumes that the exception edge is unlikely and propagates the whole probability to the normal successor.
      *   Whenever it encounters a Merge it sums up the probability of all predecessors.
      *   It also maintains a set of active loops (whose LoopBegin has been visited) and builds def/use information for the second step.
