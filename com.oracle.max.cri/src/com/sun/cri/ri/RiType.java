@@ -224,6 +224,19 @@ public interface RiType {
      */
     RiMethod resolveMethodImpl(RiMethod method);
 
+    /**
+     * Given an RiMethod a, returns a concrete RiMethod b that is the only possible
+     * unique target for a virtual call on a(). Returns {@code null} if either no
+     * such concrete method or more than one such method exists. Returns the method a
+     * if a is a concrete method that is not overridden. If the compiler uses the
+     * result of this method for its compilation, it must register an assumption
+     * (see {@link CiAssumptions}), because dynamic class loading can invalidate
+     * the result of this method.
+     * NOTE: ONLY AVAILABLE ON RESOLVED TYPES.
+     * @param method the method a for which a unique concrete target is searched
+     * @return the unique concrete target or {@code null} if no such target exists
+     *         or assumptions are not supported by this runtime
+     */
     RiMethod uniqueConcreteMethod(RiMethod method);
 
     /**
