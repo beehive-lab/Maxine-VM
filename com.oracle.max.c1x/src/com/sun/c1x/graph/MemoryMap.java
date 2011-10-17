@@ -148,7 +148,7 @@ public class MemoryMap {
             Value obj = objectMap.get(field);
             if (obj == store.object()) {
                 // is this a redundant store?
-                if (value == valueMap.get(field) && !isVolatile(field.accessFlags())) {
+                if (value == valueMap.get(field) && !isVolatile(((RiResolvedField) field).accessFlags())) {
                     return null;
                 }
             }

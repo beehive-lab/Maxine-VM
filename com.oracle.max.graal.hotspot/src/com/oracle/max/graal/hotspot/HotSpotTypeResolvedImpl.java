@@ -44,7 +44,7 @@ public final class HotSpotTypeResolvedImpl extends HotSpotType implements HotSpo
     private boolean isInterface;
     private int instanceSize;
     private RiType componentType;
-    private HashMap<Long, RiField> fieldCache;
+    private HashMap<Long, RiResolvedField> fieldCache;
     private RiConstantPool pool;
     private RiType superType;
     private boolean superTypeSet;
@@ -194,14 +194,14 @@ public final class HotSpotTypeResolvedImpl extends HotSpotType implements HotSpo
     }
 
     @Override
-    public RiField createRiField(String name, RiType type, int offset, int flags) {
-        RiField result = null;
+    public RiResolvedField createRiField(String name, RiType type, int offset, int flags) {
+        RiResolvedField result = null;
 
         long id = offset + ((long) flags << 32);
 
         // (tw) Must cache the fields, because the local load elimination only works if the objects from two field lookups are equal.
         if (fieldCache == null) {
-            fieldCache = new HashMap<Long, RiField>(8);
+            fieldCache = new HashMap<Long, RiResolvedField>(8);
         } else {
             result = fieldCache.get(id);
         }

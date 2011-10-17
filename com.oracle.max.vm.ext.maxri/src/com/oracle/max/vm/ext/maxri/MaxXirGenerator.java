@@ -401,7 +401,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     @Override
     public XirSnippet genGetField(XirSite site, XirArgument receiver, RiField field) {
         XirPair pair = getFieldTemplates[field.kind(true).ordinal()];
-        if (field.isResolved()) {
+        if (field instanceof RiResolvedField) {
             FieldActor fieldActor = (FieldActor) field;
             XirArgument offset = XirArgument.forInt(fieldActor.offset());
             return new XirSnippet(pair.resolved, receiver, offset);
@@ -414,7 +414,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     @Override
     public XirSnippet genPutField(XirSite site, XirArgument receiver, RiField field, XirArgument value) {
         XirPair pair = putFieldTemplates[field.kind(true).ordinal()];
-        if (field.isResolved()) {
+        if (field instanceof RiResolvedField) {
             FieldActor fieldActor = (FieldActor) field;
             XirArgument offset = XirArgument.forInt(fieldActor.offset());
             return new XirSnippet(pair.resolved, receiver, value, offset);
@@ -426,7 +426,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     @Override
     public XirSnippet genGetStatic(XirSite site, XirArgument staticTuple, RiField field) {
         XirPair pair = getStaticFieldTemplates[field.kind(true).ordinal()];
-        if (field.isResolved()) {
+        if (field instanceof RiResolvedField) {
             FieldActor fieldActor = (FieldActor) field;
             XirArgument offset = XirArgument.forInt(fieldActor.offset());
             return new XirSnippet(pair.resolved, staticTuple, offset);
@@ -438,7 +438,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     @Override
     public XirSnippet genPutStatic(XirSite site, XirArgument staticTuple, RiField field, XirArgument value) {
         XirPair pair = putStaticFieldTemplates[field.kind(true).ordinal()];
-        if (field.isResolved()) {
+        if (field instanceof RiResolvedField) {
             FieldActor fieldActor = (FieldActor) field;
             XirArgument offset = XirArgument.forInt(fieldActor.offset());
             return new XirSnippet(pair.resolved, staticTuple, value, offset);

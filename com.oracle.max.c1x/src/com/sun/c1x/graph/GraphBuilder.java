@@ -809,7 +809,7 @@ public final class GraphBuilder {
     void genGetField(int cpi, RiField field) {
         // Must copy the state here, because the field holder must still be on the stack.
         FrameState stateBefore = curState.immutableCopy(bci());
-        boolean isLoaded = !C1XOptions.TestPatching && field.isResolved();
+        boolean isLoaded = !C1XOptions.TestPatching && (field instanceof RiResolvedField);
         LoadField load = new LoadField(apop(), field, false, stateBefore, isLoaded);
         appendOptimizedLoadField(field.kind(false).stackKind(), load);
     }
@@ -817,17 +817,17 @@ public final class GraphBuilder {
     void genPutField(int cpi, RiField field) {
         // Must copy the state here, because the field holder must still be on the stack.
         FrameState stateBefore = curState.immutableCopy(bci());
-        boolean isLoaded = !C1XOptions.TestPatching && field.isResolved();
+        boolean isLoaded = !C1XOptions.TestPatching && (field instanceof RiResolvedField);
         Value value = pop(field.kind(false).stackKind());
         appendOptimizedStoreField(new StoreField(apop(), field, value, false, stateBefore, isLoaded));
     }
 
     void genGetStatic(int cpi, RiField field) {
         RiType holder = field.holder();
-        boolean isInitialized = !C1XOptions.TestPatching && field.isResolved() && holder.isResolved() && holder.isInitialized();
+        boolean isInitialized = !C1XOptions.TestPatching && field instanceof RiResolvedField && holder.isResolved() && holder.isInitialized();
         CiConstant constantValue = null;
         if (isInitialized && C1XOptions.CanonicalizeConstantFields) {
-            constantValue = field.constantValue(null);
+            constantValue = ((RiResolvedField) field).constantValue(null);
         }
         if (constantValue != null) {
             push(field.kind(false).stackKind(), appendWithBCI(new Constant(field.kind(false), constantValue), bci(), false));
@@ -840,7 +840,7 @@ public final class GraphBuilder {
 
     void genPutStatic(int cpi, RiField field) {
         RiType holder = field.holder();
-        boolean isInitialized = !C1XOptions.TestPatching && field.isResolved() && holder.isResolved() && holder.isInitialized();
+        boolean isInitialized = !C1XOptions.TestPatching && field instanceof RiResolvedField && holder.isResolved() && holder.isInitialized();
         Value container = genResolveClass(RiType.Representation.StaticFields, holder, isInitialized, cpi);
         Value value = pop(field.kind(false).stackKind());
         StoreField store = new StoreField(container, field, value, true, null, isInitialized);

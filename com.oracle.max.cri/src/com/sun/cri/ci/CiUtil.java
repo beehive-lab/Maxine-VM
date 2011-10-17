@@ -372,7 +372,7 @@ public class CiUtil {
                         break;
                     }
                     case 'f': {
-                        sb.append(!field.isResolved() ? "unresolved" : isStatic(field.accessFlags()) ? "static" : "instance");
+                        sb.append(!(field instanceof RiResolvedField) ? "unresolved" : isStatic(((RiResolvedField) field).accessFlags()) ? "static" : "instance");
                         break;
                     }
                     case '%': {

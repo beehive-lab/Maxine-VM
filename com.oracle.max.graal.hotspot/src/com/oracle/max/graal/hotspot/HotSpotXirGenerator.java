@@ -1192,7 +1192,6 @@ public class HotSpotXirGenerator implements RiXirGenerator {
 
     @Override
     public XirSnippet genGetField(XirSite site, XirArgument object, RiField field) {
-        assert field.isResolved();
         return new XirSnippet(getFieldTemplates.get(site, field.kind(true)), object, XirArgument.forInt(((HotSpotField) field).offset()));
     }
 
@@ -1203,19 +1202,16 @@ public class HotSpotXirGenerator implements RiXirGenerator {
 
     @Override
     public XirSnippet genPutField(XirSite site, XirArgument object, RiField field, XirArgument value) {
-        assert field.isResolved();
         return new XirSnippet(putFieldTemplates.get(site, field.kind(true)), object, value, XirArgument.forInt(((HotSpotField) field).offset()));
     }
 
     @Override
     public XirSnippet genGetStatic(XirSite site, XirArgument object, RiField field) {
-        assert field.isResolved();
         return new XirSnippet(getFieldTemplates.get(site, field.kind(true)), object, XirArgument.forInt(((HotSpotField) field).offset()));
     }
 
     @Override
     public XirSnippet genPutStatic(XirSite site, XirArgument object, RiField field, XirArgument value) {
-        assert field.isResolved();
         return new XirSnippet(putFieldTemplates.get(site, field.kind(true)), object, value, XirArgument.forInt(((HotSpotField) field).offset()));
     }
 

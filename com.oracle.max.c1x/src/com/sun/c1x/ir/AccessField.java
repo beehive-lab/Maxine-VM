@@ -50,7 +50,7 @@ public abstract class AccessField extends StateSplit {
         super(kind, stateBefore);
         this.object = object;
         this.field = field;
-        if (!isLoaded || (C1XOptions.TestPatching && !Modifier.isVolatile(field.accessFlags()))) {
+        if (!isLoaded || (C1XOptions.TestPatching && !Modifier.isVolatile(((RiResolvedField) field).accessFlags()))) {
             // require patching if the field is not loaded (i.e. resolved),
             // or if patch testing is turned on (but not if the field is volatile)
             setFlag(Flag.NeedsPatching);
@@ -101,7 +101,7 @@ public abstract class AccessField extends StateSplit {
      * @return {@code true} if the field is resolved and declared volatile
      */
     public boolean isVolatile() {
-        return isLoaded() && Modifier.isVolatile(field.accessFlags());
+        return isLoaded() && Modifier.isVolatile(((RiResolvedField) field).accessFlags());
     }
 
     @Override

@@ -32,7 +32,7 @@ import com.sun.cri.ri.*;
 /**
  * Represents a field in a HotSpot type.
  */
-public class HotSpotField extends CompilerObject implements RiField {
+public class HotSpotField extends CompilerObject implements RiResolvedField {
 
     private final RiType holder;
     private final String name;
@@ -43,9 +43,11 @@ public class HotSpotField extends CompilerObject implements RiField {
 
     public HotSpotField(Compiler compiler, RiType holder, String name, RiType type, int offset, int accessFlags) {
         super(compiler);
+        assert holder.isResolved();
         this.holder = holder;
         this.name = name;
         this.type = type;
+        assert offset != -1;
         this.offset = offset;
         this.accessFlags = accessFlags;
     }
@@ -88,20 +90,6 @@ public class HotSpotField extends CompilerObject implements RiField {
     @Override
     public RiType holder() {
         return holder;
-    }
-
-//    @Override
-//    public boolean equals(Object obj) {
-//        if (obj instanceof HotSpotField) {
-//            HotSpotField other = (HotSpotField) obj;
-//            return other.offset == offset && other.holder.equals(holder());
-//        }
-//        return false;
-//    }
-
-    @Override
-    public boolean isResolved() {
-        return holder.isResolved();
     }
 
     @Override

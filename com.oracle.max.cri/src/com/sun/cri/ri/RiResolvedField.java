@@ -22,38 +22,29 @@
  */
 package com.sun.cri.ri;
 
+import java.lang.reflect.*;
 
 import com.sun.cri.ci.*;
 
 /**
- * Represents a reference to a field, including both resolved and unresolved fields. Fields, like methods and types, are
+ * Represents a reference to a resolved field. Fields, like methods and types, are
  * resolved through {@link RiConstantPool constant pools}, and their actual implementation is provided by the
  * {@link RiRuntime runtime} to the compiler.
  */
-public interface RiField {
-    /**
-     * Gets the name of this field as a string.
-     * @return the name of this field
-     */
-    String name();
+public interface RiResolvedField extends RiField {
 
     /**
-     * Gets the type of this field as a compiler-runtime interface type.
-     * @return the type of this field
+     * Gets the access flags for this field. Only the flags specified in the JVM specification
+     * will be included in the returned mask. The utility methods in the {@link Modifier} class
+     * should be used to query the returned mask for the presence/absence of individual flags.
+     * @return the mask of JVM defined field access flags defined for this field
      */
-    RiType type();
+    int accessFlags();
 
     /**
-     * Gets the kind of this field.
-     * @param architecture When true, the architecture-specific kind used for emitting machine code is returned.
-     *        When false, the kind according to the Java specification is returned.
-     * @return the kind
+     * Gets the constant value of this field if available.
+     * @param receiver object from which this field's value is to be read. This value is ignored if this field is static.
+     * @return the constant value of this field or {@code null} if the constant value is not available
      */
-    CiKind kind(boolean architecture);
-
-    /**
-     * Gets the holder of this field as a compiler-runtime interface type.
-     * @return the holder of this field
-     */
-    RiType holder();
+    CiConstant constantValue(CiConstant receiver);
 }
