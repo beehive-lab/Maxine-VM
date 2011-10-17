@@ -29,7 +29,7 @@ import com.sun.cri.ri.*;
 /**
  * Class for recording optimistic assumptions made during compilation.
  * Recorded assumption can be visited for subsequent processing using
- * an implementation of the {@link AssumptionProcessor} interface.
+ * an implementation of the {@link CiAssumptionProcessor} interface.
  */
 public final class CiAssumptions implements Serializable {
 
@@ -40,7 +40,7 @@ public final class CiAssumptions implements Serializable {
          * @param processor the assumption processor to apply
          * @return true if a next assumption in a list should be fed to the processor.
          */
-        abstract boolean visit(AssumptionProcessor processor);
+        abstract boolean visit(CiAssumptionProcessor processor);
     }
 
     public static final class ConcreteSubtype extends Assumption {
@@ -77,7 +77,7 @@ public final class CiAssumptions implements Serializable {
         }
 
         @Override
-        public boolean visit(AssumptionProcessor processor) {
+        public boolean visit(CiAssumptionProcessor processor) {
             return processor.doConcreteSubtype(this);
         }
     }
@@ -110,7 +110,7 @@ public final class CiAssumptions implements Serializable {
         }
 
         @Override
-        public boolean visit(AssumptionProcessor processor) {
+        public boolean visit(CiAssumptionProcessor processor) {
             return processor.doConcreteMethod(this);
         }
     }
@@ -167,7 +167,7 @@ public final class CiAssumptions implements Serializable {
         count++;
     }
 
-    public void visit(AssumptionProcessor processor) {
+    public void visit(CiAssumptionProcessor processor) {
         for (int i = 0; i < count; i++) {
             if (!list[i].visit(processor)) {
                 return;
