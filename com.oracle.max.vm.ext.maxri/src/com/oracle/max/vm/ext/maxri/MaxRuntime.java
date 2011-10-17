@@ -78,7 +78,7 @@ public class MaxRuntime implements GraalRuntime {
      * @param method the compiler interface method
      * @return the compiler interface constant pool for the specified method
      */
-    public RiConstantPool getConstantPool(RiMethod method) {
+    public RiConstantPool getConstantPool(RiResolvedMethod method) {
         return asClassMethodActor(method, "getConstantPool()").compilee().codeAttribute().cp;
     }
 
@@ -140,11 +140,8 @@ public class MaxRuntime implements GraalRuntime {
         return false;
     }
 
-    static ClassMethodActor asClassMethodActor(RiMethod method, String operation) {
-        if (method instanceof ClassMethodActor) {
-            return (ClassMethodActor) method;
-        }
-        throw new CiUnresolvedException("invalid RiMethod instance: " + method.getClass());
+    static ClassMethodActor asClassMethodActor(RiResolvedMethod method, String operation) {
+        return (ClassMethodActor) method;
     }
 
     public int basicObjectLockOffsetInBytes() {
@@ -162,7 +159,7 @@ public class MaxRuntime implements GraalRuntime {
     }
 
     @Override
-    public String disassemble(RiMethod method) {
+    public String disassemble(RiResolvedMethod method) {
         ClassMethodActor classMethodActor = asClassMethodActor(method, "disassemble()");
         return classMethodActor.format("%f %R %H.%n(%P)") + String.format("%n%s", CodeAttributePrinter.toString(classMethodActor.codeAttribute()));
     }

@@ -46,10 +46,4 @@ public interface RiMethod {
      * @return the signature of the method
      */
     RiSignature signature();
-
-    /**
-     * Gets the size of the bytecode of the method, if the method {@linkplain #isResolved()} and has code.
-     * @return the size of the bytecode in bytes, or 0 if no bytecode is available
-     */
-    int codeSize();
 }

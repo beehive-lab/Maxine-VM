@@ -44,84 +44,12 @@ public class BaseUnresolvedMethod implements RiMethod {
         return name;
     }
 
-    public String jniSymbol() {
-        throw unresolved("jniSymbol()");
-    }
-
     public RiType holder() {
         return holder;
     }
 
     public RiSignature signature() {
         return signature;
-    }
-
-    public byte[] code() {
-        throw unresolved("code()");
-    }
-
-    public int codeSize() {
-        return 0;
-    }
-
-    public int maxLocals() {
-        throw unresolved("maxLocals()");
-    }
-
-    public int maxStackSize() {
-        throw unresolved("maxStackSize()");
-    }
-
-    public boolean hasBalancedMonitors() {
-        throw unresolved("hasBalancedMonitors()");
-    }
-
-    public boolean isResolved() {
-        return false;
-    }
-
-    public int accessFlags() {
-        throw unresolved("accessFlags()");
-    }
-
-    public boolean isLeafMethod() {
-        throw unresolved("isLeafMethod()");
-    }
-
-    public boolean isClassInitializer() {
-        throw unresolved("isClassInitializer()");
-    }
-
-    public boolean isConstructor() {
-        throw unresolved("isConstructor()");
-    }
-
-    public boolean isOverridden() {
-        throw unresolved("isOverridden()");
-    }
-
-    public boolean noSafepointPolls() {
-        throw unresolved("noSafepoints()");
-    }
-
-    public boolean minimalDebugInfo() {
-        throw unresolved("minimalDebugInfo()");
-    }
-
-    public CiBitMap[] livenessMap() {
-        throw unresolved("livenessMap()");
-    }
-
-    public boolean canBeStaticallyBound() {
-        throw unresolved("canBeStaticallyBound()");
-    }
-
-    public RiExceptionHandler[] exceptionHandlers() {
-        throw unresolved("exceptionHandlers()");
-    }
-
-    private CiUnresolvedException unresolved(String operation) {
-        throw new CiUnresolvedException(operation + " not defined for unresolved method " + CiUtil.format("%H.%n(%p)", this));
     }
 
     @Override

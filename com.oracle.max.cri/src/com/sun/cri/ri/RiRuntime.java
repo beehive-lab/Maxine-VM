@@ -38,7 +38,7 @@ public interface RiRuntime {
      * @param method the method
      * @return the constant pool for the method
      */
-    RiConstantPool getConstantPool(RiMethod method);
+    RiConstantPool getConstantPool(RiResolvedMethod method);
 
     /**
      * Checks whether the specified method is required to be inlined (for semantic reasons).
@@ -109,7 +109,7 @@ public interface RiRuntime {
      * @param method the method that should be disassembled
      * @return the disassembly. This will be of length 0 if the runtime does not support disassembling.
      */
-    String disassemble(RiMethod method);
+    String disassemble(RiResolvedMethod method);
 
     /**
      * Registers the given compiler stub and returns an object that can be used to identify it in the relocation

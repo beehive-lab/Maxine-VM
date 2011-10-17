@@ -56,22 +56,6 @@ public class BaseUnresolvedField implements RiField {
         return holder;
     }
 
-    public boolean isResolved() {
-        return false;
-    }
-
-    public int accessFlags() {
-        throw unresolved("accessFlags()");
-    }
-
-    public CiConstant constantValue(CiConstant receiver) {
-        return null;
-    }
-
-    private CiUnresolvedException unresolved(String operation) {
-        throw new CiUnresolvedException(operation + " not defined for unresolved field " + name + " in " + holder);
-    }
-
     @Override
     public int hashCode() {
         return System.identityHashCode(this);

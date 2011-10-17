@@ -22,7 +22,6 @@
  */
 package com.sun.max.vm.type;
 
-import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.collect.ChainedHashMapping.Entry;
@@ -288,9 +287,5 @@ public abstract class TypeDescriptor extends Descriptor {
     @HOSTED_ONLY
     public ClassActor resolveHosted(final ClassLoader classLoader) {
         return HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.mustMakeClassActor(this);
-    }
-
-    public CiUnresolvedException unresolved(String operation) {
-        throw new CiUnresolvedException(operation + " not defined for unresolved type " + this);
     }
 }

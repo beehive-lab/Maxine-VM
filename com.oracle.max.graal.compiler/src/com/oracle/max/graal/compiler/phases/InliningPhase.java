@@ -321,11 +321,11 @@ public class InliningPhase extends Phase {
         }
     }
 
-    private static String methodName(RiMethod method) {
+    private static String methodName(RiResolvedMethod method) {
         return CiUtil.format("%H.%n(%p):%r", method, false) + " (" + method.codeSize() + " bytes)";
     }
 
-    private static String methodName(RiMethod method, InvokeNode invoke) {
+    private static String methodName(RiResolvedMethod method, InvokeNode invoke) {
         if (invoke != null) {
             RiMethod parent = invoke.stateAfter().method();
             return parent.name() + "@" + invoke.bci + ": " + CiUtil.format("%H.%n(%p):%r", method, false) + " (" + method.codeSize() + " bytes)";
@@ -370,26 +370,26 @@ public class InliningPhase extends Phase {
     private boolean checkTargetConditions(RiMethod method) {
         if (!(method instanceof RiResolvedMethod)) {
             if (GraalOptions.TraceInlining) {
-                TTY.println("not inlining %s because it is unresolved", methodName(method));
+                TTY.println("not inlining %s because it is unresolved", method.toString());
             }
             return false;
         }
         RiResolvedMethod resolvedMethod = (RiResolvedMethod) method;
         if (Modifier.isNative(resolvedMethod.accessFlags())) {
             if (GraalOptions.TraceInlining) {
-                TTY.println("not inlining %s because it is a native method", methodName(method));
+                TTY.println("not inlining %s because it is a native method", methodName(resolvedMethod));
             }
             return false;
         }
         if (Modifier.isAbstract(resolvedMethod.accessFlags())) {
             if (GraalOptions.TraceInlining) {
-                TTY.println("not inlining %s because it is an abstract method", methodName(method));
+                TTY.println("not inlining %s because it is an abstract method", methodName(resolvedMethod));
             }
             return false;
         }
         if (!resolvedMethod.holder().isInitialized()) {
             if (GraalOptions.TraceInlining) {
-                TTY.println("not inlining %s because of non-initialized class", methodName(method));
+                TTY.println("not inlining %s because of non-initialized class", methodName(resolvedMethod));
             }
             return false;
         }
