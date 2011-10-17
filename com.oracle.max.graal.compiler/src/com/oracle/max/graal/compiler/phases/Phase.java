@@ -37,11 +37,11 @@ public abstract class Phase {
     protected Phase(GraalContext context) {
         this.context = context;
         this.name = this.getClass().getSimpleName();
-        this.shouldVerify = GraalOptions.Verify;
+        this.shouldVerify = GraalOptions.VerifyPhases;
     }
 
     protected Phase(GraalContext context, String name) {
-        this(context, name, GraalOptions.Verify);
+        this(context, name, GraalOptions.VerifyPhases);
     }
 
     protected Phase(GraalContext context, String name, boolean shouldVerify) {
@@ -59,31 +59,30 @@ public abstract class Phase {
     }
 
     public final void apply(Graph graph, boolean plotOnError, boolean plot) {
-        assert graph != null && (!shouldVerify || graph.verify());
+        try {
+            assert graph != null && !shouldVerify || graph.verify();
+        } catch (VerificationError e) {
+            throw e.addContext("start of phase", getDetailedName());
+        }
 
         int startDeletedNodeCount = graph.getDeletedNodeCount();
         int startNodeCount = graph.getNodeCount();
         boolean shouldFireCompilationEvents = context.isObserved() && this.getClass() != IdentifyBlocksPhase.class && (plot || GraalOptions.PlotVerbose);
-//        if (shouldFireCompilationEvents) {
-//            compilation.compiler.fireCompilationEvent(new CompilationEvent(compilation, "Before " + getDetailedName(), graph, true, false));
-//        }
         context.timers.startScope(getName());
         try {
-            run(graph);
-        } catch (CiBailout bailout) {
-            throw bailout;
-        } catch (AssertionError t) {
-            if (context.observable.isObserved() && plotOnError) {
-                context.observable.fireCompilationEvent(new CompilationEvent(null, "AssertionError in " + getDetailedName(), graph, true, false, true));
+            try {
+                run(graph);
+            } catch (CiBailout bailout) {
+                throw bailout;
+            } catch (AssertionError e) {
+                throw new VerificationError(e);
+            } catch (RuntimeException e) {
+                throw new VerificationError(e);
+            } finally {
+                context.timers.endScope();
             }
-            throw t;
-        } catch (RuntimeException t) {
-            if (context.observable.isObserved() && plotOnError) {
-                context.observable.fireCompilationEvent(new CompilationEvent(null, "RuntimeException in " + getDetailedName(), graph, true, false, true));
-            }
-            throw t;
-        } finally {
-            context.timers.endScope();
+        } catch (VerificationError e) {
+            throw e.addContext(graph).addContext("phase", getDetailedName());
         }
 
         if (GraalOptions.Meter) {
@@ -100,8 +99,8 @@ public abstract class Phase {
 
         try {
             assert !shouldVerify || graph.verify();
-        } catch (AssertionError e) {
-            throw new RuntimeException("Verification error after phase " + this.getDetailedName(), e);
+        } catch (VerificationError e) {
+            throw e.addContext("end of phase", getDetailedName());
         }
     }
 

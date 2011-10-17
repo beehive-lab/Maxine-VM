@@ -42,10 +42,10 @@ public class NodeTest {
 
         DummyNode n2 = g1.add(new DummyNode(1, 1));
         DummyNode n3 = g1.add(new DummyNode(0, 0));
-        n2.dummySetInput(0, Node.Null);
+        n2.dummySetInput(0, null);
         n2.dummySetSuccessor(0, n3);
 
-        assertSame(Node.Null, n2.inputs().first());
+        assertSame(null, n2.inputs().first());
         assertSame(n3, n2.successors().first());
 //        assertEquals(n1.inputs().size(), 2);
 //        assertEquals(n1.successors().size(), 1);
@@ -55,10 +55,10 @@ public class NodeTest {
     public void testReplace() {
         Graph g2 = new Graph(new DummyNode(0, 1));
 
-        DummyOp2 o1 = g2.add(new DummyOp2(Node.Null, Node.Null));
-        DummyOp2 o2 = g2.add(new DummyOp2(o1, Node.Null));
-        DummyOp2 o3 = g2.add(new DummyOp2(o2, Node.Null));
-        DummyOp2 o4 = g2.add(new DummyOp2(Node.Null, Node.Null));
+        DummyOp2 o1 = g2.add(new DummyOp2(null, null));
+        DummyOp2 o2 = g2.add(new DummyOp2(o1, null));
+        DummyOp2 o3 = g2.add(new DummyOp2(o2, null));
+        DummyOp2 o4 = g2.add(new DummyOp2(null, null));
 
         o2.replaceAndDelete(o4);
 

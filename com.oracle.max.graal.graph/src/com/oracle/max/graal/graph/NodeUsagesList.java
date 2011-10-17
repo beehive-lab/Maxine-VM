@@ -25,7 +25,7 @@ package com.oracle.max.graal.graph;
 import java.util.Arrays;
 import java.util.Iterator;
 
-public final class NodeReverseList implements Iterable<Node> {
+public final class NodeUsagesList implements Iterable<Node> {
 
     protected static final Node[] EMPTY_NODE_ARRAY = new Node[0];
 
@@ -33,7 +33,7 @@ public final class NodeReverseList implements Iterable<Node> {
     private int size = 0;
     private int modCount = 0;
 
-    NodeReverseList() {
+    NodeUsagesList() {
         this.size = 0;
         this.nodes = EMPTY_NODE_ARRAY;
     }
@@ -59,7 +59,7 @@ public final class NodeReverseList implements Iterable<Node> {
         return true;
     }
 
-    void copyAndClear(NodeReverseList other) {
+    void copyAndClear(NodeUsagesList other) {
         incModCount();
         other.incModCount();
         nodes = other.nodes;
@@ -119,19 +119,19 @@ public final class NodeReverseList implements Iterable<Node> {
     @Override
     public Iterator<Node> iterator() {
         return new Iterator<Node>() {
-            private final int expectedModCount = NodeReverseList.this.modCount;
+            private final int expectedModCount = NodeUsagesList.this.modCount;
             private int index = 0;
 
             @Override
             public boolean hasNext() {
-                assert expectedModCount == NodeReverseList.this.modCount;
-                return index < NodeReverseList.this.size;
+                assert expectedModCount == NodeUsagesList.this.modCount;
+                return index < NodeUsagesList.this.size;
             }
 
             @Override
             public Node next() {
-                assert expectedModCount == NodeReverseList.this.modCount;
-                return NodeReverseList.this.nodes[index++];
+                assert expectedModCount == NodeUsagesList.this.modCount;
+                return NodeUsagesList.this.nodes[index++];
             }
 
             @Override
@@ -150,32 +150,8 @@ public final class NodeReverseList implements Iterable<Node> {
         return false;
     }
 
-    public Iterable<Node> snapshot() {
-        return new Iterable<Node>() {
-
-            @Override
-            public Iterator<Node> iterator() {
-                return new Iterator<Node>() {
-                    private Node[] nodesCopy = Arrays.copyOf(NodeReverseList.this.nodes, NodeReverseList.this.size);
-                    private int index = 0;
-
-                    @Override
-                    public boolean hasNext() {
-                        return index < nodesCopy.length;
-                    }
-
-                    @Override
-                    public Node next() {
-                        return nodesCopy[index++];
-                    }
-
-                    @Override
-                    public void remove() {
-                        throw new UnsupportedOperationException();
-                    }
-                };
-            }
-        };
+    public Node[] snapshot() {
+        return Arrays.copyOf(NodeUsagesList.this.nodes, NodeUsagesList.this.size);
     }
 
     @Override

@@ -24,11 +24,33 @@ package com.sun.cri.ri;
 
 import java.io.*;
 
+/**
+ * This profile object represents the type profile of one call site, cast or instanceof instruction. The precision of
+ * the supplied values may vary, but a runtime that provides this information should be aware that it will be used to
+ * guide performance-critical decisions like speculative inlining, etc.
+ */
 public class RiTypeProfile implements Serializable {
 
+    /**
+     * How often the instruction was executed, which may be used to judge the maturity of this profile.
+     */
     public int count;
+
+    /**
+     * An estimation of how many different receiver types were encountered. This may or may not be the same as
+     * probabilities.length/types.length, as the runtime may store probabilities for a limited number of receivers.
+     */
     public int morphism;
 
-    public float[] probabilities;
+    /**
+     * A list of receivers for which the runtime has recorded probability information. This array needs to have the same
+     * length as {@link RiTypeProfile#probabilities}.
+     */
     public RiType[] types;
+
+    /**
+     * The estimated probabilities of the different receivers. This array needs to have the same length as
+     * {@link RiTypeProfile#types}.
+     */
+    public float[] probabilities;
 }

@@ -70,11 +70,6 @@ public class MergeNode extends BeginNode implements Node.IterableNodeType {
     }
 
     @Override
-    public Iterable< ? extends Node> dataInputs() {
-        return Collections.emptyList();
-    }
-
-    @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append("merge #");
