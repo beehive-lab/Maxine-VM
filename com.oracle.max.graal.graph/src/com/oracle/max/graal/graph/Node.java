@@ -382,26 +382,13 @@ public abstract class Node implements Cloneable {
         }
     }
 
+    /**
+     * Returns an iterator that will provide all control-flow successors of this node. Normally this will be the contents of all fields marked as NodeSuccessor,
+     * but some node classes (like EndNode) may return different nodes.
+     * Note that the iterator may generate null values if the fields contain them.
+     */
     public Iterable<? extends Node> cfgSuccessors() {
-        return new Iterable<Node>() {
-            @Override
-            public Iterator<Node> iterator() {
-                return new NullFilteringNodeIterator(successors().iterator());
-            }
-        };
-    }
-
-    public Iterable<? extends Node> dataInputs() {
-        return new Iterable<Node>() {
-            @Override
-            public Iterator<Node> iterator() {
-                return new NullFilteringNodeIterator(inputs().iterator());
-            }
-        };
-    }
-
-    public Iterable<? extends Node> dataUsages() {
-        return this.usages();
+        return successors();
     }
 
     Node get(Position pos) {
