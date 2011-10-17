@@ -55,7 +55,7 @@ public final class RegionTable {
     private static RegionTable theRegionTable;
 
     @INLINE
-    static RegionTable theRegionTable() {
+    public static RegionTable theRegionTable() {
         return theRegionTable;
     }
 

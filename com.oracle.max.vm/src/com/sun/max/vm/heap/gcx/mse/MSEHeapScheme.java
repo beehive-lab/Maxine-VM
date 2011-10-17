@@ -127,7 +127,6 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
             }
         } else if (phase == MaxineVM.Phase.PRISTINE) {
             allocateHeapAndGCStorage();
-            TLABLog.initialize(theHeapRegionManager().bootAllocator());
         } else if (phase == MaxineVM.Phase.TERMINATING) {
             if (Heap.traceGCTime()) {
                 collect.reportTotalGCTimes();
@@ -297,7 +296,9 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
     static class TLABFiller extends ResetTLAB {
         @Override
         protected void doBeforeReset(Pointer etla, Pointer tlabMark, Pointer tlabTop) {
-            TLABLog.doOnRetireTLAB(etla);
+            if (MaxineVM.isDebug() && RegionTable.theRegionTable().regionID(tlabMark) == FirstFitMarkSweepHeap.DebuggedRegion) {
+                TLABLog.doOnRetireTLAB(etla);
+            }
             if (tlabMark.greaterThan(tlabTop)) {
                 // Already filled-up (mark is at the limit).
                 return;
@@ -475,7 +476,9 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
      */
     private void allocateAndRefillTLAB(Pointer etla, Size tlabSize) {
         Pointer tlab = theHeap.allocateTLAB(tlabSize);
-        TLABLog.doOnRefillTLAB(etla, tlabSize);
+        if (MaxineVM.isDebug() && RegionTable.theRegionTable().regionID(tlab) == FirstFitMarkSweepHeap.DebuggedRegion) {
+            TLABLog.doOnRefillTLAB(etla, tlabSize, true);
+        }
         Size effectiveSize = setNextTLABChunk(tlab);
 
         if (Heap.traceAllocation() || traceTLAB()) {
@@ -560,7 +563,9 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
                 return theHeap.allocate(size);
             }
         }
-        TLABLog.doOnRetireTLAB(etla);
+        if (MaxineVM.isDebug() && RegionTable.theRegionTable().regionID(tlabMark) == FirstFitMarkSweepHeap.DebuggedRegion) {
+            TLABLog.doOnRetireTLAB(etla);
+        }
         // Refill TLAB and allocate (we know the request can be satisfied with a fresh TLAB and will therefore succeed).
         allocateAndRefillTLAB(etla, nextTLABSize);
         return tlabAllocate(size);
