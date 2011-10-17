@@ -296,7 +296,7 @@ public class Graph {
     }
 
     void unregister(Node node) {
-        nodes.set(node.id(), Node.Null);
+        nodes.set(node.id(), null);
 
         // nodes aren't removed from the type cache here - they will be removed during iteration
 
