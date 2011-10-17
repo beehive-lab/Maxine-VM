@@ -604,7 +604,7 @@ public class Canonicalizer extends DefaultValueVisitor {
         }
         if (i.isStatic()) {
             RiField field = i.field();
-            CiConstant value = field.constantValue(null);
+            CiConstant value = ((RiResolvedField) field).constantValue(null);
             if (value != null) {
                 if (method.isClassInitializer()) {
                     // don't do canonicalization in the <clinit> method
@@ -615,7 +615,7 @@ public class Canonicalizer extends DefaultValueVisitor {
         } else {
             RiField field = i.field();
             if (i.object().isConstant()) {
-                CiConstant value = field.constantValue(i.object().asConstant());
+                CiConstant value = ((RiResolvedField) field).constantValue(i.object().asConstant());
                 if (value != null) {
                     canonical = new Constant(field.kind(false), value);
                 }

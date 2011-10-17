@@ -39,7 +39,7 @@ public final class LoadFieldNode extends AccessFieldNode implements Canonicaliza
      * @param object the receiver object
      * @param field the compiler interface field
      */
-    public LoadFieldNode(ValueNode object, RiField field) {
+    public LoadFieldNode(ValueNode object, RiResolvedField field) {
         super(field.kind(false).stackKind(), object, field);
     }
 

@@ -190,7 +190,7 @@ public class VMExitsNative implements VMExits, Remote {
             HotSpotTypeResolved resolved = (HotSpotTypeResolved) holder;
             return resolved.createRiField(name, type, offset, flags);
         }
-        return new HotSpotField(compiler, holder, name, type, offset, flags);
+        return new BaseUnresolvedField(holder, name, type);
     }
 
     @Override
