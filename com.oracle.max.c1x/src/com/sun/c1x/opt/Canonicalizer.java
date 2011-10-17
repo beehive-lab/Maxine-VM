@@ -229,7 +229,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                 return y == 0 ? setIntConstant(0) : null;
             }
             case IDIV: return y == 1 ? setCanonical(x) : null;
-            case IREM: return y == 1 ? setCanonical(x) : null;
+            case IREM: return y == 1 ? setIntConstant(0) : null;
             case Op2.UDIV: {
                 if (y == 1) {
                     return setCanonical(x);
@@ -282,7 +282,11 @@ public class Canonicalizer extends DefaultValueVisitor {
                 if (s.opcode == opcode) {
                     // this is a chained shift operation (e >> C >> K)
                     y = y + z;
+                    if (y > mod) {
+                        return null;
+                    }
                     shift = y & mod;
+
                     if (shift == 0) {
                         return setCanonical(s.x());
                     }
