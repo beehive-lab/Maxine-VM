@@ -5,7 +5,7 @@
     This configuration file was written by the eclipse-cs plugin configuration editor
 -->
 <!--
-    Checkstyle-Configuration: C1X Checkstyle checks
+    Checkstyle-Configuration: Maxine Checks
     Description: none
 -->
 <module name="Checker">
@@ -112,13 +112,16 @@
       <metadata name="net.sf.eclipsecs.core.lastEnabledSeverity" value="inherit"/>
     </module>
     <module name="RegexpSinglelineJava">
+      <metadata name="net.sf.eclipsecs.core.comment" value="Illegal trailing whitespace(s) at the end of the line."/>
       <property name="format" value="\s$"/>
       <property name="message" value="Illegal trailing whitespace(s) at the end of the line."/>
       <property name="ignoreComments" value="true"/>
       <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Checks for trailing spaces at the end of a line"/>
     </module>
     <module name="RegexpSinglelineJava">
+      <metadata name="net.sf.eclipsecs.core.comment" value="illegal space before a comma"/>
       <property name="format" value=" ,"/>
+      <property name="message" value="illegal space before a comma"/>
       <property name="ignoreComments" value="true"/>
       <metadata name="com.atlassw.tools.eclipse.checkstyle.customMessage" value="Illegal whitespace before a comma."/>
       <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Checks for whitespace before a comma."/>
@@ -187,5 +190,10 @@
     <property name="checkFormat" value="MemberName"/>
     <property name="checkC" value="false"/>
     <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Disable field name checks"/>
+  </module>
+  <module name="RegexpMultiline">
+    <metadata name="net.sf.eclipsecs.core.comment" value="illegal Windows line ending"/>
+    <property name="format" value="\r\n"/>
+    <property name="message" value="illegal Windows line ending"/>
   </module>
 </module>
