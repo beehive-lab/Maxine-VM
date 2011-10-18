@@ -167,5 +167,4 @@ public final class NodeUsagesList implements Iterable<Node> {
         str.append(']');
         return str.toString();
     }
-
 }
