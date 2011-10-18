@@ -93,22 +93,20 @@ public class Graal implements RuntimeCompiler {
         }
     }
 
+    @HOSTED_ONLY
+    public static boolean optionsRegistered;
+
     @Override
     public void initialize(Phase phase) {
-        if (isHosted()) {
+        if (isHosted() && !optionsRegistered) {
             GraalOptions.StackShadowPages = VmThread.STACK_SHADOW_PAGES;
             VMOptions.addFieldOptions("-G:", GraalOptions.class, null);
             VMOptions.addFieldOptions("-ASM:", AsmOptions.class, null);
 
-            // Boot image code may not be safely deoptimizable due to metacircular issues
-            // so only enable speculative optimizations at runtime
-            //GraalOptions.UseAssumptions = false;
+            optionsRegistered = true;
         }
 
         if (isHosted() && phase == Phase.HOSTED_COMPILING) {
-            // Temporary work-around to support the @ACCESSOR annotation.
-            //GraphBuilder.setAccessor(ClassActor.fromJava(Accessor.class));
-
             GraalContext context = new GraalContext("Virtual Machine Compiler");
             compiler = new GraalCompiler(context, runtime, target, xirGenerator, vm().registerConfigs.compilerStub);
 
@@ -135,10 +133,7 @@ public class Graal implements RuntimeCompiler {
             });
         }
 
-        if (phase == Phase.STARTING) {
-            // Now it is safe to use speculative opts
-            //GraalOptions.UseAssumptions = deoptimizationSupported && Deoptimization.UseDeopt;
-        } else if (phase == Phase.TERMINATING) {
+        if (phase == Phase.TERMINATING) {
             if (GraalOptions.Meter) {
                 compiler.context.metrics.print();
                 DebugInfo.dumpStats(Log.out);
