@@ -696,6 +696,14 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
         rethrowException = b;
     }
 
+    @Override
+    public boolean verify() {
+        for (ValueNode value : values) {
+            assert assertTrue(value == null || (value.kind != CiKind.Void && value.kind != CiKind.Illegal), "unexpected value: %s", value);
+        }
+        return super.verify();
+    }
+
     // TODO this duplicates code in FrameStateBuilder and needs to go away
     public static boolean isTwoSlot(CiKind kind) {
         assert kind != CiKind.Void && kind != CiKind.Illegal;
