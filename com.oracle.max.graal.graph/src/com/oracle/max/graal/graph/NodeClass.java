@@ -33,7 +33,7 @@ public class NodeClass {
     public static final int NOT_ITERABLE = -1;
 
     public interface CalcOffset {
-        int getOffset(Field field);
+        long getOffset(Field field);
     }
 
     private static final Class< ? > NODE_CLASS = Node.class;
@@ -64,12 +64,12 @@ public class NodeClass {
 
     private final Class< ? > clazz;
     private final int directInputCount;
-    private final int[] inputOffsets;
+    private final long[] inputOffsets;
     private final Class<?>[] inputTypes;
     private final int directSuccessorCount;
-    private final int[] successorOffsets;
+    private final long[] successorOffsets;
     private final Class<?>[] successorTypes;
-    private final int[] dataOffsets;
+    private final long[] dataOffsets;
     private final Class<?>[] dataTypes;
     private final String[] dataNames;
     private final boolean canGVN;
@@ -80,8 +80,8 @@ public class NodeClass {
 
     static class DefaultCalcOffset implements CalcOffset {
         @Override
-        public int getOffset(Field field) {
-            return (int) unsafe.objectFieldOffset(field);
+        public long getOffset(Field field) {
+            return unsafe.objectFieldOffset(field);
         }
     }
 
@@ -93,10 +93,10 @@ public class NodeClass {
         scanner.scan(clazz);
 
         directInputCount = scanner.inputOffsets.size();
-        inputOffsets = sortedIntCopy(scanner.inputOffsets, scanner.inputListOffsets);
+        inputOffsets = sortedLongCopy(scanner.inputOffsets, scanner.inputListOffsets);
         directSuccessorCount = scanner.successorOffsets.size();
-        successorOffsets = sortedIntCopy(scanner.successorOffsets, scanner.successorListOffsets);
-        dataOffsets = new int[scanner.dataOffsets.size()];
+        successorOffsets = sortedLongCopy(scanner.successorOffsets, scanner.successorListOffsets);
+        dataOffsets = new long[scanner.dataOffsets.size()];
         for (int i = 0; i < scanner.dataOffsets.size(); ++i) {
             dataOffsets[i] = scanner.dataOffsets.get(i);
         }
@@ -143,9 +143,9 @@ public class NodeClass {
         FieldScanner scanner = new FieldScanner(calc);
         scanner.scan(clazz);
         assert directInputCount == scanner.inputOffsets.size();
-        copyInto(inputOffsets, sortedIntCopy(scanner.inputOffsets, scanner.inputListOffsets));
+        copyInto(inputOffsets, sortedLongCopy(scanner.inputOffsets, scanner.inputListOffsets));
         assert directSuccessorCount == scanner.successorOffsets.size();
-        copyInto(successorOffsets, sortedIntCopy(scanner.successorOffsets, scanner.successorListOffsets));
+        copyInto(successorOffsets, sortedLongCopy(scanner.successorOffsets, scanner.successorListOffsets));
         assert dataOffsets.length == scanner.dataOffsets.size();
         for (int i = 0; i < scanner.dataOffsets.size(); ++i) {
             dataOffsets[i] = scanner.dataOffsets.get(i);
@@ -157,7 +157,7 @@ public class NodeClass {
         copyInto(successorTypes, arrayUsingSortedOffsets(scanner.successorTypesMap, this.successorOffsets));
     }
 
-    private static void copyInto(int[] dest, int[] src) {
+    private static void copyInto(long[] dest, long[] src) {
         assert dest.length == src.length;
         for (int i = 0; i < dest.length; i++) {
             dest[i] = src[i];
@@ -208,13 +208,13 @@ public class NodeClass {
     }
 
     private static class FieldScanner {
-        public final ArrayList<Integer> inputOffsets = new ArrayList<Integer>();
-        public final ArrayList<Integer> inputListOffsets = new ArrayList<Integer>();
-        public final Map<Integer, Class< ? >> inputTypesMap = new HashMap<Integer, Class<?>>();
-        public final ArrayList<Integer> successorOffsets = new ArrayList<Integer>();
-        public final ArrayList<Integer> successorListOffsets = new ArrayList<Integer>();
-        public final Map<Integer, Class< ? >> successorTypesMap = new HashMap<Integer, Class<?>>();
-        public final ArrayList<Integer> dataOffsets = new ArrayList<Integer>();
+        public final ArrayList<Long> inputOffsets = new ArrayList<Long>();
+        public final ArrayList<Long> inputListOffsets = new ArrayList<Long>();
+        public final Map<Long, Class< ? >> inputTypesMap = new HashMap<Long, Class<?>>();
+        public final ArrayList<Long> successorOffsets = new ArrayList<Long>();
+        public final ArrayList<Long> successorListOffsets = new ArrayList<Long>();
+        public final Map<Long, Class< ? >> successorTypesMap = new HashMap<Long, Class<?>>();
+        public final ArrayList<Long> dataOffsets = new ArrayList<Long>();
         public final ArrayList<Class< ? >> dataTypes = new ArrayList<Class<?>>();
         public final ArrayList<String> dataNames = new ArrayList<String>();
         public final CalcOffset calc;
@@ -228,7 +228,7 @@ public class NodeClass {
                 for (Field field : clazz.getDeclaredFields()) {
                     if (!Modifier.isStatic(field.getModifiers())) {
                         Class< ? > type = field.getType();
-                        int offset = calc.getOffset(field);
+                        long offset = calc.getOffset(field);
                         if (field.isAnnotationPresent(Node.Input.class)) {
                             assert !field.isAnnotationPresent(Node.Successor.class) : "field cannot be both input and successor";
                             if (INPUT_LIST_CLASS.isAssignableFrom(type)) {
@@ -262,7 +262,7 @@ public class NodeClass {
         }
     }
 
-    private static Class<?>[] arrayUsingSortedOffsets(Map<Integer, Class<?>> map, int[] sortedOffsets) {
+    private static Class<?>[] arrayUsingSortedOffsets(Map<Long, Class<?>> map, long[] sortedOffsets) {
         Class<?>[] result = new Class<?>[sortedOffsets.length];
         for (int i = 0; i < sortedOffsets.length; i++) {
             result[i] = map.get(sortedOffsets[i]);
@@ -270,10 +270,10 @@ public class NodeClass {
         return result;
     }
 
-    private static int[] sortedIntCopy(ArrayList<Integer> list1, ArrayList<Integer> list2) {
+    private static long[] sortedLongCopy(ArrayList<Long> list1, ArrayList<Long> list2) {
         Collections.sort(list1);
         Collections.sort(list2);
-        int[] result = new int[list1.size() + list2.size()];
+        long[] result = new long[list1.size() + list2.size()];
         for (int i = 0; i < list1.size(); i++) {
             result[i] = list1.get(i);
         }
@@ -319,12 +319,20 @@ public class NodeClass {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private static <T> T getObject(Node node, long offset) {
-        return (T) unsafe.getObject(node, offset);
+    private static Node getNode(Node node, long offset) {
+        return (Node) unsafe.getObject(node, offset);
     }
 
-    private static void putObject(Node node, long offset, Object value) {
+    @SuppressWarnings("unchecked")
+    private static NodeList<Node> getNodeList(Node node, long offset) {
+        return (NodeList<Node>) unsafe.getObject(node, offset);
+    }
+
+    private static void putNode(Node node, long offset, Node value) {
+        unsafe.putObject(node, offset, value);
+    }
+
+    private static void putNodeList(Node node, long offset, NodeList value) {
         unsafe.putObject(node, offset, value);
     }
 
@@ -333,11 +341,11 @@ public class NodeClass {
         private final Node node;
         private final int modCount;
         private final int directCount;
-        private final int[] offsets;
+        private final long[] offsets;
         private int index;
         private int subIndex;
 
-        private NodeClassIterator(Node node, int[] offsets, int directCount) {
+        private NodeClassIterator(Node node, long[] offsets, int directCount) {
             this.node = node;
             this.modCount = node.modCount();
             this.offsets = offsets;
@@ -351,7 +359,7 @@ public class NodeClass {
             if (index < directCount) {
                 index++;
                 while (index < directCount) {
-                    Node element = getObject(node, offsets[index]);
+                    Node element = getNode(node, offsets[index]);
                     if (element != null) {
                         return;
                     }
@@ -361,7 +369,7 @@ public class NodeClass {
                 subIndex++;
             }
             while (index < offsets.length) {
-                NodeList<Node> list = getObject(node, offsets[index]);
+                NodeList<Node> list = getNodeList(node, offsets[index]);
                 while (subIndex < list.size()) {
                     if (list.get(subIndex) != null) {
                         return;
@@ -375,9 +383,9 @@ public class NodeClass {
 
         private Node nextElement() {
             if (index < directCount) {
-                return NodeClass.<Node>getObject(node, offsets[index]);
+                return getNode(node, offsets[index]);
             } else  if (index < offsets.length) {
-                NodeList<Node> list = getObject(node, offsets[index]);
+                NodeList<Node> list = getNodeList(node, offsets[index]);
                 return list.get(subIndex);
             }
             return null;
@@ -441,7 +449,7 @@ public class NodeClass {
                         assert false;
                     }
                 } else {
-                    Object o = getObject(n, dataOffsets[i]);
+                    Object o = unsafe.getObject(n, dataOffsets[i]);
                     if (o != null) {
                         number += o.hashCode();
                     }
@@ -466,7 +474,7 @@ public class NodeClass {
                     assert false;
                 }
             } else {
-                value = getObject(n, dataOffsets[i]);
+                value = unsafe.getObject(n, dataOffsets[i]);
             }
             properties.put("data." + dataNames[i], value);
         }
@@ -496,8 +504,8 @@ public class NodeClass {
                     assert false;
                 }
             } else {
-                Object objectA = getObject(a, dataOffsets[i]);
-                Object objectB = getObject(b, dataOffsets[i]);
+                Object objectA = unsafe.getObject(a, dataOffsets[i]);
+                Object objectB = unsafe.getObject(b, dataOffsets[i]);
                 if (objectA != objectB) {
                     if (objectA != null && objectB != null) {
                         if (!(objectA.equals(objectB))) {
@@ -513,27 +521,27 @@ public class NodeClass {
     }
 
     public Node get(Node node, Position pos) {
-        int offset = pos.input ? inputOffsets[pos.index] : successorOffsets[pos.index];
+        long offset = pos.input ? inputOffsets[pos.index] : successorOffsets[pos.index];
         if (pos.subIndex == NOT_ITERABLE) {
-            return getObject(node, offset);
+            return getNode(node, offset);
         } else {
-            return NodeClass.<NodeList<Node>>getObject(node, offset).get(pos.subIndex);
+            return getNodeList(node, offset).get(pos.subIndex);
         }
     }
 
     public void set(Node node, Position pos, Node x) {
-        int offset = pos.input ? inputOffsets[pos.index] : successorOffsets[pos.index];
+        long offset = pos.input ? inputOffsets[pos.index] : successorOffsets[pos.index];
         if (pos.subIndex == NOT_ITERABLE) {
-            Node old = getObject(node,  offset);
+            Node old = getNode(node,  offset);
             assert x == null || (pos.input ? inputTypes : successorTypes)[pos.index].isAssignableFrom(x.getClass()) : this + ".set(node, pos, " + x + ") while type is " + (pos.input ? inputTypes : successorTypes)[pos.index];
-            putObject(node, offset, x);
+            putNode(node, offset, x);
             if (pos.input) {
                 node.updateUsages(old, x);
             } else {
                 node.updatePredecessors(old, x);
             }
         } else {
-            NodeList<Node> list = getObject(node, offset);
+            NodeList<Node> list = getNodeList(node, offset);
             if (pos.subIndex < list.size()) {
                 list.set(pos.subIndex, x);
             } else {
@@ -580,16 +588,16 @@ public class NodeClass {
     public boolean replaceFirstInput(Node node, Node old, Node other) {
         int index = 0;
         while (index < directInputCount) {
-            Object obj = unsafe.getObject(node, inputOffsets[index]);
-            if (obj == old) {
+            Node input = getNode(node, inputOffsets[index]);
+            if (input == old) {
                 assert other == null || inputTypes[index].isAssignableFrom(other.getClass());
-                unsafe.putObject(node, inputOffsets[index], other);
+                putNode(node, inputOffsets[index], other);
                 return true;
             }
             index++;
         }
         while (index < inputOffsets.length) {
-            NodeInputList<Node> list = (NodeInputList<Node>) unsafe.getObject(node, inputOffsets[index]);
+            NodeList<Node> list = getNodeList(node, inputOffsets[index]);
             assert list != null : clazz;
             if (list.replaceFirst(old, other)) {
                 return true;
@@ -603,16 +611,16 @@ public class NodeClass {
     public boolean replaceFirstSuccessor(Node node, Node old, Node other) {
         int index = 0;
         while (index < directSuccessorCount) {
-            Object obj = unsafe.getObject(node, successorOffsets[index]);
-            if (obj == old) {
+            Node successor = getNode(node, successorOffsets[index]);
+            if (successor == old) {
                 assert other == null || successorTypes[index].isAssignableFrom(other.getClass()) : successorTypes[index] + " is not compatible with " + other.getClass();
-                unsafe.putObject(node, successorOffsets[index], other);
+                putNode(node, successorOffsets[index], other);
                 return true;
             }
             index++;
         }
         while (index < successorOffsets.length) {
-            NodeSuccessorList<Node> list = (NodeSuccessorList<Node>) unsafe.getObject(node, successorOffsets[index]);
+            NodeList<Node> list = getNodeList(node, successorOffsets[index]);
             assert list != null : clazz + " " + successorOffsets[index] + " " + node;
             if (list.replaceFirst(old, other)) {
                 return true;
@@ -626,12 +634,12 @@ public class NodeClass {
     public void clearInputs(Node node) {
         int index = 0;
         while (index < directInputCount) {
-            unsafe.putObject(node, inputOffsets[index++], null);
+            putNode(node, inputOffsets[index++], null);
         }
         while (index < inputOffsets.length) {
-            int curOffset = inputOffsets[index++];
-            int size = ((NodeInputList<Node>) unsafe.getObject(node, curOffset)).initialSize;
-            putObject(node, curOffset, new NodeInputList<Node>(node, size));
+            long curOffset = inputOffsets[index++];
+            int size = (getNodeList(node, curOffset)).initialSize;
+            putNodeList(node, curOffset, new NodeInputList<Node>(node, size));
         }
     }
 
@@ -639,12 +647,12 @@ public class NodeClass {
     public void clearSuccessors(Node node) {
         int index = 0;
         while (index < directSuccessorCount) {
-            unsafe.putObject(node, successorOffsets[index++], null);
+            putNode(node, successorOffsets[index++], null);
         }
         while (index < successorOffsets.length) {
-            int curOffset = successorOffsets[index++];
-            int size = ((NodeSuccessorList<Node>) unsafe.getObject(node, curOffset)).initialSize;
-            putObject(node, curOffset, new NodeSuccessorList<Node>(node, size));
+            long curOffset = successorOffsets[index++];
+            int size = getNodeList(node, curOffset).initialSize;
+            putNodeList(node, curOffset, new NodeSuccessorList<Node>(node, size));
         }
     }
 
@@ -654,12 +662,12 @@ public class NodeClass {
 
         int index = 0;
         while (index < directInputCount) {
-            unsafe.putObject(newNode, inputOffsets[index], unsafe.getObject(node, inputOffsets[index]));
+            putNode(newNode, inputOffsets[index], getNode(node, inputOffsets[index]));
             index++;
         }
         while (index < inputOffsets.length) {
-            NodeInputList<Node> list = (NodeInputList<Node>) unsafe.getObject(newNode, inputOffsets[index]);
-            list.copy((NodeInputList<Node>) unsafe.getObject(node, inputOffsets[index]));
+            NodeList<Node> list = getNodeList(newNode, inputOffsets[index]);
+            list.copy(getNodeList(node, inputOffsets[index]));
             index++;
         }
     }
@@ -670,12 +678,12 @@ public class NodeClass {
 
         int index = 0;
         while (index < directSuccessorCount) {
-            unsafe.putObject(newNode, successorOffsets[index], unsafe.getObject(node, successorOffsets[index]));
+            putNode(newNode, successorOffsets[index], getNode(node, successorOffsets[index]));
             index++;
         }
         while (index < successorOffsets.length) {
-            NodeSuccessorList<Node> list = (NodeSuccessorList<Node>) unsafe.getObject(newNode, successorOffsets[index]);
-            list.copy((NodeSuccessorList<Node>) unsafe.getObject(node, successorOffsets[index]));
+            NodeList<Node> list = getNodeList(newNode, successorOffsets[index]);
+            list.copy(getNodeList(node, successorOffsets[index]));
             index++;
         }
     }
@@ -686,14 +694,14 @@ public class NodeClass {
 
         int index = 0;
         while (index < directInputCount) {
-            if (unsafe.getObject(other, inputOffsets[index]) != unsafe.getObject(node, inputOffsets[index])) {
+            if (getNode(other, inputOffsets[index]) != getNode(node, inputOffsets[index])) {
                 return false;
             }
             index++;
         }
         while (index < inputOffsets.length) {
-            NodeInputList<Node> list = (NodeInputList<Node>) unsafe.getObject(other, inputOffsets[index]);
-            if (!list.equals((NodeInputList<Node>) unsafe.getObject(node, inputOffsets[index]))) {
+            NodeList<Node> list = getNodeList(other, inputOffsets[index]);
+            if (!list.equals(getNodeList(node, inputOffsets[index]))) {
                 return false;
             }
             index++;
@@ -701,14 +709,14 @@ public class NodeClass {
 
         index = 0;
         while (index < directSuccessorCount) {
-            if (unsafe.getObject(other, successorOffsets[index]) != unsafe.getObject(node, successorOffsets[index])) {
+            if (getNode(other, successorOffsets[index]) != getNode(node, successorOffsets[index])) {
                 return false;
             }
             index++;
         }
         while (index < successorOffsets.length) {
-            NodeSuccessorList<Node> list = (NodeSuccessorList<Node>) unsafe.getObject(other, successorOffsets[index]);
-            if (!list.equals((NodeSuccessorList<Node>) unsafe.getObject(node, successorOffsets[index]))) {
+            NodeList<Node> list = getNodeList(other, successorOffsets[index]);
+            if (!list.equals(getNodeList(node, successorOffsets[index]))) {
                 return false;
             }
             index++;
@@ -722,13 +730,13 @@ public class NodeClass {
 
         int index = 0;
         while (index < directInputCount) {
-            if (unsafe.getObject(node, inputOffsets[index]) == other) {
+            if (getNode(node, inputOffsets[index]) == other) {
                 return true;
             }
             index++;
         }
         while (index < inputOffsets.length) {
-            NodeInputList<Node> list = (NodeInputList<Node>) unsafe.getObject(node, inputOffsets[index]);
+            NodeList<Node> list = getNodeList(node, inputOffsets[index]);
             if (list.contains(other)) {
                 return true;
             }
@@ -743,13 +751,13 @@ public class NodeClass {
 
         int index = 0;
         while (index < directSuccessorCount) {
-            if (unsafe.getObject(node, successorOffsets[index]) == other) {
+            if (getNode(node, successorOffsets[index]) == other) {
                 return true;
             }
             index++;
         }
         while (index < successorOffsets.length) {
-            NodeSuccessorList<Node> list = (NodeSuccessorList<Node>) unsafe.getObject(node, successorOffsets[index]);
+            NodeList<Node> list = getNodeList(node, successorOffsets[index]);
             if (list.contains(other)) {
                 return true;
             }
