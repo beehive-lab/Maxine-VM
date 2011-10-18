@@ -36,7 +36,6 @@ public final class GraalOptions {
 
 
     public static boolean Lower                              = true;
-    public static boolean TraceLowering                      = ____;
 
     // inlining settings
     public static boolean Inline                             = true;
