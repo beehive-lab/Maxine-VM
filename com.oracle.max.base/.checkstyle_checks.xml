@@ -174,4 +174,10 @@
     <property name="offCommentFormat" value="Checkstyle: off"/>
     <property name="onCommentFormat" value="Checkstyle: on"/>
   </module>
+  <module name="RegexpMultiline">
+    <metadata name="net.sf.eclipsecs.core.comment" value="illegal Windows line ending"/>
+    <property name="format" value="\r\n"/>
+    <property name="message" value="illegal Windows line ending"/>
+  </module>
+
 </module>

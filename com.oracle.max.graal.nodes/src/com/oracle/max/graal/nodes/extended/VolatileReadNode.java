@@ -28,10 +28,12 @@ import com.oracle.max.graal.nodes.spi.*;
 
 public final class VolatileReadNode extends AbstractMemoryCheckpointNode {
 
+
     @Input private ValueNode readNode;
 
     public ValueNode getReadNode() {
         return readNode;
+
     }
 
     public VolatileReadNode(ValueNode readNode) {

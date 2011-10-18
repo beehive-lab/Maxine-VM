@@ -894,7 +894,13 @@ public class T1XTemplateSource {
 
     @T1X_TEMPLATE(FNEG)
     public static float fneg(@Slot(0) float value, float zero) {
-        return zero - value;
+        float res;
+        if (Float.floatToRawIntBits(value) == Float.floatToRawIntBits(zero)) {
+            res = -0.0f;
+        } else {
+            res = zero - value;
+        }
+        return res;
     }
 
     @T1X_TEMPLATE(FRETURN)
@@ -1484,7 +1490,13 @@ public class T1XTemplateSource {
 
     @T1X_TEMPLATE(DNEG)
     public static double dneg(@Slot(0) double value, double zero) {
-        return zero - value;
+        double res;
+        if (Double.doubleToRawLongBits(value) == Double.doubleToRawLongBits(zero)) {
+            res = -0.0d;
+        } else {
+            res = zero - value;
+        }
+        return res;
     }
 
     @T1X_TEMPLATE(DRETURN)
