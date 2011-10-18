@@ -1160,7 +1160,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
 
         Label continuation = new Label();
 
-        if (GraalOptions.GenSpecialDivChecks && code == LIROpcode.Ldiv) {
+        if (code == LIROpcode.Ldiv) {
             // check for special case of Long.MIN_VALUE / -1
             Label normalCase = new Label();
             masm.movq(AMD64.rdx, java.lang.Long.MIN_VALUE);
