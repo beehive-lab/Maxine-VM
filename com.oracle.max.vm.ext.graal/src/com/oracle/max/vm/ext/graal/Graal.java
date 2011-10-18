@@ -129,7 +129,7 @@ public class Graal implements RuntimeCompiler {
         if (isHosted() && phase == Phase.SERIALIZING_IMAGE) {
             NodeClass.rescanAllFieldOffsets(new CalcOffset() {
                 @Override
-                public int getOffset(Field field) {
+                public long getOffset(Field field) {
                     return FieldActor.fromJava(field).offset();
                 }
             });
