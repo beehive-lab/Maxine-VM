@@ -127,25 +127,14 @@ public class LoopBeginNode extends MergeNode implements Node.IterableNodeType {
 
     @Override
     public boolean verify() {
-        assertTrue(loopEnd() != null);
-        assertTrue(forwardEdge() != null);
+        assertTrue(loopEnd() != null, "missing loopEnd");
+        assertTrue(forwardEdge() != null, "missing forwardEdge");
         return super.verify();
     }
 
     @Override
     public String toString() {
         return "LoopBegin: " + super.toString();
-    }
-
-    @Override
-    public Iterable< ? extends Node> dataUsages() {
-        final Iterator< ? extends Node> dataUsages = super.dataUsages().iterator();
-        return new Iterable<Node>() {
-            @Override
-            public Iterator<Node> iterator() {
-                return new FilteringNodeIterator(dataUsages, LoopEndNode.class);
-            }
-        };
     }
 
     @Override

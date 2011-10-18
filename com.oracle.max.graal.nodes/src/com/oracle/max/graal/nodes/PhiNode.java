@@ -22,8 +22,6 @@
  */
 package com.oracle.max.graal.nodes;
 
-import java.util.*;
-
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.spi.*;
@@ -68,8 +66,8 @@ public final class PhiNode extends FloatingNode implements Canonicalizable, Node
 
     @Override
     public boolean verify() {
-        assertTrue(merge() != null);
-        assertTrue(merge().phiPredecessorCount() == valueCount(), merge().phiPredecessorCount() + "==" + valueCount());
+        assertTrue(merge() != null, "missing merge");
+        assertTrue(merge().phiPredecessorCount() == valueCount(), "mismatch between merge predecessor count and phi value count: %d != %d", merge().phiPredecessorCount(), valueCount());
         return super.verify();
     }
 
@@ -123,18 +121,6 @@ public final class PhiNode extends FloatingNode implements Canonicalizable, Node
 
     public void removeInput(int index) {
         values.remove(index);
-    }
-
-    @Override
-    public Iterable< ? extends Node> dataInputs() {
-        final Iterator< ? extends Node> input = super.dataInputs().iterator();
-        return new Iterable<Node>() {
-
-            @Override
-            public Iterator<Node> iterator() {
-                return new FilteringNodeIterator(input, MergeNode.class);
-            }
-        };
     }
 
     @Override

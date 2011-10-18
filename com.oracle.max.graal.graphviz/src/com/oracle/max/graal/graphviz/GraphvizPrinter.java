@@ -68,7 +68,7 @@ public class GraphvizPrinter {
     /**
      * Opens a graph with the specified title (label). Call this before printing any nodes, but not more than once
      * without calling {@link #end()} first.
-     * 
+     *
      * @param title
      *            The graph's label.
      */
@@ -119,7 +119,7 @@ public class GraphvizPrinter {
 
         int i = 0;
         for (Node successor : successors) {
-            if (successor != Node.Null && !omittedClasses.contains(successor.getClass())) {
+            if (successor != null && !omittedClasses.contains(successor.getClass())) {
                 printControlEdge(id, i, successor.id());
             }
             i++;
@@ -127,7 +127,7 @@ public class GraphvizPrinter {
 
         i = 0;
         for (Node input : inputs) {
-            if (input != Node.Null && !omittedClasses.contains(input.getClass())) {
+            if (input != null && !omittedClasses.contains(input.getClass())) {
                 if (node.getClass().getSimpleName().equals("FrameState") && input.getClass().getSimpleName().equals("Local")) {
                     continue;
                 }

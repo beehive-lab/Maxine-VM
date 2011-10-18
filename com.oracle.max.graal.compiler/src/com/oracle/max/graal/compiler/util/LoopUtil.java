@@ -138,7 +138,7 @@ public class LoopUtil {
         for (Node n : cfgNodes) {
             if (IdentifyBlocksPhase.trueSuccessorCount(n) > 1) {
                 for (Node sux : n.cfgSuccessors()) {
-                    if (!cfgNodes.isMarked(sux) && sux instanceof FixedNode) {
+                    if (sux != null && !cfgNodes.isMarked(sux) && sux instanceof FixedNode) {
                         exits.mark(sux);
                     }
                 }
@@ -292,7 +292,7 @@ public class LoopUtil {
                     }
                 }
                 if (n instanceof MergeNode) { //add phis & counters
-                    for (Node usage : n.dataUsages()) {
+                    for (Node usage : n.usages()) {
                         if (!(usage instanceof LoopEndNode)) {
                             work.add(usage);
                         }

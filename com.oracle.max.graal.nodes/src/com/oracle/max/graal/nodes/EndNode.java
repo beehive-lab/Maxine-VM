@@ -55,16 +55,7 @@ public final class EndNode extends FixedNode implements Node.IterableNodeType {
     }
 
     @Override
-    public Iterable< ? extends Node> dataUsages() {
-        return Collections.emptyList();
-    }
-
-    @Override
     public Iterable< ? extends Node> cfgSuccessors() {
-        MergeNode merge = this.merge();
-        if (merge == null) {
-            return Collections.emptyList();
-        }
-        return Arrays.asList(merge);
+        return Arrays.asList(merge());
     }
 }

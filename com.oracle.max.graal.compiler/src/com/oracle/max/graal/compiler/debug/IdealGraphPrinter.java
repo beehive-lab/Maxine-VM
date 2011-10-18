@@ -335,7 +335,7 @@ public class IdealGraphPrinter {
             // successors
             int fromIndex = 0;
             for (Node successor : node.successors()) {
-                if (successor != Node.Null && !omittedClasses.contains(successor.getClass())) {
+                if (successor != null && !omittedClasses.contains(successor.getClass())) {
                     edges.add(new Edge(node.id(), fromIndex, successor.id(), 0));
                 }
                 fromIndex++;
@@ -344,7 +344,7 @@ public class IdealGraphPrinter {
             // inputs
             int toIndex = 1;
             for (Node input : node.inputs()) {
-                if (input != Node.Null && !omittedClasses.contains(input.getClass())) {
+                if (input != null && !omittedClasses.contains(input.getClass())) {
                     edges.add(new Edge(input.id(), input.successors().explicitCount(), node.id(), toIndex));
                 }
                 toIndex++;

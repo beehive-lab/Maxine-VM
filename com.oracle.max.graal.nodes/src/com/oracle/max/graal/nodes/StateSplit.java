@@ -22,9 +22,6 @@
  */
 package com.oracle.max.graal.nodes;
 
-import java.util.*;
-
-import com.oracle.max.graal.graph.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -65,16 +62,5 @@ public abstract class StateSplit extends FixedWithNextNode {
                 stateAfter.delete();
             }
         }
-    }
-
-    @Override
-    public Iterable< ? extends Node> dataInputs() {
-        final Iterator< ? extends Node> dataInputs = super.dataInputs().iterator();
-        return new Iterable<Node>() {
-            @Override
-            public Iterator<Node> iterator() {
-                return new FilteringNodeIterator(dataInputs, FrameState.class);
-            }
-        };
     }
 }
