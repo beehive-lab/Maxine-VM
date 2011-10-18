@@ -350,9 +350,9 @@ public class HotSpotRuntime implements GraalRuntime {
             UnsafeLoad load = (UnsafeLoad) n;
             Graph graph = load.graph();
             assert load.kind != CiKind.Illegal;
-            IndexedLocationNode location = IndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, load.kind, 0, load.offset(), graph);
+            IndexedLocationNode location = IndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, load.loadKind(), 0, load.offset(), graph);
             location.setIndexScalingEnabled(false);
-            ReadNode memoryRead = graph.unique(new ReadNode(load.kind.stackKind(), load.object(), location));
+            ReadNode memoryRead = graph.unique(new ReadNode(load.kind, load.object(), location));
             memoryRead.setGuard((GuardNode) tool.createGuard(graph.unique(new IsNonNullNode(load.object()))));
             FixedNode next = load.next();
             load.setNext(null);
