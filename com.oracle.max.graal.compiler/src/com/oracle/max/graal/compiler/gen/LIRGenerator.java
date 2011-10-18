@@ -678,21 +678,14 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
                 break;
         }
 
-        CiValue destinationAddress = null;
-        // emitting the template earlier can ease pressure on register allocation, but the argument loading can destroy an
-        // implicit calling convention between the XirSnippet and the call.
-        if (!GraalOptions.InvokeSnippetAfterArguments) {
-            destinationAddress = emitXir(snippet, x, info.copy(), x.target(), false);
-        }
-
         CiValue resultOperand = resultOperandFor(x.kind);
         CiCallingConvention cc = compilation.frameMap().getCallingConvention(getSignature(x), JavaCall);
         List<CiValue> pointerSlots = new ArrayList<CiValue>(2);
         List<CiValue> argList = visitInvokeArguments(cc, x.arguments(), pointerSlots);
 
-        if (GraalOptions.InvokeSnippetAfterArguments) {
-            destinationAddress = emitXir(snippet, x, info.copy(), null, x.target(), false, pointerSlots);
-        }
+        // emitting the template earlier can ease pressure on register allocation, but the argument loading can destroy an
+        // implicit calling convention between the XirSnippet and the call.
+        CiValue destinationAddress = emitXir(snippet, x, info.copy(), null, x.target(), false, pointerSlots);
 
         // emit direct or indirect call to the destination address
         if (destinationAddress instanceof CiConstant) {
