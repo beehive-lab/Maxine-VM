@@ -150,7 +150,6 @@ public final class GraalOptions {
     public static boolean GenSafepoints                      = true;
     public static boolean GenLoopSafepoints                  = ____;
 
-    public static boolean GenSpecialDivChecks                = true;
     public static boolean GenAssertionCode                   = ____;
     public static boolean AlignCallsForPatching              = true;
     public static boolean CallSiteUniquePC                   = ____;
