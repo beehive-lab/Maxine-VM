@@ -33,7 +33,7 @@ public class RemovePlaceholderPhase extends Phase {
     }
 
     @Override
-    protected void run(Graph graph) {
+    protected void run(Graph<EntryPointNode> graph) {
         for (PlaceholderNode n : graph.getNodes(PlaceholderNode.class)) {
             n.replaceAndDelete(n.next());
         }

@@ -116,8 +116,8 @@ public final class CompareNode extends BooleanNode implements Canonicalizable {
         CiConstant falseConstant = materializeNode.falseValue().asConstant();
 
         if (falseConstant != null && trueConstant != null) {
-            Boolean trueResult = condition().foldCondition(trueConstant, constant, graph().runtime(), unorderedIsTrue());
-            Boolean falseResult = condition().foldCondition(falseConstant, constant, graph().runtime(), unorderedIsTrue());
+            Boolean trueResult = condition().foldCondition(trueConstant, constant, graph().start().runtime(), unorderedIsTrue());
+            Boolean falseResult = condition().foldCondition(falseConstant, constant, graph().start().runtime(), unorderedIsTrue());
 
             if (trueResult != null && falseResult != null) {
                 boolean trueUnboxedResult = trueResult;
@@ -164,7 +164,7 @@ public final class CompareNode extends BooleanNode implements Canonicalizable {
         } else if (x().isConstant() && y().isConstant()) {
             CiConstant constX = x().asConstant();
             CiConstant constY = y().asConstant();
-            Boolean result = condition().foldCondition(constX, constY, graph().runtime(), unorderedIsTrue());
+            Boolean result = condition().foldCondition(constX, constY, graph().start().runtime(), unorderedIsTrue());
             if (result != null) {
                 return ConstantNode.forBoolean(result, graph());
             }

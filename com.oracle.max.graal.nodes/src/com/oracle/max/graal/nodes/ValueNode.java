@@ -158,8 +158,9 @@ public abstract class ValueNode extends Node {
         return properties;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public CompilerGraph graph() {
-        return (CompilerGraph) super.graph();
+    public Graph<EntryPointNode> graph() {
+        return (Graph<EntryPointNode>) super.graph();
     }
 }

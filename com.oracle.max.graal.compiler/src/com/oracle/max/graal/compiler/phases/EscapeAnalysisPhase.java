@@ -45,7 +45,7 @@ public class EscapeAnalysisPhase extends Phase {
         public final ValueNode[] fieldState;
         public final VirtualObjectNode virtualObject;
         public ValueNode virtualObjectField;
-        public final Graph graph;
+        public final Graph<EntryPointNode> graph;
 
         public BlockExitState(EscapeField[] fields, VirtualObjectNode virtualObject) {
             this.fieldState = new ValueNode[fields.length];
@@ -153,11 +153,11 @@ public class EscapeAnalysisPhase extends Phase {
         private final Map<Block, BlockExitState> exitStates = new HashMap<Block, BlockExitState>();
 
         private final EscapeOp op;
-        private final Graph graph;
+        private final Graph<EntryPointNode> graph;
         private final Node node;
         private EscapeField[] escapeFields;
 
-        public EscapementFixup(EscapeOp op, Graph graph, Node node) {
+        public EscapementFixup(EscapeOp op, Graph<EntryPointNode> graph, Node node) {
             this.op = op;
             this.graph = graph;
             this.node = node;
@@ -291,7 +291,7 @@ public class EscapeAnalysisPhase extends Phase {
         }
     }
 
-    private void completeAnalysis(Graph graph) {
+    private void completeAnalysis(Graph<EntryPointNode> graph) {
         // TODO(ls) debugging code
 
         TTY.println("================================================================");
@@ -315,7 +315,7 @@ public class EscapeAnalysisPhase extends Phase {
 
 
     @Override
-    protected void run(Graph graph) {
+    protected void run(Graph<EntryPointNode> graph) {
         for (Node node : graph.getNodes()) {
             if (node != null) {
                 EscapeOp op = node.lookup(EscapeOp.class);

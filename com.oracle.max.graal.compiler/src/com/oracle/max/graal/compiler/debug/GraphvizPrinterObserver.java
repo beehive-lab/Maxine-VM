@@ -91,7 +91,7 @@ public class GraphvizPrinterObserver implements CompilationObserver {
         }
     }
 
-    private static void printGraph(Graph graph, String name, OutputStream buffer) {
+    private static void printGraph(Graph<?> graph, String name, OutputStream buffer) {
         GraphvizPrinter printer = new GraphvizPrinter(buffer);
         if (GraalOptions.OmitDOTFrameStates) {
             printer.addOmittedClass(FrameState.class);
