@@ -54,10 +54,10 @@ public final class TLABLog {
     static HeapScheme heapScheme;
     static Address logBufferAllocator;
 
-    static final int LOG_BUFFER_SIZE = Platform.getPageSize();
-    static final int LOG_BUFFER_HEADER_SIZE = Word.size();
-    static final int LOG_RECORD_SIZE = Word.size() * 3;
-    static final long LOG_BUFFER_TAIL_MASK = ~((long) LOG_BUFFER_SIZE - 1);
+    public static final int LOG_BUFFER_SIZE = Platform.getPageSize();
+    public static final int LOG_BUFFER_HEADER_SIZE = Word.size();
+    public static final int LOG_RECORD_SIZE = Word.size() * 3;
+    public static final long LOG_BUFFER_TAIL_MASK = ~((long) LOG_BUFFER_SIZE - 1);
 
     private static void release(Pointer logHead) {
         VirtualMemory.deallocate(logHead, Size.fromInt(LOG_BUFFER_SIZE),  VirtualMemory.Type.DATA);
@@ -66,6 +66,14 @@ public final class TLABLog {
     private static Pointer allocate(Pointer etla) {
         Pointer logBuffer = VirtualMemory.allocate(Size.fromInt(LOG_BUFFER_SIZE), VirtualMemory.Type.DATA);
         logBuffer.setWord(etla);
+        int numUnusableWords =  ((LOG_BUFFER_SIZE % LOG_RECORD_SIZE) - LOG_BUFFER_HEADER_SIZE) >> Word.widthValue().log2numberOfBytes;
+        Pointer logBufferEnd = logBuffer.plus(LOG_BUFFER_SIZE);
+        // Set up the unusable part of the log buffer with self pointers, so that
+        // one can quickly test if there's enough space for a new record by testing if log.getWord(wordIndex) == log.plusWords(wordIndex)
+        while (numUnusableWords > 0) {
+            final Pointer p = logBufferEnd.minusWords(numUnusableWords--);
+            p.setWord(p);
+        }
         return logBuffer.plus(LOG_BUFFER_HEADER_SIZE);
     }
 
@@ -95,16 +103,14 @@ public final class TLABLog {
     public static void record(Pointer etla, Pointer allocationSite, Pointer allocatedCell, Size cellSize) {
         Pointer logTail = TLAB_LOG_TAIL.load(etla);
         if (!logTail.isZero()) {
-            Pointer newLogTail = logTail.plus(LOG_RECORD_SIZE);
-            if (newLogTail.greaterThan(logEnd(logTail))) {
+            if (logTail.getWord().asPointer().equals(logTail)) {
                 flush(logTail);
                 logTail = logStart(logTail);
-                newLogTail = logTail.plus(LOG_RECORD_SIZE);
             }
             logTail.setWord(0, allocationSite);
             logTail.setWord(1, allocatedCell);
             logTail.setWord(2, cellSize);
-            TLAB_LOG_TAIL.store(etla, newLogTail);
+            TLAB_LOG_TAIL.store(etla, logTail.plus(LOG_RECORD_SIZE));
         }
     }
 
@@ -124,13 +130,23 @@ public final class TLABLog {
         return VmThread.fromTLA(logHead(logTail).getWord().asPointer());
     }
 
+    public static Pointer flushAndGetStart(Pointer logTail) {
+        flush(logTail);
+        return  logStart(logTail);
+    }
+
     @NO_SAFEPOINT_POLLS("GC debugging")
     private static void flush(Pointer logTail) {
         final boolean lockDisabledSafepoints = Log.lock();
         Log.print("TLAB allocation log for ");
-        Log.printThread(logger(logTail), true);
+        Log.printThread(logger(logTail), false);
         Pointer p = logStart(logTail);
+        Log.print(" #records = ");
+        Log.println(logTail.minus(p).dividedBy(LOG_RECORD_SIZE).toInt());
+        int logRecordId = 1;
         while (p.lessThan(logTail)) {
+            Log.print(logRecordId++);
+            Log.print(" ");
             Log.print(p.getWord(0).asAddress());
             Log.print(", ");
             Log.print(p.getWord(1).asAddress());

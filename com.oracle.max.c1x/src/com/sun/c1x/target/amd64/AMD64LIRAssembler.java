@@ -1776,6 +1776,16 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     moveOp(src, result, inst.kind, canTrap ? info : null, false);
                     break;
                 }
+                case Here: {
+                    CiValue result = operands[inst.result.index];
+                    CiRegister dst = result.asRegister();
+                    int beforeLea = masm.codeBuffer.position();
+                    masm.leaq(dst, new CiAddress(target.wordKind, InstructionRelative.asValue(), 0));
+                    int afterLea = masm.codeBuffer.position();
+                    masm.codeBuffer.setPosition(beforeLea);
+                    masm.leaq(dst, new CiAddress(target.wordKind, InstructionRelative.asValue(), beforeLea - afterLea));
+                    break;
+                }
 
                 case LoadEffectiveAddress: {
                     CiXirAssembler.AddressAccessInformation addressInformation = (CiXirAssembler.AddressAccessInformation) inst.extra;

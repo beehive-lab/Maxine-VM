@@ -190,6 +190,7 @@ public class AMD64XirAssembler extends CiXirAssembler {
                 case Push:
                 case Pop:
                 case Mark:
+                case Here:
                 case Nop:
                 case RawBytes:
                 case ShouldNotReachHere:
