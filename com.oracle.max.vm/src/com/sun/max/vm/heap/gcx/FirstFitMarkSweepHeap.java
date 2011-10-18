@@ -222,7 +222,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
                                     // Got the number of requested contiguous regions.
                                     // Remove them all from the list (except the tail if it leaves enough space for overflow allocation)
                                     // and turn them into large object regions.
-                                    if (true || traceAllocateLarge) {
+                                    if (traceAllocateLarge) {
                                         Log.print("allocate contiguous regions [");
                                         Log.print(firstRegion);
                                         Log.print(", ");

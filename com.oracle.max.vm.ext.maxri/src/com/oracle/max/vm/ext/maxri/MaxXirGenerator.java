@@ -928,7 +928,9 @@ public class MaxXirGenerator implements RiXirGenerator {
 
         asm.bindInline(ok);
         asm.pstore(WordUtil.archKind(), etla, offsetToTLABMark, newMark, false);
-
+        if (MaxineVM.isDebug()) {
+            buildTLABLogging(etla, arraySize, cell);
+        }
         asm.bindInline(done);
         // Now, plant the hub to properly format the allocated cell as an object.
         asm.pstore(CiKind.Object, cell, asm.i(hubOffset()), hub, false);
@@ -981,6 +983,9 @@ public class MaxXirGenerator implements RiXirGenerator {
         asm.add(newMark, cell, arraySize);
         asm.jgt(slowPath, newMark, tlabEnd);
         asm.pstore(WordUtil.archKind(), etla, offsetToTLABMark, newMark, false);
+        if (MaxineVM.isDebug()) {
+            buildTLABLogging(etla, arraySize, cell);
+        }
         asm.bindInline(done);
         // Now, plant the hub to properly format the allocated cell as an object.
         asm.pstore(CiKind.Object, cell, asm.i(hubOffset()), hub, false);
@@ -1118,6 +1123,9 @@ public class MaxXirGenerator implements RiXirGenerator {
         asm.jmp(done);
         asm.bindInline(ok);
         asm.pstore(WordUtil.archKind(), etla, offsetToTLABMark, newMark, false);
+        if (MaxineVM.isDebug()) {
+            buildTLABLogging(etla, tupleSize, cell);
+        }
         asm.bindInline(done);
         // Now, plant the hub to properly format the allocated cell as an object.
         asm.pstore(CiKind.Object, cell, asm.i(hubOffset()), hub, false);
@@ -1125,6 +1133,32 @@ public class MaxXirGenerator implements RiXirGenerator {
             asm.pstore(CiKind.Int, cell, asm.i(arrayLayout().arrayLengthOffset()), asm.i(hubFirstWordIndex()), false);
         }
         asm.mov(result, cell);
+    }
+
+    private void buildTLABLogging(XirOperand etla, XirOperand cellSize, XirOperand cell) {
+        XirLabel flushLog = asm.createOutOfLineLabel("flushLog");
+        XirLabel recordInLog = asm.createInlineLabel("recordInLog");
+        XirLabel done = asm.createInlineLabel("done");
+        XirOperand logTail = asm.createTemp("logTail",  WordUtil.archKind());
+        XirOperand logEndMark = asm.createTemp("logEndMark",  WordUtil.archKind());
+        XirOperand allocationSite = asm.createTemp("allocationSite",  WordUtil.archKind());
+        XirConstant offsetToTLABLogTail = asm.i(TLABLog.TLAB_LOG_TAIL.offset);
+
+        asm.pload(WordUtil.archKind(), logTail, etla, offsetToTLABLogTail, false);
+        asm.jeq(done, logTail, asm.i(0));
+        asm.pload(WordUtil.archKind(), logEndMark, logTail, false);
+        asm.jeq(flushLog, logEndMark, logTail);
+        asm.bindInline(recordInLog);
+        asm.here(allocationSite);
+        asm.pstore(WordUtil.archKind(), logTail, asm.i(0), allocationSite, false);
+        asm.pstore(WordUtil.archKind(), logTail, asm.i(Word.size()), cell, false);
+        asm.pstore(WordUtil.archKind(), logTail, asm.i(2 * Word.size()), cellSize, false);
+        asm.add(logTail, logTail, asm.i(3 * Word.size()));
+        asm.pstore(WordUtil.archKind(), etla, offsetToTLABLogTail, logTail, false);
+        asm.bindInline(done);
+        asm.bindOutOfLine(flushLog);
+        callRuntimeThroughStub(asm, "flushLog", logTail, logTail);
+        asm.jmp(recordInLog);
     }
 
     @HOSTED_ONLY
@@ -1145,6 +1179,9 @@ public class MaxXirGenerator implements RiXirGenerator {
         asm.add(newMark, cell, tupleSize);
         asm.jgt(slowPath, newMark, tlabEnd);
         asm.pstore(WordUtil.archKind(), etla, offsetToTLABMark, newMark, false);
+        if (MaxineVM.isDebug()) {
+            buildTLABLogging(etla, tupleSize, cell);
+        }
         asm.bindInline(done);
         // Now, plant the hub to properly format the allocated cell as an object.
         asm.pstore(CiKind.Object, cell, asm.i(hubOffset()), hub, false);
@@ -1720,6 +1757,10 @@ public class MaxXirGenerator implements RiXirGenerator {
                 FatalError.check(VMConfiguration.vmConfig().heapScheme().usesTLAB(), "HeapScheme must use TLAB");
             }
             return ((HeapSchemeWithTLAB) VMConfiguration.vmConfig().heapScheme()).slowPathAllocate(Size.fromInt(size), etla);
+        }
+
+        public static Pointer flushLog(Pointer logTail) {
+            return TLABLog.flushAndGetStart(logTail);
         }
 
         public static int[] allocateIntArray(int length) {
