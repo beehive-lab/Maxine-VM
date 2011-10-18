@@ -1263,7 +1263,25 @@ public class T1XTemplateGenerator {
         generateTemplateTag("%s%s", tagPrefix(k), op.toUpperCase());
         out.printf("    public static %s %s%s(@Slot(0) %s value, %s zero) {%n", k, opPrefix(k), op, k, k);
         generateBeforeAdvice(k);
-        out.printf("        return zero - value;%n");
+        if (k == DOUBLE) {
+            out.printf("        double res;%n");
+            out.printf("        if (Double.doubleToRawLongBits(value) == Double.doubleToRawLongBits(zero)) {%n");
+            out.printf("            res = -0.0d;%n");
+            out.printf("        } else {%n");
+            out.printf("            res = zero - value;%n");
+            out.printf("        }%n");
+            out.printf("        return res;%n");
+        } else if (k == FLOAT) {
+            out.printf("        float res;%n");
+            out.printf("        if (Float.floatToRawIntBits(value) == Float.floatToRawIntBits(zero)) {%n");
+            out.printf("            res = -0.0f;%n");
+            out.printf("        } else {%n");
+            out.printf("            res = zero - value;%n");
+            out.printf("        }%n");
+            out.printf("        return res;%n");
+        } else {
+            out.printf("        return zero - value;%n");
+        }
         out.printf("    }%n");
         newLine();
     }

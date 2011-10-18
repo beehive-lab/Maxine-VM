@@ -48,7 +48,12 @@ public class ReflectiveExecutor implements Executor {
             for (int i = 0; i < vals.length; ++i) {
                 Object o = vals[i];
                 if (o instanceof JavaExecHarness.CodeLiteral) {
-                    vals[i] = ((JavaExecHarness.CodeLiteral) o).value();
+                    JavaExecHarness.CodeLiteral literal = (JavaExecHarness.CodeLiteral) o;
+                    String s = literal.codeLiteral;
+                    String className = s.substring(0, s.lastIndexOf('.'));
+                    String fieldName = s.substring(s.lastIndexOf('.') + 1);
+                    Class klass = Class.forName(className);
+                    vals[i] = klass.getField(fieldName).get(null);
                 }
             }
             final Method m = (Method) c.slot1;
@@ -59,6 +64,12 @@ public class ReflectiveExecutor implements Executor {
             }
             throw ProgramError.unexpected(e);
         } catch (IllegalAccessException e) {
+            throw ProgramError.unexpected(e);
+        } catch (ClassNotFoundException e) {
+            throw ProgramError.unexpected(e);
+        } catch (SecurityException e) {
+            throw ProgramError.unexpected(e);
+        } catch (NoSuchFieldException e) {
             throw ProgramError.unexpected(e);
         }
     }

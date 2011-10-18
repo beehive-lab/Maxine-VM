@@ -22,11 +22,14 @@
  */
 package jtt.bytecode;
 
+import com.sun.max.annotate.*;
+
 /*
  * @Harness: java
  * @Runs: -0.0d = `java.lang.Double.POSITIVE_INFINITY; 0.0d = `java.lang.Double.NEGATIVE_INFINITY
  */
 public class BC_dneg2 {
+    @NEVER_INLINE
     public static double test(double a) {
         return 1/(-a);
     }
