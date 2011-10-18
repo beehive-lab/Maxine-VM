@@ -2245,9 +2245,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         int after = masm.codeBuffer.position();
         tasm.recordDirectCall(before, after, asCallTarget(target), info);
         tasm.recordExceptionHandlers(after, info);
-        if (GraalOptions.CallSiteUniquePC) {
-            masm.nop();
-        }
+        masm.ensureUniquePC();
     }
 
     public void directJmp(Object target) {
@@ -2255,9 +2253,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         masm.jmp(0, true);
         int after = masm.codeBuffer.position();
         tasm.recordDirectCall(before, after, asCallTarget(target), null);
-        if (GraalOptions.CallSiteUniquePC) {
-            masm.nop();
-        }
+        masm.ensureUniquePC();
     }
 
     public void indirectCall(CiRegister dst, Object target, LIRDebugInfo info) {
@@ -2266,9 +2262,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         int after = masm.codeBuffer.position();
         tasm.recordIndirectCall(before, after, asCallTarget(target), info);
         tasm.recordExceptionHandlers(after, info);
-        if (GraalOptions.CallSiteUniquePC) {
-            masm.nop();
-        }
+        masm.ensureUniquePC();
     }
 
     @Override

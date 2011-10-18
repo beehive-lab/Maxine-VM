@@ -1278,6 +1278,10 @@ public class AMD64Assembler extends AbstractAssembler {
         emitByte(0xD8 | encode);
     }
 
+    public final void ensureUniquePC() {
+        nop();
+    }
+
     public final void nop() {
         nop(1);
     }
