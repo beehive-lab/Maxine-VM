@@ -162,8 +162,10 @@ public final class FrameMap {
                 // TODO(tw): This is a special work around for Windows runtime calls that can happen and must be ignored.
                 assert type == RuntimeCall;
             } else {
-                assert frameSize == -1 : "frame size must not yet be fixed!";
-                reserveOutgoing(cc.stackSize);
+                if (type != RuntimeCall) {
+                    assert frameSize == -1 : "frame size must not yet be fixed!";
+                    reserveOutgoing(cc.stackSize);
+                }
             }
         }
         return cc;
