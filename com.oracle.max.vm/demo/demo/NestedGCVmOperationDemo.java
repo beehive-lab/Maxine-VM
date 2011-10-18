@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,33 +20,36 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-#ifndef __mutex_h__
-#define __mutex_h__ 1
+package demo;
 
-#include "os.h"
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 
-#if (os_DARWIN || os_LINUX)
-#   include <pthread.h>
-    typedef pthread_mutex_t mutex_Struct;
-#elif os_SOLARIS
-#   include <thread.h>
-#   include <synch.h>
-    typedef mutex_t mutex_Struct;
-#elif os_MAXVE
-#   include <maxve.h>
-    typedef maxve_monitor_t mutex_Struct;
-#endif
 
-typedef mutex_Struct *Mutex;
 
-extern void mutex_initialize(Mutex mutex);
-extern void mutex_dispose(Mutex mutex);
+public class NestedGCVmOperationDemo extends VmOperation {
 
-extern int mutex_enter(Mutex mutex);
-extern int mutex_try_enter(Mutex mutex);
-extern int mutex_exit(Mutex mutex);
+    public NestedGCVmOperationDemo(boolean disAllowNested) {
+        super("NestedGCDemo", null, Mode.Safepoint, disAllowNested);
+    }
 
-extern int mutex_enter_nolog(Mutex mutex);
-extern int mutex_exit_nolog(Mutex mutex);
+    @Override
+    public void doThread(VmThread vmThread, Pointer ip, Pointer sp, Pointer fp) {
+        System.gc();
+    }
 
-#endif /*__mutex_h__*/
+    public static void main(String[] args) {
+        boolean disAllowNested = false;
+        // Checkstyle: stop
+        for (int i = 0; i < args.length; i++) {
+            String arg = args[i];
+            if (arg.equals("-nonested")) {
+                disAllowNested = true;
+            }
+        }
+        // Checkstyle: resume
+        new NestedGCVmOperationDemo(disAllowNested).submit();
+    }
+
+}

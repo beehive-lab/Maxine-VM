@@ -551,6 +551,11 @@ public class Snippets {
     public static void nativeCallEpilogue0(Pointer etla, Pointer anchor) {
         spinWhileFrozen(etla);
         LAST_JAVA_FRAME_ANCHOR.store(etla, anchor);
+        while (SUSPEND.load(etla).equals(VmOperation.SUSPEND_REQUEST)) {
+            // I.e. SUSPEND_JAVA is not set, so this is a thread returning from native code
+            // other than that caused by the safepoint mechanism.
+            VmThread.fromTLA(etla).suspendMonitor.suspend();
+        }
     }
 
     /**

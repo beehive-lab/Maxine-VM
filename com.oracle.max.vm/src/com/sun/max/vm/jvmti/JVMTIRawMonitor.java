@@ -77,21 +77,16 @@ public class JVMTIRawMonitor {
         new CriticalMethod(JVMTIRawMonitor.class, "notifyAll", null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
-    static void initialize() {
-        mutexSize = Size.fromInt(nativeMutexSize());
-        conditionSize = Size.fromInt(nativeConditionSize());
-    }
-
     static int create(Pointer name, Pointer rawMonitorPtr) {
         Pointer rawMonitor = Memory.allocate(Struct.SIZE);
-        Pointer nativeMutex = Memory.allocate(mutexSize);
-        Pointer nativeCondition = Memory.allocate(conditionSize);
+        Word nativeMutex = Memory.allocate(mutexSize);
+        Word nativeCondition = Memory.allocate(conditionSize);
 
         if (rawMonitor.isZero() || nativeCondition.isZero() || nativeMutex.isZero()) {
             return JVMTI_ERROR_OUT_OF_MEMORY;
         }
-        nativeMutexInitialize(nativeMutex);
-        nativeConditionInitialize(nativeCondition);
+        OSMonitor.nativeMutexInitialize(nativeMutex);
+        OSMonitor.nativeConditionInitialize(nativeCondition);
         Struct.CONDITION.set(rawMonitor, nativeCondition);
         Struct.MUTEX.set(rawMonitor, nativeMutex);
         Struct.MAGIC.set(rawMonitor, Address.fromLong(RM_MAGIC));
@@ -116,7 +111,7 @@ public class JVMTIRawMonitor {
         if (!Struct.validate(rawMonitor)) {
             return JVMTI_ERROR_INVALID_MONITOR;
         }
-        if (nativeMutexLock(Struct.MUTEX.get(rawMonitor))) {
+        if (OSMonitor.nativeMutexLock(Struct.MUTEX.get(rawMonitor))) {
             return JVMTI_ERROR_NONE;
         } else {
             return JVMTI_ERROR_INTERNAL; // TODO be more specific
@@ -128,7 +123,7 @@ public class JVMTIRawMonitor {
         if (!Struct.validate(rawMonitor)) {
             return JVMTI_ERROR_INVALID_MONITOR;
         }
-        if (nativeMutexUnlock(Struct.MUTEX.get(rawMonitor))) {
+        if (OSMonitor.nativeMutexUnlock(Struct.MUTEX.get(rawMonitor))) {
             return JVMTI_ERROR_NONE;
         } else {
             return JVMTI_ERROR_INTERNAL; // TODO be more specific
@@ -141,7 +136,7 @@ public class JVMTIRawMonitor {
         if (!Struct.validate(rawMonitor)) {
             return JVMTI_ERROR_INVALID_MONITOR;
         }
-        if (nativeConditionWait(Struct.MUTEX.get(rawMonitor), Struct.CONDITION.get(rawMonitor), millis)) {
+        if (OSMonitor.nativeConditionWait(Struct.MUTEX.get(rawMonitor), Struct.CONDITION.get(rawMonitor), millis)) {
             return JVMTI_ERROR_NONE;
         } else {
             return JVMTI_ERROR_INTERNAL; // TODO be more specific
@@ -153,7 +148,7 @@ public class JVMTIRawMonitor {
         if (!Struct.validate(rawMonitor)) {
             return JVMTI_ERROR_INVALID_MONITOR;
         }
-        if (nativeConditionNotify(Struct.CONDITION.get(rawMonitor), false)) {
+        if (OSMonitor.nativeConditionNotify(Struct.CONDITION.get(rawMonitor), false)) {
             return JVMTI_ERROR_NONE;
         } else {
             return JVMTI_ERROR_INTERNAL; // TODO be more specific
@@ -165,43 +160,11 @@ public class JVMTIRawMonitor {
         if (!Struct.validate(rawMonitor)) {
             return JVMTI_ERROR_INVALID_MONITOR;
         }
-        if (nativeConditionNotify(Struct.CONDITION.get(rawMonitor), true)) {
+        if (OSMonitor.nativeConditionNotify(Struct.CONDITION.get(rawMonitor), true)) {
             return JVMTI_ERROR_NONE;
         } else {
             return JVMTI_ERROR_INTERNAL; // TODO be more specific
         }
     }
-
-    /*
-     * These are already defined as private in com.sun.max.vm.monitor.modal.sync.nat.NativeMutex/ConditionVariable.
-     * At this point we don't want to establish a dependency to that code.
-     */
-
-    static {
-        new CriticalNativeMethod(JVMTIRawMonitor.class, "nativeMutexUnlock");
-        new CriticalNativeMethod(JVMTIRawMonitor.class, "nativeConditionWait");
-    }
-
-    @C_FUNCTION
-    private static native int nativeMutexSize();
-
-    @C_FUNCTION
-    private static native void nativeMutexInitialize(Word mutex);
-
-    @C_FUNCTION
-    private static native boolean nativeMutexUnlock(Word mutex);
-
-    private static native boolean nativeMutexLock(Word mutex);
-
-    @C_FUNCTION
-    private static native int nativeConditionSize();
-
-    @C_FUNCTION
-    private static native void nativeConditionInitialize(Word condition);
-
-    @C_FUNCTION
-    private static native boolean nativeConditionNotify(Word condition, boolean all);
-
-    private static native boolean nativeConditionWait(Word mutex, Word condition, long timeoutMilliSeconds);
 
 }

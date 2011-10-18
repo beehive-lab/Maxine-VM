@@ -530,22 +530,65 @@ class JVMTIThreadFunctions {
         return setLocalValue(thread, depth, slot, new TypedData(TypedData.DATA_OBJECT, value));
     }
 
-    // Thread suspend/resume
+    // Thread suspend/resume/stop/interrupt
 
     static int suspendThread(Thread thread) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        if (!thread.isAlive()) {
+            return JVMTI_ERROR_THREAD_NOT_ALIVE;
+        }
+        new VmOperation.SuspendThreadSet(VmThread.fromJava(thread)).submit();
+        return JVMTI_ERROR_NONE;
+    }
+
+    private static int suspendOrResumeThreadList(int requestCount, Pointer requestList, Pointer results, boolean isSuspend) {
+        if (requestCount < 0) {
+            return JVMTI_ERROR_ILLEGAL_ARGUMENT;
+        }
+        Set<VmThread> set = new HashSet<VmThread>();
+        for (int i = 0; i < requestCount; i++) {
+            try {
+                Thread thread = (Thread) requestList.getWord(i).asJniHandle().unhand();
+                if (!thread.isAlive()) {
+                    results.setInt(i, JVMTI_ERROR_THREAD_NOT_ALIVE);
+                } else {
+                    set.add(VmThread.fromJava(thread));
+                    results.setInt(i, JVMTI_ERROR_NONE);
+                }
+            } catch (ClassCastException ex) {
+                results.setInt(i, JVMTI_ERROR_INVALID_THREAD);
+            }
+        }
+        if (isSuspend) {
+            new VmOperation.SuspendThreadSet(set).submit();
+        } else {
+            new VmOperation.ResumeThreadSet(set).submit();
+        }
+        return JVMTI_ERROR_NONE;
+
     }
 
     static int suspendThreadList(int requestCount, Pointer requestList, Pointer results) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return suspendOrResumeThreadList(requestCount, requestList, results, true);
     }
 
     static int resumeThread(Thread thread) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        if (!thread.isAlive()) {
+            return JVMTI_ERROR_THREAD_NOT_ALIVE;
+        }
+        new VmOperation.ResumeThreadSet(VmThread.fromJava(thread)).submit();
+        return JVMTI_ERROR_NONE;
     }
 
     static int resumeThreadList(int requestCount, Pointer requestList, Pointer results) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return suspendOrResumeThreadList(requestCount, requestList, results, false);
+    }
+
+    static int interruptThread(Thread thread) {
+        if (!thread.isAlive()) {
+            return JVMTI_ERROR_THREAD_NOT_ALIVE;
+        }
+        VmThread.fromJava(thread).interrupt0();
+        return JVMTI_ERROR_NONE;
     }
 
     // ThreadGroup functions

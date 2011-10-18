@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.jvmti;
 
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import static com.sun.max.vm.jvmti.JVMTICallbacks.*;
 import static com.sun.max.vm.jvmti.JVMTIConstants.*;
 import static com.sun.max.vm.jvmti.JVMTI.*;
@@ -40,6 +41,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.jni.*;
+import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
@@ -47,6 +49,11 @@ import com.sun.max.vm.type.*;
  * Support for all the JVMTI functions related to {@link Class} handling.
  */
 class JVMTIClassFunctions {
+
+    static int getObjectSize(Object object, Pointer sizePtr) {
+        sizePtr.setInt(Layout.size(Reference.fromJava(object)).toInt());
+        return JVMTI_ERROR_NONE;
+    }
 
     /**
      * Dispatch the {@link JVMTIEvent#CLASS_FILE_LOAD_HOOK}.
@@ -160,6 +167,59 @@ class JVMTIClassFunctions {
         }
         getAddedBootClassPathCalled = true;
         return result;
+    }
+
+    static int getClassSignature(Class klass, Pointer signaturePtrPtr, Pointer genericPtrPtr) {
+        ClassActor classActor = ClassActor.fromJava(klass);
+        Pointer signaturePtr = CString.utf8FromJava(classActor.typeDescriptor.string);
+        if (signaturePtr.isZero()) {
+            return JVMTI_ERROR_OUT_OF_MEMORY;
+        }
+        signaturePtrPtr.setWord(signaturePtr);
+        genericPtrPtr.setWord(Pointer.zero());
+        return JVMTI_ERROR_NONE;
+    }
+
+    static int getClassStatus(Class klass, Pointer statusPtr) {
+        ClassActor classActor = ClassActor.fromJava(klass);
+        int status = 0;
+        if (classActor.isArrayClass()) {
+            status = JVMTI_CLASS_STATUS_ARRAY;
+        } else if (classActor.isPrimitiveClassActor()) {
+            status = JVMTI_CLASS_STATUS_PRIMITIVE;
+        } else {
+            // ClassActor keeps a single state for the class, so we have to work backwards.
+            ClassActorProxy proxyClassActor = ClassActorProxy.asClassActorProxy(classActor);
+            if (proxyClassActor.initializationState == ClassActorProxy.INITIALIZED) {
+                status = JVMTI_CLASS_STATUS_VERIFIED | JVMTI_CLASS_STATUS_PREPARED | JVMTI_CLASS_STATUS_INITIALIZED;
+            } else if (proxyClassActor.initializationState == ClassActorProxy.VERIFIED_) {
+                status = JVMTI_CLASS_STATUS_VERIFIED | JVMTI_CLASS_STATUS_PREPARED;
+            } else if (proxyClassActor.initializationState == ClassActorProxy.PREPARED) {
+                status = JVMTI_CLASS_STATUS_PREPARED;
+            } else {
+                // any other value implies some kind of error
+                status = JVMTI_CLASS_STATUS_ERROR;
+            }
+        }
+        statusPtr.setInt(status);
+        return JVMTI_ERROR_NONE;
+    }
+
+    /**
+     * gets to private internals of {@link ClassActor} and avoids placing any JVMTI
+     * dependency there, but that could be revisited.
+     */
+    private static class ClassActorProxy {
+        @INTRINSIC(UNSAFE_CAST) public static native ClassActorProxy asClassActorProxy(Object object);
+
+        @ALIAS(declaringClass = ClassActor.class)
+        private Object initializationState;
+        @ALIAS(declaringClass = ClassActor.class)
+        private static Object INITIALIZED;
+        @ALIAS(declaringClass = ClassActor.class)
+        private static Object PREPARED;
+        @ALIAS(declaringClass = ClassActor.class)
+        private static Object VERIFIED_;
     }
 
     static int getByteCodes(MethodID methodID, Pointer bytecodeCountPtr, Pointer bytecodesPtr) {
