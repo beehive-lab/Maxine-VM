@@ -64,9 +64,10 @@ public class AMD64Backend extends Backend {
     }
 
     @Override
-    public FrameMap newFrameMap(GraalCompilation compilation, RiMethod method, int numberOfLocks) {
+    public FrameMap newFrameMap(GraalCompilation compilation, RiResolvedMethod method, int numberOfLocks) {
         return new FrameMap(compilation, method, numberOfLocks);
     }
+
     @Override
     public AbstractAssembler newAssembler(RiRegisterConfig registerConfig) {
         return new AMD64MacroAssembler(compiler.target, registerConfig);

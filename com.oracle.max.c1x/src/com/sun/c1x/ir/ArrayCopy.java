@@ -39,9 +39,9 @@ public class ArrayCopy extends StateSplit {
     private Value dest;
     private Value destPos;
     private Value length;
-    public final RiMethod arrayCopyMethod;
+    public final RiResolvedMethod arrayCopyMethod;
 
-    public ArrayCopy(Value src, Value srcPos, Value dest, Value destPos, Value length, RiMethod arrayCopyMethod, FrameState stateBefore) {
+    public ArrayCopy(Value src, Value srcPos, Value dest, Value destPos, Value length, RiResolvedMethod arrayCopyMethod, FrameState stateBefore) {
         super(CiKind.Void, stateBefore);
         this.arrayCopyMethod = arrayCopyMethod;
         this.src = src;

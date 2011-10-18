@@ -31,7 +31,7 @@ import com.sun.cri.ri.*;
  */
 public final class NewObjectArrayNode extends NewArrayNode {
 
-    private final RiType elementClass;
+    private final RiResolvedType elementClass;
 
     /**
      * Constructs a new NewObjectArrayNode.
@@ -39,23 +39,23 @@ public final class NewObjectArrayNode extends NewArrayNode {
      * @param length the node producing the length of the array
      * @param graph
      */
-    public NewObjectArrayNode(RiType elementClass, ValueNode length) {
+    public NewObjectArrayNode(RiResolvedType elementClass, ValueNode length) {
         super(length);
         this.elementClass = elementClass;
     }
 
     @Override
-    public RiType elementType() {
+    public RiResolvedType elementType() {
         return elementClass;
     }
 
     @Override
-    public RiType exactType() {
+    public RiResolvedType exactType() {
         return elementClass.arrayOf();
     }
 
     @Override
-    public RiType declaredType() {
+    public RiResolvedType declaredType() {
         return exactType();
     }
 

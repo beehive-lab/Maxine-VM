@@ -176,17 +176,21 @@ public final class ConstantNode extends BooleanNode {
     }
 
     @Override
-    public RiType declaredType() {
+    public RiResolvedType declaredType() {
+        return getType();
+    }
+
+    @Override
+    public RiResolvedType exactType() {
+        return getType();
+    }
+
+    private RiResolvedType getType() {
         RiRuntime runtime = graph().runtime();
         if (kind.isPrimitive()) {
             return runtime.asRiType(kind);
         }
         return runtime.getTypeOf(asConstant());
-    }
-
-    @Override
-    public RiType exactType() {
-        return declaredType();
     }
 
     @Override

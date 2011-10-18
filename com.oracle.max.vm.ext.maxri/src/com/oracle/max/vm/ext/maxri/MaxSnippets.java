@@ -37,11 +37,11 @@ import com.sun.max.vm.runtime.*;
  */
 public class MaxSnippets implements RiSnippets {
 
-    public final RiMethod link;
-    public final RiMethod enterNative;
-    public final RiMethod enterNativeForC;
-    public final RiMethod enterVM;
-    public final RiMethod enterVMForC;
+    public final RiResolvedMethod link;
+    public final RiResolvedMethod enterNative;
+    public final RiResolvedMethod enterNativeForC;
+    public final RiResolvedMethod enterVM;
+    public final RiResolvedMethod enterVMForC;
 
     public MaxSnippets(MaxRuntime runtime) {
         link = MethodActor.fromJava(Classes.getDeclaredMethod(NativeFunction.class, "link"));

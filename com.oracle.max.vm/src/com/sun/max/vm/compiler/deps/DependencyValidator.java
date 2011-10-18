@@ -35,7 +35,7 @@ import com.sun.max.vm.compiler.deps.DependenciesManager.UniqueConcreteMethodSear
 /**
  * Validates dependencies for a compiled method.
  */
-class DependencyValidator extends AssumptionProcessor {
+class DependencyValidator extends CiAssumptionProcessor {
 
     /**
      * Maps of context types to dependencies involving them.

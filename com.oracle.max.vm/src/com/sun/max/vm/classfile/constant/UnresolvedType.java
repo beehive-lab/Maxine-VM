@@ -89,11 +89,6 @@ public abstract class UnresolvedType implements RiType {
             }
             return false;
         }
-
-        @Override
-        public Class< ? > toJava() {
-            return null;
-        }
     }
 
     /**
@@ -114,11 +109,6 @@ public abstract class UnresolvedType implements RiType {
                        accessingClass.equals(other.accessingClass);
             }
             return false;
-        }
-
-        @Override
-        public Class< ? > toJava() {
-            return null;
         }
     }
 
@@ -142,68 +132,12 @@ public abstract class UnresolvedType implements RiType {
         return typeDescriptor.string;
     }
 
-    public Class<?> javaClass() {
-        throw unresolved("javaClass");
-    }
-
-    public boolean hasSubclass() {
-        throw unresolved("hasSubclass()");
-    }
-
-    public boolean hasFinalizer() {
-        throw unresolved("hasFinalizer()");
-    }
-
-    public boolean hasFinalizableSubclass() {
-        throw unresolved("hasFinalizableSubclass()");
-    }
-
-    public boolean isInterface() {
-        throw unresolved("isInterface()");
-    }
-
-    public boolean isArrayClass() {
-        throw unresolved("isArrayClass()");
-    }
-
-    public boolean isInstanceClass() {
-        throw unresolved("isInstanceClass()");
-    }
-
-    public int accessFlags() {
-        throw unresolved("accessFlags()");
-    }
-
     public boolean isResolved() {
         return false;
     }
 
-    public boolean isInitialized() {
-        throw unresolved("isInitialized()");
-    }
-
-    public boolean isSubtypeOf(RiType other) {
-        throw unresolved("isSubtypeOf()");
-    }
-
-    public boolean isInstance(CiConstant obj) {
-        throw unresolved("isInstance()");
-    }
-
     public RiType componentType() {
         return UnresolvedType.toRiType(typeDescriptor.componentTypeDescriptor(), null);
-    }
-
-    public RiType exactType() {
-        throw unresolved("exactType()");
-    }
-
-    public RiType superType() {
-        throw unresolved("superType()");
-    }
-
-    public RiMethod uniqueConcreteMethod(RiMethod method) {
-        throw unresolved("uniqueConcreteMethod()");
     }
 
     /**
@@ -214,22 +148,9 @@ public abstract class UnresolvedType implements RiType {
         return UnresolvedType.toRiType(JavaTypeDescriptor.getArrayDescriptorForDescriptor(typeDescriptor, 1), null);
     }
 
-    public RiMethod resolveMethodImpl(RiMethod method) {
-        throw unresolved("resolveMethodImpl()");
-    }
-
-    @Override
-    public RiType uniqueConcreteSubtype() {
-        throw unresolved("uniqueConcreteSubtype()");
-    }
-
     @Override
     public CiKind kind(boolean architecture) {
         return WordUtil.ciKind(typeDescriptor.toKind(), architecture);
-    }
-
-    public CiUnresolvedException unresolved(String operation) {
-        throw new CiUnresolvedException(operation + " not defined for unresolved class " + typeDescriptor.toString());
     }
 
     private static boolean isFinalOrPrimitive(ClassActor classActor) {
@@ -249,17 +170,8 @@ public abstract class UnresolvedType implements RiType {
         return name() + " [unresolved]";
     }
 
-    public CiConstant getEncoding(RiType.Representation r) {
-        throw unresolved("getEncoding()");
-    }
-
     public CiKind getRepresentationKind(RiType.Representation r) {
         // all portions of a type are represented by objects in Maxine
         return CiKind.Object;
-    }
-
-    @Override
-    public RiField[] declaredFields() {
-        throw unresolved("fields()");
     }
 }

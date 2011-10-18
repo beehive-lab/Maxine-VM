@@ -421,7 +421,7 @@ public final class DebugInfo {
         int holderID = in.decodeUInt();
         ClassActor holder = ClassID.toClassActor(holderID);
         int m = in.decodeUInt();
-        RiMethod method;
+        RiResolvedMethod method;
         int bci;
         if ((m & 1) == 1) {
             bci = -1;

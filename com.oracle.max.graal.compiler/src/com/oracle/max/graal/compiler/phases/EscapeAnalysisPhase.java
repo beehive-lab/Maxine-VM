@@ -237,11 +237,6 @@ public class EscapeAnalysisPhase extends Phase {
 
     private static Node escape(EscapeRecord record, Node usage) {
         final Node node = record.node;
-        // bail out on unresolved fields  - they will cause problems later on
-        if (usage instanceof AccessFieldNode && !((AccessFieldNode) usage).field().isResolved()) {
-            return node.graph().start();
-        }
-
         if (usage instanceof FrameState) {
             assert ((FrameState) usage).inputs().contains(node);
             return null;

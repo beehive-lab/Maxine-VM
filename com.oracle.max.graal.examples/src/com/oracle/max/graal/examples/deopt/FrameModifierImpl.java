@@ -49,7 +49,7 @@ public class FrameModifierImpl implements FrameModifier {
             } catch (NoSuchMethodException e) {
                 throw new RuntimeException(e);
             }
-            RiMethod handlerMethod = runtime.getRiMethod(method);
+            RiResolvedMethod handlerMethod = runtime.getRiMethod(method);
             assert handlerMethod != null : methodName + " not found...";
 
             // put the current state (local vars, expressions, etc.) into an array

@@ -38,7 +38,7 @@ public final class IsTypeNode extends BooleanNode implements Canonicalizable {
         return object;
     }
 
-    private final RiType type;
+    private final RiResolvedType type;
 
     /**
      * Constructs a new IsTypeNode.
@@ -46,15 +46,14 @@ public final class IsTypeNode extends BooleanNode implements Canonicalizable {
      * @param object the instruction producing the object to check against the given type
      * @param type the type for this check
      */
-    public IsTypeNode(ValueNode object, RiType type) {
+    public IsTypeNode(ValueNode object, RiResolvedType type) {
         super(CiKind.Object);
-        assert type.isResolved();
         assert object == null || object.kind == CiKind.Object;
         this.type = type;
         this.object = object;
     }
 
-    public RiType type() {
+    public RiResolvedType type() {
         return type;
     }
 
@@ -64,13 +63,13 @@ public final class IsTypeNode extends BooleanNode implements Canonicalizable {
     }
 
     @Override
-    public RiType declaredType() {
+    public RiResolvedType declaredType() {
         // type check does not alter the type of the object
         return object().declaredType();
     }
 
     @Override
-    public RiType exactType() {
+    public RiResolvedType exactType() {
         return type;
     }
 

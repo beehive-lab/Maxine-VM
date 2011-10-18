@@ -74,8 +74,8 @@ public final class NewInstance extends StateSplit {
      * @return the exact type produced by this instruction
      */
     @Override
-    public RiType exactType() {
-        return instanceClass;
+    public RiResolvedType exactType() {
+        return (instanceClass instanceof RiResolvedType) ? (RiResolvedType) instanceClass : null;
     }
 
     @Override

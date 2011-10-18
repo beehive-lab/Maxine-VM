@@ -82,7 +82,7 @@ public class C1XCompiler extends ObservableCompiler {
         init();
     }
 
-    public CiResult compileMethod(RiMethod method, int osrBCI, CiStatistics stats) {
+    public CiResult compileMethod(RiResolvedMethod method, int osrBCI, CiStatistics stats) {
         if (C1XOptions.PrintCFGToFile && cfgPrinterObserver == null) {
             synchronized (this) {
                 if (cfgPrinterObserver == null) {

@@ -43,7 +43,7 @@ public final class LocalNode extends FloatingNode {
     }
 
     @Data private final int index;
-    @Data private RiType declaredType;
+    @Data private RiResolvedType declaredType;
     @Data private boolean canBeNull;
 
 
@@ -70,12 +70,12 @@ public final class LocalNode extends FloatingNode {
      * Sets the declared type of this local, e.g. derived from the signature of the method.
      * @param declaredType the declared type of the local variable
      */
-    public void setDeclaredType(RiType declaredType) {
+    public void setDeclaredType(RiResolvedType declaredType) {
         this.declaredType = declaredType;
     }
 
     @Override
-    public RiType declaredType() {
+    public RiResolvedType declaredType() {
         return declaredType;
     }
 

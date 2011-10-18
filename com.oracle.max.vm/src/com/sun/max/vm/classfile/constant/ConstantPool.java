@@ -927,7 +927,7 @@ public final class ConstantPool implements RiConstantPool {
         switch (tagAt(cpi)) {
             case CLASS: {
                 RiType type = typeFrom(classAt(cpi), cpi, LDC);
-                if (type.isResolved()) {
+                if (type instanceof RiResolvedType) {
                     ClassActor classActor = (ClassActor) type;
                     return CiConstant.forObject(classActor.javaClass());
                 }

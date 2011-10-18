@@ -22,7 +22,6 @@
  */
 package com.oracle.max.graal.hotspot;
 
-import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 /**
@@ -30,6 +29,7 @@ import com.sun.cri.ri.*;
  */
 public final class HotSpotMethodUnresolved extends HotSpotMethod {
     private final RiSignature signature;
+    protected RiType holder;
 
     public HotSpotMethodUnresolved(Compiler compiler, String name, String signature, RiType holder) {
         super(compiler);
@@ -44,145 +44,12 @@ public final class HotSpotMethodUnresolved extends HotSpotMethod {
     }
 
     @Override
-    public boolean isResolved() {
-        return false;
-    }
-
-    @Override
-    public byte[] code() {
-        throw unresolved("code");
-    }
-
-    @Override
-    public int codeSize() {
-        return 0;
-    }
-
-    @Override
-    public RiMethodProfile methodData() {
-        throw unresolved("methodData");
-    }
-
-    @Override
-    public String jniSymbol() {
-        throw unresolved("jniSymbol");
-    }
-
-    @Override
-    public int maxLocals() {
-        throw unresolved("maxLocals");
-    }
-
-    @Override
-    public int maxStackSize() {
-        throw unresolved("maxStackSize");
-    }
-
-    @Override
-    public boolean hasBalancedMonitors() {
-        throw unresolved("hasBalancedMonitors");
-    }
-
-    @Override
-    public int accessFlags() {
-        throw unresolved("accessFlags");
-    }
-
-    @Override
-    public boolean isLeafMethod() {
-        throw unresolved("isLeafMethod");
-    }
-
-    @Override
-    public boolean isClassInitializer() {
-        return "<clinit>".equals(name);
-    }
-
-    @Override
-    public boolean isConstructor() {
-        return "<init>".equals(name);
-    }
-
-    @Override
-    public boolean isOverridden() {
-        throw unresolved("isOverridden");
-    }
-
-    @Override
-    public boolean noSafepointPolls() {
-        return false;
-    }
-
-    @Override
-    public CiBitMap[] livenessMap() {
-        return null;
-    }
-
-    @Override
-    public StackTraceElement toStackTraceElement(int bci) {
-        return CiUtil.toStackTraceElement(this, bci);
-    }
-
-    @Override
-    public boolean canBeStaticallyBound() {
-        throw unresolved("canBeStaticallyBound");
-    }
-
-    @Override
-    public RiExceptionHandler[] exceptionHandlers() {
-        throw unresolved("exceptionHandlers");
-    }
-
-    @Override
-    public boolean minimalDebugInfo() {
-        throw unresolved("minimalDebugInfo");
-    }
-
-    private CiUnresolvedException unresolved(String operation) {
-        return new CiUnresolvedException(operation + " not defined for unresolved method " + name);
+    public RiType holder() {
+        return holder;
     }
 
     @Override
     public String toString() {
         return "HotSpotMethod<" + holder.name() + ". " + name + ", unresolved>";
-    }
-
-    public boolean hasCompiledCode() {
-        return false;
-    }
-
-    @Override
-    public RiType accessor() {
-        return null;
-    }
-
-    @Override
-    public String intrinsic() {
-        return null;
-    }
-
-    public int invocationCount() {
-        return -1;
-    }
-
-    public int exceptionProbability(int bci) {
-        return -1;
-    }
-
-    public RiTypeProfile typeProfile(int bci) {
-        return null;
-    }
-
-    public double branchProbability(int bci) {
-        return -1;
-    }
-
-    public double[] switchProbability(int bci) {
-        return null;
-    }
-
-    @Override
-    public int compiledCodeSize() {
-        return -1;
     }
 }

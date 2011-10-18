@@ -29,7 +29,7 @@ import com.sun.cri.ci.*;
  */
 public class RiSnippetCall {
 
-    public final RiMethod snippet;
+    public final RiResolvedMethod snippet;
     public final CiConstant[] arguments;
     public final int opcode;
 
@@ -38,7 +38,7 @@ public class RiSnippetCall {
      */
     public CiConstant result;
 
-    public RiSnippetCall(int opcode, RiMethod snippet, CiConstant... arguments) {
+    public RiSnippetCall(int opcode, RiResolvedMethod snippet, CiConstant... arguments) {
         this.opcode = opcode;
         this.snippet = snippet;
         this.arguments = arguments;

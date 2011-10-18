@@ -43,10 +43,9 @@ public final class HotSpotTypeResolvedImpl extends HotSpotType implements HotSpo
     private boolean isInstanceClass;
     private boolean isInterface;
     private int instanceSize;
-    private RiType componentType;
-    private HashMap<Long, RiField> fieldCache;
+    private HashMap<Long, RiResolvedField> fieldCache;
     private RiConstantPool pool;
-    private RiType superType;
+    private RiResolvedType superType;
     private boolean superTypeSet;
     private RiField[] fields;
 
@@ -60,31 +59,31 @@ public final class HotSpotTypeResolvedImpl extends HotSpotType implements HotSpo
     }
 
     @Override
-    public RiType arrayOf() {
-        return compiler.getVMEntries().RiType_arrayOf(this);
+    public RiResolvedType arrayOf() {
+        return (RiResolvedType) compiler.getVMEntries().RiType_arrayOf(this);
     }
 
     @Override
-    public RiType componentType() {
-        return compiler.getVMEntries().RiType_componentType(this);
+    public RiResolvedType componentType() {
+        return (RiResolvedType) compiler.getVMEntries().RiType_componentType(this);
     }
 
     @Override
-    public RiType uniqueConcreteSubtype() {
-        return compiler.getVMEntries().RiType_uniqueConcreteSubtype(this);
+    public RiResolvedType uniqueConcreteSubtype() {
+        return (RiResolvedType) compiler.getVMEntries().RiType_uniqueConcreteSubtype(this);
     }
 
     @Override
-    public RiType superType() {
+    public RiResolvedType superType() {
         if (!superTypeSet) {
-            superType = compiler.getVMEntries().RiType_superType(this);
+            superType = (RiResolvedType) compiler.getVMEntries().RiType_superType(this);
             superTypeSet = true;
         }
         return superType;
     }
 
     @Override
-    public RiType exactType() {
+    public RiResolvedType exactType() {
         if (Modifier.isFinal(accessFlags)) {
             return this;
         }
@@ -153,12 +152,7 @@ public final class HotSpotTypeResolvedImpl extends HotSpotType implements HotSpo
     }
 
     @Override
-    public boolean isResolved() {
-        return true;
-    }
-
-    @Override
-    public boolean isSubtypeOf(RiType other) {
+    public boolean isSubtypeOf(RiResolvedType other) {
         if (other instanceof HotSpotTypeResolved) {
             return compiler.getVMEntries().RiType_isSubtypeOf(this, other);
         }
@@ -172,9 +166,9 @@ public final class HotSpotTypeResolvedImpl extends HotSpotType implements HotSpo
     }
 
     @Override
-    public RiMethod resolveMethodImpl(RiMethod method) {
+    public RiResolvedMethod resolveMethodImpl(RiResolvedMethod method) {
         assert method instanceof HotSpotMethod;
-        return compiler.getVMEntries().RiType_resolveMethodImpl(this, method.name(), method.signature().asString());
+        return (RiResolvedMethod) compiler.getVMEntries().RiType_resolveMethodImpl(this, method.name(), method.signature().asString());
     }
 
     @Override
@@ -194,14 +188,14 @@ public final class HotSpotTypeResolvedImpl extends HotSpotType implements HotSpo
     }
 
     @Override
-    public RiField createRiField(String name, RiType type, int offset, int flags) {
-        RiField result = null;
+    public RiResolvedField createRiField(String name, RiType type, int offset, int flags) {
+        RiResolvedField result = null;
 
         long id = offset + ((long) flags << 32);
 
         // (tw) Must cache the fields, because the local load elimination only works if the objects from two field lookups are equal.
         if (fieldCache == null) {
-            fieldCache = new HashMap<Long, RiField>(8);
+            fieldCache = new HashMap<Long, RiResolvedField>(8);
         } else {
             result = fieldCache.get(id);
         }
@@ -218,8 +212,7 @@ public final class HotSpotTypeResolvedImpl extends HotSpotType implements HotSpo
     }
 
     @Override
-    public RiMethod uniqueConcreteMethod(RiMethod method) {
-        assert method instanceof HotSpotMethodResolved;
+    public RiResolvedMethod uniqueConcreteMethod(RiResolvedMethod method) {
         return ((HotSpotMethodResolved) method).uniqueConcreteMethod();
     }
 

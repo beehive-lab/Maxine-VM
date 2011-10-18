@@ -46,7 +46,7 @@ public class RiTypeProfile implements Serializable {
      * A list of receivers for which the runtime has recorded probability information. This array needs to have the same
      * length as {@link RiTypeProfile#probabilities}.
      */
-    public RiType[] types;
+    public RiResolvedType[] types;
 
     /**
      * The estimated probabilities of the different receivers. This array needs to have the same length as

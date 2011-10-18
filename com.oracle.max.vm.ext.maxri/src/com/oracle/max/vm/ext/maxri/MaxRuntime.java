@@ -78,7 +78,7 @@ public class MaxRuntime implements GraalRuntime {
      * @param method the compiler interface method
      * @return the compiler interface constant pool for the specified method
      */
-    public RiConstantPool getConstantPool(RiMethod method) {
+    public RiConstantPool getConstantPool(RiResolvedMethod method) {
         return asClassMethodActor(method, "getConstantPool()").compilee().codeAttribute().cp;
     }
 
@@ -88,11 +88,7 @@ public class MaxRuntime implements GraalRuntime {
      * @return {@code true} if the method must be inlined; {@code false}
      * to allow the compiler to use its own heuristics
      */
-    public boolean mustInline(RiMethod method) {
-        if (!method.isResolved()) {
-            return false;
-        }
-
+    public boolean mustInline(RiResolvedMethod method) {
         ClassMethodActor methodActor = asClassMethodActor(method, "mustNotInline()");
         if (methodActor.isInline()) {
             return true;
@@ -114,10 +110,7 @@ public class MaxRuntime implements GraalRuntime {
      * @return {@code true} if the runtime forbids inlining of the specified method;
      * {@code false} to allow the compiler to use its own heuristics
      */
-    public boolean mustNotInline(RiMethod method) {
-        if (!method.isResolved()) {
-            return false;
-        }
+    public boolean mustNotInline(RiResolvedMethod method) {
         final ClassMethodActor classMethodActor = asClassMethodActor(method, "mustNotInline()");
         if (classMethodActor.isNative()) {
             // Native stubs must not be inlined as there is a 1:1 relationship between
@@ -143,15 +136,12 @@ public class MaxRuntime implements GraalRuntime {
      * @return {@code true} if the runtime forbids compilation of the specified method;
      * {@code false} to allow the compiler to compile the method
      */
-    public boolean mustNotCompile(RiMethod method) {
+    public boolean mustNotCompile(RiResolvedMethod method) {
         return false;
     }
 
-    static ClassMethodActor asClassMethodActor(RiMethod method, String operation) {
-        if (method instanceof ClassMethodActor) {
-            return (ClassMethodActor) method;
-        }
-        throw new CiUnresolvedException("invalid RiMethod instance: " + method.getClass());
+    static ClassMethodActor asClassMethodActor(RiResolvedMethod method, String operation) {
+        return (ClassMethodActor) method;
     }
 
     public int basicObjectLockOffsetInBytes() {
@@ -169,7 +159,7 @@ public class MaxRuntime implements GraalRuntime {
     }
 
     @Override
-    public String disassemble(RiMethod method) {
+    public String disassemble(RiResolvedMethod method) {
         ClassMethodActor classMethodActor = asClassMethodActor(method, "disassemble()");
         return classMethodActor.format("%f %R %H.%n(%P)") + String.format("%n%s", CodeAttributePrinter.toString(classMethodActor.codeAttribute()));
     }
@@ -262,77 +252,82 @@ public class MaxRuntime implements GraalRuntime {
         return true;
     }
 
-    @Override
-    public CiConstant invoke(RiMethod method, CiMethodInvokeArguments args) {
-        if (canonicalizeFoldableMethods() && method.isResolved()) {
+    public boolean isFoldable(RiResolvedMethod method) {
+        if (canonicalizeFoldableMethods()) {
             MethodActor methodActor = (MethodActor) method;
-            if (Actor.isDeclaredFoldable(methodActor.flags())) {
-                Value[] values;
-                int length = methodActor.descriptor().argumentCount(!methodActor.isStatic());
-                if (length == 0) {
-                    values = Value.NONE;
+            return Actor.isDeclaredFoldable(methodActor.flags());
+        }
+        return false;
+    }
+
+    @Override
+    public CiConstant fold(RiResolvedMethod method, CiConstant[] args) {
+        assert isFoldable(method);
+        MethodActor methodActor = (MethodActor) method;
+        Value[] values;
+        int length = methodActor.descriptor().argumentCount(!methodActor.isStatic());
+        assert length == args.length;
+        if (length == 0) {
+            values = Value.NONE;
+        } else {
+            values = new Value[length];
+            for (int i = 0; i < length; ++i) {
+                CiConstant arg = args[i];
+                if (arg == null) {
+                    return null;
+                }
+                Value value;
+                Kind kind;
+                if (!methodActor.isStatic() && i == 0) {
+                    kind = methodActor.holder().kind;
                 } else {
-                    values = new Value[length];
-                    for (int i = 0; i < length; ++i) {
-                        CiConstant arg = args.nextArg();
-                        if (arg == null) {
-                            return null;
-                        }
-                        Value value;
-                        Kind kind;
-                        if (!methodActor.isStatic() && i == 0) {
-                            kind = methodActor.holder().kind;
-                        } else {
-                            kind = methodActor.descriptor().parameterDescriptorAt(i - (methodActor.isStatic() ? 0 : 1)).toKind();
-                        }
-                        assert WordUtil.ciKind(kind, true) == arg.kind;
-                        // Checkstyle: stop
-                        switch (kind.asEnum) {
-                            case BOOLEAN:   value = BooleanValue.from(arg.asBoolean()); break;
-                            case BYTE:      value = ByteValue.from((byte) arg.asInt()); break;
-                            case CHAR:      value = CharValue.from((char) arg.asInt()); break;
-                            case DOUBLE:    value = DoubleValue.from(arg.asDouble()); break;
-                            case FLOAT:     value = FloatValue.from(arg.asFloat()); break;
-                            case INT:       value = IntValue.from(arg.asInt()); break;
-                            case LONG:      value = LongValue.from(arg.asLong()); break;
-                            case REFERENCE: value = ReferenceValue.from(arg.asObject()); break;
-                            case SHORT:     value = ShortValue.from((short) arg.asInt()); break;
-                            case WORD:      value = WordValue.from(Address.fromLong(arg.asLong())); break;
-                            default: throw new IllegalArgumentException();
-                        }
-                        // Checkstyle: resume
-                        values[i] = value;
-                    }
+                    kind = methodActor.descriptor().parameterDescriptorAt(i - (methodActor.isStatic() ? 0 : 1)).toKind();
                 }
-
-                if (!isHosted()) {
-                    CachedInvocation cachedInvocation = cache.get(methodActor);
-                    if (cachedInvocation != null && Arrays.equals(values, cachedInvocation.args)) {
-                        return cachedInvocation.result;
-                    }
+                assert WordUtil.ciKind(kind, true) == arg.kind;
+                // Checkstyle: stop
+                switch (kind.asEnum) {
+                    case BOOLEAN:   value = BooleanValue.from(arg.asBoolean()); break;
+                    case BYTE:      value = ByteValue.from((byte) arg.asInt()); break;
+                    case CHAR:      value = CharValue.from((char) arg.asInt()); break;
+                    case DOUBLE:    value = DoubleValue.from(arg.asDouble()); break;
+                    case FLOAT:     value = FloatValue.from(arg.asFloat()); break;
+                    case INT:       value = IntValue.from(arg.asInt()); break;
+                    case LONG:      value = LongValue.from(arg.asLong()); break;
+                    case REFERENCE: value = ReferenceValue.from(arg.asObject()); break;
+                    case SHORT:     value = ShortValue.from((short) arg.asInt()); break;
+                    case WORD:      value = WordValue.from(Address.fromLong(arg.asLong())); break;
+                    default: throw new IllegalArgumentException();
                 }
-
-                try {
-                    // attempt to invoke the method
-                    CiConstant result = methodActor.invoke(values).asCiConstant();
-                    // set the result of this instruction to be the result of invocation
-                    notifyMethodFolded();
-
-                    if (!isHosted()) {
-                        cache.put(methodActor, new CachedInvocation(values, result));
-                    }
-
-                    return result;
-                    // note that for void, we will have a void constant with value null
-                } catch (IllegalAccessException e) {
-                    // folding failed; too bad
-                } catch (InvocationTargetException e) {
-                    // folding failed; too bad
-                } catch (ExceptionInInitializerError e) {
-                    // folding failed; too bad
-                }
-                return null;
+                // Checkstyle: resume
+                values[i] = value;
             }
+        }
+
+        if (!isHosted()) {
+            CachedInvocation cachedInvocation = cache.get(methodActor);
+            if (cachedInvocation != null && Arrays.equals(values, cachedInvocation.args)) {
+                return cachedInvocation.result;
+            }
+        }
+
+        try {
+            // attempt to invoke the method
+            CiConstant result = methodActor.invoke(values).asCiConstant();
+            // set the result of this instruction to be the result of invocation
+            notifyMethodFolded();
+
+            if (!isHosted()) {
+                cache.put(methodActor, new CachedInvocation(values, result));
+            }
+
+            return result;
+            // note that for void, we will have a void constant with value null
+        } catch (IllegalAccessException e) {
+            // folding failed; too bad
+        } catch (InvocationTargetException e) {
+            // folding failed; too bad
+        } catch (ExceptionInInitializerError e) {
+            // folding failed; too bad
         }
         return null;
     }
@@ -344,15 +339,15 @@ public class MaxRuntime implements GraalRuntime {
         return new Stub(CompilerStub, name, ciTargetMethod);
     }
 
-    public RiType getType(Class<?> javaClass) {
+    public RiResolvedType getType(Class<?> javaClass) {
         return ClassActor.fromJava(javaClass);
     }
 
-    public RiType asRiType(CiKind kind) {
+    public RiResolvedType asRiType(CiKind kind) {
         return getType(kind.toJavaClass());
     }
 
-    public RiType getTypeOf(CiConstant constant) {
+    public RiResolvedType getTypeOf(CiConstant constant) {
         if (constant.kind.isObject()) {
             Object o = constant.asObject();
             if (o != null) {
@@ -385,7 +380,7 @@ public class MaxRuntime implements GraalRuntime {
         return target;
     }
 
-    public boolean isExceptionType(RiType type) {
+    public boolean isExceptionType(RiResolvedType type) {
         return type.isSubtypeOf(getType(Throwable.class));
     }
 
@@ -424,7 +419,7 @@ public class MaxRuntime implements GraalRuntime {
         // TODO(tw): Implement lowering phase for Maxine.
     }
 
-    public Graph intrinsicGraph(RiMethod caller, int bci, RiMethod method, List< ? extends Node> parameters) {
+    public Graph intrinsicGraph(RiResolvedMethod caller, int bci, RiResolvedMethod method, List< ? extends Node> parameters) {
         // TODO(tw): Implement intrinsics for Maxine.
         return null;
     }
@@ -434,7 +429,7 @@ public class MaxRuntime implements GraalRuntime {
         return 0;
     }
 
-    public RiMethod getRiMethod(Method reflectionMethod) {
+    public RiResolvedMethod getRiMethod(Method reflectionMethod) {
         return MethodActor.fromJava(reflectionMethod);
     }
 

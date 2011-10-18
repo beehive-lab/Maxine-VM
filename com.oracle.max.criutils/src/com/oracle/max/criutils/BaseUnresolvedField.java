@@ -20,20 +20,21 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.cri.ci;
+package com.oracle.max.criutils;
 
+import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 /**
  * A implementation of {@link RiField} for an unresolved field.
  */
-public class CiUnresolvedField implements RiField {
+public class BaseUnresolvedField implements RiField {
 
     public final String name;
     public final RiType holder;
     public final RiType type;
 
-    public CiUnresolvedField(RiType holder, String name, RiType type) {
+    public BaseUnresolvedField(RiType holder, String name, RiType type) {
         this.name = name;
         this.type = type;
         this.holder = holder;
@@ -53,22 +54,6 @@ public class CiUnresolvedField implements RiField {
 
     public RiType holder() {
         return holder;
-    }
-
-    public boolean isResolved() {
-        return false;
-    }
-
-    public int accessFlags() {
-        throw unresolved("accessFlags()");
-    }
-
-    public CiConstant constantValue(CiConstant receiver) {
-        return null;
-    }
-
-    private CiUnresolvedException unresolved(String operation) {
-        throw new CiUnresolvedException(operation + " not defined for unresolved field " + name + " in " + holder);
     }
 
     @Override

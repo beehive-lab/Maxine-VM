@@ -53,7 +53,7 @@ public final class CheckCastNode extends TypeCheckNode implements Canonicalizabl
      * @return the declared type of the result
      */
     @Override
-    public RiType declaredType() {
+    public RiResolvedType declaredType() {
         return targetClass();
     }
 
@@ -63,8 +63,8 @@ public final class CheckCastNode extends TypeCheckNode implements Canonicalizabl
      * @return the exact type of the result
      */
     @Override
-    public RiType exactType() {
-        return (targetClass() != null && targetClass().isResolved()) ? targetClass().exactType() : null;
+    public RiResolvedType exactType() {
+        return targetClass() != null ? targetClass().exactType() : null;
     }
 
     @Override
@@ -74,8 +74,8 @@ public final class CheckCastNode extends TypeCheckNode implements Canonicalizabl
 
     @Override
     public Node canonical(CanonicalizerTool tool) {
-        RiType objectExactType = object().exactType();
-        RiType classExactType = exactType();
+        RiResolvedType objectExactType = object().exactType();
+        RiResolvedType classExactType = exactType();
         if (objectExactType != null && classExactType != null && objectExactType.isSubtypeOf(classExactType)) {
             return object();
         }

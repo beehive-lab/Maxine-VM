@@ -132,7 +132,7 @@ public final class FrameMap {
      * @param method the outermost method being compiled
      * @param monitors the number of monitors allocated on the stack for this method
      */
-    public FrameMap(GraalCompilation compilation, RiMethod method, int monitors) {
+    public FrameMap(GraalCompilation compilation, RiResolvedMethod method, int monitors) {
         this.runtime = compilation.compiler.runtime;
         this.target = compilation.compiler.target;
         this.registerConfig = compilation.registerConfig;
@@ -157,11 +157,14 @@ public final class FrameMap {
      */
     public CiCallingConvention getCallingConvention(CiKind[] signature, Type type) {
         CiCallingConvention cc = registerConfig.getCallingConvention(type, signature, target, false);
-        if (type == RuntimeCall) {
-            assert cc.stackSize == 0 : "runtime call should not have stack arguments";
-        } else if (type.out) {
-            assert frameSize == -1 : "frame size must not yet be fixed!";
-            reserveOutgoing(cc.stackSize);
+        if (type.out) {
+            if (frameSize != -1 && cc.stackSize != 0) {
+                // TODO(tw): This is a special work around for Windows runtime calls that can happen and must be ignored.
+                assert type == RuntimeCall;
+            } else {
+                assert frameSize == -1 : "frame size must not yet be fixed!";
+                reserveOutgoing(cc.stackSize);
+            }
         }
         return cc;
     }

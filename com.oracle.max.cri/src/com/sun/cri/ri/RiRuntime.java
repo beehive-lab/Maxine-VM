@@ -38,7 +38,7 @@ public interface RiRuntime {
      * @param method the method
      * @return the constant pool for the method
      */
-    RiConstantPool getConstantPool(RiMethod method);
+    RiConstantPool getConstantPool(RiResolvedMethod method);
 
     /**
      * Checks whether the specified method is required to be inlined (for semantic reasons).
@@ -49,7 +49,7 @@ public interface RiRuntime {
      * @return {@code true} if the method must be inlined; {@code false} to let the compiler
      * use its own heuristics
      */
-    boolean mustInline(RiMethod method);
+    boolean mustInline(RiResolvedMethod method);
 
     /**
      * Checks whether the specified method must not be inlined (for semantic reasons).
@@ -57,14 +57,14 @@ public interface RiRuntime {
      * @return {@code true} if the method must not be inlined; {@code false} to let the compiler
      * use its own heuristics
      */
-    boolean mustNotInline(RiMethod method);
+    boolean mustNotInline(RiResolvedMethod method);
 
     /**
      * Checks whether the specified method cannot be compiled.
      * @param method the method being called
      * @return {@code true} if the method cannot be compiled
      */
-    boolean mustNotCompile(RiMethod method);
+    boolean mustNotCompile(RiResolvedMethod method);
 
     /**
      * Offset of the lock within the lock object on the stack.
@@ -109,7 +109,7 @@ public interface RiRuntime {
      * @param method the method that should be disassembled
      * @return the disassembly. This will be of length 0 if the runtime does not support disassembling.
      */
-    String disassemble(RiMethod method);
+    String disassemble(RiResolvedMethod method);
 
     /**
      * Registers the given compiler stub and returns an object that can be used to identify it in the relocation
@@ -124,22 +124,22 @@ public interface RiRuntime {
     /**
      * Returns the RiType object representing the base type for the given kind.
      */
-    RiType asRiType(CiKind kind);
+    RiResolvedType asRiType(CiKind kind);
 
     /**
      * Returns the type of the given constant object.
      *
      * @return {@code null} if {@code constant.isNull() || !constant.kind.isObject()}
      */
-    RiType getTypeOf(CiConstant constant);
+    RiResolvedType getTypeOf(CiConstant constant);
 
 
-    RiType getType(Class<?> clazz);
+    RiResolvedType getType(Class<?> clazz);
 
     /**
      * Returns true if the given type is a subtype of java/lang/Throwable.
      */
-    boolean isExceptionType(RiType type);
+    boolean isExceptionType(RiResolvedType type);
 
     /**
      * Gets the {@linkplain RiSnippets snippets} provided by the runtime.
@@ -147,15 +147,24 @@ public interface RiRuntime {
     RiSnippets getSnippets();
 
     /**
+     * Checks whether this method is foldable (i.e. if it is a pure function without side effects).
+     * @param method the method that is checked
+     * @return whether the method is foldable
+     */
+    boolean isFoldable(RiResolvedMethod method);
+
+    /**
      * Attempts to compile-time evaluate or "fold" a call to a given method. A foldable method is a pure function
      * that has no side effects. Such methods can be executed via reflection when all their inputs are constants,
-     * and the resulting value is substituted for the method call.
+     * and the resulting value is substituted for the method call. May only be called on methods for which
+     * isFoldable(method) returns {@code true}. The array of constant for arguments may contain {@code null} values, which
+     * means that this particular argument does not evaluate to a compile time constant.
      *
      * @param method the compiler interface method for which folding is being requested
-     * @param args the arguments to the call
+     * @param args the arguments to the call as an array of CiConstant objects
      * @return the result of the folding or {@code null} if no folding occurred
      */
-    CiConstant invoke(RiMethod method, CiMethodInvokeArguments args);
+    CiConstant fold(RiResolvedMethod method, CiConstant[] args);
 
     /**
      * Used by the canonicalizer to compare objects, since a given runtime might not want to expose the real objects to the compiler.
@@ -215,7 +224,7 @@ public interface RiRuntime {
     /**
      * Provides the {@link RiMethod} for a {@link Method} obtained via reflection.
      */
-    RiMethod getRiMethod(Method reflectionMethod);
+    RiResolvedMethod getRiMethod(Method reflectionMethod);
 
     /**
      * Installs some given machine code as the implementation of a given method.

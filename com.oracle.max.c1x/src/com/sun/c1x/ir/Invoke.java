@@ -79,8 +79,8 @@ public final class Invoke extends StateSplit {
     }
 
     @Override
-    public RiType declaredType() {
-        return returnType;
+    public RiResolvedType declaredType() {
+        return (returnType instanceof RiResolvedType) ? ((RiResolvedType) returnType) : null;
     }
 
     /**

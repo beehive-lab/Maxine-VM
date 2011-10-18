@@ -45,8 +45,8 @@ public final class LoadIndexedNode extends AccessIndexedNode implements Lowerabl
     }
 
     @Override
-    public RiType declaredType() {
-        RiType arrayType = array().declaredType();
+    public RiResolvedType declaredType() {
+        RiResolvedType arrayType = array().declaredType();
         if (arrayType == null) {
             return null;
         }
@@ -54,9 +54,9 @@ public final class LoadIndexedNode extends AccessIndexedNode implements Lowerabl
     }
 
     @Override
-    public RiType exactType() {
+    public RiResolvedType exactType() {
         RiType declared = declaredType();
-        return declared != null && declared.isResolved() ? declared.exactType() : null;
+        return (declared instanceof RiResolvedType) ? ((RiResolvedType) declared).exactType() : null;
     }
 
     @Override

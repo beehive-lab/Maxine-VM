@@ -74,7 +74,7 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
      */
     public final int bci;
 
-    public final RiMethod method;
+    public final RiResolvedMethod method;
 
     /**
      * Creates a {@code FrameState} for the given scope and maximum number of stack and local variables.
@@ -86,7 +86,7 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
      * @param lockSize number of locks
      * @param rethrowException if true the VM should re-throw the exception on top of the stack when deopt'ing using this framestate
      */
-    public FrameState(RiMethod method, int bci, int localsSize, int stackSize, int locksSize, boolean rethrowException) {
+    public FrameState(RiResolvedMethod method, int bci, int localsSize, int stackSize, int locksSize, boolean rethrowException) {
         super(CiKind.Illegal);
         this.method = method;
         this.bci = bci;
@@ -98,7 +98,7 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
         this.rethrowException = rethrowException;
     }
 
-    public FrameState(RiMethod method, int bci, ValueNode[] locals, ValueNode[] stack, int stackSize, ArrayList<ValueNode> locks, boolean rethrowException) {
+    public FrameState(RiResolvedMethod method, int bci, ValueNode[] locals, ValueNode[] stack, int stackSize, ArrayList<ValueNode> locks, boolean rethrowException) {
         super(CiKind.Illegal);
         this.method = method;
         this.bci = bci;
@@ -124,7 +124,7 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
         return rethrowException;
     }
 
-    public RiMethod method() {
+    public RiResolvedMethod method() {
         return method;
     }
 

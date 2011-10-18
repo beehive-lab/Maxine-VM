@@ -56,8 +56,8 @@ public class SnippetIntrinsificationPhase extends Phase {
             return;
         }
 
-        RiMethod target = invoke.target;
-        if (target.isResolved() && Modifier.isStatic(target.accessFlags())) {
+        RiResolvedMethod target = invoke.target;
+        if (Modifier.isStatic(target.accessFlags())) {
             Class< ? > c = target.holder().toJava();
             if (c != null && target.holder().isSubtypeOf(runtime.getType(Node.class))) {
                 try {
@@ -194,7 +194,7 @@ public class SnippetIntrinsificationPhase extends Phase {
         int count = signature.argumentCount(false);
         Class< ? >[] result = new Class< ? >[count];
         for (int i = 0; i < result.length; ++i) {
-            result[i] = signature.argumentTypeAt(i, accessingClass).toJava();
+            result[i] = ((RiResolvedType) signature.argumentTypeAt(i, accessingClass)).toJava();
         }
         return result;
     }

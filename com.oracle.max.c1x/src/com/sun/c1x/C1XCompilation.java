@@ -50,7 +50,7 @@ public final class C1XCompilation {
     public final C1XCompiler compiler;
     public final CiTarget target;
     public final RiRuntime runtime;
-    public final RiMethod method;
+    public final RiResolvedMethod method;
     public final RiRegisterConfig registerConfig;
     public final CiStatistics stats;
     public final int osrBCI;
@@ -83,7 +83,7 @@ public final class C1XCompilation {
      * @param osrBCI the bytecode index for on-stack replacement, if requested
      * @param stats externally supplied statistics object to be used if not {@code null}
      */
-    public C1XCompilation(C1XCompiler compiler, RiMethod method, int osrBCI, CiStatistics stats) {
+    public C1XCompilation(C1XCompiler compiler, RiResolvedMethod method, int osrBCI, CiStatistics stats) {
         this.parent = currentCompilation.get();
         currentCompilation.set(this);
         this.compiler = compiler;
@@ -162,7 +162,7 @@ public final class C1XCompilation {
      * @param osrBCI the OSR bytecode index; {@code -1} if this is not an OSR
      * @return the block map for the specified method
      */
-    public BlockMap getBlockMap(RiMethod method, int osrBCI) {
+    public BlockMap getBlockMap(RiResolvedMethod method, int osrBCI) {
         // PERF: cache the block map for methods that are compiled or inlined often
         BlockMap map = new BlockMap(method, hir.numberOfBlocks());
         boolean isOsrCompilation = false;
@@ -291,7 +291,7 @@ public final class C1XCompilation {
             lirAssembler.emitTraps();
 
             CiTargetMethod targetMethod = assembler().finishTargetMethod(method, runtime, lirAssembler.registerRestoreEpilogueOffset, false);
-            if (assumptions.count() > 0) {
+            if (!assumptions.isEmpty()) {
                 targetMethod.setAssumptions(assumptions);
             }
 

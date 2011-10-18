@@ -326,7 +326,7 @@ public abstract class Value {
      * Computes the exact type of the result of this instruction, if possible.
      * @return the exact type of the result of this instruction, if it is known; {@code null} otherwise
      */
-    public RiType exactType() {
+    public RiResolvedType exactType() {
         return null; // default: unknown exact type
     }
 
@@ -334,7 +334,7 @@ public abstract class Value {
      * Computes the declared type of the result of this instruction, if possible.
      * @return the declared type of the result of this instruction, if it is known; {@code null} otherwise
      */
-    public RiType declaredType() {
+    public RiResolvedType declaredType() {
         return null; // default: unknown declared type
     }
 

@@ -64,7 +64,7 @@ public class AMD64Backend extends Backend {
     }
 
     @Override
-    public FrameMap newFrameMap(C1XCompilation compilation, RiMethod method, int numberOfLocks) {
+    public FrameMap newFrameMap(C1XCompilation compilation, RiResolvedMethod method, int numberOfLocks) {
         return new FrameMap(compilation, method, numberOfLocks);
     }
     @Override

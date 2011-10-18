@@ -142,12 +142,7 @@ public final class ExceptionHandler {
         return handler.catchTypeCPI() == 0;
     }
 
-    public static boolean couldCatch(List<ExceptionHandler> exceptionHandlers, RiType klass, boolean typeIsExact) {
-        // the type is unknown so be conservative
-        if (!klass.isResolved()) {
-            return true;
-        }
-
+    public static boolean couldCatch(List<ExceptionHandler> exceptionHandlers, RiResolvedType klass, boolean typeIsExact) {
         for (int i = 0; i < exceptionHandlers.size(); i++) {
             ExceptionHandler handler = exceptionHandlers.get(i);
             if (handler.isCatchAll()) {
@@ -156,12 +151,13 @@ public final class ExceptionHandler {
             }
             RiType handlerKlass = handler.handler.catchType();
             // if it's unknown it might be catchable
-            if (!handlerKlass.isResolved()) {
+            if (!(handlerKlass instanceof RiResolvedType)) {
                 return true;
             }
+            RiResolvedType resolvedHandlerKlass = (RiResolvedType) handlerKlass;
             // if the throw type is definitely a subtype of the catch type
             // then it can be caught.
-            if (klass.isSubtypeOf(handlerKlass)) {
+            if (klass.isSubtypeOf(resolvedHandlerKlass)) {
                 return true;
             }
             if (!typeIsExact) {
@@ -172,7 +168,7 @@ public final class ExceptionHandler {
                 // throw bar can be caught by catch foo, catch bar, and catch
                 // Exception, however it can't be caught by any handlers without
                 // bar in its type hierarchy.
-                if (handlerKlass.isSubtypeOf(klass)) {
+                if (resolvedHandlerKlass.isSubtypeOf(klass)) {
                     return true;
                 }
             }

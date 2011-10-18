@@ -180,7 +180,8 @@ public class MaxineIntrinsicImplementations {
             if (register == null) {
                 throw new CiBailout("Unsupported READREG operand " + registerId);
             }
-            LoadRegister load = new LoadRegister(target.signature().returnKind(false), register, target.signature().returnType(null));
+            RiType type = target.signature().returnType(null);
+            LoadRegister load = new LoadRegister(target.signature().returnKind(false), register, (type instanceof RiResolvedType) ? (RiResolvedType) type : null);
             RiRegisterAttributes regAttr = b.compilation.registerConfig.getAttributesMap()[register.number];
             if (regAttr.isNonZero) {
                 load.setFlag(Flag.NonNull);

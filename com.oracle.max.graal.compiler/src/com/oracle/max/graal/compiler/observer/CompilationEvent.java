@@ -112,7 +112,7 @@ public class CompilationEvent {
         return label;
     }
 
-    public RiMethod getMethod() {
+    public RiResolvedMethod getMethod() {
         return (compilation == null) ? null : compilation.method;
     }
 

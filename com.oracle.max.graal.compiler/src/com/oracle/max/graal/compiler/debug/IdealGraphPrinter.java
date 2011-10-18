@@ -92,7 +92,7 @@ public class IdealGraphPrinter {
     /**
      * Starts a new group of graphs with the given name, short name and method byte code index (BCI) as properties.
      */
-    public void beginGroup(String name, String shortName, RiMethod method, int bci) {
+    public void beginGroup(String name, String shortName, RiResolvedMethod method, int bci) {
         stream.println("<group>");
         stream.printf(" <properties><p name='name'>%s</p><p name='origin'>Graal</p></properties>%n", escape(name));
         stream.printf(" <method name='%s' shortName='%s' bci='%d'>%n", escape(name), escape(shortName), bci);

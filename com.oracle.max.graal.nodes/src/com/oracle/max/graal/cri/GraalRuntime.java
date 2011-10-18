@@ -34,5 +34,5 @@ public interface GraalRuntime extends RiRuntime {
 
     void lower(Node n, CiLoweringTool tool);
 
-    Graph intrinsicGraph(RiMethod caller, int bci, RiMethod method, List<? extends Node> parameters);
+    Graph intrinsicGraph(RiResolvedMethod caller, int bci, RiResolvedMethod method, List<? extends Node> parameters);
 }

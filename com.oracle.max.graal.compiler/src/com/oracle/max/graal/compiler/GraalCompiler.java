@@ -76,7 +76,7 @@ public class GraalCompiler {
         init();
     }
 
-    public CiResult compileMethod(RiMethod method, int osrBCI, CiStatistics stats) {
+    public CiResult compileMethod(RiResolvedMethod method, int osrBCI, CiStatistics stats) {
         context.timers.startScope(getClass());
         try {
             long startTime = 0;
@@ -116,7 +116,7 @@ public class GraalCompiler {
         }
     }
 
-    public CiResult compileMethod(RiMethod method, CompilerGraph graph) {
+    public CiResult compileMethod(RiResolvedMethod method, CompilerGraph graph) {
         assert graph.verify();
         GraalCompilation compilation = new GraalCompilation(context, this, method, graph, -1, null);
         return compilation.compile();

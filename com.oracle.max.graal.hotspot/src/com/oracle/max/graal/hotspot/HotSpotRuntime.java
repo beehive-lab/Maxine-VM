@@ -61,7 +61,6 @@ public class HotSpotRuntime implements GraalRuntime {
     private final Compiler compiler;
     private IdentityHashMap<RiMethod, CompilerGraph> intrinsicGraphs = new IdentityHashMap<RiMethod, CompilerGraph>();
 
-
     public HotSpotRuntime(GraalContext context, HotSpotVMConfig config, Compiler compiler) {
         this.context = context;
         this.config = config;
@@ -127,12 +126,12 @@ public class HotSpotRuntime implements GraalRuntime {
     }
 
     @Override
-    public String disassemble(RiMethod method) {
+    public String disassemble(RiResolvedMethod method) {
         return "No disassembler available";
     }
 
     @Override
-    public RiConstantPool getConstantPool(RiMethod method) {
+    public RiConstantPool getConstantPool(RiResolvedMethod method) {
         return ((HotSpotTypeResolved) method.holder()).constantPool();
     }
 
@@ -141,18 +140,18 @@ public class HotSpotRuntime implements GraalRuntime {
     }
 
     @Override
-    public RiType asRiType(CiKind kind) {
-        return compiler.getVMEntries().getType(kind.toJavaClass());
+    public RiResolvedType asRiType(CiKind kind) {
+        return (RiResolvedType) compiler.getVMEntries().getType(kind.toJavaClass());
     }
 
     @Override
-    public RiType getTypeOf(CiConstant constant) {
-        return compiler.getVMEntries().getRiType(constant);
+    public RiResolvedType getTypeOf(CiConstant constant) {
+        return (RiResolvedType) compiler.getVMEntries().getRiType(constant);
     }
 
     @Override
-    public boolean isExceptionType(RiType type) {
-        return type.isSubtypeOf(compiler.getVMEntries().getType(Throwable.class));
+    public boolean isExceptionType(RiResolvedType type) {
+        return type.isSubtypeOf((RiResolvedType) compiler.getVMEntries().getType(Throwable.class));
     }
 
     @Override
@@ -161,17 +160,17 @@ public class HotSpotRuntime implements GraalRuntime {
     }
 
     @Override
-    public boolean mustInline(RiMethod method) {
+    public boolean mustInline(RiResolvedMethod method) {
         return false;
     }
 
     @Override
-    public boolean mustNotCompile(RiMethod method) {
+    public boolean mustNotCompile(RiResolvedMethod method) {
         return false;
     }
 
     @Override
-    public boolean mustNotInline(RiMethod method) {
+    public boolean mustNotInline(RiResolvedMethod method) {
         return Modifier.isNative(method.accessFlags());
     }
 
@@ -191,8 +190,12 @@ public class HotSpotRuntime implements GraalRuntime {
         return 8;
     }
 
+    public boolean isFoldable(RiResolvedMethod method) {
+        return false;
+    }
+
     @Override
-    public CiConstant invoke(RiMethod method, CiMethodInvokeArguments args) {
+    public CiConstant fold(RiResolvedMethod method, CiConstant[] args) {
         return null;
     }
 
@@ -310,7 +313,7 @@ public class HotSpotRuntime implements GraalRuntime {
             if (elementKind == CiKind.Object && !value.isNullConstant()) {
                 // Store check!
                 if (array.exactType() != null) {
-                    RiType elementType = array.exactType().componentType();
+                    RiResolvedType elementType = array.exactType().componentType();
                     if (elementType.superType() != null) {
                         ConstantNode type = graph.unique(new ConstantNode(elementType.getEncoding(Representation.ObjectHub)));
                         value = graph.unique(new CheckCastNode(anchor, type, value));
@@ -381,7 +384,7 @@ public class HotSpotRuntime implements GraalRuntime {
     }
 
     @Override
-    public Graph intrinsicGraph(RiMethod caller, int bci, RiMethod method, List<? extends Node> parameters) {
+    public Graph intrinsicGraph(RiResolvedMethod caller, int bci, RiResolvedMethod method, List<? extends Node> parameters) {
 
         if (method.holder().name().equals("Ljava/lang/Object;")) {
             String fullName = method.name() + method.signature().asString();
@@ -801,8 +804,8 @@ public class HotSpotRuntime implements GraalRuntime {
         return graph.add(new SafeReadNode(kind, value, LocationNode.create(LocationNode.FINAL_LOCATION, kind, offset, graph)));
     }
 
-    public RiType getType(Class<?> clazz) {
-        return compiler.getVMEntries().getType(clazz);
+    public RiResolvedType getType(Class<?> clazz) {
+        return (RiResolvedType) compiler.getVMEntries().getType(clazz);
     }
 
     public Object asCallTarget(Object target) {
@@ -813,8 +816,8 @@ public class HotSpotRuntime implements GraalRuntime {
         return compiler.getVMEntries().getMaxCallTargetOffset(rtcall);
     }
 
-    public RiMethod getRiMethod(Method reflectionMethod) {
-        return compiler.getVMEntries().getRiMethod(reflectionMethod);
+    public RiResolvedMethod getRiMethod(Method reflectionMethod) {
+        return (RiResolvedMethod) compiler.getVMEntries().getRiMethod(reflectionMethod);
     }
 
     public void installMethod(RiMethod method, CiTargetMethod code) {

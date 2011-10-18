@@ -33,7 +33,7 @@ import com.sun.cri.ri.*;
 public final class Local extends Value {
 
     private final int javaIndex;
-    private RiType declaredType;
+    private RiResolvedType declaredType;
 
     public Local(CiKind kind, int javaIndex) {
         super(kind);
@@ -57,7 +57,7 @@ public final class Local extends Value {
      * Sets the declared type of this local, e.g. derived from the signature of the method.
      * @param declaredType the declared type of the local variable
      */
-    public void setDeclaredType(RiType declaredType) {
+    public void setDeclaredType(RiResolvedType declaredType) {
         this.declaredType = declaredType;
     }
 
@@ -66,7 +66,7 @@ public final class Local extends Value {
      * @return the declared type of the result of this instruction, if it is known; {@code null} otherwise
      */
     @Override
-    public RiType declaredType() {
+    public RiResolvedType declaredType() {
         return declaredType;
     }
 

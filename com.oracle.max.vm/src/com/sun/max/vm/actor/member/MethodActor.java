@@ -49,7 +49,7 @@ import com.sun.max.vm.value.*;
 /**
  * Internal representations of Java methods.
  */
-public abstract class MethodActor extends MemberActor implements RiMethod {
+public abstract class MethodActor extends MemberActor implements RiResolvedMethod {
 
     /**
      * Extended {@linkplain Bytecodes#isStandard(int) opcode} for an {@linkplain INTRINSIC intrinsic} method.
@@ -212,7 +212,7 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
      *
      * @return {@code null} if this method has no {@link ACCESSOR} annotation
      */
-    public final RiType accessor() {
+    public final RiResolvedType accessor() {
         Class<?> accessorClass = holder().classRegistry().get(ACCESSOR, this);
         return accessorClass == null ? null : ClassActor.fromJava(accessorClass);
     }
@@ -536,10 +536,6 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
 
     public int maxStackSize() {
         return 0;
-    }
-
-    public RiMethodProfile methodData() {
-        return null;
     }
 
     public String name() {

@@ -42,12 +42,12 @@ import com.sun.cri.ri.*;
 public class Canonicalizer extends DefaultValueVisitor {
 
     final RiRuntime runtime;
-    final RiMethod method;
+    final RiResolvedMethod method;
     final CiTarget target;
     Value canonical;
     List<Instruction> extra;
 
-    public Canonicalizer(RiRuntime runtime, RiMethod method, CiTarget target) {
+    public Canonicalizer(RiRuntime runtime, RiResolvedMethod method, CiTarget target) {
         this.runtime = runtime;
         this.method = method;
         this.target = target;
@@ -604,7 +604,7 @@ public class Canonicalizer extends DefaultValueVisitor {
         }
         if (i.isStatic()) {
             RiField field = i.field();
-            CiConstant value = field.constantValue(null);
+            CiConstant value = ((RiResolvedField) field).constantValue(null);
             if (value != null) {
                 if (method.isClassInitializer()) {
                     // don't do canonicalization in the <clinit> method
@@ -615,7 +615,7 @@ public class Canonicalizer extends DefaultValueVisitor {
         } else {
             RiField field = i.field();
             if (i.object().isConstant()) {
-                CiConstant value = field.constantValue(i.object().asConstant());
+                CiConstant value = ((RiResolvedField) field).constantValue(i.object().asConstant());
                 if (value != null) {
                     canonical = new Constant(field.kind(false), value);
                 }
@@ -692,14 +692,14 @@ public class Canonicalizer extends DefaultValueVisitor {
             if (value.isNullConstant()) {
                 i.eliminateStoreCheck();
             } else {
-                RiType exactType = array.exactType();
-                if (exactType != null && exactType.isResolved()) {
+                RiResolvedType exactType = array.exactType();
+                if (exactType != null) {
                     if (exactType.componentType().superType() == null) {
                         // the exact type of the array is Object[] => no check is necessary
                         i.eliminateStoreCheck();
                     } else {
-                        RiType declaredType = value.declaredType();
-                        if (declaredType != null && declaredType.isResolved() && declaredType.isSubtypeOf(exactType.componentType())) {
+                        RiResolvedType declaredType = value.declaredType();
+                        if (declaredType != null && declaredType.isSubtypeOf(exactType.componentType())) {
                             // the value being stored has a known type
                             i.eliminateStoreCheck();
                         }
@@ -912,9 +912,9 @@ public class Canonicalizer extends DefaultValueVisitor {
     public void visitInvoke(Invoke i) {
         if (C1XOptions.CanonicalizeFoldableMethods) {
             RiMethod method = i.target();
-            if (method.isResolved()) {
+            if (method instanceof RiResolvedMethod) {
                 // only try to fold resolved method invocations
-                CiConstant result = foldInvocation(runtime, i.target(), i.arguments());
+                CiConstant result = foldInvocation(runtime, (RiResolvedMethod) method, i.arguments());
                 if (result != null) {
                     // folding was successful
                     setCanonical(new Constant(method.signature().returnKind(false), result));
@@ -926,13 +926,14 @@ public class Canonicalizer extends DefaultValueVisitor {
     @Override
     public void visitCheckCast(CheckCast i) {
         // we can remove a redundant check cast if it is an object constant or the exact type is known
-        if (i.targetClass().isResolved()) {
+        if (i.targetClass() instanceof RiResolvedType) {
+            RiResolvedType resolvedTargetClass = (RiResolvedType) i.targetClass();
             Value o = i.object();
-            RiType type = o.exactType();
+            RiResolvedType type = o.exactType();
             if (type == null) {
                 type = o.declaredType();
             }
-            if (type != null && type.isResolved() && type.isSubtypeOf(i.targetClass())) {
+            if (type != null && type.isSubtypeOf(resolvedTargetClass)) {
                 // cast is redundant if exact type or declared type is already a subtype of the target type
                 setCanonical(o);
             }
@@ -942,7 +943,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                     // checkcast of null is null
                     setCanonical(o);
                 } else if (C1XOptions.CanonicalizeObjectCheckCast) {
-                    if (i.targetClass().isInstance(obj)) {
+                    if (resolvedTargetClass.isInstance(obj)) {
                         // fold the cast if it will succeed
                         setCanonical(o);
                     }
@@ -954,11 +955,12 @@ public class Canonicalizer extends DefaultValueVisitor {
     @Override
     public void visitInstanceOf(InstanceOf i) {
         // we can fold an instanceof if it is an object constant or the exact type is known
-        if (i.targetClass().isResolved()) {
+        if (i.targetClass() instanceof RiResolvedType) {
+            RiResolvedType resolvedTargetClass = (RiResolvedType) i.targetClass();
             Value o = i.object();
-            RiType exact = o.exactType();
-            if (exact != null && exact.isResolved() && o.isNonNull()) {
-                setIntConstant(exact.isSubtypeOf(i.targetClass()) ? 1 : 0);
+            RiResolvedType exact = o.exactType();
+            if (exact != null && o.isNonNull()) {
+                setIntConstant(exact.isSubtypeOf(resolvedTargetClass) ? 1 : 0);
             } else if (o.isConstant()) {
                 final CiConstant obj = o.asConstant();
                 if (obj.isNull()) {
@@ -966,7 +968,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                     setIntConstant(0);
                 } else if (C1XOptions.CanonicalizeObjectInstanceOf) {
                     // fold the instanceof test
-                    setIntConstant(i.targetClass().isInstance(obj) ? 1 : 0);
+                    setIntConstant(resolvedTargetClass.isInstance(obj) ? 1 : 0);
                 }
             }
         }
@@ -989,7 +991,7 @@ public class Canonicalizer extends DefaultValueVisitor {
         C1XIntrinsic intrinsic = i.intrinsic();
         if (intrinsic == C1XIntrinsic.java_lang_Class$isInstance) {
             // try to convert a call to Class.isInstance() into an InstanceOf
-            RiType type = getTypeOf(args[0]);
+            RiResolvedType type = getTypeOf(args[0]);
             if (type != null) {
                 setCanonical(new InstanceOf(type, Constant.forObject(type.getEncoding(RiType.Representation.TypeInfo)), args[1], i.stateBefore()));
                 return;
@@ -997,12 +999,12 @@ public class Canonicalizer extends DefaultValueVisitor {
         }
         if (intrinsic == C1XIntrinsic.java_lang_reflect_Array$newArray) {
             // try to convert a call to Array.newInstance() into a NewObjectArray or NewTypeArray
-            RiType type = getTypeOf(args[0]);
+            RiResolvedType type = getTypeOf(args[0]);
             if (type != null) {
                 if (type.kind(false) == CiKind.Object) {
                     setCanonical(new NewObjectArray(type, args[1], i.stateBefore()));
                 } else {
-                    RiType elementType = runtime.asRiType(type.kind(false));
+                    RiResolvedType elementType = runtime.asRiType(type.kind(false));
                     setCanonical(new NewTypeArray(args[1], elementType, i.stateBefore()));
                 }
                 return;
@@ -1455,29 +1457,23 @@ public class Canonicalizer extends DefaultValueVisitor {
         return args[index].asConstant().asLong();
     }
 
-    public static CiConstant foldInvocation(RiRuntime runtime, RiMethod method, final Value[] args) {
-        CiConstant result = runtime.invoke(method, new CiMethodInvokeArguments() {
-            int i;
-            @Override
-            public CiConstant nextArg() {
-                if (i >= args.length) {
-                    return null;
+    public static CiConstant foldInvocation(RiRuntime runtime, RiResolvedMethod method, final Value[] args) {
+        if (runtime.isFoldable(method)) {
+            int length = method.signature().argumentCount(!Modifier.isStatic(method.accessFlags()));
+            CiConstant[] constantArgs = new CiConstant[length];
+            int z = 0;
+            for (int i = 0; i < args.length; ++i) {
+                if (args[i] != null) {
+                    constantArgs[z++] = args[i].asConstant();
                 }
-                Value arg = args[i++];
-                if (arg == null) {
-                    if (i >= args.length) {
-                        return null;
-                    }
-                    arg = args[i++];
-                    assert arg != null;
-                }
-                return arg.isConstant() ? arg.asConstant() : null;
             }
-        });
-        if (result != null) {
-            C1XMetrics.MethodsFolded++;
+            CiConstant result = runtime.fold(method, constantArgs);
+            if (result != null) {
+                C1XMetrics.MethodsFolded++;
+            }
+            return result;
         }
-        return result;
+        return null;
     }
 
     @Override
@@ -1502,7 +1498,7 @@ public class Canonicalizer extends DefaultValueVisitor {
         }
     }
 
-    private RiType getTypeOf(Value x) {
+    private RiResolvedType getTypeOf(Value x) {
         if (x.isConstant()) {
             return runtime.getTypeOf(x.asConstant());
         }
