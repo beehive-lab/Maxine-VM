@@ -361,10 +361,10 @@ public class JTGenerator {
     }
 
     private String getClassLiteral(JavaExecHarness.JavaTestCase testCase) {
-        return testCase.clazz.getName() + ".class";
+        return testCase.clazz.getName().replace('$', '.') + ".class";
     }
 
     private String getExceptionName(Run run) {
-        return run.expectedException.getName() + ".class";
+        return run.expectedException.getName().replace('$', '.') + ".class";
     }
 }

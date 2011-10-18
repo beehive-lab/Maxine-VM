@@ -29,10 +29,9 @@ import java.util.*;
  */
 public class VerificationError extends Error {
 
-    private final ArrayList<String> context = new ArrayList<String>();
-
     private Node node;
     private Graph graph;
+    private final ArrayList<String> context = new ArrayList<String>();
 
     /**
      * This constructor creates a VerificationError with a message assembled via {@link String#format(String, Object...)}.
