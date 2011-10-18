@@ -214,10 +214,10 @@ public class FloatingReadPhase extends Phase {
     }
 
     @Override
-    protected void run(Graph graph) {
+    protected void run(Graph<EntryPointNode> graph) {
 
         // Add start node write checkpoint.
-        addStartCheckpoint((CompilerGraph) graph);
+        addStartCheckpoint(graph);
 
         // Create node-to-loop relation.
         NodeMap<LoopBeginNode> nodeToLoop = graph.createNodeMap();
@@ -280,7 +280,7 @@ public class FloatingReadPhase extends Phase {
         }
     }
 
-    private void addStartCheckpoint(CompilerGraph graph) {
+    private void addStartCheckpoint(Graph<EntryPointNode> graph) {
         EntryPointNode entryPoint = graph.start();
         WriteMemoryCheckpointNode checkpoint = graph.add(new WriteMemoryCheckpointNode());
         FixedNode next = entryPoint.next();
@@ -364,7 +364,7 @@ public class FloatingReadPhase extends Phase {
         modifiedValues.get(loop).add(locationIdentity);
     }
 
-    private void print(Graph graph, NodeMap<LoopBeginNode> nodeToLoop, NodeMap<Set<Object>> modifiedValues) {
+    private void print(Graph<EntryPointNode> graph, NodeMap<LoopBeginNode> nodeToLoop, NodeMap<Set<Object>> modifiedValues) {
 
         TTY.println();
         TTY.println("Loops:");

@@ -57,7 +57,7 @@ public class Snippets {
                 }
                 RiResolvedMethod snippetRiMethod = runtime.getRiMethod(snippet);
                 GraphBuilderPhase graphBuilder = new GraphBuilderPhase(context, runtime, snippetRiMethod, null, false, true);
-                Graph graph = new CompilerGraph(runtime);
+                Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(runtime));
                 graphBuilder.apply(graph);
 
                 if (plotGraphs) {

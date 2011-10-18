@@ -59,11 +59,11 @@ public class OldInliningPhase extends Phase {
     }
 
     private Queue<InvokeNode> newInvokes = new ArrayDeque<InvokeNode>();
-    private CompilerGraph graph;
+    private Graph<EntryPointNode> graph;
 
     @Override
-    protected void run(Graph graph) {
-        this.graph = (CompilerGraph) graph;
+    protected void run(Graph<EntryPointNode> graph) {
+        this.graph = graph;
 
         float ratio = GraalOptions.MaximumInlineRatio;
         inliningSize = compilation.method.codeSize();
@@ -177,7 +177,7 @@ public class OldInliningPhase extends Phase {
                     String concreteName = CiUtil.format("%H.%n(%p):%r", concrete, false);
                     TTY.println("recording concrete method assumption: %s -> %s", targetName, concreteName);
                 }
-                graph.assumptions().recordConcreteMethod(invoke.target, concrete);
+                graph.start().assumptions().recordConcreteMethod(invoke.target, concrete);
                 return concrete;
             }
             return null;
@@ -387,7 +387,8 @@ public class OldInliningPhase extends Phase {
 
     public static ThreadLocal<ServiceLoader<Intrinsifier>> intrinsicLoader = new ThreadLocal<ServiceLoader<Intrinsifier>>();
 
-    private Graph intrinsicGraph(RiMethod parent, int bci, RiMethod target, List<ValueNode> arguments) {
+    @SuppressWarnings("unchecked")
+    private Graph<EntryPointNode> intrinsicGraph(RiMethod parent, int bci, RiMethod target, List<ValueNode> arguments) {
         ServiceLoader<Intrinsifier> serviceLoader = intrinsicLoader.get();
         if (serviceLoader == null) {
             serviceLoader = ServiceLoader.load(Intrinsifier.class);
@@ -395,23 +396,23 @@ public class OldInliningPhase extends Phase {
         }
 
         for (Intrinsifier intrinsifier : serviceLoader) {
-            Graph result = intrinsifier.intrinsicGraph(compilation.compiler.runtime, parent, bci, target, arguments);
+            Graph<?> result = intrinsifier.intrinsicGraph(compilation.compiler.runtime, parent, bci, target, arguments);
             if (result != null) {
-                return result;
+                return (Graph<EntryPointNode>) result;
             }
         }
         return null;
     }
 
     private void inlineMethod(InvokeNode invoke, RiResolvedMethod method) {
-        CompilerGraph graph = null;
+        Graph<EntryPointNode> graph = null;
         if (GraalOptions.Intrinsify) {
             RiResolvedMethod parent = invoke.stateAfter().method();
             if (GraalOptions.Extend) {
-                graph = (CompilerGraph) intrinsicGraph(parent, invoke.bci, method, invoke.arguments());
+                graph = intrinsicGraph(parent, invoke.bci, method, invoke.arguments());
             }
             if (graph == null) {
-                graph = (CompilerGraph) compilation.compiler.runtime.intrinsicGraph(parent, invoke.bci, method, invoke.arguments());
+                graph = compilation.compiler.runtime.intrinsicGraph(parent, invoke.bci, method, invoke.arguments());
             }
         }
         if (graph != null) {
@@ -430,7 +431,7 @@ public class OldInliningPhase extends Phase {
             if (GraalOptions.TraceInlining) {
                 TTY.println("Building graph for %s, locals: %d, stack: %d", methodName(method, invoke), method.maxLocals(), method.maxStackSize());
             }
-            graph = new CompilerGraph(compilation.compiler.runtime);
+            graph = new Graph<EntryPointNode>(new EntryPointNode(compilation.compiler.runtime));
             new GraphBuilderPhase(context, compilation.compiler.runtime, method, compilation.stats).apply(graph, true, false);
             if (GraalOptions.ProbabilityAnalysis) {
                 new DeadCodeEliminationPhase(context).apply(graph, true, false);

@@ -37,7 +37,7 @@ import com.sun.cri.ri.*;
 
 public class FrameStateBuilder implements FrameStateAccess {
 
-    private final Graph graph;
+    private final Graph<EntryPointNode> graph;
 
     private final ValueNode[] locals;
     private final ValueNode[] stack;
@@ -48,7 +48,7 @@ public class FrameStateBuilder implements FrameStateAccess {
 
     private final RiResolvedMethod method;
 
-    public FrameStateBuilder(RiResolvedMethod method, int maxLocals, int maxStackSize, CompilerGraph graph) {
+    public FrameStateBuilder(RiResolvedMethod method, int maxLocals, int maxStackSize, Graph<EntryPointNode> graph) {
         assert graph != null;
         this.method = method;
         this.graph = graph;

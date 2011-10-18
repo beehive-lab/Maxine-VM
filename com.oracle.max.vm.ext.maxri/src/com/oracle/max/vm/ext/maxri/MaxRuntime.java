@@ -34,6 +34,7 @@ import java.util.concurrent.*;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.graph.*;
+import com.oracle.max.graal.nodes.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.Call;
 import com.sun.cri.ci.CiTargetMethod.DataPatch;
@@ -419,7 +420,7 @@ public class MaxRuntime implements GraalRuntime {
         // TODO(tw): Implement lowering phase for Maxine.
     }
 
-    public Graph intrinsicGraph(RiResolvedMethod caller, int bci, RiResolvedMethod method, List< ? extends Node> parameters) {
+    public Graph<EntryPointNode> intrinsicGraph(RiResolvedMethod caller, int bci, RiResolvedMethod method, List< ? extends Node> parameters) {
         // TODO(tw): Implement intrinsics for Maxine.
         return null;
     }

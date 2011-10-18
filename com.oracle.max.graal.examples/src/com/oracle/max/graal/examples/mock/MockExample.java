@@ -25,6 +25,7 @@ package com.oracle.max.graal.examples.mock;
 import java.lang.reflect.*;
 
 import com.oracle.max.graal.compiler.*;
+import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -72,10 +73,9 @@ public class MockExample {
         RiResolvedMethod riMethod = runtime.getRiMethod(m);
 
         // Create the compiler graph for the method.
-        CompilerGraph graph = new CompilerGraph(runtime);
+        Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(runtime));
         ReturnNode returnNode = graph.add(new ReturnNode(ConstantNode.forInt(42, graph)));
         graph.start().setNext(returnNode);
-        graph.setReturn(returnNode);
 
         // Compile and print disassembly.
         CiResult result = graalCompiler.compileMethod(riMethod, graph);

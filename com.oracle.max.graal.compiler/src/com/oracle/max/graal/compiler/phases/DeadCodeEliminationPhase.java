@@ -32,14 +32,14 @@ import com.oracle.max.graal.nodes.extended.*;
 public class DeadCodeEliminationPhase extends Phase {
 
     private NodeFlood flood;
-    private Graph graph;
+    private Graph<EntryPointNode> graph;
 
     public DeadCodeEliminationPhase(GraalContext context) {
         super(context);
     }
 
     @Override
-    protected void run(Graph graph) {
+    protected void run(Graph<EntryPointNode> graph) {
         this.graph = graph;
         this.flood = graph.createNodeFlood();
 

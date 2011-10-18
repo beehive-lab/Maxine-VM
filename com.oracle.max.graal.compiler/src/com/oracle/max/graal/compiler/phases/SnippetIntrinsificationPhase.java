@@ -45,7 +45,7 @@ public class SnippetIntrinsificationPhase extends Phase {
     }
 
     @Override
-    protected void run(Graph graph) {
+    protected void run(Graph<EntryPointNode> graph) {
         for (InvokeNode invoke : graph.getNodes(InvokeNode.class)) {
             tryIntrinsify(invoke);
         }

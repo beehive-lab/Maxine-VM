@@ -39,7 +39,7 @@ public class LoweringPhase extends Phase {
     }
 
     @Override
-    protected void run(final Graph graph) {
+    protected void run(final Graph<EntryPointNode> graph) {
         final IdentifyBlocksPhase s = new IdentifyBlocksPhase(context, false);
         s.apply(graph);
         s.calculateAlwaysReachedBlock();

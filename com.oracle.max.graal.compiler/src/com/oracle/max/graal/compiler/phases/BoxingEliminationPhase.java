@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.graph.*;
+import com.oracle.max.graal.nodes.*;
 import com.sun.cri.ri.*;
 
 public class BoxingEliminationPhase extends Phase {
@@ -40,7 +41,7 @@ public class BoxingEliminationPhase extends Phase {
     }
 
     @Override
-    protected void run(Graph graph) {
+    protected void run(Graph<EntryPointNode> graph) {
         // TODO: Implement
     }
 

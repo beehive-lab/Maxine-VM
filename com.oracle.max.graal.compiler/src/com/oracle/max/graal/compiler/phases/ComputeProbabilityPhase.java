@@ -53,9 +53,8 @@ public class ComputeProbabilityPhase extends Phase {
     }
 
     @Override
-    protected void run(Graph graph) {
-        CompilerGraph compilerGraph = (CompilerGraph) graph;
-        new PropagateProbability(compilerGraph.start().next()).apply();
+    protected void run(Graph<EntryPointNode> graph) {
+        new PropagateProbability(graph.start().next()).apply();
         if (context.isObserved() && GraalOptions.TraceProbability) {
             context.observable.fireCompilationEvent(new CompilationEvent(null, "After PropagateProbability", graph, true, false));
         }
@@ -63,7 +62,7 @@ public class ComputeProbabilityPhase extends Phase {
         if (context.isObserved() && GraalOptions.TraceProbability) {
             context.observable.fireCompilationEvent(new CompilationEvent(null, "After computeLoopFactors", graph, true, false));
         }
-        new PropagateLoopFrequency(compilerGraph.start().next()).apply();
+        new PropagateLoopFrequency(graph.start().next()).apply();
     }
 
     private void computeLoopFactors() {

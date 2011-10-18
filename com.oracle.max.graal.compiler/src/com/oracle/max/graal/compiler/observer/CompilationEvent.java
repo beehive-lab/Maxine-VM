@@ -41,7 +41,7 @@ public class CompilationEvent {
 
     private final GraalCompilation compilation;
     private final String label;
-    private Graph graph;
+    private Graph<?> graph;
 
     private BlockMap blockMap;
     private int codeSize = -1;
@@ -66,18 +66,18 @@ public class CompilationEvent {
         this.compilation = compilation;
     }
 
-    public CompilationEvent(GraalCompilation compilation, String label, Graph graph, boolean hirValid, boolean lirValid) {
+    public CompilationEvent(GraalCompilation compilation, String label, Graph<?> graph, boolean hirValid, boolean lirValid) {
         this(compilation, label, graph, hirValid, lirValid, false, (Map<String, Object>) null);
     }
-    public CompilationEvent(GraalCompilation compilation, String label, Graph graph, boolean hirValid, boolean lirValid, boolean error) {
+    public CompilationEvent(GraalCompilation compilation, String label, Graph<?> graph, boolean hirValid, boolean lirValid, boolean error) {
         this(compilation, label, graph, hirValid, lirValid, error, (Map<String, Object>) null);
     }
 
-    public CompilationEvent(GraalCompilation compilation, String label, Graph graph, boolean hirValid, boolean lirValid, Map<String, Object> debugObjects) {
+    public CompilationEvent(GraalCompilation compilation, String label, Graph<?> graph, boolean hirValid, boolean lirValid, Map<String, Object> debugObjects) {
         this(compilation, label, graph, hirValid, lirValid, false, debugObjects);
     }
 
-    public CompilationEvent(GraalCompilation compilation, String label, Graph graph, boolean hirValid, boolean lirValid, boolean error, Map<String, Object> debugObjects) {
+    public CompilationEvent(GraalCompilation compilation, String label, Graph<?> graph, boolean hirValid, boolean lirValid, boolean error, Map<String, Object> debugObjects) {
         this(compilation, label);
         this.graph = graph;
         this.hirValid = hirValid;
@@ -86,7 +86,7 @@ public class CompilationEvent {
         this.errorEvent = error;
     }
 
-    public CompilationEvent(GraalCompilation compilation, String label, Graph graph, boolean hirValid, boolean lirValid, CiTargetMethod targetMethod) {
+    public CompilationEvent(GraalCompilation compilation, String label, Graph<?> graph, boolean hirValid, boolean lirValid, CiTargetMethod targetMethod) {
         this(compilation, label, graph, hirValid, lirValid);
         this.targetMethod = targetMethod;
     }
@@ -120,7 +120,7 @@ public class CompilationEvent {
         return blockMap;
     }
 
-    public Graph getGraph() {
+    public Graph<?> getGraph() {
         return graph;
     }
 

@@ -56,7 +56,7 @@ public final class GraalCompilation {
     public final CiStatistics stats;
     public final FrameState placeholderState;
 
-    public final CompilerGraph graph;
+    public final Graph<EntryPointNode> graph;
 
     private final GraalCompilation parent;
 
@@ -77,7 +77,7 @@ public final class GraalCompilation {
      * @param osrBCI the bytecode index for on-stack replacement, if requested
      * @param stats externally supplied statistics object to be used if not {@code null}
      */
-    public GraalCompilation(GraalContext context, GraalCompiler compiler, RiResolvedMethod method, CompilerGraph graph, int osrBCI, CiStatistics stats) {
+    public GraalCompilation(GraalContext context, GraalCompiler compiler, RiResolvedMethod method, Graph<EntryPointNode> graph, int osrBCI, CiStatistics stats) {
         if (osrBCI != -1) {
             throw new CiBailout("No OSR supported");
         }
@@ -97,7 +97,7 @@ public final class GraalCompilation {
     }
 
     public GraalCompilation(GraalContext context, GraalCompiler compiler, RiResolvedMethod method, int osrBCI, CiStatistics stats) {
-        this(context, compiler, method, new CompilerGraph(compiler.runtime), osrBCI, stats);
+        this(context, compiler, method, new Graph<EntryPointNode>(new EntryPointNode(compiler.runtime)), osrBCI, stats);
     }
 
 
@@ -170,7 +170,7 @@ public final class GraalCompilation {
         try {
             context.timers.startScope("HIR");
 
-            if (graph.getReturn() == null) {
+            if (graph.start().next() == null) {
                 new GraphBuilderPhase(context, compiler.runtime, method, stats).apply(graph);
                 new DeadCodeEliminationPhase(context).apply(graph);
             }
@@ -402,8 +402,8 @@ public final class GraalCompilation {
                 lirAssembler.emitTraps();
 
                 CiTargetMethod targetMethod = tma.finishTargetMethod(method, compiler.runtime, lirAssembler.registerRestoreEpilogueOffset, false);
-                if (!graph.assumptions().isEmpty()) {
-                    targetMethod.setAssumptions(graph.assumptions());
+                if (!graph.start().assumptions().isEmpty()) {
+                    targetMethod.setAssumptions(graph.start().assumptions());
                 }
 
                 if (context.isObserved()) {

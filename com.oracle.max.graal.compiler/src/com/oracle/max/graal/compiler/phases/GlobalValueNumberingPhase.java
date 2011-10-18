@@ -34,15 +34,14 @@ public class GlobalValueNumberingPhase extends Phase {
     }
 
     @Override
-    protected void run(Graph graph) {
-        CompilerGraph compilerGraph = (CompilerGraph) graph;
+    protected void run(Graph<EntryPointNode> graph) {
         NodeBitMap visited = graph.createNodeBitMap();
         for (Node n : graph.getNodes()) {
-            apply(n, visited, compilerGraph);
+            apply(n, visited, graph);
         }
     }
 
-    private void apply(Node n, NodeBitMap visited, CompilerGraph compilerGraph) {
+    private void apply(Node n, NodeBitMap visited, Graph<EntryPointNode> compilerGraph) {
         if (!visited.isMarked(n)) {
             visited.mark(n);
             for (Node input : n.inputs()) {
