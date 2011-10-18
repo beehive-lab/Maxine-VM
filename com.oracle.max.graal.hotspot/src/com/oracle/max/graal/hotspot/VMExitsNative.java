@@ -86,20 +86,6 @@ public class VMExitsNative implements VMExits, Remote {
         }
     }
 
-    public abstract class Sandbox {
-
-        public void start() throws Throwable {
-            // (ls) removed output and error stream rewiring, this influences applications and, for example, makes dacapo tests fail.
-//            PrintStream oldOut = System.out;
-//            PrintStream oldErr = System.err;
-            run();
-//            System.setOut(oldOut);
-//            System.setErr(oldErr);
-        }
-
-        protected abstract void run() throws Throwable;
-    }
-
     public static void printGCStats() {
         long totalGarbageCollections = 0;
         long garbageCollectionTime = 0;
@@ -131,47 +117,38 @@ public class VMExitsNative implements VMExits, Remote {
             installedIntrinsics = true;
         }
 
-        new Sandbox() {
-            @Override
-            public void run() throws Throwable {
-                try {
-                    CiResult result = compiler.getCompiler().compileMethod(method, -1, null);
-                    if (LogCompiledMethods) {
-                        String qualifiedName = CiUtil.toJavaName(method.holder()) + "::" + method.name();
-                        compiledMethods.add(qualifiedName);
-                    }
+        CiResult result = compiler.getCompiler().compileMethod(method, -1, null);
+        if (LogCompiledMethods) {
+            String qualifiedName = CiUtil.toJavaName(method.holder()) + "::" + method.name();
+            compiledMethods.add(qualifiedName);
+        }
 
-                    if (result.bailout() != null) {
-                        Throwable cause = result.bailout().getCause();
-                        if (!GraalOptions.QuietBailout && !(result.bailout() instanceof JSRNotSupportedBailout)) {
-                            StringWriter out = new StringWriter();
-                            result.bailout().printStackTrace(new PrintWriter(out));
-                            TTY.println("Bailout while compiling " + method + " :\n" + out.toString());
-                            if (cause != null) {
-                                Logger.info("Trace for cause: ");
-                                for (StackTraceElement e : cause.getStackTrace()) {
-                                    String current = e.getClassName() + "::" + e.getMethodName();
-                                    String type = "";
-                                    if (compiledMethods.contains(current)) {
-                                        type = "compiled";
-                                    }
-                                    Logger.info(String.format("%-10s %3d %s", type, e.getLineNumber(), current));
-                                }
-                            }
+        if (result.bailout() != null) {
+            Throwable cause = result.bailout().getCause();
+            if (!GraalOptions.QuietBailout && !(result.bailout() instanceof JSRNotSupportedBailout)) {
+                StringWriter out = new StringWriter();
+                result.bailout().printStackTrace(new PrintWriter(out));
+                TTY.println("Bailout while compiling " + method + " :\n" + out.toString());
+                if (cause != null) {
+                    Logger.info("Trace for cause: ");
+                    for (StackTraceElement e : cause.getStackTrace()) {
+                        String current = e.getClassName() + "::" + e.getMethodName();
+                        String type = "";
+                        if (compiledMethods.contains(current)) {
+                            type = "compiled";
                         }
-                        String s = result.bailout().getMessage();
-                        if (cause != null) {
-                            s = cause.getMessage();
-                        }
-                        compiler.getVMEntries().recordBailout(s);
-                    } else {
-                        HotSpotTargetMethod.installMethod(compiler, method, result.targetMethod());
+                        Logger.info(String.format("%-10s %3d %s", type, e.getLineNumber(), current));
                     }
-                } catch (Throwable t) {
-                    throw t;
                 }
             }
-        }.start();
+            String s = result.bailout().getMessage();
+            if (cause != null) {
+                s = cause.getMessage();
+            }
+            compiler.getVMEntries().recordBailout(s);
+        } else {
+            HotSpotTargetMethod.installMethod(compiler, method, result.targetMethod());
+        }
     }
 
     @Override
