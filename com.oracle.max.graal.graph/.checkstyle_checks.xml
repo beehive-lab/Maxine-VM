@@ -106,7 +106,10 @@
     </module>
     <module name="JUnitTestCase"/>
     <module name="ModifiedControlVariable"/>
-    <module name="MutableException"/>
+    <module name="MutableException">
+      <property name="severity" value="ignore"/>
+      <metadata name="net.sf.eclipsecs.core.lastEnabledSeverity" value="inherit"/>
+    </module>
     <module name="ParameterAssignment">
       <property name="severity" value="ignore"/>
       <metadata name="net.sf.eclipsecs.core.lastEnabledSeverity" value="inherit"/>
