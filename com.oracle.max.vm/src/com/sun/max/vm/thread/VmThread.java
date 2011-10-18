@@ -240,7 +240,7 @@ public class VmThread {
     private Pointer yellowZone = Pointer.zero();
 
     /**
-     * The thread locals associated with this thread.
+     * The safepoint-enabled thread locals associated with this thread.
      */
     private Pointer tla = Pointer.zero();
 
@@ -269,6 +269,11 @@ public class VmThread {
     public JavaMonitor protectedMonitor;
 
     private ConditionVariable waitingCondition = ConditionVariableFactory.create();
+
+    /**
+     * A "monitor" used to suspend the thread by {@link VmOperation}.
+     */
+    public final OSMonitor.SuspendMonitor suspendMonitor = new OSMonitor.SuspendMonitor();
 
     /**
      * Holds the exception object for the exception currently being raised. This value will only be
@@ -624,6 +629,9 @@ public class VmThread {
             // provide basic services (most importantly, heap allocation) before starting the other "system" threads.
             //
 
+            // The main thread manages to avoid the normal runtime mechanism that sets this value
+            thread.suspendMonitor.init();
+
             // Initialize JVMTI agents
             JVMTI.initialize();
 
@@ -794,6 +802,7 @@ public class VmThread {
         thread.tla = Pointer.zero();
         thread.id = -1;
         thread.waitingCondition = null;
+        thread.suspendMonitor.destroy();
 
         JniFunctions.epilogue(anchor, null);
     }
@@ -1177,6 +1186,9 @@ public class VmThread {
         }
     }
 
+    /**
+     * The address of the safepoint-enabled TLA for this thread.
+     */
     @INLINE
     public final Pointer tla() {
         return tla;
@@ -1300,6 +1312,7 @@ public class VmThread {
         assert state == Thread.State.NEW;
         state = Thread.State.RUNNABLE;
         Thread_vmThread.setObject(javaThread, this);
+        suspendMonitor.init();
         VmThreadMap.ACTIVE.startThread(this, STACK_SIZE_OPTION.getValue().alignUp(platform().pageSize).asSize(), javaThread.getPriority());
     }
 
@@ -1341,11 +1354,11 @@ public class VmThread {
     }
 
     public final void suspend0() {
-        FatalError.unimplemented();
+        new VmOperation.SuspendThreadSet(this).submit();
     }
 
     public final void resume0() {
-        FatalError.unimplemented();
+        new VmOperation.ResumeThreadSet(this).submit();
     }
 
     public final void interrupt0() {

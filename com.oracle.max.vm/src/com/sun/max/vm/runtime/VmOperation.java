@@ -25,6 +25,8 @@ package com.sun.max.vm.runtime;
 import static com.sun.max.vm.runtime.VmOperationThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
+import java.util.*;
+
 import com.oracle.max.cri.intrinsics.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.unsafe.Pointer.Predicate;
@@ -153,12 +155,20 @@ public class VmOperation {
      */
     VmOperation enclosing;
 
+    /**
+     * The {@link #Mode} of this operation.
+     */
     public final Mode mode;
 
     /**
      * The thread that {@linkplain VmOperationThread#submit(VmOperation) submitted} this operation for execution.
      */
     private VmThread callingThread;
+
+    /**
+     * Determines if this operation allows a nested operation to be performed.
+     */
+    public final boolean disAllowsNestedOperations;
 
     /**
      * Constants denoting the conditions under which a VM operation must be run.
@@ -231,11 +241,6 @@ public class VmOperation {
     protected boolean disablesHeapAllocation() {
         return false;
     }
-
-    /**
-     * Determines if this operation allows a nested operation to be performed.
-     */
-    protected boolean allowsNestedOperations;
 
     /**
      * Called by the {@linkplain Trap trap} handler on a thread that hit a safepoint.
@@ -463,8 +468,9 @@ public class VmOperation {
      * @param name descriptive name of the {@linkplain #doIt() operation}. This value is only used for tracing.
      * @param singleThread the single thread operated on by this operation. If {@code null}, then
      *            {@link #operateOnThread(VmThread)} is called to determine which threads are to be operated on.
+     * @param disAllowNestedOperations {@code true} if nested operations are not allowed (unusual case).
      */
-    public VmOperation(String name, VmThread singleThread, Mode mode) {
+    public VmOperation(String name, VmThread singleThread, Mode mode, boolean disAllowNestedOperations) {
         if (!MaxineVM.isHosted() && !Heap.isInBootImage(ClassActor.fromJava(getClass()))) {
             // All VM operation classes must be in the image so that their vtables don't contain any pointers to
             // trampolines as resolving these trampolines can involve allocation which may not be possible when
@@ -474,6 +480,7 @@ public class VmOperation {
         }
         this.name = name;
         this.mode = mode;
+        this.disAllowsNestedOperations = disAllowNestedOperations;
         this.singleThread = singleThread;
         assert singleThread == null || !singleThread.isVmOperationThread();
         doThreadAdapter = new Pointer.Procedure() {
@@ -481,6 +488,14 @@ public class VmOperation {
                 callDoThread(tla);
             }
         };
+    }
+
+    /**
+     * Normal use constructor that allows nested operations.
+     * {@see VmOperation#VmOperation(String, VmThread, Mode, boolean)}.
+     */
+    public VmOperation(String name, VmThread singleThread, Mode mode) {
+        this(name, singleThread, mode, false);
     }
 
     /**
@@ -845,4 +860,100 @@ public class VmOperation {
             Log.unlock(lockDisabledSafepoints);
         }
     }
+
+    /**
+     * Bit set in {@link VmThreadLocal#SUSPEND} when a thread is requesting to suspend.
+     */
+    public static final int SUSPEND_REQUEST = 1;
+
+    /**
+     * Bit set in {@link VmThreadLocal#SUSPEND} when a {@link #THREAD_IN_JAVA} is suspended.
+     * I.e. if {@link #doSafepoint} is called.
+     */
+    public static final int SUSPEND_JAVA = 2;
+
+    public static boolean isSuspendRequest(Pointer etla) {
+        return !SUSPEND.load(etla).asAddress().and(SUSPEND_REQUEST).isZero();
+    }
+
+    private static abstract class SuspendResumeThreadSet extends VmOperation {
+        protected final Set<VmThread> threadSet;
+        protected final VmThread singleVmThread;
+
+        private SuspendResumeThreadSet(String opName, Set<VmThread> threadSet) {
+            super(opName, null, Mode.Safepoint);
+            this.threadSet = threadSet;
+            this.singleVmThread = null;
+        }
+
+        protected SuspendResumeThreadSet(String opName, VmThread singleVmThread) {
+            super(opName, singleVmThread, Mode.Safepoint);
+            this.threadSet = null;
+            this.singleVmThread = singleVmThread;
+        }
+
+        @Override
+        protected boolean operateOnThread(VmThread vmThread) {
+            return threadSet.contains(vmThread);
+        }
+    }
+
+    /**
+     * A {@link VmOperation} that forces a set of Java threads to a safepoint, and marks them
+     * for suspend. When they continue from the safepoint, the {@link VmThreadLocal#SUSPEND} flag
+     * will be checked in the native code epilogue and they will actually suspend.
+     * It is legal for the current thread to be in the set.
+     */
+    public static class SuspendThreadSet extends SuspendResumeThreadSet {
+
+        public SuspendThreadSet(Set<VmThread> threadSet) {
+            super("SuspendThreadSet", threadSet);
+        }
+
+        public SuspendThreadSet(VmThread singleVmThread) {
+            super("SuspendThread", singleVmThread);
+        }
+
+        @Override
+        protected void doThread(VmThread vmThread, Pointer ip, Pointer sp, Pointer fp) {
+            // There is no race condition associated with this flag since
+            // it is not read until the thread has been thawed.
+            Address val = SUSPEND.load(vmThread.tla());
+            SUSPEND.store(vmThread.tla(), val.or(SUSPEND_REQUEST));
+        }
+
+        @Override
+        protected void doAtSafepointBeforeBlocking(Pointer trapFrame) {
+            // This happens before doThread, so we can just write the entire word.
+            SUSPEND.store(VmThread.current().tla(), Address.fromInt(SUSPEND_JAVA));
+        }
+    }
+
+    /**
+     * Resume previously suspended threads.
+     * We do this as a {@link VmOperation} to ensure that any threads
+     * returning from native code while this operation is proceeding
+     * will freeze before reading {@link VmThreadLocal#SUSPEND}.
+     */
+    public static class ResumeThreadSet extends SuspendResumeThreadSet {
+
+        public ResumeThreadSet(Set<VmThread> threadSet) {
+            super("ResumeThreadSet", threadSet);
+        }
+
+        public ResumeThreadSet(VmThread singleVmThread) {
+            super("ResumeThread", singleVmThread);
+        }
+
+
+        @Override
+        protected void doThread(VmThread vmThread, Pointer ip, Pointer sp, Pointer fp) {
+            // Since the thread is frozen, we can safely read and write the SUSPEND thread local
+            if (isSuspendRequest(vmThread.tla())) {
+                SUSPEND.store(vmThread.tla(), Address.zero());
+                assert vmThread.suspendMonitor.resume() : "failed to acquire suspend lock on resume";
+            }
+        }
+    }
+
 }

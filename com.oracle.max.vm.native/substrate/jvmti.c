@@ -350,22 +350,7 @@ void *getJVMTIInterface(int version) {
     return NULL;
 }
 
-//extern JNIEnv *currentJniEnv();
-/**
- * Gets the thread-local pointer to the pointer to the global JNI function table.
- */
 #include <threadLocals.h>
-
-JNIEnv *jvmtiCurrentJniEnv() {
-    TLA tla = tla_current();
-//    c_ASSERT(tla != 0);
-    if (tla == 0) {
-        return NULL;
-    }
-    JNIEnv *env = (JNIEnv *) tla_addressOf(tla, JNI_ENV);
-    c_ASSERT(env != NULL);
-    return env;
-}
 
 void *getJVMTIImpl(int version) {
     jvmtienv_impl.functions = &jvmti_extended_interface;

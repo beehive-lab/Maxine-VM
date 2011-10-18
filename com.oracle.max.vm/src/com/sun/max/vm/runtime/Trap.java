@@ -334,6 +334,9 @@ public abstract class Trap {
             if (vmOperation != null) {
                 TRAP_INSTRUCTION_POINTER.store3(instructionPointer);
                 vmOperation.doAtSafepoint(trapFrame);
+                while (VmOperation.isSuspendRequest(etla)) {
+                    VmThread.fromTLA(etla).suspendMonitor.suspend();
+                }
                 TRAP_INSTRUCTION_POINTER.store3(Pointer.zero());
             } else {
                 /*

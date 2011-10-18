@@ -108,6 +108,7 @@ public final class JDK_java_lang_Thread {
         Thread_vmThread.setObject(javaThread, vmThread);
         JDK_java_lang_Thread thisThread = asThis(javaThread);
         thisThread.priority = Thread.NORM_PRIORITY;
+        vmThread.suspendMonitor.init();
         vmThread.setJavaThread(javaThread, name);
         if (name == null) {
             name = String.valueOf(nextThreadNum());

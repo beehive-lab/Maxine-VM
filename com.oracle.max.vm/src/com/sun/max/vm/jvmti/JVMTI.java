@@ -71,6 +71,10 @@ public class JVMTI {
          * A cache of the code event settings by this agent.
          */
         long codeEventMask;
+        /**
+         *  JVMTI thread local storage.
+         */
+        JVMTIThreadLocalStorage tls = new JVMTIThreadLocalStorage();
     }
 
     /**
@@ -173,7 +177,6 @@ public class JVMTI {
      * We call Agent_OnLoad for all the agents listed in VM startup command.
      */
     public static void initialize() {
-        JVMTIRawMonitor.initialize();
         // TODO agentLibOption variant
         for (int i = 0; i < agentPathOption.count(); i++) {
             Pointer path = agentPathOption.getLibStart(i);

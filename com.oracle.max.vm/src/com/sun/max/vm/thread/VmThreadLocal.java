@@ -293,6 +293,14 @@ public class VmThreadLocal {
     public static final VmThreadLocal CUSTOM_ALLOCATION_ENABLED
         = new VmThreadLocal("CUSTOM_ALLOCATION_ENABLED", false, "Non-zero to bypass TLAB allocation and use an alternate allocator", Nature.Single);
 
+    /**
+     * Set by {@link VmOperation} when a thread is being forced to suspend. This is a bit mask, bit 0
+     * is the request to suspend and bit 1 determines whether thread was in Java or native when the
+     * request was made.
+     */
+    public static final VmThreadLocal SUSPEND
+        = new VmThreadLocal("SUSPEND", false, "Bitset for thread suspension", Nature.Single);
+
     private static VmThreadLocal[] valuesNeedingInitialization;
 
     /**

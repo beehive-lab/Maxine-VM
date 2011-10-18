@@ -1072,7 +1072,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         public ShrinkHeap(Size amount) {
             super("ShrinkHeap", null, Mode.Safepoint);
             this.amount = amount;
-            this.allowsNestedOperations = true;
         }
 
         @Override
@@ -1115,7 +1114,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         public GrowHeap(Size amount) {
             super("GrowHeap", null, Mode.Safepoint);
             this.amount = amount;
-            this.allowsNestedOperations = true;
         }
 
         @Override

@@ -29,6 +29,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jni.*;
@@ -78,6 +79,7 @@ public class JVMTIFunctionsSource {
     private static final ThreadGroup handleAsThreadGroup = null;
     private static final Class<?> handleAsClass = null;
     private static final ClassLoader handleAsClassLoader = null;
+    private static final ClassLoader handleAsObject = null;
 
     @VM_ENTRY_POINT
     private static native void reserved1();
@@ -116,12 +118,15 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int StopThread(Pointer env, JniHandle thread, JniHandle exception) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
     private static int InterruptThread(Pointer env, JniHandle thread) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: LIVE
+        // CAPABILITIES: CAN_SIGNAL_THREAD
+        // HANDLECHECK: thread=Thread
+        return JVMTIThreadFunctions.interruptThread(handleAsThread);
     }
 
     @VM_ENTRY_POINT
@@ -134,12 +139,12 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int GetOwnedMonitorInfo(Pointer env, JniHandle thread, Pointer owned_monitor_count_ptr, Pointer owned_monitors_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
     private static int GetCurrentContendedMonitor(Pointer env, JniHandle thread, Pointer monitor_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
@@ -207,7 +212,7 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int NotifyFramePop(Pointer env, JniHandle thread, int depth) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
@@ -340,12 +345,12 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int SetBreakpoint(Pointer env, MethodID method, long location) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
     private static int ClearBreakpoint(Pointer env, MethodID method, long location) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
@@ -389,7 +394,7 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int IsModifiableClass(Pointer env, JniHandle klass, Pointer is_modifiable_class_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
@@ -420,12 +425,18 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int GetClassSignature(Pointer env, JniHandle klass, Pointer signature_ptr, Pointer generic_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: START,LIVE
+        // HANDLECHECK: klass=Class
+        // NULLCHECK: signature_ptr,generic_ptr
+        return JVMTIClassFunctions.getClassSignature(handleAsClass, signature_ptr, generic_ptr);
     }
 
     @VM_ENTRY_POINT
     private static int GetClassStatus(Pointer env, JniHandle klass, Pointer status_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: START,LIVE
+        // HANDLECHECK: klass=Class
+        // NULLCHECK: status_ptr
+        return JVMTIClassFunctions.getClassStatus(handleAsClass, status_ptr);
     }
 
     @VM_ENTRY_POINT
@@ -501,12 +512,12 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int GetObjectHashCode(Pointer env, JniHandle object, Pointer hash_code_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
     private static int GetObjectMonitorUsage(Pointer env, JniHandle object, Pointer info_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
@@ -536,7 +547,13 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int IsFieldSynthetic(Pointer env, JniHandle klass, FieldID field, Pointer is_synthetic_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: START,LIVE
+        // CAPABILITIES: CAN_GET_SYNTHETIC_ATTRIBUTE
+        // NULLCHECK: is_synthetic_ptr
+        // MEMBERID: field=Field
+        boolean result = (fieldActor.flags() & Actor.ACC_SYNTHETIC) != 0;
+        is_synthetic_ptr.setBoolean(result);
+        return JVMTI_ERROR_NONE;
     }
 
     @VM_ENTRY_POINT
@@ -609,12 +626,12 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int SetNativeMethodPrefix(Pointer env, Pointer prefix) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
     private static int SetNativeMethodPrefixes(Pointer env, int prefix_count, Pointer prefixes) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
@@ -636,12 +653,18 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int IsMethodSynthetic(Pointer env, MethodID method, Pointer is_synthetic_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: START,LIVE
+        // CAPABILITIES: CAN_GET_SYNTHETIC_ATTRIBUTE
+        // NULLCHECK: is_synthetic_ptr
+        // MEMBERID: method=Method
+        boolean result = (methodActor.flags() & Actor.ACC_SYNTHETIC) != 0;
+        is_synthetic_ptr.setBoolean(result);
+        return JVMTI_ERROR_NONE;
     }
 
     @VM_ENTRY_POINT
     private static int GetLoadedClasses(Pointer env, Pointer class_count_ptr, Pointer classes_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
@@ -654,42 +677,42 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int PopFrame(Pointer env, JniHandle thread) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
     private static int ForceEarlyReturnObject(Pointer env, JniHandle thread, JniHandle value) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
     private static int ForceEarlyReturnInt(Pointer env, JniHandle thread, int value) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
     private static int ForceEarlyReturnLong(Pointer env, JniHandle thread, long value) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
     private static int ForceEarlyReturnFloat(Pointer env, JniHandle thread, float value) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
     private static int ForceEarlyReturnDouble(Pointer env, JniHandle thread, double value) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
     private static int ForceEarlyReturnVoid(Pointer env, JniHandle thread) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
     private static int RedefineClasses(Pointer env, int class_count, Pointer class_definitions) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
@@ -719,7 +742,7 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int IsMethodObsolete(Pointer env, MethodID method, Pointer is_obsolete_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
@@ -784,12 +807,17 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int GetThreadLocalStorage(Pointer env, JniHandle thread, Pointer data_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: START,LIVE
+        // HANDLECHECK: thread=Thread
+        // NULLCHECK: data_ptr
+        return JVMTIThreadLocalStorage.getThreadLocalStorage(handleAsThread, data_ptr);
     }
 
     @VM_ENTRY_POINT
     private static int SetThreadLocalStorage(Pointer env, JniHandle thread, Pointer data) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: START,LIVE
+        // HANDLECHECK: thread=Thread
+        return JVMTIThreadLocalStorage.setThreadLocalStorage(handleAsThread, data);
     }
 
     @VM_ENTRY_POINT
@@ -835,22 +863,22 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int IterateOverObjectsReachableFromObject(Pointer env, JniHandle object, Address object_reference_callback, Pointer user_data) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
     private static int IterateOverReachableObjects(Pointer env, Address heap_root_callback, Address stack_ref_callback, Address object_ref_callback, Pointer user_data) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
     private static int IterateOverHeap(Pointer env, int object_filter, Address heap_object_callback, Pointer user_data) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
     private static int IterateOverInstancesOfClass(Pointer env, JniHandle klass, int object_filter, Address heap_object_callback, Pointer user_data) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
@@ -858,17 +886,17 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int GetObjectsWithTags(Pointer env, int tag_count, Pointer tags, Pointer count_ptr, Pointer object_result_ptr, Pointer tag_result_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
     private static int FollowReferences(Pointer env, int heap_filter, JniHandle klass, JniHandle initial_object, Pointer callbacks, Pointer user_data) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
     private static int IterateThroughHeap(Pointer env, int heap_filter, JniHandle klass, Pointer callbacks, Pointer user_data) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
@@ -882,12 +910,12 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int SetJNIFunctionTable(Pointer env, Pointer function_table) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
     private static int GetJNIFunctionTable(Pointer env, Pointer function_table) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
@@ -900,22 +928,22 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int GenerateEvents(Pointer env, int event_type) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
     private static int GetExtensionFunctions(Pointer env, Pointer extension_count_ptr, Pointer extensions) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
     private static int GetExtensionEvents(Pointer env, Pointer extension_count_ptr, Pointer extensions) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
     private static int SetExtensionEventCallback(Pointer env, int extension_event_index, Address callback) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
@@ -940,12 +968,12 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int GetlongFormat(Pointer env, Pointer format_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
     private static int GetSystemProperties(Pointer env, Pointer count_ptr, Pointer property_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
@@ -957,7 +985,7 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int SetSystemProperty(Pointer env, Pointer property, Pointer value) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
@@ -969,27 +997,27 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int GetCurrentThreadCpuTimerInfo(Pointer env, Pointer info_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
     private static int GetCurrentThreadCpuTime(Pointer env, Pointer nanos_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
     private static int GetThreadCpuTimerInfo(Pointer env, Pointer info_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
     private static int GetThreadCpuTime(Pointer env, JniHandle thread, Pointer nanos_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
     private static int GetTimerInfo(Pointer env, Pointer info_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
@@ -1024,7 +1052,7 @@ public class JVMTIFunctionsSource {
                     cap.set(envCaps, true);
                 } else {
                     JVMTI.debug(cap);
-                    return JVMTI_ERROR_NOT_AVAILABLE;
+                    return JVMTI_ERROR_NOT_AVAILABLE; // TODO
                 }
             }
         }
@@ -1057,22 +1085,22 @@ public class JVMTIFunctionsSource {
     private static int GetClassVersionNumbers(Pointer env, JniHandle klass, Pointer minor_version_ptr, Pointer major_version_ptr) {
         // PHASES: START,LIVE
         // NULLCHECK: minor_version_ptr, minor_version_ptr
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
     private static int GetConstantPool(Pointer env, JniHandle klass, Pointer constant_pool_count_ptr, Pointer constant_pool_byte_count_ptr, Pointer constant_pool_bytes_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
     private static int GetEnvironmentLocalStorage(Pointer env, Pointer data_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
     private static int SetEnvironmentLocalStorage(Pointer env, Pointer data) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
@@ -1106,22 +1134,24 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int AddToSystemClassLoaderSearch(Pointer env, Pointer segment) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
     private static int RetransformClasses(Pointer env, int class_count, Pointer classes) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
     private static int GetOwnedMonitorStackDepthInfo(Pointer env, JniHandle thread, Pointer monitor_info_count_ptr, Pointer monitor_info_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
     }
 
     @VM_ENTRY_POINT
     private static int GetObjectSize(Pointer env, JniHandle object, Pointer size_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE;
+        // PHASES: START,LIVE
+        // NULLCHECK: size_ptr
+        return JVMTIClassFunctions.getObjectSize(object.unhand(), size_ptr);
     }
 
     /**

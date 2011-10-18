@@ -121,9 +121,6 @@ public class Deoptimization extends VmOperation {
     public Deoptimization(ArrayList<TargetMethod> methods) {
         super("Deoptimization", null, Mode.Safepoint);
         this.methods = methods;
-
-        // Allow GC during deopt
-        this.allowsNestedOperations = true;
     }
 
     /**
