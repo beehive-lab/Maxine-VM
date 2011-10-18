@@ -31,7 +31,7 @@ public abstract class PostOrderNodeIterator<T extends MergeableState<T>> {
 
     private final NodeBitMap visitedEnds;
     private final Deque<FixedNode> nodeQueue;
-    private final HashMap<FixedNode, T> nodeStates;
+    private final IdentityHashMap<FixedNode, T> nodeStates;
     private final FixedNode start;
 
     protected T state;
@@ -39,7 +39,7 @@ public abstract class PostOrderNodeIterator<T extends MergeableState<T>> {
     public PostOrderNodeIterator(FixedNode start, T initialState) {
         visitedEnds = start.graph().createNodeBitMap();
         nodeQueue = new ArrayDeque<FixedNode>();
-        nodeStates = new HashMap<FixedNode, T>();
+        nodeStates = new IdentityHashMap<FixedNode, T>();
         this.start = start;
         this.state = initialState;
     }

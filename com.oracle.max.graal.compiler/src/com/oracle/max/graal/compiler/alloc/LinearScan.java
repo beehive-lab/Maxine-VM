@@ -1992,7 +1992,7 @@ public final class LinearScan {
 
             if (virtualObjects != null) {
                 // collect all VirtualObjectField instances:
-                HashMap<VirtualObjectNode, VirtualObjectFieldNode> objectStates = new HashMap<VirtualObjectNode, VirtualObjectFieldNode>();
+                IdentityHashMap<VirtualObjectNode, VirtualObjectFieldNode> objectStates = new IdentityHashMap<VirtualObjectNode, VirtualObjectFieldNode>();
                 FrameState current = topState;
                 do {
                     for (Node n : current.virtualObjectMappings()) {
@@ -2009,7 +2009,7 @@ public final class LinearScan {
                 boolean changed;
                 do {
                     changed = false;
-                    HashMap<VirtualObjectNode, CiVirtualObject> virtualObjectsCopy = new HashMap<VirtualObjectNode, CiVirtualObject>(virtualObjects);
+                    IdentityHashMap<VirtualObjectNode, CiVirtualObject> virtualObjectsCopy = new IdentityHashMap<VirtualObjectNode, CiVirtualObject>(virtualObjects);
                     for (Entry<VirtualObjectNode, CiVirtualObject> entry : virtualObjectsCopy.entrySet()) {
                         if (entry.getValue().values() == null) {
                             VirtualObjectNode vobj = entry.getKey();
