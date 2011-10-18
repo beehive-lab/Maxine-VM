@@ -73,19 +73,55 @@ public class CompilerGraph extends Graph {
         return assumptions;
     }
 
-    private final HashMap<Node, Node> cachedNodes = new HashMap<Node, Node>();
+    private final HashMap<CacheEntry, Node> cachedNodes = new HashMap<CacheEntry, Node>();
+
+    private static final class CacheEntry {
+
+        private final Node node;
+
+        public CacheEntry(Node node) {
+            this.node = node;
+        }
+
+        @Override
+        public int hashCode() {
+            return node.getNodeClass().valueNumber(node);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == this) {
+                return true;
+            }
+            if (obj instanceof Node) {
+                Node other = (Node) obj;
+                NodeClass nodeClass = node.getNodeClass();
+                if (other.getNodeClass() == nodeClass) {
+                    return nodeClass.valueNumberable() && nodeClass.valueEqual(node, other) && nodeClass.edgesEqual(node, other);
+                }
+            }
+            return false;
+        }
+    }
+
+    private boolean checkValueNumberable(Node node) {
+        if (!node.getNodeClass().valueNumberable()) {
+            throw new VerificationError("node is not valueNumberable").addContext(node);
+        }
+        return true;
+    }
 
     @SuppressWarnings("unchecked")
     @Override
     public <T extends Node & ValueNumberable> T unique(T node) {
-        assert node.getNodeClass().valueNumberable();
+        assert checkValueNumberable(node);
         if (!node.getNodeClass().hasOutgoingEdges()) {
-            Node cachedNode = cachedNodes.get(node);
+            Node cachedNode = cachedNodes.get(new CacheEntry(node));
             if (cachedNode != null && cachedNode.isAlive()) {
                 return (T) cachedNode;
             } else {
                 Node result = super.unique(node);
-                cachedNodes.put(result, result);
+                cachedNodes.put(new CacheEntry(result), result);
                 return (T) result;
             }
         } else {
@@ -99,12 +135,14 @@ public class CompilerGraph extends Graph {
 
     public Node findDuplicate(Node node) {
         if (node.getNodeClass().valueNumberable()) {
-            Node firstInput = node.inputs().first();
-            if (firstInput != null) {
-                for (Node usage : firstInput.usages()) {
-                    if (usage != node && node.valueEqual(usage) && node.getNodeClass().edgesEqual(node, usage)) {
-                        return usage;
+            for (Node input : node.inputs()) {
+                if (input != null) {
+                    for (Node usage : input.usages()) {
+                        if (usage != node && node.getNodeClass().valueEqual(node, usage) && node.getNodeClass().edgesEqual(node, usage)) {
+                            return usage;
+                        }
                     }
+                    return null;
                 }
             }
         }
