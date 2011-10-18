@@ -152,7 +152,6 @@ public final class GraalOptions {
 
     public static boolean GenAssertionCode                   = ____;
     public static boolean AlignCallsForPatching              = true;
-    public static boolean CallSiteUniquePC                   = ____;
     public static boolean InvokeSnippetAfterArguments        = ____;
     public static boolean ResolveClassBeforeStaticInvoke     = true;
 

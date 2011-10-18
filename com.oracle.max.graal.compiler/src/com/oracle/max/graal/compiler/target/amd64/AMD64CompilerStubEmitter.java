@@ -351,10 +351,8 @@ public class AMD64CompilerStubEmitter {
         int before = asm.codeBuffer.position();
         asm.call();
         int after = asm.codeBuffer.position();
-        if (GraalOptions.CallSiteUniquePC) {
-            asm.nop();
-        }
         tasm.recordDirectCall(before, after - before, comp.compiler.runtime.asCallTarget(call), null);
+        asm.ensureUniquePC();
 
         if (call.resultKind != CiKind.Void) {
             CiRegister returnRegister = comp.registerConfig.getReturnRegister(call.resultKind);
