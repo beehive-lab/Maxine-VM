@@ -67,7 +67,7 @@ public class UnsafeStore extends StateSplit implements Lowerable {
     }
 
     @NodeIntrinsic
-    public static Object store(@NodeParameter Object object, @NodeParameter long offset, @NodeParameter Object value, CiKind kind) {
+    public static void store(@NodeParameter Object object, @NodeParameter long offset, @NodeParameter Object value, CiKind kind) {
         throw new UnsupportedOperationException();
     }
 }
