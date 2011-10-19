@@ -93,8 +93,8 @@ public class CompilerGraph extends Graph {
             if (obj == this) {
                 return true;
             }
-            if (obj instanceof Node) {
-                Node other = (Node) obj;
+            if (obj instanceof CacheEntry) {
+                Node other = ((CacheEntry) obj).node;
                 NodeClass nodeClass = node.getNodeClass();
                 if (other.getNodeClass() == nodeClass) {
                     return nodeClass.valueNumberable() && nodeClass.valueEqual(node, other) && nodeClass.edgesEqual(node, other);
