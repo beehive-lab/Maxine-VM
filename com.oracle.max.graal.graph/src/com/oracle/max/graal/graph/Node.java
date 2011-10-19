@@ -135,6 +135,7 @@ public abstract class Node implements Cloneable {
         modCount++;
     }
 
+
     public String shortName() {
         return getNodeClass().shortName();
     }

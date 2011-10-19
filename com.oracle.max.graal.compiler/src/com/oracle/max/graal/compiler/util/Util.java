@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
+import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.sun.cri.ci.*;
 
@@ -40,19 +41,19 @@ public class Util {
     public static final char SEPERATOR_CHARACTER = '-';
 
     public static RuntimeException unimplemented() {
-        throw new InternalError("unimplemented");
+        throw new VerificationError("unimplemented");
     }
 
-    public static RuntimeException unimplemented(String msg) {
-        throw new InternalError("unimplemented:" + msg);
+    public static RuntimeException unimplemented(String msg, Object... args) {
+        throw new VerificationError("unimplemented: " + msg, args);
     }
 
     public static RuntimeException shouldNotReachHere() {
-        throw new InternalError("should not reach here");
+        throw new VerificationError("should not reach here");
     }
 
-    public static RuntimeException shouldNotReachHere(String msg) {
-        throw new InternalError("should not reach here: " + msg);
+    public static RuntimeException shouldNotReachHere(String msg, Object... args) {
+        throw new VerificationError("should not reach here: " + msg, args);
     }
 
     public static <T> boolean replaceInList(T a, T b, List<T> list) {
