@@ -34,9 +34,9 @@ import com.sun.cri.ri.*;
 
 public class InliningUtil {
 
-    public static void inline(InvokeNode invoke, CompilerGraph inlineGraph, Queue<InvokeNode> newInvokes) {
+    public static void inline(InvokeNode invoke, Graph<EntryPointNode> inlineGraph, Queue<InvokeNode> newInvokes) {
         ValueNode[] parameters = InliningUtil.simplifyParameters(invoke);
-        Graph graph = invoke.graph();
+        Graph<EntryPointNode> graph = invoke.graph();
 
         FrameState stateAfter = invoke.stateAfter();
         FixedNode exceptionEdge = invoke.exceptionEdge();

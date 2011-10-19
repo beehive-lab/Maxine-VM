@@ -112,7 +112,7 @@ public class LoopUtil {
         }
     }
 
-    public static List<Loop> computeLoops(Graph graph) {
+    public static List<Loop> computeLoops(Graph<EntryPointNode> graph) {
         List<Loop> loops = new LinkedList<LoopUtil.Loop>();
         for (LoopBeginNode loopBegin : graph.getNodes(LoopBeginNode.class)) {
             NodeBitMap cfgNodes = markUpCFG(loopBegin, loopBegin.loopEnd()); // computeLoopNodes(loopBegin);

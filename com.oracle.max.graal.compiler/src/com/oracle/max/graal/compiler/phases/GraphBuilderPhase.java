@@ -68,7 +68,7 @@ public final class GraphBuilderPhase extends Phase {
      */
     public static final int TRACELEVEL_STATE = 2;
 
-    private CompilerGraph graph;
+    private Graph<EntryPointNode> graph;
 
     private final CiStatistics stats;
     private final RiRuntime runtime;
@@ -109,7 +109,7 @@ public final class GraphBuilderPhase extends Phase {
 
     private BitSet canTrap;
 
-    public static final Map<RiMethod, CompilerGraph> cachedGraphs = new WeakHashMap<RiMethod, CompilerGraph>();
+    public static final Map<RiMethod, Graph<EntryPointNode>> cachedGraphs = new WeakHashMap<RiMethod, Graph<EntryPointNode>>();
 
 
     public GraphBuilderPhase(GraalContext context, RiRuntime runtime, RiResolvedMethod method) {
@@ -136,10 +136,10 @@ public final class GraphBuilderPhase extends Phase {
     }
 
     @Override
-    protected void run(Graph graph) {
+    protected void run(Graph<EntryPointNode> graph) {
         assert graph != null;
-        this.graph = (CompilerGraph) graph;
-        this.frameState = new FrameStateBuilder(method, method.maxLocals(), method.maxStackSize(), (CompilerGraph) graph);
+        this.graph = graph;
+        this.frameState = new FrameStateBuilder(method, method.maxLocals(), method.maxStackSize(), graph);
         build();
     }
 
@@ -217,7 +217,7 @@ public final class GraphBuilderPhase extends Phase {
 
         if (storeResultGraph) {
             // Create duplicate graph.
-            CompilerGraph duplicate = new CompilerGraph(null);
+            Graph<EntryPointNode> duplicate = new Graph<EntryPointNode>(new EntryPointNode(null));
             Map<Node, Node> replacements = new IdentityHashMap<Node, Node>();
             replacements.put(graph.start(), duplicate.start());
             duplicate.addDuplicate(graph.getNodes(), replacements);
@@ -1417,7 +1417,6 @@ public final class GraphBuilderPhase extends Phase {
             genMonitorExit(methodSynchronizedObject);
         }
         UnwindNode unwindNode = graph.add(new UnwindNode(frameState.apop()));
-        graph.setUnwind(unwindNode);
         append(unwindNode);
     }
 
@@ -1433,7 +1432,6 @@ public final class GraphBuilderPhase extends Phase {
             genMonitorExit(methodSynchronizedObject);
         }
         ReturnNode returnNode = graph.add(new ReturnNode(x));
-        graph.setReturn(returnNode);
         append(returnNode);
     }
 

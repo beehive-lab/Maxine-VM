@@ -130,14 +130,15 @@ public class IdealGraphPrinter {
         flush();
     }
 
-    public void print(Graph graph, String title, boolean shortNames) {
+    public void print(Graph<?> graph, String title, boolean shortNames) {
         print(graph, title, shortNames, Collections.<String, Object>emptyMap());
     }
 
     /**
      * Prints an entire {@link Graph} with the specified title, optionally using short names for nodes.
      */
-    public void print(Graph graph, String title, boolean shortNames, Map<String, Object> debugObjects) {
+    @SuppressWarnings("unchecked")
+    public void print(Graph<?> graph, String title, boolean shortNames, Map<String, Object> debugObjects) {
         stream.printf(" <graph name='%s'>%n", escape(title));
         noBlockNodes.clear();
         IdentifyBlocksPhase schedule = null;
@@ -151,14 +152,14 @@ public class IdealGraphPrinter {
         if (schedule == null) {
             try {
                 schedule = new IdentifyBlocksPhase(GraalContext.EMPTY_CONTEXT, true);
-                schedule.apply(graph, false, false);
+                schedule.apply((Graph<EntryPointNode>) graph, false, false);
             } catch (Throwable t) {
                 // nothing to do here...
             }
         }
         List<Loop> loops = null;
         try {
-            loops = LoopUtil.computeLoops(graph);
+            loops = LoopUtil.computeLoops((Graph<EntryPointNode>) graph);
             // loop.nodes() does some more calculations which may fail, so execute this here as well (result is cached)
             if (loops != null) {
                 for (Loop loop : loops) {
@@ -193,7 +194,7 @@ public class IdealGraphPrinter {
         flush();
     }
 
-    private List<Edge> printNodes(Graph graph, boolean shortNames, NodeMap<Block> nodeToBlock, List<Loop> loops, Map<String, Object> debugObjects) {
+    private List<Edge> printNodes(Graph<?> graph, boolean shortNames, NodeMap<Block> nodeToBlock, List<Loop> loops, Map<String, Object> debugObjects) {
         ArrayList<Edge> edges = new ArrayList<Edge>();
         NodeBitMap loopExits = graph.createNodeBitMap();
         if (loops != null) {
@@ -358,7 +359,7 @@ public class IdealGraphPrinter {
         stream.printf("   <edge from='%d' fromIndex='%d' to='%d' toIndex='%d'/>%n", edge.from, edge.fromIndex, edge.to, edge.toIndex);
     }
 
-    private void printBlock(Graph graph, Block block, NodeMap<Block> nodeToBlock) {
+    private void printBlock(Graph<?> graph, Block block, NodeMap<Block> nodeToBlock) {
         stream.printf("   <block name='%d'>%n", block.blockID());
         stream.println("    <successors>");
         for (Block sux : block.getSuccessors()) {

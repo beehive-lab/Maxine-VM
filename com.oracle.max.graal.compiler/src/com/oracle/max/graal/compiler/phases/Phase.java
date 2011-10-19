@@ -26,6 +26,7 @@ import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.observer.*;
 import com.oracle.max.graal.compiler.schedule.*;
 import com.oracle.max.graal.graph.*;
+import com.oracle.max.graal.nodes.*;
 import com.sun.cri.ci.*;
 
 public abstract class Phase {
@@ -54,11 +55,11 @@ public abstract class Phase {
         return getName();
     }
 
-    public final void apply(Graph graph) {
+    public final void apply(Graph<EntryPointNode> graph) {
         apply(graph, true, true);
     }
 
-    public final void apply(Graph graph, boolean plotOnError, boolean plot) {
+    public final void apply(Graph<EntryPointNode> graph, boolean plotOnError, boolean plot) {
         try {
             assert graph != null && !shouldVerify || graph.verify();
         } catch (VerificationError e) {
@@ -108,5 +109,5 @@ public abstract class Phase {
         return name;
     }
 
-    protected abstract void run(Graph graph);
+    protected abstract void run(Graph<EntryPointNode> graph);
 }

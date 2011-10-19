@@ -39,7 +39,7 @@ public final class PhiSimplificationPhase extends Phase {
     private NodeBitMap cannotSimplify;
 
     @Override
-    protected void run(Graph graph) {
+    protected void run(Graph<EntryPointNode> graph) {
         visited = graph.createNodeBitMap();
         cannotSimplify = graph.createNodeBitMap();
 

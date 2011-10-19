@@ -50,7 +50,7 @@ public enum HotSpotIntrinsic {
             Snippets.install(runtime, runtime.getCompiler().getTarget(), new FloatSnippets(), GraalOptions.PlotSnippets);
             Snippets.install(runtime, runtime.getCompiler().getTarget(), new SystemSnippets(), GraalOptions.PlotSnippets);
             Snippets.install(runtime, runtime.getCompiler().getTarget(), new NodeClassSnippets(), GraalOptions.PlotSnippets);
-            //Snippets.install(runtime, runtime.getCompiler().getTarget(), new UnsafeSnippets(), GraalOptions.PlotSnippets);
+            Snippets.install(runtime, runtime.getCompiler().getTarget(), new UnsafeSnippets(), GraalOptions.PlotSnippets);
         }
     }
 }

@@ -33,14 +33,13 @@ import com.sun.cri.ri.*;
 public class IntrinsifierImpl implements Intrinsifier {
 
     @Override
-    public Graph intrinsicGraph(RiRuntime runtime, RiMethod caller, int bci, RiMethod method, List<? extends Node> parameters) {
+    public Graph<EntryPointNode> intrinsicGraph(RiRuntime runtime, RiMethod caller, int bci, RiMethod method, List<? extends Node> parameters) {
         if (method.holder().name().equals("Lcom/oracle/max/graal/examples/intrinsics/SafeAddExample;") && method.name().equals("safeAdd")) {
-            CompilerGraph graph = new CompilerGraph(runtime);
+            Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(runtime));
             LocalNode local0 = graph.add(new LocalNode(CiKind.Long, 0, graph.start()));
             LocalNode local1 = graph.add(new LocalNode(CiKind.Long, 1, graph.start()));
             ReturnNode returnNode = graph.add(new ReturnNode(graph.add(new SafeAddNode(local0, local1))));
             graph.start().setNext(returnNode);
-            graph.setReturn(returnNode);
             return graph;
         }
         return null;

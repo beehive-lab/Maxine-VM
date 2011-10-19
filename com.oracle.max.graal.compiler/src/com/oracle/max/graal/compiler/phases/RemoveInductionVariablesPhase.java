@@ -39,7 +39,7 @@ public class RemoveInductionVariablesPhase extends Phase {
     }
 
     @Override
-    protected void run(Graph graph) {
+    protected void run(Graph<EntryPointNode> graph) {
         loweredIV = graph.createNodeMap();
 
         for (LoopBeginNode loopBegin : graph.getNodes(LoopBeginNode.class)) {
