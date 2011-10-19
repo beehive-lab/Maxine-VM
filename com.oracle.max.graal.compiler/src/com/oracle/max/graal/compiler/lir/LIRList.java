@@ -178,31 +178,31 @@ public final class LIRList {
     }
 
     public void abs(CiValue from, CiValue to, CiValue tmp) {
-        append(new LIRInstruction(LIROpcode.Abs, to, null, from, tmp));
+        append(new LIRInstruction(LIROpcode.Abs, to, null, false, 0, 1, from, tmp));
     }
 
     public void sqrt(CiValue from, CiValue to, CiValue tmp) {
-        append(new LIRInstruction(LIROpcode.Sqrt, to, null, from, tmp));
+        append(new LIRInstruction(LIROpcode.Sqrt, to, null, false, 0, 1, from, tmp));
     }
 
     public void log(CiValue from, CiValue to, CiValue tmp) {
-        append(new LIRInstruction(LIROpcode.Log, to, null, from, tmp));
+        append(new LIRInstruction(LIROpcode.Log, to, null, false, 0, 1, from, tmp));
     }
 
     public void log10(CiValue from, CiValue to, CiValue tmp) {
-        append(new LIRInstruction(LIROpcode.Log10, to, null, from, tmp));
+        append(new LIRInstruction(LIROpcode.Log10, to, null, false, 0, 1, from, tmp));
     }
 
     public void sin(CiValue from, CiValue to, CiValue tmp1, CiValue tmp2) {
-        append(new LIRInstruction(LIROpcode.Sin, to, null, from, tmp1, tmp2));
+        append(new LIRInstruction(LIROpcode.Sin, to, null, false, 0, 2, from, tmp1, tmp2));
     }
 
     public void cos(CiValue from, CiValue to, CiValue tmp1, CiValue tmp2) {
-        append(new LIRInstruction(LIROpcode.Cos, to, null, from, tmp1, tmp2));
+        append(new LIRInstruction(LIROpcode.Cos, to, null, false, 0, 2, from, tmp1, tmp2));
     }
 
     public void tan(CiValue from, CiValue to, CiValue tmp1, CiValue tmp2) {
-        append(new LIRInstruction(LIROpcode.Tan, to, null, from, tmp1, tmp2));
+        append(new LIRInstruction(LIROpcode.Tan, to, null, false, 0, 2, from, tmp1, tmp2));
     }
 
     public void add(CiValue left, CiValue right, CiValue res) {
@@ -275,27 +275,27 @@ public final class LIRList {
     }
 
     public void idiv(CiValue left, CiValue right, CiValue res, CiValue tmp, LIRDebugInfo info) {
-        append(new LIRInstruction(LIROpcode.Idiv, res, info, left, right, tmp));
+        append(new LIRInstruction(LIROpcode.Idiv, res, info, false, 1, 1, left, right, tmp));
     }
 
     public void irem(CiValue left, CiValue right, CiValue res, CiValue tmp, LIRDebugInfo info) {
-        append(new LIRInstruction(LIROpcode.Irem, res, info, left, right, tmp));
+        append(new LIRInstruction(LIROpcode.Irem, res, info, false, 1, 1, left, right, tmp));
     }
 
     public void ldiv(CiValue left, CiValue right, CiValue res, CiValue tmp, LIRDebugInfo info) {
-        append(new LIRInstruction(LIROpcode.Ldiv, res, info, left, right, tmp));
+        append(new LIRInstruction(LIROpcode.Ldiv, res, info, false, 1, 1, left, right, tmp));
     }
 
     public void lrem(CiValue left, CiValue right, CiValue res, CiValue tmp, LIRDebugInfo info) {
-        append(new LIRInstruction(LIROpcode.Lrem, res, info, left, right, tmp));
+        append(new LIRInstruction(LIROpcode.Lrem, res, info, false, 1, 1, left, right, tmp));
     }
 
     public void lsb(CiValue src, CiValue dst) {
-        append(new LIRInstruction(LIROpcode.Lsb, dst, null, src));
+        append(new LIRInstruction(LIROpcode.Lsb, dst, null, false, 1, 0, src));
     }
 
     public void msb(CiValue src, CiValue dst) {
-        append(new LIRInstruction(LIROpcode.Msb, dst, null, src));
+        append(new LIRInstruction(LIROpcode.Msb, dst, null, false, 1, 0, src));
     }
 
     public void cmpMemInt(Condition condition, CiValue base, int disp, int c, LIRDebugInfo info) {
@@ -307,15 +307,15 @@ public final class LIRList {
     }
 
     public void shiftLeft(CiValue value, CiValue count, CiValue dst, CiValue tmp) {
-        append(new LIRInstruction(LIROpcode.Shl, dst, null, value, count, tmp));
+        append(new LIRInstruction(LIROpcode.Shl, dst, null, false, 0, 1, value, count, tmp));
     }
 
     public void shiftRight(CiValue value, CiValue count, CiValue dst, CiValue tmp) {
-        append(new LIRInstruction(LIROpcode.Shr, dst, null, value, count, tmp));
+        append(new LIRInstruction(LIROpcode.Shr, dst, null, false, 0, 1, value, count, tmp));
     }
 
     public void unsignedShiftRight(CiValue value, CiValue count, CiValue dst, CiValue tmp) {
-        append(new LIRInstruction(LIROpcode.Ushr, dst, null, value, count, tmp));
+        append(new LIRInstruction(LIROpcode.Ushr, dst, null, false, 0, 1, value, count, tmp));
     }
 
     public void fcmp2int(CiValue left, CiValue right, CiValue dst, boolean isUnorderedLess) {
