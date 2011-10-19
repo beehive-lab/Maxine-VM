@@ -33,7 +33,7 @@ import com.oracle.max.graal.graph.NodeClass.Position;
  * This class is a graph container, it contains the set of nodes that belong to this graph.
  * The graph contains at least one distinguished node : the {@link #start() start} node.
  */
-public class Graph {
+public class Graph<S extends Node> {
 
     private final String name;
 
@@ -43,7 +43,7 @@ public class Graph {
     // they contain the first and last pointer to a linked list of all nodes with this type.
     private final ArrayList<Node> nodeCacheFirst;
     private final ArrayList<Node> nodeCacheLast;
-    private final Node start;
+    private final S start;
     private int deletedNodeCount;
     private int mark;
 
@@ -51,7 +51,7 @@ public class Graph {
      * Creates a new Graph containing only one node : the provided {@code start} node.
      * @param start the node to use as the {@link #start() start} node
      */
-    public Graph(Node start) {
+    public Graph(S start) {
         this(null, start);
     }
 
@@ -60,7 +60,7 @@ public class Graph {
      * @param name the name of the graph, used for debugging purposes
      * @param start the node to use as the {@link #start() start} node
      */
-    public Graph(String name, Node start) {
+    public Graph(String name, S start) {
         nodes = new ArrayList<Node>(32);
         nodeCacheFirst = new ArrayList<Node>(NodeClass.cacheSize());
         nodeCacheLast = new ArrayList<Node>(NodeClass.cacheSize());
@@ -73,7 +73,7 @@ public class Graph {
         return name == null ? "Graph" : "Graph " + name;
     }
 
-    public Node start() {
+    public S start() {
         return start;
     }
 
@@ -103,15 +103,46 @@ public class Graph {
         return node;
     }
 
+    private final HashMap<Node, Node> cachedNodes = new HashMap<Node, Node>();
+
     /**
      * Adds a new node to the graph, if a <i>similar</i> node already exists in the graph, the provided node will not be added to the graph but the <i>similar</i> node will be returned instead.
      * @param node
      * @return the node which was added to the graph or a <i>similar</i> which was already in the graph.
      */
+    @SuppressWarnings("unchecked")
     public <T extends Node & ValueNumberable> T unique(T node) {
         assert node.getNodeClass().valueNumberable();
-        node.initialize(this);
-        return node;
+        if (!node.getNodeClass().hasOutgoingEdges()) {
+            Node cachedNode = cachedNodes.get(node);
+            if (cachedNode != null && cachedNode.isAlive()) {
+                return (T) cachedNode;
+            } else {
+                Node result = add(node);
+                cachedNodes.put(result, result);
+                return (T) result;
+            }
+        } else {
+            Node duplicate = findDuplicate(node);
+            if (duplicate != null) {
+                return (T) duplicate;
+            }
+            return add(node);
+        }
+    }
+
+    public Node findDuplicate(Node node) {
+        if (node.getNodeClass().valueNumberable()) {
+            Node firstInput = node.inputs().first();
+            if (firstInput != null) {
+                for (Node usage : firstInput.usages()) {
+                    if (usage != node && node.valueEqual(usage) && node.getNodeClass().edgesEqual(node, usage)) {
+                        return usage;
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     public void mark() {

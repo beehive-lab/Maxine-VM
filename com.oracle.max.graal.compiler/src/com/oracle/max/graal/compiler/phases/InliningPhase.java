@@ -56,7 +56,7 @@ public class InliningPhase extends Phase {
     private final PriorityQueue<InlineInfo> inlineCandidates = new PriorityQueue<InlineInfo>();
     private NodeMap<InlineInfo> inlineInfos;
 
-    private CompilerGraph graph;
+    private Graph<EntryPointNode> graph;
 
     public InliningPhase(GraalContext context, GraalRuntime runtime, CiTarget target, Collection<InvokeNode> hints) {
         super(context);
@@ -79,7 +79,7 @@ public class InliningPhase extends Phase {
             return (weight < o.weight) ? -1 : (weight > o.weight) ? 1 : 0;
         }
 
-        public abstract void inline(CompilerGraph graph);
+        public abstract void inline(Graph<EntryPointNode> graph);
     }
 
     private class StaticInlineInfo extends InlineInfo {
@@ -91,8 +91,8 @@ public class InliningPhase extends Phase {
         }
 
         @Override
-        public void inline(CompilerGraph compilerGraph) {
-            CompilerGraph graph = GraphBuilderPhase.cachedGraphs.get(concrete);
+        public void inline(Graph<EntryPointNode> compilerGraph) {
+            Graph<EntryPointNode> graph = GraphBuilderPhase.cachedGraphs.get(concrete);
             if (graph != null) {
                 if (GraalOptions.TraceInlining) {
                     TTY.println("Reusing graph for %s", methodName(concrete, invoke));
@@ -101,7 +101,7 @@ public class InliningPhase extends Phase {
                 if (GraalOptions.TraceInlining) {
                     TTY.println("Building graph for %s, locals: %d, stack: %d", methodName(concrete, invoke), concrete.maxLocals(), concrete.maxStackSize());
                 }
-                graph = new CompilerGraph(runtime);
+                graph = new Graph<EntryPointNode>(new EntryPointNode(runtime));
                 new GraphBuilderPhase(context, runtime, concrete, null).apply(graph, true, false);
                 if (GraalOptions.ProbabilityAnalysis) {
                     new DeadCodeEliminationPhase(context).apply(graph, true, false);
@@ -135,7 +135,7 @@ public class InliningPhase extends Phase {
         }
 
         @Override
-        public void inline(CompilerGraph graph) {
+        public void inline(Graph<EntryPointNode> graph) {
             IsTypeNode isType = graph.unique(new IsTypeNode(invoke.receiver(), type));
             FixedGuardNode guard = graph.add(new FixedGuardNode(isType));
             assert invoke.predecessor() != null;
@@ -161,13 +161,13 @@ public class InliningPhase extends Phase {
         }
 
         @Override
-        public void inline(CompilerGraph graph) {
+        public void inline(Graph<EntryPointNode> graph) {
             if (GraalOptions.TraceInlining) {
                 String targetName = CiUtil.format("%H.%n(%p):%r", invoke.target, false);
                 String concreteName = CiUtil.format("%H.%n(%p):%r", concrete, false);
                 TTY.println("recording concrete method assumption: %s -> %s", targetName, concreteName);
             }
-            graph.assumptions().recordConcreteMethod(invoke.target, concrete);
+            graph.start().assumptions().recordConcreteMethod(invoke.target, concrete);
             super.inline(graph);
         }
 
@@ -178,8 +178,8 @@ public class InliningPhase extends Phase {
     }
 
     @Override
-    protected void run(Graph graph) {
-        this.graph = (CompilerGraph) graph;
+    protected void run(Graph<EntryPointNode> graph) {
+        this.graph = graph;
         inlineInfos = graph.createNodeMap();
 
         if (hints != null) {
@@ -435,11 +435,11 @@ public class InliningPhase extends Phase {
         int count;
         if (GraalOptions.ParseBeforeInlining) {
             if (!parsedMethods.containsKey(method)) {
-                    CompilerGraph graph = new CompilerGraph(runtime);
-                    new GraphBuilderPhase(context, runtime, method, null).apply(graph, true, false);
-                    new CanonicalizerPhase(context, target).apply(graph, true, false);
-                    count = graphComplexity(graph);
-                    parsedMethods.put(method, count);
+                Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(runtime));
+                new GraphBuilderPhase(context, runtime, method, null).apply(graph, true, false);
+                new CanonicalizerPhase(context, target).apply(graph, true, false);
+                count = graphComplexity(graph);
+                parsedMethods.put(method, count);
             } else {
                 count = parsedMethods.get(method);
             }
@@ -450,7 +450,7 @@ public class InliningPhase extends Phase {
         return count / normalSize;
     }
 
-    public static int graphComplexity(CompilerGraph graph) {
+    public static int graphComplexity(Graph<EntryPointNode> graph) {
         int result = 0;
         for (Node node : graph.getNodes()) {
             if (node instanceof ConstantNode || node instanceof LocalNode || node instanceof EntryPointNode || node instanceof ReturnNode || node instanceof UnwindNode) {

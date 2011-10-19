@@ -90,7 +90,7 @@ public class GraphvizPrinter {
     /**
      * Prints all nodes and edges in the specified graph.
      */
-    public void print(Graph graph, boolean shortNames) {
+    public void print(Graph<?> graph, boolean shortNames) {
         // graph.getNodes() returns all the graph's nodes, not just "roots"
         for (Node n : graph.getNodes()) {
             printNode(n, shortNames);

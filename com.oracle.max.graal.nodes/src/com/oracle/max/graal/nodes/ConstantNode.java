@@ -55,7 +55,7 @@ public final class ConstantNode extends BooleanNode {
      * @param graph
      * @return a node for a double constant
      */
-    public static ConstantNode forDouble(double d, Graph graph) {
+    public static ConstantNode forDouble(double d, Graph<?> graph) {
         return graph.unique(new ConstantNode(CiConstant.forDouble(d)));
     }
 
@@ -65,7 +65,7 @@ public final class ConstantNode extends BooleanNode {
      * @param graph
      * @return a node for a float constant
      */
-    public static ConstantNode forFloat(float f, Graph graph) {
+    public static ConstantNode forFloat(float f, Graph<?> graph) {
         return graph.unique(new ConstantNode(CiConstant.forFloat(f)));
     }
 
@@ -75,7 +75,7 @@ public final class ConstantNode extends BooleanNode {
      * @param graph
      * @return a node for an long constant
      */
-    public static ConstantNode forLong(long i, Graph graph) {
+    public static ConstantNode forLong(long i, Graph<?> graph) {
         return graph.unique(new ConstantNode(CiConstant.forLong(i)));
     }
 
@@ -85,7 +85,7 @@ public final class ConstantNode extends BooleanNode {
      * @param graph
      * @return a node for an integer constant
      */
-    public static ConstantNode forInt(int i, Graph graph) {
+    public static ConstantNode forInt(int i, Graph<?> graph) {
         return graph.unique(new ConstantNode(CiConstant.forInt(i)));
     }
 
@@ -95,7 +95,7 @@ public final class ConstantNode extends BooleanNode {
      * @param graph
      * @return a node representing the boolean
      */
-    public static ConstantNode forBoolean(boolean i, Graph graph) {
+    public static ConstantNode forBoolean(boolean i, Graph<?> graph) {
         return graph.unique(new ConstantNode(CiConstant.forBoolean(i)));
     }
 
@@ -105,7 +105,7 @@ public final class ConstantNode extends BooleanNode {
      * @param graph
      * @return a node representing the address
      */
-    public static ConstantNode forJsr(int i, Graph graph) {
+    public static ConstantNode forJsr(int i, Graph<?> graph) {
         return graph.unique(new ConstantNode(CiConstant.forJsr(i)));
     }
 
@@ -115,7 +115,7 @@ public final class ConstantNode extends BooleanNode {
      * @param graph
      * @return a node representing the object
      */
-    public static ConstantNode forObject(Object o, Graph graph) {
+    public static ConstantNode forObject(Object o, Graph<?> graph) {
         return graph.unique(new ConstantNode(CiConstant.forObject(o)));
     }
 
@@ -186,7 +186,7 @@ public final class ConstantNode extends BooleanNode {
     }
 
     private RiResolvedType getType() {
-        RiRuntime runtime = graph().runtime();
+        RiRuntime runtime = graph().start().runtime();
         if (kind.isPrimitive()) {
             return runtime.asRiType(kind);
         }
