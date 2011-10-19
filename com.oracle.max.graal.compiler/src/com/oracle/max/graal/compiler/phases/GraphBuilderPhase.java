@@ -1136,12 +1136,7 @@ public final class GraphBuilderPhase extends Phase {
 
     private void genMonitorEnter(ValueNode x, int bci) {
         int lockNumber = frameState.locksSize();
-        MonitorAddressNode lockAddress = null;
-        if (runtime.sizeOfBasicObjectLock() != 0) {
-            lockAddress = graph.unique(new MonitorAddressNode(lockNumber, GraalCompilation.compilation().compiler.target));
-            append(lockAddress);
-        }
-        MonitorEnterNode monitorEnter = graph.add(new MonitorEnterNode(x, lockAddress, lockNumber));
+        MonitorEnterNode monitorEnter = graph.add(new MonitorEnterNode(x, lockNumber));
         appendWithBCI(monitorEnter);
         frameState.lock(x);
         if (bci == FixedWithNextNode.SYNCHRONIZATION_ENTRY_BCI) {
@@ -1154,12 +1149,7 @@ public final class GraphBuilderPhase extends Phase {
         if (lockNumber < 0) {
             throw new CiBailout("monitor stack underflow");
         }
-        MonitorAddressNode lockAddress = null;
-        if (runtime.sizeOfBasicObjectLock() != 0) {
-            lockAddress = graph.unique(new MonitorAddressNode(lockNumber, GraalCompilation.compilation().compiler.target));
-            append(lockAddress);
-        }
-        appendWithBCI(graph.add(new MonitorExitNode(x, lockAddress, lockNumber)));
+        appendWithBCI(graph.add(new MonitorExitNode(x, lockNumber)));
         frameState.unlock();
     }
 
