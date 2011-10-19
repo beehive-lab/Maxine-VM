@@ -336,7 +336,7 @@ public class EscapeAnalysisPhase extends Phase {
         }
     }
 
-    private void performAnalysis(Graph graph, FixedWithNextNode node, EscapeOp op) {
+    private void performAnalysis(Graph<EntryPointNode> graph, FixedWithNextNode node, EscapeOp op) {
         Set<Node> exits = new HashSet<Node>();
         Set<InvokeNode> invokes = new HashSet<InvokeNode>();
         int iterations = 0;
