@@ -232,6 +232,8 @@ public class jmax {
             Project proj = new Project(dir, name, sourceDirs, deps);
             String eclipseOutput = get(props, pfx + "eclipse.output", null);
             proj.eclipseOutput = eclipseOutput == null ? "bin" : eclipseOutput;
+            String cs = get(props, pfx + "checkstyle", null);
+            proj.checkstyleProj = cs == null ? name : cs;
         }
 
         for (Map.Entry<String, String> e : libNames.entrySet()) {
@@ -560,6 +562,11 @@ public class jmax {
         String eclipseOutput;
 
         /**
+         * The project whose Checkstyle configuration is used by this project.
+         */
+        String checkstyleProj;
+
+        /**
          * The direct dependencies of this project.
          */
         final List<String> dependencies;
@@ -717,50 +724,42 @@ public class jmax {
             };
             changedFiles += update.changedFiles;
 
-            File dotCheckstyle = new File(projectDir, ".checkstyle");
-            update = new FileUpdater(dotCheckstyle, true, response) {
-                @Override
-                void generate(PrintStream out) {
-                    String checkstyleConfigPath;
-                    File projectCheckstyleConfig = new File(projectDir, ".checkstyle_checks.xml");
-                    if (projectCheckstyleConfig.exists()) {
-                        checkstyleConfigPath = "/" + name + "/.checkstyle_checks.xml";
-                    } else {
-                        Project p = project("com.oracle.max.base");
-                        File sharedCheckstyleConfig = new File(new File(p.baseDir, p.name), ".checkstyle_checks.xml");
-                        if (!sharedCheckstyleConfig.exists()) {
-                            throw new InternalError("Shared checkstyle config file not found: " + sharedCheckstyleConfig);
-                        }
-                        checkstyleConfigPath = "/" + p.name + "/.checkstyle_checks.xml";
-                    }
-                    out.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-                    out.println("<fileset-config file-format-version=\"1.2.0\" simple-config=\"true\">");
-                    out.println("\t<local-check-config name=\"Maxine Checks\" location=\"" + checkstyleConfigPath + "\" type=\"project\" description=\"\">");
-                    out.println("\t\t<additional-data name=\"protect-config-file\" value=\"false\"/>");
-                    out.println("\t</local-check-config>");
-                    out.println("\t<fileset name=\"all\" enabled=\"true\" check-config-name=\"Maxine Checks\" local=\"true\">");
-                    out.println("\t\t<file-match-pattern match-pattern=\".\" include-pattern=\"true\"/>");
-                    out.println("\t</fileset>");
-                    out.println("\t<filter name=\"FileTypesFilter\" enabled=\"true\">");
-                    out.println("\t\t<filter-data value=\"java\"/>");
-                    out.println("\t</filter>");
-
-                    File exclude = new File(projectDir, ".checkstyle.exclude");
-                    if (exclude.exists()) {
-                        out.println("\t<filter name=\"FilesFromPackage\" enabled=\"true\">");
-                        for (String line : readLines(exclude)) {
-                            if (!line.startsWith("#")) {
-                                File exclDir = new File(projectDir, line);
-                                assert exclDir.isDirectory() : "excluded source directory listed in " + exclude + " does not exist or is not a directory: " + exclDir;
-                                out.println("\t\t<filter-data value=\"" + line + "\"/>");
-                            }
-                        }
+            final File projectCheckstyleConfig = new File(checkstyleProj, ".checkstyle_checks.xml");
+            if (projectCheckstyleConfig.exists()) {
+                File dotCheckstyle = new File(projectDir, ".checkstyle");
+                update = new FileUpdater(dotCheckstyle, true, response) {
+                    @Override
+                    void generate(PrintStream out) {
+                        String checkstyleConfigPath = "/" + checkstyleProj + "/.checkstyle_checks.xml";
+                        out.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+                        out.println("<fileset-config file-format-version=\"1.2.0\" simple-config=\"true\">");
+                        out.println("\t<local-check-config name=\"Maxine Checks\" location=\"" + checkstyleConfigPath + "\" type=\"project\" description=\"\">");
+                        out.println("\t\t<additional-data name=\"protect-config-file\" value=\"false\"/>");
+                        out.println("\t</local-check-config>");
+                        out.println("\t<fileset name=\"all\" enabled=\"true\" check-config-name=\"Maxine Checks\" local=\"true\">");
+                        out.println("\t\t<file-match-pattern match-pattern=\".\" include-pattern=\"true\"/>");
+                        out.println("\t</fileset>");
+                        out.println("\t<filter name=\"FileTypesFilter\" enabled=\"true\">");
+                        out.println("\t\t<filter-data value=\"java\"/>");
                         out.println("\t</filter>");
+
+                        File exclude = new File(projectDir, ".checkstyle.exclude");
+                        if (exclude.exists()) {
+                            out.println("\t<filter name=\"FilesFromPackage\" enabled=\"true\">");
+                            for (String line : readLines(exclude)) {
+                                if (!line.startsWith("#")) {
+                                    File exclDir = new File(projectDir, line);
+                                    assert exclDir.isDirectory() : "excluded source directory listed in " + exclude + " does not exist or is not a directory: " + exclDir;
+                                    out.println("\t\t<filter-data value=\"" + line + "\"/>");
+                                }
+                            }
+                            out.println("\t</filter>");
+                        }
+                        out.println("</fileset-config>");
                     }
-                    out.println("</fileset-config>");
-                }
-            };
-            changedFiles += update.changedFiles;
+                };
+                changedFiles += update.changedFiles;
+            }
 
             update = new FileUpdater(new File(projectDir, ".project"), true, response) {
                 @Override
@@ -777,15 +776,19 @@ public class jmax {
                     out.println("\t\t\t<arguments>");
                     out.println("\t\t\t</arguments>");
                     out.println("\t\t</buildCommand>");
-                    out.println("\t\t<buildCommand>");
-                    out.println("\t\t\t<name>net.sf.eclipsecs.core.CheckstyleBuilder</name>");
-                    out.println("\t\t\t<arguments>");
-                    out.println("\t\t\t</arguments>");
-                    out.println("\t\t</buildCommand>");
+                    if (projectCheckstyleConfig.exists()) {
+                        out.println("\t\t<buildCommand>");
+                        out.println("\t\t\t<name>net.sf.eclipsecs.core.CheckstyleBuilder</name>");
+                        out.println("\t\t\t<arguments>");
+                        out.println("\t\t\t</arguments>");
+                        out.println("\t\t</buildCommand>");
+                    }
                     out.println("\t</buildSpec>");
                     out.println("\t<natures>");
                     out.println("\t\t<nature>org.eclipse.jdt.core.javanature</nature>");
-                    out.println("\t\t<nature>net.sf.eclipsecs.core.CheckstyleNature</nature>");
+                    if (projectCheckstyleConfig.exists()) {
+                        out.println("\t\t<nature>net.sf.eclipsecs.core.CheckstyleNature</nature>");
+                    }
                     out.println("\t</natures>");
                     out.println("</projectDescription>");
                 }
