@@ -471,13 +471,13 @@ public final class LinearScan {
                     assert op.code == LIROpcode.Move : "only moves can have a opId of -1";
                     assert resultOperand.isVariable() : "LinearScan inserts only moves to variables";
 
-                    LIROp1 op1 = (LIROp1) op;
+                    LIRMove op1 = (LIRMove) op;
                     Interval curInterval = intervalFor(resultOperand);
 
                     if (!curInterval.location().isRegister() && curInterval.alwaysInMemory()) {
                         // move target is a stack slot that is always correct, so eliminate instruction
                         if (GraalOptions.TraceLinearScanLevel >= 4) {
-                            TTY.println("eliminating move from interval %d to %d", operandNumber(op1.operand()), operandNumber(op1.result()));
+                            TTY.println("eliminating move from interval %d to %d", operandNumber(op1.operand(0)), operandNumber(op1.result()));
                         }
                         instructions.set(j, null); // null-instructions are deleted by assignRegNum
                     }
@@ -1006,7 +1006,7 @@ public final class LinearScan {
      */
     RegisterPriority registerPriorityOfOutputOperand(LIRInstruction op, CiValue operand) {
         if (op.code == LIROpcode.Move) {
-            LIROp1 move = (LIROp1) op;
+            LIRMove move = (LIRMove) op;
             CiValue res = move.result();
             boolean resultInMemory = res.isVariable() && operands.mustStartInMemory((CiVariable) res);
 
@@ -1015,7 +1015,7 @@ public final class LinearScan {
                 // This interval will always get a stack slot first, so return noUse.
                 return RegisterPriority.None;
 
-            } else if (move.operand().isStackSlot()) {
+            } else if (move.operand(0).isStackSlot()) {
                 // method argument (condition must be equal to handleMethodArguments)
                 return RegisterPriority.None;
 
@@ -1036,7 +1036,7 @@ public final class LinearScan {
      */
     RegisterPriority registerPriorityOfInputOperand(LIRInstruction op, CiValue operand) {
         if (op.code == LIROpcode.Move) {
-            LIROp1 move = (LIROp1) op;
+            LIRMove move = (LIRMove) op;
             CiValue res = move.result();
             boolean resultInMemory = res.isVariable() && operands.mustStartInMemory((CiVariable) res);
 
@@ -1045,7 +1045,7 @@ public final class LinearScan {
                 // To avoid moves from stack to stack (not allowed) force the input operand to a register
                 return RegisterPriority.MustHaveRegister;
 
-            } else if (move.operand().isVariableOrRegister() && move.result().isVariableOrRegister()) {
+            } else if (move.operand(0).isVariableOrRegister() && move.result().isVariableOrRegister()) {
                 // The input operand is not forced to a register (moves from stack to register are allowed),
                 // but it is faster if the input operand is in a register
                 return RegisterPriority.ShouldHaveRegister;
@@ -1070,9 +1070,8 @@ public final class LinearScan {
                     case Sub:
                     case Mul:
                     case Div: {
-                        LIROp2 op2 = (LIROp2) op;
-                        if (op2.operand1() != op2.operand2() && op2.operand2() == operand) {
-                            assert (op2.result().isVariableOrRegister() || op.code == LIROpcode.Cmp) && op2.operand1().isVariableOrRegister() : "cannot mark second operand as stack if others are not in register";
+                        if (op.operand(0) != op.operand(1) && op.operand(1) == operand) {
+                            assert (op.result().isVariableOrRegister() || op.code == LIROpcode.Cmp) && op.operand(0).isVariableOrRegister() : "cannot mark second operand as stack if others are not in register";
                             return RegisterPriority.ShouldHaveRegister;
                         }
                     }
@@ -1086,9 +1085,8 @@ public final class LinearScan {
                     case LogicAnd:
                     case LogicOr:
                     case LogicXor: {
-                        LIROp2 op2 = (LIROp2) op;
-                        if (op2.operand1() != op2.operand2() && op2.operand2() == operand) {
-                            assert (op2.result().isVariableOrRegister() || op.code == LIROpcode.Cmp) && op2.operand1().isVariableOrRegister() : "cannot mark second operand as stack if others are not in register";
+                        if (op.operand(0) != op.operand(1) && op.operand(1) == operand) {
+                            assert (op.result().isVariableOrRegister() || op.code == LIROpcode.Cmp) && op.operand(0).isVariableOrRegister() : "cannot mark second operand as stack if others are not in register";
                             return RegisterPriority.ShouldHaveRegister;
                         }
                     }
@@ -1108,23 +1106,21 @@ public final class LinearScan {
      */
     void handleMethodArguments(LIRInstruction op) {
         if (op.code == LIROpcode.Move) {
-            LIROp1 move = (LIROp1) op;
-
-            if (move.operand().isStackSlot()) {
-                CiStackSlot slot = (CiStackSlot) move.operand();
+            if (op.operand(0).isStackSlot()) {
+                CiStackSlot slot = (CiStackSlot) op.operand(0);
                 if (GraalOptions.DetailedAsserts) {
                     int argSlots = compilation.method.signature().argumentSlots(!isStatic(compilation.method.accessFlags()));
                     assert slot.index() >= 0 && slot.index() < argSlots;
-                    assert move.id() > 0 : "invalid id";
-                    assert blockForId(move.id()).numberOfPreds() == 0 : "move from stack must be in first block";
-                    assert move.result().isVariable() : "result of move must be a variable";
+                    assert op.id() > 0 : "invalid id";
+                    assert blockForId(op.id()).numberOfPreds() == 0 : "move from stack must be in first block";
+                    assert op.result().isVariable() : "result of move must be a variable";
 
                     if (GraalOptions.TraceLinearScanLevel >= 4) {
-                        TTY.println("found move from stack slot %s to %s", slot, move.result());
+                        TTY.println("found move from stack slot %s to %s", slot, op.result());
                     }
                 }
 
-                Interval interval = intervalFor(move.result());
+                Interval interval = intervalFor(op.result());
                 CiStackSlot copySlot = slot;
                 if (GraalOptions.CopyPointerStackArguments && slot.kind == CiKind.Object) {
                     copySlot = allocateSpillSlot(slot.kind);
@@ -1139,10 +1135,8 @@ public final class LinearScan {
         switch (op.code) {
             case Move: // fall through
             case Convert: {
-                LIROp1 move = (LIROp1) op;
-
-                CiValue moveFrom = move.operand();
-                CiValue moveTo = move.result();
+                CiValue moveFrom = op.operand(0);
+                CiValue moveTo = op.result();
 
                 if (moveTo.isVariableOrRegister() && moveFrom.isVariableOrRegister()) {
                     Interval from = intervalFor(moveFrom);
@@ -1150,17 +1144,15 @@ public final class LinearScan {
                     if (from != null && to != null) {
                         to.setLocationHint(from);
                         if (GraalOptions.TraceLinearScanLevel >= 4) {
-                            TTY.println("operation at opId %d: added hint from interval %d to %d", move.id(), from.operandNumber, to.operandNumber);
+                            TTY.println("operation at opId %d: added hint from interval %d to %d", op.id(), from.operandNumber, to.operandNumber);
                         }
                     }
                 }
                 break;
             }
             case Cmove: {
-                LIROp2 cmove = (LIROp2) op;
-
-                CiValue moveFrom = cmove.operand1();
-                CiValue moveTo = cmove.result();
+                CiValue moveFrom = op.operand(0);
+                CiValue moveTo = op.result();
 
                 if (moveTo.isVariableOrRegister() && moveFrom.isVariableOrRegister()) {
                     Interval from = intervalFor(moveFrom);
@@ -1168,7 +1160,7 @@ public final class LinearScan {
                     if (from != null && to != null) {
                         to.setLocationHint(from);
                         if (GraalOptions.TraceLinearScanLevel >= 4) {
-                            TTY.println("operation at opId %d: added hint from interval %d to %d", cmove.id(), from.operandNumber, to.operandNumber);
+                            TTY.println("operation at opId %d: added hint from interval %d to %d", op.id(), from.operandNumber, to.operandNumber);
                         }
                     }
                 }

@@ -85,17 +85,6 @@ public class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    protected CiAddress genAddress(CiValue base, CiValue index, int shift, int disp, CiKind kind) {
-        assert base.isVariableOrRegister();
-        if (index.isConstant()) {
-            return new CiAddress(kind, base, (((CiConstant) index).asInt() << shift) + disp);
-        } else {
-            assert index.isVariableOrRegister();
-            return new CiAddress(kind, base, (index), CiAddress.Scale.fromShift(shift), disp);
-        }
-    }
-
-    @Override
     protected void genCmpMemInt(Condition condition, CiValue base, int disp, int c, LIRDebugInfo info) {
         lir.cmpMemInt(condition, base, disp, c, info);
     }
@@ -427,18 +416,9 @@ public class AMD64LIRGenerator extends LIRGenerator {
     @Override
     public void visitCompareAndSwap(CompareAndSwapNode node) {
         CiKind kind = node.newValue().kind;
-        assert (kind == node.expected().kind);
+        assert kind == node.expected().kind;
 
-        CiValue expected;
-        if (kind == CiKind.Object) {
-            expected = force(node.expected(), RAX_O);
-        } else if (kind == CiKind.Int) {
-            expected = force(node.expected(), RAX_I);
-        } else if (kind == CiKind.Long) {
-            expected = force(node.expected(), RAX_L);
-        } else {
-            throw Util.shouldNotReachHere();
-        }
+        CiValue expected = force(node.expected(), AMD64.rax.asValue(kind));
         CiValue newValue = load(node.newValue());
         CiValue object = load(node.object());
         CiValue offset;
@@ -453,12 +433,8 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
         if (kind == CiKind.Object) {
             preGCWriteBarrier(address, false, null);
-            lir.casObj(address, expected, newValue);
-        } else if (kind == CiKind.Int) {
-            lir.casInt(address, expected, newValue);
-        } else if (kind == CiKind.Long) {
-            lir.casLong(address, expected, newValue);
         }
+        lir.cas(address, expected, newValue, expected);
 
         CiValue result = createResultVariable(node);
         lir.cmove(Condition.EQ, CiConstant.TRUE, CiConstant.FALSE, result);
