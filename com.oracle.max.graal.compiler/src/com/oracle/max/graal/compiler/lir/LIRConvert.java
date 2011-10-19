@@ -27,14 +27,10 @@ import com.oracle.max.graal.nodes.calc.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiValue.Formatter;
 
-/**
- * The {@code LIRConvert} class definition.
- *
- */
-public class LIRConvert extends LIROp1 {
+public class LIRConvert extends LIRInstruction {
 
     public final ConvertNode.Op opcode;
-    public CompilerStub stub;
+    public final CompilerStub stub;
 
     /**
      * Constructs a new instruction LIRConvert for a given operand.
@@ -42,19 +38,10 @@ public class LIRConvert extends LIROp1 {
      * @param operand the input operand for this instruction
      * @param result the result operand for this instruction
      */
-    public LIRConvert(ConvertNode.Op opcode, CiValue operand, CiValue result) {
-        super(LIROpcode.Convert, operand, result);
+    public LIRConvert(LIROpcode code, CiValue result, ConvertNode.Op opcode, CompilerStub stub, CiValue operand) {
+        super(code, result, null, operand);
         this.opcode = opcode;
-    }
-
-    /**
-     * Emits target assembly code for this LIRConvert instruction.
-     *
-     * @param masm the LIRAssembler
-     */
-    @Override
-    public void emitCode(LIRAssembler masm) {
-        masm.emitConvert(this);
+        this.stub = stub;
     }
 
     /**

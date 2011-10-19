@@ -27,9 +27,6 @@ import com.oracle.max.graal.nodes.calc.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiValue.Formatter;
 
-/**
- *
- */
 public class LIRBranch extends LIRInstruction {
 
     private Condition cond;
@@ -46,41 +43,14 @@ public class LIRBranch extends LIRInstruction {
     private LIRBlock unorderedBlock;
 
 
-    public LIRBranch(Condition cond, Label label) {
-        this(cond, label, null);
-    }
-
-    /**
-     * Creates a new LIRBranch instruction.
-     *
-     * @param cond the branch condition
-     * @param label target label
-     *
-     */
-    public LIRBranch(Condition cond, Label label, LIRDebugInfo info) {
-        super(LIROpcode.Branch, CiValue.IllegalValue, info, false);
+    public LIRBranch(LIROpcode code, Condition cond, Label label, LIRDebugInfo info) {
+        super(code, CiValue.IllegalValue, info);
         this.cond = cond;
         this.label = label;
     }
 
-    /**
-     * Creates a new LIRBranch instruction.
-     *
-     * @param cond
-     * @param kind
-     * @param block
-     *
-     */
-    public LIRBranch(Condition cond, LIRBlock block) {
-        super(LIROpcode.Branch, CiValue.IllegalValue, block.debugInfo(), false);
-        this.cond = cond;
-        this.label = block.label();
-        this.block = block;
-        this.unorderedBlock = null;
-    }
-
-    public LIRBranch(Condition cond, LIRBlock block, LIRBlock ublock) {
-        super(LIROpcode.CondFloatBranch, CiValue.IllegalValue, (block.debugInfo() != null ? block.debugInfo() : (ublock != null ? ublock.debugInfo() : null)), false);
+    public LIRBranch(LIROpcode code, Condition cond, LIRBlock block, LIRBlock ublock) {
+        super(code, CiValue.IllegalValue, (block.debugInfo() != null ? block.debugInfo() : (ublock != null ? ublock.debugInfo() : null)));
         this.cond = cond;
         this.label = block.label();
         this.block = block;
@@ -106,24 +76,6 @@ public class LIRBranch extends LIRInstruction {
         return unorderedBlock;
     }
 
-    public void changeBlock(LIRBlock b) {
-        assert block != null : "must have old block";
-        assert block.label() == label() : "must be equal";
-        assert b != null;
-
-        this.block = b;
-        this.label = b.label();
-    }
-
-    public void negateCondition() {
-        cond = cond.negate();
-    }
-
-    @Override
-    public void emitCode(LIRAssembler masm) {
-        masm.emitBranch(this);
-    }
-
     @Override
     public String operationString(Formatter operandFmt) {
         StringBuilder buf = new StringBuilder(cond().operator).append(' ');
@@ -146,7 +98,7 @@ public class LIRBranch extends LIRInstruction {
             block = newBlock;
             LIRInstruction instr = newBlock.lir().instructionsList().get(0);
             assert instr instanceof LIRLabel : "first instruction of block must be label";
-            label = ((LIRLabel) instr).label();
+            label = ((LIRLabel) instr).label;
         }
         if (unorderedBlock == oldBlock) {
             unorderedBlock = newBlock;

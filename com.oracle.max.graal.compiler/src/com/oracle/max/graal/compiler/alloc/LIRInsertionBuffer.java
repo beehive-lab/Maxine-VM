@@ -99,7 +99,7 @@ public final class LIRInsertionBuffer {
     }
 
     void move(int index, CiValue src, CiValue dst, LIRDebugInfo info) {
-        append(index, new LIROp1(LIROpcode.Move, src, dst, dst.kind, info));
+        append(index, new LIRMove(LIROpcode.Move, src, dst, dst.kind, info));
     }
 
     // Implementation of LIRInsertionBuffer

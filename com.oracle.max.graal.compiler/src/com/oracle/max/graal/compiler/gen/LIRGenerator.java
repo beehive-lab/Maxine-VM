@@ -1333,11 +1333,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
                 } else {
                     assert loc.isStackSlot();
                     CiStackSlot slot = (CiStackSlot) loc;
-                    if (slot.kind == CiKind.Long || slot.kind == CiKind.Double) {
-                        lir.unalignedMove(arg, slot);
-                    } else {
-                        lir.move(arg, slot);
-                    }
+                    lir.move(arg, slot);
                 }
             }
             argumentList = Arrays.asList(cc.locations);
@@ -1674,11 +1670,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
                     CiStackSlot slot = (CiStackSlot) operand;
                     assert !slot.inCallerFrame();
                     param.loadForStore(slot.kind);
-                    if (slot.kind == CiKind.Long || slot.kind == CiKind.Double) {
-                        lir.unalignedMove(param.result(), slot);
-                    } else {
-                        lir.move(param.result(), slot);
-                    }
+                    lir.move(param.result(), slot);
 
                     if (arg.kind == CiKind.Object && pointerSlots != null) {
                         // This slot must be marked explicitly in the pointer map.
@@ -1747,8 +1739,6 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     protected abstract boolean canStoreAsConstant(ValueNode i, CiKind kind);
 
     protected abstract boolean strengthReduceMultiply(CiValue left, int constant, CiValue result, CiValue tmp);
-
-    protected abstract CiAddress genAddress(CiValue base, CiValue index, int shift, int disp, CiKind kind);
 
     protected abstract void genCmpMemInt(Condition condition, CiValue base, int disp, int c, LIRDebugInfo info);
 

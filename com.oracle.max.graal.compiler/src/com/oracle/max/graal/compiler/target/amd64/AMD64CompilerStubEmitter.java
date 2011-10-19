@@ -193,7 +193,7 @@ public class AMD64CompilerStubEmitter {
             // Is the value destroyed?
             if (template.isParameterDestroyed(param.parameterIndex)) {
                 CiValue newOp = newRegister(op.kind, allocatableRegisters);
-                lasm.moveOp(op, newOp, op.kind, null, false);
+                lasm.moveOp(op, newOp, op.kind, null);
                 operands[param.index] = newOp;
             } else {
                 operands[param.index] = op;

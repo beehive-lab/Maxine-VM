@@ -186,8 +186,7 @@ final class ControlFlowOptimizer {
 
                             if (prevBranch.block() == code.get(i + 1) && prevBranch.info == null) {
                                 // eliminate a conditional branch to the immediate successor
-                                prevBranch.changeBlock(lastBranch.block());
-                                prevBranch.negateCondition();
+                                instructions.set(instructions.size() - 2, new LIRBranch(prevBranch.code, prevBranch.cond().negate(), lastBranch.block(), lastBranch.unorderedBlock()));
                                 Util.truncate(instructions, instructions.size() - 1);
                             }
                         }
@@ -217,8 +216,8 @@ final class ControlFlowOptimizer {
 
                 assert curLastOp.info == null : "return instructions do not have debug information";
 
-                assert curLastOp instanceof LIROp1 : "return must be LIROp1";
-                CiValue returnOpr = ((LIROp1) curLastOp).operand();
+                assert curLastOp instanceof LIRMove : "return must be LIROp1";
+                CiValue returnOpr = ((LIRMove) curLastOp).operand(0);
 
                 for (int j = block.numberOfPreds() - 1; j >= 0; j--) {
                     LIRBlock pred = block.predAt(j);
@@ -232,7 +231,7 @@ final class ControlFlowOptimizer {
                         if (predLastBranch.block() == block && predLastBranch.cond() == Condition.TRUE && predLastBranch.info == null) {
                             // replace the jump to a return with a direct return
                             // Note: currently the edge between the blocks is not deleted
-                            predInstructions.set(predInstructions.size() - 1, new LIROp1(LIROpcode.Return, returnOpr));
+                            predInstructions.set(predInstructions.size() - 1, new LIRInstruction(LIROpcode.Return, CiValue.IllegalValue, null, returnOpr));
                         }
                     }
                 }
