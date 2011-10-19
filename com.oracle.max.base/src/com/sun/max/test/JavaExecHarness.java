@@ -48,6 +48,35 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
         public String toString() {
             return codeLiteral;
         }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof CodeLiteral)) {
+                return resolve().equals(obj);
+            }
+            return super.equals(obj);
+        }
+
+        public Object resolve() {
+            String s = codeLiteral;
+            String className = s.substring(0, s.lastIndexOf('.'));
+            String fieldName = s.substring(s.lastIndexOf('.') + 1);
+            Class klass;
+            try {
+                klass = Class.forName(className);
+                return klass.getField(fieldName).get(null);
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            } catch (IllegalArgumentException e) {
+                throw new RuntimeException(e);
+            } catch (SecurityException e) {
+                throw new RuntimeException(e);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            } catch (NoSuchFieldException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     public class MethodCall extends CodeLiteral {

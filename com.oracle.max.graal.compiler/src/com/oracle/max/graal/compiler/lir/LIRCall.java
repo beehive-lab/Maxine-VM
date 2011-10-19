@@ -75,24 +75,6 @@ public class LIRCall extends LIRInstruction {
         this.target = target;
     }
 
-    /**
-     * Emits target assembly code for this instruction.
-     *
-     * @param masm the target assembler
-     */
-    @Override
-    public void emitCode(LIRAssembler masm) {
-        masm.emitCall(this);
-    }
-
-    /**
-     * Returns the receiver for this method call.
-     * @return the receiver
-     */
-    public CiValue receiver() {
-        return operand(0);
-    }
-
     public RiMethod method() {
         return (RiMethod) target;
     }

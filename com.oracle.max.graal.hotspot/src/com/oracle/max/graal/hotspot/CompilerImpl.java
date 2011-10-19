@@ -148,9 +148,6 @@ public final class CompilerImpl implements Compiler, Remote {
             RiRegisterConfig registerConfig;
 
             // these options are important - graal will not generate correct code without them
-            GraalOptions.GenSpecialDivChecks = true;
-            GraalOptions.CallSiteUniquePC = true;
-            GraalOptions.InvokeSnippetAfterArguments = true;
             GraalOptions.StackShadowPages = config.stackShadowPages;
 
             registerConfig = getRuntime().globalStubRegConfig;

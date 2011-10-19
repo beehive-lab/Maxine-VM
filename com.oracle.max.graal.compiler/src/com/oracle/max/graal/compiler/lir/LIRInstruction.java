@@ -34,7 +34,7 @@ import com.sun.cri.ci.*;
 /**
  * The {@code LIRInstruction} class definition.
  */
-public abstract class LIRInstruction {
+public class LIRInstruction {
 
     private static final LIROperand ILLEGAL_SLOT = new LIROperand(CiValue.IllegalValue);
 
@@ -150,8 +150,12 @@ public abstract class LIRInstruction {
      * @param info the {@link LIRDebugInfo} info that is to be preserved for the instruction. This will be {@code null} when no debug info is required for the instruction.
      * @param hasCall specifies if all caller-saved registers are destroyed by this instruction
      */
-    public LIRInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info, boolean hasCall) {
-        this(opcode, result, info, hasCall, 0, 0, NO_OPERANDS);
+    public LIRInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info) {
+        this(opcode, result, info, false, 0, 0, NO_OPERANDS);
+    }
+
+    public LIRInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info, CiValue... operands) {
+        this (opcode, result, info, false, 0, 0, operands);
     }
 
     /**
@@ -182,12 +186,7 @@ public abstract class LIRInstruction {
         assert opcode != LIROpcode.Move || result != CiValue.IllegalValue;
         allocatorOperands = new ArrayList<CiValue>(operands.length + 3);
         this.result = initOutput(result);
-/*
-        GraalMetrics.LIRInstructions++;
 
-        if (opcode == LIROpcode.Move) {
-            GraalMetrics.LIRMoveInstructions++;
-        }*/
         id = -1;
         this.operands = new LIROperand[operands.length];
         initInputsAndTemps(tempInput, temp, operands);
@@ -367,13 +366,6 @@ public abstract class LIRInstruction {
     public String name() {
         return code.name();
     }
-
-    /**
-     * Abstract method to be used to emit target code for this instruction.
-     *
-     * @param masm the target assembler.
-     */
-    public abstract void emitCode(LIRAssembler masm);
 
     /**
      * Gets the operation performed by this instruction in terms of its operands as a string.

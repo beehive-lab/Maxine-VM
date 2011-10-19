@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,20 +22,28 @@
  */
 package com.oracle.max.graal.compiler.lir;
 
-import com.sun.cri.bytecode.*;
+import com.oracle.max.graal.nodes.calc.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiValue.Formatter;
 
-/**
- * LIR instruction used in translating {@link Bytecodes#LSB} and {@link Bytecodes#MSB}.
- */
-public class LIRSignificantBit extends LIRInstruction {
+public class LIRCondition extends LIRInstruction {
 
-    public LIRSignificantBit(LIROpcode opcode, CiValue operand, CiValue result) {
-        super(opcode, result, null, false, 1, 0, operand);
+    /**
+     * The condition of this instruction.
+     */
+    public final Condition condition;
+
+    public LIRCondition(LIROpcode opcode, CiValue result, LIRDebugInfo info, Condition condition, CiValue opr1, CiValue opr2) {
+        super(opcode, result, info, opr1, opr2);
+        this.condition = condition;
     }
 
+    /**
+     * Prints this instruction.
+     */
     @Override
-    public void emitCode(LIRAssembler masm) {
-        masm.emitSignificantBitOp(code == LIROpcode.Msb,  operand(0), result());
+    public String operationString(Formatter operandFmt) {
+        return condition.toString() + " " + super.operationString(operandFmt);
     }
 }
+

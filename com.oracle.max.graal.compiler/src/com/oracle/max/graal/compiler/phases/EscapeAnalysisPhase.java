@@ -153,7 +153,7 @@ public class EscapeAnalysisPhase extends Phase {
 
         private List<Block> blocks;
         private final Map<Object, Integer> fields = new HashMap<Object, Integer>();
-        private final Map<Block, BlockExitState> exitStates = new HashMap<Block, BlockExitState>();
+        private final Map<Block, BlockExitState> exitStates = new IdentityHashMap<Block, BlockExitState>();
 
         private final EscapeOp op;
         private final Graph<EntryPointNode> graph;

@@ -123,7 +123,7 @@ public class ComputeProbabilityPhase extends Phase {
     }
 
     public Set<LoopInfo> loopInfos = new HashSet<LoopInfo>();
-    public Map<MergeNode, Set<LoopInfo>> mergeLoops = new HashMap<MergeNode, Set<LoopInfo>>();
+    public Map<MergeNode, Set<LoopInfo>> mergeLoops = new IdentityHashMap<MergeNode, Set<LoopInfo>>();
 
     private class Probability implements MergeableState<Probability> {
         public double probability;

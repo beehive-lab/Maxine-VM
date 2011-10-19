@@ -43,18 +43,6 @@ public class LIRTableSwitch extends LIRInstruction {
     }
 
     @Override
-    public void emitCode(LIRAssembler masm) {
-        masm.emitTableSwitch(this);
-    }
-
-    /**
-     * @return the input value to this switch
-     */
-    public CiValue value() {
-        return operand(0);
-    }
-
-    @Override
     public String operationString(Formatter operandFmt) {
         StringBuilder buf = new StringBuilder(super.operationString(operandFmt));
         buf.append("\ndefault: [B").append(defaultTarget.blockID()).append(']');
