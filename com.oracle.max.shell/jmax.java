@@ -685,9 +685,15 @@ public class jmax {
                     // Every Java program depends on the JRE
                     out.println("\t<classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER\"/>");
 
-                    for (String name : dependencies) {
-                        Library l = jmax.libs.get(name);
-                        if (l != null) {
+                    List<Dependency> deps = new ArrayList<Dependency>();
+                    allDeps(deps, true);
+                    for (Dependency dep : deps) {
+                        if (dep == Project.this) {
+                            continue;
+                        }
+                        String name = dep.name;
+                        if (dep instanceof Library) {
+                            Library l = (Library) dep;
                             if (l.eclipseContainer != null) {
                                 out.println("\t<classpathentry exported=\"true\" kind=\"con\" path=\"" + l.eclipseContainer + "\"/>");
                             } else {
