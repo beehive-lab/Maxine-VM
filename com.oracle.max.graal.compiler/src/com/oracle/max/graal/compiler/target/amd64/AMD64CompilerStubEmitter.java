@@ -193,7 +193,7 @@ public class AMD64CompilerStubEmitter {
             // Is the value destroyed?
             if (template.isParameterDestroyed(param.parameterIndex)) {
                 CiValue newOp = newRegister(op.kind, allocatableRegisters);
-                lasm.moveOp(op, newOp, op.kind, null, false);
+                lasm.moveOp(op, newOp, op.kind, null);
                 operands[param.index] = newOp;
             } else {
                 operands[param.index] = op;
@@ -351,10 +351,8 @@ public class AMD64CompilerStubEmitter {
         int before = asm.codeBuffer.position();
         asm.call();
         int after = asm.codeBuffer.position();
-        if (GraalOptions.CallSiteUniquePC) {
-            asm.nop();
-        }
         tasm.recordDirectCall(before, after - before, comp.compiler.runtime.asCallTarget(call), null);
+        asm.ensureUniquePC();
 
         if (call.resultKind != CiKind.Void) {
             CiRegister returnRegister = comp.registerConfig.getReturnRegister(call.resultKind);

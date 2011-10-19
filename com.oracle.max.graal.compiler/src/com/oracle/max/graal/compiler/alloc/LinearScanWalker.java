@@ -830,10 +830,10 @@ final class LinearScanWalker extends IntervalWalker {
         if (op.code != LIROpcode.Move) {
             return false;
         }
-        assert op instanceof LIROp1 : "move must be LIROp1";
+        assert op instanceof LIRMove : "move must be LIROp1";
 
-        CiValue input = ((LIROp1) op).operand();
-        CiValue result = ((LIROp1) op).result();
+        CiValue input = ((LIRMove) op).operand(0);
+        CiValue result = ((LIRMove) op).result();
         return input.isVariable() && result.isVariable() && input == from.operand && result == to.operand;
     }
 

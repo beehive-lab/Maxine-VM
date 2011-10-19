@@ -112,7 +112,6 @@ public class C1XGraal implements RuntimeCompiler {
     public void initialize(Phase phase) {
         if (isHosted() && !optionsRegistered) {
             GraalOptions.StackShadowPages = VmThread.STACK_SHADOW_PAGES;
-            GraalOptions.CallSiteUniquePC = true;
             C1XOptions.OptIntrinsify = false; // TODO (ds): remove once intrinisification works for Maxine
             VMOptions.addFieldOptions("-G:", GraalOptions.class, null);
             VMOptions.addFieldOptions("-C1X:", C1XOptions.class, null);
