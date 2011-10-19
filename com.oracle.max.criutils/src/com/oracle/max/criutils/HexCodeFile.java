@@ -20,13 +20,16 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.cri.ci;
+package com.oracle.max.criutils;
 
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.regex.*;
 
+import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
+import com.sun.cri.ci.CiTargetMethod.CodeComment;
 import com.sun.cri.ci.CiTargetMethod.JumpTable;
 import com.sun.cri.ci.CiTargetMethod.LookupTable;
 
@@ -82,7 +85,7 @@ import com.sun.cri.ci.CiTargetMethod.LookupTable;
  *
  * </pre>
  */
-public class CiHexCodeFile {
+public class HexCodeFile {
 
     public static final String NEW_LINE = CiUtil.NEW_LINE;
     public static final String SECTION_DELIM = " <||@";
@@ -126,7 +129,7 @@ public class CiHexCodeFile {
 
     public final long startAddress;
 
-    public CiHexCodeFile(byte[] code, long startAddress, String isa, int wordWidth) {
+    public HexCodeFile(byte[] code, long startAddress, String isa, int wordWidth) {
         this.code = code;
         this.startAddress = startAddress;
         this.isa = isa;
@@ -134,9 +137,9 @@ public class CiHexCodeFile {
     }
 
     /**
-     * Parses a string in the format produced by {@link #toString()} to produce a {@link CiHexCodeFile} object.
+     * Parses a string in the format produced by {@link #toString()} to produce a {@link HexCodeFile} object.
      */
-    public static CiHexCodeFile parse(String source, String sourceName) {
+    public static HexCodeFile parse(String source, String sourceName) {
         return new Parser(source, sourceName).hcf;
     }
 
@@ -157,7 +160,7 @@ public class CiHexCodeFile {
     public void writeTo(OutputStream out) {
         PrintStream ps = out instanceof PrintStream ? (PrintStream) out : new PrintStream(out);
         ps.printf("Platform %s %d %s%n",  isa, wordWidth, SECTION_DELIM);
-        ps.printf("HexCode %x %s %s%n", startAddress, CiHexCodeFile.hexCodeString(code), SECTION_DELIM);
+        ps.printf("HexCode %x %s %s%n", startAddress, HexCodeFile.hexCodeString(code), SECTION_DELIM);
 
         for (JumpTable table : jumpTables) {
             ps.printf("JumpTable %d %d %d %d %s%n", table.position, table.entrySize, table.low, table.high, SECTION_DELIM);
@@ -218,6 +221,27 @@ public class CiHexCodeFile {
     }
 
     /**
+     * Adds any jump tables, lookup tables or code comments from a list of code annotations.
+     */
+    public static void addAnnotations(HexCodeFile hcf, List<CodeAnnotation> annotations) {
+        if (annotations == null || annotations.isEmpty()) {
+            return;
+        }
+        for (CodeAnnotation a : annotations) {
+            if (a instanceof JumpTable) {
+                JumpTable table = (JumpTable) a;
+                hcf.jumpTables.add(table);
+            } else if (a instanceof LookupTable) {
+                LookupTable table = (LookupTable) a;
+                hcf.lookupTables.add(table);
+            } else if (a instanceof CodeComment) {
+                CodeComment comment = (CodeComment) a;
+                hcf.addComment(comment.position, comment.value);
+            }
+        }
+    }
+
+    /**
      * Modifies a string to mangle any substrings matching {@link #SECTION_DELIM}.
      */
     public static String encodeString(String s) {
@@ -229,8 +253,8 @@ public class CiHexCodeFile {
     }
 
     /**
-     * Helper class to parse a string in the format produced by {@link CiHexCodeFile#toString()}
-     * and produce a {@link CiHexCodeFile} object.
+     * Helper class to parse a string in the format produced by {@link HexCodeFile#toString()}
+     * and produce a {@link HexCodeFile} object.
      */
     static class Parser {
         private static final Field offsetField = stringField("offset");
@@ -252,7 +276,7 @@ public class CiHexCodeFile {
         int wordWidth;
         byte[] code;
         long startAddress;
-        CiHexCodeFile hcf;
+        HexCodeFile hcf;
 
         Parser(String source, String sourceName) {
             this.input = storage(source);
@@ -263,7 +287,7 @@ public class CiHexCodeFile {
         void makeHCF() {
             if (hcf == null) {
                 if (isa != null && wordWidth != 0 && code != null) {
-                    hcf = new CiHexCodeFile(code, startAddress, isa, wordWidth);
+                    hcf = new HexCodeFile(code, startAddress, isa, wordWidth);
                 }
             }
         }
@@ -316,7 +340,7 @@ public class CiHexCodeFile {
         String errorMessage(int offset, String message) {
             assert offset < input.length();
             InputPos inputPos = filePos(offset);
-            int lineEnd = input.indexOf(CiHexCodeFile.NEW_LINE, offset);
+            int lineEnd = input.indexOf(HexCodeFile.NEW_LINE, offset);
             int lineStart = offset - inputPos.col;
             String line = lineEnd == -1 ? input.substring(lineStart) : input.substring(lineStart, lineEnd);
             return String.format("%s:%d: %s%n%s%n%" + (inputPos.col + 1) + "s", inputSource, inputPos.line, message, line, "^");
@@ -336,10 +360,10 @@ public class CiHexCodeFile {
             int line = 1;
             int lineEnd = 0;
             int lineStart = 0;
-            while ((lineEnd = input.indexOf(CiHexCodeFile.NEW_LINE, lineStart)) != -1) {
+            while ((lineEnd = input.indexOf(HexCodeFile.NEW_LINE, lineStart)) != -1) {
                 if (lineEnd < index) {
                     line++;
-                    lineStart = lineEnd + CiHexCodeFile.NEW_LINE.length();
+                    lineStart = lineEnd + HexCodeFile.NEW_LINE.length();
                 } else {
                     break;
                 }
@@ -370,23 +394,23 @@ public class CiHexCodeFile {
             if (section.isEmpty()) {
                 return;
             }
-            Matcher m = CiHexCodeFile.SECTION.matcher(section);
-            check(m.matches(), section, "Section does not match pattern " + CiHexCodeFile.SECTION);
+            Matcher m = HexCodeFile.SECTION.matcher(section);
+            check(m.matches(), section, "Section does not match pattern " + HexCodeFile.SECTION);
 
             String header = m.group(1);
             String body = m.group(2);
 
             if (header.equals("Platform")) {
                 check(isa == null, body, "Duplicate Platform section found");
-                m = CiHexCodeFile.PLATFORM.matcher(body);
-                check(m.matches(), body, "Platform does not match pattern " + CiHexCodeFile.PLATFORM);
+                m = HexCodeFile.PLATFORM.matcher(body);
+                check(m.matches(), body, "Platform does not match pattern " + HexCodeFile.PLATFORM);
                 isa = m.group(1);
                 wordWidth = parseInt(m.group(2));
                 makeHCF();
             } else if (header.equals("HexCode")) {
                 check(code == null, body, "Duplicate Code section found");
-                m = CiHexCodeFile.HEX_CODE.matcher(body);
-                check(m.matches(), body, "Code does not match pattern " + CiHexCodeFile.HEX_CODE);
+                m = HexCodeFile.HEX_CODE.matcher(body);
+                check(m.matches(), body, "Code does not match pattern " + HexCodeFile.HEX_CODE);
                 String hexAddress = m.group(1);
                 startAddress = Long.valueOf(hexAddress, 16);
                 String hexCode = m.group(2);
@@ -403,22 +427,22 @@ public class CiHexCodeFile {
                 makeHCF();
             } else if (header.equals("Comment")) {
                 checkHCF("Comment", header);
-                m = CiHexCodeFile.COMMENT.matcher(body);
-                check(m.matches(), body, "Comment does not match pattern " + CiHexCodeFile.COMMENT);
+                m = HexCodeFile.COMMENT.matcher(body);
+                check(m.matches(), body, "Comment does not match pattern " + HexCodeFile.COMMENT);
                 int pos = parseInt(m.group(1));
                 String comment = m.group(2);
                 hcf.addComment(pos, comment);
             } else if (header.equals("OperandComment")) {
                 checkHCF("OperandComment", header);
-                m = CiHexCodeFile.OPERAND_COMMENT.matcher(body);
-                check(m.matches(), body, "OperandComment does not match pattern " + CiHexCodeFile.OPERAND_COMMENT);
+                m = HexCodeFile.OPERAND_COMMENT.matcher(body);
+                check(m.matches(), body, "OperandComment does not match pattern " + HexCodeFile.OPERAND_COMMENT);
                 int pos = parseInt(m.group(1));
                 String comment = m.group(2);
                 hcf.addOperandComment(pos, comment);
             } else if (header.equals("JumpTable")) {
                 checkHCF("JumpTable", header);
-                m = CiHexCodeFile.JUMP_TABLE.matcher(body);
-                check(m.matches(), body, "JumpTable does not match pattern " + CiHexCodeFile.JUMP_TABLE);
+                m = HexCodeFile.JUMP_TABLE.matcher(body);
+                check(m.matches(), body, "JumpTable does not match pattern " + HexCodeFile.JUMP_TABLE);
                 int pos = parseInt(m.group(1));
                 int entrySize = parseInt(m.group(2));
                 int low = parseInt(m.group(3));
@@ -426,8 +450,8 @@ public class CiHexCodeFile {
                 hcf.jumpTables.add(new JumpTable(pos, low, high, entrySize));
             } else if (header.equals("LookupTable")) {
                 checkHCF("LookupTable", header);
-                m = CiHexCodeFile.LOOKUP_TABLE.matcher(body);
-                check(m.matches(), body, "LookupTable does not match pattern " + CiHexCodeFile.LOOKUP_TABLE);
+                m = HexCodeFile.LOOKUP_TABLE.matcher(body);
+                check(m.matches(), body, "LookupTable does not match pattern " + HexCodeFile.LOOKUP_TABLE);
                 int pos = parseInt(m.group(1));
                 int npairs = parseInt(m.group(2));
                 int keySize = parseInt(m.group(3));

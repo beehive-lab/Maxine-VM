@@ -26,10 +26,6 @@ import static java.lang.reflect.Modifier.*;
 
 import java.util.*;
 
-import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
-import com.sun.cri.ci.CiTargetMethod.CodeComment;
-import com.sun.cri.ci.CiTargetMethod.JumpTable;
-import com.sun.cri.ci.CiTargetMethod.LookupTable;
 import com.sun.cri.ri.*;
 
 /**
@@ -690,27 +686,6 @@ public class CiUtil {
             append(sb, info.codePos);
         }
         return sb;
-    }
-
-    /**
-     * Adds any jump tables, lookup tables or code comments from a list of code annotations.
-     */
-    public static void addAnnotations(CiHexCodeFile hcf, List<CodeAnnotation> annotations) {
-        if (annotations == null || annotations.isEmpty()) {
-            return;
-        }
-        for (CodeAnnotation a : annotations) {
-            if (a instanceof JumpTable) {
-                JumpTable table = (JumpTable) a;
-                hcf.jumpTables.add(table);
-            } else if (a instanceof LookupTable) {
-                LookupTable table = (LookupTable) a;
-                hcf.lookupTables.add(table);
-            } else if (a instanceof CodeComment) {
-                CodeComment comment = (CodeComment) a;
-                hcf.addComment(comment.position, comment.value);
-            }
-        }
     }
 
     public static CiKind[] signatureToKinds(RiMethod method) {
