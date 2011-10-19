@@ -1173,7 +1173,7 @@ public final class GraphBuilderPhase extends Phase {
         if (successor.jsrScope.nextReturnAddress() != stream().nextBCI()) {
             throw new JSRNotSupportedBailout("unstructured control flow (internal limitation)");
         }
-        frameState.push(CiKind.Jsr, graph.unique(ConstantNode.forJsr(stream().nextBCI(), graph)));
+        frameState.push(CiKind.Jsr, ConstantNode.forJsr(stream().nextBCI(), graph));
         appendGoto(createTarget(successor, frameState));
     }
 

@@ -135,6 +135,7 @@ public abstract class Node implements Cloneable {
         modCount++;
     }
 
+
     public String shortName() {
         return getNodeClass().shortName();
     }
@@ -316,16 +317,6 @@ public abstract class Node implements Cloneable {
     }
 
     /**
-     * Checks that this node is equal to another node for the purposes of value numbering.
-     *
-     * @param i the other node
-     * @return {@code true} if this instruction is equivalent to the specified instruction w.r.t. value numbering
-     */
-    public boolean valueEqual(Node i) {
-        return getNodeClass().valueEqual(this, i);
-    }
-
-    /**
      * Provides a {@link Map} of properties of this node for use in debugging (e.g., to view in the ideal graph
      * visualizer). Subclasses overriding this method should add to the map returned by their superclass.
      */
@@ -404,35 +395,18 @@ public abstract class Node implements Cloneable {
     }
 
     /**
-     * Compute the value number of this node. Local and global value numbering optimizations use a hash map, and the
-     * value number provides a hash code.
-     *
-     * @return the hashcode of this instruction
+     * hashCode and equals should always rely on object identity alone, thus hashCode and equals are final.
      */
-    public int valueNumber() {
-        return getNodeClass().valueNumber(this);
+    @Override
+    public final int hashCode() {
+        return super.hashCode();
     }
 
+    /**
+     * hashCode and equals should always rely on object identity alone, thus hashCode and equals are final.
+     */
     @Override
-    public int hashCode() {
-        return valueNumber();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == this) {
-            return true;
-        }
-        if (obj instanceof Node) {
-            Node node = (Node) obj;
-            if (node.getNodeClass() == getNodeClass()) {
-                if (node.getNodeClass().valueNumberable()) {
-                    return valueEqual(node) && getNodeClass().edgesEqual(this, node);
-                } else {
-                    return false;
-                }
-            }
-        }
-        return false;
+    public final boolean equals(Object obj) {
+        return super.equals(obj);
     }
 }

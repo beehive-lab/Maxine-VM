@@ -47,6 +47,37 @@ public class Graph<S extends Node> {
     private int deletedNodeCount;
     private int mark;
 
+    private final HashMap<CacheEntry, Node> cachedNodes = new HashMap<CacheEntry, Node>();
+
+    private static final class CacheEntry {
+
+        private final Node node;
+
+        public CacheEntry(Node node) {
+            this.node = node;
+        }
+
+        @Override
+        public int hashCode() {
+            return node.getNodeClass().valueNumber(node);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == this) {
+                return true;
+            }
+            if (obj instanceof Node) {
+                Node other = (Node) obj;
+                NodeClass nodeClass = node.getNodeClass();
+                if (other.getNodeClass() == nodeClass) {
+                    return nodeClass.valueNumberable() && nodeClass.valueEqual(node, other) && nodeClass.edgesEqual(node, other);
+                }
+            }
+            return false;
+        }
+    }
+
     /**
      * Creates a new Graph containing only one node : the provided {@code start} node.
      * @param start the node to use as the {@link #start() start} node
@@ -103,8 +134,6 @@ public class Graph<S extends Node> {
         return node;
     }
 
-    private final HashMap<Node, Node> cachedNodes = new HashMap<Node, Node>();
-
     /**
      * Adds a new node to the graph, if a <i>similar</i> node already exists in the graph, the provided node will not be added to the graph but the <i>similar</i> node will be returned instead.
      * @param node
@@ -112,14 +141,14 @@ public class Graph<S extends Node> {
      */
     @SuppressWarnings("unchecked")
     public <T extends Node & ValueNumberable> T unique(T node) {
-        assert node.getNodeClass().valueNumberable();
+        assert checkValueNumberable(node);
         if (!node.getNodeClass().hasOutgoingEdges()) {
-            Node cachedNode = cachedNodes.get(node);
+            Node cachedNode = cachedNodes.get(new CacheEntry(node));
             if (cachedNode != null && cachedNode.isAlive()) {
                 return (T) cachedNode;
             } else {
                 Node result = add(node);
-                cachedNodes.put(result, result);
+                cachedNodes.put(new CacheEntry(node), result);
                 return (T) result;
             }
         } else {
@@ -133,16 +162,25 @@ public class Graph<S extends Node> {
 
     public Node findDuplicate(Node node) {
         if (node.getNodeClass().valueNumberable()) {
-            Node firstInput = node.inputs().first();
-            if (firstInput != null) {
-                for (Node usage : firstInput.usages()) {
-                    if (usage != node && node.valueEqual(usage) && node.getNodeClass().edgesEqual(node, usage)) {
-                        return usage;
+            for (Node input : node.inputs()) {
+                if (input != null) {
+                    for (Node usage : input.usages()) {
+                        if (usage != node && node.getNodeClass().valueEqual(node, usage) && node.getNodeClass().edgesEqual(node, usage)) {
+                            return usage;
+                        }
                     }
+                    break;
                 }
             }
         }
         return null;
+    }
+
+    private boolean checkValueNumberable(Node node) {
+        if (!node.getNodeClass().valueNumberable()) {
+            throw new VerificationError("node is not valueNumberable").addContext(node);
+        }
+        return true;
     }
 
     public void mark() {

@@ -171,11 +171,6 @@ public final class ConstantNode extends BooleanNode {
     }
 
     @Override
-    public int valueNumber() {
-        return 0x50000000 | value.hashCode();
-    }
-
-    @Override
     public RiResolvedType declaredType() {
         return getType();
     }

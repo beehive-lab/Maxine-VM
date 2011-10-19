@@ -219,7 +219,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                            masm.movq(frameMap.toStackAddress(slot), rscratch1); break;
             case Double  : masm.movq(rscratch1, doubleToRawLongBits(c.asDouble()));
                            masm.movq(frameMap.toStackAddress(slot), rscratch1); break;
-            default      : throw Util.shouldNotReachHere("Unknown constant kind for const2stack: " + c.kind);
+            default      : throw Util.shouldNotReachHere("Unknown constant kind for const2stack: %s", c.kind);
         }
         // Checkstyle: on
     }
@@ -1264,7 +1264,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     case Object  : masm.cmpq(reg1, opr2.asRegister()); break;
                     case Float   : masm.ucomiss(reg1, asXmmFloatReg(opr2)); break;
                     case Double  : masm.ucomisd(reg1, asXmmDoubleReg(opr2)); break;
-                    default      : throw Util.shouldNotReachHere(opr1.kind.toString());
+                    default      : throw Util.shouldNotReachHere("%s", opr1.kind.toString());
                 }
             } else if (opr2.isStackSlot()) {
                 // register - stack
@@ -1279,7 +1279,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     case Object  : masm.cmpptr(reg1, frameMap.toStackAddress(opr2Slot)); break;
                     case Float   : masm.ucomiss(reg1, frameMap.toStackAddress(opr2Slot)); break;
                     case Double  : masm.ucomisd(reg1, frameMap.toStackAddress(opr2Slot)); break;
-                    default      : throw Util.shouldNotReachHere();
+                    default      : throw Util.shouldNotReachHere("unexpected kind %s", opr1.kind);
                 }
             } else if (opr2.isConstant()) {
                 // register - constant
@@ -1289,6 +1289,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     case Byte    :
                     case Char    :
                     case Short   :
+                    case Jsr     : // a comparison of a jsr value in a register against a constant is required for speculatively compiled jsr constructs
                     case Int     : masm.cmpl(reg1, c.asInt()); break;
                     case Float   : masm.ucomiss(reg1, tasm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) opr2).asFloat()))); break;
                     case Double  : masm.ucomisd(reg1, tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) opr2).asDouble()))); break;
@@ -1307,10 +1308,10 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                         masm.cmpq(reg1, rscratch1);
                         break;
                     }
-                    default      : throw Util.shouldNotReachHere();
+                    default      : throw Util.shouldNotReachHere("unexpected kind: %s", opr1.kind);
                 }
             } else {
-                throw Util.shouldNotReachHere();
+                throw Util.shouldNotReachHere("unexpected compare: %s %s %s", opr1, condition, opr2);
             }
         } else if (opr1.isStackSlot()) {
             CiAddress left = asAddress(opr1);
@@ -1341,11 +1342,11 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     default      : throw Util.shouldNotReachHere();
                 }
             } else {
-                throw Util.shouldNotReachHere("opr1=" + opr1.toString() + " opr2=" + opr2);
+                throw Util.shouldNotReachHere("unexpected compare: %s %s %s", opr1, condition, opr2);
             }
 
         } else {
-            throw Util.shouldNotReachHere("opr1=" + opr1.toString() + " opr2=" + opr2);
+            throw Util.shouldNotReachHere("unexpected compare: %s %s %s", opr1, condition, opr2);
         }
         // Checkstyle: on
     }

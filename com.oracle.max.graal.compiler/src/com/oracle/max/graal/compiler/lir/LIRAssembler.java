@@ -183,6 +183,7 @@ public abstract class LIRAssembler {
             case Label:
                 asm.bind(((LIRLabel) op).label);
                 break;
+            case CondFloatBranch:
             case Branch:
                 emitBranch((LIRBranch) op);
                 break;
@@ -335,7 +336,7 @@ public abstract class LIRAssembler {
             case Lurem : arithmeticLudiv(op.code, op.operand(0), op.operand(1), op.result(), op.info); break;
 
             default:
-                throw Util.shouldNotReachHere();
+                throw Util.shouldNotReachHere("lirop: %s", op);
         }
     }
 
