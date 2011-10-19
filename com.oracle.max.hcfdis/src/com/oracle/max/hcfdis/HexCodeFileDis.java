@@ -22,13 +22,13 @@
  */
 package com.oracle.max.hcfdis;
 
-import static com.sun.cri.ci.CiHexCodeFile.*;
+import static com.oracle.max.criutils.HexCodeFile.*;
 
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.sun.cri.ci.*;
+import com.oracle.max.criutils.*;
 import com.sun.cri.ci.CiTargetMethod.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.InlineDataDescriptor.JumpTable32;
@@ -39,7 +39,7 @@ import com.sun.max.lang.*;
 import com.sun.max.program.option.*;
 
 /**
- * Utility for converting a {@link CiHexCodeFile} to a commented disassembly.
+ * Utility for converting a {@link HexCodeFile} to a commented disassembly.
  */
 public class HexCodeFileDis extends DisassemblyPrinter {
 
@@ -80,7 +80,7 @@ public class HexCodeFileDis extends DisassemblyPrinter {
     /**
      * The HexCodeFile currently being processed.
      */
-    protected CiHexCodeFile hcf;
+    protected HexCodeFile hcf;
 
     /**
      * Current machine code position during disassembly.
@@ -105,7 +105,7 @@ public class HexCodeFileDis extends DisassemblyPrinter {
         }
         source = source.substring(EMBEDDED_HCF_OPEN.length(), source.length() - EMBEDDED_HCF_CLOSE.length());
         HexCodeFileDis dis = new HexCodeFileDis(false);
-        CiHexCodeFile hcf = CiHexCodeFile.parse(source, "");
+        HexCodeFile hcf = HexCodeFile.parse(source, "");
         return dis.process(hcf, null);
     }
 
@@ -143,7 +143,7 @@ public class HexCodeFileDis extends DisassemblyPrinter {
 
             String source = input.substring(codeStart, endIndex);
 
-            CiHexCodeFile hcf = CiHexCodeFile.parse(source, inputName);
+            HexCodeFile hcf = HexCodeFile.parse(source, inputName);
             process(hcf, out);
 
             if (verbose) {
@@ -173,7 +173,7 @@ public class HexCodeFileDis extends DisassemblyPrinter {
      * @param out if not {@code null}, this is where the HexCodeFile disassembly should be printed
      * @return the disassembled HexCodeFile if {@code out == null} otherwise {@code null}
      */
-    public String process(CiHexCodeFile hcf, PrintStream out) {
+    public String process(HexCodeFile hcf, PrintStream out) {
         final InlineDataDecoder inlineDataDecoder = makeInlineDataDecoder(hcf);
         ByteArrayOutputStream buf = null;
         if (out == null) {
@@ -214,7 +214,7 @@ public class HexCodeFileDis extends DisassemblyPrinter {
         return inlineDataDecoder;
     }
 
-    public static InlineDataDecoder makeInlineDataDecoder(CiHexCodeFile hcf) {
+    public static InlineDataDecoder makeInlineDataDecoder(HexCodeFile hcf) {
         ArrayList<InlineDataDescriptor> descriptors = new ArrayList<InlineDataDescriptor>();
         for (JumpTable table : hcf.jumpTables) {
             if (table.entrySize == 4) {
@@ -250,7 +250,7 @@ public class HexCodeFileDis extends DisassemblyPrinter {
         List<String> comments = hcf.comments.get(pos);
         if (comments != null) {
             for (String comment : comments) {
-                stream.println(commentLinePrefix + comment.replace(CiHexCodeFile.NEW_LINE, CiHexCodeFile.NEW_LINE + commentLinePrefix));
+                stream.println(commentLinePrefix + comment.replace(HexCodeFile.NEW_LINE, HexCodeFile.NEW_LINE + commentLinePrefix));
             }
         }
         super.printDisassembledObject(disassembler, stream, nOffsetChars, nLabelChars, disassembledObject);
