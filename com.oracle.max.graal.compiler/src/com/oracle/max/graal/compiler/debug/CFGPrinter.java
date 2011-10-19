@@ -26,7 +26,6 @@ import java.io.*;
 import java.util.*;
 
 import com.oracle.max.criutils.*;
-import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.alloc.*;
 import com.oracle.max.graal.compiler.alloc.Interval.UsePosList;
 import com.oracle.max.graal.compiler.graph.*;
@@ -64,7 +63,7 @@ public class CFGPrinter extends CompilationPrinter {
      * @param printHIR if {@code true} the HIR for each instruction in the block will be printed
      * @param printLIR if {@code true} the LIR for each instruction in the block will be printed
      */
-    void printBlock(Block block, List<Block> successors, Block handler, boolean printHIR, boolean printLIR) {
+    void printBlock(Block block, List<Block> successors, Block handler, RiResolvedMethod method, boolean printHIR, boolean printLIR) {
         begin("block");
 
         out.print("name \"B").print(block.blockID()).println('"');
@@ -96,7 +95,7 @@ public class CFGPrinter extends CompilationPrinter {
         out.print("loop_depth ").println(-1);
 
         if (printHIR) {
-            printHIR(block);
+            printHIR(block, method);
         }
 
         // TODO(tw): Add possibility to print LIR.
@@ -182,14 +181,15 @@ public class CFGPrinter extends CompilationPrinter {
 
     /**
      * Formats a given {@linkplain FrameState JVM frame state} as a multi line string.
+     * @param method
      */
-    private String stateToString(FrameState state, OperandFormatter operandFmt) {
+    private String stateToString(FrameState state, OperandFormatter operandFmt, RiResolvedMethod method) {
         if (state == null) {
             return null;
         }
 
         StringBuilder buf = new StringBuilder();
-        buf.append(CiUtil.toLocation(GraalCompilation.compilation().method, state.bci));
+        buf.append(CiUtil.toLocation(method, state.bci));
         buf.append('\n');
         if (state.stackSize() > 0) {
             int i = 0;
@@ -245,14 +245,15 @@ public class CFGPrinter extends CompilationPrinter {
      * Prints the HIR for each instruction in a given block.
      *
      * @param block
+     * @param method
      */
-    private void printHIR(Block block) {
+    private void printHIR(Block block, RiResolvedMethod method) {
         begin("IR");
         out.println("HIR");
         out.disableIndentation();
         for (Node i : block.getInstructions()) {
             if (i instanceof FixedWithNextNode) {
-                printInstructionHIR((FixedWithNextNode) i);
+                printInstructionHIR((FixedWithNextNode) i, method);
             }
         }
         out.enableIndentation();
@@ -264,7 +265,7 @@ public class CFGPrinter extends CompilationPrinter {
      *
      * @param block the block to print
      */
-    private void printLIR(LIRBlock block) {
+    private void printLIR(LIRBlock block, RiResolvedMethod method) {
         LIRList lir = block.lir();
         if (lir != null) {
             begin("IR");
@@ -281,7 +282,7 @@ public class CFGPrinter extends CompilationPrinter {
                         // Use register-allocator output if available
                         state = debugInfoToString(inst.info.debugInfo, new OperandFormatter(false), target.arch);
                     } else {
-                        state = stateToString(inst.info.state, new OperandFormatter(false));
+                        state = stateToString(inst.info.state, new OperandFormatter(false), method);
                     }
                     if (state != null) {
                         out.print(" st ").print(HOVER_START).print("st").print(HOVER_SEP).print(state).print(HOVER_END).print(COLUMN_END);
@@ -306,8 +307,9 @@ public class CFGPrinter extends CompilationPrinter {
      * Prints the HIR for a given instruction.
      *
      * @param i the instruction for which HIR will be printed
+     * @param method
      */
-    private void printInstructionHIR(FixedWithNextNode i) {
+    private void printInstructionHIR(FixedWithNextNode i, RiResolvedMethod method) {
         out.print("bci ").print(-1).println(COLUMN_END);
         if (i.operand().isLegal()) {
             out.print("result ").print(new OperandFormatter(false).format(i.operand())).println(COLUMN_END);
@@ -316,7 +318,7 @@ public class CFGPrinter extends CompilationPrinter {
 
         if (i instanceof StateSplit) {
             StateSplit stateSplit = (StateSplit) i;
-            String state = stateToString(stateSplit.stateAfter(), null);
+            String state = stateToString(stateSplit.stateAfter(), null, method);
             if (state != null) {
                 out.print("st ").print(HOVER_START).print("st").print(HOVER_SEP).print(state).print(HOVER_END).println(COLUMN_END);
             }
@@ -355,13 +357,13 @@ public class CFGPrinter extends CompilationPrinter {
      * @param printHIR if {@code true} the HIR for each instruction in the block will be printed
      * @param printLIR if {@code true} the LIR for each instruction in the block will be printed
      */
-    public void printCFG(Block startBlock, String label, final boolean printHIR, final boolean printLIR) {
+    public void printCFG(Block startBlock, String label, final RiResolvedMethod method, final boolean printHIR, final boolean printLIR) {
         begin("cfg");
         out.print("name \"").print(label).println('"');
         startBlock.iteratePreOrder(new BlockClosure() {
             public void apply(Block block) {
                 List<Block> successors = block.getSuccessors();
-                printBlock(block, successors, null, printHIR, printLIR);
+                printBlock(block, successors, null, method, printHIR, printLIR);
             }
         });
         end("cfg");
