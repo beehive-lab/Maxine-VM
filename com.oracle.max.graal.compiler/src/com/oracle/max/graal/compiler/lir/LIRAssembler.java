@@ -143,7 +143,7 @@ public abstract class LIRAssembler {
                 TTY.println();
             }
 
-            op.emitCode(this);
+            emitCode(op);
 
             if (GraalOptions.PrintLIRWithAssembly) {
                 printAssembly(asm);
@@ -176,118 +176,127 @@ public abstract class LIRAssembler {
         return true;
     }
 
-    void emitCall(LIRCall op) {
+    private void emitCode(LIRInstruction op) {
         verifyOopMap(op.info);
 
         switch (op.code) {
-            case DirectCall:
-                emitCallAlignment(op.code);
-                // fall through
-                if (op.marks != null) {
-                    op.marks.put(XirMark.CALLSITE, tasm.recordMark(null, new Mark[0]));
-                }
-                emitDirectCall(op.target, op.info);
-                break;
-            case IndirectCall:
-                emitCallAlignment(op.code);
-                if (op.marks != null) {
-                    op.marks.put(XirMark.CALLSITE, tasm.recordMark(null, new Mark[0]));
-                }
-                emitIndirectCall(op.target, op.info, op.targetAddress());
-                break;
-            case NativeCall: {
-                emitNativeCall((String) op.target, op.info, op.targetAddress());
-                break;
-            }
-            default:
-                throw Util.shouldNotReachHere();
-        }
-    }
-
-    void emitOpLabel(LIRLabel op) {
-        asm.bind(op.label());
-    }
-
-    void emitOp1(LIROp1 op) {
-        switch (op.code) {
-            case Move:
-                assert !op.operand().isIllegal();
-                if (op.moveKind() == LIROp1.LIRMoveKind.Volatile) {
-                    emitVolatileMove(op.operand(), op.result(), op.kind, op.info);
-                } else {
-                    moveOp(op.operand(), op.result(), op.kind, op.info, op.moveKind() == LIROp1.LIRMoveKind.Unaligned);
-                }
-                break;
-            case Prefetchr:
-                emitReadPrefetch(op.operand());
-                break;
-            case Prefetchw:
-                emitReadPrefetch(op.operand());
-                break;
-            case Return:
-                emitReturn(op.operand());
-                break;
-            case Neg:
-                emitNegate((LIRNegate) op);
-                break;
-            case Lea:
-                emitLea(op.operand(), op.result());
-                break;
-            case NullCheck:
-                emitNullCheck(op.operand(), op.info);
-                break;
-            case Lsb:
-                emitSignificantBitOp(false,  op.operand(), op.result());
-                break;
-            case Msb:
-                emitSignificantBitOp(true,  op.operand(), op.result());
-                break;
-            default:
-                throw Util.shouldNotReachHere();
-        }
-    }
-
-    public void emitOp0(LIROp0 op) {
-        switch (op.code) {
             case Label:
-                throw Util.shouldNotReachHere();
+                asm.bind(((LIRLabel) op).label);
+                break;
+            case Branch:
+                emitBranch((LIRBranch) op);
+                break;
+            case TableSwitch:
+                emitTableSwitch((LIRTableSwitch) op);
+                break;
+            case Xir:
+                emitXir((LIRXirInstruction) op);
+                break;
+            case Convert:
+                emitConvert((LIRConvert) op);
+                break;
+
             case Breakpoint:
                 emitBreakpoint();
                 break;
-            default:
-                throw Util.shouldNotReachHere();
-        }
-    }
-
-    protected void emitOp2(LIROp2 op) {
-        switch (op.code) {
-            case Cmp:
-                emitCompare(op.condition(), op.operand1(), op.operand2(), op);
+            case Membar:
+                emitMemoryBarriers(((CiConstant) op.operand(0)).asInt());
+                break;
+            case MonitorAddress:
+                emitMonitorAddress(((CiConstant) op.operand(0)).asInt(), op.result());
                 break;
 
+            case Cas:
+                emitCompareAndSwap(op);
+                break;
+
+            case DirectCall: {
+                LIRCall call = (LIRCall) op;
+                emitCallAlignment(call.code);
+                if (call.marks != null) {
+                    call.marks.put(XirMark.CALLSITE, tasm.recordMark(null, new Mark[0]));
+                }
+                emitDirectCall(call.target, call.info);
+                break;
+            }
+            case IndirectCall: {
+                LIRCall call = (LIRCall) op;
+                emitCallAlignment(call.code);
+                if (call.marks != null) {
+                    call.marks.put(XirMark.CALLSITE, tasm.recordMark(null, new Mark[0]));
+                }
+                emitIndirectCall(call.target, call.info, call.targetAddress());
+                break;
+            }
+            case NativeCall: {
+                LIRCall call = (LIRCall) op;
+                emitNativeCall((String) call.target, call.info, call.targetAddress());
+                break;
+            }
+
+            case Move:
+                LIRMove move = (LIRMove) op;
+                moveOp(op.operand(0), op.result(), move.kind, op.info);
+                break;
+            case Prefetchr:
+                emitReadPrefetch(op.operand(0));
+                break;
+            case Prefetchw:
+                emitReadPrefetch(op.operand(0));
+                break;
+            case Return:
+                emitReturn(op.operand(0));
+                break;
+            case Neg:
+                emitNegate(op.operand(0), op.result());
+                break;
+            case Lea:
+                emitLea(op.operand(0), op.result());
+                break;
+            case NullCheck:
+                emitNullCheck(op.operand(0), op.info);
+                break;
+            case Lsb:
+                emitSignificantBitOp(op.code,  op.operand(0), op.result());
+                break;
+            case Msb:
+                emitSignificantBitOp(op.code,  op.operand(0), op.result());
+                break;
+
+            case Cmp: {
+                LIRCondition condOp = (LIRCondition) op;
+                emitCompare(condOp.condition, op.operand(0), op.operand(1));
+                break;
+            }
             case Cmpl2i:
             case Cmpfd2i:
             case Ucmpfd2i:
-                emitCompare2Int(op.code, op.operand1(), op.operand2(), op.result(), op);
+                emitCompare2Int(op.code, op.operand(0), op.operand(1), op.result());
                 break;
 
-            case FCmove:
-                emitConditionalMove(op.condition(), op.operand1(), op.operand2(), op.result(), true, false);
+            case FCmove: {
+                LIRCondition condOp = (LIRCondition) op;
+                emitConditionalMove(condOp.condition, op.operand(0), op.operand(1), op.result(), true, false);
                 break;
-            case UFCmove:
-                emitConditionalMove(op.condition(), op.operand1(), op.operand2(), op.result(), true, true);
+            }
+            case UFCmove: {
+                LIRCondition condOp = (LIRCondition) op;
+                emitConditionalMove(condOp.condition, op.operand(0), op.operand(1), op.result(), true, true);
                 break;
-            case Cmove:
-                emitConditionalMove(op.condition(), op.operand1(), op.operand2(), op.result(), false, false);
+            }
+            case Cmove: {
+                LIRCondition condOp = (LIRCondition) op;
+                emitConditionalMove(condOp.condition, op.operand(0), op.operand(1), op.result(), false, false);
                 break;
+            }
 
             case Shl:
             case Shr:
             case Ushr:
-                if (op.operand2().isConstant()) {
-                    emitShiftOp(op.code, op.operand1(), ((CiConstant) op.operand2()).asInt(), op.result());
+                if (op.operand(1).isConstant()) {
+                    emitShiftOp(op.code, op.operand(0), ((CiConstant) op.operand(1)).asInt(), op.result());
                 } else {
-                    emitShiftOp(op.code, op.operand1(), op.operand2(), op.result(), op.tmp());
+                    emitShiftOp(op.code, op.operand(0), op.operand(1), op.result());
                 }
                 break;
 
@@ -296,7 +305,7 @@ public abstract class LIRAssembler {
             case Mul:
             case Div:
             case Rem:
-                emitArithOp(op.code, op.operand1(), op.operand2(), op.result(), op.info);
+                emitArithOp(op.code, op.operand(0), op.operand(1), op.result(), op.info);
                 break;
 
             case Abs:
@@ -306,36 +315,46 @@ public abstract class LIRAssembler {
             case Cos:
             case Log:
             case Log10:
-                emitIntrinsicOp(op.code, op.operand1(), op.operand2(), op.result(), op);
+                emitIntrinsicOp(op.code, op.operand(0), op.operand(1), op.result());
                 break;
 
             case LogicAnd:
             case LogicOr:
             case LogicXor:
-                emitLogicOp(op.code, op.operand1(), op.operand2(), op.result());
+                emitLogicOp(op.code, op.operand(0), op.operand(1), op.result());
                 break;
+
+
+            case Idiv  :
+            case Irem  : arithmeticIdiv(op.code, op.operand(0), op.operand(1), op.result(), op.info); break;
+            case Iudiv :
+            case Iurem : arithmeticIudiv(op.code, op.operand(0), op.operand(1), op.result(), op.info); break;
+            case Ldiv  :
+            case Lrem  : arithmeticLdiv(op.code, op.operand(0), op.operand(1), op.result(), op.info); break;
+            case Ludiv :
+            case Lurem : arithmeticLudiv(op.code, op.operand(0), op.operand(1), op.result(), op.info); break;
 
             default:
                 throw Util.shouldNotReachHere();
         }
     }
 
-    public void moveOp(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info, boolean unaligned) {
+    public void moveOp(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info) {
         if (src.isRegister()) {
             if (dest.isRegister()) {
-                assert info == null : "no patching and info allowed here";
+                assert info == null;
                 reg2reg(src, dest);
             } else if (dest.isStackSlot()) {
-                assert info == null : "no patching and info allowed here";
+                assert info == null;
                 reg2stack(src, dest, kind);
             } else if (dest.isAddress()) {
-                reg2mem(src, dest, kind, info, unaligned);
+                reg2mem(src, dest, kind, info);
             } else {
                 throw Util.shouldNotReachHere();
             }
 
         } else if (src.isStackSlot()) {
-            assert info == null : "no patching and info allowed here";
+            assert info == null;
             if (dest.isRegister()) {
                 stack2reg(src, dest, kind);
             } else if (dest.isStackSlot()) {
@@ -346,9 +365,10 @@ public abstract class LIRAssembler {
 
         } else if (src.isConstant()) {
             if (dest.isRegister()) {
-                const2reg(src, dest, info); // patching is possible
+                assert info == null;
+                const2reg(src, dest);
             } else if (dest.isStackSlot()) {
-                assert info == null : "no patching and info allowed here";
+                assert info == null;
                 const2stack(src, dest);
             } else if (dest.isAddress()) {
                 const2mem(src, dest, kind, info);
@@ -358,17 +378,17 @@ public abstract class LIRAssembler {
 
         } else if (src.isAddress()) {
             if (dest.isStackSlot()) {
-                assert info == null && !unaligned;
+                assert info == null;
                 mem2stack(src, dest, kind);
             } else if (dest.isAddress()) {
-                assert info == null && !unaligned;
+                assert info == null;
                 mem2mem(src, dest, kind);
             } else {
-                mem2reg(src, dest, kind, info, unaligned);
+                mem2reg(src, dest, kind, info);
             }
 
         } else {
-            throw Util.shouldNotReachHere(src.toString() + ", dest=" + dest.toString() + ", " + kind);
+            throw Util.shouldNotReachHere();
         }
     }
 
@@ -399,7 +419,7 @@ public abstract class LIRAssembler {
 
     protected abstract void emitNullCheck(CiValue src, LIRDebugInfo info);
 
-    protected abstract void emitNegate(LIRNegate negate);
+    protected abstract void emitNegate(CiValue left, CiValue dst);
 
     protected abstract void emitMonitorAddress(int monitor, CiValue dst);
 
@@ -413,21 +433,21 @@ public abstract class LIRAssembler {
 
     protected abstract void emitLogicOp(LIROpcode code, CiValue inOpr1, CiValue inOpr2, CiValue dst);
 
-    protected abstract void emitIntrinsicOp(LIROpcode code, CiValue inOpr1, CiValue inOpr2, CiValue dst, LIROp2 op);
+    protected abstract void emitIntrinsicOp(LIROpcode code, CiValue inOpr1, CiValue inOpr2, CiValue dst);
 
     protected abstract void emitArithOp(LIROpcode code, CiValue inOpr1, CiValue inOpr2, CiValue dst, LIRDebugInfo info);
 
-    protected abstract void emitShiftOp(LIROpcode code, CiValue inOpr1, CiValue inOpr2, CiValue dst, CiValue tmpOpr);
+    protected abstract void emitShiftOp(LIROpcode code, CiValue inOpr1, CiValue inOpr2, CiValue dst);
 
     protected abstract void emitShiftOp(LIROpcode code, CiValue inOpr1, int asJint, CiValue dst);
 
-    protected abstract void emitSignificantBitOp(boolean most, CiValue inOpr1, CiValue dst);
+    protected abstract void emitSignificantBitOp(LIROpcode code, CiValue inOpr1, CiValue dst);
 
     protected abstract void emitConditionalMove(Condition condition, CiValue inOpr1, CiValue inOpr2, CiValue dst, boolean mayBeUnordered, boolean unorderedcmovOpr1);
 
-    protected abstract void emitCompare2Int(LIROpcode code, CiValue inOpr1, CiValue inOpr2, CiValue dst, LIROp2 op);
+    protected abstract void emitCompare2Int(LIROpcode code, CiValue inOpr1, CiValue inOpr2, CiValue dst);
 
-    protected abstract void emitCompare(Condition condition, CiValue inOpr1, CiValue inOpr2, LIROp2 op);
+    protected abstract void emitCompare(Condition condition, CiValue inOpr1, CiValue inOpr2);
 
     protected abstract void emitBranch(LIRBranch branch);
 
@@ -435,9 +455,7 @@ public abstract class LIRAssembler {
 
     protected abstract void emitConvert(LIRConvert convert);
 
-    protected abstract void emitOp3(LIROp3 op3);
-
-    protected abstract void emitCompareAndSwap(LIRCompareAndSwap compareAndSwap);
+    protected abstract void emitCompareAndSwap(LIRInstruction compareAndSwap);
 
     protected abstract void emitXir(LIRXirInstruction xirInstruction);
 
@@ -453,15 +471,15 @@ public abstract class LIRAssembler {
 
     protected abstract void reg2stack(CiValue src, CiValue dest, CiKind kind);
 
-    protected abstract void reg2mem(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info, boolean unaligned);
+    protected abstract void reg2mem(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info);
 
-    protected abstract void mem2reg(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info, boolean unaligned);
+    protected abstract void mem2reg(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info);
 
     protected abstract void const2mem(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info);
 
     protected abstract void const2stack(CiValue src, CiValue dest);
 
-    protected abstract void const2reg(CiValue src, CiValue dest, LIRDebugInfo info);
+    protected abstract void const2reg(CiValue src, CiValue dest);
 
     protected abstract void mem2stack(CiValue src, CiValue dest, CiKind kind);
 
@@ -476,6 +494,14 @@ public abstract class LIRAssembler {
     protected abstract boolean trueOnUnordered(Condition condition);
 
     protected abstract boolean falseOnUnordered(Condition condition);
+
+    protected abstract void arithmeticIdiv(LIROpcode code, CiValue left, CiValue right, CiValue result, LIRDebugInfo info);
+
+    protected abstract void arithmeticIudiv(LIROpcode code, CiValue left, CiValue right, CiValue result, LIRDebugInfo info);
+
+    protected abstract void arithmeticLdiv(LIROpcode code, CiValue left, CiValue right, CiValue result, LIRDebugInfo info);
+
+    protected abstract void arithmeticLudiv(LIROpcode code, CiValue left, CiValue right, CiValue result, LIRDebugInfo info);
 
     protected boolean mayBeTrueOnUnordered(Condition condition) {
         return trueOnUnordered(condition) || !falseOnUnordered(condition);

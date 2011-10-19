@@ -40,7 +40,7 @@ public enum CiKind {
     Char   ('c', "char",    FIELD_TYPE | RETURN_TYPE | PRIMITIVE | STACK_INT),
     Int    ('i', "int",     FIELD_TYPE | RETURN_TYPE | PRIMITIVE | STACK_INT),
     Float  ('f', "float",   FIELD_TYPE | RETURN_TYPE | PRIMITIVE),
-    Long   ('l', "long",    FIELD_TYPE | RETURN_TYPE | PRIMITIVE),
+    Long   ('j', "long",    FIELD_TYPE | RETURN_TYPE | PRIMITIVE),
     Double ('d', "double",  FIELD_TYPE | RETURN_TYPE | PRIMITIVE),
     Object ('a', "Object",  FIELD_TYPE | RETURN_TYPE),
     Void   ('v', "void",    RETURN_TYPE),

@@ -99,16 +99,6 @@ public class LIRXirInstruction extends LIRInstruction {
         return originalOperands;
     }
 
-    /**
-     * Emits target assembly code for this instruction.
-     *
-     * @param masm the target assembler
-     */
-    @Override
-    public void emitCode(LIRAssembler masm) {
-        masm.emitXir(this);
-    }
-
      /**
      * Prints this instruction.
      */
