@@ -401,7 +401,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     @Override
     public void visitMonitorEnter(MonitorEnterNode x) {
         XirArgument obj = toXirArgument(x.object());
-        XirArgument lockAddress = toXirArgument(x.lockAddress());
+        XirArgument lockAddress = toXirArgument(createMonitorAddress(x.monitorIndex()));
         XirSnippet snippet = xir.genMonitorEnter(site(x), obj, lockAddress);
         emitXir(snippet, x, stateFor(x), stateFor(x, x.stateAfter()), null, true, null);
     }
@@ -409,7 +409,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     @Override
     public void visitMonitorExit(MonitorExitNode x) {
         XirArgument obj = toXirArgument(x.object());
-        XirArgument lockAddress = toXirArgument(x.lockAddress());
+        XirArgument lockAddress = toXirArgument(createMonitorAddress(x.monitorIndex()));
         XirSnippet snippet = xir.genMonitorExit(site(x), obj, lockAddress);
         emitXir(snippet, x, stateFor(x), null, true);
     }
@@ -709,10 +709,10 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         return CiUtil.signatureToKinds(x.target.signature(), receiver);
     }
 
-    @Override
-    public void visitMonitorAddress(MonitorAddressNode x) {
-        CiValue result = createResultVariable(x);
-        lir.monitorAddress(x.monitorIndex(), result);
+    public CiValue createMonitorAddress(int monitorIndex) {
+        CiValue result = newVariable(target().wordKind);
+        lir.monitorAddress(monitorIndex, result);
+        return result;
     }
 
     /**

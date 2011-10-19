@@ -347,8 +347,9 @@ public class HotSpotXirGenerator implements RiXirGenerator {
                 asm.callRuntime(config.fastMonitorEnterStub, null, useInfoAfter, object, lock);
             } else {
                 asm.reserveOutgoingStack(target.wordSize * 2);
-                asm.pstore(CiKind.Object, asm.createRegister("rsp", target.wordKind, AMD64.RSP.asRegister()), asm.i(target.wordSize), object, false);
-                asm.pstore(target.wordKind, asm.createRegister("rsp", target.wordKind, AMD64.RSP.asRegister()), asm.i(0), lock, false);
+                XirOperand rsp = asm.createRegister("rsp", target.wordKind, AMD64.RSP.asRegister());
+                asm.pstore(CiKind.Object, rsp, asm.i(target.wordSize), object, false);
+                asm.pstore(target.wordKind, rsp, asm.i(0), lock, false);
                 asm.callRuntime(config.monitorEnterStub, null, useInfoAfter);
             }
 

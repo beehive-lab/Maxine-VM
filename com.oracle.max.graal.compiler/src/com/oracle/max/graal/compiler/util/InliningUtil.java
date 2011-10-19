@@ -115,9 +115,9 @@ public class InliningUtil {
         int monitorIndexDelta = stateAfter.locksSize();
         if (monitorIndexDelta > 0) {
             for (Map.Entry<Node, Node> entry : duplicates.entrySet()) {
-                if (entry.getValue() instanceof MonitorAddressNode) {
-                    MonitorAddressNode address = (MonitorAddressNode) entry.getValue();
-                    address.setMonitorIndex(address.monitorIndex() + monitorIndexDelta);
+                if (entry.getValue() instanceof AccessMonitorNode) {
+                    AccessMonitorNode access = (AccessMonitorNode) entry.getValue();
+                    access.setMonitorIndex(access.monitorIndex() + monitorIndexDelta);
                 }
             }
         }

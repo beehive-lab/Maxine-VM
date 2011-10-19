@@ -34,11 +34,10 @@ public final class MonitorExitNode extends AccessMonitorNode {
      * Creates a new MonitorExitNode.
      *
      * @param object the instruction produces the object value
-     * @param lockAddress the address of the on-stack lock object or {@code null} if the runtime does not place locks on the stack
-     * @param lockNumber the number of the lock
+     * @param monitorIndex the number of the lock
      */
-    public MonitorExitNode(ValueNode object, ValueNode lockAddress, int lockNumber) {
-        super(object, lockAddress, lockNumber);
+    public MonitorExitNode(ValueNode object, int monitorIndex) {
+        super(object, monitorIndex);
     }
 
     @Override

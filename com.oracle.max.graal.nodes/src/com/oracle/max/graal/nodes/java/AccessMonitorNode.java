@@ -32,20 +32,20 @@ import com.sun.cri.ci.*;
 public abstract class AccessMonitorNode extends AbstractMemoryCheckpointNode {
 
     @Input private ValueNode object;
-    @Input private ValueNode lockAddress;
+    @Data private int monitorIndex;
 
     public ValueNode object() {
         return object;
     }
 
-    public ValueNode lockAddress() {
-        return lockAddress;
+    public int monitorIndex() {
+        return monitorIndex;
     }
 
-    /**
-     * The lock number of this monitor access.
-     */
-    public final int lockNumber;
+
+    public void setMonitorIndex(int monitorIndex) {
+        this.monitorIndex = monitorIndex;
+    }
 
     /**
      * Creates a new AccessMonitor instruction.
@@ -54,10 +54,9 @@ public abstract class AccessMonitorNode extends AbstractMemoryCheckpointNode {
      * @param lockAddress the address of the on-stack lock object or {@code null} if the runtime does not place locks on the stack
      * @param lockNumber the number of the lock being acquired
      */
-    public AccessMonitorNode(ValueNode object, ValueNode lockAddress, int lockNumber) {
+    public AccessMonitorNode(ValueNode object, int monitorIndex) {
         super(CiKind.Illegal);
         this.object = object;
-        this.lockAddress = lockAddress;
-        this.lockNumber = lockNumber;
+        this.monitorIndex = monitorIndex;
     }
 }
