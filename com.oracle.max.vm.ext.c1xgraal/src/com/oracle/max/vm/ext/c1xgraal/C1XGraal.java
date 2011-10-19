@@ -196,10 +196,10 @@ public class C1XGraal implements RuntimeCompiler {
         CiTargetMethod compiledMethod;
         do {
             String name = vm().compilationBroker.compilerFor(method);
-            if (name != null && name.equals("Graal")) {
-                compiledMethod = graalCompiler().compileMethod(method, -1, stats).targetMethod();
-            } else {
+            if (forceC1X(method) || (name != null && name.equals("C1X"))) {
                 compiledMethod = c1xCompiler().compileMethod(method, -1, stats).targetMethod();
+            } else {
+                compiledMethod = graalCompiler().compileMethod(method, -1, stats).targetMethod();
             }
 
             Dependencies deps = DependenciesManager.validateDependencies(compiledMethod.assumptions());
@@ -222,6 +222,14 @@ public class C1XGraal implements RuntimeCompiler {
             }
             // Loop back and recompile.
         } while(true);
+    }
+
+    /**
+     * Until Graal can compile everything, this is a mechanism to specify
+     * what it cannot yet handle.
+     */
+    boolean forceC1X(final ClassMethodActor method) {
+        return method.isNative() || method.isTemplate();
     }
 
     public Nature nature() {
