@@ -47,8 +47,6 @@ import com.sun.cri.ri.*;
  */
 public final class GraalCompilation {
 
-    private static ThreadLocal<GraalCompilation> currentCompilation = new ThreadLocal<GraalCompilation>();
-
     public final GraalContext context;
     public final GraalCompiler compiler;
     public final RiResolvedMethod method;
@@ -57,8 +55,6 @@ public final class GraalCompilation {
     public final FrameState placeholderState;
 
     public final Graph<EntryPointNode> graph;
-
-    private final GraalCompilation parent;
 
     private FrameMap frameMap;
 
@@ -81,8 +77,6 @@ public final class GraalCompilation {
         if (osrBCI != -1) {
             throw new CiBailout("No OSR supported");
         }
-        this.parent = currentCompilation.get();
-        currentCompilation.set(this);
         this.context = context;
         this.compiler = compiler;
         this.graph = graph;
@@ -102,7 +96,7 @@ public final class GraalCompilation {
 
 
     public void close() {
-        currentCompilation.set(parent);
+        //
     }
 
     public LIR lir() {
@@ -435,12 +429,6 @@ public final class GraalCompilation {
             }
         }
         return maxLocks;
-    }
-
-    public static GraalCompilation compilation() {
-        GraalCompilation compilation = currentCompilation.get();
-        assert compilation != null;
-        return compilation;
     }
 
     public void printGraph(String phase, Graph graph) {

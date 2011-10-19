@@ -103,7 +103,6 @@ public class GraalCompiler {
                 throw error;
             } finally {
                 filter.remove();
-                compilation.close();
                 if (GraalOptions.PrintCompilation && !TTY.isSuppressed()) {
                     long time = (System.nanoTime() - startTime) / 100000;
                     TTY.println(String.format("%3d.%dms", time / 10, time % 10));

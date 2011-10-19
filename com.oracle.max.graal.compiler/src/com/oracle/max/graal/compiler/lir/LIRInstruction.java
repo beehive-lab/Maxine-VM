@@ -22,14 +22,12 @@
  */
 package com.oracle.max.graal.compiler.lir;
 
-import static com.oracle.max.graal.compiler.GraalCompilation.*;
-
-import com.sun.cri.ci.CiValue.Formatter;
 import java.util.*;
 
 import com.oracle.max.graal.compiler.lir.LIROperand.LIRAddressOperand;
 import com.oracle.max.graal.compiler.lir.LIROperand.LIRVariableOperand;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiValue.Formatter;
 
 /**
  * The {@code LIRInstruction} class definition.
@@ -493,8 +491,7 @@ public class LIRInstruction {
                 if (buf.length() != 0) {
                     buf.append(", ");
                 }
-                CiRegisterValue register = compilation().compiler.target.arch.registers[reg].asValue(CiKind.Object);
-                buf.append(operandFmt.format(register));
+                buf.append("r").append(reg);
             }
         }
         return buf.toString();
