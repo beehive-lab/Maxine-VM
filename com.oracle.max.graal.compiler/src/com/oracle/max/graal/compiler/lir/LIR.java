@@ -24,6 +24,7 @@ package com.oracle.max.graal.compiler.lir;
 
 import java.util.*;
 
+import com.oracle.max.graal.compiler.gen.LIRGenerator.*;
 import com.oracle.max.graal.graph.*;
 
 /**
@@ -48,6 +49,7 @@ public class LIR {
     private final List<LIRBlock> codeEmittingOrder;
 
     private final NodeMap<LIRBlock> valueToBlock;
+    private ArrayList<DeoptimizationStub> deoptimizationStubs;
 
     /**
      * Creates a new LIR instance for the specified compilation.
@@ -78,5 +80,14 @@ public class LIR {
 
     public NodeMap<LIRBlock> valueToBlock() {
         return valueToBlock;
+    }
+
+    public void setDeoptimizationStubs(ArrayList<DeoptimizationStub> deoptimizationStubs) {
+        this.deoptimizationStubs = deoptimizationStubs;
+    }
+
+
+    public ArrayList<DeoptimizationStub> deoptimizationStubs() {
+        return deoptimizationStubs;
     }
 }
