@@ -121,7 +121,7 @@ public final class LinearScan {
     BitMap2D intervalInLoop;
 
     public LinearScan(GraalCompilation compilation, LIR ir, LIRGenerator gen, FrameMap frameMap) {
-        this.context = compilation.context;
+        this.context = compilation.compiler.context;
         this.compilation = compilation;
         this.ir = ir;
         this.gen = gen;
