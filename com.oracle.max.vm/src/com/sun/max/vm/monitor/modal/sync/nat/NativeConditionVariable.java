@@ -43,49 +43,22 @@ public final class NativeConditionVariable extends ConditionVariable {
     static class NativeReference extends WeakReference<NativeConditionVariable> {
 
         @CONSTANT_WHEN_NOT_ZERO
-        private Pointer condition = Pointer.zero();
+        private Word condition = Word.zero();
 
         NativeReference(NativeConditionVariable c) {
             super(c, refQueue);
         }
 
         private void disposeNative() {
-            Memory.deallocate(condition);
+            Memory.deallocate(condition.asPointer());
         }
     }
 
     private static ReferenceQueue<NativeConditionVariable> refQueue = new ReferenceQueue<NativeConditionVariable>();
     private NativeReference nativeRef;
 
-    private static int size;
-
-    static {
-        new CriticalNativeMethod(NativeConditionVariable.class, "nativeConditionSize");
-        new CriticalNativeMethod(NativeConditionVariable.class, "nativeConditionInitialize");
-        new CriticalNativeMethod(NativeConditionVariable.class, "nativeConditionWait");
-        new CriticalNativeMethod(NativeConditionVariable.class, "nativeConditionSize");
-        new CriticalNativeMethod(NativeConditionVariable.class, "nativeConditionNotify");
-    }
-
-    @C_FUNCTION
-    private static native int nativeConditionSize();
-
-    @C_FUNCTION
-    private static native void nativeConditionInitialize(Pointer condition);
-
-    @C_FUNCTION
-    private static native boolean nativeConditionNotify(Pointer condition, boolean all);
-
-    /**
-     * This must be a fully informative JNI call, not a C_FUNCTION, because it can block and the stack walker needs to know the last Java frame.
-     *
-     * @return true if no error occurred whilst waiting; false otherwise
-     */
-    private static native boolean nativeConditionWait(Pointer mutex, Pointer condition, long timeoutMilliSeconds);
-
     static void initialize() {
         assert vm().phase == MaxineVM.Phase.PRIMORDIAL;
-        size = nativeConditionSize();
     }
 
     NativeConditionVariable() {
@@ -98,8 +71,7 @@ public final class NativeConditionVariable extends ConditionVariable {
     @Override
     public ConditionVariable init() {
         if (nativeRef.condition.isZero()) {
-            nativeRef.condition = Memory.mustAllocate(size);
-            nativeConditionInitialize(nativeRef.condition);
+            nativeRef.condition = OSMonitor.newCondition();
         }
         return this;
     }
@@ -110,12 +82,12 @@ public final class NativeConditionVariable extends ConditionVariable {
 
     @Override
     public boolean threadWait(Mutex mutex, long timeoutMilliSeconds) {
-        return nativeConditionWait(((NativeMutex) mutex).asPointer(), nativeRef.condition, timeoutMilliSeconds);
+        return OSMonitor.nativeConditionWait(((NativeMutex) mutex).asPointer(), nativeRef.condition, timeoutMilliSeconds);
     }
 
     @Override
     public boolean threadNotify(boolean all) {
-        return nativeConditionNotify(nativeRef.condition, all);
+        return OSMonitor.nativeConditionNotify(nativeRef.condition, all);
     }
 
     /**
@@ -124,12 +96,12 @@ public final class NativeConditionVariable extends ConditionVariable {
      */
     @INLINE
     Pointer asPointer() {
-        return nativeRef.condition;
+        return nativeRef.condition.asPointer();
     }
 
     @Override
     public long logId() {
-        return nativeRef.condition.toLong();
+        return nativeRef.condition.asAddress().toLong();
     }
 
 }
