@@ -90,7 +90,7 @@ final class EdgeMoveOptimizer {
         assert op1 != null;
         assert op2 != null;
 
-        if (op1.code == LIROpcode.Move && op2.code == LIROpcode.Move) {
+        if (op1.code == LegacyOpcode.Move && op2.code == LegacyOpcode.Move) {
             assert op1 instanceof LIRMove : "move must be LIROp1";
             assert op2 instanceof LIRMove : "move must be LIROp1";
             LIRMove move1 = (LIRMove) op1;
@@ -132,12 +132,12 @@ final class EdgeMoveOptimizer {
                 return;
             }
 
-            if (predInstructions.get(predInstructions.size() - 1).code == LIROpcode.Xir) {
+            if (predInstructions.get(predInstructions.size() - 1).code == LegacyOpcode.Xir) {
                 return;
             }
 
             assert pred.suxAt(0) == block : "invalid control flow";
-            assert predInstructions.get(predInstructions.size() - 1).code == LIROpcode.Branch : "block with successor must end with branch" + predInstructions.get(predInstructions.size() - 1);
+            assert predInstructions.get(predInstructions.size() - 1).code == LegacyOpcode.Branch : "block with successor must end with branch" + predInstructions.get(predInstructions.size() - 1);
             assert predInstructions.get(predInstructions.size() - 1) instanceof LIRBranch : "branch must be LIROpBranch";
             assert ((LIRBranch) predInstructions.get(predInstructions.size() - 1)).cond() == Condition.TRUE : "block must end with unconditional branch";
 
@@ -191,12 +191,12 @@ final class EdgeMoveOptimizer {
 
         assert numSux == 2 : "method should not be called otherwise";
 
-        if (instructions.get(instructions.size() - 1).code == LIROpcode.Xir) {
+        if (instructions.get(instructions.size() - 1).code == LegacyOpcode.Xir) {
             // cannot optimize when last instruction is Xir.
             return;
         }
 
-        assert instructions.get(instructions.size() - 1).code == LIROpcode.Branch : "block with successor must end with branch block=B" + block.blockID();
+        assert instructions.get(instructions.size() - 1).code == LegacyOpcode.Branch : "block with successor must end with branch block=B" + block.blockID();
         assert instructions.get(instructions.size() - 1) instanceof LIRBranch : "branch must be LIROpBranch";
         assert ((LIRBranch) instructions.get(instructions.size() - 1)).cond() == Condition.TRUE : "block must end with unconditional branch";
 
@@ -206,7 +206,7 @@ final class EdgeMoveOptimizer {
         }
 
         LIRInstruction branch = instructions.get(instructions.size() - 2);
-        if (branch.info != null || (branch.code != LIROpcode.Branch && branch.code != LIROpcode.CondFloatBranch)) {
+        if (branch.info != null || (branch.code != LegacyOpcode.Branch && branch.code != LegacyOpcode.CondFloatBranch)) {
             // not a valid case for optimization
             // currently, only blocks that end with two branches (conditional branch followed
             // by unconditional branch) are optimized
@@ -220,7 +220,7 @@ final class EdgeMoveOptimizer {
         if (GraalOptions.DetailedAsserts && false) { // not true anymore with guards
             for (int i = insertIdx - 1; i >= 0; i--) {
                 LIRInstruction op = instructions.get(i);
-                if ((op.code == LIROpcode.Branch || op.code == LIROpcode.CondFloatBranch) && ((LIRBranch) op).block() != null) {
+                if ((op.code == LegacyOpcode.Branch || op.code == LegacyOpcode.CondFloatBranch) && ((LIRBranch) op).block() != null) {
                     throw new Error("block with two successors can have only two branch instructions : error in " + block);
                 }
             }
@@ -231,7 +231,7 @@ final class EdgeMoveOptimizer {
             LIRBlock sux = block.suxAt(i);
             List<LIRInstruction> suxInstructions = sux.lir().instructionsList();
 
-            assert suxInstructions.get(0).code == LIROpcode.Label : "block must start with label";
+            assert suxInstructions.get(0).code == LegacyOpcode.Label : "block must start with label";
 
             if (sux.numberOfPreds() != 1) {
                 // this can happen with switch-statements where multiple edges are between

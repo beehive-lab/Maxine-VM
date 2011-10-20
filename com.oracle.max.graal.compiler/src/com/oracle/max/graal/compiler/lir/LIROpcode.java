@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,80 +22,14 @@
  */
 package com.oracle.max.graal.compiler.lir;
 
-/**
- * The {@code LirOpcode} enum represents the Operation code of each LIR instruction.
- */
-public enum LIROpcode {
-    // Checkstyle: stop
-    // @formatter:off
-    BeginOp0,
-        Label,
-        Breakpoint,
-        RuntimeCall,
-        Membar,
-        Branch,
-        CondFloatBranch,
-    EndOp0,
-    BeginOp1,
-        NullCheck,
-        Return,
-        Lea,
-        Neg,
-        TableSwitch,
-        Move,
-        Prefetchr,
-        Prefetchw,
-        Convert,
-        Lsb,
-        Msb,
-        MonitorAddress,
-    EndOp1,
-    BeginOp2,
-        Cmp,
-        Cmpl2i,
-        Ucmpfd2i,
-        Cmpfd2i,
-        Cmove,
-        FCmove,
-        UFCmove,
-        Add,
-        Sub,
-        Mul,
-        Div,
-        Rem,
-        Sqrt,
-        Abs,
-        Sin,
-        Cos,
-        Tan,
-        Log,
-        Log10,
-        LogicAnd,
-        LogicOr,
-        LogicXor,
-        Shl,
-        Shr,
-        Ushr,
-        CompareTo,
-    EndOp2,
-    BeginOp3,
-        Idiv,
-        Irem,
-        Iudiv,
-        Iurem,
-        Ldiv,
-        Lrem,
-        Ludiv,
-        Lurem,
-    EndOp3,
-    NativeCall,
-    DirectCall,
-    IndirectCall,
-    InstanceOf,
-    CheckCast,
-    StoreCheck,
-    Cas,
-    Xir,
-    // @formatter:on
-    // Checkstyle: resume
+public interface LIROpcode<LA extends LIRAssembler, IT extends LIRInstruction> {
+    void emitCode(LA lasm, IT op);
+
+    /**
+     * Marker interface for the register allocator: If an operation implements this interface,
+     * the second operand can be a split slot and needs not be loaded to a register.
+     */
+    public interface SecondOperandCanBeMemory {
+
+    }
 }

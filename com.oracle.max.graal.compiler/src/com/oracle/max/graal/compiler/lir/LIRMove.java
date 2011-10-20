@@ -34,7 +34,7 @@ public class LIRMove extends LIRInstruction {
 
     public LIRMove(LIROpcode opcode, CiValue opr, CiValue result, CiKind kind, LIRDebugInfo info) {
         super(opcode, result, info, opr);
-        assert opcode == LIROpcode.Move;
+        assert opcode == LegacyOpcode.Move;
         this.kind = kind;
     }
 }

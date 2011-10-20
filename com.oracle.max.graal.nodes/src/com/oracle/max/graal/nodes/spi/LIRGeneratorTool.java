@@ -38,5 +38,5 @@ public abstract class LIRGeneratorTool extends ValueVisitor {
     public abstract void emitLea(CiAddress address, CiVariable dest);
     public abstract CiValue makeOperand(ValueNode object);
     public abstract void emitUnsignedShiftRight(CiValue value, CiValue count, CiValue dst, CiValue tmp);
-    public abstract void emitAdd(CiValue a, CiValue b, CiValue dest);
+    public abstract void emitAdd(CiVariable a, CiValue b, CiVariable dest);
 }
