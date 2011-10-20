@@ -131,6 +131,10 @@ public final class PoolConstantFactory {
         return new StringConstant(string);
     }
 
+    public static ObjectConstant createObjectConstant(Object object) {
+        return new ObjectConstant(object);
+    }
+
     public static FloatConstant createFloatConstant(float value) {
         return new FloatConstant(value);
     }

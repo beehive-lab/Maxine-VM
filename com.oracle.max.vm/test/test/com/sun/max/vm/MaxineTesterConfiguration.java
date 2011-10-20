@@ -300,10 +300,10 @@ public class MaxineTesterConfiguration {
 
         maxvmConfig("vma", "-XX:+VMA");
 
-        c1xTest("opt0", "-C1X:OptLevel=0", "^jtt", "!jtt.max", "!jtt.max.", "!jtt.jvmni.", "!jtt.exbytecode.", "!jtt.jni.", "^com.sun.c1x", "^com.sun.cri");
-        c1xTest("opt1", "-C1X:OptLevel=1", "^jtt", "^com.sun.c1x", "^com.sun.cri");
-        c1xTest("opt2", "-C1X:OptLevel=2", "^jtt", "^com.sun.c1x", "^com.sun.cri");
-        c1xTest("opt3", "-C1X:OptLevel=3", "^jtt", "^com.sun.c1x", "^com.sun.cri");
+        c1xTest("opt0", "-J-Dmax.c1x.optlevel=0", "^jtt", "!jtt.max", "!jtt.max.", "!jtt.jvmni.", "!jtt.exbytecode.", "!jtt.jni.", "^com.sun.c1x", "^com.sun.cri");
+        c1xTest("opt1", "-J-Dmax.c1x.optlevel=1", "^jtt", "^com.sun.c1x", "^com.sun.cri");
+        c1xTest("opt2", "-J-Dmax.c1x.optlevel=2", "^jtt", "^com.sun.c1x", "^com.sun.cri");
+        c1xTest("opt3", "-J-Dmax.c1x.optlevel=3", "^jtt", "^com.sun.c1x", "^com.sun.cri");
     }
 
     private static void output(Class javaClass, Expectation... results) {

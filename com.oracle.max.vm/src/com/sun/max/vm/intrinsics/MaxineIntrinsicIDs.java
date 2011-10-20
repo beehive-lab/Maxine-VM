@@ -49,41 +49,6 @@ public class MaxineIntrinsicIDs {
     public static final String UNSAFE_CAST = p + "UNSAFE_CAST";
 
     /**
-     * Links a native function.
-     * This instruction can only be used in a stub generated for a {@code native} method.
-     * It causes the VM linker to find the address for the native function
-     * corresponding to the native method.
-     * <p>
-     * The method definition must have the following form:
-     * <pre>
-     * static Address m()
-     * </pre>
-     */
-    public static final String JNI_LINK = p + "JNI_LINK";
-
-    /**
-     * Effects a transition from compiled Java code to native code.
-     * This instruction must appear immediately before {@link Bytecodes#JNICALL} in the instruction stream.
-     * <p>
-     * The method definition must have the following form:
-     * <pre>
-     * static void m()
-     * </pre>
-     */
-    public static final String JNI_J2N = p + "JNI_J2N";
-
-    /**
-     * Effects a transition from native code to compiled Java code.
-     * This instruction must appear immediately after {@link Bytecodes#JNICALL} in the instruction stream.
-     * <p>
-     * The method definition must have the following form:
-     * <pre>
-     * static void m()
-     * </pre>
-     */
-    public static final String JNI_N2J = p + "JNI_N2J";
-
-    /**
      * Allocates a requested block of memory within the current activation frame.
      * The allocated memory is reclaimed when the method returns.
      *

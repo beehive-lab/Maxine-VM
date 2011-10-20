@@ -17,6 +17,7 @@
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.asmdis"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.hcfdis"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.vm.ext.maxri"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.vm.ext.graal"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.c1x"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.vm.ext.c1x"/>
 	<classpathentry kind="output" path="bin"/>

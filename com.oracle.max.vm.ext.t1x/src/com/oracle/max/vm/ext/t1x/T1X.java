@@ -450,8 +450,7 @@ public class T1X implements RuntimeCompiler {
     public static final Set<String> unsafeIntrinsicIDs = new HashSet<String>(Arrays.asList(
         READREG, WRITEREG, IFLATCHBITREAD,
         SAFEPOINT_POLL, HERE, INFO, BREAKPOINT_TRAP,
-        ALLOCA, STACKHANDLE,
-        JNI_LINK, JNI_J2N, JNI_N2J
+        ALLOCA, STACKHANDLE
     ));
 
     @HOSTED_ONLY
