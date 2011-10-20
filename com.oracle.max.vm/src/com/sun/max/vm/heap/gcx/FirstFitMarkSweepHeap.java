@@ -993,7 +993,7 @@ public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements He
 
     @Override
     public Size shrinkAfterGC(Size delta) {
-        // TODO Auto-generated method stub
+        // TODO
         return Size.zero();
     }
 
