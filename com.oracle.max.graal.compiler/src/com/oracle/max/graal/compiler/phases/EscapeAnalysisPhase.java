@@ -216,7 +216,7 @@ public class EscapeAnalysisPhase extends Phase {
     private final GraalCompilation compilation;
 
     public EscapeAnalysisPhase(GraalCompilation compilation) {
-        super(compilation.context);
+        super(compilation.compiler.context);
         this.compilation = compilation;
     }
 
@@ -394,7 +394,7 @@ public class EscapeAnalysisPhase extends Phase {
                 TTY.println("Trying inlining to get a non-escaping object for %d", node.id());
             }
             if (GraalOptions.UseNewInlining) {
-                new InliningPhase(compilation.context, compilation.compiler.runtime, compilation.compiler.target, invokes).apply(graph);
+                new InliningPhase(context, compilation.compiler.runtime, compilation.compiler.target, invokes).apply(graph);
             } else {
                 new OldInliningPhase(context, compilation, invokes).apply(graph);
             }
