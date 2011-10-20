@@ -68,17 +68,17 @@ public class CompareAndSwapNode extends AbstractMemoryCheckpointNode {
 
     // specialized on value type until boxing/unboxing is sorted out in intrinsification
     @NodeIntrinsic
-    public static boolean compareAndSwap(@NodeParameter Object object, @NodeParameter long offset, @NodeParameter Object expected, @NodeParameter Object newValue) {
+    public static boolean compareAndSwap(Object object, long offset, Object expected, Object newValue) {
         throw new UnsupportedOperationException();
     }
 
     @NodeIntrinsic
-    public static boolean compareAndSwap(@NodeParameter Object object, @NodeParameter long offset, @NodeParameter long expected, @NodeParameter long newValue) {
+    public static boolean compareAndSwap(Object object, long offset, long expected, long newValue) {
         throw new UnsupportedOperationException();
     }
 
     @NodeIntrinsic
-    public static boolean compareAndSwap(@NodeParameter Object object, @NodeParameter long offset, @NodeParameter int expected, @NodeParameter int newValue) {
+    public static boolean compareAndSwap(Object object, long offset, int expected, int newValue) {
         throw new UnsupportedOperationException();
     }
 }

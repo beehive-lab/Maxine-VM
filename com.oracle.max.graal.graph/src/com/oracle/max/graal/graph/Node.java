@@ -68,7 +68,7 @@ public abstract class Node implements Cloneable {
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.PARAMETER)
-    public static @interface NodeParameter {}
+    public static @interface ConstantNodeParameter {}
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)

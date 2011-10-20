@@ -54,12 +54,12 @@ public final class RuntimeCallNode extends AbstractCallNode {
 
     // specialized on return type (instead of public static <T> T performCall) until boxing/unboxing is sorted out in intrinsification
     @NodeIntrinsic
-    public static <S> double performCall(CiRuntimeCall call, @NodeParameter S arg1) {
+    public static <S> double performCall(@ConstantNodeParameter CiRuntimeCall call, S arg1) {
         throw new UnsupportedOperationException("This method may only be compiled with the Graal compiler");
     }
 
     @NodeIntrinsic
-    public static long performCall(CiRuntimeCall call) {
+    public static long performCall(@ConstantNodeParameter CiRuntimeCall call) {
         throw new UnsupportedOperationException("This method may only be compiled with the Graal compiler");
     }
 }

@@ -68,47 +68,47 @@ public class UnsafeStore extends StateSplit implements Lowerable {
 
     // specialized on value type until boxing/unboxing is sorted out in intrinsification
     @NodeIntrinsic
-    public static void store(@NodeParameter Object object, @NodeParameter long offset, @NodeParameter Object value, CiKind kind) {
+    public static void store(Object object, long offset, Object value, @ConstantNodeParameter CiKind kind) {
         throw new UnsupportedOperationException();
     }
 
     @NodeIntrinsic
-    public static void store(@NodeParameter Object object, @NodeParameter long offset, @NodeParameter boolean value, CiKind kind) {
+    public static void store(Object object, long offset, boolean value, @ConstantNodeParameter CiKind kind) {
         throw new UnsupportedOperationException();
     }
 
     @NodeIntrinsic
-    public static void store(@NodeParameter Object object, @NodeParameter long offset, @NodeParameter byte value, CiKind kind) {
+    public static void store(Object object, long offset, byte value, @ConstantNodeParameter CiKind kind) {
         throw new UnsupportedOperationException();
     }
 
     @NodeIntrinsic
-    public static void store(@NodeParameter Object object, @NodeParameter long offset, @NodeParameter char value, CiKind kind) {
+    public static void store(Object object, long offset, char value, @ConstantNodeParameter CiKind kind) {
         throw new UnsupportedOperationException();
     }
 
     @NodeIntrinsic
-    public static void store(@NodeParameter Object object, @NodeParameter long offset, @NodeParameter double value, CiKind kind) {
+    public static void store(Object object, long offset, double value, @ConstantNodeParameter CiKind kind) {
         throw new UnsupportedOperationException();
     }
 
     @NodeIntrinsic
-    public static void store(@NodeParameter Object object, @NodeParameter long offset, @NodeParameter float value, CiKind kind) {
+    public static void store(Object object, long offset, float value, @ConstantNodeParameter CiKind kind) {
         throw new UnsupportedOperationException();
     }
 
     @NodeIntrinsic
-    public static void store(@NodeParameter Object object, @NodeParameter long offset, @NodeParameter int value, CiKind kind) {
+    public static void store(Object object, long offset, int value, @ConstantNodeParameter CiKind kind) {
         throw new UnsupportedOperationException();
     }
 
     @NodeIntrinsic
-    public static void store(@NodeParameter Object object, @NodeParameter long offset, @NodeParameter long value, CiKind kind) {
+    public static void store(Object object, long offset, long value, @ConstantNodeParameter CiKind kind) {
         throw new UnsupportedOperationException();
     }
 
     @NodeIntrinsic
-    public static void store(@NodeParameter Object object, @NodeParameter long offset, @NodeParameter short value, CiKind kind) {
+    public static void store(Object object, long offset, short value, @ConstantNodeParameter CiKind kind) {
         throw new UnsupportedOperationException();
     }
 }
