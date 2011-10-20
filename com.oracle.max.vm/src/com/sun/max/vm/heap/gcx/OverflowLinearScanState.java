@@ -86,7 +86,7 @@ final class OverflowLinearScanState extends OverflowScanState {
         if (!isRecovering()) {
             beginRecovery();
             startOfNextOverflowScan = leftmostFlushed;
-            final Address forwardScanFinger = heapMarker.forwardScanState.finger;
+            final Address forwardScanFinger = endOfScan;
 
             do {
                 verifyHasNoGreyMarks(startOfNextOverflowScan);
