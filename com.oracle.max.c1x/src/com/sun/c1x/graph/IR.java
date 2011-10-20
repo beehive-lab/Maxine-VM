@@ -139,12 +139,6 @@ public class IR {
             new DiamondEliminator(this);
             observeCompilationEvent("After Diamond elimination");
         }
-
-        if (compilation.compiler.extensions != null) {
-            for (C1XCompilerExtension ext : compilation.compiler.extensions) {
-                ext.run(this);
-            }
-        }
     }
 
     private void computeLinearScanOrder() {
