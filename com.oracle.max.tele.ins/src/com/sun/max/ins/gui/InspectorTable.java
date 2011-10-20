@@ -234,8 +234,8 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
     public final void refresh(boolean force) {
         MaxVMState maxVMState = vm().state();
         if (maxVMState.newerThan(lastRefreshedState) || force) {
-            getInspectorTableModel().refresh();
             getInspectorTableColumnModel().refresh(force);
+            getInspectorTableModel().refresh();
             lastRefreshedState = maxVMState;
             invalidate();
             repaint();
