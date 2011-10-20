@@ -113,14 +113,12 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
     private final TeleStack teleStack;
     private final int position;
     private final CodeLocation codeLocation;
-    private final TeleCompilation teleCompiledCode;
 
     protected TeleStackFrame(TeleVM teleVM, TeleStack teleStack, int position, StackFrame_Type stackFrame) {
         super(teleVM);
         this.stackFrame = stackFrame;
         this.teleStack = teleStack;
         this.position = position;
-        this.teleCompiledCode = teleVM.codeCache().findCompiledCode(stackFrame.ip);
 
         CodeLocation location = null;
         Pointer instructionPointer = stackFrame.ip;
@@ -182,10 +180,6 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
         return codeLocation;
     }
 
-    public final TeleCompilation compiledCode() {
-        return teleCompiledCode;
-    }
-
     public boolean isSameFrame(MaxStackFrame maxStackFrame) {
         if (maxStackFrame instanceof TeleStackFrame) {
             // By default, delegate definition of "same" to the wrapped frames.
@@ -204,12 +198,15 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
 
         private final StackFrameMemoryRegion stackFrameMemoryRegion;
         private final String entityDescription;
+        private TeleCompilation teleCompiledCode;
+
 
         protected TeleVMFrame(TeleVM teleVM, TeleStack teleStack, int position, VMStackFrame compiledStackFrame) {
             super(teleVM, teleStack, position, compiledStackFrame);
             final String description = teleStack.thread().entityName() + " frame(" + position() + ")";
             this.stackFrameMemoryRegion = new StackFrameMemoryRegion(teleVM, this, description, stackFrame.slotBase(), layout().maximumSlotOffset());
             this.entityDescription = "Stack frame " + position() + " in the " + vm().entityName() + " for " + teleStack.thread().entityName();
+            this.teleCompiledCode = teleVM.codeCache().findCompiledCode(stackFrame.ip);
         }
 
         public String entityName() {
@@ -226,6 +223,17 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
 
         public boolean contains(Address address) {
             return stackFrameMemoryRegion.contains(address);
+        }
+
+        public MaxMachineCode machineCode() {
+            return compiledCode();
+        }
+
+        public TeleCompilation compiledCode() {
+            if (teleCompiledCode == null) {
+                teleCompiledCode = vm().codeCache().findCompiledCode(stackFrame.ip);
+            }
+            return teleCompiledCode;
         }
 
         public VMFrameLayout layout() {
@@ -248,9 +256,12 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
             final TeleCompilation compiledCode = compiledCode();
             return compiledCode == null ? null : compiledCode.sourceVariableName(this, slot);
         }
+
     }
 
     static final class NativeFrame extends TeleStackFrame<NativeStackFrame> implements MaxStackFrame.Native {
+
+        private MaxExternalCode externalMachineCode = null;
 
         private NativeFrame(TeleVM teleVM, TeleStack teleStack, int position, NativeStackFrame nativeStackFrame) {
             super(teleVM, teleStack, position, nativeStackFrame);
@@ -272,6 +283,19 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
         public boolean contains(Address address) {
             return false;
         }
+
+        public TeleCompilation compiledCode() {
+            return null;
+        }
+
+        @Override
+        public MaxMachineCode machineCode() {
+            if (externalMachineCode == null) {
+                externalMachineCode = vm().codeCache().findExternalCode(stackFrame.ip);
+            }
+            return externalMachineCode;
+        }
+
     }
 
     static final class TruncatedFrame extends TeleStackFrame<TruncatedStackFrame> implements MaxStackFrame.Truncated {
@@ -311,6 +335,14 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
             return Pointer.zero();
         }
 
+        public MaxMachineCode machineCode() {
+            return null;
+        }
+
+        public TeleCompilation compiledCode() {
+            return null;
+        }
+
         public Throwable error() {
             return stackFrame.error;
         }
@@ -318,6 +350,7 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
         public int omitted() {
             return stackFrame.omitted;
         }
+
     }
 
 }
