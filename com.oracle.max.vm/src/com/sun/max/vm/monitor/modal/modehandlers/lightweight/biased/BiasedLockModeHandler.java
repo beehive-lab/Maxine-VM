@@ -102,7 +102,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
         final Object object;
         ModalLockword64 newLockword;
         RevokeBiasOperation(VmThread thread, Object object) {
-            super("RevokeBias", thread, Mode.Safepoint);
+            super("RevokeBias", thread, Mode.Safepoint, false);
             this.object = object;
         }
         @Override
@@ -534,7 +534,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
             private final Object object;
             ModalLockword64 postRevokeLockword;
             BulkRevokeOperation(Object object) {
-                super("BulkRevoke", null, Mode.Safepoint);
+                super("BulkRevoke", null, Mode.Safepoint, false);
                 this.object = object;
             }
             @Override
@@ -549,7 +549,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
             private final Object object;
             ModalLockword64 postRebiasLockword;
             BulkRebiasOperation(Object object) {
-                super("BulkRebias", null, Mode.Safepoint);
+                super("BulkRebias", null, Mode.Safepoint, false);
                 this.object = object;
             }
             @Override

@@ -332,7 +332,7 @@ public class T1XTemplateGenerator {
 
     // end of static declarations
 
-    private AdviceHook adviceHook;
+    protected AdviceHook adviceHook;
 
     public T1XTemplateGenerator(PrintStream out) {
         this.out = out;

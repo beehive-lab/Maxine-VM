@@ -22,13 +22,13 @@
  */
 package demo;
 
-import java.util.*;
-
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
+
+import demo.VmOperationDemoHelper.DemoRunnable;
 
 /**
  * Demonstrates usage of the {@link VmOperation} mechanism.
@@ -45,64 +45,55 @@ import com.sun.max.vm.thread.*;
  * This is achieved by adding 'demo.VmOperationDemo' to the end
  * of a 'max image' command.
  */
-public class VmOperationDemo extends VmOperation {
+public class StackTraceVmOperationDemo extends VmOperation {
 
-    private final HashSet<Thread> threads;
+    private static VmOperationDemoHelper demoHelper;
 
-    public VmOperationDemo(HashSet<Thread> threads) {
-        super("Demo", null, Mode.Safepoint);
-        this.threads = threads;
-        this.allowsNestedOperations = true;
+    StackTraceVmOperationDemo() {
+        super("StackTraceDemo", null, Mode.Safepoint);
     }
 
     @Override
     protected boolean operateOnThread(VmThread thread) {
-        return threads.contains(thread.javaThread());
+        return demoHelper.operateOnThread(thread);
     }
 
     @Override
     public void doThread(VmThread vmThread, Pointer ip, Pointer sp, Pointer fp) {
         Thread thread = vmThread.javaThread();
-        if (ip.isZero()) {
-            System.out.println(thread + " [not yet executing Java]");
-        } else {
-            VmStackFrameWalker sfw = new VmStackFrameWalker(vmThread.tla());
-            StackTraceElement[] trace = JDK_java_lang_Throwable.getStackTrace(sfw, ip, sp, fp, null, Integer.MAX_VALUE);
-            System.out.println(thread + " [stack depth: " + trace.length + "]");
-            for (StackTraceElement e : trace) {
-                System.out.println("\tat " + e);
-            }
+        assert !ip.isZero() : " [not yet executing Java]";
+        VmStackFrameWalker sfw = new VmStackFrameWalker(vmThread.tla());
+        StackTraceElement[] trace = JDK_java_lang_Throwable.getStackTrace(sfw, ip, sp, fp, null, Integer.MAX_VALUE);
+        System.out.println(thread + " [stack depth: " + trace.length + "]");
+        for (StackTraceElement e : trace) {
+            System.out.println("\tat " + e);
         }
     }
 
     static volatile boolean done;
-    static volatile int started;
+
+    static class Allocator extends DemoRunnable {
+        static int i = 0;
+        @Override
+        public void run() {
+            runEntered();
+            while (!done) {
+                Object[] o = new Object[1024];
+                o[0] = o;
+            }
+        }
+
+        @Override
+        protected void customize(Thread thread) {
+            thread.setName("Allocator-" + i++);
+        }
+    }
 
     public static void main(String[] args) {
+        VmOperationDemoHelper.parseArguments(args);
+        demoHelper = new VmOperationDemoHelper(new Allocator());
+        StackTraceVmOperationDemo stackTraceDumper = new StackTraceVmOperationDemo();
 
-        int seconds = args.length == 0 ? 5 : Integer.parseInt(args[0]);
-        Thread[] spinners = new Thread[10];
-        for (int i = 0; i < spinners.length; i++) {
-            Thread spinner = new Thread() {
-                @Override
-                public void run() {
-                    synchronized (VmOperationDemo.class) {
-                        started++;
-                    }
-                    while (!done) {
-                        Object[] o = new Object[1024];
-                        o[0] = o;
-                    }
-                }
-            };
-            spinners[i] = spinner;
-            spinner.start();
-        }
-        while (started != spinners.length) {
-            Thread.yield();
-        }
-
-        VmOperationDemo stackTraceDumper = new VmOperationDemo(new HashSet<Thread>(Arrays.asList(spinners)));
         long start = System.currentTimeMillis();
         int time;
         try {
@@ -120,7 +111,7 @@ public class VmOperationDemo extends VmOperation {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-            } while (time < seconds);
+            } while (time < VmOperationDemoHelper.runTime);
         } finally {
             done = true;
         }
