@@ -75,41 +75,41 @@ public class SnippetIntrinsificationPhase extends Phase {
                             for (Annotation[] annotations : m.getParameterAnnotations()) {
                                 Object currentValue = null;
                                 for (Annotation a : annotations) {
-                                    if (a instanceof NodeParameter) {
-                                        currentValue = arguments[z];
-                                        parameterTypes[z] = ValueNode.class;
-                                        Type type = m.getGenericParameterTypes()[z];
-                                        if (type instanceof TypeVariable) {
-                                            TypeVariable typeVariable = (TypeVariable) type;
-                                            if (typeVariable.getBounds().length == 1) {
-                                                Type boundType = typeVariable.getBounds()[0];
-                                                if (boundType instanceof Class && ((Class) boundType).getSuperclass() == null) {
-                                                    // Unbound generic => try boxing elimination
-                                                    ValueNode node = arguments[z];
-                                                    if (node.usages().size() == 2) {
-                                                        if (node instanceof InvokeNode) {
-                                                            InvokeNode invokeNode = (InvokeNode) node;
-                                                            if (BoxingEliminationPhase.isBoxingMethod(runtime, invokeNode.target)) {
-                                                                currentValue = invokeNode.arguments().get(0);
-                                                                FrameState stateAfter = invokeNode.stateAfter();
-                                                                invokeNode.setStateAfter(null);
-                                                                stateAfter.delete();
-                                                                invokeNode.replaceAndDelete(invokeNode.next());
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
+                                    if (a instanceof ConstantNodeParameter) {
+                                        Node n = arguments[z];
+                                        assert n instanceof ConstantNode : "must be compile time constant; " + n + " z=" + z + " for " + target;
+                                        ConstantNode constantNode = (ConstantNode) n;
+                                        currentValue = constantNode.asConstant().asObject();
                                         break;
                                     }
                                 }
 
                                 if (currentValue == null) {
-                                    Node n = arguments[z];
-                                    assert n instanceof ConstantNode : "must be compile time constant; " + n + " z=" + z + " for " + target;
-                                    ConstantNode constantNode = (ConstantNode) n;
-                                    currentValue = constantNode.asConstant().asObject();
+                                    currentValue = arguments[z];
+                                    parameterTypes[z] = ValueNode.class;
+                                    Type type = m.getGenericParameterTypes()[z];
+                                    if (type instanceof TypeVariable) {
+                                        TypeVariable typeVariable = (TypeVariable) type;
+                                        if (typeVariable.getBounds().length == 1) {
+                                            Type boundType = typeVariable.getBounds()[0];
+                                            if (boundType instanceof Class && ((Class) boundType).getSuperclass() == null) {
+                                                // Unbound generic => try boxing elimination
+                                                ValueNode node = arguments[z];
+                                                if (node.usages().size() == 2) {
+                                                    if (node instanceof InvokeNode) {
+                                                        InvokeNode invokeNode = (InvokeNode) node;
+                                                        if (BoxingEliminationPhase.isBoxingMethod(runtime, invokeNode.target)) {
+                                                            currentValue = invokeNode.arguments().get(0);
+                                                            FrameState stateAfter = invokeNode.stateAfter();
+                                                            invokeNode.setStateAfter(null);
+                                                            stateAfter.delete();
+                                                            invokeNode.replaceAndDelete(invokeNode.next());
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                                 initArgs[z] = currentValue;
                                 z++;
