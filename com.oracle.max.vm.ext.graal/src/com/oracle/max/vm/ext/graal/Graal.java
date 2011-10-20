@@ -77,9 +77,6 @@ public class Graal implements RuntimeCompiler {
     private static final int DEFAULT_OPT_LEVEL = 3;
 
     @HOSTED_ONLY
-    public static Graal instance;
-
-    @HOSTED_ONLY
     public Graal() {
         this(new MaxXirGenerator(GraalOptions.PrintXirTemplates), platform().target);
     }
@@ -88,9 +85,6 @@ public class Graal implements RuntimeCompiler {
     protected Graal(RiXirGenerator xirGenerator, CiTarget target) {
         this.xirGenerator = xirGenerator;
         this.target = target;
-        if (instance == null) {
-            instance = this;
-        }
     }
 
     @HOSTED_ONLY

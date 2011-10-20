@@ -654,6 +654,9 @@ public abstract class BytecodeAssembler {
             case STRING: {
                 break;
             }
+            case OBJECT: {
+                break;
+            }
             default: {
                 throw verifyError("Invalid index in LDC to " + tag);
             }

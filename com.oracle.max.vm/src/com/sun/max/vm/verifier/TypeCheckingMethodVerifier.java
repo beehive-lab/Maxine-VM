@@ -1516,6 +1516,11 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                 case CLASS:
                     frame.push(CLASS);
                     break;
+                case OBJECT:
+                    ObjectConstant objectConstant = constantPool().objectAt(index);
+                    TypeDescriptor typeDescriptor = JavaTypeDescriptor.forJavaClass(objectConstant.value().getClass());
+                    frame.push(getVerificationType(typeDescriptor));
+                    break;
                 default:
                     verifyError("LDC instruction for invalid constant pool type " + tag);
             }

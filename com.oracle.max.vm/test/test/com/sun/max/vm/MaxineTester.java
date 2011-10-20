@@ -1392,11 +1392,17 @@ public class MaxineTester {
                 if (!stopTesting() && (filter == null || name.contains(filter))) {
                     PrintStream out = out();
                     String[] paramList = entry.getValue();
-                    final JavaCommand javaCommand = new JavaCommand(Classes.forName("test.com.sun.max.vm.compiler.c1x.C1XTest"));
-                    for (String param : paramList) {
-                        javaCommand.addArgument(param);
-                    }
+                    final JavaCommand javaCommand = new JavaCommand(Classes.forName("com.oracle.max.vm.ext.maxri.Compile"));
                     javaCommand.addVMOptions(defaultJVMOptions());
+                    javaCommand.addArgument("-c=C1X");
+                    for (String param : paramList) {
+                        if (param.startsWith("-J")) {
+                            String vmOption = param.substring(2);
+                            javaCommand.addVMOption(vmOption);
+                        } else {
+                            javaCommand.addArgument(param);
+                        }
+                    }
                     javaCommand.addClasspath(System.getProperty("java.class.path"));
                     final String[] javaArgs = javaCommand.getExecArgs(javaExecutableOption.getValue());
                     out.println("Started C1X " + name + ": " + Utils.toString(paramList, " "));

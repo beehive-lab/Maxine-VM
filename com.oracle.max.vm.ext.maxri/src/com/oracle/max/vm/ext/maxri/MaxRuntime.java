@@ -63,8 +63,6 @@ import com.sun.max.vm.value.*;
  */
 public class MaxRuntime implements GraalRuntime {
 
-    private RiSnippets snippets;
-
     private static MaxRuntime instance = new MaxRuntime();
 
     public static MaxRuntime getInstance() {
@@ -388,13 +386,6 @@ public class MaxRuntime implements GraalRuntime {
 
     public boolean isExceptionType(RiType type) {
         return type.isSubtypeOf(getType(Throwable.class));
-    }
-
-    public RiSnippets getSnippets() {
-        if (snippets == null) {
-            snippets = new MaxSnippets(this);
-        }
-        return snippets;
     }
 
     public boolean areConstantObjectsEqual(CiConstant x, CiConstant y) {
