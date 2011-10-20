@@ -133,7 +133,7 @@ public abstract class LIRAssembler {
         for (LIRInstruction op : list.instructionsList()) {
             if (GraalOptions.CommentedAssembly) {
                 // Only print out branches
-                if (op.code == LIROpcode.Branch) {
+                if (op.code == LegacyOpcode.Branch) {
                     tasm.blockComment(op.toStringWithIdPrefix());
                 }
             }
@@ -143,12 +143,17 @@ public abstract class LIRAssembler {
                 TTY.println();
             }
 
-            emitCode(op);
+            emitOp(op);
 
             if (GraalOptions.PrintLIRWithAssembly) {
                 printAssembly(asm);
             }
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    protected void emitOp(LIRInstruction op) {
+        op.code.emitCode(this, op);
     }
 
     private void printAssembly(AbstractAssembler asm) {
@@ -174,170 +179,6 @@ public abstract class LIRAssembler {
 //        }
 
         return true;
-    }
-
-    private void emitCode(LIRInstruction op) {
-        verifyOopMap(op.info);
-
-        switch (op.code) {
-            case Label:
-                asm.bind(((LIRLabel) op).label);
-                break;
-            case CondFloatBranch:
-            case Branch:
-                emitBranch((LIRBranch) op);
-                break;
-            case TableSwitch:
-                emitTableSwitch((LIRTableSwitch) op);
-                break;
-            case Xir:
-                emitXir((LIRXirInstruction) op);
-                break;
-            case Convert:
-                emitConvert((LIRConvert) op);
-                break;
-
-            case Breakpoint:
-                emitBreakpoint();
-                break;
-            case Membar:
-                emitMemoryBarriers(((CiConstant) op.operand(0)).asInt());
-                break;
-            case MonitorAddress:
-                emitMonitorAddress(((CiConstant) op.operand(0)).asInt(), op.result());
-                break;
-
-            case Cas:
-                emitCompareAndSwap(op);
-                break;
-
-            case DirectCall: {
-                LIRCall call = (LIRCall) op;
-                emitCallAlignment(call.code);
-                if (call.marks != null) {
-                    call.marks.put(XirMark.CALLSITE, tasm.recordMark(null, new Mark[0]));
-                }
-                emitDirectCall(call.target, call.info);
-                break;
-            }
-            case IndirectCall: {
-                LIRCall call = (LIRCall) op;
-                emitCallAlignment(call.code);
-                if (call.marks != null) {
-                    call.marks.put(XirMark.CALLSITE, tasm.recordMark(null, new Mark[0]));
-                }
-                emitIndirectCall(call.target, call.info, call.targetAddress());
-                break;
-            }
-            case NativeCall: {
-                LIRCall call = (LIRCall) op;
-                emitNativeCall((String) call.target, call.info, call.targetAddress());
-                break;
-            }
-
-            case Move:
-                LIRMove move = (LIRMove) op;
-                moveOp(op.operand(0), op.result(), move.kind, op.info);
-                break;
-            case Prefetchr:
-                emitReadPrefetch(op.operand(0));
-                break;
-            case Prefetchw:
-                emitReadPrefetch(op.operand(0));
-                break;
-            case Return:
-                emitReturn(op.operand(0));
-                break;
-            case Neg:
-                emitNegate(op.operand(0), op.result());
-                break;
-            case Lea:
-                emitLea(op.operand(0), op.result());
-                break;
-            case NullCheck:
-                emitNullCheck(op.operand(0), op.info);
-                break;
-            case Lsb:
-                emitSignificantBitOp(op.code,  op.operand(0), op.result());
-                break;
-            case Msb:
-                emitSignificantBitOp(op.code,  op.operand(0), op.result());
-                break;
-
-            case Cmp: {
-                LIRCondition condOp = (LIRCondition) op;
-                emitCompare(condOp.condition, op.operand(0), op.operand(1));
-                break;
-            }
-            case Cmpl2i:
-            case Cmpfd2i:
-            case Ucmpfd2i:
-                emitCompare2Int(op.code, op.operand(0), op.operand(1), op.result());
-                break;
-
-            case FCmove: {
-                LIRCondition condOp = (LIRCondition) op;
-                emitConditionalMove(condOp.condition, op.operand(0), op.operand(1), op.result(), true, false);
-                break;
-            }
-            case UFCmove: {
-                LIRCondition condOp = (LIRCondition) op;
-                emitConditionalMove(condOp.condition, op.operand(0), op.operand(1), op.result(), true, true);
-                break;
-            }
-            case Cmove: {
-                LIRCondition condOp = (LIRCondition) op;
-                emitConditionalMove(condOp.condition, op.operand(0), op.operand(1), op.result(), false, false);
-                break;
-            }
-
-            case Shl:
-            case Shr:
-            case Ushr:
-                if (op.operand(1).isConstant()) {
-                    emitShiftOp(op.code, op.operand(0), ((CiConstant) op.operand(1)).asInt(), op.result());
-                } else {
-                    emitShiftOp(op.code, op.operand(0), op.operand(1), op.result());
-                }
-                break;
-
-            case Add:
-            case Sub:
-            case Mul:
-            case Div:
-            case Rem:
-                emitArithOp(op.code, op.operand(0), op.operand(1), op.result(), op.info);
-                break;
-
-            case Abs:
-            case Sqrt:
-            case Sin:
-            case Tan:
-            case Cos:
-            case Log:
-            case Log10:
-                emitIntrinsicOp(op.code, op.operand(0), op.operand(1), op.result());
-                break;
-
-            case LogicAnd:
-            case LogicOr:
-            case LogicXor:
-                emitLogicOp(op.code, op.operand(0), op.operand(1), op.result());
-                break;
-
-
-            case Idiv  :
-            case Irem  : arithmeticIdiv(op.code, op.operand(0), op.operand(1), op.result(), op.info); break;
-            case Iudiv :
-            case Iurem : arithmeticIudiv(op.code, op.operand(0), op.operand(1), op.result(), op.info); break;
-            case Ldiv  :
-            case Lrem  : arithmeticLdiv(op.code, op.operand(0), op.operand(1), op.result(), op.info); break;
-            case Ludiv :
-            case Lurem : arithmeticLudiv(op.code, op.operand(0), op.operand(1), op.result(), op.info); break;
-
-            default:
-                throw Util.shouldNotReachHere("lirop: %s", op);
-        }
     }
 
     public void moveOp(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info) {
@@ -432,17 +273,15 @@ public abstract class LIRAssembler {
 
     protected abstract void emitVolatileMove(CiValue inOpr, CiValue result, CiKind kind, LIRDebugInfo info);
 
-    protected abstract void emitLogicOp(LIROpcode code, CiValue inOpr1, CiValue inOpr2, CiValue dst);
+    protected abstract void emitLogicOp(LegacyOpcode code, CiValue inOpr1, CiValue inOpr2, CiValue dst);
 
-    protected abstract void emitIntrinsicOp(LIROpcode code, CiValue inOpr1, CiValue inOpr2, CiValue dst);
+    protected abstract void emitIntrinsicOp(LegacyOpcode code, CiValue inOpr1, CiValue inOpr2, CiValue dst);
 
-    protected abstract void emitArithOp(LIROpcode code, CiValue inOpr1, CiValue inOpr2, CiValue dst, LIRDebugInfo info);
+    protected abstract void emitShiftOp(LegacyOpcode code, CiValue inOpr1, CiValue inOpr2, CiValue dst);
 
-    protected abstract void emitShiftOp(LIROpcode code, CiValue inOpr1, CiValue inOpr2, CiValue dst);
+    protected abstract void emitShiftOp(LegacyOpcode code, CiValue inOpr1, int asJint, CiValue dst);
 
-    protected abstract void emitShiftOp(LIROpcode code, CiValue inOpr1, int asJint, CiValue dst);
-
-    protected abstract void emitSignificantBitOp(LIROpcode code, CiValue inOpr1, CiValue dst);
+    protected abstract void emitSignificantBitOp(LegacyOpcode code, CiValue inOpr1, CiValue dst);
 
     protected abstract void emitConditionalMove(Condition condition, CiValue inOpr1, CiValue inOpr2, CiValue dst, boolean mayBeUnordered, boolean unorderedcmovOpr1);
 
@@ -496,13 +335,6 @@ public abstract class LIRAssembler {
 
     protected abstract boolean falseOnUnordered(Condition condition);
 
-    protected abstract void arithmeticIdiv(LIROpcode code, CiValue left, CiValue right, CiValue result, LIRDebugInfo info);
-
-    protected abstract void arithmeticIudiv(LIROpcode code, CiValue left, CiValue right, CiValue result, LIRDebugInfo info);
-
-    protected abstract void arithmeticLdiv(LIROpcode code, CiValue left, CiValue right, CiValue result, LIRDebugInfo info);
-
-    protected abstract void arithmeticLudiv(LIROpcode code, CiValue left, CiValue right, CiValue result, LIRDebugInfo info);
 
     protected boolean mayBeTrueOnUnordered(Condition condition) {
         return trueOnUnordered(condition) || !falseOnUnordered(condition);

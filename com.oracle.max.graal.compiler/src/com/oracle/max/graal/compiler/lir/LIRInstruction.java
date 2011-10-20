@@ -181,7 +181,7 @@ public class LIRInstruction {
         this.info = info;
         this.hasCall = hasCall;
 
-        assert opcode != LIROpcode.Move || result != CiValue.IllegalValue;
+        assert opcode != LegacyOpcode.Move || result != CiValue.IllegalValue;
         allocatorOperands = new ArrayList<CiValue>(operands.length + 3);
         this.result = initOutput(result);
 
@@ -362,7 +362,7 @@ public class LIRInstruction {
      *         LIROpcode declaration.
      */
     public String name() {
-        return code.name();
+        return code.getClass().getSimpleName();
     }
 
     /**
@@ -396,17 +396,6 @@ public class LIRInstruction {
 
     public boolean verify() {
         return true;
-    }
-
-    /**
-     * Determines if a given opcode is in a given range of valid opcodes.
-     *
-     * @param opcode the opcode to be tested.
-     * @param start the lower bound range limit of valid opcodes
-     * @param end the upper bound range limit of valid opcodes
-     */
-    protected static boolean isInRange(LIROpcode opcode, LIROpcode start, LIROpcode end) {
-        return start.ordinal() < opcode.ordinal() && opcode.ordinal() < end.ordinal();
     }
 
     public boolean hasOperands() {

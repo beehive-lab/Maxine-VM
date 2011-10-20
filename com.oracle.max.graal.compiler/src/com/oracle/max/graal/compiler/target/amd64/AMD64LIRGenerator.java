@@ -23,6 +23,10 @@
 
 package com.oracle.max.graal.compiler.target.amd64;
 
+import static com.oracle.max.graal.compiler.target.amd64.AMD64ArithmeticOp.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64MulOp.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64DivOp.*;
+
 import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.graal.compiler.*;
@@ -95,24 +99,6 @@ public class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    protected boolean strengthReduceMultiply(CiValue left, int c, CiValue result, CiValue tmp) {
-        if (tmp.isLegal()) {
-            if (CiUtil.isPowerOf2(c + 1)) {
-                lir.move(left, tmp);
-                lir.shiftLeft(left, CiUtil.log2(c + 1), left);
-                lir.sub(left, tmp, result);
-                return true;
-            } else if (CiUtil.isPowerOf2(c - 1)) {
-                lir.move(left, tmp);
-                lir.shiftLeft(left, CiUtil.log2(c - 1), left);
-                lir.add(left, tmp, result);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @Override
     public void visitNegate(NegateNode x) {
         LIRItem value = new LIRItem(x.x(), this);
         value.setDestroysRegister();
@@ -122,191 +108,107 @@ public class AMD64LIRGenerator extends LIRGenerator {
         setResult(x, reg);
     }
 
-    public boolean livesLonger(ValueNode x, ValueNode y) {
-        if (y.usages().size() == 1) {
-            return true;
-        }
-        return false;
-    }
+    @Override
+    public void visitArithmetic(ArithmeticNode x) {
+        assert Util.archKindsEqual(x.x().kind, x.kind) && Util.archKindsEqual(x.y().kind, x.kind);
 
-    public void visitArithmeticOpFloat(ArithmeticNode x) {
-        LIRItem left = new LIRItem(x.x(), this);
-        LIRItem right = new LIRItem(x.y(), this);
-        assert !left.isStack() || !right.isStack() : "can't both be memory operands";
-        boolean mustLoadBoth = x.opcode == Bytecodes.FREM || x.opcode == Bytecodes.DREM;
-
-        // Both are in register, swap operands such that the short-living one is on the left side.
-        if (x.isCommutative() && left.isRegisterOrVariable() && right.isRegisterOrVariable()) {
-            if (livesLonger(x.x(), x.y())) {
-                LIRItem tmp = left;
-                left = right;
-                right = tmp;
-            }
-        }
-
-        if (left.isRegisterOrVariable() || x.x().isConstant() || mustLoadBoth) {
-            left.loadItem();
-        }
-
-        if (mustLoadBoth) {
-            // frem and drem destroy also right operand, so move it to a new register
-            right.setDestroysRegister();
-            right.loadItem();
-        } else if (right.isRegisterOrVariable()) {
-            right.loadItem();
-        }
-
-        CiVariable reg;
-
-        if (x.opcode == Bytecodes.FREM) {
-            reg = callRuntimeWithResult(CiRuntimeCall.ArithmeticFrem, null, left.result(), right.result());
-        } else if (x.opcode == Bytecodes.DREM) {
-            reg = callRuntimeWithResult(CiRuntimeCall.ArithmeticDrem, null, left.result(), right.result());
-        } else {
-            reg = newVariable(x.kind);
-            arithmeticOpFpu(x.opcode, reg, left.result(), right.result(), ILLEGAL);
-        }
-
-        setResult(x, reg);
-    }
-
-    public void visitArithmeticOpLong(ArithmeticNode x) {
         int opcode = x.opcode;
-        if (opcode == Bytecodes.LDIV || opcode == Bytecodes.LREM) {
-            // emit inline 64-bit code
-            LIRDebugInfo info = stateFor(x);
-            CiValue dividend = force(x.x(), RAX_L); // dividend must be in RAX
-            CiValue divisor = load(x.y());            // divisor can be in any (other) register
-
-            CiValue result = createResultVariable(x);
-            CiValue resultReg;
-            if (opcode == Bytecodes.LREM) {
-                resultReg = RDX_L; // remainder result is produced in rdx
-                lir.lrem(dividend, divisor, resultReg, LDIV_TMP, info);
-            } else {
-                resultReg = RAX_L; // division result is produced in rax
-                lir.ldiv(dividend, divisor, resultReg, LDIV_TMP, info);
-            }
-
-            lir.move(resultReg, result);
-        } else if (opcode == Bytecodes.LMUL) {
-            LIRItem right = new LIRItem(x.y(), this);
-
-            // right register is destroyed by the long mul, so it must be
-            // copied to a new register.
-            right.setDestroysRegister();
-
-            CiValue left = load(x.x());
-            right.loadItem();
-
-            arithmeticOpLong(opcode, LMUL_OUT, left, right.result());
-            CiValue result = createResultVariable(x);
-            lir.move(LMUL_OUT, result);
-        } else {
-            LIRItem right = new LIRItem(x.y(), this);
-
-            CiValue left = load(x.x());
-            // don't load constants to save register
-            right.loadNonconstant();
-            createResultVariable(x);
-            arithmeticOpLong(opcode, x.operand(), left, right.result());
-        }
-    }
-
-    public void visitArithmeticOpInt(ArithmeticNode x) {
-        int opcode = x.opcode;
-        if (opcode == Bytecodes.IDIV || opcode == Bytecodes.IREM) {
-            // emit code for integer division or modulus
-
-            // Call 'stateFor' before 'force()' because 'stateFor()' may
-            // force the evaluation of other instructions that are needed for
-            // correct debug info.  Otherwise the live range of the fixed
-            // register might be too long.
+        if (opcode == Bytecodes.IDIV || opcode == Bytecodes.IREM || opcode == Bytecodes.LDIV || opcode == Bytecodes.LREM) {
             LIRDebugInfo info = stateFor(x);
 
-            CiValue dividend = force(x.x(), RAX_I); // dividend must be in RAX
-            CiValue divisor = load(x.y());          // divisor can be in any (other) register
+            CiVariable left = load(x.x());
+            CiVariable right = load(x.y());
+            CiVariable result = createResultVariable(x);
 
-            // idiv and irem use rdx in their implementation so the
-            // register allocator must not assign it to an interval that overlaps
-            // this division instruction.
-            CiRegisterValue tmp = RDX_I;
-
-            CiValue result = createResultVariable(x);
-            CiValue resultReg;
-            if (opcode == Bytecodes.IREM) {
-                resultReg = tmp; // remainder result is produced in rdx
-                lir.irem(dividend, divisor, resultReg, tmp, info);
-            } else {
-                resultReg = RAX_I; // division result is produced in rax
-                lir.idiv(dividend, divisor, resultReg, tmp, info);
+            switch (opcode) {
+                case Bytecodes.IDIV:
+                    lir.move(left, RAX_I);
+                    lir.append(IDIV.create(RAX_I, info, RAX_I, right));
+                    lir.move(RAX_I, result);
+                    break;
+                case Bytecodes.IREM:
+                    lir.move(left, RAX_I);
+                    lir.append(IREM.create(RDX_I, info, RAX_I, right));
+                    lir.move(RDX_I, result);
+                    break;
+                case Bytecodes.LDIV:
+                    lir.move(left, RAX_L);
+                    lir.append(LDIV.create(RAX_L, info, RAX_L, right));
+                    lir.move(RAX_L, result);
+                    break;
+                case Bytecodes.LREM:
+                    lir.move(left, RAX_L);
+                    lir.append(LREM.create(RDX_L, info, RAX_L, right));
+                    lir.move(RDX_L, result);
+                    break;
             }
 
-            lir.move(resultReg, result);
+        } else if (x.opcode == Bytecodes.FREM || x.opcode == Bytecodes.DREM) {
+            CiVariable left = load(x.x());
+            CiVariable right = load(x.y());
+            CiVariable result = createResultVariable(x);
+
+            CiValue reg;
+            if (x.opcode == Bytecodes.FREM) {
+                reg = callRuntime(CiRuntimeCall.ArithmeticFrem, null, left, right);
+            } else if (x.opcode == Bytecodes.DREM) {
+                reg = callRuntime(CiRuntimeCall.ArithmeticDrem, null, left, right);
+            } else {
+                throw Util.shouldNotReachHere();
+            }
+            lir.move(reg, result);
+
         } else {
-            // emit code for other integer operations
-            LIRItem left = new LIRItem(x.x(), this);
-            LIRItem right = new LIRItem(x.y(), this);
-            LIRItem leftArg = left;
-            LIRItem rightArg = right;
-            if (x.isCommutative() && left.isStack() && right.isRegisterOrVariable()) {
-                // swap them if left is real stack (or cached) and right is real register(not cached)
-                leftArg = right;
-                rightArg = left;
-            }
+            CiVariable left = load(x.x());
+            CiValue right = loadNonconstant(x.y());
+            CiVariable result = createResultVariable(x);
 
-            leftArg.loadItem();
-
-            // do not need to load right, as we can handle stack and constants
-            if (opcode == Bytecodes.IMUL) {
-                // check if we can use shift instead
-                boolean useConstant = false;
-                boolean useTmp = false;
-                if (rightArg.result().isConstant()) {
-                    int iconst = rightArg.instruction.asConstant().asInt();
-                    if (iconst > 0) {
-                        if (CiUtil.isPowerOf2(iconst)) {
-                            useConstant = true;
-                        } else if (CiUtil.isPowerOf2(iconst - 1) || CiUtil.isPowerOf2(iconst + 1)) {
-                            useConstant = true;
-                            useTmp = true;
-                        }
-                    }
-                }
-                if (!useConstant) {
-                    rightArg.loadItem();
-                }
-                CiValue tmp = ILLEGAL;
-                if (useTmp) {
-                    tmp = newVariable(CiKind.Int);
-                }
-                createResultVariable(x);
-
-                arithmeticOpInt(opcode, x.operand(), leftArg.result(), rightArg.result(), tmp);
-            } else {
-                createResultVariable(x);
-                CiValue tmp = ILLEGAL;
-                arithmeticOpInt(opcode, x.operand(), leftArg.result(), rightArg.result(), tmp);
+            lir.move(left, result);
+            switch (opcode) {
+                case Bytecodes.IADD: lir.append(IADD.create(result, right)); break;
+                case Bytecodes.ISUB: lir.append(ISUB.create(result, right)); break;
+                case Bytecodes.IMUL: lir.append(IMUL.create(result, right)); break;
+                case Bytecodes.LADD: lir.append(LADD.create(result, right)); break;
+                case Bytecodes.LSUB: lir.append(LSUB.create(result, right)); break;
+                case Bytecodes.LMUL: lir.append(LMUL.create(result, right)); break;
+                case Bytecodes.FADD: lir.append(FADD.create(result, right)); break;
+                case Bytecodes.FSUB: lir.append(FSUB.create(result, right)); break;
+                case Bytecodes.FMUL: lir.append(FMUL.create(result, right)); break;
+                case Bytecodes.FDIV: lir.append(FDIV.create(result, right)); break;
+                case Bytecodes.DADD: lir.append(DADD.create(result, right)); break;
+                case Bytecodes.DSUB: lir.append(DSUB.create(result, right)); break;
+                case Bytecodes.DMUL: lir.append(DMUL.create(result, right)); break;
+                case Bytecodes.DDIV: lir.append(DDIV.create(result, right)); break;
+                default: throw Util.shouldNotReachHere();
             }
         }
     }
 
     @Override
-    public void visitArithmetic(ArithmeticNode x) {
-        assert Util.archKindsEqual(x.x().kind, x.kind) && Util.archKindsEqual(x.y().kind, x.kind) : "wrong parameter types: " + Bytecodes.nameOf(x.opcode) + ", x: " + x.x() + ", y: " + x.y() + ", kind: " + x.kind;
-        switch (x.kind) {
-            case Float:
-            case Double:
-                visitArithmeticOpFloat(x);
-                return;
-            case Long:
-                visitArithmeticOpLong(x);
-                return;
-            case Int:
-                visitArithmeticOpInt(x);
-                return;
+    public void integerAdd(ValueNode resultNode, ValueNode leftNode, ValueNode rightNode) {
+        CiVariable left = load(leftNode);
+        CiValue right = loadNonconstant(rightNode);
+        CiVariable result = createResultVariable(resultNode);
+
+        lir.move(left, result);
+        lir.append(IADD.create(result, right));
+    }
+
+    @Override
+    public void emitUnsignedShiftRight(CiValue value, CiValue count, CiValue dst, CiValue tmp) {
+        lir().unsignedShiftRight(value, count, dst, tmp);
+    }
+
+    @Override
+    public void emitAdd(CiVariable a, CiValue b, CiVariable dest) {
+        assert a.equals(dest);
+        switch (dest.kind) {
+            case Int: lir.append(IADD.create(dest, b)); break;
+            case Long: lir.append(LADD.create(dest, b)); break;
+            case Float: lir.append(FADD.create(dest, b)); break;
+            case Double: lir.append(DADD.create(dest, b)); break;
+            default: throw Util.shouldNotReachHere();
         }
-        throw Util.shouldNotReachHere();
     }
 
     @Override
