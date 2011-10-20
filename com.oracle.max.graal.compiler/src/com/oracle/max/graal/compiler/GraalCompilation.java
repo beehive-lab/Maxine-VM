@@ -58,8 +58,6 @@ public final class GraalCompilation {
 
     private LIR lir;
 
-    private LIRGenerator lirGenerator;
-
     public static ThreadLocal<ServiceLoader<Optimizer>> optimizerLoader = new ThreadLocal<ServiceLoader<Optimizer>>();
 
     /**
@@ -337,6 +335,7 @@ public final class GraalCompilation {
         try {
             if (GraalOptions.GenLIR) {
                 context().timers.startScope("Create LIR");
+                LIRGenerator lirGenerator = null;
                 try {
                     initFrameMap(maxLocks());
 
@@ -354,6 +353,8 @@ public final class GraalCompilation {
                 }
 
                 new LinearScan(this, lir, lirGenerator, frameMap()).allocate();
+
+                lir.setDeoptimizationStubs(lirGenerator.deoptimizationStubs());
             }
         } catch (Error e) {
             if (context().isObserved() && GraalOptions.PlotOnError) {
@@ -382,7 +383,7 @@ public final class GraalCompilation {
                 lirAssembler.emitLocalStubs();
 
                 // generate deoptimization stubs
-                ArrayList<DeoptimizationStub> deoptimizationStubs = lirGenerator.deoptimizationStubs();
+                ArrayList<DeoptimizationStub> deoptimizationStubs = lir.deoptimizationStubs();
                 if (deoptimizationStubs != null) {
                     for (DeoptimizationStub stub : deoptimizationStubs) {
                         lirAssembler.emitDeoptizationStub(stub);
