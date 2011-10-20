@@ -1143,6 +1143,13 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         private int debugBitmapWordIndex;
         private long debugBitmapWord;
 
+        /**
+         * Visit grey objects located between the finger and a rightmost position identified by a word index in the color map.
+         * Iteration stops when the index of the word holding the mark of the finger goes beyond the rightmost position specified.
+         * This code is shared between marking for region-based heaps and marking for single-contiguous space heaps.
+         *
+         * @param rightmostBitmapWordIndex
+         */
         void visitGreyObjects(int rightmostBitmapWordIndex) {
             final Pointer colorMapBase = heapMarker.base.asPointer();
             int bitmapWordIndex = heapMarker.bitmapWordIndex(finger);
@@ -1202,7 +1209,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                 final int fingerBitmapWordIndex = heapMarker.bitmapWordIndex(finger);
                 final RegionRange regionRange = regionsRanges.next();
                 final int firstRegion = regionRange.firstRegion();
-                final int rangeRightmostBitmapWordIndex = (firstRegion + regionRange.numRegions()) << log2RegionToBitmapWord;
+                final int rangeRightmostBitmapWordIndex = ((firstRegion + regionRange.numRegions()) << log2RegionToBitmapWord) - 1;
                 if (fingerBitmapWordIndex > rangeRightmostBitmapWordIndex) {
                     // skip this range, finger is past it already. This may happen after initial root marking. when the leftmost marked
                     // position is beyond the first ranges, or when starting a new pass on the mark bitmap, e.g., to trace live objects from untraced special references.
@@ -1221,10 +1228,15 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                     if (b <= rightmostBitmapWordIndex) {
                         // We reached the right most mark. No need to continue iterating over regions.
                         FatalError.check(heapMarker.markingStack.isEmpty(), "marking stack must be empty");
-                        FatalError.check(heapMarker.isBlackWhenNotWhite(rightmost), "rightmost object must be marked black");
+                        if (!heapMarker.isBlackWhenNotWhite(rightmost)) {
+                            int rbi = heapMarker.bitIndexOf(rightmost);
+                            heapMarker.traceMark(rightmost, heapMarker.color(rbi), rbi, " *** rightmost object must be marked black\n");
+                            FatalError.unexpected("rightmost object must be marked black");
+                        }
                         return;
                     }
                     if (rightmostBitmapWordIndex ==  rangeRightmostBitmapWordIndex) {
+                        FatalError.check(b > rangeRightmostBitmapWordIndex, "new rightmost object must be above the current range.");
                         // We're done with the current regions range. Break
                         // to the outer loop to iterate over subsequent region ranges.
                         break;
@@ -1453,9 +1465,11 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                 p = p.plus(Layout.size(origin));
             }
             heapWalkTracer.end = p;
-            if (MaxineVM.isDebug() && p.readWord(0).isZero()) {
+            if (MaxineVM.isDebug() && p.lessThan(end) && p.readWord(0).isZero()) {
+                traceMark(p, color(bitIndex), " *** found suspiscious obj (null hub) after obj ");
                 Log.print(" suspiscious obj @ "); Log.print(origin); Log.print(" size = ");
                 Log.println(Layout.size(origin).toLong());
+                FatalError.breakpoint();
             }
         }
         FatalError.setOnVMOpError(null);
@@ -1864,10 +1878,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             if (lastLiveMark >=  nextReclaimableMark) {
                 sweeper.processDeadSpace(regionLeftmost, Size.fromInt((lastLiveMark - leftmostBitIndex) << log2BytesCoveredPerBit));
             }
-        }
-        if (MaxineVM.isDebug() && rightmost.equals(forwardScanState.rightmost)) {
-            // FIXME: temp debug trace
-            FatalError.breakpoint();
         }
         impreciseSweep(sweeper, lastLiveMark, rightmostBitIndex);
     }
