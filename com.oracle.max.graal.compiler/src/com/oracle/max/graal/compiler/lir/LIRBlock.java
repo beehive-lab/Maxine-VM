@@ -291,7 +291,7 @@ public final class LIRBlock {
             return (lirXirInstruction.falseSuccessor() != null) && (lirXirInstruction.trueSuccessor() != null);
         }
         LIROpcode code = lirInstruction.code;
-        return code == LIROpcode.Branch || code == LIROpcode.TableSwitch;
+        return code == LegacyOpcode.Branch || code == LegacyOpcode.TableSwitch;
     }
 
     public boolean isExceptionEntry() {

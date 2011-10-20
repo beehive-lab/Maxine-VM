@@ -35,7 +35,7 @@ public class LIRLabel extends LIRInstruction {
      * @param label the label
      */
     public LIRLabel(Label label) {
-        super(LIROpcode.Label, CiValue.IllegalValue, null);
+        super(LegacyOpcode.Label, CiValue.IllegalValue, null);
         assert label != null;
         this.label = label;
     }

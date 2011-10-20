@@ -33,7 +33,7 @@ public abstract class WriteBarrier extends FixedWithNextNode {
         super(CiKind.Illegal);
     }
 
-    protected void generateBarrier(CiValue temp, LIRGeneratorTool generator) {
+    protected void generateBarrier(CiVariable temp, LIRGeneratorTool generator) {
         HotSpotVMConfig config = CompilerImpl.getInstance().getConfig();
         generator.emitUnsignedShiftRight(temp, CiConstant.forInt(config.cardtableShift), temp, CiValue.IllegalValue);
 
@@ -42,7 +42,9 @@ public abstract class WriteBarrier extends FixedWithNextNode {
         if (((int) startAddress) == startAddress) {
             displacement = (int) startAddress;
         } else {
-            generator.emitAdd(temp, CiConstant.forLong(config.cardtableStartAddress), temp);
+            CiVariable c = generator.newVariable(generator.target().wordKind);
+            generator.emitMove(CiConstant.forLong(config.cardtableStartAddress), c);
+            generator.emitAdd(temp, c, temp);
         }
         generator.emitMove(CiConstant.FALSE, new CiAddress(CiKind.Boolean, temp, displacement));
     }

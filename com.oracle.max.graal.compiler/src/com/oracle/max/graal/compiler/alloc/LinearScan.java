@@ -369,7 +369,7 @@ public final class LinearScan {
 
             case NoSpillStore:
                 assert defPos <= interval.spillDefinitionPos() : "positions are processed in reverse order when intervals are created";
-                if (defPos < interval.spillDefinitionPos() - 2 || instructionForId(interval.spillDefinitionPos()).code == LIROpcode.Xir) {
+                if (defPos < interval.spillDefinitionPos() - 2 || instructionForId(interval.spillDefinitionPos()).code == LegacyOpcode.Xir) {
                     // second definition found, so no spill optimization possible for this interval
                     interval.setSpillState(SpillState.NoOptimization);
                 } else {
@@ -468,7 +468,7 @@ public final class LinearScan {
                     CiValue resultOperand = op.result();
                     // remove move from register to stack if the stack slot is guaranteed to be correct.
                     // only moves that have been inserted by LinearScan can be removed.
-                    assert op.code == LIROpcode.Move : "only moves can have a opId of -1";
+                    assert op.code == LegacyOpcode.Move : "only moves can have a opId of -1";
                     assert resultOperand.isVariable() : "LinearScan inserts only moves to variables";
 
                     LIRMove op1 = (LIRMove) op;
@@ -1005,7 +1005,7 @@ public final class LinearScan {
      * Determines the register priority for an instruction's output/result operand.
      */
     RegisterPriority registerPriorityOfOutputOperand(LIRInstruction op, CiValue operand) {
-        if (op.code == LIROpcode.Move) {
+        if (op.code == LegacyOpcode.Move) {
             LIRMove move = (LIRMove) op;
             CiValue res = move.result();
             boolean resultInMemory = res.isVariable() && operands.mustStartInMemory((CiVariable) res);
@@ -1035,7 +1035,7 @@ public final class LinearScan {
      * Determines the priority which with an instruction's input operand will be allocated a register.
      */
     RegisterPriority registerPriorityOfInputOperand(LIRInstruction op, CiValue operand) {
-        if (op.code == LIROpcode.Move) {
+        if (op.code == LegacyOpcode.Move) {
             LIRMove move = (LIRMove) op;
             CiValue res = move.result();
             boolean resultInMemory = res.isVariable() && operands.mustStartInMemory((CiVariable) res);
@@ -1053,7 +1053,7 @@ public final class LinearScan {
         }
 
         if (compilation.compiler.target.arch.isX86()) {
-            if (op.code == LIROpcode.Cmove) {
+            if (op.code == LegacyOpcode.Cmove) {
                 // conditional moves can handle stack operands
                 assert op.result().isVariableOrRegister();
                 return RegisterPriority.ShouldHaveRegister;
@@ -1062,31 +1062,37 @@ public final class LinearScan {
             // optimizations for second input operand of arithmetic operations on Intel
             // this operand is allowed to be on the stack in some cases
             CiKind kind = operand.kind.stackKind();
-            if (kind == CiKind.Float || kind == CiKind.Double) {
+            if (op.code instanceof LIROpcode.SecondOperandCanBeMemory) {
+                if (op.operand(0) != op.operand(1) && op.operand(1) == operand) {
+                    assert (op.result().isVariableOrRegister() || op.result().isIllegal()) && op.operand(0).isVariableOrRegister() : "cannot mark second operand as stack if others are not in register";
+                    return RegisterPriority.ShouldHaveRegister;
+                }
+
+            } else if (op.code instanceof LegacyOpcode && kind == CiKind.Float || kind == CiKind.Double) {
                 // SSE float instruction (CiKind.Double only supported with SSE2)
-                switch (op.code) {
+                switch ((LegacyOpcode) op.code) {
                     case Cmp:
-                    case Add:
-                    case Sub:
-                    case Mul:
-                    case Div: {
+//                    case Add:
+//                    case Sub:
+//                    case Mul:
+//                    case Div: {
                         if (op.operand(0) != op.operand(1) && op.operand(1) == operand) {
-                            assert (op.result().isVariableOrRegister() || op.code == LIROpcode.Cmp) && op.operand(0).isVariableOrRegister() : "cannot mark second operand as stack if others are not in register";
+                            assert (op.result().isVariableOrRegister() || op.code == LegacyOpcode.Cmp) && op.operand(0).isVariableOrRegister() : "cannot mark second operand as stack if others are not in register";
                             return RegisterPriority.ShouldHaveRegister;
                         }
-                    }
+//                    }
                 }
-            } else if (kind != CiKind.Long) {
+            } else if (op.code instanceof LegacyOpcode && kind != CiKind.Long) {
                 // integer instruction (note: long operands must always be in register)
-                switch (op.code) {
+                switch ((LegacyOpcode) op.code) {
                     case Cmp:
-                    case Add:
-                    case Sub:
+//                    case Add:
+//                    case Sub:
                     case LogicAnd:
                     case LogicOr:
                     case LogicXor: {
                         if (op.operand(0) != op.operand(1) && op.operand(1) == operand) {
-                            assert (op.result().isVariableOrRegister() || op.code == LIROpcode.Cmp) && op.operand(0).isVariableOrRegister() : "cannot mark second operand as stack if others are not in register";
+                            assert (op.result().isVariableOrRegister() || op.code == LegacyOpcode.Cmp) && op.operand(0).isVariableOrRegister() : "cannot mark second operand as stack if others are not in register";
                             return RegisterPriority.ShouldHaveRegister;
                         }
                     }
@@ -1105,7 +1111,7 @@ public final class LinearScan {
      * spill slot.
      */
     void handleMethodArguments(LIRInstruction op) {
-        if (op.code == LIROpcode.Move) {
+        if (op.code == LegacyOpcode.Move) {
             if (op.operand(0).isStackSlot()) {
                 CiStackSlot slot = (CiStackSlot) op.operand(0);
                 if (GraalOptions.DetailedAsserts) {
@@ -1132,7 +1138,10 @@ public final class LinearScan {
     }
 
     void addRegisterHints(LIRInstruction op) {
-        switch (op.code) {
+        if (!(op.code instanceof LegacyOpcode)) {
+            return;
+        }
+        switch ((LegacyOpcode) op.code) {
             case Move: // fall through
             case Convert: {
                 CiValue moveFrom = op.operand(0);
@@ -1614,8 +1623,8 @@ public final class LinearScan {
             // check if block has only one predecessor and only one successor
             if (block.numberOfPreds() == 1 && block.numberOfSux() == 1) {
                 List<LIRInstruction> instructions = block.lir().instructionsList();
-                assert instructions.get(0).code == LIROpcode.Label : "block must start with label";
-                assert instructions.get(instructions.size() - 1).code == LIROpcode.Branch : "block with successors must end with branch (" + block + "), " + instructions.get(instructions.size() - 1);
+                assert instructions.get(0).code == LegacyOpcode.Label : "block must start with label";
+                assert instructions.get(instructions.size() - 1).code == LegacyOpcode.Branch : "block with successors must end with branch (" + block + "), " + instructions.get(instructions.size() - 1);
                 assert ((LIRBranch) instructions.get(instructions.size() - 1)).cond() == Condition.TRUE : "block with successor must end with unconditional branch";
 
                 // check if block is empty (only label and branch)
@@ -2099,7 +2108,7 @@ public final class LinearScan {
             assert op.verify();
 
             // remove useless moves
-            if (op.code == LIROpcode.Move) {
+            if (op.code == LegacyOpcode.Move) {
                 CiValue src = op.operand(0);
                 CiValue dst = op.result();
                 if (dst == src || src.equals(dst)) {

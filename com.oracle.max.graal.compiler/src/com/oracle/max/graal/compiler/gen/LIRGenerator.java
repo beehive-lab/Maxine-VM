@@ -48,7 +48,6 @@ import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.graal.nodes.spi.*;
-import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.ri.RiType.Representation;
@@ -150,13 +149,19 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     }
 
     @Override
-    public CiValue load(ValueNode val) {
+    public CiVariable load(ValueNode val) {
         CiValue result = makeOperand(val);
-        if (!result.isVariableOrRegister()) {
+        if (!result.isVariable()) {
             CiVariable operand = newVariable(val.kind);
             lir.move(result, operand);
             return operand;
         }
+        return (CiVariable) result;
+    }
+
+    public CiValue loadNonconstant(ValueNode val) {
+        CiValue result = makeOperand(val);
+        assert result.isVariable() || result.isConstant();
         return result;
     }
 
@@ -1203,117 +1208,6 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         lir.jump(defaultSux);
     }
 
-    protected void arithmeticOpFpu(int code, CiValue result, CiValue left, CiValue right, CiValue tmp) {
-        CiValue leftOp = left;
-
-        if (isTwoOperand && leftOp != result) {
-            assert right != result : "malformed";
-            lir.move(leftOp, result);
-            leftOp = result;
-        }
-
-        switch (code) {
-            case DADD:
-            case FADD:
-                lir.add(leftOp, right, result);
-                break;
-            case FMUL:
-            case DMUL:
-                lir.mul(leftOp, right, result);
-                break;
-            case DSUB:
-            case FSUB:
-                lir.sub(leftOp, right, result);
-                break;
-            case FDIV:
-            case DDIV:
-                lir.div(leftOp, right, result, null);
-                break;
-            default:
-                Util.shouldNotReachHere();
-        }
-    }
-
-    @Override
-    public void integerAdd(ValueNode result, ValueNode left, ValueNode right) {
-        arithmeticOpInt(Bytecodes.IADD, createResultVariable(result), load(left), load(right), CiValue.IllegalValue);
-    }
-
-    @Override
-    public void emitUnsignedShiftRight(CiValue value, CiValue count, CiValue dst, CiValue tmp) {
-        lir().unsignedShiftRight(value, count, dst, tmp);
-    }
-
-    @Override
-    public void emitAdd(CiValue a, CiValue b, CiValue dest) {
-        lir().add(a, b, dest);
-    }
-
-    public void arithmeticOpInt(int code, CiValue result, CiValue left, CiValue right, CiValue tmp) {
-        CiValue leftOp = left;
-
-        if (isTwoOperand && leftOp != result) {
-            assert right != result : "malformed";
-            lir.move(leftOp, result);
-            leftOp = result;
-        }
-
-        switch (code) {
-            case IADD:
-                lir.add(leftOp, right, result);
-                break;
-            case IMUL:
-                boolean didStrengthReduce = false;
-                if (right.isConstant()) {
-                    CiConstant rightConstant = (CiConstant) right;
-                    int c = rightConstant.asInt();
-                    if (CiUtil.isPowerOf2(c)) {
-                        // do not need tmp here
-                        lir.shiftLeft(leftOp, CiUtil.log2(c), result);
-                        didStrengthReduce = true;
-                    } else {
-                        didStrengthReduce = strengthReduceMultiply(leftOp, c, result, tmp);
-                    }
-                }
-                // we couldn't strength reduce so just emit the multiply
-                if (!didStrengthReduce) {
-                    lir.mul(leftOp, right, result);
-                }
-                break;
-            case ISUB:
-                lir.sub(leftOp, right, result);
-                break;
-            default:
-                // idiv and irem are handled elsewhere
-                Util.shouldNotReachHere();
-        }
-    }
-
-    public void arithmeticOpLong(int code, CiValue result, CiValue left, CiValue right) {
-        CiValue leftOp = left;
-
-        if (isTwoOperand && leftOp != result) {
-            assert right != result : "malformed";
-            lir.move(leftOp, result);
-            leftOp = result;
-        }
-
-        switch (code) {
-            case LADD:
-                lir.add(leftOp, right, result);
-                break;
-            case LMUL:
-                lir.mul(leftOp, right, result);
-                break;
-            case LSUB:
-                lir.sub(leftOp, right, result);
-                break;
-            default:
-                // ldiv and lrem are handled elsewhere
-                Util.shouldNotReachHere();
-        }
-    }
-
     protected final CiValue callRuntime(CiRuntimeCall runtimeCall, LIRDebugInfo info, CiValue... args) {
         // get a result register
         CiKind result = runtimeCall.resultKind;
@@ -1739,8 +1633,6 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     public abstract boolean canInlineAsConstant(ValueNode i);
 
     protected abstract boolean canStoreAsConstant(ValueNode i, CiKind kind);
-
-    protected abstract boolean strengthReduceMultiply(CiValue left, int constant, CiValue result, CiValue tmp);
 
     protected abstract void genCmpMemInt(Condition condition, CiValue base, int disp, int c, LIRDebugInfo info);
 
