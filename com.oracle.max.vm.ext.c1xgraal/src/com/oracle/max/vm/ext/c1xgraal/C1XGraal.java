@@ -36,6 +36,7 @@ import com.oracle.max.vm.ext.maxri.*;
 import com.oracle.max.vm.ext.maxri.MaxXirGenerator.RuntimeCalls;
 import com.sun.c1x.*;
 import com.sun.c1x.graph.*;
+import com.sun.c1x.observer.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
@@ -92,9 +93,6 @@ public class C1XGraal implements RuntimeCompiler {
     public static boolean optionsRegistered;
 
     @HOSTED_ONLY
-    public static C1XGraal instance;
-
-    @HOSTED_ONLY
     public C1XGraal() {
         this(new MaxXirGenerator(GraalOptions.PrintXirTemplates), platform().target);
     }
@@ -103,9 +101,6 @@ public class C1XGraal implements RuntimeCompiler {
     protected C1XGraal(RiXirGenerator xirGenerator, CiTarget target) {
         this.xirGenerator = xirGenerator;
         this.target = target;
-        if (instance == null) {
-            instance = this;
-        }
     }
 
     @Override
@@ -133,6 +128,7 @@ public class C1XGraal implements RuntimeCompiler {
             graalCompiler = new GraalCompiler(context, runtime, target, xirGenerator, vm().registerConfigs.compilerStub);
 
             c1xCompiler = new C1XCompiler(runtime, target, xirGenerator, vm().registerConfigs.compilerStub);
+            c1xCompiler.addCompilationObserver(new WordTypeRewriterPhase());
             MaxineIntrinsicImplementations.initialize(c1xCompiler.intrinsicRegistry);
 
             // search for the runtime call and register critical methods
@@ -176,6 +172,20 @@ public class C1XGraal implements RuntimeCompiler {
                 graalCompiler.context.timers.print();
             }
         }
+    }
+
+    private static class WordTypeRewriterPhase implements CompilationObserver {
+        @Override
+        public void compilationEvent(CompilationEvent event) {
+            if (event.getLabel() == CompilationEvent.AFTER_PARSING) {
+                new WordTypeRewriter().apply(event.getCompilation());
+            }
+        }
+
+        @Override
+        public void compilationStarted(CompilationEvent event) { }
+        @Override
+        public void compilationFinished(CompilationEvent event) { }
     }
 
     public GraalCompiler graalCompiler() {

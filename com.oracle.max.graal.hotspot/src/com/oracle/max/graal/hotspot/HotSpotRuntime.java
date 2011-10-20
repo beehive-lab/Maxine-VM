@@ -156,11 +156,6 @@ public class HotSpotRuntime implements GraalRuntime {
     }
 
     @Override
-    public RiSnippets getSnippets() {
-        throw new UnsupportedOperationException("getSnippets");
-    }
-
-    @Override
     public boolean mustInline(RiMethod method) {
         return false;
     }
