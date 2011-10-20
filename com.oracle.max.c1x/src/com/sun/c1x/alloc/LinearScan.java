@@ -2255,7 +2255,11 @@ public final class LinearScan {
 
         numberInstructions();
 
-        printLir("Before register allocation", true);
+        String label = "Before register allocation";
+        printLir(label, true);
+        if (compilation.compiler.isObserved()) {
+            compilation.compiler.fireCompilationEvent(new CompilationEvent(compilation, label, compilation.hir().startBlock, true, true));
+        }
 
         computeLocalLiveSets();
         computeGlobalLiveSets();
@@ -2268,7 +2272,10 @@ public final class LinearScan {
             C1XTimers.LINEAR_SCAN.start();
         }
 
-        printIntervals("Before register allocation");
+        printIntervals(label);
+        if (compilation.compiler.isObserved()) {
+            compilation.compiler.fireCompilationEvent(new CompilationEvent(compilation, label, this, intervals, intervalsSize));
+        }
 
         allocateRegisters();
 
@@ -2356,10 +2363,6 @@ public final class LinearScan {
             TTY.println(label);
             LIRList.printLIR(ir.linearScanOrder());
             TTY.println();
-        }
-
-        if (compilation.compiler.isObserved()) {
-            compilation.compiler.fireCompilationEvent(new CompilationEvent(compilation, label, compilation.hir().startBlock, hirValid, true));
         }
     }
 

@@ -101,7 +101,7 @@ public class IR {
         // Graph builder must set the startBlock and the osrEntryBlock
         new GraphBuilder(compilation, this).build(topScope);
         assert startBlock != null;
-        verifyAndPrint(CompilationEvent.AFTER_PARSING);
+        observeCompilationEvent(CompilationEvent.AFTER_PARSING);
 
         if (C1XOptions.PrintCompilation) {
             TTY.print(String.format("%3d blocks | ", this.numberOfBlocks()));
@@ -111,33 +111,33 @@ public class IR {
     private void optimize1() {
         if (!compilation.isTypesafe()) {
             new UnsafeCastEliminator(this);
-            verifyAndPrint("After unsafe cast elimination");
+            observeCompilationEvent("After unsafe cast elimination");
         }
 
         // do basic optimizations
         if (C1XOptions.PhiSimplify) {
             new PhiSimplifier(this);
-            verifyAndPrint("After phi simplification");
+            observeCompilationEvent("After phi simplification");
         }
         if (C1XOptions.OptNullCheckElimination) {
             new NullCheckEliminator(this);
-            verifyAndPrint("After null check elimination");
+            observeCompilationEvent("After null check elimination");
         }
         if (C1XOptions.OptDeadCodeElimination1) {
             new LivenessMarker(this).removeDeadCode();
-            verifyAndPrint("After dead code elimination 1");
+            observeCompilationEvent("After dead code elimination 1");
         }
         if (C1XOptions.OptCEElimination) {
             new CEEliminator(this);
-            verifyAndPrint("After CEE elimination");
+            observeCompilationEvent("After CEE elimination");
         }
         if (C1XOptions.OptBlockMerging) {
             new BlockMerger(this);
-            verifyAndPrint("After block merging");
+            observeCompilationEvent("After block merging");
         }
         if (C1XOptions.OptDiamondElimination) {
             new DiamondEliminator(this);
-            verifyAndPrint("After Diamond elimination");
+            observeCompilationEvent("After Diamond elimination");
         }
 
         if (compilation.compiler.extensions != null) {
@@ -150,7 +150,7 @@ public class IR {
     private void computeLinearScanOrder() {
         if (C1XOptions.GenLIR) {
             makeLinearScanOrder();
-            verifyAndPrint("After linear scan order");
+            observeCompilationEvent("After linear scan order");
         }
     }
 
@@ -171,11 +171,11 @@ public class IR {
         if (C1XOptions.OptGlobalValueNumbering) {
             makeLinearScanOrder();
             new GlobalValueNumberer(this);
-            verifyAndPrint("After global value numbering");
+            observeCompilationEvent("After global value numbering");
         }
         if (C1XOptions.OptDeadCodeElimination2) {
             new LivenessMarker(this).removeDeadCode();
-            verifyAndPrint("After dead code elimination 2");
+            observeCompilationEvent("After dead code elimination 2");
         }
 
     }
@@ -198,10 +198,10 @@ public class IR {
     }
 
     /**
-     * Verifies the IR and prints it out if the relevant options are set.
+     * Notifies compilation observers of a compilation event. This method also prints the IR if the relevant options are set.
      * @param phase the name of the phase for printing
      */
-    public void verifyAndPrint(String phase) {
+    public void observeCompilationEvent(String phase) {
         printToTTY(phase);
 
         if (compilation.compiler.isObserved()) {
