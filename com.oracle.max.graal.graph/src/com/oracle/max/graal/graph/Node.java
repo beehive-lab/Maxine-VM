@@ -72,7 +72,9 @@ public abstract class Node implements Cloneable {
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
-    public static @interface NodeIntrinsic {}
+    public static @interface NodeIntrinsic {
+        Class value() default NodeIntrinsic.class;
+    }
 
     public interface ValueNumberable {}
 

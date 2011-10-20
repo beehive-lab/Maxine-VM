@@ -31,6 +31,9 @@ public class EntryPointNode extends BeginNode {
     private final RiRuntime runtime;
     private final CiAssumptions assumptions = new CiAssumptions();
 
+    public EntryPointNode() {
+        this(null);
+    }
 
     public EntryPointNode(RiRuntime runtime) {
         this.runtime = runtime;

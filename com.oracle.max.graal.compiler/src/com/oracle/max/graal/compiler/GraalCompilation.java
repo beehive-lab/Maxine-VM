@@ -192,6 +192,7 @@ public final class GraalCompilation {
 
             if (GraalOptions.Extend) {
                 extensionOptimizations(graph);
+                new DeadCodeEliminationPhase(context).apply(graph);
             }
 
             if (GraalOptions.OptLoops) {
@@ -318,7 +319,9 @@ public final class GraalCompilation {
         }
     }
 
-    private void extensionOptimizations(Graph graph) {
+    private void extensionOptimizations(Graph<EntryPointNode> graph) {
+
+        new SnippetIntrinsificationPhase(context, compiler.runtime).apply(graph);
 
         ServiceLoader<Optimizer> serviceLoader = optimizerLoader.get();
         if (serviceLoader == null) {

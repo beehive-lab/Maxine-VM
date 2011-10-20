@@ -22,6 +22,9 @@
  */
 package com.oracle.max.graal.examples.intrinsics;
 
+import com.oracle.max.graal.graph.Node.NodeIntrinsic;
+import com.oracle.max.graal.graph.Node.NodeParameter;
+
 
 public class SafeAddExample {
 
@@ -47,7 +50,9 @@ public class SafeAddExample {
         return sum;
     }
 
-    public static int safeAdd(int a, int b) {
+
+    @NodeIntrinsic(SafeAddNode.class)
+    public static int safeAdd(@NodeParameter int a, @NodeParameter int b) {
         int result = a + b;
         if (b < 0 && result > a) {
             throw new IllegalStateException("underflow when adding " + a + " and " + b);

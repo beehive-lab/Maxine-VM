@@ -59,13 +59,16 @@ public class SnippetIntrinsificationPhase extends Phase {
         RiResolvedMethod target = invoke.target;
         if (Modifier.isStatic(target.accessFlags())) {
             Class< ? > c = target.holder().toJava();
-            if (c != null && target.holder().isSubtypeOf(runtime.getType(Node.class))) {
+            if ((c != null && target.holder().isSubtypeOf(runtime.getType(Node.class))) || GraalOptions.Extend) {
                 try {
                     Class< ? >[] parameterTypes = toClassArray(target.signature(), target.holder());
                     Method m = c.getMethod(target.name(), parameterTypes);
                     if (m != null) {
                         NodeIntrinsic intrinsic = m.getAnnotation(Node.NodeIntrinsic.class);
                         if (intrinsic != null) {
+                            if (intrinsic.value() != NodeIntrinsic.class) {
+                                c = intrinsic.value();
+                            }
                             int z = 0;
                             Object[] initArgs = new Object[parameterTypes.length];
                             ValueNode[] arguments = InliningUtil.simplifyParameters(invoke);
