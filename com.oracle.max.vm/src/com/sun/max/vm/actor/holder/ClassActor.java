@@ -994,6 +994,16 @@ public abstract class ClassActor extends Actor implements RiType {
         return null;
     }
 
+    public List<FieldActor> getLocalFieldActors() {
+        FieldActor[] result = new FieldActor[localInstanceFieldActors.length + localStaticFieldActors.length];
+        int cursor = 0;
+        System.arraycopy(localInstanceFieldActors, 0, result, cursor, localInstanceFieldActors.length);
+        cursor += localInstanceFieldActors.length;
+        System.arraycopy(localStaticFieldActors, 0, result, cursor, localStaticFieldActors.length);
+        return java.util.Arrays.asList(result);
+
+    }
+
     private void assignHolderToLocalMethodActors() {
         assignHolderToMembers(localVirtualMethodActors, localInterfaceMethodActors, localStaticMethodActors);
     }
@@ -1260,6 +1270,14 @@ public abstract class ClassActor extends Actor implements RiType {
             result.addAll(superClassActor.getAllInterfaceActors());
         }
         return result;
+    }
+
+    /**
+     * Get all the interfaces implemented by this class or extended by this interface.
+     * @return
+     */
+    public final List<InterfaceActor> getLocalInterfaceActors() {
+        return java.util.Arrays.asList(localInterfaceActors);
     }
 
     /**

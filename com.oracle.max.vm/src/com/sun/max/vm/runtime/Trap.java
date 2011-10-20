@@ -334,6 +334,12 @@ public abstract class Trap {
             if (vmOperation != null) {
                 TRAP_INSTRUCTION_POINTER.store3(instructionPointer);
                 vmOperation.doAtSafepoint(trapFrame);
+                while (VmOperation.isSuspendRequest(etla)) {
+                    VmThread.fromTLA(etla).suspendMonitor.suspend();
+                    // We must re-check the state because it is possible
+                    // that even though we were resumed, we may have remained
+                    // off CPU through another suspend operation.
+                }
                 TRAP_INSTRUCTION_POINTER.store3(Pointer.zero());
             } else {
                 /*

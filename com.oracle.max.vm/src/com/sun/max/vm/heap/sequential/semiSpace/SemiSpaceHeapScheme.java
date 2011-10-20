@@ -42,6 +42,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.management.*;
 import com.sun.max.vm.reference.*;
@@ -51,7 +52,6 @@ import com.sun.max.vm.thread.*;
 
 /**
  * A simple semi-space scavenger heap.
- * @Author Mick Jordan
  */
 public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisitor {
 
@@ -364,6 +364,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 // Pre-verification of the heap.
                 verifyObjectSpaces("before GC");
 
+                JVMTI.event(JVMTIEvent.GARBAGE_COLLECTION_START);
                 HeapScheme.Inspect.notifyGCStarted();
 
                 vmConfig().monitorScheme().beforeGarbageCollection();
@@ -439,6 +440,8 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
                 // Post-verification of the heap.
                 verifyObjectSpaces("after GC");
+
+                JVMTI.event(JVMTIEvent.GARBAGE_COLLECTION_FINISH);
 
                 HeapScheme.Inspect.notifyGCCompleted();
 
@@ -664,6 +667,21 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         stopTimer(copyTimer);
         if (Heap.traceGCPhases()) {
             Log.println("END: Moving reachable");
+        }
+    }
+
+    /**
+     * Visit cells corresponding to objects in the heap.
+     * TLABs complicate this as they are allocated on the
+     * heap but are not usually filled.
+     * @param visitor
+     */
+    private void visitCells(CellVisitor visitor) {
+        Pointer start = toSpace.start().asPointer();
+        Pointer cell = start;
+        while (cell.isNotZero() && cell.lessThan(allocationMark()) && cell.getWord().isNotZero()) {
+            cell = DebugHeap.checkDebugCellTag(start, cell);
+            cell = visitor.visitCell(cell);
         }
     }
 
@@ -1068,7 +1086,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         public ShrinkHeap(Size amount) {
             super("ShrinkHeap", null, Mode.Safepoint);
             this.amount = amount;
-            this.allowsNestedOperations = true;
         }
 
         @Override
@@ -1111,7 +1128,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         public GrowHeap(Size amount) {
             super("GrowHeap", null, Mode.Safepoint);
             this.amount = amount;
-            this.allowsNestedOperations = true;
         }
 
         @Override
@@ -1144,6 +1160,13 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
     @INLINE(override = true)
     public void writeBarrier(Reference from, Reference to) {
         // do nothing.
+    }
+
+    @Override
+    public void walkHeap(CallbackCellVisitor visitor) {
+//        ImmortalHeap.visitCells(visitor);
+//        Heap.bootHeapRegion.visitCells(visitor);
+        visitCells(visitor);
     }
 
     public boolean pin(Object object) {

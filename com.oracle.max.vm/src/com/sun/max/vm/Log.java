@@ -126,6 +126,10 @@ public final class Log {
         out.printSymbol(address);
     }
 
+    public static void printCString(Pointer cString) {
+        out.printCString(cString);
+    }
+
     /**
      * Equivalent to calling {@link com.sun.max.vm.Log.LogPrintStream#printf(String, Object[])} on {@link #out}.
      */
@@ -467,6 +471,14 @@ public final class Log {
             } else {
                 log_print_symbol(address.asAddress());
             }
+        }
+
+        /**
+         * Print a C string.
+         * @param cString
+         */
+        public void printCString(Pointer cString) {
+            log_print_buffer(cString);
         }
 
         /**

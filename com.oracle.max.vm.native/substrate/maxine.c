@@ -269,11 +269,12 @@ void debugger_initialize() {
 extern JNIEnv jniEnv();
 
 /**
- * Gets a pointer to the global JMM function table.
+ * Get pointers to the global JMM/JVMTI function tables.
  *
- * Defined in Native/substrate/jmm.c
+ * Defined in Native/substrate/{jmm.c,jvmti.c}
  */
 void* getJMMInterface(int version);
+void* getJVMTIInterface(int version);
 
 /**
  *  ATTENTION: this signature must match the signatures of 'com.sun.max.vm.MaxineVM.run()':
@@ -286,6 +287,7 @@ typedef jint (*VMRunMethod)(
                 char *dlerror(void),
                 JNIEnv jniEnv,
                 void *jmmInterface,
+                void *jvmtiInterface,
                 int argc,
                 char *argv[]);
 
@@ -345,10 +347,10 @@ int maxine(int argc, char *argv[], char *executablePath) {
     Address etla = ETLA_FROM_TLBLOCK(tlBlock);
 
 #if log_LOADER
-    log_println("entering Java by calling MaxineVM.run(etla=%p, bootHeapRegionStart=%p, openLibrary=%p, dlsym=%p, dlerror=%p, jniEnv=%p, jmmInterface=%p, argc=%d, argv=%p)",
-                    etla, image_heap(), openLibrary, loadSymbol, dlerror, jniEnv(), getJMMInterface(-1), argc, argv);
+    log_println("entering Java by calling MaxineVM.run(etla=%p, bootHeapRegionStart=%p, openLibrary=%p, dlsym=%p, dlerror=%p, jniEnv=%p, jmmInterface=%p, jvmtiInterface=%p, argc=%d, argv=%p)",
+                    etla, image_heap(), openLibrary, loadSymbol, dlerror, jniEnv(), getJMMInterface(-1), getJVMTIInterface(-1), argc, argv);
 #endif
-    exitCode = (*method)(etla, image_heap(), openLibrary, loadSymbol, dlerror, jniEnv(), getJMMInterface(-1), argc, argv);
+    exitCode = (*method)(etla, image_heap(), openLibrary, loadSymbol, dlerror, jniEnv(), getJMMInterface(-1), getJVMTIInterface(-1), argc, argv);
 
 #if log_LOADER
     log_println("start method exited with code: %d", exitCode);
