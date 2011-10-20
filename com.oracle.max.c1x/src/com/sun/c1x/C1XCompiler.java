@@ -38,7 +38,7 @@ import com.sun.cri.xir.*;
 /**
  * This class implements the compiler interface for C1X.
  */
-public class C1XCompiler extends ObservableCompiler {
+public class C1XCompiler extends ObservableCompiler implements CiCompiler {
 
     public final IntrinsicImpl.Registry intrinsicRegistry = new IntrinsicImpl.Registry();
 
@@ -77,7 +77,7 @@ public class C1XCompiler extends ObservableCompiler {
         init();
     }
 
-    public CiResult compileMethod(RiMethod method, int osrBCI, CiStatistics stats) {
+    public CiResult compileMethod(RiMethod method, int osrBCI, CiStatistics stats, DebugInfoLevel debugInfoLevel) {
         if (C1XOptions.PrintCFGToFile && cfgPrinterObserver == null) {
             synchronized (this) {
                 if (cfgPrinterObserver == null) {
@@ -96,7 +96,7 @@ public class C1XCompiler extends ObservableCompiler {
 
         CiResult result = null;
         TTY.Filter filter = new TTY.Filter(C1XOptions.PrintFilter, method);
-        C1XCompilation compilation = new C1XCompilation(this, method, osrBCI, stats);
+        C1XCompilation compilation = new C1XCompilation(this, method, osrBCI, stats, debugInfoLevel);
         try {
             result = compilation.compile();
         } finally {

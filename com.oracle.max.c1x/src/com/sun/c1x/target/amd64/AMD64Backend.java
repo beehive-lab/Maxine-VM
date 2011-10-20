@@ -32,6 +32,7 @@ import com.sun.c1x.stub.*;
 import com.sun.c1x.stub.CompilerStub.Id;
 import com.sun.c1x.target.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiCompiler.DebugInfoLevel;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
 
@@ -79,7 +80,7 @@ public class AMD64Backend extends Backend {
 
     @Override
     public CompilerStub emit(Id stub) {
-        final C1XCompilation comp = new C1XCompilation(compiler, null, -1, null);
+        final C1XCompilation comp = new C1XCompilation(compiler, null, -1, null, DebugInfoLevel.FULL);
         try {
             return new AMD64CompilerStubEmitter(comp, stub.arguments, stub.resultKind).emit(stub);
         } finally {
@@ -89,7 +90,7 @@ public class AMD64Backend extends Backend {
 
     @Override
     public CompilerStub emit(CiRuntimeCall rtCall) {
-        final C1XCompilation comp = new C1XCompilation(compiler, null, -1, null);
+        final C1XCompilation comp = new C1XCompilation(compiler, null, -1, null, DebugInfoLevel.FULL);
         try {
             return new AMD64CompilerStubEmitter(comp, rtCall.arguments, rtCall.resultKind).emit(rtCall);
         } finally {
@@ -109,7 +110,7 @@ public class AMD64Backend extends Backend {
 
     @Override
     public CompilerStub emit(XirTemplate t) {
-        final C1XCompilation comp = new C1XCompilation(compiler, null, -1, null);
+        final C1XCompilation comp = new C1XCompilation(compiler, null, -1, null, DebugInfoLevel.FULL);
         try {
             return new AMD64CompilerStubEmitter(comp, getArgumentKinds(t), t.resultOperand.kind).emit(t);
         } finally {

@@ -37,6 +37,7 @@ import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.observer.*;
+import com.sun.cri.ci.CiCompiler.DebugInfoLevel;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
@@ -232,7 +233,8 @@ public class C1X implements RuntimeCompiler {
     public final TargetMethod compile(final ClassMethodActor method, boolean install, CiStatistics stats) {
         CiTargetMethod compiledMethod;
         do {
-            compiledMethod = compiler().compileMethod(method, -1, stats).targetMethod();
+            DebugInfoLevel debugInfoLevel = method.isTemplate() ? DebugInfoLevel.REF_MAPS : DebugInfoLevel.FULL;
+            compiledMethod = compiler().compileMethod(method, -1, stats, debugInfoLevel).targetMethod();
             Dependencies deps = DependenciesManager.validateDependencies(compiledMethod.assumptions());
             if (deps != Dependencies.INVALID) {
                 if (C1XOptions.PrintTimers) {

@@ -32,6 +32,7 @@ import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.graph.*;
 import com.oracle.max.graal.hotspot.logging.*;
 import com.oracle.max.graal.hotspot.server.*;
+import com.sun.cri.ci.CiCompiler.DebugInfoLevel;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -135,7 +136,7 @@ public class VMExitsNative implements VMExits, Remote {
             @Override
             public void run() throws Throwable {
                 try {
-                    CiResult result = compiler.getCompiler().compileMethod(method, -1, null);
+                    CiResult result = compiler.getCompiler().compileMethod(method, -1, null, DebugInfoLevel.FULL);
                     if (LogCompiledMethods) {
                         String qualifiedName = CiUtil.toJavaName(method.holder()) + "::" + method.name();
                         compiledMethods.add(qualifiedName);

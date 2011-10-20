@@ -106,10 +106,6 @@ public class CiUnresolvedMethod implements RiMethod {
         throw unresolved("noSafepoints()");
     }
 
-    public boolean minimalDebugInfo() {
-        throw unresolved("minimalDebugInfo()");
-    }
-
     public RiMethodProfile methodData() {
         throw unresolved("methodData()");
     }

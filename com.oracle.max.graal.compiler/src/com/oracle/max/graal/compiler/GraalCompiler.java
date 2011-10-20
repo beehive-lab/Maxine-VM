@@ -35,7 +35,7 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
 
-public class GraalCompiler {
+public class GraalCompiler implements CiCompiler  {
 
     public final Map<Object, CompilerStub> stubs = new HashMap<Object, CompilerStub>();
 
@@ -94,7 +94,7 @@ public class GraalCompiler {
         });
     }
 
-    public CiResult compileMethod(RiMethod method, int osrBCI, CiStatistics stats) {
+    public CiResult compileMethod(RiMethod method, int osrBCI, CiStatistics stats, DebugInfoLevel debugInfoLevel) {
         context.timers.startScope(getClass());
         try {
             long startTime = 0;
@@ -106,7 +106,7 @@ public class GraalCompiler {
 
             CiResult result = null;
             TTY.Filter filter = new TTY.Filter(GraalOptions.PrintFilter, CiUtil.format("%H.%n", method, false));
-            GraalCompilation compilation = new GraalCompilation(context, this, method, osrBCI, stats);
+            GraalCompilation compilation = new GraalCompilation(context, this, method, osrBCI, stats, debugInfoLevel);
             currentCompilation = compilation;
             try {
                 result = compilation.compile();
@@ -127,7 +127,7 @@ public class GraalCompiler {
 
     public CiResult compileMethod(RiMethod method, CompilerGraph graph) {
         assert graph.verify();
-        GraalCompilation compilation = new GraalCompilation(context, this, method, graph, -1, null);
+        GraalCompilation compilation = new GraalCompilation(context, this, method, graph, -1, null, DebugInfoLevel.FULL);
         return compilation.compile();
     }
 

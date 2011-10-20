@@ -37,6 +37,7 @@ import com.oracle.max.vm.ext.maxri.MaxXirGenerator.RuntimeCalls;
 import com.sun.c1x.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.observer.*;
+import com.sun.cri.ci.CiCompiler.DebugInfoLevel;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
@@ -206,10 +207,11 @@ public class C1XGraal implements RuntimeCompiler {
         CiTargetMethod compiledMethod;
         do {
             String name = vm().compilationBroker.compilerFor(method);
+            DebugInfoLevel debugInfoLevel = method.isTemplate() ? DebugInfoLevel.REF_MAPS : DebugInfoLevel.FULL;
             if (forceC1X(method) || (name != null && name.equals("C1X"))) {
-                compiledMethod = c1xCompiler().compileMethod(method, -1, stats).targetMethod();
+                compiledMethod = c1xCompiler().compileMethod(method, -1, stats, debugInfoLevel).targetMethod();
             } else {
-                compiledMethod = graalCompiler().compileMethod(method, -1, stats).targetMethod();
+                compiledMethod = graalCompiler().compileMethod(method, -1, stats, debugInfoLevel).targetMethod();
             }
 
             Dependencies deps = DependenciesManager.validateDependencies(compiledMethod.assumptions());

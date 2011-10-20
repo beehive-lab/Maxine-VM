@@ -34,6 +34,7 @@ import com.oracle.max.graal.compiler.stub.*;
 import com.oracle.max.graal.compiler.stub.CompilerStub.*;
 import com.oracle.max.graal.compiler.target.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiCompiler.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
 
@@ -81,7 +82,7 @@ public class AMD64Backend extends Backend {
 
     @Override
     public CompilerStub emit(GraalContext context, Id stub) {
-        final GraalCompilation comp = new GraalCompilation(context, compiler, null, -1, null);
+        final GraalCompilation comp = new GraalCompilation(context, compiler, null, -1, null, DebugInfoLevel.FULL);
         try {
             return new AMD64CompilerStubEmitter(context, comp, stub.arguments, stub.resultKind).emit(stub);
         } finally {
@@ -91,7 +92,7 @@ public class AMD64Backend extends Backend {
 
     @Override
     public CompilerStub emit(GraalContext context, CiRuntimeCall rtCall) {
-        final GraalCompilation comp = new GraalCompilation(context, compiler, null, -1, null);
+        final GraalCompilation comp = new GraalCompilation(context, compiler, null, -1, null, DebugInfoLevel.FULL);
         try {
             return new AMD64CompilerStubEmitter(context, comp, rtCall.arguments, rtCall.resultKind).emit(rtCall);
         } finally {
@@ -111,7 +112,7 @@ public class AMD64Backend extends Backend {
 
     @Override
     public CompilerStub emit(GraalContext context, XirTemplate t) {
-        final GraalCompilation comp = new GraalCompilation(context, compiler, null, -1, null);
+        final GraalCompilation comp = new GraalCompilation(context, compiler, null, -1, null, DebugInfoLevel.FULL);
         try {
             return new AMD64CompilerStubEmitter(context, comp, getArgumentKinds(t), t.resultOperand.kind).emit(t);
         } finally {

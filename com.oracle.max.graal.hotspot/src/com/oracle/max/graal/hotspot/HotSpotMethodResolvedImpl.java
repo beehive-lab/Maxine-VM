@@ -185,11 +185,6 @@ public final class HotSpotMethodResolvedImpl extends HotSpotMethod implements Ho
         return null;
     }
 
-    @Override
-    public boolean minimalDebugInfo() {
-        return false;
-    }
-
     public int invocationCount() {
         return compiler.getVMEntries().RiMethod_invocationCount(this);
     }

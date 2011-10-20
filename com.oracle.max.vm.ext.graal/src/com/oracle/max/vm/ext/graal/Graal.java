@@ -33,6 +33,7 @@ import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.graph.NodeClass.CalcOffset;
 import com.oracle.max.vm.ext.maxri.*;
 import com.oracle.max.vm.ext.maxri.MaxXirGenerator.RuntimeCalls;
+import com.sun.cri.ci.CiCompiler.DebugInfoLevel;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
@@ -148,7 +149,7 @@ public class Graal implements RuntimeCompiler {
     public final TargetMethod compile(final ClassMethodActor method, boolean install, CiStatistics stats) {
         CiTargetMethod compiledMethod;
         do {
-            compiledMethod = compiler().compileMethod(method, -1, stats).targetMethod();
+            compiledMethod = compiler().compileMethod(method, -1, stats, DebugInfoLevel.FULL).targetMethod();
             Dependencies deps = DependenciesManager.validateDependencies(compiledMethod.assumptions());
             if (deps != Dependencies.INVALID) {
                 if (GraalOptions.Time) {
