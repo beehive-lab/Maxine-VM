@@ -193,7 +193,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     private FrameState lastState;
 
     public LIRGenerator(GraalCompilation compilation) {
-        this.context = compilation.context;
+        this.context = compilation.compiler.context;
         this.compilation = compilation;
         this.ir = compilation.lir();
         this.xir = compilation.compiler.xir;

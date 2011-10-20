@@ -63,8 +63,6 @@ public class GraalCompiler {
 
     public final RiRegisterConfig compilerStubRegisterConfig;
 
-    private GraalCompilation currentCompilation;
-
 
     public GraalCompiler(GraalContext context, GraalRuntime runtime, CiTarget target, RiXirGenerator xirGen, RiRegisterConfig compilerStubRegisterConfig) {
         this.context = context;
@@ -89,15 +87,14 @@ public class GraalCompiler {
             CiResult result = null;
             TTY.Filter filter = new TTY.Filter(GraalOptions.PrintFilter, CiUtil.format("%H.%n", method, false));
             GraalCompilation compilation = new GraalCompilation(context, this, method, osrBCI, stats);
-            currentCompilation = compilation;
             try {
                 result = compilation.compile();
             } catch (VerificationError error) {
-                if (currentCompilation != null && GraalCompiler.this.context.isObserved()) {
+                if (GraalCompiler.this.context.isObserved()) {
                     if (error.node() != null) {
-                        GraalCompiler.this.context.observable.fireCompilationEvent(new CompilationEvent(currentCompilation, "VerificationError on Node " + error.node(), error.node().graph(), true, false, true));
+                        GraalCompiler.this.context.observable.fireCompilationEvent(new CompilationEvent(compilation, "VerificationError on Node " + error.node(), error.node().graph(), true, false, true));
                     } else if (error.graph() != null) {
-                        GraalCompiler.this.context.observable.fireCompilationEvent(new CompilationEvent(currentCompilation, "VerificationError on Graph " + error.graph(), error.graph(), true, false, true));
+                        GraalCompiler.this.context.observable.fireCompilationEvent(new CompilationEvent(compilation, "VerificationError on Graph " + error.graph(), error.graph(), true, false, true));
                     }
                 }
                 throw error;
