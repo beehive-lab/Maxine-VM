@@ -30,7 +30,7 @@ public interface CellVisitor {
 
     /**
      * @param cell the cell to be visited
-     * @return the adjacent next cell
+     * @return the adjacent next cell or {@link Pointer.zero()} to terminate the visit.
      */
     Pointer visitCell(Pointer cell);
 }
