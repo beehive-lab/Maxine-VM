@@ -1591,7 +1591,8 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                         signature[i] = inst.arguments[i].kind;
                     }
 
-                    CiCallingConvention cc = frameMap.getCallingConvention(signature, RuntimeCall);
+                    CiCallingConvention cc = compilation.registerConfig.getCallingConvention(RuntimeCall, signature, target, false);
+                    compilation.frameMap().adjustOutgoingStackSize(cc, RuntimeCall);
                     for (int i = 0; i < inst.arguments.length; i++) {
                         CiValue argumentLocation = cc.locations[i];
                         CiValue argumentSourceLocation = operands[inst.arguments[i].index];

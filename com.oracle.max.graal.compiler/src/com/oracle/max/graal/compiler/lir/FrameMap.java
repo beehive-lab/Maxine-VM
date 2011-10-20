@@ -144,31 +144,27 @@ public final class FrameMap {
         if (method == null) {
             incomingArguments = new CiCallingConvention(new CiValue[0], 0);
         } else {
-            incomingArguments = getCallingConvention(CiUtil.signatureToKinds(method), JavaCallee);
+            incomingArguments = registerConfig.getCallingConvention(JavaCallee, CiUtil.signatureToKinds(method), target, false);
         }
     }
 
     /**
-     * Gets the calling convention for a call with the specified signature.
+     * Adjusts the stack-size for stack-based outgoing arguments if required.
      *
-     * @param type the type of calling convention being requested
-     * @param signature the signature of the arguments
-     * @return a {@link CiCallingConvention} instance describing the location of parameters and the return value
+     * @param cc the calling convention
+     * @param type the type of calling convention
      */
-    public CiCallingConvention getCallingConvention(CiKind[] signature, Type type) {
-        CiCallingConvention cc = registerConfig.getCallingConvention(type, signature, target, false);
-        if (type.out) {
-            if (frameSize != -1 && cc.stackSize != 0) {
-                // TODO(tw): This is a special work around for Windows runtime calls that can happen and must be ignored.
-                assert type == RuntimeCall;
-            } else {
-                if (type != RuntimeCall) {
-                    assert frameSize == -1 : "frame size must not yet be fixed!";
-                    reserveOutgoing(cc.stackSize);
-                }
+    public void adjustOutgoingStackSize(CiCallingConvention cc, Type type) {
+        assert type.out;
+        if (frameSize != -1 && cc.stackSize != 0) {
+            // TODO(tw): This is a special work around for Windows runtime calls that can happen and must be ignored.
+            assert type == RuntimeCall;
+        } else {
+            if (type != RuntimeCall) {
+                assert frameSize == -1 : "frame size must not yet be fixed!";
+                reserveOutgoing(cc.stackSize);
             }
         }
-        return cc;
     }
 
     /**

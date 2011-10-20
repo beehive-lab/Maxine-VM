@@ -198,7 +198,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     private FrameState lastState;
 
     public LIRGenerator(GraalCompilation compilation) {
-        this.context = compilation.context;
+        this.context = compilation.compiler.context;
         this.compilation = compilation;
         this.ir = compilation.lir();
         this.xir = compilation.compiler.xir;
@@ -684,7 +684,8 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         }
 
         CiValue resultOperand = resultOperandFor(x.kind);
-        CiCallingConvention cc = compilation.frameMap().getCallingConvention(getSignature(x), JavaCall);
+        CiCallingConvention cc = compilation.registerConfig.getCallingConvention(JavaCall, getSignature(x), target(), false);
+        compilation.frameMap().adjustOutgoingStackSize(cc, JavaCall);
         List<CiValue> pointerSlots = new ArrayList<CiValue>(2);
         List<CiValue> argList = visitInvokeArguments(cc, x.arguments(), pointerSlots);
 
@@ -1217,7 +1218,8 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         List<CiValue> argumentList;
         if (arguments.length > 0) {
             // move the arguments into the correct location
-            CiCallingConvention cc = compilation.frameMap().getCallingConvention(arguments, RuntimeCall);
+            CiCallingConvention cc = compilation.registerConfig.getCallingConvention(RuntimeCall, arguments, target(), false);
+            compilation.frameMap().adjustOutgoingStackSize(cc, RuntimeCall);
             assert cc.locations.length == args.length : "argument count mismatch";
             for (int i = 0; i < args.length; i++) {
                 CiValue arg = args[i];
@@ -1701,7 +1703,8 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     @Override
     public void visitUnwind(UnwindNode x) {
         // move exception oop into fixed register
-        CiCallingConvention callingConvention = compilation.frameMap().getCallingConvention(new CiKind[]{CiKind.Object}, RuntimeCall);
+        CiCallingConvention callingConvention = compilation.registerConfig.getCallingConvention(RuntimeCall, new CiKind[]{CiKind.Object}, target(), false);
+        compilation.frameMap().adjustOutgoingStackSize(callingConvention, RuntimeCall);
         CiValue argumentOperand = callingConvention.locations[0];
         lir.move(makeOperand(x.exception()), argumentOperand);
         List<CiValue> args = new ArrayList<CiValue>(1);
@@ -1726,7 +1729,8 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
             info = stateFor(x, stateBeforeCallReturn(x, x.stateAfter().bci));
         }
         CiValue resultOperand = resultOperandFor(x.kind);
-        CiCallingConvention cc = compilation.frameMap().getCallingConvention(x.call().arguments, RuntimeCall);
+        CiCallingConvention cc = compilation.registerConfig.getCallingConvention(RuntimeCall, x.call().arguments, target(), false);
+        compilation.frameMap().adjustOutgoingStackSize(cc, RuntimeCall);
         List<CiValue> pointerSlots = new ArrayList<CiValue>(2);
         List<CiValue> argList = visitInvokeArguments(cc, x.arguments(), pointerSlots);
 
