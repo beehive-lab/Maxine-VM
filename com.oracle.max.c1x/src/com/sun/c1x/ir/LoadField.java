@@ -64,7 +64,7 @@ public final class LoadField extends AccessField {
      */
     @Override
     public RiResolvedType exactType() {
-        return declaredType();
+        return declaredType() == null ? null : declaredType().exactType();
     }
 
     @Override
