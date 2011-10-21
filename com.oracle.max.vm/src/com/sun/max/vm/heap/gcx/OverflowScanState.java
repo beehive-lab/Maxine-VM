@@ -39,8 +39,17 @@ import static com.sun.max.vm.heap.gcx.TricolorHeapMarker.*;
  * overflow scan.
  */
 abstract class OverflowScanState extends ColorMapScanState {
+    /**
+     * Specifies where the end of the overflow scan should end. Typically, this is saving the finger of the forward scan.
+     */
     protected Address endOfScan;
+    /**
+     * Specifies how the marking stack is flushed.
+     */
     protected MarkingStackFlusher markingStackFlusher;
+    /**
+     * Specifies the discontinuous regions to iterate over.
+     */
     protected HeapRegionRangeIterable regionsRanges;
 
     OverflowScanState(TricolorHeapMarker heapMarker) {
