@@ -130,8 +130,10 @@ public class OldInliningPhase extends Phase {
     private RiResolvedMethod inlineInvoke(InvokeNode invoke, int iterations, float ratio) {
         RiResolvedMethod parent = invoke.stateAfter().method();
         RiTypeProfile profile = parent.typeProfile(invoke.bci);
+        FrameState outerFrameState = invoke.stateAfter().outerFrameState();
+        CiCodePos callerPos = new CiCodePos(outerFrameState != null ? outerFrameState.toCodePos() : null, parent, invoke.bci);
         if (GraalOptions.Intrinsify) {
-            if (GraalOptions.Extend && intrinsicGraph(parent, invoke.bci, invoke.target, invoke.arguments()) != null) {
+            if (GraalOptions.Extend && intrinsicGraph(callerPos, invoke.target, invoke.arguments()) != null) {
                 return invoke.target;
             }
             if (compilation.compiler.runtime.intrinsicGraph(parent, invoke.bci, invoke.target, invoke.arguments()) != null) {
@@ -388,7 +390,7 @@ public class OldInliningPhase extends Phase {
     public static ThreadLocal<ServiceLoader<Intrinsifier>> intrinsicLoader = new ThreadLocal<ServiceLoader<Intrinsifier>>();
 
     @SuppressWarnings("unchecked")
-    private Graph<EntryPointNode> intrinsicGraph(RiMethod parent, int bci, RiMethod target, List<ValueNode> arguments) {
+    private Graph<EntryPointNode> intrinsicGraph(CiCodePos callerPos, RiResolvedMethod target, List<ValueNode> arguments) {
         ServiceLoader<Intrinsifier> serviceLoader = intrinsicLoader.get();
         if (serviceLoader == null) {
             serviceLoader = ServiceLoader.load(Intrinsifier.class);
@@ -396,7 +398,7 @@ public class OldInliningPhase extends Phase {
         }
 
         for (Intrinsifier intrinsifier : serviceLoader) {
-            Graph<?> result = intrinsifier.intrinsicGraph(compilation.compiler.runtime, parent, bci, target, arguments);
+            Graph<?> result = intrinsifier.intrinsicGraph(compilation.compiler.runtime, callerPos, target, arguments);
             if (result != null) {
                 return (Graph<EntryPointNode>) result;
             }
@@ -408,8 +410,10 @@ public class OldInliningPhase extends Phase {
         Graph<EntryPointNode> graph = null;
         if (GraalOptions.Intrinsify) {
             RiResolvedMethod parent = invoke.stateAfter().method();
+            FrameState outerFrameState = invoke.stateAfter().outerFrameState();
+            CiCodePos callerPos = new CiCodePos(outerFrameState != null ? outerFrameState.toCodePos() : null, parent, invoke.bci);
             if (GraalOptions.Extend) {
-                graph = intrinsicGraph(parent, invoke.bci, method, invoke.arguments());
+                graph = intrinsicGraph(callerPos, method, invoke.arguments());
             }
             if (graph == null) {
                 graph = compilation.compiler.runtime.intrinsicGraph(parent, invoke.bci, method, invoke.arguments());
