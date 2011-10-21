@@ -74,6 +74,7 @@ public class GraalCompiler implements CiCompiler  {
         init();
     }
 
+    @Override
     public CiResult compileMethod(RiResolvedMethod method, int osrBCI, CiStatistics stats, DebugInfoLevel debugInfoLevel) {
         context.timers.startScope(getClass());
         try {
