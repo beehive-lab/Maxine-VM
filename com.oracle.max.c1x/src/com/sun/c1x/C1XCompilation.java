@@ -37,6 +37,7 @@ import com.sun.c1x.observer.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiCompiler.DebugInfoLevel;
 import com.sun.cri.ri.*;
 
 /**
@@ -83,7 +84,7 @@ public final class C1XCompilation {
      * @param osrBCI the bytecode index for on-stack replacement, if requested
      * @param stats externally supplied statistics object to be used if not {@code null}
      */
-    public C1XCompilation(C1XCompiler compiler, RiResolvedMethod method, int osrBCI, CiStatistics stats) {
+    public C1XCompilation(C1XCompiler compiler, RiResolvedMethod method, int osrBCI, CiStatistics stats, DebugInfoLevel debugInfoLevel) {
         this.parent = currentCompilation.get();
         currentCompilation.set(this);
         this.compiler = compiler;
@@ -93,7 +94,7 @@ public final class C1XCompilation {
         this.osrBCI = osrBCI;
         this.stats = stats == null ? new CiStatistics() : stats;
         this.registerConfig = method == null ? compiler.compilerStubRegisterConfig : runtime.getRegisterConfig(method);
-        this.placeholderState = method != null && method.minimalDebugInfo() ? new MutableFrameState(new IRScope(null, null, method, -1), 0, 0, 0) : null;
+        this.placeholderState = debugInfoLevel == DebugInfoLevel.REF_MAPS ? new MutableFrameState(new IRScope(null, null, method, -1), 0, 0, 0) : null;
 
         if (compiler.isObserved()) {
             compiler.fireCompilationStarted(new CompilationEvent(this));

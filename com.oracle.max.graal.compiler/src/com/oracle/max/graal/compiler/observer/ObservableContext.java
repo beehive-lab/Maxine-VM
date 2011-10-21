@@ -24,8 +24,6 @@ package com.oracle.max.graal.compiler.observer;
 
 import java.util.*;
 
-import com.oracle.max.criutils.*;
-
 /**
  * Base class for compilers that notify subscribed {@link CompilationObserver CompilationObservers} of
  * {@link CompilationEvent CompilationEvents} that occur during their compilations.
@@ -39,7 +37,7 @@ public class ObservableContext {
      *         {@code false} otherwise.
      */
     public boolean isObserved() {
-        return observers != null && !TTY.isSuppressed();
+        return observers != null;
     }
 
     /**

@@ -545,7 +545,7 @@ function run_jttgen() {
 
     pushd $maxine_dir/com.oracle.max.vm/test >/dev/null
     run ${jvm_exe} -cp $(jmax classpath com.oracle.max.vm) test.com.sun.max.vm.compiler.JavaTester \
-        -scenario=target -run-scheme-package=all -native-tests $(echo jtt/* | sed 's:jtt/fail::g')
+        -scenario=target -run-scheme-package=all -native-tests $(echo jtt/* | sed 's:jtt/hotspot::g' | sed 's:jtt/fail::g')
     result=$?
     popd >/dev/null
     exit $result

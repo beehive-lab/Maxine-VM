@@ -47,9 +47,8 @@ public class AccessorIntrinsifier implements Intrinsifier {
                 if (accessor != null) {
                     RiResolvedMethod accessorMethod = accessor.resolveMethodImpl(method);
                     Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode());
-                    CiKind returnKind = accessorMethod.signature().returnKind(false);
                     RiType returnType = accessorMethod.signature().returnType(accessor);
-                    InvokeNode invoke = graph.add(new InvokeNode(callerPos.bci, Bytecodes.INVOKESPECIAL, returnKind, parameters.toArray(new ValueNode[0]), accessorMethod, returnType));
+                    InvokeNode invoke = graph.add(new InvokeNode(callerPos.bci, Bytecodes.INVOKESPECIAL, accessorMethod, parameters.toArray(new ValueNode[0]), returnType));
                     ReturnNode ret = graph.add(new ReturnNode(invoke));
                     graph.start().setNext(invoke);
                     invoke.setNext(ret);

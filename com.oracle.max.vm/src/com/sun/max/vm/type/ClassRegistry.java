@@ -244,9 +244,6 @@ public final class ClassRegistry {
         // Add to class hierarchy, initialize vtables, and do possible deoptimizations.
         DependenciesManager.addToHierarchy(classActor);
 
-        // Now finally publish the class
-        typeDescriptorToClassActor.put(typeDescriptor, classActor);
-
         if (MaxineVM.isHosted()) {
             synchronized (this) {
                 bootImageClasses = Arrays.copyOf(bootImageClasses, bootImageClasses.length + 1);

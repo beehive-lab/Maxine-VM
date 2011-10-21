@@ -810,6 +810,7 @@ public abstract class ReferenceMapInterpreter {
                             pushCategory1();
                             break;
                         }
+                        case OBJECT:
                         case STRING:
                         case CLASS: {
                             pushRef();

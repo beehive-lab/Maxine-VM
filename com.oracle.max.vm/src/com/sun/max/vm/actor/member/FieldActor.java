@@ -51,7 +51,7 @@ import com.sun.max.vm.value.*;
 /**
  * Internal representations of fields.
  */
-public class FieldActor extends MemberActor implements RiField {
+public class FieldActor extends MemberActor implements RiResolvedField {
 
     /**
      * Flags indicating special annotations applied to methods.

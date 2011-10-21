@@ -125,7 +125,7 @@ public abstract class MachineCodeViewer extends CodeViewer {
         final MaxMemoryRegion machineCodeRegion = machineCode().memoryRegion();
         for (MaxStackFrame frame : frames) {
             final MaxCodeLocation frameCodeLocation = frame.codeLocation();
-            final MaxMachineCode machineCode = frame.compiledCode();
+            final MaxMachineCode machineCode = frame.machineCode();
             if (frameCodeLocation != null && machineCode != null) {
                 final boolean isFrameForThisCode =
                     frame instanceof MaxStackFrame.Compiled ?

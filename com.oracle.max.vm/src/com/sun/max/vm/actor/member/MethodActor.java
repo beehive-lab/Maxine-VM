@@ -155,11 +155,6 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
         return noSafepointPolls(flags()) || isTemplate();
     }
 
-    public boolean minimalDebugInfo() {
-        // Code pos and frame info are not needed for templates
-        return isTemplate();
-    }
-
     /**
      * @return whether this method was generated merely to provide an entry in a vtable slot that would otherwise be
      *         empty.

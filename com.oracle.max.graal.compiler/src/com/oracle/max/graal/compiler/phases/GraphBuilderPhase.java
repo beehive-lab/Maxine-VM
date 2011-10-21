@@ -1095,7 +1095,7 @@ public final class GraphBuilderPhase extends Phase {
             append(deoptimize);
             frameState.pushReturn(resultType, ConstantNode.defaultForKind(resultType, graph));
         } else {
-            InvokeNode invoke = graph.add(new InvokeNode(bci(), opcode, resultType.stackKind(), args, target, target.signature().returnType(method.holder())));
+            InvokeNode invoke = graph.add(new InvokeNode(bci(), opcode, target, args, target.signature().returnType(method.holder())));
             ValueNode result = appendWithBCI(invoke);
             invoke.setExceptionEdge(handleException(null, bci()));
             frameState.pushReturn(resultType, result);

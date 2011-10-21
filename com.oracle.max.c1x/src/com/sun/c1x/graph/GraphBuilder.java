@@ -2379,7 +2379,6 @@ public final class GraphBuilder {
         // Checkstyle: off
         switch (opcode) {
             case JNICALL        : genNativeCall(s.readCPI()); break;
-
             case BREAKPOINT:
                 throw new CiBailout("concurrent setting of breakpoint");
             default:
@@ -2425,36 +2424,6 @@ public final class GraphBuilder {
         BlockBegin fSucc = blockAt(stream().nextBCI());
 
         append(new IfBit(register, offset, bitNo, cond, tSucc, fSucc));
-    }
-
-    public void appendSnippetCall(RiSnippetCall snippetCall) {
-        Value[] args = new Value[snippetCall.arguments.length];
-        RiResolvedMethod snippet = snippetCall.snippet;
-        RiSignature signature = snippet.signature();
-        boolean isStatic = isStatic(snippet.accessFlags());
-        int rcvr = isStatic ? -1 : 0;
-        assert signature.argumentCount(!isStatic) == args.length;
-        for (int i = args.length - 1; i > rcvr; --i) {
-            CiKind argKind = signature.argumentKindAt(i, false);
-            if (snippetCall.arguments[i] == null) {
-                args[i] = pop(argKind);
-            } else {
-                args[i] = append(new Constant(argKind, snippetCall.arguments[i]));
-            }
-        }
-        if (!isStatic) {
-            if (snippetCall.arguments[0] == null) {
-                args[0] = pop(CiKind.Object);
-            } else {
-                args[0] = append(new Constant(CiKind.Object, snippetCall.arguments[0]));
-            }
-        }
-
-        if (!tryRemoveCall(snippet, args, true)) {
-            if (!tryInline(snippet, args)) {
-                appendInvoke(snippetCall.opcode, snippet, args, isStatic, (char) 0, constantPool());
-            }
-        }
     }
 
     private void genNativeCall(int cpi) {
