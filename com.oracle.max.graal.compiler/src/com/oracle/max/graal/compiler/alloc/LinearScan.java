@@ -1981,7 +1981,7 @@ public final class LinearScan {
             if (state.outerFrameState() != null) {
                 caller = computeFrameForState(state.outerFrameState());
             }
-            CiFrame frame = new CiFrame(caller, state.method, state.bci, state.rethrowException(), values, state.localsSize(), state.stackSize(), state.locksSize());
+            CiFrame frame = new CiFrame(caller, state.method(), state.bci, state.rethrowException(), values, state.localsSize(), state.stackSize(), state.locksSize());
             if (GraalOptions.Extend) {
                 frame = overrideFrame(frame);
             }
