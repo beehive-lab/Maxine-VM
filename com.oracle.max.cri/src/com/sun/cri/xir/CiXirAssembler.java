@@ -589,6 +589,10 @@ public abstract class CiXirAssembler {
          */
         Mark,
         /**
+         * Load instruction pointer of the next instruction in a destination register.
+         */
+        Here,
+        /**
          * Inserts nop instructions, with the given size in bytes.
          */
         Nop,
@@ -689,6 +693,10 @@ public abstract class CiXirAssembler {
 
     public void repmov(XirOperand src, XirOperand dest, XirOperand length) {
         append(new XirInstruction(target.wordKind, null, RepeatMoveWords, null, src, dest, length));
+    }
+
+    public void here(XirOperand dst) {
+        append(new XirInstruction(target.wordKind, null, Here, dst));
     }
 
     public void repmovb(XirOperand src, XirOperand dest, XirOperand length) {

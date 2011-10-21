@@ -23,6 +23,7 @@
 package com.sun.max.vm.heap.gcx;
 
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
@@ -95,7 +96,7 @@ abstract class RootCellVisitor extends PointerIndexVisitor implements CellVisito
      */
     @Override
     public Pointer visitCell(Pointer cell) {
-        if (Heap.traceRootScanning()) {
+        if (MaxineVM.isDebug() && Heap.traceRootScanning()) {
             TricolorHeapMarker.printVisitedCell(cell, "Visiting root cell ");
         }
         // FIXME: can we have a hub for a cell in the boot heap that is not itself in the boot heap !!!
