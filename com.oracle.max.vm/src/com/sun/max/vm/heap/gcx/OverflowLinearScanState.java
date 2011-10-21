@@ -52,7 +52,7 @@ final class OverflowLinearScanState extends OverflowScanState {
         int rightmostBitmapWordIndex = rightmostBitmapWordIndex();
         int bitmapWordIndex = heapMarker.bitmapWordIndex(finger);
         visitGreyObjects(bitmapWordIndex, rightmostBitmapWordIndex);
-        // The loop may have ended with a finger before the end of scan position as the finger is updated only when
+        // The overflow rescan may have ended with a finger before the end of scan position as the finger is updated only when
         // visiting grey cell. Before draining the marking stack, we set it to the end of scan position so draining
         // operates with the marking stack only.
         finger = endOfScan;

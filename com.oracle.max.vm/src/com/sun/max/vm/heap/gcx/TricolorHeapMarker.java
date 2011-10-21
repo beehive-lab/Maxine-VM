@@ -37,7 +37,8 @@ import com.sun.max.vm.runtime.*;
 
 /**
  * A marking algorithm that uses a tricolor mark-bitmap with a fixed-size marking stack, an (optional) rescan map, and a
- * finger. The tricolor mark-bitmap encodes three colors using two consecutive bits but consumes as much space overhead as
+ * finger.
+ * The tricolor mark-bitmap encodes three colors using two consecutive bits but consumes as much space overhead as
  * a single-bit mark bitmap, thanks to padding rare tiny objects to guarantee two color bits for every objects.
  * Tracing algorithm uses a single-bit mark bitmap and a fairly large marking stack (from several thousands of references, up
  * hundreds of thousands of references). The reason for the large marking stack is that if this one overflows, tracing must
@@ -132,9 +133,9 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
     static final int bitIndexInWordMask = LAST_BIT_INDEX_IN_WORD;
 
-    static boolean TraceMarking = false;
     static boolean UseRescanMap;
     static boolean UseDeepMarkStackFlush = true;
+    static boolean TraceMarking = false;
     static boolean VerifyAfterMarking = false;
     static boolean VerifyGreyLessAreas = false;
 
@@ -196,6 +197,11 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      * Number of bytes covered by each bit of the bitmaps. Must be a power of 2 of a number of words.
      */
     final int wordsCoveredPerBit;
+
+    /**
+     * Mask to apply to an address of the covered area to obtain the address coinciding with the first bit of the word covering the address in the color map.
+     */
+    final Address bitmapWordBoundaryMask;
 
     /**
      * Log 2 of the number of bytes covered by a bit. Used to compute bit index in the color map from address.
@@ -277,6 +283,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     private static String colorName(long color) {
         return COLOR_NAMES[(int) color & 0x3];
     }
+
     private static char colorChar(long color) {
         return COLOR_CHARS[(int) color & 0x3];
     }
@@ -442,7 +449,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     /**
      * Constructor for inspection support. This allows an inspector to create a surrogate of a VM mark-bitmap to perform local computation of mark bit and mark word indexes.
      *
-     * @param wordsCoveredPerBit
+     * @param wordsCoveredPerBit number of words of the covered area that a single bit covers
     * @param start start of the covered area
      * @param end end of the covered area
      * @param bitmapStorage address to the first byte of the mark bitmap
@@ -454,6 +461,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         log2BytesCoveredPerBit = Word.widthValue().log2numberOfBytes + Integer.numberOfTrailingZeros(wordsCoveredPerBit);
         assert wordsCoveredPerBit * Word.widthValue().numberOfBytes == 1 << log2BytesCoveredPerBit;
         log2BitmapWord = log2BytesCoveredPerBit + Word.widthValue().log2numberOfBits;
+        bitmapWordBoundaryMask = Address.fromInt(1).shiftedLeft(log2BytesCoveredPerBit + Word.widthValue().log2numberOfBits).minus(1).not();
         colorMap = new MemoryRegion("Mark Bitmap");
         markingStack = null;
         rootCellVisitor = null;
@@ -471,6 +479,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         log2BytesCoveredPerBit = Word.widthValue().log2numberOfBytes + Integer.numberOfTrailingZeros(wordsCoveredPerBit);
         assert wordsCoveredPerBit * Word.widthValue().numberOfBytes == 1 << log2BytesCoveredPerBit;
         log2BitmapWord = log2BytesCoveredPerBit + Word.widthValue().log2numberOfBits;
+        bitmapWordBoundaryMask = Address.fromInt(1).shiftedLeft(log2BytesCoveredPerBit + Word.widthValue().log2numberOfBits).minus(1).not();
         colorMap = new MemoryRegion("Mark Bitmap");
         markingStack = new MarkingStack();
         markingStack.setOverflowHandler(this);
@@ -520,6 +529,28 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     @INLINE
     final Pointer bitmapWordPointerOf(Address addr) {
         return biasedBitmapBase.asPointer().plus(addr.unsignedShiftedRight(log2BitmapWord));
+    }
+
+    /**
+     * Returns the address that corresponds to the first bit of the word covering the cell in the color map.
+     * In other word, <pre> bitIndexInWord(bitIndexOf(alignDownToBitmapWordBoundary(address))) == 0<pre>.
+     *
+     * @param cell an address in the covered area
+     * @return address in the covered area less or equal to the specified cell
+     */
+    private Address alignDownToBitmapWordBoundary(Address cell) {
+        return cell.and(bitmapWordBoundaryMask);
+    }
+
+    /**
+     * Returns the address that corresponds to the first bit of the word following the word covering the cell in the color map.
+     *
+     * @param cell an address in the covered area
+     * @return address in the covered area greater than the specified cell
+     */
+    private Address nextBitmapWordBoundary(Address cell) {
+        final int markBitmapWordCoverage = 1 << (log2BytesCoveredPerBit + Word.widthValue().log2numberOfBits);
+        return alignDownToBitmapWordBoundary(cell.plus(markBitmapWordCoverage));
     }
 
     /**
@@ -801,10 +832,9 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     /**
      * Clear the color map, i.e., turn all bits to white.
      */
-    void clearColorMap() {
+    private void clearColorMap() {
         Memory.clearWords(colorMap.start().asPointer(), colorMap.size().toInt() >> Word.widthValue().log2numberOfBytes);
     }
-
 
     private final RootCellVisitor rootCellVisitor;
 
@@ -849,6 +879,12 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
     }
 
+    /**
+     * A special visitor of references to be used when flushing a marking stack following an overflow.
+     * The key difference with the references visitors used during forward scan is that references aren't pushed
+     * on the marking stack but simply greyed, and the leftmost reference seen is remembered to left-bound the
+     * rescan that follows the flushing of the marking stack.
+     */
     static class FlushingIndexVisitor extends PointerIndexVisitor {
         final TricolorHeapMarker heapMarker;
         /**
@@ -856,8 +892,14 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
          */
         Address rightmost;
 
+        /**
+         * Cache of the finger of the scan state that triggered the flushing of the marking stack.
+         */
         Address finger;
 
+        /**
+         * The leftmost reference seen by this visitor.
+         */
         Address leftmostFlushed;
 
         FlushingIndexVisitor(TricolorHeapMarker heapMarker) {
@@ -1013,6 +1055,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         }
         /**
          * Current position of this scan in the covered area.
+         * This typically is the grey object whose reference are being visited.
          */
         Address finger;
         /**
@@ -1129,8 +1172,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         void printState() {
             Log.print("finger:");
             Log.print(finger);
-            Log.print(" end of finger cell:");
-            Log.print(endOfCell(finger.asPointer()));
             Log.print(" rightmost:");
             Log.println(rightmost);
             Log.print(" #mark stack overflows:");
@@ -1175,60 +1216,67 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                 debugRightmostBitmapWordIndex = rightmostBitmapWordIndex;
                 debugBitmapWordIndex = bitmapWordIndex;
             }
-            do {
-                while (bitmapWordIndex <= rightmostBitmapWordIndex) {
-                    long bitmapWord = colorMapBase.getLong(bitmapWordIndex);
-                    if (MaxineVM.isDebug()) {
-                        debugBitmapWordIndex = bitmapWordIndex;
-                        debugBitmapWord = bitmapWord;
-                    }
-                    if (bitmapWord != 0) {
-                        // FIXME (ld) this way of scanning the mark bitmap may cause black objects to end up on the marking stack.
-                        // Here's how.
-                        // If the object pointed by the finger contains backward references to objects covered by the same word
-                        // of the mark bitmap, and its end is covered by the same word, we will end up visiting these objects although
-                        // there were pushed on the marking stack.
-                        // One way to avoid that is to leave the finger set to the beginning of the word and iterate over all grey marks
-                        // of the word until reaching a fix point where all mark are white or black on the mark bitmap word.
-                        final long greyMarksInWord = bitmapWord & (bitmapWord >>> 1);
-                        if (greyMarksInWord != 0) {
-                            // First grey mark is the least set bit.
-                            final int bitIndexInWord = Pointer.fromLong(greyMarksInWord).leastSignificantBitSet();
-                            final int bitIndexOfGreyCell = (bitmapWordIndex << Word.widthValue().log2numberOfBits) + bitIndexInWord;
+            while (bitmapWordIndex <= rightmostBitmapWordIndex) {
+                long bitmapWord = colorMapBase.getLong(bitmapWordIndex);
+                if (MaxineVM.isDebug()) {
+                    debugBitmapWordIndex = bitmapWordIndex;
+                    debugBitmapWord = bitmapWord;
+                }
+                if (bitmapWord != 0) {
+                    // FIXME (ld) this way of scanning the mark bitmap may cause black objects to end up on the marking stack.
+                    // Here's how.
+                    // If the object pointed by the finger contains backward references to objects covered by the same word
+                    // of the mark bitmap, and its end is covered by the same word, we will end up visiting these objects although
+                    // there were pushed on the marking stack.
+                    // One way to avoid that is to leave the finger set to the beginning of the word and iterate over all grey marks
+                    // of the word until reaching a fix point where all mark are white or black on the mark bitmap word.
+                    final long greyMarksInWord = bitmapWord & (bitmapWord >>> 1);
+                    if (greyMarksInWord != 0) {
+                        // First grey mark is the least set bit.
+                        final int bitIndexInWord = Pointer.fromLong(greyMarksInWord).leastSignificantBitSet();
+                        final int bitIndexOfGreyCell = (bitmapWordIndex << Word.widthValue().log2numberOfBits) + bitIndexInWord;
+                        final Pointer p = markAndVisitCell(heapMarker.addressOf(bitIndexOfGreyCell).asPointer());
+                        // Get bitmap word index at the end of the object. This may avoid reading multiple mark bitmap words
+                        // when marking objects crossing multiple mark bitmap words.
+                        bitmapWordIndex = heapMarker.bitmapWordIndex(p);
+                        continue;
+                    } else if ((bitmapWord >>> LAST_BIT_INDEX_IN_WORD) == 1L) {
+                        // Mark span two words. Check first bit of next word to decide if mark is grey.
+                        bitmapWord = colorMapBase.getLong(bitmapWordIndex + 1);
+                        if ((bitmapWord & 1) != 0) {
+                            // it is a grey object.
+                            final int bitIndexOfGreyCell = (bitmapWordIndex << Word.widthValue().log2numberOfBits) + LAST_BIT_INDEX_IN_WORD;
                             final Pointer p = markAndVisitCell(heapMarker.addressOf(bitIndexOfGreyCell).asPointer());
-                            // Get bitmap word index at the end of the object. This may avoid reading multiple mark bitmap words
-                            // when marking objects crossing multiple mark bitmap words.
                             bitmapWordIndex = heapMarker.bitmapWordIndex(p);
                             continue;
-                        } else if ((bitmapWord >>> LAST_BIT_INDEX_IN_WORD) == 1L) {
-                            // Mark span two words. Check first bit of next word to decide if mark is grey.
-                            bitmapWord = colorMapBase.getLong(bitmapWordIndex + 1);
-                            if ((bitmapWord & 1) != 0) {
-                                // it is a grey object.
-                                final int bitIndexOfGreyCell = (bitmapWordIndex << Word.widthValue().log2numberOfBits) + LAST_BIT_INDEX_IN_WORD;
-                                final Pointer p = markAndVisitCell(heapMarker.addressOf(bitIndexOfGreyCell).asPointer());
-                                bitmapWordIndex = heapMarker.bitmapWordIndex(p);
-                                continue;
-                            }
                         }
                     }
-                    bitmapWordIndex++;
                 }
-                // There might be some objects left in the marking stack. Drain it.
-                // FIXME: there's a bug here (seen in pmd and fop). The draining may grey an object after the rightmost position within the same bitmap word.
-                // This one will be missed.
-                Address rightmostBeforeDraining = finger;
-                heapMarker.markingStack.drain();
-                if (MaxineVM.isDebug() && TraceMarking) {
-                    heapMarker.traceMark(rightmostBeforeDraining, " => rightmost before draining marking stack\n");
-                    heapMarker.traceMark(rightmost, " => rightmost after draining marking stack\n");
+                bitmapWordIndex++;
+            }
+            // There might be some objects left in the marking stack. Drain it.
+            // Before draining, advance the finger to the next mark bitmap word boundary to force all white references from drained cells
+            // to be pushed up on the marking stack and processed during the drainage.
+            Address fingerBeforeDraining = finger;
+            finger = heapMarker.nextBitmapWordBoundary(finger);
+            heapMarker.markingStack.drain();
+            // The draining may have advanced the rightmost value. It may have advanced it past the finger before draining, but before the advanced finger.
+            // The following updates it in that case.
+            if (rightmost.lessThan(finger)) {
+                if (rightmost.greaterThan(fingerBeforeDraining)) {
+                    // Precisely know the rightmost object within the same bitmap word should not be necessary, except for verification code.
+                    // Only knowing what mark bitmap word contains the rightmost cell is useful to bound marking and sweeping.
+                    FatalError.breakpoint();
+                    int rightmostBitIndex = rightmostBitmapWordIndex << Word.widthValue().log2numberOfBits;
+                    rightmostBitIndex += Address.fromLong(colorMapBase.getLong(rightmostBitmapWordIndex)).mostSignificantBitSet();
+                    rightmost = heapMarker.addressOf(rightmostBitIndex);
                 }
-                if (rightmost.equals(rightmostBeforeDraining)) {
-                    return;
-                }
-                // The draining of the stack may have greyed some objects covered by the same mark word. So loop back for that word again
-                bitmapWordIndex = rightmostBitmapWordIndex;
-            } while(true);
+                finger = rightmost;
+            }
+            if (MaxineVM.isDebug() && TraceMarking) {
+                heapMarker.traceMark(fingerBeforeDraining, " => finger before draining marking stack\n");
+                heapMarker.traceMark(rightmost, " => rightmost after draining marking stack\n");
+            }
         }
 
         /**
@@ -1868,13 +1916,13 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      * @return
      */
     public void sweep(HeapRegionSweeper regionsSweeper) {
-        final Address rightmostLiveObject = forwardScanState.rightmost;
+        final Address endOfRightmostLiveObject = endOfCell(forwardScanState.rightmost);
         do {
             assert regionsSweeper.hasNextSweepingRegion();
             regionsSweeper.beginSweep();
             impreciseSweep(regionsSweeper);
             regionsSweeper.endSweep();
-        } while(regionsSweeper.endOfSweepingRegion().lessEqual(rightmostLiveObject));
+        } while(regionsSweeper.endOfSweepingRegion().lessThan(endOfRightmostLiveObject));
         regionsSweeper.reachedRightmostLiveRegion();
     }
 
@@ -1885,8 +1933,8 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      * @return the pointer immediately after the last word of the cell.
      */
     @INLINE
-    private static Pointer endOfCell(Pointer cell) {
-        return cell.plus(Layout.size(Layout.cellToOrigin(cell)));
+    private static Address endOfCell(Address cell) {
+        return cell.plus(Layout.size(Layout.cellToOrigin(cell.asPointer())));
     }
 
     /**
@@ -1894,8 +1942,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      * @param cell a pointer to a formatted cell.
      * @return pointer to the last word of the cell.
      */
-    private static Pointer lastWordOfCell(Pointer cell) {
-        // FIXME: this really is the next cell. We may want to return this minus one word!
+    private static Address lastWordOfCell(Address cell) {
         return endOfCell(cell).minusWords(1);
     }
 
@@ -1913,7 +1960,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     private void impreciseSweep(HeapRegionSweeper sweeper) {
         final Address regionLeftmost = sweeper.startOfSweepingRegion();
         final Address regionRightmost = sweeper.endOfSweepingRegion();
-        final Address rightmost =  regionRightmost.greaterThan(forwardScanState.rightmost) ? endOfCell(forwardScanState.rightmost.asPointer()) : regionRightmost.minus(Word.size());
+        final Address rightmost =  regionRightmost.greaterThan(forwardScanState.rightmost) ? endOfCell(forwardScanState.rightmost) : regionRightmost.minusWords(1);
         final int rightmostBitIndex = bitIndexOf(rightmost);
         final int leftmostBitIndex = bitIndexOf(regionLeftmost);
         int lastLiveMark = firstBlackMark(leftmostBitIndex, rightmostBitIndex);
@@ -2010,7 +2057,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             }
         }
 
-        Address tail = endOfCell(addressOf(lastLiveMark).asPointer());
+        Address tail = endOfCell(addressOf(lastLiveMark));
         Size tailSpace = sweeper.endOfSweepingRegion().minus(tail).asSize();
         if (tailSpace.greaterEqual(sweeper.minReclaimableSpace())) {
             sweeper.processDeadSpace(tail, tailSpace);
