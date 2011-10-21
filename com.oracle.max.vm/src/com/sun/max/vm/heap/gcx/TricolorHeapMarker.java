@@ -938,6 +938,17 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             heapMarker.markBlackFromGrey(bitIndex);
         }
 
+        /**
+         * Flush the marking stack.
+         * This visits all the objects in the marking stack, marks their references grey, tracks the
+         * leftmost of the grey reference thus marked.
+         * It also update the rightmost marker of the scan state that initiated the flush.
+         *
+         * All the object flushed from the marking stack are therefore marked black.
+         *
+         * @param scanState scan state that cause the marking stack overflow
+         * @return the leftmost reference marked grey during the flush.
+         */
         Address flushMarkingStack(ColorMapScanState scanState) {
             rightmost = scanState.rightmost;
             finger = scanState.finger;
@@ -1005,7 +1016,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
          */
         Address finger;
         /**
-         * Rightmost cell marked in the covered area.
+         * Rightmost visited object. This is used to bound the scan.
          */
         Address rightmost;
 
