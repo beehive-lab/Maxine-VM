@@ -171,7 +171,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
 
     protected CiVariable makeVariable(CiValue value) {
         if (!value.isVariable()) {
-            CiVariable operand = newVariable(value.kind);
+            CiVariable operand = newVariable(value.kind.stackKind());
             lir.move(value, operand);
             return operand;
         }
@@ -1684,5 +1684,10 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
             CiValue result = createResultVariable(x);
             lir.move(resultOperand, result);
         }
+    }
+
+    @Override
+    public void emitBreakpoint() {
+        lir.breakpoint();
     }
 }

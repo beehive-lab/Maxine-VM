@@ -155,11 +155,6 @@ public class HotSpotRuntime implements GraalRuntime {
     }
 
     @Override
-    public RiSnippets getSnippets() {
-        throw new UnsupportedOperationException("getSnippets");
-    }
-
-    @Override
     public boolean mustInline(RiResolvedMethod method) {
         return false;
     }
@@ -346,11 +341,11 @@ public class HotSpotRuntime implements GraalRuntime {
             }
             storeIndexed.replaceAtPredecessors(anchor);
             storeIndexed.delete();
-        } else if (n instanceof UnsafeLoad) {
-            UnsafeLoad load = (UnsafeLoad) n;
+        } else if (n instanceof UnsafeLoadNode) {
+            UnsafeLoadNode load = (UnsafeLoadNode) n;
             Graph<EntryPointNode> graph = load.graph();
             assert load.kind != CiKind.Illegal;
-            IndexedLocationNode location = IndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, load.loadKind(), 0, load.offset(), graph);
+            IndexedLocationNode location = IndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, load.loadKind(), load.displacement(), load.offset(), graph);
             location.setIndexScalingEnabled(false);
             ReadNode memoryRead = graph.unique(new ReadNode(load.kind, load.object(), location));
             memoryRead.setGuard((GuardNode) tool.createGuard(graph.unique(new IsNonNullNode(load.object()))));
@@ -358,10 +353,10 @@ public class HotSpotRuntime implements GraalRuntime {
             load.setNext(null);
             memoryRead.setNext(next);
             load.replaceAndDelete(memoryRead);
-        } else if (n instanceof UnsafeStore) {
-            UnsafeStore store = (UnsafeStore) n;
+        } else if (n instanceof UnsafeStoreNode) {
+            UnsafeStoreNode store = (UnsafeStoreNode) n;
             Graph<EntryPointNode> graph = store.graph();
-            IndexedLocationNode location = IndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, store.storeKind(), 0, store.offset(), graph);
+            IndexedLocationNode location = IndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, store.storeKind(), store.displacement(), store.offset(), graph);
             location.setIndexScalingEnabled(false);
             WriteNode write = graph.add(new WriteNode(store.object(), store.value(), location));
             FieldWriteBarrier barrier = graph.add(new FieldWriteBarrier(store.object()));
@@ -650,7 +645,7 @@ public class HotSpotRuntime implements GraalRuntime {
                         LocalNode offset = graph.unique(new LocalNode(CiKind.Long, 2, graph.start()));
                         LocalNode expected = graph.unique(new LocalNode(kind, 3, graph.start()));
                         LocalNode value = graph.unique(new LocalNode(kind, 4, graph.start()));
-                        CompareAndSwapNode cas = graph.add(new CompareAndSwapNode(object, offset, expected, value));
+                        CompareAndSwapNode cas = graph.add(new CompareAndSwapNode(object, offset, expected, value, false));
                         FrameState frameState = graph.add(new FrameState(method, FrameState.AFTER_BCI, 0, 0, 0, false));
                         cas.setStateAfter(frameState);
                         ReturnNode ret = graph.add(new ReturnNode(cas));
@@ -662,7 +657,7 @@ public class HotSpotRuntime implements GraalRuntime {
                     Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
                     LocalNode object = graph.unique(new LocalNode(CiKind.Object, 1, graph.start()));
                     LocalNode offset = graph.unique(new LocalNode(CiKind.Long, 2, graph.start()));
-                    UnsafeLoad load = graph.unique(new UnsafeLoad(object, offset, CiKind.Object));
+                    UnsafeLoadNode load = graph.unique(new UnsafeLoadNode(object, offset, CiKind.Object));
                     ReturnNode ret = graph.add(new ReturnNode(load));
                     load.setNext(ret);
                     graph.start().setNext(load);
@@ -684,7 +679,7 @@ public class HotSpotRuntime implements GraalRuntime {
                     Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
                     LocalNode object = graph.unique(new LocalNode(CiKind.Object, 1, graph.start()));
                     LocalNode offset = graph.unique(new LocalNode(CiKind.Long, 2, graph.start()));
-                    UnsafeLoad load = graph.unique(new UnsafeLoad(object, offset, CiKind.Int));
+                    UnsafeLoadNode load = graph.unique(new UnsafeLoadNode(object, offset, CiKind.Int));
                     ReturnNode ret = graph.add(new ReturnNode(load));
                     load.setNext(ret);
                     graph.start().setNext(load);
@@ -694,7 +689,7 @@ public class HotSpotRuntime implements GraalRuntime {
                     LocalNode object = graph.unique(new LocalNode(CiKind.Object, 1, graph.start()));
                     LocalNode offset = graph.unique(new LocalNode(CiKind.Long, 2, graph.start()));
                     LocalNode value = graph.unique(new LocalNode(CiKind.Object, 3, graph.start()));
-                    UnsafeStore store = graph.add(new UnsafeStore(object, offset, value, CiKind.Object));
+                    UnsafeStoreNode store = graph.add(new UnsafeStoreNode(object, offset, value, CiKind.Object));
                     FrameState frameState = graph.add(new FrameState(method, FrameState.AFTER_BCI, 0, 0, 0, false));
                     store.setStateAfter(frameState);
                     ReturnNode ret = graph.add(new ReturnNode(null));

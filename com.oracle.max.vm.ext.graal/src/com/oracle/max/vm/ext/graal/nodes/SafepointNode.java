@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,28 +20,35 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.cri.ri;
+package com.oracle.max.vm.ext.graal.nodes;
 
+import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.spi.*;
+import com.sun.cri.ci.*;
 
 /**
- * Set of runtime calls to be used when translating bytecodes. These calls
- * must be woven into the IR during translation in a phase where they are
- * subject to inlining and folding.
+ * Adds a Safepoint to the generated code and possibly create a safepoint.
  */
-public interface RiSnippets {
+public final class SafepointNode extends StateSplit implements LIRLowerable {
 
-    /**
-     * Gets the snippet call that links a native method.
-     */
-    RiSnippetCall link(RiMethod nativeMethod);
+    public static enum Op {
+        SAFEPOINT_POLL, HERE, INFO, UNCOMMON_TRAP
+    }
 
-    /**
-     * Gets the snippet call that implements the transition from the VM into native code.
-     */
-    RiSnippetCall enterNative(RiMethod nativeMethod);
+    @Data private final Op op;
 
-    /**
-     * Gets the snippet call that implements the transition from native code into the VM.
-     */
-    RiSnippetCall enterVM(RiMethod nativeMethod);
+    public SafepointNode(Op op) {
+        super(CiKind.Illegal);
+        this.op = op;
+    }
+
+    @Override
+    public void accept(ValueVisitor v) {
+        // nothing to do
+    }
+
+    @Override
+    public void generate(LIRGeneratorTool generator) {
+        throw new RuntimeException();
+    }
 }

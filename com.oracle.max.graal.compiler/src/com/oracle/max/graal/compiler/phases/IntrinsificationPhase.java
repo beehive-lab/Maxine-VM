@@ -51,7 +51,7 @@ public class IntrinsificationPhase extends Phase {
         Graph<EntryPointNode> intrinsicGraph = (Graph<EntryPointNode>) target.compilerStorage().get(Graph.class);
         if (intrinsicGraph == null) {
             // TODO (ph) remove once all intrinsics are available via RiMethod
-            intrinsicGraph = runtime.intrinsicGraph(invoke.stateAfter().method, invoke.bci, target, invoke.arguments());
+            intrinsicGraph = runtime.intrinsicGraph(invoke.stateAfter().method(), invoke.bci, target, invoke.arguments());
         }
         if (intrinsicGraph != null) {
             InliningUtil.inline(invoke, intrinsicGraph, null);

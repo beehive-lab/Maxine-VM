@@ -38,40 +38,6 @@ import com.sun.cri.ri.*;
 import com.sun.max.vm.runtime.*;
 
 public class MaxineIntrinsicImplementations {
-    public static class JNILinkIntrinsic implements C1XIntrinsicImpl {
-        @Override
-        public Value createHIR(GraphBuilder b, RiMethod target, Value[] args, boolean isStatic, FrameState stateBefore) {
-            RiSnippets snippets = b.compilation.runtime.getSnippets();
-            RiMethod nativeMethod = b.scope().method;
-            RiSnippetCall linkSnippet = snippets.link(nativeMethod);
-            if (linkSnippet.result != null) {
-                return b.append(new Constant(target.signature().returnKind(false), linkSnippet.result));
-            }
-            b.appendSnippetCall(linkSnippet);
-            return null;
-        }
-    }
-
-    public static class JNI_J2NIntrinsic implements C1XIntrinsicImpl {
-        @Override
-        public Value createHIR(GraphBuilder b, RiMethod target, Value[] args, boolean isStatic, FrameState stateBefore) {
-            RiSnippets snippets = b.compilation.runtime.getSnippets();
-            RiMethod nativeMethod = b.scope().method;
-            b.appendSnippetCall(snippets.enterNative(nativeMethod));
-            return null;
-        }
-    }
-
-    public static class JNI_N2JIntrinsic implements C1XIntrinsicImpl {
-        @Override
-        public Value createHIR(GraphBuilder b, RiMethod target, Value[] args, boolean isStatic, FrameState stateBefore) {
-            RiSnippets snippets = b.compilation.runtime.getSnippets();
-            RiMethod nativeMethod = b.scope().method;
-            b.appendSnippetCall(snippets.enterVM(nativeMethod));
-            return null;
-        }
-    }
-
 
     public static class BitIntrinsic implements C1XIntrinsicImpl {
         public final LIROpcode opcode;
@@ -237,7 +203,7 @@ public class MaxineIntrinsicImplementations {
         }
     }
 
-    public static class BreakointTrapIntrinsic implements C1XIntrinsicImpl {
+    public static class BreakpointTrapIntrinsic implements C1XIntrinsicImpl {
         @Override
         public Value createHIR(GraphBuilder b, RiMethod target, Value[] args, boolean isStatic, FrameState stateBefore) {
             b.append(new BreakpointTrap());
@@ -293,10 +259,6 @@ public class MaxineIntrinsicImplementations {
 
 
     public static void initialize(IntrinsicImpl.Registry registry) {
-        registry.add(JNI_LINK, new JNILinkIntrinsic());
-        registry.add(JNI_J2N, new JNI_J2NIntrinsic());
-        registry.add(JNI_N2J, new JNI_N2JIntrinsic());
-
         registry.add(LSB, new BitIntrinsic(LIROpcode.Lsb));
         registry.add(MSB, new BitIntrinsic(LIROpcode.Msb));
 
@@ -316,7 +278,7 @@ public class MaxineIntrinsicImplementations {
         registry.add(UNCOMMON_TRAP, new InfopointIntrinsic(Infopoint.Op.UNCOMMON_TRAP));
 
         registry.add(PAUSE, new PauseIntrinsic());
-        registry.add(BREAKPOINT_TRAP, new BreakointTrapIntrinsic());
+        registry.add(BREAKPOINT_TRAP, new BreakpointTrapIntrinsic());
         registry.add(STACKHANDLE, new StackHandleIntrinsic());
         registry.add(ALLOCA, new StackAllocateIntrinsic());
 

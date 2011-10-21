@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,21 +20,32 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.c1x;
+package com.oracle.max.vm.ext.graal.nodes;
 
-import com.sun.c1x.graph.*;
+import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.spi.*;
+import com.sun.cri.ci.*;
 
 /**
- * Mechanism for extending C1X with extra transformations, analysis, optimizations.
- *
- * TODO: add support for fine grain specification of where/when extensions are to be called
+ * Reads a value from the given register.
  */
-public class C1XCompilerExtension {
+public final class ReadRegisterNode extends StateSplit implements LIRLowerable {
 
-    public final void run(IR ir) {
-        process(ir);
+    @Data public final CiRegister register;
+
+    public ReadRegisterNode(CiRegister register, CiKind kind) {
+        super(kind);
+        this.register = register;
     }
 
-    protected void process(IR ir) {
+    @Override
+    public void accept(ValueVisitor v) {
+        // nothing to do
+    }
+
+    @Override
+    public void generate(LIRGeneratorTool generator) {
+        CiVariable result = generator.createResultVariable(this);
+        generator.emitMove(register.asValue(kind), result);
     }
 }

@@ -32,6 +32,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.criutils.*;
 import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
@@ -62,8 +63,6 @@ import com.sun.max.vm.value.*;
  * constant pools, as well as some compiler tuning.
  */
 public class MaxRuntime implements GraalRuntime {
-
-    private RiSnippets snippets;
 
     private static MaxRuntime instance = new MaxRuntime();
 
@@ -167,7 +166,7 @@ public class MaxRuntime implements GraalRuntime {
 
     public String disassemble(byte[] code, long address) {
         final Platform platform = Platform.platform();
-        CiHexCodeFile hcf = new CiHexCodeFile(code, address, platform.isa.name(), platform.wordWidth().numberOfBits);
+        HexCodeFile hcf = new HexCodeFile(code, address, platform.isa.name(), platform.wordWidth().numberOfBits);
         return HexCodeFileTool.toText(hcf);
     }
 
@@ -181,8 +180,8 @@ public class MaxRuntime implements GraalRuntime {
         final Platform platform = Platform.platform();
 
         long startAddress = maxTM == null ? 0L : maxTM.codeStart().toLong();
-        CiHexCodeFile hcf = new CiHexCodeFile(code, startAddress, platform.isa.name(), platform.wordWidth().numberOfBits);
-        CiUtil.addAnnotations(hcf, ciTM.annotations());
+        HexCodeFile hcf = new HexCodeFile(code, startAddress, platform.isa.name(), platform.wordWidth().numberOfBits);
+        HexCodeFile.addAnnotations(hcf, ciTM.annotations());
         addExceptionHandlersComment(ciTM, hcf);
         CiRegister fp;
         int refMapToFPOffset;
@@ -214,9 +213,9 @@ public class MaxRuntime implements GraalRuntime {
         return HexCodeFileTool.toText(hcf);
     }
 
-    private static void addExceptionHandlersComment(CiTargetMethod tm, CiHexCodeFile hcf) {
+    private static void addExceptionHandlersComment(CiTargetMethod tm, HexCodeFile hcf) {
         if (!tm.exceptionHandlers.isEmpty()) {
-            String nl = CiHexCodeFile.NEW_LINE;
+            String nl = HexCodeFile.NEW_LINE;
             StringBuilder buf = new StringBuilder("------ Exception Handlers ------").append(nl);
             for (CiTargetMethod.ExceptionHandler e : tm.exceptionHandlers) {
                 buf.append("    ").
@@ -229,7 +228,7 @@ public class MaxRuntime implements GraalRuntime {
         }
     }
 
-    private static void addOperandComment(CiHexCodeFile hcf, int pos, String comment) {
+    private static void addOperandComment(HexCodeFile hcf, int pos, String comment) {
         String oldValue = hcf.addOperandComment(pos, comment);
         assert oldValue == null : "multiple comments for operand of instruction at " + pos + ": " + comment + ", " + oldValue;
     }
@@ -385,13 +384,6 @@ public class MaxRuntime implements GraalRuntime {
         return type.isSubtypeOf(getType(Throwable.class));
     }
 
-    public RiSnippets getSnippets() {
-        if (snippets == null) {
-            snippets = new MaxSnippets(this);
-        }
-        return snippets;
-    }
-
     public boolean areConstantObjectsEqual(CiConstant x, CiConstant y) {
         assert x.kind.isObject() && y.kind.isObject();
         return x.asObject() == y.asObject();
@@ -421,6 +413,11 @@ public class MaxRuntime implements GraalRuntime {
     }
 
     public Graph<EntryPointNode> intrinsicGraph(RiResolvedMethod caller, int bci, RiResolvedMethod method, List< ? extends Node> parameters) {
+
+        MethodActor maxMethod = (MethodActor) method;
+        if (maxMethod.intrinsic() != null) {
+            throw new UnsupportedOperationException("intrinsic not implemented");
+        }
         // TODO(tw): Implement intrinsics for Maxine.
         return null;
     }

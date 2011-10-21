@@ -87,7 +87,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
     @Override
     protected CiVariable makeByteVariable(CiValue cur) {
-        CiVariable result = operands.newVariable(cur.kind, VariableFlag.MustBeByteRegister);
+        CiVariable result = operands.newVariable(cur.kind.stackKind(), VariableFlag.MustBeByteRegister);
         lir.move(cur, result);
         return result;
     }

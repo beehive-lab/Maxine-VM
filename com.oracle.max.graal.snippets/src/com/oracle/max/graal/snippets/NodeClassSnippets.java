@@ -34,19 +34,19 @@ public class NodeClassSnippets implements SnippetsInterface {
 
 
     private static Node getNode(Node node, long offset) {
-        return UnsafeLoad.load(node, offset, CiKind.Object);
+        return UnsafeLoadNode.load(node, offset, CiKind.Object);
     }
 
     private static NodeList<Node> getNodeList(Node node, long offset) {
-        return UnsafeLoad.load(node, offset, CiKind.Object);
+        return UnsafeLoadNode.load(node, offset, CiKind.Object);
     }
 
     private static void putNode(Node node, long offset, Node value) {
-        UnsafeStore.store(node, offset, value, CiKind.Object);
+        UnsafeStoreNode.store(node, offset, value, CiKind.Object);
     }
 
     private static void putNodeList(Node node, long offset, NodeList value) {
-        UnsafeStore.store(node, offset, value, CiKind.Object);
+        UnsafeStoreNode.store(node, offset, value, CiKind.Object);
     }
 
 }

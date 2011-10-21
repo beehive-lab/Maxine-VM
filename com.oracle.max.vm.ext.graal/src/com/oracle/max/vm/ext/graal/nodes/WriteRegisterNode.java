@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,27 +20,33 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.cri.ri;
+package com.oracle.max.vm.ext.graal.nodes;
 
+import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 
 /**
- * Encapsulates a call to a {@link RiMethod} implementing a {@linkplain RiSnippets RI snippet}.
+ * Writes a value into the given register.
  */
-public class RiSnippetCall {
+public final class WriteRegisterNode extends StateSplit implements LIRLowerable {
 
-    public final RiResolvedMethod snippet;
-    public final CiConstant[] arguments;
-    public final int opcode;
+    @Input private ValueNode value;
+    @Data private final CiRegister register;
 
-    /**
-     * If the runtime can immediately fold the call to this snippet, then the result is stored in this field.
-     */
-    public CiConstant result;
+    public WriteRegisterNode(CiRegister register, ValueNode value) {
+        super(CiKind.Illegal);
+        this.value = value;
+        this.register = register;
+    }
 
-    public RiSnippetCall(int opcode, RiResolvedMethod snippet, CiConstant... arguments) {
-        this.opcode = opcode;
-        this.snippet = snippet;
-        this.arguments = arguments;
+    @Override
+    public void accept(ValueVisitor v) {
+        // nothing to do
+    }
+
+    @Override
+    public void generate(LIRGeneratorTool generator) {
+        generator.emitMove(generator.load(value), register.asValue(kind));
     }
 }
