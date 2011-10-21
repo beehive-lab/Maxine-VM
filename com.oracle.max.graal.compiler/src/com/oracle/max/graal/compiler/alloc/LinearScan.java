@@ -1061,42 +1061,9 @@ public final class LinearScan {
 
             // optimizations for second input operand of arithmetic operations on Intel
             // this operand is allowed to be on the stack in some cases
-            CiKind kind = operand.kind.stackKind();
-            if (op.code instanceof LIROpcode.SecondOperandCanBeMemory) {
-                if (op.operand(0) != op.operand(1) && op.operand(1) == operand) {
-                    assert (op.result().isVariableOrRegister() || op.result().isIllegal()) && op.operand(0).isVariableOrRegister() : "cannot mark second operand as stack if others are not in register";
-                    return RegisterPriority.ShouldHaveRegister;
-                }
-
-            } else if (op.code instanceof LegacyOpcode && kind == CiKind.Float || kind == CiKind.Double) {
-                // SSE float instruction (CiKind.Double only supported with SSE2)
-                switch ((LegacyOpcode) op.code) {
-                    case Cmp:
-//                    case Add:
-//                    case Sub:
-//                    case Mul:
-//                    case Div: {
-                        if (op.operand(0) != op.operand(1) && op.operand(1) == operand) {
-                            assert (op.result().isVariableOrRegister() || op.code == LegacyOpcode.Cmp) && op.operand(0).isVariableOrRegister() : "cannot mark second operand as stack if others are not in register";
-                            return RegisterPriority.ShouldHaveRegister;
-                        }
-//                    }
-                }
-            } else if (op.code instanceof LegacyOpcode && kind != CiKind.Long) {
-                // integer instruction (note: long operands must always be in register)
-                switch ((LegacyOpcode) op.code) {
-                    case Cmp:
-//                    case Add:
-//                    case Sub:
-                    case LogicAnd:
-                    case LogicOr:
-                    case LogicXor: {
-                        if (op.operand(0) != op.operand(1) && op.operand(1) == operand) {
-                            assert (op.result().isVariableOrRegister() || op.code == LegacyOpcode.Cmp) && op.operand(0).isVariableOrRegister() : "cannot mark second operand as stack if others are not in register";
-                            return RegisterPriority.ShouldHaveRegister;
-                        }
-                    }
-                }
+            if (op.code instanceof LIROpcode.SecondOperandCanBeMemory && op.operand(0) != op.operand(1) && op.operand(1) == operand) {
+                assert (op.result().isVariableOrRegister() || op.result().isIllegal()) && op.operand(0).isVariableOrRegister() : "cannot mark second operand as stack if others are not in register";
+                return RegisterPriority.ShouldHaveRegister;
             }
         } // X86
 
@@ -1138,12 +1105,27 @@ public final class LinearScan {
     }
 
     void addRegisterHints(LIRInstruction op) {
+        if (op.code instanceof LIROpcode.FirstOperandRegisterHint) {
+            CiValue moveFrom = op.operand(0);
+            CiValue moveTo = op.result();
+
+            if (moveTo.isVariableOrRegister() && moveFrom.isVariableOrRegister()) {
+                Interval from = intervalFor(moveFrom);
+                Interval to = intervalFor(moveTo);
+                if (from != null && to != null) {
+                    to.setLocationHint(from);
+                    if (GraalOptions.TraceLinearScanLevel >= 4) {
+                        TTY.println("operation at opId %d: added hint from interval %d to %d", op.id(), from.operandNumber, to.operandNumber);
+                    }
+                }
+            }
+        }
+
         if (!(op.code instanceof LegacyOpcode)) {
             return;
         }
         switch ((LegacyOpcode) op.code) {
-            case Move: // fall through
-            case Convert: {
+            case Move: {
                 CiValue moveFrom = op.operand(0);
                 CiValue moveTo = op.result();
 

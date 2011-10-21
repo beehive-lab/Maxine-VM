@@ -28,6 +28,8 @@ import com.oracle.max.graal.nodes.spi.*;
 
 public final class VolatileReadNode extends AbstractMemoryCheckpointNode {
 
+    // TODO Warning: This class does not work correctly. Since it is just a wrapper around a real read node,
+    // the appropriate barriers cannot be emitted.
 
     @Input private ValueNode readNode;
 

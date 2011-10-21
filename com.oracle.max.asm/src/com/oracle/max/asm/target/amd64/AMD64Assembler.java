@@ -2770,6 +2770,11 @@ public class AMD64Assembler extends AbstractAssembler {
         emitByte(0xc0 | encode);
     }
 
+    public final void xorq(CiRegister dst, int imm32) {
+        prefixqAndEncode(dst.encoding);
+        emitArith(0x81, 0xF0, dst, imm32);
+    }
+
     public final void xorq(CiRegister dst, CiRegister src) {
         prefixqAndEncode(dst.encoding, src.encoding);
         emitArith(0x33, 0xC0, dst, src);
