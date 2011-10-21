@@ -39,4 +39,5 @@ public abstract class LIRGeneratorTool extends ValueVisitor {
     public abstract CiValue makeOperand(ValueNode object);
     public abstract void emitUnsignedShiftRight(CiValue value, CiValue count, CiValue dst, CiValue tmp);
     public abstract void emitAdd(CiVariable a, CiValue b, CiVariable dest);
+    public abstract void emitBreakpoint();
 }
