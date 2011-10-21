@@ -30,16 +30,22 @@ import com.sun.cri.ci.*;
 /**
  * Store of a value at a location specified as an offset relative to an object.
  */
-public class UnsafeStore extends StateSplit implements Lowerable {
+public class UnsafeStoreNode extends StateSplit implements Lowerable {
 
     @Input private ValueNode object;
     @Input private ValueNode offset;
     @Input private ValueNode value;
-    @Data private CiKind storeKind;
+    @Data private final int displacement;
+    @Data private final CiKind storeKind;
 
-    public UnsafeStore(ValueNode object, ValueNode offset, ValueNode value, CiKind kind) {
+    public UnsafeStoreNode(ValueNode object, ValueNode offset, ValueNode value, CiKind kind) {
+        this(object, 0, offset, value, kind);
+    }
+
+    public UnsafeStoreNode(ValueNode object, int displacement, ValueNode offset, ValueNode value, CiKind kind) {
         super(CiKind.Void);
         this.object = object;
+        this.displacement = displacement;
         this.offset = offset;
         this.value = value;
         this.storeKind = kind;
@@ -47,6 +53,10 @@ public class UnsafeStore extends StateSplit implements Lowerable {
 
     public ValueNode object() {
         return object;
+    }
+
+    public int displacement() {
+        return displacement;
     }
 
     public ValueNode offset() {
