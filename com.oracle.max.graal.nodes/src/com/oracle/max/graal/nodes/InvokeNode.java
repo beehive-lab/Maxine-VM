@@ -54,7 +54,7 @@ public final class InvokeNode extends AbstractCallNode implements Node.IterableN
      * @param args the list of instructions producing arguments to the invocation, including the receiver object
      */
     public InvokeNode(int bci, int opcode, RiResolvedMethod target, ValueNode[] args, RiType returnType) {
-        super(target.signature().returnKind(false), args);
+        super(target.signature().returnKind(false).stackKind(), args);
         this.opcode = opcode;
         this.target = target;
         this.returnType = returnType;
