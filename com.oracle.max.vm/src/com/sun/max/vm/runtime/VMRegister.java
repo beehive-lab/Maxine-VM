@@ -72,13 +72,6 @@ public final class VMRegister {
     public static final int LATCH = 7;
 
     /**
-     * The register holding the address to which a call returns (e.g. {@code %i7 on SPARC}).
-     * AMD64: <none>
-     * SPARC: %i7
-     */
-    public static final int LINK = 9;
-
-    /**
      * @see MaxineIntrinsicIDs#READREG
      */
     @INTRINSIC(READREG)
@@ -89,7 +82,6 @@ public final class VMRegister {
      */
     @INTRINSIC(WRITEREG)
     public static native void setRegister(@INTRINSIC.Constant int registerId, Word value);
-
 
     @INLINE
     public static Pointer getCpuStackPointer() {

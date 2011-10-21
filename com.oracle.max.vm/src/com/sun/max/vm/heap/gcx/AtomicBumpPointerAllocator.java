@@ -38,6 +38,11 @@ public class AtomicBumpPointerAllocator<T extends RefillManager> extends BaseAto
      */
     protected Size sizeLimit;
 
+    /**
+     * Flags for enabling/disabling traces for this allocator.
+     */
+    boolean debugTrace = false;
+
 
     AtomicBumpPointerAllocator(T refillManager) {
         super(refillManager);

@@ -231,7 +231,7 @@ public abstract class HeapRegionSweeper extends Sweeper {
         Pointer endOfLeftObject = leftLiveObject.plus(Layout.size(Layout.cellToOrigin(leftLiveObject)));
         csrLiveBytes += endOfLeftObject.minus(csrLastLiveAddress).asSize().toInt();
         Size numDeadBytes = rightLiveObject.minus(endOfLeftObject).asSize();
-        if (MaxineVM.isDebug() && TraceSweep && Heap.verbose()) {
+        if (MaxineVM.isDebug() &&  ((TraceSweep && Heap.verbose()) || TraceGap)) {
             printNotifiedGap(leftLiveObject, rightLiveObject, endOfLeftObject, numDeadBytes);
         }
         if (numDeadBytes.greaterEqual(minReclaimableSpace)) {
@@ -252,7 +252,7 @@ public abstract class HeapRegionSweeper extends Sweeper {
     public void processDeadSpace(Address freeChunk, Size size) {
         assert freeChunk.plus(size).lessEqual(endOfSweepingRegion());
         csrLastLiveAddress = freeChunk.plus(size);
-        if (MaxineVM.isDebug() && TraceSweep && Heap.verbose()) {
+        if (MaxineVM.isDebug() && ((TraceSweep && Heap.verbose()) || TraceGap)) {
             printNotifiedDeadSpace(freeChunk, size);
         }
         recordFreeSpace(freeChunk, size);
