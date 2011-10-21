@@ -1741,4 +1741,9 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
             lir.move(resultOperand, result);
         }
     }
+
+    @Override
+    public void emitBreakpoint() {
+        lir.breakpoint();
+    }
 }

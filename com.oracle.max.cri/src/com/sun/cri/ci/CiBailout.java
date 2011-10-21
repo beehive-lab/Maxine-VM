@@ -22,6 +22,8 @@
  */
 package com.sun.cri.ci;
 
+import java.util.*;
+
 /**
  * {@code CiBailout} is thrown when the compiler refuses to compile a method because of problems with the method.
  * e.g. bytecode wouldn't verify, too big, JSR/ret too complicated, etc. This exception is <i>not</i>
@@ -37,6 +39,15 @@ public class CiBailout extends InternalError {
      */
     public CiBailout(String reason) {
         super(reason);
+    }
+
+    /**
+     * Create a new {@code CiBailout}.
+     * @param reason a message indicating the reason with a String.format - syntax
+     * @param args parameters to the formatter
+     */
+    public CiBailout(String format, Object... args) {
+        this(String.format(Locale.ENGLISH, format, args));
     }
 
     /**

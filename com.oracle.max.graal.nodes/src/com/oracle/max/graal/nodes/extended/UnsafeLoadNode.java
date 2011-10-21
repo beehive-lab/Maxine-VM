@@ -31,25 +31,35 @@ import com.sun.cri.ci.*;
 /**
  * Load of a value from a location specified as an offset relative to an object.
  */
-public class UnsafeLoad extends StateSplit implements Lowerable, Node.ValueNumberable {
+public class UnsafeLoadNode extends StateSplit implements Lowerable, Node.ValueNumberable {
 
     @Input private ValueNode object;
     @Input private ValueNode offset;
-    @Data private CiKind loadKind;
+    @Data private final int displacement;
+    @Data private final CiKind loadKind;
 
     public ValueNode object() {
         return object;
+    }
+
+    public int displacement() {
+        return displacement;
     }
 
     public ValueNode offset() {
         return offset;
     }
 
-    public UnsafeLoad(ValueNode object, ValueNode offset, CiKind kind) {
+    public UnsafeLoadNode(ValueNode object, ValueNode offset, CiKind kind) {
+        this(object, 0, offset, kind);
+    }
+
+    public UnsafeLoadNode(ValueNode object, int displacement, ValueNode offset, CiKind kind) {
         super(kind.stackKind());
-        this.loadKind = kind;
         this.object = object;
+        this.displacement = displacement;
         this.offset = offset;
+        this.loadKind = kind;
     }
 
     public CiKind loadKind() {
