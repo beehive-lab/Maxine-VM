@@ -70,6 +70,9 @@ public class CFGPrinterObserver implements CompilationObserver {
 
     @Override
     public void compilationStarted(CompilationEvent event) {
+        if (TTY.isSuppressed()) {
+            return;
+        }
         Observation o = new Observation(event.getCompilation().compiler.target);
         o.cfgPrinter.printCompilation(event.getCompilation().method);
         observations.get().push(o);
@@ -77,6 +80,9 @@ public class CFGPrinterObserver implements CompilationObserver {
 
     @Override
     public void compilationEvent(CompilationEvent event) {
+        if (TTY.isSuppressed()) {
+            return;
+        }
         Observation o = observations.get().peek();
         String label = event.getLabel();
 
@@ -104,6 +110,9 @@ public class CFGPrinterObserver implements CompilationObserver {
 
     @Override
     public void compilationFinished(CompilationEvent event) {
+        if (TTY.isSuppressed()) {
+            return;
+        }
         Observation o = observations.get().pop();
         o.cfgPrinter.flush();
 

@@ -189,9 +189,9 @@ public class T1X implements RuntimeCompiler {
 
         byte[] code = t1xMethod.code();
         final Platform platform = Platform.platform();
-        CiHexCodeFile hcf = new CiHexCodeFile(code, t1xMethod.codeStart().toLong(), platform.isa.name(), platform.wordWidth().numberOfBits);
+        HexCodeFile hcf = new HexCodeFile(code, t1xMethod.codeStart().toLong(), platform.isa.name(), platform.wordWidth().numberOfBits);
 
-        CiUtil.addAnnotations(hcf, c.codeAnnotations);
+        HexCodeFile.addAnnotations(hcf, c.codeAnnotations);
         addOpcodeComments(hcf, t1xMethod);
         addExceptionHandlersComment(t1xMethod, hcf);
         addSafepointPositionComments(t1xMethod, hcf);
@@ -216,7 +216,7 @@ public class T1X implements RuntimeCompiler {
         }
     }
 
-    private static void addSafepointPositionComments(T1XTargetMethod t1xMethod, CiHexCodeFile hcf) {
+    private static void addSafepointPositionComments(T1XTargetMethod t1xMethod, HexCodeFile hcf) {
         if (t1xMethod.safepoints().size() != 0) {
             Safepoints safepoints = t1xMethod.safepoints();
             Object[] directCallees = t1xMethod.directCallees();
@@ -254,9 +254,9 @@ public class T1X implements RuntimeCompiler {
         }
     }
 
-    private static void addExceptionHandlersComment(T1XTargetMethod t1xMethod, CiHexCodeFile hcf) {
+    private static void addExceptionHandlersComment(T1XTargetMethod t1xMethod, HexCodeFile hcf) {
         if (t1xMethod.handlers.length != 0) {
-            String nl = CiHexCodeFile.NEW_LINE;
+            String nl = HexCodeFile.NEW_LINE;
             StringBuilder buf = new StringBuilder("------ Exception Handlers ------").append(nl);
             for (CiExceptionHandler e : t1xMethod.handlers) {
                 if (e.catchTypeCPI == T1XTargetMethod.SYNC_METHOD_CATCH_TYPE_CPI) {
@@ -279,7 +279,7 @@ public class T1X implements RuntimeCompiler {
         }
     }
 
-    private static void addOpcodeComments(CiHexCodeFile hcf, T1XTargetMethod t1xMethod) {
+    private static void addOpcodeComments(HexCodeFile hcf, T1XTargetMethod t1xMethod) {
         int[] bciToPos = t1xMethod.bciToPos;
         BytecodeStream s = new BytecodeStream(t1xMethod.codeAttribute.code());
         for (int bci = 0; bci < bciToPos.length; ++bci) {
@@ -450,8 +450,7 @@ public class T1X implements RuntimeCompiler {
     public static final Set<String> unsafeIntrinsicIDs = new HashSet<String>(Arrays.asList(
         READREG, WRITEREG, IFLATCHBITREAD,
         SAFEPOINT_POLL, HERE, INFO, BREAKPOINT_TRAP,
-        ALLOCA, STACKHANDLE,
-        JNI_LINK, JNI_J2N, JNI_N2J
+        ALLOCA, STACKHANDLE
     ));
 
     @HOSTED_ONLY

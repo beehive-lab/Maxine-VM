@@ -448,16 +448,6 @@ public class Snippets {
         return classMethodActor.makeTargetMethod().getEntryPoint(cep).asAddress();
     }
 
-    /**
-     * Finds the address of the native function for a {@code native} Java method.
-     * <p>
-     * This snippet does not subclass {@link NonFoldableSnippet} as it needs to be foldable when executing an
-     * {@linkplain IrInterpreter IR interpreter}.
-     */
-    public static Word linkNativeMethod(ClassMethodActor classMethodActor) {
-        return classMethodActor.nativeFunction.link();
-    }
-
     static final VmThreadLocal NATIVE_CALLS_DISABLED = new VmThreadLocal("NATIVE_CALLS_DISABLED", false, "");
 
     /**

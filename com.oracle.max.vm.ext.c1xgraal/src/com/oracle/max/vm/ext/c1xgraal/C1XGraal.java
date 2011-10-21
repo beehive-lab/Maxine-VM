@@ -36,6 +36,8 @@ import com.oracle.max.vm.ext.maxri.*;
 import com.oracle.max.vm.ext.maxri.MaxXirGenerator.RuntimeCalls;
 import com.sun.c1x.*;
 import com.sun.c1x.graph.*;
+import com.sun.c1x.observer.*;
+import com.sun.cri.ci.CiCompiler.DebugInfoLevel;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
@@ -92,9 +94,6 @@ public class C1XGraal implements RuntimeCompiler {
     public static boolean optionsRegistered;
 
     @HOSTED_ONLY
-    public static C1XGraal instance;
-
-    @HOSTED_ONLY
     public C1XGraal() {
         this(new MaxXirGenerator(GraalOptions.PrintXirTemplates), platform().target);
     }
@@ -103,9 +102,6 @@ public class C1XGraal implements RuntimeCompiler {
     protected C1XGraal(RiXirGenerator xirGenerator, CiTarget target) {
         this.xirGenerator = xirGenerator;
         this.target = target;
-        if (instance == null) {
-            instance = this;
-        }
     }
 
     @Override
@@ -132,6 +128,7 @@ public class C1XGraal implements RuntimeCompiler {
             graalCompiler = new GraalCompiler(context, runtime, target, xirGenerator, vm().registerConfigs.compilerStub);
 
             c1xCompiler = new C1XCompiler(runtime, target, xirGenerator, vm().registerConfigs.compilerStub);
+            c1xCompiler.addCompilationObserver(new WordTypeRewriterPhase());
             MaxineIntrinsicImplementations.initialize(c1xCompiler.intrinsicRegistry);
 
             // search for the runtime call and register critical methods
@@ -177,6 +174,20 @@ public class C1XGraal implements RuntimeCompiler {
         }
     }
 
+    private static class WordTypeRewriterPhase implements CompilationObserver {
+        @Override
+        public void compilationEvent(CompilationEvent event) {
+            if (event.getLabel() == CompilationEvent.AFTER_PARSING) {
+                new WordTypeRewriter().apply(event.getCompilation());
+            }
+        }
+
+        @Override
+        public void compilationStarted(CompilationEvent event) { }
+        @Override
+        public void compilationFinished(CompilationEvent event) { }
+    }
+
     public GraalCompiler graalCompiler() {
         if (isHosted() && graalCompiler == null) {
             initialize(Phase.HOSTED_COMPILING);
@@ -195,10 +206,11 @@ public class C1XGraal implements RuntimeCompiler {
         CiTargetMethod compiledMethod;
         do {
             String name = vm().compilationBroker.compilerFor(method);
-            if (name != null && name.equals("Graal")) {
-                compiledMethod = graalCompiler().compileMethod(method, -1, stats).targetMethod();
+            DebugInfoLevel debugInfoLevel = method.isTemplate() ? DebugInfoLevel.REF_MAPS : DebugInfoLevel.FULL;
+            if (forceC1X(method) || (name != null && name.equals("C1X"))) {
+                compiledMethod = c1xCompiler().compileMethod(method, -1, stats, debugInfoLevel).targetMethod();
             } else {
-                compiledMethod = c1xCompiler().compileMethod(method, -1, stats).targetMethod();
+                compiledMethod = graalCompiler().compileMethod(method, -1, stats, debugInfoLevel).targetMethod();
             }
 
             Dependencies deps = DependenciesManager.validateDependencies(compiledMethod.assumptions());
@@ -221,6 +233,14 @@ public class C1XGraal implements RuntimeCompiler {
             }
             // Loop back and recompile.
         } while(true);
+    }
+
+    /**
+     * Until Graal can compile everything, this is a mechanism to specify
+     * what it cannot yet handle.
+     */
+    boolean forceC1X(final ClassMethodActor method) {
+        return method.isNative() || method.isTemplate();
     }
 
     public Nature nature() {

@@ -39,6 +39,7 @@ import com.oracle.max.graal.extensions.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiCompiler.DebugInfoLevel;
 import com.sun.cri.ri.*;
 
 /**
@@ -68,8 +69,9 @@ public final class GraalCompilation {
      * @param method the method to be compiled or {@code null} if generating code for a stub
      * @param osrBCI the bytecode index for on-stack replacement, if requested
      * @param stats externally supplied statistics object to be used if not {@code null}
+     * @param debugInfoLevel TODO
      */
-    public GraalCompilation(GraalContext context, GraalCompiler compiler, RiResolvedMethod method, Graph<EntryPointNode> graph, int osrBCI, CiStatistics stats) {
+    public GraalCompilation(GraalContext context, GraalCompiler compiler, RiResolvedMethod method, CompilerGraph graph, int osrBCI, CiStatistics stats, DebugInfoLevel debugInfoLevel) {
         if (osrBCI != -1) {
             throw new CiBailout("No OSR supported");
         }
@@ -78,15 +80,15 @@ public final class GraalCompilation {
         this.method = method;
         this.stats = stats == null ? new CiStatistics() : stats;
         this.registerConfig = method == null ? compiler.compilerStubRegisterConfig : compiler.runtime.getRegisterConfig(method);
-        this.placeholderState = method != null && method.minimalDebugInfo() ? new FrameState(method, 0, 0, 0, 0, false) : null;
+        this.placeholderState = debugInfoLevel == DebugInfoLevel.REF_MAPS ? new FrameState(method, 0, 0, 0, 0, false) : null;
 
         if (context().isObserved() && method != null) {
             context().observable.fireCompilationStarted(new CompilationEvent(this));
         }
     }
 
-    public GraalCompilation(GraalContext context, GraalCompiler compiler, RiResolvedMethod method, int osrBCI, CiStatistics stats) {
-        this(context, compiler, method, new Graph<EntryPointNode>(new EntryPointNode(compiler.runtime)), osrBCI, stats);
+    public GraalCompilation(GraalContext context, GraalCompiler compiler, RiResolvedMethod method, int osrBCI, CiStatistics stats, DebugInfoLevel debugInfoLevel) {
+        this(context, compiler, method, new CompilerGraph(compiler.runtime), osrBCI, stats, debugInfoLevel);
     }
 
 

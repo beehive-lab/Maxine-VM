@@ -24,19 +24,16 @@ package com.sun.max.vm.jni;
 
 import static com.sun.max.vm.classfile.constant.PoolConstantFactory.*;
 import static com.sun.max.vm.classfile.constant.SymbolTable.*;
-import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
-
 import com.sun.max.annotate.*;
 import com.sun.max.io.*;
 import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.intrinsics.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
@@ -66,7 +63,7 @@ import com.sun.max.vm.type.*;
  */
 public final class NativeStubGenerator extends BytecodeAssembler {
 
-    public NativeStubGenerator(ConstantPoolEditor constantPoolEditor, MethodActor classMethodActor) {
+    public NativeStubGenerator(ConstantPoolEditor constantPoolEditor, ClassMethodActor classMethodActor) {
         super(constantPoolEditor);
         this.classMethodActor = classMethodActor;
         allocateParameters(classMethodActor.isStatic(), classMethodActor.descriptor());
@@ -74,7 +71,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
     }
 
     private final SeekableByteArrayOutputStream codeStream = new SeekableByteArrayOutputStream();
-    private final MethodActor classMethodActor;
+    private final ClassMethodActor classMethodActor;
 
     @Override
     public void writeByte(byte b) {
@@ -117,9 +114,11 @@ public final class NativeStubGenerator extends BytecodeAssembler {
     private static final ClassMethodRefConstant logPrintln_String = createClassMethodConstant(Log.class, makeSymbol("println"), String.class);
     private static final ClassMethodRefConstant logPrint_String = createClassMethodConstant(Log.class, makeSymbol("print"), String.class);
     private static final FieldRefConstant traceJNI = createFieldConstant(ClassMethodActor.class, makeSymbol("TraceJNI"));
-    private static final ClassMethodRefConstant link = createClassMethodConstant(NativeStubGenerator.class, makeSymbol("link"));
-    private static final ClassMethodRefConstant nativeToJava = createClassMethodConstant(NativeStubGenerator.class, makeSymbol("nativeToJava"));
-    private static final ClassMethodRefConstant javaToNative = createClassMethodConstant(NativeStubGenerator.class, makeSymbol("javaToNative"));
+    private static final ClassMethodRefConstant link = createClassMethodConstant(NativeFunction.class, makeSymbol("link"));
+    private static final ClassMethodRefConstant nativeCallPrologue = createClassMethodConstant(Snippets.class, makeSymbol("nativeCallPrologue"), NativeFunction.class);
+    private static final ClassMethodRefConstant nativeCallPrologueForC = createClassMethodConstant(Snippets.class, makeSymbol("nativeCallPrologueForC"), NativeFunction.class);
+    private static final ClassMethodRefConstant nativeCallEpilogue = createClassMethodConstant(Snippets.class, makeSymbol("nativeCallEpilogue"));
+    private static final ClassMethodRefConstant nativeCallEpilogueForC = createClassMethodConstant(Snippets.class, makeSymbol("nativeCallEpilogueForC"));
     private static final StringConstant threadLabelPrefix = PoolConstantFactory.createStringConstant("[Thread \"");
 
     private void generateCode(boolean isCFunction, boolean isStatic, ClassActor holder, SignatureDescriptor signatureDescriptor) {
@@ -221,14 +220,17 @@ public final class NativeStubGenerator extends BytecodeAssembler {
         }
 
         // Link native function
-        invokestatic(link, 0, 1);
+        ObjectConstant nf = createObjectConstant(classMethodActor.nativeFunction);
+        ldc(nf);
+        invokevirtual(link, 1, 1);
 
-        invokestatic(javaToNative, 0, 0);
+        ldc(nf);
+        invokestatic(!isCFunction ? nativeCallPrologue : nativeCallPrologueForC, 1, 0);
 
         // Invoke the native function
         callnative(SignatureDescriptor.create(nativeFunctionDescriptor.append(')').append(nativeResultDescriptor).toString()), nativeFunctionArgSlots, nativeResultDescriptor.toKind().stackSlots);
 
-        invokestatic(nativeToJava, 0, 0);
+        invokestatic(!isCFunction ? nativeCallEpilogue : nativeCallEpilogueForC, 0, 0);
 
         if (!isCFunction) {
             // Unwrap a reference result from its enclosing JNI handle. This must be done
@@ -316,26 +318,4 @@ public final class NativeStubGenerator extends BytecodeAssembler {
         Log.print("[Thread \"");
         Log.print(VmThread.current().getName());
     }
-
-    /**
-     * @see MaxineIntrinsicIDs#JNI_LINK
-     * @see #link
-     */
-    @INTRINSIC(JNI_LINK)
-    public static native Address link();
-
-    /**
-     * @see MaxineIntrinsicIDs#JNI_N2J
-     * @see #nativeToJava
-     */
-    @INTRINSIC(JNI_N2J)
-    public static native void nativeToJava();
-
-    /**
-     * @see MaxineIntrinsicIDs#JNI_J2N
-     * @see #javaToNative
-     */
-    @INTRINSIC(JNI_J2N)
-    public static native void javaToNative();
-
 }

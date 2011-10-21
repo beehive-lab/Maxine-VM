@@ -142,18 +142,6 @@ public interface RiRuntime {
     boolean isExceptionType(RiResolvedType type);
 
     /**
-     * Gets the {@linkplain RiSnippets snippets} provided by the runtime.
-     */
-    RiSnippets getSnippets();
-
-    /**
-     * Checks whether this method is foldable (i.e. if it is a pure function without side effects).
-     * @param method the method that is checked
-     * @return whether the method is foldable
-     */
-    boolean isFoldable(RiResolvedMethod method);
-
-    /**
      * Attempts to compile-time evaluate or "fold" a call to a given method. A foldable method is a pure function
      * that has no side effects. Such methods can be executed via reflection when all their inputs are constants,
      * and the resulting value is substituted for the method call. May only be called on methods for which
