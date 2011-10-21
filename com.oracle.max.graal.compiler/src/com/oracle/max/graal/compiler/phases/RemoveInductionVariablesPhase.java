@@ -30,6 +30,9 @@ import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.loop.*;
 
+/**
+ * This phase looks for {@link InductionVariableNode}s and converts them to Phis and arithmetic nodes.
+ */
 public class RemoveInductionVariablesPhase extends Phase {
 
     private NodeMap<ValueNode> loweredIV;
