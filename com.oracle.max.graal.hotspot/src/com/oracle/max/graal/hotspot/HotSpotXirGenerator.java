@@ -408,7 +408,7 @@ public class HotSpotXirGenerator implements RiXirGenerator {
             XirParameter object = asm.createInputParameter("object", CiKind.Object);
 
             // Need temp operand, because the write barrier destroys the object pointer.
-            XirOperand temp = asm.createTemp("temp", CiKind.Object);
+            XirOperand temp = asm.createTemp("temp", target.wordKind);
             asm.mov(temp, object);
 
             writeBarrier(asm, temp);

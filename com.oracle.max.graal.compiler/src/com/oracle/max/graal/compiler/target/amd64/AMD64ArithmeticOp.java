@@ -34,7 +34,7 @@ public enum AMD64ArithmeticOp implements LIROpcode<AMD64LIRAssembler, LIRInstruc
     DADD, DSUB, DMUL, DDIV;
 
     public LIRInstruction create(CiVariable leftAndResult, CiValue right) {
-        assert (name().startsWith("I") && leftAndResult.kind == CiKind.Int && right.kind == CiKind.Int)
+        assert (name().startsWith("I") && leftAndResult.kind == CiKind.Int && right.kind.stackKind() == CiKind.Int)
             || (name().startsWith("L") && leftAndResult.kind == CiKind.Long && right.kind == CiKind.Long)
             || (name().startsWith("F") && leftAndResult.kind == CiKind.Float && right.kind == CiKind.Float)
             || (name().startsWith("D") && leftAndResult.kind == CiKind.Double && right.kind == CiKind.Double);
@@ -45,16 +45,15 @@ public enum AMD64ArithmeticOp implements LIROpcode<AMD64LIRAssembler, LIRInstruc
     @Override
     public void emitCode(AMD64LIRAssembler lasm, LIRInstruction op) {
         assert op.info == null;
-        assert op.operand(0).kind == op.operand(1).kind || (op.operand(0).kind == lasm.target.wordKind && op.operand(1).kind == CiKind.Int);
+        assert op.result().kind == op.operand(0).kind && (op.operand(0).kind == op.operand(1).kind.stackKind() || (op.operand(0).kind == lasm.target.wordKind && op.operand(1).kind.stackKind() == CiKind.Int));
         assert op.operand(0).equals(op.result());
 
-
-        CiRegister dst = op.result().asRegister();
+        CiRegister dst = lasm.asRegister(op.result());
         CiValue right = op.operand(1);
 
         AMD64MacroAssembler masm = lasm.masm;
         if (right.isRegister()) {
-            CiRegister rreg = right.asRegister();
+            CiRegister rreg = lasm.asRegister(right);
             switch (this) {
                 case IADD: masm.addl(dst,  rreg); break;
                 case ISUB: masm.subl(dst,  rreg); break;
@@ -87,8 +86,7 @@ public enum AMD64ArithmeticOp implements LIROpcode<AMD64LIRAssembler, LIRInstruc
                 case LSUB: masm.subq(dst,  lasm.asLongConst(right)); break;
                 case LAND: masm.andq(dst,  lasm.asLongConst(right)); break;
                 case LOR:  masm.orq(dst,   lasm.asLongConst(right)); break;
-// TODO: need to implement this instruction in Assembler
-//                case LXOR: masm.xorq(dst,  lasm.asLongConst(right)); break;
+                case LXOR: masm.xorq(dst,  lasm.asLongConst(right)); break;
                 case FADD: masm.addss(dst, lasm.asFloatConst(right)); break;
                 case FSUB: masm.subss(dst, lasm.asFloatConst(right)); break;
                 case FMUL: masm.mulss(dst, lasm.asFloatConst(right)); break;
@@ -125,63 +123,3 @@ public enum AMD64ArithmeticOp implements LIROpcode<AMD64LIRAssembler, LIRInstruc
         }
     }
 }
-
-//public class AMD64ArithmeticOp {
-//    private abstract static class DefaultOp2 implements LIROpcode<AMD64LIRAssembler, AMD64MacroAssembler, LIRInstruction> {
-//        public LIRInstruction create(CiVariable leftAndResult, CiValue right) {
-//            return new LIRInstruction(this, leftAndResult, null, leftAndResult, right);
-//        }
-//    }
-//
-//    public static LIROpcode IADD = new DefaultOp2() {
-//        @Override
-//        public void emitCode(AMD64LIRAssembler lasm, AMD64MacroAssembler masm, LIRInstruction op) {
-//            if (op.operand(1).isRegister()) {
-//                masm.addl(lasm.intRegOpd(op, 0), lasm.intRegOpd(op, 1));
-//            } else if (op.operand(1).isConstant()) {
-//                masm.incrementl(lasm.intRegOpd(op, 0), lasm.intConstOpd(op, 1));
-//            } else {
-//                masm.addl(lasm.intRegOpd(op, 0), lasm.intAddrOpd(op, 1));
-//            }
-//        }
-//    };
-//
-//    public static LIROpcode LADD = new DefaultOp2() {
-//        @Override
-//        public void emitCode(AMD64LIRAssembler lasm, AMD64MacroAssembler masm, LIRInstruction op) {
-//            if (op.operand(1).isRegister()) {
-//                masm.addq(lasm.longRegOpd(op, 0), lasm.longRegOpd(op, 1));
-//            } else if (op.operand(1).isConstant()) {
-//                masm.addq(lasm.longRegOpd(op, 0), lasm.longConstOpd(op, 1));
-//            } else {
-//                masm.addq(lasm.longRegOpd(op, 0), lasm.longAddrOpd(op, 1));
-//            }
-//        }
-//    };
-//
-//    public static LIROpcode FADD = new DefaultOp2() {
-//        @Override
-//        public void emitCode(AMD64LIRAssembler lasm, AMD64MacroAssembler masm, LIRInstruction op) {
-//            if (op.operand(1).isRegister()) {
-//                masm.addss(lasm.floatRegOpd(op, 0), lasm.floatRegOpd(op, 1));
-//            } else if (op.operand(1).isConstant()) {
-//                masm.addss(lasm.floatRegOpd(op, 0), lasm.floatConstOpd(op, 1));
-//            } else {
-//                masm.addss(lasm.floatRegOpd(op, 0), lasm.floatAddrOpd(op, 1));
-//            }
-//        }
-//    };
-//
-//    public static LIROpcode DADD = new DefaultOp2() {
-//        @Override
-//        public void emitCode(AMD64LIRAssembler lasm, AMD64MacroAssembler masm, LIRInstruction op) {
-//            if (op.operand(1).isRegister()) {
-//                masm.addsd(lasm.floatRegOpd(op, 0), lasm.doubleRegOpd(op, 1));
-//            } else if (op.operand(1).isConstant()) {
-//                masm.addsd(lasm.floatRegOpd(op, 0), lasm.doubleConstOpd(op, 1));
-//            } else {
-//                masm.addsd(lasm.floatRegOpd(op, 0), lasm.doubleAddrOpd(op, 1));
-//            }
-//        }
-//    };
-//}
