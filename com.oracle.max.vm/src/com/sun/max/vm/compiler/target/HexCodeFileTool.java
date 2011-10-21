@@ -24,22 +24,22 @@ package com.sun.max.vm.compiler.target;
 
 import java.lang.reflect.*;
 
-import com.sun.cri.ci.*;
+import com.oracle.max.criutils.*;
 import com.sun.max.annotate.*;
 
 /**
- * Tool that produces a textual version of a {@link CiHexCodeFile}.
+ * Tool that produces a textual version of a {@link HexCodeFile}.
  * Reflection is used to try and produced a disassembly of the input.
- * If this fails, the {@linkplain CiHexCodeFile#toEmbeddedString() embedded}
+ * If this fails, the {@linkplain HexCodeFile#toEmbeddedString() embedded}
  * string format of the input is returned instead.
  */
 public class HexCodeFileTool {
 
     /**
-     * Produces a textual version of a {@link CiHexCodeFile}, using a disassembler
+     * Produces a textual version of a {@link HexCodeFile}, using a disassembler
      * via reflection if possible.
      */
-    public static String toText(CiHexCodeFile hcf) {
+    public static String toText(HexCodeFile hcf) {
         String embeddedString = hcf.toEmbeddedString();
         String res = embeddedString;
         if (!initialized) {

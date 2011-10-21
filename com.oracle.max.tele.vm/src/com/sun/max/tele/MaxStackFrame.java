@@ -23,6 +23,7 @@
 package com.sun.max.tele;
 
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.method.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.Cursor;
@@ -34,7 +35,7 @@ public interface MaxStackFrame extends MaxEntity<MaxStackFrame> {
 
     /**
      * Gets the stack containing this frame.
-     * <br>
+     * <p>
      * Thread-safe
      *
      * @return the stack that contains this frame
@@ -43,7 +44,7 @@ public interface MaxStackFrame extends MaxEntity<MaxStackFrame> {
 
     /**
      * Gets the position of this frame in the stack.
-     * <br>
+     * <p>
      * Thread-safe
      *
      * @return the position of this frame in its stack. The top frame is at position 0;
@@ -53,7 +54,7 @@ public interface MaxStackFrame extends MaxEntity<MaxStackFrame> {
 
     /**
      * Determines whether this frame is at the top of it's stack, position.
-     * <br>
+     * <p>
      * Thread-safe
      *
      * @return whether this frame is at the top of the stack.
@@ -62,7 +63,7 @@ public interface MaxStackFrame extends MaxEntity<MaxStackFrame> {
 
     /**
      * Gets this frame's Instruction Pointer.
-     * <br>
+     * <p>
      * Thread-safe
      *
      * @return the address of the next instruction to be executed in this frame.
@@ -72,7 +73,7 @@ public interface MaxStackFrame extends MaxEntity<MaxStackFrame> {
 
     /**
      * Gets this frame's Stack Pointer.
-     * <br>
+     * <p>
      * Thread-safe
      *
      * @return the current stack pointer
@@ -82,7 +83,7 @@ public interface MaxStackFrame extends MaxEntity<MaxStackFrame> {
 
     /**
      * Gets this frame's Frame Pointer.
-     * <br>
+     * <p>
      * Thread-safe
      *
      * @return the current frame pointer
@@ -91,11 +92,21 @@ public interface MaxStackFrame extends MaxEntity<MaxStackFrame> {
     Pointer fp();
 
     /**
+     * Gets the machine code, if known, corresponding to this stack frame in the VM.
+     * <p>
+     * This typically would be a method compilation, but it could also be a region of native
+     * that has previously been registered during the session.
+     *
+     * @see TeleCodeCache#register(TeleExternalCode)
+     */
+    MaxMachineCode machineCode();
+
+    /**
      * Get's the conceptual location in code for each frame, independent of underlying
      * stack representation.
-     * <br>
+     * <p>
      * The location for the top frame in a stack is the instruction pointer.
-     * <br>
+     * <p>
      * The location for other frames in the stack is the return address:  the next address to
      * be executed when control returns to this frame.
      *
@@ -105,7 +116,7 @@ public interface MaxStackFrame extends MaxEntity<MaxStackFrame> {
 
     /**
      * Gets the compiled code enclosing the {@linkplain #ip() execution point} in this frame, if any.
-     * <br>
+     * <p>
      * Thread-safe
      *
      * @return compiled code for this frame, null if an external function or other special frame not associated with a method
@@ -114,7 +125,7 @@ public interface MaxStackFrame extends MaxEntity<MaxStackFrame> {
 
     /**
      * Determines if this frame and another refer to the same frame.
-     * <br>
+     * <p>
      * Thread-safe
      *
      * @param stackFrame another stack frame.
@@ -138,9 +149,9 @@ public interface MaxStackFrame extends MaxEntity<MaxStackFrame> {
 
         /**
          * Computes the biased offset from the slot base to the ABI's frame pointer register.
-         * <br>
+         * <p>
          * Some platforms (e.g., Solaris SPARC v9 in 64-bit mode) use a bias from the frame pointer to access stack slot.
-         * <br>
+         * <p>
          * The default is no bias, but the offset must be adjusted by frame size to be relative to the frame pointer.
          *
          * @param offset a offset relative to the address of the stack pointer

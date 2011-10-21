@@ -40,9 +40,9 @@ public final class InvokeNode extends AbstractCallNode implements Node.IterableN
 
     private boolean canInline = true;
 
-    public final int opcode;
-    public final RiResolvedMethod target;
-    public final RiType returnType;
+    private final int opcode;
+    private final RiResolvedMethod target;
+    private final RiType returnType;
     public final int bci; // needed because we can not compute the bci from the sateBefore bci of this Invoke was optimized from INVOKEINTERFACE to INVOKESPECIAL
 
     /**
@@ -50,13 +50,11 @@ public final class InvokeNode extends AbstractCallNode implements Node.IterableN
      *
      * @param bci the bytecode index of the original invoke (used for debug infos)
      * @param opcode the opcode of the invoke
-     * @param result the result type
-     * @param args the list of instructions producing arguments to the invocation, including the receiver object
      * @param target the target method being called
-     * @param returnType the return type of the target method
+     * @param args the list of instructions producing arguments to the invocation, including the receiver object
      */
-    public InvokeNode(int bci, int opcode, CiKind result, ValueNode[] args, RiResolvedMethod target, RiType returnType) {
-        super(result, args);
+    public InvokeNode(int bci, int opcode, RiResolvedMethod target, ValueNode[] args, RiType returnType) {
+        super(target.signature().returnKind(false), args);
         this.opcode = opcode;
         this.target = target;
         this.returnType = returnType;

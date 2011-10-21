@@ -98,8 +98,18 @@ public final class ConstantPool implements RiConstantPool {
         },
         NAME_AND_TYPE(12),
         UTF8(1),
+        OBJECT(-1) {
+            @Override
+            public Kind valueKind() {
+                return Kind.REFERENCE;
+            }
+        },
+
         INVALID(0);
 
+        /**
+         * A negative value indicates a non-standard constant type only used internally.
+         */
         private final byte classfileTag;
 
         /**
@@ -601,6 +611,14 @@ public final class ConstantPool implements RiConstantPool {
         }
     }
 
+    public ObjectConstant objectAt(int index) {
+        try {
+            return (ObjectConstant) at(index);
+        } catch (ClassCastException e) {
+            throw unexpectedEntry(index, null, OBJECT);
+        }
+    }
+
     public MemberRefConstant memberAt(int index) {
         return memberAt(index, null);
     }
@@ -663,22 +681,6 @@ public final class ConstantPool implements RiConstantPool {
 
     public String stringAt(int index) {
         return stringConstantAt(index).value;
-    }
-
-    public void trace(int requiredLevel) {
-        if (Trace.hasLevel(requiredLevel)) {
-            Trace.begin(requiredLevel, "ConstantPool: " + numberOfConstants());
-            for (int i = 0; i < length; i++) {
-                final Tag tag = tagAt(i);
-                if (tag == INVALID) {
-                    // The entry after a long or double constant is empty
-                    Trace.line(requiredLevel, Integer.toString(i) + ": null");
-                } else {
-                    Trace.line(requiredLevel, Integer.toString(i) + ": [" + tag + "] " + at(i));
-                }
-            }
-            Trace.end(requiredLevel, "ConstantPool");
-        }
     }
 
     ConstantPoolEditor editor;
@@ -947,6 +949,9 @@ public final class ConstantPool implements RiConstantPool {
             }
             case DOUBLE: {
                 return CiConstant.forDouble(doubleAt(cpi));
+            }
+            case OBJECT: {
+                return CiConstant.forObject(objectAt(cpi).value());
             }
             default:
                 throw ProgramError.unexpected("unknown constant type");

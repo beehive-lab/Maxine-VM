@@ -37,6 +37,7 @@ import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.observer.*;
+import com.sun.cri.ci.CiCompiler.DebugInfoLevel;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
@@ -87,7 +88,7 @@ public class C1X implements RuntimeCompiler {
     @HOSTED_ONLY
     public static boolean optionsRegistered;
 
-    private static final int DEFAULT_OPT_LEVEL = 3;
+    private static final int DEFAULT_OPT_LEVEL = Integer.getInteger("max.c1x.optlevel", 3);
 
     public static final VMIntOption optLevelOption = VMOptions.register(new VMIntOption("-C1X:OptLevel=", DEFAULT_OPT_LEVEL,
         "Set the optimization level of C1X.") {
@@ -145,9 +146,6 @@ public class C1X implements RuntimeCompiler {
     }
 
     @HOSTED_ONLY
-    public static C1X instance;
-
-    @HOSTED_ONLY
     public C1X() {
         this(new MaxXirGenerator(C1XOptions.PrintXirTemplates), platform().target);
     }
@@ -156,9 +154,6 @@ public class C1X implements RuntimeCompiler {
     protected C1X(RiXirGenerator xirGenerator, CiTarget target) {
         this.xirGenerator = xirGenerator;
         this.target = target;
-        if (instance == null) {
-            instance = this;
-        }
     }
 
     @Override
@@ -229,6 +224,7 @@ public class C1X implements RuntimeCompiler {
 
     public C1XCompiler compiler() {
         if (isHosted() && compiler == null) {
+            FatalError.unexpected("xxxx");
             initialize(Phase.HOSTED_COMPILING);
         }
         return compiler;
@@ -237,7 +233,8 @@ public class C1X implements RuntimeCompiler {
     public final TargetMethod compile(final ClassMethodActor method, boolean install, CiStatistics stats) {
         CiTargetMethod compiledMethod;
         do {
-            compiledMethod = compiler().compileMethod(method, -1, stats).targetMethod();
+            DebugInfoLevel debugInfoLevel = method.isTemplate() ? DebugInfoLevel.REF_MAPS : DebugInfoLevel.FULL;
+            compiledMethod = compiler().compileMethod(method, -1, stats, debugInfoLevel).targetMethod();
             Dependencies deps = DependenciesManager.validateDependencies(compiledMethod.assumptions());
             if (deps != Dependencies.INVALID) {
                 if (C1XOptions.PrintTimers) {

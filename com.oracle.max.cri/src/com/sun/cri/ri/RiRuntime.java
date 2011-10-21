@@ -142,11 +142,6 @@ public interface RiRuntime {
     boolean isExceptionType(RiResolvedType type);
 
     /**
-     * Gets the {@linkplain RiSnippets snippets} provided by the runtime.
-     */
-    RiSnippets getSnippets();
-
-    /**
      * Checks whether this method is foldable (i.e. if it is a pure function without side effects).
      * @param method the method that is checked
      * @return whether the method is foldable

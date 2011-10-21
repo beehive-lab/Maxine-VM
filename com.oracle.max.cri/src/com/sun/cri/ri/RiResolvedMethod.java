@@ -116,13 +116,6 @@ public interface RiResolvedMethod extends RiMethod {
     boolean noSafepointPolls();
 
     /**
-     * Determines if only minimal debug info is to be generated for a
-     * compilation of this method. The minimal debug info is exactly the
-     * reference maps.
-     */
-    boolean minimalDebugInfo();
-
-    /**
      * Gets a map from bytecode indexes to bit maps denoting the live locals at that position.
      * If a non-null array is return, its length is guaranteed to be equal to {@code code().length}.
      *

@@ -711,8 +711,8 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     }
 
     private CiKind[] getSignature(InvokeNode x) {
-        CiKind receiver = x.isStatic() ? null : x.target.holder().kind(true);
-        return CiUtil.signatureToKinds(x.target.signature(), receiver);
+        CiKind receiver = x.isStatic() ? null : x.target().holder().kind(true);
+        return CiUtil.signatureToKinds(x.target().signature(), receiver);
     }
 
     public CiValue createMonitorAddress(int monitorIndex) {
