@@ -22,6 +22,8 @@
  */
 package com.oracle.max.graal.examples.intrinsics;
 
+import com.oracle.max.graal.graph.Node.NodeIntrinsic;
+
 
 public class SafeAddExample {
 
@@ -47,6 +49,8 @@ public class SafeAddExample {
         return sum;
     }
 
+
+    @NodeIntrinsic(SafeAddNode.class)
     public static int safeAdd(int a, int b) {
         int result = a + b;
         if (b < 0 && result > a) {

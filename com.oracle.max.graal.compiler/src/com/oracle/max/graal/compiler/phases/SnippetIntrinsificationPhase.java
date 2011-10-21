@@ -59,54 +59,57 @@ public class SnippetIntrinsificationPhase extends Phase {
         RiResolvedMethod target = invoke.target;
         if (Modifier.isStatic(target.accessFlags())) {
             Class< ? > c = target.holder().toJava();
-            if (c != null && target.holder().isSubtypeOf(runtime.getType(Node.class))) {
+            if ((c != null && target.holder().isSubtypeOf(runtime.getType(Node.class))) || GraalOptions.Extend) {
                 try {
                     Class< ? >[] parameterTypes = toClassArray(target.signature(), target.holder());
                     Method m = c.getMethod(target.name(), parameterTypes);
                     if (m != null) {
                         NodeIntrinsic intrinsic = m.getAnnotation(Node.NodeIntrinsic.class);
                         if (intrinsic != null) {
+                            if (intrinsic.value() != NodeIntrinsic.class) {
+                                c = intrinsic.value();
+                            }
                             int z = 0;
                             Object[] initArgs = new Object[parameterTypes.length];
                             ValueNode[] arguments = InliningUtil.simplifyParameters(invoke);
                             for (Annotation[] annotations : m.getParameterAnnotations()) {
                                 Object currentValue = null;
                                 for (Annotation a : annotations) {
-                                    if (a instanceof NodeParameter) {
-                                        currentValue = arguments[z];
-                                        parameterTypes[z] = ValueNode.class;
-                                        Type type = m.getGenericParameterTypes()[z];
-                                        if (type instanceof TypeVariable) {
-                                            TypeVariable typeVariable = (TypeVariable) type;
-                                            if (typeVariable.getBounds().length == 1) {
-                                                Type boundType = typeVariable.getBounds()[0];
-                                                if (boundType instanceof Class && ((Class) boundType).getSuperclass() == null) {
-                                                    // Unbound generic => try boxing elimination
-                                                    ValueNode node = arguments[z];
-                                                    if (node.usages().size() == 2) {
-                                                        if (node instanceof InvokeNode) {
-                                                            InvokeNode invokeNode = (InvokeNode) node;
-                                                            if (BoxingEliminationPhase.isBoxingMethod(runtime, invokeNode.target)) {
-                                                                currentValue = invokeNode.arguments().get(0);
-                                                                FrameState stateAfter = invokeNode.stateAfter();
-                                                                invokeNode.setStateAfter(null);
-                                                                stateAfter.delete();
-                                                                invokeNode.replaceAndDelete(invokeNode.next());
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
+                                    if (a instanceof ConstantNodeParameter) {
+                                        Node n = arguments[z];
+                                        assert n instanceof ConstantNode : "must be compile time constant; " + n + " z=" + z + " for " + target;
+                                        ConstantNode constantNode = (ConstantNode) n;
+                                        currentValue = constantNode.asConstant().asObject();
                                         break;
                                     }
                                 }
 
                                 if (currentValue == null) {
-                                    Node n = arguments[z];
-                                    assert n instanceof ConstantNode : "must be compile time constant; " + n + " z=" + z + " for " + target;
-                                    ConstantNode constantNode = (ConstantNode) n;
-                                    currentValue = constantNode.asConstant().asObject();
+                                    currentValue = arguments[z];
+                                    parameterTypes[z] = ValueNode.class;
+                                    Type type = m.getGenericParameterTypes()[z];
+                                    if (type instanceof TypeVariable) {
+                                        TypeVariable typeVariable = (TypeVariable) type;
+                                        if (typeVariable.getBounds().length == 1) {
+                                            Type boundType = typeVariable.getBounds()[0];
+                                            if (boundType instanceof Class && ((Class) boundType).getSuperclass() == null) {
+                                                // Unbound generic => try boxing elimination
+                                                ValueNode node = arguments[z];
+                                                if (node.usages().size() == 2) {
+                                                    if (node instanceof InvokeNode) {
+                                                        InvokeNode invokeNode = (InvokeNode) node;
+                                                        if (BoxingEliminationPhase.isBoxingMethod(runtime, invokeNode.target)) {
+                                                            currentValue = invokeNode.arguments().get(0);
+                                                            FrameState stateAfter = invokeNode.stateAfter();
+                                                            invokeNode.setStateAfter(null);
+                                                            stateAfter.delete();
+                                                            invokeNode.replaceAndDelete(invokeNode.next());
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                                 initArgs[z] = currentValue;
                                 z++;

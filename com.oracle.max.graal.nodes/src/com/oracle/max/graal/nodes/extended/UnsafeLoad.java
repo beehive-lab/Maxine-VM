@@ -62,7 +62,7 @@ public class UnsafeLoad extends StateSplit implements Lowerable, Node.ValueNumbe
     }
 
     @NodeIntrinsic
-    public static <T> T load(@NodeParameter Object object, @NodeParameter long offset, CiKind kind) {
+    public static <T> T load(Object object, long offset, @ConstantNodeParameter CiKind kind) {
         throw new UnsupportedOperationException("This method may only be compiled with the Graal compiler");
     }
 }

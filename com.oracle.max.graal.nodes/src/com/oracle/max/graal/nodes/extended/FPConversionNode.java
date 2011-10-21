@@ -70,7 +70,7 @@ public final class FPConversionNode extends FloatingNode implements Canonicaliza
     }
 
     @NodeIntrinsic
-    public static <S, T> S convert(CiKind kind, @NodeParameter T value) {
+    public static <S, T> S convert(@ConstantNodeParameter CiKind kind, T value) {
         throw new UnsupportedOperationException();
     }
 }

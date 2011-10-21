@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,39 +20,30 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.nodes;
+package com.oracle.max.graal.compiler.lir;
 
-import java.util.*;
-
+import com.oracle.max.graal.nodes.calc.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
+import com.sun.cri.ci.CiValue.Formatter;
 
-public class EntryPointNode extends BeginNode {
-    private final RiRuntime runtime;
-    private final CiAssumptions assumptions = new CiAssumptions();
+public class LIRCondition extends LIRInstruction {
 
-    public EntryPointNode() {
-        this(null);
+    /**
+     * The condition of this instruction.
+     */
+    public final Condition condition;
+
+    public LIRCondition(LIROpcode opcode, CiValue result, LIRDebugInfo info, Condition condition, CiValue opr1, CiValue opr2) {
+        super(opcode, result, info, opr1, opr2);
+        this.condition = condition;
     }
 
-    public EntryPointNode(RiRuntime runtime) {
-        this.runtime = runtime;
-    }
-
+    /**
+     * Prints this instruction.
+     */
     @Override
-    public void delete() {
-        throw new UnsupportedOperationException();
-    }
-
-    public Collection<LocalNode> locals() {
-        return ValueUtil.filter(this.usages(), LocalNode.class);
-    }
-
-    public RiRuntime runtime() {
-        return runtime;
-    }
-
-    public CiAssumptions assumptions() {
-        return assumptions;
+    public String operationString(Formatter operandFmt) {
+        return condition.toString() + " " + super.operationString(operandFmt);
     }
 }
+
