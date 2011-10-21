@@ -203,7 +203,7 @@ public class MaxineIntrinsicImplementations {
         }
     }
 
-    public static class BreakointTrapIntrinsic implements C1XIntrinsicImpl {
+    public static class BreakpointTrapIntrinsic implements C1XIntrinsicImpl {
         @Override
         public Value createHIR(GraphBuilder b, RiMethod target, Value[] args, boolean isStatic, FrameState stateBefore) {
             b.append(new BreakpointTrap());
@@ -278,7 +278,7 @@ public class MaxineIntrinsicImplementations {
         registry.add(UNCOMMON_TRAP, new InfopointIntrinsic(Infopoint.Op.UNCOMMON_TRAP));
 
         registry.add(PAUSE, new PauseIntrinsic());
-        registry.add(BREAKPOINT_TRAP, new BreakointTrapIntrinsic());
+        registry.add(BREAKPOINT_TRAP, new BreakpointTrapIntrinsic());
         registry.add(STACKHANDLE, new StackHandleIntrinsic());
         registry.add(ALLOCA, new StackAllocateIntrinsic());
 
