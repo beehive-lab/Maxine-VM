@@ -92,7 +92,7 @@ public class IdealGraphPrinter {
     /**
      * Starts a new group of graphs with the given name, short name and method byte code index (BCI) as properties.
      */
-    public void beginGroup(String name, String shortName, RiMethod method, int bci) {
+    public void beginGroup(String name, String shortName, RiResolvedMethod method, int bci) {
         stream.println("<group>");
         stream.printf(" <properties><p name='name'>%s</p><p name='origin'>Graal</p></properties>%n", escape(name));
         stream.printf(" <method name='%s' shortName='%s' bci='%d'>%n", escape(name), escape(shortName), bci);
@@ -130,14 +130,15 @@ public class IdealGraphPrinter {
         flush();
     }
 
-    public void print(Graph graph, String title, boolean shortNames) {
+    public void print(Graph<?> graph, String title, boolean shortNames) {
         print(graph, title, shortNames, Collections.<String, Object>emptyMap());
     }
 
     /**
      * Prints an entire {@link Graph} with the specified title, optionally using short names for nodes.
      */
-    public void print(Graph graph, String title, boolean shortNames, Map<String, Object> debugObjects) {
+    @SuppressWarnings("unchecked")
+    public void print(Graph<?> graph, String title, boolean shortNames, Map<String, Object> debugObjects) {
         stream.printf(" <graph name='%s'>%n", escape(title));
         noBlockNodes.clear();
         IdentifyBlocksPhase schedule = null;
@@ -151,14 +152,14 @@ public class IdealGraphPrinter {
         if (schedule == null) {
             try {
                 schedule = new IdentifyBlocksPhase(GraalContext.EMPTY_CONTEXT, true);
-                schedule.apply(graph, false, false);
+                schedule.apply((Graph<EntryPointNode>) graph, false, false);
             } catch (Throwable t) {
                 // nothing to do here...
             }
         }
         List<Loop> loops = null;
         try {
-            loops = LoopUtil.computeLoops(graph);
+            loops = LoopUtil.computeLoops((Graph<EntryPointNode>) graph);
             // loop.nodes() does some more calculations which may fail, so execute this here as well (result is cached)
             if (loops != null) {
                 for (Loop loop : loops) {
@@ -193,7 +194,7 @@ public class IdealGraphPrinter {
         flush();
     }
 
-    private List<Edge> printNodes(Graph graph, boolean shortNames, NodeMap<Block> nodeToBlock, List<Loop> loops, Map<String, Object> debugObjects) {
+    private List<Edge> printNodes(Graph<?> graph, boolean shortNames, NodeMap<Block> nodeToBlock, List<Loop> loops, Map<String, Object> debugObjects) {
         ArrayList<Edge> edges = new ArrayList<Edge>();
         NodeBitMap loopExits = graph.createNodeBitMap();
         if (loops != null) {
@@ -335,7 +336,7 @@ public class IdealGraphPrinter {
             // successors
             int fromIndex = 0;
             for (Node successor : node.successors()) {
-                if (successor != Node.Null && !omittedClasses.contains(successor.getClass())) {
+                if (successor != null && !omittedClasses.contains(successor.getClass())) {
                     edges.add(new Edge(node.id(), fromIndex, successor.id(), 0));
                 }
                 fromIndex++;
@@ -344,7 +345,7 @@ public class IdealGraphPrinter {
             // inputs
             int toIndex = 1;
             for (Node input : node.inputs()) {
-                if (input != Node.Null && !omittedClasses.contains(input.getClass())) {
+                if (input != null && !omittedClasses.contains(input.getClass())) {
                     edges.add(new Edge(input.id(), input.successors().explicitCount(), node.id(), toIndex));
                 }
                 toIndex++;
@@ -358,7 +359,7 @@ public class IdealGraphPrinter {
         stream.printf("   <edge from='%d' fromIndex='%d' to='%d' toIndex='%d'/>%n", edge.from, edge.fromIndex, edge.to, edge.toIndex);
     }
 
-    private void printBlock(Graph graph, Block block, NodeMap<Block> nodeToBlock) {
+    private void printBlock(Graph<?> graph, Block block, NodeMap<Block> nodeToBlock) {
         stream.printf("   <block name='%d'>%n", block.blockID());
         stream.println("    <successors>");
         for (Block sux : block.getSuccessors()) {

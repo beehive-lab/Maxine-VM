@@ -45,7 +45,7 @@ public class CompilationEvent {
 
     private final C1XCompilation compilation;
     private final String label;
-    private RiMethod method;
+    private RiResolvedMethod method;
     private BlockBegin startBlock;
 
     private BlockMap blockMap;
@@ -83,7 +83,7 @@ public class CompilationEvent {
         this.targetMethod = targetMethod;
     }
 
-    public CompilationEvent(C1XCompilation compilation, RiMethod method, String label, BlockMap blockMap, int codeSize) {
+    public CompilationEvent(C1XCompilation compilation, RiResolvedMethod method, String label, BlockMap blockMap, int codeSize) {
         this(compilation, label);
         this.method = method;
         this.blockMap = blockMap;
@@ -105,7 +105,7 @@ public class CompilationEvent {
         return label;
     }
 
-    public RiMethod getMethod() {
+    public RiResolvedMethod getMethod() {
         return method;
     }
 

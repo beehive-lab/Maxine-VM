@@ -82,7 +82,7 @@ public class MathIntrinsicNode extends FloatingNode implements Canonicalizable {
     }
 
     @NodeIntrinsic
-    public static double compute(@NodeParameter double x, Operation op) {
+    public static double compute(double x, @ConstantNodeParameter Operation op) {
         throw new UnsupportedOperationException("This method may only be compiled with the Graal compiler");
     }
 }

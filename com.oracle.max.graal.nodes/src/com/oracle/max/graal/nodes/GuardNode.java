@@ -64,7 +64,7 @@ public final class GuardNode extends FloatingNode implements Canonicalizable {
         if (condition() instanceof ConstantNode) {
             ConstantNode c = (ConstantNode) condition();
             if (c.asConstant().asBoolean()) {
-                return Node.Null;
+                return null;
             }
         }
         return this;

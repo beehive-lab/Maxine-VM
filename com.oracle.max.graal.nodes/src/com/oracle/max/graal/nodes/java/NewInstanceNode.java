@@ -35,13 +35,13 @@ import com.sun.cri.ri.*;
  */
 public final class NewInstanceNode extends FixedWithNextNode {
 
-    private final RiType instanceClass;
+    private final RiResolvedType instanceClass;
 
     /**
      * Constructs a NewInstanceNode.
      * @param type the class being allocated
      */
-    public NewInstanceNode(RiType type) {
+    public NewInstanceNode(RiResolvedType type) {
         super(CiKind.Object);
         this.instanceClass = type;
     }
@@ -50,12 +50,12 @@ public final class NewInstanceNode extends FixedWithNextNode {
      * Gets the instance class being allocated by this node.
      * @return the instance class allocated
      */
-    public RiType instanceClass() {
+    public RiResolvedType instanceClass() {
         return instanceClass;
     }
 
     @Override
-    public RiType exactType() {
+    public RiResolvedType exactType() {
         return instanceClass;
     }
 
@@ -84,10 +84,10 @@ public final class NewInstanceNode extends FixedWithNextNode {
 
         @Override
         public boolean canAnalyze(Node node) {
-            return ((NewInstanceNode) node).instanceClass().isResolved();
+            return true;
         }
 
-        private void fillEscapeFields(RiType type, List<EscapeField> escapeFields) {
+        private void fillEscapeFields(RiResolvedType type, List<EscapeField> escapeFields) {
             if (type != null) {
                 fillEscapeFields(type.superType(), escapeFields);
                 for (RiField field : type.declaredFields()) {

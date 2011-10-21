@@ -39,7 +39,7 @@ public class LoweringPhase extends Phase {
     }
 
     @Override
-    protected void run(final Graph graph) {
+    protected void run(final Graph<EntryPointNode> graph) {
         final IdentifyBlocksPhase s = new IdentifyBlocksPhase(context, false);
         s.apply(graph);
         s.calculateAlwaysReachedBlock();
@@ -68,12 +68,8 @@ public class LoweringPhase extends Phase {
         };
         for (Node node : processed) {
             if (node instanceof Lowerable) {
-                String name = node.toString();
                 assert !(node instanceof FixedNode) || node.predecessor() == null;
                 ((Lowerable) node).lower(loweringTool);
-                if (GraalOptions.TraceLowering) {
-                    GraalCompilation.compilation().printGraph("After lowering " + name, node.graph());
-                }
             }
         }
     }
@@ -145,11 +141,7 @@ public class LoweringPhase extends Phase {
         for (final Node node : b.getInstructions()) {
             processed.mark(node);
             if (node instanceof Lowerable) {
-                String name = node.toString();
                 ((Lowerable) node).lower(loweringTool);
-                if (GraalOptions.TraceLowering) {
-                    GraalCompilation.compilation().printGraph("After lowering cfg " + name, node.graph());
-                }
             }
         }
     }

@@ -101,7 +101,7 @@ public class IdealGraphPrinterObserver implements CompilationObserver {
         }
     }
 
-    private void openFilePrinter(String title, RiMethod method) {
+    private void openFilePrinter(String title, RiResolvedMethod method) {
         String filename = title + ".igv.xml";
         filename = INVALID_CHAR.matcher(filename).replaceAll("_");
 
@@ -118,7 +118,7 @@ public class IdealGraphPrinterObserver implements CompilationObserver {
         }
     }
 
-    private void openNetworkPrinter(String title, RiMethod method) {
+    private void openNetworkPrinter(String title, RiResolvedMethod method) {
         try {
             socket = new Socket(host, port);
             if (socket.getInputStream().read() == 'y') {
@@ -167,7 +167,7 @@ public class IdealGraphPrinterObserver implements CompilationObserver {
             lazyStart = true;
         }
         if (printer != null && event.getGraph() != null && event.isHIRValid()) {
-            Graph graph = event.getGraph();
+            Graph<?> graph = event.getGraph();
             printer.print(graph, event.getLabel(), true, event.getDebugObjects());
         }
         if (lazyStart) {
@@ -203,7 +203,7 @@ public class IdealGraphPrinterObserver implements CompilationObserver {
         }
     }
 
-    public void printSingleGraph(String title, Graph graph) {
+    public void printSingleGraph(String title, Graph<?> graph) {
         openPrinter(title);
         if (printer != null) {
             printer.print(graph, title, true);

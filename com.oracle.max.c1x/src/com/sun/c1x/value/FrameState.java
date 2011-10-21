@@ -622,7 +622,7 @@ public abstract class FrameState {
      */
     public MutableFrameState pushScope(IRScope scope) {
         assert scope.caller == this.scope;
-        RiMethod method = scope.method;
+        RiResolvedMethod method = scope.method;
         return new MutableFrameState(scope, -1, method.maxLocals(), method.maxStackSize());
     }
 

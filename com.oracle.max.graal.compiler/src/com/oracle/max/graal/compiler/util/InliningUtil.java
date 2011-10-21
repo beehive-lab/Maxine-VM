@@ -34,9 +34,9 @@ import com.sun.cri.ri.*;
 
 public class InliningUtil {
 
-    public static void inline(InvokeNode invoke, CompilerGraph inlineGraph, Queue<InvokeNode> newInvokes) {
+    public static void inline(InvokeNode invoke, Graph<EntryPointNode> inlineGraph, Queue<InvokeNode> newInvokes) {
         ValueNode[] parameters = InliningUtil.simplifyParameters(invoke);
-        Graph graph = invoke.graph();
+        Graph<EntryPointNode> graph = invoke.graph();
 
         FrameState stateAfter = invoke.stateAfter();
         FixedNode exceptionEdge = invoke.exceptionEdge();
@@ -115,9 +115,9 @@ public class InliningUtil {
         int monitorIndexDelta = stateAfter.locksSize();
         if (monitorIndexDelta > 0) {
             for (Map.Entry<Node, Node> entry : duplicates.entrySet()) {
-                if (entry.getValue() instanceof MonitorAddressNode) {
-                    MonitorAddressNode address = (MonitorAddressNode) entry.getValue();
-                    address.setMonitorIndex(address.monitorIndex() + monitorIndexDelta);
+                if (entry.getValue() instanceof AccessMonitorNode) {
+                    AccessMonitorNode access = (AccessMonitorNode) entry.getValue();
+                    access.setMonitorIndex(access.monitorIndex() + monitorIndexDelta);
                 }
             }
         }

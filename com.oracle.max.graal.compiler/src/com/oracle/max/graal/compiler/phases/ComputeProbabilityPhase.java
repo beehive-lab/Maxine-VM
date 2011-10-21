@@ -38,7 +38,7 @@ public class ComputeProbabilityPhase extends Phase {
      * The computation of absolute probabilities works in three steps:
      *
      * - The first step, "PropagateProbability", traverses the graph in post order (merges after their ends, ...) and keeps track of the "probability state".
-     *   Whenever it encounters a ControlSplit it uses the splits probability information to divide the probability upon the successors.
+     *   Whenever it encounters a ControlSplit it uses the split's probability information to divide the probability upon the successors.
      *   Whenever it encounters an Invoke it assumes that the exception edge is unlikely and propagates the whole probability to the normal successor.
      *   Whenever it encounters a Merge it sums up the probability of all predecessors.
      *   It also maintains a set of active loops (whose LoopBegin has been visited) and builds def/use information for the second step.
@@ -53,9 +53,8 @@ public class ComputeProbabilityPhase extends Phase {
     }
 
     @Override
-    protected void run(Graph graph) {
-        CompilerGraph compilerGraph = (CompilerGraph) graph;
-        new PropagateProbability(compilerGraph.start().next()).apply();
+    protected void run(Graph<EntryPointNode> graph) {
+        new PropagateProbability(graph.start().next()).apply();
         if (context.isObserved() && GraalOptions.TraceProbability) {
             context.observable.fireCompilationEvent(new CompilationEvent(null, "After PropagateProbability", graph, true, false));
         }
@@ -63,7 +62,7 @@ public class ComputeProbabilityPhase extends Phase {
         if (context.isObserved() && GraalOptions.TraceProbability) {
             context.observable.fireCompilationEvent(new CompilationEvent(null, "After computeLoopFactors", graph, true, false));
         }
-        new PropagateLoopFrequency(compilerGraph.start().next()).apply();
+        new PropagateLoopFrequency(graph.start().next()).apply();
     }
 
     private void computeLoopFactors() {
@@ -124,7 +123,7 @@ public class ComputeProbabilityPhase extends Phase {
     }
 
     public Set<LoopInfo> loopInfos = new HashSet<LoopInfo>();
-    public Map<MergeNode, Set<LoopInfo>> mergeLoops = new HashMap<MergeNode, Set<LoopInfo>>();
+    public Map<MergeNode, Set<LoopInfo>> mergeLoops = new IdentityHashMap<MergeNode, Set<LoopInfo>>();
 
     private class Probability implements MergeableState<Probability> {
         public double probability;

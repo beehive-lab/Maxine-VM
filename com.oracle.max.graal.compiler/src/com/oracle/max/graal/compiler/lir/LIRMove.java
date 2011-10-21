@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,20 +22,19 @@
  */
 package com.oracle.max.graal.compiler.lir;
 
-import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 
-/**
- * LIR instruction used in translating {@link Bytecodes#LSB} and {@link Bytecodes#MSB}.
- */
-public class LIRSignificantBit extends LIRInstruction {
+public class LIRMove extends LIRInstruction {
 
-    public LIRSignificantBit(LIROpcode opcode, CiValue operand, CiValue result) {
-        super(opcode, result, null, false, 1, 0, operand);
-    }
+    /**
+     * The operand type of the move. Since this can be Byte, Short, ... the kind of the
+     * input or result operand is not enough to generate the correct code for moves.
+     */
+    public final CiKind kind;
 
-    @Override
-    public void emitCode(LIRAssembler masm) {
-        masm.emitSignificantBitOp(code == LIROpcode.Msb,  operand(0), result());
+    public LIRMove(LIROpcode opcode, CiValue opr, CiValue result, CiKind kind, LIRDebugInfo info) {
+        super(opcode, result, info, opr);
+        assert opcode == LegacyOpcode.Move;
+        this.kind = kind;
     }
 }

@@ -22,19 +22,17 @@
  */
 package com.oracle.max.graal.compiler.lir;
 
-import static com.oracle.max.graal.compiler.GraalCompilation.*;
-
-import com.sun.cri.ci.CiValue.Formatter;
 import java.util.*;
 
 import com.oracle.max.graal.compiler.lir.LIROperand.LIRAddressOperand;
 import com.oracle.max.graal.compiler.lir.LIROperand.LIRVariableOperand;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiValue.Formatter;
 
 /**
  * The {@code LIRInstruction} class definition.
  */
-public abstract class LIRInstruction {
+public class LIRInstruction {
 
     private static final LIROperand ILLEGAL_SLOT = new LIROperand(CiValue.IllegalValue);
 
@@ -150,8 +148,12 @@ public abstract class LIRInstruction {
      * @param info the {@link LIRDebugInfo} info that is to be preserved for the instruction. This will be {@code null} when no debug info is required for the instruction.
      * @param hasCall specifies if all caller-saved registers are destroyed by this instruction
      */
-    public LIRInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info, boolean hasCall) {
-        this(opcode, result, info, hasCall, 0, 0, NO_OPERANDS);
+    public LIRInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info) {
+        this(opcode, result, info, false, 0, 0, NO_OPERANDS);
+    }
+
+    public LIRInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info, CiValue... operands) {
+        this (opcode, result, info, false, 0, 0, operands);
     }
 
     /**
@@ -179,15 +181,10 @@ public abstract class LIRInstruction {
         this.info = info;
         this.hasCall = hasCall;
 
-        assert opcode != LIROpcode.Move || result != CiValue.IllegalValue;
+        assert opcode != LegacyOpcode.Move || result != CiValue.IllegalValue;
         allocatorOperands = new ArrayList<CiValue>(operands.length + 3);
         this.result = initOutput(result);
-/*
-        GraalMetrics.LIRInstructions++;
 
-        if (opcode == LIROpcode.Move) {
-            GraalMetrics.LIRMoveInstructions++;
-        }*/
         id = -1;
         this.operands = new LIROperand[operands.length];
         initInputsAndTemps(tempInput, temp, operands);
@@ -365,15 +362,8 @@ public abstract class LIRInstruction {
      *         LIROpcode declaration.
      */
     public String name() {
-        return code.name();
+        return code.getClass().getSimpleName();
     }
-
-    /**
-     * Abstract method to be used to emit target code for this instruction.
-     *
-     * @param masm the target assembler.
-     */
-    public abstract void emitCode(LIRAssembler masm);
 
     /**
      * Gets the operation performed by this instruction in terms of its operands as a string.
@@ -406,17 +396,6 @@ public abstract class LIRInstruction {
 
     public boolean verify() {
         return true;
-    }
-
-    /**
-     * Determines if a given opcode is in a given range of valid opcodes.
-     *
-     * @param opcode the opcode to be tested.
-     * @param start the lower bound range limit of valid opcodes
-     * @param end the upper bound range limit of valid opcodes
-     */
-    protected static boolean isInRange(LIROpcode opcode, LIROpcode start, LIROpcode end) {
-        return start.ordinal() < opcode.ordinal() && opcode.ordinal() < end.ordinal();
     }
 
     public boolean hasOperands() {
@@ -501,8 +480,7 @@ public abstract class LIRInstruction {
                 if (buf.length() != 0) {
                     buf.append(", ");
                 }
-                CiRegisterValue register = compilation().compiler.target.arch.registers[reg].asValue(CiKind.Object);
-                buf.append(operandFmt.format(register));
+                buf.append("r").append(reg);
             }
         }
         return buf.toString();

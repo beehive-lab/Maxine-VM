@@ -29,7 +29,7 @@ import com.sun.cri.ri.*;
 /**
  * Implementation of RiType for primitive HotSpot types.
  */
-public final class HotSpotTypePrimitive extends HotSpotType {
+public final class HotSpotTypePrimitive extends HotSpotType implements RiResolvedType {
 
     private CiKind kind;
 
@@ -46,22 +46,22 @@ public final class HotSpotTypePrimitive extends HotSpotType {
     }
 
     @Override
-    public RiType arrayOf() {
-        return compiler.getVMEntries().getPrimitiveArrayType(kind);
+    public RiResolvedType arrayOf() {
+        return (RiResolvedType) compiler.getVMEntries().getPrimitiveArrayType(kind);
     }
 
     @Override
-    public RiType componentType() {
+    public RiResolvedType componentType() {
         return null;
     }
 
     @Override
-    public RiType exactType() {
+    public RiResolvedType exactType() {
         return this;
     }
 
     @Override
-    public RiType superType() {
+    public RiResolvedType superType() {
         return null;
     }
 
@@ -116,12 +116,7 @@ public final class HotSpotTypePrimitive extends HotSpotType {
     }
 
     @Override
-    public boolean isResolved() {
-        return true;
-    }
-
-    @Override
-    public boolean isSubtypeOf(RiType other) {
+    public boolean isSubtypeOf(RiResolvedType other) {
         return false;
     }
 
@@ -131,7 +126,7 @@ public final class HotSpotTypePrimitive extends HotSpotType {
     }
 
     @Override
-    public RiMethod resolveMethodImpl(RiMethod method) {
+    public RiResolvedMethod resolveMethodImpl(RiResolvedMethod method) {
         return null;
     }
 
@@ -141,12 +136,12 @@ public final class HotSpotTypePrimitive extends HotSpotType {
     }
 
     @Override
-    public RiType uniqueConcreteSubtype() {
+    public RiResolvedType uniqueConcreteSubtype() {
         return this;
     }
 
     @Override
-    public RiMethod uniqueConcreteMethod(RiMethod method) {
+    public RiResolvedMethod uniqueConcreteMethod(RiResolvedMethod method) {
         return null;
     }
 

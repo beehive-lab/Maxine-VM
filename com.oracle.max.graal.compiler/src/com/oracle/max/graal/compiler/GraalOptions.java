@@ -36,7 +36,6 @@ public final class GraalOptions {
 
 
     public static boolean Lower                              = true;
-    public static boolean TraceLowering                      = ____;
 
     // inlining settings
     public static boolean Inline                             = true;
@@ -78,7 +77,7 @@ public final class GraalOptions {
     public static boolean StressLinearScan                   = ____;
     public static boolean BailoutOnException                 = ____;
     public static boolean DeoptALot                          = ____;
-    public static boolean Verify                             = true;
+    public static boolean VerifyPhases                       = true;
     public static boolean CreateDeoptInfo                    = ____;
 
     /**
@@ -151,11 +150,8 @@ public final class GraalOptions {
     public static boolean GenSafepoints                      = true;
     public static boolean GenLoopSafepoints                  = ____;
 
-    public static boolean GenSpecialDivChecks                = true;
     public static boolean GenAssertionCode                   = ____;
     public static boolean AlignCallsForPatching              = true;
-    public static boolean CallSiteUniquePC                   = ____;
-    public static boolean InvokeSnippetAfterArguments        = ____;
     public static boolean ResolveClassBeforeStaticInvoke     = true;
 
     // Translating tableswitch instructions

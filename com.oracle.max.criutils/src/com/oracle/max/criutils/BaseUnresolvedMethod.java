@@ -20,24 +20,54 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.cri.ri;
+package com.oracle.max.criutils;
 
 import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
- * Represents method profiling information from the runtime system, including the
- * locations for invocation counters, bytecode location counters, etc.
+ * A implementation of {@link RiMethod} for an unresolved method.
  */
-public interface RiMethodProfile {
-    CiConstant encoding();
-    int invocationCountOffset();
-    int bciCountOffset(int bci);
-    int branchTakenCountOffset(int bci);
-    int branchNotTakenCountOffset(int bci);
+public class BaseUnresolvedMethod implements RiMethod {
 
-    int headerOffset(int bci);
-    int countOffset(int bci);
-    RiType receiver(int bci, int i);
-    int receiverCountOffset(int bci, int i);
-    int receiverOffset(int bci, int i);
+    public final String name;
+    public final RiType holder;
+    public final RiSignature signature;
+
+    public BaseUnresolvedMethod(RiType holder, String name, RiSignature signature) {
+        this.name = name;
+        this.holder = holder;
+        this.signature = signature;
+    }
+
+    public String name() {
+        return name;
+    }
+
+    public RiType holder() {
+        return holder;
+    }
+
+    public RiSignature signature() {
+        return signature;
+    }
+
+    @Override
+    public int hashCode() {
+        return System.identityHashCode(this);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return o == this;
+    }
+
+    public StackTraceElement toStackTraceElement(int bci) {
+        return new StackTraceElement(CiUtil.toJavaName(holder), name, null, -1);
+    }
+
+    @Override
+    public String toString() {
+        return CiUtil.format("%H.%n(%p) [unresolved]", this);
+    }
 }

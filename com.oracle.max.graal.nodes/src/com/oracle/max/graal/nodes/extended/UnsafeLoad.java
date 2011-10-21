@@ -35,6 +35,7 @@ public class UnsafeLoad extends StateSplit implements Lowerable, Node.ValueNumbe
 
     @Input private ValueNode object;
     @Input private ValueNode offset;
+    @Data private CiKind loadKind;
 
     public ValueNode object() {
         return object;
@@ -45,9 +46,14 @@ public class UnsafeLoad extends StateSplit implements Lowerable, Node.ValueNumbe
     }
 
     public UnsafeLoad(ValueNode object, ValueNode offset, CiKind kind) {
-        super(kind);
+        super(kind.stackKind());
+        this.loadKind = kind;
         this.object = object;
         this.offset = offset;
+    }
+
+    public CiKind loadKind() {
+        return loadKind;
     }
 
     @Override
@@ -56,7 +62,7 @@ public class UnsafeLoad extends StateSplit implements Lowerable, Node.ValueNumbe
     }
 
     @NodeIntrinsic
-    public static <T> T load(@NodeParameter Object object, @NodeParameter long offset, CiKind kind) {
+    public static <T> T load(Object object, long offset, @ConstantNodeParameter CiKind kind) {
         throw new UnsupportedOperationException("This method may only be compiled with the Graal compiler");
     }
 }

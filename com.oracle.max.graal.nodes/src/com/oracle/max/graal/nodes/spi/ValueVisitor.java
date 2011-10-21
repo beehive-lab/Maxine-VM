@@ -56,7 +56,6 @@ public abstract class ValueVisitor {
     public abstract void visitMemoryRead(ReadNode i);
     public abstract void visitVolatileMemoryRead(VolatileReadNode i);
     public abstract void visitMemoryWrite(WriteNode i);
-    public abstract void visitMonitorAddress(MonitorAddressNode i);
     public abstract void visitMonitorEnter(MonitorEnterNode i);
     public abstract void visitMonitorExit(MonitorExitNode i);
     public abstract void visitNegate(NegateNode i);

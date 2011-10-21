@@ -157,9 +157,9 @@ public enum C1XIntrinsic {
      * @return a reference to the intrinsic for the method, if the method is an intrinsic
      * (and is loaded); {@code null} otherwise
      */
-    public static C1XIntrinsic getIntrinsic(RiMethod method) {
-        RiType holder = method.holder();
-        if (method.isResolved() && holder.isResolved() && holder.isInitialized()) {
+    public static C1XIntrinsic getIntrinsic(RiResolvedMethod method) {
+        RiResolvedType holder = method.holder();
+        if (holder.isInitialized()) {
             // note that the map uses internal names to make lookup faster
             HashMap<String, C1XIntrinsic> map = intrinsicMap.get(holder.name());
             if (map != null) {

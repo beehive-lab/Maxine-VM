@@ -63,8 +63,6 @@ public class GraalCompiler implements CiCompiler  {
 
     public final RiRegisterConfig compilerStubRegisterConfig;
 
-    private GraalCompilation currentCompilation;
-
 
     public GraalCompiler(GraalContext context, GraalRuntime runtime, CiTarget target, RiXirGenerator xirGen, RiRegisterConfig compilerStubRegisterConfig) {
         this.context = context;
@@ -74,27 +72,9 @@ public class GraalCompiler implements CiCompiler  {
         this.compilerStubRegisterConfig = compilerStubRegisterConfig;
         this.backend = Backend.create(target.arch, this);
         init();
-
-        Graph.verificationListeners.add(new VerificationListener() {
-
-            @Override
-            public void verificationFailed(Node n, String message) {
-                if (currentCompilation != null && GraalCompiler.this.context.isObserved()) {
-                    GraalCompiler.this.context.observable.fireCompilationEvent(new CompilationEvent(currentCompilation, "Verification Error on Node " + n.id(), currentCompilation.graph, true, false, true));
-                }
-                TTY.println(n.toString());
-                if (n.predecessor() != null) {
-                    TTY.println("predecessor: " + n.predecessor());
-                }
-                for (Node p : n.usages()) {
-                    TTY.println("usage: " + p);
-                }
-                assert false : "Verification of node " + n + " failed: " + message;
-            }
-        });
     }
 
-    public CiResult compileMethod(RiMethod method, int osrBCI, CiStatistics stats, DebugInfoLevel debugInfoLevel) {
+    public CiResult compileMethod(RiResolvedMethod method, int osrBCI, CiStatistics stats, DebugInfoLevel debugInfoLevel) {
         context.timers.startScope(getClass());
         try {
             long startTime = 0;
@@ -107,12 +87,19 @@ public class GraalCompiler implements CiCompiler  {
             CiResult result = null;
             TTY.Filter filter = new TTY.Filter(GraalOptions.PrintFilter, CiUtil.format("%H.%n", method, false));
             GraalCompilation compilation = new GraalCompilation(context, this, method, osrBCI, stats, debugInfoLevel);
-            currentCompilation = compilation;
             try {
                 result = compilation.compile();
+            } catch (VerificationError error) {
+                if (GraalCompiler.this.context.isObserved()) {
+                    if (error.node() != null) {
+                        GraalCompiler.this.context.observable.fireCompilationEvent(new CompilationEvent(compilation, "VerificationError on Node " + error.node(), error.node().graph(), true, false, true));
+                    } else if (error.graph() != null) {
+                        GraalCompiler.this.context.observable.fireCompilationEvent(new CompilationEvent(compilation, "VerificationError on Graph " + error.graph(), error.graph(), true, false, true));
+                    }
+                }
+                throw error;
             } finally {
                 filter.remove();
-                compilation.close();
                 if (GraalOptions.PrintCompilation && !TTY.isSuppressed()) {
                     long time = (System.nanoTime() - startTime) / 100000;
                     TTY.println(String.format("%3d.%dms", time / 10, time % 10));
@@ -125,7 +112,7 @@ public class GraalCompiler implements CiCompiler  {
         }
     }
 
-    public CiResult compileMethod(RiMethod method, CompilerGraph graph) {
+    public CiResult compileMethod(RiResolvedMethod method, Graph<EntryPointNode> graph) {
         assert graph.verify();
         GraalCompilation compilation = new GraalCompilation(context, this, method, graph, -1, null, DebugInfoLevel.FULL);
         return compilation.compile();

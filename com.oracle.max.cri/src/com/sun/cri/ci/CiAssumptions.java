@@ -29,7 +29,7 @@ import com.sun.cri.ri.*;
 /**
  * Class for recording optimistic assumptions made during compilation.
  * Recorded assumption can be visited for subsequent processing using
- * an implementation of the {@link AssumptionProcessor} interface.
+ * an implementation of the {@link CiAssumptionProcessor} interface.
  */
 public final class CiAssumptions implements Serializable {
 
@@ -40,20 +40,20 @@ public final class CiAssumptions implements Serializable {
          * @param processor the assumption processor to apply
          * @return true if a next assumption in a list should be fed to the processor.
          */
-        abstract boolean visit(AssumptionProcessor processor);
+        abstract boolean visit(CiAssumptionProcessor processor);
     }
 
     public static final class ConcreteSubtype extends Assumption {
         /**
          * Type the assumption is made about.
          */
-        public final RiType context;
+        public final RiResolvedType context;
         /**
          * Assumed unique concrete sub-type of the context type.
          */
-        public final RiType subtype;
+        public final RiResolvedType subtype;
 
-        public ConcreteSubtype(RiType context, RiType subtype) {
+        public ConcreteSubtype(RiResolvedType context, RiResolvedType subtype) {
             this.context = context;
             this.subtype = subtype;
         }
@@ -77,7 +77,7 @@ public final class CiAssumptions implements Serializable {
         }
 
         @Override
-        public boolean visit(AssumptionProcessor processor) {
+        public boolean visit(CiAssumptionProcessor processor) {
             return processor.doConcreteSubtype(this);
         }
     }
@@ -110,16 +110,24 @@ public final class CiAssumptions implements Serializable {
         }
 
         @Override
-        public boolean visit(AssumptionProcessor processor) {
+        public boolean visit(CiAssumptionProcessor processor) {
             return processor.doConcreteMethod(this);
         }
     }
 
+    /**
+     * Array with the assumptions. This field is directly accessed from C++ code in the Graal/HotSpot implementation.
+     */
     private Assumption[] list;
+
     private int count;
 
-    public int count() {
-        return count;
+    /**
+     * Returns whether any assumptions have been registered.
+     * @return {@code true} if at least one assumption has been registered, {@code false} otherwise.
+     */
+    public boolean isEmpty() {
+        return count == 0;
     }
 
     /**
@@ -128,21 +136,37 @@ public final class CiAssumptions implements Serializable {
      * @param receiverType the type that is assumed to have no finalizable subclasses
      * @return {@code true} if the assumption was recorded and can be assumed; {@code false} otherwise
      */
-    public boolean recordNoFinalizableSubclassAssumption(RiType receiverType) {
+    public boolean recordNoFinalizableSubclassAssumption(RiResolvedType receiverType) {
         return false;
     }
 
-    public void recordConcreteSubtype(RiType context, RiType subtype) {
+    /**
+     * Records that "subtype" is the only concrete subtype in the class hierarchy below "context".
+     * @param context the root of the subtree of the class hierarchy that this assumptions is about
+     * @param subtype the one concrete subtype
+     */
+    public void recordConcreteSubtype(RiResolvedType context, RiResolvedType subtype) {
         record(new ConcreteSubtype(context, subtype));
     }
 
-    public void recordConcreteMethod(RiMethod context, RiMethod method) {
+    /**
+     * Records that "method" is the only possible concrete target for a virtual call to "context".
+     * @param context the method that is the target of the virtual call
+     * @param method the concrete method that is the only possible target for the virtual call
+     */
+    public void recordConcreteMethod(RiResolvedMethod context, RiResolvedMethod method) {
         record(new ConcreteMethod(context, method));
     }
 
-    public void recordAll(CiAssumptions other) {
-        for (int i = 0; i < other.count; i++) {
-            record(other.list[i]);
+    /**
+     * Iterate over assumptions using an assumption processor.
+     * @param processor the processor that is called back for each assumption
+     */
+    public void visit(CiAssumptionProcessor processor) {
+        for (int i = 0; i < count; i++) {
+            if (!list[i].visit(processor)) {
+                return;
+            }
         }
     }
 
@@ -165,14 +189,6 @@ public final class CiAssumptions implements Serializable {
         }
         list[count] = assumption;
         count++;
-    }
-
-    public void visit(AssumptionProcessor processor) {
-        for (int i = 0; i < count; i++) {
-            if (!list[i].visit(processor)) {
-                return;
-            }
-        }
     }
 
 }

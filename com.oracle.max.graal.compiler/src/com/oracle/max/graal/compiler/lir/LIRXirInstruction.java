@@ -57,7 +57,7 @@ public class LIRXirInstruction extends LIRInstruction {
                              LIRDebugInfo infoAfter,
                              RiMethod method,
                              List<CiValue> pointerSlots) {
-        super(LIROpcode.Xir, outputOperand, info, false, inputTempCount, tempCount, operands);
+        super(LegacyOpcode.Xir, outputOperand, info, false, inputTempCount, tempCount, operands);
         this.infoAfter = infoAfter;
         this.pointerSlots = pointerSlots;
         assert this.pointerSlots == null || this.pointerSlots.size() >= 0;
@@ -97,16 +97,6 @@ public class LIRXirInstruction extends LIRInstruction {
             originalOperands[outputOperandIndex] = result();
         }
         return originalOperands;
-    }
-
-    /**
-     * Emits target assembly code for this instruction.
-     *
-     * @param masm the target assembler
-     */
-    @Override
-    public void emitCode(LIRAssembler masm) {
-        masm.emitXir(this);
     }
 
      /**

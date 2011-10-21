@@ -37,7 +37,7 @@ import com.sun.cri.ri.*;
 
 public class FrameStateBuilder implements FrameStateAccess {
 
-    private final Graph graph;
+    private final Graph<EntryPointNode> graph;
 
     private final ValueNode[] locals;
     private final ValueNode[] stack;
@@ -46,9 +46,9 @@ public class FrameStateBuilder implements FrameStateAccess {
     private int stackIndex;
     private boolean rethrowException;
 
-    private final RiMethod method;
+    private final RiResolvedMethod method;
 
-    public FrameStateBuilder(RiMethod method, int maxLocals, int maxStackSize, CompilerGraph graph) {
+    public FrameStateBuilder(RiResolvedMethod method, int maxLocals, int maxStackSize, Graph<EntryPointNode> graph) {
         assert graph != null;
         this.method = method;
         this.graph = graph;
@@ -74,8 +74,8 @@ public class FrameStateBuilder implements FrameStateAccess {
             RiType type = sig.argumentTypeAt(i, accessingClass);
             CiKind kind = type.kind(false).stackKind();
             LocalNode local = graph.unique(new LocalNode(kind, index, graph.start()));
-            if (type.isResolved()) {
-                local.setDeclaredType(type);
+            if (type instanceof RiResolvedType) {
+                local.setDeclaredType((RiResolvedType) type);
             }
             storeLocal(javaIndex, local);
             javaIndex += isTwoSlot(kind) ? 2 : 1;
@@ -136,6 +136,7 @@ public class FrameStateBuilder implements FrameStateAccess {
      */
     public void xpush(ValueNode x) {
         assert x == null || !x.isDeleted();
+        assert x == null || (x.kind != CiKind.Void && x.kind != CiKind.Illegal) : "unexpected value: " + x;
         stack[stackIndex++] = x;
     }
 
@@ -347,6 +348,7 @@ public class FrameStateBuilder implements FrameStateAccess {
      * @param x the instruction which produces the value for the local
      */
     public void storeLocal(int i, ValueNode x) {
+        assert x == null || (x.kind != CiKind.Void && x.kind != CiKind.Illegal) : "unexpected value: " + x;
         locals[i] = x;
         if (isTwoSlot(x.kind)) {
             // (tw) if this was a double word then kill i+1
@@ -367,6 +369,7 @@ public class FrameStateBuilder implements FrameStateAccess {
      * @param obj the object being locked
      */
     public void lock(ValueNode obj) {
+        assert obj == null || (obj.kind != CiKind.Void && obj.kind != CiKind.Illegal) : "unexpected value: " + obj;
         locks.add(obj);
     }
 
@@ -492,6 +495,7 @@ public class FrameStateBuilder implements FrameStateAccess {
 
     @Override
     public void setValueAt(int i, ValueNode v) {
+        assert v == null || (v.kind != CiKind.Void && v.kind != CiKind.Illegal) : "unexpected value: " + v;
         if (i < locals.length) {
             locals[i] = v;
         } else if (i < locals.length + stackIndex) {

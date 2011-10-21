@@ -71,7 +71,7 @@ public abstract class NewArrayNode extends FixedWithNextNode {
      * Gets the element type of the array.
      * @return the element type of the array
      */
-    public abstract RiType elementType();
+    public abstract RiResolvedType elementType();
 
     @Override
     public Map<Object, Object> getDebugProperties() {

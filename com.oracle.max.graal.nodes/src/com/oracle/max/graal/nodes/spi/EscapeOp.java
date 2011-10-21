@@ -37,11 +37,6 @@ public abstract class EscapeOp implements Op {
     public abstract boolean canAnalyze(Node node);
 
     public boolean escape(Node node, Node usage) {
-        // unresolved fields cause problems later on, don't escape analyze anything used by with fields
-        if (usage instanceof AccessFieldNode && !((AccessFieldNode) usage).field().isResolved()) {
-            return true;
-        }
-
         if (usage instanceof IsNonNullNode) {
             assert ((IsNonNullNode) usage).object() == node;
             return false;

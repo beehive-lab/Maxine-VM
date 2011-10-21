@@ -22,14 +22,13 @@
  */
 package com.sun.cri.ri;
 
-import java.lang.reflect.*;
 
 import com.sun.cri.ci.*;
 
 /**
  * Represents a reference to a field, including both resolved and unresolved fields. Fields, like methods and types, are
  * resolved through {@link RiConstantPool constant pools}, and their actual implementation is provided by the
- * {@link RiRuntime runtime} to the compiler. Note that most operations are only available on resolved fields.
+ * {@link RiRuntime runtime} to the compiler.
  */
 public interface RiField {
     /**
@@ -57,29 +56,4 @@ public interface RiField {
      * @return the holder of this field
      */
     RiType holder();
-
-    /**
-     * Checks whether this field is resolved.
-     * @return {@code true} if this field is resolved
-     */
-    boolean isResolved();
-
-    // NOTE: All operations beyond this point are only available on resolved fields..
-
-    /**
-     * Gets the access flags for this field. Only the flags specified in the JVM specification
-     * will be included in the returned mask. The utility methods in the {@link Modifier} class
-     * should be used to query the returned mask for the presence/absence of individual flags.
-     * NOTE: ONLY AVAILABLE ON RESOLVED FIELDS.
-     * @return the mask of JVM defined field access flags defined for this field
-     */
-    int accessFlags();
-
-    /**
-     * Gets the constant value of this field if available.
-     * NOTE: ONLY AVAILABLE FOR RESOLVED FIELDS.
-     * @param receiver object from which this field's value is to be read. This value is ignored if this field is static.
-     * @return the constant value of this field or {@code null} if the constant value is not available
-     */
-    CiConstant constantValue(CiConstant receiver);
 }

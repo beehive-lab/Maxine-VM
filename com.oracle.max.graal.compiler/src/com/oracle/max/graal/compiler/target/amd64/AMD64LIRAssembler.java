@@ -76,12 +76,53 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         rscratch1 = compilation.registerConfig.getScratchRegister();
     }
 
-    private CiAddress asAddress(CiValue value) {
-        if (value.isAddress()) {
-            return (CiAddress) value;
+
+    protected CiRegister asRegister(CiValue value) {
+        return value.asRegister();
+    }
+
+    protected int asIntConst(CiValue value) {
+        assert value.kind == CiKind.Int && value.isConstant();
+        return ((CiConstant) value).asInt();
+    }
+
+    /**
+     * Most 64-bit instructions can only have 32-bit immediate operands, therefore this
+     * method has the return type int and not long.
+     */
+    protected int asLongConst(CiValue value) {
+        assert value.kind == CiKind.Long && value.isConstant();
+        long c = ((CiConstant) value).asLong();
+        if (!(NumUtil.isInt(c))) {
+            throw Util.shouldNotReachHere();
         }
-        assert value.isStackSlot();
-        return compilation.frameMap().toStackAddress((CiStackSlot) value);
+        return (int) c;
+    }
+
+    /**
+     * Floating point constants are embedded as data references into the code, and the
+     * address of the constant is returned.
+     */
+    protected CiAddress asFloatConst(CiValue value) {
+        assert value.kind == CiKind.Float && value.isConstant();
+        return tasm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) value).asFloat()));
+    }
+
+    /**
+     * Floating point constants are embedded as data references into the code, and the
+     * address of the constant is returned.
+     */
+    protected CiAddress asDoubleConst(CiValue value) {
+        assert value.kind == CiKind.Double && value.isConstant();
+        return tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) value).asDouble()));
+    }
+
+
+    protected CiAddress asAddress(CiValue value) {
+        if (value.isStackSlot()) {
+            return compilation.frameMap().toStackAddress((CiStackSlot) value);
+        }
+        return (CiAddress) value;
     }
 
     @Override
@@ -176,7 +217,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void const2reg(CiValue src, CiValue dest, LIRDebugInfo info) {
+    protected void const2reg(CiValue src, CiValue dest) {
         assert src.isConstant();
         assert dest.isRegister();
         CiConstant c = (CiConstant) src;
@@ -219,7 +260,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                            masm.movq(frameMap.toStackAddress(slot), rscratch1); break;
             case Double  : masm.movq(rscratch1, doubleToRawLongBits(c.asDouble()));
                            masm.movq(frameMap.toStackAddress(slot), rscratch1); break;
-            default      : throw Util.shouldNotReachHere("Unknown constant kind for const2stack: " + c.kind);
+            default      : throw Util.shouldNotReachHere("Unknown constant kind for const2stack: %s", c.kind);
         }
         // Checkstyle: on
     }
@@ -295,7 +336,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void reg2mem(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info, boolean unaligned) {
+    protected void reg2mem(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info) {
         CiAddress toAddr = (CiAddress) dest;
 
         if (info != null) {
@@ -384,7 +425,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void mem2reg(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info, boolean unaligned) {
+    protected void mem2reg(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info) {
         assert src.isAddress();
         assert dest.isRegister() : "dest=" + dest;
 
@@ -422,23 +463,6 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         // Checkstyle: on
     }
 
-    @Override
-    protected void emitOp3(LIROp3 op) {
-        // Checkstyle: off
-        switch (op.code) {
-            case Idiv  :
-            case Irem  : arithmeticIdiv(op.code, op.opr1(), op.opr2(), op.result(), op.info); break;
-            case Ldiv  :
-            case Lrem  : arithmeticLdiv(op.code, op.opr1(), op.opr2(), op.result(), op.info); break;
-            case Wdiv  :
-            case Wdivi :
-            case Wrem  :
-            case Wremi : arithmeticWdiv(op.code, op.opr1(), op.opr2(), op.result(), op.info); break;
-            default    : throw Util.shouldNotReachHere();
-        }
-        // Checkstyle: on
-    }
-
     private boolean assertEmitBranch(LIRBranch op) {
         assert op.block() == null || op.block().label() == op.label() : "wrong label";
         return true;
@@ -454,7 +478,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
 
         assert assertEmitTableSwitch(op);
 
-        CiRegister value = op.value().asRegister();
+        CiRegister value = op.operand(0).asRegister();
         final Buffer buf = masm.codeBuffer;
 
         // Compare index against jump table bounds
@@ -521,7 +545,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         } else {
             ConditionFlag acond = ConditionFlag.zero;
             Label unorderedLabel = null;
-            if (op.code == LIROpcode.CondFloatBranch) {
+            if (op.code == LegacyOpcode.CondFloatBranch) {
                 if (op.unorderedBlock() == null) {
                     unorderedLabel = new Label();
                 } else {
@@ -567,7 +591,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitConvert(LIRConvert op) {
-        CiValue src = op.operand();
+        CiValue src = op.operand(0);
         CiValue dest = op.result();
         Label endLabel = new Label();
         CiRegister srcRegister = src.asRegister();
@@ -683,10 +707,10 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void emitCompareAndSwap(LIRCompareAndSwap op) {
-        CiAddress address = new CiAddress(CiKind.Object, op.address(), 0);
-        CiRegister newval = op.newValue().asRegister();
-        CiRegister cmpval = op.expectedValue().asRegister();
+    protected void emitCompareAndSwap(LIRInstruction op) {
+        CiAddress address = new CiAddress(CiKind.Object, op.operand(0), 0);
+        CiRegister newval = op.operand(2).asRegister();
+        CiRegister cmpval = op.operand(1).asRegister();
         assert cmpval == AMD64.rax : "wrong register";
         assert newval != null : "new val must be register";
         assert cmpval != newval : "cmp and new values must be in different registers";
@@ -697,11 +721,16 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         if (target.isMP) {
             masm.lock();
         }
-        if (op.code == LIROpcode.CasInt) {
-            masm.cmpxchgl(newval, address);
-        } else {
-            assert op.code == LIROpcode.CasObj || op.code == LIROpcode.CasLong || op.code == LIROpcode.CasWord;
-            masm.cmpxchgq(newval, address);
+        switch (op.operand(1).kind) {
+            case Int:
+                masm.cmpxchgl(newval, address);
+                break;
+            case Long:
+            case Object:
+                masm.cmpxchgq(newval, address);
+                break;
+            default:
+                throw Util.shouldNotReachHere();
         }
     }
 
@@ -785,7 +814,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
             stack2reg(def, result, result.kind);
         } else {
             assert def.isConstant();
-            const2reg(def, result, null);
+            const2reg(def, result);
         }
 
         boolean cmovOnParity = (unorderedcmovOpr1 && mayBeTrueOnUnordered(condition.negate())) || (!unorderedcmovOpr1 && mayBeFalseOnUnordered(condition.negate()));
@@ -810,7 +839,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                 stack2reg(other, result, result.kind);
             } else {
                 assert other.isConstant();
-                const2reg(other, result, null);
+                const2reg(other, result);
             }
             masm.bind(skip);
         }
@@ -836,162 +865,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void emitArithOp(LIROpcode code, CiValue left, CiValue right, CiValue dest, LIRDebugInfo info) {
-        assert info == null : "should never be used :  idiv/irem and ldiv/lrem not handled by this method";
-        assert Util.archKindsEqual(left.kind, right.kind) || (left.kind == target.wordKind && right.kind == CiKind.Int) : code.toString() + " left arch is " + left.kind + " and right arch is " +  right.kind;
-        assert left.equals(dest) : "left and dest must be equal";
-        CiKind kind = left.kind;
-
-        // Checkstyle: off
-        if (left.isRegister()) {
-            CiRegister lreg = left.asRegister();
-
-            if (right.isRegister()) {
-                // register - register
-                CiRegister rreg = right.asRegister();
-                if (kind.isInt()) {
-                    switch (code) {
-                        case Add : masm.addl(lreg, rreg); break;
-                        case Sub : masm.subl(lreg, rreg); break;
-                        case Mul : masm.imull(lreg, rreg); break;
-                        default  : throw Util.shouldNotReachHere();
-                    }
-                } else if (kind.isFloat()) {
-                    assert rreg.isFpu() : "must be xmm";
-                    switch (code) {
-                        case Add : masm.addss(lreg, rreg); break;
-                        case Sub : masm.subss(lreg, rreg); break;
-                        case Mul : masm.mulss(lreg, rreg); break;
-                        case Div : masm.divss(lreg, rreg); break;
-                        default  : throw Util.shouldNotReachHere();
-                    }
-                } else if (kind.isDouble()) {
-                    assert rreg.isFpu();
-                    switch (code) {
-                        case Add : masm.addsd(lreg, rreg); break;
-                        case Sub : masm.subsd(lreg, rreg); break;
-                        case Mul : masm.mulsd(lreg, rreg); break;
-                        case Div : masm.divsd(lreg, rreg); break;
-                        default  : throw Util.shouldNotReachHere();
-                    }
-                } else {
-                    assert target.sizeInBytes(kind) == 8;
-                    switch (code) {
-                        case Add : masm.addq(lreg, rreg); break;
-                        case Sub : masm.subq(lreg, rreg); break;
-                        case Mul : masm.imulq(lreg, rreg);  break;
-                        default  : throw Util.shouldNotReachHere();
-                    }
-                }
-            } else {
-                if (kind.isInt()) {
-                    if (right.isStackSlot()) {
-                        // register - stack
-                        CiAddress raddr = frameMap.toStackAddress(((CiStackSlot) right));
-                        switch (code) {
-                            case Add : masm.addl(lreg, raddr); break;
-                            case Sub : masm.subl(lreg, raddr); break;
-                            default  : throw Util.shouldNotReachHere();
-                        }
-                    } else if (right.isConstant()) {
-                        // register - constant
-                        assert kind.isInt();
-                        int delta = ((CiConstant) right).asInt();
-                        switch (code) {
-                            case Add : masm.incrementl(lreg, delta); break;
-                            case Sub : masm.decrementl(lreg, delta); break;
-                            default  : throw Util.shouldNotReachHere();
-                        }
-                    }
-                } else if (kind.isFloat()) {
-                    // register - stack/constant
-                    CiAddress raddr;
-                    if (right.isStackSlot()) {
-                        raddr = frameMap.toStackAddress(((CiStackSlot) right));
-                    } else {
-                        assert right.isConstant();
-                        raddr = tasm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) right).asFloat()));
-                    }
-                    switch (code) {
-                        case Add : masm.addss(lreg, raddr); break;
-                        case Sub : masm.subss(lreg, raddr); break;
-                        case Mul : masm.mulss(lreg, raddr); break;
-                        case Div : masm.divss(lreg, raddr); break;
-                        default  : throw Util.shouldNotReachHere();
-                    }
-                } else if (kind.isDouble()) {
-                    // register - stack/constant
-                    CiAddress raddr;
-                    if (right.isStackSlot()) {
-                        raddr = frameMap.toStackAddress(((CiStackSlot) right));
-                    } else {
-                        assert right.isConstant();
-                        raddr = tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) right).asDouble()));
-                    }
-                    switch (code) {
-                        case Add : masm.addsd(lreg, raddr); break;
-                        case Sub : masm.subsd(lreg, raddr); break;
-                        case Mul : masm.mulsd(lreg, raddr); break;
-                        case Div : masm.divsd(lreg, raddr); break;
-                        default  : throw Util.shouldNotReachHere();
-                    }
-                } else {
-                    assert target.sizeInBytes(kind) == 8;
-                    if (right.isStackSlot()) {
-                        // register - stack
-                        CiAddress raddr = frameMap.toStackAddress(((CiStackSlot) right));
-                        switch (code) {
-                            case Add : masm.addq(lreg, raddr); break;
-                            case Sub : masm.subq(lreg, raddr); break;
-                            default  : throw Util.shouldNotReachHere();
-                        }
-                    } else {
-                        // register - constant
-                        assert right.isConstant();
-                        long c = ((CiConstant) right).asLong();
-                        if (NumUtil.isInt(c)) {
-                            switch (code) {
-                                case Add : masm.addq(lreg, (int) c); break;
-                                case Sub : masm.subq(lreg, (int) c); break;
-                                default  : throw Util.shouldNotReachHere();
-                            }
-                        } else {
-                            masm.movq(rscratch1, c);
-                            switch (code) {
-                                case Add : masm.addq(lreg, rscratch1); break;
-                                case Sub : masm.subq(lreg, rscratch1); break;
-                                default  : throw Util.shouldNotReachHere();
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            assert kind.isInt();
-            CiAddress laddr = asAddress(left);
-
-            if (right.isRegister()) {
-                CiRegister rreg = right.asRegister();
-                switch (code) {
-                    case Add : masm.addl(laddr, rreg); break;
-                    case Sub : masm.subl(laddr, rreg); break;
-                    default  : throw Util.shouldNotReachHere();
-                }
-            } else {
-                assert right.isConstant();
-                int c = ((CiConstant) right).asInt();
-                switch (code) {
-                    case Add : masm.incrementl(laddr, c); break;
-                    case Sub : masm.decrementl(laddr, c); break;
-                    default  : throw Util.shouldNotReachHere();
-                }
-            }
-        }
-        // Checkstyle: on
-    }
-
-    @Override
-    protected void emitIntrinsicOp(LIROpcode code, CiValue value, CiValue unused, CiValue dest, LIROp2 op) {
+    protected void emitIntrinsicOp(LegacyOpcode code, CiValue value, CiValue unused, CiValue dest) {
         assert value.kind.isDouble();
         switch (code) {
             case Abs:
@@ -1007,7 +881,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
 
             case Log:
             case Log10:
-                masm.flog(asXmmDoubleReg(dest), asXmmDoubleReg(value), (code == LIROpcode.Log10));
+                masm.flog(asXmmDoubleReg(dest), asXmmDoubleReg(value), (code == LegacyOpcode.Log10));
                 break;
 
             case Sin:
@@ -1026,7 +900,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void emitLogicOp(LIROpcode code, CiValue left, CiValue right, CiValue dst) {
+    protected void emitLogicOp(LegacyOpcode code, CiValue left, CiValue right, CiValue dst) {
         assert left.isRegister();
         // Checkstyle: off
         if (left.kind.isInt()) {
@@ -1086,150 +960,15 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         // Checkstyle: on
     }
 
-    void arithmeticIdiv(LIROpcode code, CiValue left, CiValue right, CiValue result, LIRDebugInfo info) {
-        assert left.isRegister() : "left must be register";
-        assert right.isRegister() || right.isConstant() : "right must be register or constant";
-        assert result.isRegister() : "result must be register";
-
-        CiRegister lreg = left.asRegister();
-        CiRegister dreg = result.asRegister();
-
-        if (right.isConstant()) {
-            int divisor = ((CiConstant) right).asInt();
-            assert divisor > 0 && CiUtil.isPowerOf2(divisor) : "divisor must be power of two";
-            if (code == LIROpcode.Idiv) {
-                assert lreg == AMD64.rax : "dividend must be rax";
-                masm.cdql(); // sign extend into rdx:rax
-                if (divisor == 2) {
-                    masm.subl(lreg, AMD64.rdx);
-                } else {
-                    masm.andl(AMD64.rdx, divisor - 1);
-                    masm.addl(lreg, AMD64.rdx);
-                }
-                masm.sarl(lreg, CiUtil.log2(divisor));
-                moveRegs(lreg, dreg);
-            } else {
-                assert code == LIROpcode.Irem;
-                Label done = new Label();
-                masm.mov(dreg, lreg);
-                masm.andl(dreg, 0x80000000 | (divisor - 1));
-                masm.jcc(ConditionFlag.positive, done);
-                masm.decrementl(dreg, 1);
-                masm.orl(dreg, ~(divisor - 1));
-                masm.incrementl(dreg, 1);
-                masm.bind(done);
-            }
-        } else {
-            CiRegister rreg = right.asRegister();
-            assert lreg == AMD64.rax : "left register must be rax";
-            assert rreg != AMD64.rdx : "right register must not be rdx";
-
-            moveRegs(lreg, AMD64.rax);
-
-            Label continuation = new Label();
-            masm.cdql();
-            int offset = masm.codeBuffer.position();
-            masm.idivl(rreg);
-
-            // normal and special case exit
-            masm.bind(continuation);
-
-            tasm.recordImplicitException(offset, info);
-            if (code == LIROpcode.Irem) {
-                moveRegs(AMD64.rdx, dreg); // result is in rdx
-            } else {
-                assert code == LIROpcode.Idiv;
-                moveRegs(AMD64.rax, dreg);
-            }
-        }
-    }
-
-    void arithmeticLdiv(LIROpcode code, CiValue left, CiValue right, CiValue result, LIRDebugInfo info) {
-        assert left.isRegister() : "left must be register";
-        assert right.isRegister() : "right must be register";
-        assert result.isRegister() : "result must be register";
-        assert result.kind.isLong();
-
-        CiRegister lreg = left.asRegister();
-        CiRegister dreg = result.asRegister();
-        CiRegister rreg = right.asRegister();
-        assert lreg == AMD64.rax : "left register must be rax";
-        assert rreg != AMD64.rdx : "right register must not be rdx";
-
-        moveRegs(lreg, AMD64.rax);
-
-        Label continuation = new Label();
-
-        if (GraalOptions.GenSpecialDivChecks && code == LIROpcode.Ldiv) {
-            // check for special case of Long.MIN_VALUE / -1
-            Label normalCase = new Label();
-            masm.movq(AMD64.rdx, java.lang.Long.MIN_VALUE);
-            masm.cmpq(AMD64.rax, AMD64.rdx);
-            masm.jcc(ConditionFlag.notEqual, normalCase);
-            masm.cmpl(rreg, -1);
-            masm.jcc(ConditionFlag.equal, continuation);
-
-            // handle normal case
-            masm.bind(normalCase);
-        }
-        masm.cdqq();
-        int offset = masm.codeBuffer.position();
-        masm.idivq(rreg);
-
-        // normal and special case exit
-        masm.bind(continuation);
-
-        tasm.recordImplicitException(offset, info);
-        if (code == LIROpcode.Lrem) {
-            moveRegs(AMD64.rdx, dreg);
-        } else {
-            assert code == LIROpcode.Ldiv;
-            moveRegs(AMD64.rax, dreg);
-        }
-    }
-
-    void arithmeticWdiv(LIROpcode code, CiValue left, CiValue right, CiValue result, LIRDebugInfo info) {
-        assert left.isRegister() : "left must be register";
-        assert right.isRegister() : "right must be register";
-        assert result.isRegister() : "result must be register";
-
-        CiRegister lreg = left.asRegister();
-        CiRegister dreg = result.asRegister();
-        CiRegister rreg = right.asRegister();
-        assert lreg == AMD64.rax : "left register must be rax";
-        assert rreg != AMD64.rdx : "right register must not be rdx";
-
-        // Must zero the high 64-bit word (in RDX) of the dividend
-        masm.xorq(AMD64.rdx, AMD64.rdx);
-
-        if (code == LIROpcode.Wdivi || code == LIROpcode.Wremi) {
-            // Zero the high 32 bits of the divisor
-            masm.movzxd(rreg, rreg);
-        }
-
-        moveRegs(lreg, AMD64.rax);
-
-        int offset = masm.codeBuffer.position();
-        masm.divq(rreg);
-
-        tasm.recordImplicitException(offset, info);
-        if (code == LIROpcode.Wrem || code == LIROpcode.Wremi) {
-            moveRegs(AMD64.rdx, dreg);
-        } else {
-            assert code == LIROpcode.Wdiv || code == LIROpcode.Wdivi;
-            moveRegs(AMD64.rax, dreg);
-        }
-    }
-
     @Override
-    protected void emitCompare(Condition condition, CiValue opr1, CiValue opr2, LIROp2 op) {
+    protected void emitCompare(Condition condition, CiValue opr1, CiValue opr2) {
         // Checkstyle: off
         assert Util.archKindsEqual(opr1.kind.stackKind(), opr2.kind.stackKind()) || (opr1.kind == target.wordKind && opr2.kind == CiKind.Int) : "nonmatching stack kinds (" + condition + "): " + opr1.kind.stackKind() + "==" + opr2.kind.stackKind();
 
         if (opr1.isConstant()) {
             // Use scratch register
             CiValue newOpr1 = compilation.registerConfig.getScratchRegister().asValue(opr1.kind);
-            const2reg(opr1, newOpr1, null);
+            const2reg(opr1, newOpr1);
             opr1 = newOpr1;
         }
 
@@ -1247,7 +986,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     case Object  : masm.cmpq(reg1, opr2.asRegister()); break;
                     case Float   : masm.ucomiss(reg1, asXmmFloatReg(opr2)); break;
                     case Double  : masm.ucomisd(reg1, asXmmDoubleReg(opr2)); break;
-                    default      : throw Util.shouldNotReachHere(opr1.kind.toString());
+                    default      : throw Util.shouldNotReachHere("%s", opr1.kind.toString());
                 }
             } else if (opr2.isStackSlot()) {
                 // register - stack
@@ -1262,7 +1001,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     case Object  : masm.cmpptr(reg1, frameMap.toStackAddress(opr2Slot)); break;
                     case Float   : masm.ucomiss(reg1, frameMap.toStackAddress(opr2Slot)); break;
                     case Double  : masm.ucomisd(reg1, frameMap.toStackAddress(opr2Slot)); break;
-                    default      : throw Util.shouldNotReachHere();
+                    default      : throw Util.shouldNotReachHere("unexpected kind %s", opr1.kind);
                 }
             } else if (opr2.isConstant()) {
                 // register - constant
@@ -1272,6 +1011,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     case Byte    :
                     case Char    :
                     case Short   :
+                    case Jsr     : // a comparison of a jsr value in a register against a constant is required for speculatively compiled jsr constructs
                     case Int     : masm.cmpl(reg1, c.asInt()); break;
                     case Float   : masm.ucomiss(reg1, tasm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) opr2).asFloat()))); break;
                     case Double  : masm.ucomisd(reg1, tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) opr2).asDouble()))); break;
@@ -1290,10 +1030,10 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                         masm.cmpq(reg1, rscratch1);
                         break;
                     }
-                    default      : throw Util.shouldNotReachHere();
+                    default      : throw Util.shouldNotReachHere("unexpected kind: %s", opr1.kind);
                 }
             } else {
-                throw Util.shouldNotReachHere();
+                throw Util.shouldNotReachHere("unexpected compare: %s %s %s", opr1, condition, opr2);
             }
         } else if (opr1.isStackSlot()) {
             CiAddress left = asAddress(opr1);
@@ -1324,27 +1064,27 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     default      : throw Util.shouldNotReachHere();
                 }
             } else {
-                throw Util.shouldNotReachHere("opr1=" + opr1.toString() + " opr2=" + opr2);
+                throw Util.shouldNotReachHere("unexpected compare: %s %s %s", opr1, condition, opr2);
             }
 
         } else {
-            throw Util.shouldNotReachHere("opr1=" + opr1.toString() + " opr2=" + opr2);
+            throw Util.shouldNotReachHere("unexpected compare: %s %s %s", opr1, condition, opr2);
         }
         // Checkstyle: on
     }
 
     @Override
-    protected void emitCompare2Int(LIROpcode code, CiValue left, CiValue right, CiValue dst, LIROp2 op) {
-        if (code == LIROpcode.Cmpfd2i || code == LIROpcode.Ucmpfd2i) {
+    protected void emitCompare2Int(LIROpcode code, CiValue left, CiValue right, CiValue dst) {
+        if (code == LegacyOpcode.Cmpfd2i || code == LegacyOpcode.Ucmpfd2i) {
             if (left.kind.isFloat()) {
-                masm.cmpss2int(asXmmFloatReg(left), asXmmFloatReg(right), dst.asRegister(), code == LIROpcode.Ucmpfd2i);
+                masm.cmpss2int(asXmmFloatReg(left), asXmmFloatReg(right), dst.asRegister(), code == LegacyOpcode.Ucmpfd2i);
             } else if (left.kind.isDouble()) {
-                masm.cmpsd2int(asXmmDoubleReg(left), asXmmDoubleReg(right), dst.asRegister(), code == LIROpcode.Ucmpfd2i);
+                masm.cmpsd2int(asXmmDoubleReg(left), asXmmDoubleReg(right), dst.asRegister(), code == LegacyOpcode.Ucmpfd2i);
             } else {
                 assert false : "no fpu stack";
             }
         } else {
-            assert code == LIROpcode.Cmpl2i;
+            assert code == LegacyOpcode.Cmpl2i;
             CiRegister dest = dst.asRegister();
             Label high = new Label();
             Label done = new Label();
@@ -1383,7 +1123,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         if (callAddress.isRegister()) {
             reg = callAddress.asRegister();
         } else {
-            moveOp(callAddress, reg.asValue(callAddress.kind), callAddress.kind, null, false);
+            moveOp(callAddress, reg.asValue(callAddress.kind), callAddress.kind, null);
         }
         indirectCall(reg, target, info);
     }
@@ -1399,28 +1139,23 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         if (callAddress.isRegister()) {
             reg = callAddress.asRegister();
         } else {
-            moveOp(callAddress, reg.asValue(callAddress.kind), callAddress.kind, null, false);
+            moveOp(callAddress, reg.asValue(callAddress.kind), callAddress.kind, null);
         }
         indirectCall(reg, symbol, info);
     }
 
-    private void emitXIRShiftOp(LIROpcode code, CiValue left, CiValue count, CiValue dest) {
+    private void emitXIRShiftOp(LegacyOpcode code, CiValue left, CiValue count, CiValue dest) {
         if (count.isConstant()) {
             emitShiftOp(code, left, ((CiConstant) count).asInt(), dest);
         } else {
-            emitShiftOp(code, left, count, dest, IllegalValue);
+            emitShiftOp(code, left, count, dest);
         }
     }
 
     @Override
-    protected void emitShiftOp(LIROpcode code, CiValue left, CiValue count, CiValue dest, CiValue tmp) {
-        // optimized version for linear scan:
-        // * count must be already in ECX (guaranteed by LinearScan)
-        // * left and dest must be equal
-        // * tmp must be unused
+    protected void emitShiftOp(LegacyOpcode code, CiValue left, CiValue count, CiValue dest) {
         assert count.asRegister() == SHIFTCount : "count must be in ECX";
         assert left == dest : "left and dest must be equal";
-        assert tmp.isIllegal() : "wasting a register if tmp is allocated";
         assert left.isRegister();
 
         if (left.kind.isInt()) {
@@ -1449,7 +1184,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void emitShiftOp(LIROpcode code, CiValue left, int count, CiValue dest) {
+    protected void emitShiftOp(LegacyOpcode code, CiValue left, int count, CiValue dest) {
         assert dest.isRegister();
         if (dest.kind.isInt()) {
             // first move left into dest so that left is not destroyed by the shift
@@ -1482,7 +1217,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void emitSignificantBitOp(boolean most, CiValue src, CiValue dst) {
+    protected void emitSignificantBitOp(LegacyOpcode code, CiValue src, CiValue dst) {
         assert dst.isRegister();
         CiRegister result = dst.asRegister();
         masm.xorq(result, result);
@@ -1490,17 +1225,17 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         if (src.isRegister()) {
             CiRegister value = src.asRegister();
             assert value != result;
-            if (most) {
-                masm.bsrq(result, value);
-            } else {
-                masm.bsfq(result, value);
+            switch (code) {
+                case Msb: masm.bsrq(result, value); break;
+                case Lsb: masm.bsfq(result, value); break;
+                default: throw Util.shouldNotReachHere();
             }
         } else {
             CiAddress laddr = asAddress(src);
-            if (most) {
-                masm.bsrq(result, laddr);
-            } else {
-                masm.bsfq(result, laddr);
+            switch (code) {
+                case Msb: masm.bsrq(result, laddr); break;
+                case Lsb: masm.bsfq(result, laddr); break;
+                default: throw Util.shouldNotReachHere();
             }
         }
     }
@@ -1511,9 +1246,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void emitNegate(LIRNegate op) {
-        CiValue left = op.operand();
-        CiValue dest = op.result();
+    protected void emitNegate(CiValue left, CiValue dest) {
         assert left.isRegister();
         if (left.kind.isInt()) {
             masm.negl(left.asRegister());
@@ -1646,6 +1379,18 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         }
     }
 
+    private void emitXirViaLir(LIROpcode intOp, LIROpcode longOp, LIROpcode floatOp, LIROpcode doubleOp, CiValue left, CiValue right, CiValue result) {
+        LIROpcode code;
+        switch (result.kind) {
+            case Int: code = intOp; break;
+            case Long: code = longOp; break;
+            case Float: code = floatOp; break;
+            case Double: code = doubleOp; break;
+            default: throw Util.shouldNotReachHere();
+        }
+        emitOp(new LIRInstruction(code, result, null, left, right));
+    }
+
     public void emitXirInstructions(LIRXirInstruction xir, XirInstruction[] instructions, Label[] labels, CiValue[] operands, Map<XirMark, Mark> marks) {
         LIRDebugInfo info = xir == null ? null : xir.info;
         LIRDebugInfo infoAfter = xir == null ? null : xir.infoAfter;
@@ -1653,61 +1398,53 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         for (XirInstruction inst : instructions) {
             switch (inst.op) {
                 case Add:
-                    emitArithOp(LIROpcode.Add, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], null);
+                    emitXirViaLir(AMD64ArithmeticOp.IADD, AMD64ArithmeticOp.LADD, AMD64ArithmeticOp.FADD, AMD64ArithmeticOp.DADD, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index]);
                     break;
 
                 case Sub:
-                    emitArithOp(LIROpcode.Sub, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], null);
+                    emitXirViaLir(AMD64ArithmeticOp.ISUB, AMD64ArithmeticOp.LSUB, AMD64ArithmeticOp.FSUB, AMD64ArithmeticOp.DSUB, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index]);
                     break;
 
                 case Div:
-                    if (inst.kind == CiKind.Int) {
-                        arithmeticIdiv(LIROpcode.Idiv, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], null);
-                    } else {
-                        emitArithOp(LIROpcode.Div, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], null);
-                    }
+                    emitXirViaLir(AMD64DivOp.IDIV, AMD64DivOp.LDIV, AMD64ArithmeticOp.FDIV, AMD64ArithmeticOp.DDIV, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index]);
                     break;
 
                 case Mul:
-                    emitArithOp(LIROpcode.Mul, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], null);
+                    emitXirViaLir(AMD64MulOp.IMUL, AMD64MulOp.LMUL, AMD64ArithmeticOp.FMUL, AMD64ArithmeticOp.DMUL, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index]);
                     break;
 
                 case Mod:
-                    if (inst.kind == CiKind.Int) {
-                        arithmeticIdiv(LIROpcode.Irem, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], null);
-                    } else {
-                        emitArithOp(LIROpcode.Rem, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], null);
-                    }
+                    emitXirViaLir(AMD64DivOp.IREM, AMD64DivOp.LREM, null, null, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index]);
                     break;
 
                 case Shl:
-                    emitXIRShiftOp(LIROpcode.Shl, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index]);
+                    emitXIRShiftOp(LegacyOpcode.Shl, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index]);
                     break;
 
                 case Sar:
-                    emitXIRShiftOp(LIROpcode.Shr, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index]);
+                    emitXIRShiftOp(LegacyOpcode.Shr, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index]);
                     break;
 
                 case Shr:
-                    emitXIRShiftOp(LIROpcode.Ushr, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index]);
+                    emitXIRShiftOp(LegacyOpcode.Ushr, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index]);
                     break;
 
                 case And:
-                    emitLogicOp(LIROpcode.LogicAnd, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index]);
+                    emitLogicOp(LegacyOpcode.LogicAnd, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index]);
                     break;
 
                 case Or:
-                    emitLogicOp(LIROpcode.LogicOr, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index]);
+                    emitLogicOp(LegacyOpcode.LogicOr, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index]);
                     break;
 
                 case Xor:
-                    emitLogicOp(LIROpcode.LogicXor, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index]);
+                    emitLogicOp(LegacyOpcode.LogicXor, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index]);
                     break;
 
                 case Mov: {
                     CiValue result = operands[inst.result.index];
                     CiValue source = operands[inst.x().index];
-                    moveOp(source, result, result.kind, null, false);
+                    moveOp(source, result, result.kind, null);
                     break;
                 }
 
@@ -1719,7 +1456,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     if ((Boolean) inst.extra && info != null) {
                         tasm.recordImplicitException(codePos(), info);
                     }
-                    moveOp(new CiAddress(inst.kind, register, 0), result, inst.kind, null, false);
+                    moveOp(new CiAddress(inst.kind, register, 0), result, inst.kind, null);
                     break;
                 }
 
@@ -1731,7 +1468,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     if ((Boolean) inst.extra && info != null) {
                         tasm.recordImplicitException(codePos(), info);
                     }
-                    moveOp(value, new CiAddress(inst.kind, pointer, 0), inst.kind, null, false);
+                    moveOp(value, new CiAddress(inst.kind, pointer, 0), inst.kind, null);
                     break;
                 }
 
@@ -1758,7 +1495,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                         src = new CiAddress(inst.kind, pointer, index, scale, displacement);
                     }
 
-                    moveOp(src, result, inst.kind, canTrap ? info : null, false);
+                    moveOp(src, result, inst.kind, canTrap ? info : null);
                     break;
                 }
 
@@ -1802,7 +1539,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                         dst = new CiAddress(inst.kind, pointer, index, scale, displacement);
                     }
 
-                    moveOp(value, dst, inst.kind, canTrap ? info : null, false);
+                    moveOp(value, dst, inst.kind, canTrap ? info : null);
                     break;
                 }
 
@@ -1854,12 +1591,13 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                         signature[i] = inst.arguments[i].kind;
                     }
 
-                    CiCallingConvention cc = frameMap.getCallingConvention(signature, RuntimeCall);
+                    CiCallingConvention cc = compilation.registerConfig.getCallingConvention(RuntimeCall, signature, target, false);
+                    compilation.frameMap().adjustOutgoingStackSize(cc, RuntimeCall);
                     for (int i = 0; i < inst.arguments.length; i++) {
                         CiValue argumentLocation = cc.locations[i];
                         CiValue argumentSourceLocation = operands[inst.arguments[i].index];
                         if (argumentLocation != argumentSourceLocation) {
-                            moveOp(argumentSourceLocation, argumentLocation, argumentLocation.kind, null, false);
+                            moveOp(argumentSourceLocation, argumentLocation, argumentLocation.kind, null);
                         }
                     }
 
@@ -1869,7 +1607,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     if (inst.result != null && inst.result.kind != CiKind.Illegal && inst.result.kind != CiKind.Void) {
                         CiRegister returnRegister = compilation.registerConfig.getReturnRegister(inst.result.kind);
                         CiValue resultLocation = returnRegister.asValue(inst.result.kind.stackKind());
-                        moveOp(resultLocation, operands[inst.result.index], inst.result.kind.stackKind(), null, false);
+                        moveOp(resultLocation, operands[inst.result.index], inst.result.kind.stackKind(), null);
                     }
                     break;
                 }
@@ -2023,7 +1761,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                         masm.pop(result.asRegister());
                     } else {
                         masm.pop(rscratch1);
-                        moveOp(rscratch1.asValue(), result, result.kind, null, true);
+                        moveOp(rscratch1.asValue(), result, result.kind, null);
                     }
                     break;
                 }
@@ -2077,7 +1815,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     private CiRegisterValue assureInRegister(CiValue pointer) {
         if (pointer.isConstant()) {
             CiRegisterValue register = rscratch1.asValue(pointer.kind);
-            moveOp(pointer, register, pointer.kind, null, false);
+            moveOp(pointer, register, pointer.kind, null);
             return register;
         }
 
@@ -2088,7 +1826,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     private void emitXirCompare(XirInstruction inst, Condition condition, ConditionFlag cflag, CiValue[] ops, Label label) {
         CiValue x = ops[inst.x().index];
         CiValue y = ops[inst.y().index];
-        emitCompare(condition, x, y, null);
+        emitCompare(condition, x, y);
         masm.jcc(cflag, label);
     }
 
@@ -2245,9 +1983,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         int after = masm.codeBuffer.position();
         tasm.recordDirectCall(before, after, asCallTarget(target), info);
         tasm.recordExceptionHandlers(after, info);
-        if (GraalOptions.CallSiteUniquePC) {
-            masm.nop();
-        }
+        masm.ensureUniquePC();
     }
 
     public void directJmp(Object target) {
@@ -2255,9 +1991,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         masm.jmp(0, true);
         int after = masm.codeBuffer.position();
         tasm.recordDirectCall(before, after, asCallTarget(target), null);
-        if (GraalOptions.CallSiteUniquePC) {
-            masm.nop();
-        }
+        masm.ensureUniquePC();
     }
 
     public void indirectCall(CiRegister dst, Object target, LIRDebugInfo info) {
@@ -2266,9 +2000,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         int after = masm.codeBuffer.position();
         tasm.recordIndirectCall(before, after, asCallTarget(target), info);
         tasm.recordExceptionHandlers(after, info);
-        if (GraalOptions.CallSiteUniquePC) {
-            masm.nop();
-        }
+        masm.ensureUniquePC();
     }
 
     @Override

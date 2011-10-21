@@ -47,26 +47,17 @@ import com.sun.cri.ri.*;
  * including a reference to the runtime, statistics about the compiled code, etc.
  */
 public final class GraalCompilation {
-
-    private static ThreadLocal<GraalCompilation> currentCompilation = new ThreadLocal<GraalCompilation>();
-
-    public final GraalContext context;
     public final GraalCompiler compiler;
-    public final RiMethod method;
+    public final RiResolvedMethod method;
     public final RiRegisterConfig registerConfig;
     public final CiStatistics stats;
     public final FrameState placeholderState;
 
-    public final CompilerGraph graph;
-
-    private final GraalCompilation parent;
+    public final Graph<EntryPointNode> graph;
 
     private FrameMap frameMap;
-    private TargetMethodAssembler assembler;
 
     private LIR lir;
-
-    private LIRGenerator lirGenerator;
 
     public static ThreadLocal<ServiceLoader<Optimizer>> optimizerLoader = new ThreadLocal<ServiceLoader<Optimizer>>();
 
@@ -80,13 +71,10 @@ public final class GraalCompilation {
      * @param stats externally supplied statistics object to be used if not {@code null}
      * @param debugInfoLevel TODO
      */
-    public GraalCompilation(GraalContext context, GraalCompiler compiler, RiMethod method, CompilerGraph graph, int osrBCI, CiStatistics stats, DebugInfoLevel debugInfoLevel) {
+    public GraalCompilation(GraalContext context, GraalCompiler compiler, RiResolvedMethod method, CompilerGraph graph, int osrBCI, CiStatistics stats, DebugInfoLevel debugInfoLevel) {
         if (osrBCI != -1) {
             throw new CiBailout("No OSR supported");
         }
-        this.parent = currentCompilation.get();
-        currentCompilation.set(this);
-        this.context = context;
         this.compiler = compiler;
         this.graph = graph;
         this.method = method;
@@ -94,21 +82,21 @@ public final class GraalCompilation {
         this.registerConfig = method == null ? compiler.compilerStubRegisterConfig : compiler.runtime.getRegisterConfig(method);
         this.placeholderState = debugInfoLevel == DebugInfoLevel.REF_MAPS ? new FrameState(method, 0, 0, 0, 0, false) : null;
 
-        if (context.isObserved() && method != null) {
-            context.observable.fireCompilationStarted(new CompilationEvent(this));
+        if (context().isObserved() && method != null) {
+            context().observable.fireCompilationStarted(new CompilationEvent(this));
         }
     }
 
-    public GraalCompilation(GraalContext context, GraalCompiler compiler, RiMethod method, int osrBCI, CiStatistics stats, DebugInfoLevel debugInfoLevel) {
+    public GraalCompilation(GraalContext context, GraalCompiler compiler, RiResolvedMethod method, int osrBCI, CiStatistics stats, DebugInfoLevel debugInfoLevel) {
         this(context, compiler, method, new CompilerGraph(compiler.runtime), osrBCI, stats, debugInfoLevel);
     }
 
 
     public void close() {
-        currentCompilation.set(parent);
+        //
     }
 
-    public LIR hir() {
+    public LIR lir() {
         return lir;
     }
 
@@ -129,13 +117,11 @@ public final class GraalCompilation {
         return frameMap;
     }
 
-    public TargetMethodAssembler assembler() {
-        if (assembler == null) {
-            AbstractAssembler asm = compiler.backend.newAssembler(registerConfig);
-            assembler = new TargetMethodAssembler(context, asm);
-            assembler.setFrameSize(frameMap.frameSize());
-            assembler.targetMethod.setCustomStackAreaOffset(frameMap.offsetToCustomArea());
-        }
+    private TargetMethodAssembler createAssembler() {
+        AbstractAssembler asm = compiler.backend.newAssembler(registerConfig);
+        TargetMethodAssembler assembler = new TargetMethodAssembler(context(), asm);
+        assembler.setFrameSize(frameMap.frameSize());
+        assembler.targetMethod.setCustomStackAreaOffset(frameMap.offsetToCustomArea());
         return assembler;
     }
 
@@ -147,10 +133,12 @@ public final class GraalCompilation {
             targetMethod = emitCode();
 
             if (GraalOptions.Meter) {
-                context.metrics.BytecodesCompiled += method.codeSize();
+                context().metrics.BytecodesCompiled += method.codeSize();
             }
         } catch (CiBailout b) {
             return new CiResult(null, b, stats);
+        } catch (VerificationError e) {
+            throw e.addContext("method", CiUtil.format("%H.%n(%p):%r", method));
         } catch (Throwable t) {
             if (GraalOptions.BailoutOnException) {
                 return new CiResult(null, new CiBailout("Exception while compiling: " + method, t), stats);
@@ -158,8 +146,8 @@ public final class GraalCompilation {
                 throw new RuntimeException("Exception while compiling: " + method, t);
             }
         } finally {
-            if (context.isObserved()) {
-                context.observable.fireCompilationFinished(new CompilationEvent(this));
+            if (context().isObserved()) {
+                context().observable.fireCompilationFinished(new CompilationEvent(this));
             }
         }
 
@@ -171,85 +159,86 @@ public final class GraalCompilation {
      */
     public void emitHIR() {
         try {
-            context.timers.startScope("HIR");
+            context().timers.startScope("HIR");
 
-            if (graph.getReturn() == null) {
-                new GraphBuilderPhase(context, compiler.runtime, method, stats).apply(graph);
-                new DeadCodeEliminationPhase(context).apply(graph);
+            if (graph.start().next() == null) {
+                new GraphBuilderPhase(context(), compiler.runtime, method, stats).apply(graph);
+                new DeadCodeEliminationPhase(context()).apply(graph);
             }
 
             if (GraalOptions.ProbabilityAnalysis) {
-                new ComputeProbabilityPhase(context).apply(graph);
+                new ComputeProbabilityPhase(context()).apply(graph);
             }
 
             if (GraalOptions.Intrinsify) {
-                new IntrinsificationPhase(context, compiler.runtime).apply(graph);
+                new IntrinsificationPhase(context(), compiler.runtime).apply(graph);
             }
 
             if (GraalOptions.Inline) {
                 if (GraalOptions.UseNewInlining) {
-                    new InliningPhase(context, compiler.runtime, compiler.target, null).apply(graph);
+                    new InliningPhase(context(), compiler.runtime, compiler.target, null).apply(graph);
                 } else {
-                    new OldInliningPhase(context, this, null).apply(graph);
+                    new OldInliningPhase(context(), this, null).apply(graph);
                 }
-                new DeadCodeEliminationPhase(context).apply(graph);
+                new DeadCodeEliminationPhase(context()).apply(graph);
             }
 
             if (GraalOptions.OptCanonicalizer) {
-                new CanonicalizerPhase(context, compiler.target).apply(graph);
+                new CanonicalizerPhase(context(), compiler.target).apply(graph);
             }
 
             if (GraalOptions.Extend) {
                 extensionOptimizations(graph);
+                new DeadCodeEliminationPhase(context()).apply(graph);
             }
 
             if (GraalOptions.OptLoops) {
                 graph.mark();
-                new FindInductionVariablesPhase(context).apply(graph);
+                new FindInductionVariablesPhase(context()).apply(graph);
                 if (GraalOptions.OptCanonicalizer) {
-                    new CanonicalizerPhase(context, compiler.target, true).apply(graph);
+                    new CanonicalizerPhase(context(), compiler.target, true).apply(graph);
                 }
             }
 
             if (GraalOptions.EscapeAnalysis) {
                 new EscapeAnalysisPhase(this).apply(graph);
-                new CanonicalizerPhase(context, compiler.target).apply(graph);
+                new CanonicalizerPhase(context(), compiler.target).apply(graph);
             }
 
             if (GraalOptions.OptGVN) {
-                new GlobalValueNumberingPhase(context).apply(graph);
+                new GlobalValueNumberingPhase(context()).apply(graph);
             }
 
             graph.mark();
-            new LoweringPhase(context, compiler.runtime).apply(graph);
-            new CanonicalizerPhase(context, compiler.target, true).apply(graph);
+            new LoweringPhase(context(), compiler.runtime).apply(graph);
+            new CanonicalizerPhase(context(), compiler.target, true).apply(graph);
 
             if (GraalOptions.OptLoops) {
                 graph.mark();
-                new RemoveInductionVariablesPhase(context).apply(graph);
+                new RemoveInductionVariablesPhase(context()).apply(graph);
                 if (GraalOptions.OptCanonicalizer) {
-                    new CanonicalizerPhase(context, compiler.target, true).apply(graph);
+                    new CanonicalizerPhase(context(), compiler.target, true).apply(graph);
                 }
             }
 
             if (GraalOptions.Lower) {
-                new FloatingReadPhase(context).apply(graph);
+                new FloatingReadPhase(context()).apply(graph);
                 if (GraalOptions.OptReadElimination) {
-                    new ReadEliminationPhase(context).apply(graph);
+                    new ReadEliminationPhase(context()).apply(graph);
                 }
             }
-            new RemovePlaceholderPhase(context).apply(graph);
-            new DeadCodeEliminationPhase(context).apply(graph);
-            IdentifyBlocksPhase schedule = new IdentifyBlocksPhase(context, true);
+            new RemovePlaceholderPhase(context()).apply(graph);
+            new DeadCodeEliminationPhase(context()).apply(graph);
+            IdentifyBlocksPhase schedule = new IdentifyBlocksPhase(context(), true);
             schedule.apply(graph);
             if (stats != null) {
                 stats.loopCount = schedule.loopCount();
             }
 
-            if (context.isObserved()) {
+            if (context().isObserved()) {
                 Map<String, Object> debug = new HashMap<String, Object>();
                 debug.put("schedule", schedule);
-                context.observable.fireCompilationEvent(new CompilationEvent(this, "After IdentifyBlocksPhase", graph, true, false, debug));
+                context().observable.fireCompilationEvent(new CompilationEvent(this, "After IdentifyBlocksPhase", graph, true, false, debug));
             }
 
             List<Block> blocks = schedule.getBlocks();
@@ -297,7 +286,7 @@ public final class GraalCompilation {
             assert startBlock.blockPredecessors().size() == 0;
 
 
-            context.timers.startScope("Compute Linear Scan Order");
+            context().timers.startScope("Compute Linear Scan Order");
             try {
                 ComputeLinearScanOrder clso = new ComputeLinearScanOrder(lirBlocks.size(), stats.loopCount, startBlock);
                 List<LIRBlock> linearScanOrder = clso.linearScanOrder();
@@ -310,24 +299,26 @@ public final class GraalCompilation {
 
                 lir = new LIR(startBlock, linearScanOrder, codeEmittingOrder, valueToBlock);
 
-                if (context.isObserved()) {
-                    context.observable.fireCompilationEvent(new CompilationEvent(this, "After linear scan order", graph, true, false));
+                if (context().isObserved()) {
+                    context().observable.fireCompilationEvent(new CompilationEvent(this, "After linear scan order", graph, true, false));
                 }
             } catch (AssertionError t) {
-                    context.observable.fireCompilationEvent(new CompilationEvent(this, "AssertionError in ComputeLinearScanOrder", graph, true, false, true));
+                    context().observable.fireCompilationEvent(new CompilationEvent(this, "AssertionError in ComputeLinearScanOrder", graph, true, false, true));
                 throw t;
             } catch (RuntimeException t) {
-                    context.observable.fireCompilationEvent(new CompilationEvent(this, "RuntimeException in ComputeLinearScanOrder", graph, true, false, true));
+                    context().observable.fireCompilationEvent(new CompilationEvent(this, "RuntimeException in ComputeLinearScanOrder", graph, true, false, true));
                 throw t;
             } finally {
-                context.timers.endScope();
+                context().timers.endScope();
             }
         } finally {
-            context.timers.endScope();
+            context().timers.endScope();
         }
     }
 
-    private void extensionOptimizations(Graph graph) {
+    private void extensionOptimizations(Graph<EntryPointNode> graph) {
+
+        new SnippetIntrinsificationPhase(context(), compiler.runtime).apply(graph);
 
         ServiceLoader<Optimizer> serviceLoader = optimizerLoader.get();
         if (serviceLoader == null) {
@@ -341,14 +332,15 @@ public final class GraalCompilation {
     }
 
     public void initFrameMap(int numberOfLocks) {
-        frameMap = this.compiler.backend.newFrameMap(method, numberOfLocks);
+        frameMap = this.compiler.backend.newFrameMap(this, method, numberOfLocks);
     }
 
     private void emitLIR() {
-        context.timers.startScope("LIR");
+        context().timers.startScope("LIR");
         try {
             if (GraalOptions.GenLIR) {
-                context.timers.startScope("Create LIR");
+                context().timers.startScope("Create LIR");
+                LIRGenerator lirGenerator = null;
                 try {
                     initFrameMap(maxLocks());
 
@@ -358,7 +350,7 @@ public final class GraalCompilation {
                         lirGenerator.doBlock(b);
                     }
                 } finally {
-                    context.timers.endScope();
+                    context().timers.endScope();
                 }
 
                 if (GraalOptions.PrintLIR && !TTY.isSuppressed()) {
@@ -366,34 +358,37 @@ public final class GraalCompilation {
                 }
 
                 new LinearScan(this, lir, lirGenerator, frameMap()).allocate();
+
+                lir.setDeoptimizationStubs(lirGenerator.deoptimizationStubs());
             }
         } catch (Error e) {
-            if (context.isObserved() && GraalOptions.PlotOnError) {
-                context.observable.fireCompilationEvent(new CompilationEvent(this, e.getClass().getSimpleName() + " in emitLIR", graph, true, false, true));
+            if (context().isObserved() && GraalOptions.PlotOnError) {
+                context().observable.fireCompilationEvent(new CompilationEvent(this, e.getClass().getSimpleName() + " in emitLIR", graph, true, false, true));
             }
             throw e;
         } catch (RuntimeException e) {
-            if (context.isObserved() && GraalOptions.PlotOnError) {
-                context.observable.fireCompilationEvent(new CompilationEvent(this, e.getClass().getSimpleName() + " in emitLIR", graph, true, false, true));
+            if (context().isObserved() && GraalOptions.PlotOnError) {
+                context().observable.fireCompilationEvent(new CompilationEvent(this, e.getClass().getSimpleName() + " in emitLIR", graph, true, false, true));
             }
             throw e;
         } finally {
-            context.timers.endScope();
+            context().timers.endScope();
         }
     }
 
     private CiTargetMethod emitCode() {
         if (GraalOptions.GenLIR && GraalOptions.GenCode) {
-            context.timers.startScope("Create Code");
+            context().timers.startScope("Create Code");
             try {
-                final LIRAssembler lirAssembler = compiler.backend.newLIRAssembler(this, assembler());
+                final TargetMethodAssembler tma = createAssembler();
+                final LIRAssembler lirAssembler = compiler.backend.newLIRAssembler(this, tma);
                 lirAssembler.emitCode(lir.codeEmittingOrder());
 
                 // generate code for slow cases
                 lirAssembler.emitLocalStubs();
 
                 // generate deoptimization stubs
-                ArrayList<DeoptimizationStub> deoptimizationStubs = lirGenerator.deoptimizationStubs();
+                ArrayList<DeoptimizationStub> deoptimizationStubs = lir.deoptimizationStubs();
                 if (deoptimizationStubs != null) {
                     for (DeoptimizationStub stub : deoptimizationStubs) {
                         lirAssembler.emitDeoptizationStub(stub);
@@ -403,17 +398,17 @@ public final class GraalCompilation {
                 // generate traps at the end of the method
                 lirAssembler.emitTraps();
 
-                CiTargetMethod targetMethod = assembler().finishTargetMethod(method, compiler.runtime, lirAssembler.registerRestoreEpilogueOffset, false);
-                if (graph.assumptions().count() > 0) {
-                    targetMethod.setAssumptions(graph.assumptions());
+                CiTargetMethod targetMethod = tma.finishTargetMethod(method, compiler.runtime, lirAssembler.registerRestoreEpilogueOffset, false);
+                if (!graph.start().assumptions().isEmpty()) {
+                    targetMethod.setAssumptions(graph.start().assumptions());
                 }
 
-                if (context.isObserved()) {
-                    context.observable.fireCompilationEvent(new CompilationEvent(this, "After code generation", graph, false, true, targetMethod));
+                if (context().isObserved()) {
+                    context().observable.fireCompilationEvent(new CompilationEvent(this, "After code generation", graph, false, true, targetMethod));
                 }
                 return targetMethod;
             } finally {
-                context.timers.endScope();
+                context().timers.endScope();
             }
         }
 
@@ -439,15 +434,13 @@ public final class GraalCompilation {
         return maxLocks;
     }
 
-    public static GraalCompilation compilation() {
-        GraalCompilation compilation = currentCompilation.get();
-        assert compilation != null;
-        return compilation;
+    private GraalContext context() {
+        return compiler.context;
     }
 
     public void printGraph(String phase, Graph graph) {
-        if (context.isObserved()) {
-            context.observable.fireCompilationEvent(new CompilationEvent(this, phase, graph, true, false));
+        if (context().isObserved()) {
+            context().observable.fireCompilationEvent(new CompilationEvent(this, phase, graph, true, false));
         }
     }
 }

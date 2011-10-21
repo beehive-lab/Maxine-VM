@@ -64,7 +64,7 @@ public interface IntrinsicImpl {
          * method is searched in the registry, then the implicit ID inferred from the method name and signature.
          * @return The intrinsic implementation object, or {@code null} if none is found.
          */
-        public IntrinsicImpl get(RiMethod method) {
+        public IntrinsicImpl get(RiResolvedMethod method) {
             String intrinsic = method.intrinsic();
             if (intrinsic != null) {
                 IntrinsicImpl impl = implRegistry.get(intrinsic);

@@ -22,6 +22,7 @@
  */
 package com.oracle.max.graal.hotspot;
 
+import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.hotspot.nodes.*;
 import com.oracle.max.graal.nodes.*;
 
@@ -36,7 +37,7 @@ public class HotSpotIntrinsicGraphBuilder {
         this.runtime = runtime;
     }
 
-    public CompilerGraph buildGraph(HotSpotIntrinsic intrinsic) {
+    public Graph<EntryPointNode> buildGraph(HotSpotIntrinsic intrinsic) {
         switch (intrinsic) {
             case Thread_currentThread:
                 return buildCurrentThread();
@@ -44,11 +45,10 @@ public class HotSpotIntrinsicGraphBuilder {
         return null;
     }
 
-    private CompilerGraph buildCurrentThread() {
-        CompilerGraph graph = new CompilerGraph(runtime);
+    private Graph<EntryPointNode> buildCurrentThread() {
+        Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(runtime));
         ReturnNode ret = graph.add(new ReturnNode(graph.unique(new CurrentThread(runtime.config.threadObjectOffset))));
         graph.start().setNext(ret);
-        graph.setReturn(ret);
         return graph;
     }
 

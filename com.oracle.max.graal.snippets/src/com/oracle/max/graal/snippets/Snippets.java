@@ -55,9 +55,9 @@ public class Snippets {
                 if (Modifier.isAbstract(modifiers) || Modifier.isNative(modifiers)) {
                     throw new RuntimeException("Snippet must not be abstract or native");
                 }
-                RiMethod snippetRiMethod = runtime.getRiMethod(snippet);
+                RiResolvedMethod snippetRiMethod = runtime.getRiMethod(snippet);
                 GraphBuilderPhase graphBuilder = new GraphBuilderPhase(context, runtime, snippetRiMethod, null, false, true);
-                Graph graph = new CompilerGraph(runtime);
+                Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(runtime));
                 graphBuilder.apply(graph);
 
                 if (plotGraphs) {
@@ -86,7 +86,7 @@ public class Snippets {
                     observer.printSingleGraph(method.getName(), graph);
                 }
 
-                RiMethod targetRiMethod = runtime.getRiMethod(method);
+                RiResolvedMethod targetRiMethod = runtime.getRiMethod(method);
                 targetRiMethod.compilerStorage().put(Graph.class, graph);
             } catch (NoSuchMethodException e) {
                 throw new RuntimeException("Could not resolve method to substitute with: " + snippet.getName(), e);

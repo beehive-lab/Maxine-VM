@@ -73,7 +73,7 @@ public class JsrScope {
         StringBuilder sb = new StringBuilder();
         long tmp = scope;
         sb.append(" [");
-        while (scope != 0) {
+        while (tmp != 0) {
             sb.append(", ").append(tmp & 0xffff);
             tmp = tmp >>> 16;
         }

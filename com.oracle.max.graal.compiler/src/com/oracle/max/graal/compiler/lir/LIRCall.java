@@ -66,31 +66,13 @@ public class LIRCall extends LIRInstruction {
         super(opcode, result, info, !calleeSaved, 0, 0, toArray(arguments));
         this.marks = marks;
         this.pointerSlots = pointerSlots;
-        if (opcode == LIROpcode.DirectCall) {
+        if (opcode == LegacyOpcode.DirectCall) {
             this.targetAddressIndex = -1;
         } else {
             // The last argument is the operand holding the address for the indirect call
             this.targetAddressIndex = arguments.size() - 1;
         }
         this.target = target;
-    }
-
-    /**
-     * Emits target assembly code for this instruction.
-     *
-     * @param masm the target assembler
-     */
-    @Override
-    public void emitCode(LIRAssembler masm) {
-        masm.emitCall(this);
-    }
-
-    /**
-     * Returns the receiver for this method call.
-     * @return the receiver
-     */
-    public CiValue receiver() {
-        return operand(0);
     }
 
     public RiMethod method() {
@@ -115,9 +97,9 @@ public class LIRCall extends LIRInstruction {
             buf.append(operandFmt.format(result())).append(" = ");
         }
         String targetAddress = null;
-        if (code == LIROpcode.RuntimeCall) {
+        if (code == LegacyOpcode.RuntimeCall) {
             buf.append(target);
-        } else if (code != LIROpcode.DirectCall) {
+        } else if (code != LegacyOpcode.DirectCall) {
             if (targetAddressIndex >= 0) {
                 targetAddress = operandFmt.format(targetAddress());
                 buf.append(targetAddress);

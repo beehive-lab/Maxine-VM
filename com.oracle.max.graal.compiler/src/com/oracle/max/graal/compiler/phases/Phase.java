@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@ import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.observer.*;
 import com.oracle.max.graal.compiler.schedule.*;
 import com.oracle.max.graal.graph.*;
+import com.oracle.max.graal.nodes.*;
 import com.sun.cri.ci.*;
 
 public abstract class Phase {
@@ -37,11 +38,11 @@ public abstract class Phase {
     protected Phase(GraalContext context) {
         this.context = context;
         this.name = this.getClass().getSimpleName();
-        this.shouldVerify = GraalOptions.Verify;
+        this.shouldVerify = GraalOptions.VerifyPhases;
     }
 
     protected Phase(GraalContext context, String name) {
-        this(context, name, GraalOptions.Verify);
+        this(context, name, GraalOptions.VerifyPhases);
     }
 
     protected Phase(GraalContext context, String name, boolean shouldVerify) {
@@ -54,36 +55,35 @@ public abstract class Phase {
         return getName();
     }
 
-    public final void apply(Graph graph) {
+    public final void apply(Graph<EntryPointNode> graph) {
         apply(graph, true, true);
     }
 
-    public final void apply(Graph graph, boolean plotOnError, boolean plot) {
-        assert graph != null && (!shouldVerify || graph.verify());
+    public final void apply(Graph<EntryPointNode> graph, boolean plotOnError, boolean plot) {
+        try {
+            assert graph != null && !shouldVerify || graph.verify();
+        } catch (VerificationError e) {
+            throw e.addContext("start of phase", getDetailedName());
+        }
 
         int startDeletedNodeCount = graph.getDeletedNodeCount();
         int startNodeCount = graph.getNodeCount();
         boolean shouldFireCompilationEvents = context.isObserved() && this.getClass() != IdentifyBlocksPhase.class && (plot || GraalOptions.PlotVerbose);
-//        if (shouldFireCompilationEvents) {
-//            compilation.compiler.fireCompilationEvent(new CompilationEvent(compilation, "Before " + getDetailedName(), graph, true, false));
-//        }
         context.timers.startScope(getName());
         try {
-            run(graph);
-        } catch (CiBailout bailout) {
-            throw bailout;
-        } catch (AssertionError t) {
-            if (context.observable.isObserved() && plotOnError) {
-                context.observable.fireCompilationEvent(new CompilationEvent(null, "AssertionError in " + getDetailedName(), graph, true, false, true));
+            try {
+                run(graph);
+            } catch (CiBailout bailout) {
+                throw bailout;
+            } catch (AssertionError e) {
+                throw new VerificationError(e);
+            } catch (RuntimeException e) {
+                throw new VerificationError(e);
+            } finally {
+                context.timers.endScope();
             }
-            throw t;
-        } catch (RuntimeException t) {
-            if (context.observable.isObserved() && plotOnError) {
-                context.observable.fireCompilationEvent(new CompilationEvent(null, "RuntimeException in " + getDetailedName(), graph, true, false, true));
-            }
-            throw t;
-        } finally {
-            context.timers.endScope();
+        } catch (VerificationError e) {
+            throw e.addContext(graph).addContext("phase", getDetailedName());
         }
 
         if (GraalOptions.Meter) {
@@ -100,8 +100,8 @@ public abstract class Phase {
 
         try {
             assert !shouldVerify || graph.verify();
-        } catch (AssertionError e) {
-            throw new RuntimeException("Verification error after phase " + this.getDetailedName(), e);
+        } catch (VerificationError e) {
+            throw e.addContext("end of phase", getDetailedName());
         }
     }
 
@@ -109,5 +109,5 @@ public abstract class Phase {
         return name;
     }
 
-    protected abstract void run(Graph graph);
+    protected abstract void run(Graph<EntryPointNode> graph);
 }

@@ -115,7 +115,7 @@ public abstract class ValueNode extends Node {
      * Computes the exact type of the result of this node, if possible.
      * @return the exact type of the result of this node, if it is known; {@code null} otherwise
      */
-    public RiType exactType() {
+    public RiResolvedType exactType() {
         return null; // default: unknown exact type
     }
 
@@ -123,7 +123,7 @@ public abstract class ValueNode extends Node {
      * Computes the declared type of the result of this node, if possible.
      * @return the declared type of the result of this node, if it is known; {@code null} otherwise
      */
-    public RiType declaredType() {
+    public RiResolvedType declaredType() {
         return null; // default: unknown declared type
     }
 
@@ -158,8 +158,9 @@ public abstract class ValueNode extends Node {
         return properties;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public CompilerGraph graph() {
-        return (CompilerGraph) super.graph();
+    public Graph<EntryPointNode> graph() {
+        return (Graph<EntryPointNode>) super.graph();
     }
 }

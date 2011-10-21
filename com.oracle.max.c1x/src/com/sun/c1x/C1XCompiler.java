@@ -77,7 +77,7 @@ public class C1XCompiler extends ObservableCompiler implements CiCompiler {
         init();
     }
 
-    public CiResult compileMethod(RiMethod method, int osrBCI, CiStatistics stats, DebugInfoLevel debugInfoLevel) {
+    public CiResult compileMethod(RiResolvedMethod method, int osrBCI, CiStatistics stats, DebugInfoLevel debugInfoLevel) {
         if (C1XOptions.PrintCFGToFile && cfgPrinterObserver == null) {
             synchronized (this) {
                 if (cfgPrinterObserver == null) {

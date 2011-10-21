@@ -25,8 +25,8 @@ package com.oracle.max.graal.hotspot;
 import com.oracle.max.graal.hotspot.server.*;
 import com.sun.cri.ri.*;
 
-public interface HotSpotMethodResolved extends RiMethod, Remote {
+public interface HotSpotMethodResolved extends RiResolvedMethod, Remote {
 
-    RiMethod uniqueConcreteMethod();
+    RiResolvedMethod uniqueConcreteMethod();
     void dumpProfile();
 }

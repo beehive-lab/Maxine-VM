@@ -74,11 +74,11 @@ public interface RiSignature {
 
     /**
      * Gets the return kind of this signature.
-     * @param architecture When true, the architecture-specific kind used for emitting machine code is returned.
+     * @param architectureSpecific When true, the architecture-specific kind used for emitting machine code is returned.
      *        When false, the kind according to the Java specification is returned.
      * @return the return kind
      */
-    CiKind returnKind(boolean architecture);
+    CiKind returnKind(boolean architectureSpecific);
 
     /**
      * Converts this signature to a string.

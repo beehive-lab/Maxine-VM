@@ -36,7 +36,7 @@ public class HotSpotConstantPool extends CompilerObject implements RiConstantPoo
 
     private final FastLRUIntCache<RiMethod> methodCache = new FastLRUIntCache<RiMethod>();
     private final FastLRUIntCache<RiField> fieldCache = new FastLRUIntCache<RiField>();
-    private final FastLRUIntCache<RiType> typeCache = new FastLRUIntCache<RiType>();
+    private final FastLRUIntCache<RiResolvedType> typeCache = new FastLRUIntCache<RiResolvedType>();
 
     public static class FastLRUIntCache<T> implements Serializable {
 
@@ -128,8 +128,8 @@ public class HotSpotConstantPool extends CompilerObject implements RiConstantPoo
         RiType result = typeCache.get(cpi);
         if (result == null) {
             result = compiler.getVMEntries().RiConstantPool_lookupType(vmId, cpi);
-            if (result.isResolved()) {
-                typeCache.add(cpi, result);
+            if (result instanceof RiResolvedType) {
+                typeCache.add(cpi, (RiResolvedType) result);
             }
         }
         return result;

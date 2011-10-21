@@ -33,9 +33,7 @@ import com.oracle.max.graal.graph.NodeClass.Position;
  * This class is a graph container, it contains the set of nodes that belong to this graph.
  * The graph contains at least one distinguished node : the {@link #start() start} node.
  */
-public class Graph {
-
-    public static final List<VerificationListener> verificationListeners = new ArrayList<VerificationListener>(4);
+public class Graph<S extends Node> {
 
     private final String name;
 
@@ -45,15 +43,46 @@ public class Graph {
     // they contain the first and last pointer to a linked list of all nodes with this type.
     private final ArrayList<Node> nodeCacheFirst;
     private final ArrayList<Node> nodeCacheLast;
-    private final Node start;
+    private final S start;
     private int deletedNodeCount;
     private int mark;
+
+    private final HashMap<CacheEntry, Node> cachedNodes = new HashMap<CacheEntry, Node>();
+
+    private static final class CacheEntry {
+
+        private final Node node;
+
+        public CacheEntry(Node node) {
+            this.node = node;
+        }
+
+        @Override
+        public int hashCode() {
+            return node.getNodeClass().valueNumber(node);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == this) {
+                return true;
+            }
+            if (obj instanceof Node) {
+                Node other = (Node) obj;
+                NodeClass nodeClass = node.getNodeClass();
+                if (other.getNodeClass() == nodeClass) {
+                    return nodeClass.valueNumberable() && nodeClass.valueEqual(node, other) && nodeClass.edgesEqual(node, other);
+                }
+            }
+            return false;
+        }
+    }
 
     /**
      * Creates a new Graph containing only one node : the provided {@code start} node.
      * @param start the node to use as the {@link #start() start} node
      */
-    public Graph(Node start) {
+    public Graph(S start) {
         this(null, start);
     }
 
@@ -62,7 +91,7 @@ public class Graph {
      * @param name the name of the graph, used for debugging purposes
      * @param start the node to use as the {@link #start() start} node
      */
-    public Graph(String name, Node start) {
+    public Graph(String name, S start) {
         nodes = new ArrayList<Node>(32);
         nodeCacheFirst = new ArrayList<Node>(NodeClass.cacheSize());
         nodeCacheLast = new ArrayList<Node>(NodeClass.cacheSize());
@@ -75,7 +104,7 @@ public class Graph {
         return name == null ? "Graph" : "Graph " + name;
     }
 
-    public Node start() {
+    public S start() {
         return start;
     }
 
@@ -110,10 +139,48 @@ public class Graph {
      * @param node
      * @return the node which was added to the graph or a <i>similar</i> which was already in the graph.
      */
+    @SuppressWarnings("unchecked")
     public <T extends Node & ValueNumberable> T unique(T node) {
-        assert node.getNodeClass().valueNumberable();
-        node.initialize(this);
-        return node;
+        assert checkValueNumberable(node);
+        if (!node.getNodeClass().hasOutgoingEdges()) {
+            Node cachedNode = cachedNodes.get(new CacheEntry(node));
+            if (cachedNode != null && cachedNode.isAlive()) {
+                return (T) cachedNode;
+            } else {
+                Node result = add(node);
+                cachedNodes.put(new CacheEntry(node), result);
+                return (T) result;
+            }
+        } else {
+            Node duplicate = findDuplicate(node);
+            if (duplicate != null) {
+                return (T) duplicate;
+            }
+            return add(node);
+        }
+    }
+
+    public Node findDuplicate(Node node) {
+        if (node.getNodeClass().valueNumberable()) {
+            for (Node input : node.inputs()) {
+                if (input != null) {
+                    for (Node usage : input.usages()) {
+                        if (usage != node && node.getNodeClass().valueEqual(node, usage) && node.getNodeClass().edgesEqual(node, usage)) {
+                            return usage;
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+        return null;
+    }
+
+    private boolean checkValueNumberable(Node node) {
+        if (!node.getNodeClass().valueNumberable()) {
+            throw new VerificationError("node is not valueNumberable").addContext(node);
+        }
+        return true;
     }
 
     public void mark() {
@@ -296,7 +363,7 @@ public class Graph {
     }
 
     void unregister(Node node) {
-        nodes.set(node.id(), Node.Null);
+        nodes.set(node.id(), null);
 
         // nodes aren't removed from the type cache here - they will be removed during iteration
 
@@ -304,8 +371,18 @@ public class Graph {
     }
 
     public boolean verify() {
-        for (Node n : getNodes()) {
-            assert n.verify();
+        for (Node node : getNodes()) {
+            try {
+                try {
+                    assert node.verify();
+                } catch (AssertionError t) {
+                    throw new VerificationError(t);
+                } catch (RuntimeException t) {
+                    throw new VerificationError(t);
+                }
+            } catch (VerificationError e) {
+                throw e.addContext(node).addContext(this);
+            }
         }
         return true;
     }

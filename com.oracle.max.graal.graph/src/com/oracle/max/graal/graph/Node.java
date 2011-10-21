@@ -31,16 +31,25 @@ import com.oracle.max.graal.graph.NodeClass.Position;
 
 /**
  * This class is the base class for all nodes, it represent a node which can be inserted in a {@link Graph}.<br>
- * Once a node has been added to a graph, it has a graph-unique {@link #id()}.
- * Edges in the subclasses are represented with annotated fields. There are two kind of edges : {@link Input} and {@link Successor}.
- * If a field, of a type compatible with {@link Node}, annotated with either {@link Input} and {@link Successor} is not null, then there is an edge
- * from this node to the node this field points to.<br>
- * Fields in a node subclass can also be annotated with {@link Data} : such fields will be used when comparing 2 nodes with {@link #equals(Object)}, for value numbering and for debugging purposes.<br>
+ * Once a node has been added to a graph, it has a graph-unique {@link #id()}. Edges in the subclasses are represented
+ * with annotated fields. There are two kind of edges : {@link Input} and {@link Successor}. If a field, of a type
+ * compatible with {@link Node}, annotated with either {@link Input} and {@link Successor} is not null, then there is an
+ * edge from this node to the node this field points to.<br>
+ * Fields in a node subclass can also be annotated with {@link Data} : such fields will be used when comparing 2 nodes
+ * with {@link #equals(Object)}, for value numbering and for debugging purposes.<br>
  * Nodes which are be value numberable should implement the {@link ValueNumberable} interface.
+ *
+ * <h1>Assertions and Verification</h1>
+ *
+ * The Node class supplies the {@link #assertTrue(boolean, String, Object...)} and
+ * {@link #assertFalse(boolean, String, Object...)} methods, which will check the supplied boolean and throw a
+ * VerificationError if it has the wrong value. Both methods will always either throw an exception or return true.
+ * They can thus be used within an assert statement, so that the check is only performed if assertions are enabled.
+ *
+ *
  */
 public abstract class Node implements Cloneable {
 
-    public static final Node Null = null;
     static final int DELETED_ID = -1;
     static final int INITIAL_ID = -2;
     static final int ALIVE_ID_START = 0;
@@ -59,11 +68,13 @@ public abstract class Node implements Cloneable {
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.PARAMETER)
-    public static @interface NodeParameter {}
+    public static @interface ConstantNodeParameter {}
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
-    public static @interface NodeIntrinsic {}
+    public static @interface NodeIntrinsic {
+        Class value() default NodeIntrinsic.class;
+    }
 
     public interface ValueNumberable {}
 
@@ -75,7 +86,7 @@ public abstract class Node implements Cloneable {
     // this next pointer is used in Graph to implement fast iteration over NodeClass types, it therefore points to the next Node of the same type.
     Node typeCacheNext;
 
-    private NodeReverseList usages;
+    private NodeUsagesList usages;
     private Node predecessor;
     private int modCount;
     private NodeClass nodeClass;
@@ -90,7 +101,7 @@ public abstract class Node implements Cloneable {
         return id;
     }
 
-    public Graph graph() {
+    public Graph<?> graph() {
         return graph;
     }
 
@@ -110,7 +121,7 @@ public abstract class Node implements Cloneable {
         return getNodeClass().getSuccessorIterable(this);
     }
 
-    public final NodeReverseList usages() {
+    public final NodeUsagesList usages() {
         return usages;
     }
 
@@ -125,6 +136,7 @@ public abstract class Node implements Cloneable {
     final void incModCount() {
         modCount++;
     }
+
 
     public String shortName() {
         return getNodeClass().shortName();
@@ -143,11 +155,11 @@ public abstract class Node implements Cloneable {
      * removes this node from oldInput's usages and adds this node to newInput's usages.
      */
     protected void updateUsages(Node oldInput, Node newInput) {
-        assert usages != null : "adding " + newInput + " to " + this;
-        if (usages != null && oldInput != newInput) {
+        assert assertTrue(usages != null, "usages == null while adding %s to %s", newInput, this);
+        if (oldInput != newInput) {
             if (oldInput != null) {
                 boolean result = oldInput.usages.remove(this);
-                assert result;
+                assert assertTrue(result, "not found in usages, old input: %s", oldInput);
             }
             if (newInput != null) {
                 newInput.usages.add(this);
@@ -160,24 +172,24 @@ public abstract class Node implements Cloneable {
      * removes this node from oldSuccessor's predecessors and adds this node to newSuccessor's predecessors.
      */
     protected void updatePredecessors(Node oldSuccessor, Node newSuccessor) {
-        assert usages != null : "adding " + newSuccessor + " to " + this;
-        if (usages != null && oldSuccessor != newSuccessor) {
+        assert assertTrue(usages != null, "usages == null while adding %s to %s", newSuccessor, this);
+        if (oldSuccessor != newSuccessor) {
             if (oldSuccessor != null) {
-                assert oldSuccessor.predecessor == this : "expected pred " + this + " at " + oldSuccessor + ", actual: " + oldSuccessor.predecessor;
+                assert assertTrue(oldSuccessor.predecessor == this, "wrong predecessor in old successor (%s): %s", oldSuccessor, oldSuccessor.predecessor);
                 oldSuccessor.predecessor = null;
             }
             if (newSuccessor != null) {
-                assert newSuccessor.predecessor == null : "expected pred null at " + newSuccessor + ", actual: " + newSuccessor.predecessor + " while trying to set successor on " + this;
+                assert assertTrue(newSuccessor.predecessor == null, "unexpected non-null predecessor in new successor (%s): %s", newSuccessor, newSuccessor.predecessor);
                 newSuccessor.predecessor = this;
             }
         }
     }
 
     void initialize(Graph graph) {
-        assert id == INITIAL_ID : "unexpected id: " + id;
+        assert assertTrue(id == INITIAL_ID, "unexpected id: %d", id);
         this.graph = graph;
         this.id = graph.register(this);
-        usages = new NodeReverseList();
+        usages = new NodeUsagesList();
         for (Node input : inputs()) {
             updateUsages(null, input);
         }
@@ -194,12 +206,18 @@ public abstract class Node implements Cloneable {
         return null;
     }
 
+    private boolean checkReplaceWith(Node other) {
+        assert assertFalse(isDeleted(), "cannot replace deleted node");
+        assert assertTrue(other == null || !other.isDeleted(), "cannot replace with deleted node %s", other);
+        assert assertTrue(other == null || other.graph() == graph, "cannot replace with node in different graph: %s", other == null ? null : other.graph());
+        return true;
+    }
+
     public void replaceAtUsages(Node other) {
-        assert !isDeleted() && (other == null || !other.isDeleted()) : "id: " + id() + ", other: " + other;
-        assert other == null || other.graph == graph;
+        assert checkReplaceWith(other);
         for (Node usage : usages) {
             boolean result = usage.getNodeClass().replaceFirstInput(usage, this, other);
-            assert result : usage + " doesn't contain input " + this;
+            assert assertTrue(result, "not found in inputs, usage: %s", usage);
             if (other != null) {
                 other.usages.add(usage);
             }
@@ -208,17 +226,16 @@ public abstract class Node implements Cloneable {
     }
 
     public void replaceAtPredecessors(Node other) {
-        assert !isDeleted() && (other == null || !other.isDeleted()) : "id: " + id() + ", other: " + other;
+        assert checkReplaceWith(other);
         if (predecessor != null) {
             boolean result = predecessor.getNodeClass().replaceFirstSuccessor(predecessor, this, other);
-            assert result;
+            assert assertTrue(result, "not found in successors, predecessor: %s", predecessor);
             predecessor.updatePredecessors(this, other);
         }
     }
 
     public void replaceAndDelete(Node other) {
-        assert !isDeleted() && (other == null || !other.isDeleted()) : "id: " + id() + ", other: " + other + (other == null ? "" : " (" + other.hashCode() + ")");
-        assert other == null || other.graph == graph;
+        assert checkReplaceWith(other);
         clearSuccessors();
         replaceAtUsages(other);
         replaceAtPredecessors(other);
@@ -238,7 +255,7 @@ public abstract class Node implements Cloneable {
     }
 
     public void clearInputs() {
-        assert !isDeleted();
+        assert assertFalse(isDeleted(), "cannot clear inputs of deleted node");
 
         for (Node input : inputs()) {
             input.usages.remove(this);
@@ -247,40 +264,29 @@ public abstract class Node implements Cloneable {
     }
 
     public void clearSuccessors() {
-        assert !isDeleted();
+        assert assertFalse(isDeleted(), "cannot clear successors of deleted node");
 
         for (Node successor : successors()) {
-            assert successor.predecessor == this : "expected pred " + this + " at " + successor + ", actual: " + successor.predecessor;
+            assert assertTrue(successor.predecessor == this, "wrong predecessor in old successor (%s): %s", successor, successor.predecessor);
             successor.predecessor = null;
         }
         getNodeClass().clearSuccessors(this);
     }
 
+    private boolean checkDeletion() {
+        assertTrue(usages.isEmpty(), "cannot delete node with usages: %s", usages);
+        assertTrue(predecessor == null, "cannot delete node with predecessor: %s", predecessor);
+        return true;
+    }
+
     public void delete() {
-        assert checkDeletion() : "Could not delete " + this + " (usages: " + this.usages() + ", predecessor: " + this.predecessor + ")";
+        assert checkDeletion();
 
         clearInputs();
         clearSuccessors();
         graph.unregister(this);
         id = DELETED_ID;
         assert isDeleted();
-    }
-
-    private boolean checkDeletion() {
-        if (usages.size() != 0 || predecessor != null) {
-            // TODO(ls) this needs to be refactored into an AssertionError subclass with additional information
-            System.out.println(this.shortName() + ", id: " + id + ", usages: " + usages.size());
-            System.out.println("usages:");
-            for (Node n : usages()) {
-                System.out.print(n.id() + " (" + n.shortName() + ") ");
-            }
-            if (predecessor != null) {
-                System.out.println("\npreds:" + predecessor.id() + " (" + predecessor.shortName() + ") ");
-            }
-            System.out.println();
-            return false;
-        }
-        return true;
     }
 
     public final Node copyWithInputs() {
@@ -298,7 +304,7 @@ public abstract class Node implements Cloneable {
         try {
             newNode = (Node) this.clone();
         } catch (CloneNotSupportedException e) {
-            assert false : "cannot happen";
+            throw new VerificationError(e).addContext(this);
         }
         getNodeClass().clearInputs(newNode);
         getNodeClass().clearSuccessors(newNode);
@@ -306,20 +312,10 @@ public abstract class Node implements Cloneable {
         newNode.typeCacheNext = null;
         newNode.id = INITIAL_ID;
         newNode.id = into.register(newNode);
-        newNode.usages = new NodeReverseList();
+        newNode.usages = new NodeUsagesList();
         newNode.predecessor = null;
         newNode.modCount = 0;
         return newNode;
-    }
-
-    /**
-     * Checks that this node is equal to another node for the purposes of value numbering.
-     *
-     * @param i the other node
-     * @return {@code true} if this instruction is equivalent to the specified instruction w.r.t. value numbering
-     */
-    public boolean valueEqual(Node i) {
-        return getNodeClass().valueEqual(this, i);
     }
 
     /**
@@ -340,38 +336,39 @@ public abstract class Node implements Cloneable {
     }
 
     public boolean verify() {
-        assertTrue(isAlive());
+        assertTrue(isAlive(), "cannot verify inactive nodes (id=%d)", id);
+        assertTrue(graph() != null, "null graph");
         for (Node input : inputs()) {
-            assertTrue(input.usages().contains(this));
-            assertTrue(input.graph() == graph());
+            assertTrue(input.usages().contains(this), "missing usage in input %s", input);
+            assertTrue(input.graph() == graph(), "mismatching graph in input %s", input);
         }
         for (Node successor : successors()) {
-            assertTrue(successor.predecessor() == this, "pred of " + successor + " should be: " + this + ", is: " + successor.predecessor());
-            assertTrue(successor.graph() != null, "successor " + successor + " is assigned to no graph!");
-            assertTrue(successor.graph() == graph(), "successor " + successor + " is assigned to a different graph!");
+            assertTrue(successor.predecessor() == this, "missing predecessor in %s (actual: %s)", successor, successor.predecessor());
+            assertTrue(successor.graph() == graph(), "mismatching graph in successor %s", successor);
         }
         for (Node usage : usages()) {
-            assertTrue(usage.inputs().contains(this));
+            assertTrue(usage.inputs().contains(this), "missing input in usage %s", usage);
         }
         if (predecessor != null) {
-            assertTrue(predecessor.successors().contains(this));
+            assertTrue(predecessor.successors().contains(this), "missing successor in predecessor %s", predecessor);
         }
         return true;
     }
 
-    public final void assertTrue(boolean cond) {
-        assert cond || assertionFailure("");
-    }
-
-    public final void assertTrue(boolean cond, String message) {
-        assert cond || assertionFailure(message);
-    }
-
-    public final boolean assertionFailure(String message) {
-        for (VerificationListener l : Graph.verificationListeners) {
-            l.verificationFailed(this, message);
+    public boolean assertTrue(boolean condition, String message, Object... args) {
+        if (condition) {
+            return true;
+        } else {
+            throw new VerificationError(message, args).addContext(this);
         }
-        return true;
+    }
+
+    public boolean assertFalse(boolean condition, String message, Object... args) {
+        if (condition) {
+            throw new VerificationError(message, args).addContext(this);
+        } else {
+            return true;
+        }
     }
 
     public Iterable<? extends Node> cfgPredecessors() {
@@ -382,26 +379,13 @@ public abstract class Node implements Cloneable {
         }
     }
 
+    /**
+     * Returns an iterator that will provide all control-flow successors of this node. Normally this will be the contents of all fields marked as NodeSuccessor,
+     * but some node classes (like EndNode) may return different nodes.
+     * Note that the iterator may generate null values if the fields contain them.
+     */
     public Iterable<? extends Node> cfgSuccessors() {
-        return new Iterable<Node>() {
-            @Override
-            public Iterator<Node> iterator() {
-                return new NullFilteringNodeIterator(successors().iterator());
-            }
-        };
-    }
-
-    public Iterable<? extends Node> dataInputs() {
-        return new Iterable<Node>() {
-            @Override
-            public Iterator<Node> iterator() {
-                return new NullFilteringNodeIterator(inputs().iterator());
-            }
-        };
-    }
-
-    public Iterable<? extends Node> dataUsages() {
-        return this.usages();
+        return successors();
     }
 
     Node get(Position pos) {
@@ -413,35 +397,18 @@ public abstract class Node implements Cloneable {
     }
 
     /**
-     * Compute the value number of this node. Local and global value numbering optimizations use a hash map, and the
-     * value number provides a hash code.
-     *
-     * @return the hashcode of this instruction
+     * hashCode and equals should always rely on object identity alone, thus hashCode and equals are final.
      */
-    public int valueNumber() {
-        return getNodeClass().valueNumber(this);
+    @Override
+    public final int hashCode() {
+        return super.hashCode();
     }
 
+    /**
+     * hashCode and equals should always rely on object identity alone, thus hashCode and equals are final.
+     */
     @Override
-    public int hashCode() {
-        return valueNumber();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == this) {
-            return true;
-        }
-        if (obj instanceof Node) {
-            Node node = (Node) obj;
-            if (node.getNodeClass() == getNodeClass()) {
-                if (node.getNodeClass().valueNumberable()) {
-                    return valueEqual(node) && getNodeClass().edgesEqual(this, node);
-                } else {
-                    return false;
-                }
-            }
-        }
-        return false;
+    public final boolean equals(Object obj) {
+        return super.equals(obj);
     }
 }

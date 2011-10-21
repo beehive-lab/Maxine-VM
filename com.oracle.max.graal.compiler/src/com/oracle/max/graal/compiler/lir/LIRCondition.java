@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,34 +20,30 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.nodes.java;
+package com.oracle.max.graal.compiler.lir;
 
 import com.oracle.max.graal.nodes.calc.*;
-import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiValue.Formatter;
 
-/**
- * Instruction that is used to refer to the address of an on-stack monitor.
- */
-public final class MonitorAddressNode extends FloatingNode {
+public class LIRCondition extends LIRInstruction {
 
-    @Data private int monitorIndex;
+    /**
+     * The condition of this instruction.
+     */
+    public final Condition condition;
 
-    public MonitorAddressNode(int monitorIndex, CiTarget target) {
-        super(target.wordKind);
-        this.monitorIndex = monitorIndex;
+    public LIRCondition(LIROpcode opcode, CiValue result, LIRDebugInfo info, Condition condition, CiValue opr1, CiValue opr2) {
+        super(opcode, result, info, opr1, opr2);
+        this.condition = condition;
     }
 
+    /**
+     * Prints this instruction.
+     */
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitMonitorAddress(this);
-    }
-
-    public int monitorIndex() {
-        return monitorIndex;
-    }
-
-    public void setMonitorIndex(int monitorIndex) {
-        this.monitorIndex = monitorIndex;
+    public String operationString(Formatter operandFmt) {
+        return condition.toString() + " " + super.operationString(operandFmt);
     }
 }
+

@@ -134,7 +134,7 @@ public final class BlockMap {
         private final RiExceptionHandler[] allHandlers;
         private final ArrayMap<HashSet<BlockBegin>> handlerMap;
 
-        ExceptionMap(RiMethod method, byte[] code) {
+        ExceptionMap(RiResolvedMethod method, byte[] code) {
             canTrap = new CiBitMap(code.length);
             isObjectInit = C1XIntrinsic.getIntrinsic(method) == C1XIntrinsic.java_lang_Object$init;
             allHandlers = method.exceptionHandlers();
@@ -226,7 +226,7 @@ public final class BlockMap {
      * @param method the compiler interface method containing the code
      * @param firstBlockNum the first block number to use when creating {@link BlockBegin} nodes
      */
-    public BlockMap(RiMethod method, int firstBlockNum) {
+    public BlockMap(RiResolvedMethod method, int firstBlockNum) {
         byte[] code = method.code();
         this.code = code;
         firstBlock = firstBlockNum;

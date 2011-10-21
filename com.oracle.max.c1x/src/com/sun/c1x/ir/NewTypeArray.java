@@ -33,9 +33,9 @@ import com.sun.cri.ri.*;
  */
 public final class NewTypeArray extends NewArray {
 
-    final RiType elementType;
+    final RiResolvedType elementType;
 
-    public NewTypeArray(Value length, RiType elementType, FrameState stateBefore) {
+    public NewTypeArray(Value length, RiResolvedType elementType, FrameState stateBefore) {
         super(length, stateBefore);
         this.elementType = elementType;
     }
@@ -45,12 +45,12 @@ public final class NewTypeArray extends NewArray {
     }
 
     @Override
-    public RiType declaredType() {
+    public RiResolvedType declaredType() {
         return elementType.arrayOf();
     }
 
     @Override
-    public RiType exactType() {
+    public RiResolvedType exactType() {
         return elementType.arrayOf();
     }
 

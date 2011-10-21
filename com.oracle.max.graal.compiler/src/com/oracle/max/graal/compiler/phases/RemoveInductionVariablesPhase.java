@@ -39,7 +39,7 @@ public class RemoveInductionVariablesPhase extends Phase {
     }
 
     @Override
-    protected void run(Graph graph) {
+    protected void run(Graph<EntryPointNode> graph) {
         loweredIV = graph.createNodeMap();
 
         for (LoopBeginNode loopBegin : graph.getNodes(LoopBeginNode.class)) {
@@ -49,7 +49,7 @@ public class RemoveInductionVariablesPhase extends Phase {
                 for (InductionVariableNode iv2 : inductionVariables) {
                     if (iv1 != iv2 && iv1.isNextIteration(iv2)) {
                         if (nextIterOf == null) {
-                            nextIterOf = new HashMap<InductionVariableNode, InductionVariableNode>();
+                            nextIterOf = new IdentityHashMap<InductionVariableNode, InductionVariableNode>();
                         }
                         nextIterOf.put(iv2, iv1);
                     }

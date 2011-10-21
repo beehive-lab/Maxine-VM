@@ -55,12 +55,13 @@ public final class NewObjectArray extends NewArray {
     }
 
     @Override
-    public RiType exactType() {
-        return elementClass.arrayOf();
+    public RiResolvedType exactType() {
+        RiType result = elementClass.arrayOf();
+        return (result instanceof RiResolvedType) ? (RiResolvedType) result : null;
     }
 
     @Override
-    public RiType declaredType() {
+    public RiResolvedType declaredType() {
         return exactType();
     }
 

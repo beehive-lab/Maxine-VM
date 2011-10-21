@@ -40,7 +40,7 @@ public class FindInductionVariablesPhase extends Phase {
     }
 
     @Override
-    protected void run(Graph graph) {
+    protected void run(Graph<EntryPointNode> graph) {
         List<Loop> loops = LoopUtil.computeLoops(graph);
 
         for (Loop loop : loops) {
@@ -76,7 +76,7 @@ public class FindInductionVariablesPhase extends Phase {
                     continue;
                 }
                 if (loopNodes.isNotNewNotMarked(stride)) {
-                    Graph graph = loopBegin.graph();
+                    Graph<EntryPointNode> graph = loopBegin.graph();
                     if (backEdge instanceof IntegerSubNode) {
                         stride = graph.unique(new NegateNode(stride));
                     }

@@ -37,7 +37,7 @@ public abstract class AccessFieldNode extends StateSplit implements Lowerable {
 
     @Input private ValueNode object;
 
-    @Data protected final RiField field;
+    @Data protected final RiResolvedField field;
 
     public ValueNode object() {
         return object;
@@ -50,11 +50,10 @@ public abstract class AccessFieldNode extends StateSplit implements Lowerable {
      * @param field the compiler interface representation of the field
      * @param graph
      */
-    public AccessFieldNode(CiKind kind, ValueNode object, RiField field) {
+    public AccessFieldNode(CiKind kind, ValueNode object, RiResolvedField field) {
         super(kind);
         this.object = object;
         this.field = field;
-        assert field.isResolved();
         assert field.holder().isInitialized();
     }
 
@@ -62,7 +61,7 @@ public abstract class AccessFieldNode extends StateSplit implements Lowerable {
      * Gets the compiler interface field for this field access.
      * @return the compiler interface field for this field access
      */
-    public RiField field() {
+    public RiResolvedField field() {
         return field;
     }
 

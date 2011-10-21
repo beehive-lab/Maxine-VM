@@ -29,5 +29,5 @@ import com.sun.cri.ri.*;
 
 
 public interface Intrinsifier {
-    Graph intrinsicGraph(RiRuntime runtime, RiMethod caller, int bci, RiMethod method, List<? extends Node> parameters);
+    Graph<?> intrinsicGraph(RiRuntime runtime, RiMethod caller, int bci, RiMethod method, List<? extends Node> parameters);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,23 +20,32 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.compiler.lir;
+package com.sun.cri.ci;
 
-import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiAssumptions.ConcreteMethod;
+import com.sun.cri.ci.CiAssumptions.ConcreteSubtype;
 
 /**
- * The {@code LIRNegate} class definition.
- *
+ * Compiler assumption processor interface between classes implementing set of assumptions and
+ * classes needing iteration over assumptions.
  */
-public class LIRNegate extends LIROp1 {
+public abstract class CiAssumptionProcessor {
 
     /**
-     * Constructs a new instruction LIRNegate for a given operand.
+     * Process a unique concrete method assumption.
      *
-     * @param operand the input operand for this instruction
-     * @param result the result operand for this instruction
+     * @return true if the processor should proceed to next assumption, false if it should stop
      */
-    public LIRNegate(CiValue operand, CiValue result) {
-        super(LIROpcode.Neg, operand, result);
+    public boolean doConcreteMethod(ConcreteMethod cm) {
+        return true;
+    }
+
+    /**
+     * Processes a unique concrete sub-type assumption.
+     *
+     * @return true if the processor should proceed to next assumption, false if it should stop
+     */
+    public boolean doConcreteSubtype(ConcreteSubtype cs) {
+        return true;
     }
 }

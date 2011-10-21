@@ -23,42 +23,21 @@
 package com.oracle.max.graal.compiler.lir;
 
 import com.oracle.max.asm.*;
-
-import com.sun.cri.ci.CiValue.Formatter;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiValue.Formatter;
 
-/**
- * The {@code LIRLabel} class definition.
- */
-public class LIRLabel extends LIROp0 {
+public class LIRLabel extends LIRInstruction {
 
-    private Label label;
+    public final Label label;
 
     /**
      * Constructs a LIRLabel instruction.
      * @param label the label
      */
     public LIRLabel(Label label) {
-        super(LIROpcode.Label, CiValue.IllegalValue, null);
+        super(LegacyOpcode.Label, CiValue.IllegalValue, null);
         assert label != null;
         this.label = label;
-    }
-
-    /**
-     * Gets the label associated to this instruction.
-     * @return the label
-     */
-    public Label label() {
-        return label;
-    }
-
-    /**
-     * Emits target assembly code for this LIRLabel instruction.
-     * @param masm the LIRAssembler
-     */
-    @Override
-    public void emitCode(LIRAssembler masm) {
-        masm.emitOpLabel(this);
     }
 
     /**

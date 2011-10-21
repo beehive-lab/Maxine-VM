@@ -66,8 +66,49 @@ public class UnsafeStore extends StateSplit implements Lowerable {
         tool.getRuntime().lower(this, tool);
     }
 
+    // specialized on value type until boxing/unboxing is sorted out in intrinsification
     @NodeIntrinsic
-    public static Object store(@NodeParameter Object object, @NodeParameter long offset, @NodeParameter Object value, CiKind kind) {
+    public static void store(Object object, long offset, Object value, @ConstantNodeParameter CiKind kind) {
+        throw new UnsupportedOperationException();
+    }
+
+    @NodeIntrinsic
+    public static void store(Object object, long offset, boolean value, @ConstantNodeParameter CiKind kind) {
+        throw new UnsupportedOperationException();
+    }
+
+    @NodeIntrinsic
+    public static void store(Object object, long offset, byte value, @ConstantNodeParameter CiKind kind) {
+        throw new UnsupportedOperationException();
+    }
+
+    @NodeIntrinsic
+    public static void store(Object object, long offset, char value, @ConstantNodeParameter CiKind kind) {
+        throw new UnsupportedOperationException();
+    }
+
+    @NodeIntrinsic
+    public static void store(Object object, long offset, double value, @ConstantNodeParameter CiKind kind) {
+        throw new UnsupportedOperationException();
+    }
+
+    @NodeIntrinsic
+    public static void store(Object object, long offset, float value, @ConstantNodeParameter CiKind kind) {
+        throw new UnsupportedOperationException();
+    }
+
+    @NodeIntrinsic
+    public static void store(Object object, long offset, int value, @ConstantNodeParameter CiKind kind) {
+        throw new UnsupportedOperationException();
+    }
+
+    @NodeIntrinsic
+    public static void store(Object object, long offset, long value, @ConstantNodeParameter CiKind kind) {
+        throw new UnsupportedOperationException();
+    }
+
+    @NodeIntrinsic
+    public static void store(Object object, long offset, short value, @ConstantNodeParameter CiKind kind) {
         throw new UnsupportedOperationException();
     }
 }

@@ -38,7 +38,7 @@ import com.sun.cri.ri.*;
 public final class Intrinsic extends StateSplit {
 
     final C1XIntrinsic intrinsic;
-    final RiMethod target;
+    final RiResolvedMethod target;
     final Value[] arguments;
     final boolean canTrap;
 
@@ -53,7 +53,7 @@ public final class Intrinsic extends StateSplit {
      * @param preservesState {@code true} if the implementation of this intrinsic preserves register state
      * @param canTrap {@code true} if this intrinsic can cause a trap
      */
-    public Intrinsic(CiKind kind, C1XIntrinsic intrinsic, RiMethod target, Value[] args, boolean isStatic,
+    public Intrinsic(CiKind kind, C1XIntrinsic intrinsic, RiResolvedMethod target, Value[] args, boolean isStatic,
                      FrameState stateBefore, boolean preservesState, boolean canTrap) {
         super(kind, stateBefore);
         this.intrinsic = intrinsic;
@@ -94,7 +94,7 @@ public final class Intrinsic extends StateSplit {
      * Gets the target method for this invocation instruction.
      * @return the target method
      */
-    public RiMethod target() {
+    public RiResolvedMethod target() {
         return target;
     }
 

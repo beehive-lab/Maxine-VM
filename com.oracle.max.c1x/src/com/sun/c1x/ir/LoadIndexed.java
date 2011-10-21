@@ -51,8 +51,8 @@ public final class LoadIndexed extends AccessIndexed {
      * @return the declared type
      */
     @Override
-    public RiType declaredType() {
-        RiType arrayType = array().declaredType();
+    public RiResolvedType declaredType() {
+        RiResolvedType arrayType = array().declaredType();
         if (arrayType == null) {
             return null;
         }
@@ -64,9 +64,9 @@ public final class LoadIndexed extends AccessIndexed {
      * @return the exact type
      */
     @Override
-    public RiType exactType() {
-        RiType declared = declaredType();
-        return declared != null && declared.isResolved() ? declared.exactType() : null;
+    public RiResolvedType exactType() {
+        RiResolvedType declared = declaredType();
+        return declared != null ? declared.exactType() : null;
     }
 
     @Override

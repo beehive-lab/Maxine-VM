@@ -49,7 +49,7 @@ public class CanonicalizerPhase extends Phase {
     }
 
     @Override
-    protected void run(Graph graph) {
+    protected void run(Graph<EntryPointNode> graph) {
         nodeWorkList = graph.createNodeWorkList(!newNodes, MAX_ITERATION_PER_NODE);
         if (newNodes) {
             nodeWorkList.addAll(graph.getNewNodes());
