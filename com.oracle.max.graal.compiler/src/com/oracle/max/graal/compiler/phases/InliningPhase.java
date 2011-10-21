@@ -27,6 +27,7 @@ import java.util.*;
 
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
+import com.oracle.max.graal.compiler.observer.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.extensions.*;
@@ -68,10 +69,12 @@ public class InliningPhase extends Phase {
     private abstract static class InlineInfo implements Comparable<InlineInfo> {
         public final InvokeNode invoke;
         public final double weight;
+        public final int level;
 
-        public InlineInfo(InvokeNode invoke, double weight) {
+        public InlineInfo(InvokeNode invoke, double weight, int level) {
             this.invoke = invoke;
             this.weight = weight;
+            this.level = level;
         }
 
         @Override
@@ -85,8 +88,8 @@ public class InliningPhase extends Phase {
     private class StaticInlineInfo extends InlineInfo {
         public final RiResolvedMethod concrete;
 
-        public StaticInlineInfo(InvokeNode invoke, double weight, RiResolvedMethod concrete) {
-            super(invoke, weight);
+        public StaticInlineInfo(InvokeNode invoke, double weight, int level, RiResolvedMethod concrete) {
+            super(invoke, weight, level);
             this.concrete = concrete;
         }
 
@@ -128,8 +131,8 @@ public class InliningPhase extends Phase {
         public final RiResolvedType type;
         public final double probability;
 
-        public TypeGuardInlineInfo(InvokeNode invoke, double weight, RiResolvedMethod concrete, RiResolvedType type, double probability) {
-            super(invoke, weight, concrete);
+        public TypeGuardInlineInfo(InvokeNode invoke, double weight, int level, RiResolvedMethod concrete, RiResolvedType type, double probability) {
+            super(invoke, weight, level, concrete);
             this.type = type;
             this.probability = probability;
         }
@@ -156,8 +159,8 @@ public class InliningPhase extends Phase {
 
     private class AssumptionInlineInfo extends StaticInlineInfo {
 
-        public AssumptionInlineInfo(InvokeNode invoke, double weight, RiResolvedMethod concrete) {
-            super(invoke, weight, concrete);
+        public AssumptionInlineInfo(InvokeNode invoke, double weight, int level, RiResolvedMethod concrete) {
+            super(invoke, weight, level, concrete);
         }
 
         @Override
@@ -183,9 +186,9 @@ public class InliningPhase extends Phase {
         inlineInfos = graph.createNodeMap();
 
         if (hints != null) {
-            scanInvokes(hints);
+            scanInvokes(hints, 0);
         } else {
-            scanInvokes(graph.getNodes(InvokeNode.class));
+            scanInvokes(graph.getNodes(InvokeNode.class), 0);
         }
 
         while (graph.getNodeCount() < GraalOptions.MaximumInstructionCount && !inlineCandidates.isEmpty()) {
@@ -207,6 +210,7 @@ public class InliningPhase extends Phase {
                     TTY.println("inlining %f: %s", info.weight, info);
                 }
                 if (GraalOptions.TraceInlining) {
+                    context.observable.fireCompilationEvent(new CompilationEvent(null, "after inlining " + info, graph, true, false));
                     //printGraph("After " + info, this.graph);
                 }
                 // get the new nodes here, the canonicalizer phase will reset the mark
@@ -220,32 +224,32 @@ public class InliningPhase extends Phase {
                     context.metrics.InlinePerformed++;
                 }
             }
-            if (newNodes != null) {
-                scanInvokes(newNodes);
+            if (newNodes != null && info.level <= GraalOptions.MaximumInlineLevel) {
+                scanInvokes(newNodes, info.level + 1);
             }
         }
     }
 
-    private void scanInvokes(Iterable<? extends Node> newNodes) {
+    private void scanInvokes(Iterable<? extends Node> newNodes, int level) {
         graph.mark();
         for (Node node : newNodes) {
             if (node != null) {
                 if (node instanceof InvokeNode) {
                     InvokeNode invoke = (InvokeNode) node;
-                    scanInvoke(invoke);
+                    scanInvoke(invoke, level);
                 }
                 for (Node usage : node.usages().snapshot()) {
                     if (usage instanceof InvokeNode) {
                         InvokeNode invoke = (InvokeNode) usage;
-                        scanInvoke(invoke);
+                        scanInvoke(invoke, level);
                     }
                 }
             }
         }
     }
 
-    private void scanInvoke(InvokeNode invoke) {
-        InlineInfo info = inlineInvoke(invoke);
+    private void scanInvoke(InvokeNode invoke, int level) {
+        InlineInfo info = inlineInvoke(invoke, level);
         if (info != null) {
             if (GraalOptions.Meter) {
                 context.metrics.InlineConsidered++;
@@ -255,7 +259,7 @@ public class InliningPhase extends Phase {
         }
     }
 
-    private InlineInfo inlineInvoke(InvokeNode invoke) {
+    private InlineInfo inlineInvoke(InvokeNode invoke, int level) {
         if (!checkInvokeConditions(invoke)) {
             return null;
         }
@@ -264,7 +268,7 @@ public class InliningPhase extends Phase {
         if (invoke.opcode() == Bytecodes.INVOKESPECIAL || invoke.target().canBeStaticallyBound()) {
             if (checkTargetConditions(invoke.target())) {
                 double weight = inliningWeight(parent, invoke.target(), invoke);
-                return new StaticInlineInfo(invoke, weight, invoke.target());
+                return new StaticInlineInfo(invoke, weight, level, invoke.target());
             }
             return null;
         }
@@ -274,7 +278,7 @@ public class InliningPhase extends Phase {
             RiResolvedMethod resolved = exact.resolveMethodImpl(invoke.target());
             if (checkTargetConditions(resolved)) {
                 double weight = inliningWeight(parent, resolved, invoke);
-                return new StaticInlineInfo(invoke, weight, resolved);
+                return new StaticInlineInfo(invoke, weight, level, resolved);
             }
             return null;
         }
@@ -293,7 +297,7 @@ public class InliningPhase extends Phase {
         if (concrete != null) {
             if (checkTargetConditions(concrete)) {
                 double weight = inliningWeight(parent, concrete, invoke);
-                return new AssumptionInlineInfo(invoke, weight, concrete);
+                return new AssumptionInlineInfo(invoke, weight, level, concrete);
             }
             return null;
         }
@@ -304,7 +308,7 @@ public class InliningPhase extends Phase {
                 concrete = profile.types[0].resolveMethodImpl(invoke.target());
                 if (concrete != null && checkTargetConditions(concrete)) {
                     double weight = inliningWeight(parent, concrete, invoke);
-                    return new TypeGuardInlineInfo(invoke, weight, concrete, profile.types[0], profile.probabilities[0]);
+                    return new TypeGuardInlineInfo(invoke, weight, level, concrete, profile.types[0], profile.probabilities[0]);
                 }
                 return null;
             } else {
