@@ -98,7 +98,12 @@ Java_com_sun_max_vm_jvmti_JVMTICallbacks_invokeHeapIterationCallback(JNIEnv *env
     return (*callback)(class_tag, size, tag_ptr, length, user_data);
 }
 
-
+JNIEXPORT void JNICALL
+Java_com_sun_max_vm_jvmti_JVMTICallbacks_invokeBreakpointCallback(JNIEnv *env, jclass c, jvmtiEventBreakpoint callback,
+                jvmtiEnv *jvmti_env, jthread thread,
+                jmethodID method, jint location) {
+    (*callback)(jvmti_env, env, thread, method, location);
+}
 void setJVMTIThreadInfo(jvmtiThreadInfo *threadInfo, char *name, jint priority, jboolean is_daemon,
                 jobject thread_group, jobject context_class_loader) {
     threadInfo->name = name;

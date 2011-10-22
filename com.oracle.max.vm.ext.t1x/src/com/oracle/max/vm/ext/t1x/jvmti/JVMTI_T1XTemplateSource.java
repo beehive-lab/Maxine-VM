@@ -1082,5 +1082,10 @@ public class JVMTI_T1XTemplateSource {
         JVMTI.event(JVMTIEvent.METHOD_ENTRY, methodActor);
     }
 
+    @T1X_TEMPLATE(BREAKPOINT)
+    public static void breakpoint(long id) {
+        JVMTIBreakpoints.event(id);
+    }
+
 // END GENERATED CODE
 }

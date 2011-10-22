@@ -88,6 +88,7 @@ public class JVMTIFunctionsSource {
     // These exist solely to avoid compilation errors in the this code. The transformed
     // code defines them as locals in the method as part of the above error checks
     private static final MethodActor methodActor = null;
+    private static final ClassMethodActor classMethodActor = null;
     private static final FieldActor fieldActor = null;
     private static final Thread handleAsThread = null;
     private static final ThreadGroup handleAsThreadGroup = null;
@@ -360,12 +361,16 @@ public class JVMTIFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int SetBreakpoint(Pointer env, MethodID method, long location) {
-        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
+        // PHASES: LIVE
+        // MEMBERID: method=Class:Method
+        return JVMTIBreakpoints.setBreakpoint(classMethodActor, method, location);
     }
 
     @VM_ENTRY_POINT
     private static int ClearBreakpoint(Pointer env, MethodID method, long location) {
-        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
+        // PHASES: LIVE
+        // MEMBERID: method=Class:Method
+        return JVMTIBreakpoints.clearBreakpoint(classMethodActor, method, location);
     }
 
     @VM_ENTRY_POINT
@@ -601,16 +606,16 @@ public class JVMTIFunctionsSource {
     private static int GetMaxLocals(Pointer env, MethodID method, Pointer max_ptr) {
         // PHASES: START,LIVE
         // NULLCHECK: max_ptr
-        // MEMBERID: method=Method
-        return JVMTIClassFunctions.getMaxLocals(methodActor, max_ptr);
+        // MEMBERID: method=Class:Method
+        return JVMTIClassFunctions.getMaxLocals(classMethodActor, max_ptr);
     }
 
     @VM_ENTRY_POINT
     private static int GetArgumentsSize(Pointer env, MethodID method, Pointer size_ptr) {
         // PHASES: START,LIVE
         // NULLCHECK: size_ptr
-        // MEMBERID: method=Method
-        return JVMTIClassFunctions.getArgumentsSize(methodActor, size_ptr);
+        // MEMBERID: method=Class:Method
+        return JVMTIClassFunctions.getArgumentsSize(classMethodActor, size_ptr);
     }
 
     @VM_ENTRY_POINT
@@ -618,24 +623,24 @@ public class JVMTIFunctionsSource {
         // PHASES: START,LIVE
         // CAPABILITIES: CAN_GET_LINE_NUMBERS
         // NULLCHECK: entry_count_ptr,table_ptr
-        // MEMBERID: method=Method
-        return JVMTIClassFunctions.getLineNumberTable(methodActor, entry_count_ptr, table_ptr);
+        // MEMBERID: method=Class:Method
+        return JVMTIClassFunctions.getLineNumberTable(classMethodActor, entry_count_ptr, table_ptr);
     }
 
     @VM_ENTRY_POINT
     private static int GetMethodLocation(Pointer env, MethodID method, Pointer start_location_ptr, Pointer end_location_ptr) {
         // PHASES: START,LIVE
         // NULLCHECK: start_location_ptr,end_location_ptr
-        // MEMBERID: method=Method
-        return JVMTIClassFunctions.getMethodLocation(methodActor, start_location_ptr, end_location_ptr);
+        // MEMBERID: method=Class:Method
+        return JVMTIClassFunctions.getMethodLocation(classMethodActor, start_location_ptr, end_location_ptr);
     }
 
     @VM_ENTRY_POINT
     private static int GetLocalVariableTable(Pointer env, MethodID method, Pointer entry_count_ptr, Pointer table_ptr) {
         // PHASES: LIVE
         // NULLCHECK: entry_count_ptr, table_ptr
-        // MEMBERID: method=Method
-        return JVMTIClassFunctions.getLocalVariableTable(methodActor, entry_count_ptr, table_ptr);
+        // MEMBERID: method=Class:Method
+        return JVMTIClassFunctions.getLocalVariableTable(classMethodActor, entry_count_ptr, table_ptr);
     }
 
     @VM_ENTRY_POINT
@@ -653,7 +658,8 @@ public class JVMTIFunctionsSource {
         // PHASES: START,LIVE
         // CAPABILITIES: CAN_GET_BYTECODES
         // NULLCHECK: bytecode_count_ptr,bytecodes_ptr
-        return JVMTIClassFunctions.getByteCodes(method, bytecode_count_ptr, bytecodes_ptr);
+        // MEMBERID: method=Class:Method
+        return JVMTIClassFunctions.getByteCodes(classMethodActor, bytecode_count_ptr, bytecodes_ptr);
     }
 
     @VM_ENTRY_POINT

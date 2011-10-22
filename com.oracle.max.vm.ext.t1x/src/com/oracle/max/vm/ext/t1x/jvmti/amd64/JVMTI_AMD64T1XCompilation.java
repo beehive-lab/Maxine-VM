@@ -27,6 +27,8 @@ import static com.oracle.max.vm.ext.t1x.T1XTemplateTag.*;
 import com.oracle.max.vm.ext.t1x.*;
 import com.oracle.max.vm.ext.t1x.amd64.*;
 import com.sun.cri.bytecode.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.jvmti.*;
 
 /**
@@ -38,6 +40,13 @@ import com.sun.max.vm.jvmti.*;
  * pseudo-bytecode for method entry) is checked explicitly. If the event is not needed
  * the default compiler templates and behavior are used, otherwise the
  * JVMTI templates and behavior defined here are used.
+ *
+ * Breakpoints are handled by checking every bytecode location against
+ * the list of set breakpoints and on a match, generating the code
+ * for the breakpoint event (via a template for {@link Bytecodes#BREAKPOINT)
+ * before the code for the actual bytecode (before advice essentially).
+ * There is compelling need to recompile to remove a breakpoint, we just
+ * don't deliver the event.
  *
  * TODO: Since field events are specified per field by the agent, a further optimization
  * would be to determine whether the specific field being accessed is subject to a watch.
@@ -52,6 +61,8 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
      * and (@link altT1X#compiler#templates} which are the standard templates.
      */
     private T1XTemplate[] templates;
+    private long[] breakpoints;
+    private int breakpointIndex;
 
     private final T1X defaultT1X;
 
@@ -59,6 +70,13 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
         super(compiler);
         defaultT1X = compiler.altT1X;
         templates = defaultT1X.templates;
+    }
+
+    @Override
+    protected void initCompile(ClassMethodActor method, CodeAttribute codeAttribute) {
+        super.initCompile(method, codeAttribute);
+        breakpoints = JVMTIBreakpoints.getBreakpoints(method);
+        breakpointIndex = 0;
     }
 
     @Override
@@ -76,6 +94,20 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
     @Override
     protected void beginBytecode(int opcode) {
         super.beginBytecode(opcode);
+        if (breakpoints != null) {
+            int currentBCI = stream.currentBCI();
+            if (JVMTIBreakpoints.getLocation(breakpoints[breakpointIndex]) == currentBCI) {
+                templates = compiler.templates;
+                start(BREAKPOINT);
+                assignLong(0, "id", breakpoints[breakpointIndex]);
+                finish();
+                breakpointIndex++;
+                if (breakpointIndex >= breakpoints.length) {
+                    breakpoints = null;
+                }
+            }
+        }
+
         switch (opcode) {
             case Bytecodes.GETFIELD:
             case Bytecodes.GETSTATIC:

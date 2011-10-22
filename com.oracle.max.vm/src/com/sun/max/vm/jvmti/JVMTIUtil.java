@@ -22,8 +22,15 @@
  */
 package com.sun.max.vm.jvmti;
 
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
+
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.jni.*;
+import com.sun.max.vm.jvmti.JVMTIClassFunctions.*;
 
 
 public class JVMTIUtil {
@@ -83,6 +90,35 @@ public class JVMTIUtil {
         double doubleValue;
         Object objectValue;
         Word wordValue;
+    }
+
+    /**
+     * gets to private internals of {@link ClassActor} and avoids placing any JVMTI dependency there, but that could be
+     * revisited.
+     */
+    static class ClassActorProxy {
+
+        @INTRINSIC(UNSAFE_CAST)
+        public static native ClassActorProxy asClassActorProxy(Object object);
+
+        @ALIAS(declaringClass = ClassActor.class)
+        Object initializationState;
+        @ALIAS(declaringClass = ClassActor.class)
+        static Object INITIALIZED;
+        @ALIAS(declaringClass = ClassActor.class)
+        static Object PREPARED;
+        @ALIAS(declaringClass = ClassActor.class)
+        static Object VERIFIED_;
+        @ALIAS(declaringClass = ClassActor.class)
+        Class javaClass;
+    }
+
+    static ClassMethodActor toClassMethodActor(MethodID methodID) {
+        try {
+            return (ClassMethodActor) MethodID.toMethodActor(methodID);
+        } catch (ClassCastException ex) {
+            return null;
+        }
     }
 
 }

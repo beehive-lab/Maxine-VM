@@ -1164,8 +1164,8 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
     @Override
     public void walkHeap(CallbackCellVisitor visitor) {
-//        ImmortalHeap.visitCells(visitor);
-//        Heap.bootHeapRegion.visitCells(visitor);
+        ImmortalHeap.visitCells(visitor);
+        Heap.bootHeapRegion.visitCells(visitor);
         visitCells(visitor);
     }
 

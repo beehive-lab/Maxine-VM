@@ -23,7 +23,6 @@
 package com.sun.max.vm.jvmti;
 
 import static com.sun.max.vm.jni.JniFunctionsGenerator.Customizer;
-import static com.sun.max.vm.jvmti.JVMTIConstants.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.jni.*;
@@ -199,16 +198,24 @@ public class JVMTIFunctionsGenerator {
             StringBuilder sb = new StringBuilder(FIRST_LINE_INDENT);
             for (int i = 0; i < tagArgs.length; i++) {
                 String[] tagParts = tagArgs[i].split("=");
-                String actorName = tagParts[1];
+                String actorNamePair = tagParts[1];
                 String varName = tagParts[0];
+                String[] pairParts = actorNamePair.split(":");
+                boolean subClass = pairParts.length == 2;
+                String actorName = !subClass ? pairParts[0] : pairParts[0] + pairParts[1];
+                String actorBaseName = !subClass ? pairParts[0] : pairParts[1];
                 sb.append(actorName);
                 sb.append("Actor ");
                 String lowerActorName = toFirstLower(actorName);
                 sb.append(lowerActorName);
                 sb.append("Actor");
                 sb.append(" = ");
-                sb.append(actorName);
-                sb.append("ID.to");
+                if (subClass) {
+                    sb.append("JVMTIUtil.to");
+                } else {
+                    sb.append(actorName);
+                    sb.append("ID.to");
+                }
                 sb.append(actorName);
                 sb.append("Actor(");
                 sb.append(varName);
@@ -219,7 +226,7 @@ public class JVMTIFunctionsGenerator {
                 sb.append("Actor == null) {\n");
                 sb.append(INDENT16);
                 sb.append("return JVMTI_ERROR_INVALID_");
-                sb.append(actorName.toUpperCase());
+                sb.append(actorBaseName.toUpperCase());
                 sb.append("ID;\n" + INDENT12 + "}");
             }
             return sb.toString();

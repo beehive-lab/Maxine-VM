@@ -147,7 +147,7 @@ public class T1X implements RuntimeCompiler {
         if (c.method != null) {
             // Re-entrant call to T1X - use a new compilation object that will be discarded
             // once the compilation is done. This should be a very rare occurrence.
-            c = t1XCompilationFactory.newT1XCompilation(t1x);
+            c = t1x.t1XCompilationFactory.newT1XCompilation(t1x);
             reentrant = true;
             if (VMOptions.verboseOption.verboseCompilation || PrintCompilation) {
                 Log.println("Created temporary compilation object for re-entrant T1X compilation");
@@ -448,7 +448,7 @@ public class T1X implements RuntimeCompiler {
                     IINC, IFEQ, IFNE, IFLT, IFGE, IFGT, IFLE, IF_ICMPEQ, IF_ICMPNE, IF_ICMPLT, IF_ICMPGE, IF_ICMPGT, IF_ICMPLE, IF_ACMPEQ, IF_ACMPNE, IFNULL, IFNONNULL, GOTO, GOTO_W,
                     INVOKESPECIAL$void$resolved, INVOKESPECIAL$float$resolved, INVOKESPECIAL$long$resolved, INVOKESPECIAL$double$resolved, INVOKESPECIAL$reference$resolved,
                     INVOKESPECIAL$word$resolved, INVOKESTATIC$void$init, INVOKESTATIC$float$init, INVOKESTATIC$long$init, INVOKESTATIC$double$init, INVOKESTATIC$reference$init,
-                    INVOKESTATIC$word$init, INVOKEVIRTUAL$adviseafter, INVOKEINTERFACE$adviseafter, INVOKESPECIAL$adviseafter, INVOKESTATIC$adviseafter);
+                    INVOKESTATIC$word$init, INVOKEVIRTUAL$adviseafter, INVOKEINTERFACE$adviseafter, INVOKESPECIAL$adviseafter, INVOKESTATIC$adviseafter, BREAKPOINT);
 
     protected boolean isUnimplemented(T1XTemplateTag tag) {
         return UNIMPLEMENTED_TEMPLATES.contains(tag);

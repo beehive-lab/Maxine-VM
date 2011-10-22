@@ -22,10 +22,10 @@
  */
 package com.sun.max.vm.jvmti;
 
-import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import static com.sun.max.vm.jvmti.JVMTICallbacks.*;
 import static com.sun.max.vm.jvmti.JVMTIConstants.*;
 import static com.sun.max.vm.jvmti.JVMTI.*;
+import static com.sun.max.vm.jvmti.JVMTIUtil.ClassActorProxy;
 
 import java.io.*;
 import java.security.*;
@@ -55,7 +55,7 @@ class JVMTIClassFunctions {
         return JVMTI_ERROR_NONE;
     }
 
-    /**
+/**
      * Dispatch the {@link JVMTIEvent#CLASS_FILE_LOAD_HOOK}.
      * We do not check the event state, caller is presumed to have called {@link JVMTI#eventNeeded(int).
      * @param classLoader null for boot
@@ -83,9 +83,7 @@ class JVMTIClassFunctions {
             }
 
             newClassDataPtrPtr.setWord(Word.zero());
-            invokeClassfileLoadHookCallback(callback, env, Word.zero(), JniHandles.createLocalHandle(classLoader),
-                            classNamePtr,
-                            JniHandles.createLocalHandle(protectionDomain), classfileBytesLength,
+            invokeClassfileLoadHookCallback(callback, env, Word.zero(), JniHandles.createLocalHandle(classLoader), classNamePtr, JniHandles.createLocalHandle(protectionDomain), classfileBytesLength,
                             classDataPtr, newClassDataLenPtr, newClassDataPtrPtr);
             if (!classNamePtr.isZero()) {
                 Memory.deallocate(classNamePtr);
@@ -107,10 +105,8 @@ class JVMTIClassFunctions {
     }
 
     /**
-     * Add a directory/jar to the boot classpath.
-     * Only one addition per agent is supported.
-     * Since this if typically called in the ONLOAD phase
-     * we hold the value until Maxine has reached PRISTINE.
+     * Add a directory/jar to the boot classpath. Only one addition per agent is supported. Since this if typically
+     * called in the ONLOAD phase we hold the value until Maxine has reached PRISTINE.
      */
     static int addToBootstrapClassLoaderSearch(Pointer env, Pointer segment) {
         // TODO Handle the case where paths are added after getAddedBootClassPath has been called,
@@ -139,6 +135,7 @@ class JVMTIClassFunctions {
 
     /**
      * Handles any extra paths added in the ONLOAD phase.
+     *
      * @return
      */
     static String getAddedBootClassPath() {
@@ -209,46 +206,24 @@ class JVMTIClassFunctions {
         return JVMTI_ERROR_NONE;
     }
 
-    /**
-     * gets to private internals of {@link ClassActor} and avoids placing any JVMTI
-     * dependency there, but that could be revisited.
-     */
-    private static class ClassActorProxy {
-        @INTRINSIC(UNSAFE_CAST) public static native ClassActorProxy asClassActorProxy(Object object);
-
-        @ALIAS(declaringClass = ClassActor.class)
-        private Object initializationState;
-        @ALIAS(declaringClass = ClassActor.class)
-        private static Object INITIALIZED;
-        @ALIAS(declaringClass = ClassActor.class)
-        private static Object PREPARED;
-        @ALIAS(declaringClass = ClassActor.class)
-        private static Object VERIFIED_;
-    }
-
-    static int getByteCodes(MethodID methodID, Pointer bytecodeCountPtr, Pointer bytecodesPtr) {
-        try {
-            ClassMethodActor classMethodActor = (ClassMethodActor) MethodID.toMethodActor(methodID);
-            byte[] code = classMethodActor.code();
-            bytecodeCountPtr.setInt(code.length);
-            Pointer nativeBytesPtr = Memory.allocate(Size.fromInt(code.length));
-            Memory.writeBytes(code, nativeBytesPtr);
-            bytecodesPtr.setWord(nativeBytesPtr);
-            return JVMTI_ERROR_NONE;
-        } catch (ClassCastException ex) {
-            return JVMTI_ERROR_INVALID_METHODID;
-        }
+    static int getByteCodes(ClassMethodActor classMethodActor, Pointer bytecodeCountPtr, Pointer bytecodesPtr) {
+        byte[] code = classMethodActor.code();
+        bytecodeCountPtr.setInt(code.length);
+        Pointer nativeBytesPtr = Memory.allocate(Size.fromInt(code.length));
+        Memory.writeBytes(code, nativeBytesPtr);
+        bytecodesPtr.setWord(nativeBytesPtr);
+        return JVMTI_ERROR_NONE;
     }
 
     /**
-     * Get the classes whose loading was initiated by the given class loader.
-     * TODO: Handle initiating versus defining loaders (which requires a Maxine upgrade).
+     * Get the classes whose loading was initiated by the given class loader. TODO: Handle initiating versus defining
+     * loaders (which requires a Maxine upgrade).
      */
     static int getClassLoaderClasses(ClassLoader classLoader, Pointer classCountPtr, Pointer classesPtrPtr) {
         if (classLoader == null) {
             classLoader = BootClassLoader.BOOT_CLASS_LOADER;
         }
-        Collection<ClassActor>  classActors = ClassRegistry.makeRegistry(classLoader).getClassActors();
+        Collection<ClassActor> classActors = ClassRegistry.makeRegistry(classLoader).getClassActors();
         int classCount = classActors.size();
         Pointer classesPtr = allocateClassesArray(classCount, classCountPtr, classesPtrPtr);
         if (classesPtr.isZero()) {
@@ -292,12 +267,11 @@ class JVMTIClassFunctions {
     }
 
     /**
-     * Copies at most {@code count} classes into the C array {@code classesArrayPtr}.
-     * Returns the actual number of classes copied. This maybe {@code <= count}
-     * the number of class actors has shrunk due to unloading.
-     * The added classes are stored starting at {@code arrayIndex}.
+     * Copies at most {@code count} classes into the C array {@code classesArrayPtr}. Returns the actual number of
+     * classes copied. This maybe {@code <= count} the number of class actors has shrunk due to unloading. The added
+     * classes are stored starting at {@code arrayIndex}.
      */
-    private static int copyClassActors(Pointer classesArrayPtr, Collection<ClassActor>  classActors, int arrayIndex, int count) {
+    private static int copyClassActors(Pointer classesArrayPtr, Collection<ClassActor> classActors, int arrayIndex, int count) {
         int index = 0;
         for (ClassActor classActor : classActors) {
             if (classActor.isPrimitiveClassActor()) {
@@ -321,28 +295,23 @@ class JVMTIClassFunctions {
         return JVMTI_ERROR_NONE;
     }
 
-    static int getLineNumberTable(MethodActor methodActor, Pointer entryCountPtr, Pointer tablePtr) {
-        try {
-            ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
-            if (classMethodActor.isNative()) {
-                return JVMTI_ERROR_NATIVE_METHOD;
-            }
-            LineNumberTable table = classMethodActor.codeAttribute().lineNumberTable();
-            if (table.isEmpty()) {
-                return JVMTI_ERROR_ABSENT_INFORMATION;
-            }
-            LineNumberTable.Entry[] entries = table.entries();
-            entryCountPtr.setInt(entries.length);
-            Pointer nativeTablePtr = Memory.allocate(Size.fromInt(entries.length * getLineNumberEntrySize()));
-            for (int i = 0; i < entries.length; i++) {
-                LineNumberTable.Entry entry = entries[i];
-                setJVMTILineNumberEntry(nativeTablePtr, i, entry.bci(), entry.lineNumber());
-            }
-            tablePtr.setWord(nativeTablePtr);
-            return JVMTI_ERROR_NONE;
-        } catch (ClassCastException ex) {
-            return JVMTI_ERROR_INVALID_METHODID;
+    static int getLineNumberTable(ClassMethodActor classMethodActor, Pointer entryCountPtr, Pointer tablePtr) {
+        if (classMethodActor.isNative()) {
+            return JVMTI_ERROR_NATIVE_METHOD;
         }
+        LineNumberTable table = classMethodActor.codeAttribute().lineNumberTable();
+        if (table.isEmpty()) {
+            return JVMTI_ERROR_ABSENT_INFORMATION;
+        }
+        LineNumberTable.Entry[] entries = table.entries();
+        entryCountPtr.setInt(entries.length);
+        Pointer nativeTablePtr = Memory.allocate(Size.fromInt(entries.length * getLineNumberEntrySize()));
+        for (int i = 0; i < entries.length; i++) {
+            LineNumberTable.Entry entry = entries[i];
+            setJVMTILineNumberEntry(nativeTablePtr, i, entry.bci(), entry.lineNumber());
+        }
+        tablePtr.setWord(nativeTablePtr);
+        return JVMTI_ERROR_NONE;
     }
 
     private static int lineNumberEntrySize = -1;
@@ -360,34 +329,26 @@ class JVMTIClassFunctions {
     @C_FUNCTION
     private static native void setJVMTILineNumberEntry(Pointer table, int index, long location, int lineNumber);
 
-    static int getLocalVariableTable(MethodActor methodActor, Pointer entryCountPtr, Pointer tablePtr) {
-        try {
-            ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
-            if (classMethodActor.isNative()) {
-                return JVMTI_ERROR_NATIVE_METHOD;
-            }
-            LocalVariableTable table = classMethodActor.codeAttribute().localVariableTable();
-            if (table.isEmpty()) {
-                return JVMTI_ERROR_ABSENT_INFORMATION;
-            }
-            LocalVariableTable.Entry[] entries = table.entries();
-            ConstantPool constantPool = classMethodActor.holder().constantPool();
-            entryCountPtr.setInt(entries.length);
-            Pointer nativeTablePtr = Memory.allocate(Size.fromInt(entries.length * getLocalVariableEntrySize()));
-            for (int i = 0; i < entries.length; i++) {
-                LocalVariableTable.Entry entry = entries[i];
-                setJVMTILocalVariableEntry(nativeTablePtr, i,
-                                CString.utf8FromJava(entry.name(constantPool).string),
-                                CString.utf8FromJava(constantPool.utf8At(entry.descriptorIndex(), "local variable type").toString()),
-                                entry.signatureIndex() == 0 ? Pointer.zero() : CString.utf8FromJava(entry.signature(constantPool).string),
-                                entry.startBCI(), entry.length(), entry.slot());
-            }
-            tablePtr.setWord(nativeTablePtr);
-            return JVMTI_ERROR_NONE;
-        } catch (ClassCastException ex) {
-            return JVMTI_ERROR_INVALID_METHODID;
+    static int getLocalVariableTable(ClassMethodActor classMethodActor, Pointer entryCountPtr, Pointer tablePtr) {
+        if (classMethodActor.isNative()) {
+            return JVMTI_ERROR_NATIVE_METHOD;
         }
-
+        LocalVariableTable table = classMethodActor.codeAttribute().localVariableTable();
+        if (table.isEmpty()) {
+            return JVMTI_ERROR_ABSENT_INFORMATION;
+        }
+        LocalVariableTable.Entry[] entries = table.entries();
+        ConstantPool constantPool = classMethodActor.holder().constantPool();
+        entryCountPtr.setInt(entries.length);
+        Pointer nativeTablePtr = Memory.allocate(Size.fromInt(entries.length * getLocalVariableEntrySize()));
+        for (int i = 0; i < entries.length; i++) {
+            LocalVariableTable.Entry entry = entries[i];
+            setJVMTILocalVariableEntry(nativeTablePtr, i, CString.utf8FromJava(entry.name(constantPool).string),
+                            CString.utf8FromJava(constantPool.utf8At(entry.descriptorIndex(), "local variable type").toString()),
+                            entry.signatureIndex() == 0 ? Pointer.zero() : CString.utf8FromJava(entry.signature(constantPool).string), entry.startBCI(), entry.length(), entry.slot());
+        }
+        tablePtr.setWord(nativeTablePtr);
+        return JVMTI_ERROR_NONE;
     }
 
     private static int localVariableEntrySize = -1;
@@ -403,8 +364,7 @@ class JVMTIClassFunctions {
     private static native int getJVMTILocalVariableEntrySize();
 
     @C_FUNCTION
-    private static native void setJVMTILocalVariableEntry(Pointer table, int index, Pointer name, Pointer signature,
-                    Pointer genericSignature, long location, int length, int slot);
+    private static native void setJVMTILocalVariableEntry(Pointer table, int index, Pointer name, Pointer signature, Pointer genericSignature, long location, int length, int slot);
 
     static int getSourceDebugExtension(Class klass, Pointer sourceDebugExtensionPtr) {
         return JVMTI_ERROR_ABSENT_INFORMATION;
@@ -429,45 +389,30 @@ class JVMTIClassFunctions {
         return JVMTI_ERROR_NONE;
     }
 
-    static int getMaxLocals(MethodActor methodActor, Pointer maxPtr) {
-        try {
-            ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
-            if (classMethodActor.isNative()) {
-                return JVMTI_ERROR_INVALID_METHODID;
-            }
-            maxPtr.setInt(classMethodActor.codeAttribute().maxLocals);
-            return JVMTI_ERROR_NONE;
-        } catch (ClassCastException ex) {
+    static int getMaxLocals(ClassMethodActor classMethodActor, Pointer maxPtr) {
+        if (classMethodActor.isNative()) {
             return JVMTI_ERROR_INVALID_METHODID;
         }
+        maxPtr.setInt(classMethodActor.codeAttribute().maxLocals);
+        return JVMTI_ERROR_NONE;
     }
 
-    static int getArgumentsSize(MethodActor methodActor, Pointer sizePtr) {
-        try {
-            ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
-            if (classMethodActor.isNative()) {
-                return JVMTI_ERROR_INVALID_METHODID;
-            }
-            sizePtr.setInt(classMethodActor.numberOfParameterSlots());
-            return JVMTI_ERROR_NONE;
-        } catch (ClassCastException ex) {
+    static int getArgumentsSize(ClassMethodActor classMethodActor, Pointer sizePtr) {
+        if (classMethodActor.isNative()) {
             return JVMTI_ERROR_INVALID_METHODID;
         }
+        sizePtr.setInt(classMethodActor.numberOfParameterSlots());
+        return JVMTI_ERROR_NONE;
     }
 
-    static int getMethodLocation(MethodActor methodActor, Pointer startLocationPtr, Pointer endLocationPtr) {
-        try {
-            ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
-            if (classMethodActor.isNative()) {
-                return JVMTI_ERROR_INVALID_METHODID;
-            }
-            byte[] code = classMethodActor.codeAttribute().code();
-            startLocationPtr.setInt(0);
-            endLocationPtr.setInt(code.length - 1);
-            return JVMTI_ERROR_NONE;
-        } catch (ClassCastException ex) {
+    static int getMethodLocation(ClassMethodActor classMethodActor, Pointer startLocationPtr, Pointer endLocationPtr) {
+        if (classMethodActor.isNative()) {
             return JVMTI_ERROR_INVALID_METHODID;
         }
+        byte[] code = classMethodActor.codeAttribute().code();
+        startLocationPtr.setInt(0);
+        endLocationPtr.setInt(code.length - 1);
+        return JVMTI_ERROR_NONE;
     }
 
     static int getFieldName(FieldActor fieldActor, Pointer namePtrPtr, Pointer signaturePtrPtr, Pointer genericPtrPtr) {
