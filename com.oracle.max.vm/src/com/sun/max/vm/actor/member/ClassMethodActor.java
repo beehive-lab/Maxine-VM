@@ -54,6 +54,12 @@ public abstract class ClassMethodActor extends MethodActor {
         VMOptions.addFieldOption("-XX:", "TraceJNI", "Trace JNI calls.");
     }
 
+    @RESET
+    public static boolean TraceJVMTI;
+    static {
+        VMOptions.addFieldOption("-XX:", "TraceJVMTI", "Trace JVMTI calls.");
+    }
+
     @INSPECTED
     private CodeAttribute codeAttribute;
 

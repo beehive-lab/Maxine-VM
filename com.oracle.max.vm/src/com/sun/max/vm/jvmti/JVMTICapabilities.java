@@ -22,12 +22,17 @@
  */
 package com.sun.max.vm.jvmti;
 
+import static com.sun.max.vm.jvmti.JVMTIConstants.*;
+import static com.sun.max.vm.jvmti.JVMTIEnvNativeStruct.*;
+
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.holder.*;
 
 /**
  * JVMTI Capabilities.
  * A capability is on if the relevant bit is set in the {@code jvmtiCapabilities struct is set.
  * TODO This code currently assume 64 bit,little endian architecture.
+ * We have enabled some unimplemented capabilities for jdwp evaluation
  */
 enum JVMTICapabilities {
     CAN_TAG_OBJECTS(true),
@@ -45,20 +50,20 @@ enum JVMTICapabilities {
     CAN_GET_LINE_NUMBERS(true),
     CAN_GET_SOURCE_DEBUG_EXTENSION(true),
     CAN_ACCESS_LOCAL_VARIABLES(true),
-    CAN_MAINTAIN_ORIGINAL_METHOD_ORDER(false),
-    CAN_GENERATE_SINGLE_STEP_EVENTS(false),
-    CAN_GENERATE_EXCEPTION_EVENTS(false),
-    CAN_GENERATE_FRAME_POP_EVENTS(false),
+    CAN_MAINTAIN_ORIGINAL_METHOD_ORDER(true),
+    CAN_GENERATE_SINGLE_STEP_EVENTS(true), // TODO
+    CAN_GENERATE_EXCEPTION_EVENTS(true), // TODO
+    CAN_GENERATE_FRAME_POP_EVENTS(true), // TODO
     CAN_GENERATE_BREAKPOINT_EVENTS(true),
     CAN_SUSPEND(true),
     CAN_REDEFINE_ANY_CLASS(false),
     CAN_GET_CURRENT_THREAD_CPU_TIME(false),
     CAN_GET_THREAD_CPU_TIME(false),
     CAN_GENERATE_METHOD_ENTRY_EVENTS(true),
-    CAN_GENERATE_METHOD_EXIT_EVENTS(false),
+    CAN_GENERATE_METHOD_EXIT_EVENTS(true), // TODO
     CAN_GENERATE_ALL_CLASS_HOOK_EVENTS(true),
     CAN_GENERATE_COMPILED_METHOD_LOAD_EVENTS(false),
-    CAN_GENERATE_MONITOR_EVENTS(false),
+    CAN_GENERATE_MONITOR_EVENTS(true), // TODO
     CAN_GENERATE_VM_OBJECT_ALLOC_EVENTS(false),
     CAN_GENERATE_NATIVE_METHOD_BIND_EVENTS(false),
     CAN_GENERATE_GARBAGE_COLLECTION_EVENTS(true),
@@ -124,6 +129,24 @@ enum JVMTICapabilities {
 
     static void setAll(Pointer base) {
         base.setLong(0, allMask);
+    }
+
+    static int addCapabilities(Pointer env, Pointer capabilitiesPtr) {
+        Pointer envCaps = CAPABILITIES.getPtr(env);
+        for (int i = 0; i < values.length; i++) {
+            JVMTICapabilities cap = values[i];
+            if (cap.get(capabilitiesPtr)) {
+                if (cap.can) {
+                    cap.set(envCaps, true);
+                    if (cap == JVMTICapabilities.CAN_MAINTAIN_ORIGINAL_METHOD_ORDER) {
+                        ClassActor.preserveMethodActorOrder();
+                    }
+                } else {
+                    return JVMTI_ERROR_NOT_AVAILABLE;
+                }
+            }
+        }
+        return JVMTI_ERROR_NONE;
     }
 
 }

@@ -270,7 +270,8 @@ public class JniFunctionsGenerator {
     private static void generateFunction(PrintWriter out, JniFunctionDeclaration decl, String body, String returnStatement, Customizer customizer) {
         boolean insertTimers = TIME_JNI_FUNCTIONS && decl.name != null;
 
-        out.println("        Pointer anchor = prologue(env, \"" + decl.name + "\");");
+        out.println("        Pointer anchor = prologue(env);");
+        out.println("        tracePrologue(\"" + decl.name + "\", anchor);");
         if (insertTimers) {
             out.println("        long startTime = System.nanoTime();");
         }
@@ -283,7 +284,8 @@ public class JniFunctionsGenerator {
             out.println("            TIMER_" + decl.name + " += System.nanoTime() - startTime;");
             out.println("            COUNTER_" + decl.name + "++;");
         }
-        out.println("            epilogue(anchor, \"" + decl.name + "\");");
+        out.println("            epilogue(anchor);");
+        out.println("            traceEpilogue(\"" + decl.name + "\");");
         out.println("        }");
         out.println("    }");
         if (insertTimers) {

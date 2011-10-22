@@ -146,6 +146,12 @@ public abstract class ClassActor extends Actor implements RiType {
 
     public final char minorVersion;
 
+    private static boolean preserveOrderedMethodActors;
+
+    /**
+     * The (ordered) array passed into the constructor.
+     * {@code null} unless {@code preserveOrderedMethodActors == true}.
+     */
     private final MethodActor[] methodActors;
 
     private final InterfaceActor[] localInterfaceActors;
@@ -252,7 +258,7 @@ public abstract class ClassActor extends Actor implements RiType {
         }
 
         this.localInterfaceActors = interfaceActors;
-        this.methodActors = methodActors;
+        this.methodActors = preserveOrderedMethodActors ? methodActors : null;
 
         List<StaticMethodActor> staticMethods = new ArrayList<StaticMethodActor>(methodActors.length);
         List<VirtualMethodActor> virtualMethods = Collections.emptyList();
@@ -1284,9 +1290,18 @@ public abstract class ClassActor extends Actor implements RiType {
     }
 
     /**
+     * A request to preserve the ordered methodActors array passed to the constructor (from JVMTI).
+     * @return true if the order preservation is possible.
+     */
+    public static boolean preserveMethodActorOrder() {
+        preserveOrderedMethodActors = true;
+        return true;
+    }
+
+    /**
      * Gets all the methods declared by this class actor.
      */
-    public List<MethodActor> getLocalMethodActors() {
+    public MethodActor[] getLocalMethodActorsArray() {
         MethodActor[] result = new MethodActor[localVirtualMethodActors.length + localStaticMethodActors.length + localInterfaceMethodActors.length];
         int cursor = 0;
         System.arraycopy(localVirtualMethodActors, 0, result, cursor, localVirtualMethodActors.length);
@@ -1294,7 +1309,11 @@ public abstract class ClassActor extends Actor implements RiType {
         System.arraycopy(localStaticMethodActors, 0, result, cursor, localStaticMethodActors.length);
         cursor += localStaticMethodActors.length;
         System.arraycopy(localInterfaceMethodActors, 0, result, cursor, localInterfaceMethodActors.length);
-        return java.util.Arrays.asList(result);
+        return result;
+    }
+
+    public List<MethodActor> getLocalMethodActors() {
+        return java.util.Arrays.asList(getLocalMethodActorsArray());
     }
 
     public final boolean hasSuperClass(ClassActor superClass) {
