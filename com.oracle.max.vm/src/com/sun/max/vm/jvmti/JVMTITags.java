@@ -37,7 +37,8 @@ import com.sun.max.vm.jni.*;
  * We cannot use a standard {@link WeakHashMap} because that invokes
  * the class-specific {@link Object#hashCode()} method, which can have all
  * kinds of inappropriate side effects. Plus we only need a handful
- * of the standard {@link Map} methods, and our value is a {@code long}.
+ * of the standard {@link Map} methods, and our value is a {@code long} not an {@link Object}.
+ *
  */
 class JVMTITags {
 

@@ -40,6 +40,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.jni.*;
+import com.sun.max.vm.jvmti.JVMTIBreakpoints.EventBreakpointID;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
@@ -210,6 +211,9 @@ public class JVMTI {
      * A jvmti env value is agent-specific and can be used across threads.
      * Therefore it cannot have a stored jni env value since that is thread-specific.
      * So we load the current value from the native thread control control block.
+     * and we use a special variant of C_FUNCTION that does not do anything with the
+     * safepoint latch register, since it isn't valid at this point.
+     *
      * One possible problem: if the TLA has been set to triggered or disabled this will be wrong.
      * I believe this could only happen in the case of a callback from such a state
      * and the callback explicitly passes the jni env as well as the jvmti env.
@@ -389,6 +393,10 @@ public class JVMTI {
                         invokeFieldAccessCallback(callback, env, currentThreadHandle(), asFieldEventData(arg1));
                         break;
 
+                    case BREAKPOINT:
+                        EventBreakpointID id = asEventBreakpointID(arg1);
+                        invokeBreakpointCallback(callback, env, currentThreadHandle(), id.methodID, id.location);
+                        break;
                 }
             }
             if (eventId == VM_DEATH) {
@@ -409,6 +417,7 @@ public class JVMTI {
     private static ThreadFieldEventData tfed;
 
     @INTRINSIC(UNSAFE_CAST) public static FieldEventData  asFieldEventData(Object object) { return (FieldEventData) object; }
+    @INTRINSIC(UNSAFE_CAST) public static EventBreakpointID  asEventBreakpointID(Object object) { return (EventBreakpointID) object; }
 
     private static FieldEventData checkGetFieldModificationEvent(int eventType, Object object, int offset, boolean isStatic) {
         if (ignoreEvent(eventType)) {
@@ -425,7 +434,6 @@ public class JVMTI {
 
     @NEVER_INLINE
     public static void fieldAccessEvent(Object object, int offset, boolean isStatic) {
-        // FieldEventData data = asFieldEventData(VmThread.currentTLA().getReference(JVMTI_FIELD_EVENT_DATA.index).toJava());
         FieldEventData data = checkGetFieldModificationEvent(JVMTI_EVENT_FIELD_ACCESS, object, offset, isStatic);
         if (data == null) {
             return;

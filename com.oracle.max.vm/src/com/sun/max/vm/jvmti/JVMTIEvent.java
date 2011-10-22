@@ -68,7 +68,8 @@ public class JVMTIEvent {
     private static final int EVENT_COUNT = JVMTIConstants.JVMTI_MAX_EVENT_TYPE_VAL - JVMTIConstants.JVMTI_MIN_EVENT_TYPE_VAL + 1;
 
     static long CODE_EVENTS_MASK = computeEventBitMask(FIELD_ACCESS) | computeEventBitMask(FIELD_MODIFICATION) |
-                                   computeEventBitMask(METHOD_ENTRY) | computeEventBitMask(METHOD_EXIT);
+                                   computeEventBitMask(METHOD_ENTRY) | computeEventBitMask(METHOD_EXIT) |
+                                   computeEventBitMask(BREAKPOINT) | computeEventBitMask(SINGLE_STEP);
 
     /**
      * Returns a bit mask for the given event, or -1 if invalid.

@@ -146,6 +146,8 @@ public abstract class ClassActor extends Actor implements RiType {
 
     public final char minorVersion;
 
+    private final MethodActor[] methodActors;
+
     private final InterfaceActor[] localInterfaceActors;
 
     @INSPECTED
@@ -250,6 +252,7 @@ public abstract class ClassActor extends Actor implements RiType {
         }
 
         this.localInterfaceActors = interfaceActors;
+        this.methodActors = methodActors;
 
         List<StaticMethodActor> staticMethods = new ArrayList<StaticMethodActor>(methodActors.length);
         List<VirtualMethodActor> virtualMethods = Collections.emptyList();

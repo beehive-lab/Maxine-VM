@@ -160,6 +160,10 @@ public class JVMTI_T1XTemplateGenerator extends T1XTemplateGenerator {
                 case TRACE_METHOD_ENTRY:
                     generateTraceMethodEntry();
                     break;
+
+                case BREAKPOINT:
+                    generateBreakpoint();
+                    break;
             }
         }
 
@@ -198,6 +202,10 @@ public class JVMTI_T1XTemplateGenerator extends T1XTemplateGenerator {
         out.printf("        JVMTI.event(JVMTIEvent.METHOD_ENTRY, methodActor);\n");
     }
 
+    private void generateBreakpoint() {
+        out.printf("        JVMTIBreakpoints.event(id);\n");
+    }
+
     private static String putValue(String k) {
         String value = "value";
         if (k.equals("Word")) {
@@ -215,7 +223,15 @@ public class JVMTI_T1XTemplateGenerator extends T1XTemplateGenerator {
         generateAfterAdvice();
         out.printf("    }%n");
         newLine();
+    }
 
+    private void generateBreakpointTemplate() {
+        startMethodGeneration();
+        generateTemplateTag("%s", BREAKPOINT);
+        out.printf("    public static void breakpoint(long id) {%n");
+        generateBeforeAdvice();
+        out.printf("    }%n");
+        newLine();
     }
 
     JVMTI_T1XTemplateGenerator(PrintStream ps) {
@@ -230,7 +246,7 @@ public class JVMTI_T1XTemplateGenerator extends T1XTemplateGenerator {
         generateGetStaticTemplates();
         generatePutStaticTemplates();
         generateTraceMethodEntryTemplate();
-
+        generateBreakpointTemplate();
     }
 
     static boolean generate(boolean checkOnly, Class target) throws Exception {

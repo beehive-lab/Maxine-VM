@@ -25,11 +25,15 @@ package com.sun.max.vm.jvmti;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.jvmti.JVMTICallbacks.*;
 import static com.sun.max.vm.jvmti.JVMTIConstants.*;
+import static com.sun.max.vm.jvmti.JVMTIUtil.ClassActorProxy;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.jvmti.JVMTIUtil.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 
@@ -74,19 +78,27 @@ public class JVMTIHeapFunctions {
         class CBCV extends CallbackCellVisitor {
             @Override
             protected boolean callback(Object object) {
-                Class objectClass = object.getClass();
                 Pointer tagPtr = Intrinsics.stackAllocate(Word.size());
+                ClassActor classActor = ObjectAccess.readClassActor(object);
+                ClassActorProxy proxyClassActor = ClassActorProxy.asClassActorProxy(classActor);
+
+                /* To avoid the tricky case where we encounter an object whose Class mirror
+                 * has not been set in the ClassActor yet, which would require allocation
+                 * we check the field in classActor directly and observe that such
+                 * an object cannot have been tagged, otherwise its class mirror would be set.
+                 */
+                Class objectClass = proxyClassActor.javaClass == null ? null : proxyClassActor.javaClass;
 
                 if (klass != null && objectClass != klass)  {
                     return true;
                 }
                 if ((heapFilter & JVMTI_HEAP_FILTER_CLASS_TAGGED) != 0) {
-                    if (env.tags.isTagged(objectClass)) {
+                    if (objectClass != null && env.tags.isTagged(objectClass)) {
                         return true;
                     }
                 }
                 if ((heapFilter & JVMTI_HEAP_FILTER_CLASS_UNTAGGED) != 0) {
-                    if (!env.tags.isTagged(objectClass)) {
+                    if (!(objectClass != null && env.tags.isTagged(objectClass))) {
                         return true;
                     }
                 }
@@ -107,7 +119,7 @@ public class JVMTIHeapFunctions {
                     tagPtr.setLong(tag);
                     int flags = invokeHeapIterationCallback(
                                     heapIterationCallback.asPointer(),
-                                    env.tags.getTag(objectClass),
+                                    objectClass == null ? 0 : env.tags.getTag(objectClass),
                                     Layout.size(objectRef).toInt(),
                                     tagPtr,
                                     Layout.isArray(objectRef) ? Layout.readArrayLength(objectRef) : -1,
@@ -136,9 +148,13 @@ public class JVMTIHeapFunctions {
 
         @Override
         protected void doIt() {
-            Heap.disableAllocationForCurrentThread();
-            vmConfig().heapScheme().walkHeap(cbcv);
-            Heap.enableAllocationForCurrentThread();
+            // There should be no allocation in this path, so we enforce that as a debugging aid.
+            try {
+                Heap.disableAllocationForCurrentThread();
+                vmConfig().heapScheme().walkHeap(cbcv);
+            } finally {
+                Heap.enableAllocationForCurrentThread();
+            }
         }
     }
 

@@ -37,6 +37,7 @@ public class JVMTICallbacks {
         new CriticalNativeMethod(JVMTICallbacks.class, "invokeClassfileLoadHookCallback");
         new CriticalNativeMethod(JVMTICallbacks.class, "invokeFieldWatchCallback");
         new CriticalNativeMethod(JVMTICallbacks.class, "invokeHeapIterationCallback");
+        new CriticalNativeMethod(JVMTICallbacks.class, "invokeBreakpointCallback");
     }
 
     static native int invokeAgentOnLoad(Address onLoad, Pointer options);
@@ -55,4 +56,5 @@ public class JVMTICallbacks {
 
     static native int invokeHeapIterationCallback(Pointer callback, long classTag, long size, Pointer tagPtr, int length, Word userData);
 
+    static native void invokeBreakpointCallback(Pointer callback, Pointer jvmtiEnv, Word thread, long methodId, int location);
 }
