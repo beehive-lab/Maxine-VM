@@ -614,7 +614,7 @@ public class VmThread {
     private static void run(Pointer etla, Pointer stackBase, Pointer stackEnd) {
 
         // Enable safepoints:
-        Pointer anchor = JniFunctions.prologue(JNI_ENV.addressIn(etla), null);
+        Pointer anchor = JniFunctions.prologue(JNI_ENV.addressIn(etla));
 
         final VmThread thread = VmThread.current();
 
@@ -677,7 +677,7 @@ public class VmThread {
             JavaLangShutdown.exit(0);
         }
 
-        JniFunctions.epilogue(anchor, null);
+        JniFunctions.epilogue(anchor);
     }
 
     /**
@@ -703,7 +703,7 @@ public class VmThread {
                     Pointer tla) {
 
         // Enable safepoints:
-        Pointer anchor = JniFunctions.prologue(JNI_ENV.addressIn(ETLA.load(tla)), null);
+        Pointer anchor = JniFunctions.prologue(JNI_ENV.addressIn(ETLA.load(tla)));
 
         VmThread thread = VmThread.current();
 
@@ -739,7 +739,7 @@ public class VmThread {
             throwable.printStackTrace(Log.out);
             return JniFunctions.JNI_ERR;
         } finally {
-            JniFunctions.epilogue(anchor, null);
+            JniFunctions.epilogue(anchor);
         }
     }
 
@@ -764,7 +764,7 @@ public class VmThread {
     @VM_ENTRY_POINT
     private static void detach(Pointer tla) {
         // Disable safepoints:
-        Pointer anchor = JniFunctions.prologue(JNI_ENV.addressIn(DTLA.load(tla)), null);
+        Pointer anchor = JniFunctions.prologue(JNI_ENV.addressIn(DTLA.load(tla)));
 
         VmThread thread = VmThread.current();
 
@@ -804,7 +804,7 @@ public class VmThread {
         thread.waitingCondition = null;
         thread.suspendMonitor.destroy();
 
-        JniFunctions.epilogue(anchor, null);
+        JniFunctions.epilogue(anchor);
     }
 
     static class JavaLangShutdown {

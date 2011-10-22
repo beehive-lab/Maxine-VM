@@ -30,7 +30,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jni.*;
-import com.sun.max.vm.jvmti.JVMTIClassFunctions.*;
 
 
 public class JVMTIUtil {
@@ -111,6 +110,8 @@ public class JVMTIUtil {
         static Object VERIFIED_;
         @ALIAS(declaringClass = ClassActor.class)
         Class javaClass;
+        @ALIAS(declaringClass = ClassActor.class)
+        MethodActor[] methodActors;
     }
 
     static ClassMethodActor toClassMethodActor(MethodID methodID) {

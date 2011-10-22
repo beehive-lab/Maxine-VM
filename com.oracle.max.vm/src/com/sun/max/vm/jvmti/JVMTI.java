@@ -122,7 +122,6 @@ public class JVMTI {
                 jvmtiEnv.bootClassPathAdd [j] = 0;
             }
         }
-        new CriticalNativeMethod(JVMTI.class, "currentJniEnv");
     }
 
     @NEVER_INLINE
@@ -204,34 +203,7 @@ public class JVMTI {
         MaxineVM.native_exit(-1);
     }
 
-    /* The standard JNI entry prologue uses the fact that the jni env value is a slot in the
-     * thread local storage area in order to reset the safepoint latch register
-     * on an upcall, by indexing back to the base of the storage area.
-     *
-     * A jvmti env value is agent-specific and can be used across threads.
-     * Therefore it cannot have a stored jni env value since that is thread-specific.
-     * So we load the current value from the native thread control control block.
-     * and we use a special variant of C_FUNCTION that does not do anything with the
-     * safepoint latch register, since it isn't valid at this point.
-     *
-     * One possible problem: if the TLA has been set to triggered or disabled this will be wrong.
-     * I believe this could only happen in the case of a callback from such a state
-     * and the callback explicitly passes the jni env as well as the jvmti env.
-     * TODO We can't change the agent code, but, if this is an issue, there should
-     * be some way to cache the jni env value on the way down and use it on any nested upcalls.
-     *
-     * TODO handle the (error) case of an upcall from an unattached thread
-     */
-
-    @C_FUNCTION(noLatch = true)
-    private static native Pointer currentJniEnv();
-
-    @INLINE
-    static Pointer prologue(Pointer env, String name) {
-        return JniFunctions.prologue(currentJniEnv(), name);
-    }
-
-    /**
+   /**
      * Support for avoiding unnecessary work in the VM.
      * Returns {@code true} iff at least one agent wants to handle this event.
      * @param eventId

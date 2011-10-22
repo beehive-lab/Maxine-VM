@@ -94,7 +94,6 @@ public class JVMTIFunctionsSource {
     private static final ThreadGroup handleAsThreadGroup = null;
     private static final Class<?> handleAsClass = null;
     private static final ClassLoader handleAsClassLoader = null;
-    private static final ClassLoader handleAsObject = null;
     private static final Env jvmtiEnv = null;
 
     @VM_ENTRY_POINT
@@ -530,8 +529,15 @@ public class JVMTIFunctionsSource {
     }
 
     @VM_ENTRY_POINT
-    private static int GetObjectHashCode(Pointer env, JniHandle object, Pointer hash_code_ptr) {
-        return JVMTI_ERROR_NOT_AVAILABLE; // TODO
+    private static int GetObjectHashCode(Pointer env, JniHandle handle, Pointer hash_code_ptr) {
+        // PHASES: START,LIVE
+        // NULLCHECK: hash_code_ptr
+        Object object = handle.unhand();
+        if (object == null) {
+            return JVMTI_ERROR_INVALID_OBJECT;
+        }
+        hash_code_ptr.setInt(System.identityHashCode(object));
+        return JVMTI_ERROR_NONE;
     }
 
     @VM_ENTRY_POINT
@@ -1067,19 +1073,7 @@ public class JVMTIFunctionsSource {
     private static int AddCapabilities(Pointer env, Pointer capabilities_ptr) {
         // PHASES: ONLOAD,LIVE
         // NULLCHECK: capabilities_ptr
-        Pointer envCaps = CAPABILITIES.getPtr(env);
-        for (int i = 0; i < JVMTICapabilities.values.length; i++) {
-            JVMTICapabilities cap = JVMTICapabilities.values[i];
-            if (cap.get(capabilities_ptr)) {
-                if (cap.can) {
-                    cap.set(envCaps, true);
-                } else {
-                    JVMTI.debug(cap);
-                    return JVMTI_ERROR_NOT_AVAILABLE; // TODO
-                }
-            }
-        }
-        return JVMTI_ERROR_NONE;
+        return JVMTICapabilities.addCapabilities(env, capabilities_ptr);
     }
 
     @VM_ENTRY_POINT

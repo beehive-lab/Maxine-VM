@@ -435,17 +435,33 @@ class JVMTIClassFunctions {
     }
 
     static int getClassMethods(Class klass, Pointer methodCountPtr, Pointer methodsPtrPtr) {
-        List<MethodActor> methodActors = ClassActor.fromJava(klass).getLocalMethodActors();
-        Pointer methodsPtr = Memory.allocate(Size.fromInt(methodActors.size() * Word.size()));
+        ClassActor classActor = ClassActor.fromJava(klass);
+        MethodActor[] methodActors = ClassActorProxy.asClassActorProxy(classActor).methodActors;
+        boolean ordered = methodActors != null;
+        if (!ordered) {
+            methodActors = classActor.getLocalMethodActorsArray();
+        }
+        int length = methodActors.length;
+        Pointer methodsPtr = Memory.allocate(Size.fromInt(length * Word.size()));
         if (methodsPtr.isZero()) {
             return JVMTI_ERROR_OUT_OF_MEMORY;
         }
         methodsPtrPtr.setWord(methodsPtr);
-        int size = methodActors.size();
-        for (int i = 0; i < size; i++) {
-            methodsPtr.setWord(i, MethodID.fromMethodActor(methodActors.get(i)));
+        methodCountPtr.setInt(length);
+        // One issue: Maxine puts clinit at the end, it should be first (based on Hotspot).
+        int last = length;
+        int offset = 0;
+        if (ordered) {
+            if (classActor.clinit != null) {
+                assert methodActors[last - 1] == classActor.clinit;
+                methodsPtr.setWord(0, MethodID.fromMethodActor(classActor.clinit));
+                last--;
+                offset++;
+            }
         }
-        methodCountPtr.setInt(size);
+        for (int i = 0; i < last; i++) {
+            methodsPtr.setWord(i + offset, MethodID.fromMethodActor(methodActors[i]));
+        }
         return JVMTI_ERROR_NONE;
     }
 
