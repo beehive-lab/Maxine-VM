@@ -24,12 +24,10 @@ package com.oracle.max.graal.compiler.lir;
 
 import java.util.*;
 
-import com.oracle.max.asm.*;
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.alloc.*;
 import com.oracle.max.graal.compiler.gen.*;
-import com.oracle.max.graal.nodes.calc.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.Mark;
 import com.sun.cri.ri.*;
@@ -88,10 +86,6 @@ public final class LIRList {
         append(new LIRInstruction(LegacyOpcode.Membar, CiValue.IllegalValue, null, CiConstant.forInt(barriers)));
     }
 
-    public void branchDestination(Label lbl) {
-        append(new LIRLabel(lbl));
-    }
-
     public void lea(CiValue src, CiValue dst) {
         append(new LIRInstruction(LegacyOpcode.Lea, dst, null, src));
     }
@@ -126,39 +120,6 @@ public final class LIRList {
 
     public void nullCheck(CiValue opr, LIRDebugInfo info) {
         append(new LIRInstruction(LegacyOpcode.NullCheck, CiValue.IllegalValue, info, opr));
-    }
-
-    public void compareTo(CiValue left, CiValue right, CiValue dst) {
-        append(new LIRInstruction(LegacyOpcode.CompareTo, dst, null, left, right));
-    }
-
-    public void cmove(Condition condition, CiValue src1, CiValue src2, CiValue dst) {
-        append(new LIRCondition(LegacyOpcode.Cmove, dst, null, condition, src1, src2));
-    }
-
-    public void fcmove(Condition condition, CiValue src1, CiValue src2, CiValue dst, boolean unorderedIsSecond) {
-        append(new LIRCondition(unorderedIsSecond ? LegacyOpcode.FCmove : LegacyOpcode.UFCmove, dst, null, condition, src1, src2));
-    }
-
-    public void jump(LIRBlock block) {
-        assert block != null;
-        append(new LIRBranch(LegacyOpcode.Branch, Condition.TRUE, block, null));
-    }
-
-    public void branch(Condition cond, Label lbl) {
-        append(new LIRBranch(LegacyOpcode.Branch, cond, lbl, null));
-    }
-
-    public void branch(Condition cond, Label lbl, LIRDebugInfo info) {
-        append(new LIRBranch(LegacyOpcode.Branch, cond, lbl, info));
-    }
-
-    public void branch(Condition cond, LIRBlock block) {
-        append(new LIRBranch(LegacyOpcode.Branch, cond, block, null));
-    }
-
-    public void branch(Condition cond, LIRBlock block, LIRBlock unordered) {
-        append(new LIRBranch(LegacyOpcode.CondFloatBranch, cond, block, unordered));
     }
 
     public void tableswitch(CiValue index, int lowKey, LIRBlock defaultTargets, LIRBlock[] targets) {

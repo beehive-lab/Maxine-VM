@@ -333,12 +333,14 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         assert src.isRegister();
         assert dest.isRegister();
 
-        if (dest.kind.isFloat()) {
-            masm.movflt(asXmmFloatReg(dest), asXmmFloatReg(src));
-        } else if (dest.kind.isDouble()) {
-            masm.movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(src));
-        } else {
-            moveRegs(src.asRegister(), dest.asRegister());
+        if (!src.equals(dest)) {
+            if (dest.kind.isFloat()) {
+                masm.movflt(asXmmFloatReg(dest), asXmmFloatReg(src));
+            } else if (dest.kind.isDouble()) {
+                masm.movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(src));
+            } else {
+                moveRegs(src.asRegister(), dest.asRegister());
+            }
         }
     }
 
@@ -566,60 +568,6 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void emitBranch(LIRBranch op) {
-
-        assert assertEmitBranch(op);
-
-        if (op.cond() == Condition.TRUE) {
-            masm.jmp(op.label());
-        } else {
-            ConditionFlag acond = ConditionFlag.zero;
-            Label unorderedLabel = null;
-            if (op.code == LegacyOpcode.CondFloatBranch) {
-                if (op.unorderedBlock() == null) {
-                    unorderedLabel = new Label();
-                } else {
-                    unorderedLabel = op.unorderedBlock().label;
-                }
-                if (unorderedLabel != op.label() || !trueOnUnordered(op.cond())) {
-                    masm.jcc(ConditionFlag.parity, unorderedLabel);
-                }
-                // Checkstyle: off
-                switch (op.cond()) {
-                    case EQ : acond = ConditionFlag.equal; break;
-                    case NE : acond = ConditionFlag.notEqual; break;
-                    case BT : acond = ConditionFlag.below; break;
-                    case BE : acond = ConditionFlag.belowEqual; break;
-                    case AE : acond = ConditionFlag.aboveEqual; break;
-                    case AT : acond = ConditionFlag.above; break;
-                    default : throw Util.shouldNotReachHere();
-                }
-            } else {
-                switch (op.cond()) {
-                    case EQ : acond = ConditionFlag.equal; break;
-                    case NE : acond = ConditionFlag.notEqual; break;
-                    case LT : acond = ConditionFlag.less; break;
-                    case LE : acond = ConditionFlag.lessEqual; break;
-                    case GE : acond = ConditionFlag.greaterEqual; break;
-                    case GT : acond = ConditionFlag.greater; break;
-                    case BE : acond = ConditionFlag.belowEqual; break;
-                    case AE : acond = ConditionFlag.aboveEqual; break;
-                    case AT : acond = ConditionFlag.above; break;
-                    case BT : acond = ConditionFlag.below; break;
-                    case OF : acond = ConditionFlag.overflow; break;
-                    case NOF : acond = ConditionFlag.noOverflow; break;
-                    default : throw Util.shouldNotReachHere();
-                }
-                // Checkstyle: on
-            }
-            masm.jcc(acond, op.label());
-            if (unorderedLabel != null && op.unorderedBlock() == null) {
-                masm.bind(unorderedLabel);
-            }
-        }
-    }
-
-    @Override
     protected void emitCompareAndSwap(LIRInstruction op) {
         CiAddress address = new CiAddress(CiKind.Object, op.operand(0), 0);
         CiRegister newval = op.operand(2).asRegister();
@@ -644,136 +592,6 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                 break;
             default:
                 throw Util.shouldNotReachHere();
-        }
-    }
-
-    @Override
-    protected void emitConditionalMove(Condition condition, CiValue opr1, CiValue opr2, CiValue result, boolean mayBeUnordered, boolean unorderedcmovOpr1) {
-        ConditionFlag acond;
-        ConditionFlag ncond;
-        switch (condition) {
-            case EQ:
-                acond = ConditionFlag.equal;
-                ncond = ConditionFlag.notEqual;
-                break;
-            case NE:
-                acond = ConditionFlag.notEqual;
-                ncond = ConditionFlag.equal;
-                break;
-            case LT:
-                acond = ConditionFlag.less;
-                ncond = ConditionFlag.greaterEqual;
-                break;
-            case LE:
-                acond = ConditionFlag.lessEqual;
-                ncond = ConditionFlag.greater;
-                break;
-            case GE:
-                acond = ConditionFlag.greaterEqual;
-                ncond = ConditionFlag.less;
-                break;
-            case GT:
-                acond = ConditionFlag.greater;
-                ncond = ConditionFlag.lessEqual;
-                break;
-            case BE:
-                acond = ConditionFlag.belowEqual;
-                ncond = ConditionFlag.above;
-                break;
-            case BT:
-                acond = ConditionFlag.below;
-                ncond = ConditionFlag.aboveEqual;
-                break;
-            case AE:
-                acond = ConditionFlag.aboveEqual;
-                ncond = ConditionFlag.below;
-                break;
-            case AT:
-                acond = ConditionFlag.above;
-                ncond = ConditionFlag.belowEqual;
-                break;
-            case OF:
-                acond = ConditionFlag.overflow;
-                ncond = ConditionFlag.noOverflow;
-                break;
-            case NOF:
-                acond = ConditionFlag.noOverflow;
-                ncond = ConditionFlag.overflow;
-                break;
-            default:
-                throw Util.shouldNotReachHere();
-        }
-
-        CiValue def = opr1; // assume left operand as default
-        CiValue other = opr2;
-
-        if (opr2.isRegister() && opr2.asRegister() == result.asRegister()) {
-            // if the right operand is already in the result register, then use it as the default
-            def = opr2;
-            other = opr1;
-            // and flip the condition
-            condition = condition.negate();
-            ConditionFlag tcond = acond;
-            acond = ncond;
-            ncond = tcond;
-            unorderedcmovOpr1 = !unorderedcmovOpr1;
-        }
-
-        if (def.isRegister()) {
-            if (def.asRegister() != result.asRegister()) {
-                reg2reg(def, result);
-            }
-        } else if (def.isStackSlot()) {
-            stack2reg(def, result, result.kind);
-        } else {
-            assert def.isConstant();
-            const2reg(def, result);
-        }
-
-        boolean cmovOnParity = (unorderedcmovOpr1 && mayBeTrueOnUnordered(condition.negate())) || (!unorderedcmovOpr1 && mayBeFalseOnUnordered(condition.negate()));
-        if (!other.isConstant() && !(cmovOnParity && def.isConstant())) {
-            // optimized version that does not require a branch
-            cmov(result, ncond, other);
-            if (mayBeUnordered && cmovOnParity) {
-                cmov(result, ConditionFlag.parity, unorderedcmovOpr1 ? def : other);
-            }
-        } else {
-            // conditional move not available, use emit a branch and move
-            Label skip = new Label();
-            Label mov = new Label();
-            if (mayBeUnordered && ((mayBeTrueOnUnordered(condition) && !unorderedcmovOpr1) || (mayBeFalseOnUnordered(condition) && unorderedcmovOpr1))) {
-                masm.jcc(ConditionFlag.parity, unorderedcmovOpr1 ? skip : mov);
-            }
-            masm.jcc(acond, skip);
-            masm.bind(mov);
-            if (other.isRegister()) {
-                reg2reg(other, result);
-            } else if (other.isStackSlot()) {
-                stack2reg(other, result, result.kind);
-            } else {
-                assert other.isConstant();
-                const2reg(other, result);
-            }
-            masm.bind(skip);
-        }
-    }
-
-    private void cmov(CiValue result, ConditionFlag ncond, CiValue other) {
-        if (other.isRegister()) {
-            assert other.asRegister() != result.asRegister() : "other already overwritten by previous move";
-            if (other.kind.isInt()) {
-                masm.cmovl(ncond, result.asRegister(), other.asRegister());
-            } else {
-                masm.cmovq(ncond, result.asRegister(), other.asRegister());
-            }
-        } else {
-            assert other.isStackSlot();
-            CiStackSlot otherSlot = (CiStackSlot) other;
-            if (other.kind.isInt()) {
-                masm.cmovl(ncond, result.asRegister(), frameMap.toStackAddress(otherSlot));
-            } else {
-                masm.cmovq(ncond, result.asRegister(), frameMap.toStackAddress(otherSlot));
-            }
         }
     }
 
@@ -1638,51 +1456,6 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         tasm.recordIndirectCall(before, after, asCallTarget(target), info);
         tasm.recordExceptionHandlers(after, info);
         masm.ensureUniquePC();
-    }
-
-    @Override
-    public boolean falseOnUnordered(Condition condition) {
-        switch(condition) {
-            case AE:
-            case NE:
-            case GT:
-            case AT:
-                return true;
-            case EQ:
-            case LE:
-            case BE:
-            case BT:
-            case LT:
-            case GE:
-            case OF:
-            case NOF:
-                return false;
-            default:
-                throw Util.shouldNotReachHere();
-        }
-    }
-
-    @Override
-    public boolean trueOnUnordered(Condition condition) {
-        switch(condition) {
-            case AE:
-            case NE:
-            case GT:
-            case AT:
-                return false;
-            case EQ:
-            case LE:
-            case BE:
-            case BT:
-                return true;
-            case LT:
-            case GE:
-            case OF:
-            case NOF:
-                return false;
-            default:
-                throw Util.shouldNotReachHere();
-        }
     }
 
     protected void stop(String msg) {

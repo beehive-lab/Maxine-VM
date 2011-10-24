@@ -25,6 +25,7 @@ package com.oracle.max.graal.compiler.target.amd64;
 
 import static com.oracle.max.graal.compiler.target.amd64.AMD64ArithmeticOp.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64CompareOp.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64ControlFlowOp.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertOp.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertOpFI.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertOpFL.*;
@@ -61,7 +62,6 @@ public class AMD64LIRGenerator extends LIRGenerator {
     private static final CiRegisterValue RDX_L = AMD64.rdx.asValue(CiKind.Long);
     private static final CiRegisterValue RCX_I = AMD64.rcx.asValue(CiKind.Int);
 
-    protected static final CiValue ILLEGAL = CiValue.IllegalValue;
 
     public AMD64LIRGenerator(GraalCompilation compilation) {
         super(compilation);
@@ -90,6 +90,76 @@ public class AMD64LIRGenerator extends LIRGenerator {
         CiVariable result = operands.newVariable(cur.kind.stackKind(), VariableFlag.MustBeByteRegister);
         lir.move(cur, result);
         return result;
+    }
+
+    @Override
+    public void emitLabel(Label label) {
+        lir.append(LABEL.create(label));
+    }
+
+    @Override
+    public void emitJump(LIRBlock block) {
+        lir.append(JUMP.create(block));
+    }
+
+    @Override
+    public void emitJump(Label label, LIRDebugInfo info) {
+        lir.append(JUMP.create(label, info));
+    }
+
+    @Override
+    public void emitBranch(CiValue left, CiValue right, Condition cond, boolean unorderedIsTrue, LIRBlock block) {
+        emitCompare(left, right);
+        switch (left.kind) {
+            case Int:
+            case Long:
+            case Object: lir.append(BRANCH.create(cond, block)); break;
+            case Float:
+            case Double: lir.append(FLOAT_BRANCH.create(cond, unorderedIsTrue, block)); break;
+            default: throw Util.shouldNotReachHere();
+        }
+    }
+
+    @Override
+    public void emitBranch(CiValue left, CiValue right, Condition cond, boolean unorderedIsTrue, Label label, LIRDebugInfo info) {
+        emitCompare(left, right);
+        switch (left.kind) {
+            case Int:
+            case Long:
+            case Object: lir.append(BRANCH.create(cond, label, info)); break;
+            case Float:
+            case Double: lir.append(FLOAT_BRANCH.create(cond, unorderedIsTrue, label, info)); break;
+            default: throw Util.shouldNotReachHere();
+        }
+    }
+
+    @Override
+    public CiVariable emitCMove(CiValue left, CiValue right, Condition cond, boolean unorderedIsTrue, CiValue trueValue, CiValue falseValue) {
+        emitCompare(left, right);
+
+        CiVariable result = newVariable(trueValue.kind);
+        switch (left.kind) {
+            case Int:
+            case Long:
+            case Object: lir.append(CMOVE.create(result, cond, makeVariable(trueValue), falseValue)); break;
+            case Float:
+            case Double: lir.append(FLOAT_CMOVE.create(result, cond, unorderedIsTrue, makeVariable(trueValue), makeVariable(falseValue))); break;
+
+        }
+        return result;
+    }
+
+    protected void emitCompare(CiValue leftVal, CiValue right) {
+        CiVariable left = makeVariable(leftVal);
+        switch (left.kind) {
+            case Jsr:
+            case Int: lir.append(ICMP.create(left, right)); break;
+            case Long: lir.append(LCMP.create(left, right)); break;
+            case Object: lir.append(ACMP.create(left, right)); break;
+            case Float: lir.append(FCMP.create(left, right)); break;
+            case Double: lir.append(DCMP.create(left, right)); break;
+            default: throw Util.shouldNotReachHere();
+        }
     }
 
     @Override
@@ -311,18 +381,9 @@ public class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    protected void emitCompare(ValueNode leftNode, ValueNode rightNode) {
-        CiVariable left = load(leftNode);
-        CiValue right = loadNonconstant(rightNode);
-
-        switch (left.kind) {
-            case Int: lir.append(ICMP.create(left, right)); break;
-            case Long: lir.append(LCMP.create(left, right)); break;
-            case Object: lir.append(ACMP.create(left, right)); break;
-            case Float: lir.append(FCMP.create(left, right)); break;
-            case Double: lir.append(DCMP.create(left, right)); break;
-            default: throw Util.shouldNotReachHere();
-        }
+    public void deoptimizeOn(Condition cond) {
+        DeoptimizationStub stub = createDeoptStub("deoptimizeOn " + cond);
+        lir.append(BRANCH.create(cond, stub.label, stub.info));
     }
 
     @Override
@@ -378,27 +439,11 @@ public class AMD64LIRGenerator extends LIRGenerator {
         }
         lir.cas(address, expected, newValue, expected);
 
-        CiValue result = createResultVariable(node);
-        lir.cmove(Condition.EQ, CiConstant.TRUE, CiConstant.FALSE, result);
+        CiVariable result = createResultVariable(node);
+        lir.append(CMOVE.create(result, Condition.EQ, makeVariable(CiConstant.TRUE), CiConstant.FALSE));
 
         if (kind == CiKind.Object) {
             postGCWriteBarrier(address, newValue);
-        }
-    }
-
-    @Override
-    public Condition floatingPointCondition(Condition cond) {
-        switch(cond) {
-            case LT:
-                return Condition.BT;
-            case LE:
-                return Condition.BE;
-            case GT:
-                return Condition.AT;
-            case GE:
-                return Condition.AE;
-            default :
-                return cond;
         }
     }
 

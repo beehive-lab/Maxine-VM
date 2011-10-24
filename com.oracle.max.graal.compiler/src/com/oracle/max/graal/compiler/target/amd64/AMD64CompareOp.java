@@ -32,6 +32,7 @@ public enum AMD64CompareOp implements LIROpcode<AMD64LIRAssembler, LIRInstructio
 
     public LIRInstruction create(CiVariable leftAndResult, CiValue right) {
         assert (name().startsWith("I") && leftAndResult.kind == CiKind.Int && right.kind.stackKind() == CiKind.Int)
+            || (name().startsWith("I") && leftAndResult.kind == CiKind.Jsr && right.kind == CiKind.Jsr)
             || (name().startsWith("L") && leftAndResult.kind == CiKind.Long && right.kind == CiKind.Long)
             || (name().startsWith("A") && leftAndResult.kind == CiKind.Object && right.kind == CiKind.Object)
             || (name().startsWith("F") && leftAndResult.kind == CiKind.Float && right.kind == CiKind.Float)

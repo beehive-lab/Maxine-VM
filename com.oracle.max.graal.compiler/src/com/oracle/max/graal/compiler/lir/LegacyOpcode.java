@@ -34,12 +34,9 @@ public enum LegacyOpcode implements LIROpcode<LIRAssembler, LIRInstruction> {
     // Checkstyle: stop
     // @formatter:off
     BeginOp0,
-        Label,
         Breakpoint,
         RuntimeCall,
         Membar,
-        Branch,
-        CondFloatBranch,
     EndOp0,
     BeginOp1,
         NullCheck,
@@ -57,10 +54,6 @@ public enum LegacyOpcode implements LIROpcode<LIRAssembler, LIRInstruction> {
         Cmpl2i,
         Ucmpfd2i,
         Cmpfd2i,
-        Cmove,
-        FCmove,
-        UFCmove,
-        CompareTo,
     EndOp2,
     NativeCall,
     DirectCall,
@@ -77,13 +70,6 @@ public enum LegacyOpcode implements LIROpcode<LIRAssembler, LIRInstruction> {
 
         LegacyOpcode code = (LegacyOpcode) op.code;
         switch (code) {
-            case Label:
-                lasm.asm.bind(((LIRLabel) op).label);
-                break;
-            case CondFloatBranch:
-            case Branch:
-                lasm.emitBranch((LIRBranch) op);
-                break;
             case TableSwitch:
                 lasm.emitTableSwitch((LIRTableSwitch) op);
                 break;
@@ -160,22 +146,6 @@ public enum LegacyOpcode implements LIROpcode<LIRAssembler, LIRInstruction> {
             case Ucmpfd2i:
                 lasm.emitCompare2Int(op.code, op.operand(0), op.operand(1), op.result());
                 break;
-
-            case FCmove: {
-                LIRCondition condOp = (LIRCondition) op;
-                lasm.emitConditionalMove(condOp.condition, op.operand(0), op.operand(1), op.result(), true, false);
-                break;
-            }
-            case UFCmove: {
-                LIRCondition condOp = (LIRCondition) op;
-                lasm.emitConditionalMove(condOp.condition, op.operand(0), op.operand(1), op.result(), true, true);
-                break;
-            }
-            case Cmove: {
-                LIRCondition condOp = (LIRCondition) op;
-                lasm.emitConditionalMove(condOp.condition, op.operand(0), op.operand(1), op.result(), false, false);
-                break;
-            }
 
             default:
                 throw Util.shouldNotReachHere();
