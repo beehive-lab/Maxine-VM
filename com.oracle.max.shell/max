@@ -1578,9 +1578,22 @@ function run_jrockitbm() {
 #=======================================
 
 projects_usage=""
-projects_help="show contents of all projects.properties files"
+projects_help="show all project properties derived from the projects.properties files"
 function run_projects() {
     run jmax properties
+}
+
+#=======================================
+# 'canonicalizeprojects' command
+#=======================================
+
+canonicalizeprojects_usage=""
+canonicalizeprojects_help="process all project.properties files to canonicalize the project dependencies
+
+    The exit code of this command reflects how many files were updated."
+    
+function run_canonicalizeprojects() {
+    run jmax canonicalizeprojects
 }
 
 #=======================================
