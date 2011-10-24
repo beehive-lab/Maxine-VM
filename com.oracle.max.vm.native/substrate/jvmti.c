@@ -21,6 +21,7 @@
  * questions.
  */
 
+#include <stdlib.h>
 #include <jvmti.h>
 #include <jni.h>
 #include "mutex.h"
@@ -339,12 +340,6 @@ typedef struct {
     long eventMask;
 } JVMTIEnvImplStruct, *JVMTIEnvImpl;
 
-// TODO This all needs to be dynamically allocated per agent.
-
-JVMTIEnvImplStruct jvmtienv_impl;
-jvmtiEventCallbacks jvmtienv_impl_callbacks;
-jvmtiCapabilities jvmtienv_impl_capabilities;
-
 void *getJVMTIInterface(int version) {
     if (version == -1 || version == JVMTI_VERSION) {
         return (void*) &jvmti_extended_interface.jvmtiNativeInterface;
@@ -352,14 +347,16 @@ void *getJVMTIInterface(int version) {
     return NULL;
 }
 
-#include <threadLocals.h>
-
-void *getJVMTIImpl(int version) {
-    jvmtienv_impl.functions = &jvmti_extended_interface;
-    jvmtienv_impl.callbacks = &jvmtienv_impl_callbacks;
-    jvmtienv_impl.capabilities = &jvmtienv_impl_capabilities;
-    jvmtienv_impl.eventMask = 0;
-    ExtendedJvmtiEnv *jvmti = (ExtendedJvmtiEnv*) &jvmtienv_impl;
+void *getJVMTIImpl(JNIEnv *env, int version) {
+    JVMTIEnvImplStruct *jvmtienv_impl = malloc(sizeof(JVMTIEnvImplStruct));
+    if (jvmtienv_impl == NULL) return NULL;    
+    jvmtienv_impl->functions = &jvmti_extended_interface;
+    jvmtienv_impl->callbacks = malloc(sizeof(jvmtiEventCallbacks));
+    if (jvmtienv_impl->callbacks == NULL) return NULL;
+    jvmtienv_impl->capabilities = malloc(sizeof(jvmtiCapabilities));
+    if (jvmtienv_impl->capabilities == NULL) return NULL;
+    jvmtienv_impl->eventMask = 0;
+    ExtendedJvmtiEnv *jvmti = (ExtendedJvmtiEnv*) jvmtienv_impl;
     (*jvmti)->SetJVMTIEnv((jvmtiEnv*) jvmti);
     return (void *)jvmti;
 }
