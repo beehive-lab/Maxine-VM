@@ -24,10 +24,13 @@ package com.oracle.max.vm.ext.graal;
 
 import java.util.*;
 
+import com.oracle.max.graal.compiler.*;
+import com.oracle.max.graal.compiler.graphbuilder.*;
+import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.extensions.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
-import com.sun.cri.bytecode.*;
+import com.oracle.max.vm.ext.graal.nodes.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.unsafe.*;
@@ -46,12 +49,31 @@ public class AccessorIntrinsifier implements Intrinsifier {
                 RiResolvedType accessor = pos.method.accessor();
                 if (accessor != null) {
                     RiResolvedMethod accessorMethod = accessor.resolveMethodImpl(method);
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode());
-                    RiType returnType = accessorMethod.signature().returnType(accessor);
-                    InvokeNode invoke = graph.add(new InvokeNode(callerPos.bci, Bytecodes.INVOKESPECIAL, accessorMethod, parameters.toArray(new ValueNode[0]), returnType));
-                    ReturnNode ret = graph.add(new ReturnNode(invoke));
-                    graph.start().setNext(invoke);
-                    invoke.setNext(ret);
+
+                    // TODO (gd) move this to a graph buidling utility when GBP is moved to its own project
+                    Graph<EntryPointNode> graph = GraphBuilderPhase.cachedGraphs.get(accessorMethod);
+                    if (graph != null) {
+                        Graph<EntryPointNode> duplicate = new Graph<EntryPointNode>(new EntryPointNode(null));
+                        Map<Node, Node> replacements = new IdentityHashMap<Node, Node>();
+                        replacements.put(graph.start(), duplicate.start());
+                        duplicate.addDuplicate(graph.getNodes(), replacements);
+                        graph = duplicate;
+                    } else {
+                        graph = new Graph<EntryPointNode>(new EntryPointNode(runtime));
+                        new GraphBuilderPhase(GraalContext.EMPTY_CONTEXT, runtime, accessorMethod, null).apply(graph, true, false);
+                        if (GraalOptions.ProbabilityAnalysis) {
+                            new DeadCodeEliminationPhase(GraalContext.EMPTY_CONTEXT).apply(graph, true, false);
+                            new ComputeProbabilityPhase(GraalContext.EMPTY_CONTEXT).apply(graph, true, false);
+                        }
+                    }
+
+                    for (LocalNode l : graph.start().locals()) {
+                        if (l.index() == 0) {
+                            UnsafeCastNode cast = graph.add(new UnsafeCastNode(l, accessor));
+                            l.replaceAtUsages(cast);
+                            break;
+                        }
+                    }
                     return graph;
                 }
                 pos = pos.caller;
