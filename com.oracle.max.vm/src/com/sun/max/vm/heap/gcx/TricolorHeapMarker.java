@@ -133,6 +133,23 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
     static final int bitIndexInWordMask = LAST_BIT_INDEX_IN_WORD;
 
+    static class MarkingError extends Error {
+        private MarkingError(String message) {
+            super(message);
+        }
+        static MarkingError greyMarkFoundError = new MarkingError("must not have grey marks");
+        static MarkingError nullHubError = new MarkingError("must not have null Hub");
+        static MarkingError rightmostNotBlackError = new MarkingError("rightmost live object must be marked black");
+        static MarkingError markedFreeChunkError = new MarkingError("must not mark FreeHeapChunk");
+
+        void report() {
+            if (MaxineVM.isDebug()) {
+                throw this;
+            }
+            FatalError.unexpected(getMessage());
+        }
+    }
+
     static boolean UseRescanMap;
     static boolean UseDeepMarkStackFlush = true;
     static boolean TraceMarking = false;
@@ -171,10 +188,10 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     }
 
     /**
-     * Return the index within a word of the bit index.
+     * Return the position of the bit identified by a bit index within the word holding that bit.
      *
      * @param bitIndex
-     * @return
+     * @return a bit position within a word.
      */
     @INLINE
     static int bitIndexInWord(int bitIndex) {
@@ -355,9 +372,12 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     final void checkGreyCellHub(Address cell, Hub hub) {
         if (hub == null) {
             traceMark(cell, GREY, " ***  has null hub !\n");
-            FatalError.unexpected("not a valid object");
+            MarkingError.nullHubError.report();
         }
-        FatalError.check(hub != HeapFreeChunk.HEAP_FREE_CHUNK_HUB, "Must never mark a HeapFreeChunk");
+        if (hub == HeapFreeChunk.HEAP_FREE_CHUNK_HUB) {
+            traceMark(cell, GREY, " ***  free chunk with mark !\n");
+            MarkingError.markedFreeChunkError.report();
+        }
     }
 
     void startTimer(Timer timer) {
@@ -792,7 +812,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             final long greymask =  bitmaskFor(greyBitIndex);
             if ((bitmapWordAt(greyBitIndex) & greymask) != 0L) {
                 traceMark(addressOf(bitIndex), GREY, greyBitIndex, " *** grey bit set at index\n");
-                FatalError.unexpected("Must have no grey marks");
+                MarkingError.greyMarkFoundError.report();
             }
         }
         return true;
@@ -1316,7 +1336,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                             heapMarker.traceMark(rightmost, heapMarker.color(rbi), rbi, " *** rightmost object must be marked black\n");
                             printState();
                             heapMarker.overflowScanState.printState();
-                            FatalError.unexpected("rightmost object must be marked black");
+                            MarkingError.rightmostNotBlackError.report();
                         }
                         if (MaxineVM.isDebug() && TraceMarking) {
                             Log.println("End Forward Scan");
@@ -1546,7 +1566,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             if (hub == HeapFreeChunk.HEAP_FREE_CHUNK_HUB) {
                 if (MaxineVM.isDebug() && !isWhite(bitIndex)) {
                     traceMark(origin, color(bitIndex), " *** found chunk at non-white mark\n");
-                    FatalError.unexpected("Must not have FreeHeapChunk when tracing");
+                    throw MarkingError.markedFreeChunkError;
                 }
                 p = p.plus(HeapFreeChunk.getFreechunkSize(p));
             } else {
@@ -1634,7 +1654,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             Log.println(currentScanState == forwardScanState ? "FW" : "OFW");
             forwardScanState.printState();
             overflowScanState.printState();
-            FatalError.unexpected("Must not have any grey marks");
+            MarkingError.greyMarkFoundError.report();
         }
     }
 
@@ -2102,15 +2122,16 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     }
 
     /**
-     * Mark all live objects that resides in the heap regions enumerated by the iterable region range.
-     * @param regionsRanges enumerate ranges of heap regions holding objects to trace
+     * Mark live all objects reachable from roots and residing in the heap regions enumerated by the iterable region range.
+     *
+     * @param regionsRanges
      */
-    public void markAll(HeapRegionRangeIterable regionsRanges) {
+    private void mark(HeapRegionRangeIterable regionsRanges) {
         traceGCTimes = Heap.traceGCTime();
         if (traceGCTimes) {
             recoveryScanTimer.reset();
         }
-        FatalError.check(markingStack.isEmpty(), "Marking stack must be empty");
+        markingStack.reset();
         clearColorMap();
         overflowScanState.setHeapRegionsRanges(regionsRanges);
         markRoots();
@@ -2130,6 +2151,49 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         if (VerifyAfterMarking || VerifyGreyLessAreas) {
             regionsRanges.reset();
             verifyHasNoGreyMarks(regionsRanges, forwardScanState.endOfRightmostVisitedObject());
+        }
+    }
+
+    /**
+     * Mark all live objects that resides in the heap regions enumerated by the iterable region range.
+     * @param regionsRanges enumerate ranges of heap regions holding objects to trace
+     */
+    public void markAll(HeapRegionRangeIterable regionsRanges) {
+        traceGCTimes = Heap.traceGCTime();
+        if (traceGCTimes) {
+            recoveryScanTimer.reset();
+        }
+        if (MaxineVM.isDebug()) {
+            Throwable markFailure = null;
+            try {
+                mark(regionsRanges);
+            } catch (Throwable t) {
+                markFailure = t;
+            }
+
+            if  (markFailure != null) {
+                Log.println("\n *** Caught marking failure. Redoing Marking with Traces on\n");
+                String msg = "*** Redoing marking raised same failure";
+                try {
+                    // Redo the marking phase but with traces this time.
+                    regionsRanges.reset();
+                    TraceMarking = true;
+                    mark(regionsRanges);
+                    // If we had a failure because of some bug in tracing, the bug should be deterministic and we should have it again here too.
+                    // Either way, if we had a failure once, we're in trouble.
+                    msg = "***  Redoing failed marking didn't raise any failure!";
+                } catch (Throwable t) {
+                    if (t.getClass() != markFailure.getClass()) {
+                        // Had a different failure than the one that cause this retrace!
+                        // It's worth reporting.
+                        msg = "*** Redoing marking raised different failure !!!";
+                    }
+                }
+                FatalError.breakpoint();
+                FatalError.crash(msg);
+            }
+        } else {
+            mark(regionsRanges);
         }
         startTimer(weakRefTimer);
         markPhase = MARK_PHASE.SPECIAL_REF;
