@@ -2,18 +2,18 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.vmdi"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.jdwp"/>
 	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.base"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.cri"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.criutils"/>
-	<classpathentry exported="true" kind="lib" path="/com.oracle.max.vm/classes"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.asm"/>
+	<classpathentry exported="true" kind="lib" path="/com.oracle.max.vm/classes"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.vm"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.elf"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.vmdi"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.asmdis"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.hcfdis"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.elf"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.tele.vm"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.jdwp"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
