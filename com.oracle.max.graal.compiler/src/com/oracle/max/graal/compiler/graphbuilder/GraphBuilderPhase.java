@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.compiler.phases;
+package com.oracle.max.graal.compiler.graphbuilder;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
 import static java.lang.reflect.Modifier.*;
@@ -30,14 +30,13 @@ import java.util.*;
 
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
-import com.oracle.max.graal.compiler.graph.*;
-import com.oracle.max.graal.compiler.graph.BlockMap.Block;
-import com.oracle.max.graal.compiler.graph.BlockMap.DeoptBlock;
-import com.oracle.max.graal.compiler.graph.BlockMap.ExceptionBlock;
+import com.oracle.max.graal.compiler.graphbuilder.BlockMap.Block;
+import com.oracle.max.graal.compiler.graphbuilder.BlockMap.DeoptBlock;
+import com.oracle.max.graal.compiler.graphbuilder.BlockMap.ExceptionBlock;
+import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.compiler.schedule.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.compiler.util.LoopUtil.Loop;
-import com.oracle.max.graal.compiler.value.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.DeoptimizeNode.DeoptAction;

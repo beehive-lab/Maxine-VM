@@ -27,6 +27,7 @@ import java.util.*;
 
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
+import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.extensions.*;
 import com.oracle.max.graal.graph.*;

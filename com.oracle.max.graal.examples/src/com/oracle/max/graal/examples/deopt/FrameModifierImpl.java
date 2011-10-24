@@ -25,7 +25,7 @@ package com.oracle.max.graal.examples.deopt;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.oracle.max.graal.compiler.value.*;
+import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.extensions.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiVirtualObject.CiVirtualObjectFactory;
