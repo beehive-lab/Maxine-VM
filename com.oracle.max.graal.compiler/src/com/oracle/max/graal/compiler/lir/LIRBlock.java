@@ -290,8 +290,7 @@ public final class LIRBlock {
             LIRXirInstruction lirXirInstruction = (LIRXirInstruction) lirInstruction;
             return (lirXirInstruction.falseSuccessor() != null) && (lirXirInstruction.trueSuccessor() != null);
         }
-        LIROpcode code = lirInstruction.code;
-        return code == LegacyOpcode.Branch || code == LegacyOpcode.TableSwitch;
+        return lirInstruction instanceof LIRBranch;
     }
 
     public boolean isExceptionEntry() {

@@ -22,6 +22,7 @@
  */
 package com.oracle.max.graal.nodes.calc;
 
+import com.oracle.max.cri.intrinsics.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -87,9 +88,7 @@ public enum Condition {
     /**
      * Operation did not produce an overflow.
      */
-    NOF("noOverflow"),
-
-    TRUE("TRUE");
+    NOF("noOverflow");
 
     public final String operator;
 
@@ -105,10 +104,10 @@ public enum Condition {
             case LE: return left <= right;
             case GT: return left > right;
             case GE: return left >= right;
-            case BT: return (left & 0xffffffffL) < (right & 0xffffffffL);
-            case BE: return (left & 0xffffffffL) <= (right & 0xffffffffL);
-            case AT: return (left & 0xffffffffL) > (right & 0xffffffffL);
-            case AE: return (left & 0xffffffffL) >= (right & 0xffffffffL);
+            case AE: return UnsignedMath.aboveOrEqual(left, right);
+            case BE: return UnsignedMath.belowOrEqual(left, right);
+            case AT: return UnsignedMath.aboveThan(left, right);
+            case BT: return UnsignedMath.belowThan(left, right);
         }
         throw new IllegalArgumentException();
     }
@@ -174,6 +173,10 @@ public enum Condition {
     public Boolean foldCondition(CiConstant lt, CiConstant rt, RiRuntime runtime, boolean unorderedIsTrue) {
         switch (lt.kind) {
             case Boolean:
+            case Byte:
+            case Char:
+            case Short:
+            case Jsr:
             case Int: {
                 int x = lt.asInt();
                 int y = rt.asInt();
@@ -184,10 +187,10 @@ public enum Condition {
                     case LE: return x <= y;
                     case GT: return x > y;
                     case GE: return x >= y;
-                    case AE: return toUnsigned(x) >= toUnsigned(y);
-                    case BE: return toUnsigned(x) <= toUnsigned(y);
-                    case AT: return toUnsigned(x) > toUnsigned(y);
-                    case BT: return toUnsigned(x) < toUnsigned(y);
+                    case AE: return UnsignedMath.aboveOrEqual(x, y);
+                    case BE: return UnsignedMath.belowOrEqual(x, y);
+                    case AT: return UnsignedMath.aboveThan(x, y);
+                    case BT: return UnsignedMath.belowThan(x, y);
                 }
                 break;
             }
@@ -201,6 +204,10 @@ public enum Condition {
                     case LE: return x <= y;
                     case GT: return x > y;
                     case GE: return x >= y;
+                    case AE: return UnsignedMath.aboveOrEqual(x, y);
+                    case BE: return UnsignedMath.belowOrEqual(x, y);
+                    case AT: return UnsignedMath.aboveThan(x, y);
+                    case BT: return UnsignedMath.belowThan(x, y);
                 }
                 break;
             }
@@ -250,13 +257,7 @@ public enum Condition {
                 }
             }
         }
+        assert false : "missed folding of constant operands: " + lt + " " + this + " " + rt;
         return null;
-    }
-
-    private long toUnsigned(int x) {
-        if (x < 0) {
-            return ((long) (x & 0x7FFFFFFF)) + ((long) Integer.MAX_VALUE) + 1;
-        }
-        return x;
     }
 }

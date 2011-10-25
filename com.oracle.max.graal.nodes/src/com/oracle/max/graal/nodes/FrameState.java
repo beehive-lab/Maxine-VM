@@ -74,7 +74,7 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
      */
     public final int bci;
 
-    public final RiResolvedMethod method;
+    private final RiResolvedMethod method;
 
     /**
      * Creates a {@code FrameState} for the given scope and maximum number of stack and local variables.

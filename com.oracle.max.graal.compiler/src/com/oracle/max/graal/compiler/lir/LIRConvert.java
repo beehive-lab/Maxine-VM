@@ -23,32 +23,19 @@
 package com.oracle.max.graal.compiler.lir;
 
 import com.oracle.max.graal.compiler.stub.*;
-import com.oracle.max.graal.nodes.calc.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiValue.Formatter;
 
 public class LIRConvert extends LIRInstruction {
 
-    public final ConvertNode.Op opcode;
     public final CompilerStub stub;
 
-    /**
-     * Constructs a new instruction LIRConvert for a given operand.
-     *
-     * @param operand the input operand for this instruction
-     * @param result the result operand for this instruction
-     */
-    public LIRConvert(LIROpcode code, CiValue result, ConvertNode.Op opcode, CompilerStub stub, CiValue operand) {
+    public LIRConvert(LIROpcode code, CiValue result, CompilerStub stub, CiValue operand) {
         super(code, result, null, operand);
-        this.opcode = opcode;
         this.stub = stub;
     }
 
-    /**
-     * Prints this instruction to a LogStream.
-     */
-    @Override
-    public String operationString(Formatter operandFmt) {
-        return "[" + opcode + "] " + super.operationString(operandFmt);
+    public LIRConvert(LIROpcode code, CiValue result, CompilerStub stub, CiValue operand, CiValue tmp) {
+        super(code, result, null, false, 0, 1, operand, tmp);
+        this.stub = stub;
     }
 }
