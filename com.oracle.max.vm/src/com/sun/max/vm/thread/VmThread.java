@@ -48,6 +48,7 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jni.*;
+import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
@@ -239,7 +240,7 @@ public class VmThread {
     private Pointer yellowZone = Pointer.zero();
 
     /**
-     * The thread locals associated with this thread.
+     * The safepoint-enabled thread locals associated with this thread.
      */
     private Pointer tla = Pointer.zero();
 
@@ -268,6 +269,11 @@ public class VmThread {
     public JavaMonitor protectedMonitor;
 
     private ConditionVariable waitingCondition = ConditionVariableFactory.create();
+
+    /**
+     * A "monitor" used to suspend the thread by {@link VmOperation}.
+     */
+    public final OSMonitor.SuspendMonitor suspendMonitor = new OSMonitor.SuspendMonitor();
 
     /**
      * Holds the exception object for the exception currently being raised. This value will only be
@@ -480,8 +486,10 @@ public class VmThread {
     private static void executeRunnable(VmThread vmThread) throws Throwable {
         try {
             if (vmThread == mainThread) {
+                // JVMTIEvent.THREAD_START is dispatched in JavaRunScheme
                 vmConfig().runScheme().run();
             } else {
+                JVMTI.event(JVMTIEvent.THREAD_START);
                 vmThread.javaThread.run();
             }
         } finally {
@@ -606,7 +614,7 @@ public class VmThread {
     private static void run(Pointer etla, Pointer stackBase, Pointer stackEnd) {
 
         // Enable safepoints:
-        Pointer anchor = JniFunctions.prologue(JNI_ENV.addressIn(etla), null);
+        Pointer anchor = JniFunctions.prologue(JNI_ENV.addressIn(etla));
 
         final VmThread thread = VmThread.current();
 
@@ -620,6 +628,13 @@ public class VmThread {
             // The main thread must now bring the VM to the pristine state so as to
             // provide basic services (most importantly, heap allocation) before starting the other "system" threads.
             //
+
+            // The main thread manages to avoid the normal runtime mechanism that sets this value
+            thread.suspendMonitor.init();
+
+            // Initialize JVMTI agents
+            JVMTI.initialize();
+
             // Code manager initialization must happen after parsing of pristine options
             // It must also be performed before pristine initialization of the heap scheme.
             // This is a temporary issue due to all code managers being instances of
@@ -635,6 +650,7 @@ public class VmThread {
             VmThread.vmOperationThread.start0();
             SpecialReferenceManager.initialize(MaxineVM.Phase.PRISTINE);
             VmThread.signalDispatcherThread.start0();
+
         }
 
         try {
@@ -651,6 +667,8 @@ public class VmThread {
             }
             thread.terminationCause = throwable;
         }
+        JVMTI.event(JVMTIEvent.THREAD_END);
+
         // If this is the main thread terminating, initiate shutdown hooks after waiting for other non-daemons to terminate
         if (thread == mainThread) {
             VmThreadMap.ACTIVE.joinAllNonDaemons();
@@ -659,7 +677,7 @@ public class VmThread {
             JavaLangShutdown.exit(0);
         }
 
-        JniFunctions.epilogue(anchor, null);
+        JniFunctions.epilogue(anchor);
     }
 
     /**
@@ -685,7 +703,7 @@ public class VmThread {
                     Pointer tla) {
 
         // Enable safepoints:
-        Pointer anchor = JniFunctions.prologue(JNI_ENV.addressIn(ETLA.load(tla)), null);
+        Pointer anchor = JniFunctions.prologue(JNI_ENV.addressIn(ETLA.load(tla)));
 
         VmThread thread = VmThread.current();
 
@@ -721,7 +739,7 @@ public class VmThread {
             throwable.printStackTrace(Log.out);
             return JniFunctions.JNI_ERR;
         } finally {
-            JniFunctions.epilogue(anchor, null);
+            JniFunctions.epilogue(anchor);
         }
     }
 
@@ -746,7 +764,7 @@ public class VmThread {
     @VM_ENTRY_POINT
     private static void detach(Pointer tla) {
         // Disable safepoints:
-        Pointer anchor = JniFunctions.prologue(JNI_ENV.addressIn(DTLA.load(tla)), null);
+        Pointer anchor = JniFunctions.prologue(JNI_ENV.addressIn(DTLA.load(tla)));
 
         VmThread thread = VmThread.current();
 
@@ -784,8 +802,9 @@ public class VmThread {
         thread.tla = Pointer.zero();
         thread.id = -1;
         thread.waitingCondition = null;
+        thread.suspendMonitor.destroy();
 
-        JniFunctions.epilogue(anchor, null);
+        JniFunctions.epilogue(anchor);
     }
 
     static class JavaLangShutdown {
@@ -1167,6 +1186,9 @@ public class VmThread {
         }
     }
 
+    /**
+     * The address of the safepoint-enabled TLA for this thread.
+     */
     @INLINE
     public final Pointer tla() {
         return tla;
@@ -1290,6 +1312,7 @@ public class VmThread {
         assert state == Thread.State.NEW;
         state = Thread.State.RUNNABLE;
         Thread_vmThread.setObject(javaThread, this);
+        suspendMonitor.init();
         VmThreadMap.ACTIVE.startThread(this, STACK_SIZE_OPTION.getValue().alignUp(platform().pageSize).asSize(), javaThread.getPriority());
     }
 
@@ -1331,11 +1354,11 @@ public class VmThread {
     }
 
     public final void suspend0() {
-        FatalError.unimplemented();
+        new VmOperation.SuspendThreadSet(this).submit();
     }
 
     public final void resume0() {
-        FatalError.unimplemented();
+        new VmOperation.ResumeThreadSet(this).submit();
     }
 
     public final void interrupt0() {

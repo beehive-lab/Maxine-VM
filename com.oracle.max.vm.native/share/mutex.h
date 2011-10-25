@@ -43,6 +43,7 @@ extern void mutex_initialize(Mutex mutex);
 extern void mutex_dispose(Mutex mutex);
 
 extern int mutex_enter(Mutex mutex);
+extern int mutex_try_enter(Mutex mutex);
 extern int mutex_exit(Mutex mutex);
 
 extern int mutex_enter_nolog(Mutex mutex);

@@ -308,7 +308,7 @@ public class VmOperationThread extends Thread implements UncaughtExceptionHandle
             boolean nested = enclosingOperation != null;
             if (nested) {
                 // Nested operation: check that it's allowed for the enclosing operation
-                boolean fatal = !enclosingOperation.allowsNestedOperations;
+                boolean fatal = enclosingOperation.disAllowsNestedOperations;
                 if (TraceVmOperations || fatal) {
                     boolean lockDisabledSafepoints = Log.lock();
                     Log.print("Nested VM operation ");

@@ -310,6 +310,15 @@ public abstract class Word {
     }
 
     @INLINE
+    public final boolean isNotZero() {
+        if (isHosted()) {
+            final Boxed box = (Boxed) this;
+            return box.value() != 0;
+        }
+        return !equals(Word.zero());
+    }
+
+    @INLINE
     public final boolean isAllOnes() {
         if (isHosted()) {
             final Boxed box = (Boxed) this;

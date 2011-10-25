@@ -149,21 +149,24 @@ public final class JmmFunctions {
     @VM_ENTRY_POINT
     private static JniHandle GetInputArguments(Pointer env) {
         // Source: JmmFunctionsSource.java:65
-        Pointer anchor = prologue(env, "GetInputArguments");
+        Pointer anchor = prologue(env);
+        tracePrologue("GetInputArguments", anchor);
         try {
             return JniHandles.createLocalHandle(RuntimeManagement.getVmArguments());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
-            epilogue(anchor, "GetInputArguments");
+            epilogue(anchor);
+            traceEpilogue("GetInputArguments");
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetThreadInfo(Pointer env, JniHandle ids, int maxDepth, JniHandle infoArray) {
         // Source: JmmFunctionsSource.java:70
-        Pointer anchor = prologue(env, "GetThreadInfo");
+        Pointer anchor = prologue(env);
+        tracePrologue("GetThreadInfo", anchor);
         try {
             final ThreadInfo[] threadInfoArray = (ThreadInfo[]) infoArray.unhand();
             final long[] threadIds = (long[]) ids.unhand();
@@ -173,28 +176,32 @@ public final class JmmFunctions {
             VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
-            epilogue(anchor, "GetThreadInfo");
+            epilogue(anchor);
+            traceEpilogue("GetThreadInfo");
         }
     }
 
     @VM_ENTRY_POINT
     private static JniHandle GetInputArgumentArray(Pointer env) {
         // Source: JmmFunctionsSource.java:78
-        Pointer anchor = prologue(env, "GetInputArgumentArray");
+        Pointer anchor = prologue(env);
+        tracePrologue("GetInputArgumentArray", anchor);
         try {
             return JniHandle.zero();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
-            epilogue(anchor, "GetInputArgumentArray");
+            epilogue(anchor);
+            traceEpilogue("GetInputArgumentArray");
         }
     }
 
     @VM_ENTRY_POINT
     private static JniHandle GetMemoryPools(Pointer env, JniHandle mgr) {
         // Source: JmmFunctionsSource.java:83
-        Pointer anchor = prologue(env, "GetMemoryPools");
+        Pointer anchor = prologue(env);
+        tracePrologue("GetMemoryPools", anchor);
         try {
             final Object p = mgr.unhand();
             assert p ==null; // see sun/management/MemoryImpl.c
@@ -203,14 +210,16 @@ public final class JmmFunctions {
             VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
-            epilogue(anchor, "GetMemoryPools");
+            epilogue(anchor);
+            traceEpilogue("GetMemoryPools");
         }
     }
 
     @VM_ENTRY_POINT
     private static JniHandle GetMemoryManagers(Pointer env, JniHandle pool) {
         // Source: JmmFunctionsSource.java:90
-        Pointer anchor = prologue(env, "GetMemoryManagers");
+        Pointer anchor = prologue(env);
+        tracePrologue("GetMemoryManagers", anchor);
         try {
             final Object p = pool.unhand();
             assert p ==null; // see sun/management/MemoryImpl.c
@@ -219,35 +228,40 @@ public final class JmmFunctions {
             VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
-            epilogue(anchor, "GetMemoryManagers");
+            epilogue(anchor);
+            traceEpilogue("GetMemoryManagers");
         }
     }
 
     @VM_ENTRY_POINT
     private static JniHandle GetMemoryPoolUsage(Pointer env, JniHandle pool) {
         // Source: JmmFunctionsSource.java:97
-        Pointer anchor = prologue(env, "GetMemoryPoolUsage");
+        Pointer anchor = prologue(env);
+        tracePrologue("GetMemoryPoolUsage", anchor);
         try {
             return JniHandle.zero();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
-            epilogue(anchor, "GetMemoryPoolUsage");
+            epilogue(anchor);
+            traceEpilogue("GetMemoryPoolUsage");
         }
     }
 
     @VM_ENTRY_POINT
     private static JniHandle GetPeakMemoryPoolUsage(Pointer env, JniHandle pool) {
         // Source: JmmFunctionsSource.java:102
-        Pointer anchor = prologue(env, "GetPeakMemoryPoolUsage");
+        Pointer anchor = prologue(env);
+        tracePrologue("GetPeakMemoryPoolUsage", anchor);
         try {
             return JniHandle.zero();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
-            epilogue(anchor, "GetPeakMemoryPoolUsage");
+            epilogue(anchor);
+            traceEpilogue("GetPeakMemoryPoolUsage");
         }
     }
 
@@ -258,49 +272,56 @@ public final class JmmFunctions {
     @VM_ENTRY_POINT
     private static JniHandle GetMemoryUsage(Pointer env, boolean heap) {
         // Source: JmmFunctionsSource.java:110
-        Pointer anchor = prologue(env, "GetMemoryUsage");
+        Pointer anchor = prologue(env);
+        tracePrologue("GetMemoryUsage", anchor);
         try {
             return JniHandles.createLocalHandle(MemoryManagement.getMemoryUsage(heap));
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
-            epilogue(anchor, "GetMemoryUsage");
+            epilogue(anchor);
+            traceEpilogue("GetMemoryUsage");
         }
     }
 
     @VM_ENTRY_POINT
     private static long GetLongAttribute(Pointer env, JniHandle obj, int att) {
         // Source: JmmFunctionsSource.java:115
-        Pointer anchor = prologue(env, "GetLongAttribute");
+        Pointer anchor = prologue(env);
+        tracePrologue("GetLongAttribute", anchor);
         try {
             return 0;
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
-            epilogue(anchor, "GetLongAttribute");
+            epilogue(anchor);
+            traceEpilogue("GetLongAttribute");
         }
     }
 
     @VM_ENTRY_POINT
     private static boolean GetBoolAttribute(Pointer env, int att) {
         // Source: JmmFunctionsSource.java:120
-        Pointer anchor = prologue(env, "GetBoolAttribute");
+        Pointer anchor = prologue(env);
+        tracePrologue("GetBoolAttribute", anchor);
         try {
             return false;
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
             return false;
         } finally {
-            epilogue(anchor, "GetBoolAttribute");
+            epilogue(anchor);
+            traceEpilogue("GetBoolAttribute");
         }
     }
 
     @VM_ENTRY_POINT
     private static boolean SetBoolAttribute(Pointer env, int att, boolean flag) {
         // Source: JmmFunctionsSource.java:125
-        Pointer anchor = prologue(env, "SetBoolAttribute");
+        Pointer anchor = prologue(env);
+        tracePrologue("SetBoolAttribute", anchor);
         try {
             switch (att) {
                 case JMM_VERBOSE_GC:
@@ -319,185 +340,212 @@ public final class JmmFunctions {
             VmThread.fromJniEnv(env).setJniException(t);
             return false;
         } finally {
-            epilogue(anchor, "SetBoolAttribute");
+            epilogue(anchor);
+            traceEpilogue("SetBoolAttribute");
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetLongAttributes(Pointer env, JniHandle obj, JniHandle atts, int count, JniHandle result) {
         // Source: JmmFunctionsSource.java:142
-        Pointer anchor = prologue(env, "GetLongAttributes");
+        Pointer anchor = prologue(env);
+        tracePrologue("GetLongAttributes", anchor);
         try {
             return 0;
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
-            epilogue(anchor, "GetLongAttributes");
+            epilogue(anchor);
+            traceEpilogue("GetLongAttributes");
         }
     }
 
     @VM_ENTRY_POINT
     private static JniHandle FindCircularBlockedThreads(Pointer env) {
         // Source: JmmFunctionsSource.java:147
-        Pointer anchor = prologue(env, "FindCircularBlockedThreads");
+        Pointer anchor = prologue(env);
+        tracePrologue("FindCircularBlockedThreads", anchor);
         try {
             return JniHandle.zero();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
-            epilogue(anchor, "FindCircularBlockedThreads");
+            epilogue(anchor);
+            traceEpilogue("FindCircularBlockedThreads");
         }
     }
 
     @VM_ENTRY_POINT
     private static long GetThreadCpuTime(Pointer env, long thread_id) {
         // Source: JmmFunctionsSource.java:152
-        Pointer anchor = prologue(env, "GetThreadCpuTime");
+        Pointer anchor = prologue(env);
+        tracePrologue("GetThreadCpuTime", anchor);
         try {
             return 0;
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
-            epilogue(anchor, "GetThreadCpuTime");
+            epilogue(anchor);
+            traceEpilogue("GetThreadCpuTime");
         }
     }
 
     @VM_ENTRY_POINT
     private static JniHandle GetVMGlobalNames(Pointer env) {
         // Source: JmmFunctionsSource.java:157
-        Pointer anchor = prologue(env, "GetVMGlobalNames");
+        Pointer anchor = prologue(env);
+        tracePrologue("GetVMGlobalNames", anchor);
         try {
             return JniHandle.zero();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
-            epilogue(anchor, "GetVMGlobalNames");
+            epilogue(anchor);
+            traceEpilogue("GetVMGlobalNames");
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetVMGlobals(Pointer env, JniHandle names, Pointer globals, int count) {
         // Source: JmmFunctionsSource.java:162
-        Pointer anchor = prologue(env, "GetVMGlobals");
+        Pointer anchor = prologue(env);
+        tracePrologue("GetVMGlobals", anchor);
         try {
             return 0;
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
-            epilogue(anchor, "GetVMGlobals");
+            epilogue(anchor);
+            traceEpilogue("GetVMGlobals");
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetInternalThreadTimes(Pointer env, JniHandle names, JniHandle times) {
         // Source: JmmFunctionsSource.java:167
-        Pointer anchor = prologue(env, "GetInternalThreadTimes");
+        Pointer anchor = prologue(env);
+        tracePrologue("GetInternalThreadTimes", anchor);
         try {
             return 0;
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
-            epilogue(anchor, "GetInternalThreadTimes");
+            epilogue(anchor);
+            traceEpilogue("GetInternalThreadTimes");
         }
     }
 
     @VM_ENTRY_POINT
     private static boolean ResetStatistic(Pointer env, Word obj, int type) {
         // Source: JmmFunctionsSource.java:172
-        Pointer anchor = prologue(env, "ResetStatistic");
+        Pointer anchor = prologue(env);
+        tracePrologue("ResetStatistic", anchor);
         try {
             return false;
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
             return false;
         } finally {
-            epilogue(anchor, "ResetStatistic");
+            epilogue(anchor);
+            traceEpilogue("ResetStatistic");
         }
     }
 
     @VM_ENTRY_POINT
     private static void SetPoolSensor(Pointer env, JniHandle pool, int type, JniHandle sensor) {
         // Source: JmmFunctionsSource.java:177
-        Pointer anchor = prologue(env, "SetPoolSensor");
+        Pointer anchor = prologue(env);
+        tracePrologue("SetPoolSensor", anchor);
         try {
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
-            epilogue(anchor, "SetPoolSensor");
+            epilogue(anchor);
+            traceEpilogue("SetPoolSensor");
         }
     }
 
     @VM_ENTRY_POINT
     private static long SetPoolThreshold(Pointer env, JniHandle pool, int type, long threshold) {
         // Source: JmmFunctionsSource.java:181
-        Pointer anchor = prologue(env, "SetPoolThreshold");
+        Pointer anchor = prologue(env);
+        tracePrologue("SetPoolThreshold", anchor);
         try {
             return 0;
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
-            epilogue(anchor, "SetPoolThreshold");
+            epilogue(anchor);
+            traceEpilogue("SetPoolThreshold");
         }
     }
 
     @VM_ENTRY_POINT
     private static JniHandle GetPoolCollectionUsage(Pointer env, JniHandle pool) {
         // Source: JmmFunctionsSource.java:186
-        Pointer anchor = prologue(env, "GetPoolCollectionUsage");
+        Pointer anchor = prologue(env);
+        tracePrologue("GetPoolCollectionUsage", anchor);
         try {
             return JniHandle.zero();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
-            epilogue(anchor, "GetPoolCollectionUsage");
+            epilogue(anchor);
+            traceEpilogue("GetPoolCollectionUsage");
         }
     }
 
     @VM_ENTRY_POINT
     private static int GetGCExtAttributeInfo(Pointer env, JniHandle mgr, Pointer ext_info, int count) {
         // Source: JmmFunctionsSource.java:191
-        Pointer anchor = prologue(env, "GetGCExtAttributeInfo");
+        Pointer anchor = prologue(env);
+        tracePrologue("GetGCExtAttributeInfo", anchor);
         try {
             return 0;
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
-            epilogue(anchor, "GetGCExtAttributeInfo");
+            epilogue(anchor);
+            traceEpilogue("GetGCExtAttributeInfo");
         }
     }
 
     @VM_ENTRY_POINT
     private static void GetLastGCStat(Pointer env, JniHandle mgr, Pointer gc_stat) {
         // Source: JmmFunctionsSource.java:196
-        Pointer anchor = prologue(env, "GetLastGCStat");
+        Pointer anchor = prologue(env);
+        tracePrologue("GetLastGCStat", anchor);
         try {
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
-            epilogue(anchor, "GetLastGCStat");
+            epilogue(anchor);
+            traceEpilogue("GetLastGCStat");
         }
     }
 
     @VM_ENTRY_POINT
     private static long GetThreadCpuTimeWithKind(Pointer env, long thread_id, boolean user_sys_cpu_time) {
         // Source: JmmFunctionsSource.java:200
-        Pointer anchor = prologue(env, "GetThreadCpuTimeWithKind");
+        Pointer anchor = prologue(env);
+        tracePrologue("GetThreadCpuTimeWithKind", anchor);
         try {
             return 0;
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
-            epilogue(anchor, "GetThreadCpuTimeWithKind");
+            epilogue(anchor);
+            traceEpilogue("GetThreadCpuTimeWithKind");
         }
     }
 
@@ -508,40 +556,46 @@ public final class JmmFunctions {
     @VM_ENTRY_POINT
     private static int DumpHeap0(Pointer env, JniHandle outputfile, boolean live) {
         // Source: JmmFunctionsSource.java:208
-        Pointer anchor = prologue(env, "DumpHeap0");
+        Pointer anchor = prologue(env);
+        tracePrologue("DumpHeap0", anchor);
         try {
             return 0;
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
-            epilogue(anchor, "DumpHeap0");
+            epilogue(anchor);
+            traceEpilogue("DumpHeap0");
         }
     }
 
     @VM_ENTRY_POINT
     private static JniHandle FindDeadlocks(Pointer env, boolean object_monitors_only) {
         // Source: JmmFunctionsSource.java:213
-        Pointer anchor = prologue(env, "FindDeadlocks");
+        Pointer anchor = prologue(env);
+        tracePrologue("FindDeadlocks", anchor);
         try {
             return JniHandle.zero();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
-            epilogue(anchor, "FindDeadlocks");
+            epilogue(anchor);
+            traceEpilogue("FindDeadlocks");
         }
     }
 
     @VM_ENTRY_POINT
     private static void SetVMGlobal(Pointer env, JniHandle flag_name, Word new_value) {
         // Source: JmmFunctionsSource.java:218
-        Pointer anchor = prologue(env, "SetVMGlobal");
+        Pointer anchor = prologue(env);
+        tracePrologue("SetVMGlobal", anchor);
         try {
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
         } finally {
-            epilogue(anchor, "SetVMGlobal");
+            epilogue(anchor);
+            traceEpilogue("SetVMGlobal");
         }
     }
 
@@ -552,14 +606,16 @@ public final class JmmFunctions {
     @VM_ENTRY_POINT
     private static JniHandle DumpThreads(Pointer env, JniHandle ids, boolean lockedMonitors, boolean lockedSynchronizers) {
         // Source: JmmFunctionsSource.java:225
-        Pointer anchor = prologue(env, "DumpThreads");
+        Pointer anchor = prologue(env);
+        tracePrologue("DumpThreads", anchor);
         try {
             return JniHandle.zero();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
-            epilogue(anchor, "DumpThreads");
+            epilogue(anchor);
+            traceEpilogue("DumpThreads");
         }
     }
 // END GENERATED CODE
