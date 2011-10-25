@@ -42,7 +42,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.jvmti.JVMTIBreakpoints.EventBreakpointID;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -188,6 +187,7 @@ public class JVMTI {
             if (onLoad.isZero()) {
                 initializeFail("agentlib: ", path, " does not contain an Agent_OnLoad function");
             }
+            JDWPSymbols.fixup(onLoad.asAddress().toLong());
             int rc = invokeAgentOnLoad(onLoad.asAddress(), agentPathOption.getOptionStart(i));
             if (rc != 0) {
                 initializeFail("agentlib: ", path, " failed to initialize");
@@ -313,6 +313,8 @@ public class JVMTI {
             switch (eventId) {
                 case VM_START:
                     phase = JVMTI_PHASE_START;
+                    JVMTIFunctions.checkTracing();
+                    JDWPSymbols.dump();
                     break;
 
                 case VM_INIT:

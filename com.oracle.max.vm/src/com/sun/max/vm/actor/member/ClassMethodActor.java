@@ -48,18 +48,6 @@ import com.sun.max.vm.verifier.*;
  */
 public abstract class ClassMethodActor extends MethodActor {
 
-    @RESET
-    public static boolean TraceJNI;
-    static {
-        VMOptions.addFieldOption("-XX:", "TraceJNI", "Trace JNI calls.");
-    }
-
-    @RESET
-    public static boolean TraceJVMTI;
-    static {
-        VMOptions.addFieldOption("-XX:", "TraceJVMTI", "Trace JVMTI calls.");
-    }
-
     @INSPECTED
     private CodeAttribute codeAttribute;
 

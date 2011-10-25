@@ -24,8 +24,12 @@ package com.sun.max.vm.jvmti;
 
 import static com.sun.max.vm.jni.JniFunctionsGenerator.Customizer;
 
+import java.io.*;
+import java.util.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.vm.jni.*;
+import com.sun.max.vm.jni.JniFunctionsGenerator.JniFunctionDeclaration;
 
 @HOSTED_ONLY
 public class JVMTIFunctionsGenerator {
@@ -44,6 +48,9 @@ public class JVMTIFunctionsGenerator {
     private static final String FIRST_LINE_INDENT = INDENT8;
 
     public static class JVMTICustomizer extends Customizer {
+
+        static ArrayList<String> methodNames = new ArrayList<String>();
+
         @Override
         public String customizeBody(String line) {
             // a 4 space indent has already been appended
@@ -262,6 +269,24 @@ public class JVMTIFunctionsGenerator {
         public String customizeHandler(String returnStatement) {
             // any failure just means an internal error
             return "            return JVMTI_ERROR_INTERNAL;";
+        }
+
+        @Override
+        public void startFunction(JniFunctionDeclaration decl) {
+            methodNames.add(decl.name);
+        }
+
+        @Override
+        public void close(PrintWriter out) {
+            out.println("    private static final String[] methodNames = new String[] {");
+            for (int i = 0; i < methodNames.size(); i++) {
+                String methodName = methodNames.get(i);
+                if (i > 0) {
+                    out.println(",");
+                }
+                out.printf("        \"%s\"", methodName);
+            }
+            out.println("};");
         }
 
         private static String toFirstLower(String s) {

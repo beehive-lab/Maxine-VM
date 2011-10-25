@@ -138,6 +138,7 @@ while [ "${1:0:1}" = "-" ]; do
         -trace )
             shift
             trace_level=$1
+            inspector_trace_level=$1
             ;;
         * )
             unknown_option=$1

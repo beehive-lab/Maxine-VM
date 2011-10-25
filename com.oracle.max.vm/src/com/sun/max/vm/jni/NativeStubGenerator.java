@@ -113,7 +113,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
     private static final ClassMethodRefConstant resetHandlesTop = createClassMethodConstant(VmThread.class, makeSymbol("resetJniHandlesTop"), int.class);
     private static final ClassMethodRefConstant logPrintln_String = createClassMethodConstant(Log.class, makeSymbol("println"), String.class);
     private static final ClassMethodRefConstant logPrint_String = createClassMethodConstant(Log.class, makeSymbol("print"), String.class);
-    private static final FieldRefConstant traceJNI = createFieldConstant(ClassMethodActor.class, makeSymbol("TraceJNI"));
+    private static final FieldRefConstant traceJNI = createFieldConstant(JniFunctions.class, makeSymbol("TraceJNI"));
     private static final ClassMethodRefConstant link = createClassMethodConstant(NativeFunction.class, makeSymbol("link"));
     private static final ClassMethodRefConstant nativeCallPrologue = createClassMethodConstant(Snippets.class, makeSymbol("nativeCallPrologue"), NativeFunction.class);
     private static final ClassMethodRefConstant nativeCallPrologueForC = createClassMethodConstant(Snippets.class, makeSymbol("nativeCallPrologueForC"), NativeFunction.class);
@@ -275,7 +275,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
      * Generates the code to trace a call to a native function from a native stub.
      */
     private void verboseJniEntry() {
-        if (ClassMethodActor.TraceJNI) {
+        if (JniFunctions.TraceJNI) {
             if (MaxineVM.isHosted()) {
                 // Stubs generated while bootstrapping need to test the "-XX:+TraceJNI" VM option
                 getstatic(traceJNI);
@@ -299,7 +299,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
      * Generates the code to trace a return to a native stub from a native function.
      */
     private void verboseJniExit() {
-        if (ClassMethodActor.TraceJNI) {
+        if (JniFunctions.TraceJNI) {
             if (MaxineVM.isHosted()) {
                 // Stubs generated while bootstrapping need to test the "-XX:+TraceJNI" VM option
                 getstatic(traceJNI);

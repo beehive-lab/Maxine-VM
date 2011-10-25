@@ -26,6 +26,7 @@ import static com.sun.max.vm.intrinsics.Infopoints.*;
 import static com.sun.max.vm.runtime.VMRegister.*;
 
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.stack.*;
@@ -41,8 +42,6 @@ public class JVMTIClassLoader {
      * we reach the base and then back up from there.
      */
     static class NonVMContext extends SourceFrameVisitor {
-        private static final String COM_SUN_MAX = "com.sun.max";
-        private static final String COM_ORACLE_MAX = "com.oracle.max";
 
         MethodActor nonVMMethod;
         boolean lastFrameInVM;
@@ -52,9 +51,8 @@ public class JVMTIClassLoader {
             ClassMethodActor original = method.original();
 
             // a VM frame is one whose package prefix is either "com.sun.max" or "com.oracle.max"
-            final String name = original.holder().name();
-            if (original.holder().isReflectionStub() ||
-                (name.startsWith(COM_SUN_MAX) || name.startsWith(COM_ORACLE_MAX))) {
+            final ClassActor holder = original.holder();
+            if (holder.isReflectionStub() || JVMTIClassFunctions.isVmClass(holder)) {
                 lastFrameInVM = true;
                 nonVMMethod = null;
             } else {
