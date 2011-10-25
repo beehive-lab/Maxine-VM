@@ -31,6 +31,7 @@ import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertOpFI.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertOpFL.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64DivOp.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64MathIntrinsicOp.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64MoveOp.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64MulOp.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64Op1.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64ShiftOp.*;
@@ -38,7 +39,6 @@ import static com.oracle.max.graal.compiler.target.amd64.AMD64ShiftOp.*;
 import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.graal.compiler.*;
-import com.oracle.max.graal.compiler.alloc.OperandPool.VariableFlag;
 import com.oracle.max.graal.compiler.gen.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.stub.*;
@@ -68,10 +68,14 @@ public class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    protected boolean canStoreAsConstant(CiKind storeKind) {
-        // there is no immediate move of word values in asemblerI486.?pp
-        // TODO: check if this is necessary
-        return storeKind != CiKind.Short && storeKind != CiKind.Char;
+    protected boolean canStoreConstant(CiConstant c) {
+        // there is no immediate move of 64-bit values on Intel
+        switch (c.kind) {
+            case Long:   return Util.isInt(c.asLong());
+            case Double: return false;
+            case Object: return c.isNull();
+            default:     return true;
+        }
     }
 
     @Override
@@ -86,10 +90,22 @@ public class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    protected CiVariable makeByteVariable(CiValue cur) {
-        CiVariable result = operands.newVariable(cur.kind.stackKind(), VariableFlag.MustBeByteRegister);
-        lir.move(cur, result);
+    public CiVariable emitMove(CiValue input) {
+        CiVariable result = newVariable(input.kind.stackKind());
+        lir.append(MOVE.create(result, input));
         return result;
+    }
+
+    @Override
+    public CiVariable emitLoad(CiAddress loadAddress, CiKind kind, Object debugInfo) {
+        CiVariable result = newVariable(kind.stackKind());
+        lir.append(LOAD.create(result, loadAddress, kind, (LIRDebugInfo) debugInfo));
+        return result;
+    }
+
+    @Override
+    public void emitStore(CiAddress storeAddress, CiValue input, CiKind kind, Object debugInfo) {
+        lir.append(STORE.create(storeAddress, input, kind, (LIRDebugInfo) debugInfo));
     }
 
     @Override
@@ -167,7 +183,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
         CiValue input = loadNonconstant(x.x());
         CiVariable result = createResultVariable(x);
 
-        lir.move(input, result);
+        lir.append(MOVE.create(result, input));
         switch (x.kind) {
             case Int:    lir.append(INEG.create(result)); break;
             case Long:   lir.append(LNEG.create(result)); break;
@@ -191,24 +207,24 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
             switch (opcode) {
                 case Bytecodes.IDIV:
-                    lir.move(left, RAX_I);
+                    lir.append(MOVE.create(RAX_I, left));
                     lir.append(IDIV.create(RAX_I, info, RAX_I, right));
-                    lir.move(RAX_I, result);
+                    lir.append(MOVE.create(result, RAX_I));
                     break;
                 case Bytecodes.IREM:
-                    lir.move(left, RAX_I);
+                    lir.append(MOVE.create(RAX_I, left));
                     lir.append(IREM.create(RDX_I, info, RAX_I, right));
-                    lir.move(RDX_I, result);
+                    lir.append(MOVE.create(result, RDX_I));
                     break;
                 case Bytecodes.LDIV:
-                    lir.move(left, RAX_L);
+                    lir.append(MOVE.create(RAX_L, left));
                     lir.append(LDIV.create(RAX_L, info, RAX_L, right));
-                    lir.move(RAX_L, result);
+                    lir.append(MOVE.create(result, RAX_L));
                     break;
                 case Bytecodes.LREM:
-                    lir.move(left, RAX_L);
+                    lir.append(MOVE.create(RAX_L, left));
                     lir.append(LREM.create(RDX_L, info, RAX_L, right));
-                    lir.move(RDX_L, result);
+                    lir.append(MOVE.create(result, RDX_L));
                     break;
             }
 
@@ -225,7 +241,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
             } else {
                 throw Util.shouldNotReachHere();
             }
-            lir.move(reg, result);
+            lir.append(MOVE.create(result, reg));
 
         } else {
             CiVariable left = load(x.x());
@@ -233,7 +249,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
             CiVariable result = createResultVariable(x);
 
             // Two-operand form on Intel
-            lir.move(left, result);
+            lir.append(MOVE.create(result, left));
             switch (opcode) {
                 case Bytecodes.IADD: lir.append(IADD.create(result, right)); break;
                 case Bytecodes.ISUB: lir.append(ISUB.create(result, right)); break;
@@ -261,7 +277,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
         CiVariable result = createResultVariable(x);
 
         // Two-operand form on Intel
-        lir.move(left, result);
+        lir.append(MOVE.create(result, left));
         switch (x.opcode) {
             case Bytecodes.IAND: lir.append(IAND.create(result, right)); break;
             case Bytecodes.LAND: lir.append(LAND.create(result, right)); break;
@@ -280,10 +296,10 @@ public class AMD64LIRGenerator extends LIRGenerator {
         CiVariable result = createResultVariable(x);
 
         // Two-operand form on Intel
-        lir.move(left, result);
+        lir.append(MOVE.create(result, left));
         if (!right.isConstant()) {
             // Non-constant shift count must be in RCX
-            lir.move(right, RCX_I);
+            lir.append(MOVE.create(RCX_I, right));
             right = RCX_I;
         }
 
@@ -334,7 +350,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
         switch (x.operation()) {
             case ABS:
-                lir.move(input, result);
+                lir.append(MOVE.create(result, input));
                 lir.append(DABS.create(result));
                 break;
             case SQRT:  lir.append(SQRT.create(result, input)); break;
@@ -354,7 +370,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
         CiValue right = loadNonconstant(rightNode);
         CiVariable result = createResultVariable(resultNode);
 
-        lir.move(left, result);
+        lir.append(MOVE.create(result, left));
         lir.append(IADD.create(result, right));
     }
 
@@ -421,7 +437,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
         CiKind kind = node.newValue().kind;
         assert kind == node.expected().kind;
 
-        CiValue expected = force(node.expected(), AMD64.rax.asValue(kind));
+        CiValue expected = loadNonconstant(node.expected());
         CiValue newValue = load(node.newValue());
         CiValue object = load(node.object());
         CiValue offset;
@@ -437,7 +453,9 @@ public class AMD64LIRGenerator extends LIRGenerator {
         if (kind == CiKind.Object) {
             preGCWriteBarrier(address, false, null);
         }
-        lir.cas(address, expected, newValue, expected);
+        CiRegisterValue rax = AMD64.rax.asValue(kind);
+        lir.append(MOVE.create(rax, expected));
+        lir.cas(address, rax, newValue, rax);
 
         CiVariable result = createResultVariable(node);
         lir.append(CMOVE.create(result, Condition.EQ, makeVariable(CiConstant.TRUE), CiConstant.FALSE));
@@ -449,7 +467,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
     @Override
     public void emitMove(CiValue src, CiValue dst) {
-        lir().move(src, dst);
+        lir.append(MOVE.create(dst, src));
     }
 
     @Override

@@ -160,6 +160,19 @@ public final class OperandPool {
         assert kind != CiKind.Void;
         int varIndex = variables.size();
         CiVariable var = CiVariable.get(kind, varIndex);
+        setFlag(var, flag);
+        variables.add(var);
+        return var;
+    }
+
+    /**
+     * Creates a new {@linkplain CiVariable variable} operand.
+     *
+     * @param kind the kind of the variable
+     * @param flag a flag that is set for the new variable operand (ignored if {@code null})
+     * @return a new variable operand
+     */
+    public void setFlag(CiVariable var, VariableFlag flag) {
         if (flag == VariableFlag.MustBeByteRegister) {
             mustBeByteRegister = set(mustBeByteRegister, var);
         } else if (flag == VariableFlag.MustStartInMemory) {
@@ -169,8 +182,6 @@ public final class OperandPool {
         } else {
             assert flag == null;
         }
-        variables.add(var);
-        return var;
     }
 
     /**

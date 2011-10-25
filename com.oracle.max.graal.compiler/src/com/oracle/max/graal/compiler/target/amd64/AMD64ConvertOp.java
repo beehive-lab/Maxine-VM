@@ -41,19 +41,19 @@ public enum AMD64ConvertOp implements LIROpcode<AMD64LIRAssembler, LIRInstructio
     public void emitCode(AMD64LIRAssembler lasm, LIRInstruction op) {
         switch (this) {
             case L2I:
-                lasm.moveRegs(lasm.asLongReg(op.operand(0)), lasm.asIntReg(op.result()));
+                AMD64MoveOp.move(lasm, op.result(), op.operand(0));
                 lasm.masm.andl(lasm.asIntReg(op.result()), 0xFFFFFFFF);
                 break;
             case I2B:
-                lasm.moveRegs(lasm.asIntReg(op.operand(0)), lasm.asIntReg(op.result()));
+                AMD64MoveOp.move(lasm, op.result(), op.operand(0));
                 lasm.masm.signExtendByte(lasm.asIntReg(op.result()));
                 break;
             case I2C:
-                lasm.moveRegs(lasm.asIntReg(op.operand(0)), lasm.asIntReg(op.result()));
+                AMD64MoveOp.move(lasm, op.result(), op.operand(0));
                 lasm.masm.andl(lasm.asIntReg(op.result()), 0xFFFF);
                 break;
             case I2S:
-                lasm.moveRegs(lasm.asIntReg(op.operand(0)), lasm.asIntReg(op.result()));
+                AMD64MoveOp.move(lasm, op.result(), op.operand(0));
                 lasm.masm.signExtendShort(lasm.asIntReg(op.result()));
                 break;
             case I2L: lasm.masm.movslq(lasm.asLongReg(op.result()), lasm.asIntReg(op.operand(0))); break;

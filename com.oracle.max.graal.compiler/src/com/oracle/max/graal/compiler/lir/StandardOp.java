@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,17 +24,10 @@ package com.oracle.max.graal.compiler.lir;
 
 import com.sun.cri.ci.*;
 
-public class LIRMove extends LIRInstruction {
+public class StandardOp {
+    public static MoveOp MOVE;
 
-    /**
-     * The operand type of the move. Since this can be Byte, Short, ... the kind of the
-     * input or result operand is not enough to generate the correct code for moves.
-     */
-    public final CiKind kind;
-
-    public LIRMove(LIROpcode opcode, CiValue opr, CiValue result, CiKind kind, LIRDebugInfo info) {
-        super(opcode, result, info, opr);
-        assert opcode == LegacyOpcode.Move;
-        this.kind = kind;
+    public abstract static class MoveOp<LA extends LIRAssembler, IT extends LIRInstruction> implements LIROpcode<LA, IT> {
+        public abstract LIRInstruction create(CiValue result, CiValue input);
     }
 }

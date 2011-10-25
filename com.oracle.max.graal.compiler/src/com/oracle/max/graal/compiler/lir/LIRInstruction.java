@@ -181,7 +181,6 @@ public class LIRInstruction {
         this.info = info;
         this.hasCall = hasCall;
 
-        assert opcode != LegacyOpcode.Move || result != CiValue.IllegalValue;
         allocatorOperands = new ArrayList<CiValue>(operands.length + 3);
         this.result = initOutput(result);
 

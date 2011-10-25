@@ -98,8 +98,8 @@ public final class LIRInsertionBuffer {
         return ops.get(i);
     }
 
-    void move(int index, CiValue src, CiValue dst, LIRDebugInfo info) {
-        append(index, new LIRMove(LegacyOpcode.Move, src, dst, dst.kind, info));
+    void move(int index, CiValue src, CiValue dst) {
+        append(index, StandardOp.MOVE.create(dst, src));
     }
 
     // Implementation of LIRInsertionBuffer

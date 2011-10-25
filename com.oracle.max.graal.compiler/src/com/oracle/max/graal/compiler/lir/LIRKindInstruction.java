@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,29 +20,20 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.hotspot.nodes;
+package com.oracle.max.graal.compiler.lir;
 
-import com.oracle.max.asm.target.amd64.*;
-import com.oracle.max.graal.nodes.calc.*;
-import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 
-public final class CurrentThread extends FloatingNode implements LIRLowerable {
+public class LIRKindInstruction extends LIRInstruction {
 
-    private int threadObjectOffset;
+    /**
+     * The operand type of the move. Since this can be Byte, Short, ... the kind of the
+     * input or result operand is not enough to generate the correct code for moves.
+     */
+    public final CiKind kind;
 
-    public CurrentThread(int threadObjectOffset) {
-        super(CiKind.Object);
-        this.threadObjectOffset = threadObjectOffset;
-    }
-
-    @Override
-    public void generate(LIRGeneratorTool generator) {
-        generator.setResult(this, generator.emitLoad(new CiAddress(CiKind.Object, AMD64.r15.asValue(generator.target().wordKind), threadObjectOffset), generator.target().wordKind, null));
-    }
-
-    @NodeIntrinsic
-    public static Object get(int threadObjectOffset) {
-        throw new UnsupportedOperationException();
+    public LIRKindInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info, CiKind kind, CiValue...opr) {
+        super(opcode, result, info, opr);
+        this.kind = kind;
     }
 }

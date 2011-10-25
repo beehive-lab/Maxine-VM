@@ -113,41 +113,6 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         }
     }
 
-    /**
-     * Forces the result of a given instruction to be available in a given register,
-     * inserting move instructions if necessary.
-     *
-     * @param instruction an instruction that produces a {@linkplain ValueNode#operand() result}
-     * @param register the {@linkplain CiRegister} in which the result of {@code instruction} must be available
-     * @return {@code register} as an operand
-     */
-    protected CiValue force(ValueNode instruction, CiRegister register) {
-        return force(instruction, register.asValue(instruction.kind));
-    }
-
-    /**
-     * Forces the result of a given instruction to be available in a given operand,
-     * inserting move instructions if necessary.
-     *
-     * @param instruction an instruction that produces a {@linkplain ValueNode#operand() result}
-     * @param operand the operand in which the result of {@code instruction} must be available
-     * @return {@code operand}
-     */
-    protected CiValue force(ValueNode instruction, CiValue operand) {
-        CiValue result = makeOperand(instruction);
-        if (result != operand) {
-            assert result.kind != CiKind.Illegal;
-            if (!Util.archKindsEqual(result.kind, operand.kind)) {
-                // moves between different types need an intervening spill slot
-                CiValue tmp = forceToSpill(result, operand.kind, false);
-                lir.move(tmp, operand);
-            } else {
-                lir.move(result, operand);
-            }
-        }
-        return operand;
-    }
-
     @Override
     public CiVariable load(ValueNode val) {
         return makeVariable(makeOperand(val));
@@ -159,26 +124,23 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
 
     public CiValue loadForStore(ValueNode val, CiKind kind) {
         CiValue result = makeOperand(val);
-        if (result.isConstant() && canStoreAsConstant(kind)) {
+        if (result.isConstant() && canStoreConstant((CiConstant) result)) {
             return result;
-        } else if (kind == CiKind.Byte || kind == CiKind.Boolean) {
-            return makeByteVariable(result);
-        } else {
-            return makeVariable(result);
         }
+
+        CiVariable var = makeVariable(result);
+        if (kind == CiKind.Byte || kind == CiKind.Boolean) {
+            operands.setFlag(var, VariableFlag.MustBeByteRegister);
+        }
+        return var;
     }
 
     protected CiVariable makeVariable(CiValue value) {
         if (!value.isVariable()) {
-            CiVariable operand = newVariable(value.kind.stackKind());
-            lir.move(value, operand);
-            return operand;
+            return emitMove(value);
         }
         return (CiVariable) value;
     }
-
-    protected abstract CiVariable makeByteVariable(CiValue cur);
-
 
 
     // the range of values in a lookupswitch or tableswitch statement
@@ -392,8 +354,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
             CiValue src = args.locations[i];
             assert src.isLegal() : "check";
 
-            CiVariable dest = newVariable(src.kind.stackKind());
-            lir.move(src, dest, src.kind, null);
+            CiVariable dest = emitMove(src);
 
             assert src.kind.stackKind() == local.kind.stackKind() : "local type check failed";
             setResult(local, dest);
@@ -493,8 +454,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
                 res = x.asConstant();
             }
             if (res.isConstant()) {
-                CiVariable reg = createResultVariable(x);
-                lir.move(res, reg);
+                setResult(x, emitMove(res));
             } else {
                 setResult(x, (CiVariable) res);
             }
@@ -584,9 +544,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
 
     private CiVariable emitConstantBranch(LIRBlock block, CiValue value, LIRDebugInfo info) {
         if (value != null) {
-            CiVariable result = newVariable(value.kind);
-            lir.move(value, result);
-            return result;
+            return emitMove(value);
         } else {
             if (block != null) {
                 emitJump(block);
@@ -686,8 +644,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         }
 
         if (resultOperand.isLegal()) {
-            CiValue result = createResultVariable(x);
-            lir.move(resultOperand, result);
+            setResult(x, emitMove(resultOperand));
         }
     }
 
@@ -840,11 +797,11 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
             }
         } else {
             CiValue operand = resultOperandFor(x.kind);
-            CiValue result = force(x.result(), operand);
+            emitMove(makeOperand(x.result()), operand);
             XirSnippet epilogue = xir.genEpilogue(site(x), compilation.method);
             if (epilogue != null) {
                 emitXir(epilogue, x, null, compilation.method, false);
-                lir.returnOp(result);
+                lir.returnOp(operand);
             }
         }
         setNoResult(x);
@@ -882,17 +839,17 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     private CiValue allocateOperand(XirArgument arg, XirOperand var, boolean canBeConstant) {
         if (arg.constant != null) {
             return arg.constant;
-        } else {
-            CiValue value = (CiValue) arg.object;
-
-            if (canBeConstant) {
-                return value;
-            } else if (var.kind == CiKind.Byte || var.kind == CiKind.Boolean) {
-                return makeByteVariable(value);
-            } else {
-                return makeVariable(value);
-            }
         }
+
+        CiValue value = (CiValue) arg.object;
+        if (canBeConstant) {
+            return value;
+        }
+        CiVariable variable = makeVariable(value);
+        if (var.kind == CiKind.Byte || var.kind == CiKind.Boolean) {
+            operands.setFlag(variable, VariableFlag.MustBeByteRegister);
+        }
+        return variable;
     }
 
     protected CiValue emitXir(XirSnippet snippet, ValueNode x, LIRDebugInfo info, RiMethod method, boolean setInstructionResult) {
@@ -967,8 +924,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         for (int i = 0; i < inputTempOperands.length; i++) {
             XirOperand x = inputTempOperands[i];
             CiValue op = allocateOperand(snippet, x);
-            CiValue newOp = newVariable(op.kind);
-            lir.move(op, newOp);
+            CiValue newOp = emitMove(op);
             operands[x.index] = newOp;
             operandArray[i + inputOperands.length] = newOp;
             operandIndicesArray[i + inputOperands.length] = x.index;
@@ -1064,8 +1020,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
                     targets[i] = getLIRBlock(x.blockSuccessor(i));
                 }
                 // Making a copy of the switch value is necessary because jump table destroys the input value
-                CiVariable tmp = newVariable(value.kind);
-                lir.move(value, tmp);
+                CiVariable tmp = emitMove(value);
                 lir.tableswitch(tmp, x.lowKey(), getLIRBlock(x.defaultSuccessor()), targets);
             }
         }
@@ -1109,19 +1064,9 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
      */
     @Override
     public CiValue forceToSpill(CiValue value, CiKind kind, boolean mustStayOnStack) {
-        assert value.isLegal() : "value should not be illegal";
-        if (!value.isVariableOrRegister()) {
-            // force into a variable that must start in memory
-            CiValue operand = operands.newVariable(value.kind, mustStayOnStack ? VariableFlag.MustStayInMemory : VariableFlag.MustStartInMemory);
-            lir.move(value, operand);
-            return operand;
-        }
-
-        // create a spill location
-        CiValue operand = operands.newVariable(kind, mustStayOnStack ? VariableFlag.MustStayInMemory : VariableFlag.MustStartInMemory);
-        // move from register to spill
-        lir.move(value, operand);
-        return operand;
+        CiVariable result = emitMove(value);
+        operands.setFlag(result, mustStayOnStack ? VariableFlag.MustStayInMemory : VariableFlag.MustStartInMemory);
+        return result;
     }
 
     /**
@@ -1183,13 +1128,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
             for (int i = 0; i < args.length; i++) {
                 CiValue arg = args[i];
                 CiValue loc = cc.locations[i];
-                if (loc.isRegister()) {
-                    lir.move(arg, loc);
-                } else {
-                    assert loc.isStackSlot();
-                    CiStackSlot slot = (CiStackSlot) loc;
-                    lir.move(arg, slot);
-                }
+                emitMove(arg, loc);
             }
             argumentList = Arrays.asList(cc.locations);
         } else {
@@ -1204,10 +1143,8 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     }
 
     protected final CiVariable callRuntimeWithResult(CiRuntimeCall runtimeCall, LIRDebugInfo info, CiValue... args) {
-        CiVariable result = newVariable(runtimeCall.resultKind);
         CiValue location = callRuntime(runtimeCall, info, args);
-        lir.move(location, result);
-        return result;
+        return emitMove(location);
     }
 
     SwitchRange[] createLookupRanges(LookupSwitchNode x) {
@@ -1305,7 +1242,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
 
     @Override
     public void visitMemoryRead(ReadNode memRead) {
-        lir.move(memRead.location().createAddress(this, memRead.object()), createResultVariable(memRead), memRead.location().getValueKind(), genDebugInfo(memRead));
+        setResult(memRead, emitLoad(memRead.location().createAddress(this, memRead.object()), memRead.location().getValueKind(), genDebugInfo(memRead)));
     }
 
     @Override
@@ -1315,8 +1252,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         // queries the already generated result variable.
         CiValue readValue = load(memRead.getReadNode());
         vma.postVolatileRead();
-        CiValue result = createResultVariable(memRead);
-        lir.move(readValue, result);
+        setResult(memRead, emitMove(readValue));
     }
 
     private LIRDebugInfo genDebugInfo(AccessNode access) {
@@ -1330,7 +1266,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
 
     @Override
     public void visitMemoryWrite(WriteNode memWrite) {
-        lir.move(load(memWrite.value()), memWrite.location().createAddress(this, memWrite.object()), memWrite.location().getValueKind(), genDebugInfo(memWrite));
+        emitStore(memWrite.location().createAddress(this, memWrite.object()), loadForStore(memWrite.value(), memWrite.location().getValueKind()), memWrite.location().getValueKind(), genDebugInfo(memWrite));
     }
 
 
@@ -1418,7 +1354,9 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         x.clearOperand();
     }
 
+    @Override
     public CiValue setResult(ValueNode x, CiVariable operand) {
+        assert x.kind == operand.kind;
         x.setOperand(operand);
         if (GraalOptions.DetailedAsserts) {
             operands.recordResult(operand, x);
@@ -1467,16 +1405,15 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
             if (arg != null) {
                 CiValue operand = cc.locations[j++];
                 if (operand.isRegister()) {
-                    force(arg, operand);
+                    emitMove(makeOperand(arg), operand.asRegister().asValue(operand.kind.stackKind()));
                 } else {
-                    CiStackSlot slot = (CiStackSlot) operand;
-                    assert !slot.inCallerFrame();
-                    CiValue param = loadForStore(arg, slot.kind);
-                    lir.move(param, slot);
+                    assert !((CiStackSlot) operand).inCallerFrame();
+                    CiValue param = loadForStore(arg, operand.kind);
+                    emitMove(param, operand);
 
                     if (arg.kind == CiKind.Object && pointerSlots != null) {
                         // This slot must be marked explicitly in the pointer map.
-                        pointerSlots.add(slot);
+                        pointerSlots.add(operand);
                     }
                 }
                 argList.add(operand);
@@ -1538,7 +1475,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
 
     public abstract boolean canInlineAsConstant(ValueNode i);
 
-    protected abstract boolean canStoreAsConstant(CiKind kind);
+    protected abstract boolean canStoreConstant(CiConstant c);
 
     /**
      * Implements site-specific information for the XIR interface.
@@ -1608,7 +1545,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         CiCallingConvention callingConvention = compilation.registerConfig.getCallingConvention(RuntimeCall, new CiKind[]{CiKind.Object}, target(), false);
         compilation.frameMap().adjustOutgoingStackSize(callingConvention, RuntimeCall);
         CiValue argumentOperand = callingConvention.locations[0];
-        lir.move(makeOperand(x.exception()), argumentOperand);
+        emitMove(makeOperand(x.exception()), argumentOperand);
         List<CiValue> args = new ArrayList<CiValue>(1);
         lir.callRuntime(CiRuntimeCall.UnwindException, CiValue.IllegalValue, args, null);
         setNoResult(x);
@@ -1636,8 +1573,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         lir.callRuntime(x.call(), resultOperand, argList, info);
 
         if (resultOperand.isLegal()) {
-            CiValue result = createResultVariable(x);
-            lir.move(resultOperand, result);
+            setResult(x, emitMove(resultOperand));
         }
     }
 

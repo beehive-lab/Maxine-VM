@@ -164,65 +164,6 @@ public abstract class LIRAssembler {
         lastDecodeStart = asm.codeBuffer.position();
     }
 
-    public void moveOp(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info) {
-        if (src.isRegister()) {
-            if (dest.isRegister()) {
-                assert info == null;
-                reg2reg(src, dest);
-            } else if (dest.isStackSlot()) {
-                assert info == null;
-                reg2stack(src, dest, kind);
-            } else if (dest.isAddress()) {
-                reg2mem(src, dest, kind, info);
-            } else {
-                throw Util.shouldNotReachHere();
-            }
-
-        } else if (src.isStackSlot()) {
-            assert info == null;
-            if (dest.isRegister()) {
-                stack2reg(src, dest, kind);
-            } else if (dest.isStackSlot()) {
-                stack2stack(src, dest, kind);
-            } else {
-                throw Util.shouldNotReachHere();
-            }
-
-        } else if (src.isConstant()) {
-            if (dest.isRegister()) {
-                assert info == null;
-                const2reg(src, dest);
-            } else if (dest.isStackSlot()) {
-                assert info == null;
-                const2stack(src, dest);
-            } else if (dest.isAddress()) {
-                const2mem(src, dest, kind, info);
-            } else {
-                throw Util.shouldNotReachHere();
-            }
-
-        } else if (src.isAddress()) {
-            if (dest.isStackSlot()) {
-                assert info == null;
-                mem2stack(src, dest, kind);
-            } else if (dest.isAddress()) {
-                assert info == null;
-                mem2mem(src, dest, kind);
-            } else {
-                mem2reg(src, dest, kind, info);
-            }
-
-        } else {
-            throw Util.shouldNotReachHere();
-        }
-    }
-
-    public void verifyOopMap(LIRDebugInfo info) {
-        if (GraalOptions.VerifyPointerMaps) {
-            // TODO: verify oops
-            Util.shouldNotReachHere();
-        }
-    }
 
     protected final Object asCallTarget(Object o) {
         return compilation.compiler.runtime.asCallTarget(o);
@@ -242,8 +183,6 @@ public abstract class LIRAssembler {
 
     protected abstract void emitNullCheck(CiValue src, LIRDebugInfo info);
 
-    protected abstract void emitNegate(CiValue left, CiValue dst);
-
     protected abstract void emitMonitorAddress(int monitor, CiValue dst);
 
     protected abstract void emitStackAllocate(StackBlock src, CiValue dst);
@@ -251,8 +190,6 @@ public abstract class LIRAssembler {
     protected abstract void emitReturn(CiValue inOpr);
 
     protected abstract void emitReadPrefetch(CiValue inOpr);
-
-    protected abstract void emitVolatileMove(CiValue inOpr, CiValue result, CiKind kind, LIRDebugInfo info);
 
     protected abstract void emitSignificantBitOp(LegacyOpcode code, CiValue inOpr1, CiValue dst);
 
@@ -274,25 +211,4 @@ public abstract class LIRAssembler {
 
     protected abstract void emitMemoryBarriers(int barriers);
 
-    protected abstract void reg2stack(CiValue src, CiValue dest, CiKind kind);
-
-    protected abstract void reg2mem(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info);
-
-    protected abstract void mem2reg(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info);
-
-    protected abstract void const2mem(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info);
-
-    protected abstract void const2stack(CiValue src, CiValue dest);
-
-    protected abstract void const2reg(CiValue src, CiValue dest);
-
-    protected abstract void mem2stack(CiValue src, CiValue dest, CiKind kind);
-
-    protected abstract void mem2mem(CiValue src, CiValue dest, CiKind kind);
-
-    protected abstract void stack2stack(CiValue src, CiValue dest, CiKind kind);
-
-    protected abstract void stack2reg(CiValue src, CiValue dest, CiKind kind);
-
-    protected abstract void reg2reg(CiValue src, CiValue dest);
 }

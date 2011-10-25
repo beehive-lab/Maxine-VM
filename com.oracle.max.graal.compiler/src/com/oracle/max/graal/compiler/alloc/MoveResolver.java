@@ -200,7 +200,7 @@ final class MoveResolver {
         CiValue fromOpr = fromInterval.operand;
         CiValue toOpr = toInterval.operand;
 
-        insertionBuffer.move(insertIdx, fromOpr, toOpr, null);
+        insertionBuffer.move(insertIdx, fromOpr, toOpr);
 
         if (GraalOptions.TraceLinearScanLevel >= 4) {
             TTY.println("MoveResolver: inserted move from %d (%s) to %d (%s)", fromInterval.operandNumber, fromInterval.location(), toInterval.operandNumber, toInterval.location());
@@ -213,7 +213,7 @@ final class MoveResolver {
         assert insertionBuffer.lirList() == insertList : "wrong insertion buffer";
 
         CiValue toOpr = toInterval.operand;
-        insertionBuffer.move(insertIdx, fromOpr, toOpr, null);
+        insertionBuffer.move(insertIdx, fromOpr, toOpr);
 
         if (GraalOptions.TraceLinearScanLevel >= 4) {
             TTY.print("MoveResolver: inserted move from constant %s to %d (%s)", fromOpr, toInterval.operandNumber, toInterval.location());

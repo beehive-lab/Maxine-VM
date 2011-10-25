@@ -71,7 +71,6 @@ public final class GraalOptions {
     public static float   MinimumUsageProbability            = 0.95f;
 
     // debugging settings
-    public static boolean VerifyPointerMaps                  = ____;
     public static int     MethodEndBreakpointGuards          = 0;
     public static boolean ZapStackOnMethodEntry              = ____;
     public static boolean StressLinearScan                   = ____;

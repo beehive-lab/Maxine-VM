@@ -467,16 +467,15 @@ public final class LinearScan {
                     CiValue resultOperand = op.result();
                     // remove move from register to stack if the stack slot is guaranteed to be correct.
                     // only moves that have been inserted by LinearScan can be removed.
-                    assert op.code == LegacyOpcode.Move : "only moves can have a opId of -1";
+                    assert op.code == StandardOp.MOVE : "only moves can have a opId of -1";
                     assert resultOperand.isVariable() : "LinearScan inserts only moves to variables";
 
-                    LIRMove op1 = (LIRMove) op;
                     Interval curInterval = intervalFor(resultOperand);
 
                     if (!curInterval.location().isRegister() && curInterval.alwaysInMemory()) {
                         // move target is a stack slot that is always correct, so eliminate instruction
                         if (GraalOptions.TraceLinearScanLevel >= 4) {
-                            TTY.println("eliminating move from interval %d to %d", operandNumber(op1.operand(0)), operandNumber(op1.result()));
+                            TTY.println("eliminating move from interval %d to %d", operandNumber(op.operand(0)), operandNumber(op.result()));
                         }
                         instructions.set(j, null); // null-instructions are deleted by assignRegNum
                     }
@@ -499,7 +498,7 @@ public final class LinearScan {
                         assert fromLocation.isRegister() : "from operand must be a register but is: " + fromLocation + " toLocation=" + toLocation + " spillState=" + interval.spillState();
                         assert toLocation.isStackSlot() : "to operand must be a stack slot";
 
-                        insertionBuffer.move(j, fromLocation, toLocation, null);
+                        insertionBuffer.move(j, fromLocation, toLocation);
 
                         if (GraalOptions.TraceLinearScanLevel >= 4) {
                             CiStackSlot slot = interval.spillSlot();
@@ -1004,9 +1003,8 @@ public final class LinearScan {
      * Determines the register priority for an instruction's output/result operand.
      */
     RegisterPriority registerPriorityOfOutputOperand(LIRInstruction op, CiValue operand) {
-        if (op.code == LegacyOpcode.Move) {
-            LIRMove move = (LIRMove) op;
-            CiValue res = move.result();
+        if (op.code == StandardOp.MOVE) {
+            CiValue res = op.result();
             boolean resultInMemory = res.isVariable() && operands.mustStartInMemory((CiVariable) res);
 
             if (resultInMemory) {
@@ -1014,7 +1012,7 @@ public final class LinearScan {
                 // This interval will always get a stack slot first, so return noUse.
                 return RegisterPriority.None;
 
-            } else if (move.operand(0).isStackSlot()) {
+            } else if (op.operand(0).isStackSlot()) {
                 // method argument (condition must be equal to handleMethodArguments)
                 return RegisterPriority.None;
 
@@ -1034,9 +1032,8 @@ public final class LinearScan {
      * Determines the priority which with an instruction's input operand will be allocated a register.
      */
     RegisterPriority registerPriorityOfInputOperand(LIRInstruction op, CiValue operand) {
-        if (op.code == LegacyOpcode.Move) {
-            LIRMove move = (LIRMove) op;
-            CiValue res = move.result();
+        if (op.code == StandardOp.MOVE) {
+            CiValue res = op.result();
             boolean resultInMemory = res.isVariable() && operands.mustStartInMemory((CiVariable) res);
 
             if (resultInMemory) {
@@ -1044,7 +1041,7 @@ public final class LinearScan {
                 // To avoid moves from stack to stack (not allowed) force the input operand to a register
                 return RegisterPriority.MustHaveRegister;
 
-            } else if (move.operand(0).isVariableOrRegister() && move.result().isVariableOrRegister()) {
+            } else if (op.operand(0).isVariableOrRegister() && op.result().isVariableOrRegister()) {
                 // The input operand is not forced to a register (moves from stack to register are allowed),
                 // but it is faster if the input operand is in a register
                 return RegisterPriority.ShouldHaveRegister;
@@ -1070,7 +1067,7 @@ public final class LinearScan {
      * spill slot.
      */
     void handleMethodArguments(LIRInstruction op) {
-        if (op.code == LegacyOpcode.Move) {
+        if (op.code == StandardOp.MOVE) {
             if (op.operand(0).isStackSlot()) {
                 CiStackSlot slot = (CiStackSlot) op.operand(0);
                 if (GraalOptions.DetailedAsserts) {
@@ -1124,29 +1121,6 @@ public final class LinearScan {
                         TTY.println("operation at opId %d: added hint from interval %d to %d", op.id(), from.operandNumber, to.operandNumber);
                     }
                 }
-            }
-        }
-
-
-        if (!(op.code instanceof LegacyOpcode)) {
-            return;
-        }
-        switch ((LegacyOpcode) op.code) {
-            case Move: {
-                CiValue moveFrom = op.operand(0);
-                CiValue moveTo = op.result();
-
-                if (moveTo.isVariableOrRegister() && moveFrom.isVariableOrRegister()) {
-                    Interval from = intervalFor(moveFrom);
-                    Interval to = intervalFor(moveTo);
-                    if (from != null && to != null) {
-                        to.setLocationHint(from);
-                        if (GraalOptions.TraceLinearScanLevel >= 4) {
-                            TTY.println("operation at opId %d: added hint from interval %d to %d", op.id(), from.operandNumber, to.operandNumber);
-                        }
-                    }
-                }
-                break;
             }
         }
     }
@@ -2081,7 +2055,7 @@ public final class LinearScan {
             assert op.verify();
 
             // remove useless moves
-            if (op.code == LegacyOpcode.Move) {
+            if (op.code == StandardOp.MOVE) {
                 CiValue src = op.operand(0);
                 CiValue dst = op.result();
                 if (dst == src || src.equals(dst)) {

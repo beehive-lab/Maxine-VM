@@ -213,8 +213,7 @@ final class ControlFlowOptimizer {
 
                 assert curLastOp.info == null : "return instructions do not have debug information";
 
-                assert curLastOp instanceof LIRMove : "return must be LIROp1";
-                CiValue returnOpr = ((LIRMove) curLastOp).operand(0);
+                CiValue returnOpr = curLastOp.operand(0);
 
                 for (int j = block.numberOfPreds() - 1; j >= 0; j--) {
                     LIRBlock pred = block.predAt(j);

@@ -115,7 +115,7 @@ public class AMD64ControlFlowOp {
             // check that we don't overwrite an input operand before it is used.
             assert !result.equals(trueValue);
 
-            lasm.moveOp(falseValue, result, CiKind.Illegal, null);
+            AMD64MoveOp.move(lasm, result, falseValue);
             cmove(lasm, result, cond, trueValue);
 
         }
@@ -136,7 +136,7 @@ public class AMD64ControlFlowOp {
             // check that we don't overwrite an input operand before it is used.
             assert !result.equals(trueValue);
 
-            lasm.moveOp(falseValue, result, CiKind.Illegal, null);
+            AMD64MoveOp.move(lasm, result, falseValue);
             cmove(lasm, result, cond, trueValue);
             if (unorderedIsTrue && !trueOnUnordered(cond)) {
                 cmove(lasm, result, ConditionFlag.parity, trueValue);

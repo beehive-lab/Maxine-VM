@@ -43,7 +43,6 @@ public enum LegacyOpcode implements LIROpcode<LIRAssembler, LIRInstruction> {
         Return,
         Lea,
         TableSwitch,
-        Move,
         Prefetchr,
         Prefetchw,
         Lsb,
@@ -66,8 +65,6 @@ public enum LegacyOpcode implements LIROpcode<LIRAssembler, LIRInstruction> {
 
     @Override
     public void emitCode(LIRAssembler lasm, LIRInstruction op) {
-        lasm.verifyOopMap(op.info);
-
         LegacyOpcode code = (LegacyOpcode) op.code;
         switch (code) {
             case TableSwitch:
@@ -115,10 +112,6 @@ public enum LegacyOpcode implements LIROpcode<LIRAssembler, LIRInstruction> {
                 break;
             }
 
-            case Move:
-                LIRMove move = (LIRMove) op;
-                lasm.moveOp(op.operand(0), op.result(), move.kind, op.info);
-                break;
             case Prefetchr:
                 lasm.emitReadPrefetch(op.operand(0));
                 break;
@@ -151,7 +144,4 @@ public enum LegacyOpcode implements LIROpcode<LIRAssembler, LIRInstruction> {
                 throw Util.shouldNotReachHere();
         }
     }
-
-
-
 }

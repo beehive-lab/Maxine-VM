@@ -90,26 +90,6 @@ public final class LIRList {
         append(new LIRInstruction(LegacyOpcode.Lea, dst, null, src));
     }
 
-    public void move(CiAddress src, CiValue dst, LIRDebugInfo info) {
-        append(new LIRMove(LegacyOpcode.Move, src, dst, src.kind, info));
-    }
-
-    public void move(CiValue src, CiAddress dst, LIRDebugInfo info) {
-        append(new LIRMove(LegacyOpcode.Move, src, dst, dst.kind, info));
-    }
-
-    public void move(CiValue src, CiValue dst, CiKind kind, LIRDebugInfo info) {
-        append(new LIRMove(LegacyOpcode.Move, src, dst, kind, info));
-    }
-
-    public void move(CiValue src, CiValue dst) {
-        append(new LIRMove(LegacyOpcode.Move, src, dst, dst.kind, null));
-    }
-
-    public void oop2reg(Object o, CiValue dst) {
-        append(new LIRMove(LegacyOpcode.Move, CiConstant.forObject(o), dst, dst.kind, null));
-    }
-
     public void returnOp(CiValue result) {
         append(new LIRInstruction(LegacyOpcode.Return, CiValue.IllegalValue, null, result));
     }
@@ -158,14 +138,6 @@ public final class LIRList {
         // Compare and swap produces condition code "zero" if contentsOf(addr) == cmpValue,
         // implying successful swap of newValue into addr
         append(new LIRInstruction(LegacyOpcode.Cas, dst, null, addr, cmpValue, newValue));
-    }
-
-    public void store(CiValue src, CiAddress dst, LIRDebugInfo info) {
-        append(new LIRMove(LegacyOpcode.Move, src, dst, dst.kind, info));
-    }
-
-    public void load(CiAddress src, CiValue dst, LIRDebugInfo info) {
-        append(new LIRMove(LegacyOpcode.Move, src, dst, src.kind, info));
     }
 
     public static void printBlock(LIRBlock x) {

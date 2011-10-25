@@ -78,7 +78,7 @@ final class EdgeMoveOptimizer {
 
     /**
      * Determines if two operations are both {@linkplain LIROpcode#Move moves}
-     * that have the same {@linkplain LIRMove#operand() source} and {@linkplain LIRMove#result() destination}
+     * that have the same {@linkplain LIRInstruction#operand() source} and {@linkplain LIRInstruction#result() destination}
      * operands and they have the same {@linkplain LIRInstruction#info debug info}.
      *
      * @param op1 the first instruction to compare
@@ -89,12 +89,8 @@ final class EdgeMoveOptimizer {
         assert op1 != null;
         assert op2 != null;
 
-        if (op1.code == LegacyOpcode.Move && op2.code == LegacyOpcode.Move) {
-            assert op1 instanceof LIRMove : "move must be LIROp1";
-            assert op2 instanceof LIRMove : "move must be LIROp1";
-            LIRMove move1 = (LIRMove) op1;
-            LIRMove move2 = (LIRMove) op2;
-            if (move1.info == move2.info && move1.operand(0).equals(move2.operand(0)) && move1.result().equals(move2.result())) {
+        if (op1.code == StandardOp.MOVE && op2.code == StandardOp.MOVE) {
+            if (op1.info == op2.info && op1.operand(0).equals(op2.operand(0)) && op1.result().equals(op2.result())) {
                 // these moves are exactly equal and can be optimized
                 return true;
             }

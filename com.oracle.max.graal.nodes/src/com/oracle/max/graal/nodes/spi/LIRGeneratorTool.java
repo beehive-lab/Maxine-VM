@@ -29,8 +29,15 @@ import com.sun.cri.ci.*;
 public abstract class LIRGeneratorTool extends ValueVisitor {
     public abstract CiValue load(ValueNode value);
     public abstract CiVariable createResultVariable(ValueNode conv);
+    public abstract CiValue setResult(ValueNode x, CiVariable operand);
     public abstract CiValue forceToSpill(CiValue value, CiKind kind, boolean b);
-    public abstract void emitMove(CiValue tmp, CiValue reg);
+
+    public abstract void emitMove(CiValue src, CiValue dst);
+    public abstract CiVariable emitMove(CiValue input);
+    // TODO: LIRDebugInfo is not visible in this project. Replaced with Object for now - but how to solve that?
+    public abstract CiVariable emitLoad(CiAddress loadAddress, CiKind kind, Object debugInfo);
+    public abstract void emitStore(CiAddress storeAddress, CiValue input, CiKind kind, Object debugInfo);
+
     public abstract void integerAdd(ValueNode result, ValueNode x, ValueNode y);
     public abstract void deoptimizeOn(Condition of);
     public abstract CiVariable newVariable(CiKind kind);

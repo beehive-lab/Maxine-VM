@@ -25,8 +25,7 @@ package com.oracle.max.graal.compiler.target.amd64;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.cri.ci.CiRegister.*;
 import static com.sun.cri.ci.CiValue.*;
-import static java.lang.Double.*;
-import static java.lang.Float.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64MoveOp.*;
 
 import java.util.*;
 
@@ -58,8 +57,6 @@ import com.sun.cri.xir.CiXirAssembler.XirMark;
 public final class AMD64LIRAssembler extends LIRAssembler {
 
     private static final Object[] NO_PARAMS = new Object[0];
-    private static final long NULLWORD = 0;
-    private static final CiRegister SHIFTCount = AMD64.rcx;
 
     final CiTarget target;
     final AMD64MacroAssembler masm;
@@ -76,12 +73,17 @@ public final class AMD64LIRAssembler extends LIRAssembler {
 
 
     protected CiRegister asIntReg(CiValue value) {
-        assert value.kind == CiKind.Int;
+        assert value.kind == CiKind.Int || value.kind == CiKind.Jsr;
         return asRegister(value);
     }
 
     protected CiRegister asLongReg(CiValue value) {
         assert value.kind == CiKind.Long;
+        return asRegister(value);
+    }
+
+    protected CiRegister asObjectReg(CiValue value) {
+        assert value.kind == CiKind.Object;
         return asRegister(value);
     }
 
@@ -135,7 +137,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
      */
     protected CiAddress asFloatConst(CiValue value) {
         assert value.kind == CiKind.Float && value.isConstant();
-        return tasm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) value).asFloat()));
+        return tasm.recordDataReferenceInCode((CiConstant) value);
     }
 
     /**
@@ -144,7 +146,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
      */
     protected CiAddress asDoubleConst(CiValue value) {
         assert value.kind == CiKind.Double && value.isConstant();
-        return tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) value).asDouble()));
+        return tasm.recordDataReferenceInCode((CiConstant) value);
     }
 
 
@@ -182,43 +184,8 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         masm.leaq(dst.asRegister(), compilation.frameMap().toStackAddress(stackBlock));
     }
 
-    protected void moveRegs(CiRegister fromReg, CiRegister toReg) {
-        if (fromReg != toReg) {
-            masm.mov(toReg, fromReg);
-        }
-    }
-
     private void swapReg(CiRegister a, CiRegister b) {
         masm.xchgptr(a, b);
-    }
-
-    private void const2reg(CiRegister dst, int constant) {
-        // Do not optimize with an XOR as this instruction may be between
-        // a CMP and a Jcc in which case the XOR will modify the condition
-        // flags and interfere with the Jcc.
-        masm.movl(dst, constant);
-    }
-
-    private void const2reg(CiRegister dst, long constant) {
-        // Do not optimize with an XOR as this instruction may be between
-        // a CMP and a Jcc in which case the XOR will modify the condition
-        // flags and interfere with the Jcc.
-        masm.movq(dst, constant);
-    }
-
-    private void const2reg(CiRegister dst, CiConstant constant) {
-        assert constant.kind == CiKind.Object;
-        // Do not optimize with an XOR as this instruction may be between
-        // a CMP and a Jcc in which case the XOR will modify the condition
-        // flags and interfere with the Jcc.
-        if (constant.isNull()) {
-            masm.movq(dst, 0x0L);
-        } else if (target.inlineObjects) {
-            tasm.recordDataReferenceInCode(constant);
-            masm.movq(dst, 0xDEADDEADDEADDEADL);
-        } else {
-            masm.movq(dst, tasm.recordDataReferenceInCode(constant));
-        }
     }
 
     @Override
@@ -226,260 +193,6 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         for (int i = 0; i < GraalOptions.MethodEndBreakpointGuards; ++i) {
             masm.int3();
         }
-    }
-
-    private void const2reg(CiRegister dst, float constant) {
-        // This is *not* the same as 'constant == 0.0f' in the case where constant is -0.0f
-        if (Float.floatToRawIntBits(constant) == Float.floatToRawIntBits(0.0f)) {
-            masm.xorps(dst, dst);
-        } else {
-            masm.movflt(dst, tasm.recordDataReferenceInCode(CiConstant.forFloat(constant)));
-        }
-    }
-
-    private void const2reg(CiRegister dst, double constant) {
-        // This is *not* the same as 'constant == 0.0d' in the case where constant is -0.0d
-        if (Double.doubleToRawLongBits(constant) == Double.doubleToRawLongBits(0.0d)) {
-            masm.xorpd(dst, dst);
-        } else {
-            masm.movdbl(dst, tasm.recordDataReferenceInCode(CiConstant.forDouble(constant)));
-        }
-    }
-
-    @Override
-    protected void const2reg(CiValue src, CiValue dest) {
-        assert src.isConstant();
-        assert dest.isRegister();
-        CiConstant c = (CiConstant) src;
-
-        // Checkstyle: off
-        switch (c.kind) {
-            case Boolean :
-            case Byte    :
-            case Char    :
-            case Short   :
-            case Jsr     :
-            case Int     : const2reg(dest.asRegister(), c.asInt()); break;
-            case Long    : const2reg(dest.asRegister(), c.asLong()); break;
-            case Object  : const2reg(dest.asRegister(), c); break;
-            case Float   : const2reg(asXmmFloatReg(dest), c.asFloat()); break;
-            case Double  : const2reg(asXmmDoubleReg(dest), c.asDouble()); break;
-            default      : throw Util.shouldNotReachHere();
-        }
-        // Checkstyle: on
-    }
-
-    @Override
-    protected void const2stack(CiValue src, CiValue dst) {
-        assert src.isConstant();
-        assert dst.isStackSlot();
-        CiStackSlot slot = (CiStackSlot) dst;
-        CiConstant c = (CiConstant) src;
-
-        // Checkstyle: off
-        switch (c.kind) {
-            case Boolean :
-            case Byte    :
-            case Char    :
-            case Short   :
-            case Jsr     :
-            case Int     : masm.movl(frameMap.toStackAddress(slot), c.asInt()); break;
-            case Float   : masm.movl(frameMap.toStackAddress(slot), floatToRawIntBits(c.asFloat())); break;
-            case Object  : movoop(frameMap.toStackAddress(slot), c); break;
-            case Long    : masm.movq(rscratch1, c.asLong());
-                           masm.movq(frameMap.toStackAddress(slot), rscratch1); break;
-            case Double  : masm.movq(rscratch1, doubleToRawLongBits(c.asDouble()));
-                           masm.movq(frameMap.toStackAddress(slot), rscratch1); break;
-            default      : throw Util.shouldNotReachHere("Unknown constant kind for const2stack: %s", c.kind);
-        }
-        // Checkstyle: on
-    }
-
-    @Override
-    protected void const2mem(CiValue src, CiValue dst, CiKind kind, LIRDebugInfo info) {
-        assert src.isConstant();
-        assert dst.isAddress();
-        CiConstant constant = (CiConstant) src;
-        CiAddress addr = asAddress(dst);
-
-        int nullCheckHere = codePos();
-        // Checkstyle: off
-        switch (kind) {
-            case Boolean :
-            case Byte    : masm.movb(addr, constant.asInt() & 0xFF); break;
-            case Char    :
-            case Short   : masm.movw(addr, constant.asInt() & 0xFFFF); break;
-            case Jsr     :
-            case Int     : masm.movl(addr, constant.asInt()); break;
-            case Float   : masm.movl(addr, floatToRawIntBits(constant.asFloat())); break;
-            case Object  : movoop(addr, constant); break;
-            case Long    : masm.movq(rscratch1, constant.asLong());
-                           nullCheckHere = codePos();
-                           masm.movq(addr, rscratch1); break;
-            case Double  : masm.movq(rscratch1, doubleToRawLongBits(constant.asDouble()));
-                           nullCheckHere = codePos();
-                           masm.movq(addr, rscratch1); break;
-            default      : throw Util.shouldNotReachHere();
-        }
-        // Checkstyle: on
-
-        if (info != null) {
-            tasm.recordImplicitException(nullCheckHere, info);
-        }
-    }
-
-    @Override
-    protected void reg2reg(CiValue src, CiValue dest) {
-        assert src.isRegister();
-        assert dest.isRegister();
-
-        if (!src.equals(dest)) {
-            if (dest.kind.isFloat()) {
-                masm.movflt(asXmmFloatReg(dest), asXmmFloatReg(src));
-            } else if (dest.kind.isDouble()) {
-                masm.movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(src));
-            } else {
-                moveRegs(src.asRegister(), dest.asRegister());
-            }
-        }
-    }
-
-    @Override
-    protected void reg2stack(CiValue src, CiValue dst, CiKind kind) {
-        assert src.isRegister();
-        assert dst.isStackSlot();
-        CiAddress addr = frameMap.toStackAddress((CiStackSlot) dst);
-
-        // Checkstyle: off
-        switch (src.kind) {
-            case Boolean :
-            case Byte    :
-            case Char    :
-            case Short   :
-            case Jsr     :
-            case Int     : masm.movl(addr, src.asRegister()); break;
-            case Object  :
-            case Long    : masm.movq(addr, src.asRegister()); break;
-            case Float   : masm.movflt(addr, asXmmFloatReg(src)); break;
-            case Double  : masm.movsd(addr, asXmmDoubleReg(src)); break;
-            default      : throw Util.shouldNotReachHere();
-        }
-        // Checkstyle: on
-    }
-
-    @Override
-    protected void reg2mem(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info) {
-        CiAddress toAddr = (CiAddress) dest;
-
-        if (info != null) {
-            tasm.recordImplicitException(codePos(), info);
-        }
-
-        // Checkstyle: off
-        switch (kind) {
-            case Float   : masm.movflt(toAddr, asXmmFloatReg(src)); break;
-            case Double  : masm.movsd(toAddr, asXmmDoubleReg(src)); break;
-            case Jsr     :
-            case Int     : masm.movl(toAddr, src.asRegister()); break;
-            case Long    :
-            case Object  : masm.movq(toAddr, src.asRegister()); break;
-            case Char    :
-            case Short   : masm.movw(toAddr, src.asRegister()); break;
-            case Byte    :
-            case Boolean : masm.movb(toAddr, src.asRegister()); break;
-            default      : throw Util.shouldNotReachHere();
-        }
-        // Checkstyle: on
-    }
-
-    private static CiRegister asXmmFloatReg(CiValue src) {
-        assert src.kind.isFloat() : "must be float, actual kind: " + src.kind;
-        CiRegister result = src.asRegister();
-        assert result.isFpu() : "must be xmm, actual type: " + result;
-        return result;
-    }
-
-    @Override
-    protected void stack2reg(CiValue src, CiValue dest, CiKind kind) {
-        assert src.isStackSlot();
-        assert dest.isRegister();
-
-        CiAddress addr = frameMap.toStackAddress((CiStackSlot) src);
-
-        // Checkstyle: off
-        switch (dest.kind) {
-            case Boolean :
-            case Byte    :
-            case Char    :
-            case Short   :
-            case Jsr     :
-            case Int     : masm.movl(dest.asRegister(), addr); break;
-            case Object  :
-            case Long    : masm.movq(dest.asRegister(), addr); break;
-            case Float   : masm.movflt(asXmmFloatReg(dest), addr); break;
-            case Double  : masm.movdbl(asXmmDoubleReg(dest), addr); break;
-            default      : throw Util.shouldNotReachHere();
-        }
-        // Checkstyle: on
-    }
-
-    @Override
-    protected void mem2mem(CiValue src, CiValue dest, CiKind kind) {
-        if (dest.kind.isInt()) {
-            masm.pushl((CiAddress) src);
-            masm.popl((CiAddress) dest);
-        } else {
-            masm.pushptr((CiAddress) src);
-            masm.popptr((CiAddress) dest);
-        }
-    }
-
-    @Override
-    protected void mem2stack(CiValue src, CiValue dest, CiKind kind) {
-        if (dest.kind.isInt()) {
-            masm.pushl((CiAddress) src);
-            masm.popl(frameMap.toStackAddress((CiStackSlot) dest));
-        } else {
-            masm.pushptr((CiAddress) src);
-            masm.popptr(frameMap.toStackAddress((CiStackSlot) dest));
-        }
-    }
-
-    @Override
-    protected void stack2stack(CiValue src, CiValue dest, CiKind kind) {
-        if (src.kind.isInt()) {
-            masm.pushl(frameMap.toStackAddress((CiStackSlot) src));
-            masm.popl(frameMap.toStackAddress((CiStackSlot) dest));
-        } else {
-            masm.pushptr(frameMap.toStackAddress((CiStackSlot) src));
-            masm.popptr(frameMap.toStackAddress((CiStackSlot) dest));
-        }
-    }
-
-    @Override
-    protected void mem2reg(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info) {
-        assert src.isAddress();
-        assert dest.isRegister() : "dest=" + dest;
-
-        CiAddress addr = (CiAddress) src;
-        if (info != null) {
-            tasm.recordImplicitException(codePos(), info);
-        }
-
-        // Checkstyle: off
-        switch (kind) {
-            case Float   : masm.movflt(asXmmFloatReg(dest), addr); break;
-            case Double  : masm.movdbl(asXmmDoubleReg(dest), addr); break;
-            case Object  : masm.movq(dest.asRegister(), addr); break;
-            case Int     : masm.movslq(dest.asRegister(), addr); break;
-            case Long    : masm.movq(dest.asRegister(), addr); break;
-            case Boolean :
-            case Byte    : masm.movsxb(dest.asRegister(), addr); break;
-            case Char    : masm.movzxl(dest.asRegister(), addr); break;
-            case Short   : masm.movswl(dest.asRegister(), addr); break;
-            default      : throw Util.shouldNotReachHere();
-        }
-        // Checkstyle: on
     }
 
     @Override
@@ -599,9 +312,9 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     protected void emitCompare2Int(LIROpcode code, CiValue left, CiValue right, CiValue dst) {
         if (code == LegacyOpcode.Cmpfd2i || code == LegacyOpcode.Ucmpfd2i) {
             if (left.kind.isFloat()) {
-                masm.cmpss2int(asXmmFloatReg(left), asXmmFloatReg(right), dst.asRegister(), code == LegacyOpcode.Ucmpfd2i);
+                masm.cmpss2int(asFloatReg(left), asFloatReg(right), dst.asRegister(), code == LegacyOpcode.Ucmpfd2i);
             } else if (left.kind.isDouble()) {
-                masm.cmpsd2int(asXmmDoubleReg(left), asXmmDoubleReg(right), dst.asRegister(), code == LegacyOpcode.Ucmpfd2i);
+                masm.cmpsd2int(asDoubleReg(left), asDoubleReg(right), dst.asRegister(), code == LegacyOpcode.Ucmpfd2i);
             } else {
                 assert false : "no fpu stack";
             }
@@ -645,7 +358,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         if (callAddress.isRegister()) {
             reg = callAddress.asRegister();
         } else {
-            moveOp(callAddress, reg.asValue(callAddress.kind), callAddress.kind, null);
+            move(this, reg.asValue(callAddress.kind), callAddress);
         }
         indirectCall(reg, target, info);
     }
@@ -661,7 +374,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         if (callAddress.isRegister()) {
             reg = callAddress.asRegister();
         } else {
-            moveOp(callAddress, reg.asValue(callAddress.kind), callAddress.kind, null);
+            move(this, reg.asValue(callAddress.kind), callAddress);
         }
         indirectCall(reg, symbol, info);
     }
@@ -696,31 +409,6 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void emitNegate(CiValue left, CiValue dest) {
-        assert left.isRegister();
-        if (left.kind.isInt()) {
-            masm.negl(left.asRegister());
-            moveRegs(left.asRegister(), dest.asRegister());
-
-        } else if (dest.kind.isFloat()) {
-            if (asXmmFloatReg(left) != asXmmFloatReg(dest)) {
-                masm.movflt(asXmmFloatReg(dest), asXmmFloatReg(left));
-            }
-            masm.xorps(asXmmFloatReg(dest), tasm.recordDataReferenceInCode(CiConstant.forLong(0x8000000080000000L)));
-        } else if (dest.kind.isDouble()) {
-            if (asXmmDoubleReg(left) != asXmmDoubleReg(dest)) {
-                masm.movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(left));
-            }
-            masm.xorpd(asXmmDoubleReg(dest), tasm.recordDataReferenceInCode(CiConstant.forLong(0x8000000000000000L)));
-        } else {
-            CiRegister lreg = left.asRegister();
-            CiRegister dreg = dest.asRegister();
-            masm.movq(dreg, lreg);
-            masm.negq(dreg);
-        }
-    }
-
-    @Override
     protected void emitLea(CiValue src, CiValue dest) {
         CiRegister reg = dest.asRegister();
         masm.leaq(reg, asAddress(src));
@@ -731,41 +419,6 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         assert src.isRegister();
         tasm.recordImplicitException(codePos(), info);
         masm.nullCheck(src.asRegister());
-    }
-
-    @Override
-    protected void emitVolatileMove(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info) {
-        assert kind == CiKind.Long : "only for volatile long fields";
-
-        if (info != null) {
-            tasm.recordImplicitException(codePos(), info);
-        }
-
-        if (src.kind.isDouble()) {
-            if (dest.isRegister()) {
-                masm.movdq(dest.asRegister(), asXmmDoubleReg(src));
-            } else if (dest.isStackSlot()) {
-                masm.movsd(frameMap.toStackAddress((CiStackSlot) dest), asXmmDoubleReg(src));
-            } else {
-                assert dest.isAddress();
-                masm.movsd((CiAddress) dest, asXmmDoubleReg(src));
-            }
-        } else {
-            assert dest.kind.isDouble();
-            if (src.isStackSlot()) {
-                masm.movdbl(asXmmDoubleReg(dest), frameMap.toStackAddress((CiStackSlot) src));
-            } else {
-                assert src.isAddress();
-                masm.movdbl(asXmmDoubleReg(dest), (CiAddress) src);
-            }
-        }
-    }
-
-    private static CiRegister asXmmDoubleReg(CiValue dest) {
-        assert dest.kind.isDouble() : "must be double XMM register";
-        CiRegister result = dest.asRegister();
-        assert result.isFpu() : "must be XMM register";
-        return result;
     }
 
     @Override
@@ -906,7 +559,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                 case Mov: {
                     CiValue result = operands[inst.result.index];
                     CiValue source = operands[inst.x().index];
-                    moveOp(source, result, result.kind, null);
+                    move(this, result, source);
                     break;
                 }
 
@@ -915,10 +568,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     CiValue pointer = operands[inst.x().index];
                     CiRegisterValue register = assureInRegister(pointer);
 
-                    if ((Boolean) inst.extra && info != null) {
-                        tasm.recordImplicitException(codePos(), info);
-                    }
-                    moveOp(new CiAddress(inst.kind, register, 0), result, inst.kind, null);
+                    load(this, result, new CiAddress(inst.kind, register, 0), inst.kind, (Boolean) inst.extra ? info : null);
                     break;
                 }
 
@@ -927,10 +577,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     CiValue pointer = operands[inst.x().index];
                     assert pointer.isVariableOrRegister();
 
-                    if ((Boolean) inst.extra && info != null) {
-                        tasm.recordImplicitException(codePos(), info);
-                    }
-                    moveOp(value, new CiAddress(inst.kind, pointer, 0), inst.kind, null);
+                    store(this, new CiAddress(inst.kind, pointer, 0), value, inst.kind, (Boolean) inst.extra ? info : null);
                     break;
                 }
 
@@ -948,7 +595,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     pointer = assureInRegister(pointer);
                     assert pointer.isVariableOrRegister();
 
-                    CiValue src = null;
+                    CiAddress src;
                     if (index.isConstant()) {
                         assert index.kind == CiKind.Int;
                         CiConstant constantIndex = (CiConstant) index;
@@ -957,7 +604,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                         src = new CiAddress(inst.kind, pointer, index, scale, displacement);
                     }
 
-                    moveOp(src, result, inst.kind, canTrap ? info : null);
+                    load(this, result, src, inst.kind, canTrap ? info : null);
                     break;
                 }
 
@@ -992,7 +639,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     pointer = assureInRegister(pointer);
                     assert pointer.isVariableOrRegister();
 
-                    CiValue dst;
+                    CiAddress dst;
                     if (index.isConstant()) {
                         assert index.kind == CiKind.Int;
                         CiConstant constantIndex = (CiConstant) index;
@@ -1001,7 +648,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                         dst = new CiAddress(inst.kind, pointer, index, scale, displacement);
                     }
 
-                    moveOp(value, dst, inst.kind, canTrap ? info : null);
+                    store(this, dst, value, inst.kind, canTrap ? info : null);
                     break;
                 }
 
@@ -1059,7 +706,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                         CiValue argumentLocation = cc.locations[i];
                         CiValue argumentSourceLocation = operands[inst.arguments[i].index];
                         if (argumentLocation != argumentSourceLocation) {
-                            moveOp(argumentSourceLocation, argumentLocation, argumentLocation.kind, null);
+                            move(this, argumentLocation, argumentSourceLocation);
                         }
                     }
 
@@ -1069,7 +716,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     if (inst.result != null && inst.result.kind != CiKind.Illegal && inst.result.kind != CiKind.Void) {
                         CiRegister returnRegister = compilation.registerConfig.getReturnRegister(inst.result.kind);
                         CiValue resultLocation = returnRegister.asValue(inst.result.kind.stackKind());
-                        moveOp(resultLocation, operands[inst.result.index], inst.result.kind.stackKind(), null);
+                        move(this, operands[inst.result.index], resultLocation);
                     }
                     break;
                 }
@@ -1223,7 +870,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                         masm.pop(result.asRegister());
                     } else {
                         masm.pop(rscratch1);
-                        moveOp(rscratch1.asValue(), result, result.kind, null);
+                        move(this, result, rscratch1.asValue());
                     }
                     break;
                 }
@@ -1277,7 +924,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     private CiRegisterValue assureInRegister(CiValue pointer) {
         if (pointer.isConstant()) {
             CiRegisterValue register = rscratch1.asValue(pointer.kind);
-            moveOp(pointer, register, pointer.kind, null);
+            move(this, register, pointer);
             return register;
         }
 
@@ -1293,7 +940,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         if (GraalOptions.CreateDeoptInfo && stub.deoptInfo != null) {
             masm.nop();
             keepAlive.add(stub.deoptInfo);
-            const2reg(rscratch1, CiConstant.forObject(stub.deoptInfo));
+            AMD64MoveOp.move(this, rscratch1.asValue(), CiConstant.forObject(stub.deoptInfo));
             directCall(CiRuntimeCall.SetDeoptInfo, stub.info);
         }
         int code;
