@@ -22,35 +22,18 @@
  */
 package com.oracle.max.graal.compiler.target.amd64;
 
-import com.oracle.max.asm.*;
-import com.oracle.max.asm.target.amd64.AMD64Assembler.*;
 import com.oracle.max.graal.compiler.lir.*;
-import com.oracle.max.graal.compiler.stub.*;
-import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
 
-public enum AMD64ConvertOpFL implements LIROpcode<AMD64LIRAssembler, LIRConvert> {
-    F2L, D2L;
+public enum AMD64ReturnOp implements StandardOp.ReturnOpcode<AMD64LIRAssembler, LIRInstruction> {
+    RETURN;
 
-    public LIRInstruction create(CiVariable result, CompilerStub stub, CiVariable input, CiVariable tmp) {
-        return new LIRConvert(this, result, stub, input, tmp);
+    public LIRInstruction create(CiValue input) {
+        return new LIRInstruction(this, CiValue.IllegalValue, null, input);
     }
 
     @Override
-    public void emitCode(AMD64LIRAssembler lasm, LIRConvert op) {
-        CiRegister dst = lasm.asLongReg(op.result());
-        CiRegister tmp = lasm.asLongReg(op.operand(1));
-        switch (this) {
-            case F2L: lasm.masm.cvttss2siq(dst, lasm.asFloatReg(op.operand(0))); break;
-            case D2L: lasm.masm.cvttsd2siq(dst, lasm.asDoubleReg(op.operand(0))); break;
-            default: throw Util.shouldNotReachHere();
-        }
-
-        Label endLabel = new Label();
-        lasm.masm.movq(tmp, java.lang.Long.MIN_VALUE);
-        lasm.masm.cmpq(dst, tmp);
-        lasm.masm.jcc(ConditionFlag.notEqual, endLabel);
-        lasm.callStub(op.stub, null, op.result(), op.operand(0));
-        lasm.masm.bind(endLabel);
+    public void emitCode(AMD64LIRAssembler lasm, LIRInstruction op) {
+        lasm.masm.ret(0);
     }
 }

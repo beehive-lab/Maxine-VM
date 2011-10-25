@@ -38,7 +38,7 @@ public class AMD64MoveOp {
         StandardOp.MOVE = MOVE;
     }
 
-    public static class MoveOp extends StandardOp.MoveOp<AMD64LIRAssembler, LIRInstruction> implements LIROpcode.FirstOperandRegisterHint {
+    public static class MoveOp implements StandardOp.MoveOpcode<AMD64LIRAssembler, LIRInstruction>, LIROpcode.FirstOperandRegisterHint {
         @Override
         public LIRInstruction create(CiValue result, CiValue input) {
             assert !result.isAddress() && !input.isAddress();

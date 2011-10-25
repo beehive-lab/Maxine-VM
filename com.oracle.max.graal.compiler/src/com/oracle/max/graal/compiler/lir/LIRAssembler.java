@@ -187,8 +187,6 @@ public abstract class LIRAssembler {
 
     protected abstract void emitStackAllocate(StackBlock src, CiValue dst);
 
-    protected abstract void emitReturn(CiValue inOpr);
-
     protected abstract void emitReadPrefetch(CiValue inOpr);
 
     protected abstract void emitSignificantBitOp(LegacyOpcode code, CiValue inOpr1, CiValue dst);
@@ -200,14 +198,6 @@ public abstract class LIRAssembler {
     protected abstract void emitCompareAndSwap(LIRInstruction compareAndSwap);
 
     protected abstract void emitXir(LIRXirInstruction xirInstruction);
-
-    protected abstract void emitIndirectCall(Object target, LIRDebugInfo info, CiValue callAddress);
-
-    protected abstract void emitDirectCall(Object target, LIRDebugInfo info);
-
-    protected abstract void emitNativeCall(String symbol, LIRDebugInfo info, CiValue callAddress);
-
-    protected abstract void emitCallAlignment(LIROpcode code);
 
     protected abstract void emitMemoryBarriers(int barriers);
 

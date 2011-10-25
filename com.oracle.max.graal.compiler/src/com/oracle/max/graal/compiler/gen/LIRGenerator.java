@@ -636,11 +636,10 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         if (destinationAddress instanceof CiConstant) {
             // Direct call
             assert ((CiConstant) destinationAddress).isDefaultValue() : "destination address should be zero";
-            lir.callDirect(target, resultOperand, argList, info2, snippet.marks, pointerSlots);
+            lir.append(StandardOp.DIRECT_CALL.create(target, resultOperand, argList, null, info2, snippet.marks, pointerSlots));
         } else {
             // Indirect call
-            argList.add(destinationAddress);
-            lir.callIndirect(target, resultOperand, argList, info2, snippet.marks, pointerSlots);
+            lir.append(StandardOp.INDIRECT_CALL.create(target, resultOperand, argList, destinationAddress, info2, snippet.marks, pointerSlots));
         }
 
         if (resultOperand.isLegal()) {
@@ -789,20 +788,15 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
 
     @Override
     public void visitReturn(ReturnNode x) {
-        if (x.kind.isVoid()) {
-            XirSnippet epilogue = xir.genEpilogue(site(x), compilation.method);
-            if (epilogue != null) {
-                emitXir(epilogue, x, null, compilation.method, false);
-                lir.returnOp(IllegalValue);
-            }
-        } else {
-            CiValue operand = resultOperandFor(x.kind);
+        CiValue operand = CiValue.IllegalValue;
+        if (!x.kind.isVoid()) {
+            operand = resultOperandFor(x.kind);
             emitMove(makeOperand(x.result()), operand);
-            XirSnippet epilogue = xir.genEpilogue(site(x), compilation.method);
-            if (epilogue != null) {
-                emitXir(epilogue, x, null, compilation.method, false);
-                lir.returnOp(operand);
-            }
+        }
+        XirSnippet epilogue = xir.genEpilogue(site(x), compilation.method);
+        if (epilogue != null) {
+            emitXir(epilogue, x, null, compilation.method, false);
+            lir.append(StandardOp.RETURN.create(operand));
         }
         setNoResult(x);
     }
@@ -1137,7 +1131,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
             argumentList = Util.uncheckedCast(Collections.emptyList());
         }
 
-        lir.callRuntime(runtimeCall, physReg, argumentList, info);
+        lir.append(StandardOp.DIRECT_CALL.create(runtimeCall, physReg, argumentList, null, info, null, null));
 
         return physReg;
     }
@@ -1547,7 +1541,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         CiValue argumentOperand = callingConvention.locations[0];
         emitMove(makeOperand(x.exception()), argumentOperand);
         List<CiValue> args = new ArrayList<CiValue>(1);
-        lir.callRuntime(CiRuntimeCall.UnwindException, CiValue.IllegalValue, args, null);
+        lir.append(StandardOp.DIRECT_CALL.create(CiRuntimeCall.UnwindException, CiValue.IllegalValue, args, null, null, null, null));
         setNoResult(x);
     }
 
@@ -1570,7 +1564,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         List<CiValue> pointerSlots = new ArrayList<CiValue>(2);
         List<CiValue> argList = visitInvokeArguments(cc, x.arguments(), pointerSlots);
 
-        lir.callRuntime(x.call(), resultOperand, argList, info);
+        lir.append(StandardOp.DIRECT_CALL.create(x.call(), resultOperand, argList, null, info, null, null));
 
         if (resultOperand.isLegal()) {
             setResult(x, emitMove(resultOperand));

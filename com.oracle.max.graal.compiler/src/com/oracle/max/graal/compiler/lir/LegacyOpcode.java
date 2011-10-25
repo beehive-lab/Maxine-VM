@@ -24,8 +24,6 @@ package com.oracle.max.graal.compiler.lir;
 
 import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiTargetMethod.Mark;
-import com.sun.cri.xir.CiXirAssembler.XirMark;
 
 /**
  * The {@code LirOpcode} enum represents the Operation code of each LIR instruction.
@@ -33,30 +31,19 @@ import com.sun.cri.xir.CiXirAssembler.XirMark;
 public enum LegacyOpcode implements LIROpcode<LIRAssembler, LIRInstruction> {
     // Checkstyle: stop
     // @formatter:off
-    BeginOp0,
-        Breakpoint,
-        RuntimeCall,
-        Membar,
-    EndOp0,
-    BeginOp1,
-        NullCheck,
-        Return,
-        Lea,
-        TableSwitch,
-        Prefetchr,
-        Prefetchw,
-        Lsb,
-        Msb,
-        MonitorAddress,
-    EndOp1,
-    BeginOp2,
-        Cmpl2i,
-        Ucmpfd2i,
-        Cmpfd2i,
-    EndOp2,
-    NativeCall,
-    DirectCall,
-    IndirectCall,
+    Breakpoint,
+    Membar,
+    NullCheck,
+    Lea,
+    TableSwitch,
+    Prefetchr,
+    Prefetchw,
+    Lsb,
+    Msb,
+    MonitorAddress,
+    Cmpl2i,
+    Ucmpfd2i,
+    Cmpfd2i,
     Cas,
     Xir;
     // @formatter:on
@@ -88,38 +75,11 @@ public enum LegacyOpcode implements LIROpcode<LIRAssembler, LIRInstruction> {
                 lasm.emitCompareAndSwap(op);
                 break;
 
-            case DirectCall: {
-                LIRCall call = (LIRCall) op;
-                lasm.emitCallAlignment(call.code);
-                if (call.marks != null) {
-                    call.marks.put(XirMark.CALLSITE, lasm.tasm.recordMark(null, new Mark[0]));
-                }
-                lasm.emitDirectCall(call.target, call.info);
-                break;
-            }
-            case IndirectCall: {
-                LIRCall call = (LIRCall) op;
-                lasm.emitCallAlignment(call.code);
-                if (call.marks != null) {
-                    call.marks.put(XirMark.CALLSITE, lasm.tasm.recordMark(null, new Mark[0]));
-                }
-                lasm.emitIndirectCall(call.target, call.info, call.targetAddress());
-                break;
-            }
-            case NativeCall: {
-                LIRCall call = (LIRCall) op;
-                lasm.emitNativeCall((String) call.target, call.info, call.targetAddress());
-                break;
-            }
-
             case Prefetchr:
                 lasm.emitReadPrefetch(op.operand(0));
                 break;
             case Prefetchw:
                 lasm.emitReadPrefetch(op.operand(0));
-                break;
-            case Return:
-                lasm.emitReturn(op.operand(0));
                 break;
             case Lea:
                 lasm.emitLea(op.operand(0), op.result());
