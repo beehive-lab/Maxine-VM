@@ -175,7 +175,7 @@ public final class RegionTable {
     }
 
     public Address regionAddress(int regionID) {
-        return regionPoolStart.plus(regionID << log2RegionSizeInBytes);
+        return regionPoolStart.plus(Address.fromInt(regionID).shiftedLeft(log2RegionSizeInBytes));
     }
 
     Address regionAddress(HeapRegionInfo regionInfo) {
@@ -190,7 +190,7 @@ public final class RegionTable {
      */
     void walk(RegionRange regionRange, CellVisitor cellVisitor) {
         Pointer p = regionAddress(regionRange.firstRegion()).asPointer();
-        final Pointer end = p.plus(regionRange.numRegions()  << log2RegionSizeInBytes);
+        final Pointer end = p.plus(Pointer.fromInt(regionRange.numRegions()).shiftedLeft(log2RegionSizeInBytes));
         while (p.lessThan(end)) {
             p = cellVisitor.visitCell(p);
         }
