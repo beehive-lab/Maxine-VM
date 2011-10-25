@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,37 +20,13 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.nodes;
+package com.oracle.max.graal.examples.vectorlib;
 
-import com.oracle.max.graal.nodes.calc.*;
-import com.sun.cri.ci.*;
 
-/**
- * Base class of all nodes that are fixed within the control flow graph and have an immediate successor.
- */
-public abstract class FixedWithNextNode extends FixedNode {
-
-    @Successor private FixedNode next; // the immediate successor of the current node
-
-    public FixedNode next() {
-        return next;
-    }
-
-    public void setNext(FixedNode x) {
-        updatePredecessors(next, x);
-        next = x;
-    }
-
-    public static final int SYNCHRONIZATION_ENTRY_BCI = -1;
-
-    public FixedWithNextNode(CiKind kind) {
-        super(kind);
-    }
-
-    public void replaceWithFloating(FloatingNode other) {
-        FixedNode next = this.next();
-        setNext(null);
-        replaceAtPredecessors(next);
-        replaceAtUsages(other);
+public class Point extends Vector {
+    public Point(int x, int y) {
+        super(2);
+        values[0] = x;
+        values[1] = y;
     }
 }

@@ -59,7 +59,7 @@ public class SnippetIntrinsificationPhase extends Phase {
         RiResolvedMethod target = invoke.target;
         if (Modifier.isStatic(target.accessFlags())) {
             Class< ? > c = target.holder().toJava();
-            if ((c != null && target.holder().isSubtypeOf(runtime.getType(Node.class))) || GraalOptions.Extend) {
+            if ((c != null && !Modifier.isPrivate(target.accessFlags()) && target.holder().isSubtypeOf(runtime.getType(Node.class))) || GraalOptions.Extend) {
                 try {
                     Class< ? >[] parameterTypes = toClassArray(target.signature(), target.holder());
                     Method m = c.getMethod(target.name(), parameterTypes);
@@ -193,7 +193,7 @@ public class SnippetIntrinsificationPhase extends Phase {
         }
     }
 
-    private Class< ? >[] toClassArray(RiSignature signature, RiType accessingClass) {
+    public static Class< ? >[] toClassArray(RiSignature signature, RiType accessingClass) {
         int count = signature.argumentCount(false);
         Class< ? >[] result = new Class< ? >[count];
         for (int i = 0; i < result.length; ++i) {
