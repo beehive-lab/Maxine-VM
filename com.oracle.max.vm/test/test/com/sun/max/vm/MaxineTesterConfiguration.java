@@ -133,19 +133,19 @@ public class MaxineTesterConfiguration {
         dacapo2006("pmd");
 
         dacapoBach("avrora");
-        dacapoBach("batik",  FAIL_ALL);
+        dacapoBach("batik");
         dacapoBach("eclipse");
         dacapoBach("fop");
         dacapoBach("h2", FAIL_ALL);
-        dacapoBach("jython", FAIL_ALL);
-        dacapoBach("luindex", FAIL_ALL);
-        dacapoBach("lusearch");
+        dacapoBach("jython");
+        dacapoBach("luindex");
+        dacapoBach("lusearch", FAIL_ALL);
         dacapoBach("pmd");
         dacapoBach("sunflow");
         dacapoBach("tomcat", FAIL_ALL);
         dacapoBach("tradebeans",  FAIL_ALL);
         dacapoBach("tradesoap",  FAIL_ALL);
-        dacapoBach("xalan",  FAIL_ALL);
+        dacapoBach("xalan");
 
         specjvm98("_201_compress");
         specjvm98("_202_jess");
@@ -255,6 +255,11 @@ public class MaxineTesterConfiguration {
         imageConfig("jtt-mst1xc1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-caller-baseline");
         imageConfig("jtt-mst1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-caller-baseline", "-test-callee-baseline");
         imageConfig("jtt-msc1xc1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests");
+
+        imageConfig("jtt-msec1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.mse", "-native-tests", "-test-callee-baseline");
+        imageConfig("jtt-mset1xc1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.mse", "-native-tests", "-test-caller-baseline");
+        imageConfig("jtt-mset1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.mse", "-native-tests", "-test-caller-baseline", "-test-callee-baseline");
+        imageConfig("jtt-msec1xc1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.mse", "-native-tests");
 
         maxvmConfig("std", "-Xms2g", "-Xmx2g");
         maxvmConfig("baseline", "-Xms2g", "-Xmx2g", "-Xbaseline");
