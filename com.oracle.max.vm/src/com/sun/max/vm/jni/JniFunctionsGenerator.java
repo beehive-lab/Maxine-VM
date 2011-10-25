@@ -84,13 +84,13 @@ public class JniFunctionsGenerator {
         }
     }
 
-    static class JniFunctionDeclaration {
+    public static class JniFunctionDeclaration {
         static Pattern PATTERN = Pattern.compile("    private static (native )?(\\w+) (\\w+)\\(([^)]*)\\).*");
 
         String line;
         String returnType;
         boolean isNative;
-        String name;
+        public String name;
         String parameters;
         String arguments;
         String sourcePos;
@@ -134,6 +134,12 @@ public class JniFunctionsGenerator {
     public static class Customizer {
         public String customizeBody(String line) {
             return line;
+        }
+
+        public void startFunction(JniFunctionDeclaration decl) {
+        }
+
+        public void close(PrintWriter writer) {
         }
 
         public String customizeHandler(String returnStatement) {
@@ -238,6 +244,7 @@ public class JniFunctionsGenerator {
             out.println(line);
         }
 
+        customizer.close(out);
         writer.close();
         return Files.updateGeneratedContent(outputFile, ReadableSource.Static.fromString(writer.toString()), "// START GENERATED CODE", "// END GENERATED CODE", checkOnly);
     }
@@ -270,6 +277,7 @@ public class JniFunctionsGenerator {
     private static void generateFunction(PrintWriter out, JniFunctionDeclaration decl, String body, String returnStatement, Customizer customizer) {
         boolean insertTimers = TIME_JNI_FUNCTIONS && decl.name != null;
 
+        customizer.startFunction(decl);
         out.println("        Pointer anchor = prologue(env);");
         out.println("        tracePrologue(\"" + decl.name + "\", anchor);");
         if (insertTimers) {

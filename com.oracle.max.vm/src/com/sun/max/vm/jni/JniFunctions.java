@@ -72,6 +72,12 @@ import com.sun.max.vm.value.*;
  */
 public final class JniFunctions {
 
+    @RESET
+    public static boolean TraceJNI;
+    static {
+        VMOptions.addFieldOption("-XX:", "TraceJNI", "Trace JNI calls.");
+    }
+
     public static boolean CheckJNI;
     static {
         VMOptions.register(new VMOption("-Xcheck:jni", "Perform additional checks for JNI functions.") {
@@ -118,7 +124,7 @@ public final class JniFunctions {
 
     @INLINE
     public static void tracePrologue(String name, Pointer anchor) {
-        if (ClassMethodActor.TraceJNI) {
+        if (TraceJNI) {
             traceEntry(name, JNI, anchor);
         }
     }
@@ -147,7 +153,7 @@ public final class JniFunctions {
 
     @INLINE
     public static void traceEpilogue(String name) {
-        if (ClassMethodActor.TraceJNI) {
+        if (TraceJNI) {
             traceExit(name, JNI);
         }
     }
@@ -282,7 +288,7 @@ public final class JniFunctions {
     }
 
     private static void traceReflectiveInvocation(MethodActor methodActor) {
-        if (ClassMethodActor.TraceJNI) {
+        if (TraceJNI) {
             Log.print("[Thread \"");
             Log.print(VmThread.current().getName());
             Log.print("\" --> JNI invoke: ");

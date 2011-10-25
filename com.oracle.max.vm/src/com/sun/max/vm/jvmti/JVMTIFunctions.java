@@ -28,6 +28,9 @@ import static com.sun.max.vm.jvmti.JVMTIConstants.*;
 import static com.sun.max.vm.jvmti.JVMTIEnvNativeStruct.*;
 import static com.sun.max.vm.jni.JniFunctions.epilogue;
 
+import java.util.*;
+import java.util.regex.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
@@ -45,23 +48,34 @@ import com.sun.max.vm.thread.*;
  * Do not add code here, add it to the appropriate implementation class.
  */
 public class JVMTIFunctions  {
+    static {
+        VMOptions.addFieldOption("-XX:", "TraceJVMTI", "Trace JVMTI calls.");
+        VMOptions.addFieldOption("-XX:", "TraceJVMTIInclude", "list of methods to include");
+        VMOptions.addFieldOption("-XX:", "TraceJVMTIExclude", "list of methods to exclude");
+    }
+
+    static boolean TraceJVMTI;
+    static String TraceJVMTIInclude;
+    static String TraceJVMTIExclude;
+
     /* The standard JNI entry prologue uses the fact that the jni env value is a slot in the
      * thread local storage area in order to reset the safepoint latch register
      * on an upcall, by indexing back to the base of the storage area.
      *
      * A jvmti env value is agent-specific and can be used across threads.
      * Therefore it cannot have a stored jni env value since that is thread-specific.
-     * So we load the current value from the native thread control control block.
+     * So we load the current value of the TLA from the native thread control control block.
      * and we use a special variant of C_FUNCTION that does not do anything with the
      * safepoint latch register, since it isn't valid at this point.
      *
      * One possible problem: if the TLA has been set to triggered or disabled this will be wrong.
-     * I believe this could only happen in the case of a callback from such a state
-     * and the callback explicitly passes the jni env as well as the jvmti env.
-     * TODO We can't change the agent code, but, if this is an issue, there should
-     * be some way to cache the jni env value on the way down and use it on any nested upcalls.
-     *
-     * TODO handle the (error) case of an upcall from an unattached thread
+     * I believe this could only happen in the case of a callback from such a state which is unlikely.
+     * However, the callback typically passes the jni env as well as the jvmti env so,if this is an issue,
+     * there should be some way to cache the jni env value on the way down and use it on any nested
+     * upcalls.
+
+     * TODO handle the (error) case of an upcall from an unattached thread, whihc will not
+     * have a valid TLA in its native thread control control block.
      */
 
     @C_FUNCTION(noLatch = true)
@@ -78,15 +92,49 @@ public class JVMTIFunctions  {
 
     @INLINE
     static void tracePrologue(String name, Pointer anchor) {
-        if (ClassMethodActor.TraceJVMTI) {
-            JniFunctions.traceEntry(name, "JVMTI", anchor);
+        if (TraceJVMTI) {
+            if (methodTraceStates == null || methodTraceStates.get(name)) {
+                JniFunctions.traceEntry(name, "JVMTI", anchor);
+            }
         }
     }
 
     @INLINE
     static void traceEpilogue(String name) {
-        if (ClassMethodActor.TraceJVMTI) {
-            JniFunctions.traceExit(name, "JVMTI");
+        if (TraceJVMTI) {
+            if (methodTraceStates == null || methodTraceStates.get(name)) {
+                JniFunctions.traceExit(name, "JVMTI");
+            }
+        }
+    }
+
+    static Map<String, Boolean> methodTraceStates;
+
+    /** Called once the VM is up to check for limitations on JVMTI tracing.
+     *
+     */
+    static void checkTracing() {
+        if (TraceJVMTIInclude != null || TraceJVMTIExclude != null) {
+            methodTraceStates = new HashMap<String, Boolean>();
+        }
+        for (String methodName : methodNames) {
+            methodTraceStates.put(methodName, TraceJVMTIInclude == null ? true : false);
+        }
+        if (TraceJVMTIInclude != null) {
+            Pattern inclusionPattern = Pattern.compile(TraceJVMTIInclude);
+            for (String methodName : methodNames) {
+                if (inclusionPattern.matcher(methodName).matches()) {
+                    methodTraceStates.put(methodName, true);
+                }
+            }
+        }
+        if (TraceJVMTIExclude != null) {
+            Pattern exclusionPattern = Pattern.compile(TraceJVMTIExclude);
+            for (String methodName : methodNames) {
+                if (exclusionPattern.matcher(methodName).matches()) {
+                    methodTraceStates.put(methodName, false);
+                }
+            }
         }
     }
 
@@ -3314,5 +3362,145 @@ public class JVMTIFunctions  {
         }
     }
 
+    private static final String[] methodNames = new String[] {
+        "SetEventNotificationMode",
+        "GetAllThreads",
+        "SuspendThread",
+        "ResumeThread",
+        "StopThread",
+        "InterruptThread",
+        "GetThreadInfo",
+        "GetOwnedMonitorInfo",
+        "GetCurrentContendedMonitor",
+        "RunAgentThread",
+        "GetTopThreadGroups",
+        "GetThreadGroupInfo",
+        "GetThreadGroupChildren",
+        "GetFrameCount",
+        "GetThreadState",
+        "GetCurrentThread",
+        "GetFrameLocation",
+        "NotifyFramePop",
+        "GetLocalObject",
+        "GetLocalInt",
+        "GetLocalLong",
+        "GetLocalFloat",
+        "GetLocalDouble",
+        "SetLocalObject",
+        "SetLocalInt",
+        "SetLocalLong",
+        "SetLocalFloat",
+        "SetLocalDouble",
+        "CreateRawMonitor",
+        "DestroyRawMonitor",
+        "RawMonitorEnter",
+        "RawMonitorExit",
+        "RawMonitorWait",
+        "RawMonitorNotify",
+        "RawMonitorNotifyAll",
+        "SetBreakpoint",
+        "ClearBreakpoint",
+        "SetFieldAccessWatch",
+        "ClearFieldAccessWatch",
+        "SetFieldModificationWatch",
+        "ClearFieldModificationWatch",
+        "IsModifiableClass",
+        "Allocate",
+        "Deallocate",
+        "GetClassSignature",
+        "GetClassStatus",
+        "GetSourceFileName",
+        "GetClassModifiers",
+        "GetClassMethods",
+        "GetClassFields",
+        "GetImplementedInterfaces",
+        "IsInterface",
+        "IsArrayClass",
+        "GetClassLoader",
+        "GetObjectHashCode",
+        "GetObjectMonitorUsage",
+        "GetFieldName",
+        "GetFieldDeclaringClass",
+        "GetFieldModifiers",
+        "IsFieldSynthetic",
+        "GetMethodName",
+        "GetMethodDeclaringClass",
+        "GetMethodModifiers",
+        "GetMaxLocals",
+        "GetArgumentsSize",
+        "GetLineNumberTable",
+        "GetMethodLocation",
+        "GetLocalVariableTable",
+        "SetNativeMethodPrefix",
+        "SetNativeMethodPrefixes",
+        "GetBytecodes",
+        "IsMethodNative",
+        "IsMethodSynthetic",
+        "GetLoadedClasses",
+        "GetClassLoaderClasses",
+        "PopFrame",
+        "ForceEarlyReturnObject",
+        "ForceEarlyReturnInt",
+        "ForceEarlyReturnLong",
+        "ForceEarlyReturnFloat",
+        "ForceEarlyReturnDouble",
+        "ForceEarlyReturnVoid",
+        "RedefineClasses",
+        "GetVersionNumber",
+        "GetCapabilities",
+        "GetSourceDebugExtension",
+        "IsMethodObsolete",
+        "SuspendThreadList",
+        "ResumeThreadList",
+        "GetAllStackTraces",
+        "GetThreadListStackTraces",
+        "GetThreadLocalStorage",
+        "SetThreadLocalStorage",
+        "GetStackTrace",
+        "GetTag",
+        "SetTag",
+        "ForceGarbageCollection",
+        "IterateOverObjectsReachableFromObject",
+        "IterateOverReachableObjects",
+        "IterateOverHeap",
+        "IterateOverInstancesOfClass",
+        "GetObjectsWithTags",
+        "FollowReferences",
+        "IterateThroughHeap",
+        "SetJNIFunctionTable",
+        "GetJNIFunctionTable",
+        "SetEventCallbacks",
+        "GenerateEvents",
+        "GetExtensionFunctions",
+        "GetExtensionEvents",
+        "SetExtensionEventCallback",
+        "DisposeEnvironment",
+        "GetErrorName",
+        "GetlongFormat",
+        "GetSystemProperties",
+        "GetSystemProperty",
+        "SetSystemProperty",
+        "GetPhase",
+        "GetCurrentThreadCpuTimerInfo",
+        "GetCurrentThreadCpuTime",
+        "GetThreadCpuTimerInfo",
+        "GetThreadCpuTime",
+        "GetTimerInfo",
+        "GetTime",
+        "GetPotentialCapabilities",
+        "AddCapabilities",
+        "RelinquishCapabilities",
+        "GetAvailableProcessors",
+        "GetClassVersionNumbers",
+        "GetConstantPool",
+        "GetEnvironmentLocalStorage",
+        "SetEnvironmentLocalStorage",
+        "AddToBootstrapClassLoaderSearch",
+        "SetVerboseFlag",
+        "AddToSystemClassLoaderSearch",
+        "RetransformClasses",
+        "GetOwnedMonitorStackDepthInfo",
+        "GetObjectSize",
+        "SetJVMTIEnv"};
 // END GENERATED CODE
 }

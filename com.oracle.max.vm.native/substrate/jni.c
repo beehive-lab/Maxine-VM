@@ -821,7 +821,7 @@ jint JNICALL jni_GetEnv(JavaVM *javaVM, void **penv, jint version) {
     JNIEnv *env = (JNIEnv *) tla_addressOf(tla, JNI_ENV);
     c_ASSERT(env != NULL);
     // JVMTI or JNI?
-    if (version && JVMTI_VERSION_MASK) {
+    if (version & JVMTI_VERSION_MASK) {
         *penv = getJVMTIImpl(env, version);
         return *penv == NULL ? JNI_EVERSION : JNI_OK;
     } else {
