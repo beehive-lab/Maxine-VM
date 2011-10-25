@@ -185,17 +185,11 @@ public class InliningUtil {
         boolean withReceiver = !invoke.isStatic();
         int argumentCount = method.signature().argumentCount(false);
         ValueNode[] parameters = new ValueNode[argumentCount + (withReceiver ? 1 : 0)];
-        int slot = withReceiver ? 1 : 0;
         int param = withReceiver ? 1 : 0;
         for (int i = 0; i < argumentCount; i++) {
-            parameters[param++] = arguments.get(slot);
-            slot++;
-            if (slot < arguments.size() && arguments.get(slot) == null) {
-                // Second slot of long or double value.
-                slot++;
-            }
+            parameters[param] = arguments.get(param);
+            param++;
         }
-        assert slot == arguments.size() : "missed an argument";
         if (withReceiver) {
             parameters[0] = arguments.get(0);
         }

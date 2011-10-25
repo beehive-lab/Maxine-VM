@@ -36,6 +36,7 @@ import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.alloc.*;
 import com.oracle.max.graal.compiler.alloc.OperandPool.VariableFlag;
 import com.oracle.max.graal.compiler.debug.*;
+import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.stub.*;
 import com.oracle.max.graal.compiler.util.*;
@@ -649,7 +650,22 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     }
 
     protected FrameState stateBeforeCallWithArguments(AbstractCallNode call, int bci) {
-        return call.stateAfter().duplicateModified(bci, call.stateAfter().rethrowException(), call.kind, call.arguments().toArray(new ValueNode[0]));
+        return call.stateAfter().duplicateModified(bci, call.stateAfter().rethrowException(), call.kind, toJVMArgumentStack(call.arguments()));
+    }
+
+    private static ValueNode[] toJVMArgumentStack(NodeInputList<ValueNode> arguments) {
+        int sz = 0;
+        for (ValueNode value : arguments) {
+            sz += FrameStateBuilder.isTwoSlot(value.kind) ? 2 : 1;
+        }
+        ValueNode[] stack = new ValueNode[sz];
+        int i = 0;
+        for (ValueNode value : arguments) {
+            stack[i] = value;
+            i += FrameStateBuilder.isTwoSlot(value.kind) ? 2 : 1;
+        }
+        return stack;
+
     }
 
     @Override
