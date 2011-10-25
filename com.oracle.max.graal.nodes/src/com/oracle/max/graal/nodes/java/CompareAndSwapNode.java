@@ -27,12 +27,17 @@ import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 
+/**
+ * Represents an atomic compare-and-swap operation. If {@link #directResult} is true then the value read from the memory location is produced.
+ * Otherwise the result is a boolean that contains whether the value matched the expected value.
+ */
 public class CompareAndSwapNode extends AbstractMemoryCheckpointNode {
 
     @Input private ValueNode object;
     @Input private ValueNode offset;
     @Input private ValueNode expected;
     @Input private ValueNode newValue;
+    @Data private final boolean directResult;
 
     public ValueNode object() {
         return object;
@@ -50,8 +55,16 @@ public class CompareAndSwapNode extends AbstractMemoryCheckpointNode {
         return newValue;
     }
 
+    public boolean directResult() {
+        return directResult;
+    }
+
     public CompareAndSwapNode(ValueNode object, ValueNode offset, ValueNode expected, ValueNode newValue) {
-        super(CiKind.Boolean.stackKind());
+        this(object, offset, expected, newValue, false);
+    }
+
+    public CompareAndSwapNode(ValueNode object, ValueNode offset, ValueNode expected, ValueNode newValue, boolean directResult) {
+        super(directResult ? expected.kind.stackKind() : CiKind.Boolean.stackKind());
         assert object.kind == CiKind.Object;
         assert offset.kind == CiKind.Long;
         assert expected.kind == newValue.kind;
@@ -59,6 +72,7 @@ public class CompareAndSwapNode extends AbstractMemoryCheckpointNode {
         this.offset = offset;
         this.expected = expected;
         this.newValue = newValue;
+        this.directResult = directResult;
     }
 
     @Override

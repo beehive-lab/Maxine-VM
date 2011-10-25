@@ -31,7 +31,6 @@ import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.gen.*;
 import com.oracle.max.graal.compiler.lir.FrameMap.StackBlock;
 import com.oracle.max.graal.compiler.util.*;
-import com.oracle.max.graal.nodes.calc.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.Mark;
 import com.sun.cri.ri.*;
@@ -102,12 +101,9 @@ public abstract class LIRAssembler {
         for (LIRBlock b : hir) {
             emitBlock(b);
         }
-
-        assert checkNoUnboundLabels();
     }
 
-    void emitBlock(LIRBlock block) {
-
+    private void emitBlock(LIRBlock block) {
         if (block.align()) {
             emitAlignment();
         }
@@ -127,13 +123,11 @@ public abstract class LIRAssembler {
         emitLirList(block.lir());
     }
 
-    void emitLirList(LIRList list) {
-        doPeephole(list);
-
+    private void emitLirList(LIRList list) {
         for (LIRInstruction op : list.instructionsList()) {
             if (GraalOptions.CommentedAssembly) {
                 // Only print out branches
-                if (op.code == LegacyOpcode.Branch) {
+                if (op.code instanceof LIRBranch) {
                     tasm.blockComment(op.toStringWithIdPrefix());
                 }
             }
@@ -168,17 +162,6 @@ public abstract class LIRAssembler {
             }
         }
         lastDecodeStart = asm.codeBuffer.position();
-    }
-
-    boolean checkNoUnboundLabels() {
-//        for (int i = 0; i < branchTargetBlocks.size() - 1; i++) {
-//            if (!branchTargetBlocks.get(i).label().isBound()) {
-//                TTY.println(String.format("label of block B%d is not bound", branchTargetBlocks.get(i).blockID()));
-//                assert false : "unbound label";
-//            }
-//        }
-
-        return true;
     }
 
     public void moveOp(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info) {
@@ -247,8 +230,6 @@ public abstract class LIRAssembler {
 
     protected abstract int initialFrameSizeInBytes();
 
-    protected abstract void doPeephole(LIRList list);
-
     protected abstract void emitSlowPath(SlowPath sp);
 
     public abstract void emitDeoptizationStub(LIRGenerator.DeoptimizationStub stub);
@@ -273,27 +254,11 @@ public abstract class LIRAssembler {
 
     protected abstract void emitVolatileMove(CiValue inOpr, CiValue result, CiKind kind, LIRDebugInfo info);
 
-    protected abstract void emitLogicOp(LegacyOpcode code, CiValue inOpr1, CiValue inOpr2, CiValue dst);
-
-    protected abstract void emitIntrinsicOp(LegacyOpcode code, CiValue inOpr1, CiValue inOpr2, CiValue dst);
-
-    protected abstract void emitShiftOp(LegacyOpcode code, CiValue inOpr1, CiValue inOpr2, CiValue dst);
-
-    protected abstract void emitShiftOp(LegacyOpcode code, CiValue inOpr1, int asJint, CiValue dst);
-
     protected abstract void emitSignificantBitOp(LegacyOpcode code, CiValue inOpr1, CiValue dst);
-
-    protected abstract void emitConditionalMove(Condition condition, CiValue inOpr1, CiValue inOpr2, CiValue dst, boolean mayBeUnordered, boolean unorderedcmovOpr1);
 
     protected abstract void emitCompare2Int(LIROpcode code, CiValue inOpr1, CiValue inOpr2, CiValue dst);
 
-    protected abstract void emitCompare(Condition condition, CiValue inOpr1, CiValue inOpr2);
-
-    protected abstract void emitBranch(LIRBranch branch);
-
     protected abstract void emitTableSwitch(LIRTableSwitch tableSwitch);
-
-    protected abstract void emitConvert(LIRConvert convert);
 
     protected abstract void emitCompareAndSwap(LIRInstruction compareAndSwap);
 
@@ -330,17 +295,4 @@ public abstract class LIRAssembler {
     protected abstract void stack2reg(CiValue src, CiValue dest, CiKind kind);
 
     protected abstract void reg2reg(CiValue src, CiValue dest);
-
-    protected abstract boolean trueOnUnordered(Condition condition);
-
-    protected abstract boolean falseOnUnordered(Condition condition);
-
-
-    protected boolean mayBeTrueOnUnordered(Condition condition) {
-        return trueOnUnordered(condition) || !falseOnUnordered(condition);
-    }
-
-    protected boolean mayBeFalseOnUnordered(Condition condition) {
-        return falseOnUnordered(condition) || !trueOnUnordered(condition);
-    }
 }

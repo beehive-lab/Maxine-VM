@@ -413,6 +413,11 @@ public class MaxRuntime implements GraalRuntime {
     }
 
     public Graph<EntryPointNode> intrinsicGraph(RiResolvedMethod caller, int bci, RiResolvedMethod method, List< ? extends Node> parameters) {
+
+        MethodActor maxMethod = (MethodActor) method;
+        if (maxMethod.intrinsic() != null) {
+            throw new UnsupportedOperationException("intrinsic not implemented");
+        }
         // TODO(tw): Implement intrinsics for Maxine.
         return null;
     }

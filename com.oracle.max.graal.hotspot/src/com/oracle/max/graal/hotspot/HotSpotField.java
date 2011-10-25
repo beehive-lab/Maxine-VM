@@ -71,6 +71,8 @@ public class HotSpotField extends CompilerObject implements RiResolvedField {
                             constant = CiConstant.forFloat(f.getFloat(null));
                         } else if (f.getType() == boolean.class) {
                             constant = CiConstant.forBoolean(f.getBoolean(null));
+                        } else if (!f.getType().isPrimitive()) {
+                            constant = CiConstant.forObject(f.get(null));
                         } else {
                             assert false : "unsupported type";
                         }

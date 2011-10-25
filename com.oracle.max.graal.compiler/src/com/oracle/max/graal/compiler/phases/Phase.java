@@ -35,6 +35,10 @@ public abstract class Phase {
     private final boolean shouldVerify;
     protected final GraalContext context;
 
+    protected Phase() {
+        this(GraalContext.EMPTY_CONTEXT);
+    }
+
     protected Phase(GraalContext context) {
         this.context = context;
         this.name = this.getClass().getSimpleName();
