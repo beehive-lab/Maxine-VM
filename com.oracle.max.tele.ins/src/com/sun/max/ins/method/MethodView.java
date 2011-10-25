@@ -82,9 +82,9 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
     }
 
     /**
-     * Makes a view displaying code for the method pointed to by the instructionPointer. Should always work for
-     * Java methods. For external native methods, only works if the code block is already known to the Inspector or if the user
-     * supplies some additional information at an optional prompt.
+     * Makes a view displaying code for the method pointed to by the instructionPointer. Should always work for Java
+     * methods. For external native methods, only works if the code block is already known to the Inspector or if the
+     * user supplies some additional information at an optional prompt.
      *
      * @param address machine code location in the VM.
      * @param interactive Should user be prompted for additional address information in case the location is unknown
@@ -105,35 +105,50 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
                 methodView = make(inspection, externalCode);
             } else if (interactive) {
                 // Code location is not in a Java method or runtime stub and has not yet been viewed in a native routine.
-                // Give the user a chance to guess at its length so we can register and view it
-                final MutableInnerClassGlobal<MethodView> result = new MutableInnerClassGlobal<MethodView>();
-                final String defaultDescription = "Native code @0x" + address.toHexString();
-                new NativeLocationInputDialog(inspection, "Name unknown native code", address, MaxExternalCode.DEFAULT_NATIVE_CODE_LENGTH, defaultDescription) {
-                    @Override
-                    public void entered(Address nativeAddress, long nBytes, String enteredName) {
-                        try {
-                            String name = enteredName;
-                            if (name == null || name.equals("")) {
-                                name = defaultDescription;
+                // Check any loaded native code maps and in the last resort
+                // give the user a chance to guess at its length so we can register and view it
+                NativeCodeMaps.Info nativeCodeInfo = NativeCodeMaps.find(address);
+                if (nativeCodeInfo != null) {
+                    try {
+                        final MaxExternalCode nativeCode = inspection.vm().codeCache().createExternalCode(nativeCodeInfo.base, nativeCodeInfo.length, nativeCodeInfo.name);
+                        methodView = MethodView.make(inspection, nativeCode);
+                    } catch (MaxInvalidAddressException e) {
+                        inspection.gui().errorMessage("Unable to read memory at " + address.to0xHexString());
+                        e.printStackTrace();
+                    }
+                } else {
+                    final MutableInnerClassGlobal<MethodView> result = new MutableInnerClassGlobal<MethodView>();
+                    final String defaultDescription = "Native code @0x" + address.toHexString();
+                    new NativeLocationInputDialog(inspection, "Name unknown native code", address, MaxExternalCode.DEFAULT_NATIVE_CODE_LENGTH, defaultDescription) {
+
+                        @Override
+                        public void entered(Address nativeAddress, long nBytes, String enteredName) {
+                            try {
+                                String name = enteredName;
+                                if (name == null || name.equals("")) {
+                                    name = defaultDescription;
+                                }
+                                final MaxExternalCode externalCode = vm().codeCache().createExternalCode(nativeAddress, nBytes, name);
+                                result.setValue(MethodView.make(inspection, externalCode));
+                                // inspection.focus().setCodeLocation(new TeleCodeLocation(inspection.teleVM(),
+// nativeAddress));
+                            } catch (IllegalArgumentException illegalArgumentException) {
+                                inspection.gui().errorMessage("Specified external code range overlaps region already registered in Inpsector");
+                            } catch (MaxVMBusyException maxVMBusyException) {
+                                inspection.announceVMBusyFailure("View native code");
+                            } catch (MaxInvalidAddressException e) {
+                                inspection.gui().errorMessage("Unable to read memory at " + nativeAddress.to0xHexString());
+                                e.printStackTrace();
                             }
-                            final MaxExternalCode externalCode = vm().codeCache().createExternalCode(nativeAddress, nBytes, name);
-                            result.setValue(MethodView.make(inspection, externalCode));
-                            // inspection.focus().setCodeLocation(new TeleCodeLocation(inspection.teleVM(), nativeAddress));
-                        } catch (IllegalArgumentException illegalArgumentException) {
-                            inspection.gui().errorMessage("Specified external code range overlaps region already registered in Inpsector");
-                        } catch (MaxVMBusyException maxVMBusyException) {
-                            inspection.announceVMBusyFailure("View native code");
-                        } catch (MaxInvalidAddressException e) {
-                            inspection.gui().errorMessage("Unable to read memory at " + nativeAddress.to0xHexString());
-                            e.printStackTrace();
                         }
-                    }
-                    @Override
-                    public boolean isValidSize(long nBytes) {
-                        return nBytes > 0;
-                    }
-                };
-                methodView = result.value();
+
+                        @Override
+                        public boolean isValidSize(long nBytes) {
+                            return nBytes > 0;
+                        }
+                    };
+                    methodView = result.value();
+                }
             }
         }
         return methodView;
