@@ -621,7 +621,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
     @INLINE
     final Address addressOf(int bitIndex) {
-        return coveredAreaStart.plus(bitIndex << log2BytesCoveredPerBit);
+        return coveredAreaStart.plus(Address.fromInt(bitIndex).shiftedLeft(log2BytesCoveredPerBit));
     }
 
     @INLINE
