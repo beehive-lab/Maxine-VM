@@ -479,6 +479,30 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return runFileCommandsAction;
     }
 
+    final class LoadNativeCodeMapFromFile extends InspectorAction {
+        LoadNativeCodeMapFromFile() {
+            super(inspection(), "Load native code map from file...");
+        }
+
+        @Override
+        protected void procedure() {
+            final String fileName = gui().inputDialog("File name: ", FileCommands.defaultCommandFile());
+            if (fileName != null && !fileName.equals("")) {
+                NativeCodeMaps.read(fileName);
+            }
+        }
+    }
+
+    private final InspectorAction loadNativeCodeMapFromFileAction = new LoadNativeCodeMapFromFile();
+
+    /**
+     * @return Singleton interactive Action that will load a native code map from a specified file.
+     */
+    public final InspectorAction loadNativeCodeMapFromFile() {
+        return loadNativeCodeMapFromFileAction;
+    }
+
+
     /**
      * Action:  updates the {@linkplain MaxVM#updateLoadableTypeDescriptorsFromClasspath() types available} on
      * the VM's class path by rescanning the complete class path for types.
@@ -1678,11 +1702,41 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * @return Singleton interactive Action that displays machine code in the {@link MethodView}
      * for a selected method.
      */
-    public final InspectorAction viewMethodMachineCodeByName() {
+    public final InspectorAction viewMethodCompilationByName() {
         return viewMethodCompilationByNameAction;
     }
 
     /**
+     * Action:  displays the machine code for an interactively specified method.
+     */
+    final class ViewNativeFunctionByNameAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "View native function by name...";
+
+        public ViewNativeFunctionByNameAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+        }
+
+        @Override
+        protected void procedure() {
+            final List<NativeCodeMaps.Info> compilations = NativeFunctionSearchDialog.show(inspection(), "View Native Function...", "View Code", false);
+            if (compilations != null) {
+                focus().setCodeLocation(vm().codeManager().createMachineCodeLocation(Utils.first(compilations).base, "native code address from function map"), true);
+            }
+        }
+    }
+
+    private final InspectorAction viewNativeFunctionByNameAction = new ViewNativeFunctionByNameAction(null);
+
+    /**
+     * @return Singleton interactive Action that displays machine code in the {@link MethodView}
+     * for a selected method.
+     */
+    public final InspectorAction viewNativeFunctionByName() {
+        return viewNativeFunctionByNameAction;
+    }
+
+   /**
      * Action:  displays the compiled code for an interactively specified method.
      */
     final class ViewMethodMachineCodeAction extends InspectorAction {
@@ -4337,7 +4391,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 menu.add(actions().viewMethodMachineCode());
                 final JMenu methodSub = new JMenu("View method code by name");
                 methodSub.add(actions().viewMethodBytecodeByName());
-                methodSub.add(actions().viewMethodMachineCodeByName());
+                methodSub.add(actions().viewMethodCompilationByName());
                 menu.add(methodSub);
                 final JMenu bootMethodSub = new JMenu("View boot image method code");
                 bootMethodSub.add(actions().viewRunMethodCodeInBootImage());
@@ -4347,6 +4401,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 byAddressSub.add(actions().viewMethodCodeByAddress());
                 byAddressSub.add(actions().viewNativeCodeByAddress());
                 menu.add(byAddressSub);
+                menu.add(actions().viewNativeFunctionByName());
             }
         };
     }

@@ -88,6 +88,7 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
         menu.add(actions.changeInterpreterUseLevel());
         menu.add(actions.setTransportDebugLevel());
         menu.add(actions.runFileCommands());
+        menu.add(actions.loadNativeCodeMapFromFile());
         menu.add(actions.updateClasspathTypes());
         menu.addSeparator();
         menu.add(actions.refreshAll());
