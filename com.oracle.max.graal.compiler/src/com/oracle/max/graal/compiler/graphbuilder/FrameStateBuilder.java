@@ -275,12 +275,16 @@ public class FrameStateBuilder implements FrameStateAccess {
      * @param size the number of arguments off of the stack
      * @return an array containing the arguments off of the stack
      */
-    public ValueNode[] popArguments(int size) {
-        int base = stackIndex - size;
-        ValueNode[] r = new ValueNode[size];
-        for (int i = 0; i < size; ++i) {
-            assert stack[base + i] != null || isTwoSlot(stack[base + i - 1].kind);
-            r[i] = stack[base + i];
+    public ValueNode[] popArguments(int slotSize, int argSize) {
+        int base = stackIndex - slotSize;
+        ValueNode[] r = new ValueNode[argSize];
+        int argIndex = 0;
+        int stackindex = 0;
+        while (stackindex < slotSize) {
+            ValueNode element = stack[base + stackindex];
+            assert element != null;
+            r[argIndex++] = element;
+            stackindex += isTwoSlot(element.kind) ? 2 : 1;
         }
         stackIndex = base;
         return r;

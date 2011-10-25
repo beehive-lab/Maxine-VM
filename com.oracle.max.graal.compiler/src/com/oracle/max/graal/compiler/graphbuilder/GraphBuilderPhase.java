@@ -1012,7 +1012,7 @@ public final class GraphBuilderPhase extends Phase {
                 // of initialization is required), it can be commoned with static field accesses.
                 genTypeOrDeopt(RiType.Representation.StaticFields, holder, false);
             }
-            ValueNode[] args = frameState.popArguments(resolvedTarget.signature().argumentSlots(false));
+            ValueNode[] args = frameState.popArguments(resolvedTarget.signature().argumentSlots(false), resolvedTarget.signature().argumentCount(false));
             appendInvoke(INVOKESTATIC, resolvedTarget, args, cpi, constantPool);
         } else {
             genInvokeDeopt(target, false);
@@ -1021,7 +1021,7 @@ public final class GraphBuilderPhase extends Phase {
 
     private void genInvokeInterface(RiMethod target, int cpi, RiConstantPool constantPool) {
         if (target instanceof RiResolvedMethod) {
-            ValueNode[] args = frameState.popArguments(target.signature().argumentSlots(true));
+            ValueNode[] args = frameState.popArguments(target.signature().argumentSlots(true), target.signature().argumentCount(true));
             genInvokeIndirect(INVOKEINTERFACE, (RiResolvedMethod) target, args, cpi, constantPool);
         } else {
             genInvokeDeopt(target, true);
@@ -1030,7 +1030,7 @@ public final class GraphBuilderPhase extends Phase {
 
     private void genInvokeVirtual(RiMethod target, int cpi, RiConstantPool constantPool) {
         if (target instanceof RiResolvedMethod) {
-            ValueNode[] args = frameState.popArguments(target.signature().argumentSlots(true));
+            ValueNode[] args = frameState.popArguments(target.signature().argumentSlots(true), target.signature().argumentCount(true));
             genInvokeIndirect(INVOKEVIRTUAL, (RiResolvedMethod) target, args, cpi, constantPool);
         } else {
             genInvokeDeopt(target, true);
@@ -1042,7 +1042,7 @@ public final class GraphBuilderPhase extends Phase {
         if (target instanceof RiResolvedMethod) {
             assert target != null;
             assert target.signature() != null;
-            ValueNode[] args = frameState.popArguments(target.signature().argumentSlots(true));
+            ValueNode[] args = frameState.popArguments(target.signature().argumentSlots(true), target.signature().argumentCount(true));
             invokeDirect((RiResolvedMethod) target, args, knownHolder, cpi, constantPool);
         } else {
             genInvokeDeopt(target, true);
@@ -1052,7 +1052,7 @@ public final class GraphBuilderPhase extends Phase {
     private void genInvokeDeopt(RiMethod unresolvedTarget, boolean withReceiver) {
         storeResultGraph = false;
         append(graph.add(new DeoptimizeNode(DeoptAction.InvalidateRecompile)));
-        frameState.popArguments(unresolvedTarget.signature().argumentSlots(withReceiver));
+        frameState.popArguments(unresolvedTarget.signature().argumentSlots(withReceiver), unresolvedTarget.signature().argumentCount(withReceiver));
         CiKind kind = unresolvedTarget.signature().returnKind(false);
         if (kind != CiKind.Void) {
             frameState.push(kind.stackKind(), append(ConstantNode.defaultForKind(kind, graph)));
