@@ -27,9 +27,29 @@ public interface LIROpcode<LA extends LIRAssembler, IT extends LIRInstruction> {
 
     /**
      * Marker interface for the register allocator: If an operation implements this interface,
+     * all operands can be a split slot and need not be loaded to a register.
+     */
+    public interface AllOperandsCanBeMemory {
+    }
+
+    /**
+     * Marker interface for the register allocator: If an operation implements this interface,
      * the second operand can be a split slot and needs not be loaded to a register.
      */
     public interface SecondOperandCanBeMemory {
+    }
 
+    /**
+     * Marker interface for the register allocator: If an operation implements this interface,
+     * the register assigned to the first operand should be assigned to the result operand.
+     */
+    public interface FirstOperandRegisterHint {
+    }
+
+    /**
+     * Marker interface for the register allocator: If an operation implements this interface,
+     * the register assigned to the second operand should be assigned to the result operand.
+     */
+    public interface SecondOperandRegisterHint {
     }
 }

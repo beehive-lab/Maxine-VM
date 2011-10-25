@@ -33,9 +33,15 @@ public class LIRCondition extends LIRInstruction {
      */
     public final Condition condition;
 
-    public LIRCondition(LIROpcode opcode, CiValue result, LIRDebugInfo info, Condition condition, CiValue opr1, CiValue opr2) {
-        super(opcode, result, info, opr1, opr2);
+    /**
+     * For floating point conditions only.
+     */
+    public final boolean unorderedIsTrue;
+
+    public LIRCondition(LIROpcode opcode, CiValue result, LIRDebugInfo info, boolean hasCall, int tempInput, int temp, Condition condition, boolean unorderedIsTrue, CiValue...opr) {
+        super(opcode, result, info, hasCall, tempInput, temp, opr);
         this.condition = condition;
+        this.unorderedIsTrue = unorderedIsTrue;
     }
 
     /**

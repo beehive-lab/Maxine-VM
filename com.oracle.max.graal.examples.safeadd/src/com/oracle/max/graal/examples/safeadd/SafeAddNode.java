@@ -20,49 +20,28 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.nodes.extended;
+package com.oracle.max.graal.examples.safeadd;
 
-import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 
-/**
- * Load of a value from a location specified as an offset relative to an object.
- */
-public class UnsafeLoad extends StateSplit implements Lowerable, Node.ValueNumberable {
+@NodeInfo(shortName = "[+]")
+public final class SafeAddNode extends FloatingNode implements LIRLowerable {
+    @Input private ValueNode x;
+    @Input private ValueNode y;
 
-    @Input private ValueNode object;
-    @Input private ValueNode offset;
-    @Data private CiKind loadKind;
-
-    public ValueNode object() {
-        return object;
-    }
-
-    public ValueNode offset() {
-        return offset;
-    }
-
-    public UnsafeLoad(ValueNode object, ValueNode offset, CiKind kind) {
-        super(kind.stackKind());
-        this.loadKind = kind;
-        this.object = object;
-        this.offset = offset;
-    }
-
-    public CiKind loadKind() {
-        return loadKind;
+    public SafeAddNode(ValueNode x, ValueNode y) {
+        super(CiKind.Int);
+        this.x = x;
+        this.y = y;
     }
 
     @Override
-    public void lower(CiLoweringTool tool) {
-        tool.getRuntime().lower(this, tool);
-    }
-
-    @NodeIntrinsic
-    public static <T> T load(Object object, long offset, @ConstantNodeParameter CiKind kind) {
-        throw new UnsupportedOperationException("This method may only be compiled with the Graal compiler");
+    public void generate(LIRGeneratorTool generator) {
+        generator.integerAdd(this, x, y);
+        generator.deoptimizeOn(Condition.OF);
     }
 }

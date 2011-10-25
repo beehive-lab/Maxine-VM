@@ -22,11 +22,10 @@
  */
 package com.oracle.max.graal.compiler.lir;
 
-import com.sun.cri.ci.CiValue.Formatter;
 import java.util.*;
 
-import com.oracle.max.graal.compiler.gen.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiValue.Formatter;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
 
@@ -127,9 +126,7 @@ public class LIRXirInstruction extends LIRInstruction {
                 sb.append(operandFmt.format(a.constant));
             } else {
                 Object o = a.object;
-                if (o instanceof LIRItem) {
-                    sb.append(operandFmt.format(((LIRItem) o).result()));
-                } else if (o instanceof CiValue) {
+                if (o instanceof CiValue) {
                     sb.append(operandFmt.format((CiValue) o));
                 } else {
                     sb.append(o);
