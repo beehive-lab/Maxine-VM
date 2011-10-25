@@ -29,7 +29,16 @@ import com.sun.cri.ci.CiValue.Formatter;
 
 public class LIRBranch extends LIRInstruction {
 
-    private Condition cond;
+    /**
+     * The condition when this branch is taken, or {@code null} if it is an unconditional branch.
+     */
+    public final Condition cond;
+
+    /**
+     * For floating point branches only. True when the branch should be taken when the comparison is unordered.
+     */
+    public final boolean unorderedIsTrue;
+
     private Label label;
 
     /**
@@ -37,31 +46,21 @@ public class LIRBranch extends LIRInstruction {
      */
     private LIRBlock block;
 
-    /**
-     * This is the unordered block for a float branch.
-     */
-    private LIRBlock unorderedBlock;
 
 
-    public LIRBranch(LIROpcode code, Condition cond, Label label, LIRDebugInfo info) {
+    public LIRBranch(LIROpcode code, Condition cond, boolean unorderedIsTrue, Label label, LIRDebugInfo info) {
         super(code, CiValue.IllegalValue, info);
         this.cond = cond;
+        this.unorderedIsTrue = unorderedIsTrue;
         this.label = label;
     }
 
-    public LIRBranch(LIROpcode code, Condition cond, LIRBlock block, LIRBlock ublock) {
-        super(code, CiValue.IllegalValue, (block.debugInfo() != null ? block.debugInfo() : (ublock != null ? ublock.debugInfo() : null)));
+    public LIRBranch(LIROpcode code, Condition cond, boolean unorderedIsTrue, LIRBlock block) {
+        super(code, CiValue.IllegalValue, block.debugInfo());
         this.cond = cond;
+        this.unorderedIsTrue = unorderedIsTrue;
         this.label = block.label();
         this.block = block;
-        this.unorderedBlock = ublock;
-    }
-
-    /**
-     * @return the condition
-     */
-    public Condition cond() {
-        return cond;
     }
 
     public Label label() {
@@ -72,13 +71,9 @@ public class LIRBranch extends LIRInstruction {
         return block;
     }
 
-    public LIRBlock unorderedBlock() {
-        return unorderedBlock;
-    }
-
     @Override
     public String operationString(Formatter operandFmt) {
-        StringBuilder buf = new StringBuilder(cond().operator).append(' ');
+        StringBuilder buf = new StringBuilder(cond.operator).append(' ');
         if (block() != null) {
             buf.append("[B").append(block.blockID()).append(']');
         } else if (label().isBound()) {
@@ -86,8 +81,8 @@ public class LIRBranch extends LIRInstruction {
         } else {
             buf.append("[label:??]");
         }
-        if (unorderedBlock() != null) {
-            buf.append("unordered: [B").append(unorderedBlock().blockID()).append(']');
+        if (unorderedIsTrue) {
+            buf.append(" unorderedIsTrue");
         }
         return buf.toString();
     }
@@ -99,9 +94,6 @@ public class LIRBranch extends LIRInstruction {
             LIRInstruction instr = newBlock.lir().instructionsList().get(0);
             assert instr instanceof LIRLabel : "first instruction of block must be label";
             label = ((LIRLabel) instr).label;
-        }
-        if (unorderedBlock == oldBlock) {
-            unorderedBlock = newBlock;
         }
     }
 }

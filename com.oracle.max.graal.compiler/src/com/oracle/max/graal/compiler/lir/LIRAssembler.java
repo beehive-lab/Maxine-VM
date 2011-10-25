@@ -31,7 +31,6 @@ import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.gen.*;
 import com.oracle.max.graal.compiler.lir.FrameMap.StackBlock;
 import com.oracle.max.graal.compiler.util.*;
-import com.oracle.max.graal.nodes.calc.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.Mark;
 import com.sun.cri.ri.*;
@@ -128,7 +127,7 @@ public abstract class LIRAssembler {
         for (LIRInstruction op : list.instructionsList()) {
             if (GraalOptions.CommentedAssembly) {
                 // Only print out branches
-                if (op.code == LegacyOpcode.Branch) {
+                if (op.code instanceof LIRBranch) {
                     tasm.blockComment(op.toStringWithIdPrefix());
                 }
             }
@@ -257,11 +256,7 @@ public abstract class LIRAssembler {
 
     protected abstract void emitSignificantBitOp(LegacyOpcode code, CiValue inOpr1, CiValue dst);
 
-    protected abstract void emitConditionalMove(Condition condition, CiValue inOpr1, CiValue inOpr2, CiValue dst, boolean mayBeUnordered, boolean unorderedcmovOpr1);
-
     protected abstract void emitCompare2Int(LIROpcode code, CiValue inOpr1, CiValue inOpr2, CiValue dst);
-
-    protected abstract void emitBranch(LIRBranch branch);
 
     protected abstract void emitTableSwitch(LIRTableSwitch tableSwitch);
 
@@ -300,17 +295,4 @@ public abstract class LIRAssembler {
     protected abstract void stack2reg(CiValue src, CiValue dest, CiKind kind);
 
     protected abstract void reg2reg(CiValue src, CiValue dest);
-
-    protected abstract boolean trueOnUnordered(Condition condition);
-
-    protected abstract boolean falseOnUnordered(Condition condition);
-
-
-    protected boolean mayBeTrueOnUnordered(Condition condition) {
-        return trueOnUnordered(condition) || !falseOnUnordered(condition);
-    }
-
-    protected boolean mayBeFalseOnUnordered(Condition condition) {
-        return falseOnUnordered(condition) || !trueOnUnordered(condition);
-    }
 }

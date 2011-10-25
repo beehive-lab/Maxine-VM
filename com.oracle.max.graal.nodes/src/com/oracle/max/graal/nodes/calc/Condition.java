@@ -88,9 +88,7 @@ public enum Condition {
     /**
      * Operation did not produce an overflow.
      */
-    NOF("noOverflow"),
-
-    TRUE("TRUE");
+    NOF("noOverflow");
 
     public final String operator;
 
