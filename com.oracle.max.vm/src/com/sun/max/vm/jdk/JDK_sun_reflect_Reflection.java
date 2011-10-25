@@ -34,6 +34,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jni.*;
+import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.type.*;
 
@@ -60,6 +61,7 @@ final class JDK_sun_reflect_Reflection {
         Context(int realFramesToSkip) {
             this.realFramesToSkip = realFramesToSkip;
         }
+
         @Override
         public boolean visitSourceFrame(ClassMethodActor method, int bci, boolean trapped, long frameId) {
             ClassMethodActor original = method.original();
@@ -129,6 +131,48 @@ final class JDK_sun_reflect_Reflection {
     @SUBSTITUTE
     private static int getClassAccessFlags(Class javaClass) {
         return ClassActor.fromJava(javaClass).flags();
+    }
+
+    /**
+     * Variant of (@link {@link #getCallerClass(int)} that is called from
+     * {@link JniFunctions#FindClass} and check for JVMTI
+     * which requires special handling.
+     * @param realFramesToSkip from caller's perspective
+     * @return
+     */
+    public static Class getCallerClassForFindClass(int realFramesToSkip) {
+        realFramesToSkip++; // add this frame
+        if (JVMTI.anyActiveAgents()) {
+            JVMTICheckContext context = new JVMTICheckContext(realFramesToSkip);
+            context.walk(null, Pointer.fromLong(here()), getCpuStackPointer(), getCpuFramePointer());
+            if (context.isJVMTI) {
+                return JVMTIClassLoader.getCallerClass();
+            }
+            if (context.method == null) {
+                return null;
+            }
+            return context.method.holder().toJava();
+        } else {
+            return getCallerClass(realFramesToSkip + 1);
+        }
+    }
+
+    private static class JVMTICheckContext extends Context {
+        boolean isJVMTI;
+
+        JVMTICheckContext(int realFramesToSkip) {
+            super(realFramesToSkip);
+        }
+
+        @Override
+        public boolean visitSourceFrame(ClassMethodActor method, int bci, boolean trapped, long frameId) {
+            if (method.holder().toJava() == JVMTICallbacks.class) {
+                isJVMTI = true;
+                return false;
+            }
+            return super.visitSourceFrame(method, bci, trapped, frameId);
+        }
+
     }
 
 }

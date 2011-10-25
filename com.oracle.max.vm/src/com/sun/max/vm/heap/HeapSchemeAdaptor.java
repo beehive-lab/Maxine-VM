@@ -256,6 +256,10 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
     public void trackLifetime(Pointer cell) {
     }
 
+    @Override
+    public void walkHeap(CallbackCellVisitor visitor) {
+    }
+
     public boolean supportsPinning(PIN_SUPPORT_FLAG flag) {
         return flag.isSet(pinningSupportFlags);
     }

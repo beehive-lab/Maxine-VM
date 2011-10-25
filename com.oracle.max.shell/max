@@ -138,6 +138,7 @@ while [ "${1:0:1}" = "-" ]; do
         -trace )
             shift
             trace_level=$1
+            inspector_trace_level=$1
             ;;
         * )
             unknown_option=$1
@@ -573,6 +574,29 @@ function run_jnigen() {
     run ${jvm_exe} -cp $(jmax classpath com.oracle.max.vm) com.sun.max.vm.jni.JniFunctionsGenerator
     result=$?
     exit_if_non_zero $result
+}
+
+#=======================================
+# 'jvmtigen' command
+#=======================================
+
+jvmtigen_help="(re)generate content in JVMTIFunctions.java from JVMTIFunctionsSource.java
+
+    Run JVMTIFunctionsGenerator.java to update the methods in JVMTIFunctions.java by adding
+    a prologue and epilogue to the @JNI_FUNCTION annotated methods in JVMTIFunctionsSource.java,
+    and implementing incoming argument checks.
+
+    The exit code is non-zero if JVMTIFunctions.java was modified."
+
+function run_jvmtigen() {
+    if [ $# -ne 0 ]; then
+        run_help jvmtigen
+        exit 1
+    fi
+
+    run ${jvm_exe} -cp $(jmax classpath com.oracle.max.vm) com.sun.max.vm.jvmti.JVMTIFunctionsGenerator
+    result=$?
+    exit $result
 }
 
 #=======================================

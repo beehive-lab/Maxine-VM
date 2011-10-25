@@ -119,7 +119,7 @@ public abstract class GCOperation extends VmOperation {
     long stackReferenceMapPreparationTime;
 
     public GCOperation(String name) {
-        super(name == null ? "GC" : name, null, Mode.Safepoint);
+        super(name == null ? "GC" : name, null, Mode.Safepoint, false);
     }
 
     /**
