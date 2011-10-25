@@ -26,7 +26,6 @@ import java.util.*;
 
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.lir.*;
-import com.oracle.max.graal.nodes.calc.*;
 
 /**
  * This class optimizes moves, particularly those that result from eliminating SSA form.
@@ -137,9 +136,8 @@ final class EdgeMoveOptimizer {
             }
 
             assert pred.suxAt(0) == block : "invalid control flow";
-            assert predInstructions.get(predInstructions.size() - 1).code == LegacyOpcode.Branch : "block with successor must end with branch" + predInstructions.get(predInstructions.size() - 1);
             assert predInstructions.get(predInstructions.size() - 1) instanceof LIRBranch : "branch must be LIROpBranch";
-            assert ((LIRBranch) predInstructions.get(predInstructions.size() - 1)).cond() == Condition.TRUE : "block must end with unconditional branch";
+            assert ((LIRBranch) predInstructions.get(predInstructions.size() - 1)).cond == null : "block must end with unconditional branch";
 
             if (predInstructions.get(predInstructions.size() - 1).info != null) {
                 // can not optimize instructions that have debug info
@@ -196,9 +194,8 @@ final class EdgeMoveOptimizer {
             return;
         }
 
-        assert instructions.get(instructions.size() - 1).code == LegacyOpcode.Branch : "block with successor must end with branch block=B" + block.blockID();
         assert instructions.get(instructions.size() - 1) instanceof LIRBranch : "branch must be LIROpBranch";
-        assert ((LIRBranch) instructions.get(instructions.size() - 1)).cond() == Condition.TRUE : "block must end with unconditional branch";
+        assert ((LIRBranch) instructions.get(instructions.size() - 1)).cond == null : "block must end with unconditional branch";
 
         if (instructions.get(instructions.size() - 1).info != null) {
             // cannot optimize instructions when debug info is needed
@@ -206,7 +203,7 @@ final class EdgeMoveOptimizer {
         }
 
         LIRInstruction branch = instructions.get(instructions.size() - 2);
-        if (branch.info != null || (branch.code != LegacyOpcode.Branch && branch.code != LegacyOpcode.CondFloatBranch)) {
+        if (!(branch instanceof LIRBranch) || branch.info != null) {
             // not a valid case for optimization
             // currently, only blocks that end with two branches (conditional branch followed
             // by unconditional branch) are optimized
@@ -220,7 +217,7 @@ final class EdgeMoveOptimizer {
         if (GraalOptions.DetailedAsserts && false) { // not true anymore with guards
             for (int i = insertIdx - 1; i >= 0; i--) {
                 LIRInstruction op = instructions.get(i);
-                if ((op.code == LegacyOpcode.Branch || op.code == LegacyOpcode.CondFloatBranch) && ((LIRBranch) op).block() != null) {
+                if (op instanceof LIRBranch && ((LIRBranch) op).block() != null) {
                     throw new Error("block with two successors can have only two branch instructions : error in " + block);
                 }
             }
@@ -231,7 +228,7 @@ final class EdgeMoveOptimizer {
             LIRBlock sux = block.suxAt(i);
             List<LIRInstruction> suxInstructions = sux.lir().instructionsList();
 
-            assert suxInstructions.get(0).code == LegacyOpcode.Label : "block must start with label";
+            assert suxInstructions.get(0) instanceof LIRLabel : "block must start with label";
 
             if (sux.numberOfPreds() != 1) {
                 // this can happen with switch-statements where multiple edges are between

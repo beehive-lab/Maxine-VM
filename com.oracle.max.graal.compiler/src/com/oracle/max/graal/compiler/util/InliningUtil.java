@@ -172,6 +172,10 @@ public class InliningUtil {
             }
         }
 
+        if (stateAfter.usages().isEmpty()) {
+            GraphUtil.killNonCFG(stateAfter, null);
+        }
+
     }
 
     public static ValueNode[] simplifyParameters(InvokeNode invoke) {

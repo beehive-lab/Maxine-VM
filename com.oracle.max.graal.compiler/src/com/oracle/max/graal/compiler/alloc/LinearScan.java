@@ -42,7 +42,6 @@ import com.oracle.max.graal.extensions.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.FrameState.ValueProcedure;
-import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.virtual.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -1052,53 +1051,13 @@ public final class LinearScan {
             }
         }
 
-        if (compilation.compiler.target.arch.isX86()) {
-            if (op.code == LegacyOpcode.Cmove) {
-                // conditional moves can handle stack operands
-                assert op.result().isVariableOrRegister();
-                return RegisterPriority.ShouldHaveRegister;
-            }
-
-            // optimizations for second input operand of arithmetic operations on Intel
-            // this operand is allowed to be on the stack in some cases
-            CiKind kind = operand.kind.stackKind();
-            if (op.code instanceof LIROpcode.SecondOperandCanBeMemory) {
-                if (op.operand(0) != op.operand(1) && op.operand(1) == operand) {
-                    assert (op.result().isVariableOrRegister() || op.result().isIllegal()) && op.operand(0).isVariableOrRegister() : "cannot mark second operand as stack if others are not in register";
-                    return RegisterPriority.ShouldHaveRegister;
-                }
-
-            } else if (op.code instanceof LegacyOpcode && kind == CiKind.Float || kind == CiKind.Double) {
-                // SSE float instruction (CiKind.Double only supported with SSE2)
-                switch ((LegacyOpcode) op.code) {
-                    case Cmp:
-//                    case Add:
-//                    case Sub:
-//                    case Mul:
-//                    case Div: {
-                        if (op.operand(0) != op.operand(1) && op.operand(1) == operand) {
-                            assert (op.result().isVariableOrRegister() || op.code == LegacyOpcode.Cmp) && op.operand(0).isVariableOrRegister() : "cannot mark second operand as stack if others are not in register";
-                            return RegisterPriority.ShouldHaveRegister;
-                        }
-//                    }
-                }
-            } else if (op.code instanceof LegacyOpcode && kind != CiKind.Long) {
-                // integer instruction (note: long operands must always be in register)
-                switch ((LegacyOpcode) op.code) {
-                    case Cmp:
-//                    case Add:
-//                    case Sub:
-                    case LogicAnd:
-                    case LogicOr:
-                    case LogicXor: {
-                        if (op.operand(0) != op.operand(1) && op.operand(1) == operand) {
-                            assert (op.result().isVariableOrRegister() || op.code == LegacyOpcode.Cmp) && op.operand(0).isVariableOrRegister() : "cannot mark second operand as stack if others are not in register";
-                            return RegisterPriority.ShouldHaveRegister;
-                        }
-                    }
-                }
-            }
-        } // X86
+        // optimizations for input operands that are allowed to be on the stack in some cases
+        if (op.code instanceof LIROpcode.AllOperandsCanBeMemory) {
+            return RegisterPriority.ShouldHaveRegister;
+        }
+        if (op.code instanceof LIROpcode.SecondOperandCanBeMemory && op.operand(0) != op.operand(1) && op.operand(1) == operand) {
+            return RegisterPriority.ShouldHaveRegister;
+        }
 
         // all other operands require a register
         return RegisterPriority.MustHaveRegister;
@@ -1138,28 +1097,42 @@ public final class LinearScan {
     }
 
     void addRegisterHints(LIRInstruction op) {
+        if (op.code instanceof LIROpcode.FirstOperandRegisterHint) {
+            CiValue moveFrom = op.operand(0);
+            CiValue moveTo = op.result();
+
+            if (moveTo.isVariableOrRegister() && moveFrom.isVariableOrRegister()) {
+                Interval from = intervalFor(moveFrom);
+                Interval to = intervalFor(moveTo);
+                if (from != null && to != null) {
+                    to.setLocationHint(from);
+                    if (GraalOptions.TraceLinearScanLevel >= 4) {
+                        TTY.println("operation at opId %d: added hint from interval %d to %d", op.id(), from.operandNumber, to.operandNumber);
+                    }
+                }
+            }
+        } else if (op.code instanceof LIROpcode.SecondOperandRegisterHint) {
+            CiValue moveFrom = op.operand(1);
+            CiValue moveTo = op.result();
+
+            if (moveTo.isVariableOrRegister() && moveFrom.isVariableOrRegister()) {
+                Interval from = intervalFor(moveFrom);
+                Interval to = intervalFor(moveTo);
+                if (from != null && to != null) {
+                    to.setLocationHint(from);
+                    if (GraalOptions.TraceLinearScanLevel >= 4) {
+                        TTY.println("operation at opId %d: added hint from interval %d to %d", op.id(), from.operandNumber, to.operandNumber);
+                    }
+                }
+            }
+        }
+
+
         if (!(op.code instanceof LegacyOpcode)) {
             return;
         }
         switch ((LegacyOpcode) op.code) {
-            case Move: // fall through
-            case Convert: {
-                CiValue moveFrom = op.operand(0);
-                CiValue moveTo = op.result();
-
-                if (moveTo.isVariableOrRegister() && moveFrom.isVariableOrRegister()) {
-                    Interval from = intervalFor(moveFrom);
-                    Interval to = intervalFor(moveTo);
-                    if (from != null && to != null) {
-                        to.setLocationHint(from);
-                        if (GraalOptions.TraceLinearScanLevel >= 4) {
-                            TTY.println("operation at opId %d: added hint from interval %d to %d", op.id(), from.operandNumber, to.operandNumber);
-                        }
-                    }
-                }
-                break;
-            }
-            case Cmove: {
+            case Move: {
                 CiValue moveFrom = op.operand(0);
                 CiValue moveTo = op.result();
 
@@ -1579,7 +1552,7 @@ public final class LinearScan {
             if (instr instanceof LIRBranch) {
                 LIRBranch branch = (LIRBranch) instr;
                 // insert moves before branch
-                assert branch.cond() == Condition.TRUE : "block does not end with an unconditional jump";
+                assert branch.cond == null : "block does not end with an unconditional jump";
                 moveResolver.setInsertPosition(fromBlock.lir(), instructions.size() - 2);
             } else {
                 moveResolver.setInsertPosition(fromBlock.lir(), instructions.size() - 1);
@@ -1623,9 +1596,9 @@ public final class LinearScan {
             // check if block has only one predecessor and only one successor
             if (block.numberOfPreds() == 1 && block.numberOfSux() == 1) {
                 List<LIRInstruction> instructions = block.lir().instructionsList();
-                assert instructions.get(0).code == LegacyOpcode.Label : "block must start with label";
-                assert instructions.get(instructions.size() - 1).code == LegacyOpcode.Branch : "block with successors must end with branch (" + block + "), " + instructions.get(instructions.size() - 1);
-                assert ((LIRBranch) instructions.get(instructions.size() - 1)).cond() == Condition.TRUE : "block with successor must end with unconditional branch";
+                assert instructions.get(0) instanceof LIRLabel : "block must start with label";
+                assert instructions.get(instructions.size() - 1) instanceof LIRBranch : "block with successors must end with branch (" + block + "), " + instructions.get(instructions.size() - 1);
+                assert ((LIRBranch) instructions.get(instructions.size() - 1)).cond == null : "block with successor must end with unconditional branch";
 
                 // check if block is empty (only label and branch)
                 if (instructions.size() == 2) {
@@ -1752,7 +1725,7 @@ public final class LinearScan {
                     if (instr instanceof LIRBranch) {
                         LIRBranch branch = (LIRBranch) instr;
                         if (block.liveOut.get(operandNumber(operand))) {
-                            assert branch.cond() == Condition.TRUE : "block does not end with an unconditional jump";
+                            assert branch.cond == null : "block does not end with an unconditional jump";
                             throw new CiBailout("can't get split child for the last branch of a block because the information would be incorrect (moves are inserted before the branch in resolveDataFlow)");
                         }
                     }
@@ -1981,7 +1954,7 @@ public final class LinearScan {
             if (state.outerFrameState() != null) {
                 caller = computeFrameForState(state.outerFrameState());
             }
-            CiFrame frame = new CiFrame(caller, state.method, state.bci, state.rethrowException(), values, state.localsSize(), state.stackSize(), state.locksSize());
+            CiFrame frame = new CiFrame(caller, state.method(), state.bci, state.rethrowException(), values, state.localsSize(), state.stackSize(), state.locksSize());
             if (GraalOptions.Extend) {
                 frame = overrideFrame(frame);
             }

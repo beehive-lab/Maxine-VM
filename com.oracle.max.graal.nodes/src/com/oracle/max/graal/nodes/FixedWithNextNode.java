@@ -22,6 +22,7 @@
  */
 package com.oracle.max.graal.nodes;
 
+import com.oracle.max.graal.nodes.calc.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -44,5 +45,12 @@ public abstract class FixedWithNextNode extends FixedNode {
 
     public FixedWithNextNode(CiKind kind) {
         super(kind);
+    }
+
+    public void replaceWithFloating(FloatingNode other) {
+        FixedNode next = this.next();
+        setNext(null);
+        replaceAtPredecessors(next);
+        replaceAtUsages(other);
     }
 }

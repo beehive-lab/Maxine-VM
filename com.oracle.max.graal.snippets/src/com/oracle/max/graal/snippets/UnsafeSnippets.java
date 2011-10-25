@@ -48,89 +48,89 @@ public class UnsafeSnippets implements SnippetsInterface {
     // TODO: volatile variants of the following methods, e.g. getObjectVolatile()
 
     public Object getObject(Object o, long offset) {
-        return UnsafeLoad.load(o, offset, CiKind.Object);
+        return UnsafeLoadNode.load(o, offset, CiKind.Object);
     }
 
     public void putObject(Object o, long offset, Object x) {
-        UnsafeStore.store(o, offset, x, CiKind.Object);
+        UnsafeStoreNode.store(o, offset, x, CiKind.Object);
     }
 
     public int getInt(Object o, long offset) {
-        Integer value = UnsafeLoad.load(o, offset, CiKind.Int);
+        Integer value = UnsafeLoadNode.load(o, offset, CiKind.Int);
         return value;
     }
 
     public void putInt(Object o, long offset, int x) {
-        UnsafeStore.store(o, offset, x, CiKind.Int);
+        UnsafeStoreNode.store(o, offset, x, CiKind.Int);
     }
 
     public boolean getBoolean(Object o, long offset) {
         @JavacBug(id = 6995200)
-        Boolean result = UnsafeLoad.load(o, offset, CiKind.Boolean);
+        Boolean result = UnsafeLoadNode.load(o, offset, CiKind.Boolean);
         return result;
     }
 
     public void putBoolean(Object o, long offset, boolean x) {
-        UnsafeStore.store(o, offset, x, CiKind.Boolean);
+        UnsafeStoreNode.store(o, offset, x, CiKind.Boolean);
     }
 
     public byte getByte(Object o, long offset) {
         @JavacBug(id = 6995200)
-        Byte result = UnsafeLoad.load(o, offset, CiKind.Byte);
+        Byte result = UnsafeLoadNode.load(o, offset, CiKind.Byte);
         return result;
     }
 
     public void putByte(Object o, long offset, byte x) {
-        UnsafeStore.store(o, offset, x, CiKind.Byte);
+        UnsafeStoreNode.store(o, offset, x, CiKind.Byte);
     }
 
     public short getShort(Object o, long offset) {
         @JavacBug(id = 6995200)
-        Short result = UnsafeLoad.load(o, offset, CiKind.Short);
+        Short result = UnsafeLoadNode.load(o, offset, CiKind.Short);
         return result;
     }
 
     public void putShort(Object o, long offset, short x) {
-        UnsafeStore.store(o, offset, x, CiKind.Short);
+        UnsafeStoreNode.store(o, offset, x, CiKind.Short);
     }
 
     public char getChar(Object o, long offset) {
         @JavacBug(id = 6995200)
-        Character result = UnsafeLoad.load(o, offset, CiKind.Char);
+        Character result = UnsafeLoadNode.load(o, offset, CiKind.Char);
         return result;
     }
 
     public void putChar(Object o, long offset, char x) {
-        UnsafeStore.store(o, offset, x, CiKind.Char);
+        UnsafeStoreNode.store(o, offset, x, CiKind.Char);
     }
 
     public long getLong(Object o, long offset) {
         @JavacBug(id = 6995200)
-        Long result = UnsafeLoad.load(o, offset, CiKind.Long);
+        Long result = UnsafeLoadNode.load(o, offset, CiKind.Long);
         return result;
     }
 
     public void putLong(Object o, long offset, long x) {
-        UnsafeStore.store(o, offset, x, CiKind.Long);
+        UnsafeStoreNode.store(o, offset, x, CiKind.Long);
     }
 
     public float getFloat(Object o, long offset) {
         @JavacBug(id = 6995200)
-        Float result = UnsafeLoad.load(o, offset, CiKind.Float);
+        Float result = UnsafeLoadNode.load(o, offset, CiKind.Float);
         return result;
     }
 
     public void putFloat(Object o, long offset, float x) {
-        UnsafeStore.store(o, offset, x, CiKind.Float);
+        UnsafeStoreNode.store(o, offset, x, CiKind.Float);
     }
 
     public double getDouble(Object o, long offset) {
         @JavacBug(id = 6995200)
-        Double result = UnsafeLoad.load(o, offset, CiKind.Double);
+        Double result = UnsafeLoadNode.load(o, offset, CiKind.Double);
         return result;
     }
 
     public void putDouble(Object o, long offset, double x) {
-        UnsafeStore.store(o, offset, x, CiKind.Double);
+        UnsafeStoreNode.store(o, offset, x, CiKind.Double);
     }
 }

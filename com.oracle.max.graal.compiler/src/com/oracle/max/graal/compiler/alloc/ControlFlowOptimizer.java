@@ -27,7 +27,6 @@ import java.util.*;
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.util.*;
-import com.oracle.max.graal.nodes.calc.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -103,9 +102,9 @@ final class ControlFlowOptimizer {
         List<LIRInstruction> instructions = block.lir().instructionsList();
 
         assert instructions.size() >= 2 : "block must have label and branch";
-        assert instructions.get(0).code == LegacyOpcode.Label : "first instruction must always be a label";
+        assert instructions.get(0) instanceof LIRLabel : "first instruction must always be a label";
         assert instructions.get(instructions.size() - 1) instanceof LIRBranch : "last instruction must always be a branch but is " + instructions.get(instructions.size() - 1);
-        assert ((LIRBranch) instructions.get(instructions.size() - 1)).cond() == Condition.TRUE : "branch must be unconditional";
+        assert ((LIRBranch) instructions.get(instructions.size() - 1)).cond == null : "branch must be unconditional";
         assert ((LIRBranch) instructions.get(instructions.size() - 1)).block() == block.suxAt(0) : "branch target must be the successor " + ((LIRBranch) instructions.get(instructions.size() - 1)).block();
 
         // block must have exactly one successor
@@ -163,8 +162,7 @@ final class ControlFlowOptimizer {
             List<LIRInstruction> instructions = block.lir().instructionsList();
 
             LIRInstruction lastOp = instructions.get(instructions.size() - 1);
-            if (lastOp.code == LegacyOpcode.Branch) {
-                assert lastOp instanceof LIRBranch : "branch must be of type LIRBranch";
+            if (lastOp instanceof LIRBranch) {
                 LIRBranch lastBranch = (LIRBranch) lastOp;
 
                 if (lastBranch.block() == null) {
@@ -180,13 +178,12 @@ final class ControlFlowOptimizer {
 
                     } else {
                         LIRInstruction prevOp = instructions.get(instructions.size() - 2);
-                        if (prevOp.code == LegacyOpcode.Branch || prevOp.code == LegacyOpcode.CondFloatBranch) {
-                            assert prevOp instanceof LIRBranch : "branch must be of type LIRBranch";
+                        if (prevOp instanceof LIRBranch) {
                             LIRBranch prevBranch = (LIRBranch) prevOp;
 
                             if (prevBranch.block() == code.get(i + 1) && prevBranch.info == null) {
                                 // eliminate a conditional branch to the immediate successor
-                                instructions.set(instructions.size() - 2, new LIRBranch(prevBranch.code, prevBranch.cond().negate(), lastBranch.block(), lastBranch.unorderedBlock()));
+                                instructions.set(instructions.size() - 2, new LIRBranch(prevBranch.code, prevBranch.cond.negate(), !prevBranch.unorderedIsTrue, lastBranch.block()));
                                 Util.truncate(instructions, instructions.size() - 1);
                             }
                         }
@@ -204,7 +201,7 @@ final class ControlFlowOptimizer {
             List<LIRInstruction> curInstructions = block.lir().instructionsList();
             LIRInstruction curLastOp = curInstructions.get(curInstructions.size() - 1);
 
-            assert curInstructions.get(0).code == LegacyOpcode.Label : "first instruction must always be a label";
+            assert curInstructions.get(0) instanceof LIRLabel : "first instruction must always be a label";
             if (curInstructions.size() == 2 && curLastOp.code == LegacyOpcode.Return) {
                 // the block contains only a label and a return
                 // if a predecessor ends with an unconditional jump to this block, then the jump
@@ -224,11 +221,11 @@ final class ControlFlowOptimizer {
                     List<LIRInstruction> predInstructions = pred.lir().instructionsList();
                     LIRInstruction predLastOp = predInstructions.get(predInstructions.size() - 1);
 
-                    if (predLastOp.code == LegacyOpcode.Branch) {
+                    if (predLastOp.code instanceof LIRBranch) {
                         assert predLastOp instanceof LIRBranch : "branch must be LIRBranch";
                         LIRBranch predLastBranch = (LIRBranch) predLastOp;
 
-                        if (predLastBranch.block() == block && predLastBranch.cond() == Condition.TRUE && predLastBranch.info == null) {
+                        if (predLastBranch.block() == block && predLastBranch.cond == null && predLastBranch.info == null) {
                             // replace the jump to a return with a direct return
                             // Note: currently the edge between the blocks is not deleted
                             predInstructions.set(predInstructions.size() - 1, new LIRInstruction(LegacyOpcode.Return, CiValue.IllegalValue, null, returnOpr));
@@ -247,7 +244,6 @@ final class ControlFlowOptimizer {
                 if (instr instanceof LIRBranch) {
                     LIRBranch opBranch = (LIRBranch) instr;
                     assert opBranch.block() == null || opBranch.block().blockID() == -1 || code.contains(opBranch.block()) : "missing successor branch from: " + block + " to: " + opBranch.block();
-                    assert opBranch.unorderedBlock() == null || opBranch.unorderedBlock().blockID() == -1 || code.contains(opBranch.unorderedBlock()) : "missing successor branch from: " + block + " to: " + opBranch.unorderedBlock();
                 }
             }
 

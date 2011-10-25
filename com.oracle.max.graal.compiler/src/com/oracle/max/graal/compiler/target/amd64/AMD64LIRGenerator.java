@@ -24,12 +24,21 @@
 package com.oracle.max.graal.compiler.target.amd64;
 
 import static com.oracle.max.graal.compiler.target.amd64.AMD64ArithmeticOp.*;
-import static com.oracle.max.graal.compiler.target.amd64.AMD64MulOp.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64CompareOp.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64ControlFlowOp.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertOp.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertOpFI.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertOpFL.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64DivOp.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64MathIntrinsicOp.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64MulOp.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64Op1.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64ShiftOp.*;
 
 import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.graal.compiler.*;
+import com.oracle.max.graal.compiler.alloc.OperandPool.VariableFlag;
 import com.oracle.max.graal.compiler.gen.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.stub.*;
@@ -51,30 +60,18 @@ public class AMD64LIRGenerator extends LIRGenerator {
     private static final CiRegisterValue RAX_O = AMD64.rax.asValue(CiKind.Object);
     private static final CiRegisterValue RDX_I = AMD64.rdx.asValue(CiKind.Int);
     private static final CiRegisterValue RDX_L = AMD64.rdx.asValue(CiKind.Long);
+    private static final CiRegisterValue RCX_I = AMD64.rcx.asValue(CiKind.Int);
 
-    private static final CiRegisterValue LDIV_TMP = RDX_L;
-
-
-    /**
-     * The register in which MUL puts the result for 64-bit multiplication.
-     */
-    private static final CiRegisterValue LMUL_OUT = RAX_L;
-
-    private static final CiRegisterValue SHIFT_COUNT_IN = AMD64.rcx.asValue(CiKind.Int);
-
-    protected static final CiValue ILLEGAL = CiValue.IllegalValue;
 
     public AMD64LIRGenerator(GraalCompilation compilation) {
         super(compilation);
     }
 
     @Override
-    protected boolean canStoreAsConstant(ValueNode v, CiKind kind) {
-        if (kind == CiKind.Short || kind == CiKind.Char) {
-            // there is no immediate move of word values in asemblerI486.?pp
-            return false;
-        }
-        return v instanceof ConstantNode;
+    protected boolean canStoreAsConstant(CiKind storeKind) {
+        // there is no immediate move of word values in asemblerI486.?pp
+        // TODO: check if this is necessary
+        return storeKind != CiKind.Short && storeKind != CiKind.Char;
     }
 
     @Override
@@ -89,23 +86,95 @@ public class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    protected void genCmpMemInt(Condition condition, CiValue base, int disp, int c, LIRDebugInfo info) {
-        lir.cmpMemInt(condition, base, disp, c, info);
+    protected CiVariable makeByteVariable(CiValue cur) {
+        CiVariable result = operands.newVariable(cur.kind.stackKind(), VariableFlag.MustBeByteRegister);
+        lir.move(cur, result);
+        return result;
     }
 
     @Override
-    protected void genCmpRegMem(Condition condition, CiValue reg, CiValue base, int disp, CiKind kind, LIRDebugInfo info) {
-        lir.cmpRegMem(condition, reg, new CiAddress(kind, base, disp), info);
+    public void emitLabel(Label label) {
+        lir.append(LABEL.create(label));
+    }
+
+    @Override
+    public void emitJump(LIRBlock block) {
+        lir.append(JUMP.create(block));
+    }
+
+    @Override
+    public void emitJump(Label label, LIRDebugInfo info) {
+        lir.append(JUMP.create(label, info));
+    }
+
+    @Override
+    public void emitBranch(CiValue left, CiValue right, Condition cond, boolean unorderedIsTrue, LIRBlock block) {
+        emitCompare(left, right);
+        switch (left.kind) {
+            case Int:
+            case Long:
+            case Object: lir.append(BRANCH.create(cond, block)); break;
+            case Float:
+            case Double: lir.append(FLOAT_BRANCH.create(cond, unorderedIsTrue, block)); break;
+            default: throw Util.shouldNotReachHere();
+        }
+    }
+
+    @Override
+    public void emitBranch(CiValue left, CiValue right, Condition cond, boolean unorderedIsTrue, Label label, LIRDebugInfo info) {
+        emitCompare(left, right);
+        switch (left.kind) {
+            case Int:
+            case Long:
+            case Object: lir.append(BRANCH.create(cond, label, info)); break;
+            case Float:
+            case Double: lir.append(FLOAT_BRANCH.create(cond, unorderedIsTrue, label, info)); break;
+            default: throw Util.shouldNotReachHere();
+        }
+    }
+
+    @Override
+    public CiVariable emitCMove(CiValue left, CiValue right, Condition cond, boolean unorderedIsTrue, CiValue trueValue, CiValue falseValue) {
+        emitCompare(left, right);
+
+        CiVariable result = newVariable(trueValue.kind);
+        switch (left.kind) {
+            case Int:
+            case Long:
+            case Object: lir.append(CMOVE.create(result, cond, makeVariable(trueValue), falseValue)); break;
+            case Float:
+            case Double: lir.append(FLOAT_CMOVE.create(result, cond, unorderedIsTrue, makeVariable(trueValue), makeVariable(falseValue))); break;
+
+        }
+        return result;
+    }
+
+    protected void emitCompare(CiValue leftVal, CiValue right) {
+        CiVariable left = makeVariable(leftVal);
+        switch (left.kind) {
+            case Jsr:
+            case Int: lir.append(ICMP.create(left, right)); break;
+            case Long: lir.append(LCMP.create(left, right)); break;
+            case Object: lir.append(ACMP.create(left, right)); break;
+            case Float: lir.append(FCMP.create(left, right)); break;
+            case Double: lir.append(DCMP.create(left, right)); break;
+            default: throw Util.shouldNotReachHere();
+        }
     }
 
     @Override
     public void visitNegate(NegateNode x) {
-        LIRItem value = new LIRItem(x.x(), this);
-        value.setDestroysRegister();
-        value.loadItem();
-        CiVariable reg = newVariable(x.kind);
-        lir.negate(value.result(), reg);
-        setResult(x, reg);
+        CiValue input = loadNonconstant(x.x());
+        CiVariable result = createResultVariable(x);
+
+        lir.move(input, result);
+        switch (x.kind) {
+            case Int:    lir.append(INEG.create(result)); break;
+            case Long:   lir.append(LNEG.create(result)); break;
+            case Float:  lir.append(FNEG.create(result)); break;
+            case Double: lir.append(DNEG.create(result)); break;
+            default: throw Util.shouldNotReachHere();
+        }
     }
 
     @Override
@@ -163,6 +232,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
             CiValue right = loadNonconstant(x.y());
             CiVariable result = createResultVariable(x);
 
+            // Two-operand form on Intel
             lir.move(left, result);
             switch (opcode) {
                 case Bytecodes.IADD: lir.append(IADD.create(result, right)); break;
@@ -185,6 +255,100 @@ public class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
+    public void visitLogic(LogicNode x) {
+        CiVariable left = load(x.x());
+        CiValue right = loadNonconstant(x.y());
+        CiVariable result = createResultVariable(x);
+
+        // Two-operand form on Intel
+        lir.move(left, result);
+        switch (x.opcode) {
+            case Bytecodes.IAND: lir.append(IAND.create(result, right)); break;
+            case Bytecodes.LAND: lir.append(LAND.create(result, right)); break;
+            case Bytecodes.IOR:  lir.append(IOR.create(result, right)); break;
+            case Bytecodes.LOR:  lir.append(LOR.create(result, right)); break;
+            case Bytecodes.IXOR: lir.append(IXOR.create(result, right)); break;
+            case Bytecodes.LXOR: lir.append(LXOR.create(result, right)); break;
+            default: throw Util.shouldNotReachHere();
+        }
+    }
+
+    @Override
+    public void visitShift(ShiftNode x) {
+        CiVariable left = load(x.x());
+        CiValue right = loadNonconstant(x.y());
+        CiVariable result = createResultVariable(x);
+
+        // Two-operand form on Intel
+        lir.move(left, result);
+        if (!right.isConstant()) {
+            // Non-constant shift count must be in RCX
+            lir.move(right, RCX_I);
+            right = RCX_I;
+        }
+
+        switch (x.opcode) {
+            case Bytecodes.ISHL: lir.append(ISHL.create(result, right)); break;
+            case Bytecodes.ISHR: lir.append(ISHR.create(result, right)); break;
+            case Bytecodes.IUSHR: lir.append(UISHR.create(result, right)); break;
+            case Bytecodes.LSHL: lir.append(LSHL.create(result, right)); break;
+            case Bytecodes.LSHR: lir.append(LSHR.create(result, right)); break;
+            case Bytecodes.LUSHR: lir.append(ULSHR.create(result, right)); break;
+            default: Util.shouldNotReachHere();
+        }
+    }
+
+    @Override
+    public void visitConvert(ConvertNode x) {
+        CiVariable input = load(x.value());
+        CiVariable result = createResultVariable(x);
+
+        switch (x.opcode) {
+            case I2L: lir.append(I2L.create(result, input)); break;
+            case L2I: lir.append(L2I.create(result, input)); break;
+            case I2B: lir.append(I2B.create(result, input)); break;
+            case I2C: lir.append(I2C.create(result, input)); break;
+            case I2S: lir.append(I2S.create(result, input)); break;
+            case F2D: lir.append(F2D.create(result, input)); break;
+            case D2F: lir.append(D2F.create(result, input)); break;
+            case I2F: lir.append(I2F.create(result, input)); break;
+            case I2D: lir.append(I2D.create(result, input)); break;
+            case F2I: lir.append(F2I.create(result, stubFor(CompilerStub.Id.f2i), input)); break;
+            case D2I: lir.append(D2I.create(result, stubFor(CompilerStub.Id.d2i), input)); break;
+            case L2F: lir.append(L2F.create(result, input)); break;
+            case L2D: lir.append(L2D.create(result, input)); break;
+            case F2L: lir.append(F2L.create(result, stubFor(CompilerStub.Id.f2l), input, newVariable(CiKind.Long))); break;
+            case D2L: lir.append(D2L.create(result, stubFor(CompilerStub.Id.d2l), input, newVariable(CiKind.Long))); break;
+            case MOV_I2F: lir.append(MOV_I2F.create(result, input)); break;
+            case MOV_L2D: lir.append(MOV_L2D.create(result, input)); break;
+            case MOV_F2I: lir.append(MOV_F2I.create(result, input)); break;
+            case MOV_D2L: lir.append(MOV_D2L.create(result, input)); break;
+            default: throw Util.shouldNotReachHere();
+        }
+    }
+
+    @Override
+    public void visitMathIntrinsic(MathIntrinsicNode x) {
+        CiVariable input = load(x.x());
+        CiVariable result = createResultVariable(x);
+
+        switch (x.operation()) {
+            case ABS:
+                lir.move(input, result);
+                lir.append(DABS.create(result));
+                break;
+            case SQRT:  lir.append(SQRT.create(result, input)); break;
+            case LOG:   lir.append(LOG.create(result, input)); break;
+            case LOG10: lir.append(LOG10.create(result, input)); break;
+            case SIN:   lir.append(SIN.create(result, input)); break;
+            case COS:   lir.append(COS.create(result, input)); break;
+            case TAN:   lir.append(TAN.create(result, input)); break;
+            default:    throw Util.shouldNotReachHere();
+        }
+    }
+
+
+    @Override
     public void integerAdd(ValueNode resultNode, ValueNode leftNode, ValueNode rightNode) {
         CiVariable left = load(leftNode);
         CiValue right = loadNonconstant(rightNode);
@@ -195,8 +359,13 @@ public class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    public void emitUnsignedShiftRight(CiValue value, CiValue count, CiValue dst, CiValue tmp) {
-        lir().unsignedShiftRight(value, count, dst, tmp);
+    public void emitUnsignedShiftRight(CiVariable value, CiValue count, CiVariable dest) {
+        assert value.equals(dest);
+        switch (dest.kind) {
+            case Int: lir.append(UISHR.create(dest, count)); break;
+            case Long: lir.append(ULSHR.create(dest, count)); break;
+            default: throw Util.shouldNotReachHere();
+        }
     }
 
     @Override
@@ -212,79 +381,31 @@ public class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    public void visitShift(ShiftNode x) {
-        // count must always be in rcx
-        CiValue count = makeOperand(x.y());
-        boolean mustLoadCount = !count.isConstant() || x.kind == CiKind.Long;
-        if (mustLoadCount) {
-            // count for long must be in register
-            count = force(x.y(), SHIFT_COUNT_IN);
-        }
-
-        CiValue value = load(x.x());
-        CiValue reg = createResultVariable(x);
-
-        shiftOp(x.opcode, reg, value, count, ILLEGAL);
-    }
-
-    @Override
-    public void visitLogic(LogicNode x) {
-        LIRItem right = new LIRItem(x.y(), this);
-
-        CiValue left = load(x.x());
-        right.loadNonconstant();
-        CiValue reg = createResultVariable(x);
-
-        logicOp(x.opcode, reg, left, right.result());
+    public void deoptimizeOn(Condition cond) {
+        DeoptimizationStub stub = createDeoptStub("deoptimizeOn " + cond);
+        lir.append(BRANCH.create(cond, stub.label, stub.info));
     }
 
     @Override
     public void visitNormalizeCompare(NormalizeCompareNode x) {
-        LIRItem left = new LIRItem(x.x(), this);
-        LIRItem right = new LIRItem(x.y(), this);
-        if (!x.kind.isVoid() && x.x().kind.isLong()) {
-            left.setDestroysRegister();
-        }
-        left.loadItem();
-        right.loadItem();
+        CiVariable left = load(x.x());
+        CiVariable right = load(x.y());
+        CiVariable result = createResultVariable(x);
 
-        if (x.kind.isVoid()) {
-            lir.cmp(Condition.TRUE, left.result(), right.result());
-        } else if (x.x().kind.isFloat() || x.x().kind.isDouble()) {
-            CiValue reg = createResultVariable(x);
-            lir.fcmp2int(left.result(), right.result(), reg, x.isUnorderedLess());
-        } else if (x.x().kind.isLong()) {
-            CiValue reg = createResultVariable(x);
-            lir.lcmp2int(left.result(), right.result(), reg);
-        } else {
-            assert false;
+        switch (x.x().kind){
+            case Float:
+            case Double:
+                lir.fcmp2int(left, right, result, x.isUnorderedLess());
+                break;
+            case Long:
+                lir.lcmp2int(left, right, result);
+                break;
+            default:
+                throw Util.shouldNotReachHere();
         }
     }
 
-    @Override
-    public void visitConvert(ConvertNode x) {
-        CiValue input = load(x.value());
-        CiVariable result = newVariable(x.kind);
-        // arguments of lirConvert
-        CompilerStub stub = null;
-        // Checkstyle: off
-        switch (x.opcode) {
-            case F2I: stub = stubFor(CompilerStub.Id.f2i); break;
-            case F2L: stub = stubFor(CompilerStub.Id.f2l); break;
-            case D2I: stub = stubFor(CompilerStub.Id.d2i); break;
-            case D2L: stub = stubFor(CompilerStub.Id.d2l); break;
-        }
-        // Checkstyle: on
-        if (stub != null) {
-            // Force result to be rax to match global stubs expectation.
-            CiValue stubResult = x.kind == CiKind.Int ? RAX_I : RAX_L;
-            lir.convert(x.opcode, input, stubResult, stub);
-            lir.move(stubResult, result);
-        } else {
-            lir.convert(x.opcode, input, result, stub);
-        }
-        setResult(x, result);
-    }
+
 
     @Override
     public void visitLoopBegin(LoopBeginNode x) {
@@ -293,26 +414,6 @@ public class AMD64LIRGenerator extends LIRGenerator {
     @Override
     public void visitValueAnchor(ValueAnchorNode valueAnchor) {
         // nothing to do for ValueAnchors
-    }
-
-    @Override
-    public void visitMathIntrinsic(MathIntrinsicNode node) {
-        assert node.kind == CiKind.Double;
-        LIRItem opd = new LIRItem(node.x(), this);
-        opd.setDestroysRegister();
-        opd.loadItem();
-        CiVariable dest = createResultVariable(node);
-        switch (node.operation()) {
-            case ABS:   lir.abs(opd.result(), dest, CiValue.IllegalValue);   break;
-            case SQRT:  lir.sqrt(opd.result(), dest, CiValue.IllegalValue);  break;
-            case LOG:   lir.log(opd.result(), dest, CiValue.IllegalValue);   break;
-            case LOG10: lir.log10(opd.result(), dest, CiValue.IllegalValue); break;
-            case SIN:   lir.sin(opd.result(), dest, CiValue.IllegalValue, CiValue.IllegalValue); break;
-            case COS:   lir.cos(opd.result(), dest, CiValue.IllegalValue, CiValue.IllegalValue); break;
-            case TAN:   lir.tan(opd.result(), dest, CiValue.IllegalValue, CiValue.IllegalValue); break;
-            default:
-                throw Util.shouldNotReachHere();
-        }
     }
 
     @Override
@@ -338,27 +439,11 @@ public class AMD64LIRGenerator extends LIRGenerator {
         }
         lir.cas(address, expected, newValue, expected);
 
-        CiValue result = createResultVariable(node);
-        lir.cmove(Condition.EQ, CiConstant.TRUE, CiConstant.FALSE, result);
+        CiVariable result = createResultVariable(node);
+        lir.append(CMOVE.create(result, Condition.EQ, makeVariable(CiConstant.TRUE), CiConstant.FALSE));
 
         if (kind == CiKind.Object) {
             postGCWriteBarrier(address, newValue);
-        }
-    }
-
-    @Override
-    public Condition floatingPointCondition(Condition cond) {
-        switch(cond) {
-            case LT:
-                return Condition.BT;
-            case LE:
-                return Condition.BE;
-            case GT:
-                return Condition.AT;
-            case GE:
-                return Condition.AE;
-            default :
-                return cond;
         }
     }
 
