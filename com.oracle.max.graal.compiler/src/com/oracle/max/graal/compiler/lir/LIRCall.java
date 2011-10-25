@@ -51,22 +51,28 @@ public class LIRCall extends LIRInstruction {
     public final List<CiValue> pointerSlots;
 
 
-    private static CiValue[] toArray(List<CiValue> arguments) {
-        return arguments.toArray(new CiValue[arguments.size()]);
+    private static CiValue[] toArray(List<CiValue> arguments, CiValue targetAddress) {
+        CiValue[] result = new CiValue[arguments.size() + (targetAddress != null ? 1 : 0)];
+        arguments.toArray(result);
+        if (targetAddress != null) {
+            result[arguments.size()] = targetAddress;
+        }
+        return result;
     }
 
     public LIRCall(LIROpcode opcode,
                    Object target,
                    CiValue result,
                    List<CiValue> arguments,
+                   CiValue targetAddress,
                    LIRDebugInfo info,
                    Map<XirMark, Mark> marks,
                    boolean calleeSaved,
                    List<CiValue> pointerSlots) {
-        super(opcode, result, info, !calleeSaved, 0, 0, toArray(arguments));
+        super(opcode, result, info, !calleeSaved, 0, 0, toArray(arguments, targetAddress));
         this.marks = marks;
         this.pointerSlots = pointerSlots;
-        if (opcode == LegacyOpcode.DirectCall) {
+        if (targetAddress == null) {
             this.targetAddressIndex = -1;
         } else {
             // The last argument is the operand holding the address for the indirect call
@@ -97,13 +103,9 @@ public class LIRCall extends LIRInstruction {
             buf.append(operandFmt.format(result())).append(" = ");
         }
         String targetAddress = null;
-        if (code == LegacyOpcode.RuntimeCall) {
-            buf.append(target);
-        } else if (code != LegacyOpcode.DirectCall) {
-            if (targetAddressIndex >= 0) {
-                targetAddress = operandFmt.format(targetAddress());
-                buf.append(targetAddress);
-            }
+        if (targetAddressIndex >= 0) {
+            targetAddress = operandFmt.format(targetAddress());
+            buf.append(targetAddress);
         }
         buf.append('(');
         boolean first = true;

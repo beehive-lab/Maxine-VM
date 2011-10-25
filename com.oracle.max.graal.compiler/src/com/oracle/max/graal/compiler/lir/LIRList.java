@@ -29,9 +29,7 @@ import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.alloc.*;
 import com.oracle.max.graal.compiler.gen.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiTargetMethod.Mark;
 import com.sun.cri.ri.*;
-import com.sun.cri.xir.CiXirAssembler.XirMark;
 import com.sun.cri.xir.*;
 
 /**
@@ -70,28 +68,12 @@ public final class LIRList {
         return operations.get(i);
     }
 
-    public void callDirect(RiMethod method, CiValue result, List<CiValue> arguments, LIRDebugInfo info, Map<XirMark, Mark> marks, List<CiValue> pointerSlots) {
-        append(new LIRCall(LegacyOpcode.DirectCall, method, result, arguments, info, marks, false, pointerSlots));
-    }
-
-    public void callIndirect(RiMethod method, CiValue result, List<CiValue> arguments, LIRDebugInfo info, Map<XirMark, Mark> marks, List<CiValue> pointerSlots) {
-        append(new LIRCall(LegacyOpcode.IndirectCall, method, result, arguments, info, marks, false, pointerSlots));
-    }
-
-    public void callNative(String symbol, CiValue result, List<CiValue> arguments, LIRDebugInfo info, Map<XirMark, Mark> marks) {
-        append(new LIRCall(LegacyOpcode.NativeCall, symbol, result, arguments, info, marks, false, null));
-    }
-
     public void membar(int barriers) {
         append(new LIRInstruction(LegacyOpcode.Membar, CiValue.IllegalValue, null, CiConstant.forInt(barriers)));
     }
 
     public void lea(CiValue src, CiValue dst) {
         append(new LIRInstruction(LegacyOpcode.Lea, dst, null, src));
-    }
-
-    public void returnOp(CiValue result) {
-        append(new LIRInstruction(LegacyOpcode.Return, CiValue.IllegalValue, null, result));
     }
 
     public void monitorAddress(int monitor, CiValue dst) {
@@ -108,10 +90,6 @@ public final class LIRList {
 
     public void lcmp2int(CiValue left, CiValue right, CiValue dst) {
         append(new LIRInstruction(LegacyOpcode.Cmpl2i, dst, null, left, right));
-    }
-
-    public void callRuntime(CiRuntimeCall rtCall, CiValue result, List<CiValue> arguments, LIRDebugInfo info) {
-        append(new LIRCall(LegacyOpcode.DirectCall, rtCall, result, arguments, info, null, false, null));
     }
 
     public void breakpoint() {

@@ -62,6 +62,11 @@ public class AMD64LIRGenerator extends LIRGenerator {
     private static final CiRegisterValue RDX_L = AMD64.rdx.asValue(CiKind.Long);
     private static final CiRegisterValue RCX_I = AMD64.rcx.asValue(CiKind.Int);
 
+    static {
+        StandardOp.DIRECT_CALL = AMD64CallOp.DIRECT_CALL;
+        StandardOp.INDIRECT_CALL = AMD64CallOp.INDIRECT_CALL;
+        StandardOp.RETURN = AMD64ReturnOp.RETURN;
+    }
 
     public AMD64LIRGenerator(GraalCompilation compilation) {
         super(compilation);

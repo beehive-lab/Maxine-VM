@@ -22,12 +22,29 @@
  */
 package com.oracle.max.graal.compiler.lir;
 
+import java.util.*;
+
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiTargetMethod.*;
+import com.sun.cri.xir.CiXirAssembler.*;
 
 public class StandardOp {
-    public static MoveOp MOVE;
+    // Checkstyle: stop
+    public static MoveOpcode MOVE;
+    public static CallOpcode DIRECT_CALL;
+    public static CallOpcode INDIRECT_CALL;
+    public static ReturnOpcode RETURN;
+    // Checkstyle: resume
 
-    public abstract static class MoveOp<LA extends LIRAssembler, IT extends LIRInstruction> implements LIROpcode<LA, IT> {
-        public abstract LIRInstruction create(CiValue result, CiValue input);
+    public interface MoveOpcode<LA extends LIRAssembler, IT extends LIRInstruction> extends LIROpcode<LA, IT> {
+        LIRInstruction create(CiValue result, CiValue input);
+    }
+
+    public interface CallOpcode<LA extends LIRAssembler, IT extends LIRInstruction> extends LIROpcode<LA, IT> {
+        LIRInstruction create(Object target, CiValue result, List<CiValue> arguments, CiValue targetAddress, LIRDebugInfo info, Map<XirMark, Mark> marks, List<CiValue> pointerSlots);
+    }
+
+    public interface ReturnOpcode<LA extends LIRAssembler, IT extends LIRInstruction> extends LIROpcode<LA, IT> {
+        LIRInstruction create(CiValue input);
     }
 }
