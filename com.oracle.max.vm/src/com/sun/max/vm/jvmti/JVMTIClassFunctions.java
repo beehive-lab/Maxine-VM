@@ -57,12 +57,16 @@ class JVMTIClassFunctions {
     static boolean JVMTIIncludeVMClasses;
 
     private static final String COM_SUN_MAX = "com/sun/max";
+    private static final String COM_SUN_CRI = "com/sun/cri";
+    private static final String COM_SUN_C1X = "com/sun/c1x";
     private static final String COM_ORACLE_MAX = "com/oracle/max";
 
     static boolean isVmClass(ClassActor classActor) {
         // TODO use TBD fast/accurate check
         final String name = classActor.name();
-        return  name.contains(COM_SUN_MAX) || name.contains(COM_ORACLE_MAX) || name.contains("$INVOKE");
+        return  name.contains(COM_SUN_MAX) || name.contains(COM_ORACLE_MAX) ||
+                name.contains(COM_SUN_C1X) || name.contains(COM_SUN_CRI) ||
+                name.contains("$INVOKE");
     }
 
     static int getObjectSize(Object object, Pointer sizePtr) {
