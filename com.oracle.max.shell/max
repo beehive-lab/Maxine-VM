@@ -1579,6 +1579,20 @@ function run_msgate() {
 }
 
 #=======================================
+# 'msegate' command
+#=======================================
+
+msegate_usage="[options]"
+msegate_presets="-image-configs=jtt-c1xt1x,jtt-mset1xc1x -fail-fast -tests=output:GC+WeakReference"
+
+msegate_help="run the GC tests using the MSE heap scheme"
+
+function run_msegate() {
+    gate_presets=$msegate_presets
+    run_gate "$@"
+}
+
+#=======================================
 # 'jrockitbm' command
 #=======================================
 jrockitbm_usage="[-all] [options]"
