@@ -29,10 +29,7 @@ import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.gen.*;
-import com.oracle.max.graal.compiler.lir.FrameMap.StackBlock;
 import com.oracle.max.graal.compiler.util.*;
-import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
 
 /**
  * The {@code LIRAssembler} class definition.
@@ -61,10 +58,6 @@ public abstract class LIRAssembler {
         this.xirSlowPath = new ArrayList<SlowPath>();
     }
 
-    protected RiMethod method() {
-        return compilation.method;
-    }
-
     public void addSlowPath(SlowPath sp) {
         xirSlowPath.add(sp);
     }
@@ -75,12 +68,6 @@ public abstract class LIRAssembler {
         }
         // No more code may be emitted after this point
     }
-
-    protected int codePos() {
-        return asm.codeBuffer.position();
-    }
-
-    public abstract void emitTraps();
 
     public void emitCode(List<LIRBlock> hir) {
         if (GraalOptions.PrintLIR && !TTY.isSuppressed()) {
@@ -97,7 +84,7 @@ public abstract class LIRAssembler {
             emitAlignment();
         }
 
-        block.setBlockEntryPco(codePos());
+        block.setBlockEntryPco(asm.codeBuffer.position());
 
         if (GraalOptions.PrintLIRWithAssembly) {
             block.printWithoutPhis(TTY.out());
@@ -135,7 +122,7 @@ public abstract class LIRAssembler {
     }
 
     @SuppressWarnings("unchecked")
-    protected void emitOp(LIRInstruction op) {
+    private void emitOp(LIRInstruction op) {
         op.code.emitCode(this, op);
     }
 
@@ -154,34 +141,10 @@ public abstract class LIRAssembler {
     }
 
 
-    protected final Object asCallTarget(Object o) {
-        return compilation.compiler.runtime.asCallTarget(o);
-    }
 
-    protected abstract int initialFrameSizeInBytes();
+    public abstract void emitTraps();
 
     public abstract void emitDeoptizationStub(LIRGenerator.DeoptimizationStub stub);
 
     protected abstract void emitAlignment();
-
-    protected abstract void emitBreakpoint();
-
-    protected abstract void emitLea(CiValue src, CiValue dst);
-
-    protected abstract void emitNullCheck(CiValue src, LIRDebugInfo info);
-
-    protected abstract void emitMonitorAddress(int monitor, CiValue dst);
-
-    protected abstract void emitStackAllocate(StackBlock src, CiValue dst);
-
-    protected abstract void emitReadPrefetch(CiValue inOpr);
-
-    protected abstract void emitSignificantBitOp(LegacyOpcode code, CiValue inOpr1, CiValue dst);
-
-    protected abstract void emitTableSwitch(LIRTableSwitch tableSwitch);
-
-    protected abstract void emitCompareAndSwap(LIRInstruction compareAndSwap);
-
-    protected abstract void emitMemoryBarriers(int barriers);
-
 }

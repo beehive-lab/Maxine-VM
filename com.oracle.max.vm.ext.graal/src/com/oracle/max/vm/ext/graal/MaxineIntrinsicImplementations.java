@@ -25,7 +25,6 @@ package com.oracle.max.vm.ext.graal;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import com.oracle.max.cri.intrinsics.*;
-import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
@@ -46,10 +45,7 @@ public class MaxineIntrinsicImplementations {
 
 
     public static class BitIntrinsic implements GraalIntrinsicImpl {
-        public final LegacyOpcode opcode;
-
-        public BitIntrinsic(LegacyOpcode opcode) {
-            this.opcode = opcode;
+        public BitIntrinsic() {
         }
 
         @Override

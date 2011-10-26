@@ -28,7 +28,6 @@ import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.alloc.*;
 import com.oracle.max.graal.compiler.gen.*;
-import com.sun.cri.ci.*;
 
 /**
  * This class represents a list of LIR instructions and contains factory methods for creating and appending LIR
@@ -64,48 +63,6 @@ public final class LIRList {
 
     public LIRInstruction at(int i) {
         return operations.get(i);
-    }
-
-    public void membar(int barriers) {
-        append(new LIRInstruction(LegacyOpcode.Membar, CiValue.IllegalValue, null, CiConstant.forInt(barriers)));
-    }
-
-    public void lea(CiValue src, CiValue dst) {
-        append(new LIRInstruction(LegacyOpcode.Lea, dst, null, src));
-    }
-
-    public void monitorAddress(int monitor, CiValue dst) {
-        append(new LIRInstruction(LegacyOpcode.MonitorAddress, dst, null, CiConstant.forInt(monitor)));
-    }
-
-    public void nullCheck(CiValue opr, LIRDebugInfo info) {
-        append(new LIRInstruction(LegacyOpcode.NullCheck, CiValue.IllegalValue, info, opr));
-    }
-
-    public void tableswitch(CiValue index, int lowKey, LIRBlock defaultTargets, LIRBlock[] targets) {
-        append(new LIRTableSwitch(index, lowKey, defaultTargets, targets));
-    }
-
-    public void breakpoint() {
-        append(new LIRInstruction(LegacyOpcode.Breakpoint, CiValue.IllegalValue, null));
-    }
-
-    public void prefetch(CiAddress addr, boolean isStore) {
-        append(new LIRInstruction(isStore ? LegacyOpcode.Prefetchw : LegacyOpcode.Prefetchr, CiValue.IllegalValue, null, addr));
-    }
-
-    public void lsb(CiValue src, CiValue dst) {
-        append(new LIRInstruction(LegacyOpcode.Lsb, dst, null, false, 1, 0, src));
-    }
-
-    public void msb(CiValue src, CiValue dst) {
-        append(new LIRInstruction(LegacyOpcode.Msb, dst, null, false, 1, 0, src));
-    }
-
-    public void cas(CiValue addr, CiValue cmpValue, CiValue newValue, CiValue dst) {
-        // Compare and swap produces condition code "zero" if contentsOf(addr) == cmpValue,
-        // implying successful swap of newValue into addr
-        append(new LIRInstruction(LegacyOpcode.Cas, dst, null, addr, cmpValue, newValue));
     }
 
     public static void printBlock(LIRBlock x) {

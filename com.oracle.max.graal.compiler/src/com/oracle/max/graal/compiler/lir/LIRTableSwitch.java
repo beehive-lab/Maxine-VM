@@ -25,8 +25,6 @@ package com.oracle.max.graal.compiler.lir;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiValue.Formatter;
 
-/**
- */
 public class LIRTableSwitch extends LIRInstruction {
 
     public LIRBlock defaultTarget;
@@ -35,8 +33,8 @@ public class LIRTableSwitch extends LIRInstruction {
 
     public final int lowKey;
 
-    public LIRTableSwitch(CiValue value, int lowKey, LIRBlock defaultTarget, LIRBlock[] targets) {
-        super(LegacyOpcode.TableSwitch, CiValue.IllegalValue, null, false, 1, 0, value);
+    public LIRTableSwitch(LIROpcode opcode, int lowKey, LIRBlock defaultTarget, LIRBlock[] targets, int tempInput, int temp, CiValue...operands) {
+        super(opcode, CiValue.IllegalValue, null, false, tempInput, temp, operands);
         this.lowKey = lowKey;
         this.targets = targets;
         this.defaultTarget = defaultTarget;

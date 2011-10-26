@@ -50,7 +50,7 @@ public enum AMD64ConvertOpFL implements LIROpcode<AMD64LIRAssembler, LIRConvert>
         lasm.masm.movq(tmp, java.lang.Long.MIN_VALUE);
         lasm.masm.cmpq(dst, tmp);
         lasm.masm.jcc(ConditionFlag.notEqual, endLabel);
-        lasm.callStub(op.stub, null, op.result(), op.operand(0));
+        lasm.callStub(op.stub, op.stub.resultKind, null, op.result(), op.operand(0));
         lasm.masm.bind(endLabel);
     }
 }

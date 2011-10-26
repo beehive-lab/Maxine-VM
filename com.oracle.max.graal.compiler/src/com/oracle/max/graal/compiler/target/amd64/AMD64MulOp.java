@@ -23,32 +23,30 @@
 package com.oracle.max.graal.compiler.target.amd64;
 
 import com.oracle.max.graal.compiler.lir.*;
+import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
 
 public enum AMD64MulOp implements LIROpcode<AMD64LIRAssembler, LIRInstruction> {
-    IMUL {
-        @Override
-        public void emitCode(AMD64LIRAssembler lasm, LIRInstruction op) {
-            if (op.operand(1).isRegister()) {
-                lasm.masm.imull(lasm.asRegister(op.result()), lasm.asRegister(op.operand(1)));
-            } else {
-                lasm.masm.imull(lasm.asRegister(op.result()), lasm.asRegister(op.operand(0)), lasm.asIntConst(op.operand(1)));
-            }
-        }
-    },
-
-    LMUL {
-        @Override
-        public void emitCode(AMD64LIRAssembler lasm, LIRInstruction op) {
-            if (op.operand(1).isRegister()) {
-                lasm.masm.imulq(lasm.asRegister(op.result()), lasm.asRegister(op.operand(1)));
-            } else {
-                lasm.masm.imulq(lasm.asRegister(op.result()), lasm.asRegister(op.operand(0)), lasm.asLongConst(op.operand(1)));
-            }
-        }
-    };
+    IMUL, LMUL;
 
     public LIRInstruction create(CiVariable leftAndResult, CiValue right) {
         return new LIRInstruction(this, leftAndResult, null, leftAndResult, right);
+    }
+
+    @Override
+    public void emitCode(AMD64LIRAssembler lasm, LIRInstruction op) {
+        if (op.operand(1).isRegister()) {
+            switch (this) {
+                case IMUL: lasm.masm.imull(lasm.asRegister(op.result()), lasm.asRegister(op.operand(1))); break;
+                case LMUL: lasm.masm.imulq(lasm.asRegister(op.result()), lasm.asRegister(op.operand(1))); break;
+                default:   throw Util.shouldNotReachHere();
+            }
+        } else {
+            switch (this) {
+                case IMUL: lasm.masm.imull(lasm.asRegister(op.result()), lasm.asRegister(op.operand(0)), lasm.asIntConst(op.operand(1))); break;
+                case LMUL: lasm.masm.imulq(lasm.asRegister(op.result()), lasm.asRegister(op.operand(0)), lasm.asLongConst(op.operand(1))); break;
+                default:   throw Util.shouldNotReachHere();
+            }
+        }
     }
 }

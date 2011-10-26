@@ -25,6 +25,7 @@ package com.oracle.max.graal.compiler.target.amd64;
 import static java.lang.Double.*;
 import static java.lang.Float.*;
 
+import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
@@ -33,10 +34,10 @@ public class AMD64MoveOp {
     public static final MoveOp MOVE = new MoveOp();
     public static final LoadOp LOAD = new LoadOp();
     public static final StoreOp STORE = new StoreOp();
-
-    static {
-        StandardOp.MOVE = MOVE;
-    }
+    public static final LeaOp LEA = new LeaOp();
+    public static final MembarOp MEMBAR = new MembarOp();
+    public static final NullCheckOp NULL_CHECK = new NullCheckOp();
+    public static final CompareAndSwapOp CAS = new CompareAndSwapOp();
 
     public static class MoveOp implements StandardOp.MoveOpcode<AMD64LIRAssembler, LIRInstruction>, LIROpcode.FirstOperandRegisterHint {
         @Override
@@ -72,6 +73,65 @@ public class AMD64MoveOp {
         @Override
         public void emitCode(AMD64LIRAssembler lasm, LIRKindInstruction op) {
             store(lasm, (CiAddress) op.operand(1), op.operand(0), op.kind, op.info);
+        }
+    }
+
+    protected static class LeaOp implements LIROpcode<AMD64LIRAssembler, LIRInstruction> {
+        public LIRInstruction create(CiVariable result, CiAddress loadAddr) {
+            return new LIRInstruction(this, result, null, loadAddr);
+        }
+
+        @Override
+        public void emitCode(AMD64LIRAssembler lasm, LIRInstruction op) {
+            lasm.masm.leaq(lasm.asLongReg(op.result()), lasm.asAddress(op.operand(0)));
+        }
+    }
+
+    protected static class MembarOp implements LIROpcode<AMD64LIRAssembler, LIRInstruction> {
+        public LIRInstruction create(int barriers) {
+            return new LIRInstruction(this, CiValue.IllegalValue, null, CiConstant.forInt(barriers));
+        }
+
+        @Override
+        public void emitCode(AMD64LIRAssembler lasm, LIRInstruction op) {
+            lasm.masm.membar(lasm.asIntConst(op.operand(0)));
+        }
+    }
+
+    protected static class NullCheckOp implements StandardOp.NullCheckOpcode<AMD64LIRAssembler, LIRInstruction> {
+        @Override
+        public LIRInstruction create(CiVariable input, LIRDebugInfo info) {
+            return new LIRInstruction(this, CiValue.IllegalValue, info, input);
+        }
+
+        @Override
+        public void emitCode(AMD64LIRAssembler lasm, LIRInstruction op) {
+            lasm.tasm.recordImplicitException(lasm.masm.codeBuffer.position(), op.info);
+            lasm.masm.nullCheck(lasm.asRegister(op.operand(0)));
+        }
+    }
+
+    protected static class CompareAndSwapOp implements LIROpcode<AMD64LIRAssembler, LIRInstruction> {
+        public LIRInstruction create(CiRegisterValue result, CiAddress address, CiRegisterValue cmpValue, CiVariable newValue) {
+            return new LIRInstruction(this, result, null, address, cmpValue, newValue);
+        }
+
+        @Override
+        public void emitCode(AMD64LIRAssembler lasm, LIRInstruction op) {
+            CiAddress address = lasm.asAddress(op.operand(0));
+            assert lasm.asRegister(op.operand(1)) == AMD64.rax;
+            CiRegister newValue = lasm.asRegister(op.operand(2));
+            assert lasm.asRegister(op.result()) == AMD64.rax;
+
+            if (lasm.target.isMP) {
+                lasm.masm.lock();
+            }
+            switch (op.operand(1).kind) {
+                case Int:    lasm.masm.cmpxchgl(newValue, address); break;
+                case Long:
+                case Object: lasm.masm.cmpxchgq(newValue, address); break;
+                default:     throw Util.shouldNotReachHere();
+            }
         }
     }
 

@@ -22,17 +22,24 @@
  */
 package com.oracle.max.graal.compiler.target.amd64;
 
+import static com.sun.cri.ci.CiRegister.*;
+
 import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.amd64.AMD64Assembler.ConditionFlag;
+import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiAddress.*;
+import com.sun.cri.ci.CiTargetMethod.*;
 
 public class AMD64ControlFlowOp {
     public static final LabelOp LABEL = new LabelOp();
+    public static final ReturnOp RETURN = new ReturnOp();
     public static final JumpOp JUMP = new JumpOp();
     public static final BranchOp BRANCH = new BranchOp();
+    public static final TableSwitchOp TABLE_SWITCH = new TableSwitchOp();
     public static final FloatBranchOp FLOAT_BRANCH = new FloatBranchOp();
     public static final CondMoveOp CMOVE = new CondMoveOp();
     public static final FloatCondMoveOp FLOAT_CMOVE = new FloatCondMoveOp();
@@ -45,6 +52,17 @@ public class AMD64ControlFlowOp {
         @Override
         public void emitCode(AMD64LIRAssembler lasm, LIRLabel op) {
             lasm.masm.bind(op.label);
+        }
+    }
+
+    protected static class ReturnOp implements StandardOp.ReturnOpcode<AMD64LIRAssembler, LIRInstruction> {
+        public LIRInstruction create(CiValue input) {
+            return new LIRInstruction(this, CiValue.IllegalValue, null, input);
+        }
+
+        @Override
+        public void emitCode(AMD64LIRAssembler lasm, LIRInstruction op) {
+            lasm.masm.ret(0);
         }
     }
 
@@ -75,6 +93,74 @@ public class AMD64ControlFlowOp {
         @Override
         public void emitCode(AMD64LIRAssembler lasm, LIRBranch op) {
             lasm.masm.jcc(intCond(op.cond), op.label());
+        }
+    }
+
+    protected static class TableSwitchOp implements LIROpcode<AMD64LIRAssembler, LIRTableSwitch> {
+        public LIRInstruction create(int lowKey, LIRBlock defaultTargets, LIRBlock[] targets, CiVariable index, CiVariable scratch) {
+            return new LIRTableSwitch(this, lowKey, defaultTargets, targets, 1, 1, index, scratch);
+        }
+
+        @Override
+        public void emitCode(AMD64LIRAssembler lasm, LIRTableSwitch op) {
+            CiRegister value = lasm.asIntReg(op.operand(0));
+            CiRegister scratch = lasm.asLongReg(op.operand(1));
+
+            AMD64MacroAssembler masm = lasm.masm;
+            Buffer buf = masm.codeBuffer;
+
+            // Compare index against jump table bounds
+            int highKey = op.lowKey + op.targets.length - 1;
+            if (op.lowKey != 0) {
+                // subtract the low value from the switch value
+                masm.subl(value, op.lowKey);
+                masm.cmpl(value, highKey - op.lowKey);
+            } else {
+                masm.cmpl(value, highKey);
+            }
+
+            // Jump to default target if index is not within the jump table
+            masm.jcc(ConditionFlag.above, op.defaultTarget.label());
+
+            // Set scratch to address of jump table
+            int leaPos = buf.position();
+            masm.leaq(scratch, new CiAddress(lasm.target.wordKind, InstructionRelative.asValue(), 0));
+            int afterLea = buf.position();
+
+            // Load jump table entry into scratch and jump to it
+            masm.movslq(value, new CiAddress(CiKind.Int, scratch.asValue(), value.asValue(), Scale.Times4, 0));
+            masm.addq(scratch, value);
+            masm.jmp(scratch);
+
+            // Inserting padding so that jump table address is 4-byte aligned
+            if ((buf.position() & 0x3) != 0) {
+                masm.nop(4 - (buf.position() & 0x3));
+            }
+
+            // Patch LEA instruction above now that we know the position of the jump table
+            int jumpTablePos = buf.position();
+            buf.setPosition(leaPos);
+            masm.leaq(scratch, new CiAddress(lasm.target.wordKind, InstructionRelative.asValue(), jumpTablePos - afterLea));
+            buf.setPosition(jumpTablePos);
+
+            // Emit jump table entries
+            for (LIRBlock target : op.targets) {
+                Label label = target.label();
+                int offsetToJumpTableBase = buf.position() - jumpTablePos;
+                if (label.isBound()) {
+                    int imm32 = label.position() - jumpTablePos;
+                    buf.emitInt(imm32);
+                } else {
+                    label.addPatchAt(buf.position());
+
+                    buf.emitByte(0); // psuedo-opcode for jump table entry
+                    buf.emitShort(offsetToJumpTableBase);
+                    buf.emitByte(0); // padding to make jump table entry 4 bytes wide
+                }
+            }
+
+            JumpTable jt = new JumpTable(jumpTablePos, op.lowKey, highKey, 4);
+            lasm.tasm.targetMethod.addAnnotation(jt);
         }
     }
 
