@@ -102,35 +102,35 @@ public class AMD64LIRGenerator extends LIRGenerator {
     @Override
     public CiVariable emitMove(CiValue input) {
         CiVariable result = newVariable(input.kind.stackKind());
-        lir.append(MOVE.create(result, input));
+        append(MOVE.create(result, input));
         return result;
     }
 
     @Override
     public CiVariable emitLoad(CiAddress loadAddress, CiKind kind, Object debugInfo) {
         CiVariable result = newVariable(kind.stackKind());
-        lir.append(LOAD.create(result, loadAddress, kind, (LIRDebugInfo) debugInfo));
+        append(LOAD.create(result, loadAddress, kind, (LIRDebugInfo) debugInfo));
         return result;
     }
 
     @Override
     public void emitStore(CiAddress storeAddress, CiValue input, CiKind kind, Object debugInfo) {
-        lir.append(STORE.create(storeAddress, input, kind, (LIRDebugInfo) debugInfo));
+        append(STORE.create(storeAddress, input, kind, (LIRDebugInfo) debugInfo));
     }
 
     @Override
     public void emitLabel(Label label) {
-        lir.append(LABEL.create(label));
+        append(LABEL.create(label));
     }
 
     @Override
     public void emitJump(LIRBlock block) {
-        lir.append(JUMP.create(block));
+        append(JUMP.create(block));
     }
 
     @Override
     public void emitJump(Label label, LIRDebugInfo info) {
-        lir.append(JUMP.create(label, info));
+        append(JUMP.create(label, info));
     }
 
     @Override
@@ -139,9 +139,9 @@ public class AMD64LIRGenerator extends LIRGenerator {
         switch (left.kind) {
             case Int:
             case Long:
-            case Object: lir.append(BRANCH.create(cond, block)); break;
+            case Object: append(BRANCH.create(cond, block)); break;
             case Float:
-            case Double: lir.append(FLOAT_BRANCH.create(cond, unorderedIsTrue, block)); break;
+            case Double: append(FLOAT_BRANCH.create(cond, unorderedIsTrue, block)); break;
             default: throw Util.shouldNotReachHere();
         }
     }
@@ -152,9 +152,9 @@ public class AMD64LIRGenerator extends LIRGenerator {
         switch (left.kind) {
             case Int:
             case Long:
-            case Object: lir.append(BRANCH.create(cond, label, info)); break;
+            case Object: append(BRANCH.create(cond, label, info)); break;
             case Float:
-            case Double: lir.append(FLOAT_BRANCH.create(cond, unorderedIsTrue, label, info)); break;
+            case Double: append(FLOAT_BRANCH.create(cond, unorderedIsTrue, label, info)); break;
             default: throw Util.shouldNotReachHere();
         }
     }
@@ -167,9 +167,9 @@ public class AMD64LIRGenerator extends LIRGenerator {
         switch (left.kind) {
             case Int:
             case Long:
-            case Object: lir.append(CMOVE.create(result, cond, makeVariable(trueValue), falseValue)); break;
+            case Object: append(CMOVE.create(result, cond, makeVariable(trueValue), falseValue)); break;
             case Float:
-            case Double: lir.append(FLOAT_CMOVE.create(result, cond, unorderedIsTrue, makeVariable(trueValue), makeVariable(falseValue))); break;
+            case Double: append(FLOAT_CMOVE.create(result, cond, unorderedIsTrue, makeVariable(trueValue), makeVariable(falseValue))); break;
 
         }
         return result;
@@ -179,11 +179,11 @@ public class AMD64LIRGenerator extends LIRGenerator {
         CiVariable left = makeVariable(leftVal);
         switch (left.kind) {
             case Jsr:
-            case Int: lir.append(ICMP.create(left, right)); break;
-            case Long: lir.append(LCMP.create(left, right)); break;
-            case Object: lir.append(ACMP.create(left, right)); break;
-            case Float: lir.append(FCMP.create(left, right)); break;
-            case Double: lir.append(DCMP.create(left, right)); break;
+            case Int: append(ICMP.create(left, right)); break;
+            case Long: append(LCMP.create(left, right)); break;
+            case Object: append(ACMP.create(left, right)); break;
+            case Float: append(FCMP.create(left, right)); break;
+            case Double: append(DCMP.create(left, right)); break;
             default: throw Util.shouldNotReachHere();
         }
     }
@@ -193,12 +193,12 @@ public class AMD64LIRGenerator extends LIRGenerator {
         CiValue input = loadNonconstant(x.x());
         CiVariable result = createResultVariable(x);
 
-        lir.append(MOVE.create(result, input));
+        append(MOVE.create(result, input));
         switch (x.kind) {
-            case Int:    lir.append(INEG.create(result)); break;
-            case Long:   lir.append(LNEG.create(result)); break;
-            case Float:  lir.append(FNEG.create(result)); break;
-            case Double: lir.append(DNEG.create(result)); break;
+            case Int:    append(INEG.create(result)); break;
+            case Long:   append(LNEG.create(result)); break;
+            case Float:  append(FNEG.create(result)); break;
+            case Double: append(DNEG.create(result)); break;
             default: throw Util.shouldNotReachHere();
         }
     }
@@ -217,24 +217,24 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
             switch (opcode) {
                 case Bytecodes.IDIV:
-                    lir.append(MOVE.create(RAX_I, left));
-                    lir.append(IDIV.create(RAX_I, info, RAX_I, right));
-                    lir.append(MOVE.create(result, RAX_I));
+                    append(MOVE.create(RAX_I, left));
+                    append(IDIV.create(RAX_I, info, RAX_I, right));
+                    append(MOVE.create(result, RAX_I));
                     break;
                 case Bytecodes.IREM:
-                    lir.append(MOVE.create(RAX_I, left));
-                    lir.append(IREM.create(RDX_I, info, RAX_I, right));
-                    lir.append(MOVE.create(result, RDX_I));
+                    append(MOVE.create(RAX_I, left));
+                    append(IREM.create(RDX_I, info, RAX_I, right));
+                    append(MOVE.create(result, RDX_I));
                     break;
                 case Bytecodes.LDIV:
-                    lir.append(MOVE.create(RAX_L, left));
-                    lir.append(LDIV.create(RAX_L, info, RAX_L, right));
-                    lir.append(MOVE.create(result, RAX_L));
+                    append(MOVE.create(RAX_L, left));
+                    append(LDIV.create(RAX_L, info, RAX_L, right));
+                    append(MOVE.create(result, RAX_L));
                     break;
                 case Bytecodes.LREM:
-                    lir.append(MOVE.create(RAX_L, left));
-                    lir.append(LREM.create(RDX_L, info, RAX_L, right));
-                    lir.append(MOVE.create(result, RDX_L));
+                    append(MOVE.create(RAX_L, left));
+                    append(LREM.create(RDX_L, info, RAX_L, right));
+                    append(MOVE.create(result, RDX_L));
                     break;
             }
 
@@ -251,7 +251,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
             } else {
                 throw Util.shouldNotReachHere();
             }
-            lir.append(MOVE.create(result, reg));
+            append(MOVE.create(result, reg));
 
         } else {
             CiVariable left = load(x.x());
@@ -259,22 +259,22 @@ public class AMD64LIRGenerator extends LIRGenerator {
             CiVariable result = createResultVariable(x);
 
             // Two-operand form on Intel
-            lir.append(MOVE.create(result, left));
+            append(MOVE.create(result, left));
             switch (opcode) {
-                case Bytecodes.IADD: lir.append(IADD.create(result, right)); break;
-                case Bytecodes.ISUB: lir.append(ISUB.create(result, right)); break;
-                case Bytecodes.IMUL: lir.append(IMUL.create(result, right)); break;
-                case Bytecodes.LADD: lir.append(LADD.create(result, right)); break;
-                case Bytecodes.LSUB: lir.append(LSUB.create(result, right)); break;
-                case Bytecodes.LMUL: lir.append(LMUL.create(result, right)); break;
-                case Bytecodes.FADD: lir.append(FADD.create(result, right)); break;
-                case Bytecodes.FSUB: lir.append(FSUB.create(result, right)); break;
-                case Bytecodes.FMUL: lir.append(FMUL.create(result, right)); break;
-                case Bytecodes.FDIV: lir.append(FDIV.create(result, right)); break;
-                case Bytecodes.DADD: lir.append(DADD.create(result, right)); break;
-                case Bytecodes.DSUB: lir.append(DSUB.create(result, right)); break;
-                case Bytecodes.DMUL: lir.append(DMUL.create(result, right)); break;
-                case Bytecodes.DDIV: lir.append(DDIV.create(result, right)); break;
+                case Bytecodes.IADD: append(IADD.create(result, right)); break;
+                case Bytecodes.ISUB: append(ISUB.create(result, right)); break;
+                case Bytecodes.IMUL: append(IMUL.create(result, right)); break;
+                case Bytecodes.LADD: append(LADD.create(result, right)); break;
+                case Bytecodes.LSUB: append(LSUB.create(result, right)); break;
+                case Bytecodes.LMUL: append(LMUL.create(result, right)); break;
+                case Bytecodes.FADD: append(FADD.create(result, right)); break;
+                case Bytecodes.FSUB: append(FSUB.create(result, right)); break;
+                case Bytecodes.FMUL: append(FMUL.create(result, right)); break;
+                case Bytecodes.FDIV: append(FDIV.create(result, right)); break;
+                case Bytecodes.DADD: append(DADD.create(result, right)); break;
+                case Bytecodes.DSUB: append(DSUB.create(result, right)); break;
+                case Bytecodes.DMUL: append(DMUL.create(result, right)); break;
+                case Bytecodes.DDIV: append(DDIV.create(result, right)); break;
                 default: throw Util.shouldNotReachHere();
             }
         }
@@ -287,14 +287,14 @@ public class AMD64LIRGenerator extends LIRGenerator {
         CiVariable result = createResultVariable(x);
 
         // Two-operand form on Intel
-        lir.append(MOVE.create(result, left));
+        append(MOVE.create(result, left));
         switch (x.opcode) {
-            case Bytecodes.IAND: lir.append(IAND.create(result, right)); break;
-            case Bytecodes.LAND: lir.append(LAND.create(result, right)); break;
-            case Bytecodes.IOR:  lir.append(IOR.create(result, right)); break;
-            case Bytecodes.LOR:  lir.append(LOR.create(result, right)); break;
-            case Bytecodes.IXOR: lir.append(IXOR.create(result, right)); break;
-            case Bytecodes.LXOR: lir.append(LXOR.create(result, right)); break;
+            case Bytecodes.IAND: append(IAND.create(result, right)); break;
+            case Bytecodes.LAND: append(LAND.create(result, right)); break;
+            case Bytecodes.IOR:  append(IOR.create(result, right)); break;
+            case Bytecodes.LOR:  append(LOR.create(result, right)); break;
+            case Bytecodes.IXOR: append(IXOR.create(result, right)); break;
+            case Bytecodes.LXOR: append(LXOR.create(result, right)); break;
             default: throw Util.shouldNotReachHere();
         }
     }
@@ -306,20 +306,20 @@ public class AMD64LIRGenerator extends LIRGenerator {
         CiVariable result = createResultVariable(x);
 
         // Two-operand form on Intel
-        lir.append(MOVE.create(result, left));
+        append(MOVE.create(result, left));
         if (!right.isConstant()) {
             // Non-constant shift count must be in RCX
-            lir.append(MOVE.create(RCX_I, right));
+            append(MOVE.create(RCX_I, right));
             right = RCX_I;
         }
 
         switch (x.opcode) {
-            case Bytecodes.ISHL: lir.append(ISHL.create(result, right)); break;
-            case Bytecodes.ISHR: lir.append(ISHR.create(result, right)); break;
-            case Bytecodes.IUSHR: lir.append(UISHR.create(result, right)); break;
-            case Bytecodes.LSHL: lir.append(LSHL.create(result, right)); break;
-            case Bytecodes.LSHR: lir.append(LSHR.create(result, right)); break;
-            case Bytecodes.LUSHR: lir.append(ULSHR.create(result, right)); break;
+            case Bytecodes.ISHL: append(ISHL.create(result, right)); break;
+            case Bytecodes.ISHR: append(ISHR.create(result, right)); break;
+            case Bytecodes.IUSHR: append(UISHR.create(result, right)); break;
+            case Bytecodes.LSHL: append(LSHL.create(result, right)); break;
+            case Bytecodes.LSHR: append(LSHR.create(result, right)); break;
+            case Bytecodes.LUSHR: append(ULSHR.create(result, right)); break;
             default: Util.shouldNotReachHere();
         }
     }
@@ -330,25 +330,25 @@ public class AMD64LIRGenerator extends LIRGenerator {
         CiVariable result = createResultVariable(x);
 
         switch (x.opcode) {
-            case I2L: lir.append(I2L.create(result, input)); break;
-            case L2I: lir.append(L2I.create(result, input)); break;
-            case I2B: lir.append(I2B.create(result, input)); break;
-            case I2C: lir.append(I2C.create(result, input)); break;
-            case I2S: lir.append(I2S.create(result, input)); break;
-            case F2D: lir.append(F2D.create(result, input)); break;
-            case D2F: lir.append(D2F.create(result, input)); break;
-            case I2F: lir.append(I2F.create(result, input)); break;
-            case I2D: lir.append(I2D.create(result, input)); break;
-            case F2I: lir.append(F2I.create(result, stubFor(CompilerStub.Id.f2i), input)); break;
-            case D2I: lir.append(D2I.create(result, stubFor(CompilerStub.Id.d2i), input)); break;
-            case L2F: lir.append(L2F.create(result, input)); break;
-            case L2D: lir.append(L2D.create(result, input)); break;
-            case F2L: lir.append(F2L.create(result, stubFor(CompilerStub.Id.f2l), input, newVariable(CiKind.Long))); break;
-            case D2L: lir.append(D2L.create(result, stubFor(CompilerStub.Id.d2l), input, newVariable(CiKind.Long))); break;
-            case MOV_I2F: lir.append(MOV_I2F.create(result, input)); break;
-            case MOV_L2D: lir.append(MOV_L2D.create(result, input)); break;
-            case MOV_F2I: lir.append(MOV_F2I.create(result, input)); break;
-            case MOV_D2L: lir.append(MOV_D2L.create(result, input)); break;
+            case I2L: append(I2L.create(result, input)); break;
+            case L2I: append(L2I.create(result, input)); break;
+            case I2B: append(I2B.create(result, input)); break;
+            case I2C: append(I2C.create(result, input)); break;
+            case I2S: append(I2S.create(result, input)); break;
+            case F2D: append(F2D.create(result, input)); break;
+            case D2F: append(D2F.create(result, input)); break;
+            case I2F: append(I2F.create(result, input)); break;
+            case I2D: append(I2D.create(result, input)); break;
+            case F2I: append(F2I.create(result, stubFor(CompilerStub.Id.f2i), input)); break;
+            case D2I: append(D2I.create(result, stubFor(CompilerStub.Id.d2i), input)); break;
+            case L2F: append(L2F.create(result, input)); break;
+            case L2D: append(L2D.create(result, input)); break;
+            case F2L: append(F2L.create(result, stubFor(CompilerStub.Id.f2l), input, newVariable(CiKind.Long))); break;
+            case D2L: append(D2L.create(result, stubFor(CompilerStub.Id.d2l), input, newVariable(CiKind.Long))); break;
+            case MOV_I2F: append(MOV_I2F.create(result, input)); break;
+            case MOV_L2D: append(MOV_L2D.create(result, input)); break;
+            case MOV_F2I: append(MOV_F2I.create(result, input)); break;
+            case MOV_D2L: append(MOV_D2L.create(result, input)); break;
             default: throw Util.shouldNotReachHere();
         }
     }
@@ -360,15 +360,15 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
         switch (x.operation()) {
             case ABS:
-                lir.append(MOVE.create(result, input));
-                lir.append(DABS.create(result));
+                append(MOVE.create(result, input));
+                append(DABS.create(result));
                 break;
-            case SQRT:  lir.append(SQRT.create(result, input)); break;
-            case LOG:   lir.append(LOG.create(result, input)); break;
-            case LOG10: lir.append(LOG10.create(result, input)); break;
-            case SIN:   lir.append(SIN.create(result, input)); break;
-            case COS:   lir.append(COS.create(result, input)); break;
-            case TAN:   lir.append(TAN.create(result, input)); break;
+            case SQRT:  append(SQRT.create(result, input)); break;
+            case LOG:   append(LOG.create(result, input)); break;
+            case LOG10: append(LOG10.create(result, input)); break;
+            case SIN:   append(SIN.create(result, input)); break;
+            case COS:   append(COS.create(result, input)); break;
+            case TAN:   append(TAN.create(result, input)); break;
             default:    throw Util.shouldNotReachHere();
         }
     }
@@ -380,16 +380,16 @@ public class AMD64LIRGenerator extends LIRGenerator {
         CiValue right = loadNonconstant(rightNode);
         CiVariable result = createResultVariable(resultNode);
 
-        lir.append(MOVE.create(result, left));
-        lir.append(IADD.create(result, right));
+        append(MOVE.create(result, left));
+        append(IADD.create(result, right));
     }
 
     @Override
     public void emitUnsignedShiftRight(CiVariable value, CiValue count, CiVariable dest) {
         assert value.equals(dest);
         switch (dest.kind) {
-            case Int: lir.append(UISHR.create(dest, count)); break;
-            case Long: lir.append(ULSHR.create(dest, count)); break;
+            case Int: append(UISHR.create(dest, count)); break;
+            case Long: append(ULSHR.create(dest, count)); break;
             default: throw Util.shouldNotReachHere();
         }
     }
@@ -398,10 +398,10 @@ public class AMD64LIRGenerator extends LIRGenerator {
     public void emitAdd(CiVariable a, CiValue b, CiVariable dest) {
         assert a.equals(dest);
         switch (dest.kind) {
-            case Int: lir.append(IADD.create(dest, b)); break;
-            case Long: lir.append(LADD.create(dest, b)); break;
-            case Float: lir.append(FADD.create(dest, b)); break;
-            case Double: lir.append(DADD.create(dest, b)); break;
+            case Int: append(IADD.create(dest, b)); break;
+            case Long: append(LADD.create(dest, b)); break;
+            case Float: append(FADD.create(dest, b)); break;
+            case Double: append(DADD.create(dest, b)); break;
             default: throw Util.shouldNotReachHere();
         }
     }
@@ -409,7 +409,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
     @Override
     public void deoptimizeOn(Condition cond) {
         DeoptimizationStub stub = createDeoptStub("deoptimizeOn " + cond);
-        lir.append(BRANCH.create(cond, stub.label, stub.info));
+        append(BRANCH.create(cond, stub.label, stub.info));
     }
 
     @Override
@@ -420,13 +420,13 @@ public class AMD64LIRGenerator extends LIRGenerator {
             case Float:
             case Double:
                 if (x.isUnorderedLess()) {
-                    lir.append(CMP2INT_UL.create(result));
+                    append(CMP2INT_UL.create(result));
                 } else {
-                    lir.append(CMP2INT_UG.create(result));
+                    append(CMP2INT_UG.create(result));
                 }
                 break;
             case Long:
-                lir.append(CMP2INT.create(result));
+                append(CMP2INT.create(result));
                 break;
             default:
                 throw Util.shouldNotReachHere();
@@ -458,20 +458,20 @@ public class AMD64LIRGenerator extends LIRGenerator {
         CiVariable loadedAddress = null;
         if (kind == CiKind.Object) {
             loadedAddress = newVariable(compilation.compiler.target.wordKind);
-            lir.append(LEA.create(loadedAddress, address));
+            append(LEA.create(loadedAddress, address));
             preGCWriteBarrier(loadedAddress, false, null);
             address = new CiAddress(compilation.compiler.target.wordKind, loadedAddress);
         }
 
         CiRegisterValue rax = AMD64.rax.asValue(kind);
-        lir.append(MOVE.create(rax, expected));
-        lir.append(CAS.create(rax, address, rax, newValue));
+        append(MOVE.create(rax, expected));
+        append(CAS.create(rax, address, rax, newValue));
 
         CiVariable result = createResultVariable(node);
         if (node.directResult()) {
-            lir.append(MOVE.create(result, rax));
+            append(MOVE.create(result, rax));
         } else {
-            lir.append(CMOVE.create(result, Condition.EQ, makeVariable(CiConstant.TRUE), CiConstant.FALSE));
+            append(CMOVE.create(result, Condition.EQ, makeVariable(CiConstant.TRUE), CiConstant.FALSE));
         }
 
         if (kind == CiKind.Object) {
@@ -481,18 +481,18 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
     @Override
     public void emitMove(CiValue src, CiValue dst) {
-        lir.append(MOVE.create(dst, src));
+        append(MOVE.create(dst, src));
     }
 
     @Override
     public void emitLea(CiAddress address, CiVariable dest) {
-        lir.append(LEA.create(dest, address));
+        append(LEA.create(dest, address));
     }
 
     @Override
     public CiValue createMonitorAddress(int monitorIndex) {
         CiVariable result = newVariable(target().wordKind);
-        lir.append(MONITOR_ADDRESS.create(result, monitorIndex));
+        append(MONITOR_ADDRESS.create(result, monitorIndex));
         return result;
     }
 
@@ -500,7 +500,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
     public void emitMembar(int barriers) {
         int necessaryBarriers = compilation.compiler.target.arch.requiredBarriers(barriers);
         if (compilation.compiler.target.isMP && necessaryBarriers != 0) {
-            lir.append(MEMBAR.create(necessaryBarriers));
+            append(MEMBAR.create(necessaryBarriers));
         }
     }
 
@@ -508,6 +508,6 @@ public class AMD64LIRGenerator extends LIRGenerator {
     protected void emitTableSwitch(int lowKey, LIRBlock defaultTargets, LIRBlock[] targets, CiValue index) {
         // Making a copy of the switch value is necessary because jump table destroys the input value
         CiVariable tmp = emitMove(index);
-        lir.append(TABLE_SWITCH.create(lowKey, defaultTargets, targets, tmp, newVariable(compilation.compiler.target.wordKind)));
+        append(TABLE_SWITCH.create(lowKey, defaultTargets, targets, tmp, newVariable(compilation.compiler.target.wordKind)));
     }
 }

@@ -381,7 +381,7 @@ public final class GraalCompilation {
                 }
 
                 if (GraalOptions.PrintLIR && !TTY.isSuppressed()) {
-                    LIRList.printLIR(lir.linearScanOrder());
+                    LIR.printLIR(lir.linearScanOrder());
                 }
 
                 new LinearScan(this, lir, lirGenerator, frameMap()).allocate();

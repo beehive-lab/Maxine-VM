@@ -36,7 +36,7 @@ final class MoveResolver {
 
     private final LinearScan allocator;
 
-    private LIRList insertList;
+    private List<LIRInstruction> insertList;
     private int insertIdx;
     private LIRInsertionBuffer insertionBuffer; // buffer where moves are inserted
 
@@ -176,14 +176,14 @@ final class MoveResolver {
         return true;
     }
 
-    private void createInsertionBuffer(LIRList list) {
+    private void createInsertionBuffer(List<LIRInstruction> list) {
         assert !insertionBuffer.initialized() : "overwriting existing buffer";
         insertionBuffer.init(list);
     }
 
     private void appendInsertionBuffer() {
         if (insertionBuffer.initialized()) {
-            insertionBuffer.lirList().append(insertionBuffer);
+            insertionBuffer.finish();
         }
         assert !insertionBuffer.initialized() : "must be uninitialized now";
 
@@ -304,7 +304,7 @@ final class MoveResolver {
         assert checkEmpty();
     }
 
-    void setInsertPosition(LIRList insertList, int insertIdx) {
+    void setInsertPosition(List<LIRInstruction> insertList, int insertIdx) {
         assert this.insertList == null && this.insertIdx == -1 : "use moveInsertPosition instead of setInsertPosition when data already set";
 
         createInsertionBuffer(insertList);
@@ -312,7 +312,7 @@ final class MoveResolver {
         this.insertIdx = insertIdx;
     }
 
-    void moveInsertPosition(LIRList insertList, int insertIdx) {
+    void moveInsertPosition(List<LIRInstruction> insertList, int insertIdx) {
         if (this.insertList != null && (this.insertList != insertList || this.insertIdx != insertIdx)) {
             // insert position changed . resolve current mappings
             resolveMappings();

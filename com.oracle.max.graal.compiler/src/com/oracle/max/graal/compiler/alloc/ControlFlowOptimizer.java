@@ -99,7 +99,7 @@ final class ControlFlowOptimizer {
             return false;
         }
 
-        List<LIRInstruction> instructions = block.lir().instructionsList();
+        List<LIRInstruction> instructions = block.lir();
 
         assert instructions.size() >= 2 : "block must have label and branch";
         assert instructions.get(0) instanceof LIRLabel : "first instruction must always be a label";
@@ -125,7 +125,7 @@ final class ControlFlowOptimizer {
 
                 // update the block references in any branching LIR instructions
                 for (LIRBlock pred : block.blockPredecessors()) {
-                    for (LIRInstruction instr : pred.lir().instructionsList()) {
+                    for (LIRInstruction instr : pred.lir()) {
                         if (instr instanceof LIRBranch) {
                             ((LIRBranch) instr).substitute(block, newTarget);
                         } else if (instr instanceof LIRTableSwitch) {
@@ -159,7 +159,7 @@ final class ControlFlowOptimizer {
         // skip the last block because there a branch is always necessary
         for (int i = code.size() - 2; i >= 0; i--) {
             LIRBlock block = code.get(i);
-            List<LIRInstruction> instructions = block.lir().instructionsList();
+            List<LIRInstruction> instructions = block.lir();
 
             LIRInstruction lastOp = instructions.get(instructions.size() - 1);
             if (lastOp instanceof LIRBranch) {
@@ -198,7 +198,7 @@ final class ControlFlowOptimizer {
     private void deleteJumpsToReturn(List<LIRBlock> code) {
         for (int i = code.size() - 1; i >= 0; i--) {
             LIRBlock block = code.get(i);
-            List<LIRInstruction> curInstructions = block.lir().instructionsList();
+            List<LIRInstruction> curInstructions = block.lir();
             LIRInstruction curLastOp = curInstructions.get(curInstructions.size() - 1);
 
             assert curInstructions.get(0) instanceof LIRLabel : "first instruction must always be a label";
@@ -217,7 +217,7 @@ final class ControlFlowOptimizer {
 
                 for (int j = block.numberOfPreds() - 1; j >= 0; j--) {
                     LIRBlock pred = block.predAt(j);
-                    List<LIRInstruction> predInstructions = pred.lir().instructionsList();
+                    List<LIRInstruction> predInstructions = pred.lir();
                     LIRInstruction predLastOp = predInstructions.get(predInstructions.size() - 1);
 
                     if (predLastOp.code instanceof LIRBranch) {
@@ -237,7 +237,7 @@ final class ControlFlowOptimizer {
 
     private boolean verify(List<LIRBlock> code) {
         for (LIRBlock block : code) {
-            List<LIRInstruction> instructions = block.lir().instructionsList();
+            List<LIRInstruction> instructions = block.lir();
 
             for (LIRInstruction instr : instructions) {
                 if (instr instanceof LIRBranch) {

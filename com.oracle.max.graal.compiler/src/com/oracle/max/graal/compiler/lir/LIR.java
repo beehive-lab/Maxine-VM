@@ -24,6 +24,7 @@ package com.oracle.max.graal.compiler.lir;
 
 import java.util.*;
 
+import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.gen.LIRGenerator.*;
 import com.oracle.max.graal.graph.*;
 
@@ -89,5 +90,56 @@ public class LIR {
 
     public ArrayList<DeoptimizationStub> deoptimizationStubs() {
         return deoptimizationStubs;
+    }
+
+    public static void printBlock(LIRBlock x) {
+        // print block id
+        TTY.print("B%d ", x.blockID());
+
+        // print flags
+        if (x.isLinearScanLoopHeader()) {
+            TTY.print("lh ");
+        }
+        if (x.isLinearScanLoopEnd()) {
+            TTY.print("le ");
+        }
+
+        // print block bci range
+        TTY.print("[%d, %d] ", -1, -1);
+
+        // print predecessors and successors
+        if (x.numberOfPreds() > 0) {
+            TTY.print("preds: ");
+            for (int i = 0; i < x.numberOfPreds(); i++) {
+                TTY.print("B%d ", x.predAt(i).blockID());
+            }
+        }
+
+        if (x.numberOfSux() > 0) {
+            TTY.print("sux: ");
+            for (int i = 0; i < x.numberOfSux(); i++) {
+                TTY.print("B%d ", x.suxAt(i).blockID());
+            }
+        }
+
+        TTY.println();
+    }
+
+    public static void printLIR(List<LIRBlock> blocks) {
+        if (TTY.isSuppressed()) {
+            return;
+        }
+        TTY.println("LIR:");
+        int i;
+        for (i = 0; i < blocks.size(); i++) {
+            LIRBlock bb = blocks.get(i);
+            printBlock(bb);
+            TTY.println("__id_Instruction___________________________________________");
+            for (LIRInstruction op : bb.lir()) {
+                TTY.println(op.toStringWithIdPrefix());
+                TTY.println();
+            }
+            TTY.println();
+        }
     }
 }
