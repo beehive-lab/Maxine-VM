@@ -33,6 +33,7 @@ import com.sun.cri.xir.CiXirAssembler.*;
 public class StandardOp {
     // Checkstyle: stop
     public static MoveOpcode MOVE;
+    public static NullCheckOpcode NULL_CHECK;
     public static CallOpcode DIRECT_CALL;
     public static CallOpcode INDIRECT_CALL;
     public static ReturnOpcode RETURN;
@@ -41,6 +42,10 @@ public class StandardOp {
 
     public interface MoveOpcode<LA extends LIRAssembler, IT extends LIRInstruction> extends LIROpcode<LA, IT> {
         LIRInstruction create(CiValue result, CiValue input);
+    }
+
+    public interface NullCheckOpcode<LA extends LIRAssembler, IT extends LIRInstruction> extends LIROpcode<LA, IT> {
+        LIRInstruction create(CiVariable input, LIRDebugInfo info);
     }
 
     public interface CallOpcode<LA extends LIRAssembler, IT extends LIRInstruction> extends LIROpcode<LA, IT> {

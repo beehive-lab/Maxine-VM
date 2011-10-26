@@ -29,7 +29,6 @@ import static com.sun.cri.ci.CiValue.*;
 import java.util.*;
 
 import com.oracle.max.asm.*;
-import com.oracle.max.cri.intrinsics.*;
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.alloc.*;
@@ -63,55 +62,6 @@ import com.sun.cri.xir.*;
  * This class traverses the HIR instructions and generates LIR instructions from them.
  */
 public abstract class LIRGenerator extends LIRGeneratorTool {
-
-    /**
-     * Helper class for inserting memory barriers as necessary to implement the Java Memory Model
-     * with respect to volatile field accesses.
-     *
-     * @see MemoryBarriers
-     */
-    class VolatileMemoryAccess {
-        /**
-         * Inserts any necessary memory barriers before a volatile write as required by the JMM.
-         */
-        void preVolatileWrite() {
-            int barriers = compilation.compiler.target.arch.requiredBarriers(JMM_PRE_VOLATILE_WRITE);
-            if (compilation.compiler.target.isMP && barriers != 0) {
-                lir.membar(barriers);
-            }
-        }
-
-        /**
-         * Inserts any necessary memory barriers after a volatile write as required by the JMM.
-         */
-        void postVolatileWrite() {
-            int barriers = compilation.compiler.target.arch.requiredBarriers(JMM_POST_VOLATILE_WRITE);
-            if (compilation.compiler.target.isMP && barriers != 0) {
-                lir.membar(barriers);
-            }
-        }
-
-        /**
-         * Inserts any necessary memory barriers before a volatile read as required by the JMM.
-         */
-        void preVolatileRead() {
-            int barriers = compilation.compiler.target.arch.requiredBarriers(JMM_PRE_VOLATILE_READ);
-            if (compilation.compiler.target.isMP && barriers != 0) {
-                lir.membar(barriers);
-            }
-        }
-
-        /**
-         * Inserts any necessary memory barriers after a volatile read as required by the JMM.
-         */
-        void postVolatileRead() {
-            // Ensure field's data is loaded before any subsequent loads or stores.
-            int barriers = compilation.compiler.target.arch.requiredBarriers(LOAD_LOAD | LOAD_STORE);
-            if (compilation.compiler.target.isMP && barriers != 0) {
-                lir.membar(barriers);
-            }
-        }
-    }
 
     @Override
     public CiVariable load(ValueNode val) {
@@ -171,7 +121,6 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     private ValueNode lastInstructionPrinted; // Debugging only
 
     protected LIRList lir;
-    final VolatileMemoryAccess vma;
     private ArrayList<DeoptimizationStub> deoptimizationStubs;
     private FrameState lastState;
 
@@ -182,7 +131,6 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         this.xir = compilation.compiler.xir;
         this.xirSupport = new XirSupport();
         this.isTwoOperand = compilation.compiler.target.arch.twoOperandMode();
-        this.vma = new VolatileMemoryAccess();
 
         this.operands = new OperandPool(compilation.compiler.target);
     }
@@ -652,11 +600,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         return CiUtil.signatureToKinds(x.target.signature(), receiver);
     }
 
-    public CiValue createMonitorAddress(int monitorIndex) {
-        CiValue result = newVariable(target().wordKind);
-        lir.monitorAddress(monitorIndex, result);
-        return result;
-    }
+    public abstract CiValue createMonitorAddress(int monitorIndex);
 
     /**
      * For note on volatile fields, see {@link #visitStoreField(StoreField)}.
@@ -667,7 +611,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         LIRDebugInfo info = stateFor(x);
 
         if (x.isVolatile()) {
-            vma.preVolatileRead();
+            emitMembar(JMM_PRE_VOLATILE_READ);
         }
 
         XirArgument receiver = toXirArgument(x.object());
@@ -675,7 +619,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         emitXir(snippet, x, info, null, true);
 
         if (x.isVolatile()) {
-            vma.postVolatileRead();
+            emitMembar(JMM_POST_VOLATILE_READ);
         }
     }
 
@@ -749,9 +693,9 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     public void emitGuardComp(BooleanNode comp) {
         if (comp instanceof IsNonNullNode) {
             IsNonNullNode x = (IsNonNullNode) comp;
-            CiValue value = load(x.object());
+            CiVariable value = load(x.object());
             LIRDebugInfo info = stateFor(x);
-            lir.nullCheck(value, info);
+            lir.append(StandardOp.NULL_CHECK.create(value, info));
         } else if (comp instanceof IsTypeNode) {
             IsTypeNode x = (IsTypeNode) comp;
             load(x.object());
@@ -977,7 +921,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         LIRDebugInfo info = stateFor(x);
 
         if (x.isVolatile()) {
-            vma.preVolatileWrite();
+            emitMembar(JMM_PRE_VOLATILE_WRITE);
         }
 
         XirArgument receiver = toXirArgument(x.object());
@@ -986,7 +930,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         emitXir(snippet, x, info, null, true);
 
         if (x.isVolatile()) {
-            vma.postVolatileWrite();
+            emitMembar(JMM_POST_VOLATILE_WRITE);
         }
     }
 
@@ -1013,12 +957,13 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
                 for (int i = 0; i < x.numberOfCases(); ++i) {
                     targets[i] = getLIRBlock(x.blockSuccessor(i));
                 }
-                // Making a copy of the switch value is necessary because jump table destroys the input value
-                CiVariable tmp = emitMove(value);
-                lir.tableswitch(tmp, x.lowKey(), getLIRBlock(x.defaultSuccessor()), targets);
+                emitTableSwitch(x.lowKey(), getLIRBlock(x.defaultSuccessor()), targets, value);
             }
         }
     }
+
+    protected abstract void emitTableSwitch(int lowKey, LIRBlock defaultTargets, LIRBlock[] targets, CiValue index);
+
 
     @Override
     public void visitDeoptimize(DeoptimizeNode deoptimize) {
@@ -1245,7 +1190,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         // the actual read node was already emitted earlier (much earlier?), the "load" here only
         // queries the already generated result variable.
         CiValue readValue = load(memRead.getReadNode());
-        vma.postVolatileRead();
+        emitMembar(JMM_POST_VOLATILE_READ);
         setResult(memRead, emitMove(readValue));
     }
 
@@ -1571,8 +1516,5 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         }
     }
 
-    @Override
-    public void emitBreakpoint() {
-        lir.breakpoint();
-    }
+    public abstract void emitMembar(int barriers);
 }

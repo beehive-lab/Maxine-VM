@@ -25,17 +25,18 @@ package com.oracle.max.graal.compiler.target.amd64;
 
 import static com.oracle.max.graal.compiler.target.amd64.AMD64ArithmeticOp.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64CompareOp.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64CompareToIntOp.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64ControlFlowOp.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertOp.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertOpFI.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertOpFL.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64DivOp.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64HotSpotOp.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64MathIntrinsicOp.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64MoveOp.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64MulOp.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64Op1.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64ShiftOp.*;
-import static com.oracle.max.graal.compiler.target.amd64.AMD64CompareToIntOp.*;
 
 import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.amd64.*;
@@ -64,9 +65,11 @@ public class AMD64LIRGenerator extends LIRGenerator {
     private static final CiRegisterValue RCX_I = AMD64.rcx.asValue(CiKind.Int);
 
     static {
+        StandardOp.MOVE = AMD64MoveOp.MOVE;
+        StandardOp.NULL_CHECK = AMD64MoveOp.NULL_CHECK;
         StandardOp.DIRECT_CALL = AMD64CallOp.DIRECT_CALL;
         StandardOp.INDIRECT_CALL = AMD64CallOp.INDIRECT_CALL;
-        StandardOp.RETURN = AMD64ReturnOp.RETURN;
+        StandardOp.RETURN = AMD64ControlFlowOp.RETURN;
         StandardOp.XIR = AMD64XirOp.XIR;
     }
 
@@ -447,30 +450,32 @@ public class AMD64LIRGenerator extends LIRGenerator {
         assert kind == node.expected().kind;
 
         CiValue expected = loadNonconstant(node.expected());
-        CiValue newValue = load(node.newValue());
-        CiValue object = load(node.object());
-        CiValue offset;
-        if (node.offset().isConstant()) {
-            // NOTE: need int for addressing, but could be wrong for very large offsets (unlikely)
-            offset = CiConstant.forInt((int) node.offset().asConstant().asLong());
-        } else {
-            offset = load(node.offset());
-        }
-        CiValue address = newVariable(compilation.compiler.target.wordKind);
-        lir.lea(new CiAddress(node.object().kind, object, offset), address);
+        CiVariable newValue = load(node.newValue());
+        CiVariable object = load(node.object());
+        CiValue offset = loadNonconstant(node.offset());
 
+        CiAddress address = new CiAddress(compilation.compiler.target.wordKind, object, offset);
+        CiVariable loadedAddress = null;
         if (kind == CiKind.Object) {
-            preGCWriteBarrier(address, false, null);
+            loadedAddress = newVariable(compilation.compiler.target.wordKind);
+            lir.append(LEA.create(loadedAddress, address));
+            preGCWriteBarrier(loadedAddress, false, null);
+            address = new CiAddress(compilation.compiler.target.wordKind, loadedAddress);
         }
+
         CiRegisterValue rax = AMD64.rax.asValue(kind);
         lir.append(MOVE.create(rax, expected));
-        lir.cas(address, rax, newValue, rax);
+        lir.append(CAS.create(rax, address, rax, newValue));
 
         CiVariable result = createResultVariable(node);
-        lir.append(CMOVE.create(result, Condition.EQ, makeVariable(CiConstant.TRUE), CiConstant.FALSE));
+        if (node.directResult()) {
+            lir.append(MOVE.create(result, rax));
+        } else {
+            lir.append(CMOVE.create(result, Condition.EQ, makeVariable(CiConstant.TRUE), CiConstant.FALSE));
+        }
 
         if (kind == CiKind.Object) {
-            postGCWriteBarrier(address, newValue);
+            postGCWriteBarrier(loadedAddress, newValue);
         }
     }
 
@@ -481,6 +486,28 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
     @Override
     public void emitLea(CiAddress address, CiVariable dest) {
-        lir().lea(address, dest);
+        lir.append(LEA.create(dest, address));
+    }
+
+    @Override
+    public CiValue createMonitorAddress(int monitorIndex) {
+        CiVariable result = newVariable(target().wordKind);
+        lir.append(MONITOR_ADDRESS.create(result, monitorIndex));
+        return result;
+    }
+
+    @Override
+    public void emitMembar(int barriers) {
+        int necessaryBarriers = compilation.compiler.target.arch.requiredBarriers(barriers);
+        if (compilation.compiler.target.isMP && necessaryBarriers != 0) {
+            lir.append(MEMBAR.create(necessaryBarriers));
+        }
+    }
+
+    @Override
+    protected void emitTableSwitch(int lowKey, LIRBlock defaultTargets, LIRBlock[] targets, CiValue index) {
+        // Making a copy of the switch value is necessary because jump table destroys the input value
+        CiVariable tmp = emitMove(index);
+        lir.append(TABLE_SWITCH.create(lowKey, defaultTargets, targets, tmp, newVariable(compilation.compiler.target.wordKind)));
     }
 }

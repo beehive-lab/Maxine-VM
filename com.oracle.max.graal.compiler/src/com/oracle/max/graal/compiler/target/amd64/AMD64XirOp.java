@@ -231,8 +231,8 @@ public enum AMD64XirOp implements StandardOp.XirOpcode<AMD64LIRAssembler, LIRXir
 
                     pointer = assureInRegister(lasm, pointer);
                     assert pointer.isVariableOrRegister();
-                    CiValue src = new CiAddress(CiKind.Illegal, pointer, index, scale, displacement);
-                    lasm.emitLea(src, result);
+                    CiAddress src = new CiAddress(CiKind.Illegal, pointer, index, scale, displacement);
+                    lasm.masm.leaq(result.asRegister(), src);
                     break;
                 }
 
@@ -302,7 +302,7 @@ public enum AMD64XirOp implements StandardOp.XirOpcode<AMD64LIRAssembler, LIRXir
                     for (int i = 0; i < args.length; i++) {
                         args[i] = operands[inst.arguments[i].index];
                     }
-                    lasm.callStub(stubId, info, result, args);
+                    lasm.callStub(lasm.compilation.compiler.lookupStub(stubId), stubId.resultOperand.kind, info, result, args);
                     break;
                 }
                 case CallRuntime: {
@@ -429,7 +429,7 @@ public enum AMD64XirOp implements StandardOp.XirOpcode<AMD64LIRAssembler, LIRXir
                     break;
                 }
                 case StackOverflowCheck: {
-                    int frameSize = lasm.initialFrameSizeInBytes();
+                    int frameSize = lasm.frameMap.frameSize();
                     int lastFramePage = frameSize / lasm.target.pageSize;
                     // emit multiple stack bangs for methods with frames larger than a page
                     for (int i = 0; i <= lastFramePage; i++) {
@@ -440,7 +440,7 @@ public enum AMD64XirOp implements StandardOp.XirOpcode<AMD64LIRAssembler, LIRXir
                     break;
                 }
                 case PushFrame: {
-                    int frameSize = lasm.initialFrameSizeInBytes();
+                    int frameSize = lasm.frameMap.frameSize();
                     lasm.masm.decrementq(AMD64.rsp, frameSize); // does not emit code for frameSize == 0
                     if (GraalOptions.ZapStackOnMethodEntry) {
                         final int intSize = 4;
@@ -457,7 +457,7 @@ public enum AMD64XirOp implements StandardOp.XirOpcode<AMD64LIRAssembler, LIRXir
                     break;
                 }
                 case PopFrame: {
-                    int frameSize = lasm.initialFrameSizeInBytes();
+                    int frameSize = lasm.frameMap.frameSize();
 
                     CiCalleeSaveLayout csl = lasm.compilation.registerConfig.getCalleeSaveLayout();
                     if (csl != null && csl.size != 0) {

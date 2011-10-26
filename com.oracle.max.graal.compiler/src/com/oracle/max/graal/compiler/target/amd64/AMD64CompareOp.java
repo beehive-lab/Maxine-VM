@@ -30,15 +30,15 @@ import com.sun.cri.ci.*;
 public enum AMD64CompareOp implements LIROpcode<AMD64LIRAssembler, LIRInstruction>, LIROpcode.SecondOperandCanBeMemory {
     ICMP, LCMP, ACMP, FCMP, DCMP;
 
-    public LIRInstruction create(CiVariable leftAndResult, CiValue right) {
-        assert (name().startsWith("I") && leftAndResult.kind == CiKind.Int && right.kind.stackKind() == CiKind.Int)
-            || (name().startsWith("I") && leftAndResult.kind == CiKind.Jsr && right.kind == CiKind.Jsr)
-            || (name().startsWith("L") && leftAndResult.kind == CiKind.Long && right.kind == CiKind.Long)
-            || (name().startsWith("A") && leftAndResult.kind == CiKind.Object && right.kind == CiKind.Object)
-            || (name().startsWith("F") && leftAndResult.kind == CiKind.Float && right.kind == CiKind.Float)
-            || (name().startsWith("D") && leftAndResult.kind == CiKind.Double && right.kind == CiKind.Double);
+    public LIRInstruction create(CiVariable left, CiValue right) {
+        assert (name().startsWith("I") && left.kind == CiKind.Int && right.kind.stackKind() == CiKind.Int)
+            || (name().startsWith("I") && left.kind == CiKind.Jsr && right.kind == CiKind.Jsr)
+            || (name().startsWith("L") && left.kind == CiKind.Long && right.kind == CiKind.Long)
+            || (name().startsWith("A") && left.kind == CiKind.Object && right.kind == CiKind.Object)
+            || (name().startsWith("F") && left.kind == CiKind.Float && right.kind == CiKind.Float)
+            || (name().startsWith("D") && left.kind == CiKind.Double && right.kind == CiKind.Double);
 
-        return new LIRInstruction(this, leftAndResult, null, leftAndResult, right);
+        return new LIRInstruction(this, CiValue.IllegalValue, null, left, right);
     }
 
     @Override
