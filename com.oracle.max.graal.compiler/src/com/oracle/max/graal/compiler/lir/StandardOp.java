@@ -26,6 +26,8 @@ import java.util.*;
 
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.*;
+import com.sun.cri.ri.*;
+import com.sun.cri.xir.*;
 import com.sun.cri.xir.CiXirAssembler.*;
 
 public class StandardOp {
@@ -34,6 +36,7 @@ public class StandardOp {
     public static CallOpcode DIRECT_CALL;
     public static CallOpcode INDIRECT_CALL;
     public static ReturnOpcode RETURN;
+    public static XirOpcode XIR;
     // Checkstyle: resume
 
     public interface MoveOpcode<LA extends LIRAssembler, IT extends LIRInstruction> extends LIROpcode<LA, IT> {
@@ -46,5 +49,10 @@ public class StandardOp {
 
     public interface ReturnOpcode<LA extends LIRAssembler, IT extends LIRInstruction> extends LIROpcode<LA, IT> {
         LIRInstruction create(CiValue input);
+    }
+
+    public interface XirOpcode<LA extends LIRAssembler, IT extends LIRInstruction> extends LIROpcode<LA, IT> {
+        LIRInstruction create(XirSnippet snippet, CiValue[] operands, CiValue outputOperand, int tempInputCount, int tempCount, CiValue[] inputOperands, int[] operandIndices, int outputOperandIndex,
+                        LIRDebugInfo info, LIRDebugInfo infoAfter, RiMethod method, List<CiValue> pointerSlots);
     }
 }

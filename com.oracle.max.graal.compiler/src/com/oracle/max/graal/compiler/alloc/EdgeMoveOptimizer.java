@@ -127,7 +127,7 @@ final class EdgeMoveOptimizer {
                 return;
             }
 
-            if (predInstructions.get(predInstructions.size() - 1).code == LegacyOpcode.Xir) {
+            if (predInstructions.get(predInstructions.size() - 1).code == StandardOp.XIR) {
                 return;
             }
 
@@ -185,7 +185,7 @@ final class EdgeMoveOptimizer {
 
         assert numSux == 2 : "method should not be called otherwise";
 
-        if (instructions.get(instructions.size() - 1).code == LegacyOpcode.Xir) {
+        if (instructions.get(instructions.size() - 1).code == StandardOp.XIR) {
             // cannot optimize when last instruction is Xir.
             return;
         }

@@ -41,11 +41,7 @@ public enum LegacyOpcode implements LIROpcode<LIRAssembler, LIRInstruction> {
     Lsb,
     Msb,
     MonitorAddress,
-    Cmpl2i,
-    Ucmpfd2i,
-    Cmpfd2i,
-    Cas,
-    Xir;
+    Cas;
     // @formatter:on
     // Checkstyle: resume
 
@@ -56,9 +52,6 @@ public enum LegacyOpcode implements LIROpcode<LIRAssembler, LIRInstruction> {
         switch (code) {
             case TableSwitch:
                 lasm.emitTableSwitch((LIRTableSwitch) op);
-                break;
-            case Xir:
-                lasm.emitXir((LIRXirInstruction) op);
                 break;
 
             case Breakpoint:
@@ -92,12 +85,6 @@ public enum LegacyOpcode implements LIROpcode<LIRAssembler, LIRInstruction> {
                 break;
             case Msb:
                 lasm.emitSignificantBitOp(code,  op.operand(0), op.result());
-                break;
-
-            case Cmpl2i:
-            case Cmpfd2i:
-            case Ucmpfd2i:
-                lasm.emitCompare2Int(op.code, op.operand(0), op.operand(1), op.result());
                 break;
 
             default:

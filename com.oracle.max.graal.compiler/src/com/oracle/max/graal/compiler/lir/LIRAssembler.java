@@ -32,9 +32,7 @@ import com.oracle.max.graal.compiler.gen.*;
 import com.oracle.max.graal.compiler.lir.FrameMap.StackBlock;
 import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiTargetMethod.Mark;
 import com.sun.cri.ri.*;
-import com.sun.cri.xir.CiXirAssembler.XirMark;
 
 /**
  * The {@code LIRAssembler} class definition.
@@ -51,16 +49,8 @@ public abstract class LIRAssembler {
 
     private int lastDecodeStart;
 
-    protected static class SlowPath {
-        public final LIRXirInstruction instruction;
-        public final Label[] labels;
-        public final Map<XirMark, Mark> marks;
-
-        public SlowPath(LIRXirInstruction instruction, Label[] labels, Map<XirMark, Mark> marks) {
-            this.instruction = instruction;
-            this.labels = labels;
-            this.marks = marks;
-        }
+    public interface SlowPath {
+        void emitCode(LIRAssembler lasm);
     }
 
     public LIRAssembler(GraalCompilation compilation, TargetMethodAssembler tasm) {
@@ -75,15 +65,14 @@ public abstract class LIRAssembler {
         return compilation.method;
     }
 
-    protected void addSlowPath(SlowPath sp) {
+    public void addSlowPath(SlowPath sp) {
         xirSlowPath.add(sp);
     }
 
     public void emitLocalStubs() {
         for (SlowPath sp : xirSlowPath) {
-            emitSlowPath(sp);
+            sp.emitCode(this);
         }
-
         // No more code may be emitted after this point
     }
 
@@ -171,8 +160,6 @@ public abstract class LIRAssembler {
 
     protected abstract int initialFrameSizeInBytes();
 
-    protected abstract void emitSlowPath(SlowPath sp);
-
     public abstract void emitDeoptizationStub(LIRGenerator.DeoptimizationStub stub);
 
     protected abstract void emitAlignment();
@@ -191,13 +178,9 @@ public abstract class LIRAssembler {
 
     protected abstract void emitSignificantBitOp(LegacyOpcode code, CiValue inOpr1, CiValue dst);
 
-    protected abstract void emitCompare2Int(LIROpcode code, CiValue inOpr1, CiValue inOpr2, CiValue dst);
-
     protected abstract void emitTableSwitch(LIRTableSwitch tableSwitch);
 
     protected abstract void emitCompareAndSwap(LIRInstruction compareAndSwap);
-
-    protected abstract void emitXir(LIRXirInstruction xirInstruction);
 
     protected abstract void emitMemoryBarriers(int barriers);
 

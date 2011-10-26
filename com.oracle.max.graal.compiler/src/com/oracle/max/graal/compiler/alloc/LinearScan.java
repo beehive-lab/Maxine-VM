@@ -368,7 +368,7 @@ public final class LinearScan {
 
             case NoSpillStore:
                 assert defPos <= interval.spillDefinitionPos() : "positions are processed in reverse order when intervals are created";
-                if (defPos < interval.spillDefinitionPos() - 2 || instructionForId(interval.spillDefinitionPos()).code == LegacyOpcode.Xir) {
+                if (defPos < interval.spillDefinitionPos() - 2 || instructionForId(interval.spillDefinitionPos()).code == StandardOp.XIR) {
                     // second definition found, so no spill optimization possible for this interval
                     interval.setSpillState(SpillState.NoOptimization);
                 } else {

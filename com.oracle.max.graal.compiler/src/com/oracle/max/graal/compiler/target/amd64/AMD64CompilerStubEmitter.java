@@ -221,7 +221,7 @@ public class AMD64CompilerStubEmitter {
         }
 
         assert template.marks.length == 0 : "marks not supported in compiler stubs";
-        lasm.emitXirInstructions(null, template.fastPath, labels, operands, null);
+        AMD64XirOp.emitXirInstructions(lasm, null, template.fastPath, labels, operands, null);
         epilogue();
         String stubName = "graal-" + template.name;
         CiTargetMethod targetMethod = tasm.finishTargetMethod(stubName, comp.compiler.runtime, registerRestoreEpilogueOffset, true);
