@@ -959,10 +959,10 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         XirInstruction[] slowPath = snippet.template.slowPath;
         if (!operands[resultOperand.index].isConstant() || snippet.template.fastPath.length != 0 || (slowPath != null && slowPath.length > 0)) {
             // XIR instruction is only needed when the operand is not a constant!
-            lir.xir(snippet, operands, allocatedResultOperand, inputTempOperands.length, tempOperands.length,
+            lir.append(StandardOp.XIR.create(snippet, operands, allocatedResultOperand, inputTempOperands.length, tempOperands.length,
                     operandArray, operandIndicesArray,
                     (operands[resultOperand.index] == IllegalValue) ? -1 : resultOperand.index,
-                    info, infoAfter, method, pointerSlots);
+                    info, infoAfter, method, pointerSlots));
             if (GraalOptions.Meter) {
                 context.metrics.LIRXIRInstructions++;
             }

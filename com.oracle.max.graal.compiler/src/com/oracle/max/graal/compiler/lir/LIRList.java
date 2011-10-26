@@ -29,8 +29,6 @@ import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.alloc.*;
 import com.oracle.max.graal.compiler.gen.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
-import com.sun.cri.xir.*;
 
 /**
  * This class represents a list of LIR instructions and contains factory methods for creating and appending LIR
@@ -88,10 +86,6 @@ public final class LIRList {
         append(new LIRTableSwitch(index, lowKey, defaultTargets, targets));
     }
 
-    public void lcmp2int(CiValue left, CiValue right, CiValue dst) {
-        append(new LIRInstruction(LegacyOpcode.Cmpl2i, dst, null, left, right));
-    }
-
     public void breakpoint() {
         append(new LIRInstruction(LegacyOpcode.Breakpoint, CiValue.IllegalValue, null));
     }
@@ -106,10 +100,6 @@ public final class LIRList {
 
     public void msb(CiValue src, CiValue dst) {
         append(new LIRInstruction(LegacyOpcode.Msb, dst, null, false, 1, 0, src));
-    }
-
-    public void fcmp2int(CiValue left, CiValue right, CiValue dst, boolean isUnorderedLess) {
-        append(new LIRInstruction(isUnorderedLess ? LegacyOpcode.Ucmpfd2i : LegacyOpcode.Cmpfd2i, dst, null, left, right));
     }
 
     public void cas(CiValue addr, CiValue cmpValue, CiValue newValue, CiValue dst) {
@@ -205,10 +195,5 @@ public final class LIRList {
 
     public void insertBefore(int i, LIRInstruction op) {
         operations.add(i, op);
-    }
-
-    public void xir(XirSnippet snippet, CiValue[] operands, CiValue outputOperand, int tempInputCount, int tempCount, CiValue[] inputOperands, int[] operandIndices, int outputOperandIndex,
-                    LIRDebugInfo info, LIRDebugInfo infoAfter, RiMethod method, List<CiValue> pointerSlots) {
-        append(new LIRXirInstruction(snippet, operands, outputOperand, tempInputCount, tempCount, inputOperands, operandIndices, outputOperandIndex, info, infoAfter, method, pointerSlots));
     }
 }

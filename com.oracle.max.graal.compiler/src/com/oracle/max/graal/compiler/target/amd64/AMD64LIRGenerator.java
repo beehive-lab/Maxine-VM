@@ -35,6 +35,7 @@ import static com.oracle.max.graal.compiler.target.amd64.AMD64MoveOp.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64MulOp.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64Op1.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64ShiftOp.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64CompareToIntOp.*;
 
 import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.amd64.*;
@@ -66,6 +67,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
         StandardOp.DIRECT_CALL = AMD64CallOp.DIRECT_CALL;
         StandardOp.INDIRECT_CALL = AMD64CallOp.INDIRECT_CALL;
         StandardOp.RETURN = AMD64ReturnOp.RETURN;
+        StandardOp.XIR = AMD64XirOp.XIR;
     }
 
     public AMD64LIRGenerator(GraalCompilation compilation) {
@@ -409,17 +411,19 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
     @Override
     public void visitNormalizeCompare(NormalizeCompareNode x) {
-        CiVariable left = load(x.x());
-        CiVariable right = load(x.y());
         CiVariable result = createResultVariable(x);
-
+        emitCompare(makeOperand(x.x()), makeOperand(x.y()));
         switch (x.x().kind){
             case Float:
             case Double:
-                lir.fcmp2int(left, right, result, x.isUnorderedLess());
+                if (x.isUnorderedLess()) {
+                    lir.append(CMP2INT_UL.create(result));
+                } else {
+                    lir.append(CMP2INT_UG.create(result));
+                }
                 break;
             case Long:
-                lir.lcmp2int(left, right, result);
+                lir.append(CMP2INT.create(result));
                 break;
             default:
                 throw Util.shouldNotReachHere();
