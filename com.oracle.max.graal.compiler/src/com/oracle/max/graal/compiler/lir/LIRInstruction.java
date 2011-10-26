@@ -393,10 +393,6 @@ public class LIRInstruction {
         return buf.toString();
     }
 
-    public boolean verify() {
-        return true;
-    }
-
     public boolean hasOperands() {
         if (info != null || hasCall) {
             return true;

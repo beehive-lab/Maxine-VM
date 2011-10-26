@@ -212,10 +212,10 @@ final class RegisterVerifier {
         return true;
     }
 
-    void processOperations(LIRList ops, Interval[] inputState) {
+    void processOperations(List<LIRInstruction> ops, Interval[] inputState) {
         // visit all instructions of the block
-        for (int i = 0; i < ops.length(); i++) {
-            LIRInstruction op = ops.at(i);
+        for (int i = 0; i < ops.size(); i++) {
+            LIRInstruction op = ops.get(i);
 
             if (GraalOptions.TraceLinearScanLevel >= 4) {
                 TTY.println(op.toStringWithIdPrefix());

@@ -119,7 +119,7 @@ final class EdgeMoveOptimizer {
             LIRBlock pred = block.predAt(i);
             assert pred != null;
             assert pred.lir() != null;
-            List<LIRInstruction> predInstructions = pred.lir().instructionsList();
+            List<LIRInstruction> predInstructions = pred.lir();
 
             if (pred.numberOfSux() != 1) {
                 // this can happen with switch-statements where multiple edges are between
@@ -161,7 +161,7 @@ final class EdgeMoveOptimizer {
             }
 
             // insert the instruction at the beginning of the current block
-            block.lir().insertBefore(1, op);
+            block.lir().add(1, op);
 
             // delete the instruction at the end of all predecessors
             for (int i = 0; i < numPreds; i++) {
@@ -181,7 +181,7 @@ final class EdgeMoveOptimizer {
         edgeInstructionSeqences.clear();
         int numSux = block.numberOfSux();
 
-        List<LIRInstruction> instructions = block.lir().instructionsList();
+        List<LIRInstruction> instructions = block.lir();
 
         assert numSux == 2 : "method should not be called otherwise";
 
@@ -222,7 +222,7 @@ final class EdgeMoveOptimizer {
         // setup a list with the lir-instructions of all successors
         for (int i = 0; i < numSux; i++) {
             LIRBlock sux = block.suxAt(i);
-            List<LIRInstruction> suxInstructions = sux.lir().instructionsList();
+            List<LIRInstruction> suxInstructions = sux.lir();
 
             assert suxInstructions.get(0) instanceof LIRLabel : "block must start with label";
 
@@ -256,7 +256,7 @@ final class EdgeMoveOptimizer {
             }
 
             // insert instruction at end of current block
-            block.lir().insertBefore(insertIdx, op);
+            block.lir().add(insertIdx, op);
             insertIdx++;
 
             // delete the instructions at the beginning of all successors

@@ -71,7 +71,7 @@ public abstract class LIRAssembler {
 
     public void emitCode(List<LIRBlock> hir) {
         if (GraalOptions.PrintLIR && !TTY.isSuppressed()) {
-            LIRList.printLIR(hir);
+            LIR.printLIR(hir);
         }
 
         for (LIRBlock b : hir) {
@@ -99,8 +99,8 @@ public abstract class LIRAssembler {
         emitLirList(block.lir());
     }
 
-    private void emitLirList(LIRList list) {
-        for (LIRInstruction op : list.instructionsList()) {
+    private void emitLirList(List<LIRInstruction> list) {
+        for (LIRInstruction op : list) {
             if (GraalOptions.CommentedAssembly) {
                 // Only print out branches
                 if (op.code instanceof LIRBranch) {

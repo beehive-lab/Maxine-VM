@@ -266,12 +266,12 @@ public class CFGPrinter extends CompilationPrinter {
      * @param block the block to print
      */
     private void printLIR(LIRBlock block, RiResolvedMethod method) {
-        LIRList lir = block.lir();
+        List<LIRInstruction> lir = block.lir();
         if (lir != null) {
             begin("IR");
             out.println("LIR");
-            for (int i = 0; i < lir.length(); i++) {
-                LIRInstruction inst = lir.at(i);
+            for (int i = 0; i < lir.size(); i++) {
+                LIRInstruction inst = lir.get(i);
                 out.printf("nr %4d ", inst.id()).print(COLUMN_END);
 
                 if (inst.info != null) {

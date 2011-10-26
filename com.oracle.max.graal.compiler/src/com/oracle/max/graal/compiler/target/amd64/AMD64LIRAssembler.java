@@ -79,7 +79,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     }
 
     protected int asIntConst(CiValue value) {
-        assert value.kind.stackKind() == CiKind.Int && value.isConstant();
+        assert (value.kind.stackKind() == CiKind.Int || value.kind == CiKind.Jsr) && value.isConstant();
         return ((CiConstant) value).asInt();
     }
 

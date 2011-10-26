@@ -55,7 +55,7 @@ public class LIRTableSwitch extends LIRInstruction {
 
     private LIRBlock substitute(LIRBlock block, LIRBlock oldBlock, LIRBlock newBlock) {
         if (block == oldBlock) {
-            LIRInstruction instr = newBlock.lir().instructionsList().get(0);
+            LIRInstruction instr = newBlock.lir().get(0);
             assert instr instanceof LIRLabel : "first instruction of block must be label";
             return newBlock;
         }
