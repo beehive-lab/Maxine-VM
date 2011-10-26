@@ -156,7 +156,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
 
         theHeapRegionManager().initialize(firstUnusedByteAddress, maxSize, HeapRegionInfo.class);
         try {
-            enableCustomAllocation(theHeapRegionManager().bootAllocator());
+            enableCustomAllocation(theHeapRegionManager().allocator());
             final MemoryRegion heapBounds = theHeapRegionManager().bounds();
             final Size applicationHeapMaxSize = heapBounds.size().minus(theHeapRegionManager().size());
 
