@@ -45,6 +45,7 @@ import com.oracle.max.graal.compiler.gen.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.stub.*;
 import com.oracle.max.graal.compiler.util.*;
+import com.oracle.max.graal.nodes.DeoptimizeNode.DeoptAction;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.extended.*;
@@ -75,6 +76,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
     public AMD64LIRGenerator(GraalCompilation compilation) {
         super(compilation);
+        ir.methodEndMarker = new AMD64MethodEndStub();
     }
 
     @Override
@@ -119,8 +121,8 @@ public class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    public void emitLabel(Label label) {
-        append(LABEL.create(label));
+    public void emitLabel(Label label, boolean align) {
+        append(LABEL.create(label, align));
     }
 
     @Override
@@ -408,8 +410,9 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
     @Override
     public void deoptimizeOn(Condition cond) {
-        DeoptimizationStub stub = createDeoptStub("deoptimizeOn " + cond);
-        append(BRANCH.create(cond, stub.label, stub.info));
+        LIRDebugInfo info = stateFor(null);
+        Label stubEntry = createDeoptStub(DeoptAction.InvalidateReprofile, info, "deoptimizeOn " + cond);
+        append(BRANCH.create(cond, stubEntry, info));
     }
 
     @Override
@@ -510,4 +513,14 @@ public class AMD64LIRGenerator extends LIRGenerator {
         CiVariable tmp = emitMove(index);
         append(TABLE_SWITCH.create(lowKey, defaultTargets, targets, tmp, newVariable(compilation.compiler.target.wordKind)));
     }
+
+    @Override
+    protected Label createDeoptStub(DeoptAction action, LIRDebugInfo info, Object deoptInfo) {
+        assert info.state != null : "deoptimize instruction always needs a state";
+        assert info.state.bci != FixedWithNextNode.SYNCHRONIZATION_ENTRY_BCI : "bci must not be -1 for deopt framestate";
+        AMD64DeoptimizationStub stub = new AMD64DeoptimizationStub(action, info, deoptInfo);
+        ir.deoptimizationStubs.add(stub);
+        return stub.label;
+    }
+
 }

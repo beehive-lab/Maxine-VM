@@ -47,7 +47,7 @@ public enum AMD64ConvertOpFI implements LIROpcode<AMD64LIRAssembler, LIRConvert>
         Label endLabel = new Label();
         lasm.masm.cmp32(lasm.asIntReg(op.result()), Integer.MIN_VALUE);
         lasm.masm.jcc(ConditionFlag.notEqual, endLabel);
-        lasm.callStub(op.stub, op.stub.resultKind, null, op.result(), op.operand(0));
+        AMD64CallOp.callStub(lasm, op.stub, op.stub.resultKind, null, op.result(), op.operand(0));
         lasm.masm.bind(endLabel);
     }
 }

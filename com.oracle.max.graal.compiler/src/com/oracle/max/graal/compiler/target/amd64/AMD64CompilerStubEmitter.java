@@ -68,7 +68,7 @@ public class AMD64CompilerStubEmitter {
     /**
      * The offset of the stub code restoring the saved registers and returning to the caller.
      */
-    private int registerRestoreEpilogueOffset = -1;
+//    private int registerRestoreEpilogueOffset = -1;
 
     /**
      * The layout of the callee save area of the stub being emitted.
@@ -112,7 +112,7 @@ public class AMD64CompilerStubEmitter {
     public CompilerStub emit(CiRuntimeCall runtimeCall) {
         emitStandardForward(null, runtimeCall);
         String name = "graal-stub-" + runtimeCall;
-        CiTargetMethod targetMethod = tasm.finishTargetMethod(name, comp.compiler.runtime, registerRestoreEpilogueOffset, true);
+        CiTargetMethod targetMethod = tasm.finishTargetMethod(name, comp.compiler.runtime, true);
         Object stubObject = comp.compiler.runtime.registerCompilerStub(targetMethod, name);
         return new CompilerStub(null, runtimeCall.resultKind, stubObject, inArgs, outResult);
     }
@@ -134,7 +134,7 @@ public class AMD64CompilerStubEmitter {
         }
 
         String name = "graal-stub-" + stub;
-        CiTargetMethod targetMethod = tasm.finishTargetMethod(name, comp.compiler.runtime, registerRestoreEpilogueOffset, true);
+        CiTargetMethod targetMethod = tasm.finishTargetMethod(name, comp.compiler.runtime, true);
         Object stubObject = comp.compiler.runtime.registerCompilerStub(targetMethod, name);
         return new CompilerStub(stub, stub.resultKind, stubObject, inArgs, outResult);
     }
@@ -224,7 +224,7 @@ public class AMD64CompilerStubEmitter {
         AMD64XirOp.emitXirInstructions(lasm, null, template.fastPath, labels, operands, null);
         epilogue();
         String stubName = "graal-" + template.name;
-        CiTargetMethod targetMethod = tasm.finishTargetMethod(stubName, comp.compiler.runtime, registerRestoreEpilogueOffset, true);
+        CiTargetMethod targetMethod = tasm.finishTargetMethod(stubName, comp.compiler.runtime, true);
         Object stubObject = comp.compiler.runtime.registerCompilerStub(targetMethod, stubName);
         return new CompilerStub(null, template.resultOperand.kind, stubObject, inArgs, outResult);
     }
@@ -320,8 +320,7 @@ public class AMD64CompilerStubEmitter {
     }
 
     private void epilogue() {
-        assert registerRestoreEpilogueOffset == -1;
-        registerRestoreEpilogueOffset = asm.codeBuffer.position();
+        tasm.targetMethod.setRegisterRestoreEpilogueOffset(asm.codeBuffer.position());
 
         // Restore registers
         int frameToCSA = csl.frameOffsetToCSA;

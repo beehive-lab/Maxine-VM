@@ -25,7 +25,8 @@ package com.oracle.max.graal.compiler.lir;
 import java.util.*;
 
 import com.oracle.max.criutils.*;
-import com.oracle.max.graal.compiler.gen.LIRGenerator.*;
+import com.oracle.max.graal.compiler.*;
+import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.graph.*;
 
 /**
@@ -50,7 +51,21 @@ public class LIR {
     private final List<LIRBlock> codeEmittingOrder;
 
     private final NodeMap<LIRBlock> valueToBlock;
-    private ArrayList<DeoptimizationStub> deoptimizationStubs;
+
+
+    public final List<SlowPath> slowPaths;
+
+    public final List<SlowPath> deoptimizationStubs;
+
+    /**
+     * The last slow path emitted, which can be used emit marker bytes.
+     */
+    public SlowPath methodEndMarker;
+
+
+    public interface SlowPath {
+        void emitCode(LIRAssembler lasm);
+    }
 
     /**
      * Creates a new LIR instance for the specified compilation.
@@ -61,6 +76,9 @@ public class LIR {
         this.linearScanOrder = linearScanOrder;
         this.startBlock = startBlock;
         this.valueToBlock = valueToBlock;
+
+        slowPaths = new ArrayList<SlowPath>();
+        deoptimizationStubs = new ArrayList<SlowPath>();
     }
 
     /**
@@ -83,14 +101,80 @@ public class LIR {
         return valueToBlock;
     }
 
-    public void setDeoptimizationStubs(ArrayList<DeoptimizationStub> deoptimizationStubs) {
-        this.deoptimizationStubs = deoptimizationStubs;
+
+    public void emitCode(LIRAssembler lasm) {
+        if (GraalOptions.PrintLIR && !TTY.isSuppressed()) {
+            printLIR(codeEmittingOrder());
+        }
+
+        for (LIRBlock b : codeEmittingOrder()) {
+            emitBlock(lasm, b);
+        }
+
+        // generate code for slow cases
+        for (SlowPath sp : slowPaths) {
+            sp.emitCode(lasm);
+        }
+        // generate deoptimization stubs
+        for (SlowPath sp : deoptimizationStubs) {
+            sp.emitCode(lasm);
+        }
+        // generate traps at the end of the method
+        methodEndMarker.emitCode(lasm);
     }
 
+    private void emitBlock(LIRAssembler lasm, LIRBlock block) {
+        if (GraalOptions.PrintLIRWithAssembly) {
+            block.printWithoutPhis(TTY.out());
+        }
 
-    public ArrayList<DeoptimizationStub> deoptimizationStubs() {
-        return deoptimizationStubs;
+        if (GraalOptions.CommentedAssembly) {
+            String st = String.format(" block B%d", block.blockID());
+            lasm.tasm.blockComment(st);
+        }
+
+        for (LIRInstruction op : block.lir()) {
+            if (GraalOptions.CommentedAssembly) {
+                // Only print out branches
+                if (op.code instanceof LIRBranch) {
+                    lasm.tasm.blockComment(op.toStringWithIdPrefix());
+                }
+            }
+            if (GraalOptions.PrintLIRWithAssembly && !TTY.isSuppressed()) {
+                // print out the LIR operation followed by the resulting assembly
+                TTY.println(op.toStringWithIdPrefix());
+                TTY.println();
+            }
+
+            emitOp(lasm, op);
+
+            if (GraalOptions.PrintLIRWithAssembly) {
+                printAssembly(lasm);
+            }
+        }
     }
+
+    @SuppressWarnings("unchecked")
+    private void emitOp(LIRAssembler lasm, LIRInstruction op) {
+        op.code.emitCode(lasm, op);
+    }
+
+    private int lastDecodeStart;
+
+    private void printAssembly(LIRAssembler lasm) {
+        byte[] currentBytes = lasm.asm.codeBuffer.copyData(lastDecodeStart, lasm.asm.codeBuffer.position());
+        if (currentBytes.length > 0) {
+            String disasm = lasm.compilation.compiler.runtime.disassemble(currentBytes, lastDecodeStart);
+            if (disasm.length() != 0) {
+                TTY.println(disasm);
+            } else {
+                TTY.println("Code [+%d]: %d bytes", lastDecodeStart, currentBytes.length);
+                Util.printBytes(lastDecodeStart, currentBytes, GraalOptions.PrintAssemblyBytesPerLine);
+            }
+        }
+        lastDecodeStart = lasm.asm.codeBuffer.position();
+    }
+
 
     public static void printBlock(LIRBlock x) {
         // print block id

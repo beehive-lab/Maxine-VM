@@ -83,11 +83,11 @@ public enum AMD64XirOp implements StandardOp.XirOpcode<AMD64LIRAssembler, LIRXir
         }
 
         if (snippet.template.slowPath != null) {
-            lasm.addSlowPath(new SlowPath(op, labels, snippet.marks));
+            lasm.compilation.lir().slowPaths.add(new SlowPath(op, labels, snippet.marks));
         }
     }
 
-    private static class SlowPath implements LIRAssembler.SlowPath {
+    private static class SlowPath implements LIR.SlowPath {
         public final LIRXirInstruction instruction;
         public final Label[] labels;
         public final Map<XirMark, Mark> marks;
@@ -302,7 +302,7 @@ public enum AMD64XirOp implements StandardOp.XirOpcode<AMD64LIRAssembler, LIRXir
                     for (int i = 0; i < args.length; i++) {
                         args[i] = operands[inst.arguments[i].index];
                     }
-                    lasm.callStub(lasm.compilation.compiler.lookupStub(stubId), stubId.resultOperand.kind, info, result, args);
+                    AMD64CallOp.callStub(lasm, lasm.compilation.compiler.lookupStub(stubId), stubId.resultOperand.kind, info, result, args);
                     break;
                 }
                 case CallRuntime: {
@@ -322,7 +322,7 @@ public enum AMD64XirOp implements StandardOp.XirOpcode<AMD64LIRAssembler, LIRXir
                     }
 
                     RuntimeCallInformation runtimeCallInformation = (RuntimeCallInformation) inst.extra;
-                    lasm.directCall(runtimeCallInformation.target, (runtimeCallInformation.useInfoAfter) ? infoAfter : info);
+                    AMD64CallOp.directCall(lasm, runtimeCallInformation.target, (runtimeCallInformation.useInfoAfter) ? infoAfter : info);
 
                     if (inst.result != null && inst.result.kind != CiKind.Illegal && inst.result.kind != CiKind.Void) {
                         CiRegister returnRegister = lasm.compilation.registerConfig.getReturnRegister(inst.result.kind);
@@ -336,7 +336,7 @@ public enum AMD64XirOp implements StandardOp.XirOpcode<AMD64LIRAssembler, LIRXir
                         Label label = labels[((XirLabel) inst.extra).index];
                         lasm.masm.jmp(label);
                     } else {
-                        lasm.directJmp(inst.extra);
+                        AMD64CallOp.directJmp(lasm, inst.extra);
                     }
                     break;
                 }
@@ -461,7 +461,7 @@ public enum AMD64XirOp implements StandardOp.XirOpcode<AMD64LIRAssembler, LIRXir
 
                     CiCalleeSaveLayout csl = lasm.compilation.registerConfig.getCalleeSaveLayout();
                     if (csl != null && csl.size != 0) {
-                        lasm.registerRestoreEpilogueOffset = lasm.masm.codeBuffer.position();
+                        lasm.tasm.targetMethod.setRegisterRestoreEpilogueOffset(lasm.masm.codeBuffer.position());
                         // saved all registers, restore all registers
                         int frameToCSA = lasm.frameMap.offsetToCalleeSaveAreaStart();
                         lasm.masm.restore(csl, frameToCSA);
@@ -510,11 +510,7 @@ public enum AMD64XirOp implements StandardOp.XirOpcode<AMD64LIRAssembler, LIRXir
                     break;
                 }
                 case ShouldNotReachHere: {
-                    if (inst.extra == null) {
-                        lasm.stop("should not reach here");
-                    } else {
-                        lasm.stop("should not reach here: " + inst.extra);
-                    }
+                    AMD64CallOp.shouldNotReachHere(lasm);
                     break;
                 }
                 default:

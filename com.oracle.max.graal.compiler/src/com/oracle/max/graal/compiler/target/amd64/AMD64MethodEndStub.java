@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,33 +20,18 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.compiler.lir;
+package com.oracle.max.graal.compiler.target.amd64;
 
-import com.oracle.max.asm.*;
-import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiValue.Formatter;
+import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.graal.compiler.*;
+import com.oracle.max.graal.compiler.lir.*;
 
-public class LIRLabel extends LIRInstruction {
-
-    public final Label label;
-    public final boolean align;
-
-    /**
-     * Constructs a LIRLabel instruction.
-     * @param label the label
-     */
-    public LIRLabel(LIROpcode opcode, Label label, boolean align) {
-        super(opcode, CiValue.IllegalValue, null);
-        assert label != null;
-        this.label = label;
-        this.align = align;
-    }
-
-    /**
-     * Prints this instruction to a LogStream.
-     */
+public class AMD64MethodEndStub implements LIR.SlowPath {
     @Override
-    public String operationString(Formatter operandFmt) {
-        return label.isBound() ? String.valueOf(label.position()) : "?";
+    public void emitCode(LIRAssembler lasm) {
+        AMD64MacroAssembler masm = ((AMD64LIRAssembler) lasm).masm;
+        for (int i = 0; i < GraalOptions.MethodEndBreakpointGuards; ++i) {
+            masm.int3();
+        }
     }
 }

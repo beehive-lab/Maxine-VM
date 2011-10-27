@@ -78,7 +78,6 @@ public final class LIRBlock {
 
     private int firstLirInstructionID;
     private int lastLirInstructionID;
-    public int blockEntryPco;
 
     public LIRBlock(Label label, LIRDebugInfo debugInfo) {
         this.label = label;
@@ -136,10 +135,6 @@ public final class LIRBlock {
 
     public void setLir(List<LIRInstruction> lir) {
         this.lir = lir;
-    }
-
-    public void setBlockEntryPco(int codePos) {
-        this.blockEntryPco = codePos;
     }
 
     public void printWithoutPhis(LogStream out) {

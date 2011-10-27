@@ -45,12 +45,15 @@ public class AMD64ControlFlowOp {
     public static final FloatCondMoveOp FLOAT_CMOVE = new FloatCondMoveOp();
 
     protected static class LabelOp implements LIROpcode<AMD64LIRAssembler, LIRLabel> {
-        public LIRInstruction create(Label label) {
-            return new LIRLabel(this, label);
+        public LIRInstruction create(Label label, boolean align) {
+            return new LIRLabel(this, label, align);
         }
 
         @Override
         public void emitCode(AMD64LIRAssembler lasm, LIRLabel op) {
+            if (op.align) {
+                lasm.masm.align(lasm.target.wordSize);
+            }
             lasm.masm.bind(op.label);
         }
     }

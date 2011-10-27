@@ -57,16 +57,15 @@ public class TargetMethodAssembler {
         targetMethod.addAnnotation(new CiTargetMethod.CodeComment(asm.codeBuffer.position(), s));
     }
 
-    public CiTargetMethod finishTargetMethod(Object name, RiRuntime runtime, int registerRestoreEpilogueOffset, boolean isStub) {
+    public CiTargetMethod finishTargetMethod(Object name, RiRuntime runtime, boolean isStub) {
         // Install code, data and frame size
         targetMethod.setTargetCode(asm.codeBuffer.close(false), asm.codeBuffer.position());
-        targetMethod.setRegisterRestoreEpilogueOffset(registerRestoreEpilogueOffset);
 
         // Record exception handlers if they exist
         if (exceptionInfoList != null) {
             for (ExceptionInfo ei : exceptionInfoList) {
                 int codeOffset = ei.codeOffset;
-                targetMethod.recordExceptionHandler(codeOffset, -1, 0, ei.exceptionEdge.blockEntryPco, -1, null);
+                targetMethod.recordExceptionHandler(codeOffset, -1, 0, ei.exceptionEdge.label.position(), -1, null);
             }
         }
 

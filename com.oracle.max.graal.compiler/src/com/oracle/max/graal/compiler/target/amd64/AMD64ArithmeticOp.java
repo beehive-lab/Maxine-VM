@@ -82,19 +82,19 @@ public enum AMD64ArithmeticOp implements LIROpcode<AMD64LIRAssembler, LIRInstruc
                 case IAND: masm.andl(dst,  lasm.asIntConst(right)); break;
                 case IOR:  masm.orl(dst,   lasm.asIntConst(right)); break;
                 case IXOR: masm.xorl(dst,  lasm.asIntConst(right)); break;
-                case LADD: masm.addq(dst,  lasm.asLongConst(right)); break;
-                case LSUB: masm.subq(dst,  lasm.asLongConst(right)); break;
-                case LAND: masm.andq(dst,  lasm.asLongConst(right)); break;
-                case LOR:  masm.orq(dst,   lasm.asLongConst(right)); break;
-                case LXOR: masm.xorq(dst,  lasm.asLongConst(right)); break;
-                case FADD: masm.addss(dst, lasm.asFloatConst(right)); break;
-                case FSUB: masm.subss(dst, lasm.asFloatConst(right)); break;
-                case FMUL: masm.mulss(dst, lasm.asFloatConst(right)); break;
-                case FDIV: masm.divss(dst, lasm.asFloatConst(right)); break;
-                case DADD: masm.addsd(dst, lasm.asDoubleConst(right)); break;
-                case DSUB: masm.subsd(dst, lasm.asDoubleConst(right)); break;
-                case DMUL: masm.mulsd(dst, lasm.asDoubleConst(right)); break;
-                case DDIV: masm.divsd(dst, lasm.asDoubleConst(right)); break;
+                case LADD: masm.addq(dst,  lasm.asIntConst(right)); break;
+                case LSUB: masm.subq(dst,  lasm.asIntConst(right)); break;
+                case LAND: masm.andq(dst,  lasm.asIntConst(right)); break;
+                case LOR:  masm.orq(dst,   lasm.asIntConst(right)); break;
+                case LXOR: masm.xorq(dst,  lasm.asIntConst(right)); break;
+                case FADD: masm.addss(dst, lasm.asFloatConstRef(right)); break;
+                case FSUB: masm.subss(dst, lasm.asFloatConstRef(right)); break;
+                case FMUL: masm.mulss(dst, lasm.asFloatConstRef(right)); break;
+                case FDIV: masm.divss(dst, lasm.asFloatConstRef(right)); break;
+                case DADD: masm.addsd(dst, lasm.asDoubleConstRef(right)); break;
+                case DSUB: masm.subsd(dst, lasm.asDoubleConstRef(right)); break;
+                case DMUL: masm.mulsd(dst, lasm.asDoubleConstRef(right)); break;
+                case DDIV: masm.divsd(dst, lasm.asDoubleConstRef(right)); break;
                 default:   throw Util.shouldNotReachHere();
             }
         } else {

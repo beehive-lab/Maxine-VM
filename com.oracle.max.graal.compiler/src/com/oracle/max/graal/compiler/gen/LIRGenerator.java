@@ -121,7 +121,6 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     private ValueNode lastInstructionPrinted; // Debugging only
 
     protected List<LIRInstruction> lir;
-    private ArrayList<DeoptimizationStub> deoptimizationStubs;
     private FrameState lastState;
 
     public LIRGenerator(GraalCompilation compilation) {
@@ -140,10 +139,6 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         return compilation.compiler.target;
     }
 
-    public List<LIRInstruction> lir() {
-        return lir;
-    }
-
     public void append(LIRInstruction op) {
         if (GraalOptions.PrintIRWithLIR && !TTY.isSuppressed()) {
             maybePrintCurrentInstruction();
@@ -151,30 +146,6 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
             TTY.println();
         }
         lir.add(op);
-    }
-
-    public ArrayList<DeoptimizationStub> deoptimizationStubs() {
-        return deoptimizationStubs;
-    }
-
-    private void addDeoptimizationStub(DeoptimizationStub stub) {
-        if (deoptimizationStubs == null) {
-            deoptimizationStubs = new ArrayList<LIRGenerator.DeoptimizationStub>();
-        }
-        deoptimizationStubs.add(stub);
-    }
-
-    public static class DeoptimizationStub {
-        public final Label label = new Label();
-        public final LIRDebugInfo info;
-        public final DeoptAction action;
-        public final Object deoptInfo;
-
-        public DeoptimizationStub(DeoptAction action, FrameState state, Object deoptInfo) {
-            this.action = action;
-            this.info = new LIRDebugInfo(state);
-            this.deoptInfo = deoptInfo;
-        }
     }
 
     public void doBlock(LIRBlock block) {
@@ -532,7 +503,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         }
     }
 
-    public abstract void emitLabel(Label label);
+    public abstract void emitLabel(Label label, boolean align);
     public abstract void emitJump(LIRBlock block);
     public abstract void emitJump(Label label, LIRDebugInfo info);
     public abstract void emitBranch(CiValue left, CiValue right, Condition cond, boolean unorderedIsTrue, LIRBlock block);
@@ -716,22 +687,11 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
             if (comp instanceof ConstantNode && comp.asConstant().asBoolean()) {
                 // Nothing to emit.
             } else {
-                DeoptimizationStub stub = createDeoptStub("emitGuardComp " + comp);
-                emitBooleanBranch(comp, null, new LIRBlock(stub.label, stub.info), null, null, stub.info);
+                LIRDebugInfo info = stateFor(comp);
+                Label stubEntry = createDeoptStub(DeoptAction.InvalidateReprofile, info, "emitGuardComp " + comp);
+                emitBooleanBranch(comp, null, new LIRBlock(stubEntry, info), null, null, info);
             }
         }
-    }
-
-    protected DeoptimizationStub createDeoptStub(Object deoptInfo) {
-        if (deoptimizationStubs == null) {
-            deoptimizationStubs = new ArrayList<DeoptimizationStub>();
-        }
-
-        FrameState state = lastState;
-        assert state != null : "deoptimize instruction always needs a state";
-        DeoptimizationStub stub = new DeoptimizationStub(DeoptAction.InvalidateReprofile, state, deoptInfo);
-        deoptimizationStubs.add(stub);
-        return stub;
     }
 
     @Override
@@ -976,11 +936,9 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
 
     @Override
     public void visitDeoptimize(DeoptimizeNode deoptimize) {
-        assert lastState != null : "deoptimize always needs a state";
-        assert lastState.bci != FixedWithNextNode.SYNCHRONIZATION_ENTRY_BCI : "bci must not be -1 for deopt framestate";
-        DeoptimizationStub stub = new DeoptimizationStub(deoptimize.action(), lastState, "DeoptimizeNode " + deoptimize);
-        addDeoptimizationStub(stub);
-        emitJump(stub.label, stub.info);
+        LIRDebugInfo info = stateFor(deoptimize);
+        Label stubEntry = createDeoptStub(deoptimize.action(), info, "DeoptimizeNode " + deoptimize);
+        emitJump(stubEntry, info);
     }
 
     private void blockDoEpilog() {
@@ -998,7 +956,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         lir = new ArrayList<LIRInstruction>();
         block.setLir(lir);
 
-        emitLabel(block.label());
+        emitLabel(block.label(), block.align());
     }
 
     /**
@@ -1054,7 +1012,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
                 Label l = new Label();
                 emitBranch(value, CiConstant.forInt(lowKey), Condition.LT, false, l, null);
                 emitBranch(value, CiConstant.forInt(highKey), Condition.LE, false, dest);
-                emitLabel(l);
+                emitLabel(l, false);
             }
         }
         emitJump(defaultSux);
@@ -1526,4 +1484,6 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     }
 
     public abstract void emitMembar(int barriers);
+
+    protected abstract Label createDeoptStub(DeoptAction action, LIRDebugInfo info, Object deoptInfo);
 }

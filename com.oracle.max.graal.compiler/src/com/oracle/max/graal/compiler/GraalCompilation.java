@@ -31,7 +31,6 @@ import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.alloc.*;
 import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.gen.*;
-import com.oracle.max.graal.compiler.gen.LIRGenerator.DeoptimizationStub;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.observer.*;
 import com.oracle.max.graal.compiler.phases.*;
@@ -385,8 +384,6 @@ public final class GraalCompilation {
                 }
 
                 new LinearScan(this, lir, lirGenerator, frameMap()).allocate();
-
-                lir.setDeoptimizationStubs(lirGenerator.deoptimizationStubs());
             }
         } catch (Error e) {
             if (context().isObserved() && GraalOptions.PlotOnError) {
@@ -409,23 +406,9 @@ public final class GraalCompilation {
             try {
                 final TargetMethodAssembler tma = createAssembler();
                 final LIRAssembler lirAssembler = compiler.backend.newLIRAssembler(this, tma);
-                lirAssembler.emitCode(lir.codeEmittingOrder());
+                lir.emitCode(lirAssembler);
 
-                // generate code for slow cases
-                lirAssembler.emitLocalStubs();
-
-                // generate deoptimization stubs
-                ArrayList<DeoptimizationStub> deoptimizationStubs = lir.deoptimizationStubs();
-                if (deoptimizationStubs != null) {
-                    for (DeoptimizationStub stub : deoptimizationStubs) {
-                        lirAssembler.emitDeoptizationStub(stub);
-                    }
-                }
-
-                // generate traps at the end of the method
-                lirAssembler.emitTraps();
-
-                CiTargetMethod targetMethod = tma.finishTargetMethod(method, compiler.runtime, lirAssembler.registerRestoreEpilogueOffset, false);
+                CiTargetMethod targetMethod = tma.finishTargetMethod(method, compiler.runtime, false);
                 if (!graph.start().assumptions().isEmpty()) {
                     targetMethod.setAssumptions(graph.start().assumptions());
                 }

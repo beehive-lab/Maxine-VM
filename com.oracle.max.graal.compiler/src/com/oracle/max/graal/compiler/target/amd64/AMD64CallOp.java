@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.lir.*;
+import com.oracle.max.graal.compiler.stub.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.Mark;
@@ -46,7 +47,7 @@ public enum AMD64CallOp implements StandardOp.CallOpcode<AMD64LIRAssembler, LIRC
                 if (op.marks != null) {
                     op.marks.put(XirMark.CALLSITE, lasm.tasm.recordMark(null, new Mark[0]));
                 }
-                lasm.directCall(op.target, op.info);
+                directCall(lasm, op.target, op.info);
                 break;
             }
             case INDIRECT_CALL: {
@@ -55,12 +56,12 @@ public enum AMD64CallOp implements StandardOp.CallOpcode<AMD64LIRAssembler, LIRC
                     op.marks.put(XirMark.CALLSITE, lasm.tasm.recordMark(null, new Mark[0]));
                 }
                 CiRegister reg = lasm.asRegister(op.targetAddress());
-                lasm.indirectCall(reg, op.target, op.info);
+                indirectCall(lasm, reg, op.target, op.info);
                 break;
             }
             case NATIVE_CALL: {
                 CiRegister reg = lasm.asRegister(op.targetAddress());
-                lasm.indirectCall(reg, op.target, op.info);
+                indirectCall(lasm, reg, op.target, op.info);
                 break;
             }
             default:
@@ -68,7 +69,7 @@ public enum AMD64CallOp implements StandardOp.CallOpcode<AMD64LIRAssembler, LIRC
         }
     }
 
-    private void callAlignment(AMD64LIRAssembler lasm) {
+    public void callAlignment(AMD64LIRAssembler lasm) {
         if (GraalOptions.AlignCallsForPatching) {
             // make sure that the displacement word of the call ends up word aligned
             int offset = lasm.masm.codeBuffer.position();
@@ -76,6 +77,81 @@ public enum AMD64CallOp implements StandardOp.CallOpcode<AMD64LIRAssembler, LIRC
             while (offset++ % lasm.target.wordSize != 0) {
                 lasm.masm.nop();
             }
+        }
+    }
+
+    public static void callStub(AMD64LIRAssembler lasm, CompilerStub stub, CiKind resultKind, LIRDebugInfo info, CiValue result, CiValue... args) {
+        assert args.length == stub.inArgs.length;
+        for (int i = 0; i < args.length; i++) {
+            assert stub.inArgs[i].inCallerFrame();
+            AMD64MoveOp.move(lasm, stub.inArgs[i].asOutArg(), args[i]);
+        }
+
+        directCall(lasm, stub.stubObject, info);
+
+        if (result.isLegal()) {
+            AMD64MoveOp.move(lasm, result, stub.outResult.asOutArg());
+        }
+
+        // Clear out parameters
+        if (GraalOptions.GenAssertionCode) {
+            for (int i = 0; i < args.length; i++) {
+                CiStackSlot inArg = stub.inArgs[i];
+                CiStackSlot outArg = inArg.asOutArg();
+                CiAddress dst = lasm.asAddress(outArg);
+                lasm.masm.movptr(dst, 0);
+            }
+        }
+    }
+
+    public static void directCall(AMD64LIRAssembler lasm, Object target, LIRDebugInfo info) {
+        int before = lasm.masm.codeBuffer.position();
+        if (target instanceof CiRuntimeCall) {
+            long maxOffset = lasm.compilation.compiler.runtime.getMaxCallTargetOffset((CiRuntimeCall) target);
+            if (maxOffset != (int) maxOffset) {
+                // offset might not fit a 32-bit immediate, generate an
+                // indirect call with a 64-bit immediate
+                CiRegister scratch = lasm.compilation.registerConfig.getScratchRegister();
+                // TODO(cwi): we want to get rid of a generally reserved scratch register.
+                lasm.masm.movq(scratch, 0L);
+                lasm.masm.call(scratch);
+            } else {
+                lasm.masm.call();
+            }
+        } else {
+            lasm.masm.call();
+        }
+        int after = lasm.masm.codeBuffer.position();
+        lasm.tasm.recordDirectCall(before, after, asCallTarget(lasm, target), info);
+        lasm.tasm.recordExceptionHandlers(after, info);
+        lasm.masm.ensureUniquePC();
+    }
+
+    public static void directJmp(AMD64LIRAssembler lasm, Object target) {
+        int before = lasm.masm.codeBuffer.position();
+        lasm.masm.jmp(0, true);
+        int after = lasm.masm.codeBuffer.position();
+        lasm.tasm.recordDirectCall(before, after, asCallTarget(lasm, target), null);
+        lasm.masm.ensureUniquePC();
+    }
+
+    public static void indirectCall(AMD64LIRAssembler lasm, CiRegister dst, Object target, LIRDebugInfo info) {
+        int before = lasm.masm.codeBuffer.position();
+        lasm.masm.call(dst);
+        int after = lasm.masm.codeBuffer.position();
+        lasm.tasm.recordIndirectCall(before, after, asCallTarget(lasm, target), info);
+        lasm.tasm.recordExceptionHandlers(after, info);
+        lasm.masm.ensureUniquePC();
+    }
+
+    private static Object asCallTarget(AMD64LIRAssembler lasm, Object o) {
+        return lasm.compilation.compiler.runtime.asCallTarget(o);
+    }
+
+    public static void shouldNotReachHere(AMD64LIRAssembler lasm) {
+        if (GraalOptions.GenAssertionCode) {
+            directCall(lasm, CiRuntimeCall.Debug, null);
+            lasm.masm.hlt();
         }
     }
 }
