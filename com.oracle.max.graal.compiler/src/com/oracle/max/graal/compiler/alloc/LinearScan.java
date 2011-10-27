@@ -1848,7 +1848,7 @@ public final class LinearScan {
                 VirtualObjectNode obj = (VirtualObjectNode) value;
                 CiVirtualObject ciObj = virtualObjects.get(value);
                 if (ciObj == null) {
-                    ciObj = CiVirtualObject.get(obj.type(), null, value.id());
+                    ciObj = CiVirtualObject.get(obj.type(), null, virtualObjects.size());
                     virtualObjects.put(obj, ciObj);
                 }
                 return ciObj;

@@ -133,11 +133,6 @@ public class LoopBeginNode extends MergeNode implements Node.IterableNodeType {
     }
 
     @Override
-    public String toString() {
-        return "LoopBegin: " + super.toString();
-    }
-
-    @Override
     public Map<Object, Object> getDebugProperties() {
         Map<Object, Object> properties = super.getDebugProperties();
         properties.put("loopFrequency", String.format("%7.1f", loopFrequency));

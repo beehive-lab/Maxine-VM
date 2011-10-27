@@ -31,6 +31,7 @@ import com.sun.cri.ri.*;
  * The {@code ConstantNode} represents a constant such as an integer value,
  * long, float, object reference, address, etc.
  */
+@NodeInfo(shortName = "Const")
 public final class ConstantNode extends BooleanNode {
 
     @Data public final CiConstant value;
@@ -166,8 +167,12 @@ public final class ConstantNode extends BooleanNode {
     }
 
     @Override
-    public String toString() {
-        return super.toString() + "(" + value + ")";
+    public String toString(Verbosity verbosity) {
+        if (verbosity == Verbosity.Name) {
+            return super.toString(Verbosity.Name) + "(" + value.kind.format(value.boxedValue()) + ")";
+        } else {
+            return super.toString(verbosity);
+        }
     }
 
     @Override
@@ -186,10 +191,5 @@ public final class ConstantNode extends BooleanNode {
             return runtime.asRiType(kind);
         }
         return runtime.getTypeOf(asConstant());
-    }
-
-    @Override
-    public String shortName() {
-        return value.name();
     }
 }

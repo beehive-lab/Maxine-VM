@@ -134,8 +134,12 @@ public final class InvokeNode extends AbstractCallNode implements Node.IterableN
     }
 
     @Override
-    public String toString() {
-        return super.toString() + target;
+    public String toString(Verbosity verbosity) {
+        if (verbosity == Verbosity.Long) {
+            return super.toString(Verbosity.Short) + "(" + target + ")";
+        } else {
+            return super.toString(verbosity);
+        }
     }
 
     @Override

@@ -100,18 +100,22 @@ public final class PhiNode extends FloatingNode implements Canonicalizable, Node
     }
 
     @Override
-    public String shortName() {
-        StringBuilder str = new StringBuilder();
-        for (int i = 0; i < valueCount(); ++i) {
-            if (i != 0) {
-                str.append(' ');
+    public String toString(Verbosity verbosity) {
+        if (verbosity == Verbosity.Name) {
+            StringBuilder str = new StringBuilder();
+            for (int i = 0; i < valueCount(); ++i) {
+                if (i != 0) {
+                    str.append(' ');
+                }
+                str.append(valueAt(i) == null ? "-" : valueAt(i).toString(Verbosity.Id));
             }
-            str.append(valueAt(i) == null ? "-" : valueAt(i).id());
-        }
-        if (type == PhiType.Value) {
-            return "Phi: (" + str + ")";
+            if (type == PhiType.Value) {
+                return super.toString(Verbosity.Name) + "(" + str + ")";
+            } else {
+                return type + super.toString(Verbosity.Name) + "(" + str + ")";
+            }
         } else {
-            return type + "Phi: (" + str + ")";
+            return super.toString(verbosity);
         }
     }
 

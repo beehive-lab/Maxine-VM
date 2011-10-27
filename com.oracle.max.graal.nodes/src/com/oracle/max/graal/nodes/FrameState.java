@@ -598,11 +598,6 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
         }
     }
 
-    @Override
-    public String toString() {
-        return super.toString();
-    }
-
     public String toDetailedString() {
         StringBuilder sb = new StringBuilder();
         String nl = String.format("%n");
@@ -632,8 +627,12 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
     }
 
     @Override
-    public String shortName() {
-        return "FrameState@" + bci;
+    public String toString(Verbosity verbosity) {
+        if (verbosity == Verbosity.Name) {
+            return super.toString(Verbosity.Name) + "@" + bci;
+        } else {
+            return super.toString(verbosity);
+        }
     }
 
     public void visitFrameState(FrameState i) {
@@ -665,17 +664,17 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
         properties.put("method", CiUtil.format("%H.%n(%p):%r", method, false));
         StringBuilder str = new StringBuilder();
         for (int i = 0; i < localsSize(); i++) {
-            str.append(i == 0 ? "" : ", ").append(localAt(i) == null ? "_" : localAt(i).id());
+            str.append(i == 0 ? "" : ", ").append(localAt(i) == null ? "_" : localAt(i).toString(Verbosity.Id));
         }
         properties.put("locals", str.toString());
         str = new StringBuilder();
         for (int i = 0; i < stackSize(); i++) {
-            str.append(i == 0 ? "" : ", ").append(stackAt(i) == null ? "_" : stackAt(i).id());
+            str.append(i == 0 ? "" : ", ").append(stackAt(i) == null ? "_" : stackAt(i).toString(Verbosity.Id));
         }
         properties.put("stack", str.toString());
         str = new StringBuilder();
         for (int i = 0; i < locksSize(); i++) {
-            str.append(i == 0 ? "" : ", ").append(lockAt(i) == null ? "_" : lockAt(i).id());
+            str.append(i == 0 ? "" : ", ").append(lockAt(i) == null ? "_" : lockAt(i).toString(Verbosity.Id));
         }
         properties.put("locks", str.toString());
         properties.put("rethrowException", rethrowException);

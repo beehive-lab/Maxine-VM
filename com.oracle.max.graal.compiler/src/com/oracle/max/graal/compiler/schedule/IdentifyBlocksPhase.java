@@ -28,6 +28,7 @@ import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.graph.*;
+import com.oracle.max.graal.graph.Node.Verbosity;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.loop.*;
@@ -440,7 +441,7 @@ public class IdentifyBlocksPhase extends Phase {
             PhiNode phi = (PhiNode) usage;
             MergeNode merge = phi.merge();
             Block mergeBlock = nodeToBlock.get(merge);
-            assert mergeBlock != null : "no block for merge " + merge.id();
+            assert mergeBlock != null : "no block for merge " + merge.toString(Verbosity.Id);
             for (int i = 0; i < phi.valueCount(); ++i) {
                 if (phi.valueAt(i) == node) {
                     if (mergeBlock.getPredecessors().size() <= i) {
