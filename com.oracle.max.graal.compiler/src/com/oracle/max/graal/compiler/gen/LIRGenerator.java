@@ -313,7 +313,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     @Override
     public void visitMonitorEnter(MonitorEnterNode x) {
         XirArgument obj = toXirArgument(x.object());
-        XirArgument lockAddress = toXirArgument(createMonitorAddress(x.monitorIndex()));
+        XirArgument lockAddress = x.monitorStackSlots() ? toXirArgument(createMonitorAddress(x.monitorIndex())) : null;
         XirSnippet snippet = xir.genMonitorEnter(site(x), obj, lockAddress);
         emitXir(snippet, x, stateFor(x), stateFor(x, x.stateAfter()), null, true, null);
     }
@@ -321,7 +321,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     @Override
     public void visitMonitorExit(MonitorExitNode x) {
         XirArgument obj = toXirArgument(x.object());
-        XirArgument lockAddress = toXirArgument(createMonitorAddress(x.monitorIndex()));
+        XirArgument lockAddress = x.monitorStackSlots() ? toXirArgument(createMonitorAddress(x.monitorIndex())) : null;
         XirSnippet snippet = xir.genMonitorExit(site(x), obj, lockAddress);
         emitXir(snippet, x, stateFor(x), null, true);
     }

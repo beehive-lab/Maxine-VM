@@ -311,7 +311,7 @@ public class HotSpotRuntime implements GraalRuntime {
                     RiResolvedType elementType = array.exactType().componentType();
                     if (elementType.superType() != null) {
                         ConstantNode type = graph.unique(new ConstantNode(elementType.getEncoding(Representation.ObjectHub)));
-                        value = graph.unique(new CheckCastNode(anchor, type, value));
+                        value = graph.unique(new CheckCastNode(anchor, type, elementType, value));
                     } else {
                         assert elementType.name().equals("Ljava/lang/Object;") : elementType.name();
                     }
@@ -321,9 +321,8 @@ public class HotSpotRuntime implements GraalRuntime {
                     arrayClass.setGuard(guard);
                     append.setNext(arrayClass);
                     append = arrayClass;
-                    ReadNode arrayElementKlass1 = graph.unique(new ReadNode(CiKind.Object, arrayClass, LocationNode.create(LocationNode.FINAL_LOCATION, CiKind.Object, config.arrayClassElementOffset, graph)));
-                    ReadNode arrayElementKlass = arrayElementKlass1;
-                    value = graph.unique(new CheckCastNode(anchor, arrayElementKlass, value));
+                    ReadNode arrayElementKlass = graph.unique(new ReadNode(CiKind.Object, arrayClass, LocationNode.create(LocationNode.FINAL_LOCATION, CiKind.Object, config.arrayClassElementOffset, graph)));
+                    value = graph.unique(new CheckCastNode(anchor, arrayElementKlass, null, value));
                 }
             }
             WriteNode memoryWrite = graph.add(new WriteNode(array, value, arrayLocation));
@@ -449,7 +448,7 @@ public class HotSpotRuntime implements GraalRuntime {
                     SafeReadNode klassOop = safeRead(graph, CiKind.Object, receiver, config.klassOopOffset);
                     graph.start().setNext(klassOop);
                     // TODO(tw): Care about primitive classes!
-                    MaterializeNode result = MaterializeNode.create(graph.unique(new InstanceOfNode(klassOop, argument)), graph);
+                    MaterializeNode result = MaterializeNode.create(graph.unique(new InstanceOfNode(klassOop, null, argument)), graph);
                     ReturnNode ret = graph.add(new ReturnNode(result));
                     klassOop.setNext(ret);
                     intrinsicGraphs.put(method, graph);

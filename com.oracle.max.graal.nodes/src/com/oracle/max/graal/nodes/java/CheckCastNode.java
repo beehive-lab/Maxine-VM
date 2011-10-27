@@ -39,11 +39,12 @@ public final class CheckCastNode extends TypeCheckNode implements Canonicalizabl
     /**
      * Creates a new CheckCast instruction.
      *
+     * @param targetClassInstruction the instruction which produces the class which is being cast to
      * @param targetClass the class being cast to
      * @param object the instruction producing the object
      */
-    public CheckCastNode(AnchorNode anchor, ValueNode targetClassInstruction, ValueNode object) {
-        super(targetClassInstruction, object, CiKind.Object);
+    public CheckCastNode(AnchorNode anchor, ValueNode targetClassInstruction, RiResolvedType targetClass, ValueNode object) {
+        super(targetClassInstruction, targetClass, object, CiKind.Object);
         this.anchor = anchor;
     }
 

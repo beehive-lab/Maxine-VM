@@ -737,7 +737,7 @@ public final class GraphBuilderPhase extends Phase {
             ValueNode object = frameState.apop();
             AnchorNode anchor = graph.add(new AnchorNode());
             append(anchor);
-            CheckCastNode checkCast = graph.unique(new CheckCastNode(anchor, typeInstruction, object));
+            CheckCastNode checkCast = graph.unique(new CheckCastNode(anchor, typeInstruction, (RiResolvedType) type, object));
             append(graph.add(new ValueAnchorNode(checkCast)));
             frameState.apush(checkCast);
         } else {
@@ -753,7 +753,7 @@ public final class GraphBuilderPhase extends Phase {
         ConstantNode typeInstruction = genTypeOrDeopt(RiType.Representation.ObjectHub, type, type instanceof RiResolvedType);
         ValueNode object = frameState.apop();
         if (typeInstruction != null) {
-            frameState.ipush(append(MaterializeNode.create(graph.unique(new InstanceOfNode(typeInstruction, object)), graph)));
+            frameState.ipush(append(MaterializeNode.create(graph.unique(new InstanceOfNode(typeInstruction, (RiResolvedType) type, object)), graph)));
         } else {
             frameState.ipush(appendConstant(CiConstant.INT_0));
         }
@@ -1136,7 +1136,7 @@ public final class GraphBuilderPhase extends Phase {
 
     private void genMonitorEnter(ValueNode x, int bci) {
         int lockNumber = frameState.locksSize();
-        MonitorEnterNode monitorEnter = graph.add(new MonitorEnterNode(x, lockNumber));
+        MonitorEnterNode monitorEnter = graph.add(new MonitorEnterNode(x, lockNumber, runtime.sizeOfBasicObjectLock() > 0));
         appendWithBCI(monitorEnter);
         frameState.lock(x);
         if (bci == FixedWithNextNode.SYNCHRONIZATION_ENTRY_BCI) {
@@ -1149,7 +1149,7 @@ public final class GraphBuilderPhase extends Phase {
         if (lockNumber < 0) {
             throw new CiBailout("monitor stack underflow");
         }
-        appendWithBCI(graph.add(new MonitorExitNode(x, lockNumber)));
+        appendWithBCI(graph.add(new MonitorExitNode(x, lockNumber, runtime.sizeOfBasicObjectLock() > 0)));
         frameState.unlock();
     }
 
@@ -1440,7 +1440,7 @@ public final class GraphBuilderPhase extends Phase {
                 FixedNode catchSuccessor = createTarget(block.successors.get(0), frameState);
                 FixedNode nextDispatch = createTarget(nextBlock, frameState);
                 ValueNode exception = frameState.stackAt(0);
-                IfNode ifNode = graph.add(new IfNode(graph.unique(new InstanceOfNode(typeInstruction, exception)), catchSuccessor, nextDispatch, 0.5));
+                IfNode ifNode = graph.add(new IfNode(graph.unique(new InstanceOfNode(typeInstruction, (RiResolvedType) catchType, exception)), catchSuccessor, nextDispatch, 0.5));
                 append(ifNode);
             }
         }
