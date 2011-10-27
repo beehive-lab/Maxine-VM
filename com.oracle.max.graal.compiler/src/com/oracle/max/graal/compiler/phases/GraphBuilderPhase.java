@@ -635,7 +635,7 @@ public final class GraphBuilderPhase extends Phase {
 
     private void genConvert(ConvertNode.Op opcode, CiKind from, CiKind to) {
         CiKind tt = to.stackKind();
-        frameState.push(tt, append(graph.unique(new ConvertNode(opcode, frameState.pop(from.stackKind()), tt))));
+        frameState.push(tt, append(graph.unique(new ConvertNode(tt, opcode, frameState.pop(from.stackKind())))));
     }
 
     private void genIncrement() {

@@ -160,7 +160,7 @@ public class MaxineIntrinsicImplementations {
      */
     private static ValueNode offsetOrIndex(Graph<?> graph, ValueNode offsetOrIndex) {
         if (offsetOrIndex.kind == CiKind.Int && Platform.target().arch.is64bit()) {
-            return graph.unique(new ConvertNode(ConvertNode.Op.I2L, offsetOrIndex, CiKind.Long));
+            return graph.unique(new ConvertNode(CiKind.Long, ConvertNode.Op.I2L, offsetOrIndex));
         }
         return offsetOrIndex;
     }

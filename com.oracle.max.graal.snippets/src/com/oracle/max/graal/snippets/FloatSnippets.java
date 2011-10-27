@@ -22,7 +22,7 @@
  */
 package com.oracle.max.graal.snippets;
 
-import com.oracle.max.graal.nodes.extended.*;
+import com.oracle.max.graal.nodes.calc.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 
@@ -36,23 +36,24 @@ public class FloatSnippets implements SnippetsInterface {
 
     public static int floatToRawIntBits(float value) {
         @JavacBug(id = 6995200)
-        Integer result = FPConversionNode.convert(CiKind.Int, value);
+        Integer result = ConvertNode.convert(CiKind.Int, ConvertNode.Op.MOV_F2I, value);
         return result;
     }
 
+    // TODO This method is not necessary, since the JDK method does exactly this
     public static int floatToIntBits(float value) {
         if (value != value) {
             return NAN_RAW_INT_BITS;
         } else {
             @JavacBug(id = 6995200)
-            Integer result = FPConversionNode.convert(CiKind.Int, value);
+            Integer result = ConvertNode.convert(CiKind.Int, ConvertNode.Op.MOV_F2I, value);
             return result;
         }
     }
 
     public static float intBitsToFloat(int bits) {
         @JavacBug(id = 6995200)
-        Float result = FPConversionNode.convert(CiKind.Float, bits);
+        Float result = ConvertNode.convert(CiKind.Float, ConvertNode.Op.MOV_I2F, bits);
         return result;
     }
 }

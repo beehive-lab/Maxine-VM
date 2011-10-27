@@ -101,6 +101,36 @@ public final class ConstantNode extends BooleanNode {
     }
 
     /**
+     * Returns a node for a byte constant.
+     * @param i the byte value for which to create the instruction
+     * @param graph
+     * @return a node representing the byte
+     */
+    public static ConstantNode forByte(byte i, Graph<?> graph) {
+        return graph.unique(new ConstantNode(CiConstant.forByte(i)));
+    }
+
+    /**
+     * Returns a node for a char constant.
+     * @param i the char value for which to create the instruction
+     * @param graph
+     * @return a node representing the char
+     */
+    public static ConstantNode forChar(char i, Graph<?> graph) {
+        return graph.unique(new ConstantNode(CiConstant.forChar(i)));
+    }
+
+    /**
+     * Returns a node for a short constant.
+     * @param i the short value for which to create the instruction
+     * @param graph
+     * @return a node representing the short
+     */
+    public static ConstantNode forShort(short i, Graph<?> graph) {
+        return graph.unique(new ConstantNode(CiConstant.forShort(i)));
+    }
+
+    /**
      * Returns a node for an address (jsr/ret address) constant.
      * @param i the address value for which to create the instruction
      * @param graph
