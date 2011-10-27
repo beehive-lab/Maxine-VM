@@ -36,11 +36,11 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
 /**
- * A region-based, flat, mark-sweep heap, with bump pointer allocation only.
+ * A region-based, flat, mark-sweep heap space, with bump pointer allocation only.
  * Each partially occupied region has a list of addressed ordered free chunks, used to allocate TLAB refill and an overflow allocator.
  */
-public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements HeapAccountOwner, ApplicationHeap {
-    /* For simplicity at the moment. Should be able to allocate this in GC's own heap (i.e., the bootstrap allocator).
+public final class FirstFitMarkSweepHeap extends HeapRegionSweeper implements HeapAccountOwner, HeapSpace {
+    /* For simplicity at the moment. Should be able to allocate this in GC's own heap (i.e., the HeapRegionManager's allocator).
      */
     private static final OutOfMemoryError outOfMemoryError = new OutOfMemoryError();
 

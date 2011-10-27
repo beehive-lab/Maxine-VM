@@ -25,9 +25,9 @@ package com.sun.max.vm.heap.gcx;
 import com.sun.max.unsafe.*;
 
 /**
- * Application heap interface to a GCX heap scheme.
+ * Heap Space interface. A given heap may be made of one or more such spaces.
  */
-public interface ApplicationHeap extends ResizableSpace {
+public interface HeapSpace extends ResizableSpace {
     Pointer allocate(Size size);
     Pointer allocateTLAB(Size size);
     boolean contains(Address address);
