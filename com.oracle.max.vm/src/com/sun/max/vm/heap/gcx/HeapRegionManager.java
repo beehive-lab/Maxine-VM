@@ -210,9 +210,9 @@ public final class HeapRegionManager implements HeapAccountOwner {
      */
     public void initialize(Address reservedSpace, Size maxHeapSize, Class<HeapRegionInfo> regionInfoClass) {
         // Initialize region constants (size and log constants).
-        // For now, regions have a fixed size, and their numbers depends on the size. We may want to adopt a different scheme where
-        // the size of regions is computed from the requested heap size so as to keep the region table size more or less independent of heap size.
-        HeapRegionConstants.initializeConstants();
+        // The size of regions is computed from the requested heap size so as to keep the region table bounded and adapt region size to the heap size
+        // (in particular, very large heap command large region size).
+        HeapRegionConstants.initializeConstants(maxHeapSize);
         // Adjust reserved space to region boundaries.
         final Address startOfManagedSpace = reservedSpace.alignUp(regionSizeInBytes);
         final Address endOfManagedSpace = startOfManagedSpace.plus(maxHeapSize).alignUp(regionSizeInBytes);
