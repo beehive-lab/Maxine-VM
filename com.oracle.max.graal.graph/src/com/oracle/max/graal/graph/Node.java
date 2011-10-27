@@ -422,7 +422,7 @@ public abstract class Node implements Cloneable {
          */
         Name,
         /**
-         * {@link #Id} + {@link #Name}
+         * {@link #Id} + {@link #Name}.
          */
         Short,
         /**
