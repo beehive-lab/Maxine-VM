@@ -42,7 +42,7 @@ public final class UnsafeCastNode extends FloatingNode implements Canonicalizabl
     }
 
     public UnsafeCastNode(ValueNode x, RiResolvedType toType) {
-        super(toType.kind(false));
+        super(toType.kind(false).stackKind());
         this.x = x;
         this.toType = toType;
     }

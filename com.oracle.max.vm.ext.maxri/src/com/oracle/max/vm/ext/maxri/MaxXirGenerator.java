@@ -1071,7 +1071,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         if (rank < SMALL_MULTIANEWARRAY_RANK) {
             // "small" resolved multianewarray (rank 3 or less)
             XirOperand result = asm.restart(CiKind.Object);
-            XirParameter[] lengths = new XirParameter[rank];
+            XirOperand[] lengths = new XirOperand[rank];
             for (int i = 0; i < rank; i++) {
                 lengths[i] = asm.createInputParameter("lengths[" + i + "]", CiKind.Int);
             }
@@ -1082,7 +1082,7 @@ public class MaxXirGenerator implements RiXirGenerator {
 
         // unresolved or large multianewarray
         XirOperand result = asm.restart(CiKind.Object);
-        XirParameter[] lengths = new XirParameter[rank];
+        XirOperand[] lengths = new XirOperand[rank];
         for (int i = 0; i < rank; i++) {
             lengths[i] = asm.createInputParameter("lengths[" + i + "]", CiKind.Int);
         }

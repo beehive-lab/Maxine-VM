@@ -780,9 +780,9 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
             // Otherwise it is assumed that the result is part of the inputs
             if (resultOperand.kind != CiKind.Void && resultOperand.kind != CiKind.Illegal) {
                 if (setInstructionResult) {
-                    outputOperand = newVariable(instruction.kind);
+                    outputOperand = newVariable(instruction.kind.stackKind());
                 } else {
-                    outputOperand = newVariable(resultOperand.kind);
+                    outputOperand = newVariable(resultOperand.kind.stackKind());
                 }
                 assert operands[resultOperand.index] == null;
             }
