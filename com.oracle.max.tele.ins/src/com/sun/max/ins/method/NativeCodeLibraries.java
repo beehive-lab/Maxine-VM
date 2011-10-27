@@ -63,7 +63,7 @@ public class NativeCodeLibraries {
                     libPath = stringFromCString(vm, pathAsCString);
                 } else {
                     // this is mainHandle
-                    libPath = new File(vm.bootImageFile().getParent(), "libjvm.so").getAbsolutePath();
+                    libPath = new File(vm.bootImageFile().getParent(), "libjvm." + vm.platform().getOS().libSuffix()).getAbsolutePath();
                 }
                 libInfo = new LibInfo(libPath, handle, sentinel, sentinelAddress);
             }
@@ -104,21 +104,36 @@ public class NativeCodeLibraries {
             String result = sentinel == null ? "(?) " : "";
             return result += path;
         }
+
+        public String shortName() {
+            String name = new File(path).getName();
+            int index = name.lastIndexOf('.');
+            if (index > 0) {
+                name = name.substring(0, index);
+            }
+            return name;
+        }
     }
 
     public static class SymbolInfo implements Comparable<SymbolInfo>{
         public final String name;
         public Address base;
         public int length;
+        public final LibInfo lib;
 
-        SymbolInfo(String name, long base) {
+        SymbolInfo(String name, LibInfo lib, long base) {
             this.name = name;
+            this.lib = lib;
             this.base = Address.fromLong(base);
         }
 
         @Override
         public String toString() {
             return name;
+        }
+
+        public String qualName() {
+            return lib.shortName() + "." + name;
         }
 
         public int compareTo(SymbolInfo other) {
@@ -196,7 +211,7 @@ public class NativeCodeLibraries {
             for (ELFSymbolTable.Entry entry : entryList) {
                 ELFSymbolTable.Entry64 entry64 = (ELFSymbolTable.Entry64) entry;
                 if (entry64.isFunction() && entry64.st_value != 0) {
-                    values.add(new SymbolInfo(entry64.getName(), entry64.st_value));
+                    values.add(new SymbolInfo(entry64.getName(), libInfo, entry64.st_value));
                     if (libInfo.sentinel != null && entry64.getName().equals(libInfo.sentinel)) {
                         sentinelOffset = entry64.st_value;
                     }
