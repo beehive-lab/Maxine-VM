@@ -93,7 +93,7 @@ public abstract class PostOrderNodeIterator<T extends MergeableState<T>> {
                 queueSuccessors(current);
                 current = nextQueuedNode();
             } else {
-                assert false : current.shortName();
+                assert false : current;
             }
         } while(current != null);
     }

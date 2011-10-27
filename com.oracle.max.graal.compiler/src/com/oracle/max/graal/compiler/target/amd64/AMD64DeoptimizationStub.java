@@ -58,7 +58,7 @@ public class AMD64DeoptimizationStub implements LIR.SlowPath<AMD64MacroAssembler
         masm.bind(label);
         if (GraalOptions.CreateDeoptInfo && deoptInfo != null) {
             masm.nop();
-            keepAlive.add(deoptInfo);
+            keepAlive.add(deoptInfo.toString());
             AMD64MoveOp.move(tasm, scratch.asValue(), CiConstant.forObject(deoptInfo));
             // TODO Why use scratch register here? Is it an implicit calling convention that the runtime function reads this register?
             AMD64CallOp.directCall(tasm, CiRuntimeCall.SetDeoptInfo, info);
