@@ -40,6 +40,7 @@ import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jni.*;
+import com.sun.max.vm.jvmti.*;
 
 /**
  * The VM internal class loader that is commonly referred to as the bootstrap class
@@ -64,7 +65,11 @@ public final class BootClassLoader extends ClassLoader {
 
     public Classpath classpath() {
         if (classpath == null) {
-            classpath = Classpath.bootClassPath();
+            String extraPath = null;
+            if (!MaxineVM.isHosted()) {
+                extraPath = JVMTI.getAddedBootClassPath();
+            }
+            classpath = Classpath.bootClassPath(extraPath);
         }
         return classpath;
     }

@@ -409,7 +409,7 @@ public abstract class T1XCompilation {
         }
     }
 
-    public T1XTargetMethod compile1(ClassMethodActor method, CodeAttribute codeAttribute, boolean install) {
+    private T1XTargetMethod compile1(ClassMethodActor method, CodeAttribute codeAttribute, boolean install) {
         startTimer(T1XTimer.PRE_COMPILE);
         try {
             initCompile(method, codeAttribute);
@@ -700,6 +700,13 @@ public abstract class T1XCompilation {
     protected abstract void emitEpilogue();
 
     protected int localSlotOffset(int localIndex, Kind kind) {
+        return frame.localVariableOffset(localIndex) + JVMSFrameLayout.offsetInStackSlot(kind);
+    }
+
+    /**
+     * JVMTI access to local variables.
+     */
+    public static int localSlotOffset(JVMSFrameLayout frame, int localIndex, Kind kind) {
         return frame.localVariableOffset(localIndex) + JVMSFrameLayout.offsetInStackSlot(kind);
     }
 

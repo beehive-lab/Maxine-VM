@@ -70,6 +70,17 @@ int mutex_enter_nolog(Mutex mutex) {
 #endif
 }
 
+int mutex_try_enter(Mutex mutex) {
+#if os_SOLARIS
+    return mutex_trylock(mutex);
+#elif os_LINUX || os_DARWIN
+    return pthread_mutex_trylock(mutex);
+#else
+    c_UNIMPLEMENTED();
+#endif
+
+}
+
 int mutex_enter(Mutex mutex) {
 #if log_MONITORS
     log_println("mutex_enter     (" THREAD_MUTEX_FORMAT ")", thread_self(), mutex);
