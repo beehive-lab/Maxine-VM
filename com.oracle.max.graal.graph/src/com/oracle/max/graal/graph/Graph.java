@@ -67,11 +67,11 @@ public class Graph<S extends Node> {
             if (obj == this) {
                 return true;
             }
-            if (obj instanceof Node) {
-                Node other = (Node) obj;
+            if (obj instanceof CacheEntry) {
+                CacheEntry other = (CacheEntry) obj;
                 NodeClass nodeClass = node.getNodeClass();
-                if (other.getNodeClass() == nodeClass) {
-                    return nodeClass.valueNumberable() && nodeClass.valueEqual(node, other) && nodeClass.edgesEqual(node, other);
+                if (other.node.getNodeClass() == nodeClass) {
+                    return nodeClass.valueNumberable() && nodeClass.valueEqual(node, other.node) && nodeClass.edgesEqual(node, other.node);
                 }
             }
             return false;
