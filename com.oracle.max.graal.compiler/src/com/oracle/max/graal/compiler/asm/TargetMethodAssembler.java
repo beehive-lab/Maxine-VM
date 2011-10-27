@@ -210,6 +210,7 @@ public class TargetMethodAssembler<A extends AbstractAssembler> {
     }
 
     public CiRegister asRegister(CiValue value) {
+        assert value.isRegister();
         return value.asRegister();
     }
 

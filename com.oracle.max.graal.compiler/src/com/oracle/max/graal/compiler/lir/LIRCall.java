@@ -76,7 +76,8 @@ public class LIRCall extends LIRInstruction {
             this.targetAddressIndex = -1;
         } else {
             // The last argument is the operand holding the address for the indirect call
-            this.targetAddressIndex = arguments.size() - 1;
+            assert operands.length - 1 == arguments.size();
+            this.targetAddressIndex = arguments.size();
         }
         this.target = target;
     }

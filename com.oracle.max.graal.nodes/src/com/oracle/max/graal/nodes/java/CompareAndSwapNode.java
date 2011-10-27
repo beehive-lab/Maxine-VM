@@ -65,8 +65,6 @@ public class CompareAndSwapNode extends AbstractMemoryCheckpointNode {
 
     public CompareAndSwapNode(ValueNode object, ValueNode offset, ValueNode expected, ValueNode newValue, boolean directResult) {
         super(directResult ? expected.kind.stackKind() : CiKind.Boolean.stackKind());
-        assert object.kind == CiKind.Object;
-        assert offset.kind == CiKind.Long;
         assert expected.kind == newValue.kind;
         this.object = object;
         this.offset = offset;
