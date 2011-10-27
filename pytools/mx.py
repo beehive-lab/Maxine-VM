@@ -45,8 +45,10 @@ from threading import Thread
 from argparse import ArgumentParser, REMAINDER
 from os.path import join, dirname, abspath, exists, getmtime
 import commands
+import shlex
+import types
 
-DEFAULT_JAVA_ARGS = '-d64 -ea -Xss2m -Xmx1g'
+DEFAULT_JAVA_ARGS = '-ea -Xss2m -Xmx1g'
 
 class Env(ArgumentParser):
 
@@ -60,28 +62,38 @@ class Env(ArgumentParser):
         return msg + '\n'
     
     def __init__(self):
+        self.java_initialized = False
         ArgumentParser.__init__(self, prog='max')
     
-        self.add_argument('-v',          action='store_true', dest='verbose', help='enable verbose output')
-        self.add_argument('-d',          action='store_true', dest='java_dbg', help='make Java processes wait on port 8000 for a debugger')
-        self.add_argument('--cp-pfx',    action='store', dest='cp_prefix', help='class path prefix', metavar='<arg>')
-        self.add_argument('--cp-sfx',    action='store', dest='cp_suffix', help='class path suffix', metavar='<arg>')
-        self.add_argument('--J',         action='store', dest='java_args', help='Java VM arguments (e.g. --J @-dsa)', metavar='@<args>', default=DEFAULT_JAVA_ARGS)
-        self.add_argument('--Jp',      action='append', dest='java_args_pfx', help='prefix Java VM arguments (e.g. --Jp @-dsa)', metavar='@<args>', default=[])
-        self.add_argument('--Ja',      action='append', dest='java_args_sfx', help='suffix Java VM arguments (e.g. --Ja @-dsa)', metavar='@<args>', default=[])
-        self.add_argument('--java-home', action='store', help='JDK installation directory (must be JDK 6 or later)', metavar='<path>', default=default_java_home())
-        self.add_argument('--java',       action='store', help='Java VM executable (default: bin/java under JAVA_HOME)', metavar='<path>')
-        self.add_argument('--os',        action='store', dest='os', help='operating system hosting the VM (all lower case) for remote inspecting')
-        self.add_argument('-V', '--vmdir', action='store', dest='vmdir',
+        self.add_argument('-v', action='store_true', dest='verbose', help='enable verbose output')
+        self.add_argument('-d', action='store_true', dest='java_dbg', help='make Java processes wait on port 8000 for a debugger')
+        self.add_argument('--cp-pfx', dest='cp_prefix', help='class path prefix', metavar='<arg>')
+        self.add_argument('--cp-sfx', dest='cp_suffix', help='class path suffix', metavar='<arg>')
+        self.add_argument('--J', dest='java_args', help='Java VM arguments (e.g. --J @-dsa)', metavar='@<args>', default=DEFAULT_JAVA_ARGS)
+        self.add_argument('--Jp', action='append', dest='java_args_pfx', help='prefix Java VM arguments (e.g. --Jp @-dsa)', metavar='@<args>', default=[])
+        self.add_argument('--Ja', action='append', dest='java_args_sfx', help='suffix Java VM arguments (e.g. --Ja @-dsa)', metavar='@<args>', default=[])
+        self.add_argument('--user-home', help='users home directory', metavar='<path>', default=os.path.expanduser('~'))
+        self.add_argument('--java-home', help='JDK installation directory (must be JDK 6 or later)', metavar='<path>', default=default_java_home())
+        self.add_argument('--java', help='Java VM executable (default: bin/java under JAVA_HOME)', metavar='<path>')
+        self.add_argument('--os', dest='os', help='operating system hosting the VM (all lower case) for remote inspecting')
+        self.add_argument('-V', '--vmdir', dest='vmdir',
                           metavar='<path>', 
                           help='directory for VM executable, shared libraries boot image and related files')
-        self.add_argument('-M', '--maxine', action='store', dest='maxine_dir',
+        self.add_argument('-M', '--maxine', dest='maxine_dir',
                           metavar='<path>', 
                           help='base directory of the Maxine code base')
         
         self.add_argument('commandAndArgs', nargs=REMAINDER, metavar='command args...')
         
         self.parse_args(namespace=self)
+
+        if self.java_home is None or self.java_home == '':
+            self.log('Could not find Java home. Use --java-home option or ensure JAVA_HOME environment variable is set.')
+            abort(1)
+
+        if self.user_home is None or self.user_home == '':
+            self.log('Could not find user home. Use --user-home option or ensure HOME environment variable is set.')
+            abort(1)
 
         if self.os is None:
             self.remote = False
@@ -104,6 +116,7 @@ class Env(ArgumentParser):
             self.java = join(self.java_home, 'bin', 'java')
     
         os.environ['JAVA_HOME'] = self.java_home
+        os.environ['HOME'] = self.user_home
  
         if self.maxine_dir is None:
             self.maxine_dir = dirname(abspath(dirname(sys.argv[0])))
@@ -132,19 +145,10 @@ class Env(ArgumentParser):
         
     def classpath(self, project):
         return self.jmax(['classpath', project])
-    
+            
     def run_java(self, args, nonZeroIsFatal=True, out=None, err=None, cwd=None):
-            
-        def delAt(s):
-            return s.lstrip('@')
-            
-        java_args = [delAt(self.java_args)]
-        java_args_pfx = map(delAt, self.java_args_pfx)
-        java_args_sfx = map(delAt, self.java_args_sfx)
-        dbg_args = []
-        if self.java_dbg:
-            dbg_args += ['-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8000']
-        return self.run([self.java] + java_args_pfx + java_args + dbg_args + java_args_sfx + args, nonZeroIsFatal=nonZeroIsFatal, out=out, err=err, cwd=cwd)
+        self._init_java()
+        return self.run([self.java] + self.java_args_pfx + self.java_args + self.java_args_sfx + args, nonZeroIsFatal=nonZeroIsFatal, out=out, err=err, cwd=cwd)
     
     def run(self, args, nonZeroIsFatal=True, out=None, err=None, cwd=None):
         """
@@ -156,11 +160,11 @@ class Env(ArgumentParser):
         provided out and err functions if they are not None.
         
         """
-        cmdLine = ' '.join(args)
-        args = cmdLine.split()
-
+        
+        assert isinstance(args, types.ListType), "'args' must be a list of strings: " + str(args)
+        
         if self.verbose:
-            self.log(cmdLine)
+            self.log(' '.join(args))
             
         try:
             if out is None and err is None:
@@ -181,7 +185,7 @@ class Env(ArgumentParser):
                     t.start()
                 retcode = p.wait()
         except OSError as e:
-            self.log('Error executing \'' + cmdLine + '\': ' + str(e))
+            self.log('Error executing \'' + ' '.join(args) + '\': ' + str(e))
             if self.verbose:
                 raise e
             abort(e.errno)
@@ -189,7 +193,7 @@ class Env(ArgumentParser):
 
         if retcode and nonZeroIsFatal:
             if self.verbose:
-                raise subprocess.CalledProcessError(retcode, cmdLine)
+                raise subprocess.CalledProcessError(retcode, ' '.join(args))
             abort(retcode)
             
         return retcode
@@ -198,7 +202,42 @@ class Env(ArgumentParser):
     def log(self, msg):
         print msg
 
+    def _init_java(self):
+        if self.java_initialized:
+            return
 
+        def delAt(s):
+            return s.lstrip('@')
+        
+        self.java_args = shlex.split(delAt(self.java_args))
+        self.java_args_pfx = map(shlex.split, map(delAt, self.java_args_pfx))
+        self.java_args_sfx = map(shlex.split, map(delAt, self.java_args_sfx))
+        
+        # Prepend the -d64 VM option only if the java command supports it
+        output = ''
+        try:
+            output = subprocess.check_output([self.java, '-d64', '-version'], stderr=subprocess.STDOUT)
+            self.java_args = ['-d64'] + self.java_args
+        except subprocess.CalledProcessError as e:
+            try:
+                output = subprocess.check_output([self.java, '-version'], stderr=subprocess.STDOUT)
+            except subprocess.CalledProcessError as e:
+                print e.output
+                abort(e.returncode)
+
+        output = output.split()
+        assert output[0] == 'java'
+        assert output[1] == 'version'
+        version = output[2]
+        if not version.startswith('"1.6') and not version.startswith('"1.7'):
+            self.log('Requires Java version 1.6 or 1.7, got version ' + version)
+            abort(1)
+
+        if self.java_dbg:
+            self.java_args += ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8000']
+            
+        self.java_initialized = True
+    
 def default_java_home():
     javaHome = os.getenv('JAVA_HOME')
     if javaHome is None:
@@ -210,8 +249,6 @@ def default_java_home():
             javaHome = '/usr/jdk/latest'
     return javaHome
        
-       
-
 def abort(code):
     """ raises a SystemExit exception with the provided exit code """
     raise SystemExit(code)

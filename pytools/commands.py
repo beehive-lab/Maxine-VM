@@ -30,7 +30,6 @@ import mx
 import os
 import shutil
 import fnmatch
-import tempfile
 from os.path import join, exists, dirname
 from argparse import ArgumentParser, REMAINDER
 import xml.dom.minidom
@@ -93,6 +92,7 @@ def build(env, args):
     
     parser = ArgumentParser(prog='max build');
     parser.add_argument('-c', action='store_true', dest='clean', help='removes existing build output')
+    parser.add_argument('--no-native', action='store_false', dest='native', help='do not build com.oracle.max.vm.native')
     parser.add_argument('projects', nargs=REMAINDER, metavar='projects...')
     parser.add_argument('--jdt', help='Eclipse installation or path to ecj.jar for using the Eclipse batch compiler instead of javac', metavar='<path>')
 
@@ -108,7 +108,14 @@ def build(env, args):
             if len(choices) != 0:
                 jdtJar = join(plugins, sorted(choices, reverse=True)[0])
 
-    allProjects = ['com.oracle.max.vm.native'] + env.jmax(['projects']).split()
+    allProjects = env.jmax(['projects']).split()
+    if args.native:
+        if env.os == 'windows':
+            env.log('Skipping C compilation on Windows until it is supported')
+            pass
+        else:
+            allProjects = ['com.oracle.max.vm.native'] + allProjects
+    
     if len(args.projects) == 0:
         projects = allProjects
     else:
@@ -149,9 +156,9 @@ def build(env, args):
             if len(javafilelist) == 0:
                 env.log('[no Java sources in {0} - skipping]'.format(sourceDir))
                 continue
-            
-            (_, tmpfile) = tempfile.mkstemp(prefix='javafiles-', suffix='.list')
-            argfile = open(tmpfile, 'w')
+
+            argfileName = join(projectDir, 'javafilelist.txt')
+            argfile = open(argfileName, 'w')
             argfile.write('\n'.join(javafilelist))
             argfile.close()
             
@@ -187,7 +194,8 @@ def build(env, args):
                              '-warn:-unusedImport,-unchecked',
                              '-d', outputDir, '@' + argfile.name])
             finally:
-                os.unlink(argfile.name)
+                os.remove(argfileName)
+                        
                 
             for name in nonjavafilelist:
                 dst = join(outputDir, name[len(sourceDir) + 1:])
@@ -215,6 +223,7 @@ If no projects are given, then all Java projects are checked."""
         projectDir = join(env.maxine_dir, project)
         sourceDirs = env.jmax(['source_dirs', project]).split()
         dotCheckstyle = join(projectDir, '.checkstyle')
+        
         if not exists(dotCheckstyle):
             continue
         
@@ -237,7 +246,8 @@ If no projects are given, then all Java projects are checked."""
             exclude = join(projectDir, '.checkstyle.exclude')
             if exists(exclude):
                 with open(exclude) as f:
-                    patterns = [name.rstrip() for name in f.readlines()]
+                    # Convert patterns to OS separators
+                    patterns = [name.rstrip().replace('/', os.sep) for name in f.readlines()]
                 def match(name):
                     for p in patterns:
                         if p in name:
@@ -247,19 +257,42 @@ If no projects are given, then all Java projects are checked."""
                     
                 javafilelist = [name for name in javafilelist if not match(name)]
             
-            (_, auditFile) = tempfile.mkstemp(prefix='audit.')
-            
+            auditfileName = join(projectDir, 'checkstyleOutput.txt')
             env.log('Running Checkstyle on {0} using {1}...'.format(sourceDir, config))
+            
             try:
-                env.run_java(['-Xmx1g', '-jar', env.jmax(['library', 'CHECKSTYLE']), '-c', config, '-o', auditFile] + javafilelist)
-                warnings = []
-                with open(auditFile) as f:
-                    warnings = [line.strip() for line in f if 'warning:' in line]
-                if len(warnings) != 0:
-                    map(env.log, warnings)
-                    mx.abort(1)
+
+                # Checkstyle is unable to read the filenames to process from a file, and the
+                # CreateProcess function on Windows limits the length of a command line to
+                # 32,768 characters (http://msdn.microsoft.com/en-us/library/ms682425%28VS.85%29.aspx)
+                # so calling Checkstyle must be done in batches.
+                while len(javafilelist) != 0:
+                    i = 0
+                    size = 0
+                    while i < len(javafilelist):
+                        s = len(javafilelist[i]) + 1
+                        if (size + s < 30000):
+                            size += s
+                            i += 1
+                        else:
+                            break
+                    
+                    batch = javafilelist[:i]
+                    javafilelist = javafilelist[i:]
+                    try:
+                        env.run_java(['-Xmx1g', '-jar', env.jmax(['library', 'CHECKSTYLE']), '-c', config, '-o', auditfileName] + batch)
+                    finally:
+                        with open(auditfileName) as f:
+                            warnings = [line.strip() for line in f if 'warning:' in line]
+                            if len(warnings) != 0:
+                                map(env.log, warnings)
+                                mx.abort(1)
             finally:
-                os.unlink(auditFile)
+                os.unlink(auditfileName)
+
+def copycheck(env, args):
+    """run copyright check on the Maxine sources (defined as being under hg control)"""
+    env.run_java(['-cp', env.jmax(['classpath_noresolve', 'com.oracle.max.base']), 'com.sun.max.tools.CheckCopyright'] + args)
 
 def clean(env, args):
     """remove all class files, images, and executables
@@ -286,5 +319,7 @@ table = {
     'build': (build, '[options] projects...'),
     'help': (help, '[command]'),
     'check': (check, 'projects...'),
-    'clean': (clean, '')
+    'clean': (clean, ''),
+    'copycheck': (copycheck, '')
+    
 }
