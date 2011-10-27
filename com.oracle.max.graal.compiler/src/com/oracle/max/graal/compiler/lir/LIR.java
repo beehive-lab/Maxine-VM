@@ -158,7 +158,17 @@ public class LIR {
 
     @SuppressWarnings("unchecked")
     private void emitOp(TargetMethodAssembler tasm, LIRInstruction op) {
-        op.code.emitCode(tasm, op);
+        try {
+            try {
+                op.code.emitCode(tasm, op);
+            } catch (AssertionError t) {
+                throw new VerificationError(t);
+            } catch (RuntimeException t) {
+                throw new VerificationError(t);
+            }
+        } catch (VerificationError e) {
+            throw e.addContext("lir instruction", op);
+        }
     }
 
     @SuppressWarnings("unchecked")

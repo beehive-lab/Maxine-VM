@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,53 +20,41 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.nodes.virtual;
-
-import java.util.*;
+package com.oracle.max.graal.nodes.extended;
 
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
-import com.sun.cri.ci.*;
+import com.sun.cri.bytecode.*;
 import com.sun.cri.ri.*;
 
+/**
+ * Instruction implementing the semantics of {@link Bytecodes#ALLOCA}.
+ */
+public final class StackAllocateNode extends FixedWithNextNode {
 
-public class VirtualObjectNode extends ValueNode {
+    @Input private ValueNode size;
+    @Data private final RiType declaredType;
 
-    @Data private RiType type;
-    private EscapeField[] fields;
-
-    public VirtualObjectNode(RiType type, EscapeField[] fields) {
-        super(CiKind.Int);
-        this.type = type;
-        this.fields = fields;
+    public ValueNode size() {
+        return size;
     }
 
-    public RiType type() {
-        return type;
-    }
-
-    public EscapeField[] fields() {
-        return fields;
+    /**
+     * Creates a new StackAllocate instance.
+     */
+    public StackAllocateNode(ValueNode size, RiType declaredType) {
+        super(declaredType.kind(false));
+        this.size = size;
+        this.declaredType = declaredType;
     }
 
     @Override
     public void accept(ValueVisitor v) {
-        // nothing to do...
+        v.visitStackAllocate(this);
     }
 
     @Override
-    public Map<Object, Object> getDebugProperties() {
-        Map<Object, Object> properties = super.getDebugProperties();
-        properties.put("type", type);
-        return properties;
-    }
-
-    @Override
-    public String toString(Verbosity verbosity) {
-        if (verbosity == Verbosity.Name) {
-            return super.toString(Verbosity.Name) + " " + type.name();
-        } else {
-            return super.toString(verbosity);
-        }
+    public RiResolvedType declaredType() {
+        return (declaredType instanceof RiResolvedType) ? (RiResolvedType) declaredType : null;
     }
 }

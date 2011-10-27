@@ -73,7 +73,11 @@ public class VirtualObjectFieldNode extends ValueNode {
     }
 
     @Override
-    public String shortName() {
-        return "VirtualObjectField " + object().fields()[index].name();
+    public String toString(Verbosity verbosity) {
+        if (verbosity == Verbosity.Name) {
+            return super.toString(Verbosity.Name) + " " + object().fields()[index].name();
+        } else {
+            return super.toString(verbosity);
+        }
     }
 }

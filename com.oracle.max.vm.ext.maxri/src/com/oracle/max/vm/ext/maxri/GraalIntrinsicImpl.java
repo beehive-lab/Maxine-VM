@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.graal;
+package com.oracle.max.vm.ext.maxri;
 
 import com.oracle.max.cri.intrinsics.*;
 import com.oracle.max.graal.graph.*;
@@ -37,12 +37,11 @@ public interface GraalIntrinsicImpl extends IntrinsicImpl {
      * Creates the HIR instructions necessary for the implementation of the intrinsic and appends them using the
      * supplied {@link GraphBuilder} object.
      * @param runtime The RiRuntime, used to get information about types, etc.
+     * @param caller The method that calls the intrinsified method.
      * @param target The intrinsic method, i.e., the method that has the {@link INTRINSIC} annotation.
      * @param graph the graph that the intrinsic will be created into
      * @param args The arguments of the intrinsic methods, to be used as the parameters of the intrinsic instruction.
-     * @param isStatic True if it is a static method call for the intrinsic.
-     * @param stateBefore Frame state of the intrinsic call site.
      * @return The instruction that should be returned by the intrinsic, or null if no result should be returned.
      */
-    ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiMethod target, ValueNode[] args, boolean isStatic, FrameState stateBefore);
+    ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args);
 }

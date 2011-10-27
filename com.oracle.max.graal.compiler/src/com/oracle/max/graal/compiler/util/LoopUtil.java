@@ -27,6 +27,7 @@ import java.util.*;
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.schedule.*;
 import com.oracle.max.graal.graph.*;
+import com.oracle.max.graal.graph.Node.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.PhiNode.PhiType;
 import com.oracle.max.graal.nodes.extended.*;
@@ -108,7 +109,7 @@ public class LoopUtil {
 
         @Override
         public String toString() {
-            return "Loop #" + loopBegin().id();
+            return "Loop #" + loopBegin().toString(Verbosity.Id);
         }
     }
 

@@ -25,6 +25,7 @@ package com.oracle.max.graal.nodes;
 import java.util.*;
 
 import com.oracle.max.graal.graph.*;
+import com.oracle.max.graal.graph.Node.Verbosity;
 import com.sun.cri.ci.*;
 
 
@@ -102,6 +103,6 @@ public class ValueUtil {
      * @return the instruction representation as a string
      */
     public static String valueString(ValueNode value) {
-        return (value == null) ? "-" : ("" + value.kind.typeChar + value.id());
+        return (value == null) ? "-" : ("" + value.kind.typeChar + value.toString(Verbosity.Id));
     }
 }

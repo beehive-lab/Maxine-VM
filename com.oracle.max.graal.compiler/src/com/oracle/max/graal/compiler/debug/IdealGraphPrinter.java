@@ -32,6 +32,7 @@ import com.oracle.max.graal.compiler.schedule.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.compiler.util.LoopUtil.Loop;
 import com.oracle.max.graal.graph.*;
+import com.oracle.max.graal.graph.Node.Verbosity;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.loop.*;
 import com.sun.cri.bytecode.*;
@@ -44,12 +45,12 @@ import com.sun.cri.ri.*;
 public class IdealGraphPrinter {
 
     private static class Edge {
-        final int from;
-        final int to;
+        final String from;
         final int fromIndex;
+        final String to;
         final int toIndex;
 
-        Edge(int from, int fromIndex, int to, int toIndex) {
+        Edge(String from, int fromIndex, String to, int toIndex) {
             this.from = from;
             this.fromIndex = fromIndex;
             this.to = to;
@@ -254,14 +255,14 @@ public class IdealGraphPrinter {
                 continue;
             }
 
-            stream.printf("   <node id='%d'><properties>%n", node.id());
-            stream.printf("    <p name='idx'>%d</p>%n", node.id());
+            stream.printf("   <node id='%s'><properties>%n", node.toString(Verbosity.Id));
+            stream.printf("    <p name='idx'>%s</p>%n", node.toString(Verbosity.Id));
 
             Map<Object, Object> props = node.getDebugProperties();
             if (!props.containsKey("name") || props.get("name").toString().trim().length() == 0) {
                 String name;
                 if (shortNames) {
-                    name = node.shortName();
+                    name = node.toString(Verbosity.Name);
                 } else {
                     name = node.toString();
                 }
@@ -288,7 +289,7 @@ public class IdealGraphPrinter {
                         if (sb.length() > 0) {
                             sb.append(", ");
                         }
-                        sb.append(loop.loopBegin().id());
+                        sb.append(loop.loopBegin().toString(Verbosity.Id));
                     }
                 }
             }
@@ -337,7 +338,7 @@ public class IdealGraphPrinter {
             int fromIndex = 0;
             for (Node successor : node.successors()) {
                 if (successor != null && !omittedClasses.contains(successor.getClass())) {
-                    edges.add(new Edge(node.id(), fromIndex, successor.id(), 0));
+                    edges.add(new Edge(node.toString(Verbosity.Id), fromIndex, successor.toString(Verbosity.Id), 0));
                 }
                 fromIndex++;
             }
@@ -346,7 +347,7 @@ public class IdealGraphPrinter {
             int toIndex = 1;
             for (Node input : node.inputs()) {
                 if (input != null && !omittedClasses.contains(input.getClass())) {
-                    edges.add(new Edge(input.id(), input.successors().explicitCount(), node.id(), toIndex));
+                    edges.add(new Edge(input.toString(Verbosity.Id), input.successors().explicitCount(), node.toString(Verbosity.Id), toIndex));
                 }
                 toIndex++;
             }
@@ -356,7 +357,7 @@ public class IdealGraphPrinter {
     }
 
     private void printEdge(Edge edge) {
-        stream.printf("   <edge from='%d' fromIndex='%d' to='%d' toIndex='%d'/>%n", edge.from, edge.fromIndex, edge.to, edge.toIndex);
+        stream.printf("   <edge from='%s' fromIndex='%d' to='%s' toIndex='%d'/>%n", edge.from, edge.fromIndex, edge.to, edge.toIndex);
     }
 
     private void printBlock(Graph<?> graph, Block block, NodeMap<Block> nodeToBlock) {
@@ -412,7 +413,7 @@ public class IdealGraphPrinter {
 
             for (Node node : nodes) {
                 if (!omittedClasses.contains(node.getClass())) {
-                    stream.printf("     <node id='%d'/>%n", node.id());
+                    stream.printf("     <node id='%s'/>%n", node.toString(Verbosity.Id));
                 }
             }
         }
@@ -425,7 +426,7 @@ public class IdealGraphPrinter {
             stream.printf("   <block name='noBlock'>%n");
             stream.printf("    <nodes>%n");
             for (Node node : noBlockNodes) {
-                stream.printf("     <node id='%d'/>%n", node.id());
+                stream.printf("     <node id='%s'/>%n", node.toString(Verbosity.Id));
             }
             stream.printf("    </nodes>%n");
             stream.printf("   </block>%n");

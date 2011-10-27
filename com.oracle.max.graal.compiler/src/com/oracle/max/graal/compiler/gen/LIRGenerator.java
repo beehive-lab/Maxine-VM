@@ -703,7 +703,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
                 // Nothing to emit.
             } else {
                 LIRDebugInfo info = stateFor(comp);
-                Label stubEntry = createDeoptStub(DeoptAction.InvalidateReprofile, info, "emitGuardComp " + comp);
+                Label stubEntry = createDeoptStub(DeoptAction.InvalidateReprofile, info, comp);
                 emitBooleanBranch(comp, null, new LIRBlock(stubEntry, info), null, null, info);
             }
         }
@@ -952,7 +952,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     @Override
     public void visitDeoptimize(DeoptimizeNode deoptimize) {
         LIRDebugInfo info = stateFor(deoptimize);
-        Label stubEntry = createDeoptStub(deoptimize.action(), info, "DeoptimizeNode " + deoptimize);
+        Label stubEntry = createDeoptStub(deoptimize.action(), info, deoptimize);
         emitJump(stubEntry, info);
     }
 
@@ -1253,7 +1253,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     }
 
     private CiValue operandForPhi(PhiNode phi) {
-        assert phi.type() == PhiType.Value : "wrong phi type: " + phi.id();
+        assert phi.type() == PhiType.Value : "wrong phi type: " + phi;
         if (phi.operand().isIllegal()) {
             // allocate a variable for this phi
             createResultVariable(phi);

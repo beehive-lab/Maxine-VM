@@ -25,6 +25,7 @@ package com.oracle.max.graal.compiler.target.amd64;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.lir.*;
+import com.oracle.max.graal.compiler.lir.FrameMap.StackBlock;
 import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
 
@@ -35,6 +36,7 @@ public class AMD64MaxineOp {
     public static final BreakpointOpcode BREAKPOINT = new BreakpointOpcode();
     public static final SignificantBitOpcode MSB = new SignificantBitOpcode();
     public static final SignificantBitOpcode LSB = new SignificantBitOpcode();
+    public static final StackAllocateOpcode STACK_ALLOCATE = new StackAllocateOpcode();
 
     protected static class BreakpointOpcode implements LIROpcode<AMD64MacroAssembler, LIRInstruction> {
         public LIRInstruction create() {
@@ -78,6 +80,17 @@ public class AMD64MaxineOp {
                     throw Util.shouldNotReachHere();
                 }
             }
+        }
+    }
+
+    protected static class StackAllocateOpcode implements LIROpcode<AMD64MacroAssembler, LIRStackAllocate> {
+        public LIRInstruction create(CiVariable result, StackBlock stackBlock) {
+            return new LIRStackAllocate(this, result, stackBlock);
+        }
+
+        @Override
+        public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRStackAllocate op) {
+            tasm.masm.leaq(op.result().asRegister(), tasm.compilation.frameMap().toStackAddress(op.stackBlock));
         }
     }
 }

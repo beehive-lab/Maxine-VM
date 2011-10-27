@@ -92,4 +92,13 @@ public class MethodCallTargetNode extends CallTargetNode {
     public Collection<InvokeNode> invokes() {
         return ValueUtil.filter(this.usages(), InvokeNode.class);
     }
+
+    @Override
+    public String toString(Verbosity verbosity) {
+        if (verbosity == Verbosity.Long) {
+            return super.toString(Verbosity.Short) + "(" + targetMethod() + ")";
+        } else {
+            return super.toString(verbosity);
+        }
+    }
 }

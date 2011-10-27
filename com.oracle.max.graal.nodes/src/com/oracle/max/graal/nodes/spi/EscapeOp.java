@@ -32,7 +32,7 @@ import com.oracle.max.graal.nodes.virtual.*;
 import com.sun.cri.ci.*;
 
 
-public abstract class EscapeOp implements Op {
+public abstract class EscapeOp {
 
     public abstract boolean canAnalyze(Node node);
 

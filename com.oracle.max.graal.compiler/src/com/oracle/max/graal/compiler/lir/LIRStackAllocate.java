@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,9 +20,25 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.graph;
+package com.oracle.max.graal.compiler.lir;
 
+import com.oracle.max.graal.compiler.lir.FrameMap.StackBlock;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
 
-public interface Op {
+/**
+ * LIR instruction used in translating {@link Bytecodes#ALLOCA}.
+ */
+public class LIRStackAllocate extends LIRInstruction {
 
+    public final StackBlock stackBlock;
+
+    /**
+     * Creates an LIR instruction modelling a stack block allocation.
+     * @param result
+     */
+    public LIRStackAllocate(LIROpcode opcode, CiValue result, StackBlock stackBlock) {
+        super(opcode, result, null);
+        this.stackBlock = stackBlock;
+    }
 }

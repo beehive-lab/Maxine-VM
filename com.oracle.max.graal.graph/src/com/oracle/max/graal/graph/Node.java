@@ -103,7 +103,7 @@ public abstract class Node implements Cloneable {
         nodeClass = NodeClass.get(getClass());
     }
 
-    public int id() {
+    int id() {
         return id;
     }
 
@@ -141,11 +141,6 @@ public abstract class Node implements Cloneable {
 
     final void incModCount() {
         modCount++;
-    }
-
-
-    public String shortName() {
-        return getNodeClass().shortName();
     }
 
     public boolean isDeleted() {
@@ -206,10 +201,6 @@ public abstract class Node implements Cloneable {
 
     public final NodeClass getNodeClass() {
         return nodeClass;
-    }
-
-    public <T extends Op> T lookup(Class<T> clazz) {
-        return null;
     }
 
     private boolean checkReplaceWith(Node other) {
@@ -324,23 +315,6 @@ public abstract class Node implements Cloneable {
         return newNode;
     }
 
-    /**
-     * Provides a {@link Map} of properties of this node for use in debugging (e.g., to view in the ideal graph
-     * visualizer). Subclasses overriding this method should add to the map returned by their superclass.
-     */
-    public Map<Object, Object> getDebugProperties() {
-        Map<Object, Object> map = new HashMap<Object, Object>();
-        map.put("usageCount", usages.size());
-        map.put("predecessorCount", predecessor == null ? 0 : 1);
-        getNodeClass().getDebugProperties(this, map);
-        return map;
-    }
-
-    @Override
-    public String toString() {
-        return this.getClass().getSimpleName() + "-" + this.id();
-    }
-
     public boolean verify() {
         assertTrue(isAlive(), "cannot verify inactive nodes (id=%d)", id);
         assertTrue(graph() != null, "null graph");
@@ -416,5 +390,75 @@ public abstract class Node implements Cloneable {
     @Override
     public final boolean equals(Object obj) {
         return super.equals(obj);
+    }
+
+    /**
+     * Provides a {@link Map} of properties of this node for use in debugging (e.g., to view in the ideal graph
+     * visualizer). Subclasses overriding this method should add to the map returned by their superclass.
+     */
+    public Map<Object, Object> getDebugProperties() {
+        Map<Object, Object> map = new HashMap<Object, Object>();
+        map.put("usageCount", usages.size());
+        map.put("predecessorCount", predecessor == null ? 0 : 1);
+        getNodeClass().getDebugProperties(this, map);
+        return map;
+    }
+
+    /**
+     * This method is a shortcut for {@link #toString(Verbosity)} with {@link Verbosity#Short}.
+     */
+    @Override
+    public final String toString() {
+        return toString(Verbosity.Short);
+    }
+
+    public enum Verbosity {
+        /**
+         * Only the id of the node.
+         */
+        Id,
+        /**
+         * Only the name of the node, which may contain some more information for certain node types (constants, ...).
+         */
+        Name,
+        /**
+         * {@link #Id} + {@link #Name}.
+         */
+        Short,
+        /**
+         * Defaults to {@link #Short} and may be enhanced by subclasses.
+         */
+        Long,
+        /**
+         * All the other information plus all debug properties of the node.
+         */
+        All
+    }
+
+    /**
+     * Creates a String representation for this node with a given {@link Verbosity}.
+     */
+    public String toString(Verbosity verbosity) {
+        switch (verbosity) {
+            case Id:
+                return Integer.toString(id);
+            case Name:
+                return getNodeClass().shortName();
+            case Short:
+                return toString(Verbosity.Id) + "|" + toString(Verbosity.Name);
+            case Long:
+                return toString(Verbosity.Short);
+            case All: {
+                StringBuilder str = new StringBuilder();
+                str.append(toString(Verbosity.Short)).append(" { ");
+                for (Map.Entry<Object, Object> entry : getDebugProperties().entrySet()) {
+                    str.append(entry.getKey()).append("=").append(entry.getValue()).append(", ");
+                }
+                str.append(" }");
+                return str.toString();
+            }
+            default:
+                throw new RuntimeException("unknown verbosity: " + verbosity);
+        }
     }
 }

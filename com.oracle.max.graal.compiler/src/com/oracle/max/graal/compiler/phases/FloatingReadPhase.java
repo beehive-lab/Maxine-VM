@@ -114,7 +114,7 @@ public class FloatingReadPhase extends Phase {
             if (original == newValue) {
                 // Nothing to merge.
                 if (GraalOptions.TraceMemoryMaps) {
-                    TTY.println("Nothing to merge both nodes are " + original.id());
+                    TTY.println("Nothing to merge both nodes are " + original);
                 }
                 return;
             }
@@ -123,7 +123,7 @@ public class FloatingReadPhase extends Phase {
                 PhiNode phi = (PhiNode) original;
                 phi.addInput((ValueNode) newValue);
                 if (GraalOptions.TraceMemoryMaps) {
-                    TTY.println("Add new input to phi " + original.id() + ": " + newValue.id());
+                    TTY.println("Add new input to " + original + ": " + newValue);
                 }
                 assert phi.valueCount() <= phi.merge().endCount() : phi.merge();
             } else {
@@ -134,7 +134,7 @@ public class FloatingReadPhase extends Phase {
                 }
                 phi.addInput((ValueNode) newValue);
                 if (GraalOptions.TraceMemoryMaps) {
-                    TTY.println("Creating new phi " + phi.id() + " merge=" + phi.merge() + ", mergeOperationCount=" + mergeOperationCount + ", newValue=" + newValue.id() + ", location=" + location);
+                    TTY.println("Creating new " + phi + " merge=" + phi.merge() + ", mergeOperationCount=" + mergeOperationCount + ", newValue=" + newValue + ", location=" + location);
                 }
                 assert phi.valueCount() <= phi.merge().endCount() + ((phi.merge() instanceof LoopBeginNode) ? 1 : 0) : phi.merge() + "/" + phi.valueCount() + "/" + phi.merge().endCount() + "/" + mergeOperationCount;
                 assert m.usages().contains(phi);
@@ -161,7 +161,7 @@ public class FloatingReadPhase extends Phase {
             readNode.replaceAtPredecessors(next);
 
             if (GraalOptions.TraceMemoryMaps) {
-                TTY.println("Register read to node " + readNode.id());
+                TTY.println("Register read to node " + readNode);
             }
 
             // Create dependency on previous node that creates the memory state for this location.
@@ -369,7 +369,7 @@ public class FloatingReadPhase extends Phase {
         TTY.println();
         TTY.println("Loops:");
         for (LoopBeginNode begin : graph.getNodes(LoopBeginNode.class)) {
-            TTY.print("Loop " + begin.id() + " modified values: " + modifiedValues.get(begin));
+            TTY.print("Loop " + begin + " modified values: " + modifiedValues.get(begin));
             TTY.println();
         }
 //

@@ -89,8 +89,12 @@ public final class InvokeNode extends AbstractMemoryCheckpointNode implements No
     }
 
     @Override
-    public String toString() {
-        return super.toString() + callTarget().targetMethod();
+    public String toString(Verbosity verbosity) {
+        if (verbosity == Verbosity.Long) {
+            return super.toString(Verbosity.Short) + "(bci=" + bci + ")";
+        } else {
+            return super.toString(verbosity);
+        }
     }
 
     public int bci() {

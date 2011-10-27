@@ -32,6 +32,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.cri.intrinsics.*;
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.graph.*;
@@ -66,11 +67,17 @@ public class MaxRuntime implements GraalRuntime {
 
     private static MaxRuntime instance = new MaxRuntime();
 
+    private IntrinsicImpl.Registry intrinsicRegistry;
+
     public static MaxRuntime getInstance() {
         return instance;
     }
 
     private MaxRuntime() {
+    }
+
+    public void setIntrinsicRegistry(IntrinsicImpl.Registry registry) {
+        intrinsicRegistry = registry;
     }
 
     /**
@@ -413,12 +420,31 @@ public class MaxRuntime implements GraalRuntime {
     }
 
     public Graph<EntryPointNode> intrinsicGraph(RiResolvedMethod caller, int bci, RiResolvedMethod method, List< ? extends Node> parameters) {
-
         MethodActor maxMethod = (MethodActor) method;
         if (maxMethod.intrinsic() != null) {
-            throw new UnsupportedOperationException("intrinsic not implemented");
+            IntrinsicImpl impl = intrinsicRegistry.get(method);
+            if (impl != null) {
+                Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
+                ValueNode[] args = new ValueNode[parameters.size()];
+                for (int i = 0; i < args.length; i++) {
+                    args[i] = graph.unique(new LocalNode(((ValueNode) parameters.get(i)).kind, 0, graph.start()));
+                }
+                ValueNode node = ((GraalIntrinsicImpl) impl).createHIR(this, graph, caller, method, args);
+                if (node instanceof FixedNode) {
+                    if (node instanceof FixedWithNextNode) {
+                        graph.start().setNext((FixedNode) node);
+                        ((FixedWithNextNode) node).setNext(graph.add(new ReturnNode(node)));
+                    } else {
+                        graph.start().setNext((FixedNode) node);
+                    }
+                } else {
+                    graph.start().setNext(graph.add(new ReturnNode(node)));
+                }
+                return graph;
+            } else {
+                throw new UnsupportedOperationException("intrinsic not implemented: " + maxMethod.intrinsic());
+            }
         }
-        // TODO(tw): Implement intrinsics for Maxine.
         return null;
     }
 

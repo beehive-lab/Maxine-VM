@@ -107,8 +107,12 @@ public final class CompareNode extends BooleanNode implements Canonicalizable {
     }
 
     @Override
-    public String shortName() {
-        return "Comp " + condition.operator;
+    public String toString(Verbosity verbosity) {
+        if (verbosity == Verbosity.Name) {
+            return super.toString(Verbosity.Name) + " " + condition.operator;
+        } else {
+            return super.toString(verbosity);
+        }
     }
 
     private Node optimizeMaterialize(CiConstant constant, MaterializeNode materializeNode) {

@@ -62,7 +62,7 @@ public final class UnsafeCastNode extends FloatingNode implements Canonicalizabl
         if (x != null && x.declaredType() != null && x.declaredType().isSubtypeOf(toType)) {
             return x;
         }
-        return null;
+        return this;
     }
 
     @Override
