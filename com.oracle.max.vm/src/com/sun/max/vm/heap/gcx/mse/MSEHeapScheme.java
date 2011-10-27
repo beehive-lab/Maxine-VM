@@ -200,7 +200,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
         } finally {
             disableCustomAllocation();
         }
-        theHeapRegionManager().verifyAfterInitialization(heapMarker);
+        theHeapRegionManager().checkOutgoingReferences();
     }
 
     @Override

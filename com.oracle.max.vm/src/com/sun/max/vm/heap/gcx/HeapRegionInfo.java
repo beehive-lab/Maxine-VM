@@ -32,10 +32,10 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.reference.*;
 /**
- * Descriptor of heap region.
+ * Descriptor of a heap region.
  * The information recorded is carefully crafted so that a zero-filled HeapRegionInfo
  * instance represents the state of a free region, not allocated to any heap account.
- * This avoids costly initialization of the {@link RegionTable} entries at startup.
+ * This avoids initialization of the {@link RegionTable} entries at startup.
  */
 public class HeapRegionInfo {
 
@@ -139,27 +139,30 @@ public class HeapRegionInfo {
     int flags; // NOTE: don't want to use an EnumSet here. Don't want a long for storing flags; and want the flags embedded in the heap region info.
 
     /**
-     * Index, in number of words relative to the beginning of a region to the first free chunk of the region.
+     * Offset (in bytes) relative to the beginning of a region to the first free chunk of the region.
      * Zero if the region is empty.
      */
     @INSPECTED
-    int firstFreeChunkIndex;
+    private int firstFreeChunkOffset;
     /**
      * Number of free chunks. Zero if the region is empty.
      */
     @INSPECTED
-    int numFreeChunks;
+    private int numFreeChunks;
     /**
-     * Space available for allocation, in words. This excludes dark matter than cannot be used
+     * Space available for allocation, in bytes. This excludes dark matter than cannot be used
      * for allocation. Zero if the region is empty.
      */
-    int freeSpace;
+    private int freeSpace;
     /**
-     * Amount of live data, in words. Zero if the region is empty.
+     * Amount of live data, in bytes. Zero if the region is empty.
      * Can be used  with {@link #freeSpace} to determine dark matter.
      */
-    int liveData;
+    private int liveData;
 
+    /**
+     * Owner of the region described by {@link HeapRegionInfo} instance.
+     */
     HeapAccountOwner owner;
 
     public final boolean isEmpty() {
@@ -199,31 +202,12 @@ public class HeapRegionInfo {
     }
 
     /**
-     * Return an offset in bytes from the start of the region to the first free chunk in the region.
-     * @return
-     */
-    private int firstFreeChunkOffset() {
-        return firstFreeChunkIndex << Word.widthValue().log2numberOfBytes;
-    }
-    public final int liveInWords() {
-        return liveData;
-    }
-
-    public final int darkMatterInWords() {
-        return regionSizeInWords - (liveData + freeSpace);
-    }
-
-    public final int freeWordsInChunks() {
-        return freeSpace;
-    }
-
-    /**
      * Total number of free bytes in free chunks. This is only relevant for region with at least one free chunk.
      * Empty regions have a free bytes count of zero.
      * @return
      */
     public final int freeBytesInChunks() {
-        return freeSpace << Word.widthValue().log2numberOfBytes;
+        return freeSpace;
     }
 
     public final int freeBytes() {
@@ -273,12 +257,7 @@ public class HeapRegionInfo {
      * @return Address to the first chunk of space available for allocation, or zero if the region is full.
      */
     final Address firstFreeBytes() {
-        return isFull() ? Address.zero() : regionStart().plus(firstFreeChunkOffset());
-    }
-
-    @INLINE
-    private int indexInRegion(Address address) {
-        return offsetInRegion(address) >>> Word.widthValue().log2numberOfBytes;
+        return isFull() ? Address.zero() : regionStart().plus(firstFreeChunkOffset);
     }
 
     private int offsetInRegion(Address address) {
@@ -296,14 +275,14 @@ public class HeapRegionInfo {
     private void clear() {
         liveData = 0;
         numFreeChunks  = 0;
-        firstFreeChunkIndex = 0;
+        firstFreeChunkOffset = 0;
         freeSpace = 0;
     }
 
     final void setFreeChunks(Address firstChunkAddress, int numBytes, int numChunks) {
-        firstFreeChunkIndex = indexInRegion(firstChunkAddress);
+        firstFreeChunkOffset = offsetInRegion(firstChunkAddress);
         numFreeChunks = numChunks;
-        freeSpace = numBytes >>> Word.widthValue().log2numberOfBytes;
+        freeSpace = numBytes;
     }
 
     final void setFreeChunks(Address firstChunkAddress, Size numBytes, int numChunks) {
@@ -311,7 +290,7 @@ public class HeapRegionInfo {
     }
 
     final void clearFreeChunks() {
-        firstFreeChunkIndex = 0;
+        firstFreeChunkOffset = 0;
         numFreeChunks = 0;
         freeSpace = 0;
     }

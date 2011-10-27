@@ -64,6 +64,10 @@ public final class HeapRegionManager implements HeapAccountOwner {
      */
     private HeapAccount<HeapRegionManager> managerHeapAccount;
 
+    /**
+     * Heap account of the region manager. This account is distinct from all other heap accounts
+     * and in particular, heap accounts used by applications. It serves the need of the heap region manager only.
+     */
     public HeapAccount<HeapRegionManager> heapAccount() {
         return managerHeapAccount;
     }
@@ -337,6 +341,9 @@ public final class HeapRegionManager implements HeapAccountOwner {
         regionAllocator.uncommit(firstRegionId, numRegions);
     }
 
+    /**
+     * Verifies, in debug mode only (@see {@link MaxineVM#isDebug()}), that no references from this heap region manager's heap account escape.
+     */
     public void checkOutgoingReferences() {
         if (MaxineVM.isDebug()) {
             managerAllocator.unsafeMakeParsable();
@@ -350,12 +357,6 @@ public final class HeapRegionManager implements HeapAccountOwner {
                 FatalError.crash("Must not happen");
             }
         }
-    }
-
-    public void verifyAfterInitialization(TricolorHeapMarker heapMarker) {
-        HeapRegionConstants.validate();
-        checkOutgoingReferences();
-        FatalError.check(HeapRegionConstants.log2RegionSizeInBytes >= heapMarker.log2BitmapWord, "Region size too small for heap marker");
     }
 }
 

@@ -70,7 +70,9 @@ public final class HeapRegionConstants {
     private static void initializeConstants(int defaultRegionSizeInBytes) {
         regionSizeInBytes = defaultRegionSizeInBytes;
         log2RegionSizeInBytes = Integer.numberOfTrailingZeros(regionSizeInBytes);
-        FatalError.check(regionSizeInBytes == (1 << log2RegionSizeInBytes), "Heap region size must be a power of 2");
+        FatalError.check((regionSizeInBytes == (1 << log2RegionSizeInBytes)) &&
+                        ((regionSizeInBytes % Platform.platform().pageSize) == 0),
+                        "Region size must be a power of 2 and an integral number of platform pages");
         regionSizeInWords = regionSizeInBytes >> Word.widthValue().log2numberOfBytes;
         log2RegionSizeInWords = log2RegionSizeInBytes - Word.widthValue().log2numberOfBytes;
         regionAlignmentMask = Address.fromInt(regionSizeInBytes).minus(1);
@@ -98,12 +100,6 @@ public final class HeapRegionConstants {
      */
     static int numberOfRegions(Size sizeInBytes) {
         return sizeInBytes.alignUp(regionSizeInBytes).unsignedShiftedRight(log2RegionSizeInBytes).toInt();
-    }
-
-    static void validate() {
-        FatalError.check((regionSizeInBytes == (1 << log2RegionSizeInBytes)) &&
-                        ((regionSizeInBytes % Platform.platform().pageSize) == 0),
-                        "Region size must be a power of 2 and an integral number of platform pages");
     }
 
     /**
