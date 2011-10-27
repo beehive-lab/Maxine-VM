@@ -28,7 +28,7 @@ import java.util.*;
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.alloc.*;
 import com.oracle.max.graal.compiler.alloc.Interval.UsePosList;
-import com.oracle.max.graal.compiler.graph.*;
+import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.schedule.*;
 import com.oracle.max.graal.graph.*;
