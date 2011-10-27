@@ -36,14 +36,16 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 
 /**
- * A marking algorithm that uses a tricolor mark-bitmap with a fixed-size marking stack, an (optional) rescan map, and a
- * finger.
+ * A marking algorithm that uses a tricolor mark-bitmap with a fixed-size marking stack, an (optional) rescan map.
+ * The marking algorithm follows a strategy similar to Detlef & Printezis ISMM 2000 (see {@link ForwardScanState}
+ * for details).
+ *
  * The tricolor mark-bitmap encodes three colors using two consecutive bits but consumes as much space overhead as
  * a single-bit mark bitmap, thanks to padding rare tiny objects to guarantee two color bits for every objects.
- * Tracing algorithm uses a single-bit mark bitmap and a fairly large marking stack (from several thousands of references, up
+ * Tracing algorithm uses a single-bit mark bitmap and a fairly large marking stack (from several thousands of references, up to
  * hundreds of thousands of references). The reason for the large marking stack is that if this one overflows, tracing must
- * rescan the heap starting from leftmost reference that was on the stack, and must visit every marked object from that point,
- * thus revisiting many objects. The cost of rescan is so overwhelming that a very large marking stack is used to avoid
+ * rescan the heap starting from the leftmost reference that was on the stack, and must visit every marked object from that point,
+ * thus revisiting all marked objects. The cost of rescan is so overwhelming that a very large marking stack is used to avoid
  * this possibility. The reason for the blind rescan is that with a single bit, one cannot distinguish visited (black) objects from
  * unvisited but live (grey) objects.
  *
@@ -156,9 +158,24 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     static boolean UseRescanMap;
     static boolean UseDeepMarkStackFlush = true;
     static boolean TraceMarking = false;
+
+    /**
+     * Enables verification that there is no grey mark left in the mark bitmap after tracing is done.
+     */
     static boolean VerifyAfterMarking = false;
+
+    /**
+     * Enables verification of grey less area. Many steps of the tracing algorithm should leave some ranges of
+     * spaces without any grey mark. Enabling this flag make the tracing algorithm to verify that this is the case.
+     * This is a finer grain verification than those enabled by the {@link #VerifyAfterMarking} flag.
+     * @see #verifyHasNoGreyMarks(Address, Address)
+     * @see #verifyHasNoGreyMarks(HeapRegionRangeIterable, Address)
+     */
     static boolean VerifyGreyLessAreas = false;
 
+    /**
+     * A ready-to-use option to try new code.
+     */
     static boolean UseNewCode = false;
     static {
         VMOptions.addFieldOption("-XX:", "TraceMarking", TricolorHeapMarker.class, "Trace each mark update (Debug mode only)", Phase.PRISTINE);
@@ -273,8 +290,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     /**
      * Shortcut to colorMap.start() for fast bitmap operation.
      */
-    @INSPECTED
-    private Address base;
+    @INSPECTED Address base;
 
     /**
      * The marking stack.
@@ -297,7 +313,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
     private boolean traceGCTimes = false;
 
-    private MARK_PHASE markPhase = MARK_PHASE.DONE;
+    MARK_PHASE markPhase = MARK_PHASE.DONE;
 
 
     private static String colorName(long color) {
@@ -313,7 +329,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         return base.asPointer();
     }
 
-    private void traceMark(Address cell,  long color, int bitIndex, String msg) {
+    void traceMark(Address cell,  long color, int bitIndex, String msg) {
         final int bwi = bitmapWordIndex(bitIndex);
         Log.print("#mark ");
         Log.print(markPhase);
@@ -572,7 +588,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      * @param cell an address in the covered area
      * @return address in the covered area greater than the specified cell
      */
-    private Address nextMarkWordBoundary(Address cell) {
+    Address nextMarkWordBoundary(Address cell) {
         final int markBitmapWordCoverage = 1 << (log2BytesCoveredPerBit + Word.widthValue().log2numberOfBits);
         return alignDownToBitmapWordBoundary(cell.plus(markBitmapWordCoverage));
     }
@@ -1204,226 +1220,13 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         }
     }
 
-    static final class ForwardScanState extends ColorMapScanState implements SpecialReferenceManager.GC {
-
-        ForwardScanState(TricolorHeapMarker heapMarker) {
-            super(heapMarker);
-        }
-
-        Address endOfRightmostVisitedObject() {
-            return rightmost.plus(Layout.size(Layout.cellToOrigin(rightmost.asPointer())));
-        }
-
-        @Override
-        public int rightmostBitmapWordIndex() {
-            return heapMarker.bitmapWordIndex(endOfRightmostVisitedObject());
-        }
-
-        /*
-         * Helper instance variables for debugging purposes only.
-         * Easier to track than local variables when under the inspector.
-         */
-        private int debugRightmostBitmapWordIndex;
-        private int debugBitmapWordIndex;
-        private long debugBitmapWord;
-
-        /**
-         * Visit grey objects located between the finger and a rightmost position identified by a word index in the color map.
-         * Iteration stops when the index of the word holding the mark of the finger goes beyond the rightmost position specified.
-         * This code is shared between marking for region-based heaps and marking for single-contiguous space heaps.
-         *
-         * @param rightmostBitmapWordIndex
-         */
-        void visitGreyObjects(int rightmostBitmapWordIndex) {
-            final Pointer colorMapBase = heapMarker.base.asPointer();
-            int bitmapWordIndex = heapMarker.bitmapWordIndex(finger);
-            if (MaxineVM.isDebug()) {
-                debugRightmostBitmapWordIndex = rightmostBitmapWordIndex;
-                debugBitmapWordIndex = bitmapWordIndex;
-            }
-            while (bitmapWordIndex <= rightmostBitmapWordIndex) {
-                long bitmapWord = colorMapBase.getLong(bitmapWordIndex);
-                if (MaxineVM.isDebug()) {
-                    debugBitmapWordIndex = bitmapWordIndex;
-                    debugBitmapWord = bitmapWord;
-                }
-                if (bitmapWord != 0) {
-                    // FIXME (ld) this way of scanning the mark bitmap may cause black objects to end up on the marking stack.
-                    // Here's how.
-                    // If the object pointed by the finger contains backward references to objects covered by the same word
-                    // of the mark bitmap, and its end is covered by the same word, we will end up visiting these objects although
-                    // there were pushed on the marking stack.
-                    // One way to avoid that is to leave the finger set to the beginning of the word and iterate over all grey marks
-                    // of the word until reaching a fix point where all mark are white or black on the mark bitmap word.
-                    final long greyMarksInWord = bitmapWord & (bitmapWord >>> 1);
-                    if (greyMarksInWord != 0) {
-                        // First grey mark is the least set bit.
-                        final int bitIndexInWord = Pointer.fromLong(greyMarksInWord).leastSignificantBitSet();
-                        final int bitIndexOfGreyCell = (bitmapWordIndex << Word.widthValue().log2numberOfBits) + bitIndexInWord;
-                        final Pointer p = markAndVisitCell(heapMarker.addressOf(bitIndexOfGreyCell).asPointer());
-                        // Get bitmap word index at the end of the object. This may avoid reading multiple mark bitmap words
-                        // when marking objects crossing multiple mark bitmap words.
-                        bitmapWordIndex = heapMarker.bitmapWordIndex(p);
-                        continue;
-                    } else if ((bitmapWord >>> LAST_BIT_INDEX_IN_WORD) == 1L) {
-                        // Mark span two words. Check first bit of next word to decide if mark is grey.
-                        bitmapWord = colorMapBase.getLong(bitmapWordIndex + 1);
-                        if ((bitmapWord & 1) != 0) {
-                            // it is a grey object.
-                            final int bitIndexOfGreyCell = (bitmapWordIndex << Word.widthValue().log2numberOfBits) + LAST_BIT_INDEX_IN_WORD;
-                            final Pointer p = markAndVisitCell(heapMarker.addressOf(bitIndexOfGreyCell).asPointer());
-                            bitmapWordIndex = heapMarker.bitmapWordIndex(p);
-                            continue;
-                        }
-                    }
-                }
-                bitmapWordIndex++;
-            }
-            // There might be some objects left in the marking stack. Drain it.
-            // Before draining, advance the finger to the next mark bitmap word boundary to force all white references from drained cells that point to objects
-            // with mark in the current mark word to be pushed up on the marking stack and processed during the drainage.
-            Address fingerBeforeDraining = finger;
-            if (MaxineVM.isDebug() && TraceMarking) {
-                heapMarker.traceMark(fingerBeforeDraining, " => finger before draining marking stack\n");
-            }
-            finger = heapMarker.nextMarkWordBoundary(finger);
-            heapMarker.markingStack.drain();
-
-            // Reset the finger to the rightmost black object in the finger's mark word.
-            int fingerBitmapWordIndex = heapMarker.bitmapWordIndex(fingerBeforeDraining);
-            int fingerBitIndex = fingerBitmapWordIndex << Word.widthValue().log2numberOfBits;
-            fingerBitIndex += Address.fromLong(colorMapBase.getLong(fingerBitmapWordIndex)).mostSignificantBitSet();
-            finger = heapMarker.addressOf(fingerBitIndex);
-            // Adjust the rightmost pointer too. This one may have been before the next mark word boundary, in which case it wouldn't be updated by
-            // the draining of the marking stack if the rightmost visited object remain before that boundary.
-            if (rightmost.lessThan(finger)) {
-                rightmost = finger;
-            }
-            if (MaxineVM.isDebug() && TraceMarking) {
-                heapMarker.traceMark(rightmost, " => rightmost after draining marking stack\n");
-            }
-        }
-
-        /**
-         * Forward scan over the mark bitmap, from the finger to the rightmost marked position.
-         * @param regionsRanges
-         */
-        public void visitGreyObjects(HeapRegionRangeIterable regionsRanges) {
-            final int log2RegionToBitmapWord = HeapRegionConstants.log2RegionSizeInBytes - heapMarker.log2BitmapWord;
-            if (MaxineVM.isDebug() && TraceMarking) {
-                Log.println("Begin Forward Scan");
-            }
-            while (regionsRanges.hasNext()) {
-                final int fingerBitmapWordIndex = heapMarker.bitmapWordIndex(finger);
-                final RegionRange regionRange = regionsRanges.next();
-                final int firstRegion = regionRange.firstRegion();
-                if (MaxineVM.isDebug() && TraceMarking) {
-                    Log.print("Begin scan of regions range ["); Log.print(firstRegion); Log.print(", "); Log.print(firstRegion + regionRange.numRegions()); Log.println("[");
-                }
-
-                final int rangeRightmostBitmapWordIndex = ((firstRegion + regionRange.numRegions()) << log2RegionToBitmapWord) - 1;
-                if (fingerBitmapWordIndex > rangeRightmostBitmapWordIndex) {
-                    // skip this range, finger is past it already. This may happen after initial root marking. when the leftmost marked
-                    // position is beyond the first ranges, or when starting a new pass on the mark bitmap, e.g., to trace live objects from untraced special references.
-                    continue;
-                }
-                FatalError.check((firstRegion << log2RegionToBitmapWord) <= fingerBitmapWordIndex, "finger must be within the region range");
-
-                int rightmostBitmapWordIndex = rightmostBitmapWordIndex();
-                if (rightmostBitmapWordIndex > rangeRightmostBitmapWordIndex) {
-                    rightmostBitmapWordIndex = rangeRightmostBitmapWordIndex;
-                }
-                do {
-                    visitGreyObjects(rightmostBitmapWordIndex);
-                    if (finger == rightmost) {
-                        // We reached the right most mark. No need to continue iterating over regions.
-                        FatalError.check(heapMarker.markingStack.isEmpty(), "marking stack must be empty");
-                        if (!heapMarker.isBlackWhenNotWhite(rightmost)) {
-                            int rbi = heapMarker.bitIndexOf(rightmost);
-                            heapMarker.traceMark(rightmost, heapMarker.color(rbi), rbi, " *** rightmost object must be marked black\n");
-                            printState();
-                            heapMarker.overflowScanState.printState();
-                            MarkingError.rightmostNotBlackError.report(heapMarker.markPhase);
-                        }
-                        if (MaxineVM.isDebug() && TraceMarking) {
-                            Log.println("End Forward Scan");
-                        }
-                        return;
-                    }
-                    if (MaxineVM.isDebug() && finger.greaterThan(rightmost)) {
-                        MarkingError.fingerGreaterThanRightmostError.report(heapMarker.markPhase);
-                    }
-                    // finger is less than rightmost. This may be because:
-                    // - the rightmost was not in this region range but in one further up the address space
-                    // - we may have drained an object that contained a reference past the finger's mark word boundary.
-
-                    final int b = rightmostBitmapWordIndex();
-                    if (rightmostBitmapWordIndex ==  rangeRightmostBitmapWordIndex) {
-                        if (MaxineVM.isDebug() && b > rangeRightmostBitmapWordIndex) {
-                            MarkingError.rightmostNotAboveCurrentRegionRangeError.report(heapMarker.markPhase);
-                        }
-                        if (MaxineVM.isDebug() && TraceMarking) {
-                            Log.print("End scan of regions range ["); Log.print(firstRegion); Log.print(", "); Log.print(firstRegion + regionRange.numRegions()); Log.println("[");
-                        }
-                        // We're done with the current regions range. Break
-                        // to the outer loop to iterate over subsequent region ranges.
-                        break;
-                    }
-                    // Update rightmost for the next iterate over the current range.
-                    rightmostBitmapWordIndex = b > rangeRightmostBitmapWordIndex ? rangeRightmostBitmapWordIndex : b;
-                } while(true);
-            }
-        }
-
-        @Override
-        public void visitGreyObjects() {
-            int rightmostBitmapWordIndex = rightmostBitmapWordIndex();
-            do {
-                visitGreyObjects(rightmostBitmapWordIndex);
-                // Rightmost may have been updated (e.g., when the marking stack was drained). Check for this, and loop back if it has.
-                final int b = rightmostBitmapWordIndex();
-                if (b <= rightmostBitmapWordIndex) {
-                    // We're done.
-                    return;
-                }
-                rightmostBitmapWordIndex = b;
-            } while(true);
-        }
-
-        public boolean isReachable(Reference ref) {
-            Pointer origin = ref.toOrigin();
-            if (heapMarker.isCovered(origin)) {
-                // If either back or grey, the object is reachable.
-                return !heapMarker.isWhite(origin);
-            }
-            // If not in the covered area, it must be in one of the regions treated as permanent roots.
-            // We cannot easily check that here because of NativeMutex which store the address of a NativeMutex
-            // in there reference field (nasty piece of work...).
-            return true;
-        }
-
-        public Reference preserve(Reference ref) {
-            visit(ref);
-            return ref;
-        }
-
-        public boolean mayRelocateLiveObjects() {
-            return false;
-        }
-
-        @Override
-        public String toString() {
-            return "forward scan";
-        }
-    }
-
     final ForwardScanState forwardScanState = new ForwardScanState(this);
     /**
      * Scanning state when recovering from a marking state overflow.
      * Set to either {@link #overflowLinearScanState} or {@link #overflowScanWithRescanMapState}
      * depending on whether a rescan map is used.
      */
-    private OverflowScanState overflowScanState;
+    OverflowScanState overflowScanState;
     private final OverflowLinearScanState overflowLinearScanState;
     private final OverflowScanWithRescanMapState overflowScanWithRescanMapState;
 

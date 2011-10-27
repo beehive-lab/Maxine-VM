@@ -26,7 +26,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.gcx.TricolorHeapMarker.ColorMapScanState;
-import com.sun.max.vm.heap.gcx.TricolorHeapMarker.ForwardScanState;
 import com.sun.max.vm.heap.gcx.TricolorHeapMarker.MarkingStackFlusher;
 import static com.sun.max.vm.heap.gcx.TricolorHeapMarker.*;
 
