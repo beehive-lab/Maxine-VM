@@ -46,11 +46,9 @@ import com.sun.max.vm.thread.*;
 
 /**
  * The heart of the Maxine JVMTI implementation.
+ * Handles environments, event handling.
  */
 public class JVMTI {
-    private static final String AGENT_ONLOAD = "Agent_OnLoad";
-    private static final String AGENT_ONUNLOAD = "Agent_OnUnLoad";
-
     /**
      * Holds state associated with this side (i.e. Java) of the implementation.
      */
@@ -76,6 +74,15 @@ public class JVMTI {
          */
         JVMTIThreadLocalStorage tls = new JVMTIThreadLocalStorage();
     }
+
+    private static final String AGENT_ONLOAD = "Agent_OnLoad";
+    private static final String AGENT_ONUNLOAD = "Agent_OnUnLoad";
+
+    static {
+        VMOptions.addFieldOption("-XX:", "TraceJVMTIEvents", "Trace JVMTI events.");
+    }
+
+    static boolean TraceJVMTIEvents;
 
     /**
      * Since the agent initialization code happens very early, before we have a functional heap,
@@ -121,11 +128,6 @@ public class JVMTI {
                 jvmtiEnv.bootClassPathAdd [j] = 0;
             }
         }
-    }
-
-    @NEVER_INLINE
-    static void debug(Object cap) {
-
     }
 
     /**
@@ -187,7 +189,6 @@ public class JVMTI {
             if (onLoad.isZero()) {
                 initializeFail("agentlib: ", path, " does not contain an Agent_OnLoad function");
             }
-            JDWPSymbols.fixup(onLoad.asAddress().toLong());
             int rc = invokeAgentOnLoad(onLoad.asAddress(), agentPathOption.getOptionStart(i));
             if (rc != 0) {
                 initializeFail("agentlib: ", path, " failed to initialize");
@@ -295,6 +296,21 @@ public class JVMTI {
         event(eventId, null);
     }
 
+    private static void traceEvent(int eventId, boolean ignoring) {
+        boolean lockDisabledSafepoints = Log.lock();
+        Log.print("[Thread \"");
+        Log.print(VmThread.current().getName());
+        Log.print("\" --> ");
+        Log.print("JVMTI");
+        Log.print(" event: ");
+        Log.print(JVMTIEvent.name(eventId));
+        if (ignoring) {
+            Log.print(" ignoring");
+        }
+        Log.println("]");
+        Log.unlock(lockDisabledSafepoints);
+    }
+
     /**
      * Dispatches the event denoted by {@code eventId} to all environments that have registered
      * and enabled a call back for it.
@@ -302,7 +318,12 @@ public class JVMTI {
      * @param eventId
      */
     public static void event(int eventId, Object arg1) {
-        if (ignoreEvent(eventId)) {
+        boolean ignoring = ignoreEvent(eventId);
+        if (TraceJVMTIEvents) {
+            traceEvent(eventId, ignoring);
+        }
+
+        if (ignoring) {
             return;
         }
 
@@ -314,7 +335,6 @@ public class JVMTI {
                 case VM_START:
                     phase = JVMTI_PHASE_START;
                     JVMTIFunctions.checkTracing();
-                    JDWPSymbols.dump();
                     break;
 
                 case VM_INIT:

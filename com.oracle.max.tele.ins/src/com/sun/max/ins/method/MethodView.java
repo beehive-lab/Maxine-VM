@@ -107,7 +107,7 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
                 // Code location is not in a Java method or runtime stub and has not yet been viewed in a native routine.
                 // Check any loaded native code maps and in the last resort
                 // give the user a chance to guess at its length so we can register and view it
-                NativeCodeMaps.Info nativeCodeInfo = NativeCodeMaps.find(address);
+                NativeCodeLibraries.SymbolInfo nativeCodeInfo = NativeCodeLibraries.find(address);
                 if (nativeCodeInfo != null) {
                     try {
                         final MaxExternalCode nativeCode = inspection.vm().codeCache().createExternalCode(nativeCodeInfo.base, nativeCodeInfo.length, nativeCodeInfo.name);

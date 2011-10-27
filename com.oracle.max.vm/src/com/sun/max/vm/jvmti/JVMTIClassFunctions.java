@@ -108,7 +108,6 @@ class JVMTIClassFunctions {
                 Memory.deallocate(classNamePtr);
             }
             if (!newClassDataPtrPtr.getWord().isZero()) {
-                debug(null);
                 classDataPtr = newClassDataPtrPtr.getWord().asPointer();
                 classfileBytesLength = newClassDataLenPtr.getInt();
                 changed = true;
