@@ -280,7 +280,7 @@ public class JVMTIFunctionsSource {
         // PHASES: LIVE
         // CAPABILITIES: CAN_ACCESS_LOCAL_VARIABLES
         // HANDLECHECK: thread=Thread
-        return JVMTIThreadFunctions.setLocalObject(handleAsThread, depth, slot, value);
+        return JVMTIThreadFunctions.setLocalObject(handleAsThread, depth, slot, value.unhand());
     }
 
     @VM_ENTRY_POINT

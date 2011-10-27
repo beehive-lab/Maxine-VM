@@ -110,29 +110,30 @@ public class JVMTIFunctions  {
 
     static Map<String, Boolean> methodTraceStates;
 
-    /** Called once the VM is up to check for limitations on JVMTI tracing.
+    /**
+     * Called once the VM is up to check for limitations on JVMTI tracing.
      *
      */
     static void checkTracing() {
         if (TraceJVMTIInclude != null || TraceJVMTIExclude != null) {
             methodTraceStates = new HashMap<String, Boolean>();
-        }
-        for (String methodName : methodNames) {
-            methodTraceStates.put(methodName, TraceJVMTIInclude == null ? true : false);
-        }
-        if (TraceJVMTIInclude != null) {
-            Pattern inclusionPattern = Pattern.compile(TraceJVMTIInclude);
             for (String methodName : methodNames) {
-                if (inclusionPattern.matcher(methodName).matches()) {
-                    methodTraceStates.put(methodName, true);
+                methodTraceStates.put(methodName, TraceJVMTIInclude == null ? true : false);
+            }
+            if (TraceJVMTIInclude != null) {
+                Pattern inclusionPattern = Pattern.compile(TraceJVMTIInclude);
+                for (String methodName : methodNames) {
+                    if (inclusionPattern.matcher(methodName).matches()) {
+                        methodTraceStates.put(methodName, true);
+                    }
                 }
             }
-        }
-        if (TraceJVMTIExclude != null) {
-            Pattern exclusionPattern = Pattern.compile(TraceJVMTIExclude);
-            for (String methodName : methodNames) {
-                if (exclusionPattern.matcher(methodName).matches()) {
-                    methodTraceStates.put(methodName, false);
+            if (TraceJVMTIExclude != null) {
+                Pattern exclusionPattern = Pattern.compile(TraceJVMTIExclude);
+                for (String methodName : methodNames) {
+                    if (exclusionPattern.matcher(methodName).matches()) {
+                        methodTraceStates.put(methodName, false);
+                    }
                 }
             }
         }
@@ -772,7 +773,7 @@ public class JVMTIFunctions  {
             } catch (ClassCastException ex) {
                 return JVMTI_ERROR_INVALID_THREAD;
             }
-            return JVMTIThreadFunctions.setLocalObject(handleAsThread, depth, slot, value);
+            return JVMTIThreadFunctions.setLocalObject(handleAsThread, depth, slot, value.unhand());
         } catch (Throwable t) {
             return JVMTI_ERROR_INTERNAL;
         } finally {

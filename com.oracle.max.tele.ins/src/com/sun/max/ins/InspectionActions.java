@@ -479,29 +479,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return runFileCommandsAction;
     }
 
-    final class LoadNativeCodeMapFromFile extends InspectorAction {
-        LoadNativeCodeMapFromFile() {
-            super(inspection(), "Load native code map from file...");
-        }
-
-        @Override
-        protected void procedure() {
-            final String fileName = gui().inputDialog("File name: ", FileCommands.defaultCommandFile());
-            if (fileName != null && !fileName.equals("")) {
-                NativeCodeMaps.read(fileName);
-            }
-        }
-    }
-
-    private final InspectorAction loadNativeCodeMapFromFileAction = new LoadNativeCodeMapFromFile();
-
-    /**
-     * @return Singleton interactive Action that will load a native code map from a specified file.
-     */
-    public final InspectorAction loadNativeCodeMapFromFile() {
-        return loadNativeCodeMapFromFileAction;
-    }
-
 
     /**
      * Action:  updates the {@linkplain MaxVM#updateLoadableTypeDescriptorsFromClasspath() types available} on
@@ -1719,9 +1696,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final List<NativeCodeMaps.Info> compilations = NativeFunctionSearchDialog.show(inspection(), "View Native Function...", "View Code", false);
-            if (compilations != null) {
-                focus().setCodeLocation(vm().codeManager().createMachineCodeLocation(Utils.first(compilations).base, "native code address from function map"), true);
+            final NativeCodeLibraries.LibInfo libInfo = NativeLibrarySearchDialog.show(inspection(), "View code for native function in library...", "Select");
+            if (libInfo != null) {
+                final List<NativeCodeLibraries.SymbolInfo> functions = NativeFunctionSearchDialog.show(inspection(), libInfo, "View Native Function...", "View Code", false);
+                if (functions != null) {
+                    focus().setCodeLocation(vm().codeManager().createMachineCodeLocation(Utils.first(functions).base, "native code address from function map"), true);
+                }
             }
         }
     }
@@ -2625,6 +2605,54 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     public final InspectorAction setMachineCodeBreakpointAtEntriesByName() {
         return setMachineCodeBreakpointAtEntriesByNameAction;
+    }
+
+    /**
+     * Action:  sets machine code breakpoints at native function entries to be selected interactively by name.
+     */
+    final class SetNativeFunctionBreakpointByNameAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Native function...";
+
+        SetNativeFunctionBreakpointByNameAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+            refreshableActions.add(this);
+        }
+
+        @Override
+        protected void procedure() {
+            final NativeCodeLibraries.LibInfo libInfo = NativeLibrarySearchDialog.show(inspection(), "Native function library for breakpoints...", "Select");
+            if (libInfo != null) {
+                final List<NativeCodeLibraries.SymbolInfo> functions = NativeFunctionSearchDialog.show(inspection(), libInfo, "Native Function Breakpoints...", "View Code", false);
+                if (functions != null) {
+                    try {
+                        MaxBreakpoint machineCodeBreakpoint = null;
+                        for (NativeCodeLibraries.SymbolInfo symbolInfo : functions) {
+                            machineCodeBreakpoint =
+                                vm().breakpointManager().makeBreakpoint(vm().codeManager().createMachineCodeLocation(symbolInfo.base, "set machine breakpoint"));
+                        }
+                        focus().setBreakpoint(machineCodeBreakpoint);
+                    } catch (MaxVMBusyException maxVMBusyException) {
+                        inspection().announceVMBusyFailure(name());
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(inspection().hasProcess());
+        }
+    }
+
+    private final SetNativeFunctionBreakpointByNameAction setNativeFunctionBreakpointByNameAction =
+        new SetNativeFunctionBreakpointByNameAction(null);
+
+    /**
+     * @return Singleton interactive Action that sets a machine code breakpoint at  a method entry to be selected by name.
+     */
+    public final InspectorAction setNativeFunctionBreakpointByName() {
+        return setNativeFunctionBreakpointByNameAction;
     }
 
     /**
@@ -4424,6 +4452,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
                 final InspectorMenu breakAt = new InspectorMenu("Break at machine code");
                 breakAt.add(actions().setMachineCodeBreakpointAtAddress());
+                breakAt.add(actions().setNativeFunctionBreakpointByName());
                 breakAt.add(actions().setMachineCodeBreakpointAtObjectInitializer());
                 menu.add(breakAt);
 

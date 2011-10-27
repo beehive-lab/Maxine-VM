@@ -441,6 +441,8 @@ public final class MaxineVM {
         // Link the critical native methods:
         CriticalNativeMethod.linkAll();
 
+        DynamicLinker.criticalLinked();
+
         // Initialize the trap system:
         Trap.initialize();
 

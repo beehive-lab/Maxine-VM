@@ -22,48 +22,42 @@
  */
 package com.sun.max.ins.method;
 
-import java.util.*;
-
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.method.NativeCodeLibraries.*;
 import com.sun.max.lang.*;
+import com.sun.max.tele.*;
 
-public class NativeFunctionSearchDialog extends FilteredListDialog<SymbolInfo> {
 
+public class NativeLibrarySearchDialog extends FilteredListDialog<LibInfo> {
     @Override
-    protected SymbolInfo noSelectedObject() {
+    protected LibInfo noSelectedObject() {
         return null;
     }
 
     @Override
-    protected SymbolInfo convertSelectedItem(Object listItem) {
-        return (SymbolInfo) listItem;
+    protected LibInfo convertSelectedItem(Object listItem) {
+        return (LibInfo) listItem;
     }
 
     @Override
     protected void rebuildList(String filterText) {
         final String filter = filterText.toLowerCase();
-        if (libInfo != null && libInfo.sentinel != null) {
-            for (SymbolInfo info : libInfo.symbols) {
-                if (filter.endsWith(" ")) {
-                    if (info.name.equalsIgnoreCase(Strings.chopSuffix(filter, 1))) {
-                        listModel.addElement(info);
-                    }
-                } else if (info.name.toLowerCase().contains(filter)) {
+        for (LibInfo info : NativeCodeLibraries.getLibs((TeleVM) vm())) {
+            if (filter.endsWith(" ")) {
+                if (info.path.equalsIgnoreCase(Strings.chopSuffix(filter, 1))) {
                     listModel.addElement(info);
                 }
+            } else if (info.path.toLowerCase().contains(filter)) {
+                listModel.addElement(info);
             }
         }
     }
 
-    private NativeFunctionSearchDialog(Inspection inspection, LibInfo libInfo, String title, String actionName, boolean multiSelection) {
-        super(inspection, title == null ? "Select Native Function" : title, "Filter text", actionName, multiSelection);
-        this.libInfo = libInfo;
+    private NativeLibrarySearchDialog(Inspection inspection, String title, String actionName) {
+        super(inspection, title == null ? "Select Native Library" : title, "Filter text", actionName, false);
         rebuildList();
     }
-
-    private LibInfo libInfo;
 
     /**
      * Displays a dialog to let the use select one or more native functions in the tele VM.
@@ -71,11 +65,12 @@ public class NativeFunctionSearchDialog extends FilteredListDialog<SymbolInfo> {
      * @param title for dialog window
      * @param actionName name to appear on button
      * @param multi allow multiple selections if true
-     * @return references to the selected instances of {@link NativeCodeLibraries.SymbolInfo}, null if user canceled.
+     * @return references to the selected instances of {@link NativeCodeLibraries.LibInfo}, null if user canceled.
      */
-    public static List<NativeCodeLibraries.SymbolInfo> show(Inspection inspection, LibInfo libInfo, String title, String actionName, boolean multi) {
-        final NativeFunctionSearchDialog dialog = new NativeFunctionSearchDialog(inspection, libInfo, title, actionName, multi);
+    public static NativeCodeLibraries.LibInfo show(Inspection inspection, String title, String actionName) {
+        final NativeLibrarySearchDialog dialog = new NativeLibrarySearchDialog(inspection, title, actionName);
         dialog.setVisible(true);
-        return dialog.selectedObjects();
+        return dialog.selectedObject();
     }
+
 }

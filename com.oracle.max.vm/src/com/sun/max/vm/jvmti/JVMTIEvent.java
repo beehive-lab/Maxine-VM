@@ -30,6 +30,7 @@ import com.sun.max.vm.jni.*;
 
 /**
  * Support for JVMTI event handling.
+ * This perhaps should be recast as an enum.
  */
 public class JVMTIEvent {
     // Event IDs
@@ -201,5 +202,48 @@ public class JVMTIEvent {
         }
     }
 
+    /**
+     * Event tracing support.
+     * @param id
+     * @return
+     */
+    static String name(int id) {
+        switch (id) {
+            // Checkstyle: stop
+            case JVMTI_EVENT_VM_INIT: return "VM_INIT";
+            case JVMTI_EVENT_VM_DEATH: return "VM_DEATH";
+            case JVMTI_EVENT_THREAD_START: return "THREAD_START";
+            case JVMTI_EVENT_THREAD_END: return "THREAD_END";
+            case JVMTI_EVENT_CLASS_FILE_LOAD_HOOK: return "CLASS_FILE_LOAD_HOOK";
+            case JVMTI_EVENT_CLASS_LOAD: return "CLASS_LOAD";
+            case JVMTI_EVENT_CLASS_PREPARE: return "CLASS_PREPARE";
+            case JVMTI_EVENT_VM_START: return "VM_START";
+            case JVMTI_EVENT_EXCEPTION: return "EXCEPTION";
+            case JVMTI_EVENT_EXCEPTION_CATCH: return "EXCEPTION_CATCH";
+            case JVMTI_EVENT_SINGLE_STEP: return "SINGLE_STEP";
+            case JVMTI_EVENT_FRAME_POP: return "FRAME_POP";
+            case JVMTI_EVENT_BREAKPOINT: return "BREAKPOINT";
+            case JVMTI_EVENT_FIELD_ACCESS: return "FIELD_ACCESS";
+            case JVMTI_EVENT_FIELD_MODIFICATION: return "FIELD_MODIFICATION";
+            case JVMTI_EVENT_METHOD_ENTRY: return "METHOD_ENTRY";
+            case JVMTI_EVENT_METHOD_EXIT: return "METHOD_EXIT";
+            case JVMTI_EVENT_NATIVE_METHOD_BIND: return "NATIVE_METHOD_BIND";
+            case JVMTI_EVENT_COMPILED_METHOD_LOAD: return "COMPILED_METHOD_LOAD";
+            case JVMTI_EVENT_COMPILED_METHOD_UNLOAD: return "COMPILED_METHOD_UNLOAD";
+            case JVMTI_EVENT_DYNAMIC_CODE_GENERATED: return "DYNAMIC_CODE_GENERATED";
+            case JVMTI_EVENT_DATA_DUMP_REQUEST: return "DATA_DUMP_REQUEST";
+            case JVMTI_EVENT_MONITOR_WAIT: return "MONITOR_WAIT";
+            case JVMTI_EVENT_MONITOR_WAITED: return "MONITOR_WAITED";
+            case JVMTI_EVENT_MONITOR_CONTENDED_ENTER: return "MONITOR_CONTENDED_ENTER";
+            case JVMTI_EVENT_MONITOR_CONTENDED_ENTERED: return "MONITOR_CONTENDED_ENTERED";
+            case JVMTI_EVENT_RESOURCE_EXHAUSTED: return "RESOURCE_EXHAUSTED";
+            case JVMTI_EVENT_GARBAGE_COLLECTION_START: return "GARBAGE_COLLECTION_START";
+            case JVMTI_EVENT_GARBAGE_COLLECTION_FINISH: return "GARBAGE_COLLECTION_FINISH";
+            case JVMTI_EVENT_OBJECT_FREE: return "OBJECT_FREE";
+            case JVMTI_EVENT_VM_OBJECT_ALLOC: return "VM_OBJECT_ALLOC";
+            default: return "UNKNOWN EVENT";
+            // Checkstyle: resume
+        }
+    }
 
 }
