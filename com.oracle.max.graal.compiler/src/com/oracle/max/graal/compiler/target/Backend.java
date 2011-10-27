@@ -26,7 +26,6 @@ import java.lang.reflect.*;
 
 import com.oracle.max.asm.*;
 import com.oracle.max.graal.compiler.*;
-import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.gen.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.stub.*;
@@ -57,7 +56,6 @@ public abstract class Backend {
 
     public abstract FrameMap newFrameMap(GraalCompilation compilation, RiResolvedMethod method, int numberOfLocks);
     public abstract LIRGenerator newLIRGenerator(GraalCompilation compilation);
-    public abstract LIRAssembler newLIRAssembler(GraalCompilation compilation, TargetMethodAssembler tasm);
     public abstract AbstractAssembler newAssembler(RiRegisterConfig registerConfig);
     public abstract CiXirAssembler newXirAssembler();
 

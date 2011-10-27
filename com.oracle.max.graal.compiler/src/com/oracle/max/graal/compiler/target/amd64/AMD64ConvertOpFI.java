@@ -23,13 +23,15 @@
 package com.oracle.max.graal.compiler.target.amd64;
 
 import com.oracle.max.asm.*;
+import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.asm.target.amd64.AMD64Assembler.*;
+import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.stub.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
 
-public enum AMD64ConvertOpFI implements LIROpcode<AMD64LIRAssembler, LIRConvert> {
+public enum AMD64ConvertOpFI implements LIROpcode<AMD64MacroAssembler, LIRConvert> {
     F2I, D2I;
 
     public LIRInstruction create(CiVariable result, CompilerStub stub, CiVariable input) {
@@ -37,17 +39,17 @@ public enum AMD64ConvertOpFI implements LIROpcode<AMD64LIRAssembler, LIRConvert>
     }
 
     @Override
-    public void emitCode(AMD64LIRAssembler lasm, LIRConvert op) {
+    public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRConvert op) {
         switch (this) {
-            case F2I: lasm.masm.cvttss2sil(lasm.asIntReg(op.result()), lasm.asFloatReg(op.operand(0))); break;
-            case D2I: lasm.masm.cvttsd2sil(lasm.asIntReg(op.result()), lasm.asDoubleReg(op.operand(0))); break;
+            case F2I: tasm.masm.cvttss2sil(tasm.asIntReg(op.result()), tasm.asFloatReg(op.operand(0))); break;
+            case D2I: tasm.masm.cvttsd2sil(tasm.asIntReg(op.result()), tasm.asDoubleReg(op.operand(0))); break;
             default: throw Util.shouldNotReachHere();
         }
 
         Label endLabel = new Label();
-        lasm.masm.cmp32(lasm.asIntReg(op.result()), Integer.MIN_VALUE);
-        lasm.masm.jcc(ConditionFlag.notEqual, endLabel);
-        AMD64CallOp.callStub(lasm, op.stub, op.stub.resultKind, null, op.result(), op.operand(0));
-        lasm.masm.bind(endLabel);
+        tasm.masm.cmp32(tasm.asIntReg(op.result()), Integer.MIN_VALUE);
+        tasm.masm.jcc(ConditionFlag.notEqual, endLabel);
+        AMD64CallOp.callStub(tasm, op.stub, op.stub.resultKind, null, op.result(), op.operand(0));
+        tasm.masm.bind(endLabel);
     }
 }

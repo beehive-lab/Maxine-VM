@@ -25,11 +25,12 @@ package com.oracle.max.graal.compiler.target.amd64;
 import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.asm.target.amd64.AMD64Assembler.ConditionFlag;
+import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
 
-public enum AMD64DivOp implements LIROpcode<AMD64LIRAssembler, LIRInstruction> {
+public enum AMD64DivOp implements LIROpcode<AMD64MacroAssembler, LIRInstruction> {
     IDIV, IREM, UIDIV, UIREM,
     LDIV, LREM, ULDIV, ULREM;
 
@@ -38,17 +39,17 @@ public enum AMD64DivOp implements LIROpcode<AMD64LIRAssembler, LIRInstruction> {
     }
 
     @Override
-    public void emitCode(AMD64LIRAssembler lasm, LIRInstruction op) {
-        CiRegister left = lasm.asRegister(op.operand(0));
-        CiRegister right = lasm.asRegister(op.operand(1));
-        CiRegister result = lasm.asRegister(op.result());
+    public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
+        CiRegister left = tasm.asRegister(op.operand(0));
+        CiRegister right = tasm.asRegister(op.operand(1));
+        CiRegister result = tasm.asRegister(op.result());
 
         // left input in rax, right input in any register but rax and rdx, result quotient in rax, result remainder in rdx
         assert left == AMD64.rax;
         assert right != AMD64.rax && right != AMD64.rdx;
         assert (name().endsWith("DIV") && result == AMD64.rax) || (name().endsWith("REM") && result == AMD64.rdx);
 
-        AMD64MacroAssembler masm = lasm.masm;
+        AMD64MacroAssembler masm = tasm.masm;
         int exceptionOffset;
         switch (this) {
             case IDIV:
@@ -97,6 +98,6 @@ public enum AMD64DivOp implements LIROpcode<AMD64LIRAssembler, LIRInstruction> {
             default:
                 throw Util.shouldNotReachHere();
         }
-        lasm.tasm.recordImplicitException(exceptionOffset, op.info);
+        tasm.recordImplicitException(exceptionOffset, op.info);
     }
 }

@@ -24,14 +24,14 @@ package com.oracle.max.graal.compiler.target.amd64;
 
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.graal.compiler.*;
+import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.lir.*;
 
-public class AMD64MethodEndStub implements LIR.SlowPath {
+public class AMD64MethodEndStub implements LIR.SlowPath<AMD64MacroAssembler> {
     @Override
-    public void emitCode(LIRAssembler lasm) {
-        AMD64MacroAssembler masm = ((AMD64LIRAssembler) lasm).masm;
+    public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm) {
         for (int i = 0; i < GraalOptions.MethodEndBreakpointGuards; ++i) {
-            masm.int3();
+            tasm.masm.int3();
         }
     }
 }

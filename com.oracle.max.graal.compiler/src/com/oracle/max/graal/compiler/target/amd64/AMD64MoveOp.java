@@ -26,6 +26,7 @@ import static java.lang.Double.*;
 import static java.lang.Float.*;
 
 import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
@@ -39,7 +40,7 @@ public class AMD64MoveOp {
     public static final NullCheckOp NULL_CHECK = new NullCheckOp();
     public static final CompareAndSwapOp CAS = new CompareAndSwapOp();
 
-    public static class MoveOp implements StandardOp.MoveOpcode<AMD64LIRAssembler, LIRInstruction>, LIROpcode.FirstOperandRegisterHint {
+    public static class MoveOp implements StandardOp.MoveOpcode<AMD64MacroAssembler, LIRInstruction>, LIROpcode.FirstOperandRegisterHint {
         @Override
         public LIRInstruction create(CiValue result, CiValue input) {
             assert !result.isAddress() && !input.isAddress();
@@ -48,116 +49,116 @@ public class AMD64MoveOp {
         }
 
         @Override
-        public void emitCode(AMD64LIRAssembler lasm, LIRInstruction op) {
-            move(lasm, op.result(), op.operand(0));
+        public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
+            move(tasm, op.result(), op.operand(0));
         }
     }
 
-    protected static class LoadOp implements LIROpcode<AMD64LIRAssembler, LIRKindInstruction> {
+    protected static class LoadOp implements LIROpcode<AMD64MacroAssembler, LIRKindInstruction> {
         public LIRInstruction create(CiVariable result, CiAddress loadAddr, CiKind kind, LIRDebugInfo info) {
             return new LIRKindInstruction(this, result, info, kind, loadAddr);
         }
 
         @Override
-        public void emitCode(AMD64LIRAssembler lasm, LIRKindInstruction op) {
-            load(lasm, op.result(), (CiAddress) op.operand(0), op.kind, op.info);
+        public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRKindInstruction op) {
+            load(tasm, op.result(), (CiAddress) op.operand(0), op.kind, op.info);
         }
     }
 
-    protected static class StoreOp implements LIROpcode<AMD64LIRAssembler, LIRKindInstruction> {
+    protected static class StoreOp implements LIROpcode<AMD64MacroAssembler, LIRKindInstruction> {
         public LIRInstruction create(CiAddress storeAddr, CiValue input, CiKind kind, LIRDebugInfo info) {
             // Since the registers used by storeAddr are actual input operands, storeAddr is registered as an input.
             return new LIRKindInstruction(this, CiValue.IllegalValue, info, kind, input, storeAddr);
         }
 
         @Override
-        public void emitCode(AMD64LIRAssembler lasm, LIRKindInstruction op) {
-            store(lasm, (CiAddress) op.operand(1), op.operand(0), op.kind, op.info);
+        public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRKindInstruction op) {
+            store(tasm, (CiAddress) op.operand(1), op.operand(0), op.kind, op.info);
         }
     }
 
-    protected static class LeaOp implements LIROpcode<AMD64LIRAssembler, LIRInstruction> {
+    protected static class LeaOp implements LIROpcode<AMD64MacroAssembler, LIRInstruction> {
         public LIRInstruction create(CiVariable result, CiAddress loadAddr) {
             return new LIRInstruction(this, result, null, loadAddr);
         }
 
         @Override
-        public void emitCode(AMD64LIRAssembler lasm, LIRInstruction op) {
-            lasm.masm.leaq(lasm.asLongReg(op.result()), lasm.asAddress(op.operand(0)));
+        public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
+            tasm.masm.leaq(tasm.asLongReg(op.result()), tasm.asAddress(op.operand(0)));
         }
     }
 
-    protected static class MembarOp implements LIROpcode<AMD64LIRAssembler, LIRInstruction> {
+    protected static class MembarOp implements LIROpcode<AMD64MacroAssembler, LIRInstruction> {
         public LIRInstruction create(int barriers) {
             return new LIRInstruction(this, CiValue.IllegalValue, null, CiConstant.forInt(barriers));
         }
 
         @Override
-        public void emitCode(AMD64LIRAssembler lasm, LIRInstruction op) {
-            lasm.masm.membar(lasm.asIntConst(op.operand(0)));
+        public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
+            tasm.masm.membar(tasm.asIntConst(op.operand(0)));
         }
     }
 
-    protected static class NullCheckOp implements StandardOp.NullCheckOpcode<AMD64LIRAssembler, LIRInstruction> {
+    protected static class NullCheckOp implements StandardOp.NullCheckOpcode<AMD64MacroAssembler, LIRInstruction> {
         @Override
         public LIRInstruction create(CiVariable input, LIRDebugInfo info) {
             return new LIRInstruction(this, CiValue.IllegalValue, info, input);
         }
 
         @Override
-        public void emitCode(AMD64LIRAssembler lasm, LIRInstruction op) {
-            lasm.tasm.recordImplicitException(lasm.masm.codeBuffer.position(), op.info);
-            lasm.masm.nullCheck(lasm.asRegister(op.operand(0)));
+        public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
+            tasm.recordImplicitException(tasm.masm.codeBuffer.position(), op.info);
+            tasm.masm.nullCheck(tasm.asRegister(op.operand(0)));
         }
     }
 
-    protected static class CompareAndSwapOp implements LIROpcode<AMD64LIRAssembler, LIRInstruction> {
+    protected static class CompareAndSwapOp implements LIROpcode<AMD64MacroAssembler, LIRInstruction> {
         public LIRInstruction create(CiRegisterValue result, CiAddress address, CiRegisterValue cmpValue, CiVariable newValue) {
             return new LIRInstruction(this, result, null, address, cmpValue, newValue);
         }
 
         @Override
-        public void emitCode(AMD64LIRAssembler lasm, LIRInstruction op) {
-            CiAddress address = lasm.asAddress(op.operand(0));
-            assert lasm.asRegister(op.operand(1)) == AMD64.rax;
-            CiRegister newValue = lasm.asRegister(op.operand(2));
-            assert lasm.asRegister(op.result()) == AMD64.rax;
+        public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
+            CiAddress address = tasm.asAddress(op.operand(0));
+            assert tasm.asRegister(op.operand(1)) == AMD64.rax;
+            CiRegister newValue = tasm.asRegister(op.operand(2));
+            assert tasm.asRegister(op.result()) == AMD64.rax;
 
-            if (lasm.target.isMP) {
-                lasm.masm.lock();
+            if (tasm.target.isMP) {
+                tasm.masm.lock();
             }
             switch (op.operand(1).kind) {
-                case Int:    lasm.masm.cmpxchgl(newValue, address); break;
+                case Int:    tasm.masm.cmpxchgl(newValue, address); break;
                 case Long:
-                case Object: lasm.masm.cmpxchgq(newValue, address); break;
+                case Object: tasm.masm.cmpxchgq(newValue, address); break;
                 default:     throw Util.shouldNotReachHere();
             }
         }
     }
 
 
-    protected static void move(AMD64LIRAssembler lasm, CiValue result, CiValue input) {
+    protected static void move(TargetMethodAssembler<AMD64MacroAssembler> tasm, CiValue result, CiValue input) {
         if (input.isRegister()) {
             if (result.isRegister()) {
-                reg2reg(lasm, result, input);
+                reg2reg(tasm, result, input);
             } else if (result.isStackSlot()) {
-                reg2stack(lasm, result, input);
+                reg2stack(tasm, result, input);
             } else {
                 throw Util.shouldNotReachHere();
             }
         } else if (input.isStackSlot()) {
             if (result.isRegister()) {
-                stack2reg(lasm, result, input);
+                stack2reg(tasm, result, input);
             } else if (result.isStackSlot()) {
-                stack2stack(lasm, result, input);
+                stack2stack(tasm, result, input);
             } else {
                 throw Util.shouldNotReachHere();
             }
         } else if (input.isConstant()) {
             if (result.isRegister()) {
-                const2reg(lasm, result, (CiConstant) input);
+                const2reg(tasm, result, (CiConstant) input);
             } else if (result.isStackSlot()) {
-                const2stack(lasm, result, (CiConstant) input);
+                const2stack(tasm, result, (CiConstant) input);
             } else {
                 throw Util.shouldNotReachHere();
             }
@@ -166,93 +167,93 @@ public class AMD64MoveOp {
         }
     }
 
-    private static void reg2reg(AMD64LIRAssembler lasm, CiValue result, CiValue input) {
+    private static void reg2reg(TargetMethodAssembler<AMD64MacroAssembler> tasm, CiValue result, CiValue input) {
         if (input.equals(result)) {
             return;
         }
         switch (result.kind) {
             case Jsr:
-            case Int:    lasm.masm.movl(lasm.asRegister(result),      lasm.asRegister(input)); break;
-            case Long:   lasm.masm.movq(lasm.asRegister(result),     lasm.asRegister(input)); break;
-            case Float:  lasm.masm.movflt(lasm.asFloatReg(result),  lasm.asFloatReg(input)); break;
-            case Double: lasm.masm.movdbl(lasm.asDoubleReg(result), lasm.asDoubleReg(input)); break;
-            case Object: lasm.masm.movq(lasm.asRegister(result),   lasm.asRegister(input)); break;
+            case Int:    tasm.masm.movl(tasm.asRegister(result),      tasm.asRegister(input)); break;
+            case Long:   tasm.masm.movq(tasm.asRegister(result),     tasm.asRegister(input)); break;
+            case Float:  tasm.masm.movflt(tasm.asFloatReg(result),  tasm.asFloatReg(input)); break;
+            case Double: tasm.masm.movdbl(tasm.asDoubleReg(result), tasm.asDoubleReg(input)); break;
+            case Object: tasm.masm.movq(tasm.asRegister(result),   tasm.asRegister(input)); break;
             default:     throw Util.shouldNotReachHere();
         }
     }
 
-    private static void reg2stack(AMD64LIRAssembler lasm, CiValue result, CiValue input) {
+    private static void reg2stack(TargetMethodAssembler<AMD64MacroAssembler> tasm, CiValue result, CiValue input) {
         switch (result.kind) {
             case Jsr:
-            case Int:    lasm.masm.movl(lasm.asAddress(result),   lasm.asRegister(input)); break;
-            case Long:   lasm.masm.movq(lasm.asAddress(result),   lasm.asRegister(input)); break;
-            case Float:  lasm.masm.movflt(lasm.asAddress(result), lasm.asFloatReg(input)); break;
-            case Double: lasm.masm.movsd(lasm.asAddress(result),  lasm.asDoubleReg(input)); break;
-            case Object: lasm.masm.movq(lasm.asAddress(result),   lasm.asRegister(input)); break;
+            case Int:    tasm.masm.movl(tasm.asAddress(result),   tasm.asRegister(input)); break;
+            case Long:   tasm.masm.movq(tasm.asAddress(result),   tasm.asRegister(input)); break;
+            case Float:  tasm.masm.movflt(tasm.asAddress(result), tasm.asFloatReg(input)); break;
+            case Double: tasm.masm.movsd(tasm.asAddress(result),  tasm.asDoubleReg(input)); break;
+            case Object: tasm.masm.movq(tasm.asAddress(result),   tasm.asRegister(input)); break;
             default:     throw Util.shouldNotReachHere();
         }
     }
 
-    private static void stack2reg(AMD64LIRAssembler lasm, CiValue result, CiValue input) {
+    private static void stack2reg(TargetMethodAssembler<AMD64MacroAssembler> tasm, CiValue result, CiValue input) {
         switch (result.kind) {
             case Jsr:
-            case Int:    lasm.masm.movl(lasm.asRegister(result),      lasm.asAddress(input)); break;
-            case Long:   lasm.masm.movq(lasm.asRegister(result),     lasm.asAddress(input)); break;
-            case Float:  lasm.masm.movflt(lasm.asFloatReg(result),  lasm.asAddress(input)); break;
-            case Double: lasm.masm.movdbl(lasm.asDoubleReg(result), lasm.asAddress(input)); break;
-            case Object: lasm.masm.movq(lasm.asRegister(result),   lasm.asAddress(input)); break;
+            case Int:    tasm.masm.movl(tasm.asRegister(result),      tasm.asAddress(input)); break;
+            case Long:   tasm.masm.movq(tasm.asRegister(result),     tasm.asAddress(input)); break;
+            case Float:  tasm.masm.movflt(tasm.asFloatReg(result),  tasm.asAddress(input)); break;
+            case Double: tasm.masm.movdbl(tasm.asDoubleReg(result), tasm.asAddress(input)); break;
+            case Object: tasm.masm.movq(tasm.asRegister(result),   tasm.asAddress(input)); break;
             default:     throw Util.shouldNotReachHere();
         }
     }
 
-    private static void stack2stack(AMD64LIRAssembler lasm, CiValue result, CiValue input) {
+    private static void stack2stack(TargetMethodAssembler<AMD64MacroAssembler> tasm, CiValue result, CiValue input) {
         switch (result.kind) {
             case Jsr:
             case Int:
             case Float:
-                lasm.masm.pushl(lasm.asAddress(input));
-                lasm.masm.popl(lasm.asAddress(result));
+                tasm.masm.pushl(tasm.asAddress(input));
+                tasm.masm.popl(tasm.asAddress(result));
                 break;
             case Long:
             case Double:
             case Object:
-                lasm.masm.pushq(lasm.asAddress(input));
-                lasm.masm.popq(lasm.asAddress(result));
+                tasm.masm.pushq(tasm.asAddress(input));
+                tasm.masm.popq(tasm.asAddress(result));
                 break;
             default:
                 throw Util.shouldNotReachHere();
         }
     }
 
-    private static void const2reg(AMD64LIRAssembler lasm, CiValue result, CiConstant c) {
+    private static void const2reg(TargetMethodAssembler<AMD64MacroAssembler> tasm, CiValue result, CiConstant c) {
         switch (result.kind) {
             case Jsr:
             case Int:
                 // Do not optimize with an XOR as this instruction may be between
                 // a CMP and a Jcc in which case the XOR will modify the condition
                 // flags and interfere with the Jcc.
-                lasm.masm.movl(lasm.asRegister(result), lasm.asIntConst(c));
+                tasm.masm.movl(tasm.asRegister(result), tasm.asIntConst(c));
                 break;
             case Long:
                 // Do not optimize with an XOR as this instruction may be between
                 // a CMP and a Jcc in which case the XOR will modify the condition
                 // flags and interfere with the Jcc.
-                lasm.masm.movq(lasm.asRegister(result), c.asLong());
+                tasm.masm.movq(tasm.asRegister(result), c.asLong());
                 break;
             case Float:
                 // This is *not* the same as 'constant == 0.0f' in the case where constant is -0.0f
                 if (Float.floatToRawIntBits(c.asFloat()) == Float.floatToRawIntBits(0.0f)) {
-                    lasm.masm.xorps(lasm.asFloatReg(result), lasm.asFloatReg(result));
+                    tasm.masm.xorps(tasm.asFloatReg(result), tasm.asFloatReg(result));
                 } else {
-                    lasm.masm.movflt(lasm.asFloatReg(result), lasm.asFloatConstRef(c));
+                    tasm.masm.movflt(tasm.asFloatReg(result), tasm.asFloatConstRef(c));
                 }
                 break;
             case Double:
                 // This is *not* the same as 'constant == 0.0d' in the case where constant is -0.0d
                 if (Double.doubleToRawLongBits(c.asDouble()) == Double.doubleToRawLongBits(0.0d)) {
-                    lasm.masm.xorpd(lasm.asDoubleReg(result), lasm.asDoubleReg(result));
+                    tasm.masm.xorpd(tasm.asDoubleReg(result), tasm.asDoubleReg(result));
                 } else {
-                    lasm.masm.movdbl(lasm.asDoubleReg(result), lasm.asDoubleConstRef(c));
+                    tasm.masm.movdbl(tasm.asDoubleReg(result), tasm.asDoubleConstRef(c));
                 }
                 break;
             case Object:
@@ -260,12 +261,12 @@ public class AMD64MoveOp {
                 // a CMP and a Jcc in which case the XOR will modify the condition
                 // flags and interfere with the Jcc.
                 if (c.isNull()) {
-                    lasm.masm.movq(lasm.asRegister(result), 0x0L);
-                } else if (lasm.target.inlineObjects) {
-                    lasm.tasm.recordDataReferenceInCode(c);
-                    lasm.masm.movq(lasm.asRegister(result), 0xDEADDEADDEADDEADL);
+                    tasm.masm.movq(tasm.asRegister(result), 0x0L);
+                } else if (tasm.target.inlineObjects) {
+                    tasm.recordDataReferenceInCode(c);
+                    tasm.masm.movq(tasm.asRegister(result), 0xDEADDEADDEADDEADL);
                 } else {
-                    lasm.masm.movq(lasm.asRegister(result), lasm.tasm.recordDataReferenceInCode(c));
+                    tasm.masm.movq(tasm.asRegister(result), tasm.recordDataReferenceInCode(c));
                 }
                 break;
             default:
@@ -273,16 +274,16 @@ public class AMD64MoveOp {
         }
     }
 
-    private static void const2stack(AMD64LIRAssembler lasm, CiValue result, CiConstant c) {
+    private static void const2stack(TargetMethodAssembler<AMD64MacroAssembler> tasm, CiValue result, CiConstant c) {
         switch (result.kind) {
             case Jsr:
-            case Int:    lasm.masm.movl(lasm.asAddress(result), c.asInt()); break;
-            case Long:   lasm.masm.movlong(lasm.asAddress(result), c.asLong()); break;
-            case Float:  lasm.masm.movl(lasm.asAddress(result), floatToRawIntBits(c.asFloat())); break;
-            case Double: lasm.masm.movlong(lasm.asAddress(result), doubleToRawLongBits(c.asDouble())); break;
+            case Int:    tasm.masm.movl(tasm.asAddress(result), c.asInt()); break;
+            case Long:   tasm.masm.movlong(tasm.asAddress(result), c.asLong()); break;
+            case Float:  tasm.masm.movl(tasm.asAddress(result), floatToRawIntBits(c.asFloat())); break;
+            case Double: tasm.masm.movlong(tasm.asAddress(result), doubleToRawLongBits(c.asDouble())); break;
             case Object:
                 if (c.isNull()) {
-                    lasm.masm.movlong(lasm.asAddress(result), 0L);
+                    tasm.masm.movlong(tasm.asAddress(result), 0L);
                 } else {
                     throw Util.shouldNotReachHere("Non-null object constants must be in register");
                 }
@@ -293,63 +294,63 @@ public class AMD64MoveOp {
     }
 
 
-    protected static void load(AMD64LIRAssembler lasm, CiValue result, CiAddress loadAddr, CiKind kind, LIRDebugInfo info) {
+    protected static void load(TargetMethodAssembler<AMD64MacroAssembler> tasm, CiValue result, CiAddress loadAddr, CiKind kind, LIRDebugInfo info) {
         if (info != null) {
-            lasm.tasm.recordImplicitException(lasm.masm.codeBuffer.position(), info);
+            tasm.recordImplicitException(tasm.masm.codeBuffer.position(), info);
         }
         switch (kind) {
             case Boolean:
-            case Byte:   lasm.masm.movsxb(lasm.asRegister(result),    loadAddr); break;
-            case Char:   lasm.masm.movzxl(lasm.asRegister(result),    loadAddr); break;
-            case Short:  lasm.masm.movswl(lasm.asRegister(result),    loadAddr); break;
-            case Int:    lasm.masm.movslq(lasm.asRegister(result),    loadAddr); break;
-            case Long:   lasm.masm.movq(lasm.asRegister(result),     loadAddr); break;
-            case Float:  lasm.masm.movflt(lasm.asFloatReg(result),  loadAddr); break;
-            case Double: lasm.masm.movdbl(lasm.asDoubleReg(result), loadAddr); break;
-            case Object: lasm.masm.movq(lasm.asRegister(result),   loadAddr); break;
+            case Byte:   tasm.masm.movsxb(tasm.asRegister(result),    loadAddr); break;
+            case Char:   tasm.masm.movzxl(tasm.asRegister(result),    loadAddr); break;
+            case Short:  tasm.masm.movswl(tasm.asRegister(result),    loadAddr); break;
+            case Int:    tasm.masm.movslq(tasm.asRegister(result),    loadAddr); break;
+            case Long:   tasm.masm.movq(tasm.asRegister(result),     loadAddr); break;
+            case Float:  tasm.masm.movflt(tasm.asFloatReg(result),  loadAddr); break;
+            case Double: tasm.masm.movdbl(tasm.asDoubleReg(result), loadAddr); break;
+            case Object: tasm.masm.movq(tasm.asRegister(result),   loadAddr); break;
             default:     throw Util.shouldNotReachHere();
         }
     }
 
-    protected static void store(AMD64LIRAssembler lasm, CiAddress storeAddr, CiValue input, CiKind kind, LIRDebugInfo info) {
+    protected static void store(TargetMethodAssembler<AMD64MacroAssembler> tasm, CiAddress storeAddr, CiValue input, CiKind kind, LIRDebugInfo info) {
         if (info != null) {
-            lasm.tasm.recordImplicitException(lasm.masm.codeBuffer.position(), info);
+            tasm.recordImplicitException(tasm.masm.codeBuffer.position(), info);
         }
 
         if (input.isRegister()) {
             switch (kind) {
                 case Boolean:
-                case Byte:   lasm.masm.movb(storeAddr,   lasm.asRegister(input)); break;
+                case Byte:   tasm.masm.movb(storeAddr,   tasm.asRegister(input)); break;
                 case Char:
-                case Short:  lasm.masm.movw(storeAddr,   lasm.asRegister(input)); break;
-                case Int:    lasm.masm.movl(storeAddr,   lasm.asRegister(input)); break;
-                case Long:   lasm.masm.movq(storeAddr,   lasm.asRegister(input)); break;
-                case Float:  lasm.masm.movflt(storeAddr, lasm.asFloatReg(input)); break;
-                case Double: lasm.masm.movsd(storeAddr,  lasm.asDoubleReg(input)); break;
-                case Object: lasm.masm.movq(storeAddr,   lasm.asRegister(input)); break;
+                case Short:  tasm.masm.movw(storeAddr,   tasm.asRegister(input)); break;
+                case Int:    tasm.masm.movl(storeAddr,   tasm.asRegister(input)); break;
+                case Long:   tasm.masm.movq(storeAddr,   tasm.asRegister(input)); break;
+                case Float:  tasm.masm.movflt(storeAddr, tasm.asFloatReg(input)); break;
+                case Double: tasm.masm.movsd(storeAddr,  tasm.asDoubleReg(input)); break;
+                case Object: tasm.masm.movq(storeAddr,   tasm.asRegister(input)); break;
                 default:     throw Util.shouldNotReachHere();
             }
         } else if (input.isConstant()) {
             CiConstant c = (CiConstant) input;
             switch (kind) {
                 case Boolean:
-                case Byte:   lasm.masm.movb(storeAddr, c.asInt() & 0xFF); break;
+                case Byte:   tasm.masm.movb(storeAddr, c.asInt() & 0xFF); break;
                 case Char:
-                case Short:  lasm.masm.movw(storeAddr, c.asInt() & 0xFFFF); break;
+                case Short:  tasm.masm.movw(storeAddr, c.asInt() & 0xFFFF); break;
                 case Jsr:
-                case Int:    lasm.masm.movl(storeAddr, c.asInt()); break;
+                case Int:    tasm.masm.movl(storeAddr, c.asInt()); break;
                 case Long:
                     if (Util.isInt(c.asLong())) {
-                        lasm.masm.movslq(storeAddr, (int) c.asLong());
+                        tasm.masm.movslq(storeAddr, (int) c.asLong());
                     } else {
                         throw Util.shouldNotReachHere("Cannot store 64-bit constants to memory");
                     }
                     break;
-                case Float:  lasm.masm.movl(storeAddr, floatToRawIntBits(c.asFloat())); break;
+                case Float:  tasm.masm.movl(storeAddr, floatToRawIntBits(c.asFloat())); break;
                 case Double: throw Util.shouldNotReachHere("Cannot store 64-bit constants to memory");
                 case Object:
                     if (c.isNull()) {
-                        lasm.masm.movptr(storeAddr, 0);
+                        tasm.masm.movptr(storeAddr, 0);
                     } else {
                         throw Util.shouldNotReachHere("Cannot store 64-bit constants to memory");
                     }

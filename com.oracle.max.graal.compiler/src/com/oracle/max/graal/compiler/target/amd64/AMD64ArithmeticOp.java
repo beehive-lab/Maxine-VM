@@ -23,11 +23,12 @@
 package com.oracle.max.graal.compiler.target.amd64;
 
 import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
 
-public enum AMD64ArithmeticOp implements LIROpcode<AMD64LIRAssembler, LIRInstruction>, LIROpcode.SecondOperandCanBeMemory {
+public enum AMD64ArithmeticOp implements LIROpcode<AMD64MacroAssembler, LIRInstruction>, LIROpcode.SecondOperandCanBeMemory {
     IADD, ISUB, IAND, IOR, IXOR,
     LADD, LSUB, LAND, LOR, LXOR,
     FADD, FSUB, FMUL, FDIV,
@@ -43,17 +44,17 @@ public enum AMD64ArithmeticOp implements LIROpcode<AMD64LIRAssembler, LIRInstruc
     }
 
     @Override
-    public void emitCode(AMD64LIRAssembler lasm, LIRInstruction op) {
+    public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
         assert op.info == null;
-        assert op.result().kind == op.operand(0).kind && (op.operand(0).kind == op.operand(1).kind.stackKind() || (op.operand(0).kind == lasm.target.wordKind && op.operand(1).kind.stackKind() == CiKind.Int));
+        assert op.result().kind == op.operand(0).kind && (op.operand(0).kind == op.operand(1).kind.stackKind() || (op.operand(0).kind == tasm.target.wordKind && op.operand(1).kind.stackKind() == CiKind.Int));
         assert op.operand(0).equals(op.result());
 
-        CiRegister dst = lasm.asRegister(op.result());
+        CiRegister dst = tasm.asRegister(op.result());
         CiValue right = op.operand(1);
 
-        AMD64MacroAssembler masm = lasm.masm;
+        AMD64MacroAssembler masm = tasm.masm;
         if (right.isRegister()) {
-            CiRegister rreg = lasm.asRegister(right);
+            CiRegister rreg = tasm.asRegister(right);
             switch (this) {
                 case IADD: masm.addl(dst,  rreg); break;
                 case ISUB: masm.subl(dst,  rreg); break;
@@ -77,28 +78,28 @@ public enum AMD64ArithmeticOp implements LIROpcode<AMD64LIRAssembler, LIRInstruc
             }
         } else if (right.isConstant()) {
             switch (this) {
-                case IADD: masm.incrementl(dst, lasm.asIntConst(right)); break;
-                case ISUB: masm.decrementl(dst, lasm.asIntConst(right)); break;
-                case IAND: masm.andl(dst,  lasm.asIntConst(right)); break;
-                case IOR:  masm.orl(dst,   lasm.asIntConst(right)); break;
-                case IXOR: masm.xorl(dst,  lasm.asIntConst(right)); break;
-                case LADD: masm.addq(dst,  lasm.asIntConst(right)); break;
-                case LSUB: masm.subq(dst,  lasm.asIntConst(right)); break;
-                case LAND: masm.andq(dst,  lasm.asIntConst(right)); break;
-                case LOR:  masm.orq(dst,   lasm.asIntConst(right)); break;
-                case LXOR: masm.xorq(dst,  lasm.asIntConst(right)); break;
-                case FADD: masm.addss(dst, lasm.asFloatConstRef(right)); break;
-                case FSUB: masm.subss(dst, lasm.asFloatConstRef(right)); break;
-                case FMUL: masm.mulss(dst, lasm.asFloatConstRef(right)); break;
-                case FDIV: masm.divss(dst, lasm.asFloatConstRef(right)); break;
-                case DADD: masm.addsd(dst, lasm.asDoubleConstRef(right)); break;
-                case DSUB: masm.subsd(dst, lasm.asDoubleConstRef(right)); break;
-                case DMUL: masm.mulsd(dst, lasm.asDoubleConstRef(right)); break;
-                case DDIV: masm.divsd(dst, lasm.asDoubleConstRef(right)); break;
+                case IADD: masm.incrementl(dst, tasm.asIntConst(right)); break;
+                case ISUB: masm.decrementl(dst, tasm.asIntConst(right)); break;
+                case IAND: masm.andl(dst,  tasm.asIntConst(right)); break;
+                case IOR:  masm.orl(dst,   tasm.asIntConst(right)); break;
+                case IXOR: masm.xorl(dst,  tasm.asIntConst(right)); break;
+                case LADD: masm.addq(dst,  tasm.asIntConst(right)); break;
+                case LSUB: masm.subq(dst,  tasm.asIntConst(right)); break;
+                case LAND: masm.andq(dst,  tasm.asIntConst(right)); break;
+                case LOR:  masm.orq(dst,   tasm.asIntConst(right)); break;
+                case LXOR: masm.xorq(dst,  tasm.asIntConst(right)); break;
+                case FADD: masm.addss(dst, tasm.asFloatConstRef(right)); break;
+                case FSUB: masm.subss(dst, tasm.asFloatConstRef(right)); break;
+                case FMUL: masm.mulss(dst, tasm.asFloatConstRef(right)); break;
+                case FDIV: masm.divss(dst, tasm.asFloatConstRef(right)); break;
+                case DADD: masm.addsd(dst, tasm.asDoubleConstRef(right)); break;
+                case DSUB: masm.subsd(dst, tasm.asDoubleConstRef(right)); break;
+                case DMUL: masm.mulsd(dst, tasm.asDoubleConstRef(right)); break;
+                case DDIV: masm.divsd(dst, tasm.asDoubleConstRef(right)); break;
                 default:   throw Util.shouldNotReachHere();
             }
         } else {
-            CiAddress raddr = lasm.asAddress(right);
+            CiAddress raddr = tasm.asAddress(right);
             switch (this) {
                 case IADD: masm.addl(dst,  raddr); break;
                 case ISUB: masm.subl(dst,  raddr); break;

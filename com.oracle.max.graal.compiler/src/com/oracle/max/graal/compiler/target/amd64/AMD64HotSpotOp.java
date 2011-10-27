@@ -23,6 +23,7 @@
 package com.oracle.max.graal.compiler.target.amd64;
 
 import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.sun.cri.ci.*;
 
@@ -32,20 +33,20 @@ import com.sun.cri.ci.*;
 public class AMD64HotSpotOp {
     public static final MonitorAddressOpcode MONITOR_ADDRESS = new MonitorAddressOpcode();
 
-    protected static class MonitorAddressOpcode implements LIROpcode<AMD64LIRAssembler, LIRInstruction> {
+    protected static class MonitorAddressOpcode implements LIROpcode<AMD64MacroAssembler, LIRInstruction> {
         public LIRInstruction create(CiVariable result, int monitorIndex) {
             return new LIRInstruction(this, result, null, CiConstant.forInt(monitorIndex));
         }
 
         @Override
-        public void emitCode(AMD64LIRAssembler lasm, LIRInstruction op) {
+        public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
             // Note: This LIR operation is just a LEA, so reusing the LEA op would be desirable.
             // However, the address that is loaded depends on the stack slot, and the stack slot numbers are
             // only fixed after register allocation when the number of spill slots is known. Therefore, the address
             // is not known when the LIR is generated.
-            int monitorIndex = lasm.asIntConst(op.operand(0));
-            CiStackSlot slot = lasm.frameMap.toMonitorBaseStackAddress(monitorIndex);
-            lasm.masm.leaq(lasm.asRegister(op.result()), new CiAddress(slot.kind, AMD64.rsp.asValue(), slot.index() * lasm.target.arch.wordSize));
+            int monitorIndex = tasm.asIntConst(op.operand(0));
+            CiStackSlot slot = tasm.compilation.frameMap().toMonitorBaseStackAddress(monitorIndex);
+            tasm.masm.leaq(tasm.asRegister(op.result()), new CiAddress(slot.kind, AMD64.rsp.asValue(), slot.index() * tasm.target.arch.wordSize));
         }
     }
 }

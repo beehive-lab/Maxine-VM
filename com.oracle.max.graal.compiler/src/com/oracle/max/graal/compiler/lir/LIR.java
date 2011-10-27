@@ -24,8 +24,10 @@ package com.oracle.max.graal.compiler.lir;
 
 import java.util.*;
 
+import com.oracle.max.asm.*;
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
+import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.graph.*;
 
@@ -63,8 +65,8 @@ public class LIR {
     public SlowPath methodEndMarker;
 
 
-    public interface SlowPath {
-        void emitCode(LIRAssembler lasm);
+    public interface SlowPath<A extends AbstractAssembler> {
+        void emitCode(TargetMethodAssembler<A> tasm);
     }
 
     /**
@@ -102,42 +104,42 @@ public class LIR {
     }
 
 
-    public void emitCode(LIRAssembler lasm) {
+    public void emitCode(TargetMethodAssembler tasm) {
         if (GraalOptions.PrintLIR && !TTY.isSuppressed()) {
             printLIR(codeEmittingOrder());
         }
 
         for (LIRBlock b : codeEmittingOrder()) {
-            emitBlock(lasm, b);
+            emitBlock(tasm, b);
         }
 
         // generate code for slow cases
         for (SlowPath sp : slowPaths) {
-            sp.emitCode(lasm);
+            emitSlowPath(tasm, sp);
         }
         // generate deoptimization stubs
         for (SlowPath sp : deoptimizationStubs) {
-            sp.emitCode(lasm);
+            emitSlowPath(tasm, sp);
         }
         // generate traps at the end of the method
-        methodEndMarker.emitCode(lasm);
+        emitSlowPath(tasm, methodEndMarker);
     }
 
-    private void emitBlock(LIRAssembler lasm, LIRBlock block) {
+    private void emitBlock(TargetMethodAssembler tasm, LIRBlock block) {
         if (GraalOptions.PrintLIRWithAssembly) {
             block.printWithoutPhis(TTY.out());
         }
 
         if (GraalOptions.CommentedAssembly) {
             String st = String.format(" block B%d", block.blockID());
-            lasm.tasm.blockComment(st);
+            tasm.blockComment(st);
         }
 
         for (LIRInstruction op : block.lir()) {
             if (GraalOptions.CommentedAssembly) {
                 // Only print out branches
                 if (op.code instanceof LIRBranch) {
-                    lasm.tasm.blockComment(op.toStringWithIdPrefix());
+                    tasm.blockComment(op.toStringWithIdPrefix());
                 }
             }
             if (GraalOptions.PrintLIRWithAssembly && !TTY.isSuppressed()) {
@@ -146,25 +148,30 @@ public class LIR {
                 TTY.println();
             }
 
-            emitOp(lasm, op);
+            emitOp(tasm, op);
 
             if (GraalOptions.PrintLIRWithAssembly) {
-                printAssembly(lasm);
+                printAssembly(tasm);
             }
         }
     }
 
     @SuppressWarnings("unchecked")
-    private void emitOp(LIRAssembler lasm, LIRInstruction op) {
-        op.code.emitCode(lasm, op);
+    private void emitOp(TargetMethodAssembler tasm, LIRInstruction op) {
+        op.code.emitCode(tasm, op);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void emitSlowPath(TargetMethodAssembler tasm, SlowPath sp) {
+        sp.emitCode(tasm);
     }
 
     private int lastDecodeStart;
 
-    private void printAssembly(LIRAssembler lasm) {
-        byte[] currentBytes = lasm.asm.codeBuffer.copyData(lastDecodeStart, lasm.asm.codeBuffer.position());
+    private void printAssembly(TargetMethodAssembler tasm) {
+        byte[] currentBytes = tasm.masm.codeBuffer.copyData(lastDecodeStart, tasm.masm.codeBuffer.position());
         if (currentBytes.length > 0) {
-            String disasm = lasm.compilation.compiler.runtime.disassemble(currentBytes, lastDecodeStart);
+            String disasm = tasm.compilation.compiler.runtime.disassemble(currentBytes, lastDecodeStart);
             if (disasm.length() != 0) {
                 TTY.println(disasm);
             } else {
@@ -172,7 +179,7 @@ public class LIR {
                 Util.printBytes(lastDecodeStart, currentBytes, GraalOptions.PrintAssemblyBytesPerLine);
             }
         }
-        lastDecodeStart = lasm.asm.codeBuffer.position();
+        lastDecodeStart = tasm.masm.codeBuffer.position();
     }
 
 

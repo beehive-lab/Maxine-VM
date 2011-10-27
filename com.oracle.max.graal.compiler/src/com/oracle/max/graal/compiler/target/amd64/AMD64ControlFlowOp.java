@@ -27,6 +27,7 @@ import static com.sun.cri.ci.CiRegister.*;
 import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.amd64.AMD64Assembler.ConditionFlag;
 import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.nodes.calc.*;
@@ -44,32 +45,32 @@ public class AMD64ControlFlowOp {
     public static final CondMoveOp CMOVE = new CondMoveOp();
     public static final FloatCondMoveOp FLOAT_CMOVE = new FloatCondMoveOp();
 
-    protected static class LabelOp implements LIROpcode<AMD64LIRAssembler, LIRLabel> {
+    protected static class LabelOp implements LIROpcode<AMD64MacroAssembler, LIRLabel> {
         public LIRInstruction create(Label label, boolean align) {
             return new LIRLabel(this, label, align);
         }
 
         @Override
-        public void emitCode(AMD64LIRAssembler lasm, LIRLabel op) {
+        public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRLabel op) {
             if (op.align) {
-                lasm.masm.align(lasm.target.wordSize);
+                tasm.masm.align(tasm.target.wordSize);
             }
-            lasm.masm.bind(op.label);
+            tasm.masm.bind(op.label);
         }
     }
 
-    protected static class ReturnOp implements StandardOp.ReturnOpcode<AMD64LIRAssembler, LIRInstruction> {
+    protected static class ReturnOp implements StandardOp.ReturnOpcode<AMD64MacroAssembler, LIRInstruction> {
         public LIRInstruction create(CiValue input) {
             return new LIRInstruction(this, CiValue.IllegalValue, null, input);
         }
 
         @Override
-        public void emitCode(AMD64LIRAssembler lasm, LIRInstruction op) {
-            lasm.masm.ret(0);
+        public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
+            tasm.masm.ret(0);
         }
     }
 
-    protected static class JumpOp implements LIROpcode<AMD64LIRAssembler, LIRBranch> {
+    protected static class JumpOp implements LIROpcode<AMD64MacroAssembler, LIRBranch> {
         public LIRInstruction create(LIRBlock block) {
             return new LIRBranch(this, null, false, block);
         }
@@ -79,12 +80,12 @@ public class AMD64ControlFlowOp {
         }
 
         @Override
-        public void emitCode(AMD64LIRAssembler lasm, LIRBranch op) {
-            lasm.masm.jmp(op.label());
+        public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRBranch op) {
+            tasm.masm.jmp(op.label());
         }
     }
 
-    protected static class BranchOp implements LIROpcode<AMD64LIRAssembler, LIRBranch> {
+    protected static class BranchOp implements LIROpcode<AMD64MacroAssembler, LIRBranch> {
         public LIRInstruction create(Condition cond, LIRBlock block) {
             return new LIRBranch(this, cond, false, block);
         }
@@ -94,22 +95,22 @@ public class AMD64ControlFlowOp {
         }
 
         @Override
-        public void emitCode(AMD64LIRAssembler lasm, LIRBranch op) {
-            lasm.masm.jcc(intCond(op.cond), op.label());
+        public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRBranch op) {
+            tasm.masm.jcc(intCond(op.cond), op.label());
         }
     }
 
-    protected static class TableSwitchOp implements LIROpcode<AMD64LIRAssembler, LIRTableSwitch> {
+    protected static class TableSwitchOp implements LIROpcode<AMD64MacroAssembler, LIRTableSwitch> {
         public LIRInstruction create(int lowKey, LIRBlock defaultTargets, LIRBlock[] targets, CiVariable index, CiVariable scratch) {
             return new LIRTableSwitch(this, lowKey, defaultTargets, targets, 1, 1, index, scratch);
         }
 
         @Override
-        public void emitCode(AMD64LIRAssembler lasm, LIRTableSwitch op) {
-            CiRegister value = lasm.asIntReg(op.operand(0));
-            CiRegister scratch = lasm.asLongReg(op.operand(1));
+        public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRTableSwitch op) {
+            CiRegister value = tasm.asIntReg(op.operand(0));
+            CiRegister scratch = tasm.asLongReg(op.operand(1));
 
-            AMD64MacroAssembler masm = lasm.masm;
+            AMD64MacroAssembler masm = tasm.masm;
             Buffer buf = masm.codeBuffer;
 
             // Compare index against jump table bounds
@@ -127,7 +128,7 @@ public class AMD64ControlFlowOp {
 
             // Set scratch to address of jump table
             int leaPos = buf.position();
-            masm.leaq(scratch, new CiAddress(lasm.target.wordKind, InstructionRelative.asValue(), 0));
+            masm.leaq(scratch, new CiAddress(tasm.target.wordKind, InstructionRelative.asValue(), 0));
             int afterLea = buf.position();
 
             // Load jump table entry into scratch and jump to it
@@ -143,7 +144,7 @@ public class AMD64ControlFlowOp {
             // Patch LEA instruction above now that we know the position of the jump table
             int jumpTablePos = buf.position();
             buf.setPosition(leaPos);
-            masm.leaq(scratch, new CiAddress(lasm.target.wordKind, InstructionRelative.asValue(), jumpTablePos - afterLea));
+            masm.leaq(scratch, new CiAddress(tasm.target.wordKind, InstructionRelative.asValue(), jumpTablePos - afterLea));
             buf.setPosition(jumpTablePos);
 
             // Emit jump table entries
@@ -163,11 +164,11 @@ public class AMD64ControlFlowOp {
             }
 
             JumpTable jt = new JumpTable(jumpTablePos, op.lowKey, highKey, 4);
-            lasm.tasm.targetMethod.addAnnotation(jt);
+            tasm.targetMethod.addAnnotation(jt);
         }
     }
 
-    protected static class FloatBranchOp implements LIROpcode<AMD64LIRAssembler, LIRBranch> {
+    protected static class FloatBranchOp implements LIROpcode<AMD64MacroAssembler, LIRBranch> {
         public LIRInstruction create(Condition cond, boolean unorderedIsTrue, LIRBlock block) {
             return new LIRBranch(this, cond, unorderedIsTrue, block);
         }
@@ -177,26 +178,26 @@ public class AMD64ControlFlowOp {
         }
 
         @Override
-        public void emitCode(AMD64LIRAssembler lasm, LIRBranch op) {
+        public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRBranch op) {
             ConditionFlag cond = floatCond(op.cond);
             Label endLabel = new Label();
             if (op.unorderedIsTrue && !trueOnUnordered(cond)) {
-                lasm.masm.jcc(ConditionFlag.parity, op.label());
+                tasm.masm.jcc(ConditionFlag.parity, op.label());
             } else if (!op.unorderedIsTrue && trueOnUnordered(cond)) {
-                lasm.masm.jcc(ConditionFlag.parity, endLabel);
+                tasm.masm.jcc(ConditionFlag.parity, endLabel);
             }
-            lasm.masm.jcc(cond, op.label());
-            lasm.masm.bind(endLabel);
+            tasm.masm.jcc(cond, op.label());
+            tasm.masm.bind(endLabel);
         }
     }
 
-    protected static class CondMoveOp implements LIROpcode<AMD64LIRAssembler, LIRCondition>, LIROpcode.SecondOperandRegisterHint {
+    protected static class CondMoveOp implements LIROpcode<AMD64MacroAssembler, LIRCondition>, LIROpcode.SecondOperandRegisterHint {
         public LIRInstruction create(CiVariable result, Condition cond, CiVariable trueValue, CiValue falseValue) {
             return new LIRCondition(this, result, null, false, 0, 1, cond, false, trueValue, falseValue, trueValue);
         }
 
         @Override
-        public void emitCode(AMD64LIRAssembler lasm, LIRCondition op) {
+        public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRCondition op) {
             CiValue result = op.result();
             CiValue trueValue = op.operand(0);
             CiValue falseValue = op.operand(1);
@@ -204,19 +205,19 @@ public class AMD64ControlFlowOp {
             // check that we don't overwrite an input operand before it is used.
             assert !result.equals(trueValue);
 
-            AMD64MoveOp.move(lasm, result, falseValue);
-            cmove(lasm, result, cond, trueValue);
+            AMD64MoveOp.move(tasm, result, falseValue);
+            cmove(tasm, result, cond, trueValue);
 
         }
     }
 
-    protected static class FloatCondMoveOp implements LIROpcode<AMD64LIRAssembler, LIRCondition>, LIROpcode.SecondOperandRegisterHint {
+    protected static class FloatCondMoveOp implements LIROpcode<AMD64MacroAssembler, LIRCondition>, LIROpcode.SecondOperandRegisterHint {
         public LIRInstruction create(CiVariable result, Condition cond, boolean unorderedIsTrue, CiVariable trueValue, CiVariable falseValue) {
             return new LIRCondition(this, result, null, false, 0, 1, cond, unorderedIsTrue, trueValue, falseValue, trueValue);
         }
 
         @Override
-        public void emitCode(AMD64LIRAssembler lasm, LIRCondition op) {
+        public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRCondition op) {
             CiValue result = op.result();
             CiValue trueValue = op.operand(0);
             CiValue falseValue = op.operand(1);
@@ -225,28 +226,28 @@ public class AMD64ControlFlowOp {
             // check that we don't overwrite an input operand before it is used.
             assert !result.equals(trueValue);
 
-            AMD64MoveOp.move(lasm, result, falseValue);
-            cmove(lasm, result, cond, trueValue);
+            AMD64MoveOp.move(tasm, result, falseValue);
+            cmove(tasm, result, cond, trueValue);
             if (unorderedIsTrue && !trueOnUnordered(cond)) {
-                cmove(lasm, result, ConditionFlag.parity, trueValue);
+                cmove(tasm, result, ConditionFlag.parity, trueValue);
             } else if (!unorderedIsTrue && trueOnUnordered(cond)) {
-                cmove(lasm, result, ConditionFlag.parity, falseValue);
+                cmove(tasm, result, ConditionFlag.parity, falseValue);
             }
         }
     }
 
-    protected static void cmove(AMD64LIRAssembler lasm, CiValue result, ConditionFlag cond, CiValue other) {
+    protected static void cmove(TargetMethodAssembler<AMD64MacroAssembler> tasm, CiValue result, ConditionFlag cond, CiValue other) {
         if (other.isRegister()) {
-            assert lasm.asRegister(other) != lasm.asRegister(result) : "other already overwritten by previous move";
+            assert tasm.asRegister(other) != tasm.asRegister(result) : "other already overwritten by previous move";
             switch (other.kind) {
-                case Int:  lasm.masm.cmovl(cond, lasm.asRegister(result), lasm.asRegister(other)); break;
-                case Long: lasm.masm.cmovq(cond, lasm.asRegister(result), lasm.asRegister(other)); break;
+                case Int:  tasm.masm.cmovl(cond, tasm.asRegister(result), tasm.asRegister(other)); break;
+                case Long: tasm.masm.cmovq(cond, tasm.asRegister(result), tasm.asRegister(other)); break;
                 default:   throw Util.shouldNotReachHere();
             }
         } else {
             switch (other.kind) {
-                case Int:  lasm.masm.cmovl(cond, lasm.asRegister(result), lasm.asAddress(other)); break;
-                case Long: lasm.masm.cmovq(cond, lasm.asRegister(result), lasm.asAddress(other)); break;
+                case Int:  tasm.masm.cmovl(cond, tasm.asRegister(result), tasm.asAddress(other)); break;
+                case Long: tasm.masm.cmovq(cond, tasm.asRegister(result), tasm.asAddress(other)); break;
                 default:   throw Util.shouldNotReachHere();
             }
         }
