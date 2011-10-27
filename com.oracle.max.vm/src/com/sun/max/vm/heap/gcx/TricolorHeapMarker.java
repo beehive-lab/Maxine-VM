@@ -527,6 +527,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             Size coveredAreaSize = end.minus(start).asSize();
             FatalError.check(bitmapSize.toLong() >= bitmapSize(coveredAreaSize).toLong(), "Mark bitmap too small to cover heap");
         }
+        FatalError.check(HeapRegionConstants.log2RegionSizeInBytes >= log2BitmapWord, "Region size too small for heap marker");
         setCoveredArea(start, end);
         colorMap.setStart(bitmapStorage);
         colorMap.setSize(bitmapSize);
