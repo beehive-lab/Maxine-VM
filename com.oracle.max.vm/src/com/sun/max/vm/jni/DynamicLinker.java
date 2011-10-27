@@ -25,7 +25,6 @@ package com.sun.max.vm.jni;
 import static com.sun.max.vm.tele.Inspectable.isVmInspected;
 
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
@@ -51,6 +50,8 @@ import com.sun.max.vm.type.*;
  */
 public final class DynamicLinker {
 
+    private static final String DLOPEN = "dlopen";
+    private static final String DLSYM = "dlsym";
     public static boolean TraceDL;
     static {
         VMOptions.addFieldOption("-XX:", "TraceDL", "Trace Dynamic Linker calls.");
@@ -70,12 +71,6 @@ public final class DynamicLinker {
         ClassMethodActor cma = (ClassMethodActor) ClassRegistry.findMethod(DynamicLinker.class, name, parameterTypes);
         return cma.nativeFunction;
     }
-
-    /**
-     * The non-moving raw memory buffer used to pass data to the native dynamic linker functions.
-     * Any use of the buffer must synchronize on this object once the VM is multi-threaded.
-     */
-    private static final BootMemory buffer = new BootMemory(4 * Ints.K);
 
     /**
      * Initialize the system, "opening" the main program dynamic library.
@@ -122,10 +117,10 @@ public final class DynamicLinker {
                     throw new UnsatisfiedLinkError();
                 }
             }
-            if (NativeInterfaces.verbose()) {
-                Log.println("Loaded library from " + absolutePath + " to " + handle.toHexString());
-            }
             LibInfo.add(cString, handle);
+            if (TraceDL) {
+                trace(DLOPEN, absolutePath, handle);
+            }
         }
         return handle;
     }
@@ -138,12 +133,7 @@ public final class DynamicLinker {
      * @throws UnsatisfiedLinkError if there was an error locating or loading the library
      */
     public static Word load(String absolutePath) throws UnsatisfiedLinkError {
-        if (MaxineVM.isPrimordialOrPristine()) {
-            return doLoad(absolutePath);
-        }
-        synchronized (buffer) {
-            return doLoad(absolutePath);
-        }
+        return doLoad(absolutePath);
     }
 
     /**
@@ -171,13 +161,10 @@ public final class DynamicLinker {
         if (h.isZero()) {
             h = mainHandle;
         }
-        if (MaxineVM.isPrimordialOrPristine()) {
-            return dlsym(symbol, h);
-        }
-        synchronized (buffer) {
-            return dlsym(symbol, h);
-        }
+        return dlsym(symbol, h);
     }
+
+    private static final int STACK_BUFFER_SIZE = 2048;
 
     /**
      * Looks up a symbol in a given library.
@@ -189,43 +176,46 @@ public final class DynamicLinker {
      */
     private static Word dlsym(String symbol, Word h) {
         if (TraceDL) {
-            traceEntry(symbol, h);
+            trace(DLSYM, symbol, h);
         }
+        Pointer symbolAsCString = Intrinsics.stackAllocate(STACK_BUFFER_SIZE);
         Word addr;
         int delim = symbol.indexOf(Mangle.LONG_NAME_DELIMITER);
         if (delim == -1) {
-            BootMemory buf = buffer;
-            int bufRem = buf.size();
-            final int i = CString.writePartialUtf8(symbol, 0, symbol.length(), buf.address(), bufRem);
+            final int i = CString.writePartialUtf8(symbol, 0, symbol.length(), symbolAsCString, STACK_BUFFER_SIZE);
             FatalError.check(i == symbol.length() + 1, "Symbol name is too long for buffer");
-            addr = dlsym(h, buf.address());
+            addr = dlsym(h, symbolAsCString);
         } else {
-            BootMemory buf = buffer;
             int shortNameLength = delim;
-            int i = CString.writePartialUtf8(symbol, 0, shortNameLength, buf.address(), buf.size());
+            int i = CString.writePartialUtf8(symbol, 0, shortNameLength, symbolAsCString, STACK_BUFFER_SIZE);
             FatalError.check(i == shortNameLength + 1, "Symbol name is too long for buffer");
 
-            addr = dlsym(h, buf.address());
+            addr = dlsym(h, symbolAsCString);
             if (addr.isZero()) {
                 int longNameSuffixLength = symbol.length() - (delim + 1);
-                i = CString.writePartialUtf8(symbol, delim + 1, longNameSuffixLength, buf.address().plus(shortNameLength), buf.size() - i);
+                i = CString.writePartialUtf8(symbol, delim + 1, longNameSuffixLength, symbolAsCString, STACK_BUFFER_SIZE);
                 FatalError.check(i == longNameSuffixLength + 1, "Symbol name is too long for buffer");
-                addr = dlsym(h, buf.address());
+                addr = dlsym(h, symbolAsCString);
             }
         }
         if (addr.isNotZero() && criticalDone && isVmInspected()) {
-            LibInfo.setSentinel(h, buffer.address(), addr.asAddress());
+            LibInfo.setSentinel(h, symbolAsCString, addr.asAddress());
         }
         return addr;
     }
 
-    private static void traceEntry(String symbol, Word handle) {
+    private static void trace(String callType, String string, Word handle) {
         boolean lockDisabledSafepoints = Log.lock();
         Log.print("[Thread \"");
         Log.print(VmThread.current().getName());
-        Log.print("\" dlsym(");
-        Log.print(symbol); Log.print(") in ");
-        printLibrary(handle);
+        Log.print("\" ");
+        Log.print(callType);
+        Log.print(" ");
+        Log.print(string);
+        if (callType.equals(DLSYM)) {
+            Log.print(" in ");
+            printLibrary(handle);
+        }
         Log.println("]");
         Log.unlock(lockDisabledSafepoints);
     }
@@ -295,7 +285,7 @@ public final class DynamicLinker {
     * file, assuming a contiguous load.
     *
     * Library name is recorded always for tracing. The sentinel symbol is only
-    * recorder if the VM is being inspected.
+    * recorded if the VM is being inspected.
     */
 
     static {
