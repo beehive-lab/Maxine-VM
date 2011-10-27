@@ -1700,7 +1700,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (libInfo != null) {
                 final List<NativeCodeLibraries.SymbolInfo> functions = NativeFunctionSearchDialog.show(inspection(), libInfo, "View Native Function...", "View Code", false);
                 if (functions != null) {
-                    focus().setCodeLocation(vm().codeManager().createMachineCodeLocation(Utils.first(functions).base, "native code address from function map"), true);
+                    focus().setCodeLocation(vm().codeManager().createMachineCodeLocation(Utils.first(functions).base, "native function address from library"), true);
                 }
             }
         }
@@ -2623,7 +2623,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final NativeCodeLibraries.LibInfo libInfo = NativeLibrarySearchDialog.show(inspection(), "Native function library for breakpoints...", "Select");
             if (libInfo != null) {
-                final List<NativeCodeLibraries.SymbolInfo> functions = NativeFunctionSearchDialog.show(inspection(), libInfo, "Native Function Breakpoints...", "View Code", false);
+                final List<NativeCodeLibraries.SymbolInfo> functions = NativeFunctionSearchDialog.show(inspection(), libInfo, "Native Function Breakpoints...", "Set Breakpoint", true);
                 if (functions != null) {
                     try {
                         MaxBreakpoint machineCodeBreakpoint = null;

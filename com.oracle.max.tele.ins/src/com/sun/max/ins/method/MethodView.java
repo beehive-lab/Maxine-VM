@@ -110,7 +110,7 @@ public abstract class MethodView<View_Kind extends MethodView> extends AbstractV
                 NativeCodeLibraries.SymbolInfo nativeCodeInfo = NativeCodeLibraries.find(address);
                 if (nativeCodeInfo != null) {
                     try {
-                        final MaxExternalCode nativeCode = inspection.vm().codeCache().createExternalCode(nativeCodeInfo.base, nativeCodeInfo.length, nativeCodeInfo.name);
+                        final MaxExternalCode nativeCode = inspection.vm().codeCache().createExternalCode(nativeCodeInfo.base, nativeCodeInfo.length, nativeCodeInfo.qualName());
                         methodView = MethodView.make(inspection, nativeCode);
                     } catch (MaxInvalidAddressException e) {
                         inspection.gui().errorMessage("Unable to read memory at " + address.to0xHexString());
