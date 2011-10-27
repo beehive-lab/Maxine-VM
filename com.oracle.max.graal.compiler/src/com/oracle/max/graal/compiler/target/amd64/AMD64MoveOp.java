@@ -244,7 +244,7 @@ public class AMD64MoveOp {
                 if (Float.floatToRawIntBits(c.asFloat()) == Float.floatToRawIntBits(0.0f)) {
                     lasm.masm.xorps(lasm.asFloatReg(result), lasm.asFloatReg(result));
                 } else {
-                    lasm.masm.movflt(lasm.asFloatReg(result), lasm.asFloatConst(c));
+                    lasm.masm.movflt(lasm.asFloatReg(result), lasm.asFloatConstRef(c));
                 }
                 break;
             case Double:
@@ -252,7 +252,7 @@ public class AMD64MoveOp {
                 if (Double.doubleToRawLongBits(c.asDouble()) == Double.doubleToRawLongBits(0.0d)) {
                     lasm.masm.xorpd(lasm.asDoubleReg(result), lasm.asDoubleReg(result));
                 } else {
-                    lasm.masm.movdbl(lasm.asDoubleReg(result), lasm.asDoubleConst(c));
+                    lasm.masm.movdbl(lasm.asDoubleReg(result), lasm.asDoubleConstRef(c));
                 }
                 break;
             case Object:

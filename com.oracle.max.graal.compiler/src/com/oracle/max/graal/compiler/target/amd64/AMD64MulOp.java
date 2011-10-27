@@ -44,7 +44,7 @@ public enum AMD64MulOp implements LIROpcode<AMD64LIRAssembler, LIRInstruction> {
         } else {
             switch (this) {
                 case IMUL: lasm.masm.imull(lasm.asRegister(op.result()), lasm.asRegister(op.operand(0)), lasm.asIntConst(op.operand(1))); break;
-                case LMUL: lasm.masm.imulq(lasm.asRegister(op.result()), lasm.asRegister(op.operand(0)), lasm.asLongConst(op.operand(1))); break;
+                case LMUL: lasm.masm.imulq(lasm.asRegister(op.result()), lasm.asRegister(op.operand(0)), lasm.asIntConst(op.operand(1))); break;
                 default:   throw Util.shouldNotReachHere();
             }
         }

@@ -63,10 +63,15 @@ public enum AMD64CompareOp implements LIROpcode<AMD64LIRAssembler, LIRInstructio
         } else if (right.isConstant()) {
             switch (this) {
                 case ICMP: masm.cmpl(left, lasm.asIntConst(right)); break;
-                case LCMP: masm.cmpq(left, lasm.asLongConst(right)); break;
-                case ACMP: masm.cmpq(left, lasm.asObjectConst(right)); break;
-                case FCMP: masm.ucomiss(left, lasm.asFloatConst(right)); break;
-                case DCMP: masm.ucomisd(left, lasm.asDoubleConst(right)); break;
+                case LCMP: masm.cmpq(left, lasm.asIntConst(right)); break;
+                case ACMP:
+                    if (((CiConstant) right).isNull()) {
+                        masm.cmpq(left, 0); break;
+                    } else {
+                        throw Util.shouldNotReachHere("Only null object constants are allowed in comparisons");
+                    }
+                case FCMP: masm.ucomiss(left, lasm.asFloatConstRef(right)); break;
+                case DCMP: masm.ucomisd(left, lasm.asDoubleConstRef(right)); break;
                 default:   throw Util.shouldNotReachHere();
             }
         } else {
