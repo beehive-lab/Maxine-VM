@@ -367,6 +367,14 @@ public interface HeapScheme extends VMScheme {
     void trackLifetime(Pointer cell);
 
     /**
+     * Encapsulates the structure of the heap from a tool (e.g. JVMTI) that want to visit every object
+     * in the heap.
+     *
+     * @param visitor
+     */
+    void walkHeap(CallbackCellVisitor visitor);
+
+    /**
      * A collection of methods that support certain inspection services.
      * The public methods are to be called by all implementations when
      * the specified events occur.

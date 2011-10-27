@@ -354,6 +354,7 @@ public enum T1XTemplateTag {
     MULTIANEWARRAY$resolved,
     IFNULL,
     IFNONNULL,
+    BREAKPOINT,
 
     LOAD_EXCEPTION(-1),
     RETHROW_EXCEPTION(-1),

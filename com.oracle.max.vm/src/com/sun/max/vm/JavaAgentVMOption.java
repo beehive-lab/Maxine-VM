@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,18 +27,14 @@ import java.util.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 
-/**
- * Support for the (repeatable) agent command line options.
- * Implemented using delegation to a list of {@link VMStringOption}
- * This could be genericized if necessary.
- */
 
-public class AgentVMOption extends VMOption {
+public class JavaAgentVMOption extends VMOption {
     private List<VMStringOption> optionList = new ArrayList<VMStringOption>();
 
     @HOSTED_ONLY
-    public AgentVMOption(String prefix, String help) {
-        super(prefix, help);
+    public JavaAgentVMOption() {
+        super("-javaagent",
+              "load Java programming language agent, see java.lang.instrument");
     }
 
     /**
