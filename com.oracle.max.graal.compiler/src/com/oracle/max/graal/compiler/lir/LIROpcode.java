@@ -22,8 +22,11 @@
  */
 package com.oracle.max.graal.compiler.lir;
 
-public interface LIROpcode<LA extends LIRAssembler, IT extends LIRInstruction> {
-    void emitCode(LA lasm, IT op);
+import com.oracle.max.asm.*;
+import com.oracle.max.graal.compiler.asm.*;
+
+public interface LIROpcode<A extends AbstractAssembler, I extends LIRInstruction> {
+    void emitCode(TargetMethodAssembler<A> tasm, I op);
 
     /**
      * Marker interface for the register allocator: If an operation implements this interface,

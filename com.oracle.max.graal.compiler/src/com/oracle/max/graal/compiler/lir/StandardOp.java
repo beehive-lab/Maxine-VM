@@ -24,6 +24,7 @@ package com.oracle.max.graal.compiler.lir;
 
 import java.util.*;
 
+import com.oracle.max.asm.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.*;
 import com.sun.cri.ri.*;
@@ -40,23 +41,23 @@ public class StandardOp {
     public static XirOpcode<?, ?> XIR;
     // Checkstyle: resume
 
-    public interface MoveOpcode<LA extends LIRAssembler, IT extends LIRInstruction> extends LIROpcode<LA, IT> {
+    public interface MoveOpcode<A extends AbstractAssembler, I extends LIRInstruction> extends LIROpcode<A, I> {
         LIRInstruction create(CiValue result, CiValue input);
     }
 
-    public interface NullCheckOpcode<LA extends LIRAssembler, IT extends LIRInstruction> extends LIROpcode<LA, IT> {
+    public interface NullCheckOpcode<A extends AbstractAssembler, I extends LIRInstruction> extends LIROpcode<A, I> {
         LIRInstruction create(CiVariable input, LIRDebugInfo info);
     }
 
-    public interface CallOpcode<LA extends LIRAssembler, IT extends LIRInstruction> extends LIROpcode<LA, IT> {
+    public interface CallOpcode<A extends AbstractAssembler, I extends LIRInstruction> extends LIROpcode<A, I> {
         LIRInstruction create(Object target, CiValue result, List<CiValue> arguments, CiValue targetAddress, LIRDebugInfo info, Map<XirMark, Mark> marks, List<CiValue> pointerSlots);
     }
 
-    public interface ReturnOpcode<LA extends LIRAssembler, IT extends LIRInstruction> extends LIROpcode<LA, IT> {
+    public interface ReturnOpcode<A extends AbstractAssembler, I extends LIRInstruction> extends LIROpcode<A, I> {
         LIRInstruction create(CiValue input);
     }
 
-    public interface XirOpcode<LA extends LIRAssembler, IT extends LIRInstruction> extends LIROpcode<LA, IT> {
+    public interface XirOpcode<A extends AbstractAssembler, I extends LIRInstruction> extends LIROpcode<A, I> {
         LIRInstruction create(XirSnippet snippet, CiValue[] operands, CiValue outputOperand, int tempInputCount, int tempCount, CiValue[] inputOperands, int[] operandIndices, int outputOperandIndex,
                         LIRDebugInfo info, LIRDebugInfo infoAfter, RiMethod method, List<CiValue> pointerSlots);
     }

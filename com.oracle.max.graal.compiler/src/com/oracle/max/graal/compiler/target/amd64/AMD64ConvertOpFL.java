@@ -23,13 +23,15 @@
 package com.oracle.max.graal.compiler.target.amd64;
 
 import com.oracle.max.asm.*;
+import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.asm.target.amd64.AMD64Assembler.*;
+import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.stub.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
 
-public enum AMD64ConvertOpFL implements LIROpcode<AMD64LIRAssembler, LIRConvert> {
+public enum AMD64ConvertOpFL implements LIROpcode<AMD64MacroAssembler, LIRConvert> {
     F2L, D2L;
 
     public LIRInstruction create(CiVariable result, CompilerStub stub, CiVariable input, CiVariable tmp) {
@@ -37,20 +39,20 @@ public enum AMD64ConvertOpFL implements LIROpcode<AMD64LIRAssembler, LIRConvert>
     }
 
     @Override
-    public void emitCode(AMD64LIRAssembler lasm, LIRConvert op) {
-        CiRegister dst = lasm.asLongReg(op.result());
-        CiRegister tmp = lasm.asLongReg(op.operand(1));
+    public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRConvert op) {
+        CiRegister dst = tasm.asLongReg(op.result());
+        CiRegister tmp = tasm.asLongReg(op.operand(1));
         switch (this) {
-            case F2L: lasm.masm.cvttss2siq(dst, lasm.asFloatReg(op.operand(0))); break;
-            case D2L: lasm.masm.cvttsd2siq(dst, lasm.asDoubleReg(op.operand(0))); break;
+            case F2L: tasm.masm.cvttss2siq(dst, tasm.asFloatReg(op.operand(0))); break;
+            case D2L: tasm.masm.cvttsd2siq(dst, tasm.asDoubleReg(op.operand(0))); break;
             default: throw Util.shouldNotReachHere();
         }
 
         Label endLabel = new Label();
-        lasm.masm.movq(tmp, java.lang.Long.MIN_VALUE);
-        lasm.masm.cmpq(dst, tmp);
-        lasm.masm.jcc(ConditionFlag.notEqual, endLabel);
-        AMD64CallOp.callStub(lasm, op.stub, op.stub.resultKind, null, op.result(), op.operand(0));
-        lasm.masm.bind(endLabel);
+        tasm.masm.movq(tmp, java.lang.Long.MIN_VALUE);
+        tasm.masm.cmpq(dst, tmp);
+        tasm.masm.jcc(ConditionFlag.notEqual, endLabel);
+        AMD64CallOp.callStub(tasm, op.stub, op.stub.resultKind, null, op.result(), op.operand(0));
+        tasm.masm.bind(endLabel);
     }
 }

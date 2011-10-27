@@ -32,17 +32,19 @@ import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
-public class TargetMethodAssembler {
-    private final GraalContext context;
-    public final AbstractAssembler asm;
+public class TargetMethodAssembler<A extends AbstractAssembler> {
+    public final GraalCompilation compilation;
+    public final A masm;
     public final CiTargetMethod targetMethod;
+    public final CiTarget target;
     private List<ExceptionInfo> exceptionInfoList;
     private int lastSafepointPos;
 
-    public TargetMethodAssembler(GraalContext context, AbstractAssembler asm) {
-        this.context = context;
-        this.asm = asm;
+    public TargetMethodAssembler(GraalCompilation compilation, A masm) {
+        this.compilation = compilation;
+        this.masm = masm;
         this.targetMethod = new CiTargetMethod();
+        this.target = compilation.compiler.target;
     }
 
     public void setFrameSize(int frameSize) {
@@ -50,16 +52,16 @@ public class TargetMethodAssembler {
     }
 
     public CiTargetMethod.Mark recordMark(Object id, CiTargetMethod.Mark[] references) {
-        return targetMethod.recordMark(asm.codeBuffer.position(), id, references);
+        return targetMethod.recordMark(masm.codeBuffer.position(), id, references);
     }
 
     public void blockComment(String s) {
-        targetMethod.addAnnotation(new CiTargetMethod.CodeComment(asm.codeBuffer.position(), s));
+        targetMethod.addAnnotation(new CiTargetMethod.CodeComment(masm.codeBuffer.position(), s));
     }
 
     public CiTargetMethod finishTargetMethod(Object name, RiRuntime runtime, boolean isStub) {
         // Install code, data and frame size
-        targetMethod.setTargetCode(asm.codeBuffer.close(false), asm.codeBuffer.position());
+        targetMethod.setTargetCode(masm.codeBuffer.close(false), masm.codeBuffer.position());
 
         // Record exception handlers if they exist
         if (exceptionInfoList != null) {
@@ -70,18 +72,18 @@ public class TargetMethodAssembler {
         }
 
         if (GraalOptions.Meter) {
-            context.metrics.TargetMethods++;
-            context.metrics.CodeBytesEmitted += targetMethod.targetCodeSize();
-            context.metrics.SafepointsEmitted += targetMethod.safepoints.size();
-            context.metrics.DataPatches += targetMethod.dataReferences.size();
-            context.metrics.ExceptionHandlersEmitted += targetMethod.exceptionHandlers.size();
+            compilation.compiler.context.metrics.TargetMethods++;
+            compilation.compiler.context.metrics.CodeBytesEmitted += targetMethod.targetCodeSize();
+            compilation.compiler.context.metrics.SafepointsEmitted += targetMethod.safepoints.size();
+            compilation.compiler.context.metrics.DataPatches += targetMethod.dataReferences.size();
+            compilation.compiler.context.metrics.ExceptionHandlersEmitted += targetMethod.exceptionHandlers.size();
         }
 
         if (GraalOptions.PrintAssembly && !TTY.isSuppressed() && !isStub) {
             Util.printSection("Target Method", Util.SECTION_CHARACTER);
             TTY.println("Name: " + name);
             TTY.println("Frame size: " + targetMethod.frameSize());
-            TTY.println("Register size: " + asm.target.arch.registerReferenceMapBitCount);
+            TTY.println("Register size: " + masm.target.arch.registerReferenceMapBitCount);
 
             if (GraalOptions.PrintCodeBytes) {
                 Util.printSection("Code", Util.SUB_SECTION_CHARACTER);
@@ -167,7 +169,7 @@ public class TargetMethodAssembler {
     public CiAddress recordDataReferenceInCode(CiConstant data) {
         assert data != null;
 
-        int pos = asm.codeBuffer.position();
+        int pos = masm.codeBuffer.position();
 
         if (GraalOptions.TraceRelocation) {
             TTY.print("Data reference in code: pos = %d, data = %s", pos, data.toString());
@@ -179,5 +181,71 @@ public class TargetMethodAssembler {
 
     public int lastSafepointPos() {
         return lastSafepointPos;
+    }
+
+
+    public CiRegister asIntReg(CiValue value) {
+        assert value.kind == CiKind.Int || value.kind == CiKind.Jsr;
+        return asRegister(value);
+    }
+
+    public CiRegister asLongReg(CiValue value) {
+        assert value.kind == CiKind.Long;
+        return asRegister(value);
+    }
+
+    public CiRegister asObjectReg(CiValue value) {
+        assert value.kind == CiKind.Object;
+        return asRegister(value);
+    }
+
+    public CiRegister asFloatReg(CiValue value) {
+        assert value.kind == CiKind.Float;
+        return asRegister(value);
+    }
+
+    public CiRegister asDoubleReg(CiValue value) {
+        assert value.kind == CiKind.Double;
+        return asRegister(value);
+    }
+
+    public CiRegister asRegister(CiValue value) {
+        return value.asRegister();
+    }
+
+    /**
+     * Returns the integer value of any constants that can be represented by a 32-bit integer value,
+     * including long constants that fit into the 32-bit range.
+     */
+    public int asIntConst(CiValue value) {
+        assert (value.kind.stackKind() == CiKind.Int || value.kind == CiKind.Jsr || value.kind == CiKind.Long) && value.isConstant();
+        long c = ((CiConstant) value).asLong();
+        if (!(NumUtil.isInt(c))) {
+            throw Util.shouldNotReachHere();
+        }
+        return (int) c;
+    }
+
+    /**
+     * Returns the address of a float constant that is embedded as a data references into the code.
+     */
+    public CiAddress asFloatConstRef(CiValue value) {
+        assert value.kind == CiKind.Float && value.isConstant();
+        return recordDataReferenceInCode((CiConstant) value);
+    }
+
+    /**
+     * Returns the address of a double constant that is embedded as a data references into the code.
+     */
+    public CiAddress asDoubleConstRef(CiValue value) {
+        assert value.kind == CiKind.Double && value.isConstant();
+        return recordDataReferenceInCode((CiConstant) value);
+    }
+
+    public CiAddress asAddress(CiValue value) {
+        if (value.isStackSlot()) {
+            return compilation.frameMap().toStackAddress((CiStackSlot) value);
+        }
+        return (CiAddress) value;
     }
 }

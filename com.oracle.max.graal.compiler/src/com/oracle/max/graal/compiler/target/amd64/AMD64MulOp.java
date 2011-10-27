@@ -22,11 +22,13 @@
  */
 package com.oracle.max.graal.compiler.target.amd64;
 
+import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
 
-public enum AMD64MulOp implements LIROpcode<AMD64LIRAssembler, LIRInstruction> {
+public enum AMD64MulOp implements LIROpcode<AMD64MacroAssembler, LIRInstruction> {
     IMUL, LMUL;
 
     public LIRInstruction create(CiVariable leftAndResult, CiValue right) {
@@ -34,17 +36,17 @@ public enum AMD64MulOp implements LIROpcode<AMD64LIRAssembler, LIRInstruction> {
     }
 
     @Override
-    public void emitCode(AMD64LIRAssembler lasm, LIRInstruction op) {
+    public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
         if (op.operand(1).isRegister()) {
             switch (this) {
-                case IMUL: lasm.masm.imull(lasm.asRegister(op.result()), lasm.asRegister(op.operand(1))); break;
-                case LMUL: lasm.masm.imulq(lasm.asRegister(op.result()), lasm.asRegister(op.operand(1))); break;
+                case IMUL: tasm.masm.imull(tasm.asRegister(op.result()), tasm.asRegister(op.operand(1))); break;
+                case LMUL: tasm.masm.imulq(tasm.asRegister(op.result()), tasm.asRegister(op.operand(1))); break;
                 default:   throw Util.shouldNotReachHere();
             }
         } else {
             switch (this) {
-                case IMUL: lasm.masm.imull(lasm.asRegister(op.result()), lasm.asRegister(op.operand(0)), lasm.asIntConst(op.operand(1))); break;
-                case LMUL: lasm.masm.imulq(lasm.asRegister(op.result()), lasm.asRegister(op.operand(0)), lasm.asIntConst(op.operand(1))); break;
+                case IMUL: tasm.masm.imull(tasm.asRegister(op.result()), tasm.asRegister(op.operand(0)), tasm.asIntConst(op.operand(1))); break;
+                case LMUL: tasm.masm.imulq(tasm.asRegister(op.result()), tasm.asRegister(op.operand(0)), tasm.asIntConst(op.operand(1))); break;
                 default:   throw Util.shouldNotReachHere();
             }
         }

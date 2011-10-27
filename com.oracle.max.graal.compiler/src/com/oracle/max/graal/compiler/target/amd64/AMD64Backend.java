@@ -25,14 +25,13 @@ package com.oracle.max.graal.compiler.target.amd64;
 import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.graal.compiler.*;
-import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.gen.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.stub.*;
 import com.oracle.max.graal.compiler.stub.CompilerStub.Id;
 import com.oracle.max.graal.compiler.target.*;
+import com.sun.cri.ci.CiCompiler.DebugInfoLevel;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiCompiler.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
 
@@ -52,16 +51,6 @@ public class AMD64Backend extends Backend {
     @Override
     public LIRGenerator newLIRGenerator(GraalCompilation compilation) {
         return new AMD64LIRGenerator(compilation);
-    }
-
-    /**
-     * Creates a new LIRAssembler for x86.
-     * @param compilation the compilation for which to create the LIR assembler
-     * @return an appropriate LIR assembler instance
-     */
-    @Override
-    public LIRAssembler newLIRAssembler(GraalCompilation compilation, TargetMethodAssembler tasm) {
-        return new AMD64LIRAssembler(compilation, tasm);
     }
 
     @Override

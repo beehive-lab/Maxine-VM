@@ -23,11 +23,12 @@
 package com.oracle.max.graal.compiler.target.amd64;
 
 import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
 
-public enum AMD64CompareOp implements LIROpcode<AMD64LIRAssembler, LIRInstruction>, LIROpcode.SecondOperandCanBeMemory {
+public enum AMD64CompareOp implements LIROpcode<AMD64MacroAssembler, LIRInstruction>, LIROpcode.SecondOperandCanBeMemory {
     ICMP, LCMP, ACMP, FCMP, DCMP;
 
     public LIRInstruction create(CiVariable left, CiValue right) {
@@ -42,16 +43,16 @@ public enum AMD64CompareOp implements LIROpcode<AMD64LIRAssembler, LIRInstructio
     }
 
     @Override
-    public void emitCode(AMD64LIRAssembler lasm, LIRInstruction op) {
+    public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
         assert op.info == null;
         assert op.operand(0).kind == op.operand(1).kind.stackKind();
 
-        CiRegister left = lasm.asRegister(op.operand(0));
+        CiRegister left = tasm.asRegister(op.operand(0));
         CiValue right = op.operand(1);
 
-        AMD64MacroAssembler masm = lasm.masm;
+        AMD64MacroAssembler masm = tasm.masm;
         if (right.isRegister()) {
-            CiRegister rreg = lasm.asRegister(right);
+            CiRegister rreg = tasm.asRegister(right);
             switch (this) {
                 case ICMP: masm.cmpl(left, rreg); break;
                 case LCMP: masm.cmpq(left, rreg); break;
@@ -62,20 +63,20 @@ public enum AMD64CompareOp implements LIROpcode<AMD64LIRAssembler, LIRInstructio
             }
         } else if (right.isConstant()) {
             switch (this) {
-                case ICMP: masm.cmpl(left, lasm.asIntConst(right)); break;
-                case LCMP: masm.cmpq(left, lasm.asIntConst(right)); break;
+                case ICMP: masm.cmpl(left, tasm.asIntConst(right)); break;
+                case LCMP: masm.cmpq(left, tasm.asIntConst(right)); break;
                 case ACMP:
                     if (((CiConstant) right).isNull()) {
                         masm.cmpq(left, 0); break;
                     } else {
                         throw Util.shouldNotReachHere("Only null object constants are allowed in comparisons");
                     }
-                case FCMP: masm.ucomiss(left, lasm.asFloatConstRef(right)); break;
-                case DCMP: masm.ucomisd(left, lasm.asDoubleConstRef(right)); break;
+                case FCMP: masm.ucomiss(left, tasm.asFloatConstRef(right)); break;
+                case DCMP: masm.ucomisd(left, tasm.asDoubleConstRef(right)); break;
                 default:   throw Util.shouldNotReachHere();
             }
         } else {
-            CiAddress raddr = lasm.asAddress(right);
+            CiAddress raddr = tasm.asAddress(right);
             switch (this) {
                 case ICMP: masm.cmpl(left, raddr); break;
                 case LCMP: masm.cmpq(left, raddr); break;

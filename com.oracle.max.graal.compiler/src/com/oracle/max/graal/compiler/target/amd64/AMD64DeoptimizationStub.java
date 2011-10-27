@@ -25,13 +25,15 @@ package com.oracle.max.graal.compiler.target.amd64;
 import java.util.*;
 
 import com.oracle.max.asm.*;
+import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.graal.compiler.*;
+import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.nodes.DeoptimizeNode.DeoptAction;
 import com.sun.cri.ci.*;
 
-public class AMD64DeoptimizationStub implements LIR.SlowPath {
+public class AMD64DeoptimizationStub implements LIR.SlowPath<AMD64MacroAssembler> {
     public final Label label = new Label();
     public final LIRDebugInfo info;
     public final DeoptAction action;
@@ -47,19 +49,19 @@ public class AMD64DeoptimizationStub implements LIR.SlowPath {
     private static ArrayList<Object> keepAlive = new ArrayList<Object>();
 
     @Override
-    public void emitCode(LIRAssembler l) {
-        AMD64LIRAssembler lasm = (AMD64LIRAssembler) l;
+    public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm) {
+        AMD64MacroAssembler masm = tasm.masm;
 
         // TODO(cwi): we want to get rid of a generally reserved scratch register.
-        CiRegister scratch = lasm.compilation.registerConfig.getScratchRegister();
+        CiRegister scratch = tasm.compilation.registerConfig.getScratchRegister();
 
-        lasm.masm.bind(label);
+        masm.bind(label);
         if (GraalOptions.CreateDeoptInfo && deoptInfo != null) {
-            lasm.masm.nop();
+            masm.nop();
             keepAlive.add(deoptInfo);
-            AMD64MoveOp.move(lasm, scratch.asValue(), CiConstant.forObject(deoptInfo));
+            AMD64MoveOp.move(tasm, scratch.asValue(), CiConstant.forObject(deoptInfo));
             // TODO Why use scratch register here? Is it an implicit calling convention that the runtime function reads this register?
-            AMD64CallOp.directCall(lasm, CiRuntimeCall.SetDeoptInfo, info);
+            AMD64CallOp.directCall(tasm, CiRuntimeCall.SetDeoptInfo, info);
         }
         int code;
         switch(action) {
@@ -85,10 +87,9 @@ public class AMD64DeoptimizationStub implements LIR.SlowPath {
             // TODO Why throw an exception here for a value that was set explicitly some lines above?
             throw new RuntimeException();
         }
-        lasm.masm.movq(scratch, code);
+        masm.movq(scratch, code);
         // TODO Why use scratch register here? Is it an implicit calling convention that the runtime function reads this register?
-        AMD64CallOp.directCall(lasm, CiRuntimeCall.Deoptimize, info);
-        AMD64CallOp.shouldNotReachHere(lasm);
+        AMD64CallOp.directCall(tasm, CiRuntimeCall.Deoptimize, info);
+        AMD64CallOp.shouldNotReachHere(tasm);
     }
 }
-

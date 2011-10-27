@@ -118,11 +118,11 @@ public final class GraalCompilation {
     }
 
     private TargetMethodAssembler createAssembler() {
-        AbstractAssembler asm = compiler.backend.newAssembler(registerConfig);
-        TargetMethodAssembler assembler = new TargetMethodAssembler(context(), asm);
-        assembler.setFrameSize(frameMap.frameSize());
-        assembler.targetMethod.setCustomStackAreaOffset(frameMap.offsetToCustomArea());
-        return assembler;
+        AbstractAssembler masm = compiler.backend.newAssembler(registerConfig);
+        TargetMethodAssembler tasm = new TargetMethodAssembler<AbstractAssembler>(this, masm);
+        tasm.setFrameSize(frameMap.frameSize());
+        tasm.targetMethod.setCustomStackAreaOffset(frameMap.offsetToCustomArea());
+        return tasm;
     }
 
     public CiResult compile() {
@@ -404,11 +404,10 @@ public final class GraalCompilation {
         if (GraalOptions.GenLIR && GraalOptions.GenCode) {
             context().timers.startScope("Create Code");
             try {
-                final TargetMethodAssembler tma = createAssembler();
-                final LIRAssembler lirAssembler = compiler.backend.newLIRAssembler(this, tma);
-                lir.emitCode(lirAssembler);
+                TargetMethodAssembler tasm = createAssembler();
+                lir.emitCode(tasm);
 
-                CiTargetMethod targetMethod = tma.finishTargetMethod(method, compiler.runtime, false);
+                CiTargetMethod targetMethod = tasm.finishTargetMethod(method, compiler.runtime, false);
                 if (!graph.start().assumptions().isEmpty()) {
                     targetMethod.setAssumptions(graph.start().assumptions());
                 }

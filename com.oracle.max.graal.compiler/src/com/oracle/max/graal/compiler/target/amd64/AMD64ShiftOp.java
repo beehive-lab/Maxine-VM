@@ -23,11 +23,12 @@
 package com.oracle.max.graal.compiler.target.amd64;
 
 import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
 
-public enum AMD64ShiftOp implements LIROpcode<AMD64LIRAssembler, LIRInstruction> {
+public enum AMD64ShiftOp implements LIROpcode<AMD64MacroAssembler, LIRInstruction> {
     ISHL, ISHR, UISHR,
     LSHL, LSHR, ULSHR;
 
@@ -36,13 +37,13 @@ public enum AMD64ShiftOp implements LIROpcode<AMD64LIRAssembler, LIRInstruction>
     }
 
     @Override
-    public void emitCode(AMD64LIRAssembler lasm, LIRInstruction op) {
+    public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
         CiRegister dst = op.result().asRegister();
         CiValue right = op.operand(1);
 
-        AMD64MacroAssembler masm = lasm.masm;
+        AMD64MacroAssembler masm = tasm.masm;
         if (right.isRegister()) {
-            assert lasm.asRegister(right) == AMD64.rcx;
+            assert tasm.asRegister(right) == AMD64.rcx;
             switch (this) {
                 case ISHL:  masm.shll(dst); break;
                 case ISHR:  masm.sarl(dst); break;
@@ -54,12 +55,12 @@ public enum AMD64ShiftOp implements LIROpcode<AMD64LIRAssembler, LIRInstruction>
             }
         } else {
             switch (this) {
-                case ISHL:  masm.shll(dst, lasm.asIntConst(right) & 31); break;
-                case ISHR:  masm.sarl(dst, lasm.asIntConst(right) & 31); break;
-                case UISHR: masm.shrl(dst, lasm.asIntConst(right) & 31); break;
-                case LSHL:  masm.shlq(dst, lasm.asIntConst(right) & 63); break;
-                case LSHR:  masm.sarq(dst, lasm.asIntConst(right) & 63); break;
-                case ULSHR: masm.shrq(dst, lasm.asIntConst(right) & 63); break;
+                case ISHL:  masm.shll(dst, tasm.asIntConst(right) & 31); break;
+                case ISHR:  masm.sarl(dst, tasm.asIntConst(right) & 31); break;
+                case UISHR: masm.shrl(dst, tasm.asIntConst(right) & 31); break;
+                case LSHL:  masm.shlq(dst, tasm.asIntConst(right) & 63); break;
+                case LSHR:  masm.sarq(dst, tasm.asIntConst(right) & 63); break;
+                case ULSHR: masm.shrq(dst, tasm.asIntConst(right) & 63); break;
                 default:   throw Util.shouldNotReachHere();
             }
         }

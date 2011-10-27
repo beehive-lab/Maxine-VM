@@ -23,7 +23,9 @@
 package com.oracle.max.graal.compiler.target.amd64;
 
 import com.oracle.max.asm.*;
+import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.asm.target.amd64.AMD64Assembler.*;
+import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
@@ -33,7 +35,7 @@ import com.sun.cri.ci.*;
  * integer constants -1, 0, 1 on less, equal, or greater, respectively.  For floating point compares,
  * unordered can be either greater {@link #CMP2INT_UG} or less {@link #CMP2INT_UL}.
  */
-public enum AMD64CompareToIntOp implements LIROpcode<AMD64LIRAssembler, LIRInstruction> {
+public enum AMD64CompareToIntOp implements LIROpcode<AMD64MacroAssembler, LIRInstruction> {
     CMP2INT, CMP2INT_UG, CMP2INT_UL;
 
     public LIRInstruction create(CiVariable result) {
@@ -41,8 +43,8 @@ public enum AMD64CompareToIntOp implements LIROpcode<AMD64LIRAssembler, LIRInstr
     }
 
     @Override
-    public void emitCode(AMD64LIRAssembler lasm, LIRInstruction op) {
-        CiRegister dest = lasm.asIntReg(op.result());
+    public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
+        CiRegister dest = tasm.asIntReg(op.result());
         Label high = new Label();
         Label low = new Label();
         Label done = new Label();
@@ -50,38 +52,38 @@ public enum AMD64CompareToIntOp implements LIROpcode<AMD64LIRAssembler, LIRInstr
         // comparison is done by a separate LIR instruction before
         switch (this) {
             case CMP2INT:
-                lasm.masm.jcc(ConditionFlag.greater, high);
-                lasm.masm.jcc(ConditionFlag.less, low);
+                tasm.masm.jcc(ConditionFlag.greater, high);
+                tasm.masm.jcc(ConditionFlag.less, low);
                 break;
             case CMP2INT_UG:
-                lasm.masm.jcc(ConditionFlag.parity, high);
-                lasm.masm.jcc(ConditionFlag.above, high);
-                lasm.masm.jcc(ConditionFlag.below, low);
+                tasm.masm.jcc(ConditionFlag.parity, high);
+                tasm.masm.jcc(ConditionFlag.above, high);
+                tasm.masm.jcc(ConditionFlag.below, low);
                 break;
             case CMP2INT_UL:
-                lasm.masm.jcc(ConditionFlag.parity, low);
-                lasm.masm.jcc(ConditionFlag.above, high);
-                lasm.masm.jcc(ConditionFlag.below, low);
+                tasm.masm.jcc(ConditionFlag.parity, low);
+                tasm.masm.jcc(ConditionFlag.above, high);
+                tasm.masm.jcc(ConditionFlag.below, low);
                 break;
             default:
                 throw Util.shouldNotReachHere();
         }
 
         // equal -> 0
-        lasm.masm.xorptr(dest, dest);
-        lasm.masm.jmp(done);
+        tasm.masm.xorptr(dest, dest);
+        tasm.masm.jmp(done);
 
         // greater -> 1
-        lasm.masm.bind(high);
-        lasm.masm.xorptr(dest, dest);
-        lasm.masm.incrementl(dest, 1);
-        lasm.masm.jmp(done);
+        tasm.masm.bind(high);
+        tasm.masm.xorptr(dest, dest);
+        tasm.masm.incrementl(dest, 1);
+        tasm.masm.jmp(done);
 
         // less -> -1
-        lasm.masm.bind(low);
-        lasm.masm.xorptr(dest, dest);
-        lasm.masm.decrementl(dest, 1);
+        tasm.masm.bind(low);
+        tasm.masm.xorptr(dest, dest);
+        tasm.masm.decrementl(dest, 1);
 
-        lasm.masm.bind(done);
+        tasm.masm.bind(done);
     }
 }

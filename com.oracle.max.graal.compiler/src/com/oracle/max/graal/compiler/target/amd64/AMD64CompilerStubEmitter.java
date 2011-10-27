@@ -66,11 +66,6 @@ public class AMD64CompilerStubEmitter {
     private final CiStackSlot outResult;
 
     /**
-     * The offset of the stub code restoring the saved registers and returning to the caller.
-     */
-//    private int registerRestoreEpilogueOffset = -1;
-
-    /**
      * The layout of the callee save area of the stub being emitted.
      */
     private CiCalleeSaveLayout csl;
@@ -82,7 +77,7 @@ public class AMD64CompilerStubEmitter {
 
     private final GraalContext context;
 
-    private final TargetMethodAssembler tasm;
+    private final TargetMethodAssembler<AMD64MacroAssembler> tasm;
     private final AMD64MacroAssembler asm;
 
     public AMD64CompilerStubEmitter(GraalContext context, GraalCompilation compilation, CiKind[] argTypes, CiKind resultKind) {
@@ -91,7 +86,7 @@ public class AMD64CompilerStubEmitter {
         this.context = context;
         final RiRegisterConfig registerConfig = compilation.compiler.compilerStubRegisterConfig;
         this.asm = new AMD64MacroAssembler(compilation.compiler.target, registerConfig);
-        this.tasm = new TargetMethodAssembler(context, asm);
+        this.tasm = new TargetMethodAssembler<AMD64MacroAssembler>(compilation, asm);
 
         inArgs = new CiStackSlot[argTypes.length];
         if (argTypes.length != 0) {
@@ -182,7 +177,6 @@ public class AMD64CompilerStubEmitter {
             operands[resultOperand.index] = outputOperand;
         }
 
-        AMD64LIRAssembler lasm = new AMD64LIRAssembler(comp, tasm);
         for (int i = 0; i < template.parameters.length; i++) {
             final XirParameter param = template.parameters[i];
             assert !(param instanceof XirConstantOperand) : "constant parameters not supported for stubs";
@@ -193,7 +187,7 @@ public class AMD64CompilerStubEmitter {
             // Is the value destroyed?
             if (template.isParameterDestroyed(param.parameterIndex)) {
                 CiValue newOp = newRegister(op.kind, allocatableRegisters);
-                AMD64MoveOp.move(lasm, newOp, op);
+                AMD64MoveOp.move(tasm, newOp, op);
                 operands[param.index] = newOp;
             } else {
                 operands[param.index] = op;
@@ -221,7 +215,7 @@ public class AMD64CompilerStubEmitter {
         }
 
         assert template.marks.length == 0 : "marks not supported in compiler stubs";
-        AMD64XirOp.emitXirInstructions(lasm, null, template.fastPath, labels, operands, null);
+        AMD64XirOp.emitXirInstructions(tasm, null, template.fastPath, labels, operands, null);
         epilogue();
         String stubName = "graal-" + template.name;
         CiTargetMethod targetMethod = tasm.finishTargetMethod(stubName, comp.compiler.runtime, true);

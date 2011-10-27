@@ -22,6 +22,8 @@
  */
 package com.oracle.max.graal.compiler.target.amd64;
 
+import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
@@ -34,44 +36,44 @@ public class AMD64MaxineOp {
     public static final SignificantBitOpcode MSB = new SignificantBitOpcode();
     public static final SignificantBitOpcode LSB = new SignificantBitOpcode();
 
-    protected static class BreakpointOpcode implements LIROpcode<AMD64LIRAssembler, LIRInstruction> {
+    protected static class BreakpointOpcode implements LIROpcode<AMD64MacroAssembler, LIRInstruction> {
         public LIRInstruction create() {
             return new LIRInstruction(this, CiValue.IllegalValue, null);
         }
 
         @Override
-        public void emitCode(AMD64LIRAssembler lasm, LIRInstruction op) {
-            lasm.masm.int3();
+        public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
+            tasm.masm.int3();
         }
     }
 
-    protected static class SignificantBitOpcode implements LIROpcode<AMD64LIRAssembler, LIRInstruction>, LIROpcode.AllOperandsCanBeMemory {
+    protected static class SignificantBitOpcode implements LIROpcode<AMD64MacroAssembler, LIRInstruction>, LIROpcode.AllOperandsCanBeMemory {
         public LIRInstruction create(CiVariable result, CiVariable input) {
             return new LIRInstruction(this, result, null, false, 1, 0, input);
         }
 
         @Override
-        public void emitCode(AMD64LIRAssembler lasm, LIRInstruction op) {
+        public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
             CiValue src = op.operand(0);
-            CiRegister result = lasm.asLongReg(op.result());
+            CiRegister result = tasm.asLongReg(op.result());
 
-            lasm.masm.xorq(result, result);
-            lasm.masm.notq(result);
+            tasm.masm.xorq(result, result);
+            tasm.masm.notq(result);
             if (src.isRegister()) {
-                assert lasm.asLongReg(src) != result;
+                assert tasm.asLongReg(src) != result;
                 if (this == MSB) {
-                    lasm.masm.bsrq(result, lasm.asLongReg(src));
+                    tasm.masm.bsrq(result, tasm.asLongReg(src));
                 } else if (this == LSB) {
-                    lasm.masm.bsfq(result, lasm.asLongReg(src));
+                    tasm.masm.bsfq(result, tasm.asLongReg(src));
                 } else {
                     throw Util.shouldNotReachHere();
                 }
 
             } else {
                 if (this == MSB) {
-                    lasm.masm.bsrq(result, lasm.asAddress(src));
+                    tasm.masm.bsrq(result, tasm.asAddress(src));
                 } else if (this == LSB) {
-                    lasm.masm.bsfq(result, lasm.asAddress(src));
+                    tasm.masm.bsfq(result, tasm.asAddress(src));
                 } else {
                     throw Util.shouldNotReachHere();
                 }
