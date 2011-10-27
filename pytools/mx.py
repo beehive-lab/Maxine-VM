@@ -1,4 +1,4 @@
-#!/usr/bin/python -u
+#!/usr/bin/python
 #
 # mx.py - shell interface for Maxine source code
 #
@@ -26,16 +26,27 @@
 # questions.
 #
 # ----------------------------------------------------------------------------------------------------
+#
+# A launcher for Maxine executables and tools. This launch simplifies the task
+# of running the Maxine VM and utilities by setting up the necessary class paths
+# and executable paths. The only requirement is for the user to have set the
+# environment variable JAVA_HOME to point to a JDK installation directory.
+# The '-java_home' global option can be used instead.
+#
+# The commands are defined in commands.py.
+#
+# The mymx.py file gives an example of how to extend this launcher.
+#
 
 import sys
 import os
 import subprocess
-import shlex
+from threading import Thread
 from argparse import ArgumentParser, REMAINDER
 from os.path import join, dirname, abspath, exists, getmtime
 import commands
 
-DEFAULT_JVM_ARGS = '-d64 -ea -Xss2m -Xmx1g'
+DEFAULT_JAVA_ARGS = '-d64 -ea -Xss2m -Xmx1g'
 
 class Env(ArgumentParser):
 
@@ -43,7 +54,8 @@ class Env(ArgumentParser):
     def format_help(self):
         msg = ArgumentParser.format_help(self) + '\navailable commands:\n\n'
         for cmd in commands.table.iterkeys():
-            doc = commands.__dict__[cmd].__doc__
+            c, _ = commands.table[cmd]
+            doc = c.__doc__
             msg += ' {0:<16} {1}\n'.format(cmd, doc.split('\n', 1)[0])
         return msg + '\n'
     
@@ -51,10 +63,10 @@ class Env(ArgumentParser):
         ArgumentParser.__init__(self, prog='max')
     
         self.add_argument('-v',          action='store_true', dest='verbose', help='enable verbose output')
-        self.add_argument('-d',          action='store_true', dest='java_dbg', help='make JVM process wait on port 8000 for a debugger')
+        self.add_argument('-d',          action='store_true', dest='java_dbg', help='make Java processes wait on port 8000 for a debugger')
         self.add_argument('--cp-pfx',    action='store', dest='cp_prefix', help='class path prefix', metavar='<arg>')
         self.add_argument('--cp-sfx',    action='store', dest='cp_suffix', help='class path suffix', metavar='<arg>')
-        self.add_argument('--J',         action='store', dest='java_args', help='Java VM arguments (e.g. --J @-dsa)', metavar='@<args>', default=DEFAULT_JVM_ARGS)
+        self.add_argument('--J',         action='store', dest='java_args', help='Java VM arguments (e.g. --J @-dsa)', metavar='@<args>', default=DEFAULT_JAVA_ARGS)
         self.add_argument('--Jp',      action='append', dest='java_args_pfx', help='prefix Java VM arguments (e.g. --Jp @-dsa)', metavar='@<args>', default=[])
         self.add_argument('--Ja',      action='append', dest='java_args_sfx', help='suffix Java VM arguments (e.g. --Ja @-dsa)', metavar='@<args>', default=[])
         self.add_argument('--java-home', action='store', help='JDK installation directory (must be JDK 6 or later)', metavar='<path>', default=default_java_home())
@@ -114,14 +126,14 @@ class Env(ArgumentParser):
         jmaxClass = join(jmaxDir, 'jmax.class')
         jmaxSource = join(jmaxDir, 'jmax.java')
         if  not exists(jmaxClass) or getmtime(jmaxClass) < getmtime(jmaxSource):
-            subprocess.call([self.javac, '-d', dirname(jmaxClass), jmaxSource])
+            subprocess.check_call([self.javac, '-d', dirname(jmaxClass), jmaxSource])
         
         return subprocess.check_output([self.java, '-ea', '-cp', jmaxDir, 'jmax'] + args).strip()
         
     def classpath(self, project):
         return self.jmax(['classpath', project])
     
-    def run_java(self, args):
+    def run_java(self, args, nonZeroIsFatal=True, out=None, err=None, cwd=None):
             
         def delAt(s):
             return s.lstrip('@')
@@ -132,47 +144,54 @@ class Env(ArgumentParser):
         dbg_args = []
         if self.java_dbg:
             dbg_args += ['-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8000']
-        
-        
-        return self.run([self.java] + java_args_pfx + java_args + dbg_args + java_args_sfx + args)
+        return self.run([self.java] + java_args_pfx + java_args + dbg_args + java_args_sfx + args, nonZeroIsFatal=nonZeroIsFatal, out=out, err=err, cwd=cwd)
     
-    def run(self, args, nonZeroIsError=True):
-        cmdLine = ' '.join(args)
-        args = shlex.split(cmdLine)
-        if self.verbose:
-            self.log(cmdLine)
-        if nonZeroIsError:
-            return subprocess.check_call(args)
-        return subprocess.call(args)
-
-    def run_redirect(self, args, nonZeroIsError=True, out=None, err=None):
+    def run(self, args, nonZeroIsFatal=True, out=None, err=None, cwd=None):
         """
-        Run command with arguments. Each line of stdout and stderr can be redirected to the provided out and err functions. """
+        
+        Run a command in a subprocess, wait for it to complete and return the exit status of the process.
+        If the exit status is non-zero and `nonZeroIsFatal` is true, then the program is exited with
+        the same exit status.
+        Each line of the standard output and error streams of the subprocess are redirected to the
+        provided out and err functions if they are not None.
+        
+        """
         cmdLine = ' '.join(args)
-        args = shlex.split(cmdLine)
+        args = cmdLine.split()
+
         if self.verbose:
             self.log(cmdLine)
             
-        process = subprocess.Popen(args, stdout=None if out is None else subprocess.PIPE, stderr=None if err is None else subprocess.PIPE)
-        while True:
-            process.poll()
-            done = True
-            if out is not None:
-                line = process.stdout.readline()
-                if (line != ''):
-                    done = False 
-                    out(line)
-            if err is not None:
-                line = process.stderr.readline()
-                if (line != ''):
-                    done = False 
-                    err(line)
-            if done and process.returncode != None:
-                break
-        retcode = process.returncode
-        if retcode and nonZeroIsError:
-            cmd = args[0]
-            raise subprocess.CalledProcessError(retcode, cmd)
+        try:
+            if out is None and err is None:
+                retcode = subprocess.call(args, cwd=cwd)
+            else:
+                def redirect(stream, f):
+                    for line in iter(stream.readline, ''):
+                        f(line)
+                    stream.close()
+                p = subprocess.Popen(args, stdout=None if out is None else subprocess.PIPE, stderr=None if err is None else subprocess.PIPE)
+                if out is not None:
+                    t = Thread(target=redirect, args=(p.stdout, out))
+                    t.daemon = True # thread dies with the program
+                    t.start()
+                if err is not None:
+                    t = Thread(target=redirect, args=(p.stderr, err))
+                    t.daemon = True # thread dies with the program
+                    t.start()
+                retcode = p.wait()
+        except OSError as e:
+            self.log('Error executing \'' + cmdLine + '\': ' + str(e))
+            if self.verbose:
+                raise e
+            abort(e.errno)
+        
+
+        if retcode and nonZeroIsFatal:
+            if self.verbose:
+                raise subprocess.CalledProcessError(retcode, cmdLine)
+            abort(retcode)
+            
         return retcode
 
     
@@ -210,10 +229,10 @@ def main():
     if not commands.table.has_key(env.command):
         env.error('unknown command "' + env.command + '"')
         
-    c = getattr(commands, env.command)
+    c, _ = commands.table[env.command]
     retcode = c(env, env.command_args)
     if retcode is not None and retcode != 0:
-        sys.exit(retcode)
+        abort(retcode)
     
     
 #This idiom means the below code only runs when executed from command line
