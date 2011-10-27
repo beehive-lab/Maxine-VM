@@ -32,6 +32,7 @@ import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertOpFI.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertOpFL.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64DivOp.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64HotSpotOp.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64MaxineOp.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64MathIntrinsicOp.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64MoveOp.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64MulOp.*;
@@ -43,6 +44,7 @@ import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.gen.*;
 import com.oracle.max.graal.compiler.lir.*;
+import com.oracle.max.graal.compiler.lir.FrameMap.*;
 import com.oracle.max.graal.compiler.stub.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.nodes.DeoptimizeNode.DeoptAction;
@@ -411,7 +413,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
     @Override
     public void deoptimizeOn(Condition cond) {
         LIRDebugInfo info = stateFor(null);
-        Label stubEntry = createDeoptStub(DeoptAction.InvalidateReprofile, info, "deoptimizeOn " + cond);
+        Label stubEntry = createDeoptStub(DeoptAction.InvalidateReprofile, info, cond);
         append(BRANCH.create(cond, stubEntry, info));
     }
 
@@ -523,4 +525,11 @@ public class AMD64LIRGenerator extends LIRGenerator {
         return stub.label;
     }
 
+    @Override
+    public void visitStackAllocate(StackAllocateNode x) {
+        CiVariable result = createResultVariable(x);
+        assert x.size().isConstant() : "ALLOCA bytecode 'size' operand is not a constant: " + x.size();
+        StackBlock stackBlock = compilation.frameMap().reserveStackBlock(x.size().asConstant().asInt());
+        append(STACK_ALLOCATE.create(result, stackBlock));
+    }
 }

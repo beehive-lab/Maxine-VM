@@ -80,4 +80,5 @@ public abstract class ValueVisitor {
     public abstract void visitMathIntrinsic(MathIntrinsicNode i);
     public abstract void visitRuntimeCall(RuntimeCallNode i);
     public abstract void visitCompareAndSwap(CompareAndSwapNode i);
+    public abstract void visitStackAllocate(StackAllocateNode i);
 }
