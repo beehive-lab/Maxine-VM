@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.compiler.phases;
+package com.oracle.max.graal.compiler.graphbuilder;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
 import static java.lang.reflect.Modifier.*;
@@ -30,14 +30,13 @@ import java.util.*;
 
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
-import com.oracle.max.graal.compiler.graph.*;
-import com.oracle.max.graal.compiler.graph.BlockMap.Block;
-import com.oracle.max.graal.compiler.graph.BlockMap.DeoptBlock;
-import com.oracle.max.graal.compiler.graph.BlockMap.ExceptionBlock;
+import com.oracle.max.graal.compiler.graphbuilder.BlockMap.Block;
+import com.oracle.max.graal.compiler.graphbuilder.BlockMap.DeoptBlock;
+import com.oracle.max.graal.compiler.graphbuilder.BlockMap.ExceptionBlock;
+import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.compiler.schedule.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.compiler.util.LoopUtil.Loop;
-import com.oracle.max.graal.compiler.value.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.DeoptimizeNode.DeoptAction;
@@ -45,6 +44,7 @@ import com.oracle.max.graal.nodes.PhiNode.PhiType;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.java.*;
+import com.oracle.max.graal.nodes.java.MethodCallTargetNode.InvokeKind;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
@@ -1013,8 +1013,8 @@ public final class GraphBuilderPhase extends Phase {
                 // of initialization is required), it can be commoned with static field accesses.
                 genTypeOrDeopt(RiType.Representation.StaticFields, holder, false);
             }
-            ValueNode[] args = frameState.popArguments(resolvedTarget.signature().argumentSlots(false));
-            appendInvoke(INVOKESTATIC, resolvedTarget, args, cpi, constantPool);
+            ValueNode[] args = frameState.popArguments(resolvedTarget.signature().argumentSlots(false), resolvedTarget.signature().argumentCount(false));
+            appendInvoke(InvokeKind.Static, resolvedTarget, args, cpi, constantPool);
         } else {
             genInvokeDeopt(target, false);
         }
@@ -1022,8 +1022,8 @@ public final class GraphBuilderPhase extends Phase {
 
     private void genInvokeInterface(RiMethod target, int cpi, RiConstantPool constantPool) {
         if (target instanceof RiResolvedMethod) {
-            ValueNode[] args = frameState.popArguments(target.signature().argumentSlots(true));
-            genInvokeIndirect(INVOKEINTERFACE, (RiResolvedMethod) target, args, cpi, constantPool);
+            ValueNode[] args = frameState.popArguments(target.signature().argumentSlots(true), target.signature().argumentCount(true));
+            genInvokeIndirect(InvokeKind.Interface, (RiResolvedMethod) target, args, cpi, constantPool);
         } else {
             genInvokeDeopt(target, true);
         }
@@ -1031,8 +1031,8 @@ public final class GraphBuilderPhase extends Phase {
 
     private void genInvokeVirtual(RiMethod target, int cpi, RiConstantPool constantPool) {
         if (target instanceof RiResolvedMethod) {
-            ValueNode[] args = frameState.popArguments(target.signature().argumentSlots(true));
-            genInvokeIndirect(INVOKEVIRTUAL, (RiResolvedMethod) target, args, cpi, constantPool);
+            ValueNode[] args = frameState.popArguments(target.signature().argumentSlots(true), target.signature().argumentCount(true));
+            genInvokeIndirect(InvokeKind.Virtual, (RiResolvedMethod) target, args, cpi, constantPool);
         } else {
             genInvokeDeopt(target, true);
         }
@@ -1043,7 +1043,7 @@ public final class GraphBuilderPhase extends Phase {
         if (target instanceof RiResolvedMethod) {
             assert target != null;
             assert target.signature() != null;
-            ValueNode[] args = frameState.popArguments(target.signature().argumentSlots(true));
+            ValueNode[] args = frameState.popArguments(target.signature().argumentSlots(true), target.signature().argumentCount(true));
             invokeDirect((RiResolvedMethod) target, args, knownHolder, cpi, constantPool);
         } else {
             genInvokeDeopt(target, true);
@@ -1053,14 +1053,14 @@ public final class GraphBuilderPhase extends Phase {
     private void genInvokeDeopt(RiMethod unresolvedTarget, boolean withReceiver) {
         storeResultGraph = false;
         append(graph.add(new DeoptimizeNode(DeoptAction.InvalidateRecompile)));
-        frameState.popArguments(unresolvedTarget.signature().argumentSlots(withReceiver));
+        frameState.popArguments(unresolvedTarget.signature().argumentSlots(withReceiver), unresolvedTarget.signature().argumentCount(withReceiver));
         CiKind kind = unresolvedTarget.signature().returnKind(false);
         if (kind != CiKind.Void) {
             frameState.push(kind.stackKind(), append(ConstantNode.defaultForKind(kind, graph)));
         }
     }
 
-    private void genInvokeIndirect(int opcode, RiResolvedMethod target, ValueNode[] args, int cpi, RiConstantPool constantPool) {
+    private void genInvokeIndirect(InvokeKind invokeKind, RiResolvedMethod target, ValueNode[] args, int cpi, RiConstantPool constantPool) {
         ValueNode receiver = args[0];
         // attempt to devirtualize the call
         RiResolvedType klass = target.holder();
@@ -1079,23 +1079,24 @@ public final class GraphBuilderPhase extends Phase {
             return;
         }
         // devirtualization failed, produce an actual invokevirtual
-        appendInvoke(opcode, target, args, cpi, constantPool);
+        appendInvoke(invokeKind, target, args, cpi, constantPool);
     }
 
     private void invokeDirect(RiResolvedMethod target, ValueNode[] args, RiType knownHolder, int cpi, RiConstantPool constantPool) {
-        appendInvoke(INVOKESPECIAL, target, args, cpi, constantPool);
+        appendInvoke(InvokeKind.Special, target, args, cpi, constantPool);
     }
 
-    private void appendInvoke(int opcode, RiResolvedMethod target, ValueNode[] args, int cpi, RiConstantPool constantPool) {
-        CiKind resultType = target.signature().returnKind(false);
+    private void appendInvoke(InvokeKind invokeKind, RiResolvedMethod targetMethod, ValueNode[] args, int cpi, RiConstantPool constantPool) {
+        CiKind resultType = targetMethod.signature().returnKind(false);
         if (GraalOptions.DeoptALot) {
             storeResultGraph = false;
             DeoptimizeNode deoptimize = graph.add(new DeoptimizeNode(DeoptAction.None));
-            deoptimize.setMessage("invoke " + target.name());
+            deoptimize.setMessage("invoke " + targetMethod.name());
             append(deoptimize);
             frameState.pushReturn(resultType, ConstantNode.defaultForKind(resultType, graph));
         } else {
-            InvokeNode invoke = graph.add(new InvokeNode(bci(), opcode, resultType.stackKind(), args, target, target.signature().returnType(method.holder())));
+            MethodCallTargetNode callTarget = graph.unique(new MethodCallTargetNode(invokeKind, targetMethod, args, targetMethod.signature().returnType(method.holder())));
+            InvokeNode invoke = graph.add(new InvokeNode(bci(), callTarget));
             ValueNode result = appendWithBCI(invoke);
             invoke.setExceptionEdge(handleException(null, bci()));
             frameState.pushReturn(resultType, result);
