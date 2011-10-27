@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,15 +20,33 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.extensions;
-
-import java.util.*;
+package com.oracle.max.graal.nodes;
 
 import com.oracle.max.graal.graph.*;
+import com.oracle.max.graal.graph.Node.*;
+import com.oracle.max.graal.nodes.calc.*;
+import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
+public abstract class CallTargetNode extends FloatingNode implements ValueNumberable{
+    @Input protected final NodeInputList<ValueNode> arguments;
 
-public interface Intrinsifier {
-    Graph<?> intrinsicGraph(RiRuntime runtime, CiCodePos callerPos, RiResolvedMethod method, List<? extends Node> parameters);
+    public CallTargetNode(ValueNode[] arguments) {
+        super(CiKind.Illegal);
+        this.arguments = new NodeInputList<ValueNode>(this, arguments);
+    }
+
+    public NodeInputList<ValueNode> arguments() {
+        return arguments;
+    }
+
+    public abstract RiType returnType();
+
+    public abstract CiKind returnKind();
+
+    @Override
+    public void accept(ValueVisitor v) {
+        //nop
+    }
 }
