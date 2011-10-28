@@ -23,11 +23,8 @@
 package com.oracle.max.graal.graph;
 
 import java.util.*;
-import java.util.Map.Entry;
 
 import com.oracle.max.graal.graph.Node.*;
-import com.oracle.max.graal.graph.NodeClass.NodeClassIterator;
-import com.oracle.max.graal.graph.NodeClass.Position;
 
 /**
  * This class is a graph container, it contains the set of nodes that belong to this graph.
@@ -409,73 +406,6 @@ public class Graph<S extends Node> {
      * @return a map which associates the duplicated nodes to their duplicate
      */
     public Map<Node, Node> addDuplicate(Iterable<Node> nodes, Map<Node, Node> replacements) {
-        Map<Node, Node> newNodes = new IdentityHashMap<Node, Node>();
-        // create node duplicates
-        for (Node node : nodes) {
-            if (node != null && !replacements.containsKey(node)) {
-                assert !node.isDeleted() : "trying to duplicate deleted node";
-                Node newNode = node.clone(this);
-                assert newNode.getClass() == node.getClass();
-                newNodes.put(node, newNode);
-            }
-        }
-        // re-wire inputs
-        for (Entry<Node, Node> entry : newNodes.entrySet()) {
-            Node oldNode = entry.getKey();
-            Node node = entry.getValue();
-            for (NodeClassIterator iter = oldNode.inputs().iterator(); iter.hasNext();) {
-                Position pos = iter.nextPosition();
-                Node input = oldNode.get(pos);
-                Node target = replacements.get(input);
-                if (target == null) {
-                    target = newNodes.get(input);
-                }
-                node.set(pos, target);
-            }
-        }
-        for (Entry<Node, Node> entry : replacements.entrySet()) {
-            Node oldNode = entry.getKey();
-            Node node = entry.getValue();
-            if (oldNode == node) {
-                continue;
-            }
-            for (NodeClassIterator iter = oldNode.inputs().iterator(); iter.hasNext();) {
-                Position pos = iter.nextPosition();
-                Node input = oldNode.get(pos);
-                if (newNodes.containsKey(input)) {
-                    node.set(pos, newNodes.get(input));
-                }
-            }
-        }
-
-        // re-wire successors
-        for (Entry<Node, Node> entry : newNodes.entrySet()) {
-            Node oldNode = entry.getKey();
-            Node node = entry.getValue();
-            for (NodeClassIterator iter = oldNode.successors().iterator(); iter.hasNext();) {
-                Position pos = iter.nextPosition();
-                Node succ = oldNode.get(pos);
-                Node target = replacements.get(succ);
-                if (target == null) {
-                    target = newNodes.get(succ);
-                }
-                node.set(pos, target);
-            }
-        }
-        for (Entry<Node, Node> entry : replacements.entrySet()) {
-            Node oldNode = entry.getKey();
-            Node node = entry.getValue();
-            if (oldNode == node) {
-                continue;
-            }
-            for (NodeClassIterator iter = oldNode.successors().iterator(); iter.hasNext();) {
-                Position pos = iter.nextPosition();
-                Node succ = oldNode.get(pos);
-                if (newNodes.containsKey(succ)) {
-                    node.set(pos, newNodes.get(succ));
-                }
-            }
-        }
-        return newNodes;
+        return NodeClass.addGraphDuplicate(this, nodes, replacements);
     }
 }
