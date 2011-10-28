@@ -156,6 +156,16 @@ def build(env, args):
                 if exists(dirname(dst)):
                     shutil.copyfile(name, dst)
 
+def c1x(env, args):
+    """alias for "mx olc -c=C1X ..." """
+    olc(env, ['-c=C1X'] + args)
+
+def canonicalizeprojects(env, args):
+    """process all project.properties files to canonicalize the project dependencies
+
+    The exit code of this command reflects how many files were updated."""
+    env.jmax(['canonicalizeprojects'])
+    
 def check(env, args):
     """run Checkstyle on the Maxine Java sources
 
@@ -285,7 +295,17 @@ def copycheck(env, args):
     """run copyright check on the Maxine sources (defined as being under hg control)"""
     env.run_java(['-cp', env.jmax(['classpath_noresolve', 'com.oracle.max.base']), 'com.sun.max.tools.CheckCopyright'] + args)
 
-def help(env, args):
+def eclipseprojects(env, args):
+    """(re)generate Eclipse project configurations
+
+    The exit code of this command reflects how many files were updated."""
+    env.jmax(['eclipse'] + args)
+    
+def graal(env, args):
+    """alias for "mx olc -c=Graal ..." """
+    olc(env, ['-c=Graal'] + args)
+
+def help_(env, args):
     """show help for a given command
 
 With no arguments, print a list of commands and short help for each command.
@@ -299,8 +319,12 @@ Given a command name, print help for that command."""
     if not table.has_key(name):
         env.error('unknown command: ' + name)
     
-    (func, usage) = table[name]
+    value = table[name]
+    (func, usage) = value[:2]
     doc = func.__doc__
+    if len(value) > 2:
+        docArgs = value[2:]
+        doc = doc.format(*docArgs)
     print 'mx {0} {1}\n\n{2}\n'.format(name, usage, doc)
 
 def image(env, args):
@@ -397,6 +421,26 @@ def jttgen(env, args):
     return env.run_java(['-cp', env.classpath('com.oracle.max.vm'), 'test.com.sun.max.vm.compiler.JavaTester',
                          '-scenario=target', '-run-scheme-package=all', '-native-tests'] + tests, cwd=testDir)
 
+def olc(env, args):
+    """offline compile a list of methods
+
+    See Patterns below for a description of the format expected for "patterns..."
+
+    The output traced by this command is not guaranteed to be the same as the output
+    for a compilation performed at runtime. The code produced by a compiler is sensitive
+    to the compilation context such as what classes have been resolved etc.
+
+    Use "mx olc -help" to see what other options this command accepts.
+
+    --- Patterns ---
+    {0}"""
+
+    env.run_java(['-cp', env.classpath(), 'com.oracle.max.vm.ext.maxri.Compile'] + args)
+
+def t1x(env, args):
+    """alias for "mx olc -c=T1X ..." """
+    olc(env, ['-c=T1X'] + args)
+
 def t1xgen(env, args):
     """(re)generate content in T1XTemplateSource.java
 
@@ -406,19 +450,79 @@ def t1xgen(env, args):
 
     return env.run_java(['-cp', env.classpath('com.oracle.max.vm.ext.t1x'), 'com.oracle.max.vm.ext.t1x.T1XTemplateGenerator'])
 
+def verify(env, args):
+    """verifies a set of methods using the Maxine bytecode verifier
+
+    Run the Maxine verifier over a set of specified methods available
+    on the class path. To extend the class path, use one of the global
+    "--cp-pfx" or "--cp-sfx" options.
+
+    See Patterns below for a description of the format expected for "patterns..."
+
+    Use "mx verify -help" to see what other options this command accepts.
+
+    --- Patterns ---
+    {0}"""
+
+    env.run_java(['-cp', env.classpath(), 'test.com.sun.max.vm.verifier.CommandLineVerifier'] + args)
             
+_patternHelp="""
+    A pattern is a class name pattern followed by an optional method name
+    pattern separated by a ':' further followed by an optional signature:
+
+      <class name>[:<method name>[:<signature>]]
+
+    For example, the list of patterns:
+
+         "Object:wait", "String", "Util:add:(int,float)"
+
+    will match all methods in a class whose name contains "Object" where the
+    method name contains "wait", all methods in a class whose name
+    contains "String" and all methods in any class whose name
+    contains "Util", the method name contains "add" and the
+    signature is (int, float).
+
+    The type of matching performed for a given class/method name is determined
+    by the position of '^' in the pattern name as follows:
+
+    Position of '^'   | Match algorithm
+     ------------------+------------------
+     start AND end     | Equality
+     start             | Prefix
+     end               | Suffix
+     absent            | Substring
+
+    For example, "^java.util:^toString^" matches all methods named "toString" in
+    any class whose name starts with "java.util".
+
+    The matching performed on a signature is always a substring test. Signatures can
+    specified either in Java source syntax (e.g. "int,String") or JVM internal syntax
+    (e.g. "IFLjava/lang/String;"). The latter must always use fully qualified type
+    names where as the former must not.
+
+    Any pattern starting with "!" is an exclusion specification. Any class or method
+    whose name contains an exclusion string (the exclusion specification minus the
+    leading "!") is excluded."""
+
 # Table of commands in alphabetical order.
-# Keys are command names, entries are tuples of command function and usage message
+# Keys are command names, value are lists: [<function>, <usage msg>, <args to function doc string>...]
 # Extensions should update this table directly
 table = {
-    'build': (build, '[options] projects...'),
-    'check': (check, 'projects...'),
-    'clean': (clean, ''),
-    'configs': (configs, ''),
-    'copycheck': (copycheck, ''),
-    'help': (help, '[command]'),
-    'image': (image, '[options] classes|packages...'),
-    'jnigen': (jnigen, ''),
-    'jttgen': (jttgen, ''),
-    't1xgen': (t1xgen, '')
+    'build': [build, '[options] projects...'],
+    'c1x': [c1x, '[options] patterns...'],
+    'check': [check, 'projects...'],
+    'canonicalizeprojects': [canonicalizeprojects, ''],
+    'clean': [clean, ''],
+    'configs': [configs, ''],
+    'copycheck': [copycheck, ''],
+    'eclipseprojects': [eclipseprojects, ''],
+    'graal': [graal, '[options] patterns...'],
+    'help': [help_, '[command]'],
+    'image': [image, '[options] classes|packages...'],
+    'jnigen': [jnigen, ''],
+    'jttgen': [jttgen, ''],
+    'olc': [olc, '[options] patterns...', _patternHelp],
+    't1x': [t1x, '[options] patterns...'],
+    't1xgen': [t1xgen, ''],
+    'verify': [verify, '[options] patterns...', _patternHelp]
 }

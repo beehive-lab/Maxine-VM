@@ -26,7 +26,6 @@ import static com.sun.max.platform.Platform.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
-import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.thread.*;
