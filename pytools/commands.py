@@ -314,10 +314,10 @@ def gate(env, args):
     if hgNode is None:
         copycheck(env, ['-modified', '-reporterrors=true', '-continueonerror'])
     else:
-        revTip = subprocess.check_output(['hg', 'tip', '--template', "'{rev}'"])
-        revLast = subprocess.check_output(['hg', 'log', '-r', hgNode, '--template', "'{rev}'"])
-        changesetCount=revTip - revLast + 1
-        copycheck(env, ['-last=' + changesetCount, '-reporterrors=true', '-continueonerror'])
+        revTip = int(subprocess.check_output(['hg', 'tip', '--template', "'{rev}'"]).strip("'"))
+        revLast = int(subprocess.check_output(['hg', 'log', '-r', hgNode, '--template', "'{rev}'"]).strip("'"))
+        changesetCount = revTip - revLast + 1
+        copycheck(env, ['-last=' + str(changesetCount), '-reporterrors=true', '-continueonerror'])
 
     env.log('Ensuring JavaTester harness is up to date')
     try:
