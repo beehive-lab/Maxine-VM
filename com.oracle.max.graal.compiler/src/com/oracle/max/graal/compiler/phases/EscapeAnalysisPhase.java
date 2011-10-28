@@ -393,11 +393,7 @@ public class EscapeAnalysisPhase extends Phase {
             if (GraalOptions.TraceEscapeAnalysis || GraalOptions.PrintEscapeAnalysis) {
                 TTY.println("Trying inlining to get a non-escaping object for %s", node);
             }
-            if (GraalOptions.UseNewInlining) {
-                new InliningPhase(context, compilation.compiler.runtime, compilation.compiler.target, invokes).apply(graph);
-            } else {
-                new OldInliningPhase(context, compilation, invokes).apply(graph);
-            }
+            new InliningPhase(context, compilation.compiler.runtime, compilation.compiler.target, invokes).apply(graph);
             new DeadCodeEliminationPhase(context).apply(graph);
             if (node.isDeleted()) {
                 if (GraalOptions.TraceEscapeAnalysis || GraalOptions.PrintEscapeAnalysis) {

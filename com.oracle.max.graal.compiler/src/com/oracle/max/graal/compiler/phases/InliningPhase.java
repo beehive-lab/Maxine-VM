@@ -192,9 +192,10 @@ public class InliningPhase extends Phase {
             scanInvokes(graph.getNodes(InvokeNode.class), 0);
         }
 
-        while (graph.getNodeCount() < GraalOptions.MaximumInstructionCount && !inlineCandidates.isEmpty()) {
+        while (!inlineCandidates.isEmpty()) {
             InlineInfo info = inlineCandidates.remove();
-            if (info.weight > GraalOptions.MaximumInlineWeight) {
+            double penalty = Math.pow(GraalOptions.InliningSizePenaltyExp, graph.getNodeCount() / (double) GraalOptions.MaximumDesiredSize) / GraalOptions.InliningSizePenaltyExp;
+            if (info.weight > GraalOptions.MaximumInlineWeight / (1 + penalty * GraalOptions.InliningSizePenalty)) {
                 if (GraalOptions.TraceInlining) {
                     TTY.println("not inlining (cut off by weight):");
                     while (info != null) {
@@ -422,6 +423,7 @@ public class InliningPhase extends Phase {
         }
 
         final double normalSize;
+        // TODO(ls) get rid of this magic, it's here to emulate the old behavior for the time being
         if (ratio < 0.01) {
             ratio = 0.01;
         }
