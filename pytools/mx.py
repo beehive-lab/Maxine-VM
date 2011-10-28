@@ -56,9 +56,9 @@ class Env(ArgumentParser):
     def format_help(self):
         msg = ArgumentParser.format_help(self) + '\navailable commands:\n\n'
         for cmd in sorted(commands.table.iterkeys()):
-            c, _ = commands.table[cmd]
+            c, _ = commands.table[cmd][:2]
             doc = c.__doc__
-            msg += ' {0:<16} {1}\n'.format(cmd, doc.split('\n', 1)[0])
+            msg += ' {0:<20} {1}\n'.format(cmd, doc.split('\n', 1)[0])
         return msg + '\n'
     
     def __init__(self):
@@ -164,7 +164,11 @@ class Env(ArgumentParser):
         
         """
         
-        assert isinstance(args, types.ListType), "'args' must be a list of strings: " + str(args)
+        assert isinstance(args, types.ListType), "'args' must be a list: " + str(args)
+        for arg in args:
+            if not isinstance(arg, types.StringTypes):
+                self.log('argument is not a string: ' + str(arg))
+                abort(1)
         
         if self.verbose:
             self.log(' '.join(args))
@@ -212,12 +216,12 @@ class Env(ArgumentParser):
         if self.java_initialized:
             return
 
-        def delAt(s):
-            return s.lstrip('@')
-        
-        self.java_args = shlex.split(delAt(self.java_args))
-        self.java_args_pfx = map(shlex.split, map(delAt, self.java_args_pfx))
-        self.java_args_sfx = map(shlex.split, map(delAt, self.java_args_sfx))
+        def delAtAndSplit(s):
+            return shlex.split(s.lstrip('@'))
+
+        self.java_args = delAtAndSplit(self.java_args)
+        self.java_args_pfx = sum(map(delAtAndSplit, self.java_args_pfx), [])
+        self.java_args_sfx = sum(map(delAtAndSplit, self.java_args_sfx), [])
         
         # Prepend the -d64 VM option only if the java command supports it
         output = ''
@@ -272,7 +276,7 @@ def main():
     if not commands.table.has_key(env.command):
         env.error('unknown command "' + env.command + '"')
         
-    c, _ = commands.table[env.command]
+    c, _ = commands.table[env.command][:2]
     try:
         retcode = c(env, env.command_args)
         if retcode is not None and retcode != 0:
