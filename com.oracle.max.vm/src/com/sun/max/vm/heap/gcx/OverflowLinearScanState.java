@@ -48,12 +48,11 @@ final class OverflowLinearScanState extends OverflowScanState {
     }
 
     private void visitGreyObjects() {
-        int rightmostBitmapWordIndex = rightmostBitmapWordIndex();
-        int fingerBitmapWordIndex = heapMarker.bitmapWordIndex(finger);
-
         if (regionsRanges != null) {
             visitGreyObjects(regionsRanges);
         } else {
+            int rightmostBitmapWordIndex = rightmostBitmapWordIndex();
+            int fingerBitmapWordIndex = heapMarker.bitmapWordIndex(finger);
             visitGreyObjectsToEndOfScan(fingerBitmapWordIndex, rightmostBitmapWordIndex);
         }
         // The overflow rescan may have ended with a finger before the end of scan position as the finger is updated only when
