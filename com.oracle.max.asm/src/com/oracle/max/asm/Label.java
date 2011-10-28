@@ -78,6 +78,6 @@ public final class Label {
 
     @Override
     public String toString() {
-        return "label";
+        return isBound() ? String.valueOf(position()) : "?";
     }
 }

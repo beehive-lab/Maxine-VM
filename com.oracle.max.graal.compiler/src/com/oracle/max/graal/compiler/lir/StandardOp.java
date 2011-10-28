@@ -37,6 +37,7 @@ public class StandardOp {
     public static NullCheckOpcode<?, ?> NULL_CHECK;
     public static CallOpcode<?, ?> DIRECT_CALL;
     public static CallOpcode<?, ?> INDIRECT_CALL;
+    public static LIROpcode<?, ?> LABEL;
     public static ReturnOpcode<?, ?> RETURN;
     public static XirOpcode<?, ?> XIR;
     // Checkstyle: resume
