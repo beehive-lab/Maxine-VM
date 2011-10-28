@@ -149,9 +149,19 @@ class Env(ArgumentParser):
             return self.jmax(['classpath'])
         return self.jmax(['classpath', project])
             
+    def run_jmax(self, args):
+        try:
+            return self.jmax(args)
+        except subprocess.CalledProcessError as e:
+            self.log(e.output.rstrip())
+            abort(e.returncode)
+        
+    def format_java_cmd(self, args):
+        self.init_java()
+        return [self.java] + self.java_args_pfx + self.java_args + self.java_args_sfx + args
+        
     def run_java(self, args, nonZeroIsFatal=True, out=None, err=None, cwd=None):
-        self._init_java()
-        return self.run([self.java] + self.java_args_pfx + self.java_args + self.java_args_sfx + args, nonZeroIsFatal=nonZeroIsFatal, out=out, err=err, cwd=cwd)
+        return self.run(self.format_java_cmd(args), nonZeroIsFatal=nonZeroIsFatal, out=out, err=err, cwd=cwd)
     
     def run(self, args, nonZeroIsFatal=True, out=None, err=None, cwd=None):
         """
@@ -212,7 +222,7 @@ class Env(ArgumentParser):
         else:
             print msg
 
-    def _init_java(self):
+    def init_java(self):
         if self.java_initialized:
             return
 
@@ -245,6 +255,10 @@ class Env(ArgumentParser):
 
         if self.java_dbg:
             self.java_args += ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8000']
+            
+        if self.os == 'windows':
+            self.log('[pretending to be Linux-AMD64 - remove when Windows is fully supported]')
+            self.java_args += ['-Dmax.platform=linux-amd64', '-Dmax.nsig=32']
             
         self.java_initialized = True
     
