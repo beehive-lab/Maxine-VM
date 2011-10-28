@@ -20,27 +20,33 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.examples.vectorlib;
+package com.oracle.max.graal.nodes;
 
-import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.graph.*;
-import com.oracle.max.graal.nodes.*;
-import com.oracle.max.graal.nodes.java.*;
+import com.oracle.max.graal.graph.Node.*;
+import com.oracle.max.graal.nodes.calc.*;
+import com.oracle.max.graal.nodes.spi.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
+public abstract class CallTargetNode extends FloatingNode implements ValueNumberable{
+    @Input protected final NodeInputList<ValueNode> arguments;
 
-public class PointOptimizationPhase extends Phase {
+    public CallTargetNode(ValueNode[] arguments) {
+        super(CiKind.Illegal);
+        this.arguments = new NodeInputList<ValueNode>(this, arguments);
+    }
+
+    public NodeInputList<ValueNode> arguments() {
+        return arguments;
+    }
+
+    public abstract RiType returnType();
+
+    public abstract CiKind returnKind();
+
     @Override
-    protected void run(Graph<EntryPointNode> graph) {
-        for (InvokeNode invoke : graph.getNodes(InvokeNode.class)) {
-            MethodCallTargetNode callTarget = invoke.callTarget();
-            System.out.println("Invoke: " + callTarget.targetMethod().name());
-            if (callTarget.targetMethod().name().equals("same")) {
-                ValueNode arg0 = callTarget.arguments().get(0);
-                ValueNode arg1 = callTarget.arguments().get(1);
-                if (arg0 == arg1) {
-                    invoke.replaceWithFloating(ConstantNode.forBoolean(true, graph));
-                }
-            }
-        }
+    public void accept(ValueVisitor v) {
+        //nop
     }
 }

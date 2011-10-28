@@ -44,8 +44,6 @@ public class InliningUtil {
             exceptionEdge = ((PlaceholderNode) exceptionEdge).next();
         }
 
-        invoke.clearInputs();
-
         IdentityHashMap<Node, Node> replacements = new IdentityHashMap<Node, Node>();
         ArrayList<Node> nodes = new ArrayList<Node>();
         ArrayList<Node> frameStates = new ArrayList<Node>();
@@ -77,7 +75,7 @@ public class InliningUtil {
 
         FixedNode firstCFGNodeDuplicate = (FixedNode) duplicates.get(firstCFGNode);
         FixedNode invokeReplacement;
-        if (invoke.isStatic()) {
+        if (invoke.callTarget().isStatic()) {
             invokeReplacement = firstCFGNodeDuplicate;
         } else {
             FixedGuardNode guard = graph.add(new FixedGuardNode(graph.unique(new IsNonNullNode(parameters[0]))));
@@ -103,7 +101,7 @@ public class InliningUtil {
                 FrameState frameState = (FrameState) node;
                 if (frameState.bci == FrameState.BEFORE_BCI) {
                     if (stateBefore == null) {
-                        stateBefore = stateAfter.duplicateModified(invoke.bci, false, invoke.kind, parameters);
+                        stateBefore = stateAfter.duplicateModified(invoke.bci(), false, invoke.kind, parameters);
                     }
                     frameState.replaceAndDelete(stateBefore);
                 } else if (frameState.bci == FrameState.AFTER_BCI) {
@@ -159,11 +157,12 @@ public class InliningUtil {
             }
         }
 
+        invoke.clearInputs();
         GraphUtil.killCFG(invoke);
 
         // adjust all frame states that were copied
         if (frameStates.size() > 0) {
-            FrameState outerFrameState = stateAfter.duplicateModified(invoke.bci, stateAfter.rethrowException(), invoke.kind);
+            FrameState outerFrameState = stateAfter.duplicateModified(invoke.bci(), stateAfter.rethrowException(), invoke.kind);
             for (Node node : frameStates) {
                 FrameState frameState = (FrameState) duplicates.get(node);
                 if (!frameState.isDeleted()) {
@@ -179,23 +178,18 @@ public class InliningUtil {
     }
 
     public static ValueNode[] simplifyParameters(InvokeNode invoke) {
-        RiMethod method = invoke.target();
-        NodeInputList<ValueNode> arguments = invoke.arguments();
+        MethodCallTargetNode target = invoke.callTarget();
+        RiMethod method = target.targetMethod();
+        NodeInputList<ValueNode> arguments = target.arguments();
 
-        boolean withReceiver = !invoke.isStatic();
+        boolean withReceiver = !target.isStatic();
         int argumentCount = method.signature().argumentCount(false);
         ValueNode[] parameters = new ValueNode[argumentCount + (withReceiver ? 1 : 0)];
-        int slot = withReceiver ? 1 : 0;
         int param = withReceiver ? 1 : 0;
         for (int i = 0; i < argumentCount; i++) {
-            parameters[param++] = arguments.get(slot);
-            slot++;
-            if (slot < arguments.size() && arguments.get(slot) == null) {
-                // Second slot of long or double value.
-                slot++;
-            }
+            parameters[param] = arguments.get(param);
+            param++;
         }
-        assert slot == arguments.size() : "missed an argument";
         if (withReceiver) {
             parameters[0] = arguments.get(0);
         }

@@ -56,7 +56,7 @@ public class SnippetIntrinsificationPhase extends Phase {
             return;
         }
 
-        RiResolvedMethod target = invoke.target;
+        RiResolvedMethod target = invoke.callTarget().targetMethod();
         if (Modifier.isStatic(target.accessFlags())) {
             Class< ? > c = target.holder().toJava();
             if ((c != null && !Modifier.isPrivate(target.accessFlags()) && target.holder().isSubtypeOf(runtime.getType(Node.class))) || GraalOptions.Extend) {
@@ -98,11 +98,8 @@ public class SnippetIntrinsificationPhase extends Phase {
                                                 if (node.usages().size() == 2) {
                                                     if (node instanceof InvokeNode) {
                                                         InvokeNode invokeNode = (InvokeNode) node;
-                                                        if (BoxingEliminationPhase.isBoxingMethod(runtime, invokeNode.target)) {
-                                                            currentValue = invokeNode.arguments().get(0);
-                                                            FrameState stateAfter = invokeNode.stateAfter();
-                                                            invokeNode.setStateAfter(null);
-                                                            stateAfter.delete();
+                                                        if (BoxingEliminationPhase.isBoxingMethod(runtime, invokeNode.callTarget().targetMethod())) {
+                                                            currentValue = invokeNode.callTarget().arguments().get(0);
                                                             invokeNode.replaceAndDelete(invokeNode.next());
                                                         }
                                                     }
@@ -150,14 +147,14 @@ public class SnippetIntrinsificationPhase extends Phase {
                                                 if (checkCastUsage instanceof ValueAnchorNode) {
                                                     ValueAnchorNode valueAnchorNode = (ValueAnchorNode) checkCastUsage;
                                                     valueAnchorNode.replaceAndDelete(valueAnchorNode.next());
-                                                } else if (checkCastUsage instanceof InvokeNode) {
-                                                    InvokeNode invokeNode = (InvokeNode) checkCastUsage;
-                                                    assert BoxingEliminationPhase.isUnboxingMethod(runtime, invokeNode.target);
-                                                    FrameState stateAfter = invokeNode.stateAfter();
-                                                    invokeNode.setStateAfter(null);
-                                                    stateAfter.delete();
-                                                    invokeNode.replaceAtUsages(newInstance);
-                                                    invokeNode.replaceAndDelete(invokeNode.next());
+                                                } else if (checkCastUsage instanceof MethodCallTargetNode) {
+                                                    MethodCallTargetNode callTarget = (MethodCallTargetNode) checkCastUsage;
+                                                    assert BoxingEliminationPhase.isUnboxingMethod(runtime, callTarget.targetMethod());
+                                                    for (InvokeNode invokeNode : callTarget.invokes()) {
+                                                        invokeNode.replaceAtUsages(newInstance);
+                                                        invokeNode.replaceAndDelete(invokeNode.next());
+                                                    }
+                                                    callTarget.delete();
                                                 } else if (checkCastUsage instanceof FrameState) {
                                                     checkCastUsage.replaceFirstInput(checkCastNode, null);
                                                 } else {

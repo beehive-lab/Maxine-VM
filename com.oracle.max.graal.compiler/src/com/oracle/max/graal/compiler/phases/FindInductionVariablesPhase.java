@@ -33,6 +33,17 @@ import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.loop.*;
 import com.sun.cri.ci.*;
 
+
+/**
+ * Looks for linear induction variables in loops.
+ * Saves the information in the graph by replacing these induction variables computations with subclasses of {@link InductionVariableNode} :
+ * <ul>
+ * <li> {@link LoopCounterNode} is the iteration counter (from 0 to Niter)</li>
+ * <li> {@link BasicInductionVariableNode} is an induction variable of the form {@code stride * loopCount + init}. Computed using a phi and an add node</li>
+ * <li> {@link DerivedInductionVariableNode} is an induction variable of the form {@code scale * base + offset} where base is an other of {@link InductionVariableNode}. Computed using multiply and add</li>
+ * </ul>
+ * This phase works in collaboration with {@link RemoveInductionVariablesPhase} which will convert the {@link InductionVariableNode}s back to phis and arithmetic nodes.
+ */
 public class FindInductionVariablesPhase extends Phase {
 
     public FindInductionVariablesPhase(GraalContext context) {

@@ -34,6 +34,7 @@ import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.alloc.*;
 import com.oracle.max.graal.compiler.alloc.OperandPool.VariableFlag;
 import com.oracle.max.graal.compiler.debug.*;
+import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.stub.*;
 import com.oracle.max.graal.compiler.util.*;
@@ -46,7 +47,6 @@ import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.graal.nodes.spi.*;
-import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.ri.RiType.Representation;
@@ -511,54 +511,68 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     public abstract CiVariable emitCMove(CiValue leftVal, CiValue right, Condition cond, boolean unorderedIsTrue, CiValue trueValue, CiValue falseValue);
 
 
-    protected FrameState stateBeforeCallReturn(AbstractCallNode call, int bci) {
-        return call.stateAfter().duplicateModified(bci, call.stateAfter().rethrowException(), call.kind);
+    protected FrameState stateBeforeCallReturn(FrameState stateAfter, CallTargetNode call, int bci) {
+        return stateAfter.duplicateModified(bci, stateAfter.rethrowException(), call.returnKind());
     }
 
-    protected FrameState stateBeforeCallWithArguments(AbstractCallNode call, int bci) {
-        return call.stateAfter().duplicateModified(bci, call.stateAfter().rethrowException(), call.kind, call.arguments().toArray(new ValueNode[0]));
+    protected FrameState stateBeforeCallWithArguments(FrameState stateAfter, CallTargetNode call, int bci) {
+        return stateAfter.duplicateModified(bci, stateAfter.rethrowException(), call.returnKind(), toJVMArgumentStack(call.arguments()));
+    }
+
+    private static ValueNode[] toJVMArgumentStack(NodeInputList<ValueNode> arguments) {
+        int sz = 0;
+        for (ValueNode value : arguments) {
+            sz += FrameStateBuilder.isTwoSlot(value.kind) ? 2 : 1;
+        }
+        ValueNode[] stack = new ValueNode[sz];
+        int i = 0;
+        for (ValueNode value : arguments) {
+            stack[i] = value;
+            i += FrameStateBuilder.isTwoSlot(value.kind) ? 2 : 1;
+        }
+        return stack;
+
     }
 
     @Override
     public void visitInvoke(InvokeNode x) {
-        RiMethod target = x.target();
-        LIRDebugInfo info = stateFor(x, stateBeforeCallWithArguments(x, x.bci));
-        LIRDebugInfo info2 = stateFor(x, stateBeforeCallReturn(x, x.bci));
+        MethodCallTargetNode callTarget = x.callTarget();
+        RiMethod target = callTarget.targetMethod();
+        LIRDebugInfo info = stateFor(x, stateBeforeCallWithArguments(x.stateAfter(), x.callTarget(), x.bci()));
+        LIRDebugInfo info2 = stateFor(x, stateBeforeCallReturn(x.stateAfter(), x.callTarget(), x.bci()));
         if (x.exceptionEdge() != null) {
             info2.setExceptionEdge(getLIRBlock(x.exceptionEdge()));
         }
 
         XirSnippet snippet = null;
-
-        int opcode = x.opcode();
         XirArgument receiver;
-        switch (opcode) {
-            case Bytecodes.INVOKESTATIC:
+        switch (callTarget.invokeKind()) {
+            case Static:
                 snippet = xir.genInvokeStatic(site(x), target);
                 break;
-            case Bytecodes.INVOKESPECIAL:
-                receiver = toXirArgument(x.receiver());
+            case Special:
+                receiver = toXirArgument(callTarget.receiver());
                 snippet = xir.genInvokeSpecial(site(x), receiver, target);
                 break;
-            case Bytecodes.INVOKEVIRTUAL:
-                receiver = toXirArgument(x.receiver());
+            case Virtual:
+                receiver = toXirArgument(callTarget.receiver());
                 snippet = xir.genInvokeVirtual(site(x), receiver, target);
                 break;
-            case Bytecodes.INVOKEINTERFACE:
-                receiver = toXirArgument(x.receiver());
+            case Interface:
+                receiver = toXirArgument(callTarget.receiver());
                 snippet = xir.genInvokeInterface(site(x), receiver, target);
                 break;
         }
 
         CiValue resultOperand = resultOperandFor(x.kind);
-        CiCallingConvention cc = compilation.registerConfig.getCallingConvention(JavaCall, getSignature(x), target(), false);
+        CiCallingConvention cc = compilation.registerConfig.getCallingConvention(JavaCall, getSignature(callTarget), target(), false);
         compilation.frameMap().adjustOutgoingStackSize(cc, JavaCall);
         List<CiValue> pointerSlots = new ArrayList<CiValue>(2);
-        List<CiValue> argList = visitInvokeArguments(cc, x.arguments(), pointerSlots);
+        List<CiValue> argList = visitInvokeArguments(cc, callTarget.arguments(), pointerSlots);
 
         // emitting the template earlier can ease pressure on register allocation, but the argument loading can destroy an
         // implicit calling convention between the XirSnippet and the call.
-        CiValue destinationAddress = emitXir(snippet, x, info.copy(), null, x.target(), false, pointerSlots);
+        CiValue destinationAddress = emitXir(snippet, x, info.copy(), null, callTarget.targetMethod(), false, pointerSlots);
 
         // emit direct or indirect call to the destination address
         if (destinationAddress instanceof CiConstant) {
@@ -575,9 +589,10 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         }
     }
 
-    private CiKind[] getSignature(InvokeNode x) {
-        CiKind receiver = x.isStatic() ? null : x.target.holder().kind(true);
-        return CiUtil.signatureToKinds(x.target.signature(), receiver);
+    private CiKind[] getSignature(MethodCallTargetNode x) {
+
+        CiKind receiver = x.isStatic() ? null : x.targetMethod().holder().kind(true);
+        return CiUtil.signatureToKinds(x.targetMethod().signature(), receiver);
     }
 
     public abstract CiValue createMonitorAddress(int monitorIndex);
@@ -1471,8 +1486,11 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     @Override
     public void visitRuntimeCall(RuntimeCallNode x) {
         LIRDebugInfo info = null;
-        if (x.stateAfter() != null) {
-            info = stateFor(x, stateBeforeCallReturn(x, x.stateAfter().bci));
+        FrameState stateAfter = x.stateAfter();
+        if (stateAfter != null) {
+            // TODO change back to stateBeforeReturn() when RuntimeCallNode uses a CallTargetNode
+            FrameState stateBeforeReturn = stateAfter.duplicateModified(stateAfter.bci, stateAfter.rethrowException(), x.kind);
+            info = stateFor(x, stateBeforeReturn);
         }
         CiValue resultOperand = resultOperandFor(x.kind);
         CiCallingConvention cc = compilation.registerConfig.getCallingConvention(RuntimeCall, x.call().arguments, target(), false);

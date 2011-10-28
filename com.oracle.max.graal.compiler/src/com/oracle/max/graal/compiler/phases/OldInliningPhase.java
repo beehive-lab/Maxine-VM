@@ -27,12 +27,13 @@ import java.util.*;
 
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
+import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.extensions.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.java.*;
-import com.sun.cri.bytecode.*;
+import com.oracle.max.graal.nodes.java.MethodCallTargetNode.InvokeKind;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -129,55 +130,58 @@ public class OldInliningPhase extends Phase {
 
     private RiResolvedMethod inlineInvoke(InvokeNode invoke, int iterations, float ratio) {
         RiResolvedMethod parent = invoke.stateAfter().method();
-        RiTypeProfile profile = parent.typeProfile(invoke.bci);
+        RiTypeProfile profile = parent.typeProfile(invoke.bci());
+        FrameState outerFrameState = invoke.stateAfter().outerFrameState();
+        CiCodePos callerPos = new CiCodePos(outerFrameState != null ? outerFrameState.toCodePos() : null, parent, invoke.bci());
+        MethodCallTargetNode callTarget = invoke.callTarget();
         if (GraalOptions.Intrinsify) {
-            if (GraalOptions.Extend && intrinsicGraph(parent, invoke.bci, invoke.target, invoke.arguments()) != null) {
-                return invoke.target;
+            if (GraalOptions.Extend && intrinsicGraph(callerPos, callTarget.targetMethod(), callTarget.arguments()) != null) {
+                return callTarget.targetMethod();
             }
-            if (compilation.compiler.runtime.intrinsicGraph(parent, invoke.bci, invoke.target, invoke.arguments()) != null) {
+            if (compilation.compiler.runtime.intrinsicGraph(parent, invoke.bci(), callTarget.targetMethod(), callTarget.arguments()) != null) {
                 // Always intrinsify.
-                return invoke.target;
+                return callTarget.targetMethod();
             }
         }
         if (!checkInvokeConditions(invoke)) {
             return null;
         }
 
-        if (invoke.opcode() == Bytecodes.INVOKESPECIAL || invoke.target.canBeStaticallyBound()) {
-            if (checkTargetConditions(invoke.target, iterations) && checkSizeConditions(parent, iterations, invoke.target, invoke, profile, ratio)) {
-                return invoke.target;
+        if (callTarget.invokeKind() == InvokeKind.Special || callTarget.targetMethod().canBeStaticallyBound()) {
+            if (checkTargetConditions(callTarget.targetMethod(), iterations) && checkSizeConditions(parent, iterations, callTarget.targetMethod(), invoke, profile, ratio)) {
+                return callTarget.targetMethod();
             }
             return null;
         }
-        if (invoke.receiver().exactType() != null) {
-            RiResolvedType exact = invoke.receiver().exactType();
-            assert exact.isSubtypeOf(invoke.target().holder()) : exact + " subtype of " + invoke.target().holder();
-            RiResolvedMethod resolved = exact.resolveMethodImpl(invoke.target());
+        if (callTarget.receiver().exactType() != null) {
+            RiResolvedType exact = callTarget.receiver().exactType();
+            assert exact.isSubtypeOf(callTarget.targetMethod().holder()) : exact + " subtype of " + callTarget.targetMethod().holder();
+            RiResolvedMethod resolved = exact.resolveMethodImpl(callTarget.targetMethod());
             if (checkTargetConditions(resolved, iterations) && checkSizeConditions(parent, iterations, resolved, invoke, profile, ratio)) {
                 return resolved;
             }
             return null;
         }
-        RiResolvedType holder = invoke.target().holder();
+        RiResolvedType holder = callTarget.targetMethod().holder();
 
-        if (invoke.receiver().declaredType() != null) {
-            RiType declared = invoke.receiver().declaredType();
+        if (callTarget.receiver().declaredType() != null) {
+            RiType declared = callTarget.receiver().declaredType();
             // the invoke target might be more specific than the holder (happens after inlining: locals lose their declared type...)
             // TODO (ls) fix this
-            if (declared instanceof RiResolvedType && ((RiResolvedType) declared).isSubtypeOf(invoke.target().holder())) {
+            if (declared instanceof RiResolvedType && ((RiResolvedType) declared).isSubtypeOf(callTarget.targetMethod().holder())) {
                 holder = (RiResolvedType) declared;
             }
         }
 
-        RiResolvedMethod concrete = holder.uniqueConcreteMethod(invoke.target);
+        RiResolvedMethod concrete = holder.uniqueConcreteMethod(callTarget.targetMethod());
         if (concrete != null) {
             if (checkTargetConditions(concrete, iterations) && checkSizeConditions(parent, iterations, concrete, invoke, profile, ratio)) {
                 if (GraalOptions.TraceInlining) {
-                    String targetName = CiUtil.format("%H.%n(%p):%r", invoke.target, false);
+                    String targetName = CiUtil.format("%H.%n(%p):%r", callTarget.targetMethod(), false);
                     String concreteName = CiUtil.format("%H.%n(%p):%r", concrete, false);
                     TTY.println("recording concrete method assumption: %s -> %s", targetName, concreteName);
                 }
-                graph.start().assumptions().recordConcreteMethod(invoke.target, concrete);
+                graph.start().assumptions().recordConcreteMethod(callTarget.targetMethod(), concrete);
                 return concrete;
             }
             return null;
@@ -185,9 +189,9 @@ public class OldInliningPhase extends Phase {
         if (profile != null && profile.probabilities != null && profile.probabilities.length > 0 && profile.morphism == 1) {
             if (GraalOptions.InlineWithTypeCheck) {
                 // type check and inlining...
-                concrete = profile.types[0].resolveMethodImpl(invoke.target);
+                concrete = profile.types[0].resolveMethodImpl(callTarget.targetMethod());
                 if (concrete != null && checkTargetConditions(concrete, iterations) && checkSizeConditions(parent, iterations, concrete, invoke, profile, ratio)) {
-                    IsTypeNode isType = compilation.graph.unique(new IsTypeNode(invoke.receiver(), profile.types[0]));
+                    IsTypeNode isType = compilation.graph.unique(new IsTypeNode(callTarget.receiver(), profile.types[0]));
                     FixedGuardNode guard = compilation.graph.add(new FixedGuardNode(isType));
                     assert invoke.predecessor() != null;
                     invoke.predecessor().replaceFirstSuccessor(invoke, guard);
@@ -201,13 +205,13 @@ public class OldInliningPhase extends Phase {
                 return null;
             } else {
                 if (GraalOptions.TraceInlining) {
-                    TTY.println("not inlining %s because GraalOptions.InlineWithTypeCheck == false", methodName(invoke.target, invoke));
+                    TTY.println("not inlining %s because GraalOptions.InlineWithTypeCheck == false", methodName(callTarget.targetMethod(), invoke));
                 }
                 return null;
             }
         } else {
             if (GraalOptions.TraceInlining) {
-                TTY.println("not inlining %s because no monomorphic receiver could be found", methodName(invoke.target, invoke));
+                TTY.println("not inlining %s because no monomorphic receiver could be found", methodName(callTarget.targetMethod(), invoke));
             }
             return null;
         }
@@ -220,7 +224,7 @@ public class OldInliningPhase extends Phase {
     private String methodName(RiResolvedMethod method, InvokeNode invoke) {
         if (invoke != null) {
             RiMethod parent = invoke.stateAfter().method();
-            return parent.name() + "@" + invoke.bci + ": " + CiUtil.format("%H.%n(%p):%r", method, false) + " (" + method.codeSize() + " bytes)";
+            return parent.name() + "@" + invoke.bci() + ": " + CiUtil.format("%H.%n(%p):%r", method, false) + " (" + method.codeSize() + " bytes)";
         } else {
             return CiUtil.format("%H.%n(%p):%r", method, false) + " (" + method.codeSize() + " bytes)";
         }
@@ -229,31 +233,31 @@ public class OldInliningPhase extends Phase {
     private boolean checkInvokeConditions(InvokeNode invoke) {
         if (!invoke.canInline()) {
             if (GraalOptions.TraceInlining) {
-                TTY.println("not inlining %s because the invoke is manually set to be non-inlinable", methodName(invoke.target, invoke));
+                TTY.println("not inlining %s because the invoke is manually set to be non-inlinable", methodName(invoke.callTarget().targetMethod(), invoke));
             }
             return false;
         }
         if (invoke.stateAfter() == null) {
             if (GraalOptions.TraceInlining) {
-                TTY.println("not inlining %s because the invoke has no after state", methodName(invoke.target, invoke));
+                TTY.println("not inlining %s because the invoke has no after state", methodName(invoke.callTarget().targetMethod(), invoke));
             }
             return false;
         }
         if (invoke.stateAfter().locksSize() > 0) {
             if (GraalOptions.TraceInlining) {
-                TTY.println("not inlining %s because of locks", methodName(invoke.target, invoke));
+                TTY.println("not inlining %s because of locks", methodName(invoke.callTarget().targetMethod(), invoke));
             }
             return false;
         }
         if (invoke.predecessor() == null) {
             if (GraalOptions.TraceInlining) {
-                TTY.println("not inlining %s because the invoke is dead code", methodName(invoke.target, invoke));
+                TTY.println("not inlining %s because the invoke is dead code", methodName(invoke.callTarget().targetMethod(), invoke));
             }
             return false;
         }
         if (invoke.stateAfter() == null) {
             if (GraalOptions.TraceInlining) {
-                TTY.println("not inlining %s because of missing frame state", methodName(invoke.target, invoke));
+                TTY.println("not inlining %s because of missing frame state", methodName(invoke.callTarget().targetMethod(), invoke));
             }
         }
         return true;
@@ -329,7 +333,7 @@ public class OldInliningPhase extends Phase {
                                 methodName(method, invoke), method.codeSize(), maximumSize, compiledSize, maximumCompiledSize, ratio, profile);
             }
             if (GraalOptions.Extend) {
-                boolean newResult = overrideInliningDecision(iterations, caller, invoke.bci, method, false);
+                boolean newResult = overrideInliningDecision(iterations, caller, invoke.bci(), method, false);
                 if (GraalOptions.TraceInlining && newResult) {
                     TTY.println("overridden inlining decision");
                 }
@@ -342,7 +346,7 @@ public class OldInliningPhase extends Phase {
             TTY.println("inlining %s (size: %d, max size: %d, ratio %5.3f, %s)", methodName(method, invoke), method.codeSize(), maximumSize, ratio, profile);
         }
         if (GraalOptions.Extend) {
-            boolean newResult = overrideInliningDecision(iterations, caller, invoke.bci, method, true);
+            boolean newResult = overrideInliningDecision(iterations, caller, invoke.bci(), method, true);
             if (GraalOptions.TraceInlining && !newResult) {
                 TTY.println("overridden inlining decision");
             }
@@ -388,7 +392,7 @@ public class OldInliningPhase extends Phase {
     public static ThreadLocal<ServiceLoader<Intrinsifier>> intrinsicLoader = new ThreadLocal<ServiceLoader<Intrinsifier>>();
 
     @SuppressWarnings("unchecked")
-    private Graph<EntryPointNode> intrinsicGraph(RiMethod parent, int bci, RiMethod target, List<ValueNode> arguments) {
+    private Graph<EntryPointNode> intrinsicGraph(CiCodePos callerPos, RiResolvedMethod target, List<ValueNode> arguments) {
         ServiceLoader<Intrinsifier> serviceLoader = intrinsicLoader.get();
         if (serviceLoader == null) {
             serviceLoader = ServiceLoader.load(Intrinsifier.class);
@@ -396,7 +400,7 @@ public class OldInliningPhase extends Phase {
         }
 
         for (Intrinsifier intrinsifier : serviceLoader) {
-            Graph<?> result = intrinsifier.intrinsicGraph(compilation.compiler.runtime, parent, bci, target, arguments);
+            Graph<?> result = intrinsifier.intrinsicGraph(compilation.compiler.runtime, callerPos, target, arguments);
             if (result != null) {
                 return (Graph<EntryPointNode>) result;
             }
@@ -408,11 +412,13 @@ public class OldInliningPhase extends Phase {
         Graph<EntryPointNode> graph = null;
         if (GraalOptions.Intrinsify) {
             RiResolvedMethod parent = invoke.stateAfter().method();
+            FrameState outerFrameState = invoke.stateAfter().outerFrameState();
+            CiCodePos callerPos = new CiCodePos(outerFrameState != null ? outerFrameState.toCodePos() : null, parent, invoke.bci());
             if (GraalOptions.Extend) {
-                graph = intrinsicGraph(parent, invoke.bci, method, invoke.arguments());
+                graph = intrinsicGraph(callerPos, method, invoke.callTarget().arguments());
             }
             if (graph == null) {
-                graph = compilation.compiler.runtime.intrinsicGraph(parent, invoke.bci, method, invoke.arguments());
+                graph = compilation.compiler.runtime.intrinsicGraph(parent, invoke.bci(), method, invoke.callTarget().arguments());
             }
         }
         if (graph != null) {

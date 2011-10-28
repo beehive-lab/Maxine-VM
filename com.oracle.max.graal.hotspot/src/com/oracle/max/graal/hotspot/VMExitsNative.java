@@ -28,7 +28,7 @@ import java.util.*;
 
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
-import com.oracle.max.graal.compiler.graph.*;
+import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.hotspot.logging.*;
 import com.oracle.max.graal.hotspot.server.*;
 import com.sun.cri.ci.CiCompiler.DebugInfoLevel;

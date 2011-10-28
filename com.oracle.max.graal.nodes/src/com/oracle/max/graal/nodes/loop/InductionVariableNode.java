@@ -26,7 +26,9 @@ import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.sun.cri.ci.*;
 
-
+/**
+ * This is a base class for all induction variables nodes.
+ */
 public abstract class InductionVariableNode extends FloatingNode {
 
     public static enum StrideDirection {
@@ -39,18 +41,48 @@ public abstract class InductionVariableNode extends FloatingNode {
         assert kind.isInt() || kind.isLong();
     }
 
+    /**
+     * Retruns the loopBeginNode corresponding to the loop this induction vraibles is attached to.
+     * @return the loopBeginNode corresponding to the loop this induction vraibles is attached to.
+     */
     public abstract LoopBeginNode loopBegin();
 
+    /**
+     * This will make the induction be initialized with the value it should have had on the second iteration of the loop.
+     */
     public abstract void peelOneIteration();
 
+    /**
+     * Transforms this induction variable to generic nodes (Phis, arithmetics...).
+     * @return the generic node that computes the value of this induction vraible.
+     */
     public abstract ValueNode lowerInductionVariable();
 
+    /**
+     * Checks if the provided induction variable is the value that this induction variable will have on the next iteration.
+     * @param other the induction variable this check should run against
+     * @return true if the provided induction variable is the value that this induction variable will have on the next iteration.
+     */
     public abstract boolean isNextIteration(InductionVariableNode other);
 
+    /**
+     * Tries to statically find the minimum value that this induction variable can have over all possible iterations at a specific {@code point} in the CFG.
+     * @param point the point in the CFG from which static information will be collected
+     * @return the minimum value if it could be found, null otherwise
+     */
     public abstract ValueNode minValue(FixedNode point);
 
+    /**
+     * Tries to statically find the maximum value that this induction variable can have over all possible iterations at a specific {@code point} in the CFG.
+     * @param point the point in the CFG from which static information will be collected
+     * @return the maximum value if it could be found, null otherwise
+     */
     public abstract ValueNode maxValue(FixedNode point);
 
+    /**
+     * Tries to statically find the direction of this induction variable.
+     * @return returns {@link StrideDirection#Up Up} if this variable is known to be increasing, {@link StrideDirection#Down Down}  if it is know to decrease, null otherwise.
+     */
     public abstract StrideDirection strideDirection();
 
     public ValueNode searchExtremum(FixedNode point, StrideDirection direction) {
