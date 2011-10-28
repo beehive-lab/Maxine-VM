@@ -38,7 +38,7 @@ public class AMD64MaxineOp {
     public static final SignificantBitOpcode LSB = new SignificantBitOpcode();
     public static final StackAllocateOpcode STACK_ALLOCATE = new StackAllocateOpcode();
 
-    protected static class BreakpointOpcode implements LIROpcode<AMD64MacroAssembler, LIRInstruction> {
+    public static class BreakpointOpcode implements LIROpcode<AMD64MacroAssembler, LIRInstruction> {
         public LIRInstruction create() {
             return new LIRInstruction(this, CiValue.IllegalValue, null);
         }
@@ -49,7 +49,7 @@ public class AMD64MaxineOp {
         }
     }
 
-    protected static class SignificantBitOpcode implements LIROpcode<AMD64MacroAssembler, LIRInstruction>, LIROpcode.AllOperandsCanBeMemory {
+    public static class SignificantBitOpcode implements LIROpcode<AMD64MacroAssembler, LIRInstruction>, LIROpcode.AllOperandsCanBeMemory {
         public LIRInstruction create(CiVariable result, CiVariable input) {
             return new LIRInstruction(this, result, null, false, new CiValue[] {input}, new CiValue[] {input});
         }
@@ -83,7 +83,7 @@ public class AMD64MaxineOp {
         }
     }
 
-    protected static class StackAllocateOpcode implements LIROpcode<AMD64MacroAssembler, LIRStackAllocate> {
+    public static class StackAllocateOpcode implements LIROpcode<AMD64MacroAssembler, LIRStackAllocate> {
         public LIRInstruction create(CiVariable result, StackBlock stackBlock) {
             return new LIRStackAllocate(this, result, stackBlock);
         }

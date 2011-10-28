@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.graal.nodes;
+package com.oracle.max.graal.nodes.extended;
 
 import com.oracle.max.graal.cri.*;
 import com.oracle.max.graal.graph.*;
@@ -68,5 +68,10 @@ public final class UnsafeCastNode extends FloatingNode implements Canonicalizabl
     @Override
     public void lower(CiLoweringTool tool) {
         replaceAndDelete(x);
+    }
+
+    @NodeIntrinsic
+    public static <T> T cast(Object object, @ConstantNodeParameter Class<?> toType) {
+        throw new UnsupportedOperationException("This method may only be compiled with the Graal compiler");
     }
 }

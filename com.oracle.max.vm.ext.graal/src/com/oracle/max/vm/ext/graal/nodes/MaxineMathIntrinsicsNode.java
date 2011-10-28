@@ -25,22 +25,22 @@ package com.oracle.max.vm.ext.graal.nodes;
 import com.oracle.max.graal.compiler.gen.*;
 import com.oracle.max.graal.compiler.target.amd64.*;
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 
-/**
- * Adds a Safepoint to the generated code and possibly create a safepoint.
- */
-public final class SafepointNode extends StateSplit implements LIRLowerable {
+public final class MaxineMathIntrinsicsNode extends FloatingNode implements LIRLowerable {
 
-    public static enum Op {
-        SAFEPOINT_POLL, HERE, INFO, UNCOMMON_TRAP, BREAKPOINT, PAUSE
-    }
-
+    @Input private ValueNode value;
     @Data private final Op op;
 
-    public SafepointNode(Op op) {
-        super(CiKind.Illegal);
+    public static enum Op {
+        MSB, LSB
+    }
+
+    public MaxineMathIntrinsicsNode(ValueNode value, Op op) {
+        super(value.kind);
+        this.value = value;
         this.op = op;
     }
 
@@ -53,20 +53,17 @@ public final class SafepointNode extends StateSplit implements LIRLowerable {
     public void generate(LIRGeneratorTool tool) {
         // TODO(ls) this is just experimental - we cannot use LIRGenerator and AMD64 here
         LIRGenerator gen = (LIRGenerator) tool;
+        CiVariable result = gen.createResultVariable(this);
+        CiVariable input = gen.load(value);
         switch (op) {
-            case SAFEPOINT_POLL:
+            case MSB:
+                gen.append(AMD64MaxineOp.MSB.create(result, input));
                 break;
-            case HERE:
+            case LSB:
+                gen.append(AMD64MaxineOp.LSB.create(result, input));
                 break;
-            case INFO:
-                break;
-            case UNCOMMON_TRAP:
-                break;
-            case BREAKPOINT:
-                gen.append(AMD64MaxineOp.BREAKPOINT.create());
-                break;
-            case PAUSE:
-                break;
+            default:
+                throw new RuntimeException();
         }
     }
 }
