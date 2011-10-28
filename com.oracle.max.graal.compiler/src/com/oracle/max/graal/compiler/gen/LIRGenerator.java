@@ -815,14 +815,16 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         XirOperand[] inputTempOperands = snippet.template.inputTempOperands;
         XirOperand[] tempOperands = snippet.template.tempOperands;
 
-        CiValue[] operandArray = new CiValue[inputOperands.length + inputTempOperands.length + tempOperands.length];
-        int[] operandIndicesArray = new int[inputOperands.length + inputTempOperands.length + tempOperands.length];
+        CiValue[] inputOperandArray = new CiValue[inputOperands.length + inputTempOperands.length];
+        CiValue[] tempOperandArray = new CiValue[inputTempOperands.length + tempOperands.length];
+        int[] inputOperandIndicesArray = new int[inputOperands.length + inputTempOperands.length];
+        int[] tempOperandIndicesArray = new int[inputTempOperands.length + tempOperands.length];
         for (int i = 0; i < inputOperands.length; i++) {
             XirOperand x = inputOperands[i];
             CiValue op = allocateOperand(snippet, x);
             operands[x.index] = op;
-            operandArray[i] = op;
-            operandIndicesArray[i] = x.index;
+            inputOperandArray[i] = op;
+            inputOperandIndicesArray[i] = x.index;
             if (GraalOptions.PrintXirTemplates) {
                 TTY.println("Input operand: " + x);
             }
@@ -833,8 +835,10 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
             CiValue op = allocateOperand(snippet, x);
             CiValue newOp = emitMove(op);
             operands[x.index] = newOp;
-            operandArray[i + inputOperands.length] = newOp;
-            operandIndicesArray[i + inputOperands.length] = x.index;
+            inputOperandArray[i + inputOperands.length] = newOp;
+            inputOperandIndicesArray[i] = x.index;
+            tempOperandArray[i + inputOperands.length] = newOp;
+            tempOperandIndicesArray[i] = x.index;
             if (GraalOptions.PrintXirTemplates) {
                 TTY.println("InputTemp operand: " + x);
             }
@@ -844,8 +848,8 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
             XirOperand x = tempOperands[i];
             CiValue op = allocateOperand(snippet, x);
             operands[x.index] = op;
-            operandArray[i + inputOperands.length + inputTempOperands.length] = op;
-            operandIndicesArray[i + inputOperands.length + inputTempOperands.length] = x.index;
+            tempOperandArray[i + inputTempOperands.length] = op;
+            tempOperandIndicesArray[i + inputTempOperands.length] = x.index;
             if (GraalOptions.PrintXirTemplates) {
                 TTY.println("Temp operand: " + x);
             }
@@ -872,8 +876,8 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         XirInstruction[] slowPath = snippet.template.slowPath;
         if (!operands[resultOperand.index].isConstant() || snippet.template.fastPath.length != 0 || (slowPath != null && slowPath.length > 0)) {
             // XIR instruction is only needed when the operand is not a constant!
-            append(StandardOp.XIR.create(snippet, operands, allocatedResultOperand, inputTempOperands.length, tempOperands.length,
-                    operandArray, operandIndicesArray,
+            append(StandardOp.XIR.create(snippet, operands, allocatedResultOperand,
+                    inputOperandArray, tempOperandArray, inputOperandIndicesArray, tempOperandIndicesArray,
                     (operands[resultOperand.index] == IllegalValue) ? -1 : resultOperand.index,
                     info, infoAfter, method, pointerSlots));
             if (GraalOptions.Meter) {

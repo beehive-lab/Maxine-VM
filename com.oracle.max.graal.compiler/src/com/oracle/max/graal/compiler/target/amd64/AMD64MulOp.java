@@ -37,16 +37,16 @@ public enum AMD64MulOp implements LIROpcode<AMD64MacroAssembler, LIRInstruction>
 
     @Override
     public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
-        if (op.operand(1).isRegister()) {
+        if (op.input(1).isRegister()) {
             switch (this) {
-                case IMUL: tasm.masm.imull(tasm.asRegister(op.result()), tasm.asRegister(op.operand(1))); break;
-                case LMUL: tasm.masm.imulq(tasm.asRegister(op.result()), tasm.asRegister(op.operand(1))); break;
+                case IMUL: tasm.masm.imull(tasm.asRegister(op.result()), tasm.asRegister(op.input(1))); break;
+                case LMUL: tasm.masm.imulq(tasm.asRegister(op.result()), tasm.asRegister(op.input(1))); break;
                 default:   throw Util.shouldNotReachHere();
             }
         } else {
             switch (this) {
-                case IMUL: tasm.masm.imull(tasm.asRegister(op.result()), tasm.asRegister(op.operand(0)), tasm.asIntConst(op.operand(1))); break;
-                case LMUL: tasm.masm.imulq(tasm.asRegister(op.result()), tasm.asRegister(op.operand(0)), tasm.asIntConst(op.operand(1))); break;
+                case IMUL: tasm.masm.imull(tasm.asRegister(op.result()), tasm.asRegister(op.input(0)), tasm.asIntConst(op.input(1))); break;
+                case LMUL: tasm.masm.imulq(tasm.asRegister(op.result()), tasm.asRegister(op.input(0)), tasm.asIntConst(op.input(1))); break;
                 default:   throw Util.shouldNotReachHere();
             }
         }

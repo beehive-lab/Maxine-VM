@@ -35,16 +35,16 @@ public enum AMD64ConvertOpFL implements LIROpcode<AMD64MacroAssembler, LIRConver
     F2L, D2L;
 
     public LIRInstruction create(CiVariable result, CompilerStub stub, CiVariable input, CiVariable tmp) {
-        return new LIRConvert(this, result, stub, input, tmp);
+        return new LIRConvert(this, result, stub, new CiValue[] {input}, new CiValue[] {tmp});
     }
 
     @Override
     public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRConvert op) {
         CiRegister dst = tasm.asLongReg(op.result());
-        CiRegister tmp = tasm.asLongReg(op.operand(1));
+        CiRegister tmp = tasm.asLongReg(op.temp(0));
         switch (this) {
-            case F2L: tasm.masm.cvttss2siq(dst, tasm.asFloatReg(op.operand(0))); break;
-            case D2L: tasm.masm.cvttsd2siq(dst, tasm.asDoubleReg(op.operand(0))); break;
+            case F2L: tasm.masm.cvttss2siq(dst, tasm.asFloatReg(op.input(0))); break;
+            case D2L: tasm.masm.cvttsd2siq(dst, tasm.asDoubleReg(op.input(0))); break;
             default: throw Util.shouldNotReachHere();
         }
 
@@ -52,7 +52,7 @@ public enum AMD64ConvertOpFL implements LIROpcode<AMD64MacroAssembler, LIRConver
         tasm.masm.movq(tmp, java.lang.Long.MIN_VALUE);
         tasm.masm.cmpq(dst, tmp);
         tasm.masm.jcc(ConditionFlag.notEqual, endLabel);
-        AMD64CallOp.callStub(tasm, op.stub, op.stub.resultKind, null, op.result(), op.operand(0));
+        AMD64CallOp.callStub(tasm, op.stub, op.stub.resultKind, null, op.result(), op.input(0));
         tasm.masm.bind(endLabel);
     }
 }

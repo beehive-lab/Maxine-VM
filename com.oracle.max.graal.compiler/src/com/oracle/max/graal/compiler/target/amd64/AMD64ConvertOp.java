@@ -43,32 +43,32 @@ public enum AMD64ConvertOp implements LIROpcode<AMD64MacroAssembler, LIRInstruct
     public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
         switch (this) {
             case L2I:
-                AMD64MoveOp.move(tasm, op.result(), op.operand(0));
+                AMD64MoveOp.move(tasm, op.result(), op.input(0));
                 tasm.masm.andl(tasm.asIntReg(op.result()), 0xFFFFFFFF);
                 break;
             case I2B:
-                AMD64MoveOp.move(tasm, op.result(), op.operand(0));
+                AMD64MoveOp.move(tasm, op.result(), op.input(0));
                 tasm.masm.signExtendByte(tasm.asIntReg(op.result()));
                 break;
             case I2C:
-                AMD64MoveOp.move(tasm, op.result(), op.operand(0));
+                AMD64MoveOp.move(tasm, op.result(), op.input(0));
                 tasm.masm.andl(tasm.asIntReg(op.result()), 0xFFFF);
                 break;
             case I2S:
-                AMD64MoveOp.move(tasm, op.result(), op.operand(0));
+                AMD64MoveOp.move(tasm, op.result(), op.input(0));
                 tasm.masm.signExtendShort(tasm.asIntReg(op.result()));
                 break;
-            case I2L: tasm.masm.movslq(tasm.asLongReg(op.result()), tasm.asIntReg(op.operand(0))); break;
-            case F2D: tasm.masm.cvtss2sd(tasm.asDoubleReg(op.result()), tasm.asFloatReg(op.operand(0))); break;
-            case D2F: tasm.masm.cvtsd2ss(tasm.asFloatReg(op.result()), tasm.asDoubleReg(op.operand(0))); break;
-            case I2F: tasm.masm.cvtsi2ssl(tasm.asFloatReg(op.result()), tasm.asIntReg(op.operand(0))); break;
-            case I2D: tasm.masm.cvtsi2sdl(tasm.asDoubleReg(op.result()), tasm.asIntReg(op.operand(0))); break;
-            case L2F: tasm.masm.cvtsi2ssq(tasm.asFloatReg(op.result()), tasm.asLongReg(op.operand(0))); break;
-            case L2D: tasm.masm.cvtsi2sdq(tasm.asDoubleReg(op.result()), tasm.asLongReg(op.operand(0))); break;
-            case MOV_I2F: tasm.masm.movdl(tasm.asFloatReg(op.result()), tasm.asIntReg(op.operand(0))); break;
-            case MOV_L2D: tasm.masm.movdq(tasm.asDoubleReg(op.result()), tasm.asLongReg(op.operand(0))); break;
-            case MOV_F2I: tasm.masm.movdl(tasm.asFloatReg(op.result()), tasm.asIntReg(op.operand(0))); break;
-            case MOV_D2L: tasm.masm.movdq(tasm.asLongReg(op.result()), tasm.asIntReg(op.operand(0))); break;
+            case I2L: tasm.masm.movslq(tasm.asLongReg(op.result()), tasm.asIntReg(op.input(0))); break;
+            case F2D: tasm.masm.cvtss2sd(tasm.asDoubleReg(op.result()), tasm.asFloatReg(op.input(0))); break;
+            case D2F: tasm.masm.cvtsd2ss(tasm.asFloatReg(op.result()), tasm.asDoubleReg(op.input(0))); break;
+            case I2F: tasm.masm.cvtsi2ssl(tasm.asFloatReg(op.result()), tasm.asIntReg(op.input(0))); break;
+            case I2D: tasm.masm.cvtsi2sdl(tasm.asDoubleReg(op.result()), tasm.asIntReg(op.input(0))); break;
+            case L2F: tasm.masm.cvtsi2ssq(tasm.asFloatReg(op.result()), tasm.asLongReg(op.input(0))); break;
+            case L2D: tasm.masm.cvtsi2sdq(tasm.asDoubleReg(op.result()), tasm.asLongReg(op.input(0))); break;
+            case MOV_I2F: tasm.masm.movdl(tasm.asFloatReg(op.result()), tasm.asIntReg(op.input(0))); break;
+            case MOV_L2D: tasm.masm.movdq(tasm.asDoubleReg(op.result()), tasm.asLongReg(op.input(0))); break;
+            case MOV_F2I: tasm.masm.movdl(tasm.asIntReg(op.result()), tasm.asFloatReg(op.input(0))); break;
+            case MOV_D2L: tasm.masm.movdq(tasm.asLongReg(op.result()), tasm.asDoubleReg(op.input(0))); break;
             default: throw Util.shouldNotReachHere();
         }
     }

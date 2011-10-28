@@ -90,7 +90,7 @@ final class EdgeMoveOptimizer {
         assert op2 != null;
 
         if (op1.code == StandardOp.MOVE && op2.code == StandardOp.MOVE) {
-            if (op1.info == op2.info && op1.operand(0).equals(op2.operand(0)) && op1.result().equals(op2.result())) {
+            if (op1.info == op2.info && op1.input(0).equals(op2.input(0)) && op1.result().equals(op2.result())) {
                 // these moves are exactly equal and can be optimized
                 return true;
             }

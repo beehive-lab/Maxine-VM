@@ -45,10 +45,10 @@ public enum AMD64CompareOp implements LIROpcode<AMD64MacroAssembler, LIRInstruct
     @Override
     public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
         assert op.info == null;
-        assert op.operand(0).kind == op.operand(1).kind.stackKind();
+        assert op.input(0).kind == op.input(1).kind.stackKind();
 
-        CiRegister left = tasm.asRegister(op.operand(0));
-        CiValue right = op.operand(1);
+        CiRegister left = tasm.asRegister(op.input(0));
+        CiValue right = op.input(1);
 
         AMD64MacroAssembler masm = tasm.masm;
         if (right.isRegister()) {

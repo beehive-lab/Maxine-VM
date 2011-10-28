@@ -50,41 +50,41 @@ public class AMD64MoveOp {
 
         @Override
         public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
-            move(tasm, op.result(), op.operand(0));
+            move(tasm, op.result(), op.input(0));
         }
     }
 
-    protected static class LoadOp implements LIROpcode<AMD64MacroAssembler, LIRKindInstruction> {
-        public LIRInstruction create(CiVariable result, CiAddress loadAddr, CiKind kind, LIRDebugInfo info) {
-            return new LIRKindInstruction(this, result, info, kind, loadAddr);
+    protected static class LoadOp implements LIROpcode<AMD64MacroAssembler, LIRAddressInstruction> {
+        public LIRInstruction create(CiVariable result, CiValue addrBase, CiValue addrIndex, CiAddress.Scale addrScale, int addrDisplacement, CiKind kind, LIRDebugInfo info) {
+            return new LIRAddressInstruction(this, result, info, kind, addrScale, addrDisplacement, addrBase, addrIndex);
         }
 
         @Override
-        public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRKindInstruction op) {
-            load(tasm, op.result(), (CiAddress) op.operand(0), op.kind, op.info);
+        public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRAddressInstruction op) {
+            load(tasm, op.result(), op.createAddress(0, 1), op.kind, op.info);
         }
     }
 
-    protected static class StoreOp implements LIROpcode<AMD64MacroAssembler, LIRKindInstruction> {
-        public LIRInstruction create(CiAddress storeAddr, CiValue input, CiKind kind, LIRDebugInfo info) {
+    protected static class StoreOp implements LIROpcode<AMD64MacroAssembler, LIRAddressInstruction> {
+        public LIRInstruction create(CiValue addrBase, CiValue addrIndex, CiAddress.Scale addrScale, int addrDisplacement, CiValue input, CiKind kind, LIRDebugInfo info) {
             // Since the registers used by storeAddr are actual input operands, storeAddr is registered as an input.
-            return new LIRKindInstruction(this, CiValue.IllegalValue, info, kind, input, storeAddr);
+            return new LIRAddressInstruction(this, CiValue.IllegalValue, info, kind, addrScale, addrDisplacement, addrBase, addrIndex, input);
         }
 
         @Override
-        public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRKindInstruction op) {
-            store(tasm, (CiAddress) op.operand(1), op.operand(0), op.kind, op.info);
+        public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRAddressInstruction op) {
+            store(tasm, op.createAddress(0, 1), op.input(2), op.kind, op.info);
         }
     }
 
-    protected static class LeaOp implements LIROpcode<AMD64MacroAssembler, LIRInstruction> {
-        public LIRInstruction create(CiVariable result, CiAddress loadAddr) {
-            return new LIRInstruction(this, result, null, loadAddr);
+    protected static class LeaOp implements LIROpcode<AMD64MacroAssembler, LIRAddressInstruction> {
+        public LIRInstruction create(CiVariable result, CiValue addrBase, CiValue addrIndex, CiAddress.Scale addrScale, int addrDisplacement) {
+            return new LIRAddressInstruction(this, result, null, CiKind.Illegal, addrScale, addrDisplacement, addrBase, addrIndex);
         }
 
         @Override
-        public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
-            tasm.masm.leaq(tasm.asLongReg(op.result()), tasm.asAddress(op.operand(0)));
+        public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRAddressInstruction op) {
+            tasm.masm.leaq(tasm.asLongReg(op.result()), op.createAddress(0, 1));
         }
     }
 
@@ -95,7 +95,7 @@ public class AMD64MoveOp {
 
         @Override
         public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
-            tasm.masm.membar(tasm.asIntConst(op.operand(0)));
+            tasm.masm.membar(tasm.asIntConst(op.input(0)));
         }
     }
 
@@ -108,26 +108,26 @@ public class AMD64MoveOp {
         @Override
         public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
             tasm.recordImplicitException(tasm.masm.codeBuffer.position(), op.info);
-            tasm.masm.nullCheck(tasm.asRegister(op.operand(0)));
+            tasm.masm.nullCheck(tasm.asRegister(op.input(0)));
         }
     }
 
-    protected static class CompareAndSwapOp implements LIROpcode<AMD64MacroAssembler, LIRInstruction> {
-        public LIRInstruction create(CiRegisterValue result, CiAddress address, CiRegisterValue cmpValue, CiVariable newValue) {
-            return new LIRInstruction(this, result, null, address, cmpValue, newValue);
+    protected static class CompareAndSwapOp implements LIROpcode<AMD64MacroAssembler, LIRAddressInstruction> {
+        public LIRInstruction create(CiRegisterValue result, CiValue addrBase, CiValue addrIndex, CiAddress.Scale addrScale, int addrDisplacement, CiRegisterValue cmpValue, CiVariable newValue) {
+            return new LIRAddressInstruction(this, result, null, CiKind.Illegal, addrScale, addrDisplacement, addrBase, addrIndex, cmpValue, newValue);
         }
 
         @Override
-        public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
-            CiAddress address = tasm.asAddress(op.operand(0));
-            assert tasm.asRegister(op.operand(1)) == AMD64.rax;
-            CiRegister newValue = tasm.asRegister(op.operand(2));
+        public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRAddressInstruction op) {
+            CiAddress address = op.createAddress(0, 1);
+            assert tasm.asRegister(op.input(1)) == AMD64.rax;
+            CiRegister newValue = tasm.asRegister(op.input(2));
             assert tasm.asRegister(op.result()) == AMD64.rax;
 
             if (tasm.target.isMP) {
                 tasm.masm.lock();
             }
-            switch (op.operand(1).kind) {
+            switch (op.input(1).kind) {
                 case Int:    tasm.masm.cmpxchgl(newValue, address); break;
                 case Long:
                 case Object: tasm.masm.cmpxchgq(newValue, address); break;

@@ -39,7 +39,7 @@ public enum AMD64MathIntrinsicOp implements LIROpcode<AMD64MacroAssembler, LIRIn
 
     @Override
     public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
-        CiRegister input = tasm.asDoubleReg(op.operand(0));
+        CiRegister input = tasm.asDoubleReg(op.input(0));
         CiRegister result = tasm.asDoubleReg(op.result());
         switch (this) {
             case SQRT:  tasm.masm.sqrtsd(result, input); break;

@@ -38,7 +38,7 @@ public enum AMD64Op1 implements LIROpcode<AMD64MacroAssembler, LIRInstruction> {
 
     @Override
     public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
-        assert op.operand(0).equals(op.result());
+        assert op.input(0).equals(op.result());
         switch (this) {
             case INEG: tasm.masm.negl(tasm.asIntReg(op.result())); break;
             case LNEG: tasm.masm.negq(tasm.asLongReg(op.result())); break;

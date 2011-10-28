@@ -46,11 +46,11 @@ public enum AMD64ArithmeticOp implements LIROpcode<AMD64MacroAssembler, LIRInstr
     @Override
     public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
         assert op.info == null;
-        assert op.result().kind == op.operand(0).kind && (op.operand(0).kind == op.operand(1).kind.stackKind() || (op.operand(0).kind == tasm.target.wordKind && op.operand(1).kind.stackKind() == CiKind.Int));
-        assert op.operand(0).equals(op.result());
+        assert op.result().kind == op.input(0).kind && (op.input(0).kind == op.input(1).kind.stackKind() || (op.input(0).kind == tasm.target.wordKind && op.input(1).kind.stackKind() == CiKind.Int));
+        assert op.input(0).equals(op.result());
 
         CiRegister dst = tasm.asRegister(op.result());
-        CiValue right = op.operand(1);
+        CiValue right = op.input(1);
 
         AMD64MacroAssembler masm = tasm.masm;
         if (right.isRegister()) {

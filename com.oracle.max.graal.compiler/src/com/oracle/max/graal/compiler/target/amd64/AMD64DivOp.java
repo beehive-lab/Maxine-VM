@@ -35,13 +35,13 @@ public enum AMD64DivOp implements LIROpcode<AMD64MacroAssembler, LIRInstruction>
     LDIV, LREM, ULDIV, ULREM;
 
     public LIRInstruction create(CiRegisterValue result, LIRDebugInfo info, CiRegisterValue left, CiVariable right) {
-        return new LIRInstruction(this, result, info, false, 0, 3, left, right, AMD64.rax.asValue(), AMD64.rdx.asValue(), right);
+        return new LIRInstruction(this, result, info, false, new CiValue[] {left, right}, new CiValue[] {AMD64.rax.asValue(), AMD64.rdx.asValue(), right});
     }
 
     @Override
     public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
-        CiRegister left = tasm.asRegister(op.operand(0));
-        CiRegister right = tasm.asRegister(op.operand(1));
+        CiRegister left = tasm.asRegister(op.input(0));
+        CiRegister right = tasm.asRegister(op.input(1));
         CiRegister result = tasm.asRegister(op.result());
 
         // left input in rax, right input in any register but rax and rdx, result quotient in rax, result remainder in rdx
