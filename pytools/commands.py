@@ -364,7 +364,7 @@ def image(env, args):
                 help(env, ['image'])
                 mx.abort()
             value = args[i]
-            systemProps += ['-D' + name + '=' + value]
+            systemProps += ['-Dmax.' + name + '=' + value]
         elif arg.startswith('--XX:LogFile='):
             os.environ['MAXINE_LOG_FILE'] = arg.split('=', 1)[1]
         elif arg == '-vma':
