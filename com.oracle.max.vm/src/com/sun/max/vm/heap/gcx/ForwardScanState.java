@@ -30,7 +30,11 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 /**
- * State of the forward scan of the tri-color map.
+ * State of the forward scan of the tricolor mark-bitmap.
+ * The forward scan linearly iterates over the mark bitmap, starting from the leftmost object marked grey by the root scan, up to the rightmost
+ * object. The forward scan advances a cursor, called the finger, which is set on the currently visited grey object.
+ * References to the left of the cursor (i.e., backward references) are pushed on a marking stack while reference forward are marked grey.
+ * To avoid duplicates on the marking stack, the backward references are marked grey as well.
  */
 final class ForwardScanState extends ColorMapScanState implements SpecialReferenceManager.GC {
 
@@ -69,45 +73,8 @@ final class ForwardScanState extends ColorMapScanState implements SpecialReferen
             debugRightmostBitmapWordIndex = rightmostBitmapWordIndex;
             debugBitmapWordIndex = bitmapWordIndex;
         }
-        while (bitmapWordIndex <= rightmostBitmapWordIndex) {
-            long bitmapWord = colorMapBase.getLong(bitmapWordIndex);
-            if (MaxineVM.isDebug()) {
-                debugBitmapWordIndex = bitmapWordIndex;
-                debugBitmapWord = bitmapWord;
-            }
-            if (bitmapWord != 0) {
-                // FIXME (ld) this way of scanning the mark bitmap may cause black objects to end up on the marking stack.
-                // Here's how.
-                // If the object pointed by the finger contains backward references to objects covered by the same word
-                // of the mark bitmap, and its end is covered by the same word, we will end up visiting these objects although
-                // there were pushed on the marking stack.
-                // One way to avoid that is to leave the finger set to the beginning of the word and iterate over all grey marks
-                // of the word until reaching a fix point where all mark are white or black on the mark bitmap word.
-                final long greyMarksInWord = bitmapWord & (bitmapWord >>> 1);
-                if (greyMarksInWord != 0) {
-                    // First grey mark is the least set bit.
-                    final int bitIndexInWord = Pointer.fromLong(greyMarksInWord).leastSignificantBitSet();
-                    final int bitIndexOfGreyCell = (bitmapWordIndex << Word.widthValue().log2numberOfBits) + bitIndexInWord;
-                    final Pointer p = markAndVisitCell(heapMarker.addressOf(bitIndexOfGreyCell).asPointer());
-                    // Get bitmap word index at the end of the object. This may avoid reading multiple mark bitmap words
-                    // when marking objects crossing multiple mark bitmap words.
-                    bitmapWordIndex = heapMarker.bitmapWordIndex(p);
-                    continue;
-                } else if ((bitmapWord >>> TricolorHeapMarker.LAST_BIT_INDEX_IN_WORD) == 1L) {
-                    // Mark span two words. Check first bit of next word to decide if mark is grey.
-                    bitmapWord = colorMapBase.getLong(bitmapWordIndex + 1);
-                    if ((bitmapWord & 1) != 0) {
-                        // it is a grey object.
-                        final int bitIndexOfGreyCell = (bitmapWordIndex << Word.widthValue().log2numberOfBits) + TricolorHeapMarker.LAST_BIT_INDEX_IN_WORD;
-                        final Pointer p = markAndVisitCell(heapMarker.addressOf(bitIndexOfGreyCell).asPointer());
-                        bitmapWordIndex = heapMarker.bitmapWordIndex(p);
-                        continue;
-                    }
-                }
-            }
-            bitmapWordIndex++;
-        }
-        // There might be some objects left in the marking stack. Drain it.
+        visitGreyObjects(bitmapWordIndex, rightmostBitmapWordIndex);
+         // There might be some objects left in the marking stack. Drain it.
         // Before draining, advance the finger to the next mark bitmap word boundary to force all white references from drained cells that point to objects
         // with mark in the current mark word to be pushed up on the marking stack and processed during the drainage.
         Address fingerBeforeDraining = finger;
@@ -203,7 +170,6 @@ final class ForwardScanState extends ColorMapScanState implements SpecialReferen
         }
     }
 
-    @Override
     public void visitGreyObjects() {
         int rightmostBitmapWordIndex = rightmostBitmapWordIndex();
         do {
