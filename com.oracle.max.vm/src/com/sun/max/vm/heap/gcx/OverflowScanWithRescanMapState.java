@@ -119,8 +119,7 @@ final class OverflowScanWithRescanMapState extends OverflowScanState {
     /**
      * Visit grey cells using the specified rescan map.
      */
-    @Override
-    public void visitGreyObjects() {
+    private void visitGreyObjects() {
         // Iterate over the rescan map and iterate over the corresponding bounds in the mark bitmap for each
         // entry recording the presence of grey objects.
         while (!rescanMap.isEmpty()) {
