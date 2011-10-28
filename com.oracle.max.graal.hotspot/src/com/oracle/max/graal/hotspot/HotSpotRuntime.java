@@ -38,7 +38,7 @@ import com.oracle.max.graal.nodes.calc.ConditionalNode.ConditionalStructure;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.graal.nodes.java.MathIntrinsicNode.Operation;
-import com.sun.cri.bytecode.*;
+import com.oracle.max.graal.nodes.java.MethodCallTargetNode.InvokeKind;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.DataPatch;
 import com.sun.cri.ci.CiTargetMethod.Safepoint;
@@ -539,7 +539,8 @@ public class HotSpotRuntime implements GraalRuntime {
                         IfNode elementClassIf = graph.add(new IfNode(graph.unique(new CompareNode(srcClass, Condition.EQ, destClass)), 0.5));
                         destClass.setNext(elementClassIf);
                         ifNode.setFalseSuccessor(BeginNode.begin(anchor));
-                        newInvoke = graph.add(new InvokeNode(bci, Bytecodes.INVOKESTATIC, CiKind.Void, new ValueNode[]{src, srcPos, dest, destPos, length}, method, method.signature().returnType(method.holder())));
+                        MethodCallTargetNode target = graph.unique(new MethodCallTargetNode(InvokeKind.Static, method, new ValueNode[]{src, srcPos, dest, destPos, length}, method.signature().returnType(holder)));
+                        newInvoke = graph.add(new InvokeNode(bci, target));
                         newInvoke.setCanInline(false);
                         newInvoke.setStateAfter(stateAfter);
                         elementClassIf.setFalseSuccessor(BeginNode.begin(newInvoke));

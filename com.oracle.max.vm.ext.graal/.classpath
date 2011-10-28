@@ -11,7 +11,6 @@
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.vm"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.graal.graph"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.graal.nodes"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.graal.extensions"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.graal.graphviz"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.graal.compiler"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.asmdis"/>

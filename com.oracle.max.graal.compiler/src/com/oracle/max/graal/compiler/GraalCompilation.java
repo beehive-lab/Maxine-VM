@@ -31,6 +31,7 @@ import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.alloc.*;
 import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.gen.*;
+import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.observer.*;
 import com.oracle.max.graal.compiler.phases.*;

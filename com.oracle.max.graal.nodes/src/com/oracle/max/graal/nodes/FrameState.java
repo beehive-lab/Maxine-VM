@@ -695,6 +695,15 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
         rethrowException = b;
     }
 
+    public CiCodePos toCodePos() {
+        FrameState caller = outerFrameState();
+        CiCodePos callerCodePos = null;
+        if (caller != null) {
+            callerCodePos = caller.toCodePos();
+        }
+        return new CiCodePos(callerCodePos, method, bci);
+    }
+
     @Override
     public boolean verify() {
         for (ValueNode value : values) {
