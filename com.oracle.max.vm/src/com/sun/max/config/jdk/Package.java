@@ -27,6 +27,7 @@ import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.jdk.*;
 
 /**
  * Redirection for the standard set of JDK packages to include in the image.
@@ -99,7 +100,9 @@ public class Package extends BootImagePackage {
         CompiledPrototype.registerImageInvocationStub(MethodActor.fromJava(Classes.getDeclaredMethod(java.nio.charset.Charset.class, "isSupported", String.class)));
         CompiledPrototype.registerImageInvocationStub(MethodActor.fromJava(Classes.getDeclaredMethod(java.lang.String.class, "getBytes", String.class)));
         CompiledPrototype.registerImageInvocationStub(MethodActor.fromJavaConstructor(Classes.getDeclaredConstructor(java.lang.String.class, byte[].class, String.class)));
-        CompiledPrototype.registerImageInvocationStub(MethodActor.fromJavaConstructor(Classes.getDeclaredConstructor(Classes.forName("java.io.UnixFileSystem"))));
+        if (JDK.java_io_UnixFileSystem.javaClass() != null) {
+            CompiledPrototype.registerImageInvocationStub(MethodActor.fromJavaConstructor(Classes.getDeclaredConstructor(JDK.java_io_UnixFileSystem.javaClass())));
+        }
         // Constructors that are invoked via reflection during startup; we want the invocation stub in the boot image to avoid compilation at run time
         CompiledPrototype.registerImageConstructorStub(MethodActor.fromJavaConstructor(Classes.getDeclaredConstructor(sun.net.www.protocol.jar.Handler.class)));
 
