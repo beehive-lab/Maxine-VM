@@ -176,11 +176,7 @@ public final class GraalCompilation {
             }
 
             if (GraalOptions.Inline) {
-                if (GraalOptions.UseNewInlining) {
-                    new InliningPhase(context(), compiler.runtime, compiler.target, null).apply(graph);
-                } else {
-                    new OldInliningPhase(context(), this, null).apply(graph);
-                }
+                new InliningPhase(context(), compiler.runtime, compiler.target, null).apply(graph);
                 new DeadCodeEliminationPhase(context()).apply(graph);
             }
 
