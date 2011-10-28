@@ -24,9 +24,6 @@ package com.sun.max.vm.jni;
 
 import com.sun.max.config.*;
 
-/**
- * @see MaxPackage
- */
 public class Package extends BootImagePackage {
     public Package() {
         super();

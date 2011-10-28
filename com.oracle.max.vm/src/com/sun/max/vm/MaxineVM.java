@@ -45,6 +45,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.*;
+import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -426,7 +427,7 @@ public final class MaxineVM {
      * @return 0 indicating initialization succeeded, non-0 if not
      */
     @VM_ENTRY_POINT
-    public static int run(Pointer etla, Pointer bootHeapRegionStart, Word dlopen, Word dlsym, Word dlerror, Pointer jniEnv, Pointer jmmInterface, int argc, Pointer argv) {
+    public static int run(Pointer etla, Pointer bootHeapRegionStart, Word dlopen, Word dlsym, Word dlerror, Pointer jniEnv, Pointer jmmInterface, Pointer jvmtiInterface, int argc, Pointer argv) {
         SafepointPoll.setLatchRegister(etla);
 
         // This one field was not marked by the data prototype for relocation
@@ -440,12 +441,14 @@ public final class MaxineVM {
         // Link the critical native methods:
         CriticalNativeMethod.linkAll();
 
+        DynamicLinker.criticalLinked();
+
         // Initialize the trap system:
         Trap.initialize();
 
         ImmortalHeap.initialize();
 
-        NativeInterfaces.initialize(jniEnv, jmmInterface);
+        NativeInterfaces.initialize(jniEnv, jmmInterface, jvmtiInterface);
 
         // Perhaps this should be later, after VM has initialized
         startupTime = System.currentTimeMillis();
@@ -576,6 +579,8 @@ public final class MaxineVM {
         // This prevents further thread creation
         VmThreadMap.ACTIVE.setVMTerminating();
         SignalDispatcher.terminate();
+
+        JVMTI.event(JVMTIEvent.VM_DEATH);
 
         // TODO: need to revisit this. Likely, we would want to bring all
         // threads to a safepoint before running the terminating phase.

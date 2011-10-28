@@ -167,7 +167,7 @@ public class jmax {
      */
     static String getenv(String name, boolean required) {
         String value = System.getenv(name);
-        assert !required || value != null : "the required environment variable ' " + name + "' is not set";
+        assert !required || value != null : "the required environment variable '" + name + "' is not set";
         return value;
     }
 
