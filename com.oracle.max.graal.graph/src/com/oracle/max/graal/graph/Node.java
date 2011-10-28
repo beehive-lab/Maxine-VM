@@ -21,13 +21,10 @@
  * questions.
  */
 package com.oracle.max.graal.graph;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+
+import java.lang.annotation.*;
 import java.util.*;
 
-import com.oracle.max.graal.graph.NodeClass.Position;
 
 /**
  * This class is the base class for all nodes, it represent a node which can be inserted in a {@link Graph}.<br>
@@ -366,14 +363,6 @@ public abstract class Node implements Cloneable {
      */
     public Iterable<? extends Node> cfgSuccessors() {
         return successors();
-    }
-
-    Node get(Position pos) {
-        return this.getNodeClass().get(this, pos);
-    }
-
-    void set(Position pos, Node value) {
-        this.getNodeClass().set(this, pos, value);
     }
 
     /**
