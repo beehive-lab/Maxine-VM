@@ -47,6 +47,6 @@ public class LIRLabel extends LIRInstruction {
      */
     @Override
     public String operationString(Formatter operandFmt) {
-        return label.isBound() ? String.valueOf(label.position()) : "?";
+        return label.toString();
     }
 }

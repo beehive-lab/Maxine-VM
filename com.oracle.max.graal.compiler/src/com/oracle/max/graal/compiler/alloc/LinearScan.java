@@ -1536,7 +1536,7 @@ public final class LinearScan {
             }
 
             if (GraalOptions.DetailedAsserts) {
-                assert fromBlock.lir().get(0) instanceof LIRLabel : "block does not start with a label";
+                assert fromBlock.lir().get(0).code == StandardOp.LABEL : "block does not start with a label";
 
                 // because the number of predecessor edges matches the number of
                 // successor edges, blocks which are reached by switch statements
@@ -1568,7 +1568,7 @@ public final class LinearScan {
             // check if block has only one predecessor and only one successor
             if (block.numberOfPreds() == 1 && block.numberOfSux() == 1) {
                 List<LIRInstruction> instructions = block.lir();
-                assert instructions.get(0) instanceof LIRLabel : "block must start with label";
+                assert instructions.get(0).code == StandardOp.LABEL : "block must start with label";
                 assert instructions.get(instructions.size() - 1) instanceof LIRBranch : "block with successors must end with branch (" + block + "), " + instructions.get(instructions.size() - 1);
                 assert ((LIRBranch) instructions.get(instructions.size() - 1)).cond == null : "block with successor must end with unconditional branch";
 

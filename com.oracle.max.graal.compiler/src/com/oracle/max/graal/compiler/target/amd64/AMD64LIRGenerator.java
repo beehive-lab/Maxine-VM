@@ -72,6 +72,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
         StandardOp.NULL_CHECK = AMD64MoveOp.NULL_CHECK;
         StandardOp.DIRECT_CALL = AMD64CallOp.DIRECT_CALL;
         StandardOp.INDIRECT_CALL = AMD64CallOp.INDIRECT_CALL;
+        StandardOp.LABEL = AMD64ControlFlowOp.LABEL;
         StandardOp.RETURN = AMD64ControlFlowOp.RETURN;
         StandardOp.XIR = AMD64XirOp.XIR;
     }

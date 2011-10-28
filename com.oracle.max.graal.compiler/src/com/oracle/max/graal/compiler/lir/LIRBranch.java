@@ -91,9 +91,7 @@ public class LIRBranch extends LIRInstruction {
         assert newBlock != null;
         if (block == oldBlock) {
             block = newBlock;
-            LIRInstruction instr = newBlock.lir().get(0);
-            assert instr instanceof LIRLabel : "first instruction of block must be label";
-            label = ((LIRLabel) instr).label;
+            label = newBlock.label;
         }
     }
 }

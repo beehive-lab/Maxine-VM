@@ -102,7 +102,7 @@ final class ControlFlowOptimizer {
         List<LIRInstruction> instructions = block.lir();
 
         assert instructions.size() >= 2 : "block must have label and branch";
-        assert instructions.get(0) instanceof LIRLabel : "first instruction must always be a label";
+        assert instructions.get(0).code == StandardOp.LABEL : "first instruction must always be a label";
         assert instructions.get(instructions.size() - 1) instanceof LIRBranch : "last instruction must always be a branch but is " + instructions.get(instructions.size() - 1);
         assert ((LIRBranch) instructions.get(instructions.size() - 1)).cond == null : "branch must be unconditional";
         assert ((LIRBranch) instructions.get(instructions.size() - 1)).block() == block.suxAt(0) : "branch target must be the successor " + ((LIRBranch) instructions.get(instructions.size() - 1)).block();
@@ -201,7 +201,7 @@ final class ControlFlowOptimizer {
             List<LIRInstruction> curInstructions = block.lir();
             LIRInstruction curLastOp = curInstructions.get(curInstructions.size() - 1);
 
-            assert curInstructions.get(0) instanceof LIRLabel : "first instruction must always be a label";
+            assert curInstructions.get(0).code == StandardOp.LABEL : "first instruction must always be a label";
             if (curInstructions.size() == 2 && curLastOp.code == StandardOp.RETURN) {
                 // the block contains only a label and a return
                 // if a predecessor ends with an unconditional jump to this block, then the jump
@@ -219,8 +219,7 @@ final class ControlFlowOptimizer {
                     List<LIRInstruction> predInstructions = pred.lir();
                     LIRInstruction predLastOp = predInstructions.get(predInstructions.size() - 1);
 
-                    if (predLastOp.code instanceof LIRBranch) {
-                        assert predLastOp instanceof LIRBranch : "branch must be LIRBranch";
+                    if (predLastOp instanceof LIRBranch) {
                         LIRBranch predLastBranch = (LIRBranch) predLastOp;
 
                         if (predLastBranch.block() == block && predLastBranch.cond == null && predLastBranch.info == null) {

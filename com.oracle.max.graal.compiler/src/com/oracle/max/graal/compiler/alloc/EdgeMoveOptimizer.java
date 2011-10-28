@@ -224,7 +224,7 @@ final class EdgeMoveOptimizer {
             LIRBlock sux = block.suxAt(i);
             List<LIRInstruction> suxInstructions = sux.lir();
 
-            assert suxInstructions.get(0) instanceof LIRLabel : "block must start with label";
+            assert suxInstructions.get(0).code == StandardOp.LABEL : "block must start with label";
 
             if (sux.numberOfPreds() != 1) {
                 // this can happen with switch-statements where multiple edges are between
