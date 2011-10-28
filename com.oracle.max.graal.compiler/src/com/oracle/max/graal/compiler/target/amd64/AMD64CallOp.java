@@ -34,11 +34,11 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.Mark;
 import com.sun.cri.xir.CiXirAssembler.XirMark;
 
-public enum AMD64CallOp implements StandardOp.CallOpcode<AMD64MacroAssembler, LIRCall> {
+public enum AMD64CallOp implements StandardOp.CallOpcode<AMD64MacroAssembler, LIRCall>, LIROpcode.HasCall {
     DIRECT_CALL, INDIRECT_CALL, NATIVE_CALL;
 
     public LIRInstruction create(Object target, CiValue result, List<CiValue> arguments, CiValue targetAddress, LIRDebugInfo info, Map<XirMark, Mark> marks, List<CiValue> pointerSlots) {
-        return new LIRCall(this, target, result, arguments, targetAddress, info, marks, false, pointerSlots);
+        return new LIRCall(this, target, result, arguments, targetAddress, info, marks, pointerSlots);
     }
 
     @Override

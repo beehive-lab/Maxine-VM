@@ -350,7 +350,7 @@ public final class LinearScan {
      */
     boolean hasCall(int opId) {
         assert isEven(opId) : "opId not even";
-        return instructionForId(opId).hasCall;
+        return instructionForId(opId).code instanceof LIROpcode.HasCall;
     }
 
     /**
@@ -1167,7 +1167,7 @@ public final class LinearScan {
                 final int opId = op.id();
 
                 // add a temp range for each register if operation destroys caller-save registers
-                if (op.hasCall) {
+                if (op.code instanceof LIROpcode.HasCall) {
                     for (CiRegister r : callerSaveRegs) {
                         if (attributes(r).isAllocatable) {
                             addTemp(r.asValue(), opId, RegisterPriority.None, CiKind.Illegal);
@@ -1779,7 +1779,7 @@ public final class LinearScan {
 
     void computeOopMap(IntervalWalker iw, LIRInstruction op, LIRDebugInfo info, CiBitMap frameRefMap, CiBitMap regRefMap) {
         computeMonitorOopMap(frameRefMap, info.state);
-        computeOopMap(iw, op, info, op.hasCall, frameRefMap, regRefMap);
+        computeOopMap(iw, op, info, op.code instanceof LIROpcode.HasCall, frameRefMap, regRefMap);
         if (op instanceof LIRCall) {
             List<CiValue> pointerSlots = ((LIRCall) op).pointerSlots;
             if (pointerSlots != null) {
@@ -2005,7 +2005,7 @@ public final class LinearScan {
                 int frameSize = compilation.frameMap().frameSize();
                 int frameWords = frameSize / compilation.compiler.target.spillSlotSize;
                 CiBitMap frameRefMap = new CiBitMap(frameWords);
-                CiBitMap regRefMap = !op.hasCall ? new CiBitMap(compilation.compiler.target.arch.registerReferenceMapBitCount) : null;
+                CiBitMap regRefMap = op.code instanceof LIROpcode.HasCall ? null : new CiBitMap(compilation.compiler.target.arch.registerReferenceMapBitCount);
                 CiFrame frame = compilation.placeholderState != null ? null : computeFrame(info.state, op.id(), frameRefMap);
                 computeOopMap(iw, op, info, frameRefMap, regRefMap);
                 info.debugInfo = new CiDebugInfo(frame, regRefMap, frameRefMap);

@@ -193,7 +193,7 @@ public class AMD64ControlFlowOp {
 
     protected static class CondMoveOp implements LIROpcode<AMD64MacroAssembler, LIRCondition>, LIROpcode.SecondOperandRegisterHint {
         public LIRInstruction create(CiVariable result, Condition cond, CiVariable trueValue, CiValue falseValue) {
-            return new LIRCondition(this, result, null, false, cond, false, new CiValue[] {trueValue, falseValue}, new CiValue[] {trueValue});
+            return new LIRCondition(this, result, null, cond, false, new CiValue[] {trueValue, falseValue}, new CiValue[] {trueValue});
         }
 
         @Override
@@ -213,7 +213,7 @@ public class AMD64ControlFlowOp {
 
     protected static class FloatCondMoveOp implements LIROpcode<AMD64MacroAssembler, LIRCondition>, LIROpcode.SecondOperandRegisterHint {
         public LIRInstruction create(CiVariable result, Condition cond, boolean unorderedIsTrue, CiVariable trueValue, CiVariable falseValue) {
-            return new LIRCondition(this, result, null, false, cond, unorderedIsTrue, new CiValue[] {trueValue, falseValue}, new CiValue[] {trueValue});
+            return new LIRCondition(this, result, null, cond, unorderedIsTrue, new CiValue[] {trueValue, falseValue}, new CiValue[] {trueValue});
         }
 
         @Override

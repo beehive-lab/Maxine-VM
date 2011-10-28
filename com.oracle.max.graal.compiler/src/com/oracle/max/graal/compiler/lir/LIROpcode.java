@@ -55,4 +55,11 @@ public interface LIROpcode<A extends AbstractAssembler, I extends LIRInstruction
      */
     public interface SecondOperandRegisterHint {
     }
+
+    /**
+     * Marker interface for the register allocator: If an operation implements this interface,
+     * all caller-saved registers are destroyed by the instruction.
+     */
+    public interface HasCall {
+    }
 }

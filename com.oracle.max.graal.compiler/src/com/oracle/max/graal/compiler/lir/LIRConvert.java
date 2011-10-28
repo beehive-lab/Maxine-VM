@@ -30,7 +30,7 @@ public class LIRConvert extends LIRInstruction {
     public final CompilerStub stub;
 
     public LIRConvert(LIROpcode code, CiValue result, CompilerStub stub, CiValue[] inputs, CiValue[] temps) {
-        super(code, result, null, false, inputs, temps);
+        super(code, result, null, inputs, temps);
         this.stub = stub;
     }
 }

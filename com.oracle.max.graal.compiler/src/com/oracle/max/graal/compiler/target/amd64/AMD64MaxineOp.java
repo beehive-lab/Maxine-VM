@@ -51,7 +51,7 @@ public class AMD64MaxineOp {
 
     public static class SignificantBitOpcode implements LIROpcode<AMD64MacroAssembler, LIRInstruction>, LIROpcode.AllOperandsCanBeMemory {
         public LIRInstruction create(CiVariable result, CiVariable input) {
-            return new LIRInstruction(this, result, null, false, new CiValue[] {input}, new CiValue[] {input});
+            return new LIRInstruction(this, result, null, new CiValue[] {input}, new CiValue[] {input});
         }
 
         @Override

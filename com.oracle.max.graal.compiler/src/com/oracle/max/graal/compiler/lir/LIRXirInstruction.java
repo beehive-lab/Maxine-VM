@@ -53,7 +53,7 @@ public class LIRXirInstruction extends LIRInstruction {
                              LIRDebugInfo infoAfter,
                              RiMethod method,
                              List<CiValue> pointerSlots) {
-        super(opcode, outputOperand, info, false, inputs, temps);
+        super(opcode, outputOperand, info, inputs, temps);
         this.infoAfter = infoAfter;
         this.pointerSlots = pointerSlots;
         assert this.pointerSlots == null || this.pointerSlots.size() >= 0;
