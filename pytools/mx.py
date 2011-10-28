@@ -55,15 +55,15 @@ class Env(ArgumentParser):
     # Override parent to append the list of available commands
     def format_help(self):
         msg = ArgumentParser.format_help(self) + '\navailable commands:\n\n'
-        for cmd in commands.table.iterkeys():
-            c, _ = commands.table[cmd]
+        for cmd in sorted(commands.table.iterkeys()):
+            c, _ = commands.table[cmd][:2]
             doc = c.__doc__
-            msg += ' {0:<16} {1}\n'.format(cmd, doc.split('\n', 1)[0])
+            msg += ' {0:<20} {1}\n'.format(cmd, doc.split('\n', 1)[0])
         return msg + '\n'
     
     def __init__(self):
         self.java_initialized = False
-        ArgumentParser.__init__(self, prog='max')
+        ArgumentParser.__init__(self, prog='mx')
     
         self.add_argument('-v', action='store_true', dest='verbose', help='enable verbose output')
         self.add_argument('-d', action='store_true', dest='java_dbg', help='make Java processes wait on port 8000 for a debugger')
@@ -75,6 +75,7 @@ class Env(ArgumentParser):
         self.add_argument('--user-home', help='users home directory', metavar='<path>', default=os.path.expanduser('~'))
         self.add_argument('--java-home', help='JDK installation directory (must be JDK 6 or later)', metavar='<path>', default=default_java_home())
         self.add_argument('--java', help='Java VM executable (default: bin/java under JAVA_HOME)', metavar='<path>')
+        self.add_argument('--trace', dest='java_trace', help='trace level for Java tools that use it', metavar='<n>', default=1)
         self.add_argument('--os', dest='os', help='operating system hosting the VM (all lower case) for remote inspecting')
         self.add_argument('-V', '--vmdir', dest='vmdir',
                           metavar='<path>', 
@@ -143,7 +144,9 @@ class Env(ArgumentParser):
         
         return subprocess.check_output([self.java, '-ea', '-cp', jmaxDir, 'jmax'] + args).strip()
         
-    def classpath(self, project):
+    def classpath(self, project=None):
+        if project is None:
+            return self.jmax(['classpath'])
         return self.jmax(['classpath', project])
             
     def run_java(self, args, nonZeroIsFatal=True, out=None, err=None, cwd=None):
@@ -161,7 +164,11 @@ class Env(ArgumentParser):
         
         """
         
-        assert isinstance(args, types.ListType), "'args' must be a list of strings: " + str(args)
+        assert isinstance(args, types.ListType), "'args' must be a list: " + str(args)
+        for arg in args:
+            if not isinstance(arg, types.StringTypes):
+                self.log('argument is not a string: ' + str(arg))
+                abort(1)
         
         if self.verbose:
             self.log(' '.join(args))
@@ -199,19 +206,22 @@ class Env(ArgumentParser):
         return retcode
 
     
-    def log(self, msg):
-        print msg
+    def log(self, msg=None):
+        if msg is None:
+            print
+        else:
+            print msg
 
     def _init_java(self):
         if self.java_initialized:
             return
 
-        def delAt(s):
-            return s.lstrip('@')
-        
-        self.java_args = shlex.split(delAt(self.java_args))
-        self.java_args_pfx = map(shlex.split, map(delAt, self.java_args_pfx))
-        self.java_args_sfx = map(shlex.split, map(delAt, self.java_args_sfx))
+        def delAtAndSplit(s):
+            return shlex.split(s.lstrip('@'))
+
+        self.java_args = delAtAndSplit(self.java_args)
+        self.java_args_pfx = sum(map(delAtAndSplit, self.java_args_pfx), [])
+        self.java_args_sfx = sum(map(delAtAndSplit, self.java_args_sfx), [])
         
         # Prepend the -d64 VM option only if the java command supports it
         output = ''
@@ -266,10 +276,13 @@ def main():
     if not commands.table.has_key(env.command):
         env.error('unknown command "' + env.command + '"')
         
-    c, _ = commands.table[env.command]
-    retcode = c(env, env.command_args)
-    if retcode is not None and retcode != 0:
-        abort(retcode)
+    c, _ = commands.table[env.command][:2]
+    try:
+        retcode = c(env, env.command_args)
+        if retcode is not None and retcode != 0:
+            abort(retcode)
+    except KeyboardInterrupt:
+        abort(1)
     
     
 #This idiom means the below code only runs when executed from command line

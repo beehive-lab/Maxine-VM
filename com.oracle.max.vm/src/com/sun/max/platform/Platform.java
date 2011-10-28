@@ -102,11 +102,6 @@ public final class Platform {
      */
     public static final String NUMBER_OF_SIGNALS_PROPERTY = "max.nsig";
 
-    /**
-     * The global platform {@linkplain #platform() context}.
-     */
-    private static Platform current = Platform.createDefaultPlatform();
-
     public final CPU cpu;
 
     public final ISA isa;
@@ -344,7 +339,23 @@ public final class Platform {
      * Gets the absolute path to the "jni.h" file against which the native code was compiled.
      */
     @HOSTED_ONLY
-    public static native String jniHeaderFilePath();
+    public static String jniHeaderFilePath() {
+        try {
+            return nativeJniHeaderFilePath();
+        } catch (UnsatisfiedLinkError e) {
+            String javaHome = System.getenv("JAVA_HOME");
+            FatalError.check(javaHome != null, "Environment variable JAVA_HOME not set");
+            if (javaHome != null) {
+                File jni = new File(javaHome, "include" + File.separatorChar + "jni.h");
+                if (jni.exists()) {
+                    return jni.getAbsolutePath();
+                }
+            }
+            throw FatalError.unexpected("Could not find jni.h");
+        }
+    }
+
+    public static native String nativeJniHeaderFilePath();
 
     /**
      * Gets the absolute path to the "jvmti.h" file against which the native code was compiled.
@@ -436,7 +447,8 @@ public final class Platform {
         }
 
 
-        ISA isa = ISA.valueOf(getProperty(ISA_PROPERTY) == null ? getInstructionSet() : getProperty(ISA_PROPERTY));
+        String isaProperty = getProperty(ISA_PROPERTY);
+        ISA isa = ISA.valueOf(isaProperty == null ? getInstructionSet() : isaProperty.toUpperCase());
         WordWidth word = WordWidth.fromInt(getInteger(WORD_WIDTH_PROPERTY) == null ? getWordWidth() : getInteger(WORD_WIDTH_PROPERTY));
         final Endianness endianness;
         final String endiannessProperty = getProperty(ENDIANNESS_PROPERTY);
@@ -476,6 +488,11 @@ public final class Platform {
         map.put("maxve-amd64", new Platform(CPU.AMD64, OS.MAXVE, Ints.K * 8));
         Supported = Collections.unmodifiableMap(map);
     }
+
+    /**
+     * The global platform {@linkplain #platform() context}.
+     */
+    private static Platform current = Platform.createDefaultPlatform();
 
     /**
      * Parses a platform string into a {@link Platform} object. The strings for which a non-null {@code Platform} object

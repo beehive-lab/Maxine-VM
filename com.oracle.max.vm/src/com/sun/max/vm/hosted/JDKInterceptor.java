@@ -417,6 +417,13 @@ public final class JDKInterceptor {
             if (object instanceof ClassRef) {
                 // we found a classref, add it and its intercepted fields to the map
                 ClassRef holder = (ClassRef) object;
+                if (holder.javaClass() == null) {
+                    // Optional/platform dependent class: skips its field specs
+                    while (i + 1 < specification.length && !(specification[i + 1] instanceof ClassRef)) {
+                        i++;
+                    }
+                    continue;
+                }
                 Map<String, InterceptedField> fieldMap = map.get(holder.className());
                 if (fieldMap == null) {
                     fieldMap = new HashMap<String, InterceptedField>();

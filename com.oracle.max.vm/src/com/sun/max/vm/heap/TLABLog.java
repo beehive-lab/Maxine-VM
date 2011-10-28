@@ -22,9 +22,10 @@
  */
 package com.sun.max.vm.heap;
 
+import static com.sun.max.platform.Platform.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
-import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.thread.*;
@@ -54,7 +55,7 @@ public final class TLABLog {
     static HeapScheme heapScheme;
     static Address logBufferAllocator;
 
-    public static final int LOG_BUFFER_SIZE = Platform.getPageSize();
+    public static final int LOG_BUFFER_SIZE = platform().pageSize;
     public static final int LOG_BUFFER_HEADER_SIZE = Word.size();
     public static final int LOG_RECORD_SIZE = Word.size() * 3;
     public static final long LOG_BUFFER_TAIL_MASK = ~((long) LOG_BUFFER_SIZE - 1);

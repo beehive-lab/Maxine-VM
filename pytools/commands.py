@@ -34,54 +34,8 @@ from os.path import join, exists, dirname
 from argparse import ArgumentParser, REMAINDER
 import xml.dom.minidom
 
-def jnigen(env, args):
-    """(re)generate content in JniFunctions.java from JniFunctionsSource.java
+# Commands are in alphabetical order in this file.
 
-    Run JniFunctionsGenerator.java to update the methods in JniFunctions.java by adding
-    a prologue and epilogue to the @JNI_FUNCTION annotated methods in JniFunctionsSource.java.
-
-    The exit code is non-zero if JniFunctions.java was modified."""
-
-    return env.run_java(['-cp', env.classpath('com.oracle.max.vm'), 'com.sun.max.vm.jni.JniFunctionsGenerator'])
-
-def t1xgen(env, args):
-    """(re)generate content in T1XTemplateSource.java
-
-    Run T1XTemplateGenerator.java to generate the auto-generated templates in T1XTemplateSource.java.
-
-    The exit code is non-zero if the auto-generated part of T1XTemplateSource.java was modified."""
-
-    return env.run_java(['-cp', env.classpath('com.oracle.max.vm.ext.t1x'), 'com.oracle.max.vm.ext.t1x.T1XTemplateGenerator'])
-
-def jttgen(env, args):
-    """(re)generate harness and run scheme for the JavaTester tests
-
-    Run the JavaTester to update the JavaTesterRunScheme.java and JavaTesterTests.java
-    files in the com.sun.max.vm.jtrun.all package."""
-
-    testDir = join(env.maxine_dir, 'com.oracle.max.vm', 'test')
-    tests = [join('jtt', name) for name in os.listdir(join(testDir, 'jtt')) if name != 'hotspot' and name != 'fail']
-    return env.run_java(['-cp', env.classpath('com.oracle.max.vm'), 'test.com.sun.max.vm.compiler.JavaTester',
-                         '-scenario=target', '-run-scheme-package=all', '-native-tests'] + tests, cwd=testDir)
-
-def help(env, args):
-    """show help for a given command
-
-With no arguments, print a list of commands and short help for each command.
-
-Given a command name, print help for that command."""
-    if len(args) == 0:
-        env.print_help()
-        return
-    
-    name = args[0]
-    if not table.has_key(name):
-        env.error('unknown command: ' + name)
-    
-    (func, usage) = table[name]
-    doc = func.__doc__
-    print 'max {0} {1}\n\n{2}\n'.format(name, usage, doc)
-    
 def build(env, args):
     """compile the Maxine Java and C sources, linking the latter
 
@@ -90,7 +44,7 @@ def build(env, args):
 
     If no projects are given, then all projects are built."""
     
-    parser = ArgumentParser(prog='max build');
+    parser = ArgumentParser(prog='mx build');
     parser.add_argument('-c', action='store_true', dest='clean', help='removes existing build output')
     parser.add_argument('--no-native', action='store_false', dest='native', help='do not build com.oracle.max.vm.native')
     parser.add_argument('projects', nargs=REMAINDER, metavar='projects...')
@@ -189,7 +143,7 @@ def build(env, args):
                     jdtProperties = join(projectDir, '.settings', 'org.eclipse.jdt.core.prefs')
                     if not exists(jdtProperties):
                         raise SystemError('JDT properties file {0} not found'.format(jdtProperties))
-                    env.run([env.java, '-Xmx1g', '-jar', jdtJar, '-1.6', '-cp', classpath,
+                    env.run([env.java, '-Xmx1g', '-jar', jdtJar, '-1.6', '-cp', classpath, '-g',
                              '-properties', jdtProperties, 
                              '-warn:-unusedImport,-unchecked',
                              '-d', outputDir, '@' + argfile.name])
@@ -202,6 +156,16 @@ def build(env, args):
                 if exists(dirname(dst)):
                     shutil.copyfile(name, dst)
 
+def c1x(env, args):
+    """alias for "mx olc -c=C1X ..." """
+    olc(env, ['-c=C1X'] + args)
+
+def canonicalizeprojects(env, args):
+    """process all project.properties files to canonicalize the project dependencies
+
+    The exit code of this command reflects how many files were updated."""
+    env.jmax(['canonicalizeprojects'])
+    
 def check(env, args):
     """run Checkstyle on the Maxine Java sources
 
@@ -290,10 +254,6 @@ If no projects are given, then all Java projects are checked."""
             finally:
                 os.unlink(auditfileName)
 
-def copycheck(env, args):
-    """run copyright check on the Maxine sources (defined as being under hg control)"""
-    env.run_java(['-cp', env.jmax(['classpath_noresolve', 'com.oracle.max.base']), 'com.sun.max.tools.CheckCopyright'] + args)
-
 def clean(env, args):
     """remove all class files, images, and executables
 
@@ -309,17 +269,260 @@ def clean(env, args):
         if outputDir != '':
             env.log('Removing {0}...'.format(outputDir))
             shutil.rmtree(outputDir)
+
+def _configs(env):
+    class Configs:
+        def __init__(self):
+            self.configs = dict()
             
-# Table of commands: keys are command names, entries are tuples of command function and usage message
+        def eat(self, line):
+            (k, v) = line.split('#')
+            self.configs[k] = v.rstrip()
+    c = Configs()        
+    env.run([env.java, '-client', '-Xmx40m', '-Xms40m', '-XX:NewSize=30m', '-cp', env.classpath('com.oracle.max.vm'), 'test.com.sun.max.vm.MaxineTesterConfiguration'], out=c.eat)
+    return c.configs
+
+def configs(env, arg):
+    """prints the predefined image configurations"""
+    c = _configs(env)
+    env.log('The available preconfigured option sets are:')
+    env.log()
+    env.log('    Configuration    Expansion')
+    for k, v in sorted(c.iteritems()):
+        env.log('    @{0:<16} {1}'.format(k, v.replace(',', ' ')))
+    
+def copycheck(env, args):
+    """run copyright check on the Maxine sources (defined as being under hg control)"""
+    env.run_java(['-cp', env.jmax(['classpath_noresolve', 'com.oracle.max.base']), 'com.sun.max.tools.CheckCopyright'] + args)
+
+def eclipseprojects(env, args):
+    """(re)generate Eclipse project configurations
+
+    The exit code of this command reflects how many files were updated."""
+    env.jmax(['eclipse'] + args)
+    
+def graal(env, args):
+    """alias for "mx olc -c=Graal ..." """
+    olc(env, ['-c=Graal'] + args)
+
+def help_(env, args):
+    """show help for a given command
+
+With no arguments, print a list of commands and short help for each command.
+
+Given a command name, print help for that command."""
+    if len(args) == 0:
+        env.print_help()
+        return
+    
+    name = args[0]
+    if not table.has_key(name):
+        env.error('unknown command: ' + name)
+    
+    value = table[name]
+    (func, usage) = value[:2]
+    doc = func.__doc__
+    if len(value) > 2:
+        docArgs = value[2:]
+        doc = doc.format(*docArgs)
+    print 'mx {0} {1}\n\n{2}\n'.format(name, usage, doc)
+
+def image(env, args):
+    """build a boot image
+
+    Run the BootImageGenerator to build a Maxine boot image. The classes
+    and packages specified on the command line will be included in the
+    boot image in addition to those found by the Package.java mechanism.
+    Package names are differentiated from class names by being prefixed
+    with '^'.
+
+    The platform configuration for the generated image is auto-detected
+    by native methods. However, the following system properties can be
+    used to override the defaults:
+
+    Name            | Description                   | Example values
+    ================+===============================+================
+    max.platform    | name of a preset platform     | solaris-amd64 linux-amd64 darwin-amd64
+    max.cpu         | processor model               | AMD64 IA32 SPARCV9
+    max.isa         | instruction set architecture  | AMD64 ARM PPC SPARC
+    max.os          | operating system              | Darwin Linux Solaris
+    max.endianness  | endianness                    | BIG LITTLE
+    max.bits        | machine word size             | 64 32
+    max.page        | page size                     | 4096 8192
+    max.nsig        | number of signals             | 32
+
+    These system properties can be specified as options to the image
+    command (e.g. '-os Darwin -bits 32').
+
+    An option starting with '@' denotes one of the preconfigured set of
+    options described by running "mx options".
+    
+    An option starting with '--' is interpreted as a VM option of the same name
+    after the leading '-' is removed. For example, to use the '-verbose:class'
+    VM option to trace class loading while image building, specify '--verbose:class'.
+    Note that not all VM options have an effect during image building.
+
+    Use "mx image -help" to see what other options this command accepts."""
+
+    systemProps = []
+    imageArgs = []
+    i = 0
+    while i < len(args):
+        arg = args[i]
+        if arg[0] == '@':
+            name = arg.lstrip('@')
+            configs = _configs(env)
+            if not name in configs:
+                env.log('Invalid image configuration: ' + name)
+                help(env, ['image'])
+                mx.abort()
+            values = configs[name].split(',')
+            del args[i]
+            args[i:i] = values
+            continue
+        elif arg in ['-platform', '-cpu', '-isa', '-os', '-endianness', '-bits', '-page', '-nsig']:
+            name = arg.lstrip('-')
+            i += 1
+            if i == len(args):
+                env.log('Missing value for ' + arg)
+                help(env, ['image'])
+                mx.abort()
+            value = args[i]
+            systemProps += ['-Dmax.' + name + '=' + value]
+        elif arg.startswith('--XX:LogFile='):
+            os.environ['MAXINE_LOG_FILE'] = arg.split('=', 1)[1]
+        elif arg == '-vma':
+            systemProps += ['-Dmax.permsize=2', '-Dmax.vmthread.factory.class=com.oracle.max.vm.ext.vma.runtime.VMAVmThreadFactory']
+        else:
+            imageArgs += [arg]
+        i += 1
+
+    env.run_java(systemProps + ['-cp', env.classpath(), 'com.sun.max.vm.hosted.BootImageGenerator', '-trace=' + str(env.java_trace), '-run=java'] + imageArgs)
+
+
+def jnigen(env, args):
+    """(re)generate content in JniFunctions.java from JniFunctionsSource.java
+
+    Run JniFunctionsGenerator.java to update the methods in JniFunctions.java by adding
+    a prologue and epilogue to the @JNI_FUNCTION annotated methods in JniFunctionsSource.java.
+
+    The exit code is non-zero if JniFunctions.java was modified."""
+
+    return env.run_java(['-cp', env.classpath('com.oracle.max.vm'), 'com.sun.max.vm.jni.JniFunctionsGenerator'])
+
+def jttgen(env, args):
+    """(re)generate harness and run scheme for the JavaTester tests
+
+    Run the JavaTester to update the JavaTesterRunScheme.java and JavaTesterTests.java
+    files in the com.sun.max.vm.jtrun.all package."""
+
+    testDir = join(env.maxine_dir, 'com.oracle.max.vm', 'test')
+    tests = [join('jtt', name) for name in os.listdir(join(testDir, 'jtt')) if name != 'hotspot' and name != 'fail']
+    return env.run_java(['-cp', env.classpath('com.oracle.max.vm'), 'test.com.sun.max.vm.compiler.JavaTester',
+                         '-scenario=target', '-run-scheme-package=all', '-native-tests'] + tests, cwd=testDir)
+
+def olc(env, args):
+    """offline compile a list of methods
+
+    See Patterns below for a description of the format expected for "patterns..."
+
+    The output traced by this command is not guaranteed to be the same as the output
+    for a compilation performed at runtime. The code produced by a compiler is sensitive
+    to the compilation context such as what classes have been resolved etc.
+
+    Use "mx olc -help" to see what other options this command accepts.
+
+    --- Patterns ---
+    {0}"""
+
+    env.run_java(['-cp', env.classpath(), 'com.oracle.max.vm.ext.maxri.Compile'] + args)
+
+def t1x(env, args):
+    """alias for "mx olc -c=T1X ..." """
+    olc(env, ['-c=T1X'] + args)
+
+def t1xgen(env, args):
+    """(re)generate content in T1XTemplateSource.java
+
+    Run T1XTemplateGenerator.java to generate the auto-generated templates in T1XTemplateSource.java.
+
+    The exit code is non-zero if the auto-generated part of T1XTemplateSource.java was modified."""
+
+    return env.run_java(['-cp', env.classpath('com.oracle.max.vm.ext.t1x'), 'com.oracle.max.vm.ext.t1x.T1XTemplateGenerator'])
+
+def verify(env, args):
+    """verifies a set of methods using the Maxine bytecode verifier
+
+    Run the Maxine verifier over a set of specified methods available
+    on the class path. To extend the class path, use one of the global
+    "--cp-pfx" or "--cp-sfx" options.
+
+    See Patterns below for a description of the format expected for "patterns..."
+
+    Use "mx verify -help" to see what other options this command accepts.
+
+    --- Patterns ---
+    {0}"""
+
+    env.run_java(['-cp', env.classpath(), 'test.com.sun.max.vm.verifier.CommandLineVerifier'] + args)
+            
+_patternHelp="""
+    A pattern is a class name pattern followed by an optional method name
+    pattern separated by a ':' further followed by an optional signature:
+
+      <class name>[:<method name>[:<signature>]]
+
+    For example, the list of patterns:
+
+         "Object:wait", "String", "Util:add:(int,float)"
+
+    will match all methods in a class whose name contains "Object" where the
+    method name contains "wait", all methods in a class whose name
+    contains "String" and all methods in any class whose name
+    contains "Util", the method name contains "add" and the
+    signature is (int, float).
+
+    The type of matching performed for a given class/method name is determined
+    by the position of '^' in the pattern name as follows:
+
+    Position of '^'   | Match algorithm
+     ------------------+------------------
+     start AND end     | Equality
+     start             | Prefix
+     end               | Suffix
+     absent            | Substring
+
+    For example, "^java.util:^toString^" matches all methods named "toString" in
+    any class whose name starts with "java.util".
+
+    The matching performed on a signature is always a substring test. Signatures can
+    specified either in Java source syntax (e.g. "int,String") or JVM internal syntax
+    (e.g. "IFLjava/lang/String;"). The latter must always use fully qualified type
+    names where as the former must not.
+
+    Any pattern starting with "!" is an exclusion specification. Any class or method
+    whose name contains an exclusion string (the exclusion specification minus the
+    leading "!") is excluded."""
+
+# Table of commands in alphabetical order.
+# Keys are command names, value are lists: [<function>, <usage msg>, <args to function doc string>...]
 # Extensions should update this table directly
 table = {
-    'jnigen': (jnigen, ''),
-    'jttgen': (jttgen, ''),
-    't1xgen': (t1xgen, ''),
-    'build': (build, '[options] projects...'),
-    'help': (help, '[command]'),
-    'check': (check, 'projects...'),
-    'clean': (clean, ''),
-    'copycheck': (copycheck, '')
-    
+    'build': [build, '[options] projects...'],
+    'c1x': [c1x, '[options] patterns...'],
+    'check': [check, 'projects...'],
+    'canonicalizeprojects': [canonicalizeprojects, ''],
+    'clean': [clean, ''],
+    'configs': [configs, ''],
+    'copycheck': [copycheck, ''],
+    'eclipseprojects': [eclipseprojects, ''],
+    'graal': [graal, '[options] patterns...'],
+    'help': [help_, '[command]'],
+    'image': [image, '[options] classes|packages...'],
+    'jnigen': [jnigen, ''],
+    'jttgen': [jttgen, ''],
+    'olc': [olc, '[options] patterns...', _patternHelp],
+    't1x': [t1x, '[options] patterns...'],
+    't1xgen': [t1xgen, ''],
+    'verify': [verify, '[options] patterns...', _patternHelp]
 }
