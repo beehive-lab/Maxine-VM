@@ -126,7 +126,8 @@ final class OverflowScanWithRescanMapState extends OverflowScanState {
             rescanMap.cacheLeftmostEntryBound();
             int bitmapWordIndex = rescanMap.leftmostLeftBound();
             int rightmostBitmapWordIndex = rescanMap.leftmostRightBound();
-            visitGreyObjectsTillEndOfScan(bitmapWordIndex, rightmostBitmapWordIndex);
+            // FIXME: use visitGreyObjects here for all rescan map but the one containing the finger.
+            visitGreyObjectsToEndOfScan(bitmapWordIndex, rightmostBitmapWordIndex);
             rescanMap.fetchNextEntry();
         }
         // The loop may have ended with a finger before the end of scan position as the finger is updated only when
