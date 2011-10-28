@@ -236,7 +236,7 @@ final class RegisterVerifier {
             }
 
             // invalidate all caller save registers at calls
-            if (op.hasCall) {
+            if (op.code instanceof LIROpcode.HasCall) {
                 for (CiRegister r : allocator.compilation.registerConfig.getCallerSaveRegisters()) {
                     statePut(inputState, r.asValue(), null);
                 }

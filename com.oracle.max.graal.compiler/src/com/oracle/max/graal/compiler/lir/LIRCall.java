@@ -67,9 +67,8 @@ public class LIRCall extends LIRInstruction {
                    CiValue targetAddress,
                    LIRDebugInfo info,
                    Map<XirMark, Mark> marks,
-                   boolean calleeSaved,
                    List<CiValue> pointerSlots) {
-        super(opcode, result, info, !calleeSaved, toArray(arguments, targetAddress), LIRInstruction.NO_OPERANDS);
+        super(opcode, result, info, toArray(arguments, targetAddress), LIRInstruction.NO_OPERANDS);
         this.marks = marks;
         this.pointerSlots = pointerSlots;
         if (targetAddress == null) {

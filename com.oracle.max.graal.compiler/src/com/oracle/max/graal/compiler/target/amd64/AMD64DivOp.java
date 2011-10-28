@@ -35,7 +35,7 @@ public enum AMD64DivOp implements LIROpcode<AMD64MacroAssembler, LIRInstruction>
     LDIV, LREM, ULDIV, ULREM;
 
     public LIRInstruction create(CiRegisterValue result, LIRDebugInfo info, CiRegisterValue left, CiVariable right) {
-        return new LIRInstruction(this, result, info, false, new CiValue[] {left, right}, new CiValue[] {AMD64.rax.asValue(), AMD64.rdx.asValue(), right});
+        return new LIRInstruction(this, result, info, new CiValue[] {left, right}, new CiValue[] {AMD64.rax.asValue(), AMD64.rdx.asValue(), right});
     }
 
     @Override
