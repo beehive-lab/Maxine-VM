@@ -120,14 +120,14 @@ public class AMD64MoveOp {
         @Override
         public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRAddressInstruction op) {
             CiAddress address = op.createAddress(0, 1);
-            assert tasm.asRegister(op.input(1)) == AMD64.rax;
-            CiRegister newValue = tasm.asRegister(op.input(2));
+            assert tasm.asRegister(op.input(2)) == AMD64.rax;
+            CiRegister newValue = tasm.asRegister(op.input(3));
             assert tasm.asRegister(op.result()) == AMD64.rax;
 
             if (tasm.target.isMP) {
                 tasm.masm.lock();
             }
-            switch (op.input(1).kind) {
+            switch (op.input(2).kind) {
                 case Int:    tasm.masm.cmpxchgl(newValue, address); break;
                 case Long:
                 case Object: tasm.masm.cmpxchgq(newValue, address); break;
