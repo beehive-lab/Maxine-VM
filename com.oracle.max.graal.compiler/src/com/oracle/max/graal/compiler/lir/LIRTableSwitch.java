@@ -33,8 +33,8 @@ public class LIRTableSwitch extends LIRInstruction {
 
     public final int lowKey;
 
-    public LIRTableSwitch(LIROpcode opcode, int lowKey, LIRBlock defaultTarget, LIRBlock[] targets, int tempInput, int temp, CiValue...operands) {
-        super(opcode, CiValue.IllegalValue, null, false, tempInput, temp, operands);
+    public LIRTableSwitch(LIROpcode opcode, int lowKey, LIRBlock defaultTarget, LIRBlock[] targets, CiValue[] inputs, CiValue[] temps) {
+        super(opcode, CiValue.IllegalValue, null, false, inputs, temps);
         this.lowKey = lowKey;
         this.targets = targets;
         this.defaultTarget = defaultTarget;

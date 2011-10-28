@@ -44,7 +44,7 @@ public class AMD64HotSpotOp {
             // However, the address that is loaded depends on the stack slot, and the stack slot numbers are
             // only fixed after register allocation when the number of spill slots is known. Therefore, the address
             // is not known when the LIR is generated.
-            int monitorIndex = tasm.asIntConst(op.operand(0));
+            int monitorIndex = tasm.asIntConst(op.input(0));
             CiStackSlot slot = tasm.compilation.frameMap().toMonitorBaseStackAddress(monitorIndex);
             tasm.masm.leaq(tasm.asRegister(op.result()), new CiAddress(slot.kind, AMD64.rsp.asValue(), slot.index() * tasm.target.arch.wordSize));
         }

@@ -39,7 +39,7 @@ public enum AMD64ShiftOp implements LIROpcode<AMD64MacroAssembler, LIRInstructio
     @Override
     public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
         CiRegister dst = op.result().asRegister();
-        CiValue right = op.operand(1);
+        CiValue right = op.input(1);
 
         AMD64MacroAssembler masm = tasm.masm;
         if (right.isRegister()) {

@@ -33,12 +33,10 @@ public class LIRXirInstruction extends LIRInstruction {
 
     public final CiValue[] originalOperands;
     public final int outputOperandIndex;
-    public final int[] operandIndices;
+    public final int[] inputOperandIndices;
+    public final int[] tempOperandIndices;
     public final XirSnippet snippet;
     public final RiMethod method;
-    public final int inputTempCount;
-    public final int tempCount;
-    public final int inputCount;
     public final List<CiValue> pointerSlots;
     public final LIRDebugInfo infoAfter;
     private LIRBlock trueSuccessor;
@@ -48,27 +46,23 @@ public class LIRXirInstruction extends LIRInstruction {
                              XirSnippet snippet,
                              CiValue[] originalOperands,
                              CiValue outputOperand,
-                             int inputTempCount,
-                             int tempCount,
-                             CiValue[] operands,
-                             int[] operandIndices,
+                             CiValue[] inputs, CiValue[] temps,
+                             int[] inputOperandIndices, int[] tempOperandIndices,
                              int outputOperandIndex,
                              LIRDebugInfo info,
                              LIRDebugInfo infoAfter,
                              RiMethod method,
                              List<CiValue> pointerSlots) {
-        super(opcode, outputOperand, info, false, inputTempCount, tempCount, operands);
+        super(opcode, outputOperand, info, false, inputs, temps);
         this.infoAfter = infoAfter;
         this.pointerSlots = pointerSlots;
         assert this.pointerSlots == null || this.pointerSlots.size() >= 0;
         this.method = method;
         this.snippet = snippet;
-        this.operandIndices = operandIndices;
+        this.inputOperandIndices = inputOperandIndices;
+        this.tempOperandIndices = tempOperandIndices;
         this.outputOperandIndex = outputOperandIndex;
         this.originalOperands = originalOperands;
-        this.inputTempCount = inputTempCount;
-        this.tempCount = tempCount;
-        this.inputCount = operands.length - inputTempCount - tempCount;
     }
 
 
@@ -90,8 +84,11 @@ public class LIRXirInstruction extends LIRInstruction {
     }
 
     public CiValue[] getOperands() {
-        for (int i = 0; i < operandIndices.length; i++) {
-            originalOperands[operandIndices[i]] = operand(i);
+        for (int i = 0; i < inputOperandIndices.length; i++) {
+            originalOperands[inputOperandIndices[i]] = input(i);
+        }
+        for (int i = 0; i < tempOperandIndices.length; i++) {
+            originalOperands[tempOperandIndices[i]] = temp(i);
         }
         if (outputOperandIndex != -1) {
             originalOperands[outputOperandIndex] = result();

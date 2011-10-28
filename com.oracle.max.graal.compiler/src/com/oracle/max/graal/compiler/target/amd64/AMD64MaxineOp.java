@@ -51,12 +51,12 @@ public class AMD64MaxineOp {
 
     protected static class SignificantBitOpcode implements LIROpcode<AMD64MacroAssembler, LIRInstruction>, LIROpcode.AllOperandsCanBeMemory {
         public LIRInstruction create(CiVariable result, CiVariable input) {
-            return new LIRInstruction(this, result, null, false, 1, 0, input);
+            return new LIRInstruction(this, result, null, false, new CiValue[] {input}, new CiValue[] {input});
         }
 
         @Override
         public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
-            CiValue src = op.operand(0);
+            CiValue src = op.input(0);
             CiRegister result = tasm.asLongReg(op.result());
 
             tasm.masm.xorq(result, result);

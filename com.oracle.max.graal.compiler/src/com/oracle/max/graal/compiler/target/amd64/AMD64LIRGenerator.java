@@ -113,13 +113,13 @@ public class AMD64LIRGenerator extends LIRGenerator {
     @Override
     public CiVariable emitLoad(CiAddress loadAddress, CiKind kind, Object debugInfo) {
         CiVariable result = newVariable(kind.stackKind());
-        append(LOAD.create(result, loadAddress, kind, (LIRDebugInfo) debugInfo));
+        append(LOAD.create(result, loadAddress.base, loadAddress.index, loadAddress.scale, loadAddress.displacement, kind, (LIRDebugInfo) debugInfo));
         return result;
     }
 
     @Override
     public void emitStore(CiAddress storeAddress, CiValue input, CiKind kind, Object debugInfo) {
-        append(STORE.create(storeAddress, input, kind, (LIRDebugInfo) debugInfo));
+        append(STORE.create(storeAddress.base, storeAddress.index, storeAddress.scale, storeAddress.displacement, input, kind, (LIRDebugInfo) debugInfo));
     }
 
     @Override
@@ -456,21 +456,21 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
         CiValue expected = loadNonconstant(node.expected());
         CiVariable newValue = load(node.newValue());
-        CiVariable object = load(node.object());
-        CiValue offset = loadNonconstant(node.offset());
+        CiVariable addrBase = load(node.object());
+        CiValue addrIndex = loadNonconstant(node.offset());
 
-        CiAddress address = new CiAddress(compilation.compiler.target.wordKind, object, offset);
-        CiVariable loadedAddress = null;
         if (kind == CiKind.Object) {
-            loadedAddress = newVariable(compilation.compiler.target.wordKind);
-            append(LEA.create(loadedAddress, address));
-            preGCWriteBarrier(loadedAddress, false, null);
-            address = new CiAddress(compilation.compiler.target.wordKind, loadedAddress);
+            CiVariable loadedAddress = newVariable(compilation.compiler.target.wordKind);
+            append(LEA.create(loadedAddress, addrBase, addrIndex, CiAddress.Scale.Times1, 0));
+            addrBase = loadedAddress;
+            addrIndex = CiVariable.IllegalValue;
+
+            preGCWriteBarrier(addrBase, false, null);
         }
 
         CiRegisterValue rax = AMD64.rax.asValue(kind);
         append(MOVE.create(rax, expected));
-        append(CAS.create(rax, address, rax, newValue));
+        append(CAS.create(rax, addrBase, addrIndex, CiAddress.Scale.Times1, 0, rax, newValue));
 
         CiVariable result = createResultVariable(node);
         if (node.directResult()) {
@@ -480,7 +480,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
         }
 
         if (kind == CiKind.Object) {
-            postGCWriteBarrier(loadedAddress, newValue);
+            postGCWriteBarrier(addrBase, newValue);
         }
     }
 
@@ -491,7 +491,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
     @Override
     public void emitLea(CiAddress address, CiVariable dest) {
-        append(LEA.create(dest, address));
+        append(LEA.create(dest, address.base, address.index, address.scale, address.displacement));
     }
 
     @Override

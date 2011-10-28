@@ -102,13 +102,13 @@ public class AMD64ControlFlowOp {
 
     protected static class TableSwitchOp implements LIROpcode<AMD64MacroAssembler, LIRTableSwitch> {
         public LIRInstruction create(int lowKey, LIRBlock defaultTargets, LIRBlock[] targets, CiVariable index, CiVariable scratch) {
-            return new LIRTableSwitch(this, lowKey, defaultTargets, targets, 1, 1, index, scratch);
+            return new LIRTableSwitch(this, lowKey, defaultTargets, targets, new CiValue[] {index}, new CiValue[] {index, scratch});
         }
 
         @Override
         public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRTableSwitch op) {
-            CiRegister value = tasm.asIntReg(op.operand(0));
-            CiRegister scratch = tasm.asLongReg(op.operand(1));
+            CiRegister value = tasm.asIntReg(op.input(0));
+            CiRegister scratch = tasm.asLongReg(op.temp(1));
 
             AMD64MacroAssembler masm = tasm.masm;
             Buffer buf = masm.codeBuffer;
@@ -193,14 +193,14 @@ public class AMD64ControlFlowOp {
 
     protected static class CondMoveOp implements LIROpcode<AMD64MacroAssembler, LIRCondition>, LIROpcode.SecondOperandRegisterHint {
         public LIRInstruction create(CiVariable result, Condition cond, CiVariable trueValue, CiValue falseValue) {
-            return new LIRCondition(this, result, null, false, 0, 1, cond, false, trueValue, falseValue, trueValue);
+            return new LIRCondition(this, result, null, false, cond, false, new CiValue[] {trueValue, falseValue}, new CiValue[] {trueValue});
         }
 
         @Override
         public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRCondition op) {
             CiValue result = op.result();
-            CiValue trueValue = op.operand(0);
-            CiValue falseValue = op.operand(1);
+            CiValue trueValue = op.input(0);
+            CiValue falseValue = op.input(1);
             ConditionFlag cond = intCond(op.condition);
             // check that we don't overwrite an input operand before it is used.
             assert !result.equals(trueValue);
@@ -213,14 +213,14 @@ public class AMD64ControlFlowOp {
 
     protected static class FloatCondMoveOp implements LIROpcode<AMD64MacroAssembler, LIRCondition>, LIROpcode.SecondOperandRegisterHint {
         public LIRInstruction create(CiVariable result, Condition cond, boolean unorderedIsTrue, CiVariable trueValue, CiVariable falseValue) {
-            return new LIRCondition(this, result, null, false, 0, 1, cond, unorderedIsTrue, trueValue, falseValue, trueValue);
+            return new LIRCondition(this, result, null, false, cond, unorderedIsTrue, new CiValue[] {trueValue, falseValue}, new CiValue[] {trueValue});
         }
 
         @Override
         public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRCondition op) {
             CiValue result = op.result();
-            CiValue trueValue = op.operand(0);
-            CiValue falseValue = op.operand(1);
+            CiValue trueValue = op.input(0);
+            CiValue falseValue = op.input(1);
             ConditionFlag cond = floatCond(op.condition);
             boolean unorderedIsTrue = op.unorderedIsTrue;
             // check that we don't overwrite an input operand before it is used.

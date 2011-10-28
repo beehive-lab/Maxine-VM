@@ -24,7 +24,7 @@ package com.oracle.max.graal.compiler.lir;
 
 import com.sun.cri.ci.*;
 
-public class LIRKindInstruction extends LIRInstruction {
+public class LIRAddressInstruction extends LIRInstruction {
 
     /**
      * The operand type of the move. Since this can be Byte, Short, ... the kind of the
@@ -32,8 +32,18 @@ public class LIRKindInstruction extends LIRInstruction {
      */
     public final CiKind kind;
 
-    public LIRKindInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info, CiKind kind, CiValue...opr) {
+    public final CiAddress.Scale addrScale;
+
+    public final int addrDisplacement;
+
+    public LIRAddressInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info, CiKind kind, CiAddress.Scale addrScale, int addrDisplacement, CiValue...opr) {
         super(opcode, result, info, opr);
         this.kind = kind;
+        this.addrScale = addrScale;
+        this.addrDisplacement = addrDisplacement;
+    }
+
+    public CiAddress createAddress(int baseOpd, int indexOpd) {
+        return new CiAddress(kind, input(baseOpd), input(indexOpd), addrScale, addrDisplacement);
     }
 }

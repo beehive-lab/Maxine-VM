@@ -69,14 +69,14 @@ public class LIRCall extends LIRInstruction {
                    Map<XirMark, Mark> marks,
                    boolean calleeSaved,
                    List<CiValue> pointerSlots) {
-        super(opcode, result, info, !calleeSaved, 0, 0, toArray(arguments, targetAddress));
+        super(opcode, result, info, !calleeSaved, toArray(arguments, targetAddress), LIRInstruction.NO_OPERANDS);
         this.marks = marks;
         this.pointerSlots = pointerSlots;
         if (targetAddress == null) {
             this.targetAddressIndex = -1;
         } else {
             // The last argument is the operand holding the address for the indirect call
-            assert operands.length - 1 == arguments.size();
+            assert inputs.length - 1 == arguments.size();
             this.targetAddressIndex = arguments.size();
         }
         this.target = target;
@@ -92,7 +92,7 @@ public class LIRCall extends LIRInstruction {
 
     public CiValue targetAddress() {
         if (targetAddressIndex >= 0) {
-            return operand(targetAddressIndex);
+            return input(targetAddressIndex);
         }
         return null;
     }
@@ -100,28 +100,25 @@ public class LIRCall extends LIRInstruction {
     @Override
     public String operationString(Formatter operandFmt) {
         StringBuilder buf = new StringBuilder();
-        if (result().isLegal()) {
-            buf.append(operandFmt.format(result())).append(" = ");
+        if (result.isLegal()) {
+            buf.append(operandFmt.format(result)).append(" = ");
         }
-        String targetAddress = null;
         if (targetAddressIndex >= 0) {
-            targetAddress = operandFmt.format(targetAddress());
-            buf.append(targetAddress);
+            buf.append(operandFmt.format(targetAddress()));
         }
-        buf.append('(');
-        boolean first = true;
-        for (LIROperand operandSlot : operands) {
-            String operand = operandFmt.format(operandSlot.value(this));
-            if (!operand.isEmpty() && !operand.equals(targetAddress)) {
-                if (!first) {
-                    buf.append(", ");
-                } else {
-                    first = false;
-                }
-                buf.append(operand);
+        if (inputs.length > 1) {
+            buf.append("(");
+        }
+        String sep = "";
+        for (CiValue input : inputs) {
+            if (input != targetAddress()) {
+                buf.append(sep).append(operandFmt.format(input));
+                sep = ", ";
             }
         }
-        buf.append(')');
+        if (inputs.length > 1) {
+            buf.append(")");
+        }
         return buf.toString();
     }
 }
