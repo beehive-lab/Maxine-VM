@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,31 +23,27 @@
 package com.oracle.max.graal.nodes;
 
 import com.oracle.max.graal.graph.*;
-import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ri.*;
 
-/**
- * The {@code InvokeNode} represents all kinds of method calls.
- */
-public final class InvokeNode extends AbstractMemoryCheckpointNode implements Node.IterableNodeType, Invoke {
+public class InvokeWithExceptionNode extends ControlSplitNode implements Node.IterableNodeType, Invoke{
+    private static final int NORMAL_EDGE = 0;
+    private static final int EXCEPTION_EDGE = 0;
 
     @Input private MethodCallTargetNode callTarget;
     @Input private FrameState stateBefore;
     private boolean canInline = true;
 
     /**
-     * Constructs a new Invoke instruction.
-     *
-     * @param bci the bytecode index of the original invoke (used for debug infos)
-     * @param opcode the opcode of the invoke
-     * @param target the target method being called
-     * @param args the list of instructions producing arguments to the invocation, including the receiver object
+     * @param kind
+     * @param blockSuccessors
+     * @param branchProbability
      */
-    public InvokeNode(MethodCallTargetNode callTarget, FrameState stateBefore) {
-        super(callTarget.returnKind().stackKind());
+    public InvokeWithExceptionNode(MethodCallTargetNode callTarget, BeginNode exceptionEdge, FrameState stateBefore) {
+        super(callTarget.returnKind().stackKind(), new BeginNode[]{null, exceptionEdge}, new double[]{1.0, 0.0});
         assert stateBefore != null && callTarget != null;
+        this.stateBefore = stateBefore;
         this.callTarget = callTarget;
     }
 
@@ -57,6 +53,22 @@ public final class InvokeNode extends AbstractMemoryCheckpointNode implements No
 
     public void setCanInline(boolean b) {
         canInline = b;
+    }
+
+    public BeginNode exceptionEdge() {
+        return blockSuccessor(EXCEPTION_EDGE);
+    }
+
+    public void setExceptionEdge(BeginNode x) {
+        setBlockSuccessor(EXCEPTION_EDGE, x);
+    }
+
+    public BeginNode next() {
+        return blockSuccessor(NORMAL_EDGE);
+    }
+
+    public void setNext(BeginNode x) {
+        setBlockSuccessor(NORMAL_EDGE, x);
     }
 
     public MethodCallTargetNode callTarget() {
@@ -92,13 +104,21 @@ public final class InvokeNode extends AbstractMemoryCheckpointNode implements No
         return this;
     }
 
-    public FrameState stateBefore() {
-        return stateBefore;
+    @Override
+    public void setNext(FixedNode x) {
+        this.setNext(BeginNode.begin(x));
     }
 
-    @Override
+    public FrameState stateAfter() {
+        return next().stateAfter();
+    }
+
     public FrameState stateDuring() {
         FrameState stateAfter = stateAfter();
         return stateAfter.duplicateModified(bci(), stateAfter.rethrowException(), this.kind);
+    }
+
+    public FrameState stateBefore() {
+        return stateBefore;
     }
 }

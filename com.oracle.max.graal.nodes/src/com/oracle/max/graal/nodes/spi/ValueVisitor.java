@@ -47,7 +47,7 @@ public abstract class ValueVisitor {
     public abstract void visitFrameState(FrameState i);
     public abstract void visitAnchor(AnchorNode i);
     public abstract void visitIf(IfNode i);
-    public abstract void visitInvoke(InvokeNode i);
+    public abstract void visitInvoke(Invoke i);
     public abstract void visitLoadField(LoadFieldNode i);
     public abstract void visitLoadIndexed(LoadIndexedNode i);
     public abstract void visitLocal(LocalNode i);
