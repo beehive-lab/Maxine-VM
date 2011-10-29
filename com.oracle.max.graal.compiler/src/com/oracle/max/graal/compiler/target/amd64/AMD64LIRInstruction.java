@@ -27,7 +27,9 @@ import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.sun.cri.ci.*;
 
-
+/**
+ * Convenience class to cast AbstractAssembler to AMD64MacroAssembler for the {@link #emitCode} method.
+ */
 public abstract class AMD64LIRInstruction extends LIRInstruction {
 
     public AMD64LIRInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info, CiValue[] inputs) {
@@ -44,5 +46,4 @@ public abstract class AMD64LIRInstruction extends LIRInstruction {
     }
 
     public abstract void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm);
-
 }

@@ -39,8 +39,8 @@ public abstract class LIRXirInstruction extends LIRInstruction {
     public final RiMethod method;
     public final List<CiValue> pointerSlots;
     public final LIRDebugInfo infoAfter;
-    private LIRBlock trueSuccessor;
-    private LIRBlock falseSuccessor;
+    private LabelRef trueSuccessor;
+    private LabelRef falseSuccessor;
 
     public LIRXirInstruction(LIROpcode opcode,
                              XirSnippet snippet,
@@ -66,20 +66,20 @@ public abstract class LIRXirInstruction extends LIRInstruction {
     }
 
 
-    public void setFalseSuccessor(LIRBlock falseSuccessor) {
+    public void setFalseSuccessor(LabelRef falseSuccessor) {
         this.falseSuccessor = falseSuccessor;
     }
 
 
-    public void setTrueSuccessor(LIRBlock trueSuccessor) {
+    public void setTrueSuccessor(LabelRef trueSuccessor) {
         this.trueSuccessor = trueSuccessor;
     }
 
-    public LIRBlock falseSuccessor() {
+    public LabelRef falseSuccessor() {
         return falseSuccessor;
     }
 
-    public LIRBlock trueSuccessor() {
+    public LabelRef trueSuccessor() {
         return trueSuccessor;
     }
 
@@ -165,16 +165,5 @@ public abstract class LIRXirInstruction extends LIRInstruction {
         appendDebugInfo(sb, operandFmt, info);
 
         return sb.toString();
-    }
-
-
-    public void substitute(LIRBlock block, LIRBlock newTarget) {
-        if (trueSuccessor == block) {
-            trueSuccessor = newTarget;
-        }
-
-        if (falseSuccessor == block) {
-            falseSuccessor = newTarget;
-        }
     }
 }

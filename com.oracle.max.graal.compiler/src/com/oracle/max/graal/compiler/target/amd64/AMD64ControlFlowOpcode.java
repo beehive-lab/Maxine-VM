@@ -81,23 +81,17 @@ public class AMD64ControlFlowOpcode {
     public enum JumpOpcode implements LIROpcode {
         JUMP;
 
-        public LIRInstruction create(LIRBlock block) {
-            return new LIRBranch(this, null, false, block) {
+        public LIRInstruction create(LabelRef label, LIRDebugInfo info) {
+            return new LIRBranch(this, null, false, label, info) {
                 @Override
                 public void emitCode(TargetMethodAssembler tasm) {
                     AMD64MacroAssembler masm = (AMD64MacroAssembler) tasm.asm;
-                    masm.jmp(block().label());
+                    masm.jmp(this.destination.label());
                 }
-            };
-        }
 
-        public LIRInstruction create(final Label label, LIRDebugInfo info) {
-            CiValue[] inputs = LIRInstruction.NO_OPERANDS;
-
-            return new AMD64LIRInstruction(this, CiValue.IllegalValue, info, inputs) {
                 @Override
-                public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
-                    masm.jmp(label);
+                public String operationString(Formatter operandFmt) {
+                    return  "[" + destination + "]";
                 }
             };
         }
@@ -107,23 +101,17 @@ public class AMD64ControlFlowOpcode {
     public enum BranchOpcode implements LIROpcode {
         BRANCH;
 
-        public LIRInstruction create(Condition cond, LIRBlock block) {
-            return new LIRBranch(this, cond, false, block) {
+        public LIRInstruction create(Condition cond, LabelRef label, LIRDebugInfo info) {
+            return new LIRBranch(this, cond, false, label, info) {
                 @Override
                 public void emitCode(TargetMethodAssembler tasm) {
                     AMD64MacroAssembler masm = (AMD64MacroAssembler) tasm.asm;
-                    masm.jcc(intCond(cond), block().label);
+                    masm.jcc(intCond(cond), destination.label());
                 }
-            };
-        }
 
-        public LIRInstruction create(final Condition cond, final Label label, LIRDebugInfo info) {
-            CiValue[] inputs = LIRInstruction.NO_OPERANDS;
-
-            return new AMD64LIRInstruction(this, CiValue.IllegalValue, info, inputs) {
                 @Override
-                public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
-                    masm.jcc(intCond(cond), label);
+                public String operationString(Formatter operandFmt) {
+                    return cond.operator + " [" + destination + "]";
                 }
             };
         }
@@ -133,22 +121,16 @@ public class AMD64ControlFlowOpcode {
     public enum FloatBranchOpcode implements LIROpcode {
         FLOAT_BRANCH;
 
-        public LIRInstruction create(Condition cond, boolean unorderedIsTrue, LIRBlock block) {
-            return new LIRBranch(this, cond, unorderedIsTrue, block) {
+        public LIRInstruction create(Condition cond, boolean unorderedIsTrue, LabelRef label, LIRDebugInfo info) {
+            return new LIRBranch(this, cond, unorderedIsTrue, label, info) {
                 @Override
                 public void emitCode(TargetMethodAssembler tasm) {
-                    floatJcc(tasm, (AMD64MacroAssembler) tasm.asm, this.cond, this.unorderedIsTrue, block().label());
+                    floatJcc(tasm, (AMD64MacroAssembler) tasm.asm, cond, unorderedIsTrue, destination.label());
                 }
-            };
-        }
 
-        public LIRInstruction create(final Condition cond, final boolean unorderedIsTrue, final Label label, LIRDebugInfo info) {
-            CiValue[] inputs = LIRInstruction.NO_OPERANDS;
-
-            return new AMD64LIRInstruction(this, CiValue.IllegalValue, info, inputs) {
                 @Override
-                public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
-                    floatJcc(tasm, masm, cond, unorderedIsTrue, label);
+                public String operationString(Formatter operandFmt) {
+                    return cond.operator + " [" + destination + "]" + (unorderedIsTrue ? " unorderedIsTrue" : " unorderedIsFalse");
                 }
             };
         }
@@ -158,14 +140,26 @@ public class AMD64ControlFlowOpcode {
     public enum TableSwitchOpcode implements LIROpcode {
         TABLE_SWITCH;
 
-        public LIRInstruction create(int lowKey, LIRBlock defaultTargets, LIRBlock[] targets, CiVariable index, CiVariable scratch) {
+        public LIRInstruction create(final int lowKey, final LabelRef defaultTarget, final LabelRef[] targets, CiVariable index, CiVariable scratch) {
             CiValue[] inputs = new CiValue[] {index};
             CiValue[] temps = new CiValue[] {index, scratch};
 
-            return new LIRTableSwitch(this, lowKey, defaultTargets, targets, inputs, temps) {
+            return new LIRInstruction(this, CiValue.IllegalValue, null, inputs, temps) {
                 @Override
                 public void emitCode(TargetMethodAssembler tasm) {
                     tableswitch(tasm, (AMD64MacroAssembler) tasm.asm, lowKey, defaultTarget, targets, tasm.asIntReg(input(0)), tasm.asLongReg(temp(1)));
+                }
+
+                @Override
+                public String operationString(Formatter operandFmt) {
+                    StringBuilder buf = new StringBuilder(super.operationString(operandFmt));
+                    buf.append("\ndefault: [").append(defaultTarget).append(']');
+                    int key = lowKey;
+                    for (LabelRef l : targets) {
+                        buf.append("\ncase ").append(key).append(": [").append(l).append(']');
+                        key++;
+                    }
+                    return buf.toString();
                 }
             };
         }
@@ -226,7 +220,7 @@ public class AMD64ControlFlowOpcode {
     }
 
 
-    private static void tableswitch(TargetMethodAssembler tasm, AMD64MacroAssembler masm, int lowKey, LIRBlock defaultTarget, LIRBlock[] targets, CiRegister value, CiRegister scratch) {
+    private static void tableswitch(TargetMethodAssembler tasm, AMD64MacroAssembler masm, int lowKey, LabelRef defaultTarget, LabelRef[] targets, CiRegister value, CiRegister scratch) {
         Buffer buf = masm.codeBuffer;
         // Compare index against jump table bounds
         int highKey = lowKey + targets.length - 1;
@@ -263,7 +257,7 @@ public class AMD64ControlFlowOpcode {
         buf.setPosition(jumpTablePos);
 
         // Emit jump table entries
-        for (LIRBlock target : targets) {
+        for (LabelRef target : targets) {
             Label label = target.label();
             int offsetToJumpTableBase = buf.position() - jumpTablePos;
             if (label.isBound()) {

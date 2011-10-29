@@ -27,10 +27,10 @@ import com.oracle.max.graal.compiler.lir.*;
 public class ExceptionInfo {
 
     public final int codeOffset;
-    public final LIRBlock exceptionEdge;
+    public final LabelRef exceptionEdge;
     public final int bci;
 
-    public ExceptionInfo(int pcOffset, LIRBlock exceptionEdge, int bci) {
+    public ExceptionInfo(int pcOffset, LabelRef exceptionEdge, int bci) {
         this.codeOffset = pcOffset;
         this.exceptionEdge = exceptionEdge;
         this.bci = bci;
