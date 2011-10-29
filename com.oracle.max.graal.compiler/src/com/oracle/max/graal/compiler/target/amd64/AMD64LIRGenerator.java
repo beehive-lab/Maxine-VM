@@ -23,28 +23,25 @@
 
 package com.oracle.max.graal.compiler.target.amd64;
 
-import static com.oracle.max.graal.compiler.target.amd64.AMD64ArithmeticOp.*;
-import static com.oracle.max.graal.compiler.target.amd64.AMD64CompareOp.*;
-import static com.oracle.max.graal.compiler.target.amd64.AMD64CompareToIntOp.*;
-import static com.oracle.max.graal.compiler.target.amd64.AMD64ControlFlowOp.*;
-import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertOp.*;
-import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertOpFI.*;
-import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertOpFL.*;
-import static com.oracle.max.graal.compiler.target.amd64.AMD64DivOp.*;
-import static com.oracle.max.graal.compiler.target.amd64.AMD64HotSpotOp.*;
-import static com.oracle.max.graal.compiler.target.amd64.AMD64MaxineOp.*;
-import static com.oracle.max.graal.compiler.target.amd64.AMD64MathIntrinsicOp.*;
-import static com.oracle.max.graal.compiler.target.amd64.AMD64MoveOp.*;
-import static com.oracle.max.graal.compiler.target.amd64.AMD64MulOp.*;
-import static com.oracle.max.graal.compiler.target.amd64.AMD64Op1.*;
-import static com.oracle.max.graal.compiler.target.amd64.AMD64ShiftOp.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64ArithmeticOpcode.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64CompareOpcode.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64CompareToIntOpcode.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertOpcode.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertFIOpcode.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertFLOpcode.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64DivOpcode.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64MathIntrinsicOpcode.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64MulOpcode.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64Op1Opcode.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64ShiftOpcode.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64StandardOpcode.*;
 
 import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.gen.*;
+import com.oracle.max.graal.compiler.lir.FrameMap.StackBlock;
 import com.oracle.max.graal.compiler.lir.*;
-import com.oracle.max.graal.compiler.lir.FrameMap.*;
 import com.oracle.max.graal.compiler.stub.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.nodes.DeoptimizeNode.DeoptAction;
@@ -68,13 +65,13 @@ public class AMD64LIRGenerator extends LIRGenerator {
     private static final CiRegisterValue RCX_I = AMD64.rcx.asValue(CiKind.Int);
 
     static {
-        StandardOp.MOVE = AMD64MoveOp.MOVE;
-        StandardOp.NULL_CHECK = AMD64MoveOp.NULL_CHECK;
-        StandardOp.DIRECT_CALL = AMD64CallOp.DIRECT_CALL;
-        StandardOp.INDIRECT_CALL = AMD64CallOp.INDIRECT_CALL;
-        StandardOp.LABEL = AMD64ControlFlowOp.LABEL;
-        StandardOp.RETURN = AMD64ControlFlowOp.RETURN;
-        StandardOp.XIR = AMD64XirOp.XIR;
+        StandardOpcode.MOVE = AMD64StandardOpcode.MOVE;
+        StandardOpcode.NULL_CHECK = AMD64StandardOpcode.NULL_CHECK;
+        StandardOpcode.DIRECT_CALL = AMD64CallOpcode.DIRECT_CALL;
+        StandardOpcode.INDIRECT_CALL = AMD64CallOpcode.INDIRECT_CALL;
+        StandardOpcode.LABEL = AMD64StandardOpcode.LABEL;
+        StandardOpcode.RETURN = AMD64StandardOpcode.RETURN;
+        StandardOpcode.XIR = AMD64XirOpcode.XIR;
     }
 
     public AMD64LIRGenerator(GraalCompilation compilation) {
@@ -498,7 +495,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
     @Override
     public CiValue createMonitorAddress(int monitorIndex) {
         CiVariable result = newVariable(target().wordKind);
-        append(MONITOR_ADDRESS.create(result, monitorIndex));
+        append(AMD64HotSpotOpcode.MonitorAddressOpcode.MONITOR_ADDRESS.create(result, monitorIndex));
         return result;
     }
 
@@ -531,6 +528,6 @@ public class AMD64LIRGenerator extends LIRGenerator {
         CiVariable result = createResultVariable(x);
         assert x.size().isConstant() : "ALLOCA bytecode 'size' operand is not a constant: " + x.size();
         StackBlock stackBlock = compilation.frameMap().reserveStackBlock(x.size().asConstant().asInt());
-        append(STACK_ALLOCATE.create(result, stackBlock));
+        append(AMD64MaxineOpcode.StackAllocateOpcode.STACK_ALLOCATE.create(result, stackBlock));
     }
 }

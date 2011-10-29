@@ -28,20 +28,23 @@ import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
 
-public enum AMD64ShiftOp implements LIROpcode<AMD64MacroAssembler, LIRInstruction> {
+public enum AMD64ShiftOpcode implements LIROpcode {
     ISHL, ISHR, UISHR,
     LSHL, LSHR, ULSHR;
 
     public LIRInstruction create(CiVariable leftAndResult, CiValue right) {
-        return new LIRInstruction(this, leftAndResult, null, leftAndResult, right);
+        CiValue[] inputs = new CiValue[] {leftAndResult, right};
+
+        return new AMD64LIRInstruction(this, leftAndResult, null, inputs) {
+            @Override
+            public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
+                emit(tasm, masm, result(), input(1));
+            }
+        };
     }
 
-    @Override
-    public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
-        CiRegister dst = op.result().asRegister();
-        CiValue right = op.input(1);
-
-        AMD64MacroAssembler masm = tasm.masm;
+    protected void emit(TargetMethodAssembler tasm, AMD64MacroAssembler masm, CiValue leftAndResult, CiValue right) {
+        CiRegister dst = tasm.asRegister(leftAndResult);
         if (right.isRegister()) {
             assert tasm.asRegister(right) == AMD64.rcx;
             switch (this) {

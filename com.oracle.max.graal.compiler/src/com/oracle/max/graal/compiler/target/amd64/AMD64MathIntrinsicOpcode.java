@@ -28,24 +28,31 @@ import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
 
-public enum AMD64Op1 implements LIROpcode<AMD64MacroAssembler, LIRInstruction> {
-    INEG, LNEG, FNEG, DNEG,
-    DABS;
+public enum AMD64MathIntrinsicOpcode implements LIROpcode {
+    SQRT,
+    SIN, COS, TAN,
+    LOG, LOG10;
 
-    public LIRInstruction create(CiVariable inputAndResult) {
-        return new LIRInstruction(this, inputAndResult, null, inputAndResult);
+    public LIRInstruction create(CiVariable result, CiVariable input) {
+        CiValue[] inputs = new CiValue[] {input};
+
+        return new AMD64LIRInstruction(this, result, null, inputs) {
+            @Override
+            public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
+                emit(tasm, masm, tasm.asDoubleReg(result()), tasm.asDoubleReg(input(0)));
+            }
+        };
     }
 
-    @Override
-    public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
-        assert op.input(0).equals(op.result());
+    private void emit(TargetMethodAssembler tasm, AMD64MacroAssembler masm, CiRegister result, CiRegister input) {
         switch (this) {
-            case INEG: tasm.masm.negl(tasm.asIntReg(op.result())); break;
-            case LNEG: tasm.masm.negq(tasm.asLongReg(op.result())); break;
-            case FNEG: tasm.masm.xorps(tasm.asFloatReg(op.result()),  tasm.recordDataReferenceInCode(CiConstant.forLong(0x8000000080000000L))); break;
-            case DNEG: tasm.masm.xorpd(tasm.asDoubleReg(op.result()), tasm.recordDataReferenceInCode(CiConstant.forLong(0x8000000000000000L))); break;
-            case DABS: tasm.masm.andpd(tasm.asDoubleReg(op.result()), tasm.recordDataReferenceInCode(CiConstant.forLong(0x7FFFFFFFFFFFFFFFL))); break;
-            default:   throw Util.shouldNotReachHere();
+            case SQRT:  masm.sqrtsd(result, input); break;
+            case LOG:   masm.flog(result, input, false); break;
+            case LOG10: masm.flog(result, input, true); break;
+            case SIN:   masm.fsin(result, input); break;
+            case COS:   masm.fcos(result, input); break;
+            case TAN:   masm.ftan(result, input); break;
+            default:    throw Util.shouldNotReachHere();
         }
     }
 }

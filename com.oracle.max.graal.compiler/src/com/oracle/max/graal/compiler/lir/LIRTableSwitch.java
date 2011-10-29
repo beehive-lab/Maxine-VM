@@ -25,7 +25,7 @@ package com.oracle.max.graal.compiler.lir;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiValue.Formatter;
 
-public class LIRTableSwitch extends LIRInstruction {
+public abstract class LIRTableSwitch extends LIRInstruction {
 
     public LIRBlock defaultTarget;
 

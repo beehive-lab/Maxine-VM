@@ -32,17 +32,17 @@ import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
-public class TargetMethodAssembler<A extends AbstractAssembler> {
+public class TargetMethodAssembler {
     public final GraalCompilation compilation;
-    public final A masm;
+    public final AbstractAssembler asm;
     public final CiTargetMethod targetMethod;
     public final CiTarget target;
     private List<ExceptionInfo> exceptionInfoList;
     private int lastSafepointPos;
 
-    public TargetMethodAssembler(GraalCompilation compilation, A masm) {
+    public TargetMethodAssembler(GraalCompilation compilation, AbstractAssembler asm) {
         this.compilation = compilation;
-        this.masm = masm;
+        this.asm = asm;
         this.targetMethod = new CiTargetMethod();
         this.target = compilation.compiler.target;
     }
@@ -52,16 +52,16 @@ public class TargetMethodAssembler<A extends AbstractAssembler> {
     }
 
     public CiTargetMethod.Mark recordMark(Object id, CiTargetMethod.Mark[] references) {
-        return targetMethod.recordMark(masm.codeBuffer.position(), id, references);
+        return targetMethod.recordMark(asm.codeBuffer.position(), id, references);
     }
 
     public void blockComment(String s) {
-        targetMethod.addAnnotation(new CiTargetMethod.CodeComment(masm.codeBuffer.position(), s));
+        targetMethod.addAnnotation(new CiTargetMethod.CodeComment(asm.codeBuffer.position(), s));
     }
 
     public CiTargetMethod finishTargetMethod(Object name, RiRuntime runtime, boolean isStub) {
         // Install code, data and frame size
-        targetMethod.setTargetCode(masm.codeBuffer.close(false), masm.codeBuffer.position());
+        targetMethod.setTargetCode(asm.codeBuffer.close(false), asm.codeBuffer.position());
 
         // Record exception handlers if they exist
         if (exceptionInfoList != null) {
@@ -83,7 +83,7 @@ public class TargetMethodAssembler<A extends AbstractAssembler> {
             Util.printSection("Target Method", Util.SECTION_CHARACTER);
             TTY.println("Name: " + name);
             TTY.println("Frame size: " + targetMethod.frameSize());
-            TTY.println("Register size: " + masm.target.arch.registerReferenceMapBitCount);
+            TTY.println("Register size: " + asm.target.arch.registerReferenceMapBitCount);
 
             if (GraalOptions.PrintCodeBytes) {
                 Util.printSection("Code", Util.SUB_SECTION_CHARACTER);
@@ -169,7 +169,7 @@ public class TargetMethodAssembler<A extends AbstractAssembler> {
     public CiAddress recordDataReferenceInCode(CiConstant data) {
         assert data != null;
 
-        int pos = masm.codeBuffer.position();
+        int pos = asm.codeBuffer.position();
 
         if (GraalOptions.TraceRelocation) {
             TTY.print("Data reference in code: pos = %d, data = %s", pos, data.toString());

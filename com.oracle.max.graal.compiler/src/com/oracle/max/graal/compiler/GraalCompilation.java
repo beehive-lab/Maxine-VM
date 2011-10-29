@@ -120,7 +120,7 @@ public final class GraalCompilation {
 
     private TargetMethodAssembler createAssembler() {
         AbstractAssembler masm = compiler.backend.newAssembler(registerConfig);
-        TargetMethodAssembler tasm = new TargetMethodAssembler<AbstractAssembler>(this, masm);
+        TargetMethodAssembler tasm = new TargetMethodAssembler(this, masm);
         tasm.setFrameSize(frameMap.frameSize());
         tasm.targetMethod.setCustomStackAreaOffset(frameMap.offsetToCustomArea());
         return tasm;

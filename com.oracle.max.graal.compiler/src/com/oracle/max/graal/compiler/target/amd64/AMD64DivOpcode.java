@@ -30,26 +30,28 @@ import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
 
-public enum AMD64DivOp implements LIROpcode<AMD64MacroAssembler, LIRInstruction> {
+public enum AMD64DivOpcode implements LIROpcode {
     IDIV, IREM, UIDIV, UIREM,
     LDIV, LREM, ULDIV, ULREM;
 
     public LIRInstruction create(CiRegisterValue result, LIRDebugInfo info, CiRegisterValue left, CiVariable right) {
-        return new LIRInstruction(this, result, info, new CiValue[] {left, right}, new CiValue[] {AMD64.rax.asValue(), AMD64.rdx.asValue(), right});
+        CiValue[] inputs = new CiValue[] {left, right};
+        CiValue[] temps = new CiValue[] {AMD64.rax.asValue(), AMD64.rdx.asValue(), right};
+
+        return new AMD64LIRInstruction(this, result, info, inputs, temps) {
+            @Override
+            public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
+                emit(tasm, masm, tasm.asRegister(result()), info, tasm.asRegister(input(0)), tasm.asRegister(input(1)));
+            }
+        };
     }
 
-    @Override
-    public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
-        CiRegister left = tasm.asRegister(op.input(0));
-        CiRegister right = tasm.asRegister(op.input(1));
-        CiRegister result = tasm.asRegister(op.result());
-
+    protected void emit(TargetMethodAssembler tasm, AMD64MacroAssembler masm, CiRegister result, LIRDebugInfo info, CiRegister left, CiRegister right) {
         // left input in rax, right input in any register but rax and rdx, result quotient in rax, result remainder in rdx
         assert left == AMD64.rax;
         assert right != AMD64.rax && right != AMD64.rdx;
         assert (name().endsWith("DIV") && result == AMD64.rax) || (name().endsWith("REM") && result == AMD64.rdx);
 
-        AMD64MacroAssembler masm = tasm.masm;
         int exceptionOffset;
         switch (this) {
             case IDIV:
@@ -98,6 +100,6 @@ public enum AMD64DivOp implements LIROpcode<AMD64MacroAssembler, LIRInstruction>
             default:
                 throw Util.shouldNotReachHere();
         }
-        tasm.recordImplicitException(exceptionOffset, op.info);
+        tasm.recordImplicitException(exceptionOffset, info);
     }
 }

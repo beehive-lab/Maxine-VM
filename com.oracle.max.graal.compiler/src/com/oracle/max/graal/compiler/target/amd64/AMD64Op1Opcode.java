@@ -28,27 +28,29 @@ import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
 
-public enum AMD64MulOp implements LIROpcode<AMD64MacroAssembler, LIRInstruction> {
-    IMUL, LMUL;
+public enum AMD64Op1Opcode implements LIROpcode {
+    INEG, LNEG, FNEG, DNEG,
+    DABS;
 
-    public LIRInstruction create(CiVariable leftAndResult, CiValue right) {
-        return new LIRInstruction(this, leftAndResult, null, leftAndResult, right);
+    public LIRInstruction create(CiVariable inputAndResult) {
+        CiValue[] inputs = new CiValue[] {inputAndResult};
+
+        return new AMD64LIRInstruction(this, inputAndResult, null, inputs) {
+            @Override
+            public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
+                emit(tasm, masm, result());
+            }
+        };
     }
 
-    @Override
-    public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
-        if (op.input(1).isRegister()) {
-            switch (this) {
-                case IMUL: tasm.masm.imull(tasm.asRegister(op.result()), tasm.asRegister(op.input(1))); break;
-                case LMUL: tasm.masm.imulq(tasm.asRegister(op.result()), tasm.asRegister(op.input(1))); break;
-                default:   throw Util.shouldNotReachHere();
-            }
-        } else {
-            switch (this) {
-                case IMUL: tasm.masm.imull(tasm.asRegister(op.result()), tasm.asRegister(op.input(0)), tasm.asIntConst(op.input(1))); break;
-                case LMUL: tasm.masm.imulq(tasm.asRegister(op.result()), tasm.asRegister(op.input(0)), tasm.asIntConst(op.input(1))); break;
-                default:   throw Util.shouldNotReachHere();
-            }
+    private void emit(TargetMethodAssembler tasm, AMD64MacroAssembler masm, CiValue inputAndResult) {
+        switch (this) {
+            case INEG: masm.negl(tasm.asIntReg(inputAndResult)); break;
+            case LNEG: masm.negq(tasm.asLongReg(inputAndResult)); break;
+            case FNEG: masm.xorps(tasm.asFloatReg(inputAndResult),  tasm.recordDataReferenceInCode(CiConstant.forLong(0x8000000080000000L))); break;
+            case DNEG: masm.xorpd(tasm.asDoubleReg(inputAndResult), tasm.recordDataReferenceInCode(CiConstant.forLong(0x8000000000000000L))); break;
+            case DABS: masm.andpd(tasm.asDoubleReg(inputAndResult), tasm.recordDataReferenceInCode(CiConstant.forLong(0x7FFFFFFFFFFFFFFFL))); break;
+            default:   throw Util.shouldNotReachHere();
         }
     }
 }

@@ -578,10 +578,10 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         if (destinationAddress instanceof CiConstant) {
             // Direct call
             assert ((CiConstant) destinationAddress).isDefaultValue() : "destination address should be zero";
-            append(StandardOp.DIRECT_CALL.create(target, resultOperand, argList, null, info2, snippet.marks, pointerSlots));
+            append(StandardOpcode.DIRECT_CALL.create(target, resultOperand, argList, null, info2, snippet.marks, pointerSlots));
         } else {
             // Indirect call
-            append(StandardOp.INDIRECT_CALL.create(target, resultOperand, argList, destinationAddress, info2, snippet.marks, pointerSlots));
+            append(StandardOpcode.INDIRECT_CALL.create(target, resultOperand, argList, destinationAddress, info2, snippet.marks, pointerSlots));
         }
 
         if (resultOperand.isLegal()) {
@@ -690,7 +690,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
             IsNonNullNode x = (IsNonNullNode) comp;
             CiVariable value = load(x.object());
             LIRDebugInfo info = stateFor(x);
-            append(StandardOp.NULL_CHECK.create(value, info));
+            append(StandardOpcode.NULL_CHECK.create(value, info));
         } else if (comp instanceof IsTypeNode) {
             IsTypeNode x = (IsTypeNode) comp;
             load(x.object());
@@ -724,7 +724,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         XirSnippet epilogue = xir.genEpilogue(site(x), compilation.method);
         if (epilogue != null) {
             emitXir(epilogue, x, null, compilation.method, false);
-            append(StandardOp.RETURN.create(operand));
+            append(StandardOpcode.RETURN.create(operand));
         }
         setNoResult(x);
     }
@@ -891,7 +891,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         XirInstruction[] slowPath = snippet.template.slowPath;
         if (!operands[resultOperand.index].isConstant() || snippet.template.fastPath.length != 0 || (slowPath != null && slowPath.length > 0)) {
             // XIR instruction is only needed when the operand is not a constant!
-            append(StandardOp.XIR.create(snippet, operands, allocatedResultOperand,
+            append(StandardOpcode.XIR.create(snippet, operands, allocatedResultOperand,
                     inputOperandArray, tempOperandArray, inputOperandIndicesArray, tempOperandIndicesArray,
                     (operands[resultOperand.index] == IllegalValue) ? -1 : resultOperand.index,
                     info, infoAfter, method, pointerSlots));
@@ -1062,7 +1062,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
             argumentList = Util.uncheckedCast(Collections.emptyList());
         }
 
-        append(StandardOp.DIRECT_CALL.create(runtimeCall, physReg, argumentList, null, info, null, null));
+        append(StandardOpcode.DIRECT_CALL.create(runtimeCall, physReg, argumentList, null, info, null, null));
 
         return physReg;
     }
@@ -1472,7 +1472,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         CiValue argumentOperand = callingConvention.locations[0];
         emitMove(makeOperand(x.exception()), argumentOperand);
         List<CiValue> args = new ArrayList<CiValue>(1);
-        append(StandardOp.DIRECT_CALL.create(CiRuntimeCall.UnwindException, CiValue.IllegalValue, args, null, null, null, null));
+        append(StandardOpcode.DIRECT_CALL.create(CiRuntimeCall.UnwindException, CiValue.IllegalValue, args, null, null, null, null));
         setNoResult(x);
     }
 
@@ -1498,7 +1498,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         List<CiValue> pointerSlots = new ArrayList<CiValue>(2);
         List<CiValue> argList = visitInvokeArguments(cc, x.arguments(), pointerSlots);
 
-        append(StandardOp.DIRECT_CALL.create(x.call(), resultOperand, argList, null, info, null, null));
+        append(StandardOpcode.DIRECT_CALL.create(x.call(), resultOperand, argList, null, info, null, null));
 
         if (resultOperand.isLegal()) {
             setResult(x, emitMove(resultOperand));
