@@ -31,7 +31,7 @@ import os
 import shutil
 import fnmatch
 import subprocess
-from os.path import join, exists, dirname, isdir, pathsep
+from os.path import join, exists, dirname, isdir, pathsep, isfile
 from argparse import ArgumentParser, REMAINDER
 from collections import Callable
 import xml.dom.minidom
@@ -561,6 +561,53 @@ def jttgen(env, args):
     return env.run_java(['-cp', env.classpath('com.oracle.max.vm'), 'test.com.sun.max.vm.compiler.JavaTester',
                          '-scenario=target', '-run-scheme-package=all', '-native-tests'] + tests, cwd=testDir)
 
+def makejdk(env, args):
+    """create a JDK directory based on the Maxine VM
+
+    Create a JDK directory by replicating the file structure of $JAVA_HOME
+    and replacing the 'java' executable with the Maxine VM
+    executable. This produces a Maxine VM based JDK for applications
+    (such as NetBeans) which expect a certain directory structure
+    and executable names in a JDK installation."""
+
+    if env.os == 'darwin':
+        env.log('mx makejdk is not supported on Darwin')
+        mx.abort(1)
+
+    if len(args) == 0:
+        maxjdk = join(env.maxine_dir, 'maxjdk')
+    else:
+        maxjdk = args[0]
+        if maxjdk[0] != '/':
+            maxjdk = join(os.getcwd, args[0])
+
+    if exists(maxjdk):
+        env.log('The destination directory already exists -- it will be deleted')
+        shutil.rmtree(maxjdk)
+
+    if not isdir(env.java_home):
+        env.log(env.java_home + " does not exist or is not a directory")
+        mx.abort(1)
+        
+    env.log('Replicating ' + env.java_home + ' in ' + maxjdk + '...')
+    shutil.copytree(env.java_home, maxjdk)
+
+    for f in os.listdir(env.vmdir):
+        if isfile(f):
+            shutil.copy(join(env.vmdir, f), join(maxjdk, 'bin'))
+            shutil.copy(join(env.vmdir, f), join(maxjdk, 'jre', 'bin'))
+                
+    os.unlink(join(maxjdk, 'bin', 'java'))
+    os.unlink(join(maxjdk, 'jre', 'bin', 'java'))
+    if (env.os == 'windows'):
+        shutil.copy(join(maxjdk, 'bin', 'maxvm'), join(maxjdk, 'bin', 'java'))
+        shutil.copy(join(maxjdk, 'jre', 'bin', 'maxvm'), join(maxjdk, 'jre', 'bin', 'java'))
+    else:
+        os.symlink(join(maxjdk, 'bin', 'maxvm'), join(maxjdk, 'bin', 'java'))
+        os.symlink(join(maxjdk, 'jre', 'bin', 'maxvm'), join(maxjdk, 'jre', 'bin', 'java'))
+
+    env.log('Created Maxine based JDK in ' + maxjdk)
+
 def methodtree(env, args):
     """print the causality spanning-tree of the method graph in the boot image
 
@@ -758,6 +805,7 @@ table = {
     'inspect': [inspect, '[options] [class | -jar jarfile]  [args...]'],
     'jnigen': [jnigen, ''],
     'jttgen': [jttgen, ''],
+    'makejdk': [makejdk, '[<destination directory>]'],
     'methodtree': [methodtree, '[options]'],
     'nm': [nm, '[options] [boot image file]', _vm_image],
     'objecttree': [objecttree, '[options]'],
