@@ -29,7 +29,7 @@ import com.sun.cri.ci.CiValue.Formatter;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
 
-public class LIRXirInstruction extends LIRInstruction {
+public abstract class LIRXirInstruction extends LIRInstruction {
 
     public final CiValue[] originalOperands;
     public final int outputOperandIndex;

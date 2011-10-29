@@ -22,24 +22,21 @@
  */
 package com.oracle.max.graal.compiler.lir;
 
-import com.oracle.max.asm.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiValue.Formatter;
 
-public class LIRBranch extends LIRInstruction {
+public abstract class LIRBranch extends LIRInstruction {
 
     /**
      * The condition when this branch is taken, or {@code null} if it is an unconditional branch.
      */
-    public final Condition cond;
+    public Condition cond;
 
     /**
      * For floating point branches only. True when the branch should be taken when the comparison is unordered.
      */
-    public final boolean unorderedIsTrue;
-
-    private Label label;
+    public boolean unorderedIsTrue;
 
     /**
      * The target block of this branch.
@@ -47,40 +44,27 @@ public class LIRBranch extends LIRInstruction {
     private LIRBlock block;
 
 
-
-    public LIRBranch(LIROpcode code, Condition cond, boolean unorderedIsTrue, Label label, LIRDebugInfo info) {
-        super(code, CiValue.IllegalValue, info);
-        this.cond = cond;
-        this.unorderedIsTrue = unorderedIsTrue;
-        this.label = label;
-    }
-
     public LIRBranch(LIROpcode code, Condition cond, boolean unorderedIsTrue, LIRBlock block) {
-        super(code, CiValue.IllegalValue, block.debugInfo());
+        super(code, CiValue.IllegalValue, block.debugInfo(), LIRInstruction.NO_OPERANDS);
         this.cond = cond;
         this.unorderedIsTrue = unorderedIsTrue;
-        this.label = block.label();
         this.block = block;
-    }
-
-    public Label label() {
-        return label;
     }
 
     public LIRBlock block() {
         return block;
     }
 
+    public void negate(LIRBlock newBlock) {
+        block = newBlock;
+        cond = cond.negate();
+        unorderedIsTrue = !unorderedIsTrue;
+    }
+
     @Override
     public String operationString(Formatter operandFmt) {
         StringBuilder buf = new StringBuilder(cond.operator).append(' ');
-        if (block() != null) {
-            buf.append("[B").append(block.blockID()).append(']');
-        } else if (label().isBound()) {
-            buf.append("[label:0x").append(Integer.toHexString(label().position())).append(']');
-        } else {
-            buf.append("[label:??]");
-        }
+        buf.append("[B").append(block.blockID()).append(']');
         if (unorderedIsTrue) {
             buf.append(" unorderedIsTrue");
         }
@@ -91,7 +75,6 @@ public class LIRBranch extends LIRInstruction {
         assert newBlock != null;
         if (block == oldBlock) {
             block = newBlock;
-            label = newBlock.label;
         }
     }
 }

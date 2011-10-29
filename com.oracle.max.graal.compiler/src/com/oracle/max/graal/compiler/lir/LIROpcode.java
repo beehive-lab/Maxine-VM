@@ -22,44 +22,5 @@
  */
 package com.oracle.max.graal.compiler.lir;
 
-import com.oracle.max.asm.*;
-import com.oracle.max.graal.compiler.asm.*;
-
-public interface LIROpcode<A extends AbstractAssembler, I extends LIRInstruction> {
-    void emitCode(TargetMethodAssembler<A> tasm, I op);
-
-    /**
-     * Marker interface for the register allocator: If an operation implements this interface,
-     * all operands can be a split slot and need not be loaded to a register.
-     */
-    public interface AllOperandsCanBeMemory {
-    }
-
-    /**
-     * Marker interface for the register allocator: If an operation implements this interface,
-     * the second operand can be a split slot and needs not be loaded to a register.
-     */
-    public interface SecondOperandCanBeMemory {
-    }
-
-    /**
-     * Marker interface for the register allocator: If an operation implements this interface,
-     * the register assigned to the first operand should be assigned to the result operand.
-     */
-    public interface FirstOperandRegisterHint {
-    }
-
-    /**
-     * Marker interface for the register allocator: If an operation implements this interface,
-     * the register assigned to the second operand should be assigned to the result operand.
-     */
-    public interface SecondOperandRegisterHint {
-    }
-
-    /**
-     * Marker interface for the register allocator: If an operation implements this interface,
-     * all caller-saved registers are destroyed by the instruction.
-     */
-    public interface HasCall {
-    }
+public interface LIROpcode {
 }

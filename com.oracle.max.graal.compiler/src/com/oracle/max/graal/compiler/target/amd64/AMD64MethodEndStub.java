@@ -27,11 +27,13 @@ import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.lir.*;
 
-public class AMD64MethodEndStub implements LIR.SlowPath<AMD64MacroAssembler> {
+public class AMD64MethodEndStub implements LIR.SlowPath {
     @Override
-    public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm) {
+    public void emitCode(TargetMethodAssembler tasm) {
+        AMD64MacroAssembler masm = (AMD64MacroAssembler) tasm.asm;
+
         for (int i = 0; i < GraalOptions.MethodEndBreakpointGuards; ++i) {
-            tasm.masm.int3();
+            masm.int3();
         }
     }
 }

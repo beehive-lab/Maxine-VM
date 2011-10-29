@@ -63,7 +63,7 @@ public final class SafepointNode extends StateSplit implements LIRLowerable {
             case UNCOMMON_TRAP:
                 break;
             case BREAKPOINT:
-                gen.append(AMD64MaxineOp.BREAKPOINT.create());
+                gen.append(AMD64MaxineOpcode.BreakpointOpcode.BREAKPOINT.create());
                 break;
             case PAUSE:
                 break;

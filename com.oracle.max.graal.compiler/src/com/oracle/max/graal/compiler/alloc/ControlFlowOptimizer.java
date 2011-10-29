@@ -102,7 +102,7 @@ final class ControlFlowOptimizer {
         List<LIRInstruction> instructions = block.lir();
 
         assert instructions.size() >= 2 : "block must have label and branch";
-        assert instructions.get(0).code == StandardOp.LABEL : "first instruction must always be a label";
+        assert instructions.get(0).code == StandardOpcode.LABEL : "first instruction must always be a label";
         assert instructions.get(instructions.size() - 1) instanceof LIRBranch : "last instruction must always be a branch but is " + instructions.get(instructions.size() - 1);
         assert ((LIRBranch) instructions.get(instructions.size() - 1)).cond == null : "branch must be unconditional";
         assert ((LIRBranch) instructions.get(instructions.size() - 1)).block() == block.suxAt(0) : "branch target must be the successor " + ((LIRBranch) instructions.get(instructions.size() - 1)).block();
@@ -169,7 +169,6 @@ final class ControlFlowOptimizer {
                     // this might target a deoptimization stub...
                     continue;
                 }
-                assert lastBranch.label() == lastBranch.block().label() : "must be equal";
 
                 if (lastBranch.info == null) {
                     if (lastBranch.block() == code.get(i + 1)) {
@@ -183,7 +182,7 @@ final class ControlFlowOptimizer {
 
                             if (prevBranch.block() == code.get(i + 1) && prevBranch.info == null) {
                                 // eliminate a conditional branch to the immediate successor
-                                instructions.set(instructions.size() - 2, new LIRBranch(prevBranch.code, prevBranch.cond.negate(), !prevBranch.unorderedIsTrue, lastBranch.block()));
+                                prevBranch.negate(lastBranch.block());
                                 Util.truncate(instructions, instructions.size() - 1);
                             }
                         }
@@ -201,8 +200,8 @@ final class ControlFlowOptimizer {
             List<LIRInstruction> curInstructions = block.lir();
             LIRInstruction curLastOp = curInstructions.get(curInstructions.size() - 1);
 
-            assert curInstructions.get(0).code == StandardOp.LABEL : "first instruction must always be a label";
-            if (curInstructions.size() == 2 && curLastOp.code == StandardOp.RETURN) {
+            assert curInstructions.get(0).code == StandardOpcode.LABEL : "first instruction must always be a label";
+            if (curInstructions.size() == 2 && curLastOp.code == StandardOpcode.RETURN) {
                 // the block contains only a label and a return
                 // if a predecessor ends with an unconditional jump to this block, then the jump
                 // can be replaced with a return instruction
@@ -225,7 +224,7 @@ final class ControlFlowOptimizer {
                         if (predLastBranch.block() == block && predLastBranch.cond == null && predLastBranch.info == null) {
                             // replace the jump to a return with a direct return
                             // Note: currently the edge between the blocks is not deleted
-                            predInstructions.set(predInstructions.size() - 1, StandardOp.RETURN.create(returnOpr));
+                            predInstructions.set(predInstructions.size() - 1, StandardOpcode.RETURN.create(returnOpr));
                         }
                     }
                 }

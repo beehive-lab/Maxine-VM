@@ -24,41 +24,40 @@ package com.oracle.max.graal.compiler.lir;
 
 import java.util.*;
 
-import com.oracle.max.asm.*;
+import com.sun.cri.ci.CiTargetMethod.Mark;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiTargetMethod.*;
 import com.sun.cri.ri.*;
+import com.sun.cri.xir.CiXirAssembler.XirMark;
 import com.sun.cri.xir.*;
-import com.sun.cri.xir.CiXirAssembler.*;
 
-public class StandardOp {
+public class StandardOpcode {
     // Checkstyle: stop
-    public static MoveOpcode<?, ?> MOVE;
-    public static NullCheckOpcode<?, ?> NULL_CHECK;
-    public static CallOpcode<?, ?> DIRECT_CALL;
-    public static CallOpcode<?, ?> INDIRECT_CALL;
-    public static LIROpcode<?, ?> LABEL;
-    public static ReturnOpcode<?, ?> RETURN;
-    public static XirOpcode<?, ?> XIR;
+    public static MoveOpcode MOVE;
+    public static NullCheckOpcode NULL_CHECK;
+    public static CallOpcode DIRECT_CALL;
+    public static CallOpcode INDIRECT_CALL;
+    public static LIROpcode LABEL;
+    public static ReturnOpcode RETURN;
+    public static XirOpcode XIR;
     // Checkstyle: resume
 
-    public interface MoveOpcode<A extends AbstractAssembler, I extends LIRInstruction> extends LIROpcode<A, I> {
+    public interface MoveOpcode extends LIROpcode {
         LIRInstruction create(CiValue result, CiValue input);
     }
 
-    public interface NullCheckOpcode<A extends AbstractAssembler, I extends LIRInstruction> extends LIROpcode<A, I> {
+    public interface NullCheckOpcode extends LIROpcode {
         LIRInstruction create(CiVariable input, LIRDebugInfo info);
     }
 
-    public interface CallOpcode<A extends AbstractAssembler, I extends LIRInstruction> extends LIROpcode<A, I> {
+    public interface CallOpcode extends LIROpcode {
         LIRInstruction create(Object target, CiValue result, List<CiValue> arguments, CiValue targetAddress, LIRDebugInfo info, Map<XirMark, Mark> marks, List<CiValue> pointerSlots);
     }
 
-    public interface ReturnOpcode<A extends AbstractAssembler, I extends LIRInstruction> extends LIROpcode<A, I> {
+    public interface ReturnOpcode extends LIROpcode {
         LIRInstruction create(CiValue input);
     }
 
-    public interface XirOpcode<A extends AbstractAssembler, I extends LIRInstruction> extends LIROpcode<A, I> {
+    public interface XirOpcode extends LIROpcode {
         LIRInstruction create(XirSnippet snippet, CiValue[] operands, CiValue outputOperand, CiValue[] inputs, CiValue[] temps, int[] inputOperandIndices, int[] tempOperandIndices, int outputOperandIndex,
                         LIRDebugInfo info, LIRDebugInfo infoAfter, RiMethod method, List<CiValue> pointerSlots);
     }

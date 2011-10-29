@@ -22,37 +22,33 @@
  */
 package com.oracle.max.graal.compiler.target.amd64;
 
-import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.amd64.*;
-import com.oracle.max.asm.target.amd64.AMD64Assembler.*;
 import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.lir.*;
-import com.oracle.max.graal.compiler.stub.*;
-import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
 
-public enum AMD64ConvertOpFL implements LIROpcode<AMD64MacroAssembler, LIRConvert> {
-    F2L, D2L;
+/**
+ * LIR operations that are HotSpot-specific, and should therefore be moved to a HotSpot-specific project.
+ */
+public class AMD64HotSpotOpcode {
 
-    public LIRInstruction create(CiVariable result, CompilerStub stub, CiVariable input, CiVariable tmp) {
-        return new LIRConvert(this, result, stub, new CiValue[] {input}, new CiValue[] {tmp});
-    }
+    // Note: This LIR operation is just a LEA, so reusing the LEA op would be desirable.
+    // However, the address that is loaded depends on the stack slot, and the stack slot numbers are
+    // only fixed after register allocation when the number of spill slots is known. Therefore, the address
+    // is not known when the LIR is generated.
+    public enum MonitorAddressOpcode implements LIROpcode {
+        MONITOR_ADDRESS;
 
-    @Override
-    public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRConvert op) {
-        CiRegister dst = tasm.asLongReg(op.result());
-        CiRegister tmp = tasm.asLongReg(op.temp(0));
-        switch (this) {
-            case F2L: tasm.masm.cvttss2siq(dst, tasm.asFloatReg(op.input(0))); break;
-            case D2L: tasm.masm.cvttsd2siq(dst, tasm.asDoubleReg(op.input(0))); break;
-            default: throw Util.shouldNotReachHere();
+        public LIRInstruction create(CiVariable result, final int monitorIndex) {
+            CiValue[] inputs = LIRInstruction.NO_OPERANDS;
+
+            return new AMD64LIRInstruction(this, result, null, inputs) {
+                @Override
+                public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
+                    CiStackSlot slot = tasm.compilation.frameMap().toMonitorBaseStackAddress(monitorIndex);
+                    masm.leaq(tasm.asRegister(result()), new CiAddress(slot.kind, AMD64.rsp.asValue(), slot.index() * tasm.target.arch.wordSize));
+                }
+            };
         }
-
-        Label endLabel = new Label();
-        tasm.masm.movq(tmp, java.lang.Long.MIN_VALUE);
-        tasm.masm.cmpq(dst, tmp);
-        tasm.masm.jcc(ConditionFlag.notEqual, endLabel);
-        AMD64CallOp.callStub(tasm, op.stub, op.stub.resultKind, null, op.result(), op.input(0));
-        tasm.masm.bind(endLabel);
     }
 }

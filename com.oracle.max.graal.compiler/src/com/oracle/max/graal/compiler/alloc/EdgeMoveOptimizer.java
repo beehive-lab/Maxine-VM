@@ -89,7 +89,7 @@ final class EdgeMoveOptimizer {
         assert op1 != null;
         assert op2 != null;
 
-        if (op1.code == StandardOp.MOVE && op2.code == StandardOp.MOVE) {
+        if (op1.code == StandardOpcode.MOVE && op2.code == StandardOpcode.MOVE) {
             if (op1.info == op2.info && op1.input(0).equals(op2.input(0)) && op1.result().equals(op2.result())) {
                 // these moves are exactly equal and can be optimized
                 return true;
@@ -127,7 +127,7 @@ final class EdgeMoveOptimizer {
                 return;
             }
 
-            if (predInstructions.get(predInstructions.size() - 1).code == StandardOp.XIR) {
+            if (predInstructions.get(predInstructions.size() - 1).code == StandardOpcode.XIR) {
                 return;
             }
 
@@ -185,7 +185,7 @@ final class EdgeMoveOptimizer {
 
         assert numSux == 2 : "method should not be called otherwise";
 
-        if (instructions.get(instructions.size() - 1).code == StandardOp.XIR) {
+        if (instructions.get(instructions.size() - 1).code == StandardOpcode.XIR) {
             // cannot optimize when last instruction is Xir.
             return;
         }
@@ -224,7 +224,7 @@ final class EdgeMoveOptimizer {
             LIRBlock sux = block.suxAt(i);
             List<LIRInstruction> suxInstructions = sux.lir();
 
-            assert suxInstructions.get(0).code == StandardOp.LABEL : "block must start with label";
+            assert suxInstructions.get(0).code == StandardOpcode.LABEL : "block must start with label";
 
             if (sux.numberOfPreds() != 1) {
                 // this can happen with switch-statements where multiple edges are between

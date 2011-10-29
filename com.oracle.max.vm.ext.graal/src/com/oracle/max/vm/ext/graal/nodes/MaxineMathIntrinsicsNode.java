@@ -57,10 +57,10 @@ public final class MaxineMathIntrinsicsNode extends FloatingNode implements LIRL
         CiVariable input = gen.load(value);
         switch (op) {
             case MSB:
-                gen.append(AMD64MaxineOp.MSB.create(result, input));
+                gen.append(AMD64MaxineOpcode.SignificantBitOpcode.MSB.create(result, input));
                 break;
             case LSB:
-                gen.append(AMD64MaxineOp.LSB.create(result, input));
+                gen.append(AMD64MaxineOpcode.SignificantBitOpcode.LSB.create(result, input));
                 break;
             default:
                 throw new RuntimeException();

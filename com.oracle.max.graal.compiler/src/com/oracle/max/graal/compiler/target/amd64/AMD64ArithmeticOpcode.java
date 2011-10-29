@@ -28,7 +28,7 @@ import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
 
-public enum AMD64ArithmeticOp implements LIROpcode<AMD64MacroAssembler, LIRInstruction>, LIROpcode.SecondOperandCanBeMemory {
+public enum AMD64ArithmeticOpcode implements LIROpcode {
     IADD, ISUB, IAND, IOR, IXOR,
     LADD, LSUB, LAND, LOR, LXOR,
     FADD, FSUB, FMUL, FDIV,
@@ -40,19 +40,22 @@ public enum AMD64ArithmeticOp implements LIROpcode<AMD64MacroAssembler, LIRInstr
             || (name().startsWith("F") && leftAndResult.kind == CiKind.Float && right.kind == CiKind.Float)
             || (name().startsWith("D") && leftAndResult.kind == CiKind.Double && right.kind == CiKind.Double);
 
-        return new LIRInstruction(this, leftAndResult, null, leftAndResult, right);
+        CiValue[] inputs = new CiValue[] {leftAndResult, right};
+        return new AMD64LIRInstruction(this, leftAndResult, null, inputs) {
+            @Override
+            public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
+                emit(tasm, masm, result(), input(1));
+            }
+
+            @Override
+            public boolean inputCanBeMemory(int index) {
+                return index == 1;
+            }
+        };
     }
 
-    @Override
-    public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
-        assert op.info == null;
-        assert op.result().kind == op.input(0).kind && (op.input(0).kind == op.input(1).kind.stackKind() || (op.input(0).kind == tasm.target.wordKind && op.input(1).kind.stackKind() == CiKind.Int));
-        assert op.input(0).equals(op.result());
-
-        CiRegister dst = tasm.asRegister(op.result());
-        CiValue right = op.input(1);
-
-        AMD64MacroAssembler masm = tasm.masm;
+    protected void emit(TargetMethodAssembler tasm, AMD64MacroAssembler masm, CiValue leftAndResult, CiValue right) {
+        CiRegister dst = tasm.asRegister(leftAndResult);
         if (right.isRegister()) {
             CiRegister rreg = tasm.asRegister(right);
             switch (this) {

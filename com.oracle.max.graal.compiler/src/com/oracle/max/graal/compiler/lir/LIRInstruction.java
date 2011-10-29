@@ -22,6 +22,7 @@
  */
 package com.oracle.max.graal.compiler.lir;
 
+import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiValue.Formatter;
@@ -29,7 +30,7 @@ import com.sun.cri.ci.CiValue.Formatter;
 /**
  * The {@code LIRInstruction} class definition.
  */
-public class LIRInstruction {
+public abstract class LIRInstruction {
 
     public static final CiValue[] NO_OPERANDS = {};
 
@@ -87,17 +88,10 @@ public class LIRInstruction {
     private int id;
 
     /**
-     * Constructs a new LIR instruction that has no input or temp operands.
+     * Constructs a new LIR instruction that has input operands, but no temp operands.
      */
-    public LIRInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info) {
-        this(opcode, result, info, NO_OPERANDS, NO_OPERANDS);
-    }
-
-    /**
-     * Constructs a new LIR instruction that has inputoperands, but no temp operands.
-     */
-    public LIRInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info, CiValue... operands) {
-        this (opcode, result, info, operands, NO_OPERANDS);
+    public LIRInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info, CiValue[] inputs) {
+        this (opcode, result, info, inputs, NO_OPERANDS);
     }
 
     /**
@@ -118,6 +112,9 @@ public class LIRInstruction {
         this.info = info;
         this.id = -1;
     }
+
+    public abstract void emitCode(TargetMethodAssembler tasm);
+
 
     public final int id() {
         return id;
@@ -160,11 +157,11 @@ public class LIRInstruction {
      * Gets the instruction name.
      */
     public String name() {
-        return code.getClass().getSimpleName();
+        return code.toString();
     }
 
     public boolean hasOperands() {
-        return inputs.length > 0 || temps.length > 0 || info != null || code instanceof LIROpcode.HasCall;
+        return inputs.length > 0 || temps.length > 0 || info != null || hasCall();
     }
 
     public final int operandCount(OperandMode mode) {
@@ -197,6 +194,34 @@ public class LIRInstruction {
             default:     throw Util.shouldNotReachHere();
         }
     }
+
+    /**
+     * Returns true when this instruction is a call instruction that destroys all caller-saved registers.
+     */
+    public boolean hasCall() {
+        return false;
+    }
+
+    /**
+     * Used by the register allocator.  The result operand of this instruction should get
+     * the same register assigned as the input operand with returned number.
+     * @return The number of the input operand that is used as a register hint for the output operand,
+     *         or -1 if no register hint should be defined.
+     */
+    public int registerHint() {
+        return -1;
+    }
+
+    /**
+     * Used by the register allocator to decide whether an input operand can be assigned a stack slot.
+     * Subclasses should override this method when an input can be memory.
+     * @param index The index of the operand in {@link #inputs}.
+     * @return true if the input operand with the given index can be assigned a stack slot.
+     */
+    public boolean inputCanBeMemory(int index) {
+        return false;
+    }
+
 
     @Override
     public String toString() {

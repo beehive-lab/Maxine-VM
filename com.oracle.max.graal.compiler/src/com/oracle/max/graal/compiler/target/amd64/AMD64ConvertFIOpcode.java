@@ -22,33 +22,40 @@
  */
 package com.oracle.max.graal.compiler.target.amd64;
 
+import com.oracle.max.asm.*;
+import com.oracle.max.asm.target.amd64.AMD64Assembler.ConditionFlag;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.lir.*;
+import com.oracle.max.graal.compiler.stub.*;
 import com.oracle.max.graal.compiler.util.*;
 import com.sun.cri.ci.*;
 
-public enum AMD64MathIntrinsicOp implements LIROpcode<AMD64MacroAssembler, LIRInstruction> {
-    SQRT,
-    SIN, COS, TAN,
-    LOG, LOG10;
+public enum AMD64ConvertFIOpcode implements LIROpcode {
+    F2I, D2I;
 
-    public LIRInstruction create(CiVariable result, CiVariable input) {
-        return new LIRInstruction(this, result, null, input);
+    public LIRInstruction create(CiVariable result, final CompilerStub stub, CiVariable input) {
+        CiValue[] inputs = new CiValue[] {input};
+
+        return new AMD64LIRInstruction(this, result, null, inputs) {
+            @Override
+            public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
+                emit(tasm, masm, result(), stub, input(0));
+            }
+        };
     }
 
-    @Override
-    public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm, LIRInstruction op) {
-        CiRegister input = tasm.asDoubleReg(op.input(0));
-        CiRegister result = tasm.asDoubleReg(op.result());
+    private void emit(TargetMethodAssembler tasm, AMD64MacroAssembler masm, CiValue result, CompilerStub stub, CiValue input) {
         switch (this) {
-            case SQRT:  tasm.masm.sqrtsd(result, input); break;
-            case LOG:   tasm.masm.flog(result, input, false); break;
-            case LOG10: tasm.masm.flog(result, input, true); break;
-            case SIN:   tasm.masm.fsin(result, input); break;
-            case COS:   tasm.masm.fcos(result, input); break;
-            case TAN:   tasm.masm.ftan(result, input); break;
-            default:    throw Util.shouldNotReachHere();
+            case F2I: masm.cvttss2sil(tasm.asIntReg(result), tasm.asFloatReg(input)); break;
+            case D2I: masm.cvttsd2sil(tasm.asIntReg(result), tasm.asDoubleReg(input)); break;
+            default: throw Util.shouldNotReachHere();
         }
+
+        Label endLabel = new Label();
+        masm.cmp32(tasm.asIntReg(result), Integer.MIN_VALUE);
+        masm.jcc(ConditionFlag.notEqual, endLabel);
+        AMD64CallOpcode.callStub(tasm, masm, stub, stub.resultKind, null, result, input);
+        masm.bind(endLabel);
     }
 }
