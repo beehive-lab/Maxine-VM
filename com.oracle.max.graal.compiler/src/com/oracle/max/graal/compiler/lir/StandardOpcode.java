@@ -37,6 +37,7 @@ public class StandardOpcode {
     public static CallOpcode DIRECT_CALL;
     public static CallOpcode INDIRECT_CALL;
     public static LIROpcode LABEL;
+    public static LIROpcode JUMP;
     public static ReturnOpcode RETURN;
     public static XirOpcode XIR;
     // Checkstyle: resume

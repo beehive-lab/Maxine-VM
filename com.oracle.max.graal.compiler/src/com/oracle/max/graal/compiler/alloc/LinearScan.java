@@ -1504,9 +1504,8 @@ public final class LinearScan {
             List<LIRInstruction> instructions = fromBlock.lir();
             LIRInstruction instr = instructions.get(instructions.size() - 1);
             if (instr instanceof LIRBranch) {
-                LIRBranch branch = (LIRBranch) instr;
                 // insert moves before branch
-                assert branch.cond == null : "block does not end with an unconditional jump";
+                assert instr.code == StandardOpcode.JUMP : "block does not end with an unconditional jump";
                 moveResolver.setInsertPosition(fromBlock.lir(), instructions.size() - 2);
             } else {
                 moveResolver.setInsertPosition(fromBlock.lir(), instructions.size() - 1);
@@ -1551,8 +1550,7 @@ public final class LinearScan {
             if (block.numberOfPreds() == 1 && block.numberOfSux() == 1) {
                 List<LIRInstruction> instructions = block.lir();
                 assert instructions.get(0).code == StandardOpcode.LABEL : "block must start with label";
-                assert instructions.get(instructions.size() - 1) instanceof LIRBranch : "block with successors must end with branch (" + block + "), " + instructions.get(instructions.size() - 1);
-                assert ((LIRBranch) instructions.get(instructions.size() - 1)).cond == null : "block with successor must end with unconditional branch";
+                assert instructions.get(instructions.size() - 1).code == StandardOpcode.JUMP : "block with successor must end with unconditional jump";
 
                 // check if block is empty (only label and branch)
                 if (instructions.size() == 2) {
@@ -1679,8 +1677,8 @@ public final class LinearScan {
                     if (instr instanceof LIRBranch) {
                         LIRBranch branch = (LIRBranch) instr;
                         if (block.liveOut.get(operandNumber(operand))) {
-                            assert branch.cond == null : "block does not end with an unconditional jump";
-                            throw new CiBailout("can't get split child for the last branch of a block because the information would be incorrect (moves are inserted before the branch in resolveDataFlow)");
+                            assert branch.code == StandardOpcode.JUMP : "block does not end with an unconditional jump";
+                            assert false : "can't get split child for the last branch of a block because the information would be incorrect (moves are inserted before the branch in resolveDataFlow)";
                         }
                     }
                 }

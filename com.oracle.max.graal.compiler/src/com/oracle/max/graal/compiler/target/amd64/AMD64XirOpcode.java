@@ -70,7 +70,7 @@ public enum AMD64XirOpcode implements StandardOpcode.XirOpcode {
                     endLabel = new Label();
                     labels[i] = endLabel;
                 } else {
-                    labels[i] = op.trueSuccessor().label;
+                    labels[i] = op.trueSuccessor().label();
                 }
             } else if (snippet.template.labels[i].name == XirLabel.FalseSuccessor) {
                 if (op.falseSuccessor() == null) {
@@ -78,7 +78,7 @@ public enum AMD64XirOpcode implements StandardOpcode.XirOpcode {
                     endLabel = new Label();
                     labels[i] = endLabel;
                 } else {
-                    labels[i] = op.falseSuccessor().label;
+                    labels[i] = op.falseSuccessor().label();
                 }
             }
         }

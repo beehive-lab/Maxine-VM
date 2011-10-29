@@ -24,7 +24,6 @@ package com.oracle.max.graal.compiler.alloc;
 
 import java.util.*;
 
-import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.lir.*;
 
 /**
@@ -132,8 +131,7 @@ final class EdgeMoveOptimizer {
             }
 
             assert pred.suxAt(0) == block : "invalid control flow";
-            assert predInstructions.get(predInstructions.size() - 1) instanceof LIRBranch : "branch must be LIROpBranch";
-            assert ((LIRBranch) predInstructions.get(predInstructions.size() - 1)).cond == null : "block must end with unconditional branch";
+            assert predInstructions.get(predInstructions.size() - 1).code == StandardOpcode.JUMP : "block must end with unconditional jump";
 
             if (predInstructions.get(predInstructions.size() - 1).info != null) {
                 // can not optimize instructions that have debug info
@@ -190,8 +188,7 @@ final class EdgeMoveOptimizer {
             return;
         }
 
-        assert instructions.get(instructions.size() - 1) instanceof LIRBranch : "branch must be LIROpBranch";
-        assert ((LIRBranch) instructions.get(instructions.size() - 1)).cond == null : "block must end with unconditional branch";
+        assert instructions.get(instructions.size() - 1).code == StandardOpcode.JUMP : "block must end with unconditional jump";
 
         if (instructions.get(instructions.size() - 1).info != null) {
             // cannot optimize instructions when debug info is needed
@@ -209,15 +206,6 @@ final class EdgeMoveOptimizer {
         // now it is guaranteed that the block ends with two branch instructions.
         // the instructions are inserted at the end of the block before these two branches
         int insertIdx = instructions.size() - 2;
-
-        if (GraalOptions.DetailedAsserts && false) { // not true anymore with guards
-            for (int i = insertIdx - 1; i >= 0; i--) {
-                LIRInstruction op = instructions.get(i);
-                if (op instanceof LIRBranch && ((LIRBranch) op).block() != null) {
-                    throw new Error("block with two successors can have only two branch instructions : error in " + block);
-                }
-            }
-        }
 
         // setup a list with the lir-instructions of all successors
         for (int i = 0; i < numSux; i++) {

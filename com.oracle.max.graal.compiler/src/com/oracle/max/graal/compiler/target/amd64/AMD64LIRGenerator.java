@@ -70,6 +70,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
         StandardOpcode.DIRECT_CALL = AMD64CallOpcode.DIRECT_CALL;
         StandardOpcode.INDIRECT_CALL = AMD64CallOpcode.INDIRECT_CALL;
         StandardOpcode.LABEL = AMD64StandardOpcode.LABEL;
+        StandardOpcode.JUMP = AMD64StandardOpcode.JUMP;
         StandardOpcode.RETURN = AMD64StandardOpcode.RETURN;
         StandardOpcode.XIR = AMD64XirOpcode.XIR;
     }
@@ -126,30 +127,12 @@ public class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    public void emitJump(LIRBlock block) {
-        append(JUMP.create(block));
-    }
-
-    @Override
-    public void emitJump(Label label, LIRDebugInfo info) {
+    public void emitJump(LabelRef label, LIRDebugInfo info) {
         append(JUMP.create(label, info));
     }
 
     @Override
-    public void emitBranch(CiValue left, CiValue right, Condition cond, boolean unorderedIsTrue, LIRBlock block) {
-        emitCompare(left, right);
-        switch (left.kind) {
-            case Int:
-            case Long:
-            case Object: append(BRANCH.create(cond, block)); break;
-            case Float:
-            case Double: append(FLOAT_BRANCH.create(cond, unorderedIsTrue, block)); break;
-            default: throw Util.shouldNotReachHere();
-        }
-    }
-
-    @Override
-    public void emitBranch(CiValue left, CiValue right, Condition cond, boolean unorderedIsTrue, Label label, LIRDebugInfo info) {
+    public void emitBranch(CiValue left, CiValue right, Condition cond, boolean unorderedIsTrue, LabelRef label, LIRDebugInfo info) {
         emitCompare(left, right);
         switch (left.kind) {
             case Int:
@@ -412,7 +395,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
     public void deoptimizeOn(Condition cond) {
         LIRDebugInfo info = stateFor(null);
         Label stubEntry = createDeoptStub(DeoptAction.InvalidateReprofile, info, cond);
-        append(BRANCH.create(cond, stubEntry, info));
+        append(BRANCH.create(cond, LabelRef.forLabel(stubEntry), info));
     }
 
     @Override
@@ -508,10 +491,10 @@ public class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    protected void emitTableSwitch(int lowKey, LIRBlock defaultTargets, LIRBlock[] targets, CiValue index) {
+    protected void emitTableSwitch(int lowKey, LabelRef defaultTarget, LabelRef[] targets, CiValue index) {
         // Making a copy of the switch value is necessary because jump table destroys the input value
         CiVariable tmp = emitMove(index);
-        append(TABLE_SWITCH.create(lowKey, defaultTargets, targets, tmp, newVariable(compilation.compiler.target.wordKind)));
+        append(TABLE_SWITCH.create(lowKey, defaultTarget, targets, tmp, newVariable(compilation.compiler.target.wordKind)));
     }
 
     @Override

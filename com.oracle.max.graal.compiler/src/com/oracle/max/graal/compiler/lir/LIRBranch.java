@@ -24,57 +24,39 @@ package com.oracle.max.graal.compiler.lir;
 
 import com.oracle.max.graal.nodes.calc.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiValue.Formatter;
 
 public abstract class LIRBranch extends LIRInstruction {
 
     /**
      * The condition when this branch is taken, or {@code null} if it is an unconditional branch.
      */
-    public Condition cond;
+    protected Condition cond;
 
     /**
      * For floating point branches only. True when the branch should be taken when the comparison is unordered.
      */
-    public boolean unorderedIsTrue;
+    protected boolean unorderedIsTrue;
 
     /**
-     * The target block of this branch.
+     * The target of this branch.
      */
-    private LIRBlock block;
+    protected LabelRef destination;
 
 
-    public LIRBranch(LIROpcode code, Condition cond, boolean unorderedIsTrue, LIRBlock block) {
-        super(code, CiValue.IllegalValue, block.debugInfo(), LIRInstruction.NO_OPERANDS);
+    public LIRBranch(LIROpcode code, Condition cond, boolean unorderedIsTrue, LabelRef destination, LIRDebugInfo info) {
+        super(code, CiValue.IllegalValue, info, LIRInstruction.NO_OPERANDS);
         this.cond = cond;
         this.unorderedIsTrue = unorderedIsTrue;
-        this.block = block;
+        this.destination = destination;
     }
 
-    public LIRBlock block() {
-        return block;
+    public LabelRef destination() {
+        return destination;
     }
 
-    public void negate(LIRBlock newBlock) {
-        block = newBlock;
+    public void negate(LabelRef newDestination) {
+        destination = newDestination;
         cond = cond.negate();
         unorderedIsTrue = !unorderedIsTrue;
-    }
-
-    @Override
-    public String operationString(Formatter operandFmt) {
-        StringBuilder buf = new StringBuilder(cond.operator).append(' ');
-        buf.append("[B").append(block.blockID()).append(']');
-        if (unorderedIsTrue) {
-            buf.append(" unorderedIsTrue");
-        }
-        return buf.toString();
-    }
-
-    public void substitute(LIRBlock oldBlock, LIRBlock newBlock) {
-        assert newBlock != null;
-        if (block == oldBlock) {
-            block = newBlock;
-        }
     }
 }
