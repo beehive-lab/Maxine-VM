@@ -144,10 +144,10 @@ public class AMD64ControlFlowOpcode {
             CiValue[] inputs = new CiValue[] {index};
             CiValue[] temps = new CiValue[] {index, scratch};
 
-            return new LIRInstruction(this, CiValue.IllegalValue, null, inputs, temps) {
+            return new AMD64LIRInstruction(this, CiValue.IllegalValue, null, inputs, temps) {
                 @Override
-                public void emitCode(TargetMethodAssembler tasm) {
-                    tableswitch(tasm, (AMD64MacroAssembler) tasm.asm, lowKey, defaultTarget, targets, tasm.asIntReg(input(0)), tasm.asLongReg(temp(1)));
+                public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
+                    tableswitch(tasm, masm, lowKey, defaultTarget, targets, tasm.asIntReg(input(0)), tasm.asLongReg(temp(1)));
                 }
 
                 @Override

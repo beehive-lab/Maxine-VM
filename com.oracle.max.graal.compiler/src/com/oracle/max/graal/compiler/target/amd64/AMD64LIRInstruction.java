@@ -41,7 +41,7 @@ public abstract class AMD64LIRInstruction extends LIRInstruction {
     }
 
     @Override
-    public void emitCode(TargetMethodAssembler tasm) {
+    public final void emitCode(TargetMethodAssembler tasm) {
         emitCode(tasm, (AMD64MacroAssembler) tasm.asm);
     }
 
