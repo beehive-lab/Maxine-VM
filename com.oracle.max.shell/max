@@ -74,7 +74,6 @@ cp_suffix=
 cp_prefix=
 remote=0
 trace_level=1
-inspector_trace_level=0
 cp_sep=":"
 while [ "${1:0:1}" = "-" ]; do
     case $1 in
@@ -331,6 +330,12 @@ function run() {
     "$@"
 }
 
+function exit_if_non_zero() {
+    if [ $1 -ne 0 ]; then
+        exit $1
+    fi
+}
+
 #=======================================
 # Utility to ensure $make points to a
 # GNU make executable
@@ -423,9 +428,7 @@ function run_build() {
         run $make;
         result=$?
         popd >/dev/null
-        if [ $result -ne 0 ]; then
-            exit $result
-        fi
+        exit_if_non_zero $result
     fi
 
     # Compile Java sources
@@ -469,9 +472,7 @@ function run_build() {
             fi
             rm $javac_input
             popd >/dev/null
-            if [ $result -ne 0 ]; then
-                exit $result
-            fi
+            exit_if_non_zero $result
         done
     done
 }
@@ -506,7 +507,7 @@ function run_clean() {
         fi
     done
 
-    exit $result
+    exit_if_non_zero $result
 }
 
 
@@ -548,7 +549,7 @@ function run_jttgen() {
         -scenario=target -run-scheme-package=all -native-tests $(echo jtt/* | sed 's:jtt/hotspot::g' | sed 's:jtt/fail::g')
     result=$?
     popd >/dev/null
-    exit $result
+    exit_if_non_zero $result
 }
 
 #=======================================
@@ -569,6 +570,29 @@ function run_jnigen() {
     fi
 
     run ${jvm_exe} -cp $(jmax classpath com.oracle.max.vm) com.sun.max.vm.jni.JniFunctionsGenerator
+    result=$?
+    exit_if_non_zero $result
+}
+
+#=======================================
+# 'jvmtigen' command
+#=======================================
+
+jvmtigen_help="(re)generate content in JVMTIFunctions.java from JVMTIFunctionsSource.java
+
+    Run JVMTIFunctionsGenerator.java to update the methods in JVMTIFunctions.java by adding
+    a prologue and epilogue to the @JNI_FUNCTION annotated methods in JVMTIFunctionsSource.java,
+    and implementing incoming argument checks.
+
+    The exit code is non-zero if JVMTIFunctions.java was modified."
+
+function run_jvmtigen() {
+    if [ $# -ne 0 ]; then
+        run_help jvmtigen
+        exit 1
+    fi
+
+    run ${jvm_exe} -cp $(jmax classpath com.oracle.max.vm) com.sun.max.vm.jvmti.JVMTIFunctionsGenerator
     result=$?
     exit $result
 }
@@ -591,7 +615,7 @@ function run_t1xgen() {
 
     run ${jvm_exe} -cp $(jmax classpath com.oracle.max.vm.ext.t1x) com.oracle.max.vm.ext.t1x.T1XTemplateGenerator
     result=$?
-    exit $result
+    exit_if_non_zero $result
 }
 
 #=======================================
@@ -604,9 +628,7 @@ copycheck_help="run copyright check on the Maxine sources (defined as being unde
 function run_copycheck() {
     run ${jvm_exe} -cp $(jmax classpath_noresolve com.oracle.max.base) com.sun.max.tools.CheckCopyright $@
     result=$?
-    if [ $result -ne 0 ]; then
-        exit $result
-    fi
+    exit_if_non_zero $result
  }
 
 #=======================================
@@ -689,9 +711,7 @@ function run_check() {
                 rm $checkstyle_out
             fi
             rm $javac_input
-            if [ $result -ne 0 ]; then
-                exit $result
-            fi
+            exit_if_non_zero $result
         done
         popd >/dev/null
     done
@@ -777,9 +797,7 @@ function run_javadoc() {
     $extra_javadoc_options $(<$package_list)
     result=$?
     rm $package_list
-    if [ $result -ne 0 ]; then
-        exit $result
-    fi
+    exit_if_non_zero $result
 }
 
 #=======================================
@@ -1304,9 +1322,9 @@ function run_inspect() {
         run sudo -E -p \
 "Debugging is a privileged operation on Mac OS X.
 Please enter your 'sudo' password:" \
-        ${jvm_exe} $system_props -cp $(jmax classpath)${inspector_cp} com.sun.max.ins.MaxineInspector -trace=$inspector_trace_level ${inspector_args} -a="$vm_args"
+        ${jvm_exe} $system_props -cp $(jmax classpath)${inspector_cp} com.sun.max.ins.MaxineInspector ${inspector_args} -a="$vm_args"
     else
-        run ${jvm_exe} $system_props -cp $(jmax classpath)${inspector_cp} com.sun.max.ins.MaxineInspector -trace=$inspector_trace_level ${inspector_args} -a="$vm_args"
+        run ${jvm_exe} $system_props -cp $(jmax classpath)${inspector_cp} com.sun.max.ins.MaxineInspector ${inspector_args} -a="$vm_args"
     fi
 }
 
@@ -1490,7 +1508,7 @@ function run_test() {
     run ${jvm_exe} -cp $(jmax classpath) test.com.sun.max.vm.MaxineTester -output-dir=maxine-tester\
         -refvm="${jvm}" "-refvm-args=${jvm_args}" "$@" 2>&1 | tee maxine-tester/console
     result=${PIPESTATUS[0]}
-    exit $result
+    exit_if_non_zero $result
 }
 
 #=======================================
@@ -1511,10 +1529,62 @@ gate_help="run the tests used to validate a push to the stable Maxine repository
 
     Use \"max gate -help\" to see what other options this command accepts."
 
-function run_gate() {
+
+function gate_copycheck() {
+    echo "Running copycheck"
+    if [ -z "$hg_node" ]; then
+        run_copycheck -modified -reporterrors=true -continueonerror
+    else
+        changeset_count=$(( $(hg tip --template '{rev}') - $(hg log -r $hg_node --template '{rev}') + 1 ))
+        run_copycheck -last=$changeset_count -reporterrors=true -continueonerror
+    fi
+}
+
+function gate_jttcheck() {
+    echo "Ensuring JavaTester harness is up to date"
+    run_jttgen
+    result=$?
+    if [ $result -ne 0 ]; then
+        echo "Updated JavaTesterRunScheme.java or JavaTesterTests.java in com.sun.max.vm.jtrun.all."
+        echo "To push your changes to the repository, these files need to be generated locally and checked in."
+        echo "The files can be generated by running: max jttgen"
+    fi
+    return $result
+}
+
+function gate_eclipseprojectscheck() {
+    echo "Ensuring Eclipse project files match auto-generated content"
+    run_eclipseprojects
+    result=$?
+    if [ $result -ne 0 ]; then
+        echo "One or more Eclipse project files differ from the content generated"
+        echo "by running 'max eclipseprojects'."
+    fi
+    return $result
+}
+function gate_canonicalprojectscheck() {
+    echo "Ensuring projects.properties files are canonicalized"
+    run_canonicalizeprojects
+    result=$?
+    if [ $result -ne 0 ]; then
+        echo "Rerun 'max canonicalizeprojects' and check in the modified projects.properties files."
+    fi
+    return $result
+}
+
+function gate_maxinetester() {
+    echo "Running MaxineTester..."
     run ${jvm_exe} -cp $(jmax classpath) test.com.sun.max.vm.MaxineTester -refvm="${jvm}" "-refvm-args=${jvm_args}" ${gate_presets} "$@"
 }
 
+function run_gate() {
+#    run_check &&
+    gate_copycheck &&
+    gate_jttcheck &&
+    gate_eclipseprojectscheck &&
+    gate_canonicalprojectscheck &&
+    gate_maxinetester "$@"
+}
 
 #=======================================
 # 'msgate' command
@@ -1527,6 +1597,20 @@ msgate_help="run the GC tests using the MS heap scheme"
 
 function run_msgate() {
     gate_presets=$msgate_presets
+    run_gate "$@"
+}
+
+#=======================================
+# 'msegate' command
+#=======================================
+
+msegate_usage="[options]"
+msegate_presets="-image-configs=jtt-c1xt1x,jtt-mset1xc1x -fail-fast -tests=output:GC+WeakReference"
+
+msegate_help="run the GC tests using the MSE heap scheme"
+
+function run_msegate() {
+    gate_presets=$msegate_presets
     run_gate "$@"
 }
 
@@ -1578,9 +1662,22 @@ function run_jrockitbm() {
 #=======================================
 
 projects_usage=""
-projects_help="show contents of all projects.properties files"
+projects_help="show all project properties derived from the projects.properties files"
 function run_projects() {
     run jmax properties
+}
+
+#=======================================
+# 'canonicalizeprojects' command
+#=======================================
+
+canonicalizeprojects_usage=""
+canonicalizeprojects_help="process all project.properties files to canonicalize the project dependencies
+
+    The exit code of this command reflects how many files were updated."
+    
+function run_canonicalizeprojects() {
+    run jmax canonicalizeprojects
 }
 
 #=======================================

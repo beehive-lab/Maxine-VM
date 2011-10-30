@@ -71,9 +71,9 @@ final class OverflowScanWithRescanMapState extends OverflowScanState {
     }
 
     /**
-     * Mark the object at the specified address grey.
+     * Mark the cell at the specified address grey.
      *
-     * @param cell
+     * @param cell pointer corresponding to the origin of an object.
      */
     @INLINE
     private void markObjectGrey(Pointer cell) {
@@ -87,6 +87,7 @@ final class OverflowScanWithRescanMapState extends OverflowScanState {
                 }
             }
         } else if (cell.greaterEqual(heapMarker.coveredAreaStart) && heapMarker.markGreyIfWhite(cell)) {
+            // Push only if not already marked grey. Avoid duplicates.
             heapMarker.markingStack.push(cell);
         }
     }

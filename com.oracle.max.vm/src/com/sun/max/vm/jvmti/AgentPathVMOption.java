@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,19 +20,25 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.heap.gcx;
+package com.sun.max.vm.jvmti;
 
-import com.sun.max.unsafe.*;
+import com.sun.max.annotate.*;
+import com.sun.max.vm.*;
 
-/**
- * Application heap interface to a GCX heap scheme.
- */
-public interface ApplicationHeap extends ResizableSpace {
-    Pointer allocate(Size size);
-    Pointer allocateTLAB(Size size);
-    boolean contains(Address address);
-    void doBeforeGC();
-    void doAfterGC();
-    Size freeSpace();
-    Size usedSpace();
+
+public class AgentPathVMOption extends NativeAgentVMOption {
+
+    private static final String optionValueTemplate = ":<pathname>[=<options>]";
+
+    @HOSTED_ONLY
+    public AgentPathVMOption() {
+        super("-agentpath", optionValueTemplate,
+              "load native agent library by full pathname");
+    }
+
+    @Override
+    public void printHelp() {
+        VMOptions.printHelpForOption(category(), prefix, optionValueTemplate, help);
+    }
+
 }

@@ -27,6 +27,7 @@ import static com.sun.max.vm.MaxineVM.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -62,12 +63,16 @@ public final class Memory {
     /**
      * @param size the size of the chunk of memory to be allocated
      * @return a pointer to the allocated chunk of memory
-     * @throws OutOfMemoryError if allocation failed
+     * @throws OutOfMemoryError if allocation failed or log message and VM termination if early in bootstrap
      */
     public static Pointer mustAllocate(Size size) throws OutOfMemoryError, IllegalArgumentException {
         final Pointer result = isHosted() ? BoxedMemory.allocate(size) : memory_allocate(size);
         if (result.isZero()) {
-            throw new OutOfMemoryError();
+            if (MaxineVM.isPrimordialOrPristine()) {
+                MaxineVM.reportPristineMemoryFailure("unknown", "mustAllocate", size);
+            } else {
+                throw OUT_OF_MEMORY_ERROR;
+            }
         }
         return result;
     }

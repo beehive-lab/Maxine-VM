@@ -27,6 +27,7 @@ import java.io.*;
 import com.sun.max.*;
 import com.sun.max.ide.*;
 import com.sun.max.platform.*;
+import com.sun.max.program.*;
 import com.sun.max.vm.*;
 
 /**
@@ -89,7 +90,12 @@ public abstract class Prototype {
             JDKInterceptor.setLibraryPath(libraryPath);
             isPathHacked = true;
         }
-        System.loadLibrary(name);
+        try {
+            System.loadLibrary(name);
+        } catch (UnsatisfiedLinkError e) {
+            String lib = System.mapLibraryName(name);
+            ProgramWarning.message("Could not load native library: " + lib);
+        }
     }
 
     private static boolean isHostedLoaded;

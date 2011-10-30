@@ -809,6 +809,9 @@ struct ExtendedJNINativeInterface_ jni_ExtendedNativeInterface = {
     /* jni_GetNumberOfArguments */ NULL
 };
 
+#define JVMTI_VERSION_MASK 0x30000000
+extern void* getJVMTIImpl(JNIEnv *env, int version);
+
 jint JNICALL jni_GetEnv(JavaVM *javaVM, void **penv, jint version) {
     TLA tla = tla_current();
     if (tla == 0) {
@@ -817,9 +820,15 @@ jint JNICALL jni_GetEnv(JavaVM *javaVM, void **penv, jint version) {
     }
     JNIEnv *env = (JNIEnv *) tla_addressOf(tla, JNI_ENV);
     c_ASSERT(env != NULL);
-    *penv = (void *) env;
-    /* TODO: check that requested version is supported */
-    return JNI_OK;
+    // JVMTI or JNI?
+    if (version & JVMTI_VERSION_MASK) {
+        *penv = getJVMTIImpl(env, version);
+        return *penv == NULL ? JNI_EVERSION : JNI_OK;
+    } else {
+        *penv = (void *) env;
+        /* TODO: check that requested JNI version is supported */
+        return JNI_OK;
+    }
 }
 
 jint JNICALL JNI_CreateJavaVM(JavaVM **vm, void **penv, void *args) {

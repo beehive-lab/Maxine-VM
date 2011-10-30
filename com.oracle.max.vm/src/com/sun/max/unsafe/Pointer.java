@@ -101,9 +101,10 @@ public abstract class Pointer extends Address implements Accessor {
         return asAddress().plus(addend).asPointer();
     }
 
+    @Override
     @INLINE
     public final Pointer plusWords(int nWords) {
-        return plus(nWords * Word.size());
+        return  asAddress().plusWords(nWords).asPointer();
     }
 
     @Override
@@ -124,9 +125,10 @@ public abstract class Pointer extends Address implements Accessor {
         return asAddress().minus(subtrahend).asPointer();
     }
 
+    @Override
     @INLINE
     public final Pointer minusWords(int nWords) {
-        return minus(nWords * Word.size());
+        return asAddress().minusWords(nWords).asPointer();
     }
 
     @Override

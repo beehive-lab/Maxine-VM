@@ -281,8 +281,18 @@ public abstract class Address extends Word {
     }
 
     @INLINE(override = true)
+    public Address  plusWords(int nWords) {
+        return plus(nWords * Word.size());
+    }
+
+    @INLINE(override = true)
     public Address minus(int subtrahend) {
         return asOffset().minus(subtrahend).asAddress();
+    }
+
+    @INLINE(override = true)
+    public Address minusWords(int nWords) {
+        return minus(nWords * Word.size());
     }
 
     @INLINE(override = true)

@@ -107,7 +107,7 @@ Java_com_sun_max_platform_Platform_nativeNumberOfSignals(JNIEnv *env, jclass c)
 }
 
 JNIEXPORT jstring JNICALL
-Java_com_sun_max_platform_Platform_jniHeaderFilePath(JNIEnv *env, jclass c)
+Java_com_sun_max_platform_Platform_nativeJniHeaderFilePath(JNIEnv *env, jclass c)
 {
 #ifndef JNI_H_PATH
 #error JNI_H_PATH should be defined
