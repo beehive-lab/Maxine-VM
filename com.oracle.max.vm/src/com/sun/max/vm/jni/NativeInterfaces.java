@@ -39,16 +39,19 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.jni.JniFunctionsGenerator.Customizer;
+import com.sun.max.vm.jvmti.*;
 import com.sun.max.vm.runtime.*;
 
 /**
- * This class encapsulates the Java side of the native interfaces such as JNI and JMM supported by the VM.
+ * This class encapsulates the Java side of the native interfaces such as JNI, JVMTI and JMM supported by the VM.
  */
 public final class NativeInterfaces {
 
     static {
-        checkGenerateSourcesInSync(JniFunctionsSource.class, JniFunctions.class);
-        checkGenerateSourcesInSync(JmmFunctionsSource.class, JmmFunctions.class);
+        checkGenerateSourcesInSync(JniFunctionsSource.class, JniFunctions.class, null);
+        checkGenerateSourcesInSync(JmmFunctionsSource.class, JmmFunctions.class, null);
+        checkGenerateSourcesInSync(JVMTIFunctionsSource.class, JVMTIFunctions.class, new JVMTIFunctionsGenerator.JVMTICustomizer());
     }
 
     private NativeInterfaces() {
@@ -155,6 +158,11 @@ public final class NativeInterfaces {
         return jmmFunctionActors;
     }
 
+    @HOSTED_ONLY
+    private static StaticMethodActor[] checkAgainstJvmtiHeaderFile(StaticMethodActor[] jvmtiFunctionActors) {
+        return jvmtiFunctionActors;
+    }
+
     /**
      * Parses a given file for declarations of functions in a VM native interface.
      * The declaration of such functions match this pattern:
@@ -194,15 +202,18 @@ public final class NativeInterfaces {
 
     private static final StaticMethodActor[] jniFunctionActors = checkAgainstJniHeaderFile(getNativeInterfaceFunctionActors(JniFunctions.class));
     private static final StaticMethodActor[] jmmFunctionActors = checkAgainstJmmHeaderFile(getNativeInterfaceFunctionActors(JmmFunctions.class));
+    private static final StaticMethodActor[] jvmtiFunctionActors = checkAgainstJvmtiHeaderFile(getNativeInterfaceFunctionActors(JVMTIFunctions.class));
 
     private static final CriticalMethod[] jniFunctions = toCriticalMethods(jniFunctionActors);
     private static final CriticalMethod[] jmmFunctions = toCriticalMethods(jmmFunctionActors);
+    private static final CriticalMethod[] jvmtiFunctions = toCriticalMethods(jvmtiFunctionActors);
 
     public static CriticalMethod[] jniFunctions() {
         return jniFunctions;
     }
 
     private static Pointer jniEnv = Pointer.zero();
+    private static Pointer jvmtiEnv = Pointer.zero();
 
     /**
      * Get the address of the table of JNI functions.
@@ -219,11 +230,13 @@ public final class NativeInterfaces {
      *
      * @param jniEnv pointer to the JNI function table
      * @param jmmInterface pointer to the JMM function table
+     * @param jvmtiInterface pointer to the JVMTI function table
      */
-    public static void initialize(Pointer jniEnv, Pointer jmmInterface) {
+    public static void initialize(Pointer jniEnv, Pointer jmmInterface, Pointer jvmtiInterface) {
         NativeInterfaces.jniEnv = jniEnv;
         initFunctionTable(jniEnv, jniFunctions, jniFunctionActors);
         initFunctionTable(jmmInterface, jmmFunctions, jmmFunctionActors);
+        initFunctionTable(jvmtiInterface, jvmtiFunctions, jvmtiFunctionActors);
     }
 
     private static void initFunctionTable(Pointer functionTable, CriticalMethod[] functions, StaticMethodActor[] functionActors) {
@@ -234,21 +247,21 @@ public final class NativeInterfaces {
                 if (!functionTable.getWord(i).isZero()) {
                     Log.print("Overwriting value ");
                     Log.print(functionTable.getWord(i));
-                    Log.print(" in JNI/JMM function table at index ");
+                    Log.print(" in JNI/JMM/JVMTI function table at index ");
                     Log.print(i);
                     Log.print(" with function ");
                     Log.printMethod(function.classMethodActor, true);
-                    FatalError.crash("Multiple implementations for a JNI/JMM function");
+                    FatalError.crash("Multiple implementations for a JNI/JMM/JVMTI function");
                 }
                 functionTable.setWord(i, functionPointer);
             } else {
                 if (functionTable.getWord(i).isZero()) {
-                    Log.print("Entry in JNI/JMM function table at index ");
+                    Log.print("Entry in JNI/JMM/JVMTI function table at index ");
                     Log.print(i);
                     Log.println(" for ");
                     Log.printMethod(functionActors[i], false);
                     Log.println(" has no implementation");
-                    FatalError.crash("Missing implementation for JNI/JMM function");
+                    FatalError.crash("Missing implementation for JNI/JMM/JVMTI function");
                 }
             }
         }
@@ -277,13 +290,13 @@ public final class NativeInterfaces {
      * Determines if information should be displayed about use of native methods and other Java Native Interface activity.
      */
     public static boolean verbose() {
-        return verboseOption.verboseJNI || ClassMethodActor.TraceJNI;
+        return verboseOption.verboseJNI || JniFunctions.TraceJNI;
     }
 
     @HOSTED_ONLY
-    private static void checkGenerateSourcesInSync(Class source, Class target) {
+    private static void checkGenerateSourcesInSync(Class source, Class target, Customizer customizer) {
         try {
-            if (JniFunctionsGenerator.generate(true, source, target)) {
+            if (JniFunctionsGenerator.generate(true, source, target, customizer == null ? new Customizer() : customizer)) {
                 String thisFile = target.getSimpleName() + ".java";
                 String sourceFile = source.getSimpleName() + ".java";
                 FatalError.unexpected(String.format("%n%n" + thisFile +

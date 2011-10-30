@@ -33,6 +33,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.debug.*;
+import com.sun.max.vm.intrinsics.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
@@ -53,7 +54,6 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public static final String TLAB_MARK_THREAD_LOCAL_NAME = "TLAB_MARK";
     public static final String TLAB_DISABLED_THREAD_LOCAL_NAME = "TLAB_DISABLED";
 
-
     // TODO: clean this up. Used just for testing with and without inlined XIR tlab allocation.
     public static boolean GenInlinedTLABAlloc = true;
 
@@ -67,6 +67,10 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     @INLINE
     public static boolean traceTLAB() {
         return TraceTLAB;
+    }
+
+    public static void setTraceTLAB(boolean b) {
+        TraceTLAB = b;
     }
 
     private static boolean PrintTLABStats;
@@ -332,6 +336,9 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
     /**
      * Refill the TLAB with a chunk of space allocated from the heap.
+     * This basically sets the TLAB's {@link #TLAB_MARK} and {@link #TLAB_TOP} thread local variables to the
+     * bounds of the allocated space.
+     * Heap schemes may overrides a {@link #doBeforeTLABRefill(Pointer, Pointer)}
      * The size may be different from the initial tlab size.
      * @param tlab
      * @param size
@@ -391,10 +398,17 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
     /**
      * Action to perform on a TLAB before its refill with another chunk of heap.
-     * @param etla
+     * Typically used for statistics gathering or formatting the leftover of the TLAB to enable heap walk.
+     *
+     * @param tlabAllocationMark allocation mark of the TLAB before the refill
+     * @param tlabEnd end of the TLAB before the refill
      */
     protected abstract void doBeforeTLABRefill(Pointer tlabAllocationMark, Pointer tlabEnd);
 
+    @NEVER_INLINE
+    private static void reportAllocatedCell(Pointer cell, Size size) {
+        Log.print(" tlabAllocate("); Log.print(size.toLong()); Log.print(") = "); Log.println(cell);
+    }
     /**
      * The fast, inline path for allocation.
      *
@@ -417,6 +431,10 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             return slowPathAllocate(size, etla, oldAllocationMark, tlabEnd);
         }
         TLAB_MARK.store(etla, end);
+
+        if (MaxineVM.isDebug()) {
+            TLABLog.record(etla, Pointer.fromLong(Infopoints.here()), cell, size);
+        }
         return cell;
     }
 
@@ -425,6 +443,16 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         return slowPathAllocate(size, etla, TLAB_MARK.load(etla), TLAB_TOP.load(etla));
     }
 
+    /**
+     * Handling of custom allocation by sub-classes.
+     * The normal allocation path. may be escaped by temporarily enabling use of a custom allocator identified with an opaque identifier.
+     * The default code path retrieve this custom allocator identifier and pass it to the customAllocate method, along with the requested size.
+     *
+     * @param customAllocator identifier of the enabled custom allocator
+     * @param size number of bytes requested to the custom allocator
+     * @param adjustForDebugTag provision space for a debug tag if true
+     * @return pointer a the custom allocated space of the requested size
+     */
     protected abstract Pointer customAllocate(Pointer customAllocator, Size size, boolean adjustForDebugTag);
 
     @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")

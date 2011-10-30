@@ -156,7 +156,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
 
         theHeapRegionManager().initialize(firstUnusedByteAddress, maxSize, HeapRegionInfo.class);
         try {
-            enableCustomAllocation(theHeapRegionManager().bootAllocator());
+            enableCustomAllocation(theHeapRegionManager().allocator());
             final MemoryRegion heapBounds = theHeapRegionManager().bounds();
             final Size applicationHeapMaxSize = heapBounds.size().minus(theHeapRegionManager().size());
 
@@ -200,7 +200,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
         } finally {
             disableCustomAllocation();
         }
-        theHeapRegionManager().verifyAfterInitialization(heapMarker);
+        theHeapRegionManager().checkOutgoingReferences();
     }
 
     @Override
@@ -230,6 +230,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
             allocatedSinceLastGC[logCursor] = usedSpaceBefore.minus(usedSpaceAfterLastGC).toLong();
             if (logCursor == 15) {
                 long c = collectionCount - 15;
+                Log.print("#GC, bytes reclaimed: ");
                 for (int i = 0; i <= 15; i++) {
                     Log.print(c + i); Log.print(' '); Log.print(allocatedSinceLastGC[i]); Log.print(' ');
                 }
@@ -295,15 +296,14 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
     static class TLABFiller extends ResetTLAB {
         @Override
         protected void doBeforeReset(Pointer etla, Pointer tlabMark, Pointer tlabTop) {
+            if (MaxineVM.isDebug() && RegionTable.theRegionTable().regionID(tlabMark) == FirstFitMarkSweepHeap.DebuggedRegion) {
+                TLABLog.doOnRetireTLAB(etla);
+            }
             if (tlabMark.greaterThan(tlabTop)) {
                 // Already filled-up (mark is at the limit).
                 return;
             }
-            // Before filling the current TLAB chunk, save link to next pointer.
-            final Pointer nextChunk = tlabTop.getWord().asPointer();
             fillTLABWithDeadObject(tlabMark, tlabTop);
-            // FIXME: we shouldn't have to do the following. Heap walker should be able to walk over HeapFreeChunk.
-            HeapFreeChunk.makeParsable(nextChunk);
         }
     }
 
@@ -425,8 +425,8 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
             FatalError.check(HeapFreeChunk.getFreechunkSize(chunk).greaterEqual(theHeap.minReclaimableSpace()), "TLAB chunk must be greater than min reclaimable space");
         }
         Size chunkSize =  HeapFreeChunk.getFreechunkSize(chunk);
-        Size effectiveSize = chunkSize.minus(TLAB_HEADROOM);
         Address nextChunk = HeapFreeChunk.getFreeChunkNext(chunk);
+        Size effectiveSize = chunkSize.minus(TLAB_HEADROOM);
         // Zap chunk data to leave allocation area clean.
         Memory.clearWords(chunk, effectiveSize.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt());
         chunk.plus(effectiveSize).setWord(nextChunk);
@@ -476,9 +476,12 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
      */
     private void allocateAndRefillTLAB(Pointer etla, Size tlabSize) {
         Pointer tlab = theHeap.allocateTLAB(tlabSize);
+        if (MaxineVM.isDebug() && RegionTable.theRegionTable().regionID(tlab) == FirstFitMarkSweepHeap.DebuggedRegion) {
+            TLABLog.doOnRefillTLAB(etla, tlabSize, true);
+        }
         Size effectiveSize = setNextTLABChunk(tlab);
 
-        if (Heap.traceAllocation()) {
+        if (Heap.traceAllocation() || traceTLAB()) {
             final boolean lockDisabledSafepoints = Log.lock();
             Size realTLABSize = effectiveSize.plus(TLAB_HEADROOM);
             Log.printCurrentThread(false);
@@ -559,6 +562,9 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
                 // Size would fit in a new tlab, but the policy says we shouldn't refill the tlab yet, so allocate directly in the heap.
                 return theHeap.allocate(size);
             }
+        }
+        if (MaxineVM.isDebug() && RegionTable.theRegionTable().regionID(tlabMark) == FirstFitMarkSweepHeap.DebuggedRegion) {
+            TLABLog.doOnRetireTLAB(etla);
         }
         // Refill TLAB and allocate (we know the request can be satisfied with a fresh TLAB and will therefore succeed).
         allocateAndRefillTLAB(etla, nextTLABSize);

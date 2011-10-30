@@ -4,19 +4,19 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.base"/>
-	<classpathentry exported="true" kind="lib" path="/com.oracle.max.vm/classes"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.cri"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.criutils"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.asm"/>
+	<classpathentry exported="true" kind="lib" path="/com.oracle.max.vm/classes"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.vm"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.graal.graph"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.graal.nodes"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.graal.extensions"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.graal.graphviz"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.graal.compiler"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.asmdis"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.hcfdis"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.vm.ext.maxri"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.graal.extensions"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.graal.graphviz"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.graal.compiler"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.vm.ext.graal"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.c1x"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/com.oracle.max.vm.ext.c1x"/>

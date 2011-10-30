@@ -24,6 +24,7 @@ package com.sun.max.vm.heap.gcx;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
@@ -74,8 +75,13 @@ public class AfterMarkSweepBootHeapVerifier<T extends AfterMarkSweepBootHeapVeri
         }
     }
 
+    private Pointer visitedRootLocation;
+
     @Override
     final public void visit(Pointer pointer, int wordIndex) {
+        if (MaxineVM.isDebug())  {
+            visitedRootLocation = pointer.plusWords(wordIndex);
+        }
         checkExternalRoot(Layout.originToCell(pointer.getReference(wordIndex).toOrigin()));
     }
 

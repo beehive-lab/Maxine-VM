@@ -333,11 +333,22 @@ public class Classpath {
 
     /**
      * Gets a classpath corresponding to the class search order used by the boot class loader.
-     */
+     * */
     public static Classpath bootClassPath() {
-        final String value = System.getProperty("sun.boot.class.path");
+        return bootClassPath(null);
+    }
+
+    /**
+     * Gets a classpath corresponding to the class search order used by the boot class loader.
+     * @param extraPath an additional path to append to the system property or null if none
+     */
+    public static Classpath bootClassPath(String extraPath) {
+        String value = System.getProperty("sun.boot.class.path");
         if (value == null) {
             return EMPTY;
+        }
+        if (extraPath != null) {
+            value = value + File.pathSeparator + extraPath;
         }
         return new Classpath(value.split(File.pathSeparator));
     }

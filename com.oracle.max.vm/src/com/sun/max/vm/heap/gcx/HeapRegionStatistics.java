@@ -96,9 +96,9 @@ public final class HeapRegionStatistics {
      */
     public void add(HeapRegionInfo rinfo) {
         if (MaxineVM.isDebug()) {
-            FatalError.check(rinfo.hasFreeChunks() || (rinfo.isEmpty() && rinfo.freeSpace == 0) || (rinfo.isFull() && rinfo.freeSpace == 0), "Invalid RegionInfo");
+            FatalError.check(rinfo.hasFreeChunks() || (rinfo.isEmpty() && rinfo.freeBytesInChunks() == 0) || (rinfo.isFull() && rinfo.freeBytesInChunks() == 0), "Invalid RegionInfo");
         }
-        regionsFragmentation[rinfo.numFreeChunks]++;
+        regionsFragmentation[rinfo.numFreeChunks()]++;
         if (rinfo.hasFreeChunks()) {
             freeSpaceSizes[sizeBin(rinfo.freeBytesInChunks())]++;
         } else if (rinfo.isEmpty()) {

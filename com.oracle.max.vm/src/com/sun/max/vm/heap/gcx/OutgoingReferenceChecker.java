@@ -30,8 +30,9 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Checker of out of heap account references.
- * Reference to the boot regions aren't counted.
+ * A simple tool that counts (and print to the log) references that escapes a particular heap account.
+ * References to the boot image aren't counted as escaping.
+ * The tools is currently used to verify that no references escape the {@link HeapRegionManager}'s heap account.
  */
 class OutgoingReferenceChecker extends PointerIndexVisitor implements CellVisitor {
     private final Object accountOwner;

@@ -29,14 +29,13 @@ import static com.sun.max.vm.heap.gcx.HeapRegionState.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.reference.*;
 /**
- * Descriptor of heap region.
+ * Descriptor of a heap region.
  * The information recorded is carefully crafted so that a zero-filled HeapRegionInfo
  * instance represents the state of a free region, not allocated to any heap account.
- * This avoids costly initialization of the {@link RegionTable} entries at startup.
+ * This avoids initialization of the {@link RegionTable} entries at startup.
  */
 public class HeapRegionInfo {
 
@@ -139,6 +138,33 @@ public class HeapRegionInfo {
     @INSPECTED
     int flags; // NOTE: don't want to use an EnumSet here. Don't want a long for storing flags; and want the flags embedded in the heap region info.
 
+    /**
+     * Offset (in bytes) relative to the beginning of a region to the first free chunk of the region.
+     * Zero if the region is empty.
+     */
+    @INSPECTED
+    private int firstFreeChunkOffset;
+    /**
+     * Number of free chunks. Zero if the region is empty.
+     */
+    @INSPECTED
+    private int numFreeChunks;
+    /**
+     * Space available for allocation, in bytes. This excludes dark matter than cannot be used
+     * for allocation. Zero if the region is empty.
+     */
+    private int freeSpace;
+    /**
+     * Amount of live data, in bytes. Zero if the region is empty.
+     * Can be used  with {@link #freeSpace} to determine dark matter.
+     */
+    private int liveData;
+
+    /**
+     * Owner of the region described by {@link HeapRegionInfo} instance.
+     */
+    HeapAccountOwner owner;
+
     public final boolean isEmpty() {
         return flags == EMPTY_REGION.flags;
     }
@@ -176,57 +202,12 @@ public class HeapRegionInfo {
     }
 
     /**
-     * Offset to the next HeapRegionInfo. This takes into account heap padding and alignment issue.
-     * HeapRegionInfo objects are allocated in a single contiguous area so they can be accessed as a single
-     */
-    private static final Size OFFSET_TO_NEXT = ClassActor.fromJava(HeapFreeChunk.class).dynamicHub().tupleSize;
-
-    /**
-     * Index, in number of words relative to the beginning of a region to the first free chunk of the region.
-     * Zero if the region is empty.
-     */
-    @INSPECTED
-    short firstFreeChunkIndex;
-    /**
-     * Number of free chunks. Zero if the region is empty.
-     */
-    @INSPECTED
-    short numFreeChunks;
-    /**
-     * Space available for allocation, in words. This excludes dark matter than cannot be used
-     * for allocation. Zero if the region is empty.
-     */
-    short freeSpace;
-    /**
-     * Amount of live data, in words. Zero if the region is empty.
-     * Can be used  with {@link #freeSpace} to determine dark matter.
-     */
-    short liveData;
-
-    HeapAccountOwner owner;
-
-    private int firstFreeChunkOffset() {
-        return firstFreeChunkIndex << Word.widthValue().log2numberOfBytes;
-    }
-    public final int liveInWords() {
-        return liveData;
-    }
-
-    public final int darkMatterInWords() {
-        return regionSizeInWords - (liveData + freeSpace);
-    }
-
-    public final int freeWordsInChunks() {
-        return freeSpace;
-    }
-
-    /**
      * Total number of free bytes in free chunks. This is only relevant for region with at least one free chunk.
      * Empty regions have a free bytes count of zero.
      * @return
      */
     public final int freeBytesInChunks() {
-        return freeSpace << Word.widthValue().log2numberOfBytes;
+        return freeSpace;
     }
 
     public final int freeBytes() {
@@ -272,17 +253,15 @@ public class HeapRegionInfo {
 
     /**
      * Return the address to the first chunk of space available for allocation.
-     * The chunk is formatted as a {@link HeapFreeChunk} only if the region has its {@link Flag#HAS_FREE_CHUNK}
-     * set.
+     * The chunk is formatted as a {@link HeapFreeChunk} only if the region has its {@link Flag#HAS_FREE_CHUNK} set.
      * @return Address to the first chunk of space available for allocation, or zero if the region is full.
      */
     final Address firstFreeBytes() {
-        return isFull() ? Address.zero() : regionStart().plus(firstFreeChunkOffset());
+        return isFull() ? Address.zero() : regionStart().plus(firstFreeChunkOffset);
     }
 
-    @INLINE
-    private int indexInRegion(Address address) {
-        return address.and(regionAlignmentMask).unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
+    private int offsetInRegion(Address address) {
+        return address.and(regionAlignmentMask).toInt();
     }
 
     /**
@@ -296,19 +275,14 @@ public class HeapRegionInfo {
     private void clear() {
         liveData = 0;
         numFreeChunks  = 0;
-        firstFreeChunkIndex = 0;
+        firstFreeChunkOffset = 0;
         freeSpace = 0;
     }
 
-    final void setFreeChunks(Address firstChunkAddress, short numFreeWords, short numChunks) {
-        firstFreeChunkIndex = (short) indexInRegion(firstChunkAddress);
-        numFreeChunks = numChunks;
-        freeSpace = numFreeWords;
-    }
-
     final void setFreeChunks(Address firstChunkAddress, int numBytes, int numChunks) {
-        final short numFreeWords = (short) (numBytes >>> Word.widthValue().log2numberOfBytes);
-        setFreeChunks(firstChunkAddress, numFreeWords, (short) numChunks);
+        firstFreeChunkOffset = offsetInRegion(firstChunkAddress);
+        numFreeChunks = numChunks;
+        freeSpace = numBytes;
     }
 
     final void setFreeChunks(Address firstChunkAddress, Size numBytes, int numChunks) {
@@ -316,7 +290,7 @@ public class HeapRegionInfo {
     }
 
     final void clearFreeChunks() {
-        firstFreeChunkIndex = 0;
+        firstFreeChunkOffset = 0;
         numFreeChunks = 0;
         freeSpace = 0;
     }

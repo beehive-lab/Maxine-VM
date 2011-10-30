@@ -34,7 +34,7 @@ import com.oracle.max.elf.ELFSymbolTable.*;
  */
 public class ELFSymbolLookup {
 
-    private Map<String, Entry> symbolMap = new HashMap<String, Entry>();
+    public final  Map<String, List<Entry>> symbolMap = new HashMap<String, List<Entry>>();
 
     public ELFSymbolLookup(File elfFile) throws IOException, FormatError {
         RandomAccessFile raf = null;
@@ -73,8 +73,13 @@ public class ELFSymbolLookup {
             Entry[] symbolTableEntries = symbolTable.entries;
             for (int i = 0; i < symbolTableEntries.length; i++) {
                 Entry symbolTableEntry = symbolTableEntries[i];
-                if (!"".equals(symbolTableEntry.getName() != null ? symbolTableEntry.getName() : "")) {
-                    symbolMap.put(symbolTableEntry.getName(), symbolTableEntry);
+                if (symbolTableEntry.getName() != null && !symbolTableEntry.getName().equals("")) {
+                    List<Entry> oldEntryList = symbolMap.get(symbolTableEntry.getName());
+                    if (oldEntryList == null) {
+                        oldEntryList = new LinkedList<Entry>();
+                        symbolMap.put(symbolTableEntry.getName(), oldEntryList);
+                    }
+                    oldEntryList.add(symbolTableEntry);
                 }
             }
         }
@@ -87,7 +92,8 @@ public class ELFSymbolLookup {
      *         Integer if the ELF file is 32 bit, its a Long if the file is 64 bit
      */
     public Number lookupSymbolValue(String name) {
-        Entry symbolTableEntry = symbolMap.get(name);
+        List<Entry> symbolTableEntryList = symbolMap.get(name);
+        Entry symbolTableEntry = symbolTableEntryList.get(0);
         return symbolTableEntry != null ? symbolTableEntry.is32Bit() ? ((Entry32) symbolTableEntry).st_value : ((Entry64) symbolTableEntry).st_value : null;
     }
 

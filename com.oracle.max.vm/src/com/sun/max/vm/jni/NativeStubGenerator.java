@@ -113,7 +113,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
     private static final ClassMethodRefConstant resetHandlesTop = createClassMethodConstant(VmThread.class, makeSymbol("resetJniHandlesTop"), int.class);
     private static final ClassMethodRefConstant logPrintln_String = createClassMethodConstant(Log.class, makeSymbol("println"), String.class);
     private static final ClassMethodRefConstant logPrint_String = createClassMethodConstant(Log.class, makeSymbol("print"), String.class);
-    private static final FieldRefConstant traceJNI = createFieldConstant(ClassMethodActor.class, makeSymbol("TraceJNI"));
+    private static final FieldRefConstant traceJNI = createFieldConstant(JniFunctions.class, makeSymbol("TraceJNI"));
     private static final ClassMethodRefConstant link = createClassMethodConstant(NativeFunction.class, makeSymbol("link"));
     private static final ClassMethodRefConstant nativeCallPrologue = createClassMethodConstant(Snippets.class, makeSymbol("nativeCallPrologue"), NativeFunction.class);
     private static final ClassMethodRefConstant nativeCallPrologueForC = createClassMethodConstant(Snippets.class, makeSymbol("nativeCallPrologueForC"), NativeFunction.class);
@@ -122,6 +122,9 @@ public final class NativeStubGenerator extends BytecodeAssembler {
     private static final StringConstant threadLabelPrefix = PoolConstantFactory.createStringConstant("[Thread \"");
 
     private void generateCode(boolean isCFunction, boolean isStatic, ClassActor holder, SignatureDescriptor signatureDescriptor) {
+        if (holder.name().contains("JVMTI")) {
+            System.console();
+        }
         final TypeDescriptor resultDescriptor = signatureDescriptor.resultDescriptor();
         final Kind resultKind = resultDescriptor.toKind();
         final StringBuilder nativeFunctionDescriptor = new StringBuilder("(");
@@ -224,13 +227,17 @@ public final class NativeStubGenerator extends BytecodeAssembler {
         ldc(nf);
         invokevirtual(link, 1, 1);
 
-        ldc(nf);
-        invokestatic(!isCFunction ? nativeCallPrologue : nativeCallPrologueForC, 1, 0);
+        if (!classMethodActor.isCFunctionNoLatch()) {
+            ldc(nf);
+            invokestatic(!isCFunction ? nativeCallPrologue : nativeCallPrologueForC, 1, 0);
+        }
 
         // Invoke the native function
         callnative(SignatureDescriptor.create(nativeFunctionDescriptor.append(')').append(nativeResultDescriptor).toString()), nativeFunctionArgSlots, nativeResultDescriptor.toKind().stackSlots);
 
-        invokestatic(!isCFunction ? nativeCallEpilogue : nativeCallEpilogueForC, 0, 0);
+        if (!classMethodActor.isCFunctionNoLatch()) {
+            invokestatic(!isCFunction ? nativeCallEpilogue : nativeCallEpilogueForC, 0, 0);
+        }
 
         if (!isCFunction) {
             // Unwrap a reference result from its enclosing JNI handle. This must be done
@@ -268,7 +275,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
      * Generates the code to trace a call to a native function from a native stub.
      */
     private void verboseJniEntry() {
-        if (ClassMethodActor.TraceJNI) {
+        if (JniFunctions.TraceJNI) {
             if (MaxineVM.isHosted()) {
                 // Stubs generated while bootstrapping need to test the "-XX:+TraceJNI" VM option
                 getstatic(traceJNI);
@@ -292,7 +299,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
      * Generates the code to trace a return to a native stub from a native function.
      */
     private void verboseJniExit() {
-        if (ClassMethodActor.TraceJNI) {
+        if (JniFunctions.TraceJNI) {
             if (MaxineVM.isHosted()) {
                 // Stubs generated while bootstrapping need to test the "-XX:+TraceJNI" VM option
                 getstatic(traceJNI);
