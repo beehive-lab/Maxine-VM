@@ -84,6 +84,8 @@ class Env(ArgumentParser):
                           metavar='<path>', 
                           help='base directory of the Maxine code base')
         
+    def parse_cmd_line(self):
+        
         self.add_argument('commandAndArgs', nargs=REMAINDER, metavar='command args...')
         
         self.parse_args(namespace=self)
@@ -277,8 +279,9 @@ def abort(code):
     """ raises a SystemExit exception with the provided exit code """
     raise SystemExit(code)
     
-def main():
-    env = Env()
+def main(envClass):
+    env = envClass()
+    env.parse_cmd_line()
 
     if len(env.commandAndArgs) == 0:
         env.print_help()
@@ -301,5 +304,5 @@ def main():
     
 #This idiom means the below code only runs when executed from command line
 if __name__ == '__main__':
-    main()
+    main(Env)
     
