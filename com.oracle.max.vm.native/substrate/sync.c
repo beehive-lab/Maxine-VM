@@ -41,6 +41,11 @@ void nativeMutexInitialize(Mutex mutex) {
 }
 
 JNIEXPORT jboolean JNICALL
+Java_com_sun_max_vm_runtime_OSMonitor_nativeMutexLock(JNIEnv *env, jclass c, Mutex mutex) {
+    return mutex_enter(mutex) == 0;
+}
+
+JNIEXPORT jboolean JNICALL
 Java_com_sun_max_vm_monitor_modal_sync_nat_NativeMutex_nativeMutexLock(JNIEnv *env, jclass c, Mutex mutex) {
 	return mutex_enter(mutex) == 0;
 }
@@ -58,8 +63,31 @@ void nativeConditionInitialize(Condition condition) {
 }
 
 JNIEXPORT jboolean JNICALL
+Java_com_sun_max_vm_runtime_OSMonitor_nativeConditionWait(JNIEnv *env, jclass c, Mutex mutex, Condition condition, jlong timeoutMilliSeconds) {
+    return condition_timedWait(condition, mutex, timeoutMilliSeconds);
+}
+
+JNIEXPORT jboolean JNICALL
 Java_com_sun_max_vm_monitor_modal_sync_nat_NativeConditionVariable_nativeConditionWait(JNIEnv *env, jclass c, Mutex mutex, Condition condition, jlong timeoutMilliSeconds) {
 	return condition_timedWait(condition, mutex, timeoutMilliSeconds);
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_sun_max_vm_runtime_OSMonitor_nativeTakeLockAndWait(JNIEnv *env, jclass c, Mutex mutex, Condition condition) {
+    c_ASSERT(mutex_enter(mutex) == 0);
+    jboolean result = condition_wait(condition, mutex);
+    c_ASSERT(mutex_exit(mutex) == 0);
+    c_ASSERT(result == true);
+    return result;
+}
+
+jboolean nativeTakeLockAndNotify(Mutex mutex, Condition condition) {
+    if (mutex_try_enter(mutex) != 0) {
+        return false;
+    }
+    c_ASSERT(condition_notify(condition) == true);
+    c_ASSERT(mutex_exit(mutex) == 0);
+    return true;
 }
 
 jboolean nativeConditionNotify(Condition condition, jboolean all) {

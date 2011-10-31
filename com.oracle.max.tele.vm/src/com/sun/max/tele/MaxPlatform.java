@@ -80,6 +80,16 @@ public interface MaxPlatform {
             return OS.valueOf(name.toUpperCase());
         }
 
+        public String libSuffix() {
+            if (this == DARWIN) {
+                return "dylib";
+            } else if (this == WINDOWS) {
+                return "dll";
+            } else {
+                return "so";
+            }
+        }
+
         @Override
         public final String toString() {
             return name;

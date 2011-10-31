@@ -104,6 +104,10 @@ public class MarkingStack {
         return topIndex == 0;
     }
 
+    final void reset() {
+        topIndex = 0;
+    }
+
     void push(Pointer cell) {
         if (MaxineVM.isDebug()) {
             final Pointer origin = Layout.cellToOrigin(cell);

@@ -41,6 +41,7 @@ public class AfterMarkSweepVerifier extends PointerIndexVisitor implements CellV
     long freeChunksByteCount;
     long liveDataByteCount;
     Pointer visitedCellOrigin;
+    int visitedIndex;
     final AfterMarkSweepBootHeapVerifier bootHeapVerifier;
 
     public AfterMarkSweepVerifier(TricolorHeapMarker heapMarker, Sweeper msVerification, AfterMarkSweepBootHeapVerifier bootHeapVerifier) {
@@ -49,20 +50,28 @@ public class AfterMarkSweepVerifier extends PointerIndexVisitor implements CellV
         this.bootHeapVerifier = bootHeapVerifier;
     }
 
+    private void printMark(Pointer origin) {
+        final int bitIndex = heapMarker.bitIndexOf(origin);
+        Log.print("bit index = ");
+        Log.print(bitIndex);
+        Log.print(" at bitmap word # ");
+        Log.print(heapMarker.bitmapWordIndex(origin));
+        Log.print(", marked ");
+        Log.print(heapMarker.colorName(bitIndex));
+    }
+
     @INLINE
     private void visit(Pointer origin) {
         if (!origin.isZero()) {
             final boolean inDeadSpace = HeapFreeChunk.isInDeadSpace(origin);
             if (inDeadSpace) {
-                Log.print("\n\nCell @");
+                Log.print("\n\nvisited Cell @");
                 Log.print(visitedCellOrigin);
-                Log.print("[ bit index = ");
-                Log.print(heapMarker.bitIndexOf(visitedCellOrigin));
-                Log.print(" at bitmap word # ");
-                Log.print(heapMarker.bitmapWordIndex(visitedCellOrigin));
-                Log.print("] pointing to dead space @");
+                printMark(visitedCellOrigin);
+                Log.print(" pointing to dead space @");
                 Log.println(origin);
-
+                printMark(origin);
+                Log.println();
                 FatalError.check(!HeapFreeChunk.isInDeadSpace(origin), "must not points to dead space");
             }
             // Check that the reference points to a valid object, and that if it is in the covered area, it is marked black.
@@ -106,8 +115,8 @@ public class AfterMarkSweepVerifier extends PointerIndexVisitor implements CellV
                 TupleReferenceMap.visitReferences(hub, origin, this);
             } else if (specificLayout.isReferenceArrayLayout()) {
                 final int length = Layout.readArrayLength(origin);
-                for (int index = 0; index < length; index++) {
-                    visit(Layout.getReference(origin, index).toOrigin());
+                for (visitedIndex = 0; visitedIndex < length; visitedIndex++) {
+                    visit(Layout.getReference(origin, visitedIndex).toOrigin());
                 }
             }
             liveDataByteCount += size.toLong();

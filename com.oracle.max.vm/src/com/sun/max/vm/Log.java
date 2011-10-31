@@ -126,6 +126,10 @@ public final class Log {
         out.printSymbol(address);
     }
 
+    public static void printCString(Pointer cString) {
+        out.printCString(cString);
+    }
+
     /**
      * Equivalent to calling {@link com.sun.max.vm.Log.LogPrintStream#printf(String, Object[])} on {@link #out}.
      */
@@ -370,6 +374,22 @@ public final class Log {
         out.printThreadLocals(tla, all);
     }
 
+    /**
+     * Equivalent to a sequence of call to{@link LogPrintStream#print(Long)} and {@link LogPrintStream#print(char)} on {@link #out} with, respectively, the
+     * size converted to the unit and the char representing the unit.
+     */
+    public static void printToPowerOfTwoUnits(Size size) {
+        out.printToPowerOfTwoUnits(size);
+    }
+
+    /**
+     * Equivalent to a sequence of call to{@link LogPrintStream#print(Long)} and {@link LogPrintStream#println(char)} on {@link #out} with, respectively, the
+     * size converted to the unit and the char representing the unit.
+     */
+    public static void printlnToPowerOfTwoUnits(Size size) {
+        out.printlnToPowerOfTwoUnits(size);
+    }
+
     private static final class LogOutputStream extends OutputStream {
 
         /**
@@ -467,6 +487,14 @@ public final class Log {
             } else {
                 log_print_symbol(address.asAddress());
             }
+        }
+
+        /**
+         * Print a C string.
+         * @param cString
+         */
+        public void printCString(Pointer cString) {
+            log_print_buffer(cString);
         }
 
         /**
@@ -976,6 +1004,54 @@ public final class Log {
             }
             if (!MaxineVM.isHosted()) {
                 unlock(lockDisabledSafepoints);
+            }
+        }
+
+        /**
+         * Print a size with using unit suffixes to reduce the
+         * number of digits to three or less using base 2 for sizes.
+         * The conversion is allocation free.
+         *
+         * @param size the size to print
+         */
+        public void printToPowerOfTwoUnits(Size size) {
+            long number = size.toLong();
+            if (number >= Longs.P) {
+                print(number / Longs.P);  print('P');
+            } else if (number >= Longs.T) {
+                print(number / Longs.T);  print('T');
+            } else if (number >= Longs.G) {
+                print(number / Longs.G);  print('G');
+            } else if (number >= Longs.M) {
+                print(number / Longs.M);  print('M');
+            } else if (number >= Longs.K) {
+                print(number / Longs.K);  print('K');
+            } else {
+                print(number);
+            }
+        }
+
+        /**
+         * Print a size with using unit suffixes to reduce the
+         * number of digits to three or less using base 2 for sizes.
+         * The conversion is allocation free.
+         *
+         * @param size the size to print
+         */
+        public void printlnToPowerOfTwoUnits(Size size) {
+            long number = size.toLong();
+            if (number >= Longs.P) {
+                print(number / Longs.P);  println('P');
+            } else if (number >= Longs.T) {
+                print(number / Longs.T);  println('T');
+            } else if (number >= Longs.G) {
+                print(number / Longs.G);  println('G');
+            } else if (number >= Longs.M) {
+                print(number / Longs.M);  println('M');
+            } else if (number >= Longs.K) {
+                print(number / Longs.K);  println('K');
+            } else {
+                println(number);
             }
         }
     }

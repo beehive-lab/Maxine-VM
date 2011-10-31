@@ -59,7 +59,7 @@ public class JDK {
     public static final ClassRef java_lang_ref_ReferenceQueue              = new ClassRef(java.lang.ref.ReferenceQueue.class);
 
     public static final ClassRef java_io_Serializable                = new ClassRef(java.io.Serializable.class);
-    public static final ClassRef java_io_UnixFileSystem              = new ClassRef("java.io.UnixFileSystem");
+    public static final ClassRef java_io_UnixFileSystem              = new ClassRef("java.io.UnixFileSystem", true);
     public static final ClassRef java_io_ExpiringCache               = new ClassRef("java.io.ExpiringCache");
 
     public static final ClassRef java_nio_DirectByteBuffer           = new LazyClassRef("java.nio.DirectByteBuffer");
@@ -147,16 +147,33 @@ public class JDK {
         @CONSTANT_WHEN_NOT_ZERO
         protected ClassActor classActor;
 
+        @HOSTED_ONLY
         public ClassRef(Class javaClass) {
             this.javaClass = javaClass;
         }
 
+        @HOSTED_ONLY
         public ClassRef(Class javaClass, String inner) {
             this.javaClass = Classes.forName(javaClass.getName() + "$" + inner);
         }
 
+        @HOSTED_ONLY
         public ClassRef(String name) {
-            javaClass = Classes.forName(name);
+            try {
+                javaClass = Class.forName(name);
+            } catch (ClassNotFoundException e) {
+            }
+        }
+
+        @HOSTED_ONLY
+        public ClassRef(String name, boolean optional) {
+            try {
+                javaClass = Class.forName(name);
+            } catch (ClassNotFoundException e) {
+                if (!optional) {
+                    throw new NoClassDefFoundError(name);
+                }
+            }
         }
 
         public String className() {
@@ -195,16 +212,19 @@ public class JDK {
     public static class LazyClassRef extends ClassRef {
         private final String className;
 
+        @HOSTED_ONLY
         public LazyClassRef(String className) {
             super((Class) null);
             this.className = className;
         }
 
+        @HOSTED_ONLY
         public LazyClassRef(Class javaClass) {
             super((Class) null);
             className = javaClass.getName();
         }
 
+        @HOSTED_ONLY
         public LazyClassRef(Class javaClass, String inner) {
             super((Class) null);
             className = javaClass.getName() + "$" + inner;

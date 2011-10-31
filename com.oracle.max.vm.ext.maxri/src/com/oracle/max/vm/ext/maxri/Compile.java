@@ -56,9 +56,6 @@ public class Compile {
 
     private static final Option<String> compilerOption = options.newStringOption("c", null,
         "The alias of the compiler to use " + compilerAliases.keySet() + " chosen from the following list: " + compilerAliasNames);
-    private static final Option<String> searchCpOption = options.newStringOption("search-cp", null,
-        "The restricted class path to use when matching compilation_specs. This must be a " +
-        "subset of the classpath (i.e. the classpath specified to the underlying JVM running this process).");
     private static final Option<Integer> traceOption = options.newIntegerOption("trace", 0,
         "Set the tracing level of the Maxine VM and runtime.");
     private static final Option<Integer> verboseOption = options.newIntegerOption("verbose", 1,
@@ -157,8 +154,7 @@ public class Compile {
             cb.baselineCompiler.initialize(Phase.HOSTED_COMPILING);
         }
 
-        String searchCp = searchCpOption.getValue();
-        final Classpath classpath = searchCp == null || searchCp.length() == 0 ? Classpath.fromSystem() : new Classpath(searchCp);
+        final Classpath classpath = Classpath.fromSystem();
         final List<MethodActor> methods = new MyMethodFinder().find(arguments, classpath, Compile.class.getClassLoader(), null);
         final ProgressPrinter progress = new ProgressPrinter(out, methods.size(), verboseOption.getValue(), false);
 

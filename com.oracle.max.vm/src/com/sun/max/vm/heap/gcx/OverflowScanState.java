@@ -24,7 +24,11 @@ package com.sun.max.vm.heap.gcx;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.heap.gcx.TricolorHeapMarker.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.heap.gcx.TricolorHeapMarker.ColorMapScanState;
+import com.sun.max.vm.heap.gcx.TricolorHeapMarker.ForwardScanState;
+import com.sun.max.vm.heap.gcx.TricolorHeapMarker.MarkingStackFlusher;
+import static com.sun.max.vm.heap.gcx.TricolorHeapMarker.*;
 
 /**
  * State of an overflow scan of the tricolor map. A scan of the tricolor map enter this state when the marking stack overflow.
@@ -35,8 +39,17 @@ import com.sun.max.vm.heap.gcx.TricolorHeapMarker.*;
  * overflow scan.
  */
 abstract class OverflowScanState extends ColorMapScanState {
+    /**
+     * Specifies where the end of the overflow scan should end. Typically, this is saving the finger of the forward scan.
+     */
     protected Address endOfScan;
+    /**
+     * Specifies how the marking stack is flushed.
+     */
     protected MarkingStackFlusher markingStackFlusher;
+    /**
+     * Specifies the discontinuous regions to iterate over.
+     */
     protected HeapRegionRangeIterable regionsRanges;
 
     OverflowScanState(TricolorHeapMarker heapMarker) {
@@ -219,6 +232,11 @@ abstract class OverflowScanState extends ColorMapScanState {
         // cache rightmost locally.
         rightmost = forwardScanState.rightmost;
         markingStackFlusher.setScanState(this);
+        if (MaxineVM.isDebug() && TraceMarking) {
+            Log.println("Begin Overflow Scan");
+            heapMarker.traceMark(endOfScan, " => endOfScan\n");
+            heapMarker.traceMark(rightmost, " => rightmost\n");
+        }
     }
 
     protected void endRecovery() {
@@ -228,6 +246,12 @@ abstract class OverflowScanState extends ColorMapScanState {
         markingStackFlusher.setScanState(forwardScanState);
         heapMarker.currentScanState = forwardScanState;
         heapMarker.stopTimer(heapMarker.recoveryScanTimer);
+        if (MaxineVM.isDebug() && TraceMarking) {
+            Log.print("End Overflow Scan (# mark stack overflow = ");
+            Log.print(numMarkinkgStackOverflow); Log.println(")");
+            heapMarker.traceMark(finger, " => overflow finger\n");
+            heapMarker.traceMark(rightmost, " => rightmost\n");
+        }
     }
 
     @Override

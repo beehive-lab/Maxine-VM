@@ -27,6 +27,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.debug.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 
@@ -75,5 +76,16 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion {
             SpecialReferenceManager.discoverSpecialReference(Reference.fromJava(specialReference).toOrigin());
         }
     }
+
+    public void visitCells(CellVisitor cellVisitor) {
+        final Pointer firstCell = start().asPointer();
+        final Pointer lastCell = mark();
+        Pointer cell = firstCell;
+        while (cell.isNotZero() && cell.lessThan(lastCell)) {
+            cell = DebugHeap.checkDebugCellTag(firstCell, cell);
+            cell = cellVisitor.visitCell(cell);
+        }
+    }
+
 }
 

@@ -47,7 +47,6 @@ public class DeoptimizeALot extends Thread {
         ArrayList<TargetMethod> methods = new ArrayList<TargetMethod>();
         MethodSelector() {
             super("DeoptimizeALotMethodSelector", null, Mode.Safepoint);
-            allowsNestedOperations = true;
         }
 
         class Visitor extends RawStackFrameVisitor {

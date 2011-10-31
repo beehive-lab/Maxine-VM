@@ -95,6 +95,30 @@ public class jmax {
                     }
                 }
             }
+        } else if (cmd.equals("canonicalizeprojects")) {
+            int changedFiles = 0;
+            for (File dir : projectDirs) {
+                File projectsFile = new File(dir, "projects.properties");
+                final ArrayList<String> lines = readLines(projectsFile);
+                FileUpdater update = new FileUpdater(projectsFile, true, response) {
+                    @Override
+                    void generate(PrintStream out) {
+                        Pattern projectDepsLine = Pattern.compile("project@([^@]+)@dependencies=.*");
+                        for (String line : lines) {
+                            Matcher m = projectDepsLine.matcher(line);
+                            if (m.matches()) {
+                                String name = m.group(1);
+                                Project p = project(name);
+                                out.println("project@" + name + "@dependencies=" + jmax.toString(p.canonicalDependencies(), ",", null));
+                            } else {
+                                out.println(line);
+                            }
+                        }
+                    }
+                };
+                changedFiles += update.changedFiles;
+                return changedFiles;
+            }
         } else {
             throw new Error("Command ' " + cmd + "' not known");
         }
@@ -143,8 +167,17 @@ public class jmax {
      */
     static String getenv(String name, boolean required) {
         String value = System.getenv(name);
-        assert !required || value != null : "the required environment variable ' " + name + "' is not set";
+        assert !required || value != null : "the required environment variable '" + name + "' is not set";
         return value;
+    }
+
+    /**
+     * Determines if a given dependency name denotes a library.
+     *
+     * @return true if {@code name} denotes a {@link Library}
+     */
+    static boolean isLibrary(String name) {
+        return jmax.libs.containsKey(name);
     }
 
     /**
@@ -551,6 +584,19 @@ public class jmax {
         abstract void generate(PrintStream out);
     }
 
+    static void computeMaxDepDistances(String name, HashMap<String, Integer> distances, int dist) {
+        Integer currentDist = distances.get(name);
+        if (currentDist == null || currentDist < dist) {
+            distances.put(name, dist);
+            if (!isLibrary(name)) {
+                Project p = project(name);
+                for (String dep : p.dependencies) {
+                    computeMaxDepDistances(dep, distances, dist + 1);
+                }
+            }
+        }
+    }
+
     static final class Project extends Dependency {
 
         final File baseDir;
@@ -648,6 +694,23 @@ public class jmax {
                 cp.append(File.pathSeparatorChar).append(classes.getPath());
             }
             return cp;
+        }
+
+        Collection<String> canonicalDependencies() {
+            HashMap<String, Integer> distances = new HashMap<String, Integer>();
+            Set<String> result = new HashSet<String>();
+            computeMaxDepDistances(this.name, distances, 0);
+            for (Map.Entry<String, Integer> e : distances.entrySet()) {
+                int d = e.getValue();
+                assert d > 0 || e.getKey().equals(name);
+                if (d == 1) {
+                    result.add(e.getKey());
+                }
+            }
+            if (result.size() == dependencies.size() && new HashSet<String>(dependencies).equals(result)) {
+                return dependencies;
+            }
+            return result;
         }
 
         @Override

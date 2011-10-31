@@ -55,7 +55,7 @@ public class JDK_java_lang_ProcessEnvironment {
      * @return an array of byte arrays denoting the name and value pairs loaded from
      * the native process environment
      */
-    @SUBSTITUTE
+    @SUBSTITUTE(optional = true)
     public static byte[][] environ() {
         final Pointer environ = MaxineVM.native_environment();
 

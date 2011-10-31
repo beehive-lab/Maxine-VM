@@ -137,7 +137,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
      * @param codeLocation a location in code in the VM
      */
     public void setCodeLocation(MaxCodeLocation codeLocation) {
-        setCodeLocation(codeLocation, false);
+        setCodeLocation(codeLocation, TeleVM.promptForNativeCodeView);
     }
 
     private MaxThread thread;
