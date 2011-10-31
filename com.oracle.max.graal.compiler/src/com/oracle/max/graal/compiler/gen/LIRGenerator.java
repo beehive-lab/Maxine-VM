@@ -1199,6 +1199,11 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         emitJump(getLIRBlock(x.loopBegin()), null);
     }
 
+    public void emitSafepointPoll(FixedNode x) {
+        XirSnippet snippet = xir.genSafepointPoll(site(x));
+        emitXir(snippet, x, stateFor(x), null, false);
+    }
+
     private void moveToPhi(MergeNode merge, Node pred) {
         if (GraalOptions.TraceLIRGeneratorLevel >= 1) {
             TTY.println("MOVE TO PHI from " + pred + " to " + merge);
@@ -1303,7 +1308,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         });
     }
 
-    protected LIRDebugInfo stateFor(ValueNode x) {
+    public LIRDebugInfo stateFor(ValueNode x) {
         assert lastState != null : "must have state before instruction for " + x;
         return stateFor(x, lastState);
     }

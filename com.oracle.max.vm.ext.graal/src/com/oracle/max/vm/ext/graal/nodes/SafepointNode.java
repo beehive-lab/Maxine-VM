@@ -34,13 +34,13 @@ import com.sun.cri.ci.*;
 public final class SafepointNode extends StateSplit implements LIRLowerable {
 
     public static enum Op {
-        SAFEPOINT_POLL, HERE, INFO, UNCOMMON_TRAP, BREAKPOINT, PAUSE
+        SAFEPOINT_POLL, HERE, INFO, BREAKPOINT, PAUSE
     }
 
     @Data private final Op op;
 
     public SafepointNode(Op op) {
-        super(CiKind.Illegal);
+        super(op == Op.HERE ? CiKind.Long : CiKind.Illegal);
         this.op = op;
     }
 
@@ -55,12 +55,14 @@ public final class SafepointNode extends StateSplit implements LIRLowerable {
         LIRGenerator gen = (LIRGenerator) tool;
         switch (op) {
             case SAFEPOINT_POLL:
+                gen.emitSafepointPoll(this);
                 break;
             case HERE:
+                gen.emitLea(new CiAddress(CiKind.Byte, CiRegister.InstructionRelative.asValue()), gen.createResultVariable(this));
+                gen.append(AMD64MaxineOpcode.SafepointOpcode.SAFEPOINT.create(gen.stateFor(this)));
                 break;
             case INFO:
-                break;
-            case UNCOMMON_TRAP:
+                gen.append(AMD64MaxineOpcode.SafepointOpcode.SAFEPOINT.create(gen.stateFor(this)));
                 break;
             case BREAKPOINT:
                 gen.append(AMD64MaxineOpcode.BreakpointOpcode.BREAKPOINT.create());

@@ -95,6 +95,9 @@ public class Graal implements RuntimeCompiler {
 
     @Override
     public void initialize(Phase phase) {
+        // TODO(ls) implementation of RiType.fields required to enable escape analysis
+        GraalOptions.EscapeAnalysis = false;
+
         if (isHosted() && !optionsRegistered) {
             GraalOptions.StackShadowPages = VmThread.STACK_SHADOW_PAGES;
             VMOptions.addFieldOptions("-G:", GraalOptions.class, null);

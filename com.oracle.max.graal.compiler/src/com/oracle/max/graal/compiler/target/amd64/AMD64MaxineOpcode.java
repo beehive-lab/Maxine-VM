@@ -49,6 +49,22 @@ public class AMD64MaxineOpcode {
         }
     }
 
+    public enum SafepointOpcode implements LIROpcode {
+        SAFEPOINT;
+
+        public LIRInstruction create(LIRDebugInfo info) {
+            CiValue[] inputs = LIRInstruction.NO_OPERANDS;
+
+            return new AMD64LIRInstruction(this, CiValue.IllegalValue, info, inputs) {
+                @Override
+                public void emitCode(TargetMethodAssembler tasm, AMD64MacroAssembler masm) {
+                    tasm.recordSafepoint(masm.codeBuffer.position(), info);
+                    masm.nop();
+                }
+            };
+        }
+    }
+
 
     public enum SignificantBitOpcode implements LIROpcode {
         MSB, LSB;
