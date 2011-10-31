@@ -99,6 +99,16 @@ public interface RiXirGenerator {
 
     XirSnippet genGetClass(XirSite site, XirArgument xirArgument);
 
+    /**
+     * Generates code that checks that the {@linkplain Representation#ObjectHub hub} of
+     * an object is identical to a given hub constant. In pseudo code:
+     * <pre>
+     *     if (object.getHub() != hub) {
+     *         uncommonTrap();
+     *     }
+     * </pre>
+     * This snippet should only be used when the object is guaranteed not to be null.
+     */
     XirSnippet genTypeCheck(XirSite site, XirArgument object, XirArgument hub, RiType type);
 
     /**
