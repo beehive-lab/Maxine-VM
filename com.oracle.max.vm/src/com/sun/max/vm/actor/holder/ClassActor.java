@@ -1781,6 +1781,6 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
     }
 
     public RiField[] declaredFields() {
-        return null;
+        return this.localInstanceFieldActors;
     }
 }
