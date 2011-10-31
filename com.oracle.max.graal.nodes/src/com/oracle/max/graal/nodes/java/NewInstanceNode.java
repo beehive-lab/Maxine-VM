@@ -85,7 +85,9 @@ public final class NewInstanceNode extends FixedWithNextNode implements EscapeAn
         private void fillEscapeFields(RiResolvedType type, List<EscapeField> escapeFields) {
             if (type != null) {
                 fillEscapeFields(type.superType(), escapeFields);
-                for (RiField field : type.declaredFields()) {
+                RiField[] declaredFields = type.declaredFields();
+                assert declaredFields != null : "the runtime must specify the declared fields of that type";
+                for (RiField field : declaredFields) {
                     escapeFields.add(new EscapeField(field.name(), field, field.type()));
                 }
             }
