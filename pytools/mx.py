@@ -73,16 +73,11 @@ class Env(ArgumentParser):
         self.add_argument('--Jp', action='append', dest='java_args_pfx', help='prefix Java VM arguments (e.g. --Jp @-dsa)', metavar='@<args>', default=[])
         self.add_argument('--Ja', action='append', dest='java_args_sfx', help='suffix Java VM arguments (e.g. --Ja @-dsa)', metavar='@<args>', default=[])
         self.add_argument('--user-home', help='users home directory', metavar='<path>', default=os.path.expanduser('~'))
-        self.add_argument('--java-home', help='JDK installation directory (must be JDK 6 or later)', metavar='<path>', default=default_java_home())
+        self.add_argument('--java-home', help='JDK installation directory (must be JDK 6 or later)', metavar='<path>', default=self.default_java_home())
         self.add_argument('--java', help='Java VM executable (default: bin/java under JAVA_HOME)', metavar='<path>')
         self.add_argument('--trace', dest='java_trace', help='trace level for Java tools that use it', metavar='<n>', default=1)
         self.add_argument('--os', dest='os', help='operating system hosting the VM (all lower case) for remote inspecting')
-        self.add_argument('-V', '--vmdir', dest='vmdir',
-                          metavar='<path>', 
-                          help='directory for VM executable, shared libraries boot image and related files')
-        self.add_argument('-M', '--maxine', dest='maxine_dir',
-                          metavar='<path>', 
-                          help='base directory of the Maxine code base')
+        self.add_argument('-V', dest='vmdir', help='directory for VM executable, shared libraries boot image and related files', metavar='<path>')
         
     def parse_cmd_line(self):
         
@@ -92,11 +87,11 @@ class Env(ArgumentParser):
 
         if self.java_home is None or self.java_home == '':
             self.log('Could not find Java home. Use --java-home option or ensure JAVA_HOME environment variable is set.')
-            abort(1)
+            self.abort(1)
 
         if self.user_home is None or self.user_home == '':
             self.log('Could not find user home. Use --user-home option or ensure HOME environment variable is set.')
-            abort(1)
+            self.abort(1)
 
         if self.os is None:
             self.remote = False
@@ -121,24 +116,33 @@ class Env(ArgumentParser):
         os.environ['JAVA_HOME'] = self.java_home
         os.environ['HOME'] = self.user_home
  
-        if self.maxine_dir is None:
-            self.maxine_dir = dirname(abspath(dirname(sys.argv[0])))
+        self.maxine_home = dirname(abspath(dirname(sys.argv[0])))
     
         if self.vmdir is None:
-            self.vmdir = join(self.maxine_dir, 'com.oracle.max.vm.native', 'generated', self.os)
+            self.vmdir = join(self.maxine_home, 'com.oracle.max.vm.native', 'generated', self.os)
             
         self.maxvm_options = os.getenv('MAXVM_OPTIONS', '')
         self.javac = join(self.java_home, 'bin', 'javac')
 
+    def load_config_file(self, configFile, override=False):
+        """ adds attributes to this object from a file containing key=value lines """
+        if exists(configFile):
+            with open(configFile) as f:
+                for line in f:
+                    k, v = line.split('=', 1)
+                    k = k.strip().lower()
+                    if (override or not hasattr(self, k)):
+                        setattr(self, k, os.path.expandvars(v.strip()))
+
     def jmax(self, args):
         """ executes a jmax.java command, returning stdout as a string """
-        os.environ['maxine_dir'] = self.maxine_dir
+        os.environ['maxine_home'] = self.maxine_home
         if self.cp_prefix is not None:
             os.environ['cp_prefix'] = self.cp_prefix
         if self.cp_suffix is not None:
             os.environ['cp_suffix'] = self.cp_suffix
         
-        jmaxDir = join(self.maxine_dir, 'com.oracle.max.shell')
+        jmaxDir = join(self.maxine_home, 'com.oracle.max.shell')
         jmaxClass = join(jmaxDir, 'jmax.class')
         jmaxSource = join(jmaxDir, 'jmax.java')
         if  not exists(jmaxClass) or getmtime(jmaxClass) < getmtime(jmaxSource):
@@ -156,7 +160,7 @@ class Env(ArgumentParser):
             return self.jmax(args)
         except subprocess.CalledProcessError as e:
             self.log(e.output.rstrip())
-            abort(e.returncode)
+            self.abort(e.returncode)
         
     def format_java_cmd(self, args):
         self.init_java()
@@ -180,7 +184,7 @@ class Env(ArgumentParser):
         for arg in args:
             if not isinstance(arg, types.StringTypes):
                 self.log('argument is not a string: ' + str(arg))
-                abort(1)
+                self.abort(1)
         
         if self.verbose:
             self.log(' '.join(args))
@@ -207,13 +211,13 @@ class Env(ArgumentParser):
             self.log('Error executing \'' + ' '.join(args) + '\': ' + str(e))
             if self.verbose:
                 raise e
-            abort(e.errno)
+            self.abort(e.errno)
         
 
         if retcode and nonZeroIsFatal:
             if self.verbose:
                 raise subprocess.CalledProcessError(retcode, ' '.join(args))
-            abort(retcode)
+            self.abort(retcode)
             
         return retcode
 
@@ -245,7 +249,7 @@ class Env(ArgumentParser):
                 output = subprocess.check_output([self.java, '-version'], stderr=subprocess.STDOUT)
             except subprocess.CalledProcessError as e:
                 print e.output
-                abort(e.returncode)
+                self.abort(e.returncode)
 
         output = output.split()
         assert output[0] == 'java'
@@ -253,7 +257,7 @@ class Env(ArgumentParser):
         version = output[2]
         if not version.startswith('"1.6') and not version.startswith('"1.7'):
             self.log('Requires Java version 1.6 or 1.7, got version ' + version)
-            abort(1)
+            self.abort(1)
 
         if self.java_dbg:
             self.java_args += ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8000']
@@ -264,25 +268,24 @@ class Env(ArgumentParser):
             
         self.java_initialized = True
     
-def default_java_home():
-    javaHome = os.getenv('JAVA_HOME')
-    if javaHome is None:
-        if exists('/usr/lib/java/java-6-sun'):
-            javaHome = '/usr/lib/java/java-6-sun'
-        elif exists('/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home'):
-            javaHome = '/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home'
-        elif exists('/usr/jdk/latest'):
-            javaHome = '/usr/jdk/latest'
-    return javaHome
-       
-def abort(code):
-    """ raises a SystemExit exception with the provided exit code """
-    raise SystemExit(code)
-    
-def main(envClass):
-    env = envClass()
-    env.parse_cmd_line()
+    def default_java_home(self):
+        javaHome = os.getenv('JAVA_HOME')
+        if javaHome is None:
+            if exists('/usr/lib/java/java-6-sun'):
+                javaHome = '/usr/lib/java/java-6-sun'
+            elif exists('/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home'):
+                javaHome = '/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home'
+            elif exists('/usr/jdk/latest'):
+                javaHome = '/usr/jdk/latest'
+        return javaHome
+           
+    def abort(self, code):
+        """ raises a SystemExit exception with the provided exit code """
+        raise SystemExit(code)
 
+def main(env):
+    env.parse_cmd_line()
+    
     if len(env.commandAndArgs) == 0:
         env.print_help()
         return
@@ -297,12 +300,12 @@ def main(envClass):
     try:
         retcode = c(env, env.command_args)
         if retcode is not None and retcode != 0:
-            abort(retcode)
+            env.abort(retcode)
     except KeyboardInterrupt:
-        abort(1)
+        env.abort(1)
     
     
 #This idiom means the below code only runs when executed from command line
 if __name__ == '__main__':
-    main(Env)
+    main(Env())
     
