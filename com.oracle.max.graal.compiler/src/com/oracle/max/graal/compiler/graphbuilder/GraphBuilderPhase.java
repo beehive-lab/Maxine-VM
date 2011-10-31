@@ -381,50 +381,47 @@ public final class GraphBuilderPhase extends Phase {
             firstHandler = unwindHandler;
         }
 
-        if (firstHandler != null) {
-            Block dispatchBlock = null;
-            if (firstHandler == unwindHandler) {
-                dispatchBlock = unwindBlock(bci);
-            } else {
-                for (int i = currentBlock.normalSuccessors; i < currentBlock.successors.size(); i++) {
-                    Block block = currentBlock.successors.get(i);
-                    if (block instanceof ExceptionBlock && ((ExceptionBlock) block).handler == firstHandler) {
-                        dispatchBlock = block;
-                        break;
-                    }
-                    if (isCatchAll(firstHandler) && block.startBci == firstHandler.handlerBCI()) {
-                        dispatchBlock = block;
-                        break;
-                    }
+        Block dispatchBlock = null;
+        if (firstHandler == unwindHandler) {
+            dispatchBlock = unwindBlock(bci);
+        } else {
+            for (int i = currentBlock.normalSuccessors; i < currentBlock.successors.size(); i++) {
+                Block block = currentBlock.successors.get(i);
+                if (block instanceof ExceptionBlock && ((ExceptionBlock) block).handler == firstHandler) {
+                    dispatchBlock = block;
+                    break;
+                }
+                if (isCatchAll(firstHandler) && block.startBci == firstHandler.handlerBCI()) {
+                    dispatchBlock = block;
+                    break;
                 }
             }
-
-            PlaceholderNode p = graph.add(new PlaceholderNode());
-            p.setStateAfter(frameState.duplicateWithoutStack(bci));
-
-            ValueNode currentExceptionObject;
-            ExceptionObjectNode newObj = null;
-            if (exceptionObject == null) {
-                newObj = graph.add(new ExceptionObjectNode());
-                currentExceptionObject = newObj;
-            } else {
-                currentExceptionObject = exceptionObject;
-            }
-            FrameState stateWithException = frameState.duplicateWithException(bci, currentExceptionObject);
-            if (newObj != null) {
-                newObj.setStateAfter(stateWithException);
-            }
-            FixedNode target = createTarget(dispatchBlock, stateWithException);
-            if (exceptionObject == null) {
-                ExceptionObjectNode eObj = (ExceptionObjectNode) currentExceptionObject;
-                eObj.setNext(target);
-                p.setNext(eObj);
-            } else {
-                p.setNext(target);
-            }
-            return p;
         }
-        return null;
+
+        PlaceholderNode p = graph.add(new PlaceholderNode());
+        p.setStateAfter(frameState.duplicateWithoutStack(bci));
+
+        ValueNode currentExceptionObject;
+        ExceptionObjectNode newObj = null;
+        if (exceptionObject == null) {
+            newObj = graph.add(new ExceptionObjectNode());
+            currentExceptionObject = newObj;
+        } else {
+            currentExceptionObject = exceptionObject;
+        }
+        FrameState stateWithException = frameState.duplicateWithException(bci, currentExceptionObject);
+        if (newObj != null) {
+            newObj.setStateAfter(stateWithException);
+        }
+        FixedNode target = createTarget(dispatchBlock, stateWithException);
+        if (exceptionObject == null) {
+            ExceptionObjectNode eObj = (ExceptionObjectNode) currentExceptionObject;
+            eObj.setNext(target);
+            p.setNext(eObj);
+        } else {
+            p.setNext(target);
+        }
+        return p;
     }
 
     private void genLoadConstant(int cpi) {
