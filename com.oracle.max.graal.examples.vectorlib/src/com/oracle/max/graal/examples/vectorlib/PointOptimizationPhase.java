@@ -25,16 +25,18 @@ package com.oracle.max.graal.examples.vectorlib;
 import com.oracle.max.graal.compiler.phases.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.java.*;
 
 
 public class PointOptimizationPhase extends Phase {
     @Override
     protected void run(Graph<EntryPointNode> graph) {
         for (InvokeNode invoke : graph.getNodes(InvokeNode.class)) {
-            System.out.println("Invoke: " + invoke.target.name());
-            if (invoke.target.name().equals("same")) {
-                ValueNode arg0 = invoke.arguments().get(0);
-                ValueNode arg1 = invoke.arguments().get(1);
+            MethodCallTargetNode callTarget = invoke.callTarget();
+            System.out.println("Invoke: " + callTarget.targetMethod().name());
+            if (callTarget.targetMethod().name().equals("same")) {
+                ValueNode arg0 = callTarget.arguments().get(0);
+                ValueNode arg1 = callTarget.arguments().get(1);
                 if (arg0 == arg1) {
                     invoke.replaceWithFloating(ConstantNode.forBoolean(true, graph));
                 }

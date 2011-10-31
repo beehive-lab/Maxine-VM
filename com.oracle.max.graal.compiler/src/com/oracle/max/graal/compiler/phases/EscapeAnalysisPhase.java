@@ -301,8 +301,8 @@ public class EscapeAnalysisPhase extends Phase {
 
         TTY.println("================================================================");
         for (Node node : graph.getNodes()) {
-            if (node != null) {
-                EscapeOp op = node.lookup(EscapeOp.class);
+            if (node != null && node instanceof FixedWithNextNode && node instanceof EscapeAnalyzable) {
+                EscapeOp op = ((EscapeAnalyzable) node).getEscapeOp();
                 if (op != null && op.canAnalyze(node)) {
                     EscapeRecord record = new EscapeRecord(node);
 
@@ -322,9 +322,9 @@ public class EscapeAnalysisPhase extends Phase {
     @Override
     protected void run(Graph<EntryPointNode> graph) {
         for (Node node : graph.getNodes()) {
-            if (node != null && node instanceof FixedWithNextNode) {
+            if (node != null && node instanceof FixedWithNextNode && node instanceof EscapeAnalyzable) {
                 FixedWithNextNode fixedNode = (FixedWithNextNode) node;
-                EscapeOp op = fixedNode.lookup(EscapeOp.class);
+                EscapeOp op = ((EscapeAnalyzable) node).getEscapeOp();
                 if (op != null && op.canAnalyze(fixedNode)) {
                     try {
                         performAnalysis(graph, fixedNode, op);
@@ -346,14 +346,14 @@ public class EscapeAnalysisPhase extends Phase {
             double weight = analyze(op, node, exits, invokes);
             if (exits.size() != 0) {
                 if (GraalOptions.TraceEscapeAnalysis || GraalOptions.PrintEscapeAnalysis) {
-                    TTY.println("%n####### escaping object: %d %s (%s) in %s", node.id(), node.shortName(), node.exactType(), compilation.method);
+                    TTY.println("%n####### escaping object: %s (%s) in %s", node, node.exactType(), compilation.method);
                     if (GraalOptions.TraceEscapeAnalysis) {
-                        TTY.print("%d: new value: %d %s, weight %f, escapes at ", iterations, node.id(), node.shortName(), weight);
+                        TTY.print("%d: new value: %s, weight %f, escapes at ", iterations, node, weight);
                         for (Node n : exits) {
-                            TTY.print("%d %s, ", n.id(), n.shortName());
+                            TTY.print("%s, ", n);
                         }
                         for (Node n : invokes) {
-                            TTY.print("%d %s, ", n.id(), n.shortName());
+                            TTY.print("%s, ", n);
                         }
                         TTY.println();
                     }
@@ -363,10 +363,10 @@ public class EscapeAnalysisPhase extends Phase {
             if (invokes.size() == 0) {
 
                 if (context.isObserved()) {
-                    context.observable.fireCompilationEvent(new CompilationEvent(compilation, "Before escape " + node.id(), graph, true, false));
+                    context.observable.fireCompilationEvent(new CompilationEvent(compilation, "Before escape " + node, graph, true, false));
                 }
                 if (GraalOptions.TraceEscapeAnalysis || GraalOptions.PrintEscapeAnalysis) {
-                    TTY.println("%n!!!!!!!! non-escaping object: %d %s (%s) in %s", node.id(), node.shortName(), node.exactType(), compilation.method);
+                    TTY.println("%n!!!!!!!! non-escaping object: %s (%s) in %s", node, node.exactType(), compilation.method);
                 }
                 try {
                     context.timers.startScope("Escape Analysis Fixup");
@@ -383,7 +383,7 @@ public class EscapeAnalysisPhase extends Phase {
             }
             if (weight < minimumWeight) {
                 if (GraalOptions.TraceEscapeAnalysis || GraalOptions.PrintEscapeAnalysis) {
-                    TTY.println("%n####### possibly escaping object: %d in %s (insufficient weight for inlining)", node.id(), compilation.method);
+                    TTY.println("%n####### possibly escaping object: %s in %s (insufficient weight for inlining)", node, compilation.method);
                 }
                 break;
             }
@@ -391,17 +391,13 @@ public class EscapeAnalysisPhase extends Phase {
                 break;
             }
             if (GraalOptions.TraceEscapeAnalysis || GraalOptions.PrintEscapeAnalysis) {
-                TTY.println("Trying inlining to get a non-escaping object for %d", node.id());
+                TTY.println("Trying inlining to get a non-escaping object for %s", node);
             }
-            if (GraalOptions.UseNewInlining) {
-                new InliningPhase(context, compilation.compiler.runtime, compilation.compiler.target, invokes).apply(graph);
-            } else {
-                new OldInliningPhase(context, compilation, invokes).apply(graph);
-            }
+            new InliningPhase(context, compilation.compiler.runtime, compilation.compiler.target, invokes).apply(graph);
             new DeadCodeEliminationPhase(context).apply(graph);
             if (node.isDeleted()) {
                 if (GraalOptions.TraceEscapeAnalysis || GraalOptions.PrintEscapeAnalysis) {
-                    TTY.println("%n!!!!!!!! object died while performing escape analysis: %d %s (%s) in %s", node.id(), node.shortName(), node.exactType(), compilation.method);
+                    TTY.println("%n!!!!!!!! object died while performing escape analysis: %s (%s) in %s", node, node.exactType(), compilation.method);
                 }
                 break;
             }

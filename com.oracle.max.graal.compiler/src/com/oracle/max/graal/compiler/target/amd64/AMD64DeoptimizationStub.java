@@ -33,7 +33,7 @@ import com.oracle.max.graal.compiler.util.*;
 import com.oracle.max.graal.nodes.DeoptimizeNode.DeoptAction;
 import com.sun.cri.ci.*;
 
-public class AMD64DeoptimizationStub implements LIR.SlowPath<AMD64MacroAssembler> {
+public class AMD64DeoptimizationStub implements LIR.SlowPath {
     public final Label label = new Label();
     public final LIRDebugInfo info;
     public final DeoptAction action;
@@ -49,8 +49,8 @@ public class AMD64DeoptimizationStub implements LIR.SlowPath<AMD64MacroAssembler
     private static ArrayList<Object> keepAlive = new ArrayList<Object>();
 
     @Override
-    public void emitCode(TargetMethodAssembler<AMD64MacroAssembler> tasm) {
-        AMD64MacroAssembler masm = tasm.masm;
+    public void emitCode(TargetMethodAssembler tasm) {
+        AMD64MacroAssembler masm = (AMD64MacroAssembler) tasm.asm;
 
         // TODO(cwi): we want to get rid of a generally reserved scratch register.
         CiRegister scratch = tasm.compilation.registerConfig.getScratchRegister();
@@ -58,10 +58,10 @@ public class AMD64DeoptimizationStub implements LIR.SlowPath<AMD64MacroAssembler
         masm.bind(label);
         if (GraalOptions.CreateDeoptInfo && deoptInfo != null) {
             masm.nop();
-            keepAlive.add(deoptInfo);
-            AMD64MoveOp.move(tasm, scratch.asValue(), CiConstant.forObject(deoptInfo));
+            keepAlive.add(deoptInfo.toString());
+            AMD64MoveOpcode.move(tasm, masm, scratch.asValue(), CiConstant.forObject(deoptInfo));
             // TODO Why use scratch register here? Is it an implicit calling convention that the runtime function reads this register?
-            AMD64CallOp.directCall(tasm, CiRuntimeCall.SetDeoptInfo, info);
+            AMD64CallOpcode.directCall(tasm, masm, CiRuntimeCall.SetDeoptInfo, info);
         }
         int code;
         switch(action) {
@@ -89,7 +89,7 @@ public class AMD64DeoptimizationStub implements LIR.SlowPath<AMD64MacroAssembler
         }
         masm.movq(scratch, code);
         // TODO Why use scratch register here? Is it an implicit calling convention that the runtime function reads this register?
-        AMD64CallOp.directCall(tasm, CiRuntimeCall.Deoptimize, info);
-        AMD64CallOp.shouldNotReachHere(tasm);
+        AMD64CallOpcode.directCall(tasm, masm, CiRuntimeCall.Deoptimize, info);
+        AMD64CallOpcode.shouldNotReachHere(tasm, masm);
     }
 }

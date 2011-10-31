@@ -24,7 +24,6 @@ package com.oracle.max.graal.compiler.lir;
 
 import java.util.*;
 
-import com.oracle.max.asm.*;
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.asm.*;
@@ -65,8 +64,8 @@ public class LIR {
     public SlowPath methodEndMarker;
 
 
-    public interface SlowPath<A extends AbstractAssembler> {
-        void emitCode(TargetMethodAssembler<A> tasm);
+    public interface SlowPath {
+        void emitCode(TargetMethodAssembler tasm);
     }
 
     /**
@@ -115,14 +114,14 @@ public class LIR {
 
         // generate code for slow cases
         for (SlowPath sp : slowPaths) {
-            emitSlowPath(tasm, sp);
+            sp.emitCode(tasm);
         }
         // generate deoptimization stubs
         for (SlowPath sp : deoptimizationStubs) {
-            emitSlowPath(tasm, sp);
+            sp.emitCode(tasm);
         }
         // generate traps at the end of the method
-        emitSlowPath(tasm, methodEndMarker);
+        methodEndMarker.emitCode(tasm);
     }
 
     private void emitBlock(TargetMethodAssembler tasm, LIRBlock block) {
@@ -156,20 +155,24 @@ public class LIR {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private void emitOp(TargetMethodAssembler tasm, LIRInstruction op) {
-        op.code.emitCode(tasm, op);
-    }
-
-    @SuppressWarnings("unchecked")
-    private void emitSlowPath(TargetMethodAssembler tasm, SlowPath sp) {
-        sp.emitCode(tasm);
+        try {
+            try {
+                op.emitCode(tasm);
+            } catch (AssertionError t) {
+                throw new VerificationError(t);
+            } catch (RuntimeException t) {
+                throw new VerificationError(t);
+            }
+        } catch (VerificationError e) {
+            throw e.addContext("lir instruction", op);
+        }
     }
 
     private int lastDecodeStart;
 
     private void printAssembly(TargetMethodAssembler tasm) {
-        byte[] currentBytes = tasm.masm.codeBuffer.copyData(lastDecodeStart, tasm.masm.codeBuffer.position());
+        byte[] currentBytes = tasm.asm.codeBuffer.copyData(lastDecodeStart, tasm.asm.codeBuffer.position());
         if (currentBytes.length > 0) {
             String disasm = tasm.compilation.compiler.runtime.disassemble(currentBytes, lastDecodeStart);
             if (disasm.length() != 0) {
@@ -179,7 +182,7 @@ public class LIR {
                 Util.printBytes(lastDecodeStart, currentBytes, GraalOptions.PrintAssemblyBytesPerLine);
             }
         }
-        lastDecodeStart = tasm.masm.codeBuffer.position();
+        lastDecodeStart = tasm.asm.codeBuffer.position();
     }
 
 

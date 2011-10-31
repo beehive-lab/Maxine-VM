@@ -127,19 +127,6 @@ public abstract class ValueNode extends Node {
         return null; // default: unknown declared type
     }
 
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("#");
-        builder.append(id());
-        builder.append(' ');
-        if (id() < 10) {
-            builder.append(' ');
-        }
-        builder.append(getClass().getSimpleName());
-        return builder.toString();
-    }
-
     /**
      * This method supports the visitor pattern by accepting a visitor and calling the
      * appropriate {@code visit()} method.

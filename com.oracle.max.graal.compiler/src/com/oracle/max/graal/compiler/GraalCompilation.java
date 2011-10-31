@@ -31,6 +31,7 @@ import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.alloc.*;
 import com.oracle.max.graal.compiler.asm.*;
 import com.oracle.max.graal.compiler.gen.*;
+import com.oracle.max.graal.compiler.graphbuilder.*;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.observer.*;
 import com.oracle.max.graal.compiler.phases.*;
@@ -119,7 +120,7 @@ public final class GraalCompilation {
 
     private TargetMethodAssembler createAssembler() {
         AbstractAssembler masm = compiler.backend.newAssembler(registerConfig);
-        TargetMethodAssembler tasm = new TargetMethodAssembler<AbstractAssembler>(this, masm);
+        TargetMethodAssembler tasm = new TargetMethodAssembler(this, masm);
         tasm.setFrameSize(frameMap.frameSize());
         tasm.targetMethod.setCustomStackAreaOffset(frameMap.offsetToCustomArea());
         return tasm;
@@ -175,11 +176,7 @@ public final class GraalCompilation {
             }
 
             if (GraalOptions.Inline) {
-                if (GraalOptions.UseNewInlining) {
-                    new InliningPhase(context(), compiler.runtime, compiler.target, null).apply(graph);
-                } else {
-                    new OldInliningPhase(context(), this, null).apply(graph);
-                }
+                new InliningPhase(context(), compiler.runtime, compiler.target, null).apply(graph);
                 new DeadCodeEliminationPhase(context()).apply(graph);
             }
 

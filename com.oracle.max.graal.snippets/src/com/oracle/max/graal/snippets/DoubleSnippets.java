@@ -22,7 +22,7 @@
  */
 package com.oracle.max.graal.snippets;
 
-import com.oracle.max.graal.nodes.extended.*;
+import com.oracle.max.graal.nodes.calc.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 
@@ -36,23 +36,24 @@ public class DoubleSnippets implements SnippetsInterface {
 
     public static long doubleToRawLongBits(double value) {
         @JavacBug(id = 6995200)
-        Long result = FPConversionNode.convert(CiKind.Long, value);
+        Long result = ConvertNode.convert(CiKind.Long, ConvertNode.Op.MOV_D2L, value);
         return result;
     }
 
+    // TODO This method is not necessary, since the JDK method does exactly this
     public static long doubleToLongBits(double value) {
         if (value != value) {
             return NAN_RAW_LONG_BITS;
         } else {
             @JavacBug(id = 6995200)
-            Long result = FPConversionNode.convert(CiKind.Long, value);
+            Long result = ConvertNode.convert(CiKind.Long, ConvertNode.Op.MOV_D2L, value);
             return result;
         }
     }
 
     public static double longBitsToDouble(long bits) {
         @JavacBug(id = 6995200)
-        Double result = FPConversionNode.convert(CiKind.Double, bits);
+        Double result = ConvertNode.convert(CiKind.Double, ConvertNode.Op.MOV_L2D, bits);
         return result;
     }
 }

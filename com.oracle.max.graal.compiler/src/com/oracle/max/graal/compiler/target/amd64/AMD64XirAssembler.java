@@ -111,9 +111,20 @@ public class AMD64XirAssembler extends CiXirAssembler {
 
                     }
 
-                    if (xOp != i.x() || yOp != i.y()) {
-                        currentList.add(new XirInstruction(i.result.kind, i.op, i.result, xOp, yOp));
+                    XirOperand resultOp = i.result;
+                    if (i.op == XirOp.Div) {
+                        resultOp = fixedRAX;
+                    } else if (i.op == XirOp.Mod) {
+                        resultOp = fixedRDX;
+                    }
+
+                    if (xOp != i.x() || yOp != i.y() || resultOp != i.result) {
+                        currentList.add(new XirInstruction(i.result.kind, i.op, resultOp, xOp, yOp));
                         appended = true;
+                    }
+
+                    if (resultOp != i.result) {
+                        currentList.add(new XirInstruction(i.result.kind, XirOp.Mov, i.result, resultOp));
                     }
                     break;
 
@@ -154,6 +165,14 @@ public class AMD64XirAssembler extends CiXirAssembler {
                     appended = true;
                     break;
                 case CallStub:
+                    for (int j = 0; j < i.arguments.length; j++) {
+                        XirOperand op = i.arguments[j];
+                        if (op instanceof XirConstantOperand && (op.kind == CiKind.Object || op.kind == CiKind.Long)) {
+                            XirOperand tempLocation = createTemp("callStubTempLocation", op.kind);
+                            currentList.add(new XirInstruction(op.kind, XirOp.Mov, tempLocation, op));
+                            i.arguments[j] = tempLocation;
+                        }
+                    }
                     flags |= HAS_STUB_CALL.mask;
                     calleeTemplates.add((XirTemplate) i.extra);
                     break;

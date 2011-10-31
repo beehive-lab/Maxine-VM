@@ -26,40 +26,33 @@ import java.util.*;
 
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.extended.*;
+import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.graal.nodes.spi.*;
-import com.sun.cri.bytecode.*;
-import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 /**
  * The {@code InvokeNode} represents all kinds of method calls.
  */
-public final class InvokeNode extends AbstractCallNode implements Node.IterableNodeType {
+public final class InvokeNode extends AbstractMemoryCheckpointNode implements Node.IterableNodeType {
 
     @Successor private FixedNode exceptionEdge;
 
     private boolean canInline = true;
 
-    public final int opcode;
-    public final RiResolvedMethod target;
-    public final RiType returnType;
-    public final int bci; // needed because we can not compute the bci from the sateBefore bci of this Invoke was optimized from INVOKEINTERFACE to INVOKESPECIAL
+    @Input private MethodCallTargetNode callTarget;
+    private final int bci; // needed because we can not compute the bci from the sateBefore bci of this Invoke was optimized from INVOKEINTERFACE to INVOKESPECIAL
 
     /**
      * Constructs a new Invoke instruction.
      *
      * @param bci the bytecode index of the original invoke (used for debug infos)
      * @param opcode the opcode of the invoke
-     * @param result the result type
-     * @param args the list of instructions producing arguments to the invocation, including the receiver object
      * @param target the target method being called
-     * @param returnType the return type of the target method
+     * @param args the list of instructions producing arguments to the invocation, including the receiver object
      */
-    public InvokeNode(int bci, int opcode, CiKind result, ValueNode[] args, RiResolvedMethod target, RiType returnType) {
-        super(result, args);
-        this.opcode = opcode;
-        this.target = target;
-        this.returnType = returnType;
+    public InvokeNode(int bci, MethodCallTargetNode callTarget) {
+        super(callTarget.returnKind().stackKind());
+        this.callTarget = callTarget;
         this.bci = bci;
     }
 
@@ -80,52 +73,14 @@ public final class InvokeNode extends AbstractCallNode implements Node.IterableN
         canInline = b;
     }
 
-    /**
-     * Gets the opcode of this invoke instruction.
-     * @return the opcode
-     */
-    public int opcode() {
-        return opcode;
-    }
-
-    /**
-     * Checks whether this is an invocation of a static method.
-     * @return {@code true} if the invocation is a static invocation
-     */
-    public boolean isStatic() {
-        return opcode == Bytecodes.INVOKESTATIC;
+    public MethodCallTargetNode callTarget() {
+        return callTarget;
     }
 
     @Override
     public RiResolvedType declaredType() {
+        RiType returnType = callTarget().returnType();
         return (returnType instanceof RiResolvedType) ? ((RiResolvedType) returnType) : null;
-    }
-
-    /**
-     * Gets the instruction that produces the receiver object for this invocation, if any.
-     * @return the instruction that produces the receiver object for this invocation if any, {@code null} if this
-     *         invocation does not take a receiver object
-     */
-    public ValueNode receiver() {
-        assert !isStatic();
-        return arguments().get(0);
-    }
-
-    /**
-     * Gets the target method for this invocation instruction.
-     * @return the target method
-     */
-    public RiResolvedMethod target() {
-        return target;
-    }
-
-    /**
-     * Checks whether this invocation has a receiver object.
-     * @return {@code true} if this invocation has a receiver object; {@code false} otherwise, if this is a
-     *         static call
-     */
-    public boolean hasReceiver() {
-        return !isStatic();
     }
 
     @Override
@@ -134,15 +89,21 @@ public final class InvokeNode extends AbstractCallNode implements Node.IterableN
     }
 
     @Override
-    public String toString() {
-        return super.toString() + target;
+    public String toString(Verbosity verbosity) {
+        if (verbosity == Verbosity.Long) {
+            return super.toString(Verbosity.Short) + "(bci=" + bci + ")";
+        } else {
+            return super.toString(verbosity);
+        }
+    }
+
+    public int bci() {
+        return bci;
     }
 
     @Override
     public Map<Object, Object> getDebugProperties() {
         Map<Object, Object> properties = super.getDebugProperties();
-        properties.put("opcode", Bytecodes.nameOf(opcode));
-        properties.put("target", CiUtil.format("%H.%n(%p):%r", target, false));
         properties.put("bci", bci);
         return properties;
     }

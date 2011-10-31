@@ -24,6 +24,7 @@ package com.oracle.max.graal.graph;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.Map.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import sun.misc.Unsafe;
@@ -520,7 +521,7 @@ public class NodeClass {
         return true;
     }
 
-    public Node get(Node node, Position pos) {
+    private Node get(Node node, Position pos) {
         long offset = pos.input ? inputOffsets[pos.index] : successorOffsets[pos.index];
         if (pos.subIndex == NOT_ITERABLE) {
             return getNode(node, offset);
@@ -529,7 +530,7 @@ public class NodeClass {
         }
     }
 
-    public void set(Node node, Position pos, Node x) {
+    private void set(Node node, Position pos, Node x) {
         long offset = pos.input ? inputOffsets[pos.index] : successorOffsets[pos.index];
         if (pos.subIndex == NOT_ITERABLE) {
             Node old = getNode(node,  offset);
@@ -772,5 +773,76 @@ public class NodeClass {
 
     public int directSuccessorCount() {
         return directSuccessorCount;
+    }
+
+    static Map<Node, Node> addGraphDuplicate(Graph graph, Iterable<Node> nodes, Map<Node, Node> replacements) {
+        Map<Node, Node> newNodes = new IdentityHashMap<Node, Node>();
+        // create node duplicates
+        for (Node node : nodes) {
+            if (node != null && !replacements.containsKey(node)) {
+                assert !node.isDeleted() : "trying to duplicate deleted node";
+                Node newNode = node.clone(graph);
+                assert newNode.getClass() == node.getClass();
+                newNodes.put(node, newNode);
+            }
+        }
+        // re-wire inputs
+        for (Entry<Node, Node> entry : newNodes.entrySet()) {
+            Node oldNode = entry.getKey();
+            Node node = entry.getValue();
+            for (NodeClassIterator iter = oldNode.inputs().iterator(); iter.hasNext();) {
+                Position pos = iter.nextPosition();
+                Node input = oldNode.getNodeClass().get(oldNode, pos);
+                Node target = replacements.get(input);
+                if (target == null) {
+                    target = newNodes.get(input);
+                }
+                node.getNodeClass().set(node, pos, target);
+            }
+        }
+        for (Entry<Node, Node> entry : replacements.entrySet()) {
+            Node oldNode = entry.getKey();
+            Node node = entry.getValue();
+            if (oldNode == node) {
+                continue;
+            }
+            for (NodeClassIterator iter = oldNode.inputs().iterator(); iter.hasNext();) {
+                Position pos = iter.nextPosition();
+                Node input = oldNode.getNodeClass().get(oldNode, pos);
+                if (newNodes.containsKey(input)) {
+                    node.getNodeClass().set(node, pos, newNodes.get(input));
+                }
+            }
+        }
+
+        // re-wire successors
+        for (Entry<Node, Node> entry : newNodes.entrySet()) {
+            Node oldNode = entry.getKey();
+            Node node = entry.getValue();
+            for (NodeClassIterator iter = oldNode.successors().iterator(); iter.hasNext();) {
+                Position pos = iter.nextPosition();
+                Node succ = oldNode.getNodeClass().get(oldNode, pos);
+                Node target = replacements.get(succ);
+                if (target == null) {
+                    target = newNodes.get(succ);
+                }
+                node.getNodeClass().set(node, pos, target);
+            }
+        }
+        for (Entry<Node, Node> entry : replacements.entrySet()) {
+            Node oldNode = entry.getKey();
+            Node node = entry.getValue();
+            if (oldNode == node) {
+                continue;
+            }
+            for (NodeClassIterator iter = oldNode.successors().iterator(); iter.hasNext();) {
+                Position pos = iter.nextPosition();
+                Node succ = oldNode.getNodeClass().get(oldNode, pos);
+                if (newNodes.containsKey(succ)) {
+                    node.getNodeClass().set(node, pos, newNodes.get(succ));
+                }
+            }
+        }
+        return newNodes;
     }
 }

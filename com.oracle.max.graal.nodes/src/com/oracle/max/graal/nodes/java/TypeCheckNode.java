@@ -33,17 +33,20 @@ public abstract class TypeCheckNode extends BooleanNode {
 
     @Input private ValueNode object;
     @Input private ValueNode targetClassInstruction;
+    @Data private final RiResolvedType targetClass;
 
     /**
      * Creates a new TypeCheckNode.
-     * @param targetClassInstruction the instruction which produces the class which is being casted to or checked against
+     * @param targetClassInstruction the instruction which produces the class which is being cast to or checked against
+     * @param targetClass the class that is being casted to or checked against
      * @param object the node which produces the object
      * @param kind the result type of this node
      */
-    public TypeCheckNode(ValueNode targetClassInstruction, ValueNode object, CiKind kind) {
+    public TypeCheckNode(ValueNode targetClassInstruction, RiResolvedType targetClass, ValueNode object, CiKind kind) {
         super(kind);
-        this.object = object;
         this.targetClassInstruction = targetClassInstruction;
+        this.targetClass = targetClass;
+        this.object = object;
     }
 
     public ValueNode object() {
@@ -59,6 +62,6 @@ public abstract class TypeCheckNode extends BooleanNode {
      * @return the target class
      */
     public RiResolvedType targetClass() {
-        return targetClassInstruction() instanceof ConstantNode ? (RiResolvedType) targetClassInstruction().asConstant().asObject() : null;
+        return targetClass;
     }
 }

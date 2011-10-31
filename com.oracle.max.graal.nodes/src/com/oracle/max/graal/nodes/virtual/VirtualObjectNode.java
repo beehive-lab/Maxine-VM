@@ -62,7 +62,11 @@ public class VirtualObjectNode extends ValueNode {
     }
 
     @Override
-    public String shortName() {
-        return "VirtualObject " + type.name();
+    public String toString(Verbosity verbosity) {
+        if (verbosity == Verbosity.Name) {
+            return super.toString(Verbosity.Name) + " " + type.name();
+        } else {
+            return super.toString(verbosity);
+        }
     }
 }

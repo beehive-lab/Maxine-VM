@@ -31,6 +31,7 @@ import com.sun.cri.ri.*;
  * The {@code ConstantNode} represents a constant such as an integer value,
  * long, float, object reference, address, etc.
  */
+@NodeInfo(shortName = "Const")
 public final class ConstantNode extends BooleanNode {
 
     @Data public final CiConstant value;
@@ -100,6 +101,36 @@ public final class ConstantNode extends BooleanNode {
     }
 
     /**
+     * Returns a node for a byte constant.
+     * @param i the byte value for which to create the instruction
+     * @param graph
+     * @return a node representing the byte
+     */
+    public static ConstantNode forByte(byte i, Graph<?> graph) {
+        return graph.unique(new ConstantNode(CiConstant.forByte(i)));
+    }
+
+    /**
+     * Returns a node for a char constant.
+     * @param i the char value for which to create the instruction
+     * @param graph
+     * @return a node representing the char
+     */
+    public static ConstantNode forChar(char i, Graph<?> graph) {
+        return graph.unique(new ConstantNode(CiConstant.forChar(i)));
+    }
+
+    /**
+     * Returns a node for a short constant.
+     * @param i the short value for which to create the instruction
+     * @param graph
+     * @return a node representing the short
+     */
+    public static ConstantNode forShort(short i, Graph<?> graph) {
+        return graph.unique(new ConstantNode(CiConstant.forShort(i)));
+    }
+
+    /**
      * Returns a node for an address (jsr/ret address) constant.
      * @param i the address value for which to create the instruction
      * @param graph
@@ -166,8 +197,12 @@ public final class ConstantNode extends BooleanNode {
     }
 
     @Override
-    public String toString() {
-        return super.toString() + "(" + value + ")";
+    public String toString(Verbosity verbosity) {
+        if (verbosity == Verbosity.Name) {
+            return super.toString(Verbosity.Name) + "(" + value.kind.format(value.boxedValue()) + ")";
+        } else {
+            return super.toString(verbosity);
+        }
     }
 
     @Override
@@ -186,10 +221,5 @@ public final class ConstantNode extends BooleanNode {
             return runtime.asRiType(kind);
         }
         return runtime.getTypeOf(asConstant());
-    }
-
-    @Override
-    public String shortName() {
-        return value.name();
     }
 }

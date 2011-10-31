@@ -28,6 +28,8 @@ import static com.sun.max.vm.MaxineVM.*;
 import java.lang.reflect.*;
 
 import com.oracle.max.asm.*;
+import com.oracle.max.cri.intrinsics.*;
+import com.oracle.max.cri.intrinsics.IntrinsicImpl.Registry;
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.graph.NodeClass.CalcOffset;
@@ -102,6 +104,10 @@ public class Graal implements RuntimeCompiler {
         }
 
         if (isHosted() && phase == Phase.HOSTED_COMPILING) {
+            Registry intrinsicRegistry = new IntrinsicImpl.Registry();
+            MaxineIntrinsicImplementations.initialize(intrinsicRegistry);
+            runtime.setIntrinsicRegistry(intrinsicRegistry);
+
             GraalContext context = new GraalContext("Virtual Machine Compiler");
             compiler = new GraalCompiler(context, runtime, target, xirGenerator, vm().registerConfigs.compilerStub);
 

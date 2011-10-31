@@ -23,25 +23,24 @@
 
 package com.oracle.max.graal.compiler.target.amd64;
 
-import static com.oracle.max.graal.compiler.target.amd64.AMD64ArithmeticOp.*;
-import static com.oracle.max.graal.compiler.target.amd64.AMD64CompareOp.*;
-import static com.oracle.max.graal.compiler.target.amd64.AMD64CompareToIntOp.*;
-import static com.oracle.max.graal.compiler.target.amd64.AMD64ControlFlowOp.*;
-import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertOp.*;
-import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertOpFI.*;
-import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertOpFL.*;
-import static com.oracle.max.graal.compiler.target.amd64.AMD64DivOp.*;
-import static com.oracle.max.graal.compiler.target.amd64.AMD64HotSpotOp.*;
-import static com.oracle.max.graal.compiler.target.amd64.AMD64MathIntrinsicOp.*;
-import static com.oracle.max.graal.compiler.target.amd64.AMD64MoveOp.*;
-import static com.oracle.max.graal.compiler.target.amd64.AMD64MulOp.*;
-import static com.oracle.max.graal.compiler.target.amd64.AMD64Op1.*;
-import static com.oracle.max.graal.compiler.target.amd64.AMD64ShiftOp.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64ArithmeticOpcode.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64CompareOpcode.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64CompareToIntOpcode.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertOpcode.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertFIOpcode.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertFLOpcode.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64DivOpcode.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64MathIntrinsicOpcode.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64MulOpcode.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64Op1Opcode.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64ShiftOpcode.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64StandardOpcode.*;
 
 import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.graal.compiler.*;
 import com.oracle.max.graal.compiler.gen.*;
+import com.oracle.max.graal.compiler.lir.FrameMap.StackBlock;
 import com.oracle.max.graal.compiler.lir.*;
 import com.oracle.max.graal.compiler.stub.*;
 import com.oracle.max.graal.compiler.util.*;
@@ -66,12 +65,14 @@ public class AMD64LIRGenerator extends LIRGenerator {
     private static final CiRegisterValue RCX_I = AMD64.rcx.asValue(CiKind.Int);
 
     static {
-        StandardOp.MOVE = AMD64MoveOp.MOVE;
-        StandardOp.NULL_CHECK = AMD64MoveOp.NULL_CHECK;
-        StandardOp.DIRECT_CALL = AMD64CallOp.DIRECT_CALL;
-        StandardOp.INDIRECT_CALL = AMD64CallOp.INDIRECT_CALL;
-        StandardOp.RETURN = AMD64ControlFlowOp.RETURN;
-        StandardOp.XIR = AMD64XirOp.XIR;
+        StandardOpcode.MOVE = AMD64StandardOpcode.MOVE;
+        StandardOpcode.NULL_CHECK = AMD64StandardOpcode.NULL_CHECK;
+        StandardOpcode.DIRECT_CALL = AMD64CallOpcode.DIRECT_CALL;
+        StandardOpcode.INDIRECT_CALL = AMD64CallOpcode.INDIRECT_CALL;
+        StandardOpcode.LABEL = AMD64StandardOpcode.LABEL;
+        StandardOpcode.JUMP = AMD64StandardOpcode.JUMP;
+        StandardOpcode.RETURN = AMD64StandardOpcode.RETURN;
+        StandardOpcode.XIR = AMD64XirOpcode.XIR;
     }
 
     public AMD64LIRGenerator(GraalCompilation compilation) {
@@ -111,13 +112,13 @@ public class AMD64LIRGenerator extends LIRGenerator {
     @Override
     public CiVariable emitLoad(CiAddress loadAddress, CiKind kind, Object debugInfo) {
         CiVariable result = newVariable(kind.stackKind());
-        append(LOAD.create(result, loadAddress, kind, (LIRDebugInfo) debugInfo));
+        append(LOAD.create(result, loadAddress.base, loadAddress.index, loadAddress.scale, loadAddress.displacement, kind, (LIRDebugInfo) debugInfo));
         return result;
     }
 
     @Override
     public void emitStore(CiAddress storeAddress, CiValue input, CiKind kind, Object debugInfo) {
-        append(STORE.create(storeAddress, input, kind, (LIRDebugInfo) debugInfo));
+        append(STORE.create(storeAddress.base, storeAddress.index, storeAddress.scale, storeAddress.displacement, input, kind, (LIRDebugInfo) debugInfo));
     }
 
     @Override
@@ -126,30 +127,12 @@ public class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    public void emitJump(LIRBlock block) {
-        append(JUMP.create(block));
-    }
-
-    @Override
-    public void emitJump(Label label, LIRDebugInfo info) {
+    public void emitJump(LabelRef label, LIRDebugInfo info) {
         append(JUMP.create(label, info));
     }
 
     @Override
-    public void emitBranch(CiValue left, CiValue right, Condition cond, boolean unorderedIsTrue, LIRBlock block) {
-        emitCompare(left, right);
-        switch (left.kind) {
-            case Int:
-            case Long:
-            case Object: append(BRANCH.create(cond, block)); break;
-            case Float:
-            case Double: append(FLOAT_BRANCH.create(cond, unorderedIsTrue, block)); break;
-            default: throw Util.shouldNotReachHere();
-        }
-    }
-
-    @Override
-    public void emitBranch(CiValue left, CiValue right, Condition cond, boolean unorderedIsTrue, Label label, LIRDebugInfo info) {
+    public void emitBranch(CiValue left, CiValue right, Condition cond, boolean unorderedIsTrue, LabelRef label, LIRDebugInfo info) {
         emitCompare(left, right);
         switch (left.kind) {
             case Int:
@@ -411,8 +394,8 @@ public class AMD64LIRGenerator extends LIRGenerator {
     @Override
     public void deoptimizeOn(Condition cond) {
         LIRDebugInfo info = stateFor(null);
-        Label stubEntry = createDeoptStub(DeoptAction.InvalidateReprofile, info, "deoptimizeOn " + cond);
-        append(BRANCH.create(cond, stubEntry, info));
+        Label stubEntry = createDeoptStub(DeoptAction.InvalidateReprofile, info, cond);
+        append(BRANCH.create(cond, LabelRef.forLabel(stubEntry), info));
     }
 
     @Override
@@ -454,21 +437,21 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
         CiValue expected = loadNonconstant(node.expected());
         CiVariable newValue = load(node.newValue());
-        CiVariable object = load(node.object());
-        CiValue offset = loadNonconstant(node.offset());
+        CiVariable addrBase = load(node.object());
+        CiValue addrIndex = loadNonconstant(node.offset());
 
-        CiAddress address = new CiAddress(compilation.compiler.target.wordKind, object, offset);
-        CiVariable loadedAddress = null;
         if (kind == CiKind.Object) {
-            loadedAddress = newVariable(compilation.compiler.target.wordKind);
-            append(LEA.create(loadedAddress, address));
-            preGCWriteBarrier(loadedAddress, false, null);
-            address = new CiAddress(compilation.compiler.target.wordKind, loadedAddress);
+            CiVariable loadedAddress = newVariable(compilation.compiler.target.wordKind);
+            append(LEA.create(loadedAddress, addrBase, addrIndex, CiAddress.Scale.Times1, 0));
+            addrBase = loadedAddress;
+            addrIndex = CiVariable.IllegalValue;
+
+            preGCWriteBarrier(addrBase, false, null);
         }
 
         CiRegisterValue rax = AMD64.rax.asValue(kind);
         append(MOVE.create(rax, expected));
-        append(CAS.create(rax, address, rax, newValue));
+        append(CAS.create(rax, addrBase, addrIndex, CiAddress.Scale.Times1, 0, rax, newValue));
 
         CiVariable result = createResultVariable(node);
         if (node.directResult()) {
@@ -478,7 +461,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
         }
 
         if (kind == CiKind.Object) {
-            postGCWriteBarrier(loadedAddress, newValue);
+            postGCWriteBarrier(addrBase, newValue);
         }
     }
 
@@ -489,13 +472,13 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
     @Override
     public void emitLea(CiAddress address, CiVariable dest) {
-        append(LEA.create(dest, address));
+        append(LEA.create(dest, address.base, address.index, address.scale, address.displacement));
     }
 
     @Override
     public CiValue createMonitorAddress(int monitorIndex) {
         CiVariable result = newVariable(target().wordKind);
-        append(MONITOR_ADDRESS.create(result, monitorIndex));
+        append(AMD64HotSpotOpcode.MonitorAddressOpcode.MONITOR_ADDRESS.create(result, monitorIndex));
         return result;
     }
 
@@ -508,10 +491,10 @@ public class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    protected void emitTableSwitch(int lowKey, LIRBlock defaultTargets, LIRBlock[] targets, CiValue index) {
+    protected void emitTableSwitch(int lowKey, LabelRef defaultTarget, LabelRef[] targets, CiValue index) {
         // Making a copy of the switch value is necessary because jump table destroys the input value
         CiVariable tmp = emitMove(index);
-        append(TABLE_SWITCH.create(lowKey, defaultTargets, targets, tmp, newVariable(compilation.compiler.target.wordKind)));
+        append(TABLE_SWITCH.create(lowKey, defaultTarget, targets, tmp, newVariable(compilation.compiler.target.wordKind)));
     }
 
     @Override
@@ -523,4 +506,11 @@ public class AMD64LIRGenerator extends LIRGenerator {
         return stub.label;
     }
 
+    @Override
+    public void visitStackAllocate(StackAllocateNode x) {
+        CiVariable result = createResultVariable(x);
+        assert x.size().isConstant() : "ALLOCA bytecode 'size' operand is not a constant: " + x.size();
+        StackBlock stackBlock = compilation.frameMap().reserveStackBlock(x.size().asConstant().asInt());
+        append(AMD64MaxineOpcode.StackAllocateOpcode.STACK_ALLOCATE.create(result, stackBlock));
+    }
 }

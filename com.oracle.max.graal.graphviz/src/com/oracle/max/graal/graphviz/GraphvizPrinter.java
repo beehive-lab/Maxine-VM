@@ -32,6 +32,7 @@ import com.oracle.max.graal.graph.Graph;
 import com.oracle.max.graal.graph.Node;
 import com.oracle.max.graal.graph.NodeInputsIterable;
 import com.oracle.max.graal.graph.NodeSuccessorsIterable;
+import com.oracle.max.graal.graph.Node.*;
 
 /**
  * Generates a representation of {@link Node Nodes} or entire {@link Graph Graphs} in the DOT language that can be
@@ -104,7 +105,7 @@ public class GraphvizPrinter {
         if (omittedClasses.contains(node.getClass())) {
             return;
         }
-        int id = node.id();
+        String id = node.toString(Verbosity.Id);
         String name = "n" + id;
         NodeInputsIterable inputs = node.inputs();
         NodeSuccessorsIterable successors = node.successors();
@@ -112,15 +113,15 @@ public class GraphvizPrinter {
         String color = classColors.get(node.getClass());
 
         if (shortNames) {
-            printNode(name, node.id(), excapeLabel(node.shortName()), color, inputs.explicitCount(), successors.explicitCount());
+            printNode(name, node.toString(Verbosity.Id), excapeLabel(node.toString(Verbosity.Name)), color, inputs.explicitCount(), successors.explicitCount());
         } else {
-            printNode(name, node.id(), excapeLabel(node.toString()), color, inputs.explicitCount(), successors.explicitCount());
+            printNode(name, node.toString(Verbosity.Id), excapeLabel(node.toString()), color, inputs.explicitCount(), successors.explicitCount());
         }
 
         int i = 0;
         for (Node successor : successors) {
             if (successor != null && !omittedClasses.contains(successor.getClass())) {
-                printControlEdge(id, i, successor.id());
+                printControlEdge(id, i, successor.toString(Verbosity.Id));
             }
             i++;
         }
@@ -131,13 +132,13 @@ public class GraphvizPrinter {
                 if (node.getClass().getSimpleName().equals("FrameState") && input.getClass().getSimpleName().equals("Local")) {
                     continue;
                 }
-                printDataEdge(id, i, input.id());
+                printDataEdge(id, i, input.toString(Verbosity.Id));
             }
             i++;
         }
     }
 
-    private void printNode(String name, Number number, String label, String color, int ninputs, int nsuccessors) {
+    private void printNode(String name, String number, String label, String color, int ninputs, int nsuccessors) {
         int minWidth = Math.min(1 + label.length() / 3, 10);
         minWidth = Math.max(minWidth, Math.max(ninputs + 1, nsuccessors + 1));
         out.println(name + "  [shape=plaintext,");
@@ -192,11 +193,11 @@ public class GraphvizPrinter {
         out.print("    <TD CELLPADDING=\"0\" WIDTH=\"15\"><TABLE BORDER=\"0\" CELLSPACING=\"2\" CELLPADDING=\"0\"><TR><TD WIDTH=\"15\" HEIGHT=\"5\"></TD></TR></TABLE></TD>");
     }
 
-    private void printControlEdge(int from, int fromPort, int to) {
+    private void printControlEdge(String from, int fromPort, String to) {
         out.println("n" + from + ":succ" + fromPort + ":s -> n" + to + ":predecessors:n [color=red, weight=2];");
     }
 
-    private void printDataEdge(int from, int fromPort, int to) {
+    private void printDataEdge(String from, int fromPort, String to) {
         out.println("n" + to + ":usages:s -> n" + from + ":in" + fromPort + ":n [color=black,dir=back];");
     }
 

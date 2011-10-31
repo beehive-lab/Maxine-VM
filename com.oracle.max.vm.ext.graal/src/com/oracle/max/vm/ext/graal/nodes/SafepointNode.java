@@ -22,6 +22,8 @@
  */
 package com.oracle.max.vm.ext.graal.nodes;
 
+import com.oracle.max.graal.compiler.gen.*;
+import com.oracle.max.graal.compiler.target.amd64.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
@@ -32,7 +34,7 @@ import com.sun.cri.ci.*;
 public final class SafepointNode extends StateSplit implements LIRLowerable {
 
     public static enum Op {
-        SAFEPOINT_POLL, HERE, INFO, UNCOMMON_TRAP
+        SAFEPOINT_POLL, HERE, INFO, UNCOMMON_TRAP, BREAKPOINT, PAUSE
     }
 
     @Data private final Op op;
@@ -48,7 +50,23 @@ public final class SafepointNode extends StateSplit implements LIRLowerable {
     }
 
     @Override
-    public void generate(LIRGeneratorTool generator) {
-        throw new RuntimeException();
+    public void generate(LIRGeneratorTool tool) {
+        // TODO(ls) this is just experimental - we cannot use LIRGenerator and AMD64 here
+        LIRGenerator gen = (LIRGenerator) tool;
+        switch (op) {
+            case SAFEPOINT_POLL:
+                break;
+            case HERE:
+                break;
+            case INFO:
+                break;
+            case UNCOMMON_TRAP:
+                break;
+            case BREAKPOINT:
+                gen.append(AMD64MaxineOpcode.BreakpointOpcode.BREAKPOINT.create());
+                break;
+            case PAUSE:
+                break;
+        }
     }
 }

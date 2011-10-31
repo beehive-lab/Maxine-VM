@@ -33,7 +33,7 @@ import com.sun.cri.ri.*;
 /**
  * The {@code NewInstanceNode} represents the allocation of an instance class object.
  */
-public final class NewInstanceNode extends FixedWithNextNode {
+public final class NewInstanceNode extends FixedWithNextNode implements EscapeAnalyzable {
 
     private final RiResolvedType instanceClass;
 
@@ -71,13 +71,8 @@ public final class NewInstanceNode extends FixedWithNextNode {
         return properties;
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public <T extends Op> T lookup(Class<T> clazz) {
-        if (clazz == EscapeOp.class) {
-            return (T) ESCAPE;
-        }
-        return super.lookup(clazz);
+    public EscapeOp getEscapeOp() {
+        return ESCAPE;
     }
 
     private static final EscapeOp ESCAPE = new EscapeOp() {

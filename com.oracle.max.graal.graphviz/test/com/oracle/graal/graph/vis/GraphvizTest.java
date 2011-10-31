@@ -102,8 +102,12 @@ public class GraphvizTest {
         private final String name;
 
         @Override
-        public String toString() {
-            return name;
+        public String toString(Verbosity verbosity) {
+            if (verbosity == Verbosity.Long) {
+                return name;
+            } else {
+                return super.toString(verbosity);
+            }
         }
     }
 
