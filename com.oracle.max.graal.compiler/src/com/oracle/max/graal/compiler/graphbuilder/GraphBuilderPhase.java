@@ -369,7 +369,6 @@ public final class GraphBuilderPhase extends Phase {
         // join with all potential exception handlers
         if (exceptionHandlers != null) {
             for (RiExceptionHandler handler : exceptionHandlers) {
-                // if the handler covers this bytecode index, add it to the list
                 if (covers(handler, bci)) {
                     firstHandler = handler;
                     break;
@@ -383,7 +382,7 @@ public final class GraphBuilderPhase extends Phase {
 
         if (firstHandler != null) {
             Block dispatchBlock = null;
-            if (firstHandler.handlerBCI() == FixedWithNextNode.SYNCHRONIZATION_ENTRY_BCI) {
+            if (firstHandler.handlerBCI() == FixedWithNextNode.SYNCHRONIZATION_ENTRY_BCI) { // <=> firstHandler == unwindHandler
                 dispatchBlock = unwindBlock(bci);
             } else {
                 for (int i = currentBlock.normalSuccessors; i < currentBlock.successors.size(); i++) {

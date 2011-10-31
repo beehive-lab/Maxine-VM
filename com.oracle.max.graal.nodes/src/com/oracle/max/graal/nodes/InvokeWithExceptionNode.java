@@ -106,7 +106,11 @@ public class InvokeWithExceptionNode extends ControlSplitNode implements Node.It
 
     @Override
     public void setNext(FixedNode x) {
-        this.setNext(BeginNode.begin(x));
+        if (x != null) {
+            this.setNext(BeginNode.begin(x));
+        } else {
+            this.setNext(null);
+        }
     }
 
     public FrameState stateAfter() {
