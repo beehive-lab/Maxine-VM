@@ -381,7 +381,7 @@ public final class GraphBuilderPhase extends Phase {
         }
 
         Block dispatchBlock = null;
-        if (firstHandler.handlerBCI() == FixedWithNextNode.SYNCHRONIZATION_ENTRY_BCI) { // <=> firstHandler == unwindHandler
+        if (firstHandler == unwindHandler) {
             dispatchBlock = unwindBlock(bci);
         } else {
             for (int i = currentBlock.normalSuccessors; i < currentBlock.successors.size(); i++) {
