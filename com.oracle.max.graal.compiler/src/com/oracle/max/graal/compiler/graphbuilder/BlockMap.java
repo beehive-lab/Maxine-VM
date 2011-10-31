@@ -150,13 +150,12 @@ public final class BlockMap {
         }
     }
 
-    public static class ExceptionBlock  extends Block {
+    public static class ExceptionBlock extends Block {
         public RiExceptionHandler handler;
-        public Block next;
         public int deoptBci;
     }
 
-    public static class DeoptBlock  extends Block {
+    public static class DeoptBlock extends Block {
         public DeoptBlock(int startBci) {
             this.startBci = startBci;
         }
@@ -511,8 +510,7 @@ public final class BlockMap {
             block.handler = handler;
             block.successors.add(blockMap[handler.handlerBCI()]);
             if (index < handlers.size() - 1) {
-                block.next = makeExceptionDispatch(handlers, index + 1, bci);
-                block.successors.add(block.next);
+                block.successors.add(makeExceptionDispatch(handlers, index + 1, bci));
             }
             exceptionDispatch.put(handler, block);
         }

@@ -190,7 +190,7 @@ public final class GraphBuilderPhase extends Phase {
 
         // finish the start block
         appendGoto(createTarget(blockMap.startBlock, frameState));
-        unwindHandler = new CiExceptionHandler(0, method.code().length, FixedWithNextNode.SYNCHRONIZATION_ENTRY_BCI, 0, null);
+        unwindHandler = new CiExceptionHandler(0, method.code().length, -2, 0, null);
 
         // do the normal parsing
         iterateAllBlocks();
@@ -383,7 +383,7 @@ public final class GraphBuilderPhase extends Phase {
 
         if (firstHandler != null) {
             Block dispatchBlock = null;
-            if (firstHandler.handlerBCI() == FixedWithNextNode.SYNCHRONIZATION_ENTRY_BCI) {
+            if (firstHandler == unwindHandler) {
                 dispatchBlock = unwindBlock(bci);
             } else {
                 for (int i = currentBlock.normalSuccessors; i < currentBlock.successors.size(); i++) {
