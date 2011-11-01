@@ -283,14 +283,19 @@ def _configs(env):
     env.run([env.java, '-client', '-Xmx40m', '-Xms40m', '-XX:NewSize=30m', '-cp', env.classpath('com.oracle.max.vm'), 'test.com.sun.max.vm.MaxineTesterConfiguration'], out=c.eat)
     return c.configs
 
-def configs(env, arg):
+def _configs_msg(env):
     """prints the predefined image configurations"""
     c = _configs(env)
-    env.log('The available preconfigured option sets are:')
-    env.log()
-    env.log('    Configuration    Expansion')
+    msg = """The available preconfigured option sets are:
+    
+    Configuration    Expansion"""
     for k, v in sorted(c.iteritems()):
-        env.log('    @{0:<16} {1}'.format(k, v.replace(',', ' ')))
+        msg += '    @{0:<16} {1}\n'.format(k, v.replace(',', ' '))
+    return msg
+
+def configs(env, arg):
+    """prints the predefined image configurations"""
+    env.log(_configs_msg(env))
     
 def copycheck(env, args):
     """run copyright check on the Maxine sources (defined as being under hg control)"""
@@ -417,7 +422,7 @@ def image(env, args):
     command (e.g. '-os Darwin -bits 32').
 
     An option starting with '@' denotes one of the preconfigured set of
-    options described by running "mx options".
+    options. {0}
     
     An option starting with '--' is interpreted as a VM option of the same name
     after the leading '-' is removed. For example, to use the '-verbose:class'
@@ -800,7 +805,7 @@ table = {
     'hcfdis': [hcfdis, '[options] files...'],
     'helloworld': [helloworld, '[VM options]'],
     'help': [help_, '[command]'],
-    'image': [image, '[options] classes|packages...'],
+    'image': [image, '[options] classes|packages...', _configs_msg],
     'inspect': [inspect, '[options] [class | -jar jarfile]  [args...]'],
     'jnigen': [jnigen, ''],
     'jttgen': [jttgen, ''],
