@@ -26,9 +26,9 @@ package com.oracle.max.graal.compiler.target.amd64;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64ArithmeticOpcode.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64CompareOpcode.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64CompareToIntOpcode.*;
-import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertOpcode.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertFIOpcode.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertFLOpcode.*;
+import static com.oracle.max.graal.compiler.target.amd64.AMD64ConvertOpcode.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64DivOpcode.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64MathIntrinsicOpcode.*;
 import static com.oracle.max.graal.compiler.target.amd64.AMD64MulOpcode.*;
@@ -49,7 +49,6 @@ import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.java.*;
-import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -82,7 +81,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
     @Override
     protected boolean canStoreConstant(CiConstant c) {
-        // there is no immediate move of 64-bit values on Intel
+        // there is no immediate move of 64-bit constants on Intel
         switch (c.kind) {
             case Long:   return Util.isInt(c.asLong());
             case Double: return false;
@@ -92,15 +91,14 @@ public class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    public boolean canInlineAsConstant(ValueNode v) {
-        if (!v.isConstant()) {
-            return false;
+    protected boolean canInlineConstant(CiConstant c) {
+        switch (c.kind) {
+            case Long:   return NumUtil.isInt(c.asLong());
+            case Object: return c.isNull();
+            default:     return true;
         }
-        if (v.kind == CiKind.Long) {
-            return NumUtil.isInt(v.asConstant().asLong());
-        }
-        return v.kind != CiKind.Object || v.isNullConstant();
     }
+
 
     @Override
     public CiVariable emitMove(CiValue input) {
@@ -110,16 +108,29 @@ public class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    public CiVariable emitLoad(CiAddress loadAddress, CiKind kind, Object debugInfo) {
+    public void emitMove(CiValue src, CiValue dst) {
+        append(MOVE.create(dst, src));
+    }
+
+    @Override
+    public CiVariable emitLoad(CiAddress loadAddress, CiKind kind, boolean canTrap) {
         CiVariable result = newVariable(kind.stackKind());
-        append(LOAD.create(result, loadAddress.base, loadAddress.index, loadAddress.scale, loadAddress.displacement, kind, (LIRDebugInfo) debugInfo));
+        append(LOAD.create(result, loadAddress.base, loadAddress.index, loadAddress.scale, loadAddress.displacement, kind, canTrap ? state() : null));
         return result;
     }
 
     @Override
-    public void emitStore(CiAddress storeAddress, CiValue input, CiKind kind, Object debugInfo) {
-        append(STORE.create(storeAddress.base, storeAddress.index, storeAddress.scale, storeAddress.displacement, input, kind, (LIRDebugInfo) debugInfo));
+    public void emitStore(CiAddress storeAddress, CiValue input, CiKind kind, boolean canTrap) {
+        append(STORE.create(storeAddress.base, storeAddress.index, storeAddress.scale, storeAddress.displacement, input, kind, canTrap ? state() : null));
     }
+
+    @Override
+    public CiVariable emitLea(CiAddress address) {
+        CiVariable result = newVariable(target().wordKind);
+        append(LEA.create(result, address.base, address.index, address.scale, address.displacement));
+        return result;
+    }
+
 
     @Override
     public void emitLabel(Label label, boolean align) {
@@ -152,16 +163,17 @@ public class AMD64LIRGenerator extends LIRGenerator {
         switch (left.kind) {
             case Int:
             case Long:
-            case Object: append(CMOVE.create(result, cond, makeVariable(trueValue), falseValue)); break;
+            case Object: append(CMOVE.create(result, cond, load(trueValue), loadNonConst(falseValue))); break;
             case Float:
-            case Double: append(FLOAT_CMOVE.create(result, cond, unorderedIsTrue, makeVariable(trueValue), makeVariable(falseValue))); break;
+            case Double: append(FLOAT_CMOVE.create(result, cond, unorderedIsTrue, load(trueValue), load(falseValue))); break;
 
         }
         return result;
     }
 
-    protected void emitCompare(CiValue leftVal, CiValue right) {
-        CiVariable left = makeVariable(leftVal);
+    private void emitCompare(CiValue a, CiValue b) {
+        CiVariable left = load(a);
+        CiValue right = loadNonConst(b);
         switch (left.kind) {
             case Jsr:
             case Int: append(ICMP.create(left, right)); break;
@@ -174,147 +186,246 @@ public class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    public void visitNegate(NegateNode x) {
-        CiValue input = loadNonconstant(x.x());
-        CiVariable result = createResultVariable(x);
-
+    public CiVariable emitNegate(CiValue input) {
+        CiVariable result = newVariable(input.kind);
         append(MOVE.create(result, input));
-        switch (x.kind) {
+        switch (input.kind) {
             case Int:    append(INEG.create(result)); break;
             case Long:   append(LNEG.create(result)); break;
             case Float:  append(FNEG.create(result)); break;
             case Double: append(DNEG.create(result)); break;
             default: throw Util.shouldNotReachHere();
         }
+        return result;
     }
 
     @Override
-    public void visitArithmetic(ArithmeticNode x) {
-        assert Util.archKindsEqual(x.x().kind, x.kind) && Util.archKindsEqual(x.y().kind, x.kind);
+    public CiVariable emitAdd(CiValue a, CiValue b) {
+        CiVariable result = newVariable(a.kind);
+        append(MOVE.create(result, a));
+        switch(a.kind) {
+            case Int:    append(IADD.create(result, loadNonConst(b))); break;
+            case Long:   append(LADD.create(result, loadNonConst(b))); break;
+            case Float:  append(FADD.create(result, loadNonConst(b))); break;
+            case Double: append(DADD.create(result, loadNonConst(b))); break;
+            default:     throw Util.shouldNotReachHere();
+        }
+        return result;
+    }
 
-        int opcode = x.opcode;
-        if (opcode == Bytecodes.IDIV || opcode == Bytecodes.IREM || opcode == Bytecodes.LDIV || opcode == Bytecodes.LREM) {
-            LIRDebugInfo info = stateFor(x);
+    @Override
+    public CiVariable emitSub(CiValue a, CiValue b) {
+        CiVariable result = newVariable(a.kind);
+        append(MOVE.create(result, a));
+        switch(a.kind) {
+            case Int:    append(ISUB.create(result, loadNonConst(b))); break;
+            case Long:   append(LSUB.create(result, loadNonConst(b))); break;
+            case Float:  append(FSUB.create(result, loadNonConst(b))); break;
+            case Double: append(DSUB.create(result, loadNonConst(b))); break;
+            default:     throw Util.shouldNotReachHere();
+        }
+        return result;
+    }
 
-            CiVariable left = load(x.x());
-            CiVariable right = load(x.y());
-            CiVariable result = createResultVariable(x);
+    @Override
+    public CiVariable emitMul(CiValue a, CiValue b) {
+        CiVariable result = newVariable(a.kind);
+        append(MOVE.create(result, a));
+        switch(a.kind) {
+            case Int:    append(IMUL.create(result, loadNonConst(b))); break;
+            case Long:   append(LMUL.create(result, loadNonConst(b))); break;
+            case Float:  append(FMUL.create(result, loadNonConst(b))); break;
+            case Double: append(DMUL.create(result, loadNonConst(b))); break;
+            default:     throw Util.shouldNotReachHere();
+        }
+        return result;
+    }
 
-            switch (opcode) {
-                case Bytecodes.IDIV:
-                    append(MOVE.create(RAX_I, left));
-                    append(IDIV.create(RAX_I, info, RAX_I, right));
-                    append(MOVE.create(result, RAX_I));
-                    break;
-                case Bytecodes.IREM:
-                    append(MOVE.create(RAX_I, left));
-                    append(IREM.create(RDX_I, info, RAX_I, right));
-                    append(MOVE.create(result, RDX_I));
-                    break;
-                case Bytecodes.LDIV:
-                    append(MOVE.create(RAX_L, left));
-                    append(LDIV.create(RAX_L, info, RAX_L, right));
-                    append(MOVE.create(result, RAX_L));
-                    break;
-                case Bytecodes.LREM:
-                    append(MOVE.create(RAX_L, left));
-                    append(LREM.create(RDX_L, info, RAX_L, right));
-                    append(MOVE.create(result, RDX_L));
-                    break;
-            }
-
-        } else if (x.opcode == Bytecodes.FREM || x.opcode == Bytecodes.DREM) {
-            CiVariable left = load(x.x());
-            CiVariable right = load(x.y());
-            CiVariable result = createResultVariable(x);
-
-            CiValue reg;
-            if (x.opcode == Bytecodes.FREM) {
-                reg = callRuntime(CiRuntimeCall.ArithmeticFrem, null, left, right);
-            } else if (x.opcode == Bytecodes.DREM) {
-                reg = callRuntime(CiRuntimeCall.ArithmeticDrem, null, left, right);
-            } else {
+    @Override
+    public CiVariable emitDiv(CiValue a, CiValue b) {
+        CiVariable result = newVariable(load(a).kind);
+        switch(a.kind) {
+            case Int:
+                append(MOVE.create(RAX_I, load(a)));
+                append(IDIV.create(RAX_I, state(), RAX_I, load(b)));
+                append(MOVE.create(result, RAX_I));
+                break;
+            case Long:
+                append(MOVE.create(RAX_L, load(a)));
+                append(LDIV.create(RAX_L, state(), RAX_L, load(b)));
+                append(MOVE.create(result, RAX_L));
+                break;
+            case Float:
+                append(MOVE.create(result, a));
+                append(FDIV.create(result, loadNonConst(b)));
+                break;
+            case Double:
+                append(MOVE.create(result, a));
+                append(DDIV.create(result, loadNonConst(b)));
+                break;
+            default:
                 throw Util.shouldNotReachHere();
-            }
-            append(MOVE.create(result, reg));
-
-        } else {
-            CiVariable left = load(x.x());
-            CiValue right = loadNonconstant(x.y());
-            CiVariable result = createResultVariable(x);
-
-            // Two-operand form on Intel
-            append(MOVE.create(result, left));
-            switch (opcode) {
-                case Bytecodes.IADD: append(IADD.create(result, right)); break;
-                case Bytecodes.ISUB: append(ISUB.create(result, right)); break;
-                case Bytecodes.IMUL: append(IMUL.create(result, right)); break;
-                case Bytecodes.LADD: append(LADD.create(result, right)); break;
-                case Bytecodes.LSUB: append(LSUB.create(result, right)); break;
-                case Bytecodes.LMUL: append(LMUL.create(result, right)); break;
-                case Bytecodes.FADD: append(FADD.create(result, right)); break;
-                case Bytecodes.FSUB: append(FSUB.create(result, right)); break;
-                case Bytecodes.FMUL: append(FMUL.create(result, right)); break;
-                case Bytecodes.FDIV: append(FDIV.create(result, right)); break;
-                case Bytecodes.DADD: append(DADD.create(result, right)); break;
-                case Bytecodes.DSUB: append(DSUB.create(result, right)); break;
-                case Bytecodes.DMUL: append(DMUL.create(result, right)); break;
-                case Bytecodes.DDIV: append(DDIV.create(result, right)); break;
-                default: throw Util.shouldNotReachHere();
-            }
         }
+        return result;
     }
 
     @Override
-    public void visitLogic(LogicNode x) {
-        CiVariable left = load(x.x());
-        CiValue right = loadNonconstant(x.y());
-        CiVariable result = createResultVariable(x);
-
-        // Two-operand form on Intel
-        append(MOVE.create(result, left));
-        switch (x.opcode) {
-            case Bytecodes.IAND: append(IAND.create(result, right)); break;
-            case Bytecodes.LAND: append(LAND.create(result, right)); break;
-            case Bytecodes.IOR:  append(IOR.create(result, right)); break;
-            case Bytecodes.LOR:  append(LOR.create(result, right)); break;
-            case Bytecodes.IXOR: append(IXOR.create(result, right)); break;
-            case Bytecodes.LXOR: append(LXOR.create(result, right)); break;
-            default: throw Util.shouldNotReachHere();
+    public CiVariable emitRem(CiValue a, CiValue b) {
+        CiVariable result = newVariable(load(a).kind);
+        switch(a.kind) {
+            case Int:
+                append(MOVE.create(RAX_I, load(a)));
+                append(IREM.create(RDX_I, state(), RAX_I, load(b)));
+                append(MOVE.create(result, RDX_I));
+                break;
+            case Long:
+                append(MOVE.create(RAX_L, load(a)));
+                append(LREM.create(RDX_L, state(), RAX_L, load(b)));
+                append(MOVE.create(result, RDX_L));
+                break;
+            case Float:
+                CiValue freg = callRuntime(CiRuntimeCall.ArithmeticFrem, null, a, b);
+                append(MOVE.create(result, freg));
+                break;
+            case Double:
+                CiValue dreg = callRuntime(CiRuntimeCall.ArithmeticDrem, null, a, b);
+                append(MOVE.create(result, dreg));
+                break;
+            default:
+                throw Util.shouldNotReachHere();
         }
+        return result;
     }
 
     @Override
-    public void visitShift(ShiftNode x) {
-        CiVariable left = load(x.x());
-        CiValue right = loadNonconstant(x.y());
-        CiVariable result = createResultVariable(x);
-
-        // Two-operand form on Intel
-        append(MOVE.create(result, left));
-        if (!right.isConstant()) {
-            // Non-constant shift count must be in RCX
-            append(MOVE.create(RCX_I, right));
-            right = RCX_I;
+    public CiVariable emitUDiv(CiValue a, CiValue b) {
+        CiVariable result = newVariable(load(a).kind);
+        switch(a.kind) {
+            case Int:
+                append(MOVE.create(RAX_I, load(a)));
+                append(UIDIV.create(RAX_I, state(), RAX_I, load(b)));
+                append(MOVE.create(result, RAX_I));
+                break;
+            case Long:
+                append(MOVE.create(RAX_L, load(a)));
+                append(ULDIV.create(RAX_L, state(), RAX_L, load(b)));
+                append(MOVE.create(result, RAX_L));
+                break;
+            default:
+                throw Util.shouldNotReachHere();
         }
+        return result;
+    }
 
-        switch (x.opcode) {
-            case Bytecodes.ISHL: append(ISHL.create(result, right)); break;
-            case Bytecodes.ISHR: append(ISHR.create(result, right)); break;
-            case Bytecodes.IUSHR: append(UISHR.create(result, right)); break;
-            case Bytecodes.LSHL: append(LSHL.create(result, right)); break;
-            case Bytecodes.LSHR: append(LSHR.create(result, right)); break;
-            case Bytecodes.LUSHR: append(ULSHR.create(result, right)); break;
+    @Override
+    public CiVariable emitURem(CiValue a, CiValue b) {
+        CiVariable result = newVariable(load(a).kind);
+        switch(a.kind) {
+            case Int:
+                append(MOVE.create(RAX_I, load(a)));
+                append(UIREM.create(RDX_I, state(), RAX_I, load(b)));
+                append(MOVE.create(result, RDX_I));
+                break;
+            case Long:
+                append(MOVE.create(RAX_L, load(a)));
+                append(ULREM.create(RDX_L, state(), RAX_L, load(b)));
+                append(MOVE.create(result, RDX_L));
+                break;
+            default:
+                throw Util.shouldNotReachHere();
+        }
+        return result;
+    }
+
+
+    @Override
+    public CiVariable emitAnd(CiValue a, CiValue b) {
+        CiVariable result = newVariable(a.kind);
+        append(MOVE.create(result, a));
+        switch(a.kind) {
+            case Int:    append(IAND.create(result, loadNonConst(b))); break;
+            case Long:   append(LAND.create(result, loadNonConst(b))); break;
+            default:     throw Util.shouldNotReachHere();
+        }
+        return result;
+    }
+
+    @Override
+    public CiVariable emitOr(CiValue a, CiValue b) {
+        CiVariable result = newVariable(a.kind);
+        append(MOVE.create(result, a));
+        switch(a.kind) {
+            case Int:    append(IOR.create(result, loadNonConst(b))); break;
+            case Long:   append(LOR.create(result, loadNonConst(b))); break;
+            default:     throw Util.shouldNotReachHere();
+        }
+        return result;
+    }
+
+    @Override
+    public CiVariable emitXor(CiValue a, CiValue b) {
+        CiVariable result = newVariable(a.kind);
+        append(MOVE.create(result, a));
+        switch(a.kind) {
+            case Int:    append(IXOR.create(result, loadNonConst(b))); break;
+            case Long:   append(LXOR.create(result, loadNonConst(b))); break;
+            default:     throw Util.shouldNotReachHere();
+        }
+        return result;
+    }
+
+
+    @Override
+    public CiVariable emitShl(CiValue a, CiValue b) {
+        CiVariable result = newVariable(a.kind);
+        append(MOVE.create(result, a));
+        switch (a.kind) {
+            case Int:    append(ISHL.create(result, loadShiftCount(b))); break;
+            case Long:   append(LSHL.create(result, loadShiftCount(b))); break;
             default: Util.shouldNotReachHere();
         }
+        return result;
     }
 
     @Override
-    public void visitConvert(ConvertNode x) {
-        CiVariable input = load(x.value());
-        CiVariable result = createResultVariable(x);
+    public CiVariable emitShr(CiValue a, CiValue b) {
+        CiVariable result = newVariable(a.kind);
+        append(MOVE.create(result, a));
+        switch (a.kind) {
+            case Int:    append(ISHR.create(result, loadShiftCount(b))); break;
+            case Long:   append(LSHR.create(result, loadShiftCount(b))); break;
+            default: Util.shouldNotReachHere();
+        }
+        return result;
+    }
 
-        switch (x.opcode) {
+    @Override
+    public CiVariable emitUShr(CiValue a, CiValue b) {
+        CiVariable result = newVariable(a.kind);
+        append(MOVE.create(result, a));
+        switch (a.kind) {
+            case Int:    append(UISHR.create(result, loadShiftCount(b))); break;
+            case Long:   append(ULSHR.create(result, loadShiftCount(b))); break;
+            default: Util.shouldNotReachHere();
+        }
+        return result;
+    }
+
+    private CiValue loadShiftCount(CiValue value) {
+        if (value.isConstant()) {
+            return value;
+        }
+        // Non-constant shift count must be in RCX
+        append(MOVE.create(RCX_I, value));
+        return RCX_I;
+    }
+
+
+    @Override
+    public CiVariable emitConvert(ConvertNode.Op opcode, CiValue inputVal) {
+        CiVariable input = load(inputVal);
+        CiVariable result = newVariable(opcode.to.stackKind());
+        switch (opcode) {
             case I2L: append(I2L.create(result, input)); break;
             case L2I: append(L2I.create(result, input)); break;
             case I2B: append(I2B.create(result, input)); break;
@@ -336,90 +447,19 @@ public class AMD64LIRGenerator extends LIRGenerator {
             case MOV_D2L: append(MOV_D2L.create(result, input)); break;
             default: throw Util.shouldNotReachHere();
         }
-    }
-
-    @Override
-    public void visitMathIntrinsic(MathIntrinsicNode x) {
-        CiVariable input = load(x.x());
-        CiVariable result = createResultVariable(x);
-
-        switch (x.operation()) {
-            case ABS:
-                append(MOVE.create(result, input));
-                append(DABS.create(result));
-                break;
-            case SQRT:  append(SQRT.create(result, input)); break;
-            case LOG:   append(LOG.create(result, input)); break;
-            case LOG10: append(LOG10.create(result, input)); break;
-            case SIN:   append(SIN.create(result, input)); break;
-            case COS:   append(COS.create(result, input)); break;
-            case TAN:   append(TAN.create(result, input)); break;
-            default:    throw Util.shouldNotReachHere();
-        }
+        return result;
     }
 
 
     @Override
-    public void integerAdd(ValueNode resultNode, ValueNode leftNode, ValueNode rightNode) {
-        CiVariable left = load(leftNode);
-        CiValue right = loadNonconstant(rightNode);
-        CiVariable result = createResultVariable(resultNode);
-
-        append(MOVE.create(result, left));
-        append(IADD.create(result, right));
-    }
-
-    @Override
-    public void emitUnsignedShiftRight(CiVariable value, CiValue count, CiVariable dest) {
-        assert value.equals(dest);
-        switch (dest.kind) {
-            case Int: append(UISHR.create(dest, count)); break;
-            case Long: append(ULSHR.create(dest, count)); break;
-            default: throw Util.shouldNotReachHere();
-        }
-    }
-
-    @Override
-    public void emitAdd(CiVariable a, CiValue b, CiVariable dest) {
-        assert a.equals(dest);
-        switch (dest.kind) {
-            case Int: append(IADD.create(dest, b)); break;
-            case Long: append(LADD.create(dest, b)); break;
-            case Float: append(FADD.create(dest, b)); break;
-            case Double: append(DADD.create(dest, b)); break;
-            default: throw Util.shouldNotReachHere();
-        }
-    }
-
-    @Override
-    public void deoptimizeOn(Condition cond) {
-        LIRDebugInfo info = stateFor(null);
-        Label stubEntry = createDeoptStub(DeoptAction.InvalidateReprofile, info, cond);
+    public void emitDeoptimizeOn(Condition cond, DeoptAction action) {
+        LIRDebugInfo info = state();
+        Label stubEntry = createDeoptStub(action, info, cond);
         append(BRANCH.create(cond, LabelRef.forLabel(stubEntry), info));
     }
 
-    @Override
-    public void visitNormalizeCompare(NormalizeCompareNode x) {
-        CiVariable result = createResultVariable(x);
-        emitCompare(makeOperand(x.x()), makeOperand(x.y()));
-        switch (x.x().kind){
-            case Float:
-            case Double:
-                if (x.isUnorderedLess()) {
-                    append(CMP2INT_UL.create(result));
-                } else {
-                    append(CMP2INT_UG.create(result));
-                }
-                break;
-            case Long:
-                append(CMP2INT.create(result));
-                break;
-            default:
-                throw Util.shouldNotReachHere();
-        }
-    }
 
-
+// TODO Methods below here still need to be worked on.
 
     @Override
     public void visitLoopBegin(LoopBeginNode x) {
@@ -435,10 +475,10 @@ public class AMD64LIRGenerator extends LIRGenerator {
         CiKind kind = node.newValue().kind;
         assert kind == node.expected().kind;
 
-        CiValue expected = loadNonconstant(node.expected());
-        CiVariable newValue = load(node.newValue());
-        CiVariable addrBase = load(node.object());
-        CiValue addrIndex = loadNonconstant(node.offset());
+        CiValue expected = loadNonConst(operand(node.expected()));
+        CiVariable newValue = load(operand(node.newValue()));
+        CiVariable addrBase = load(operand(node.object()));
+        CiValue addrIndex = loadNonConst(operand(node.offset()));
 
         if (kind == CiKind.Object) {
             CiVariable loadedAddress = newVariable(compilation.compiler.target.wordKind);
@@ -453,26 +493,17 @@ public class AMD64LIRGenerator extends LIRGenerator {
         append(MOVE.create(rax, expected));
         append(CAS.create(rax, addrBase, addrIndex, CiAddress.Scale.Times1, 0, rax, newValue));
 
-        CiVariable result = createResultVariable(node);
+        CiVariable result = newVariable(node.kind);
         if (node.directResult()) {
             append(MOVE.create(result, rax));
         } else {
-            append(CMOVE.create(result, Condition.EQ, makeVariable(CiConstant.TRUE), CiConstant.FALSE));
+            append(CMOVE.create(result, Condition.EQ, load(CiConstant.TRUE), CiConstant.FALSE));
         }
+        setResult(node, result);
 
         if (kind == CiKind.Object) {
             postGCWriteBarrier(addrBase, newValue);
         }
-    }
-
-    @Override
-    public void emitMove(CiValue src, CiValue dst) {
-        append(MOVE.create(dst, src));
-    }
-
-    @Override
-    public void emitLea(CiAddress address, CiVariable dest) {
-        append(LEA.create(dest, address.base, address.index, address.scale, address.displacement));
     }
 
     @Override
@@ -508,9 +539,54 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
     @Override
     public void visitStackAllocate(StackAllocateNode x) {
-        CiVariable result = createResultVariable(x);
-        assert x.size().isConstant() : "ALLOCA bytecode 'size' operand is not a constant: " + x.size();
-        StackBlock stackBlock = compilation.frameMap().reserveStackBlock(x.size().asConstant().asInt());
+        CiVariable result = newVariable(x.kind);
+        StackBlock stackBlock = compilation.frameMap().reserveStackBlock(x.size);
         append(AMD64MaxineOpcode.StackAllocateOpcode.STACK_ALLOCATE.create(result, stackBlock));
+        setResult(x, result);
+    }
+
+
+    // TODO This method will go away, and the logic directly merged into MathIntrinsicNode
+    @Override
+    public void visitMathIntrinsic(MathIntrinsicNode x) {
+        CiVariable input = load(operand(x.x()));
+        CiVariable result = newVariable(x.kind);
+        switch (x.operation()) {
+            case ABS:
+                append(MOVE.create(result, input));
+                append(DABS.create(result));
+                break;
+            case SQRT:  append(SQRT.create(result, input)); break;
+            case LOG:   append(LOG.create(result, input)); break;
+            case LOG10: append(LOG10.create(result, input)); break;
+            case SIN:   append(SIN.create(result, input)); break;
+            case COS:   append(COS.create(result, input)); break;
+            case TAN:   append(TAN.create(result, input)); break;
+            default:    throw Util.shouldNotReachHere();
+        }
+        setResult(x, result);
+    }
+
+    // TODO The class NormalizeCompareNode should be lowered away in the front end, since the code generated here is long and uses branches anyway.
+    @Override
+    public void visitNormalizeCompare(NormalizeCompareNode x) {
+        emitCompare(operand(x.x()), operand(x.y()));
+        CiVariable result = newVariable(x.kind);
+        switch (x.x().kind){
+            case Float:
+            case Double:
+                if (x.isUnorderedLess) {
+                    append(CMP2INT_UL.create(result));
+                } else {
+                    append(CMP2INT_UG.create(result));
+                }
+                break;
+            case Long:
+                append(CMP2INT.create(result));
+                break;
+            default:
+                throw Util.shouldNotReachHere();
+        }
+        setResult(x, result);
     }
 }

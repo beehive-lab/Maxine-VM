@@ -155,7 +155,7 @@ public final class CompareNode extends BooleanNode implements Canonicalizable {
             }
             CompareNode result = graph().unique(new CompareNode(normalizeNode.x(), condition, normalizeNode.y()));
             boolean isLess = condition == Condition.LE || condition == Condition.LT || condition == Condition.BE || condition == Condition.BT;
-            result.unorderedIsTrue = condition != Condition.EQ && (condition == Condition.NE || !(isLess ^ normalizeNode.isUnorderedLess()));
+            result.unorderedIsTrue = condition != Condition.EQ && (condition == Condition.NE || !(isLess ^ normalizeNode.isUnorderedLess));
             return result;
         }
         return this;

@@ -25,14 +25,13 @@ package com.oracle.max.graal.nodes.calc;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
-import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 
 @NodeInfo(shortName = "-")
-public final class IntegerSubNode extends IntegerArithmeticNode implements Canonicalizable {
+public final class IntegerSubNode extends IntegerArithmeticNode implements Canonicalizable, LIRLowerable {
 
     public IntegerSubNode(CiKind kind, ValueNode x, ValueNode y) {
-        super(kind, kind == CiKind.Int ? Bytecodes.ISUB : Bytecodes.LSUB, x, y);
+        super(kind, x, y);
     }
 
     @Override
@@ -65,5 +64,10 @@ public final class IntegerSubNode extends IntegerArithmeticNode implements Canon
             }
         }
         return this;
+    }
+
+    @Override
+    public void generate(LIRGeneratorTool gen) {
+        gen.setResult(this, gen.emitSub(gen.operand(x()), gen.operand(y())));
     }
 }

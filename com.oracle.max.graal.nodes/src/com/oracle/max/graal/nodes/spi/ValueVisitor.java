@@ -34,13 +34,11 @@ import com.oracle.max.graal.nodes.java.*;
  */
 public abstract class ValueVisitor {
     // Checkstyle: stop
-    public abstract void visitArithmetic(ArithmeticNode i);
     public abstract void visitArrayLength(ArrayLengthNode i);
     public abstract void visitMerge(MergeNode i);
     public abstract void visitCheckCast(CheckCastNode i);
     public abstract void visitNormalizeCompare(NormalizeCompareNode i);
     public abstract void visitConstant(ConstantNode i);
-    public abstract void visitConvert(ConvertNode i);
     public abstract void visitConditional(ConditionalNode i);
     public abstract void visitExceptionObject(ExceptionObjectNode i);
     public abstract void visitEndNode(EndNode i);
@@ -51,14 +49,12 @@ public abstract class ValueVisitor {
     public abstract void visitLoadField(LoadFieldNode i);
     public abstract void visitLoadIndexed(LoadIndexedNode i);
     public abstract void visitLocal(LocalNode i);
-    public abstract void visitLogic(LogicNode i);
     public abstract void visitLookupSwitch(LookupSwitchNode i);
     public abstract void visitMemoryRead(ReadNode i);
     public abstract void visitVolatileMemoryRead(VolatileReadNode i);
     public abstract void visitMemoryWrite(WriteNode i);
     public abstract void visitMonitorEnter(MonitorEnterNode i);
     public abstract void visitMonitorExit(MonitorExitNode i);
-    public abstract void visitNegate(NegateNode i);
     public abstract void visitNewInstance(NewInstanceNode i);
     public abstract void visitNewMultiArray(NewMultiArrayNode i);
     public abstract void visitNewObjectArray(NewObjectArrayNode i);
@@ -67,7 +63,6 @@ public abstract class ValueVisitor {
     public abstract void visitPhi(PhiNode i);
     public abstract void visitRegisterFinalizer(RegisterFinalizerNode i);
     public abstract void visitReturn(ReturnNode i);
-    public abstract void visitShift(ShiftNode i);
     public abstract void visitStoreField(StoreFieldNode i);
     public abstract void visitStoreIndexed(StoreIndexedNode i);
     public abstract void visitTableSwitch(TableSwitchNode i);

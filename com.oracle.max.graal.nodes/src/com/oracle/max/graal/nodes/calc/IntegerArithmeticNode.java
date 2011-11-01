@@ -29,8 +29,8 @@ import com.sun.cri.ci.*;
 
 public abstract class IntegerArithmeticNode extends ArithmeticNode {
 
-    public IntegerArithmeticNode(CiKind kind, int opcode, ValueNode x, ValueNode y) {
-        super(kind, opcode, x, y, false);
+    public IntegerArithmeticNode(CiKind kind, ValueNode x, ValueNode y) {
+        super(kind, x, y, false);
         assert kind == CiKind.Int || kind == CiKind.Long;
     }
 
