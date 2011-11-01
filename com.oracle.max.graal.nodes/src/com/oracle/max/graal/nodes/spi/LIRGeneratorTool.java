@@ -23,27 +23,41 @@
 package com.oracle.max.graal.nodes.spi;
 
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.DeoptimizeNode.DeoptAction;
 import com.oracle.max.graal.nodes.calc.*;
 import com.sun.cri.ci.*;
 
 public abstract class LIRGeneratorTool extends ValueVisitor {
-    public abstract CiValue load(ValueNode value);
-    public abstract CiVariable createResultVariable(ValueNode conv);
-    public abstract CiValue setResult(ValueNode x, CiVariable operand);
-    public abstract CiValue forceToSpill(CiValue value, CiKind kind, boolean b);
-
-    public abstract void emitMove(CiValue src, CiValue dst);
-    public abstract CiVariable emitMove(CiValue input);
-    // TODO: LIRDebugInfo is not visible in this project. Replaced with Object for now - but how to solve that?
-    public abstract CiVariable emitLoad(CiAddress loadAddress, CiKind kind, Object debugInfo);
-    public abstract void emitStore(CiAddress storeAddress, CiValue input, CiKind kind, Object debugInfo);
-
-    public abstract void integerAdd(ValueNode result, ValueNode x, ValueNode y);
-    public abstract void deoptimizeOn(Condition of);
-    public abstract CiVariable newVariable(CiKind kind);
     public abstract CiTarget target();
-    public abstract void emitLea(CiAddress address, CiVariable dest);
-    public abstract CiValue makeOperand(ValueNode object);
-    public abstract void emitUnsignedShiftRight(CiVariable value, CiValue count, CiVariable dest);
-    public abstract void emitAdd(CiVariable a, CiValue b, CiVariable dest);
+
+    public abstract CiValue operand(ValueNode object);
+    public abstract CiVariable newVariable(CiKind kind);
+    public abstract CiValue setResult(ValueNode x, CiValue operand);
+
+    public abstract CiVariable emitMove(CiValue input);
+    public abstract void emitMove(CiValue src, CiValue dst);
+    public abstract CiVariable emitLoad(CiAddress loadAddress, CiKind kind, boolean canTrap);
+    public abstract void emitStore(CiAddress storeAddress, CiValue input, CiKind kind, boolean canTrap);
+    public abstract CiVariable emitLea(CiAddress address);
+
+    public abstract CiVariable emitNegate(CiValue input);
+    public abstract CiVariable emitAdd(CiValue a, CiValue b);
+    public abstract CiVariable emitSub(CiValue a, CiValue b);
+    public abstract CiVariable emitMul(CiValue a, CiValue b);
+    public abstract CiVariable emitDiv(CiValue a, CiValue b);
+    public abstract CiVariable emitRem(CiValue a, CiValue b);
+    public abstract CiVariable emitUDiv(CiValue a, CiValue b);
+    public abstract CiVariable emitURem(CiValue a, CiValue b);
+
+    public abstract CiVariable emitAnd(CiValue a, CiValue b);
+    public abstract CiVariable emitOr(CiValue a, CiValue b);
+    public abstract CiVariable emitXor(CiValue a, CiValue b);
+
+    public abstract CiVariable emitShl(CiValue a, CiValue b);
+    public abstract CiVariable emitShr(CiValue a, CiValue b);
+    public abstract CiVariable emitUShr(CiValue a, CiValue b);
+
+    public abstract CiVariable emitConvert(ConvertNode.Op opcode, CiValue inputVal);
+
+    public abstract void emitDeoptimizeOn(Condition of, DeoptAction action);
 }

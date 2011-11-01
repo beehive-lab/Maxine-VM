@@ -624,18 +624,15 @@ public final class GraphBuilderPhase extends Phase {
         frameState.push(kind, append(graph.unique(v)));
     }
 
-    private void genCompareOp(CiKind kind, int opcode, CiKind resultKind) {
+    private void genCompareOp(CiKind kind, boolean isUnorderedLess) {
         ValueNode y = frameState.pop(kind);
         ValueNode x = frameState.pop(kind);
-        ValueNode value = append(graph.unique(new NormalizeCompareNode(opcode, resultKind, x, y)));
-        if (!resultKind.isVoid()) {
-            frameState.ipush(value);
-        }
+        frameState.ipush(append(graph.unique(new NormalizeCompareNode(x, y, isUnorderedLess))));
     }
 
-    private void genConvert(ConvertNode.Op opcode, CiKind from, CiKind to) {
-        CiKind tt = to.stackKind();
-        frameState.push(tt, append(graph.unique(new ConvertNode(tt, opcode, frameState.pop(from.stackKind())))));
+    private void genConvert(ConvertNode.Op opcode) {
+        ValueNode input = frameState.pop(opcode.from.stackKind());
+        frameState.push(opcode.to.stackKind(), append(graph.unique(new ConvertNode(opcode, input))));
     }
 
     private void genIncrement() {
@@ -1649,26 +1646,26 @@ public final class GraphBuilderPhase extends Phase {
             case LOR            : // fall through
             case LXOR           : genLogicOp(CiKind.Long, opcode); break;
             case IINC           : genIncrement(); break;
-            case I2L            : genConvert(ConvertNode.Op.I2L, CiKind.Int   , CiKind.Long  ); break;
-            case I2F            : genConvert(ConvertNode.Op.I2F, CiKind.Int   , CiKind.Float ); break;
-            case I2D            : genConvert(ConvertNode.Op.I2D, CiKind.Int   , CiKind.Double); break;
-            case L2I            : genConvert(ConvertNode.Op.L2I, CiKind.Long  , CiKind.Int   ); break;
-            case L2F            : genConvert(ConvertNode.Op.L2F, CiKind.Long  , CiKind.Float ); break;
-            case L2D            : genConvert(ConvertNode.Op.L2D, CiKind.Long  , CiKind.Double); break;
-            case F2I            : genConvert(ConvertNode.Op.F2I, CiKind.Float , CiKind.Int   ); break;
-            case F2L            : genConvert(ConvertNode.Op.F2L, CiKind.Float , CiKind.Long  ); break;
-            case F2D            : genConvert(ConvertNode.Op.F2D, CiKind.Float , CiKind.Double); break;
-            case D2I            : genConvert(ConvertNode.Op.D2I, CiKind.Double, CiKind.Int   ); break;
-            case D2L            : genConvert(ConvertNode.Op.D2L, CiKind.Double, CiKind.Long  ); break;
-            case D2F            : genConvert(ConvertNode.Op.D2F, CiKind.Double, CiKind.Float ); break;
-            case I2B            : genConvert(ConvertNode.Op.I2B, CiKind.Int   , CiKind.Byte  ); break;
-            case I2C            : genConvert(ConvertNode.Op.I2C, CiKind.Int   , CiKind.Char  ); break;
-            case I2S            : genConvert(ConvertNode.Op.I2S, CiKind.Int   , CiKind.Short ); break;
-            case LCMP           : genCompareOp(CiKind.Long, opcode, CiKind.Int); break;
-            case FCMPL          : genCompareOp(CiKind.Float, opcode, CiKind.Int); break;
-            case FCMPG          : genCompareOp(CiKind.Float, opcode, CiKind.Int); break;
-            case DCMPL          : genCompareOp(CiKind.Double, opcode, CiKind.Int); break;
-            case DCMPG          : genCompareOp(CiKind.Double, opcode, CiKind.Int); break;
+            case I2L            : genConvert(ConvertNode.Op.I2L); break;
+            case I2F            : genConvert(ConvertNode.Op.I2F); break;
+            case I2D            : genConvert(ConvertNode.Op.I2D); break;
+            case L2I            : genConvert(ConvertNode.Op.L2I); break;
+            case L2F            : genConvert(ConvertNode.Op.L2F); break;
+            case L2D            : genConvert(ConvertNode.Op.L2D); break;
+            case F2I            : genConvert(ConvertNode.Op.F2I); break;
+            case F2L            : genConvert(ConvertNode.Op.F2L); break;
+            case F2D            : genConvert(ConvertNode.Op.F2D); break;
+            case D2I            : genConvert(ConvertNode.Op.D2I); break;
+            case D2L            : genConvert(ConvertNode.Op.D2L); break;
+            case D2F            : genConvert(ConvertNode.Op.D2F); break;
+            case I2B            : genConvert(ConvertNode.Op.I2B); break;
+            case I2C            : genConvert(ConvertNode.Op.I2C); break;
+            case I2S            : genConvert(ConvertNode.Op.I2S); break;
+            case LCMP           : genCompareOp(CiKind.Long, false); break;
+            case FCMPL          : genCompareOp(CiKind.Float, true); break;
+            case FCMPG          : genCompareOp(CiKind.Float, false); break;
+            case DCMPL          : genCompareOp(CiKind.Double, true); break;
+            case DCMPG          : genCompareOp(CiKind.Double, false); break;
             case IFEQ           : genIfZero(Condition.EQ); break;
             case IFNE           : genIfZero(Condition.NE); break;
             case IFLT           : genIfZero(Condition.LT); break;

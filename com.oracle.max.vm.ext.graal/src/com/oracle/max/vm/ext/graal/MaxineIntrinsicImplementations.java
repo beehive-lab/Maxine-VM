@@ -54,13 +54,14 @@ public class MaxineIntrinsicImplementations {
         public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
             assert args.length == 3 && args[0].isConstant() && args[0].kind == CiKind.Int;
             int opcode = args[0].asConstant().asInt();
+            // TODO(cwi): Why the separation when both branches do the same?
             if (args[1].kind == CiKind.Long || args[1].kind == CiKind.Double) {
                 assert opcode == Bytecodes.LCMP || opcode == Bytecodes.DCMPG || opcode == Bytecodes.DCMPL;
-                return graph.unique(new NormalizeCompareNode(opcode, CiKind.Int, args[1], args[2]));
+                return graph.unique(new NormalizeCompareNode(args[1], args[2], opcode == Bytecodes.FCMPL || opcode == Bytecodes.DCMPL));
             } else {
                 assert opcode == Bytecodes.FCMPG || opcode == Bytecodes.FCMPL;
                 assert args[1].kind == CiKind.Float;
-                return graph.unique(new NormalizeCompareNode(opcode, CiKind.Int, args[1], args[2]));
+                return graph.unique(new NormalizeCompareNode(args[1], args[2], opcode == Bytecodes.FCMPL || opcode == Bytecodes.DCMPL));
             }
         }
     }
@@ -197,7 +198,7 @@ public class MaxineIntrinsicImplementations {
      */
     private static ValueNode offsetOrIndex(Graph<?> graph, ValueNode offsetOrIndex) {
         if (offsetOrIndex.kind == CiKind.Int && Platform.target().arch.is64bit()) {
-            return graph.unique(new ConvertNode(CiKind.Long, ConvertNode.Op.I2L, offsetOrIndex));
+            return graph.unique(new ConvertNode(ConvertNode.Op.I2L, offsetOrIndex));
         }
         return offsetOrIndex;
     }
@@ -276,7 +277,7 @@ public class MaxineIntrinsicImplementations {
     public static class StackAllocateIntrinsic implements GraalIntrinsicImpl {
         @Override
         public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
-            return graph.add(new StackAllocateNode(args[0], target.signature().returnType(null)));
+            return graph.add(new StackAllocateNode(intConstant(args[0]), (RiResolvedType) target.signature().returnType(null)));
         }
     }
 

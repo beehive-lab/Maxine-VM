@@ -58,11 +58,11 @@ public final class SafepointNode extends StateSplit implements LIRLowerable {
                 gen.emitSafepointPoll(this);
                 break;
             case HERE:
-                gen.emitLea(new CiAddress(CiKind.Byte, CiRegister.InstructionRelative.asValue()), gen.createResultVariable(this));
-                gen.append(AMD64MaxineOpcode.SafepointOpcode.SAFEPOINT.create(gen.stateFor(this)));
+                gen.setResult(this, gen.emitLea(new CiAddress(CiKind.Byte, CiRegister.InstructionRelative.asValue())));
+                gen.append(AMD64MaxineOpcode.SafepointOpcode.SAFEPOINT.create(gen.state()));
                 break;
             case INFO:
-                gen.append(AMD64MaxineOpcode.SafepointOpcode.SAFEPOINT.create(gen.stateFor(this)));
+                gen.append(AMD64MaxineOpcode.SafepointOpcode.SAFEPOINT.create(gen.state()));
                 break;
             case BREAKPOINT:
                 gen.append(AMD64MaxineOpcode.BreakpointOpcode.BREAKPOINT.create());

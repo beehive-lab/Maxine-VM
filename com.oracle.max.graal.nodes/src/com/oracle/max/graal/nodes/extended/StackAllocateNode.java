@@ -32,17 +32,13 @@ import com.sun.cri.ri.*;
  */
 public final class StackAllocateNode extends FixedWithNextNode {
 
-    @Input private ValueNode size;
-    @Data private final RiType declaredType;
-
-    public ValueNode size() {
-        return size;
-    }
+    @Data public final int size;
+    @Data public final RiResolvedType declaredType;
 
     /**
      * Creates a new StackAllocate instance.
      */
-    public StackAllocateNode(ValueNode size, RiType declaredType) {
+    public StackAllocateNode(int size, RiResolvedType declaredType) {
         super(declaredType.kind(false));
         this.size = size;
         this.declaredType = declaredType;
@@ -55,6 +51,6 @@ public final class StackAllocateNode extends FixedWithNextNode {
 
     @Override
     public RiResolvedType declaredType() {
-        return (declaredType instanceof RiResolvedType) ? (RiResolvedType) declaredType : null;
+        return declaredType;
     }
 }

@@ -105,7 +105,7 @@ public final class CiAddress extends CiValue {
             index = IllegalValue;
             scale = Scale.Times1;
         }
-        assert base.isVariableOrRegister();
+        assert base.isIllegal() || base.isVariableOrRegister();
         assert index.isIllegal() || index.isVariableOrRegister();
 
         this.base = base;

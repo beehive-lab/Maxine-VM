@@ -53,8 +53,8 @@ public final class MaxineMathIntrinsicsNode extends FloatingNode implements LIRL
     public void generate(LIRGeneratorTool tool) {
         // TODO(ls) this is just experimental - we cannot use LIRGenerator and AMD64 here
         LIRGenerator gen = (LIRGenerator) tool;
-        CiVariable result = gen.createResultVariable(this);
-        CiVariable input = gen.load(value);
+        CiVariable result = gen.newVariable(kind);
+        CiVariable input = gen.load(gen.operand(value));
         switch (op) {
             case MSB:
                 gen.append(AMD64MaxineOpcode.SignificantBitOpcode.MSB.create(result, input));
@@ -65,5 +65,6 @@ public final class MaxineMathIntrinsicsNode extends FloatingNode implements LIRL
             default:
                 throw new RuntimeException();
         }
+        gen.setResult(this, result);
     }
 }
