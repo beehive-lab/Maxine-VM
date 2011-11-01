@@ -136,7 +136,7 @@ class Env(ArgumentParser):
 
     def jmax(self, args):
         """ executes a jmax.java command, returning stdout as a string """
-        os.environ['maxine_home'] = self.maxine_home
+        os.environ['maxine_dir'] = self.maxine_home
         if self.cp_prefix is not None:
             os.environ['cp_prefix'] = self.cp_prefix
         if self.cp_suffix is not None:
