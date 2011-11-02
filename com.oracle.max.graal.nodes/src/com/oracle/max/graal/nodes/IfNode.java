@@ -30,7 +30,7 @@ import com.sun.cri.ci.*;
  * The {@code IfNode} represents a branch that can go one of two directions depending on the outcome of a
  * comparison.
  */
-public final class IfNode extends ControlSplitNode implements Canonicalizable {
+public final class IfNode extends ControlSplitNode implements Canonicalizable, LIRLowerable {
 
     private static final BeginNode[] EMPTY_IF_SUCCESSORS = new BeginNode[] {null, null};
 
@@ -87,8 +87,8 @@ public final class IfNode extends ControlSplitNode implements Canonicalizable {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitIf(this);
+    public void generate(LIRGeneratorTool gen) {
+        gen.visitIf(this);
     }
 
     @Override

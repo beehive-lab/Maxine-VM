@@ -30,7 +30,7 @@ import com.sun.cri.ri.*;
 /**
  * The {@code StoreFieldNode} represents a write to a static or instance field.
  */
-public final class StoreFieldNode extends AccessFieldNode {
+public final class StoreFieldNode extends AccessFieldNode implements LIRLowerable {
 
     @Input private ValueNode value;
 
@@ -50,7 +50,7 @@ public final class StoreFieldNode extends AccessFieldNode {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitStoreField(this);
+    public void generate(LIRGeneratorTool gen) {
+        gen.visitStoreField(this);
     }
 }

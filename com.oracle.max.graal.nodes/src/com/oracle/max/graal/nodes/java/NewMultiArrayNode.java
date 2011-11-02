@@ -31,7 +31,7 @@ import com.sun.cri.ri.*;
  * The {@code NewMultiArrayNode} represents an allocation of a multi-dimensional object
  * array.
  */
-public final class NewMultiArrayNode extends NewArrayNode {
+public final class NewMultiArrayNode extends NewArrayNode implements LIRLowerable {
 
     @Input private final NodeInputList<ValueNode> dimensions;
 
@@ -65,8 +65,8 @@ public final class NewMultiArrayNode extends NewArrayNode {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitNewMultiArray(this);
+    public void generate(LIRGeneratorTool gen) {
+        gen.visitNewMultiArray(this);
     }
 
     @Override

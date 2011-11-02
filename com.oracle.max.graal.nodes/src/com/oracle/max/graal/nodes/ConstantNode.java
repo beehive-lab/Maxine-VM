@@ -23,7 +23,6 @@
 package com.oracle.max.graal.nodes;
 
 import com.oracle.max.graal.graph.*;
-import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -33,7 +32,7 @@ import com.sun.cri.ri.*;
  * long, float, object reference, address, etc.
  */
 @NodeInfo(shortName = "Const")
-public final class ConstantNode extends BooleanNode {
+public final class ConstantNode extends BooleanNode implements LIRLowerable {
 
     @Data public final CiConstant value;
 
@@ -47,8 +46,12 @@ public final class ConstantNode extends BooleanNode {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitConstant(this);
+    public void generate(LIRGeneratorTool gen) {
+        if (gen.canInlineConstant(value)) {
+            gen.setResult(this, value);
+        } else {
+            gen.setResult(this, gen.emitMove(value));
+        }
     }
 
     /**

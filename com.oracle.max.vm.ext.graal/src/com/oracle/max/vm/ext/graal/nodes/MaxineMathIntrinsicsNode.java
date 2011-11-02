@@ -45,11 +45,6 @@ public final class MaxineMathIntrinsicsNode extends FloatingNode implements LIRL
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        // nothing to do
-    }
-
-    @Override
     public void generate(LIRGeneratorTool tool) {
         // TODO(ls) this is just experimental - we cannot use LIRGenerator and AMD64 here
         LIRGenerator gen = (LIRGenerator) tool;

@@ -25,7 +25,7 @@ package com.oracle.max.graal.nodes;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 
-public final class ReturnNode extends FixedNode {
+public final class ReturnNode extends FixedNode implements LIRLowerable {
 
     @Input private ValueNode result;
 
@@ -43,7 +43,7 @@ public final class ReturnNode extends FixedNode {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitReturn(this);
+    public void generate(LIRGeneratorTool gen) {
+        gen.visitReturn(this);
     }
 }

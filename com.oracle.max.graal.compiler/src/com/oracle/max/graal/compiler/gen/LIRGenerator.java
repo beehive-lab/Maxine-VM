@@ -282,11 +282,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
             TTY.println("Visiting    " + instr);
         }
 
-        if (instr instanceof LIRLowerable) {
-            ((LIRLowerable) instr).generate(this);
-        } else {
-            instr.accept(this);
-        }
+        ((LIRLowerable) instr).generate(this);
 
         if (GraalOptions.TraceLIRVisit) {
             TTY.println("Operand for " + instr + " = " + instr.operand());
@@ -297,13 +293,6 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     private boolean canBeNullCheck(LocationNode location) {
         // TODO: Make this part of CiTarget
         return !(location instanceof IndexedLocationNode) && location.displacement() < 4096;
-    }
-
-    @Override
-    public void visitMerge(MergeNode x) {
-        if (x.next() instanceof LoopBeginNode) {
-            moveToPhi((LoopBeginNode) x.next(), x);
-        }
     }
 
     private void setOperandsForParameters() {
@@ -365,6 +354,45 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     }
 
     @Override
+    public void visitLoadField(LoadFieldNode x) {
+        RiField field = x.field();
+        LIRDebugInfo info = state();
+        if (x.isVolatile()) {
+            emitMembar(JMM_PRE_VOLATILE_READ);
+        }
+        XirArgument receiver = toXirArgument(x.object());
+        XirSnippet snippet = x.isStatic() ? xir.genGetStatic(site(x), receiver, field) : xir.genGetField(site(x), receiver, field);
+        emitXir(snippet, x, info, null, true);
+        if (x.isVolatile()) {
+            emitMembar(JMM_POST_VOLATILE_READ);
+        }
+    }
+
+    @Override
+    public void visitStoreField(StoreFieldNode x) {
+        RiField field = x.field();
+        LIRDebugInfo info = state();
+        if (x.isVolatile()) {
+            emitMembar(JMM_PRE_VOLATILE_WRITE);
+        }
+        XirArgument receiver = toXirArgument(x.object());
+        XirArgument value = toXirArgument(x.value());
+        XirSnippet snippet = x.isStatic() ? xir.genPutStatic(site(x), receiver, field, value) : xir.genPutField(site(x), receiver, field, value);
+        emitXir(snippet, x, info, null, true);
+        if (x.isVolatile()) {
+            emitMembar(JMM_POST_VOLATILE_WRITE);
+        }
+    }
+
+    @Override
+    public void visitLoadIndexed(LoadIndexedNode x) {
+        XirArgument array = toXirArgument(x.array());
+        XirArgument index = toXirArgument(x.index());
+        XirSnippet snippet = xir.genArrayLoad(site(x), array, index, x.elementKind(), null);
+        emitXir(snippet, x, state(), null, true);
+    }
+
+    @Override
     public void visitStoreIndexed(StoreIndexedNode x) {
         XirArgument array = toXirArgument(x.array());
         XirArgument index = toXirArgument(x.index());
@@ -410,28 +438,22 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         emitXir(snippet, x, info, null, true);
     }
 
-
-
     @Override
-    public void visitGuardNode(GuardNode x) {
-        emitGuardComp(x.condition());
-    }
-
-
-    @Override
-    public void visitConstant(ConstantNode x) {
-        CiConstant c = x.value;
-        if (canInlineConstant(c)) {
-            setResult(x, c);
-        } else {
-            setResult(x, emitMove(c));
+    public void visitReturn(ReturnNode x) {
+        CiValue operand = CiValue.IllegalValue;
+        if (!x.kind.isVoid()) {
+            operand = resultOperandFor(x.kind);
+            emitMove(operand(x.result()), operand);
         }
-    }
-
-    @Override
-    public void visitAnchor(AnchorNode x) {
+        XirSnippet epilogue = xir.genEpilogue(site(x), compilation.method);
+        if (epilogue != null) {
+            emitXir(epilogue, x, null, compilation.method, false);
+            append(StandardOpcode.RETURN.create(operand));
+        }
         setNoResult(x);
     }
+
+
 
     @Override
     public void visitIf(IfNode x) {
@@ -631,35 +653,6 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
 
     public abstract CiValue createMonitorAddress(int monitorIndex);
 
-    /**
-     * For note on volatile fields, see {@link #visitStoreField(StoreField)}.
-     */
-    @Override
-    public void visitLoadField(LoadFieldNode x) {
-        RiField field = x.field();
-        LIRDebugInfo info = state();
-
-        if (x.isVolatile()) {
-            emitMembar(JMM_PRE_VOLATILE_READ);
-        }
-
-        XirArgument receiver = toXirArgument(x.object());
-        XirSnippet snippet = x.isStatic() ? xir.genGetStatic(site(x), receiver, field) : xir.genGetField(site(x), receiver, field);
-        emitXir(snippet, x, info, null, true);
-
-        if (x.isVolatile()) {
-            emitMembar(JMM_POST_VOLATILE_READ);
-        }
-    }
-
-    @Override
-    public void visitLoadIndexed(LoadIndexedNode x) {
-        XirArgument array = toXirArgument(x.array());
-        XirArgument index = toXirArgument(x.index());
-        XirSnippet snippet = xir.genArrayLoad(site(x), array, index, x.elementKind(), null);
-        emitXir(snippet, x, state(), null, true);
-    }
-
     protected CompilerStub stubFor(CiRuntimeCall runtimeCall) {
         CompilerStub stub = compilation.compiler.lookupStub(runtimeCall);
         compilation.frameMap().usesStub(stub);
@@ -703,13 +696,7 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     }
 
     @Override
-    public void visitFixedGuard(FixedGuardNode fixedGuard) {
-        for (BooleanNode condition : fixedGuard.conditions()) {
-            emitGuardComp(condition);
-        }
-    }
-
-    public void emitGuardComp(BooleanNode comp) {
+    public void emitGuardCheck(BooleanNode comp) {
         if (comp instanceof NullCheckNode) {
             NullCheckNode x = (NullCheckNode) comp;
             CiVariable value = load(operand(x.object()));
@@ -736,21 +723,6 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
                 emitBooleanBranch(comp, null, LabelRef.forLabel(stubEntry), null, null, info);
             }
         }
-    }
-
-    @Override
-    public void visitReturn(ReturnNode x) {
-        CiValue operand = CiValue.IllegalValue;
-        if (!x.kind.isVoid()) {
-            operand = resultOperandFor(x.kind);
-            emitMove(operand(x.result()), operand);
-        }
-        XirSnippet epilogue = xir.genEpilogue(site(x), compilation.method);
-        if (epilogue != null) {
-            emitXir(epilogue, x, null, compilation.method, false);
-            append(StandardOpcode.RETURN.create(operand));
-        }
-        setNoResult(x);
     }
 
     protected XirArgument toXirArgument(CiValue v) {
@@ -925,25 +897,6 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         }
 
         return operands[resultOperand.index];
-    }
-
-    @Override
-    public void visitStoreField(StoreFieldNode x) {
-        RiField field = x.field();
-        LIRDebugInfo info = state();
-
-        if (x.isVolatile()) {
-            emitMembar(JMM_PRE_VOLATILE_WRITE);
-        }
-
-        XirArgument receiver = toXirArgument(x.object());
-        XirArgument value = toXirArgument(x.value());
-        XirSnippet snippet = x.isStatic() ? xir.genPutStatic(site(x), receiver, field, value) : xir.genPutField(site(x), receiver, field, value);
-        emitXir(snippet, x, info, null, true);
-
-        if (x.isVolatile()) {
-            emitMembar(JMM_POST_VOLATILE_WRITE);
-        }
     }
 
     @Override
@@ -1128,19 +1081,6 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
     }
 
     @Override
-    public void visitEndNode(EndNode end) {
-        setNoResult(end);
-        assert end.merge() != null;
-        moveToPhi(end.merge(), end);
-        emitJump(getLIRBlock(end.merge()), null);
-    }
-
-    @Override
-    public void visitMemoryRead(ReadNode memRead) {
-        setResult(memRead, emitLoad(memRead.location().createAddress(this, memRead.object()), memRead.location().getValueKind(), memRead.getNullCheck()));
-    }
-
-    @Override
     public void visitVolatileMemoryRead(VolatileReadNode memRead) {
         // TODO Warning: the preVolatileRead is missing here, and cannot be inserted: since
         // the actual read node was already emitted earlier (much earlier?), the "load" here only
@@ -1150,11 +1090,21 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
         setResult(memRead, emitMove(readValue));
     }
 
+
     @Override
-    public void visitMemoryWrite(WriteNode memWrite) {
-        emitStore(memWrite.location().createAddress(this, memWrite.object()), loadForStore(operand(memWrite.value()), memWrite.location().getValueKind()), memWrite.location().getValueKind(), memWrite.getNullCheck());
+    public void visitMerge(MergeNode x) {
+        if (x.next() instanceof LoopBeginNode) {
+            moveToPhi((LoopBeginNode) x.next(), x);
+        }
     }
 
+    @Override
+    public void visitEndNode(EndNode end) {
+        setNoResult(end);
+        assert end.merge() != null;
+        moveToPhi(end.merge(), end);
+        emitJump(getLIRBlock(end.merge()), null);
+    }
 
     @Override
     public void visitLoopEnd(LoopEndNode x) {
@@ -1272,22 +1222,6 @@ public abstract class LIRGenerator extends LIRGeneratorTool {
             ip.printInstructionListing(currentInstruction);
         }
     }
-
-    /**
-     * Checks whether the supplied constant can be used without loading it into a register
-     * for most operations, i.e., for commonly used arithmetic, logical, and comparison operations.
-     * @param c The constant to check.
-     * @return True if the constant can be used directly, false if the constant needs to be in a register.
-     */
-    protected abstract boolean canInlineConstant(CiConstant c);
-
-    /**
-     * Checks whether the supplied constant can be used without loading it into a register
-     * for store operations, i.e., on the right hand side of a memory access.
-     * @param c The constant to check.
-     * @return True if the constant can be used directly, false if the constant needs to be in a register.
-     */
-    protected abstract boolean canStoreConstant(CiConstant c);
 
     /**
      * Implements site-specific information for the XIR interface.
