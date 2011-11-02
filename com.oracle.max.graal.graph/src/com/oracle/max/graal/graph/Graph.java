@@ -305,15 +305,29 @@ public class Graph<S extends Node> {
      * @return an {@link Iterable} providing all the matching nodes.
      */
     public <T extends Node & IterableNodeType> Iterable<T> getNodes(final Class<T> type) {
-        int nodeClassId = NodeClass.get(type).iterableId();
-        assert nodeClassId != -1 : type + " is not iterable within graphs (missing \"implements IterableNodeType\"?)";
-        final Node start = nodeCacheFirst.size() <= nodeClassId ? null : nodeCacheFirst.get(nodeClassId);
+        final Node start = getStartNode(type);
         return new Iterable<T>() {
             @Override
             public Iterator<T> iterator() {
                 return new TypedNodeIterator<T>(start);
             }
         };
+    }
+
+    /**
+     * Returns whether the graph contains at least one node of the given type.
+     * @param type the type of node that is checked for occurrence
+     * @return whether there is at least one such node
+     */
+    public <T extends Node & IterableNodeType> boolean hasNode(final Class<T> type) {
+        return getStartNode(type) != null;
+    }
+
+    private <T> Node getStartNode(final Class<T> type) {
+        int nodeClassId = NodeClass.get(type).iterableId();
+        assert nodeClassId != -1 : type + " is not iterable within graphs (missing \"implements IterableNodeType\"?)";
+        final Node start = nodeCacheFirst.size() <= nodeClassId ? null : nodeCacheFirst.get(nodeClassId);
+        return start;
     }
 
     public NodeBitMap createNodeBitMap() {

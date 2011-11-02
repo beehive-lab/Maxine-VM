@@ -27,7 +27,7 @@ import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 
 @NodeInfo(shortName = "Deopt")
-public class DeoptimizeNode extends FixedNode {
+public class DeoptimizeNode extends FixedNode implements Node.IterableNodeType {
 
     public static enum DeoptAction {
         None,                           // just interpret, do not invalidate nmethod
