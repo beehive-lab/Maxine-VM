@@ -342,6 +342,17 @@ public final class BlockMap {
                     }
                     break;
                 }
+                case INVOKEINTERFACE:
+                case INVOKESPECIAL:
+                case INVOKESTATIC:
+                case INVOKEVIRTUAL: {
+                    current = null;
+                    int target = bci + lengthOf(code, bci);
+                    Block b1 = makeBlock(target);
+                    setSuccessors(bci, b1);
+                    canTrap.set(bci);
+                    break;
+                }
                 default: {
                     if (canTrap(opcode, bci)) {
                         canTrap.set(bci);

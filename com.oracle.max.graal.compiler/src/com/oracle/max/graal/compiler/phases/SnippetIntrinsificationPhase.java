@@ -154,9 +154,9 @@ public class SnippetIntrinsificationPhase extends Phase {
                                                 } else if (checkCastUsage instanceof MethodCallTargetNode) {
                                                     MethodCallTargetNode callTarget = (MethodCallTargetNode) checkCastUsage;
                                                     assert BoxingEliminationPhase.isUnboxingMethod(runtime, callTarget.targetMethod());
-                                                    for (InvokeNode invokeNode : callTarget.invokes()) {
-                                                        invokeNode.replaceAtUsages(newInstance);
-                                                        invokeNode.replaceAndDelete(invokeNode.next());
+                                                    for (Invoke invokeNode : callTarget.invokes()) {
+                                                        invokeNode.node().replaceAtUsages(newInstance);
+                                                        invokeNode.node().replaceAndDelete(invokeNode.next());
                                                     }
                                                     callTarget.delete();
                                                 } else if (checkCastUsage instanceof FrameState) {
