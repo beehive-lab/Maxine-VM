@@ -24,6 +24,7 @@ package com.oracle.max.graal.nodes.java;
 
 import java.util.*;
 
+import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -89,8 +90,14 @@ public class MethodCallTargetNode extends CallTargetNode {
         return targetMethod().signature().returnKind(false);
     }
 
-    public Collection<InvokeNode> invokes() {
-        return ValueUtil.filter(this.usages(), InvokeNode.class);
+    public Collection<Invoke> invokes() {
+        ArrayList<Invoke> invokes = new ArrayList<Invoke>();
+        for (Node node : usages()) {
+            if (node instanceof Invoke) {
+                invokes.add((Invoke) node);
+            }
+        }
+        return invokes;
     }
 
     @Override

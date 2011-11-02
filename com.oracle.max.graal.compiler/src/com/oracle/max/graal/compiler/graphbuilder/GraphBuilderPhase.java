@@ -376,12 +376,8 @@ public final class GraphBuilderPhase extends Phase {
             }
         }
 
-        if (firstHandler == null) {
-            firstHandler = unwindHandler;
-        }
-
         Block dispatchBlock = null;
-        if (firstHandler == unwindHandler) {
+        if (firstHandler == null) {
             dispatchBlock = unwindBlock(bci);
         } else {
             for (int i = currentBlock.normalSuccessors; i < currentBlock.successors.size(); i++) {
@@ -1101,12 +1097,14 @@ public final class GraphBuilderPhase extends Phase {
             if (exceptionEdge != null) {
                 InvokeWithExceptionNode invoke = graph.add(new InvokeWithExceptionNode(callTarget, exceptionEdge, stateBefore));
                 result = append(invoke);
-                //TODO
-                //invoke.setNext(createTarget(block, stateAfter))
+                frameState.pushReturn(resultType, result);
+                Block nextBlock = currentBlock.successors.get(0);
+                invoke.setNext(createTarget(nextBlock, frameState));
+                invoke.next().setStateAfter(frameState.create(nextBlock.startBci));
             } else {
                 result = appendWithBCI(graph.add(new InvokeNode(callTarget, stateBefore)));
+                frameState.pushReturn(resultType, result);
             }
-            frameState.pushReturn(resultType, result);
         }
     }
 
