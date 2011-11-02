@@ -28,7 +28,7 @@ import com.oracle.max.graal.nodes.spi.*;
 /**
  * The {@code MonitorEnterNode} represents a monitor release.
  */
-public final class MonitorExitNode extends AccessMonitorNode {
+public final class MonitorExitNode extends AccessMonitorNode implements LIRLowerable {
 
     /**
      * Creates a new MonitorExitNode.
@@ -42,7 +42,7 @@ public final class MonitorExitNode extends AccessMonitorNode {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitMonitorExit(this);
+    public void generate(LIRGeneratorTool gen) {
+        gen.visitMonitorExit(this);
     }
 }

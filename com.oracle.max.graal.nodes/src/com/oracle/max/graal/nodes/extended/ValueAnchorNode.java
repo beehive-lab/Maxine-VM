@@ -32,7 +32,7 @@ import com.sun.cri.ci.*;
  * The ValueAnchor instruction keeps non-CFG (floating) nodes above a certain point in the graph.
  */
 
-public final class ValueAnchorNode extends FixedWithNextNode implements Canonicalizable {
+public final class ValueAnchorNode extends FixedWithNextNode implements Canonicalizable, LIRLowerable {
 
     @Input private ValueNode object;
 
@@ -46,8 +46,8 @@ public final class ValueAnchorNode extends FixedWithNextNode implements Canonica
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitValueAnchor(this);
+    public void generate(LIRGeneratorTool gen) {
+        // Nothing to emit, since this is node is used for structural purposes only.
     }
 
     @Override

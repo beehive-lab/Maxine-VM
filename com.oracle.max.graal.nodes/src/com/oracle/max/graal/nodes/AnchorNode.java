@@ -29,7 +29,7 @@ import com.sun.cri.ci.*;
 /**
  * The {@code AnchorNode} can be used a lower bound for a Guard. It can also be used as an upper bound if no other FixedNode can be used for that purpose.
  */
-public final class AnchorNode extends FixedWithNextNode {
+public final class AnchorNode extends FixedWithNextNode implements LIRLowerable {
 
     @Input private final NodeInputList<GuardNode> guards = new NodeInputList<GuardNode>(this);
 
@@ -42,7 +42,8 @@ public final class AnchorNode extends FixedWithNextNode {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitAnchor(this);
+    public void generate(LIRGeneratorTool gen) {
+        // TODO is it necessary to do something for the "guards" list here?
+        // Currently, there is nothing to emit since anchors are only a structural element with no execution semantics.
     }
 }

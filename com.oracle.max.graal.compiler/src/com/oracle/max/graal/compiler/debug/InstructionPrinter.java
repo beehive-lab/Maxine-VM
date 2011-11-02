@@ -26,7 +26,6 @@ import static com.oracle.max.graal.compiler.debug.InstructionPrinter.Instruction
 
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.nodes.*;
-import com.oracle.max.graal.nodes.spi.*;
 
 /**
  * A {@link ValueVisitor} for {@linkplain #printInstruction(ValueNode) printing}

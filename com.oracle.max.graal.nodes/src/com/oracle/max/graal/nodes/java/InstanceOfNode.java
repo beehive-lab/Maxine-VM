@@ -32,7 +32,7 @@ import com.sun.cri.ri.*;
 /**
  * The {@code InstanceOfNode} represents an instanceof test.
  */
-public final class InstanceOfNode extends TypeCheckNode implements Canonicalizable {
+public final class InstanceOfNode extends TypeCheckNode implements Canonicalizable, LIRLowerable {
 
     @Data public final boolean negated;
 
@@ -49,7 +49,7 @@ public final class InstanceOfNode extends TypeCheckNode implements Canonicalizab
     }
 
     @Override
-    public void accept(ValueVisitor v) {
+    public void generate(LIRGeneratorTool gen) {
     }
 
     @Override

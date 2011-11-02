@@ -80,7 +80,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    protected boolean canStoreConstant(CiConstant c) {
+    public boolean canStoreConstant(CiConstant c) {
         // there is no immediate move of 64-bit constants on Intel
         switch (c.kind) {
             case Long:   return Util.isInt(c.asLong());
@@ -91,7 +91,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    protected boolean canInlineConstant(CiConstant c) {
+    public boolean canInlineConstant(CiConstant c) {
         switch (c.kind) {
             case Long:   return NumUtil.isInt(c.asLong());
             case Object: return c.isNull();
@@ -120,7 +120,8 @@ public class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    public void emitStore(CiAddress storeAddress, CiValue input, CiKind kind, boolean canTrap) {
+    public void emitStore(CiAddress storeAddress, CiValue inputVal, CiKind kind, boolean canTrap) {
+        CiValue input = loadForStore(inputVal, kind);
         append(STORE.create(storeAddress.base, storeAddress.index, storeAddress.scale, storeAddress.displacement, input, kind, canTrap ? state() : null));
     }
 
@@ -243,7 +244,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
     @Override
     public CiVariable emitDiv(CiValue a, CiValue b) {
-        CiVariable result = newVariable(load(a).kind);
+        CiVariable result = newVariable(a.kind);
         switch(a.kind) {
             case Int:
                 append(MOVE.create(RAX_I, load(a)));
@@ -271,7 +272,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
     @Override
     public CiVariable emitRem(CiValue a, CiValue b) {
-        CiVariable result = newVariable(load(a).kind);
+        CiVariable result = newVariable(a.kind);
         switch(a.kind) {
             case Int:
                 append(MOVE.create(RAX_I, load(a)));
@@ -299,7 +300,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
     @Override
     public CiVariable emitUDiv(CiValue a, CiValue b) {
-        CiVariable result = newVariable(load(a).kind);
+        CiVariable result = newVariable(a.kind);
         switch(a.kind) {
             case Int:
                 append(MOVE.create(RAX_I, load(a)));
@@ -319,7 +320,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
     @Override
     public CiVariable emitURem(CiValue a, CiValue b) {
-        CiVariable result = newVariable(load(a).kind);
+        CiVariable result = newVariable(a.kind);
         switch(a.kind) {
             case Int:
                 append(MOVE.create(RAX_I, load(a)));
@@ -462,15 +463,6 @@ public class AMD64LIRGenerator extends LIRGenerator {
 // TODO Methods below here still need to be worked on.
 
     @Override
-    public void visitLoopBegin(LoopBeginNode x) {
-    }
-
-    @Override
-    public void visitValueAnchor(ValueAnchorNode valueAnchor) {
-        // nothing to do for ValueAnchors
-    }
-
-    @Override
     public void visitCompareAndSwap(CompareAndSwapNode node) {
         CiKind kind = node.newValue().kind;
         assert kind == node.expected().kind;
@@ -567,7 +559,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
         setResult(x, result);
     }
 
-    // TODO The class NormalizeCompareNode should be lowered away in the front end, since the code generated here is long and uses branches anyway.
+    // TODO The class NormalizeCompareNode should be lowered away in the front end, since the code generated is long and uses branches anyway.
     @Override
     public void visitNormalizeCompare(NormalizeCompareNode x) {
         emitCompare(operand(x.x()), operand(x.y()));

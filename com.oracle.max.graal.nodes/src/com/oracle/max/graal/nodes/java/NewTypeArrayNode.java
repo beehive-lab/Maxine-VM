@@ -29,7 +29,7 @@ import com.sun.cri.ri.*;
 /**
  * The {@code NewTypeArrayNode} class definition.
  */
-public final class NewTypeArrayNode extends NewArrayNode {
+public final class NewTypeArrayNode extends NewArrayNode implements LIRLowerable {
 
     private final RiResolvedType elementType;
 
@@ -54,7 +54,7 @@ public final class NewTypeArrayNode extends NewArrayNode {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitNewTypeArray(this);
+    public void generate(LIRGeneratorTool gen) {
+        gen.visitNewTypeArray(this);
     }
 }

@@ -33,7 +33,7 @@ import com.sun.cri.ci.*;
  * Compare should probably be made a value (so that it can be canonicalized for example) and in later stages some Compare usage should be transformed
  * into variants that do not materialize the value (CompareIf, CompareGuard...)
  */
-public final class CompareNode extends BooleanNode implements Canonicalizable {
+public final class CompareNode extends BooleanNode implements Canonicalizable, LIRLowerable {
 
     @Input private ValueNode x;
     @Input private ValueNode y;
@@ -116,7 +116,7 @@ public final class CompareNode extends BooleanNode implements Canonicalizable {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
+    public void generate(LIRGeneratorTool gen) {
     }
 
     @Override
