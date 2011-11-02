@@ -41,7 +41,6 @@ public class ConditionalNode extends BinaryNode implements Canonicalizable, LIRL
     }
 
     public ConditionalNode(BooleanNode condition, ValueNode trueValue, ValueNode falseValue) {
-        // TODO: return the appropriate bytecode IF_ICMPEQ, etc or remove the need for bytecodes in BinaryNode
         super(trueValue.kind, trueValue, falseValue);
         assert trueValue.kind == falseValue.kind;
         this.condition = condition;
@@ -102,11 +101,6 @@ public class ConditionalNode extends BinaryNode implements Canonicalizable, LIRL
         }
         if (trueValue() == falseValue()) {
             return trueValue();
-        }
-
-        if (condition instanceof NegateBooleanNode) {
-            NegateBooleanNode negateBooleanNode = (NegateBooleanNode) condition;
-            return graph().unique(new ConditionalNode(negateBooleanNode.value(), falseValue(), trueValue()));
         }
 
         return this;

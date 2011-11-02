@@ -31,4 +31,6 @@ public abstract class BooleanNode extends FloatingNode {
     public BooleanNode(CiKind kind) {
         super(kind);
     }
+
+    public abstract BooleanNode negate();
 }

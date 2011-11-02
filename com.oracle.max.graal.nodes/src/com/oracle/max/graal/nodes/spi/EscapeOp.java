@@ -37,8 +37,8 @@ public abstract class EscapeOp {
     public abstract boolean canAnalyze(Node node);
 
     public boolean escape(Node node, Node usage) {
-        if (usage instanceof IsNonNullNode) {
-            assert ((IsNonNullNode) usage).object() == node;
+        if (usage instanceof NullCheckNode) {
+            assert ((NullCheckNode) usage).object() == node;
             return false;
         } else if (usage instanceof IsTypeNode) {
             assert ((IsTypeNode) usage).object() == node;
@@ -100,9 +100,9 @@ public abstract class EscapeOp {
 
     public void beforeUpdate(Node node, Node usage) {
         // IsNonNullNode and IsTypeNode should have been eliminated by the CanonicalizerPhase, but we can't rely on this
-        if (usage instanceof IsNonNullNode) {
-            IsNonNullNode x = (IsNonNullNode) usage;
-            x.replaceAndDelete(ConstantNode.forBoolean(true, node.graph()));
+        if (usage instanceof NullCheckNode) {
+            NullCheckNode x = (NullCheckNode) usage;
+            x.replaceAndDelete(ConstantNode.forBoolean(!x.expectedNull, node.graph()));
         } else if (usage instanceof IsTypeNode) {
             IsTypeNode x = (IsTypeNode) usage;
             assert x.type() == ((ValueNode) node).exactType();

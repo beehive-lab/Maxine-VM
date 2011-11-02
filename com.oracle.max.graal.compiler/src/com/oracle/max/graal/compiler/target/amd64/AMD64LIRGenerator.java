@@ -76,7 +76,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
 
     public AMD64LIRGenerator(GraalCompilation compilation) {
         super(compilation);
-        ir.methodEndMarker = new AMD64MethodEndStub();
+        lir.methodEndMarker = new AMD64MethodEndStub();
     }
 
     @Override
@@ -533,7 +533,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
         assert info.state != null : "deoptimize instruction always needs a state";
         assert info.state.bci != FixedWithNextNode.SYNCHRONIZATION_ENTRY_BCI : "bci must not be -1 for deopt framestate";
         AMD64DeoptimizationStub stub = new AMD64DeoptimizationStub(action, info, deoptInfo);
-        ir.deoptimizationStubs.add(stub);
+        lir.deoptimizationStubs.add(stub);
         return stub.label;
     }
 
