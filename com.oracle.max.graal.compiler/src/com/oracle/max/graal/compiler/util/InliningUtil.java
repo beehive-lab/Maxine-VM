@@ -78,7 +78,7 @@ public class InliningUtil {
         if (invoke.callTarget().isStatic()) {
             invokeReplacement = firstCFGNodeDuplicate;
         } else {
-            FixedGuardNode guard = graph.add(new FixedGuardNode(graph.unique(new IsNonNullNode(parameters[0]))));
+            FixedGuardNode guard = graph.add(new FixedGuardNode(graph.unique(new NullCheckNode(parameters[0], false))));
             guard.setNext(firstCFGNodeDuplicate);
             invokeReplacement = guard;
         }

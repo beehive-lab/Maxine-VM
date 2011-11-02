@@ -442,7 +442,10 @@ public class MaxRuntime implements GraalRuntime {
                 }
                 return graph;
             } else {
-                throw new UnsupportedOperationException("intrinsic not implemented: " + maxMethod.intrinsic());
+                // TODO(ls) ignore these intrinsics for now...
+                if (!IntrinsicIDs.UDIV.equals(method.intrinsic()) && !IntrinsicIDs.UREM.equals(method.intrinsic()) && !IntrinsicIDs.MEMBAR.equals(method.intrinsic())) {
+                    throw new UnsupportedOperationException("intrinsic not implemented: " + maxMethod.intrinsic());
+                }
             }
         }
         return null;

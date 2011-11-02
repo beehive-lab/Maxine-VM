@@ -29,9 +29,10 @@ import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
-public final class IsNonNullNode extends BooleanNode implements Canonicalizable {
+public final class NullCheckNode extends BooleanNode implements Canonicalizable {
 
     @Input private ValueNode object;
+    @Data public final boolean expectedNull;
 
     public ValueNode object() {
         return object;
@@ -41,12 +42,13 @@ public final class IsNonNullNode extends BooleanNode implements Canonicalizable 
      * Constructs a new NullCheck instruction.
      *
      * @param object the instruction producing the object to check against null
-     * @param graph
+     * @param expectedNull True when this node checks that the value is null, false when this node checks for non-null
      */
-    public IsNonNullNode(ValueNode object) {
+    public NullCheckNode(ValueNode object, boolean expectedNull) {
         super(CiKind.Object);
         assert object == null || object.kind == CiKind.Object : object;
         this.object = object;
+        this.expectedNull = expectedNull;
     }
 
     @Override
@@ -69,20 +71,25 @@ public final class IsNonNullNode extends BooleanNode implements Canonicalizable 
     @Override
     public Node canonical(CanonicalizerTool tool) {
         if (object instanceof NewInstanceNode || object instanceof NewArrayNode) {
-            return ConstantNode.forBoolean(true, graph());
+            return ConstantNode.forBoolean(!expectedNull, graph());
         }
         CiConstant constant = object().asConstant();
         if (constant != null) {
             assert constant.kind == CiKind.Object;
-            return ConstantNode.forBoolean(constant.isNonNull(), graph());
+            return ConstantNode.forBoolean(constant.isNull() == expectedNull, graph());
         }
 
         if (object instanceof LocalNode) {
             LocalNode localNode = (LocalNode) object;
             if (!localNode.canBeNull()) {
-                return ConstantNode.forBoolean(true, graph());
+                return ConstantNode.forBoolean(!expectedNull, graph());
             }
         }
         return this;
+    }
+
+    @Override
+    public BooleanNode negate() {
+        return graph().unique(new NullCheckNode(object(), !expectedNull));
     }
 }

@@ -67,10 +67,12 @@ public class LocationNode extends FloatingNode implements LIRLowerable {
         return valueKind;
     }
 
-    public CiAddress createAddress(LIRGeneratorTool lirGenerator, ValueNode object) {
-        CiValue indexValue = CiValue.IllegalValue;
-        Scale indexScale = Scale.Times1;
-        return new CiAddress(valueKind, lirGenerator.load(object), indexValue, indexScale, displacement);
+    public CiAddress createAddress(LIRGeneratorTool gen, ValueNode object) {
+        CiValue base = gen.operand(object);
+        if (base.isConstant() && ((CiConstant) base).isNull()) {
+            base = CiValue.IllegalValue;
+        }
+        return new CiAddress(valueKind, base, CiValue.IllegalValue, Scale.Times1, displacement());
     }
 
     public Object locationIdentity() {

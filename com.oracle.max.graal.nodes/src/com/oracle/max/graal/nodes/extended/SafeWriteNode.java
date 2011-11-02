@@ -46,7 +46,7 @@ public class SafeWriteNode extends SafeAccessNode implements Lowerable{
     @Override
     public void lower(CiLoweringTool tool) {
         Graph<EntryPointNode> graph = graph();
-        GuardNode guard = (GuardNode) tool.createGuard(graph.unique(new IsNonNullNode(object())));
+        GuardNode guard = (GuardNode) tool.createGuard(graph.unique(new NullCheckNode(object(), false)));
         WriteNode write = graph.add(new WriteNode(object(), value(), location()));
         write.setGuard(guard);
         FixedNode next = this.next();
