@@ -110,7 +110,7 @@ public class AMD64MaxineOpcode {
     }
 
 
-    public enum StackAllocateOpcode implements LIROpcode {
+    public enum StackAllocteOpcode implements LIROpcode {
         STACK_ALLOCATE;
 
         public LIRInstruction create(CiVariable result, final StackBlock stackBlock) {
