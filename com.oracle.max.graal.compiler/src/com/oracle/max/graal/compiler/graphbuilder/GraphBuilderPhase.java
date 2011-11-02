@@ -687,7 +687,7 @@ public final class GraphBuilderPhase extends Phase {
 
     private void genThrow(int bci) {
         ValueNode exception = frameState.apop();
-        FixedGuardNode node = graph.add(new FixedGuardNode(graph.unique(new IsNonNullNode(exception))));
+        FixedGuardNode node = graph.add(new FixedGuardNode(graph.unique(new NullCheckNode(exception, false))));
         append(node);
 
         FixedNode entry = handleException(exception, bci);
@@ -750,7 +750,7 @@ public final class GraphBuilderPhase extends Phase {
         ConstantNode typeInstruction = genTypeOrDeopt(RiType.Representation.ObjectHub, type, type instanceof RiResolvedType);
         ValueNode object = frameState.apop();
         if (typeInstruction != null) {
-            frameState.ipush(append(MaterializeNode.create(graph.unique(new InstanceOfNode(typeInstruction, (RiResolvedType) type, object)), graph)));
+            frameState.ipush(append(MaterializeNode.create(graph.unique(new InstanceOfNode(typeInstruction, (RiResolvedType) type, object, false)), graph)));
         } else {
             frameState.ipush(appendConstant(CiConstant.INT_0));
         }
@@ -857,7 +857,7 @@ public final class GraphBuilderPhase extends Phase {
     private ExceptionInfo emitNullCheck(ValueNode receiver) {
         PlaceholderNode trueSucc = graph.add(new PlaceholderNode());
         PlaceholderNode falseSucc = graph.add(new PlaceholderNode());
-        IfNode ifNode = graph.add(new IfNode(graph.unique(new IsNonNullNode(receiver)), trueSucc, falseSucc, 1));
+        IfNode ifNode = graph.add(new IfNode(graph.unique(new NullCheckNode(receiver, false)), trueSucc, falseSucc, 1));
 
         append(ifNode);
         lastInstr = trueSucc;
@@ -1438,7 +1438,7 @@ public final class GraphBuilderPhase extends Phase {
                 FixedNode catchSuccessor = createTarget(block.successors.get(0), frameState);
                 FixedNode nextDispatch = createTarget(nextBlock, frameState);
                 ValueNode exception = frameState.stackAt(0);
-                IfNode ifNode = graph.add(new IfNode(graph.unique(new InstanceOfNode(typeInstruction, (RiResolvedType) catchType, exception)), catchSuccessor, nextDispatch, 0.5));
+                IfNode ifNode = graph.add(new IfNode(graph.unique(new InstanceOfNode(typeInstruction, (RiResolvedType) catchType, exception, false)), catchSuccessor, nextDispatch, 0.5));
                 append(ifNode);
             }
         }

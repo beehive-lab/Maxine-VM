@@ -89,4 +89,9 @@ public final class CheckCastNode extends TypeCheckNode implements Canonicalizabl
         }
         return this;
     }
+
+    @Override
+    public BooleanNode negate() {
+        throw new Error("A CheckCast does not produce a boolean value, so it should actually not be a subclass of BooleanNode");
+    }
 }

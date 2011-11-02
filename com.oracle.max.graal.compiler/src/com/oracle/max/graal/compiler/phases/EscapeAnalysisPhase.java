@@ -249,8 +249,8 @@ public class EscapeAnalysisPhase extends Phase {
             if (usage instanceof FixedNode) {
                 record.localWeight += ((FixedNode) usage).probability();
             }
-            if (usage instanceof IsNonNullNode) {
-                assert ((IsNonNullNode) usage).object() == node;
+            if (usage instanceof NullCheckNode) {
+                assert ((NullCheckNode) usage).object() == node;
                 return null;
             } else if (usage instanceof IsTypeNode) {
                 assert ((IsTypeNode) usage).object() == node;

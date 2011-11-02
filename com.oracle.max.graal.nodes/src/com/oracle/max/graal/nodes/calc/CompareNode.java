@@ -58,9 +58,22 @@ public final class CompareNode extends BooleanNode implements Canonicalizable {
      * @param graph
      */
     public CompareNode(ValueNode x, Condition condition, ValueNode y) {
+        this(x, condition, false, y);
+    }
+
+    /**
+     * Constructs a new Compare instruction.
+     *
+     * @param x the instruction producing the first input to the instruction
+     * @param condition the condition (comparison operation)
+     * @param y the instruction that produces the second input to this instruction
+     * @param graph
+     */
+    public CompareNode(ValueNode x, Condition condition, boolean unorderedIsTrue, ValueNode y) {
         super(CiKind.Illegal);
         assert (x == null && y == null) || x.kind == y.kind;
         this.condition = condition;
+        this.unorderedIsTrue = unorderedIsTrue;
         this.x = x;
         this.y = y;
     }
@@ -97,9 +110,9 @@ public final class CompareNode extends BooleanNode implements Canonicalizable {
         throw new UnsupportedOperationException("swapOperands...");
     }
 
-    public void negate() {
-        condition = condition.negate();
-        unorderedIsTrue = !unorderedIsTrue;
+    @Override
+    public BooleanNode negate() {
+        return graph().unique(new CompareNode(x(), condition.negate(), !unorderedIsTrue, y()));
     }
 
     @Override
@@ -134,7 +147,7 @@ public final class CompareNode extends BooleanNode implements Canonicalizable {
                         return materializeNode.condition();
                     } else {
                         assert falseUnboxedResult == true;
-                        return graph().unique(new NegateBooleanNode(materializeNode.condition()));
+                        return materializeNode.condition().negate();
 
                     }
                 }
@@ -193,13 +206,7 @@ public final class CompareNode extends BooleanNode implements Canonicalizable {
                 object = x();
             }
             if (object != null) {
-                IsNonNullNode nonNull = graph().unique(new IsNonNullNode(object));
-                if (condition == Condition.NE) {
-                    return nonNull;
-                } else {
-                    assert condition == Condition.EQ;
-                    return graph().unique(new NegateBooleanNode(nonNull));
-                }
+                return graph().unique(new NullCheckNode(object, condition == Condition.EQ));
             }
         }
         return this;

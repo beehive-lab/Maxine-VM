@@ -48,7 +48,6 @@ public abstract class ValueVisitor {
     public abstract void visitInvoke(InvokeNode i);
     public abstract void visitLoadField(LoadFieldNode i);
     public abstract void visitLoadIndexed(LoadIndexedNode i);
-    public abstract void visitLocal(LocalNode i);
     public abstract void visitLookupSwitch(LookupSwitchNode i);
     public abstract void visitMemoryRead(ReadNode i);
     public abstract void visitVolatileMemoryRead(VolatileReadNode i);
@@ -60,7 +59,6 @@ public abstract class ValueVisitor {
     public abstract void visitNewObjectArray(NewObjectArrayNode i);
     public abstract void visitNewTypeArray(NewTypeArrayNode i);
     public abstract void visitFixedGuard(FixedGuardNode i);
-    public abstract void visitPhi(PhiNode i);
     public abstract void visitRegisterFinalizer(RegisterFinalizerNode i);
     public abstract void visitReturn(ReturnNode i);
     public abstract void visitStoreField(StoreFieldNode i);

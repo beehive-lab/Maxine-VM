@@ -255,7 +255,7 @@ public class HotSpotRuntime implements GraalRuntime {
             int displacement = ((HotSpotField) field.field()).offset();
             assert field.kind != CiKind.Illegal;
             ReadNode memoryRead = graph.unique(new ReadNode(field.field().kind(true).stackKind(), field.object(), LocationNode.create(field.field(), field.field().kind(true), displacement, graph)));
-            memoryRead.setGuard((GuardNode) tool.createGuard(graph.unique(new IsNonNullNode(field.object()))));
+            memoryRead.setGuard((GuardNode) tool.createGuard(graph.unique(new NullCheckNode(field.object(), false))));
             FixedNode next = field.next();
             field.setNext(null);
             memoryRead.setNext(next);
@@ -268,7 +268,7 @@ public class HotSpotRuntime implements GraalRuntime {
             Graph<EntryPointNode> graph = field.graph();
             int displacement = ((HotSpotField) field.field()).offset();
             WriteNode memoryWrite = graph.add(new WriteNode(field.object(), field.value(), LocationNode.create(field.field(), field.field().kind(true), displacement, graph)));
-            memoryWrite.setGuard((GuardNode) tool.createGuard(graph.unique(new IsNonNullNode(field.object()))));
+            memoryWrite.setGuard((GuardNode) tool.createGuard(graph.unique(new NullCheckNode(field.object(), false))));
             memoryWrite.setStateAfter(field.stateAfter());
             FixedNode next = field.next();
             field.setNext(null);
@@ -316,7 +316,7 @@ public class HotSpotRuntime implements GraalRuntime {
                         assert elementType.name().equals("Ljava/lang/Object;") : elementType.name();
                     }
                 } else {
-                    GuardNode guard = (GuardNode) tool.createGuard(graph.unique(new IsNonNullNode(array)));
+                    GuardNode guard = (GuardNode) tool.createGuard(graph.unique(new NullCheckNode(array, false)));
                     ReadNode arrayClass = graph.unique(new ReadNode(CiKind.Object, array, LocationNode.create(LocationNode.FINAL_LOCATION, CiKind.Object, config.hubOffset, graph)));
                     arrayClass.setGuard(guard);
                     append.setNext(arrayClass);
@@ -347,7 +347,7 @@ public class HotSpotRuntime implements GraalRuntime {
             IndexedLocationNode location = IndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, load.loadKind(), load.displacement(), load.offset(), graph);
             location.setIndexScalingEnabled(false);
             ReadNode memoryRead = graph.unique(new ReadNode(load.kind, load.object(), location));
-            memoryRead.setGuard((GuardNode) tool.createGuard(graph.unique(new IsNonNullNode(load.object()))));
+            memoryRead.setGuard((GuardNode) tool.createGuard(graph.unique(new NullCheckNode(load.object(), false))));
             FixedNode next = load.next();
             load.setNext(null);
             memoryRead.setNext(next);
@@ -448,7 +448,7 @@ public class HotSpotRuntime implements GraalRuntime {
                     SafeReadNode klassOop = safeRead(graph, CiKind.Object, receiver, config.klassOopOffset);
                     graph.start().setNext(klassOop);
                     // TODO(tw): Care about primitive classes!
-                    MaterializeNode result = MaterializeNode.create(graph.unique(new InstanceOfNode(klassOop, null, argument)), graph);
+                    MaterializeNode result = MaterializeNode.create(graph.unique(new InstanceOfNode(klassOop, null, argument, false)), graph);
                     ReturnNode ret = graph.add(new ReturnNode(result));
                     klassOop.setNext(ret);
                     intrinsicGraphs.put(method, graph);
