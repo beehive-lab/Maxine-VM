@@ -146,6 +146,7 @@ public final class OperandPool {
      * @return a new variable
      */
     public CiVariable newVariable(CiKind kind) {
+        // TODO since CiVariable.get ensures that the variable kind is a stackKind, the checks for Boolean and Byte here are useless!
         return newVariable(kind, kind == CiKind.Boolean || kind == CiKind.Byte ? VariableFlag.MustBeByteRegister : null);
     }
 

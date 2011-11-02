@@ -64,14 +64,19 @@ public final class IndexedLocationNode extends LocationNode implements LIRLowera
     }
 
     @Override
-    public CiAddress createAddress(LIRGeneratorTool lirGenerator, ValueNode object) {
-        CiValue indexValue = CiValue.IllegalValue;
-        Scale indexScale = Scale.Times1;
-        indexValue = lirGenerator.load(this.index());
-        if (indexScalingEnabled) {
-            indexScale = Scale.fromInt(lirGenerator.target().sizeInBytes(getValueKind()));
+    public CiAddress createAddress(LIRGeneratorTool gen, ValueNode object) {
+        CiValue base = gen.operand(object);
+        if (base.isConstant() && ((CiConstant) base).isNull()) {
+            base = CiValue.IllegalValue;
         }
-        return new CiAddress(getValueKind(), lirGenerator.load(object), indexValue, indexScale, displacement());
+
+        CiValue indexValue = gen.operand(index());
+        Scale indexScale = Scale.Times1;
+        if (indexScalingEnabled) {
+            indexScale = Scale.fromInt(gen.target().sizeInBytes(getValueKind()));
+        }
+
+        return new CiAddress(getValueKind(), base, indexValue, indexScale, displacement());
     }
 
     @Override

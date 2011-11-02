@@ -28,11 +28,11 @@ import static com.oracle.max.cri.intrinsics.IntrinsicIDs.*;
 import com.oracle.max.cri.intrinsics.*;
 import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.DeoptimizeNode.DeoptAction;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
-import com.oracle.max.vm.ext.graal.nodes.SafepointNode.Op;
 import com.oracle.max.vm.ext.maxri.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
@@ -52,17 +52,16 @@ public class MaxineIntrinsicImplementations {
 
         @Override
         public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
-            assert args.length > 0 && args[0].isConstant() && args[0].kind == CiKind.Int;
+            assert args.length == 3 && args[0].isConstant() && args[0].kind == CiKind.Int;
             int opcode = args[0].asConstant().asInt();
+            // TODO(cwi): Why the separation when both branches do the same?
             if (args[1].kind == CiKind.Long || args[1].kind == CiKind.Double) {
                 assert opcode == Bytecodes.LCMP || opcode == Bytecodes.DCMPG || opcode == Bytecodes.DCMPL;
-                assert args.length == 5;
-                return graph.unique(new NormalizeCompareNode(opcode, CiKind.Int, args[1], args[3]));
+                return graph.unique(new NormalizeCompareNode(args[1], args[2], opcode == Bytecodes.FCMPL || opcode == Bytecodes.DCMPL));
             } else {
                 assert opcode == Bytecodes.FCMPG || opcode == Bytecodes.FCMPL;
-                assert args.length == 3;
                 assert args[1].kind == CiKind.Float;
-                return graph.unique(new NormalizeCompareNode(opcode, CiKind.Int, args[1], args[2]));
+                return graph.unique(new NormalizeCompareNode(args[1], args[2], opcode == Bytecodes.FCMPL || opcode == Bytecodes.DCMPL));
             }
         }
     }
@@ -77,14 +76,9 @@ public class MaxineIntrinsicImplementations {
 
         @Override
         public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
-            if (args[0].kind == CiKind.Long) {
-                assert args.length == 4;
-                return graph.unique(new CompareNode(args[0], condition, args[2]));
-            } else {
-                assert args.length == 2;
-                assert args[0].kind == CiKind.Int;
-                return graph.unique(new CompareNode(args[0], condition, args[1]));
-            }
+            assert args.length == 2;
+            assert args[0].kind == CiKind.Int || args[0].kind == CiKind.Long;
+            return graph.unique(new CompareNode(args[0], condition, args[1]));
         }
     }
 
@@ -204,7 +198,7 @@ public class MaxineIntrinsicImplementations {
      */
     private static ValueNode offsetOrIndex(Graph<?> graph, ValueNode offsetOrIndex) {
         if (offsetOrIndex.kind == CiKind.Int && Platform.target().arch.is64bit()) {
-            return graph.unique(new ConvertNode(CiKind.Long, ConvertNode.Op.I2L, offsetOrIndex));
+            return graph.unique(new ConvertNode(ConvertNode.Op.I2L, offsetOrIndex));
         }
         return offsetOrIndex;
     }
@@ -260,24 +254,15 @@ public class MaxineIntrinsicImplementations {
 
         @Override
         public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
-            throw new UnsupportedOperationException("intrinsic not implemented");
-//            assert args.length == 0;
-//            return b.append(new SafepointNode(op));
+            assert args.length == 0;
+            return graph.add(new SafepointNode(op));
         }
     }
 
-
-    public static class PauseIntrinsic implements GraalIntrinsicImpl {
+    public static class UncommonTrapIntrinsic implements GraalIntrinsicImpl {
         @Override
         public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
-            return graph.add(new SafepointNode(Op.PAUSE));
-        }
-    }
-
-    public static class BreakpointTrapIntrinsic implements GraalIntrinsicImpl {
-        @Override
-        public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
-            return graph.add(new SafepointNode(Op.BREAKPOINT));
+            return graph.add(new DeoptimizeNode(DeoptAction.InvalidateReprofile));
         }
     }
 
@@ -292,7 +277,7 @@ public class MaxineIntrinsicImplementations {
     public static class StackAllocateIntrinsic implements GraalIntrinsicImpl {
         @Override
         public ValueNode createHIR(RiRuntime runtime, Graph<?> graph, RiResolvedMethod caller, RiResolvedMethod target, ValueNode[] args) {
-            return graph.add(new StackAllocateNode(args[0], target.signature().returnType(null)));
+            return graph.add(new StackAllocateNode(intConstant(args[0]), (RiResolvedType) target.signature().returnType(null)));
         }
     }
 
@@ -326,11 +311,11 @@ public class MaxineIntrinsicImplementations {
         registry.add(SAFEPOINT_POLL, new SafepointIntrinsic(SafepointNode.Op.SAFEPOINT_POLL));
         registry.add(INFO, new SafepointIntrinsic(SafepointNode.Op.INFO));
         registry.add(HERE, new SafepointIntrinsic(SafepointNode.Op.HERE));
-        registry.add(UNCOMMON_TRAP, new SafepointIntrinsic(SafepointNode.Op.UNCOMMON_TRAP));
+        registry.add(UNCOMMON_TRAP, new UncommonTrapIntrinsic());
 
-        registry.add(PAUSE, new PauseIntrinsic());
-        registry.add(BREAKPOINT_TRAP, new BreakpointTrapIntrinsic());
-//        registry.add(STACKHANDLE, new StackHandleIntrinsic());
+        registry.add(PAUSE, new SafepointIntrinsic(SafepointNode.Op.PAUSE));
+        registry.add(BREAKPOINT_TRAP, new SafepointIntrinsic(SafepointNode.Op.BREAKPOINT));
+        registry.add(STACKHANDLE, new StackHandleIntrinsic());
         registry.add(ALLOCA, new StackAllocateIntrinsic());
 
         registry.add(CMP_BYTECODE, new NormalizeCompareIntrinsic());

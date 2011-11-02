@@ -29,7 +29,7 @@ import com.oracle.max.graal.nodes.spi.*;
 /**
  * The {@code NegateNode} node negates its operand.
  */
-public final class NegateNode extends FloatingNode implements Canonicalizable {
+public final class NegateNode extends FloatingNode implements Canonicalizable, LIRLowerable {
 
     @Input
     private ValueNode x;
@@ -46,11 +46,6 @@ public final class NegateNode extends FloatingNode implements Canonicalizable {
     public NegateNode(ValueNode x) {
         super(x.kind);
         this.x = x;
-    }
-
-    @Override
-    public void accept(ValueVisitor v) {
-        v.visitNegate(this);
     }
 
     @Override
@@ -71,5 +66,10 @@ public final class NegateNode extends FloatingNode implements Canonicalizable {
             return ((NegateNode) x()).x();
         }
         return this;
+    }
+
+    @Override
+    public void generate(LIRGeneratorTool gen) {
+        gen.setResult(this, gen.emitNegate(gen.operand(x())));
     }
 }

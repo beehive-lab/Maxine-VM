@@ -23,6 +23,7 @@
 package com.oracle.max.graal.nodes;
 
 import com.oracle.max.graal.graph.*;
+import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -221,5 +222,10 @@ public final class ConstantNode extends BooleanNode {
             return runtime.asRiType(kind);
         }
         return runtime.getTypeOf(asConstant());
+    }
+
+    @Override
+    public BooleanNode negate() {
+        return ConstantNode.forBoolean(!value.asBoolean(), graph());
     }
 }

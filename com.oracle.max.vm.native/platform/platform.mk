@@ -204,7 +204,10 @@ ifeq ($(OS),linux)
     # this flag, the main thread's complete stack (including the guard page) is
     # mprotected with PROT_READ, PROT_WRITE, PROT_EXEC when dlopen() is called to
     # open libjava.so. 
-    LINK_MAIN = $(CC) -z execstack -g -lc -lm -lpthread -ldl -rdynamic -Xlinker -rpath -Xlinker $(shell cd $(PROJECT)/generated/$(OS) && /bin/pwd) -o $(MAIN)
+    LINK_MAIN = $(CC) -z execstack -g -rdynamic -Xlinker -rpath -Xlinker $(shell cd $(PROJECT)/generated/$(OS) && /bin/pwd) -o $(MAIN)
+    # Libraries must be specified after the actual source files, so the POSTFIX variable is used for that
+    # (Introduced to solve a linking problem on Ubuntu 11.10)
+    LINK_MAIN_POSTFIX = -lc -lm -lpthread -ldl
     LINK_LIB = $(CC) -g -shared -lc -lm
     LIB_PREFIX = lib
     LIB_SUFFIX = .so

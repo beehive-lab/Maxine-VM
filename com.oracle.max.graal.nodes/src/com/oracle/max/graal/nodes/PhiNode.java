@@ -95,11 +95,6 @@ public final class PhiNode extends FloatingNode implements Canonicalizable, Node
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitPhi(this);
-    }
-
-    @Override
     public String toString(Verbosity verbosity) {
         if (verbosity == Verbosity.Name) {
             StringBuilder str = new StringBuilder();

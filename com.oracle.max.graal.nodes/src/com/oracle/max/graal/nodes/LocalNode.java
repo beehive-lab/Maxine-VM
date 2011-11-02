@@ -25,7 +25,6 @@ package com.oracle.max.graal.nodes;
 import java.util.*;
 
 import com.oracle.max.graal.nodes.calc.*;
-import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -77,11 +76,6 @@ public final class LocalNode extends FloatingNode {
     @Override
     public RiResolvedType declaredType() {
         return declaredType;
-    }
-
-    @Override
-    public void accept(ValueVisitor v) {
-        v.visitLocal(this);
     }
 
     @Override

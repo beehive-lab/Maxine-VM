@@ -45,7 +45,7 @@ $(LIBRARY) : $(OBJECTS)
 	cp -f $(LIBRARY) $(PROJECT)/generated/$(OS)
 
 $(MAIN) : $(OBJECTS)
-	$(LINK_MAIN) $(OBJECTS)
+	$(LINK_MAIN) $(OBJECTS) $(LINK_MAIN_POSTFIX)
 else
 #
 # On Xen we only care about two things, the image and the inspector library (tele)

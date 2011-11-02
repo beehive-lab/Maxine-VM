@@ -26,7 +26,6 @@ import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.PhiNode.PhiType;
 import com.oracle.max.graal.nodes.spi.*;
-import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -42,8 +41,7 @@ public class ConditionalNode extends BinaryNode implements Canonicalizable, LIRL
     }
 
     public ConditionalNode(BooleanNode condition, ValueNode trueValue, ValueNode falseValue) {
-        // TODO: return the appropriate bytecode IF_ICMPEQ, etc or remove the need for bytecodes in BinaryNode
-        super(trueValue.kind, Bytecodes.ILLEGAL, trueValue, falseValue);
+        super(trueValue.kind, trueValue, falseValue);
         assert trueValue.kind == falseValue.kind;
         this.condition = condition;
     }
@@ -103,11 +101,6 @@ public class ConditionalNode extends BinaryNode implements Canonicalizable, LIRL
         }
         if (trueValue() == falseValue()) {
             return trueValue();
-        }
-
-        if (condition instanceof NegateBooleanNode) {
-            NegateBooleanNode negateBooleanNode = (NegateBooleanNode) condition;
-            return graph().unique(new ConditionalNode(negateBooleanNode.value(), falseValue(), trueValue()));
         }
 
         return this;
