@@ -2370,19 +2370,19 @@ public final class GraphBuilder {
             case GOTO_W         : genGoto(s.currentBCI(), s.readFarBranchDest()); break;
             case JSR_W          : genJsr(s.readFarBranchDest()); break;
             default:
-                processExtendedBytecode(bci, s, opcode);
+                processExtendedBytecode(opcode, s);
         }
         // Checkstyle: on
     }
 
-    private void processExtendedBytecode(int bci, BytecodeStream s, int opcode) {
+    private void processExtendedBytecode(int opcode, BytecodeStream s) {
         // Checkstyle: off
         switch (opcode) {
             case JNICALL        : genNativeCall(s.readCPI()); break;
             case BREAKPOINT:
                 throw new CiBailout("concurrent setting of breakpoint");
             default:
-                throw new CiBailout("Unsupported opcode " + opcode + " (" + nameOf(opcode) + ") [bci=" + bci + "]");
+                throw new CiBailout("Unsupported opcode " + opcode + " (" + nameOf(opcode) + ") [bci=" + s.currentBCI() + "]");
         }
         // Checkstyle: on
     }
