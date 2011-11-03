@@ -28,7 +28,6 @@ import com.oracle.max.graal.graph.Node.*;
 
 /**
  * This class is a graph container, it contains the set of nodes that belong to this graph.
- * The graph contains at least one distinguished node : the {@link #start() start} node.
  */
 public class Graph {
 

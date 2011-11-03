@@ -163,8 +163,7 @@ public class IdentifyBlocksPhase extends Phase {
         assert nodeToBlock.get(n) == null;
         nodeToBlock.set(n, b);
 
-        if (n instanceof BeginNode && n.predecessor() == null) {
-            assert startBlock == null;
+        if (n == graph.start()) {
             startBlock = b;
         }
 
