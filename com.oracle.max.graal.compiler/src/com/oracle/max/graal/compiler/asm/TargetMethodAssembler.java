@@ -45,6 +45,8 @@ public class TargetMethodAssembler {
         this.asm = asm;
         this.targetMethod = new CiTargetMethod();
         this.target = compilation.compiler.target;
+        // 0 is a valid pc for safepoints in template methods
+        this.lastSafepointPos = -1;
     }
 
     public void setFrameSize(int frameSize) {
@@ -137,7 +139,7 @@ public class TargetMethodAssembler {
     public void recordImplicitException(int pcOffset, LIRDebugInfo info) {
         // record an implicit exception point
         if (info != null) {
-            assert lastSafepointPos < pcOffset;
+            assert lastSafepointPos < pcOffset : lastSafepointPos + "<" + pcOffset;
             lastSafepointPos = pcOffset;
             targetMethod.recordSafepoint(pcOffset, info.debugInfo());
             assert info.exceptionEdge() == null;

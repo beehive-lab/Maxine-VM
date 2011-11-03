@@ -88,6 +88,25 @@ public class InliningPhase extends Phase {
         public abstract void inline(StructuredGraph graph);
     }
 
+    private class IntrinsicInlineInfo extends InlineInfo {
+        public final StructuredGraph intrinsicGraph;
+
+        public IntrinsicInlineInfo(InvokeNode invoke, StructuredGraph intrinsicGraph) {
+            super(invoke, 0, 0);
+            this.intrinsicGraph = graph;
+        }
+
+        @Override
+        public void inline(StructuredGraph compilerGraph) {
+            InliningUtil.inline(invoke, intrinsicGraph, null);
+        }
+
+        @Override
+        public String toString() {
+            return "intrinsic inlining " + CiUtil.format("%H.%n(%p):%r", invoke.callTarget().targetMethod(), false);
+        }
+    }
+
     private class StaticInlineInfo extends InlineInfo {
         public final RiResolvedMethod concrete;
 
@@ -209,23 +228,33 @@ public class InliningPhase extends Phase {
             }
             Iterable<Node> newNodes = null;
             if (info.invoke.isAlive()) {
-                info.inline(this.graph);
-                if (GraalOptions.TraceInlining) {
-                    TTY.println("inlining %f: %s", info.weight, info);
-                }
-                if (GraalOptions.TraceInlining) {
-                    context.observable.fireCompilationEvent(new CompilationEvent(null, "after inlining " + info, graph, true, false));
-                    //printGraph("After " + info, this.graph);
-                }
-                // get the new nodes here, the canonicalizer phase will reset the mark
-                newNodes = graph.getNewNodes();
+                try {
+                    info.inline(this.graph);
+                    if (GraalOptions.TraceInlining) {
+                        TTY.println("inlining %f: %s", info.weight, info);
+                    }
+                    if (GraalOptions.TraceInlining) {
+                        context.observable.fireCompilationEvent(new CompilationEvent(null, "after inlining " + info, graph, true, false));
+                    }
+                    // get the new nodes here, the canonicalizer phase will reset the mark
+                    newNodes = graph.getNewNodes();
                 new CanonicalizerPhase(context, target, runtime, true, assumptions).apply(graph);
-                new PhiSimplificationPhase(context).apply(graph);
-                if (GraalOptions.Intrinsify) {
-                    new IntrinsificationPhase(context, runtime).apply(graph);
-                }
-                if (GraalOptions.Meter) {
-                    context.metrics.InlinePerformed++;
+                    new PhiSimplificationPhase(context).apply(graph);
+                    if (GraalOptions.Intrinsify) {
+                        new IntrinsificationPhase(context, runtime).apply(graph);
+                    }
+                    if (GraalOptions.Meter) {
+                        context.metrics.InlinePerformed++;
+                    }
+                } catch (CiBailout bailout) {
+                    // TODO determine if we should really bail out of the whole compilation.
+                    throw bailout;
+                } catch (AssertionError e) {
+                    throw new VerificationError(e).addContext(info.toString());
+                } catch (RuntimeException e) {
+                    throw new VerificationError(e).addContext(info.toString());
+                } catch (VerificationError e) {
+                    throw e.addContext(info.toString());
                 }
             }
             if (newNodes != null && info.level <= GraalOptions.MaximumInlineLevel) {
@@ -269,6 +298,12 @@ public class InliningPhase extends Phase {
         }
         RiResolvedMethod parent = invoke.stateAfter().method();
         MethodCallTargetNode callTarget = invoke.callTarget();
+        Graph intrinsicGraph = runtime.intrinsicGraph(parent, invoke.bci(), callTarget.targetMethod(), callTarget.arguments());
+        if (intrinsicGraph != null) {
+            System.out.println("!!! intrinsic inlining " + invoke.callTarget().targetMethod());
+            return new IntrinsicInlineInfo(invoke, graph);
+        }
+
         if (callTarget.invokeKind() == InvokeKind.Special || callTarget.targetMethod().canBeStaticallyBound()) {
             if (checkTargetConditions(callTarget.targetMethod())) {
                 double weight = inliningWeight(parent, callTarget.targetMethod(), invoke);
