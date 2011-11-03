@@ -29,4 +29,5 @@ import com.sun.cri.ci.*;
 public interface CanonicalizerTool {
     void deleteBranch(FixedNode branch);
     CiTarget target();
+    CiAssumptions assumptions();
 }

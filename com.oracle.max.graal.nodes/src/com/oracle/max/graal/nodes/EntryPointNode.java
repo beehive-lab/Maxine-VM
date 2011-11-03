@@ -22,12 +22,10 @@
  */
 package com.oracle.max.graal.nodes;
 
-import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 public class EntryPointNode extends BeginNode {
     private final RiRuntime runtime;
-    private final CiAssumptions assumptions = new CiAssumptions();
 
     public EntryPointNode() {
         this(null);
@@ -44,9 +42,5 @@ public class EntryPointNode extends BeginNode {
 
     public RiRuntime runtime() {
         return runtime;
-    }
-
-    public CiAssumptions assumptions() {
-        return assumptions;
     }
 }

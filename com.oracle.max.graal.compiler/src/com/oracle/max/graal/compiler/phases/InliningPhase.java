@@ -59,12 +59,14 @@ public class InliningPhase extends Phase {
     private NodeMap<InlineInfo> inlineInfos;
 
     private Graph<EntryPointNode> graph;
+    private CiAssumptions assumptions;
 
-    public InliningPhase(GraalContext context, GraalRuntime runtime, CiTarget target, Collection<InvokeNode> hints) {
+    public InliningPhase(GraalContext context, GraalRuntime runtime, CiTarget target, Collection<InvokeNode> hints, CiAssumptions assumptions) {
         super(context);
         this.runtime = runtime;
         this.target = target;
         this.hints = hints;
+        this.assumptions = assumptions;
     }
 
     private abstract static class InlineInfo implements Comparable<InlineInfo> {
@@ -111,7 +113,7 @@ public class InliningPhase extends Phase {
                     new DeadCodeEliminationPhase(context).apply(graph, true, false);
                     new ComputeProbabilityPhase(context).apply(graph, true, false);
                 }
-                new CanonicalizerPhase(context, target).apply(graph, true, false);
+                new CanonicalizerPhase(context, target, assumptions).apply(graph, true, false);
 
                 if (GraalOptions.ParseBeforeInlining && !parsedMethods.containsKey(concrete)) {
                     parsedMethods.put(concrete, graphComplexity(graph));
@@ -171,7 +173,7 @@ public class InliningPhase extends Phase {
                 String concreteName = CiUtil.format("%H.%n(%p):%r", concrete, false);
                 TTY.println("recording concrete method assumption: %s -> %s", targetName, concreteName);
             }
-            graph.start().assumptions().recordConcreteMethod(invoke.callTarget().targetMethod(), concrete);
+            assumptions.recordConcreteMethod(invoke.callTarget().targetMethod(), concrete);
             super.inline(graph);
         }
 
@@ -217,7 +219,7 @@ public class InliningPhase extends Phase {
                 }
                 // get the new nodes here, the canonicalizer phase will reset the mark
                 newNodes = graph.getNewNodes();
-                new CanonicalizerPhase(context, target, true).apply(graph);
+                new CanonicalizerPhase(context, target, true, assumptions).apply(graph);
                 new PhiSimplificationPhase(context).apply(graph);
                 if (GraalOptions.Intrinsify) {
                     new IntrinsificationPhase(context, runtime).apply(graph);
@@ -296,7 +298,7 @@ public class InliningPhase extends Phase {
         }
 
         RiResolvedMethod concrete = holder.uniqueConcreteMethod(callTarget.targetMethod());
-        if (concrete != null) {
+        if (concrete != null && assumptions != null) {
             if (checkTargetConditions(concrete)) {
                 double weight = inliningWeight(parent, concrete, invoke);
                 return new AssumptionInlineInfo(invoke, weight, level, concrete);
@@ -444,7 +446,7 @@ public class InliningPhase extends Phase {
             if (!parsedMethods.containsKey(method)) {
                 Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(runtime));
                 new GraphBuilderPhase(context, runtime, method, null).apply(graph, true, false);
-                new CanonicalizerPhase(context, target).apply(graph, true, false);
+                new CanonicalizerPhase(context, target, assumptions).apply(graph, true, false);
                 count = graphComplexity(graph);
                 parsedMethods.put(method, count);
             } else {
