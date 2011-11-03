@@ -141,7 +141,7 @@ public final class GraalOptions {
     public static boolean OmitHotExceptionStacktrace         = ____;
     public static int     MatureInvocationCount              = 100;
     public static boolean GenSafepoints                      = true;
-    public static boolean GenLoopSafepoints                  = ____;
+    public static boolean GenLoopSafepoints                  = true;
 
     public static boolean GenAssertionCode                   = ____;
     public static boolean AlignCallsForPatching              = true;
