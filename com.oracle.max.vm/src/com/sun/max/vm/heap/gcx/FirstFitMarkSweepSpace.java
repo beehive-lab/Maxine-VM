@@ -39,7 +39,7 @@ import com.sun.max.vm.runtime.*;
  * A region-based, flat, mark-sweep heap space, with bump pointer allocation only.
  * Each partially occupied region has a list of addressed ordered free chunks, used to allocate TLAB refill and an overflow allocator.
  */
-public final class FirstFitMarkSweepSpace extends HeapRegionSweeper implements HeapAccountOwner, HeapSpace {
+public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends HeapRegionSweeper implements HeapSpace {
     /* For simplicity at the moment. Should be able to allocate this in GC's own heap (i.e., the HeapRegionManager's allocator).
      */
     private static final OutOfMemoryError outOfMemoryError = new OutOfMemoryError();
@@ -55,9 +55,9 @@ public final class FirstFitMarkSweepSpace extends HeapRegionSweeper implements H
         return RegionTable.theRegionTable().regionID(address) == DebuggedRegion;
     }
     /**
-     * Heap account tracking the pool of regions allocated to this heap.
+     * Heap account tracking the pool of regions allocated to this space.
      */
-    final HeapAccount<FirstFitMarkSweepSpace> heapAccount;
+    final HeapAccount<T> heapAccount;
 
     /**
      * List of region with space available for allocation.
@@ -97,11 +97,6 @@ public final class FirstFitMarkSweepSpace extends HeapRegionSweeper implements H
      * Overflow allocator. Handles direct allocation request and all small overflow of TLABs.
      */
     final BaseAtomicBumpPointerAllocator<Refiller> overflowAllocator;
-
-    /**
-     * Large object allocator. Handles direct allocation requests for large object as well as large overflow of TLABs.
-     */
-    final LargeObjectSpace largeObjectAllocator;
 
     /**
      * Pre-allocated region range iterator. Provides GC operations with allocation free  iteration over contiguous region ranges from a list.
@@ -672,19 +667,18 @@ public final class FirstFitMarkSweepSpace extends HeapRegionSweeper implements H
         }
     }
 
-    public FirstFitMarkSweepSpace() {
-        heapAccount = new HeapAccount<FirstFitMarkSweepSpace>(this);
+    public FirstFitMarkSweepSpace(HeapAccount<T> hc) {
+        heapAccount = hc;
         currentOverflowAllocatingRegion = INVALID_REGION_ID;
         currentTLABAllocatingRegion = INVALID_REGION_ID;
         overflowAllocator = new BaseAtomicBumpPointerAllocator<Refiller>(new OverflowAllocatorRefiller());
         tlabAllocator = new ChunkListAllocator<TLABRefillManager>(new TLABRefillManager());
         tlabAllocator.refillManager.setMinChunkSize(Size.fromInt(regionSizeInBytes).dividedBy(2));
-        largeObjectAllocator = new LargeObjectSpace();
         regionsRangeIterable = new HeapRegionRangeIterable();
         regionInfoIterable = new HeapRegionInfoIterable();
     }
 
-    public HeapAccount<FirstFitMarkSweepSpace> heapAccount() {
+    public HeapAccount<T> heapAccount() {
         return heapAccount;
     }
 
@@ -694,9 +688,6 @@ public final class FirstFitMarkSweepSpace extends HeapRegionSweeper implements H
      * @param maxSize
      */
     public void initialize(Size minSize, Size maxSize) {
-        if (!heapAccount.open(numberOfRegions(maxSize))) {
-            FatalError.unexpected("Failed to create application heap");
-        }
         Size regionSize = Size.fromInt(regionSizeInBytes);
         tlabAllocationRegions = HeapRegionList.RegionListUse.OWNERSHIP.createList();
         allocationRegions = HeapRegionList.RegionListUse.OWNERSHIP.createList();
@@ -723,9 +714,8 @@ public final class FirstFitMarkSweepSpace extends HeapRegionSweeper implements H
         currentTLABAllocatingRegion = allocationRegions.removeHead();
         final HeapRegionInfo regionInfo = fromRegionID(currentTLABAllocatingRegion);
         ALLOCATING_REGION.setState(regionInfo);
-        final Size allocatorsHeadroom = HeapSchemeAdaptor.MIN_OBJECT_SIZE;
-        tlabAllocator.initialize(regionInfo.firstFreeBytes(), regionSize, regionSize, allocatorsHeadroom);
-        overflowAllocator.initialize(Address.zero(), Size.zero(), allocatorsHeadroom);
+        tlabAllocator.initialize(regionInfo.firstFreeBytes(), regionSize, regionSize);
+        overflowAllocator.initialize(Address.zero(), Size.zero());
 
         allocationRegionsFreeSpace = regionSize.times(allocationRegions.size());
     }
@@ -752,7 +742,7 @@ public final class FirstFitMarkSweepSpace extends HeapRegionSweeper implements H
     @Override
     public boolean contains(Address address) {
         final HeapRegionInfo regionInfo = fromAddress(address);
-        return regionInfo.owner() == this;
+        return regionInfo.owner() == heapAccount.owner;
     }
 
     public boolean canSatisfyAllocation(Size size) {

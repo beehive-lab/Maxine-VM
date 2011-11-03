@@ -98,7 +98,7 @@ public final class HeapRegionConstants {
      * @param sizeInBytes size in bytes
      * @return a number of regions.
      */
-    static int numberOfRegions(Size sizeInBytes) {
+    public static int numberOfRegions(Size sizeInBytes) {
         return sizeInBytes.alignUp(regionSizeInBytes).unsignedShiftedRight(log2RegionSizeInBytes).toInt();
     }
 

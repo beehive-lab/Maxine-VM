@@ -40,11 +40,6 @@ public class ChunkListAllocator<T extends ChunkListRefillManager> extends Atomic
         super(refillManager);
     }
 
-    void initialize(Address initialChunk, Size initialChunkSize, Size sizeLimit, Size headroom, Size tlabMinChunkSize) {
-        super.initialize(initialChunk, initialChunkSize, sizeLimit, headroom);
-        refillManager.setMinChunkSize(tlabMinChunkSize);
-    }
-
     /**
      * Allocate TLAB.
      * The allocator tries to allocate the requested TLAB from its current
