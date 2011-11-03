@@ -28,7 +28,7 @@ import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 
-public class MathIntrinsicNode extends FloatingNode implements Canonicalizable {
+public class MathIntrinsicNode extends FloatingNode implements Canonicalizable, LIRLowerable {
 
     @Input private ValueNode x;
     @Data private final Operation operation;
@@ -53,8 +53,8 @@ public class MathIntrinsicNode extends FloatingNode implements Canonicalizable {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitMathIntrinsic(this);
+    public void generate(LIRGeneratorTool gen) {
+        gen.visitMathIntrinsic(this);
     }
 
     @Override

@@ -31,7 +31,7 @@ import com.sun.cri.ri.*;
 /**
  * The {@code LoadIndexedNode} represents a read from an element of an array.
  */
-public final class LoadIndexedNode extends AccessIndexedNode implements Lowerable {
+public final class LoadIndexedNode extends AccessIndexedNode implements Lowerable, LIRLowerable {
 
     /**
      * Creates a new LoadIndexedNode.
@@ -60,8 +60,8 @@ public final class LoadIndexedNode extends AccessIndexedNode implements Lowerabl
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitLoadIndexed(this);
+    public void generate(LIRGeneratorTool gen) {
+        gen.visitLoadIndexed(this);
     }
 
     @Override

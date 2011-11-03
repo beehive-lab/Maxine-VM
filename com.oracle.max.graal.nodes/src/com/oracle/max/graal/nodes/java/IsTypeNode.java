@@ -30,7 +30,7 @@ import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
-public final class IsTypeNode extends BooleanNode implements Canonicalizable {
+public final class IsTypeNode extends BooleanNode implements Canonicalizable, LIRLowerable {
 
     @Input private ValueNode object;
 
@@ -58,7 +58,7 @@ public final class IsTypeNode extends BooleanNode implements Canonicalizable {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
+    public void generate(LIRGeneratorTool gen) {
         // nothing to do
     }
 

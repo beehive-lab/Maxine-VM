@@ -26,7 +26,7 @@ import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 
-public final class RuntimeCallNode extends AbstractCallNode {
+public final class RuntimeCallNode extends AbstractCallNode implements LIRLowerable {
 
     @Data private final CiRuntimeCall call;
 
@@ -48,8 +48,8 @@ public final class RuntimeCallNode extends AbstractCallNode {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitRuntimeCall(this);
+    public void generate(LIRGeneratorTool gen) {
+        gen.visitRuntimeCall(this);
     }
 
     // specialized on return type (instead of public static <T> T performCall) until boxing/unboxing is sorted out in intrinsification

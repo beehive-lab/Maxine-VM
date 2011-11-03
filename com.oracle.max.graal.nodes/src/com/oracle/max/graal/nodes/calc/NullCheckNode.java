@@ -29,7 +29,7 @@ import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
-public final class NullCheckNode extends BooleanNode implements Canonicalizable {
+public final class NullCheckNode extends BooleanNode implements Canonicalizable, LIRLowerable {
 
     @Input private ValueNode object;
     @Data public final boolean expectedNull;
@@ -52,7 +52,7 @@ public final class NullCheckNode extends BooleanNode implements Canonicalizable 
     }
 
     @Override
-    public void accept(ValueVisitor v) {
+    public void generate(LIRGeneratorTool gen) {
         // Nothing to do.
     }
 

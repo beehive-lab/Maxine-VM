@@ -28,7 +28,7 @@ import com.oracle.max.graal.nodes.DeoptimizeNode.DeoptAction;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 
-public final class FixedGuardNode extends FixedWithNextNode implements Canonicalizable, Lowerable {
+public final class FixedGuardNode extends FixedWithNextNode implements Canonicalizable, Lowerable, LIRLowerable {
 
     @Input private final NodeInputList<BooleanNode> conditions;
 
@@ -43,8 +43,10 @@ public final class FixedGuardNode extends FixedWithNextNode implements Canonical
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitFixedGuard(this);
+    public void generate(LIRGeneratorTool gen) {
+        for (BooleanNode condition : conditions()) {
+            gen.emitGuardCheck(condition);
+        }
     }
 
     public void addCondition(BooleanNode x) {

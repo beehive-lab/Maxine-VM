@@ -28,15 +28,15 @@ import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 
-public final class EndNode extends FixedNode implements Node.IterableNodeType {
+public final class EndNode extends FixedNode implements Node.IterableNodeType, LIRLowerable {
 
     public EndNode() {
         super(CiKind.Illegal);
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitEndNode(this);
+    public void generate(LIRGeneratorTool gen) {
+        gen.visitEndNode(this);
     }
 
     public MergeNode merge() {

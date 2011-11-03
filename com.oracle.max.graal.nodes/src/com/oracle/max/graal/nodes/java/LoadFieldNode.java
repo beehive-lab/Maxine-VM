@@ -31,7 +31,7 @@ import com.sun.cri.ri.*;
 /**
  * The {@code LoadFieldNode} represents a read of a static or instance field.
  */
-public final class LoadFieldNode extends AccessFieldNode implements Canonicalizable {
+public final class LoadFieldNode extends AccessFieldNode implements Canonicalizable, LIRLowerable {
 
     /**
      * Creates a new LoadFieldNode instance.
@@ -67,8 +67,8 @@ public final class LoadFieldNode extends AccessFieldNode implements Canonicaliza
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitLoadField(this);
+    public void generate(LIRGeneratorTool gen) {
+        gen.visitLoadField(this);
     }
 
     @Override

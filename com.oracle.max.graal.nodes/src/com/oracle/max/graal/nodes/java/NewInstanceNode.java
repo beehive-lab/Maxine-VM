@@ -33,7 +33,7 @@ import com.sun.cri.ri.*;
 /**
  * The {@code NewInstanceNode} represents the allocation of an instance class object.
  */
-public final class NewInstanceNode extends FixedWithNextNode implements EscapeAnalyzable {
+public final class NewInstanceNode extends FixedWithNextNode implements EscapeAnalyzable, LIRLowerable {
 
     private final RiResolvedType instanceClass;
 
@@ -60,8 +60,8 @@ public final class NewInstanceNode extends FixedWithNextNode implements EscapeAn
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitNewInstance(this);
+    public void generate(LIRGeneratorTool gen) {
+        gen.visitNewInstance(this);
     }
 
     @Override

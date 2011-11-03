@@ -28,7 +28,7 @@ import com.oracle.max.graal.nodes.spi.*;
 /**
  * The {@code MonitorEnterNode} represents the acquisition of a monitor.
  */
-public final class MonitorEnterNode extends AccessMonitorNode {
+public final class MonitorEnterNode extends AccessMonitorNode implements LIRLowerable {
 
     /**
      * Creates a new MonitorEnterNode.
@@ -42,7 +42,7 @@ public final class MonitorEnterNode extends AccessMonitorNode {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitMonitorEnter(this);
+    public void generate(LIRGeneratorTool gen) {
+        gen.visitMonitorEnter(this);
     }
 }

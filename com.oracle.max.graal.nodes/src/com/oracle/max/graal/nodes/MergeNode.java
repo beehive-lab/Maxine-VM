@@ -30,7 +30,7 @@ import com.oracle.max.graal.nodes.spi.*;
 /**
  * Denotes the merging of multiple control-flow paths.
  */
-public class MergeNode extends BeginNode implements Node.IterableNodeType {
+public class MergeNode extends BeginNode implements Node.IterableNodeType, LIRLowerable {
 
     @Input private final NodeInputList<EndNode> ends = new NodeInputList<EndNode>(this);
 
@@ -40,8 +40,8 @@ public class MergeNode extends BeginNode implements Node.IterableNodeType {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitMerge(this);
+    public void generate(LIRGeneratorTool gen) {
+        gen.visitMerge(this);
     }
 
     public int endIndex(EndNode end) {

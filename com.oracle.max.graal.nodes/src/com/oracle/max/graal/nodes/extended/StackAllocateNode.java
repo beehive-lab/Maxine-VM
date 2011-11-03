@@ -30,7 +30,7 @@ import com.sun.cri.ri.*;
 /**
  * Instruction implementing the semantics of {@link Bytecodes#ALLOCA}.
  */
-public final class StackAllocateNode extends FixedWithNextNode {
+public final class StackAllocateNode extends FixedWithNextNode implements LIRLowerable {
 
     @Data public final int size;
     @Data public final RiResolvedType declaredType;
@@ -45,8 +45,8 @@ public final class StackAllocateNode extends FixedWithNextNode {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitStackAllocate(this);
+    public void generate(LIRGeneratorTool gen) {
+        gen.visitStackAllocate(this);
     }
 
     @Override

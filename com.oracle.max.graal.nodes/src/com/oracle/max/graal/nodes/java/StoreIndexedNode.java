@@ -30,7 +30,7 @@ import com.sun.cri.ci.*;
 /**
  * The {@code StoreIndexedNode} represents a write to an array element.
  */
-public final class StoreIndexedNode extends AccessIndexedNode implements Lowerable {
+public final class StoreIndexedNode extends AccessIndexedNode implements Lowerable, LIRLowerable {
 
     @Input private ValueNode value;
 
@@ -52,8 +52,8 @@ public final class StoreIndexedNode extends AccessIndexedNode implements Lowerab
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitStoreIndexed(this);
+    public void generate(LIRGeneratorTool gen) {
+        gen.visitStoreIndexed(this);
     }
 
     @Override
