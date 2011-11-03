@@ -161,7 +161,7 @@ public class HeapAccount<T extends HeapAccountOwner>{
      * @param recipient the heap region list where the regions will be added if the request succeeds
      * @param prepend if true, insert the allocated regions at the head of the list, otherwise at the tail.
      * @param orLess  if true, allocate the remainder of what is left, otherwise, don't allocate any region.
-     * @return The number of regions allocated, or if orLess is false the number of regions left if the
+     * @return The number of regions allocated, or, if orLess is false, the number of regions left if the
      * account doesn't have enough regions to satisfy the request.
      */
     public synchronized int allocate(int numRegions, HeapRegionList recipient, boolean prepend, boolean orLess) {

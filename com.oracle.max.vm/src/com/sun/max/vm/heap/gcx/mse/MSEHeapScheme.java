@@ -46,7 +46,7 @@ import com.sun.max.vm.thread.*;
  * Region-based Mark Sweep + Evacuation-based defragmentation Heap Scheme.
  * Used for testing region-based support.
  */
-public class MSEHeapScheme extends HeapSchemeWithTLAB {
+public final class MSEHeapScheme extends HeapSchemeWithTLAB implements HeapAccountOwner {
     /**
      * Number of heap words covered by a single mark.
      */
@@ -91,7 +91,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
     /**
      * Space where objects are allocated from by default.
      */
-    private final FirstFitMarkSweepSpace markSweepSpace;
+    private final FirstFitMarkSweepSpace<MSEHeapScheme> markSweepSpace;
 
     private final Collect collect = new Collect();
 
@@ -112,9 +112,10 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
 
     @HOSTED_ONLY
     public MSEHeapScheme() {
-        markSweepSpace = new FirstFitMarkSweepSpace();
-        heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT, new HeapAccounRootCellVisitor(markSweepSpace));
-        afterGCVerifier = new AfterMarkSweepVerifier(heapMarker, markSweepSpace, AfterMarkSweepBootHeapVerifier.makeVerifier(heapMarker, markSweepSpace));
+        final HeapAccount<MSEHeapScheme> heapAccount = new HeapAccount<MSEHeapScheme>(this);
+        markSweepSpace = new FirstFitMarkSweepSpace<MSEHeapScheme>(heapAccount);
+        heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT, new HeapAccounRootCellVisitor(this));
+        afterGCVerifier = new AfterMarkSweepVerifier(heapMarker, markSweepSpace, AfterMarkSweepBootHeapVerifier.makeVerifier(heapMarker, this));
         pinningSupportFlags = PIN_SUPPORT_FLAG.makePinSupportFlags(true, false, true);
         pinnedCounter = MaxineVM.isDebug() ? new AtomicPinnedCounter() : null;
     }
@@ -125,7 +126,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
         if (MaxineVM.isHosted() && phase == MaxineVM.Phase.BOOTSTRAPPING) {
             // VM-generation time initialization.
             TLAB_HEADROOM = MIN_OBJECT_SIZE;
-            AtomicBumpPointerAllocator.hostInitialize();
+            BaseAtomicBumpPointerAllocator.hostInitialize();
             if (MaxineVM.isDebug()) {
                 AtomicPinnedCounter.hostInitialize();
             }
@@ -177,6 +178,10 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
                 MaxineVM.reportPristineMemoryFailure("heap marker data", "reserve", heapMarkerDatasize);
             }
 
+            if (!markSweepSpace.heapAccount().open(HeapRegionConstants.numberOfRegions(applicationHeapMaxSize))) {
+                FatalError.unexpected("Failed to create application heap");
+            }
+
             markSweepSpace.initialize(initSize, applicationHeapMaxSize);
             // FIXME (ld) We should uncommit what hasn't been committed yet!
 
@@ -216,7 +221,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
 
     private void reportFragmentationStats(boolean reclaimedEnoughSpace) {
         if (DumpFragStatsAfterGC || (!reclaimedEnoughSpace && DumpFragStatsAtGCFailure)) {
-            fragmentationStats.reportStats(markSweepSpace.heapAccount());
+            fragmentationStats.reportStats(heapAccount());
         }
     }
 
@@ -513,6 +518,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
     }
 
     @Override
+    @NEVER_INLINE
     protected Pointer handleTLABOverflow(Size size, Pointer etla, Pointer tlabMark, Pointer tlabEnd) {      // Should we refill the TLAB ?
         final TLABRefillPolicy refillPolicy = TLABRefillPolicy.getForCurrentThread(etla);
         if (refillPolicy == null) {
@@ -584,6 +590,11 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
     @Override
     protected void releaseUnusedReservedVirtualSpace() {
         // Do nothing. This heap scheme has its own way of doing this.
+    }
+
+    @Override
+    public HeapAccount<MSEHeapScheme> heapAccount() {
+        return markSweepSpace.heapAccount();
     }
 }
 

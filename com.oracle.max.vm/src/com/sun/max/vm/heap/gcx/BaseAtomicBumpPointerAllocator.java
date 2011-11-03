@@ -54,7 +54,7 @@ public class BaseAtomicBumpPointerAllocator<T extends Refiller> {
      * The headroom is used to compute a soft limit that'll be used as the tlab's top.
      */
     @CONSTANT_WHEN_NOT_ZERO
-    protected Size headroom = HeapSchemeAdaptor.MIN_OBJECT_SIZE;
+    protected Size headroom;
 
     protected final T refillManager;
 
@@ -78,9 +78,8 @@ public class BaseAtomicBumpPointerAllocator<T extends Refiller> {
         top = Address.zero();
     }
 
-
-    void initialize(Address initialChunk, Size initialChunkSize, Size headroom) {
-        this.headroom = headroom;
+    void initialize(Address initialChunk, Size initialChunkSize) {
+        headroom = HeapSchemeAdaptor.MIN_OBJECT_SIZE;
         if (initialChunk.isZero()) {
             clear();
         } else {
@@ -179,8 +178,7 @@ public class BaseAtomicBumpPointerAllocator<T extends Refiller> {
         }
     }
 
-
-    Pointer refillOrAllocate(Size size) {
+    protected Pointer refillOrAllocate(Size size) {
         synchronized (refillLock()) {
             // We're the only thread that can refill the allocator now.
             // We're still racing with other threads that might try to allocate
