@@ -1578,7 +1578,7 @@ function gate_maxinetester() {
 }
 
 function run_gate() {
-#    run_check &&
+    run_check &&
     gate_copycheck &&
     gate_jttcheck &&
     gate_eclipseprojectscheck &&
