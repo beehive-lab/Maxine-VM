@@ -22,16 +22,7 @@
  */
 package com.oracle.max.graal.nodes;
 
-import com.sun.cri.ri.*;
-
 public class EntryPointNode extends BeginNode {
-    public EntryPointNode() {
-        this(null);
-    }
-
-    public EntryPointNode(RiRuntime runtime) {
-    }
-
     @Override
     public void delete() {
         throw new UnsupportedOperationException();

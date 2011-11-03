@@ -214,7 +214,7 @@ public final class GraphBuilderPhase extends Phase {
 
         if (GraalOptions.CacheGraphs && !graph.hasNode(DeoptimizeNode.class)) {
             // Create duplicate graph.
-            Graph<EntryPointNode> duplicate = new Graph<EntryPointNode>(new EntryPointNode(null));
+            Graph<EntryPointNode> duplicate = new Graph<EntryPointNode>(new EntryPointNode());
             Map<Node, Node> replacements = new IdentityHashMap<Node, Node>();
             replacements.put(graph.start(), duplicate.start());
             duplicate.addDuplicate(graph.getNodes(), replacements);

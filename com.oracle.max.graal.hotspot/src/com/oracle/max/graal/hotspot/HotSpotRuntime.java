@@ -385,7 +385,7 @@ public class HotSpotRuntime implements GraalRuntime {
             if (fullName.equals("getClass()Ljava/lang/Class;")) {
                 ValueNode obj = (ValueNode) parameters.get(0);
                 if (obj.isConstant() && obj.asConstant().isNonNull()) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
+                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode());
                     ValueNode result;
                     if (GraalOptions.Meter) {
                         context.metrics.GetClassForConstant++;
@@ -402,7 +402,7 @@ public class HotSpotRuntime implements GraalRuntime {
                 ValueNode obj = (ValueNode) parameters.get(0);
                 if (obj.isConstant()) {
                     assert obj.asConstant().asObject() instanceof Class;
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
+                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode());
                     ValueNode result;
                     if (GraalOptions.Meter) {
                         context.metrics.GetClassForConstant++;
@@ -420,7 +420,7 @@ public class HotSpotRuntime implements GraalRuntime {
             String holderName = holder.name();
             if (holderName.equals("Ljava/lang/Object;")) {
                 if (fullName.equals("getClass()Ljava/lang/Class;")) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
+                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode());
                     LocalNode receiver = graph.unique(new LocalNode(CiKind.Object, 0));
                     SafeReadNode klassOop = safeReadHub(graph, receiver);
                     SafeReadNode result = graph.add(new SafeReadNode(CiKind.Object, klassOop, LocationNode.create(LocationNode.FINAL_LOCATION, CiKind.Object, config.classMirrorOffset, graph)));
@@ -432,7 +432,7 @@ public class HotSpotRuntime implements GraalRuntime {
                 }
             } else if (method.holder().name().equals("Ljava/lang/Class;")) {
                 if (fullName.equals("getModifiers()I")) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
+                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode());
                     LocalNode receiver = graph.unique(new LocalNode(CiKind.Object, 0));
                     SafeReadNode klassOop = safeRead(graph, CiKind.Object, receiver, config.klassOopOffset);
                     graph.start().setNext(klassOop);
@@ -442,7 +442,7 @@ public class HotSpotRuntime implements GraalRuntime {
                     klassOop.setNext(ret);
                     intrinsicGraphs.put(method, graph);
                 } else if (fullName.equals("isInstance(Ljava/lang/Object;)Z")) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
+                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode());
                     LocalNode receiver = graph.unique(new LocalNode(CiKind.Object, 0));
                     LocalNode argument = graph.unique(new LocalNode(CiKind.Object, 1));
                     SafeReadNode klassOop = safeRead(graph, CiKind.Object, receiver, config.klassOopOffset);
@@ -455,7 +455,7 @@ public class HotSpotRuntime implements GraalRuntime {
                 }
             } else if (holderName.equals("Ljava/lang/System;")) {
                 if (fullName.equals("arraycopy(Ljava/lang/Object;ILjava/lang/Object;II)V")) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
+                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode());
                     LocalNode src = graph.unique(new LocalNode(CiKind.Object, 0));
                     LocalNode srcPos = graph.unique(new LocalNode(CiKind.Int, 1));
                     LocalNode dest = graph.unique(new LocalNode(CiKind.Object, 2));
@@ -569,14 +569,14 @@ public class HotSpotRuntime implements GraalRuntime {
                     merge2.setNext(ret);
                     return graph;
                 } else if (fullName.equals("currentTimeMillis()J")) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
+                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode());
                     RuntimeCallNode call = graph.add(new RuntimeCallNode(CiRuntimeCall.JavaTimeMillis));
                     ReturnNode ret = graph.add(new ReturnNode(call));
                     call.setNext(ret);
                     graph.start().setNext(call);
                     intrinsicGraphs.put(method, graph);
                 } else if (fullName.equals("nanoTime()J")) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
+                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode());
                     RuntimeCallNode call = graph.add(new RuntimeCallNode(CiRuntimeCall.JavaTimeNanos));
                     ReturnNode ret = graph.add(new ReturnNode(call));
                     call.setNext(ret);
@@ -585,12 +585,12 @@ public class HotSpotRuntime implements GraalRuntime {
                 }
             } else if (holderName.equals("Ljava/lang/Float;")) {
                 if (fullName.equals("floatToRawIntBits(F)I")) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
+                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode());
                     ReturnNode ret = graph.add(new ReturnNode(graph.unique(new ConvertNode(ConvertNode.Op.MOV_F2I, graph.unique(new LocalNode(CiKind.Float, 0))))));
                     graph.start().setNext(ret);
                     intrinsicGraphs.put(method, graph);
                 } else if (fullName.equals("floatToIntBits(F)I")) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
+                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode());
                     LocalNode arg = graph.unique(new LocalNode(CiKind.Float, 0));
                     CompareNode isNan = graph.unique(new CompareNode(arg, Condition.NE, arg));
                     isNan.setUnorderedIsTrue(true);
@@ -601,19 +601,19 @@ public class HotSpotRuntime implements GraalRuntime {
                     conditionalStructure.merge.setNext(ret);
                     intrinsicGraphs.put(method, graph);
                 } else if (fullName.equals("intBitsToFloat(I)F")) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
+                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode());
                     ReturnNode ret = graph.add(new ReturnNode(graph.unique(new ConvertNode(ConvertNode.Op.MOV_I2F, graph.unique(new LocalNode(CiKind.Int, 0))))));
                     graph.start().setNext(ret);
                     intrinsicGraphs.put(method, graph);
                 }
             } else if (holderName.equals("Ljava/lang/Double;")) {
                 if (fullName.equals("doubleToRawLongBits(D)J")) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
+                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode());
                     ReturnNode ret = graph.add(new ReturnNode(graph.unique(new ConvertNode(ConvertNode.Op.MOV_D2L, graph.unique(new LocalNode(CiKind.Double, 0))))));
                     graph.start().setNext(ret);
                     intrinsicGraphs.put(method, graph);
                 } else if (fullName.equals("doubleToLongBits(D)J")) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
+                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode());
                     LocalNode arg = graph.unique(new LocalNode(CiKind.Double, 0));
                     CompareNode isNan = graph.unique(new CompareNode(arg, Condition.NE, arg));
                     isNan.setUnorderedIsTrue(true);
@@ -624,7 +624,7 @@ public class HotSpotRuntime implements GraalRuntime {
                     conditionalStructure.merge.setNext(ret);
                     intrinsicGraphs.put(method, graph);
                 } else if (fullName.equals("longBitsToDouble(J)D")) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
+                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode());
                     ReturnNode ret = graph.add(new ReturnNode(graph.unique(new ConvertNode(ConvertNode.Op.MOV_L2D, graph.unique(new LocalNode(CiKind.Long, 0))))));
                     graph.start().setNext(ret);
                     intrinsicGraphs.put(method, graph);
@@ -640,7 +640,7 @@ public class HotSpotRuntime implements GraalRuntime {
                         kind = CiKind.Long;
                     }
                     if (kind != null) {
-                        Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
+                        Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode());
                         LocalNode object = graph.unique(new LocalNode(CiKind.Object, 1));
                         LocalNode offset = graph.unique(new LocalNode(CiKind.Long, 2));
                         LocalNode expected = graph.unique(new LocalNode(kind, 3));
@@ -654,7 +654,7 @@ public class HotSpotRuntime implements GraalRuntime {
                         intrinsicGraphs.put(method, graph);
                     }
                 } else if (fullName.equals("getObject(Ljava/lang/Object;J)Ljava/lang/Object;")) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
+                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode());
                     LocalNode object = graph.unique(new LocalNode(CiKind.Object, 1));
                     LocalNode offset = graph.unique(new LocalNode(CiKind.Long, 2));
                     UnsafeLoadNode load = graph.unique(new UnsafeLoadNode(object, offset, CiKind.Object));
@@ -663,7 +663,7 @@ public class HotSpotRuntime implements GraalRuntime {
                     graph.start().setNext(load);
                     intrinsicGraphs.put(method, graph);
                 } else if (fullName.equals("getObjectVolatile(Ljava/lang/Object;J)Ljava/lang/Object;")) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
+                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode());
                     LocalNode object = graph.unique(new LocalNode(CiKind.Object, 1));
                     LocalNode offset = graph.unique(new LocalNode(CiKind.Long, 2));
                     IndexedLocationNode location = IndexedLocationNode.create(LocationNode.UNSAFE_ACCESS_LOCATION, CiKind.Object, 0, offset, graph);
@@ -676,7 +676,7 @@ public class HotSpotRuntime implements GraalRuntime {
                     volatileRead.setNext(ret);
                     intrinsicGraphs.put(method, graph);
                 } else if (fullName.equals("getInt(Ljava/lang/Object;J)I")) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
+                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode());
                     LocalNode object = graph.unique(new LocalNode(CiKind.Object, 1));
                     LocalNode offset = graph.unique(new LocalNode(CiKind.Long, 2));
                     UnsafeLoadNode load = graph.unique(new UnsafeLoadNode(object, offset, CiKind.Int));
@@ -685,7 +685,7 @@ public class HotSpotRuntime implements GraalRuntime {
                     graph.start().setNext(load);
                     intrinsicGraphs.put(method, graph);
                 } else if (fullName.equals("putObject(Ljava/lang/Object;JLjava/lang/Object;)V")) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
+                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode());
                     LocalNode object = graph.unique(new LocalNode(CiKind.Object, 1));
                     LocalNode offset = graph.unique(new LocalNode(CiKind.Long, 2));
                     LocalNode value = graph.unique(new LocalNode(CiKind.Object, 3));
@@ -715,7 +715,7 @@ public class HotSpotRuntime implements GraalRuntime {
                     op = Operation.TAN;
                 }
                 if (op != null) {
-                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(this));
+                    Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode());
                     LocalNode value = graph.unique(new LocalNode(CiKind.Double, 0));
                     if (op == Operation.SIN || op == Operation.COS || op == Operation.TAN) {
                         // Math.sin(), .cos() and .tan() guarantee a value within 1 ULP of the

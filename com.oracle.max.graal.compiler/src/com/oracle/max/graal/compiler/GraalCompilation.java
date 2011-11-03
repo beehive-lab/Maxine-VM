@@ -90,7 +90,7 @@ public final class GraalCompilation {
     }
 
     public GraalCompilation(GraalContext context, GraalCompiler compiler, RiResolvedMethod method, int osrBCI, CiStatistics stats, DebugInfoLevel debugInfoLevel) {
-        this(context, compiler, method, new Graph<EntryPointNode>(new EntryPointNode(compiler.runtime)), osrBCI, stats, debugInfoLevel);
+        this(context, compiler, method, new Graph<EntryPointNode>(new EntryPointNode()), osrBCI, stats, debugInfoLevel);
     }
 
 

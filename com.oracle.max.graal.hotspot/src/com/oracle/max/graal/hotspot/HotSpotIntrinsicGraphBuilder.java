@@ -46,7 +46,7 @@ public class HotSpotIntrinsicGraphBuilder {
     }
 
     private Graph<EntryPointNode> buildCurrentThread() {
-        Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode(runtime));
+        Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode());
         ReturnNode ret = graph.add(new ReturnNode(graph.unique(new CurrentThread(runtime.config.threadObjectOffset))));
         graph.start().setNext(ret);
         return graph;
