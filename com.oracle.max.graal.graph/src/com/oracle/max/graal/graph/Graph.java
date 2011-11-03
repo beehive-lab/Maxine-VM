@@ -270,11 +270,17 @@ public class Graph {
         public boolean hasNext() {
             if (current != null) {
                 Node next = current.typeCacheNext;
-                while (next != null && next.isDeleted()) {
-                    next = next.typeCacheNext;
-                    current.typeCacheNext = next;
+                if (next != null) {
+                    while (next.isDeleted()) {
+                        next = next.typeCacheNext;
+                        if (next == null) {
+                            return false;
+                        }
+                        current.typeCacheNext = next;
+                    }
+                    return true;
                 }
-                return next != null;
+                return false;
             } else {
                 return start != null;
             }
