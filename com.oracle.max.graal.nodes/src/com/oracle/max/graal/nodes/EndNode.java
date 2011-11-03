@@ -55,6 +55,13 @@ public final class EndNode extends FixedNode implements Node.IterableNodeType, L
     }
 
     @Override
+    public Map<Object, Object> getDebugProperties() {
+        Map<Object, Object> debugProperties = super.getDebugProperties();
+        debugProperties.put("shortName", "E");
+        return debugProperties;
+    }
+
+    @Override
     public Iterable< ? extends Node> cfgSuccessors() {
         return Arrays.asList(merge());
     }
