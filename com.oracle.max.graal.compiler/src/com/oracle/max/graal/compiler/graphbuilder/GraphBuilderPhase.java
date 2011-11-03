@@ -30,6 +30,7 @@ import java.util.*;
 
 import com.oracle.max.criutils.*;
 import com.oracle.max.graal.compiler.*;
+import com.oracle.max.graal.compiler.ext.*;
 import com.oracle.max.graal.compiler.graphbuilder.BlockMap.Block;
 import com.oracle.max.graal.compiler.graphbuilder.BlockMap.DeoptBlock;
 import com.oracle.max.graal.compiler.graphbuilder.BlockMap.ExceptionBlock;
@@ -54,7 +55,7 @@ import com.sun.cri.ri.RiType.Representation;
 /**
  * The {@code GraphBuilder} class parses the bytecode of a method and builds the IR graph.
  */
-public final class GraphBuilderPhase extends Phase {
+public final class GraphBuilderPhase extends Phase implements GraphBuilderTool {
 
     /**
      * The minimum value to which {@link GraalOptions#TraceBytecodeParserLevel} must be set to trace
@@ -109,6 +110,11 @@ public final class GraphBuilderPhase extends Phase {
 
     public static final Map<RiMethod, StructuredGraph> cachedGraphs = new WeakHashMap<RiMethod, StructuredGraph>();
 
+    private ExtendedBytecodeHandler extendedBytecodeHandler;
+
+    public void setExtendedBytecodeHandler(ExtendedBytecodeHandler extendedBytecodeHandler) {
+        this.extendedBytecodeHandler = extendedBytecodeHandler;
+    }
 
     public GraphBuilderPhase(GraalContext context, RiRuntime runtime, RiResolvedMethod method) {
         this(context, runtime, method, null);
@@ -1233,6 +1239,15 @@ public final class GraphBuilderPhase extends Phase {
         return v;
     }
 
+    @Override
+    public void append(Node node) {
+        if (node instanceof FixedNode) {
+            append((FixedNode) node);
+        } else {
+            append((ValueNode) node);
+        }
+    }
+
     private ValueNode appendWithBCI(FixedWithNextNode x) {
         assert x.predecessor() == null : "instruction should not have been appended yet";
         assert lastInstr.next() == null : "cannot append instruction to instruction which isn't end (" + lastInstr + "->" + lastInstr.next() + ")";
@@ -1702,7 +1717,9 @@ public final class GraphBuilderPhase extends Phase {
             case BREAKPOINT:
                 throw new CiBailout("concurrent setting of breakpoint");
             default:
-                throw new CiBailout("Unsupported opcode " + opcode + " (" + nameOf(opcode) + ") [bci=" + bci + "]");
+                if (extendedBytecodeHandler == null || !extendedBytecodeHandler.handle(opcode, stream, graph, frameState, this)) {
+                    throw new CiBailout("Unsupported opcode " + opcode + " (" + nameOf(opcode) + ") [bci=" + bci + "]");
+                }
         }
         // Checkstyle: resume
     }

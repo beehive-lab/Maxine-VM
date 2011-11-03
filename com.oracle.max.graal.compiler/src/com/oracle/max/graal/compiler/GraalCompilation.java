@@ -164,7 +164,9 @@ public final class GraalCompilation {
             context().timers.startScope("HIR");
 
             if (graph.start().next() == null) {
-                new GraphBuilderPhase(context(), compiler.runtime, method, stats).apply(graph);
+                GraphBuilderPhase graphBuilderPhase = new GraphBuilderPhase(context(), compiler.runtime, method, stats);
+                graphBuilderPhase.setExtendedBytecodeHandler(compiler.extendedBytecodeHandler);
+                graphBuilderPhase.apply(graph);
                 new DeadCodeEliminationPhase(context()).apply(graph);
             }
 

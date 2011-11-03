@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,12 +20,10 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.compiler.ext;
+package com.oracle.max.graal.compiler.graphbuilder;
 
-import com.oracle.max.graal.compiler.graphbuilder.*;
-import com.oracle.max.graal.nodes.*;
-import com.sun.cri.bytecode.*;
+import com.oracle.max.graal.graph.*;
 
-public interface ExtendedBytecodeHandler {
-    boolean handle(int opcode, BytecodeStream s, StructuredGraph graph, FrameStateBuilder frameStateBuilder, GraphBuilderTool tool);
+public interface GraphBuilderTool {
+    void append(Node node);
 }
