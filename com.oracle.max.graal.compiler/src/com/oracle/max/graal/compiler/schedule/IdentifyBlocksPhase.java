@@ -41,7 +41,7 @@ public class IdentifyBlocksPhase extends Phase {
     private NodeMap<Block> nodeToBlock;
     private NodeMap<Block> earliestCache;
     private Block startBlock;
-    private Graph<EntryPointNode> graph;
+    private StructuredGraph graph;
     private boolean scheduleAllNodes;
     private int loopCount;
 
@@ -126,7 +126,7 @@ public class IdentifyBlocksPhase extends Phase {
     }
 
     @Override
-    protected void run(Graph<EntryPointNode> graph) {
+    protected void run(StructuredGraph graph) {
         this.graph = graph;
         nodeToBlock = graph.createNodeMap();
         earliestCache = graph.createNodeMap();

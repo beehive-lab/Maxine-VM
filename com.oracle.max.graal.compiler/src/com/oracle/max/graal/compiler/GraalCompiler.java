@@ -113,7 +113,7 @@ public class GraalCompiler implements CiCompiler  {
         }
     }
 
-    public CiResult compileMethod(RiResolvedMethod method, Graph<EntryPointNode> graph) {
+    public CiResult compileMethod(RiResolvedMethod method, StructuredGraph graph) {
         assert graph.verify();
         GraalCompilation compilation = new GraalCompilation(context, this, method, graph, -1, null, DebugInfoLevel.FULL);
         return compilation.compile();

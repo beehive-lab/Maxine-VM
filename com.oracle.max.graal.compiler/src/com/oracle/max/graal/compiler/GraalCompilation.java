@@ -54,7 +54,7 @@ public final class GraalCompilation {
     public final CiStatistics stats;
     public final FrameState placeholderState;
 
-    public final Graph<EntryPointNode> graph;
+    public final StructuredGraph graph;
     public final CiAssumptions assumptions = new CiAssumptions();
 
     private FrameMap frameMap;
@@ -73,7 +73,7 @@ public final class GraalCompilation {
      * @param stats externally supplied statistics object to be used if not {@code null}
      * @param debugInfoLevel TODO
      */
-    public GraalCompilation(GraalContext context, GraalCompiler compiler, RiResolvedMethod method, Graph<EntryPointNode> graph, int osrBCI, CiStatistics stats, DebugInfoLevel debugInfoLevel) {
+    public GraalCompilation(GraalContext context, GraalCompiler compiler, RiResolvedMethod method, StructuredGraph graph, int osrBCI, CiStatistics stats, DebugInfoLevel debugInfoLevel) {
         if (osrBCI != -1) {
             throw new CiBailout("No OSR supported");
         }
@@ -90,7 +90,7 @@ public final class GraalCompilation {
     }
 
     public GraalCompilation(GraalContext context, GraalCompiler compiler, RiResolvedMethod method, int osrBCI, CiStatistics stats, DebugInfoLevel debugInfoLevel) {
-        this(context, compiler, method, new Graph<EntryPointNode>(new EntryPointNode()), osrBCI, stats, debugInfoLevel);
+        this(context, compiler, method, new StructuredGraph(), osrBCI, stats, debugInfoLevel);
     }
 
 
@@ -314,7 +314,7 @@ public final class GraalCompilation {
         }
     }
 
-    private void extensionOptimizations(Graph<EntryPointNode> graph) {
+    private void extensionOptimizations(StructuredGraph graph) {
         Class< ? > c = method.holder().toJava();
         if (c != null && !Modifier.isPrivate(method.accessFlags())) {
             Class< ? >[] parameterTypes = SnippetIntrinsificationPhase.toClassArray(method.signature(), method.holder());

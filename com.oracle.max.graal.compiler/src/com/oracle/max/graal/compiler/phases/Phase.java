@@ -59,11 +59,11 @@ public abstract class Phase {
         return getName();
     }
 
-    public final void apply(Graph<EntryPointNode> graph) {
+    public final void apply(StructuredGraph graph) {
         apply(graph, true, true);
     }
 
-    public final void apply(Graph<EntryPointNode> graph, boolean plotOnError, boolean plot) {
+    public final void apply(StructuredGraph graph, boolean plotOnError, boolean plot) {
         try {
             assert graph != null && !shouldVerify || graph.verify();
         } catch (VerificationError e) {
@@ -113,5 +113,5 @@ public abstract class Phase {
         return name;
     }
 
-    protected abstract void run(Graph<EntryPointNode> graph);
+    protected abstract void run(StructuredGraph graph);
 }

@@ -153,14 +153,14 @@ public class IdealGraphPrinter {
         if (schedule == null) {
             try {
                 schedule = new IdentifyBlocksPhase(GraalContext.EMPTY_CONTEXT, true);
-                schedule.apply((Graph<EntryPointNode>) graph, false, false);
+                schedule.apply((StructuredGraph) graph, false, false);
             } catch (Throwable t) {
                 // nothing to do here...
             }
         }
         List<Loop> loops = null;
         try {
-            loops = LoopUtil.computeLoops((Graph<EntryPointNode>) graph);
+            loops = LoopUtil.computeLoops((StructuredGraph) graph);
             // loop.nodes() does some more calculations which may fail, so execute this here as well (result is cached)
             if (loops != null) {
                 for (Loop loop : loops) {

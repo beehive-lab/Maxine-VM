@@ -27,7 +27,6 @@ import static java.lang.reflect.Modifier.*;
 
 import java.util.*;
 
-import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.PhiNode.PhiType;
 import com.oracle.max.graal.nodes.spi.*;
@@ -37,7 +36,7 @@ import com.sun.cri.ri.*;
 
 public class FrameStateBuilder implements FrameStateAccess {
 
-    private final Graph<EntryPointNode> graph;
+    private final StructuredGraph graph;
 
     private final ValueNode[] locals;
     private final ValueNode[] stack;
@@ -48,7 +47,7 @@ public class FrameStateBuilder implements FrameStateAccess {
 
     private final RiResolvedMethod method;
 
-    public FrameStateBuilder(RiResolvedMethod method, int maxLocals, int maxStackSize, Graph<EntryPointNode> graph) {
+    public FrameStateBuilder(RiResolvedMethod method, int maxLocals, int maxStackSize, StructuredGraph graph) {
         assert graph != null;
         this.method = method;
         this.graph = graph;
