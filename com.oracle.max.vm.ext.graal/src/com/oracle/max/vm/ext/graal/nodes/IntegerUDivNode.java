@@ -20,33 +20,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.graal.snippets;
+package com.oracle.max.vm.ext.graal.nodes;
 
 import com.oracle.max.graal.graph.*;
-import com.oracle.max.graal.nodes.extended.*;
+import com.oracle.max.graal.nodes.*;
+import com.oracle.max.graal.nodes.calc.*;
+import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 
-/**
- * Snippets for {@link NodeClass} methods.
- */
-@ClassSubstitution(NodeClass.class)
-public class NodeClassSnippets implements SnippetsInterface {
+@NodeInfo(shortName = "/")
+public final class IntegerUDivNode extends IntegerArithmeticNode implements LIRLowerable {
 
-
-    private static Node getNode(Node node, long offset) {
-        return UnsafeCastNode.cast(UnsafeLoadNode.load(node, offset, CiKind.Object), Node.class);
+    public IntegerUDivNode(CiKind kind, ValueNode x, ValueNode y) {
+        super(kind, x, y);
     }
 
-    private static NodeList<Node> getNodeList(Node node, long offset) {
-        return UnsafeCastNode.cast(UnsafeLoadNode.load(node, offset, CiKind.Object), NodeList.class);
+    @Override
+    public void generate(LIRGeneratorTool gen) {
+        gen.setResult(this, gen.emitUDiv(gen.operand(x()), gen.operand(y())));
     }
-
-    private static void putNode(Node node, long offset, Node value) {
-        UnsafeStoreNode.store(node, offset, value, CiKind.Object);
-    }
-
-    private static void putNodeList(Node node, long offset, NodeList value) {
-        UnsafeStoreNode.store(node, offset, value, CiKind.Object);
-    }
-
 }
