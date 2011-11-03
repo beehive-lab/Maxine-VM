@@ -26,6 +26,7 @@ import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /* TODO(tw/gd) For high-level optimization purpose the compare node should be a boolean *value* (it is currently only a helper node)
  * But in the back-end the comparison should not always be materialized (for example in x86 the comparison result will not be in a register but in a flag)
@@ -128,13 +129,13 @@ public final class CompareNode extends BooleanNode implements Canonicalizable {
         }
     }
 
-    private Node optimizeMaterialize(CiConstant constant, MaterializeNode materializeNode) {
+    private Node optimizeMaterialize(CiConstant constant, MaterializeNode materializeNode, RiRuntime runtime) {
         CiConstant trueConstant = materializeNode.trueValue().asConstant();
         CiConstant falseConstant = materializeNode.falseValue().asConstant();
 
         if (falseConstant != null && trueConstant != null) {
-            Boolean trueResult = condition().foldCondition(trueConstant, constant, graph().start().runtime(), unorderedIsTrue());
-            Boolean falseResult = condition().foldCondition(falseConstant, constant, graph().start().runtime(), unorderedIsTrue());
+            Boolean trueResult = condition().foldCondition(trueConstant, constant, runtime, unorderedIsTrue());
+            Boolean falseResult = condition().foldCondition(falseConstant, constant, runtime, unorderedIsTrue());
 
             if (trueResult != null && falseResult != null) {
                 boolean trueUnboxedResult = trueResult;
@@ -181,7 +182,7 @@ public final class CompareNode extends BooleanNode implements Canonicalizable {
         } else if (x().isConstant() && y().isConstant()) {
             CiConstant constX = x().asConstant();
             CiConstant constY = y().asConstant();
-            Boolean result = condition().foldCondition(constX, constY, graph().start().runtime(), unorderedIsTrue());
+            Boolean result = condition().foldCondition(constX, constY, tool.runtime(), unorderedIsTrue());
             if (result != null) {
                 return ConstantNode.forBoolean(result, graph());
             }
@@ -189,7 +190,7 @@ public final class CompareNode extends BooleanNode implements Canonicalizable {
 
         if (y().isConstant()) {
             if (x() instanceof MaterializeNode) {
-                return optimizeMaterialize(y().asConstant(), (MaterializeNode) x());
+                return optimizeMaterialize(y().asConstant(), (MaterializeNode) x(), tool.runtime());
             } else if (x() instanceof NormalizeCompareNode) {
                 return optimizeNormalizeCmp(y().asConstant(), (NormalizeCompareNode) x());
             }
