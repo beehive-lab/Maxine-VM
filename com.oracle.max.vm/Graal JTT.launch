@@ -21,5 +21,5 @@
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="test.com.sun.max.vm.compiler.JavaTester"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-filter= -verbose=1 -gen-run-scheme=false -run-scheme-package=all test/jtt/bytecode test/jtt/except test/jtt/hotpath test/jtt/jdk test/jtt/lang test/jtt/loop test/jtt/micro test/jtt/optimize test/jtt/reflect test/jtt/threads test/jtt/reflect test/jtt/hotspot"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="com.oracle.max.vm"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-ea -esa -Xcomp -G:Plot -XX:+PrintCompilation -XX:CompileOnly=jtt"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-ea -esa -Xcomp -XX:+PrintCompilation -XX:CompileOnly=jtt"/>
 </launchConfiguration>

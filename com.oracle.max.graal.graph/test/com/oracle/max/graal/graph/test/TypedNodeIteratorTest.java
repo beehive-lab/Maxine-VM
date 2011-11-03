@@ -51,6 +51,18 @@ public class TypedNodeIteratorTest {
     }
 
     @Test
+    public void deleteAndAddTest() {
+        TestNode testNode = new TestNode("b");
+        Graph graph = new Graph();
+        graph.add(new TestNode("a"));
+        graph.add(testNode);
+        testNode.delete();
+        assertEquals("a", toString(graph.getNodes(TestNode.class)));
+        graph.add(new TestNode("c"));
+        assertEquals("ac", toString(graph.getNodes(TestNode.class)));
+    }
+
+    @Test
     public void iteratorBehaviorTest() {
         Graph graph = new Graph();
         graph.add(new TestNode("a"));
