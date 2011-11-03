@@ -274,10 +274,11 @@ If no projects are given, then all Java projects are checked."""
                                 warnings = [line.strip() for line in f if 'warning:' in line]
                                 if len(warnings) != 0:
                                     map(env.log, warnings)
-                                    env.abort(1)
+                                    return 1
             finally:
                 if exists(auditfileName):
                     os.unlink(auditfileName)
+    return 0
 
 def clean(env, args):
     """remove all class files, images, and executables
@@ -474,7 +475,7 @@ def gate(env, args):
     If this commands exits with a 0 exit code, then the source code is in
     a state that would be accepted for integration into the main repository."""
     
-    if checkstyle(env, args) != 0:
+    if checkstyle(env, args):
         env.abort('Checkstyle warnings were found')
     
     env.log('Running copycheck')

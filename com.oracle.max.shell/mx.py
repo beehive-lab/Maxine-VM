@@ -43,7 +43,7 @@ import os
 import subprocess
 from threading import Thread
 from argparse import ArgumentParser, REMAINDER
-from os.path import join, dirname, abspath, exists
+from os.path import join, dirname, abspath, exists, getmtime
 import commands
 import shlex
 import types
@@ -323,8 +323,16 @@ class Env(ArgumentParser):
             except zipfile.BadZipfile as e:
                 self.log('Error in zip file downloaded from ' + url + ': ' + str(e))
                 
-        self.abort('Could not download to ' + path + ' from any of the following URLs:\n\n    ' +
-                  '\n    '.join(urls) + '\n\nPlease use a web browser to do the download manually')
+        # now try it with Java - urllib2 does not handle meta refreshes which are used by Sourceforge
+        myDir = dirname(__file__)
+        
+        javaSource = join(myDir, 'URLConnectionDownload.java')
+        javaClass = join(myDir, 'URLConnectionDownload.class')
+        if not exists(javaClass) or getmtime(javaClass) < getmtime(javaSource):
+            subprocess.check_call([self.javac, '-d', myDir, javaSource])
+        if self.run([self.java, '-cp', myDir, 'URLConnectionDownload', path] + urls) != 0:
+            self.abort('Could not download to ' + path + ' from any of the following URLs:\n\n    ' +
+                      '\n    '.join(urls) + '\n\nPlease use a web browser to do the download manually')
 
     def update_file(self, path, content):
         """
