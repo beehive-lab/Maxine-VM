@@ -41,7 +41,7 @@ public final class LocalNode extends FloatingNode implements Node.IterableNodeTy
     @Data private RiResolvedType declaredType;
     @Data private boolean canBeNull;
 
-    public LocalNode(CiKind kind, int javaIndex, EntryPointNode entryPoint) {
+    public LocalNode(CiKind kind, int javaIndex) {
         this(kind, javaIndex, true);
     }
 
