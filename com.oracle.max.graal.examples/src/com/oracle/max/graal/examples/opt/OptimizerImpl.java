@@ -36,7 +36,7 @@ import com.sun.cri.ri.*;
 public class OptimizerImpl implements Optimizer {
 
     @Override
-    public void optimize(RiRuntime runtime, Graph<?> graph) {
+    public void optimize(RiRuntime runtime, Graph graph) {
         // iterate over all instanceof of SafeAddNode in the graph
         for (SafeAddNode safeAdd : graph.getNodes(SafeAddNode.class)) {
             if (!canOverflow(safeAdd)) {

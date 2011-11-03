@@ -45,9 +45,9 @@ public class GraphvizTest {
 
     @Test
     public void testSimpleGraph() throws IOException {
-        Graph<DummyNode> g = new Graph<DummyNode>(new DummyNode("start", 0, 1));
+        Graph g = new Graph();
 
-        DummyNode start = g.start();
+        DummyNode start = new DummyNode("start", 0, 1);
 
         DummyNode ifnode = g.add(new DummyNode("if", 2, 2));
         start.setSuccessor(0, ifnode);

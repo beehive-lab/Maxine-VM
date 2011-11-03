@@ -49,11 +49,11 @@ public class InliningUtil {
         ArrayList<Node> frameStates = new ArrayList<Node>();
         ReturnNode returnNode = null;
         UnwindNode unwindNode = null;
-        EntryPointNode entryPointNode = inlineGraph.start();
+        BeginNode entryPointNode = inlineGraph.start();
         FixedNode firstCFGNode = entryPointNode.next();
         for (Node node : inlineGraph.getNodes()) {
-            if (node instanceof EntryPointNode) {
-                assert entryPointNode == node;
+            if (node == entryPointNode) {
+                // Do nothing.
             } else if (node instanceof LocalNode) {
                 replacements.put(node, parameters[((LocalNode) node).index()]);
             } else {

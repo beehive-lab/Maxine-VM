@@ -30,14 +30,14 @@ import java.util.Iterator;
 public final class NodeBitMap implements Iterable<Node>{
 
     private final BitMap bitMap;
-    private final Graph<?> graph;
+    private final Graph graph;
 
-    public NodeBitMap(Graph<?> graph) {
+    public NodeBitMap(Graph graph) {
         this.graph = graph;
         bitMap = new BitMap(graph.nodeIdCount());
     }
 
-    public Graph<?> graph() {
+    public Graph graph() {
         return graph;
     }
 

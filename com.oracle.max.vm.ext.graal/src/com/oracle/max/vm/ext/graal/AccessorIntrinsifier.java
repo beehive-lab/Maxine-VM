@@ -42,7 +42,7 @@ import com.sun.max.unsafe.*;
 public class AccessorIntrinsifier implements Intrinsifier {
 
     @Override
-    public Graph<?> intrinsicGraph(RiRuntime runtime, CiCodePos callerPos, RiResolvedMethod method, List< ? extends Node> parameters) {
+    public Graph intrinsicGraph(RiRuntime runtime, CiCodePos callerPos, RiResolvedMethod method, List< ? extends Node> parameters) {
         if (method.holder().equals(runtime.getType(Accessor.class))) {
             CiCodePos pos = callerPos;
             while (pos != null) {

@@ -281,7 +281,7 @@ public class FloatingReadPhase extends Phase {
     }
 
     private void addStartCheckpoint(StructuredGraph graph) {
-        EntryPointNode entryPoint = graph.start();
+        BeginNode entryPoint = graph.start();
         WriteMemoryCheckpointNode checkpoint = graph.add(new WriteMemoryCheckpointNode());
         FixedNode next = entryPoint.next();
         entryPoint.setNext(checkpoint);

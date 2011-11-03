@@ -72,7 +72,7 @@ public class ConditionalNode extends BinaryNode implements Canonicalizable, LIRL
     }
 
     public static ConditionalStructure createConditionalStructure(BooleanNode condition, ValueNode trueValue, ValueNode falseValue, double trueProbability) {
-        Graph<?> graph = condition.graph();
+        Graph graph = condition.graph();
         assert trueValue.kind == falseValue.kind;
         CiKind kind = trueValue.kind;
         IfNode ifNode = graph.add(new IfNode(condition, trueProbability));

@@ -35,7 +35,8 @@ public class TypedNodeIteratorTest {
 
     @Test
     public void singleNodeTest() {
-        Graph<TestNode> graph = new Graph<TestNode>(new TestNode("a"));
+        Graph graph = new Graph();
+        graph.add(new TestNode("a"));
         assertTrue(graph.hasNode(TestNode.class));
         assertEquals("a", toString(graph.getNodes(TestNode.class)));
     }
@@ -43,14 +44,16 @@ public class TypedNodeIteratorTest {
     @Test
     public void deletingNodeTest() {
         TestNode testNode = new TestNode("a");
-        Graph<TestNode> graph = new Graph<TestNode>(testNode);
+        Graph graph = new Graph();
+        graph.add(testNode);
         testNode.delete();
         assertEquals("", toString(graph.getNodes(TestNode.class)));
     }
 
     @Test
     public void iteratorBehaviorTest() {
-        Graph<TestNode> graph = new Graph<TestNode>(new TestNode("a"));
+        Graph graph = new Graph();
+        graph.add(new TestNode("a"));
         Iterator<TestNode> iterator = graph.getNodes(TestNode.class).iterator();
         assertTrue(iterator.hasNext());
         assertEquals("a", iterator.next().getName());
@@ -68,7 +71,8 @@ public class TypedNodeIteratorTest {
 
     @Test
     public void complicatedIterationTest() {
-        Graph<TestNode> graph = new Graph<TestNode>(new TestNode("a"));
+        Graph graph = new Graph();
+        graph.add(new TestNode("a"));
         for (TestNode tn : graph.getNodes(TestNode.class)) {
             String name = tn.getName();
             for (int i = 0; i < name.length(); ++i) {
@@ -106,7 +110,8 @@ public class TypedNodeIteratorTest {
 
     @Test
     public void addingNodeDuringIterationTest() {
-        Graph<TestNode> graph = new Graph<TestNode>(new TestNode("a"));
+        Graph graph = new Graph();
+        graph.add(new TestNode("a"));
         StringBuilder sb = new StringBuilder();
         int z = 0;
         for (TestNode tn : graph.getNodes(TestNode.class)) {

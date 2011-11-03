@@ -462,7 +462,7 @@ public class InliningPhase extends Phase {
     public static int graphComplexity(StructuredGraph graph) {
         int result = 0;
         for (Node node : graph.getNodes()) {
-            if (node instanceof ConstantNode || node instanceof LocalNode || node instanceof EntryPointNode || node instanceof ReturnNode || node instanceof UnwindNode) {
+            if (node instanceof ConstantNode || node instanceof LocalNode || node instanceof BeginNode || node instanceof ReturnNode || node instanceof UnwindNode) {
                 result += 0;
             } else if (node instanceof PhiNode) {
                 result += 5;
