@@ -69,9 +69,7 @@ public class Graal implements RuntimeCompiler {
         @Override
         public boolean handle(int opcode, BytecodeStream s, StructuredGraph graph, FrameStateBuilder frameState, GraphBuilderTool graphBuilderTool) {
             if (opcode == Bytecodes.JNICALL) {
-                // TODO(tw): Add code for JNI calls.
-                int cpi = s.readCPI();
-                System.out.println("Unhandled JNI call cpi=" + cpi);
+                // TODO(tw): Add code for JNI calls. int cpi = s.readCPI();
             }
             return false;
         }
