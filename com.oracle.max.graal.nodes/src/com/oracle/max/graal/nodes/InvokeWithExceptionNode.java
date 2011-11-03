@@ -22,17 +22,21 @@
  */
 package com.oracle.max.graal.nodes;
 
+import java.util.*;
+
 import com.oracle.max.graal.graph.*;
+import com.oracle.max.graal.nodes.extended.*;
 import com.oracle.max.graal.nodes.java.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ri.*;
 
-public class InvokeWithExceptionNode extends ControlSplitNode implements Node.IterableNodeType, Invoke{
+public class InvokeWithExceptionNode extends ControlSplitNode implements Node.IterableNodeType, Invoke, MemoryCheckpoint {
     private static final int NORMAL_EDGE = 0;
     private static final int EXCEPTION_EDGE = 1;
 
     @Input private MethodCallTargetNode callTarget;
     @Input private FrameState stateBefore;
+    @Input private final NodeInputList<Node> mergedNodes = new NodeInputList<Node>(this);
     private boolean canInline = true;
 
     /**
@@ -124,5 +128,17 @@ public class InvokeWithExceptionNode extends ControlSplitNode implements Node.It
 
     public FrameState stateBefore() {
         return stateBefore;
+    }
+
+    @Override
+    public Map<Object, Object> getDebugProperties() {
+        Map<Object, Object> debugProperties = super.getDebugProperties();
+        debugProperties.put("memoryCheckpoint", "true");
+        return debugProperties;
+    }
+
+    @Override
+    public NodeInputList<Node> mergedNodes() {
+        return mergedNodes;
     }
 }
