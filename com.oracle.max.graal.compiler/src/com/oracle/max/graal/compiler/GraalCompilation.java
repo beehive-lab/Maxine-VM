@@ -55,6 +55,7 @@ public final class GraalCompilation {
     public final FrameState placeholderState;
 
     public final Graph<EntryPointNode> graph;
+    public final CiAssumptions assumptions = new CiAssumptions();
 
     private FrameMap frameMap;
 
@@ -176,12 +177,12 @@ public final class GraalCompilation {
             }
 
             if (GraalOptions.Inline) {
-                new InliningPhase(context(), compiler.runtime, compiler.target, null).apply(graph);
+                new InliningPhase(context(), compiler.runtime, compiler.target, null, assumptions).apply(graph);
                 new DeadCodeEliminationPhase(context()).apply(graph);
             }
 
             if (GraalOptions.OptCanonicalizer) {
-                new CanonicalizerPhase(context(), compiler.target).apply(graph);
+                new CanonicalizerPhase(context(), compiler.target, assumptions).apply(graph);
             }
 
             if (GraalOptions.Extend) {
@@ -193,13 +194,13 @@ public final class GraalCompilation {
                 graph.mark();
                 new FindInductionVariablesPhase(context()).apply(graph);
                 if (GraalOptions.OptCanonicalizer) {
-                    new CanonicalizerPhase(context(), compiler.target, true).apply(graph);
+                    new CanonicalizerPhase(context(), compiler.target, true, assumptions).apply(graph);
                 }
             }
 
             if (GraalOptions.EscapeAnalysis) {
                 new EscapeAnalysisPhase(this).apply(graph);
-                new CanonicalizerPhase(context(), compiler.target).apply(graph);
+                new CanonicalizerPhase(context(), compiler.target, assumptions).apply(graph);
             }
 
             if (GraalOptions.OptGVN) {
@@ -208,13 +209,13 @@ public final class GraalCompilation {
 
             graph.mark();
             new LoweringPhase(context(), compiler.runtime).apply(graph);
-            new CanonicalizerPhase(context(), compiler.target, true).apply(graph);
+            new CanonicalizerPhase(context(), compiler.target, true, assumptions).apply(graph);
 
             if (GraalOptions.OptLoops) {
                 graph.mark();
                 new RemoveInductionVariablesPhase(context()).apply(graph);
                 if (GraalOptions.OptCanonicalizer) {
-                    new CanonicalizerPhase(context(), compiler.target, true).apply(graph);
+                    new CanonicalizerPhase(context(), compiler.target, true, assumptions).apply(graph);
                 }
             }
 
@@ -405,8 +406,8 @@ public final class GraalCompilation {
                 lir.emitCode(tasm);
 
                 CiTargetMethod targetMethod = tasm.finishTargetMethod(method, compiler.runtime, false);
-                if (!graph.start().assumptions().isEmpty()) {
-                    targetMethod.setAssumptions(graph.start().assumptions());
+                if (!assumptions.isEmpty()) {
+                    targetMethod.setAssumptions(assumptions);
                 }
 
                 if (context().isObserved()) {

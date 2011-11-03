@@ -72,7 +72,7 @@ public class Snippets {
                 for (InvokeNode invoke : graph.getNodes(InvokeNode.class)) {
                     invokes.add(invoke);
                 }
-                new InliningPhase(context, runtime, target, invokes).apply(graph);
+                new InliningPhase(context, runtime, target, invokes, null).apply(graph);
 
                 new SnippetIntrinsificationPhase(context, runtime).apply(graph);
 

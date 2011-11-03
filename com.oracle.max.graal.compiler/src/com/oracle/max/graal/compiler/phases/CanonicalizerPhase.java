@@ -35,17 +35,19 @@ public class CanonicalizerPhase extends Phase {
 
     private boolean newNodes;
     private final CiTarget target;
+    private final CiAssumptions assumptions;
 
     private NodeWorkList nodeWorkList;
 
-    public CanonicalizerPhase(GraalContext context, CiTarget target) {
-        this(context, target, false);
+    public CanonicalizerPhase(GraalContext context, CiTarget target, CiAssumptions assumptions) {
+        this(context, target, false, assumptions);
     }
 
-    public CanonicalizerPhase(GraalContext context, CiTarget target, boolean newNodes) {
+    public CanonicalizerPhase(GraalContext context, CiTarget target, boolean newNodes, CiAssumptions assumptions) {
         super(context);
         this.newNodes = newNodes;
         this.target = target;
+        this.assumptions = assumptions;
     }
 
     @Override
@@ -215,6 +217,11 @@ public class CanonicalizerPhase extends Phase {
         @Override
         public CiTarget target() {
             return target;
+        }
+
+        @Override
+        public CiAssumptions assumptions() {
+            return assumptions;
         }
     }
 }
