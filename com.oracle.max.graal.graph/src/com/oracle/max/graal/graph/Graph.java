@@ -265,30 +265,35 @@ public class Graph<S extends Node> {
         private final Node start;
 
         public TypedNodeIterator(Node start) {
-            assert start == null || !start.isDeleted();
-            this.current = null;
+            if (start != null && start.isDeleted()) {
+                this.current = start;
+            } else {
+                this.current = null;
+            }
             this.start = start;
         }
 
         @Override
         public boolean hasNext() {
-            Node next = start;
             if (current != null) {
-                next = current.typeCacheNext;
+                Node next = current.typeCacheNext;
                 while (next != null && next.isDeleted()) {
                     next = next.typeCacheNext;
                     current.typeCacheNext = next;
                 }
+                return next != null;
+            } else {
+                return start != null;
             }
-            return next != null;
         }
 
         @Override
         @SuppressWarnings("unchecked")
         public T next() {
             if (current == null) {
-                current = start;
-                return (T) start;
+                Node result = start;
+                current = result;
+                return (T) result;
             } else {
                 Node result = current.typeCacheNext;
                 current = result;
@@ -323,16 +328,13 @@ public class Graph<S extends Node> {
      * @return whether there is at least one such node
      */
     public <T extends Node & IterableNodeType> boolean hasNode(final Class<T> type) {
-        return getStartNode(type) != null;
+        return getNodes(type).iterator().hasNext();
     }
 
     private <T> Node getStartNode(final Class<T> type) {
         int nodeClassId = NodeClass.get(type).iterableId();
         assert nodeClassId != -1 : type + " is not iterable within graphs (missing \"implements IterableNodeType\"?)";
         Node start = nodeCacheFirst.size() <= nodeClassId ? null : nodeCacheFirst.get(nodeClassId);
-        while (start != null && start.isDeleted()) {
-            start = start.typeCacheNext;
-        }
         return start;
     }
 
