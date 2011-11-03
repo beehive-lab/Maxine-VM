@@ -43,10 +43,15 @@ import os
 import subprocess
 from threading import Thread
 from argparse import ArgumentParser, REMAINDER
-from os.path import join, dirname, abspath, exists, getmtime
+from os.path import join, dirname, abspath, exists
 import commands
 import shlex
 import types
+import urllib2
+import contextlib
+import StringIO
+import zipfile
+import projects
 
 DEFAULT_JAVA_ARGS = '-ea -Xss2m -Xmx1g'
 
@@ -63,6 +68,8 @@ class Env(ArgumentParser):
     
     def __init__(self):
         self.java_initialized = False
+        self.extraProjectDirs = []
+        self._pdb = None
         ArgumentParser.__init__(self, prog='mx')
     
         self.add_argument('-v', action='store_true', dest='verbose', help='enable verbose output')
@@ -133,34 +140,14 @@ class Env(ArgumentParser):
                     k = k.strip().lower()
                     if (override or not hasattr(self, k)):
                         setattr(self, k, os.path.expandvars(v.strip()))
-
-    def jmax(self, args):
-        """ executes a jmax.java command, returning stdout as a string """
-        os.environ['maxine_dir'] = self.maxine_home
-        if self.cp_prefix is not None:
-            os.environ['cp_prefix'] = self.cp_prefix
-        if self.cp_suffix is not None:
-            os.environ['cp_suffix'] = self.cp_suffix
-        
-        jmaxDir = join(self.maxine_home, 'com.oracle.max.shell')
-        jmaxClass = join(jmaxDir, 'jmax.class')
-        jmaxSource = join(jmaxDir, 'jmax.java')
-        if  not exists(jmaxClass) or getmtime(jmaxClass) < getmtime(jmaxSource):
-            subprocess.check_call([self.javac, '-d', dirname(jmaxClass), jmaxSource])
-        
-        return subprocess.check_output([self.java, '-ea', '-cp', jmaxDir, 'jmax'] + args).strip()
-        
-    def classpath(self, project=None):
-        if project is None:
-            return self.jmax(['classpath'])
-        return self.jmax(['classpath', project])
-            
-    def run_jmax(self, args):
-        try:
-            return self.jmax(args)
-        except subprocess.CalledProcessError as e:
-            self.log(e.output.rstrip())
-            self.abort(e.returncode)
+                        
+    def pdb(self):
+        """
+        Gets the projects DB initialized from the relevant projects.properties files.
+        """
+        if self._pdb is None:
+            self._pdb = projects.ProjectsDB(self)
+        return self._pdb
         
     def format_java_cmd(self, args):
         self.init_java()
@@ -171,20 +158,16 @@ class Env(ArgumentParser):
     
     def run(self, args, nonZeroIsFatal=True, out=None, err=None, cwd=None):
         """
-        
         Run a command in a subprocess, wait for it to complete and return the exit status of the process.
         If the exit status is non-zero and `nonZeroIsFatal` is true, then the program is exited with
         the same exit status.
         Each line of the standard output and error streams of the subprocess are redirected to the
         provided out and err functions if they are not None.
-        
         """
         
         assert isinstance(args, types.ListType), "'args' must be a list: " + str(args)
         for arg in args:
-            if not isinstance(arg, types.StringTypes):
-                self.log('argument is not a string: ' + str(arg))
-                self.abort(1)
+            assert isinstance(arg, types.StringTypes), 'argument is not a string: ' + str(arg)
         
         if self.verbose:
             self.log(' '.join(args))
@@ -223,12 +206,20 @@ class Env(ArgumentParser):
 
     
     def log(self, msg=None):
+        """
+        Write a message to the console.
+        All script output goes through this method thus allowing a subclass
+        to redirect it. 
+        """
         if msg is None:
             print
         else:
             print msg
 
     def init_java(self):
+        """
+        Lazy initialization and preprocessing of this object's fields before running a Java command.
+        """
         if self.java_initialized:
             return
 
@@ -279,10 +270,85 @@ class Env(ArgumentParser):
                 javaHome = '/usr/jdk/latest'
         return javaHome
            
-    def abort(self, code):
-        """ raises a SystemExit exception with the provided exit code """
-        raise SystemExit(code)
+    def abort(self, codeOrMessage):
+        """
+        Aborts the program with a SystemExit exception.
+        If 'codeOrMessage' is a plain integer, it specifies the system exit status;
+        if it is None, the exit status is zero; if it has another type (such as a string),
+        the object's value is printed and the exit status is one.
+        """
+        raise SystemExit(codeOrMessage)
 
+    def download(self, path, urls):
+        """
+        Attempts to downloads content for each URL in a list, stopping after the first successful download.
+        If the content cannot be retrieved from any URL, the program is aborted. The downloaded content
+        is written to the file indicated by 'path'.
+        """
+        d = dirname(path)
+        if d != '' and not exists(d):
+            os.makedirs(d)
+            
+        def url_open(url):
+            userAgent = 'Mozilla/5.0 (compatible)'
+            headers = { 'User-Agent' : userAgent }
+            req = urllib2.Request(url, headers=headers)
+            return urllib2.urlopen(req);
+            
+        for url in urls:
+            try:
+                self.log('Downloading ' + url + ' to ' + path)
+                if url.startswith('zip:') or url.startswith('jar:'):
+                    i = url.find('!/')
+                    if i == -1:
+                        self.log('Zip or jar URL does not contain "!/": ' + url)
+                        self.abort(1)
+                    url, _, entry = url[len('zip:'):].partition('!/')
+                    with contextlib.closing(url_open(url)) as f:
+                        data = f.read()
+                        zipdata = StringIO.StringIO(f.read())
+                
+                    zf = zipfile.ZipFile(zipdata, 'r')
+                    data = zf.read(entry)
+                    with open(path, 'w') as f:
+                        f.write(data)
+                else:
+                    with contextlib.closing(url_open(url)) as f:
+                        data = f.read()
+                    with open(path, 'w') as f:
+                        f.write(data)
+                return
+            except IOError as e:
+                self.log('Error reading from ' + url + ': ' + str(e))
+            except zipfile.BadZipfile as e:
+                self.log('Error in zip file downloaded from ' + url + ': ' + str(e))
+                
+        self.abort('Could not download to ' + path + ' from any of the following URLs:\n\n    ' +
+                  '\n    '.join(urls) + '\n\nPlease use a web browser to do the download manually')
+
+    def update_file(self, path, content):
+        """
+        Updates a file with some given content if the content differs from what's in
+        the file already. The return value indicates if the file was updated.
+        """
+        existed = exists(path)
+        try:
+            old = None
+            if existed:
+                with open(path) as f:
+                    old = f.read()
+            
+            if old == content:
+                return False
+                
+            with open(path, 'w') as f:
+                f.write(content)
+                
+            self.log(('modified ' if existed else 'created ') + path)
+            return True;
+        except IOError as e:
+            self.abort('Error while writing to ' + path + ': ' + str(e));
+            
 def main(env):
     env.parse_cmd_line()
     
@@ -302,6 +368,7 @@ def main(env):
         if retcode is not None and retcode != 0:
             env.abort(retcode)
     except KeyboardInterrupt:
+        # no need to show the stack trace when the user presses CTRL-C
         env.abort(1)
     
     
