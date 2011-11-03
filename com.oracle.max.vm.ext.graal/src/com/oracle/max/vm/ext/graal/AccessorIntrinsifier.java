@@ -51,15 +51,15 @@ public class AccessorIntrinsifier implements Intrinsifier {
                     RiResolvedMethod accessorMethod = accessor.resolveMethodImpl(method);
 
                     // TODO (gd) move this to a graph buidling utility when GBP is moved to its own project
-                    Graph<EntryPointNode> graph = GraphBuilderPhase.cachedGraphs.get(accessorMethod);
+                    StructuredGraph graph = GraphBuilderPhase.cachedGraphs.get(accessorMethod);
                     if (graph != null) {
-                        Graph<EntryPointNode> duplicate = new Graph<EntryPointNode>(new EntryPointNode());
+                        StructuredGraph duplicate = new StructuredGraph();
                         Map<Node, Node> replacements = new IdentityHashMap<Node, Node>();
                         replacements.put(graph.start(), duplicate.start());
                         duplicate.addDuplicate(graph.getNodes(), replacements);
                         graph = duplicate;
                     } else {
-                        graph = new Graph<EntryPointNode>(new EntryPointNode());
+                        graph = new StructuredGraph();
                         new GraphBuilderPhase(GraalContext.EMPTY_CONTEXT, runtime, accessorMethod, null).apply(graph, true, false);
                         if (GraalOptions.ProbabilityAnalysis) {
                             new DeadCodeEliminationPhase(GraalContext.EMPTY_CONTEXT).apply(graph, true, false);

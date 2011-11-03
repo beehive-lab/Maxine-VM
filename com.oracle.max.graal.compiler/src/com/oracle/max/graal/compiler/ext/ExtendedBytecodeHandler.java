@@ -22,10 +22,9 @@
  */
 package com.oracle.max.graal.compiler.ext;
 
-import com.oracle.max.graal.graph.*;
 import com.oracle.max.graal.nodes.*;
 import com.sun.cri.bytecode.*;
 
 public interface ExtendedBytecodeHandler {
-    void handle(int opcode, BytecodeStream s, Graph<EntryPointNode> graph);
+    void handle(int opcode, BytecodeStream s, StructuredGraph graph);
 }

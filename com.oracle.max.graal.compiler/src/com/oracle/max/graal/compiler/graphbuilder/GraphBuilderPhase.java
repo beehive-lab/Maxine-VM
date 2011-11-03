@@ -68,7 +68,7 @@ public final class GraphBuilderPhase extends Phase {
      */
     public static final int TRACELEVEL_STATE = 2;
 
-    private Graph<EntryPointNode> graph;
+    private StructuredGraph graph;
 
     private final CiStatistics stats;
     private final RiRuntime runtime;
@@ -107,7 +107,7 @@ public final class GraphBuilderPhase extends Phase {
 
     private BitSet canTrap;
 
-    public static final Map<RiMethod, Graph<EntryPointNode>> cachedGraphs = new WeakHashMap<RiMethod, Graph<EntryPointNode>>();
+    public static final Map<RiMethod, StructuredGraph> cachedGraphs = new WeakHashMap<RiMethod, StructuredGraph>();
 
 
     public GraphBuilderPhase(GraalContext context, RiRuntime runtime, RiResolvedMethod method) {
@@ -133,7 +133,7 @@ public final class GraphBuilderPhase extends Phase {
     }
 
     @Override
-    protected void run(Graph<EntryPointNode> graph) {
+    protected void run(StructuredGraph graph) {
         assert graph != null;
         this.graph = graph;
         this.frameState = new FrameStateBuilder(method, method.maxLocals(), method.maxStackSize(), graph);
@@ -214,7 +214,7 @@ public final class GraphBuilderPhase extends Phase {
 
         if (GraalOptions.CacheGraphs && !graph.hasNode(DeoptimizeNode.class)) {
             // Create duplicate graph.
-            Graph<EntryPointNode> duplicate = new Graph<EntryPointNode>(new EntryPointNode());
+            StructuredGraph duplicate = new StructuredGraph();
             Map<Node, Node> replacements = new IdentityHashMap<Node, Node>();
             replacements.put(graph.start(), duplicate.start());
             duplicate.addDuplicate(graph.getNodes(), replacements);

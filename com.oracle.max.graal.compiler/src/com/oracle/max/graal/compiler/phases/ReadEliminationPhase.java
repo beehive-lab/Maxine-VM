@@ -35,7 +35,7 @@ public class ReadEliminationPhase extends Phase {
     }
 
     @Override
-    protected void run(Graph<EntryPointNode> graph) {
+    protected void run(StructuredGraph graph) {
         for (ReadNode n : graph.getNodes(ReadNode.class)) {
             if (n.dependencies().size() > 0) {
                 Node memoryInput = n.dependencies().get(0);

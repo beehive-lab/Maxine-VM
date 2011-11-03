@@ -419,12 +419,12 @@ public class MaxRuntime implements GraalRuntime {
         // TODO(tw): Implement lowering phase for Maxine.
     }
 
-    public Graph<EntryPointNode> intrinsicGraph(RiResolvedMethod caller, int bci, RiResolvedMethod method, List< ? extends Node> parameters) {
+    public StructuredGraph intrinsicGraph(RiResolvedMethod caller, int bci, RiResolvedMethod method, List< ? extends Node> parameters) {
         MethodActor maxMethod = (MethodActor) method;
         if (maxMethod.intrinsic() != null) {
             IntrinsicImpl impl = intrinsicRegistry.get(method);
             if (impl != null) {
-                Graph<EntryPointNode> graph = new Graph<EntryPointNode>(new EntryPointNode());
+                StructuredGraph graph = new StructuredGraph();
                 ValueNode[] args = new ValueNode[parameters.size()];
                 for (int i = 0; i < args.length; i++) {
                     args[i] = graph.unique(new LocalNode(((ValueNode) parameters.get(i)).kind, 0));
