@@ -30,7 +30,7 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 
-public class VirtualObjectNode extends ValueNode {
+public class VirtualObjectNode extends ValueNode implements LIRLowerable {
 
     @Data private RiType type;
     private EscapeField[] fields;
@@ -50,7 +50,7 @@ public class VirtualObjectNode extends ValueNode {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
+    public void generate(LIRGeneratorTool gen) {
         // nothing to do...
     }
 

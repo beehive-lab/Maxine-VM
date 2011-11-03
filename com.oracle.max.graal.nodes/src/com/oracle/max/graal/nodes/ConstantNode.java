@@ -32,7 +32,7 @@ import com.sun.cri.ri.*;
  * long, float, object reference, address, etc.
  */
 @NodeInfo(shortName = "Const")
-public final class ConstantNode extends BooleanNode {
+public final class ConstantNode extends BooleanNode implements LIRLowerable {
 
     @Data public final CiConstant value;
     private RiRuntime runtime;
@@ -52,8 +52,12 @@ public final class ConstantNode extends BooleanNode {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitConstant(this);
+    public void generate(LIRGeneratorTool gen) {
+        if (gen.canInlineConstant(value)) {
+            gen.setResult(this, value);
+        } else {
+            gen.setResult(this, gen.emitMove(value));
+        }
     }
 
     public static ConstantNode forCiConstant(CiConstant constant, RiRuntime runtime, Graph graph) {

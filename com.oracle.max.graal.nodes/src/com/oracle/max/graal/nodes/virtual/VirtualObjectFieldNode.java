@@ -28,7 +28,7 @@ import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
 import com.sun.cri.ci.*;
 
-public class VirtualObjectFieldNode extends ValueNode {
+public class VirtualObjectFieldNode extends ValueNode implements LIRLowerable {
 
     @Input private VirtualObjectNode object;
     @Input private ValueNode lastState;
@@ -61,7 +61,7 @@ public class VirtualObjectFieldNode extends ValueNode {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
+    public void generate(LIRGeneratorTool gen) {
         // nothing to do...
     }
 

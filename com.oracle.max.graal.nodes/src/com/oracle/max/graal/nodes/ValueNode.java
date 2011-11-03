@@ -25,7 +25,6 @@ package com.oracle.max.graal.nodes;
 import java.util.*;
 
 import com.oracle.max.graal.graph.*;
-import com.oracle.max.graal.nodes.spi.*;
 import com.oracle.max.graal.nodes.virtual.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -125,16 +124,6 @@ public abstract class ValueNode extends Node {
      */
     public RiResolvedType declaredType() {
         return null; // default: unknown declared type
-    }
-
-    /**
-     * This method supports the visitor pattern by accepting a visitor and calling the
-     * appropriate {@code visit()} method.
-     *
-     * @param v the visitor to accept
-     */
-    public void accept(ValueVisitor v) {
-        throw new IllegalStateException("No visit method for this node (" + this + ")");
     }
 
     @Override

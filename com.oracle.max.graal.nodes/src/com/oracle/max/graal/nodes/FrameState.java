@@ -35,7 +35,7 @@ import com.sun.cri.ri.*;
  * The {@code FrameState} class encapsulates the frame state (i.e. local variables and
  * operand stack) at a particular point in the abstract interpretation.
  */
-public final class FrameState extends ValueNode implements FrameStateAccess, Node.IterableNodeType {
+public final class FrameState extends ValueNode implements FrameStateAccess, Node.IterableNodeType, LIRLowerable {
 
     protected final int localsSize;
 
@@ -622,8 +622,8 @@ public final class FrameState extends ValueNode implements FrameStateAccess, Nod
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitFrameState(this);
+    public void generate(LIRGeneratorTool gen) {
+        gen.visitFrameState(this);
     }
 
     @Override

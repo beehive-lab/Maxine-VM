@@ -32,7 +32,7 @@ import com.sun.cri.ri.*;
 /**
  * The {@code ArrayLength} instruction gets the length of an array.
  */
-public final class ArrayLengthNode extends FixedWithNextNode implements Canonicalizable, Lowerable {
+public final class ArrayLengthNode extends FixedWithNextNode implements Canonicalizable, Lowerable, LIRLowerable {
 
     @Input private ValueNode array;
 
@@ -46,8 +46,8 @@ public final class ArrayLengthNode extends FixedWithNextNode implements Canonica
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitArrayLength(this);
+    public void generate(LIRGeneratorTool gen) {
+        gen.visitArrayLength(this);
     }
 
     @Override

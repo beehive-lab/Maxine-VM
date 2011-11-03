@@ -26,7 +26,7 @@ import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.spi.*;
 
 
-public final class VolatileReadNode extends AbstractMemoryCheckpointNode {
+public final class VolatileReadNode extends AbstractMemoryCheckpointNode implements LIRLowerable {
 
     // TODO Warning: This class does not work correctly. Since it is just a wrapper around a real read node,
     // the appropriate barriers cannot be emitted.
@@ -44,7 +44,7 @@ public final class VolatileReadNode extends AbstractMemoryCheckpointNode {
     }
 
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitVolatileMemoryRead(this);
+    public void generate(LIRGeneratorTool gen) {
+        gen.visitVolatileMemoryRead(this);
     }
 }
